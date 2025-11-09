@@ -1,4 +1,4 @@
-import { TrendingUp, Zap, BookOpen, Brain } from "lucide-react";
+import { PersonStanding, BookOpen, Brain, PhoneCallIcon } from "lucide-react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -8,14 +8,14 @@ import { cn } from "@/lib/utils";
 
 const brands = [
   {
-    icon: TrendingUp,
+    icon: PhoneCallIcon,
     name: "Salespirates",
     brand: "salespirates" as const,
     description:
       "Ihre externe Vertriebsagentur für den Inbound- oder Outboundsales. Wir liefern Leads oder unterstützen Ihren Vertrieb – aktiv, zielgerichtet und mit messbaren Ergebnissen.",
   },
   {
-    icon: Zap,
+    icon: PersonStanding,
     name: "Rodeo-Consulting",
     brand: "rodeo" as const,
     description:
@@ -46,10 +46,9 @@ export const Services = () => {
             Unsere Marken
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Vier starke Marken, ein gemeinsames Ziel: Ihr Vertriebserfolg
+            Vier starke Marken, ein gemeinsames Ziel: <span className="underline decoration-muted">Ihr Vertriebserfolg</span>
           </p>
         </div>
-
         <div className="border border-foreground/20 rounded-lg overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
             {brands.map((brand, index) => {
@@ -57,15 +56,15 @@ export const Services = () => {
               const isEven = index % 2 === 0;
               const isTopRow = index < 2;
               return (
-                <Card 
-                  key={index} 
+                <Card
+                  key={index}
                   className={cn(
-                    "border-0 rounded-none bg-card",
+                    "border-0 rounded-none bg-card h-full flex flex-col",
                     !isTopRow && "border-t border-foreground/20",
                     !isEven && "md:border-l border-foreground/20"
                   )}
                 >
-                  <CardHeader>
+                  <CardHeader className="shrink-0">
                     <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4">
                       <Icon className="w-6 h-6 text-primary" />
                     </div>
@@ -73,15 +72,14 @@ export const Services = () => {
                       <BrandText brand={brand.brand}>{brand.name}</BrandText>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-base">{brand.description}</CardDescription>
+                  <CardContent className="grow">
+                    <CardDescription className="text-base text-muted">{brand.description}</CardDescription>
                   </CardContent>
                 </Card>
               );
             })}
           </div>
         </div>
-
         <div className="text-center">
           <Button asChild>
             <Link

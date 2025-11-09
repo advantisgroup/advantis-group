@@ -1,5 +1,4 @@
 "use client";
-
 import { cn } from "@/lib/utils";
 
 interface BrandTextProps {
@@ -9,68 +8,62 @@ interface BrandTextProps {
   hoverable?: boolean;
 }
 
-export const BrandText = ({ brand, children, className, hoverable = true }: BrandTextProps) => {
-  // Split brand name to highlight first part
-  const getParts = (name: string, brandType: string) => {
-    if (brandType === "salespirates") {
+const BRAND_CONFIGS = {
+  salespirates: {
+    patterns: ["Salespirates", "Sales-", "Sales "],
+    split: (name: string) => {
       if (name.includes("Salespirates")) return ["Sales", "pirates"];
-      if (name.includes("Sales-")) {
-        const parts = name.split("Sales-");
-        return ["Sales", "-" + parts[1]];
-      }
-      if (name.includes("Sales ")) {
-        const parts = name.split("Sales ");
-        return ["Sales", " " + parts[1]];
-      }
+      if (name.includes("Sales-")) return name.split(/-(.+)/);
+      if (name.includes("Sales ")) return name.split(/ (.+)/);
       return ["Sales", name.replace("Sales", "")];
-    }
-    if (brandType === "advantis") {
-      if (name.includes("Advantis")) return ["Advantis", name.replace("Advantis", "")];
-      if (name.includes("advantis")) return ["advantis", name.replace("advantis", "")];
-      return ["Advantis", name.replace(/Advantis|advantis/i, "")];
-    }
-    if (brandType === "rodeo") {
-      if (name.includes("Rodeo")) return ["Rodeo", name.replace("Rodeo", "")];
-      return ["Rodeo", name.replace(/Rodeo/i, "")];
-    }
-    if (brandType === "oldschool-train") {
-      if (name.includes("Oldschool-train")) return ["Oldschool", "train"];
-      return ["Oldschool", name.replace("Oldschool-train", "")];
-    }
-    if (brandType === "sales-ai-germany") {
-      if (name.includes("Sales-AI-Germany")) return ["Sales-AI", "Germany"];
-      return ["Sales-AI", name.replace("Sales-AI-Germany", "")];
-    }
-    return [name, ""];
-  };
+    },
+    color: "text-brand-salespirates",
+    hoverColor: "group-hover:text-brand-salespirates",
+  },
+  advantis: {
+    split: (name: string) => {
+      const match = name.match(/(Advantis|advantis)(.*)/) || [];
+      return [match[1] || "Advantis", match[2] || ""];
+    },
+    color: "text-brand-advantis",
+    hoverColor: "group-hover:text-brand-advantis",
+  },
+  rodeo: {
+    split: (name: string) => {
+      const match = name.match(/(Rodeo)(.*)/) || [];
+      return [match[1] || "Rodeo", match[2] || ""];
+    },
+    color: "text-brand-rodeo",
+    hoverColor: "group-hover:text-brand-rodeo",
+  },
+  "oldschool-train": {
+    split: (name: string) => {
+      if (name.includes("Oldschool-train")) return name.split(/-(.+)/);
+      return ["Oldschool", name.replace("Oldschool", "")];
+    },
+    color: "text-brand-oldschool-train",
+    hoverColor: "group-hover:text-brand-oldschool-train",
+  },
+  "sales-ai-germany": {
+    split: (name: string) => {
+      if (name.includes("Sales-AI-Germany")) return name.split(/Germany/);
+      return ["Sales-AI-", name.replace("Sales-AI-", "")];
+    },
+    color: "text-brand-sales-ai-germany",
+    hoverColor: "group-hover:text-brand-sales-ai-germany",
+  },
+} as const;
 
-  const [firstPart, rest] = getParts(children, brand);
-
-  const getBrandHoverClass = (brandType: string) => {
-    if (brandType === "salespirates") return "group-hover:text-brand-salespirates";
-    if (brandType === "advantis") return "group-hover:text-brand-advantis";
-    if (brandType === "rodeo") return "group-hover:text-brand-rodeo";
-    if (brandType === "oldschool-train") return "group-hover:text-brand-oldschool-train";
-    if (brandType === "sales-ai-germany") return "group-hover:text-brand-sales-ai-germany";
-    return "";
-  };
-
-  const brandColors = {
-    salespirates: "text-brand-salespirates",
-    advantis: "text-brand-advantis",
-    rodeo: "text-brand-rodeo",
-    "oldschool-train": "text-brand-oldschool-train",
-    "sales-ai-germany": "text-brand-sales-ai-germany",
-  };
+export const BrandText = ({ brand, children, className, hoverable = true }: BrandTextProps) => {
+  const config = BRAND_CONFIGS[brand];
+  const [firstPart, rest] = config.split(children);
 
   return (
     <span className={cn(className, hoverable && "group cursor-pointer inline-block")}>
       <span
         className={cn(
           "transition-colors duration-300",
-          hoverable 
-            ? cn("text-foreground", getBrandHoverClass(brand))
-            : brandColors[brand]
+          hoverable ? cn("text-foreground", config.hoverColor) : config.color
         )}
       >
         {firstPart}
@@ -83,4 +76,3 @@ export const BrandText = ({ brand, children, className, hoverable = true }: Bran
     </span>
   );
 };
-

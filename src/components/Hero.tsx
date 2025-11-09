@@ -9,8 +9,8 @@ export const Hero = () => {
     <section className="relative h-screen flex items-center">
       {/* Gradient Background */}
       <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden">
-        <GradientBackground 
-          backdropBlurAmount="sm" 
+        <GradientBackground
+          backdropBlurAmount="lg"
           className="h-full w-full opacity-50"
         />
         {/* Brand color overlay gradient - subtle blend of brand colors */}
@@ -20,13 +20,13 @@ export const Hero = () => {
         <div className="absolute bottom-0 left-0 right-0 h-80 bg-linear-to-b from-transparent via-background/40 to-background pointer-events-none" />
       </div>
       {/* Additional blur overlay at bottom edge for extra smoothness */}
-      <div className="absolute bottom-0 left-0 right-0 h-24 bg-background/80 backdrop-blur-sm pointer-events-none" 
+      <div className="absolute bottom-0 left-0 right-0 h-24 bg-background/80 backdrop-blur-sm pointer-events-none"
         style={{
           maskImage: 'linear-gradient(to top, black 0%, transparent 100%)',
           WebkitMaskImage: 'linear-gradient(to top, black 0%, transparent 100%)',
         }}
       />
-      
+
       <div className="container mx-auto px-4 w-full relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-12">
           <div className="space-y-2">
@@ -35,7 +35,7 @@ export const Hero = () => {
                 Advantis Group
               </BrandText>
             </h1>
-            
+
             <p className="text-2xl md:text-3xl text-muted-foreground font-medium">
               Wir bringen Ihren Vertrieb auf das nächste Level!
             </p>

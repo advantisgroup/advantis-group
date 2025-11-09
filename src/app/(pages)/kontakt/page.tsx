@@ -7,8 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { BrandText } from "@/components/BrandText";
 import Link from "next/link";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function Kontakt() {
+  const isMobile = useIsMobile();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -45,48 +47,71 @@ export default function Kontakt() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="container mx-auto px-4 pt-24 pb-24 space-y-24">
-        <section className="max-w-4xl mx-auto space-y-8 text-center">
-          <h1 className="text-5xl md:text-7xl font-bold">
+      <main className="container mx-auto px-4 pt-24 pb-24 space-y-16 md:space-y-24">
+        <section className="max-w-4xl mx-auto space-y-6 md:space-y-8 text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold">
             Kontakt
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten
           </p>
         </section>
 
-        <section className="max-w-6xl mx-auto space-y-12">
-          <div className="border border-border">
-            <div className="grid md:grid-cols-3 divide-x divide-border">
+        <section className="max-w-6xl mx-auto space-y-8 md:space-y-12">
+          {isMobile ? (
+            <div className="space-y-4">
               {contactInfo.map((info) => {
                 const Icon = info.icon;
                 return (
-                  <Card key={info.label} className="border-0 rounded-none">
-                    <CardHeader>
-                      <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4">
-                        <Icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <CardTitle className="text-lg">{info.label}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <a
-                        href={info.href}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {info.value}
-                      </a>
-                    </CardContent>
-                  </Card>
+                  <a
+                    key={info.label}
+                    href={info.href}
+                    className="flex items-center gap-4 p-4 border border-border rounded-lg hover:border-foreground/40 transition-colors"
+                  >
+                    <div className="w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                      <Icon className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-muted-foreground">{info.label}</p>
+                      <p className="text-base text-foreground wrap-break-word">{info.value}</p>
+                    </div>
+                  </a>
                 );
               })}
             </div>
-          </div>
+          ) : (
+            <div className="border border-border overflow-hidden">
+              <div className="grid md:grid-cols-3 divide-x divide-border">
+                {contactInfo.map((info) => {
+                  const Icon = info.icon;
+                  return (
+                    <Card key={info.label} className="border-0 rounded-none">
+                      <CardHeader>
+                        <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4">
+                          <Icon className="w-6 h-6 text-primary" />
+                        </div>
+                        <CardTitle className="text-lg">{info.label}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <a
+                          href={info.href}
+                          className="text-muted-foreground hover:text-foreground transition-colors wrap-break-word"
+                        >
+                          {info.value}
+                        </a>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-          <div className="border border-border">
-            <div className="grid md:grid-cols-2 divide-x divide-border">
-              <Card className="border-0 rounded-none">
+          <div className="border border-border rounded-lg md:rounded-none overflow-hidden">
+            <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 divide-x'} divide-border`}>
+              <Card className={`border-0 rounded-none ${isMobile ? 'border-b' : ''}`}>
                 <CardHeader>
-                  <CardTitle className="text-2xl">Schreiben Sie uns</CardTitle>
+                  <CardTitle className="text-xl md:text-2xl">Schreiben Sie uns</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-4">
@@ -99,7 +124,7 @@ export default function Kontakt() {
                         id="name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                         required
                       />
                     </div>
@@ -112,7 +137,7 @@ export default function Kontakt() {
                         id="email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                         required
                       />
                     </div>
@@ -123,7 +148,7 @@ export default function Kontakt() {
                       <input
                         type="tel"
                         id="phone"
-                        className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring"
+                        className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                       />
                     </div>
                     <div>
@@ -134,8 +159,8 @@ export default function Kontakt() {
                         id="message"
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        rows={6}
-                        className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                        rows={isMobile ? 4 : 6}
+                        className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
                         required
                       />
                     </div>
@@ -157,7 +182,7 @@ export default function Kontakt() {
 
               <Card className="border-0 rounded-none">
                 <CardHeader>
-                  <CardTitle className="text-2xl">
+                  <CardTitle className="text-xl md:text-2xl">
                     Warum <BrandText brand="advantis">Advantis Group</BrandText>?
                   </CardTitle>
                 </CardHeader>
