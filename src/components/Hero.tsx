@@ -31,7 +31,7 @@ export const Hero = () => {
         <div className="max-w-4xl mx-auto text-center space-y-12">
           <div className="space-y-2">
             <h1 className="text-6xl md:text-8xl font-bold leading-tight">
-              <BrandText brand="advantis" hoverable={true} className="text-brand-advantis">
+              <BrandText brand="advantis" hoverable keepRestColor className="hover:text-shadow-xs text-shadow-white/30 duration-300">
                 Advantis Group
               </BrandText>
             </h1>
