@@ -1,0 +1,7 @@
+onlyBuiltDependencies:
+  - '@clerk/shared'
+  - '@swc/core'
+  - '@tsparticles/engine'
+  - '@vercel/speed-insights'
+  - esbuild
+  - sharp
