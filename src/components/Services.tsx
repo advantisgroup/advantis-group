@@ -49,8 +49,8 @@ export const Services = () => {
             Vier starke Marken, ein gemeinsames Ziel: <span className="underline decoration-muted">Ihr Vertriebserfolg</span>
           </p>
         </div>
-        <div className="border border-foreground/20 rounded-lg overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2">
+        <div className="border border-foreground/20 rounded-lg overflow-hidden hover:bg-white/40 duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 ">
             {brands.map((brand, index) => {
               const Icon = brand.icon;
               const isEven = index % 2 === 0;
@@ -59,7 +59,7 @@ export const Services = () => {
                 <Card
                   key={index}
                   className={cn(
-                    "border-0 rounded-none bg-card h-full flex flex-col",
+                    "border-0 rounded-none bg-card hover:bg-black/80 duration-300 h-full flex flex-col",
                     !isTopRow && "border-t border-foreground/20",
                     !isEven && "md:border-l border-foreground/20"
                   )}

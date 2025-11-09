@@ -8,11 +8,14 @@ import { Button } from "@/components/ui/button";
 import { BrandText } from "@/components/BrandText";
 import Link from "next/link";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 export default function Kontakt() {
   const isMobile = useIsMobile();
   const [formData, setFormData] = useState({
-    name: "",
+    company: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
     message: "",
@@ -116,17 +119,45 @@ export default function Kontakt() {
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                      <label htmlFor="name" className="block text-sm font-medium mb-2">
-                        Ihr Firmenname, Vorname, Nachname
+                      <label htmlFor="company" className="block text-sm font-medium mb-2">
+                        Ihr Firmenname
                       </label>
                       <input
                         type="text"
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        id="company"
+                        value={formData.company}
+                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                         className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                         required
                       />
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="w-full md:w-1/2">
+                        <label htmlFor="firstName" className="block text-sm font-medium mb-2">
+                          Vorname
+                        </label>
+                        <input
+                          type="text"
+                          id="firstName"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+                          required
+                        />
+                      </div>
+                      <div className="w-full md:w-1/2">
+                        <label htmlFor="lastName" className="block text-sm font-medium mb-2">
+                          Nachname
+                        </label>
+                        <input
+                          type="text"
+                          id="lastName"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
+                          required
+                        />
+                      </div>
                     </div>
                     <div>
                       <label htmlFor="email" className="block text-sm font-medium mb-2">
@@ -171,7 +202,10 @@ export default function Kontakt() {
                           Weitere Informationen finden Sie in unserer Datenschutzerklärung.
                         </Link>
                       </p>
-                      <Button type="submit" className="w-full">
+                      <Button onClick={() => {
+                        toast.success("Gesendet!", { description: "Wir werden uns in bis zu 24h bei ihnen melden." })
+                      }}
+                        type="submit" className="w-full">
                         Absenden
                         <Send className="w-4 h-4 ml-2" />
                       </Button>

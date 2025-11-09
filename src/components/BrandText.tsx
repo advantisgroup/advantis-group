@@ -17,40 +17,40 @@ const BRAND_CONFIGS = {
       if (name.includes("Sales ")) return name.split(/ (.+)/);
       return ["Sales", name.replace("Sales", "")];
     },
-    color: "text-brand-salespirates",
-    hoverColor: "group-hover:text-brand-salespirates",
+    color: "text-salespirates",
+    hoverColor: "group-hover:text-salespirates",
   },
   advantis: {
     split: (name: string) => {
       const match = name.match(/(Advantis|advantis)(.*)/) || [];
       return [match[1] || "Advantis", match[2] || ""];
     },
-    color: "text-brand-advantis",
-    hoverColor: "group-hover:text-brand-advantis",
+    color: "text-advantis",
+    hoverColor: "group-hover:text-advantis",
   },
   rodeo: {
     split: (name: string) => {
       const match = name.match(/(Rodeo)(.*)/) || [];
       return [match[1] || "Rodeo", match[2] || ""];
     },
-    color: "text-brand-rodeo",
-    hoverColor: "group-hover:text-brand-rodeo",
+    color: "text-rodeo",
+    hoverColor: "group-hover:text-rodeo",
   },
   "oldschool-train": {
     split: (name: string) => {
-      if (name.includes("Oldschool-train")) return name.split(/-(.+)/);
+      if (name.includes("Oldschool-train")) return ["Oldschool", "-train"];
       return ["Oldschool", name.replace("Oldschool", "")];
     },
-    color: "text-brand-oldschool-train",
-    hoverColor: "group-hover:text-brand-oldschool-train",
+    color: "text-oldschool-train",
+    hoverColor: "group-hover:text-oldschool-train",
   },
   "sales-ai-germany": {
     split: (name: string) => {
-      if (name.includes("Sales-AI-Germany")) return name.split(/Germany/);
-      return ["Sales-AI-", name.replace("Sales-AI-", "")];
+      if (name.includes("Sales-AI-Germany")) return name.split(/-Germany/);
+      return ["Sales-AI", name.replace("Sales-AI", "")];
     },
-    color: "text-brand-sales-ai-germany",
-    hoverColor: "group-hover:text-brand-sales-ai-germany",
+    color: "text-sales-ai-germany",
+    hoverColor: "group-hover:text-sales-ai-germany",
   },
 } as const;
 

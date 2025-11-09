@@ -17,11 +17,6 @@ const config: Config = {
                     DEFAULT: "oklch(var(--secondary))",
                     foreground: "oklch(var(--secondary-foreground))",
                 },
-                brand: {
-                    salespirates: "oklch(var(--brand-salespirates))",
-                    advantis: "oklch(var(--brand-advantis))",
-                    rodeo: "oklch(var(--brand-rodeo))",
-                },
             },
         },
     },

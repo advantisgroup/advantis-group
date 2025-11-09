@@ -64,7 +64,7 @@ export default function Team() {
           <Card className="border border-border">
             <CardHeader>
               <div className="flex flex-col md:flex-row items-center gap-8">
-                <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center text-4xl font-bold text-primary flex-shrink-0">
+                <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center text-4xl font-bold text-primary shrink-0">
                   {teamMembers[0].initials}
                 </div>
                 <div className="flex-1 text-center md:text-left">
