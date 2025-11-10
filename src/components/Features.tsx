@@ -98,7 +98,7 @@ export const Features = () => {
                                     {/* Expanded content overlay - Desktop only */}
                                     {!isMobile && (
                                         <div className={cn(
-                                            "absolute top-0 h-full bg-card border-2 border-primary/40 rounded-lg shadow-2xl transition-all duration-700 ease-out pointer-events-none z-50",
+                                            "absolute top-0 h-full bg-card border-2 border-primary/40 rounded-lg shadow-2xl transition-all duration-300 ease-out pointer-events-none z-50",
                                             // Smart positioning and animation: first card expands RIGHT, last card expands LEFT, middle expands BOTH
                                             isFirst && "left-0",
                                             isLast && "right-0",
