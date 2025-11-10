@@ -136,7 +136,7 @@ function GradientBackground({
         navigator.hardwareConcurrency <= 2) ||
       (typeof navigator !== "undefined" &&
         (navigator as any).connection?.saveData) ||
-      isMobile;
+      !!isMobile;
     console.log(navigator.hardwareConcurrency)
     setIsLowSpec(lowSpec);
   }, [isMobile]);
