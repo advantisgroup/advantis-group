@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/components/Header";
-import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { Mail, Phone, MapPin, Send, X } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,10 +9,14 @@ import { BrandText } from "@/components/BrandText";
 import Link from "next/link";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { FormDataSchema } from "@/lib/schema";
+import { z } from "zod";
+
+type FormData = z.infer<typeof FormDataSchema>;
 
 export default function Kontakt() {
   const isMobile = useIsMobile();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     company: "",
     firstName: "",
     lastName: "",
@@ -20,10 +24,39 @@ export default function Kontakt() {
     phone: "",
     message: "",
   });
+  const [errors, setErrors] = useState<z.ZodFlattenedError<FormData>['fieldErrors']>({});
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+
+    const result = FormDataSchema.safeParse(formData);
+
+    if (!result.success) {
+      setErrors(result.error.flatten().fieldErrors);
+      return;
+    }
+
+    setErrors({});
+
+    const res = await fetch("api/db/save", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(formData),
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      toast.error("Etwas ist schiefgelaufen", {
+        description: "Fals das problem anhalt versuchen sie es spater nochmal",
+        icon: <X />,
+      });
+    } else {
+      toast.success("Gesendet!", {
+        description: "Wir werden uns in bis zu 24h bei ihnen melden.",
+      });
+    }
   };
 
   const contactInfo = [
@@ -128,8 +161,8 @@ export default function Kontakt() {
                         value={formData.company}
                         onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                         className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-                        required
                       />
+                      {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company[0]}</p>}
                     </div>
                     <div className="flex flex-col md:flex-row gap-4">
                       <div className="w-full md:w-1/2">
@@ -142,8 +175,8 @@ export default function Kontakt() {
                           value={formData.firstName}
                           onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-                          required
                         />
+                        {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
                       </div>
                       <div className="w-full md:w-1/2">
                         <label htmlFor="lastName" className="block text-sm font-medium mb-2">
@@ -155,8 +188,8 @@ export default function Kontakt() {
                           value={formData.lastName}
                           onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-                          required
                         />
+                        {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName[0]}</p>}
                       </div>
                     </div>
                     <div>
@@ -169,8 +202,8 @@ export default function Kontakt() {
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-                        required
                       />
+                      {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
                     </div>
                     <div>
                       <label htmlFor="phone" className="block text-sm font-medium mb-2">
@@ -179,6 +212,8 @@ export default function Kontakt() {
                       <input
                         type="tel"
                         id="phone"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                       />
                     </div>
@@ -192,8 +227,8 @@ export default function Kontakt() {
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                         rows={isMobile ? 4 : 6}
                         className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
-                        required
                       />
+                      {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message[0]}</p>}
                     </div>
                     <div className="space-y-3">
                       <p className="text-xs text-muted-foreground">
@@ -202,10 +237,7 @@ export default function Kontakt() {
                           Weitere Informationen finden Sie in unserer Datenschutzerklärung.
                         </Link>
                       </p>
-                      <Button onClick={() => {
-                        toast.success("Gesendet!", { description: "Wir werden uns in bis zu 24h bei ihnen melden." })
-                      }}
-                        type="submit" className="w-full">
+                      <Button type="submit" className="w-full">
                         Absenden
                         <Send className="w-4 h-4 ml-2" />
                       </Button>
