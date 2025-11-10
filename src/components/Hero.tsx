@@ -47,7 +47,7 @@ export const Hero = () => {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 md:pt-1">
             <Button asChild size="lg">
               <Link href="/kontakt">
                 Jetzt Kontakt aufnehmen
