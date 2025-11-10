@@ -4,7 +4,7 @@ import { Redis } from "@upstash/redis";
 // Create a new ratelimiter, that allows 5 requests per 24 hours
 export const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(5, "24 h"),
+  limiter: Ratelimit.slidingWindow(1, "12 h"),
   analytics: true,
   /**
    * Optional prefix for the keys used in redis. This is useful if you want to share a redis
