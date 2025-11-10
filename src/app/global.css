@@ -14,6 +14,16 @@
   }
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
 .animate-pulse-slow {
   animation: pulse-slow 3s ease-in-out infinite;
 }
@@ -88,7 +98,7 @@
 
     /* Muted colors for subtle elements */
     --muted: oklch(61% 0.001% 0);
-    --muted-foreground: oklch(75.6% 0.001 0);
+    --muted-foreground: oklch(85.6% 0.001 0);
 
     /* Accent for interactive elements */
     --accent: oklch(10% 0.001 260.5);

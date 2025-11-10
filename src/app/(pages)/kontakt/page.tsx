@@ -1,7 +1,7 @@
 "use client";
 
 import { Header } from "@/components/Header";
-import { Mail, Phone, MapPin, Send, X } from "lucide-react";
+import { Mail, Phone, MapPin, Send, X, Check, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ type FormData = z.infer<typeof FormDataSchema>;
 
 export default function Kontakt() {
   const isMobile = useIsMobile();
+  const [buttonState, setButtonState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [formData, setFormData] = useState<FormData>({
     company: "",
     firstName: "",
@@ -28,11 +29,22 @@ export default function Kontakt() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setButtonState('loading');
 
     const result = FormDataSchema.safeParse(formData);
 
     if (!result.success) {
       setErrors(result.error.flatten().fieldErrors);
+      setButtonState('error');
+
+      toast.error("Etwas ist schiefgelaufen", {
+        description: "Bitte überprüfen Sie Ihre Eingaben",
+        icon: <X />,
+      });
+
+      setTimeout(() => {
+        setButtonState('idle');
+      }, 3000);
       return;
     }
 
@@ -48,15 +60,28 @@ export default function Kontakt() {
     const data = await res.json();
 
     if (!data.success) {
-      toast.error("Etwas ist schiefgelaufen", {
-        description: "Fals das problem anhalt versuchen sie es spater nochmal",
-        icon: <X />,
-      });
+      setButtonState('error');
+      if (res.status === 429) {
+        toast.error("Rate Limit", {
+          description: "Sie haben zu viele Anfragen geschickt. Versuchen sie es spater nochmal",
+          icon: <X />,
+        });
+      } else {
+        toast.error("Etwas ist schiefgelaufen", {
+          description: "Fals das problem anhalt versuchen sie es spater nochmal",
+          icon: <X />,
+        });
+      }
     } else {
+      setButtonState('success');
       toast.success("Gesendet!", {
         description: "Wir werden uns in bis zu 24h bei ihnen melden.",
       });
     }
+
+    setTimeout(() => {
+      setButtonState('idle');
+    }, 3000);
   };
 
   const contactInfo = [
@@ -237,9 +262,56 @@ export default function Kontakt() {
                           Weitere Informationen finden Sie in unserer Datenschutzerklärung.
                         </Link>
                       </p>
-                      <Button type="submit" className="w-full">
-                        Absenden
-                        <Send className="w-4 h-4 ml-2" />
+                      <Button
+                        type="submit"
+                        disabled={buttonState !== 'idle'}
+                        className="w-full relative overflow-hidden"
+                      >
+                        <span className="relative flex items-center justify-center gap-2">
+                          {!(buttonState === "loading") && "Absenden"}
+
+                          {/* Send Icon - flies away when transitioning */}
+                          <span
+                            className={`inline-flex transition-all duration-500 ${buttonState === 'idle'
+                                ? 'translate-x-0 opacity-100'
+                                : 'translate-x-12 opacity-0'
+                              }`}
+                          >
+                            <Send className="w-4 h-4" />
+                          </span>
+
+                          {/* Loading Spinner */}
+                          <span
+                            className={`absolute transition-all duration-500 ${buttonState === 'loading'
+                                ? 'translate-x-0 opacity-100 scale-100'
+                                : buttonState === 'idle'
+                                  ? '-translate-x-12 opacity-0 scale-50'
+                                  : 'translate-x-12 opacity-0 scale-50'
+                              }`}
+                          >
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          </span>
+
+                          {/* Success Checkmark */}
+                          <span
+                            className={`absolute transition-all duration-500 ${buttonState === 'success'
+                                ? 'translate-x-0 opacity-100 scale-100'
+                                : '-translate-x-12 opacity-0 scale-50'
+                              }`}
+                          >
+                            <Check className="w-5 h-5" />
+                          </span>
+
+                          {/* Error X with shake animation */}
+                          <span
+                            className={`absolute transition-all duration-500 ${buttonState === 'error'
+                                ? 'translate-x-0 opacity-100 scale-100 animate-shake'
+                                : '-translate-x-12 opacity-0 scale-50'
+                              }`}
+                          >
+                            <X className="w-5 h-5" />
+                          </span>
+                        </span>
                       </Button>
                     </div>
                   </form>
