@@ -130,13 +130,15 @@ function GradientBackground({
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    const lowSpec =
-      (typeof navigator !== "undefined" &&
-        navigator.hardwareConcurrency &&
-        navigator.hardwareConcurrency <= 2) ||
-      (typeof navigator !== "undefined" &&
-        (navigator as any).connection?.saveData) ||
-      !!isMobile;
+     const lowSpec =
+    isMobile
+      ? false // if mobile, override and set to false
+      : (typeof navigator !== "undefined" &&
+          navigator.hardwareConcurrency &&
+          navigator.hardwareConcurrency <= 2) ||
+        (typeof navigator !== "undefined" &&
+          (navigator as any).connection?.saveData);
+    
     console.log(navigator.hardwareConcurrency)
     setIsLowSpec(lowSpec);
   }, [isMobile]);
