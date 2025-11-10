@@ -55,6 +55,8 @@
   --color-advantis: var(--advantis);
   --color-rodeo: var(--rodeo);
   --color-salespirates: var(--salespirates);
+  --color-sales-ai: var(--sales-ai);
+  --color-oldschool: var(--oldschool);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -73,7 +75,6 @@
     --card: oklch(10% 0.001 260.5);
     --card-foreground: oklch(95.6% 0.001 260.5);
     --card-border: oklch(10% 0.001 260.5);
-
     --popover: oklch(10% 0.001% 0);
     --popover-foreground: oklch(95.6% 0.001 260.5);
 
@@ -87,7 +88,7 @@
 
     /* Muted colors for subtle elements */
     --muted: oklch(61% 0.001% 0);
-    --muted-foreground: oklch(95.6% 0.001 260.5);
+    --muted-foreground: oklch(75.6% 0.001 0);
 
     /* Accent for interactive elements */
     --accent: oklch(10% 0.001 260.5);
@@ -102,11 +103,59 @@
     --input: oklch(10% 0.001 260.5);
     --ring: oklch(50% 0.001 260.5);
 
+    /* Brand colors - same in both modes */
     --salespirates: oklch(75% 0.15 85);
     --advantis: oklch(65% 0.18 350);
     --rodeo: oklch(65% 0.20 240);
+    --sales-ai: oklch(45% 0.90 240);
+    --oldschool: oklch(25% 0.5 10);
 
     --radius: 0.5rem;
+  }
+
+  :root.light {
+    /* Base colors - Clean white/near-white background */
+    --background: oklch(99% 0% 0);
+    --foreground: oklch(15% 0.001 260.5);
+
+    /* Card colors - Pure white to elevate above background */
+    --card: oklch(100% 0% 0);
+    --card-foreground: oklch(15% 0.001 260.5);
+    --card-border: oklch(95% 0.001 260.5);
+    --popover: oklch(100% 0% 0);
+    --popover-foreground: oklch(15% 0.001 260.5);
+
+    /* Primary - Keep high contrast for accessibility */
+    --primary: oklch(15% 0.001 260.5);
+    --primary-foreground: oklch(99% 0% 0);
+
+    /* Secondary - Muted but visible */
+    --secondary: oklch(92% 0.001 260.5);
+    --secondary-foreground: oklch(15% 0.001 260.5);
+
+    /* Muted colors - Light grays for subtle elements */
+    --muted: oklch(64% 0.001 260.5);
+    --muted-foreground: oklch(45% 0.001 260.5);
+
+    /* Accent - Light with dark text */
+    --accent: oklch(94% 0.001 260.5);
+    --accent-foreground: oklch(15% 0.001 260.5);
+
+    /* Destructive - Readable red */
+    --destructive: oklch(55% 0.22 25);
+    --destructive-foreground: oklch(99% 0% 0);
+
+    /* Borders and inputs - Subtle but visible */
+    --border: oklch(88% 0.001 260.5);
+    --input: oklch(88% 0.001 260.5);
+    --ring: oklch(15% 0.001 260.5);
+
+    /* Brand colors - adjusted for light mode visibility */
+    --salespirates: oklch(65% 0.15 85);
+    --advantis: oklch(55% 0.18 350);
+    --rodeo: oklch(55% 0.20 240);
+    --sales-ai: oklch(40% 0.90 240);
+    --oldschool: oklch(30% 0.5 10);
   }
 
   body {

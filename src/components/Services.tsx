@@ -59,7 +59,7 @@ export const Services = () => {
                 <Card
                   key={index}
                   className={cn(
-                    "border-0 rounded-none bg-card hover:bg-black/80 duration-300 h-full flex flex-col",
+                    "border-0 rounded-none bg-card hover:bg-background/70 duration-300 h-full flex flex-col",
                     !isTopRow && "border-t border-foreground/20",
                     !isEven && "md:border-l border-foreground/20"
                   )}

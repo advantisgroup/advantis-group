@@ -3,6 +3,7 @@
 import { Mail, Phone, MapPin } from "lucide-react";
 import Link from "next/link";
 import { BrandText } from "./BrandText";
+import { ModeToggle } from "./theme-toggle";
 
 export const Footer = () => {
   const footerLinks = [
@@ -142,6 +143,7 @@ export const Footer = () => {
               © {new Date().getFullYear().toString()} <BrandText brand="advantis">Advantis Group</BrandText> GmbH. Alle Rechte vorbehalten.
             </p>
             <div className="flex items-center gap-6">
+              <ModeToggle />
               <Link
                 href="/impressum"
                 className="text-xs text-muted-foreground hover:text-foreground transition-colors"

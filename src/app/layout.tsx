@@ -4,10 +4,11 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import './global.css'
 import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/Footer";
+import { ThemeProvider } from "@/components/theme-provider";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {
-    title: "Advantis Group GmbH - Ihre Heimat für exzellenten Vertrieb",
+    title: "Advantis Group GmbH",
     description: "Ganzheitliche Sales Power: von Marketingstrategie und Leadgenerierung über Akquise Support, Sales Trainings bis hin zur Implementierung von KI-Tools.",
     openGraph: {
         type: "website",
@@ -24,14 +25,20 @@ export default function RootLayout({
     children: React.ReactNode
 }) {
     return (
-            <html lang="de">
-                <body className="bg-black">
+        <html lang="de" suppressHydrationWarning>
+            <body className="bg-background">
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="system"
+                    enableSystem
+                >
                     {children}
                     <Analytics />
                     <SpeedInsights />
                     <Toaster />
                     <Footer />
-                </body>
-            </html>
+                </ThemeProvider>
+            </body>
+        </html>
     )
 }

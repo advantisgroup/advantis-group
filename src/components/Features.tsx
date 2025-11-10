@@ -42,7 +42,6 @@ export const Features = () => {
                 "15+ Jahre Expertise im B2B- und B2C-Vertrieb",
                 "Innovative Ansätze kombiniert mit bewährten Methoden",
                 "Langfristige Partnerschaften statt kurzfristiger Projekte",
-                "ROI-fokussierte Strategien mit nachweisbaren Ergebnissen"
             ]
         },
     ];
@@ -79,12 +78,13 @@ export const Features = () => {
                                     <Card className={cn(
                                         "border-0 rounded-none bg-card transition-all duration-300 h-full cursor-pointer relative",
                                         isNotFirst && "md:border-l border-foreground/20",
-                                        isExpanded && "z-50"
+                                        isExpanded && "z-50",
+                                        expandedCard !== null && !isExpanded && "opacity-40 grayscale",
                                     )}>
                                         <CardHeader>
                                             <div className={cn(
                                                 "w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4 transition-all duration-300",
-                                                isExpanded && "bg-primary/20 scale-110"
+                                                isExpanded && "bg-primary/20 scale-110",
                                             )}>
                                                 <Icon className="w-6 h-6 text-primary" />
                                             </div>
@@ -100,9 +100,9 @@ export const Features = () => {
                                         <div className={cn(
                                             "absolute top-0 h-full bg-card border-2 border-primary/40 rounded-lg shadow-2xl transition-all duration-300 ease-out pointer-events-none z-50",
                                             // Smart positioning and animation: first card expands RIGHT, last card expands LEFT, middle expands BOTH
-                                            isFirst && "left-0",
-                                            isLast && "right-0",
-                                            !isFirst && !isLast && "left-1/2 -translate-x-1/2",
+                                            isFirst && "left-0 rounded-r-none",
+                                            isLast && "right-0 rounded-l-none",
+                                            !isFirst && !isLast && "left-1/2 rounded-none -translate-x-1/2",
                                             // Animate width and opacity
                                             isExpanded ? "opacity-100 visible pointer-events-auto w-[200%]" : "opacity-0 invisible w-full"
                                         )}>
@@ -111,12 +111,12 @@ export const Features = () => {
                                                 isExpanded ? "opacity-100 delay-300" : "opacity-0"
                                             )}>
                                                 <div className="flex items-start gap-4 mb-4">
-                                                    <div className="w-14 h-14 rounded-md bg-primary/20 flex items-center justify-center flex-shrink-0">
+                                                    <div className="w-14 h-14 rounded-md bg-primary/20 flex items-center justify-center shrink-0">
                                                         <Icon className="w-7 h-7 text-primary" />
                                                     </div>
                                                     <div>
                                                         <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
-                                                        <p className="text-sm text-muted-foreground">{f.desc}</p>
+                                                        <p className="text-sm text-muted">{f.desc}</p>
                                                     </div>
                                                 </div>
                                                 
@@ -125,7 +125,7 @@ export const Features = () => {
                                                     <ul className="space-y-2">
                                                         {f.details.map((detail, idx) => (
                                                             <li key={idx} className="flex items-start gap-2 text-sm">
-                                                                <Plus className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                                                                <Plus className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                                                                 <span className="text-muted-foreground">{detail}</span>
                                                             </li>
                                                         ))}
@@ -142,7 +142,7 @@ export const Features = () => {
                                             <ul className="space-y-2">
                                                 {f.details.map((detail, idx) => (
                                                     <li key={idx} className="flex items-start gap-2 text-sm">
-                                                        <Plus className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                                                        <Plus className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                                                         <span className="text-muted-foreground">{detail}</span>
                                                     </li>
                                                 ))}

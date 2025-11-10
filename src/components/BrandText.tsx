@@ -43,7 +43,7 @@ const BRAND_CONFIGS = {
       return ["Oldschool", name.replace("Oldschool", "")];
     },
     color: "text-oldschool-train",
-    hoverColor: "group-hover:text-oldschool-train",
+    hoverColor: "group-hover:text-oldschool",
   },
   "sales-ai-germany": {
     split: (name: string) => {
@@ -51,7 +51,7 @@ const BRAND_CONFIGS = {
       return ["Sales-AI", name.replace("Sales-AI", "")];
     },
     color: "text-sales-ai-germany",
-    hoverColor: "group-hover:text-sales-ai-germany",
+    hoverColor: "group-hover:text-sales-ai",
   },
 } as const;
 
