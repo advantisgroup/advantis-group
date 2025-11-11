@@ -5,6 +5,7 @@ import './global.css'
 import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
+import posthog from "posthog-js";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {

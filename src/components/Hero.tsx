@@ -1,8 +1,11 @@
+"use client"
+
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { BrandText } from "./BrandText";
 import { Button } from "./ui/button";
 import GradientBackground from "./lightswind/gradient-background";
+import posthog from "posthog-js";
 
 export const Hero = () => {
   return (
@@ -54,7 +57,10 @@ export const Hero = () => {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button
+              asChild
+              variant="outline"
+              size="lg">
               <Link href="/unsere-marken">
                 Unsere Marken entdecken
               </Link>
