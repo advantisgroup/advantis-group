@@ -11,7 +11,6 @@ interface BrandTextProps {
 
 const BRAND_CONFIGS = {
   salespirates: {
-    patterns: ["Salespirates", "Sales-", "Sales "],
     split: (name: string) => {
       if (name.includes("Salespirates")) return ["Sales", "pirates"];
       if (name.includes("Sales-")) return name.split(/-(.+)/);
@@ -42,15 +41,20 @@ const BRAND_CONFIGS = {
       if (name.includes("Oldschool-train")) return ["Oldschool", "-train"];
       return ["Oldschool", name.replace("Oldschool", "")];
     },
-    color: "text-oldschool-train",
+    color: "text-oldschool",
     hoverColor: "group-hover:text-oldschool",
   },
   "sales-ai-germany": {
     split: (name: string) => {
-      if (name.includes("Sales-AI-Germany")) return name.split(/-Germany/);
-      return ["Sales-AI", name.replace("Sales-AI", "")];
+      if (name.includes("Sales-AI-Germany")) {
+        return ["Sales-AI", "-Germany"];
+      }
+      if (name.includes("Sales-AI")) {
+        return ["Sales-AI", name.replace("Sales-AI", "")];
+      }
+      return ["Sales-AI", ""];
     },
-    color: "text-sales-ai-germany",
+    color: "text-sales-ai",
     hoverColor: "group-hover:text-sales-ai",
   },
 } as const;
