@@ -33,8 +33,6 @@ export default function RootLayout({
                     enableSystem
                 >
                     {children}
-                    <Analytics />
-                    <SpeedInsights />
                     <Toaster />
                     <Footer />
                 </ThemeProvider>
