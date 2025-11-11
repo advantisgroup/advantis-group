@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max)
 
@@ -66,7 +67,7 @@ export default function GlobalNotFoundClient() {
               <p className="text-xl text-muted-foreground">scheint sich entfernt zu haben...</p>
             </div>
 
-            <a
+            <Link
               href="/"
               className="button button-primary inline-flex items-center gap-2 group relative px-6 py-3"
             >
@@ -88,7 +89,7 @@ export default function GlobalNotFoundClient() {
                 Back to Shore
               </span>
               <span className="absolute inset-0 bg-primary/10 rounded-lg group-hover:animate-pulse" />
-            </a>
+            </Link>
           </div>
 
           {/* floating particles */}

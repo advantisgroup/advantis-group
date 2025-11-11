@@ -3,10 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: false,
-  reactCompiler: true,
   experimental: {
-    globalNotFound: true
-  }
+    globalNotFound: true,
+  },
 };
 
 export default nextConfig;

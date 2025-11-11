@@ -154,7 +154,7 @@ export default function Kontakt() {
               {contactInfo.map((info) => {
                 const Icon = info.icon;
                 return (
-                  <a
+                  <Link
                     key={info.label}
                     href={info.href}
                     className="flex items-center gap-4 p-4 border border-border rounded-lg hover:border-foreground/40 transition-colors"
@@ -166,7 +166,7 @@ export default function Kontakt() {
                       <p className="text-sm font-medium text-muted-foreground">{info.label}</p>
                       <p className="text-base text-foreground wrap-break-word">{info.value}</p>
                     </div>
-                  </a>
+                  </Link>
                 );
               })}
             </div>
@@ -184,12 +184,12 @@ export default function Kontakt() {
                         <CardTitle className="text-lg">{info.label}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <a
+                        <Link
                           href={info.href}
                           className="text-muted-foreground hover:text-foreground transition-colors wrap-break-word"
                         >
                           {info.value}
-                        </a>
+                        </Link>
                       </CardContent>
                     </Card>
                   );
