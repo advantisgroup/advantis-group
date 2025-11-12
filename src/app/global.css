@@ -145,7 +145,7 @@
 
     /* Muted colors - Light grays for subtle elements */
     --muted: oklch(64% 0.001 260.5);
-    --muted-foreground: oklch(45% 0.001 260.5);
+    --muted-foreground: oklch(20.505% 0.00198 286.056);
 
     /* Accent - Light with dark text */
     --accent: oklch(94% 0.001 260.5);

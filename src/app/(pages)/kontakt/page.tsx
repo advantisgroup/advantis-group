@@ -258,7 +258,7 @@ export default function Kontakt() {
                 </CardHeader>
                 <CardContent>
                   {contactMode === 'message' ? (
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form className="space-y-4">
                       <div>
                         <label htmlFor="company" className="block text-sm font-medium mb-2">
                           Ihr Firmenname
@@ -347,7 +347,7 @@ export default function Kontakt() {
                         </p>
                         <Button
                           type="submit"
-                          disabled={buttonState !== 'idle'}
+                          disabled
                           className="w-full relative overflow-hidden"
                         >
                           <span className="relative flex items-center justify-center gap-2">
@@ -399,7 +399,7 @@ export default function Kontakt() {
                       </div>
                     </form>
                   ) : (
-                    <form onSubmit={handleCallbackSubmit} className="space-y-4">
+                    <form className="space-y-4">
                       <div>
                         <label htmlFor="callback-company" className="block text-sm font-medium mb-2">
                           Ihr Firmenname*
@@ -501,7 +501,7 @@ export default function Kontakt() {
                         </p>
                         <Button
                           type="submit"
-                          disabled={callbackButtonState !== 'idle'}
+                          disabled
                           className="w-full relative overflow-hidden"
                         >
                           <span className="relative flex items-center justify-center gap-2">
