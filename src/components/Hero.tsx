@@ -13,11 +13,9 @@ export const Hero = () => {
           backdropBlurAmount="lg"
           className="h-full w-full opacity-50"
         />
-        {/* Brand color overlay gradient - subtle blend of brand colors */}
-        <div className="absolute inset-0 bg-linear-to-br from-brand-advantis/30 via-transparent to-brand-rodeo/20 mix-blend-soft-light" />
-        <div className="absolute inset-0 bg-linear-to-t from-background/40 via-transparent to-transparent" />
+        
         {/* Smooth fade-out at bottom for seamless transition - creates soft blur effect */}
-        <div className="absolute bottom-0 left-0 right-0 h-80 bg-linear-to-b from-transparent via-background/40 to-background pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-50 bg-linear-to-b from-transparent via-background/40 to-background pointer-events-none" />
       </div>
       {/* Additional blur overlay at bottom edge for extra smoothness */}
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-background/80 backdrop-blur-sm pointer-events-none"
@@ -28,10 +26,10 @@ export const Hero = () => {
       />
 
       <div className="container mx-auto px-4 w-full relative z-10">
-        <div className="max-w-4xl mx-auto text-center space-y-12">
+        <div className="max-w-4xl mx-auto text-center space-y-6">
           <div className="space-y-2">
             <h1 className="text-6xl md:text-8xl font-bold leading-tight">
-              <BrandText brand="advantis" hoverable keepRestColor className="hover:text-shadow-xs text-shadow-white/30 duration-300">
+              <BrandText brand="advantis" hoverable keepRestColor className="hover:text-shadow-xs text-shadow-black/30 duration-300">
                 Advantis Group
               </BrandText>
             </h1>

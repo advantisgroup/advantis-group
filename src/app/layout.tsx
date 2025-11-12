@@ -1,10 +1,14 @@
 import { Metadata } from "next"
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next'
 import './global.css'
 import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Inter } from "next/font/google";
+
+const inter = Inter({
+    subsets: ["latin"],
+    variable: "--font-inter",
+})
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {
@@ -26,7 +30,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="de" suppressHydrationWarning>
-            <body className="bg-background">
+            <body className={`bg-background antialiased text-balance ${inter.variable}`}>
                 <ThemeProvider
                     attribute="class"
                     defaultTheme="system"

@@ -39,7 +39,8 @@ export default function Kontakt() {
     const result = FormDataSchema.safeParse(formData);
 
     if (!result.success) {
-      setErrors(result.error.flatten().fieldErrors);
+      const flatten = z.treeifyError(result.error)
+      setErrors(flatten.errors as z.ZodFlattenedError<FormData>['fieldErrors']);
       setButtonState('error');
 
       toast.error("Etwas ist schiefgelaufen", {
@@ -177,11 +178,16 @@ export default function Kontakt() {
                   const Icon = info.icon;
                   return (
                     <Card key={info.label} className="border-0 rounded-none">
-                      <CardHeader>
-                        <div className="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4">
-                          <Icon className="w-6 h-6 text-primary" />
-                        </div>
-                        <CardTitle className="text-lg">{info.label}</CardTitle>
+                      <CardHeader
+                        style={{
+                          paddingBottom: "0px"
+                        }}>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                            <Icon className="w-4 h-4 text-primary" />
+                          </div>
+                          {info.label}
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <Link
@@ -574,6 +580,6 @@ export default function Kontakt() {
           </div>
         </section>
       </main>
-    </div>
+    </div >
   );
 }

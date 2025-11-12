@@ -30,8 +30,8 @@ export const Header = () => {
       className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
     >
       <nav className="container mx-auto flex items-center justify-between h-16 px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-          <span className="text-brand-advantis">ADVANTIS</span>
+        <Link href="/" className="group flex items-center gap-1 font-semibold text-lg">
+          <span className="group-hover:text-advantis duration-300">ADVANTIS</span>
           <span className="text-foreground">GROUP</span>
         </Link>
 
