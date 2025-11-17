@@ -3,7 +3,6 @@ import './global.css'
 import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
-import posthog from "posthog-js";
 import { Geist, Inter } from "next/font/google";
 
 const geist = Geist({
