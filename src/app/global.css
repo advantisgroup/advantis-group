@@ -81,7 +81,7 @@
     --foreground: oklch(96% 0.005 80);
     
     /* Card colors - Elevated surface with subtle warmth */
-    --card: oklch(34% 0.0066 48.52);
+    --card: oklch(29% 0.0066 48.52);
     --card-foreground: oklch(96% 0.005 80);
     --card-border: oklch(32% 0.025 240);
     

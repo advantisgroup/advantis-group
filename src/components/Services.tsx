@@ -56,31 +56,26 @@ export const Services = () => {
               const Icon = brand.icon;
               const isEven = index % 2 === 0;
               const isTopRow = index < 2;
-              
+
               return (
                 <div
                   key={index}
                   className={cn(
-                    "group relative bg-card hover:bg-accent/50 transition-all duration-300",
+                    "group relative bg-card hover:bg-card/50 transition-all duration-300",
                     !isTopRow && "border-t border-foreground/20",
                     !isEven && "md:border-l border-foreground/20"
                   )}
                 >
                   <Link href="/unsere-marken" className="block">
                     <div className="p-8 space-y-4">
-                      {/* Icon & Arrow */}
                       <div className="flex items-start justify-between">
-                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                          <Icon className="w-6 h-6 text-primary" />
-                        </div>
+                        <h3 className="text-2xl text-muted font-semibold">
+                          <BrandText brand={brand.brand}>{brand.name}</BrandText>
+                        </h3>
                         <ArrowRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                       </div>
-                      
-                      {/* Brand Name */}
-                      <h3 className="text-2xl font-semibold">
-                        <BrandText brand={brand.brand}>{brand.name}</BrandText>
-                      </h3>
-                      
+
+
                       {/* Description */}
                       <p className="text-muted-foreground leading-relaxed">
                         {brand.description}
@@ -96,8 +91,8 @@ export const Services = () => {
         {/* CTA Button */}
         <div className="text-center pt-4">
           <Button asChild size="lg" className="group">
-            <Link href="/unsere-marken">
-              Alle Marken entdecken
+            <Link href="/team">
+              Lernen sie das Team kennen!
               <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
