@@ -53,7 +53,6 @@ export const Services = () => {
         <div className="border border-foreground/20 rounded-lg overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2">
             {brands.map((brand, index) => {
-              const Icon = brand.icon;
               const isEven = index % 2 === 0;
               const isTopRow = index < 2;
 
@@ -69,7 +68,7 @@ export const Services = () => {
                   <Link href="/unsere-marken" className="block">
                     <div className="p-8 space-y-4">
                       <div className="flex items-start justify-between">
-                        <h3 className="text-2xl text-muted font-semibold">
+                        <h3 className="text-2xl md:text-muted font-semibold">
                           <BrandText brand={brand.brand}>{brand.name}</BrandText>
                         </h3>
                         <ArrowRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />

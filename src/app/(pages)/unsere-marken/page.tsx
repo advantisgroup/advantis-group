@@ -93,7 +93,6 @@ export default function UnsereMarken() {
         <section className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2">
             {brands.map((brand, index) => {
-              const Icon = brand.icon;
               const isHovered = hoveredCard === index;
               const hasHoveredCard = hoveredCard !== null;
 
@@ -158,7 +157,7 @@ export default function UnsereMarken() {
                         rel="noopener noreferrer"
                         className={cn(
                           "inline-flex items-center gap-2 text-sm font-medium text-primary hover:gap-3 transition-all duration-300 group/link pt-2",
-                          isHovered && "gap-3"
+                          isHovered && "gap-3",
                         )}
                         onClick={(e) => e.stopPropagation()}
                       >

@@ -9,5 +9,4 @@ posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
   autocapture: true,
   secure_cookie: true,
   respect_dnt: true,
-  opt_in_site_apps: true
 });
