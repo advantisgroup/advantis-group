@@ -1,12 +1,10 @@
 "use client"
 
-import { ArrowRight } from "lucide-react";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { BrandText } from "./BrandText";
 import { Button } from "./ui/button";
 import GradientBackground from "./lightswind/gradient-background";
-import posthog from "posthog-js";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export const Hero = () => {
