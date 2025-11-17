@@ -6,7 +6,8 @@ interface BrandTextProps {
   children: string;
   className?: string;
   hoverable?: boolean;
-  keepRestColor?: boolean
+  keepRestColor?: boolean;
+  groupHover?: boolean
 }
 
 const BRAND_CONFIGS = {
@@ -59,7 +60,7 @@ const BRAND_CONFIGS = {
   },
 } as const;
 
-export const BrandText = ({ brand, children, className, hoverable = true, keepRestColor = false }: BrandTextProps) => {
+export const BrandText = ({ brand, children, className, hoverable = true, keepRestColor = false, groupHover = false }: BrandTextProps) => {
   const config = BRAND_CONFIGS[brand];
   const [firstPart, rest] = config.split(children);
 
@@ -68,13 +69,13 @@ export const BrandText = ({ brand, children, className, hoverable = true, keepRe
       <span
         className={cn(
           "transition-colors duration-300",
-          hoverable ? cn("text-foreground", config.hoverColor) : config.color
+          hoverable ? groupHover ? cn("text-foreground", config.hoverColor) : config.hoverColor : keepRestColor ? config.color : "",
         )}
       >
         {firstPart}
       </span>
       {rest && (
-        <span className={cn("transition-colors duration-300", hoverable ? keepRestColor ? "" : "group-hover:text-foreground/70" : "")}>
+        <span className={cn("transition-colors duration-300", hoverable ? keepRestColor ? "" : "group-hover:text-foreground/70" : "", groupHover ? "group-hover:text-foreground" : "")}>
           {rest}
         </span>
       )}

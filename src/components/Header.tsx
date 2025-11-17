@@ -1,10 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export const Header = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const shouldBeScrolled = mobileMenuOpen || window.scrollY > 50;
+      setIsScrolled(shouldBeScrolled);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [mobileMenuOpen]);
 
   const navLinks = [
     {
@@ -27,11 +39,11 @@ export const Header = () => {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60"
+      className={`fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 ${!isScrolled ? "" : "border-b border-border "}`}
     >
       <nav className="container mx-auto flex items-center justify-between h-16 px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
-          <span className="text-brand-advantis">ADVANTIS</span>
+        <Link href="/" className="group flex items-center gap-1 font-semibold text-lg">
+          <span className="group-hover:text-advantis duration-300">ADVANTIS</span>
           <span className="text-foreground">GROUP</span>
         </Link>
 
