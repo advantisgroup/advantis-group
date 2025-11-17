@@ -4,9 +4,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Geist, Inter } from "next/font/google";
+import { Header } from "@/components/Header";
 
 const geist = Geist({
-  subsets: ['latin'],
+    subsets: ['latin'],
 })
 
 const inter = Inter({
@@ -40,6 +41,7 @@ export default function RootLayout({
                     defaultTheme="system"
                     enableSystem
                 >
+                    <Header />
                     {children}
                     <Toaster />
                     <Footer />

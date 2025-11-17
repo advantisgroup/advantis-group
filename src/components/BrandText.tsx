@@ -2,12 +2,12 @@
 import { cn } from "@/lib/utils";
 
 interface BrandTextProps {
-  brand: "salespirates" | "advantis" | "rodeo" | "oldschool-train" | "sales-ai-germany";
+  brand?: "salespirates" | "advantis" | "rodeo" | "oldschool-train" | "sales-ai-germany" | string;
   children: string;
   className?: string;
   hoverable?: boolean;
   keepRestColor?: boolean;
-  groupHover?: boolean
+  groupHover?: boolean;
 }
 
 const BRAND_CONFIGS = {
@@ -60,22 +60,58 @@ const BRAND_CONFIGS = {
   },
 } as const;
 
-export const BrandText = ({ brand, children, className, hoverable = true, keepRestColor = false, groupHover = false }: BrandTextProps) => {
-  const config = BRAND_CONFIGS[brand];
-  const [firstPart, rest] = config.split(children);
+export const BrandText = ({
+  brand,
+  children,
+  className,
+  hoverable = true,
+  keepRestColor = false,
+  groupHover = false
+}: BrandTextProps) => {
+  const config = brand && BRAND_CONFIGS[brand as keyof typeof BRAND_CONFIGS];
+
+  let firstPart: string;
+  let rest: string;
+  let color: string;
+  let hoverColor: string;
+
+  if (config) {
+    [firstPart, rest] = config.split(children);
+    color = config.color;
+    hoverColor = config.hoverColor;
+  } else {
+    const spaceIndex = children.indexOf(" ");
+    if (spaceIndex === -1) {
+      firstPart = children;
+      rest = "";
+    } else {
+      firstPart = children.substring(0, spaceIndex);
+      rest = children.substring(spaceIndex);
+    }
+
+    const brandClass = brand ? brand.toLowerCase().replace(/\s+/g, '') : children ? children.toLowerCase().replace(/\s+/g, '') : "";
+    color = brandClass ? `text-${brandClass}` : "";
+    hoverColor = brandClass ? groupHover ? `group-hover:text-${brandClass}` : `hover:text-${brandClass}` : "";
+
+    console.log(brandClass, color, hoverColor)
+  }
 
   return (
     <span className={cn(className, hoverable && "group cursor-pointer inline-block")}>
       <span
         className={cn(
           "transition-colors duration-300",
-          hoverable ? groupHover ? cn("text-foreground", config.hoverColor) : config.hoverColor : keepRestColor ? config.color : "",
+          hoverable ? cn("text-foreground", hoverColor) : "",
         )}
       >
         {firstPart}
       </span>
       {rest && (
-        <span className={cn("transition-colors duration-300", hoverable ? keepRestColor ? "" : "group-hover:text-foreground/70" : "", groupHover ? "group-hover:text-foreground" : "")}>
+        <span className={cn(
+          "transition-colors duration-300",
+          hoverable ? keepRestColor ? "" : "group-hover:text-foreground/70" : "",
+          groupHover ? "group-hover:text-foreground" : ""
+        )}>
           {rest}
         </span>
       )}

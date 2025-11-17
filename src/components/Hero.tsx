@@ -41,11 +41,17 @@ export const Hero = () => {
 
             {isMobile ?
               <h1 className="font-bold">
-                <span className="text-3xl">Mehr als ein Unternehmen</span> <br /> <span className="text-4xl">komplette Sales Power</span>
+                <span className="text-3xl">Mehr als ein Unternehmen</span> <br />
+                <span className="text-4xl">
+                  komplette Sales Power
+                </span>
               </h1>
               :
-              <h1 className="text-4xl md:text-8xl font-bold leading-tight">
-                Mehr als ein Unternehmen, komplette Sales Power
+              <h1 className="text-4xl group md:text-8xl font-bold leading-tight">
+                Mehr als ein Unternehmen, komplette {" "}
+                <BrandText hoverable groupHover>
+                  Sales Power
+                </BrandText>
               </h1>
             }
 

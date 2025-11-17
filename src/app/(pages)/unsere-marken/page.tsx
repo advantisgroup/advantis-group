@@ -1,6 +1,5 @@
 "use client"
 
-import { Header } from "@/components/Header";
 import { TrendingUp, Zap, BookOpen, Brain, ArrowRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -73,7 +72,6 @@ export default function UnsereMarken() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 pt-32 pb-24 space-y-24">
         {/* Hero Section */}
         <section className="max-w-4xl mx-auto space-y-8 text-center">

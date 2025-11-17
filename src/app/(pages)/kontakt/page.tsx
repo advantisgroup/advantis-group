@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { Mail, Phone, MapPin, Send, X, Check, Loader2, Calendar, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,7 +137,6 @@ export default function Kontakt() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main className="container mx-auto px-4 pt-24 pb-24 space-y-16 md:space-y-24">
         <section className="max-w-4xl mx-auto space-y-6 md:space-y-8 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold">

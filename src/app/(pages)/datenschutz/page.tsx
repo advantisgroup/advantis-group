@@ -1,6 +1,5 @@
 "use client";
 
-import { Header } from "@/components/Header";
 import { Shield, Lock, User, Database, Mail, FileText, Menu, X, LucideProps } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BrandText } from "@/components/BrandText";
@@ -212,8 +211,6 @@ export default function Datenschutz() {
 
   return (
     <div className="min-h-screen">
-      <Header />
-
       {/* Mobile TOC Button */}
       {isMobile && (
         <Button
