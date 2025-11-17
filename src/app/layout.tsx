@@ -3,7 +3,7 @@ import './global.css'
 import { Toaster } from "@/components/ui/sonner";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Geist, Inter } from "next/font/google";
+import { Geist, Inter, Noto_Sans } from "next/font/google";
 
 const geist = Geist({
   subsets: ['latin'],
@@ -12,6 +12,11 @@ const geist = Geist({
 const inter = Inter({
     subsets: ['latin'],
     variable: '--font-inter',
+})
+
+const noto = Noto_Sans({
+    subsets: ['latin'],
+    variable: '--font-noto',
 })
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -34,7 +39,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="de" suppressHydrationWarning>
-            <body className={`bg-background antialiased text-balance ${geist.className} ${inter.variable}}`}>
+            <body className={`bg-background antialiased text-balance leading-tight ${noto.className} ${geist.className} ${inter.variable}`}>
                 <ThemeProvider
                     attribute="class"
                     defaultTheme="system"
