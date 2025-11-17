@@ -10,7 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 export const Features = () => {
     const isMobile = useIsMobile();
     const [expandedCard, setExpandedCard] = useState<number | null>(null);
-    
+
     const features = [
         {
             icon: TrendingUp,
@@ -57,34 +57,33 @@ export const Features = () => {
                         Wir kombinieren Erfahrung, Innovation und Leidenschaft für nachhaltige Ergebnisse
                     </p>
                 </div>
-                
-                <div className="relative border border-foreground/20 rounded-lg overflow-visible">
-                    <div className="grid md:grid-cols-3">
+
+                <div className="relative md:border border-foreground/20 rounded-lg overflow-visible">
+                    <div className="grid md:grid-cols-3 gap-4 md:gap-0">
                         {features.map((f, i) => {
                             const Icon = f.icon;
                             const isNotFirst = i > 0;
                             const isFirst = i === 0;
                             const isLast = i === features.length - 1;
                             const isExpanded = expandedCard === i;
-                            
+
                             return (
-                                <div 
-                                    key={i} 
+                                <div
+                                    key={i}
                                     className="relative"
                                     onMouseEnter={() => !isMobile && setExpandedCard(i)}
                                     onMouseLeave={() => !isMobile && setExpandedCard(null)}
-                                    onClick={() => isMobile && setExpandedCard(isExpanded ? null : i)}
                                 >
                                     <Card className={cn(
-                                        "border-0 rounded-none bg-card transition-all duration-300 h-full cursor-pointer relative",
-                                        isNotFirst && "md:border-l border-foreground/20",
-                                        isExpanded && "z-50",
-                                        expandedCard !== null && !isExpanded && "opacity-40 grayscale",
+                                        "border rounded-lg md:border-0 md:rounded-none bg-card transition-all duration-300 h-full relative",
+                                        isNotFirst && "md:border-l md:border-foreground/20",
+                                        !isMobile && isExpanded && "z-50",
+                                        !isMobile && expandedCard !== null && !isExpanded && "opacity-40 grayscale",
                                     )}>
                                         <CardHeader>
                                             <div className={cn(
                                                 "w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center mb-4 transition-all duration-300",
-                                                isExpanded && "bg-primary/20 scale-110",
+                                                !isMobile && isExpanded && "bg-primary/20 scale-110",
                                             )}>
                                                 <Icon className="w-6 h-6 text-primary" />
                                             </div>
@@ -94,7 +93,7 @@ export const Features = () => {
                                             <CardDescription className="text-base text-muted">{f.desc}</CardDescription>
                                         </CardContent>
                                     </Card>
-                                    
+
                                     {/* Expanded content overlay - Desktop only */}
                                     {!isMobile && (
                                         <div className={cn(
@@ -119,7 +118,7 @@ export const Features = () => {
                                                         <p className="text-sm text-muted">{f.desc}</p>
                                                     </div>
                                                 </div>
-                                                
+
                                                 <div className="mt-4 pt-4 border-t border-foreground/10">
                                                     <h4 className="text-sm font-semibold mb-3 text-primary">Was wir bieten:</h4>
                                                     <ul className="space-y-2">
@@ -132,21 +131,6 @@ export const Features = () => {
                                                     </ul>
                                                 </div>
                                             </div>
-                                        </div>
-                                    )}
-                                    
-                                    {/* Expanded content - Mobile (below card) */}
-                                    {isMobile && isExpanded && (
-                                        <div className="mt-4 p-4 bg-card border border-primary/40 rounded-lg animate-in fade-in slide-in-from-top-2 duration-300">
-                                            <h4 className="text-sm font-semibold mb-3 text-primary">Was wir bieten:</h4>
-                                            <ul className="space-y-2">
-                                                {f.details.map((detail, idx) => (
-                                                    <li key={idx} className="flex items-start gap-2 text-sm">
-                                                        <Plus className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                                                        <span className="text-muted-foreground">{detail}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
                                         </div>
                                     )}
                                 </div>
