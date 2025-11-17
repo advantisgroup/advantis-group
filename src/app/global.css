@@ -77,11 +77,11 @@
   /* Dark theme - Rich, warm dark palette with depth */
   :root {
     /* Base colors - Deep charcoal with warm undertones instead of pure black */
-    --background: oklch(18% 0.015 260);
+    --background: oklch(23.613% 0.00152 16.294);
     --foreground: oklch(96% 0.005 80);
     
     /* Card colors - Elevated surface with subtle warmth */
-    --card: oklch(22% 0.018 250);
+    --card: oklch(34% 0.0066 48.52);
     --card-foreground: oklch(96% 0.005 80);
     --card-border: oklch(32% 0.025 240);
     
@@ -97,7 +97,7 @@
     --secondary-foreground: oklch(18% 0.015 260);
     
     /* Muted colors - Warm mid-tones for subtle elements */
-    --muted: oklch(35% 0.025 240);
+    --muted: oklch(62.115% 0.01717 86.441);
     --muted-foreground: oklch(72% 0.015 70);
     
     /* Accent - Vibrant purple/blue for interactive elements */
@@ -109,7 +109,7 @@
     --destructive-foreground: oklch(98% 0.003 80);
     
     /* Borders and inputs - Visible but elegant */
-    --border: oklch(32% 0.025 240);
+    --border: oklch(0.5072 0.0256 80.56);
     --input: oklch(28% 0.020 245);
     --ring: oklch(0.6441 0.2026 14);
     
@@ -124,50 +124,53 @@
   }
   
   :root.light {
-    /* Base colors - Soft warm white with subtle color */
-    --background: oklch(98% 0.008 80);
-    --foreground: oklch(22% 0.020 260);
-    
-    /* Card colors - Crisp white with gentle warmth */
-    --card: oklch(99.5% 0.002 80);
-    --card-foreground: oklch(22% 0.020 260);
-    --card-border: oklch(90% 0.012 70);
-    
-    --popover: oklch(99.5% 0.002 80);
-    --popover-foreground: oklch(22% 0.020 260);
-    
-    /* Primary - Your brand orange (keeping it) */
-    --primary: oklch(0.6441 0.2026 14);
-    --primary-foreground: oklch(99% 0.002 80);
-    
-    /* Secondary - Your brand secondary lightened for backgrounds */
-    --secondary: oklch(92% 0.08 68.86);
-    --secondary-foreground: oklch(22% 0.020 260);
-    
-    /* Muted colors - Soft, warm neutrals */
-    --muted: oklch(94% 0.010 70);
-    --muted-foreground: oklch(45% 0.020 260);
-    
-    /* Accent - Light purple/blue tint for interactivity */
-    --accent: oklch(94% 0.035 280);
-    --accent-foreground: oklch(22% 0.020 260);
-    
-    /* Destructive - Clear but not harsh red */
-    --destructive: oklch(55% 0.22 25);
-    --destructive-foreground: oklch(99% 0.002 80);
-    
-    /* Borders and inputs - Soft, visible boundaries */
-    --border: oklch(88% 0.012 70);
-    --input: oklch(88% 0.012 70);
-    --ring: oklch(0.6441 0.2026 14);
-    
-    /* Brand colors - adjusted for light mode visibility */
-    --salespirates: oklch(65% 0.15 85);
-    --advantis: oklch(55% 0.18 350);
-    --rodeo: oklch(55% 0.20 240);
-    --sales-ai: oklch(40% 0.90 240);
-    --oldschool: oklch(30% 0.5 10);
-  }
+  /* Base – warm near-white with slight tint */
+  --background: oklch(98.5% 0.006 90);
+  --foreground: oklch(20% 0.015 260); /* soft charcoal */
+
+  /* Cards – slightly elevated warm whites */
+  --card: oklch(99.741% 0.0029 84.357);
+  --card-foreground: oklch(20% 0.015 260);
+  --card-border: oklch(88% 0.010 90);
+
+  --popover: oklch(99% 0.004 95);
+  --popover-foreground: oklch(20% 0.015 260);
+
+  /* Primary (brand orange) – identical hue, slightly softened foreground */
+  --primary: oklch(0.6441 0.2026 14);
+  --primary-foreground: oklch(99% 0.002 95);
+
+  /* Secondary – derived from dark mode but corrected for light backgrounds */
+  --secondary: oklch(90% 0.070 68.86);
+  --secondary-foreground: oklch(25% 0.020 260);
+
+  /* Muted – warm neutral grays with tint */
+  --muted: oklch(60.247% 0.01189 84.54);
+  --muted-foreground: oklch(45% 0.015 260);
+
+  /* Accent – mirrors dark theme purple/blue but in light tones */
+  --accent: oklch(92% 0.030 280);
+  --accent-foreground: oklch(25% 0.015 260);
+
+  /* Destructive – consistent red tone with clear accessibility */
+  --destructive: oklch(60% 0.20 25);
+  --destructive-foreground: oklch(99% 0.002 95);
+
+  /* Borders & Inputs – slightly darker than card but still soft */
+  --border: oklch(86% 0.010 90);
+  --input: oklch(92% 0.010 90);
+  --ring: oklch(0.6441 0.2026 14);
+
+  /* Brand colors – recalibrated for readability in light theme */
+  --salespirates: oklch(70% 0.13 85);
+  --advantis: oklch(60% 0.20 14);
+  --rodeo: oklch(62% 0.18 240);
+  --sales-ai: oklch(48% 0.90 240);
+  --oldschool: oklch(32% 0.5 10);
+
+  --radius: 0.5rem;
+}
+
   
   body {
     @apply bg-background text-foreground;

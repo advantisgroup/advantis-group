@@ -73,7 +73,6 @@ export default function UnsereMarken() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 pt-32 pb-24 space-y-24">
         {/* Hero Section */}
         <section className="max-w-4xl mx-auto space-y-8 text-center">

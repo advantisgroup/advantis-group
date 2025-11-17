@@ -46,7 +46,6 @@ export default function Impressum() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main className="container mx-auto px-4 pt-24 pb-24 space-y-24">
         <section className="max-w-4xl mx-auto space-y-8 text-center">
           <h1 className="text-5xl md:text-7xl font-bold">

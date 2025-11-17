@@ -6,7 +6,6 @@ import { Services } from "@/components/Services";
 export default function Page() {
   return (
     <div className="min-h-screen">
-      <Header />
       <main className="pt-16 space-y-24 pb-24">
         <Hero />
         <Features />

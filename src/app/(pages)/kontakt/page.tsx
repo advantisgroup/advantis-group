@@ -585,7 +585,6 @@ export default function Kontakt() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main className="container mx-auto px-4 pt-24 pb-24 space-y-16 md:space-y-24">
         {/* Hero Section */}
         <section className="max-w-4xl mx-auto space-y-6 md:space-y-8 text-center">

@@ -2,6 +2,7 @@ import { Header } from "@/components/Header";
 import { Target, Zap, Heart } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BrandText } from "@/components/BrandText";
+import Image from "next/image";
 
 export default function UberUns() {
   const values = [
@@ -24,7 +25,6 @@ export default function UberUns() {
 
   return (
     <div className="min-h-screen">
-      <Header />
       <main className="container mx-auto px-4 pt-24 pb-24 space-y-24">
         <section className="max-w-4xl mx-auto space-y-8 text-center">
           <h1 className="text-5xl md:text-7xl font-bold">
@@ -36,7 +36,7 @@ export default function UberUns() {
         </section>
 
         <section className="max-w-6xl mx-auto space-y-12">
-          <Card className="border border-border">
+          <Card className="border border-border rounded-t-lg">
             <CardHeader>
               <CardTitle className="text-2xl">
                 Unsere Geschichte
@@ -63,7 +63,7 @@ export default function UberUns() {
             </CardContent>
           </Card>
 
-          <div className="border border-border">
+          <div className="border border-border rounded-b-lg">
             <div className="grid md:grid-cols-3 divide-x divide-border">
               {values.map((value) => {
                 const Icon = value.icon;

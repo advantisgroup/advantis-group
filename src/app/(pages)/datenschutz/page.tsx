@@ -212,8 +212,6 @@ export default function Datenschutz() {
 
   return (
     <div className="min-h-screen">
-      <Header />
-
       {/* Mobile TOC Button */}
       {isMobile && (
         <Button
