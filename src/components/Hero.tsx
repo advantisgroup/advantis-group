@@ -69,7 +69,10 @@ export const Hero = () => {
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg">
+            <Button
+              asChild
+              variant="outline"
+              size="lg">
               <Link href="/unsere-marken">
                 Unsere Marken entdecken
               </Link>

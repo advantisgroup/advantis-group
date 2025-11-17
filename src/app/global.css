@@ -74,105 +74,109 @@
 }
 
 @layer base {
-
-  /* Dark theme - Vercel-inspired black with brand color accents */
+  /* Dark theme - Rich, warm dark palette with depth */
   :root {
-    /* Base colors - Pure black background */
-    --background: oklch(10% 0% 0);
-    --foreground: oklch(95.6% 0.001 260.5);
-
-    /* Card colors - Slightly brighter black to pop out */
-    --card: oklch(10% 0.001 260.5);
-    --card-foreground: oklch(95.6% 0.001 260.5);
-    --card-border: oklch(10% 0.001 260.5);
-    --popover: oklch(10% 0.001% 0);
-    --popover-foreground: oklch(95.6% 0.001 260.5);
-
-    /* Primary - Vibrant brand orange/coral (Advantis Group accent) */
-    --primary: oklch(95.6% 0.001 260.5);
-    --primary-foreground: oklch(10% 0.001 260.5);
-
-    /* Secondary - Electric cyan/teal accent */
-    --secondary: oklch(50% 0.001 260.5);
-    --secondary-foreground: oklch(10% 0.001 260.5);
-
-    /* Muted colors for subtle elements */
-    --muted: oklch(61% 0.001% 0);
-    --muted-foreground: oklch(85.6% 0.001 0);
-
-    /* Accent for interactive elements */
-    --accent: oklch(10% 0.001 260.5);
-    --accent-foreground: oklch(95.6% 0.001 260.5);
-
-    /* Destructive for errors */
-    --destructive: oklch(50% 0.001 260.5);
-    --destructive-foreground: oklch(95.6% 0.001 260.5);
-
-    /* Borders and inputs - Faint borders like Vercel */
-    --border: oklch(50% 0.001 260.5);
-    --input: oklch(10% 0.001 260.5);
-    --ring: oklch(50% 0.001 260.5);
-
+    /* Base colors - Deep charcoal with warm undertones instead of pure black */
+    --background: oklch(23.613% 0.00152 16.294);
+    --foreground: oklch(96% 0.005 80);
+    
+    /* Card colors - Elevated surface with subtle warmth */
+    --card: oklch(34% 0.0066 48.52);
+    --card-foreground: oklch(96% 0.005 80);
+    --card-border: oklch(32% 0.025 240);
+    
+    --popover: oklch(20% 0.016 255);
+    --popover-foreground: oklch(96% 0.005 80);
+    
+    /* Primary - Using your brand orange (keeping it) */
+    --primary: oklch(0.6441 0.2026 14);
+    --primary-foreground: oklch(98% 0.003 80);
+    
+    /* Secondary - Using your brand secondary (keeping it) */
+    --secondary: oklch(76.51% 0.16454 68.86);
+    --secondary-foreground: oklch(18% 0.015 260);
+    
+    /* Muted colors - Warm mid-tones for subtle elements */
+    --muted: oklch(62.115% 0.01717 86.441);
+    --muted-foreground: oklch(72% 0.015 70);
+    
+    /* Accent - Vibrant purple/blue for interactive elements */
+    --accent: oklch(55% 0.15 280);
+    --accent-foreground: oklch(98% 0.003 80);
+    
+    /* Destructive - Warm red with good contrast */
+    --destructive: oklch(58% 0.20 25);
+    --destructive-foreground: oklch(98% 0.003 80);
+    
+    /* Borders and inputs - Visible but elegant */
+    --border: oklch(0.5072 0.0256 80.56);
+    --input: oklch(28% 0.020 245);
+    --ring: oklch(0.6441 0.2026 14);
+    
     /* Brand colors - same in both modes */
     --salespirates: oklch(75% 0.15 85);
-    --advantis: oklch(65% 0.18 350);
+    --advantis: oklch(0.6441 0.2026 14);
     --rodeo: oklch(65% 0.20 240);
     --sales-ai: oklch(45% 0.90 240);
     --oldschool: oklch(25% 0.5 10);
-
+    
     --radius: 0.5rem;
   }
-
+  
   :root.light {
-    /* Base colors - Clean white/near-white background */
-    --background: oklch(99% 0% 0);
-    --foreground: oklch(15% 0.001 260.5);
+  /* Base – warm near-white with slight tint */
+  --background: oklch(98.5% 0.006 90);
+  --foreground: oklch(20% 0.015 260); /* soft charcoal */
 
-    /* Card colors - Pure white to elevate above background */
-    --card: oklch(100% 0% 0);
-    --card-foreground: oklch(15% 0.001 260.5);
-    --card-border: oklch(95% 0.001 260.5);
-    --popover: oklch(100% 0% 0);
-    --popover-foreground: oklch(15% 0.001 260.5);
+  /* Cards – slightly elevated warm whites */
+  --card: oklch(99.741% 0.0029 84.357);
+  --card-foreground: oklch(20% 0.015 260);
+  --card-border: oklch(88% 0.010 90);
 
-    /* Primary - Keep high contrast for accessibility */
-    --primary: oklch(15% 0.001 260.5);
-    --primary-foreground: oklch(99% 0% 0);
+  --popover: oklch(99% 0.004 95);
+  --popover-foreground: oklch(20% 0.015 260);
 
-    /* Secondary - Muted but visible */
-    --secondary: oklch(92% 0.001 260.5);
-    --secondary-foreground: oklch(15% 0.001 260.5);
+  /* Primary (brand orange) – identical hue, slightly softened foreground */
+  --primary: oklch(0.6441 0.2026 14);
+  --primary-foreground: oklch(99% 0.002 95);
 
-    /* Muted colors - Light grays for subtle elements */
-    --muted: oklch(64% 0.001 260.5);
-    --muted-foreground: oklch(20.505% 0.00198 286.056);
+  /* Secondary – derived from dark mode but corrected for light backgrounds */
+  --secondary: oklch(90% 0.070 68.86);
+  --secondary-foreground: oklch(25% 0.020 260);
 
-    /* Accent - Light with dark text */
-    --accent: oklch(94% 0.001 260.5);
-    --accent-foreground: oklch(15% 0.001 260.5);
+  /* Muted – warm neutral grays with tint */
+  --muted: oklch(60.247% 0.01189 84.54);
+  --muted-foreground: oklch(45% 0.015 260);
 
-    /* Destructive - Readable red */
-    --destructive: oklch(55% 0.22 25);
-    --destructive-foreground: oklch(99% 0% 0);
+  /* Accent – mirrors dark theme purple/blue but in light tones */
+  --accent: oklch(92% 0.030 280);
+  --accent-foreground: oklch(25% 0.015 260);
 
-    /* Borders and inputs - Subtle but visible */
-    --border: oklch(88% 0.001 260.5);
-    --input: oklch(88% 0.001 260.5);
-    --ring: oklch(15% 0.001 260.5);
+  /* Destructive – consistent red tone with clear accessibility */
+  --destructive: oklch(60% 0.20 25);
+  --destructive-foreground: oklch(99% 0.002 95);
 
-    /* Brand colors - adjusted for light mode visibility */
-    --salespirates: oklch(65% 0.15 85);
-    --advantis: oklch(55% 0.18 350);
-    --rodeo: oklch(55% 0.20 240);
-    --sales-ai: oklch(40% 0.90 240);
-    --oldschool: oklch(30% 0.5 10);
-  }
+  /* Borders & Inputs – slightly darker than card but still soft */
+  --border: oklch(86% 0.010 90);
+  --input: oklch(92% 0.010 90);
+  --ring: oklch(0.6441 0.2026 14);
 
+  /* Brand colors – recalibrated for readability in light theme */
+  --salespirates: oklch(70% 0.13 85);
+  --advantis: oklch(60% 0.20 14);
+  --rodeo: oklch(62% 0.18 240);
+  --sales-ai: oklch(48% 0.90 240);
+  --oldschool: oklch(32% 0.5 10);
+
+  --radius: 0.5rem;
+}
+
+  
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: noto ,geist, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
-
+  
   h1,
   h2,
   h3,
@@ -182,18 +186,17 @@
     @apply font-bold;
     letter-spacing: -0.02em;
   }
-
+  
   h1 {
     @apply text-5xl md:text-6xl lg:text-7xl;
   }
-
+  
   h2 {
     @apply text-4xl md:text-5xl lg:text-6xl;
   }
-
+  
   h3 {
     @apply text-3xl md:text-4xl;
   }
 }
-
 @layer components {}

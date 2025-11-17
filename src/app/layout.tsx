@@ -15,6 +15,11 @@ const inter = Inter({
     variable: '--font-inter',
 })
 
+const noto = Noto_Sans({
+    subsets: ['latin'],
+    variable: '--font-noto',
+})
+
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {
     title: "Advantis Group GmbH",
@@ -35,7 +40,7 @@ export default function RootLayout({
 }) {
     return (
         <html lang="de" suppressHydrationWarning>
-            <body className={`bg-background antialiased text-balance ${geist.className} ${inter.variable}}`}>
+            <body className={`bg-background antialiased text-balance leading-tight ${noto.className} ${geist.className} ${inter.variable}`}>
                 <ThemeProvider
                     attribute="class"
                     defaultTheme="system"

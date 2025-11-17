@@ -58,7 +58,7 @@ export const Features = () => {
                     </p>
                 </div>
 
-                <div className="relative md:border border-foreground/20 rounded-lg overflow-visible">
+                <div className="relative md:border border-foreground/20 rounded-sm overflow-hidden">
                     <div className="grid md:grid-cols-3 gap-4 md:gap-0">
                         {features.map((f, i) => {
                             const Icon = f.icon;
@@ -75,7 +75,7 @@ export const Features = () => {
                                     onMouseLeave={() => !isMobile && setExpandedCard(null)}
                                 >
                                     <Card className={cn(
-                                        "border rounded-lg md:border-0 md:rounded-none bg-card transition-all duration-300 h-full relative",
+                                        "border rounded-sm md:border-0 md:rounded-none bg-card transition-all duration-300 h-full relative",
                                         isNotFirst && "md:border-l md:border-foreground/20",
                                         !isMobile && isExpanded && "z-50",
                                         !isMobile && expandedCard !== null && !isExpanded && "opacity-40 grayscale",
@@ -97,7 +97,7 @@ export const Features = () => {
                                     {/* Expanded content overlay - Desktop only */}
                                     {!isMobile && (
                                         <div className={cn(
-                                            "absolute top-0 h-full bg-card border-2 border-primary/40 rounded-lg shadow-2xl transition-all duration-300 ease-out pointer-events-none z-50",
+                                            "absolute top-0 h-full bg-card border-2 border-primary/40 rounded-sm shadow-2xl transition-all duration-300 ease-out pointer-events-none z-50",
                                             // Smart positioning and animation: first card expands RIGHT, last card expands LEFT, middle expands BOTH
                                             isFirst && "left-0 rounded-r-none",
                                             isLast && "right-0 rounded-l-none",
