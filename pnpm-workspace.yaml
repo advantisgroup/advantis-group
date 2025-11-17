@@ -3,6 +3,7 @@ onlyBuiltDependencies:
   - '@swc/core'
   - '@tsparticles/engine'
   - '@vercel/speed-insights'
+  - core-js
   - esbuild
   - sharp
   - unrs-resolver
