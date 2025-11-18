@@ -4,8 +4,35 @@ import { Mail, Phone, MapPin } from 'lucide-react'
 import Link from 'next/link'
 import { BrandText } from './BrandText'
 import { ModeToggle } from './theme-toggle'
+import { useEffect, useRef, useState } from 'react'
 
 export const Footer = () => {
+    const footerRef = useRef<HTMLElement>(null)
+    const [scrollProgress, setScrollProgress] = useState(0)
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (!footerRef.current) return
+
+            const footerTop = footerRef.current.offsetTop
+            const windowHeight = window.innerHeight
+            const scrollY = window.scrollY
+
+            // Calculate how far into the footer we've scrolled
+            const scrollIntoFooter = scrollY + windowHeight - footerTop
+            const footerHeight = footerRef.current.offsetHeight
+
+            // Progress from 0 to 1 as we scroll through the footer
+            const progress = Math.min(Math.max(scrollIntoFooter / footerHeight, 0), 1)
+            setScrollProgress(progress)
+        }
+
+        window.addEventListener('scroll', handleScroll)
+        handleScroll() // Initial calculation
+
+        return () => window.removeEventListener('scroll', handleScroll)
+    }, [])
+
     const footerLinks = [
         {
             label: 'Home',
@@ -48,27 +75,51 @@ export const Footer = () => {
         },
     ]
 
+    // Calculate lift for each letter (last 5 letters lift progressively)
+    const getLiftAmount = (index: number, totalLetters: number) => {
+        const lettersToLift = 5 // Lift last 5 letters
+        const startIndex = totalLetters - lettersToLift
+
+        if (index < startIndex) return 0
+
+        const liftIndex = index - startIndex
+        const maxLift = 40 // Maximum pixels to lift
+        const liftAmount = ((liftIndex + 1) / lettersToLift) * maxLift * scrollProgress
+
+        return -liftAmount // Negative to lift up
+    }
+
+    const companyName = 'ADVANTIS GROUP'
+    const letters = companyName.split('')
+
     return (
-        <footer className="border-t border-white bg-card">
-            <div className="container mx-auto px-4 py-12">
-                <div className="mb-12 pb-8 border-b border-border">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                        <div className="flex flex-col gap-2">
-                            <div className="text-2xl font-bold tracking-tight">
-                                <span className="text-brand-advantis">ADVANTIS</span>
-                                <span className="text-foreground"> GROUP</span>
-                            </div>
-                            <p className="text-sm text-muted-foreground">Ihre Heimat für exzellenten Vertrieb</p>
-                        </div>
-                        <div className="flex flex-col items-start md:items-end gap-2">
-                            <p className="text-sm text-muted-foreground">Ganzheitliche Sales Power</p>
-                            <p className="text-xs text-muted-foreground/80">Von Marketingstrategie bis KI-Tools</p>
-                        </div>
+        <footer ref={footerRef} className="relative border-t border-white bg-card overflow-hidden">
+            {/* Subtle background pattern */}
+            <div className="absolute inset-0 noise-texture opacity-30 pointer-events-none" />
+
+            <div className="container mx-auto px-4 py-24 relative">
+                {/* Large animated company name */}
+                <div className="mb-24 overflow-hidden">
+                    <div className="text-center mb-4">
+                        <p className="text-sm text-muted-foreground">Ihre Heimat für exzellenten Vertrieb</p>
                     </div>
+                    <h2 className="text-[12vw] md:text-[10vw] lg:text-[8rem] font-bold leading-none tracking-tighter text-center">
+                        {letters.map((letter, index) => (
+                            <span
+                                key={index}
+                                className="inline-block transition-transform duration-300 ease-out"
+                                style={{
+                                    transform: `translateY(${getLiftAmount(index, letters.length)}px)`,
+                                }}
+                            >
+                                {letter === ' ' ? '\u00A0' : letter}
+                            </span>
+                        ))}
+                    </h2>
                 </div>
 
                 {/* Main footer grid */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-10">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-10 mb-12">
                     {/* Company Info */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold">Über uns</h3>
@@ -140,7 +191,7 @@ export const Footer = () => {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="mt-12 pt-8 border-t border-border">
+                <div className="pt-8 border-t border-border">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                         <p className="text-xs text-muted-foreground">
                             © {new Date().getFullYear().toString()}{' '}

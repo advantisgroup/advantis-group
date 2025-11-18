@@ -3,21 +3,21 @@ import './global.css'
 import { Toaster } from '@/components/ui/sonner'
 import { Footer } from '@/components/Footer'
 import { ThemeProvider } from '@/components/theme-provider'
-import { Geist, Inter, Noto_Sans } from 'next/font/google'
 import { Header } from '@/components/Header'
+import { Outfit, Manrope } from 'next/font/google'
 
-const geist = Geist({
+// Outfit - Rounded, modern, distinctive for headings
+const outfit = Outfit({
     subsets: ['latin'],
+    variable: '--font-outfit',
+    display: 'swap',
 })
 
-const inter = Inter({
+// Manrope - Geometric, clean, unique for body
+const manrope = Manrope({
     subsets: ['latin'],
-    variable: '--font-inter',
-})
-
-const noto = Noto_Sans({
-    subsets: ['latin'],
-    variable: '--font-noto',
+    variable: '--font-manrope',
+    display: 'swap',
 })
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -37,9 +37,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="de" suppressHydrationWarning>
-            <body
-                className={`bg-background antialiased text-balance leading-tight ${noto.className} ${geist.className} ${inter.variable}`}
-            >
+            <body className={`bg-background antialiased ${manrope.variable} ${outfit.variable} font-sans`}>
                 <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                     <Header />
                     {children}
