@@ -44,10 +44,10 @@ export default function Team() {
             initials: 'MB',
         },
         {
-            name: "",
-            role: "",
-            initials: ""
-        }
+            name: '',
+            role: '',
+            initials: '',
+        },
     ]
 
     return (
@@ -55,12 +55,10 @@ export default function Team() {
             <main className="container mx-auto px-6 pt-32 pb-32 max-w-6xl">
                 {/* Hero */}
                 <section className="max-w-3xl mb-32">
-                    <h1 className="text-7xl md:text-8xl font-medium tracking-tight mb-8">
-                        Unser Team
-                    </h1>
+                    <h1 className="text-7xl md:text-8xl font-medium tracking-tight mb-8">Unser Team</h1>
                     <p className="text-xl text-muted-foreground leading-relaxed">
-                        Unterstützt von einem Netzwerk aus erfahrenen Vertriebsprofis, Trainern, Consultants
-                        und Tech-Spezialisten – alle vereint durch eines: Sales ist unsere DNA.
+                        Unterstützt von einem Netzwerk aus erfahrenen Vertriebsprofis, Trainern, Consultants und
+                        Tech-Spezialisten – alle vereint durch eines: Sales ist unsere DNA.
                     </p>
                 </section>
 
@@ -80,9 +78,7 @@ export default function Team() {
                                 <h3 className="text-3xl font-medium mb-2">{teamMembers[0].name}</h3>
                                 <p className="text-lg text-muted-foreground">{teamMembers[0].role}</p>
                             </div>
-                            <p className="text-lg text-muted-foreground leading-relaxed">
-                                {teamMembers[0].bio}
-                            </p>
+                            <p className="text-lg text-muted-foreground leading-relaxed">{teamMembers[0].bio}</p>
                         </div>
                     </div>
                 </section>
@@ -100,13 +96,11 @@ export default function Team() {
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border">
                         {teamMembers.slice(1).map((member) => (
                             <div key={member.name} className="bg-card p-8 group hover:bg-card/90 transition-colors">
-                                {member.initials &&
-                                    (
-                                        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-xl font-medium text-primary mb-6 group-hover:bg-primary/15 transition-colors">
-                                            {member.initials}
-                                        </div>
-                                    )
-                                }
+                                {member.initials && (
+                                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-xl font-medium text-primary mb-6 group-hover:bg-primary/15 transition-colors">
+                                        {member.initials}
+                                    </div>
+                                )}
                                 <h3 className="text-lg font-medium mb-2">{member.name}</h3>
                                 <p className="text-sm text-muted-foreground">{member.role}</p>
                             </div>

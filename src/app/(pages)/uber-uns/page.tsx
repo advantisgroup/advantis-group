@@ -28,11 +28,10 @@ export default function UberUns() {
             <main className="container mx-auto px-6 pt-32 pb-32 max-w-6xl">
                 {/* Hero */}
                 <section className="max-w-3xl mb-32">
-                    <h1 className="text-7xl md:text-8xl font-medium tracking-tight mb-8">
-                        Über uns
-                    </h1>
+                    <h1 className="text-7xl md:text-8xl font-medium tracking-tight mb-8">Über uns</h1>
                     <p className="text-xl text-muted-foreground leading-relaxed">
-                        Die <BrandText brand="advantis">Advantis-group GmbH</BrandText> – Ihre Heimat für exzellenten Vertrieb
+                        Die <BrandText brand="advantis">Advantis-group GmbH</BrandText> – Ihre Heimat für exzellenten
+                        Vertrieb
                     </p>
                 </section>
 
@@ -88,7 +87,10 @@ export default function UberUns() {
                         {values.map((value, index) => {
                             const Icon = value.icon
                             return (
-                                <div key={value.title + "_" + index} className="bg-card p-12 group hover:bg-accent/5 transition-colors">
+                                <div
+                                    key={value.title + '_' + index}
+                                    className="bg-card p-12 group hover:bg-accent/5 transition-colors"
+                                >
                                     <Icon className="w-8 h-8 mb-6 text-foreground/60" strokeWidth={1.5} />
                                     <h3 className="text-xl font-medium mb-4">{value.title}</h3>
                                     <p className="text-muted-foreground leading-relaxed">{value.description}</p>
@@ -101,18 +103,13 @@ export default function UberUns() {
                 {/* CTA Section */}
                 <section className="border-t border-border pt-20">
                     <div className="max-w-3xl">
-                        <h2 className="text-3xl font-medium mb-6">
-                            Bereit für den nächsten Schritt?
-                        </h2>
+                        <h2 className="text-3xl font-medium mb-6">Bereit für den nächsten Schritt?</h2>
                         <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                            Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten. Ob Unterstützung im aktiven Vertrieb,
-                            strategische Beratung oder moderne KI-Lösungen – wir helfen Ihnen dabei.
+                            Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten. Ob Unterstützung im aktiven
+                            Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen Ihnen dabei.
                         </p>
                         <Button asChild>
-                            <Link
-                                href="/kontakt"
-                                className="inline-flex items-center gap-2 group"
-                            >
+                            <Link href="/kontakt" className="inline-flex items-center gap-2 group">
                                 <span className="font-medium">Kontakt aufnehmen</span>
                                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Link>
