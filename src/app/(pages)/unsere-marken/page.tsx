@@ -104,8 +104,8 @@ export default function UnsereMarken() {
                                     <CardHeader className="relative">
                                         <div className="flex items-start gap-4">
                                             <div className="space-y-2 flex-1">
-                                                <div className="text-sm text-primary font-medium">{brand.tagline}</div>
-                                                <CardTitle className="text-3xl">
+                                                <div className="text-sm text-primary/70 font-medium">{brand.tagline}</div>
+                                                <CardTitle className="text-3xl md:text-muted">
                                                     <BrandText brand={brand.brand}>{brand.name}</BrandText>
                                                 </CardTitle>
                                             </div>

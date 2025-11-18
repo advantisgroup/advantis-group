@@ -43,51 +43,74 @@ export default function Team() {
             role: 'Datenschutzbeauftragter und Qualitätsmanager',
             initials: 'MB',
         },
+        {
+            name: "",
+            role: "",
+            initials: ""
+        }
     ]
 
     return (
         <div className="min-h-screen">
-            <main className="container mx-auto px-4 pt-24 pb-24 space-y-24">
-                <section className="max-w-4xl mx-auto space-y-8 text-center">
-                    <h1 className="text-5xl md:text-7xl font-bold">Unser Team</h1>
-                    <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                        Unterstützt wird Andrea von einem Netzwerk aus erfahrenen Vertriebsprofis, Trainern, Consultants
+            <main className="container mx-auto px-6 pt-32 pb-32 max-w-6xl">
+                {/* Hero */}
+                <section className="max-w-3xl mb-32">
+                    <h1 className="text-7xl md:text-8xl font-medium tracking-tight mb-8">
+                        Unser Team
+                    </h1>
+                    <p className="text-xl text-muted-foreground leading-relaxed">
+                        Unterstützt von einem Netzwerk aus erfahrenen Vertriebsprofis, Trainern, Consultants
                         und Tech-Spezialisten – alle vereint durch eines: Sales ist unsere DNA.
                     </p>
                 </section>
 
-                <section className="max-w-6xl mx-auto space-y-12">
-                    <Card className="border border-border">
-                        <CardHeader>
-                            <div className="flex flex-col md:flex-row items-center gap-8">
-                                <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center text-4xl font-bold text-primary shrink-0">
-                                    {teamMembers[0].initials}
-                                </div>
-                                <div className="flex-1 text-center md:text-left">
-                                    <CardTitle className="text-3xl mb-2">{teamMembers[0].name}</CardTitle>
-                                    <CardDescription className="text-lg text-primary font-semibold mb-4">
-                                        {teamMembers[0].role}
-                                    </CardDescription>
-                                    <CardDescription className="text-base">{teamMembers[0].bio}</CardDescription>
-                                </div>
+                {/* Founder Section */}
+                <section className="mb-24">
+                    <div className="grid md:grid-cols-12 gap-16">
+                        <div className="md:col-span-4">
+                            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-8">
+                                Führung
+                            </h2>
+                            <div className="w-32 h-32 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-medium text-primary">
+                                {teamMembers[0].initials}
                             </div>
-                        </CardHeader>
-                    </Card>
+                        </div>
+                        <div className="md:col-span-8 space-y-4">
+                            <div>
+                                <h3 className="text-3xl font-medium mb-2">{teamMembers[0].name}</h3>
+                                <p className="text-lg text-muted-foreground">{teamMembers[0].role}</p>
+                            </div>
+                            <p className="text-lg text-muted-foreground leading-relaxed">
+                                {teamMembers[0].bio}
+                            </p>
+                        </div>
+                    </div>
+                </section>
 
-                    <div className="border border-border">
-                        <div className="grid md:grid-cols-2 lg:grid-cols-4 divide-x divide-border">
-                            {teamMembers.slice(1).map((member, index) => (
-                                <Card key={index} className="border-0 rounded-none">
-                                    <CardHeader className="text-center">
-                                        <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-2xl font-bold text-primary mx-auto mb-4">
+                {/* Team Grid */}
+                <section>
+                    <div className="grid md:grid-cols-12 gap-16 mb-12">
+                        <div className="md:col-span-4">
+                            <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                                Das Team
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border">
+                        {teamMembers.slice(1).map((member) => (
+                            <div key={member.name} className="bg-card p-8 group hover:bg-card/90 transition-colors">
+                                {member.initials &&
+                                    (
+                                        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-xl font-medium text-primary mb-6 group-hover:bg-primary/15 transition-colors">
                                             {member.initials}
                                         </div>
-                                        <CardTitle className="text-xl">{member.name}</CardTitle>
-                                        <CardDescription>{member.role}</CardDescription>
-                                    </CardHeader>
-                                </Card>
-                            ))}
-                        </div>
+                                    )
+                                }
+                                <h3 className="text-lg font-medium mb-2">{member.name}</h3>
+                                <p className="text-sm text-muted-foreground">{member.role}</p>
+                            </div>
+                        ))}
                     </div>
                 </section>
             </main>

@@ -83,8 +83,10 @@
     --color-oldschool: var(--oldschool);
     --radius-sm: calc(var(--radius) - 4px);
     --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
+    --radius-normal: var(--radius);
+    --radius-lg: calc(var(--radius) + 4px);
+    --radius-xl: calc(var(--radius) + 8px);
+    --radius-xxl: calc(var(--radius) + 16px);
 }
 
 @layer base {
@@ -115,7 +117,7 @@
         --muted-foreground: oklch(72% 0.015 70);
 
         /* Accent - Vibrant purple/blue for interactive elements */
-        --accent: oklch(55% 0.15 280);
+        --accent: oklch(0.6441 0.226 14 / 87.11%);
         --accent-foreground: oklch(98% 0.003 80);
 
         /* Destructive - Warm red with good contrast */

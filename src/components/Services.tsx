@@ -49,7 +49,7 @@ export const Services = () => {
                 </div>
 
                 {/* Brands Grid */}
-                <div className="border border-foreground/20 rounded-lg overflow-hidden">
+                <div className="border border-foreground/20 rounded-none overflow-hidden">
                     <div className="grid grid-cols-1 md:grid-cols-2">
                         {brands.map((brand, index) => {
                             const isEven = index % 2 === 0
