@@ -1,10 +1,10 @@
 /* eslint-disable */
 // @ts-nocheck
 
-"use client";
+'use client'
 
-import { useIsMobile } from "@/hooks/use-mobile";
-import React, { useEffect, useRef, useState } from "react";
+import { useIsMobile } from '@/hooks/use-mobile'
+import React, { useEffect, useRef, useState } from 'react'
 
 const vertexShaderSource = `
   precision mediump float;
@@ -14,7 +14,7 @@ const vertexShaderSource = `
     v_position = a_position;
     gl_Position = vec4(a_position, 0.0, 1.0);
   }
-`;
+`
 
 const fragmentShaderLowSpec = `
   precision mediump float;
@@ -47,7 +47,7 @@ const fragmentShaderLowSpec = `
     
     gl_FragColor = vec4(color, 1.0);
   }
-`;
+`
 
 const fragmentShaderHighSpec = `
 #ifdef GL_ES
@@ -99,161 +99,148 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
 void main() {
   mainImage(gl_FragColor, gl_FragCoord.xy);
 }
-`;
+`
 
 const blurClassMap = {
-  none: "backdrop-blur-none",
-  sm: "backdrop-blur-sm",
-  md: "backdrop-blur-md",
-  lg: "backdrop-blur-lg",
-  xl: "backdrop-blur-xl",
-  "2xl": "backdrop-blur-2xl",
-  "3xl": "backdrop-blur-3xl",
-};
+    none: 'backdrop-blur-none',
+    sm: 'backdrop-blur-sm',
+    md: 'backdrop-blur-md',
+    lg: 'backdrop-blur-lg',
+    xl: 'backdrop-blur-xl',
+    '2xl': 'backdrop-blur-2xl',
+    '3xl': 'backdrop-blur-3xl',
+}
 
-export type BlurSize = "none" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl";
+export type BlurSize = 'none' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
 
 interface GradientBackgroundProps {
-  className?: string;
-  backdropBlurAmount?: BlurSize;
-  disableGradient?: boolean;
+    className?: string
+    backdropBlurAmount?: BlurSize
+    disableGradient?: boolean
 }
 
 function GradientBackground({
-  className = "",
-  backdropBlurAmount = "sm",
-  disableGradient: forceDisable = false,
+    className = '',
+    backdropBlurAmount = 'sm',
+    disableGradient: forceDisable = false,
 }: GradientBackgroundProps): React.JSX.Element {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isEnabled, setIsEnabled] = useState(!forceDisable);
-  const [isLowSpec, setIsLowSpec] = useState(false);
-  const isMobile = useIsMobile();
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    const [isEnabled, setIsEnabled] = useState(!forceDisable)
+    const [isLowSpec, setIsLowSpec] = useState(false)
+    const isMobile = useIsMobile()
 
-  useEffect(() => {
-     const lowSpec =
-    isMobile
-      ? false // if mobile, override and set to false
-      : (typeof navigator !== "undefined" &&
-          navigator.hardwareConcurrency &&
-          navigator.hardwareConcurrency <= 2) ||
-        (typeof navigator !== "undefined" &&
-          (navigator as any).connection?.saveData);
-    
-    console.log(navigator.hardwareConcurrency)
-    setIsLowSpec(lowSpec);
-  }, [isMobile]);
+    useEffect(() => {
+        const lowSpec = isMobile
+            ? false // if mobile, override and set to false
+            : (typeof navigator !== 'undefined' &&
+                  navigator.hardwareConcurrency &&
+                  navigator.hardwareConcurrency <= 2) ||
+              (typeof navigator !== 'undefined' && (navigator as any).connection?.saveData)
 
-  useEffect(() => {
-    if (forceDisable) {
-      setIsEnabled(false);
-    }
-  }, [forceDisable]);
+        console.log(navigator.hardwareConcurrency)
+        setIsLowSpec(lowSpec)
+    }, [isMobile])
 
-  useEffect(() => {
-    if (!isEnabled) return;
+    useEffect(() => {
+        if (forceDisable) {
+            setIsEnabled(false)
+        }
+    }, [forceDisable])
 
-    const canvas = canvasRef.current!;
-    const gl = canvas.getContext("webgl");
-    if (!gl) {
-      console.error("WebGL not supported");
-      setIsEnabled(false);
-      return;
-    }
+    useEffect(() => {
+        if (!isEnabled) return
 
-    const createShader = (type: number, source: string) => {
-      const shader = gl.createShader(type)!;
-      gl.shaderSource(shader, source);
-      gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error(
-          "An error occurred compiling the shaders: " +
-            gl.getShaderInfoLog(shader)
-        );
-        gl.deleteShader(shader);
-        return null;
-      }
-      return shader;
-    };
+        const canvas = canvasRef.current!
+        const gl = canvas.getContext('webgl')
+        if (!gl) {
+            console.error('WebGL not supported')
+            setIsEnabled(false)
+            return
+        }
 
-    const vertexShaderObj = createShader(gl.VERTEX_SHADER, vertexShaderSource);
-    const fragmentShader = isLowSpec
-      ? fragmentShaderLowSpec
-      : fragmentShaderHighSpec;
-    const fragmentShaderObj = createShader(gl.FRAGMENT_SHADER, fragmentShader);
+        const createShader = (type: number, source: string) => {
+            const shader = gl.createShader(type)!
+            gl.shaderSource(shader, source)
+            gl.compileShader(shader)
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader))
+                gl.deleteShader(shader)
+                return null
+            }
+            return shader
+        }
 
-    const program = gl.createProgram()!;
-    gl.attachShader(program, vertexShaderObj!);
-    gl.attachShader(program, fragmentShaderObj!);
-    gl.linkProgram(program);
+        const vertexShaderObj = createShader(gl.VERTEX_SHADER, vertexShaderSource)
+        const fragmentShader = isLowSpec ? fragmentShaderLowSpec : fragmentShaderHighSpec
+        const fragmentShaderObj = createShader(gl.FRAGMENT_SHADER, fragmentShader)
 
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.error(
-        "Unable to initialize the shader program: " +
-          gl.getProgramInfoLog(program)
-      );
-      return;
-    }
+        const program = gl.createProgram()!
+        gl.attachShader(program, vertexShaderObj!)
+        gl.attachShader(program, fragmentShaderObj!)
+        gl.linkProgram(program)
 
-    gl.useProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error('Unable to initialize the shader program: ' + gl.getProgramInfoLog(program))
+            return
+        }
 
-    const positionAttributeLocation = gl.getAttribLocation(program, "a_position");
-    const iResolutionLocation = gl.getUniformLocation(program, "iResolution");
-    const iTimeLocation = gl.getUniformLocation(program, "iTime");
+        gl.useProgram(program)
 
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    const positions = [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1];
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        const positionAttributeLocation = gl.getAttribLocation(program, 'a_position')
+        const iResolutionLocation = gl.getUniformLocation(program, 'iResolution')
+        const iTimeLocation = gl.getUniformLocation(program, 'iTime')
 
-    gl.enableVertexAttribArray(positionAttributeLocation);
-    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+        const positionBuffer = gl.createBuffer()
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+        const positions = [-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
-    let startTime = Date.now();
-    let animationFrameId: number;
+        gl.enableVertexAttribArray(positionAttributeLocation)
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0)
 
-    const render = () => {
-      const width = canvas.clientWidth;
-      const height = canvas.clientHeight;
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
-        gl.viewport(0, 0, width, height);
-      }
+        let startTime = Date.now()
+        let animationFrameId: number
 
-      const currentTime = (Date.now() - startTime) / 1000;
-      gl.uniform2f(iResolutionLocation, width, height);
-      gl.uniform1f(iTimeLocation, currentTime);
+        const render = () => {
+            const width = canvas.clientWidth
+            const height = canvas.clientHeight
+            if (canvas.width !== width || canvas.height !== height) {
+                canvas.width = width
+                canvas.height = height
+                gl.viewport(0, 0, width, height)
+            }
 
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-      animationFrameId = requestAnimationFrame(render);
-    };
+            const currentTime = (Date.now() - startTime) / 1000
+            gl.uniform2f(iResolutionLocation, width, height)
+            gl.uniform1f(iTimeLocation, currentTime)
 
-    render();
+            gl.drawArrays(gl.TRIANGLES, 0, 6)
+            animationFrameId = requestAnimationFrame(render)
+        }
 
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [isEnabled, isLowSpec]);
+        render()
 
-  const finalBlurClass =
-    blurClassMap[backdropBlurAmount as BlurSize] || blurClassMap["sm"];
+        return () => {
+            cancelAnimationFrame(animationFrameId)
+        }
+    }, [isEnabled, isLowSpec])
 
-  return (
-    <div
-      className={`w-full max-w-screen h-full overflow-hidden bg-black ${className}`}
-    >
-      {isEnabled && (
-        <>
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full max-w-screen h-full overflow-hidden"
-            style={{ display: "block" }}
-          />
-          <div className={`absolute inset-0 ${finalBlurClass}`} />
-        </>
-      )}
-    </div>
-  );
+    const finalBlurClass = blurClassMap[backdropBlurAmount as BlurSize] || blurClassMap['sm']
+
+    return (
+        <div className={`w-full max-w-screen h-full overflow-hidden bg-black ${className}`}>
+            {isEnabled && (
+                <>
+                    <canvas
+                        ref={canvasRef}
+                        className="absolute inset-0 w-full max-w-screen h-full overflow-hidden"
+                        style={{ display: 'block' }}
+                    />
+                    <div className={`absolute inset-0 ${finalBlurClass}`} />
+                </>
+            )}
+        </div>
+    )
 }
 
-export default GradientBackground;
+export default GradientBackground

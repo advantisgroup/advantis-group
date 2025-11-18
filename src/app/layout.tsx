@@ -1,10 +1,10 @@
-import { Metadata } from "next"
+import { Metadata } from 'next'
 import './global.css'
-import { Toaster } from "@/components/ui/sonner";
-import { Footer } from "@/components/Footer";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Geist, Inter, Noto_Sans } from "next/font/google";
-import { Header } from "@/components/Header";
+import { Toaster } from '@/components/ui/sonner'
+import { Footer } from '@/components/Footer'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Geist, Inter, Noto_Sans } from 'next/font/google'
+import { Header } from '@/components/Header'
 
 const geist = Geist({
     subsets: ['latin'],
@@ -22,30 +22,25 @@ const noto = Noto_Sans({
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {
-    title: "Advantis Group GmbH",
-    description: "Ganzheitliche Sales Power: von Marketingstrategie und Leadgenerierung über Akquise Support, Sales Trainings bis hin zur Implementierung von KI-Tools.",
+    title: 'Advantis Group GmbH',
+    description:
+        'Ganzheitliche Sales Power: von Marketingstrategie und Leadgenerierung über Akquise Support, Sales Trainings bis hin zur Implementierung von KI-Tools.',
     openGraph: {
-        type: "website",
-        url: "https://advantis-group.de",
-        title: "Advantis Group GmbH",
-        description: "Ihre Heimat für exzellenten Vertrieb",
-        siteName: "Advantis Group",
-    }
+        type: 'website',
+        url: 'https://advantis-group.de',
+        title: 'Advantis Group GmbH',
+        description: 'Ihre Heimat für exzellenten Vertrieb',
+        siteName: 'Advantis Group',
+    },
 }
 
-export default function RootLayout({
-    children,
-}: {
-    children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="de" suppressHydrationWarning>
-            <body className={`bg-background antialiased text-balance leading-tight ${noto.className} ${geist.className} ${inter.variable}`}>
-                <ThemeProvider
-                    attribute="class"
-                    defaultTheme="system"
-                    enableSystem
-                >
+            <body
+                className={`bg-background antialiased text-balance leading-tight ${noto.className} ${geist.className} ${inter.variable}`}
+            >
+                <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                     <Header />
                     {children}
                     <Toaster />
