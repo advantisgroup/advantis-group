@@ -1,11 +1,13 @@
 'use client'
 
-import { Shield, Lock, User, Database, Mail, FileText, Menu, X, LucideProps } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import React, { useState, useEffect, useMemo } from 'react'
+
+import { Shield, Lock, User, Database, Mail, FileText, Menu, X, type LucideProps } from 'lucide-react'
+
 import { BrandText } from '@/components/BrandText'
-import { useIsMobile } from '@/hooks/use-mobile'
-import { useState, useEffect, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 
 const TableOfContents = ({

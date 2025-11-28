@@ -1,6 +1,7 @@
 'use client'
 
 import { TrendingUp, Users, Sparkles } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
 
 interface HomeStatsProps {

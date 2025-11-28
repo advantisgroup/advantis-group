@@ -1,10 +1,8 @@
 'use client'
 
-import { ArrowRight, TrendingUp, Users, Zap } from 'lucide-react'
-import Link from 'next/link'
-import { Button } from './ui/button'
+import { TrendingUp, Users, Zap } from 'lucide-react'
+
 import { ScrollReveal } from './ScrollReveal'
-import GradientBackground from './lightswind/gradient-background'
 
 export const Stats = () => {
     const stats = [

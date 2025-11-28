@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+
 import { ShapeParticles } from '@/components/ShapeParticles'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
 
 export default function ParticleDemo() {
     const [selectedShape, setSelectedShape] = useState<'diamond' | 'circle' | 'square' | 'wave'>('diamond')

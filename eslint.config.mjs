@@ -6,7 +6,6 @@ import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
 import jsxA11y from "eslint-plugin-jsx-a11y";
-import tailwind from "eslint-plugin-tailwindcss";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
@@ -45,7 +44,6 @@ export default defineConfig([
       "react-refresh": reactRefresh,
       "import": importPlugin,
       "jsx-a11y": jsxA11y,
-      "tailwindcss": tailwind,
     },
     rules: {
       ...tseslint.configs.recommended.rules,
@@ -115,10 +113,6 @@ export default defineConfig([
       "import/no-duplicates": "warn",
       "import/no-unused-modules": "off",
       
-      "tailwindcss/classnames-order": "warn",
-      "tailwindcss/no-custom-classname": "off",
-      "tailwindcss/no-contradicting-classname": "error",
-      
       "jsx-a11y/alt-text": "warn",
       "jsx-a11y/anchor-is-valid": "warn",
       "jsx-a11y/aria-props": "warn",
@@ -138,10 +132,6 @@ export default defineConfig([
           project: "./tsconfig.json",
         },
         node: true,
-      },
-      tailwindcss: {
-        callees: ["cn", "cva"],
-        config: "tailwind.config.js",
       },
     },
   }

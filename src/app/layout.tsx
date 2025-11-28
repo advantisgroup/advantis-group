@@ -1,11 +1,14 @@
-import { Metadata } from 'next'
-import './global.css'
-import { Toaster } from '@/components/ui/sonner'
-import { Footer } from '@/components/Footer'
-import { ThemeProvider } from '@/components/theme-provider'
-import { Header } from '@/components/Header'
+import React from 'react'
+
 import { Outfit, Manrope } from 'next/font/google'
 
+import { type Metadata } from 'next'
+
+import './global.css'
+import { Footer } from '@/components/Footer'
+import { Header } from '@/components/Header'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
 // Outfit - Rounded, modern, distinctive for headings
 const outfit = Outfit({
     subsets: ['latin'],

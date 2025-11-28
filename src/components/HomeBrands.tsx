@@ -1,9 +1,12 @@
 'use client'
 
-import { Zap, Brain, BookOpen, Phone, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { BrandText } from './BrandText'
+
+import { Zap, Brain, BookOpen, Phone, ArrowRight } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
+
+import { BrandText } from './BrandText'
 import { Button } from './ui/button'
 
 interface HomeBrandsProps {

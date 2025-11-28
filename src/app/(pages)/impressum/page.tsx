@@ -1,6 +1,7 @@
 import { Building2, Mail, FileText } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { BrandText } from '@/components/BrandText'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function Impressum() {
     const sections = [

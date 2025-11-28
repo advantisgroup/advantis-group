@@ -1,8 +1,9 @@
+import Link from 'next/link'
+
 import { Target, Zap, Heart, ArrowRight } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
 import { BrandText } from '@/components/BrandText'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 
 export default function UberUns() {
     const values = [

@@ -1,11 +1,12 @@
 'use client'
 
-import { Hero } from '@/components/Hero'
-import { HomeFeatures } from '@/components/HomeFeatures'
-import { HomeBrands } from '@/components/HomeBrands'
-import { HomeStats } from '@/components/HomeStats'
-import { HomeCTA } from '@/components/HomeCTA'
 import { useState, useEffect, useRef } from 'react'
+
+import { Hero } from '@/components/Hero'
+import { HomeBrands } from '@/components/HomeBrands'
+import { HomeCTA } from '@/components/HomeCTA'
+import { HomeFeatures } from '@/components/HomeFeatures'
+import { HomeStats } from '@/components/HomeStats'
 
 export default function Page() {
     const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set())

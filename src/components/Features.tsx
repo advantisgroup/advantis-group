@@ -1,13 +1,16 @@
 'use client'
 
-import { TrendingUp, Zap, Target, Plus } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { BrandText } from './BrandText'
-import { cn } from '@/lib/utils'
 import { useState } from 'react'
+
+import { TrendingUp, Zap, Target, Plus } from 'lucide-react'
+
 import { useIsMobile } from '@/hooks/use-mobile'
+import { cn } from '@/lib/utils'
+
+import { BrandText } from './BrandText'
 import { ScrollReveal } from './ScrollReveal'
 import { SectionDivider } from './SectionDivider'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 
 export const Features = () => {
     const isMobile = useIsMobile()

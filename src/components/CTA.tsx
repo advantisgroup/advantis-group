@@ -1,10 +1,12 @@
 'use client'
 
-import { ArrowRight, Mail } from 'lucide-react'
 import Link from 'next/link'
-import { Button } from './ui/button'
+
+import { ArrowRight, Mail } from 'lucide-react'
+
 import { BrandText } from './BrandText'
 import { ScrollReveal } from './ScrollReveal'
+import { Button } from './ui/button'
 
 export const CTA = () => {
     return (

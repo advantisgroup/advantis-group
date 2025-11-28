@@ -1,9 +1,12 @@
-import { PersonStanding, BookOpen, Brain, Phone, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import { BrandText } from './BrandText'
-import { Button } from './ui/button'
+
+import { PersonStanding, BookOpen, Brain, Phone, ArrowRight } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
+
+import { BrandText } from './BrandText'
 import { ScrollReveal } from './ScrollReveal'
+import { Button } from './ui/button'
 
 const brands = [
     {

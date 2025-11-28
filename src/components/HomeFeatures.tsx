@@ -1,8 +1,10 @@
 'use client'
 
 import { TrendingUp, Zap, Target } from 'lucide-react'
-import { BrandText } from './BrandText'
+
 import { cn } from '@/lib/utils'
+
+import { BrandText } from './BrandText'
 
 interface HomeFeaturesProps {
     isVisible: boolean
@@ -73,7 +75,9 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                                                 <Icon className="w-8 h-8 text-primary" />
                                             </div>
                                             <h3 className="text-2xl font-bold leading-tight">{feature.title}</h3>
-                                            <p className="text-base text-muted-foreground leading-relaxed">{feature.desc}</p>
+                                            <p className="text-base text-muted-foreground leading-relaxed">
+                                                {feature.desc}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

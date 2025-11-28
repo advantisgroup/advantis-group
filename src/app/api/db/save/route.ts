@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/supabase/server'
+
 import { ratelimit } from '@/lib/rate-limit'
 import { FormDataSchema } from '@/lib/schema'
+import { createServerClient } from '@/lib/supabase/server'
 
 export async function POST(req: Request) {
     const ip = req.headers.get('x-forwarded-for') ?? '127.0.0.1'
@@ -12,6 +13,7 @@ export async function POST(req: Request) {
     }
 
     const supabase = createServerClient()
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const data = await req.json()
 
     const result = FormDataSchema.safeParse(data)

@@ -1,10 +1,13 @@
 'use client'
 
-import { Mail, Phone, MapPin } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+
 import Link from 'next/link'
+
+import { Mail, Phone, MapPin } from 'lucide-react'
+
 import { BrandText } from './BrandText'
 import { ModeToggle } from './theme-toggle'
-import { useEffect, useRef, useState } from 'react'
 
 export const Footer = () => {
     const footerRef = useRef<HTMLElement>(null)

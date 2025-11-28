@@ -1,9 +1,12 @@
 'use client'
 
-import { ArrowRight, Mail } from 'lucide-react'
 import Link from 'next/link'
-import { Button } from './ui/button'
+
+import { ArrowRight, Mail } from 'lucide-react'
+
 import { cn } from '@/lib/utils'
+
+import { Button } from './ui/button'
 
 interface HomeCTAProps {
     isVisible: boolean

@@ -53,7 +53,7 @@ export const SectionDivider = ({ variant = 'wave', className, flip = false, opac
     if (variant === 'dots') {
         return (
             <div className={cn('w-full flex justify-center gap-2 py-8', className)}>
-                {[...Array(5)].map((_, i) => (
+                {[...Array<number>(5)].map((_, i) => (
                     <div
                         key={i}
                         className="w-1.5 h-1.5 rounded-full bg-primary"

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import { usePathname } from 'next/navigation'
-import Link from 'next/link'
 
 const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max)
 
@@ -56,14 +56,14 @@ export default function GlobalNotFoundClient() {
                     </h1>
                 </div>
 
-            <div className="mb-8 space-y-4">
-              <p className="text-xl text-muted-foreground">Verloren im digitalen Meer?</p>
-              <div className="px-4 py-2 rounded-lg bg-muted/50 border border-primary/10">
-                <code className="text-primary font-mono font-medium">{location}</code>
-              </div>
-              <p className="text-xl text-muted-foreground">scheint sich entfernt zu haben...</p>
+                <div className="mb-8 space-y-4">
+                    <p className="text-xl text-muted-foreground">Verloren im digitalen Meer?</p>
+                    <div className="px-4 py-2 rounded-lg bg-muted/50 border border-primary/10">
+                        <code className="text-primary font-mono font-medium">{location}</code>
+                    </div>
+                    <p className="text-xl text-muted-foreground">scheint sich entfernt zu haben...</p>
+                </div>
             </div>
-          </div>
 
             {/* floating particles */}
             <div className="absolute inset-0 pointer-events-none">

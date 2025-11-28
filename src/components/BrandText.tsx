@@ -2,7 +2,7 @@
 import { cn } from '@/lib/utils'
 
 interface BrandTextProps {
-    brand?: 'salespirates' | 'advantis' | 'rodeo' | 'oldschool-train' | 'sales-ai-germany' | string
+    brand?: 'salespirates' | 'advantis' | 'rodeo' | 'oldschool-train' | 'sales-ai-germany'
     children: string
     className?: string
     hoverable?: boolean
@@ -68,7 +68,7 @@ export const BrandText = ({
     keepRestColor = false,
     groupHover = false,
 }: BrandTextProps) => {
-    const config = brand && BRAND_CONFIGS[brand as keyof typeof BRAND_CONFIGS]
+    const config = brand && BRAND_CONFIGS[brand]
 
     let firstPart: string
     let rest: string
@@ -96,8 +96,6 @@ export const BrandText = ({
               : ''
         color = brandClass ? `text-${brandClass}` : ''
         hoverColor = brandClass ? (groupHover ? `group-hover:text-${brandClass}` : `hover:text-${brandClass}`) : ''
-
-        console.log(brandClass, color, hoverColor)
     }
 
     return (
