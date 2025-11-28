@@ -1,30 +1,30 @@
-import { NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase/server';
-import { ratelimit } from '@/lib/rate-limit';
-import { FormDataSchema } from '@/lib/schema';
+import { NextResponse } from 'next/server'
+import { createServerClient } from '@/lib/supabase/server'
+import { ratelimit } from '@/lib/rate-limit'
+import { FormDataSchema } from '@/lib/schema'
 
 export async function POST(req: Request) {
-  const ip = req.headers.get('x-forwarded-for') ?? '127.0.0.1';
-  const { success: rateLimitSuccess } = await ratelimit.limit(ip);
+    const ip = req.headers.get('x-forwarded-for') ?? '127.0.0.1'
+    const { success: rateLimitSuccess } = await ratelimit.limit(ip)
 
-  if (!rateLimitSuccess) {
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-  }
+    if (!rateLimitSuccess) {
+        return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
 
-  const supabase = createServerClient();
-  const data = await req.json();
+    const supabase = createServerClient()
+    const data = await req.json()
 
-  const result = FormDataSchema.safeParse(data);
+    const result = FormDataSchema.safeParse(data)
 
-  if (!result.success) {
-    return NextResponse.json({ error: 'Invalid form data' }, { status: 400 });
-  }
+    if (!result.success) {
+        return NextResponse.json({ error: 'Invalid form data' }, { status: 400 })
+    }
 
-  const { error } = await supabase.from('contact_data').insert(result.data);
+    const { error } = await supabase.from('contact_data').insert(result.data)
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
-  }
+    if (error) {
+        return NextResponse.json({ error: error.message }, { status: 400 })
+    }
 
-  return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true })
 }
