@@ -105,7 +105,7 @@ export const Footer = () => {
                     <div className="text-center mb-4">
                         <p className="text-sm text-muted-foreground">Ihre Heimat für exzellenten Vertrieb</p>
                     </div>
-                    <h2 className="text-[12vw] md:text-[10vw] lg:text-[8rem] font-bold leading-none tracking-tighter text-center">
+                    <h2 className="text-[12vw] md:text-[7vw] lg:text-[8rem] font-bold leading-none tracking-tighter text-center">
                         {letters.map((letter, index) => (
                             <span
                                 key={index}
