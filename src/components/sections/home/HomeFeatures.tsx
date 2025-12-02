@@ -4,7 +4,7 @@ import { TrendingUp, Zap, Target } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
-import { BrandText } from './BrandText'
+import { BrandText } from '../../effects/BrandText'
 
 interface HomeFeaturesProps {
     isVisible: boolean

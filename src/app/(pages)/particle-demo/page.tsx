@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 
-import { ShapeParticles } from '@/components/ShapeParticles'
+import { ShapeParticles } from '@/components/effects/ShapeParticles'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 

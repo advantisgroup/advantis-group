@@ -6,11 +6,11 @@ import { ArrowRight, Sparkles, ChevronDown } from 'lucide-react'
 
 import { useIsMobile } from '@/hooks/use-mobile'
 
-import { BrandText } from './BrandText'
-import GradientBackground from './lightswind/gradient-background'
-import { SectionDivider } from './SectionDivider'
-import { ShapeParticles } from './ShapeParticles'
-import { Button } from './ui/button'
+import { BrandText } from '../effects/BrandText'
+import GradientBackground from '../effects/GradientBackground'
+import { ShapeParticles } from '../effects/ShapeParticles'
+import { SectionDivider } from '../layout/SectionDivider'
+import { Button } from '../ui/button'
 
 export const Hero = () => {
     const isMobile = useIsMobile()

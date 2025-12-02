@@ -100,7 +100,7 @@ export const BrandText = ({
 
     return (
         <span className={cn(className, hoverable && 'group cursor-pointer inline-block')}>
-            <span className={cn(className, 'transition-colors duration-300', hoverable ? cn(hoverColor) : '')}>
+            <span className={cn(className, 'transition-colors duration-300', color, hoverable ? cn(hoverColor) : '')}>
                 {firstPart}
             </span>
             {rest && (

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 
 import { Shield, Lock, User, Database, Mail, FileText, Menu, X, type LucideProps } from 'lucide-react'
 
-import { BrandText } from '@/components/BrandText'
+import { BrandText } from '@/components/effects/BrandText'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'

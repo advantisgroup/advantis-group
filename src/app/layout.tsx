@@ -5,9 +5,9 @@ import { Outfit, Manrope } from 'next/font/google'
 import { type Metadata } from 'next'
 
 import './global.css'
-import { Footer } from '@/components/Footer'
-import { Header } from '@/components/Header'
-import { ThemeProvider } from '@/components/theme-provider'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { ThemeProvider } from '@/components/theme/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 // Outfit - Rounded, modern, distinctive for headings
 const outfit = Outfit({

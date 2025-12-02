@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 import { Target, Zap, Heart, ArrowRight } from 'lucide-react'
 
-import { BrandText } from '@/components/BrandText'
+import { BrandText } from '@/components/effects/BrandText'
 import { Button } from '@/components/ui/button'
 
 export default function UberUns() {

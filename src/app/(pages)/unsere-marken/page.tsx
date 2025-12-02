@@ -6,8 +6,8 @@ import Link from 'next/link'
 
 import { TrendingUp, Zap, BookOpen, Brain, ArrowRight, ExternalLink, Sparkles, ChevronDown } from 'lucide-react'
 
-import { BrandText } from '@/components/BrandText'
-import GradientBackground from '@/components/lightswind/gradient-background'
+import { BrandText } from '@/components/effects/BrandText'
+import GradientBackground from '@/components/effects/GradientBackground'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -170,6 +170,7 @@ export default function UnsereMarken() {
 
                     return (
                         <section
+                            id={brand.brand}
                             key={index}
                             ref={(el) => {
                                 sectionRefs.current[index] = el
@@ -227,19 +228,7 @@ export default function UnsereMarken() {
                                                     'inline-flex w-full',
                                                     isEven ? 'lg:justify-end' : 'lg:justify-start'
                                                 )}
-                                            >
-                                                <div
-                                                    className={cn(
-                                                        'flex items-center justify-center w-20 h-20 rounded-2xl backdrop-blur-xl border-2 transition-all duration-500',
-                                                        'bg-card/50 border-border/50',
-                                                        brand.brandColor,
-                                                        isActive && 'border-current shadow-2xl scale-110',
-                                                        brand.glowColor
-                                                    )}
-                                                >
-                                                    <Icon className="w-10 h-10" />
-                                                </div>
-                                            </div>
+                                            ></div>
 
                                             {/* Tagline */}
                                             <div className="space-y-2">

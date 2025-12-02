@@ -2,12 +2,11 @@
 
 import Link from 'next/link'
 
-import { Zap, Brain, BookOpen, Phone, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 
+import { BrandText } from '@/components/effects/BrandText'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-
-import { BrandText } from './BrandText'
-import { Button } from './ui/button'
 
 interface HomeBrandsProps {
     isVisible: boolean
@@ -16,7 +15,6 @@ interface HomeBrandsProps {
 export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
     const brands = [
         {
-            icon: Phone,
             name: 'Salespirates',
             brand: 'salespirates' as const,
             tagline: 'Externe Vertriebsagentur',
@@ -25,7 +23,6 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
             brandColor: 'text-salespirates',
         },
         {
-            icon: Zap,
             name: 'Rodeo-Consulting',
             brand: 'rodeo' as const,
             tagline: 'Strategische Beratung',
@@ -34,7 +31,6 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
             brandColor: 'text-rodeo',
         },
         {
-            icon: BookOpen,
             name: 'Oldschool-train',
             brand: 'oldschool-train' as const,
             tagline: 'Authentische Trainings',
@@ -43,7 +39,6 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
             brandColor: 'text-oldschool',
         },
         {
-            icon: Brain,
             name: 'Sales-AI-Germany',
             brand: 'sales-ai-germany' as const,
             tagline: 'KI für den Vertrieb',
@@ -82,8 +77,6 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                     {/* Brand Grid */}
                     <div className="grid md:grid-cols-2 gap-6">
                         {brands.map((brand, idx) => {
-                            const Icon = brand.icon
-
                             return (
                                 <div
                                     key={idx}
@@ -93,21 +86,10 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                                     )}
                                     style={{ transitionDelay: `${200 + idx * 100}ms` }}
                                 >
-                                    <Link href="/unsere-marken">
+                                    <Link href={`/unsere-marken/#${brand.brand}`}>
                                         <div className="group relative p-8 rounded-2xl bg-card/60 backdrop-blur-xl border-2 border-border/50 hover:border-primary/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10 h-full">
                                             {/* Icon */}
                                             <div className="flex items-start gap-4 mb-6">
-                                                <div
-                                                    className={cn(
-                                                        'flex items-center justify-center w-14 h-14 rounded-xl bg-card/80 border-2 transition-all duration-300',
-                                                        brand.brandColor,
-                                                        'group-hover:scale-110 group-hover:shadow-lg'
-                                                    )}
-                                                    style={{ borderColor: 'currentColor' }}
-                                                >
-                                                    <Icon className="w-7 h-7" />
-                                                </div>
-
                                                 <div className="flex-1">
                                                     <div className="text-xs uppercase tracking-widest text-muted-foreground font-semibold mb-2">
                                                         {brand.tagline}

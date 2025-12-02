@@ -1,7 +1,7 @@
 'use client'
 
-import { ScrollReveal } from '@/components/ScrollReveal'
-import { SectionDivider } from '@/components/SectionDivider'
+import { ScrollReveal } from '@/components/effects/ScrollReveal'
+import { SectionDivider } from '@/components/layout/SectionDivider'
 
 export default function Team() {
     const teamMembers = [

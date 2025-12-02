@@ -9,7 +9,7 @@ import posthog from 'posthog-js'
 import { toast } from 'sonner'
 import { z } from 'zod'
 
-import { BrandText } from '@/components/BrandText'
+import { BrandText } from '@/components/effects/BrandText'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'

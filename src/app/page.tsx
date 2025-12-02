@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-import { Hero } from '@/components/Hero'
-import { HomeBrands } from '@/components/HomeBrands'
-import { HomeCTA } from '@/components/HomeCTA'
-import { HomeFeatures } from '@/components/HomeFeatures'
-import { HomeStats } from '@/components/HomeStats'
+import { Hero } from '@/components/sections/Hero'
+import { HomeBrands } from '@/components/sections/home/HomeBrands'
+import { HomeCTA } from '@/components/sections/home/HomeCTA'
+import { HomeFeatures } from '@/components/sections/home/HomeFeatures'
+import { HomeStats } from '@/components/sections/home/HomeStats'
 
 export default function Page() {
     const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set())

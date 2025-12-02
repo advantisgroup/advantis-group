@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google'
 import './global.css'
 import { type Metadata } from 'next'
 
-import GlobalNotFoundClient from '@/components/GlobalNotFoundClient'
+import GlobalNotFoundClient from '@/components/layout/GlobalNotFoundClient'
 
 const inter = Inter({ subsets: ['latin'] })
 
