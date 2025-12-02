@@ -70,10 +70,7 @@ export default function Team() {
                 {/* Hero Section */}
                 <section className="relative h-screen flex items-center justify-center pt-32 pb-20 overflow-hidden">
                     <div className="absolute inset-0 pointer-events-none">
-                        <ShapeParticles
-                            particleCount={40}
-                            className="opacity-30"
-                        />
+                        <ShapeParticles particleCount={40} className="opacity-30" />
                     </div>
 
                     <div className="container mx-auto px-4 md:px-6 relative -top-[10vh]">
@@ -88,12 +85,16 @@ export default function Team() {
                                 </div>
                                 <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
                                     Die Gesichter hinter <br />
-                                    <BrandText brand="advantis" className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary/60">
+                                    <BrandText
+                                        brand="advantis"
+                                        className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary/60"
+                                    >
                                         Advantis Group
                                     </BrandText>
                                 </h1>
                                 <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                                    Experten, Visionäre und Macher. Vereint durch die Leidenschaft für exzellenten Vertrieb.
+                                    Experten, Visionäre und Macher. Vereint durch die Leidenschaft für exzellenten
+                                    Vertrieb.
                                 </p>
                             </div>
                         </ScrollReveal>
@@ -129,7 +130,12 @@ export default function Team() {
                                         </div>
 
                                         {teamMembers[0].email && (
-                                            <Button variant="ghost" size="sm" className="mt-4 -ml-2 text-muted-foreground hover:text-primary" asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="mt-4 -ml-2 text-muted-foreground hover:text-primary"
+                                                asChild
+                                            >
                                                 <Link href={`mailto:${teamMembers[0].email}`}>
                                                     <Mail className="w-4 h-4 mr-2" />
                                                     Kontaktieren
@@ -182,11 +188,15 @@ export default function Team() {
                                                 </div>
                                             </div>
 
-                                            <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">{member.name}</h3>
+                                            <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">
+                                                {member.name}
+                                            </h3>
                                             <p className="text-sm text-muted-foreground mb-4">{member.role}</p>
 
                                             <div className="mt-auto pt-4 border-t border-border/50 w-full opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
-                                                <span className="text-xs font-medium text-primary uppercase tracking-wider">Advantis Team</span>
+                                                <span className="text-xs font-medium text-primary uppercase tracking-wider">
+                                                    Advantis Team
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

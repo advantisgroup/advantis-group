@@ -70,9 +70,9 @@ export default function UberUns() {
                                     exzellenten Vertrieb
                                 </h1>
                                 <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl">
-                                    Die <BrandText brand="advantis">Advantis-group GmbH</BrandText> vereint über 15 Jahre
-                                    Vertriebserfahrung unter einem Dach – mit Leidenschaft, Pragmatismus und einem klaren
-                                    Fokus auf Erfolg.
+                                    Die <BrandText brand="advantis">Advantis-group GmbH</BrandText> vereint über 15
+                                    Jahre Vertriebserfahrung unter einem Dach – mit Leidenschaft, Pragmatismus und einem
+                                    klaren Fokus auf Erfolg.
                                 </p>
                             </div>
                         </ScrollReveal>
@@ -128,8 +128,8 @@ export default function UberUns() {
                                 <div className="md:col-span-8 space-y-6">
                                     <p className="text-lg leading-relaxed">
                                         Die <BrandText brand="advantis">Advantis-Group GmbH</BrandText> wurde 2025 von{' '}
-                                        <span className="font-semibold">Andrea Reichl</span> gegründet und vereint über 15
-                                        Jahre Vertriebserfahrung in unterschiedlichen Branchen unter einem Dach.
+                                        <span className="font-semibold">Andrea Reichl</span> gegründet und vereint über
+                                        15 Jahre Vertriebserfahrung in unterschiedlichen Branchen unter einem Dach.
                                     </p>
 
                                     <p className="text-lg text-muted-foreground leading-relaxed">
@@ -138,8 +138,8 @@ export default function UberUns() {
                                     </p>
 
                                     <p className="text-lg text-muted-foreground leading-relaxed">
-                                        Schnick-schnack liegt uns nicht – wir haben das Rad nicht neu erfunden, nur ein paar
-                                        schicke Felgen aufgezogen. Pragmatisch, effektiv, nachhaltig.
+                                        Schnick-schnack liegt uns nicht – wir haben das Rad nicht neu erfunden, nur ein
+                                        paar schicke Felgen aufgezogen. Pragmatisch, effektiv, nachhaltig.
                                     </p>
                                 </div>
                             </div>
@@ -161,7 +161,9 @@ export default function UberUns() {
                                                 <Icon className="w-7 h-7 text-primary" />
                                             </div>
                                             <div className="text-4xl font-bold text-primary mb-2">{stat.value}</div>
-                                            <div className="text-sm text-muted-foreground font-medium">{stat.label}</div>
+                                            <div className="text-sm text-muted-foreground font-medium">
+                                                {stat.label}
+                                            </div>
                                         </div>
                                     )
                                 })}
@@ -188,7 +190,10 @@ export default function UberUns() {
                                             className="bg-card/30 backdrop-blur-sm border border-border/50 rounded-xl p-8 group hover:border-primary/30 hover:-translate-y-1 transition-all duration-300"
                                         >
                                             <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-background/50 mb-6 group-hover:bg-primary/10 transition-colors">
-                                                <Icon className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={1.5} />
+                                                <Icon
+                                                    className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors"
+                                                    strokeWidth={1.5}
+                                                />
                                             </div>
                                             <h3 className="text-xl font-semibold mb-3">{value.title}</h3>
                                             <p className="text-muted-foreground leading-relaxed">{value.description}</p>
@@ -207,8 +212,9 @@ export default function UberUns() {
                                     Bereit für den nächsten Schritt?
                                 </h2>
                                 <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                                    Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten. Ob Unterstützung im aktiven
-                                    Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen Ihnen dabei.
+                                    Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten. Ob Unterstützung im
+                                    aktiven Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen Ihnen
+                                    dabei.
                                 </p>
                                 <Button asChild size="lg">
                                     <Link href="/kontakt" className="inline-flex items-center gap-2 group">
