@@ -86,7 +86,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                                     )}
                                     style={{ transitionDelay: `${200 + idx * 100}ms` }}
                                 >
-                                    <Link href={`/unsere-marken/#${brand.brand}`}>
+                                    <Link href={`/unsere-marken#${brand.brand}`}>
                                         <div className="group relative p-8 rounded-2xl bg-card/60 backdrop-blur-xl border-2 border-border/50 hover:border-primary/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10 h-full">
                                             {/* Icon */}
                                             <div className="flex items-start gap-4 mb-6">
