@@ -31,7 +31,7 @@ export const Footer = () => {
         }
 
         window.addEventListener('scroll', handleScroll)
-        handleScroll() // Initial calculation
+        handleScroll() 
 
         return () => window.removeEventListener('scroll', handleScroll)
     }, [])
@@ -78,15 +78,14 @@ export const Footer = () => {
         },
     ]
 
-    // Calculate lift for each letter (last 5 letters lift progressively)
     const getLiftAmount = (index: number, totalLetters: number) => {
-        const lettersToLift = 5 // Lift last 5 letters
+        const lettersToLift = 5 
         const startIndex = totalLetters - lettersToLift
 
         if (index < startIndex) return 0
 
         const liftIndex = index - startIndex
-        const maxLift = 40 // Maximum pixels to lift
+        const maxLift = 40 
         const liftAmount = ((liftIndex + 1) / lettersToLift) * maxLift * scrollProgress
 
         return -liftAmount // Negative to lift up

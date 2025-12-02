@@ -9,14 +9,12 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { ThemeProvider } from '@/components/theme/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
-// Outfit - Rounded, modern, distinctive for headings
 const outfit = Outfit({
     subsets: ['latin'],
     variable: '--font-outfit',
     display: 'swap',
 })
 
-// Manrope - Geometric, clean, unique for body
 const manrope = Manrope({
     subsets: ['latin'],
     variable: '--font-manrope',

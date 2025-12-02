@@ -12,7 +12,6 @@ export default function Page() {
     const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set())
     const sectionRefs = useRef<(HTMLElement | null)[]>([])
 
-    // Intersection Observer for smooth scroll animations
     useEffect(() => {
         const observers: IntersectionObserver[] = []
 

@@ -71,7 +71,6 @@ export default function UnsereMarken() {
         },
     ]
 
-    // Intersection Observer for scroll animations
     useEffect(() => {
         const observers: IntersectionObserver[] = []
 

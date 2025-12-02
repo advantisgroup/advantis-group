@@ -19,7 +19,6 @@ export default function GlobalNotFoundClient() {
 
     const [particles, setParticles] = useState<Particle[]>([])
 
-    // Run once after hydration
     useEffect(() => {
         const generatedParticles: Particle[] = Array.from({ length: 25 }).map(() => ({
             left: `${Math.random() * 100}%`,
