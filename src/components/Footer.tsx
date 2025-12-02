@@ -98,7 +98,6 @@ export const Footer = () => {
     return (
         <footer ref={footerRef} className="relative border-t border-white bg-card overflow-hidden">
             {/* Subtle background pattern */}
-            <div className="absolute inset-0 noise-texture opacity-30 pointer-events-none" />
 
             <div className="container mx-auto px-4 py-24 relative">
                 {/* Large animated company name */}
