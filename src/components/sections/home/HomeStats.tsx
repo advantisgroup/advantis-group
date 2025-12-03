@@ -52,8 +52,8 @@ export const HomeStats = ({ isVisible }: HomeStatsProps) => {
                 </div>
             </div>
 
-            {/* Bottom blend to next section */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-b from-transparent to-primary/5 pointer-events-none" />
+            {/* Extended bottom blend to next section for smooth transition */}
+            <div className="absolute bottom-0 left-0 right-0 h-64 bg-linear-to-b from-transparent via-primary/3 to-primary/5 pointer-events-none" />
         </section>
     )
 }
