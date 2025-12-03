@@ -38,8 +38,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="de" suppressHydrationWarning>
-            <body className={`bg-background antialiased ${manrope.variable} ${outfit.variable}`}>
-                <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+            <body className={`bg-background antialiased scroll-smooth ${manrope.variable} ${outfit.variable}`}>
+                <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                     <Header />
                     {children}
                     <Toaster />

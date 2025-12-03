@@ -43,7 +43,7 @@ export const Header = () => {
             className={`fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 ${!isScrolled ? '' : 'border-b border-border '}`}
         >
             <nav className="container mx-auto flex items-center justify-between h-16 px-4">
-                <Link href="/" className="group flex items-center gap-1 font-semibold text-lg">
+                <Link href="/" className="group flex items-center gap-1 font-bold text-lg font-sans">
                     <span className="group-hover:text-advantis duration-300">ADVANTIS</span>
                     <span className="text-foreground">GROUP</span>
                 </Link>

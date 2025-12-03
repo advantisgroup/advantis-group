@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 
 import { Target, Zap, Heart, ArrowRight, TrendingUp, Users, Award } from 'lucide-react'
@@ -9,8 +10,10 @@ import GradientBackground from '@/components/effects/GradientBackground'
 import { ScrollReveal } from '@/components/effects/ScrollReveal'
 import { SectionDivider } from '@/components/layout/SectionDivider'
 import { Button } from '@/components/ui/button'
+import { useBrandLogo } from '@/hooks/use-logo'
 
 export default function UberUns() {
+    const logo = useBrandLogo()
     const values = [
         {
             icon: Target,
@@ -200,6 +203,24 @@ export default function UberUns() {
                                         </div>
                                     )
                                 })}
+                            </div>
+                        </section>
+                    </ScrollReveal>
+
+                    {/* Logo Section */}
+                    <ScrollReveal delay={150}>
+                        <section className="">
+                            <div className="flex justify-center">
+                                <div className="relative w-full max-w-sm md:max-w-2xl lg:max-w-4xl px-4">
+                                    <Image
+                                        src={logo}
+                                        alt="Advantis Group - All About Sales"
+                                        width={3125}
+                                        height={1875}
+                                        className="w-full h-auto"
+                                        priority={false}
+                                    />
+                                </div>
                             </div>
                         </section>
                     </ScrollReveal>
