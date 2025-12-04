@@ -7,10 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "fix": "pnpm link && pnpm format",
+    "fix": "bun link && bun format",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "format": "pnpm dlx prettier --write ./src"
+    "format": "bunx prettier --write ./src"
   },
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "^2.1.16",
