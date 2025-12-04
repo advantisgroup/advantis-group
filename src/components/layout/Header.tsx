@@ -5,8 +5,12 @@ import React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { useIsMobile } from '@/hooks/use-mobile'
+
 export const Header = () => {
     const pathname = usePathname()
+    const isMobile = useIsMobile()
+
     const [isScrolled, setIsScrolled] = React.useState(false)
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
     const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 })
@@ -67,39 +71,59 @@ export const Header = () => {
                 className={`fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-all duration-300 ${!isScrolled ? '' : 'border-b border-border shadow-sm'}`}
             >
                 <nav className="container mx-auto flex items-center justify-between h-16 px-4">
-                    <Link
-                        href="/"
-                        className="group relative flex items-center gap-1 font-bold text-lg font-sans"
-                        onMouseMove={handleMouseMove}
-                        onMouseLeave={() => setMousePosition({ x: 0, y: 0 })}
-                        style={{
-                            transform: `translate(${mousePosition.x * 0.18}px, ${mousePosition.y * 0.18}px)`,
-                            transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-                        }}
-                    >
-                        <span
-                            className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground group-hover:from-advantis group-hover:via-white group-hover:to-advantis transition-all duration-500"
+                    {!isMobile ? (
+                        <Link
+                            href="/"
+                            className="group relative flex items-center gap-1 font-bold text-lg font-sans"
+                            onMouseMove={handleMouseMove}
+                            onMouseLeave={() => setMousePosition({ x: 0, y: 0 })}
                             style={{
-                                backgroundSize: '200% 100%',
-                                animation: 'shimmer 4s ease-in-out infinite',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
+                                transform: `translate(${mousePosition.x * 0.18}px, ${mousePosition.y * 0.18}px)`,
+                                transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                             }}
                         >
-                            ADVANTIS
-                        </span>
-                        <span
-                            className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground  duration-500"
+                            <span
+                                className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground group-hover:from-advantis group-hover:via-white group-hover:to-advantis transition-all duration-500"
+                                style={{
+                                    backgroundSize: '200% 100%',
+                                    animation: 'shimmer 4s ease-in-out infinite',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                }}
+                            >
+                                ADVANTIS
+                            </span>
+                            <span
+                                className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground  duration-500"
+                                style={{
+                                    backgroundSize: '200% 100%',
+                                    animation: 'shimmer 6s ease-in-out infinite',
+                                    WebkitBackgroundClip: 'text',
+                                    WebkitTextFillColor: 'transparent',
+                                }}
+                            >
+                                GROUP
+                            </span>
+                        </Link>
+                    ) : (
+                        <Link
+                            href="/"
+                            className="group relative flex items-center gap-1 font-bold text-lg font-sans"
+                            onMouseMove={handleMouseMove}
+                            onMouseLeave={() => setMousePosition({ x: 0, y: 0 })}
                             style={{
-                                backgroundSize: '200% 100%',
-                                animation: 'shimmer 6s ease-in-out infinite',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
+                                transform: `translate(${mousePosition.x * 0.18}px, ${mousePosition.y * 0.18}px)`,
+                                transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                             }}
                         >
-                            GROUP
-                        </span>
-                    </Link>
+                            <span className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground group-hover:from-advantis group-hover:via-white group-hover:to-advantis transition-all duration-500">
+                                ADVANTIS
+                            </span>
+                            <span className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground  duration-500">
+                                GROUP
+                            </span>
+                        </Link>
+                    )}
 
                     <ul className="hidden md:flex items-center gap-6 text-sm">
                         {navLinks.map((link, i) => (
