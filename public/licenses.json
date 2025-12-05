@@ -1,0 +1,1250 @@
+{
+  "@alloc/quick-lru@5.2.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/quick-lru",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "https://sindresorhus.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@alloc\\quick-lru",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@alloc\\quick-lru\\license"
+  },
+  "@floating-ui/core@1.7.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/floating-ui/floating-ui",
+    "publisher": "atomiks",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@floating-ui\\core",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@floating-ui\\core\\LICENSE"
+  },
+  "@floating-ui/dom@1.7.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/floating-ui/floating-ui",
+    "publisher": "atomiks",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@floating-ui\\dom",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@floating-ui\\dom\\LICENSE"
+  },
+  "@floating-ui/react-dom@2.1.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/floating-ui/floating-ui",
+    "publisher": "atomiks",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@floating-ui\\react-dom",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@floating-ui\\react-dom\\LICENSE"
+  },
+  "@floating-ui/utils@0.2.10": {
+    "licenses": "MIT",
+    "repository": "https://github.com/floating-ui/floating-ui",
+    "publisher": "atomiks",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@floating-ui\\utils",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@floating-ui\\utils\\LICENSE"
+  },
+  "@img/colour@1.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lovell/colour",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@img\\colour",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@img\\colour\\LICENSE.md"
+  },
+  "@img/sharp-win32-x64@0.34.5": {
+    "licenses": "Apache-2.0 AND LGPL-3.0-or-later",
+    "repository": "https://github.com/lovell/sharp",
+    "publisher": "Lovell Fuller",
+    "email": "npm@lovell.info",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@img\\sharp-win32-x64",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@img\\sharp-win32-x64\\LICENSE"
+  },
+  "@jridgewell/gen-mapping@0.3.13": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/sourcemaps",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\gen-mapping",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\gen-mapping\\LICENSE"
+  },
+  "@jridgewell/remapping@2.3.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/sourcemaps",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\remapping",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\remapping\\LICENSE"
+  },
+  "@jridgewell/resolve-uri@3.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/resolve-uri",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\resolve-uri",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\resolve-uri\\LICENSE"
+  },
+  "@jridgewell/sourcemap-codec@1.5.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/sourcemaps",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\sourcemap-codec",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\sourcemap-codec\\LICENSE"
+  },
+  "@jridgewell/trace-mapping@0.3.31": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jridgewell/sourcemaps",
+    "publisher": "Justin Ridgewell",
+    "email": "justin@ridgewell.name",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\trace-mapping",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@jridgewell\\trace-mapping\\LICENSE"
+  },
+  "@next/env@16.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vercel/next.js",
+    "publisher": "Next.js Team",
+    "email": "support@vercel.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@next\\env",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@next\\env\\README.md"
+  },
+  "@next/swc-win32-x64-msvc@16.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vercel/next.js",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@next\\swc-win32-x64-msvc",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@next\\swc-win32-x64-msvc\\README.md"
+  },
+  "@posthog/core@1.7.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/PostHog/posthog-js",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@posthog\\core"
+  },
+  "@radix-ui/primitive@1.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\primitive",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\primitive\\LICENSE"
+  },
+  "@radix-ui/react-arrow@1.1.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-arrow",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-arrow\\LICENSE"
+  },
+  "@radix-ui/react-collection@1.1.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-collection",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-collection\\LICENSE"
+  },
+  "@radix-ui/react-compose-refs@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-compose-refs",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-compose-refs\\README.md"
+  },
+  "@radix-ui/react-context@1.1.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-context",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-context\\README.md"
+  },
+  "@radix-ui/react-direction@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-direction",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-direction\\README.md"
+  },
+  "@radix-ui/react-dismissable-layer@1.1.11": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-dismissable-layer",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-dismissable-layer\\LICENSE"
+  },
+  "@radix-ui/react-dropdown-menu@2.1.16": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-dropdown-menu",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-dropdown-menu\\LICENSE"
+  },
+  "@radix-ui/react-focus-guards@1.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-focus-guards",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-focus-guards\\LICENSE"
+  },
+  "@radix-ui/react-focus-scope@1.1.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-focus-scope",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-focus-scope\\LICENSE"
+  },
+  "@radix-ui/react-id@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-id",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-id\\README.md"
+  },
+  "@radix-ui/react-menu@2.1.16": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-menu",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-menu\\LICENSE"
+  },
+  "@radix-ui/react-popper@1.2.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-popper",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-popper\\LICENSE"
+  },
+  "@radix-ui/react-portal@1.1.9": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-portal",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-portal\\LICENSE"
+  },
+  "@radix-ui/react-presence@1.1.5": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-presence",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-presence\\LICENSE"
+  },
+  "@radix-ui/react-primitive@2.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-primitive",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-primitive\\LICENSE"
+  },
+  "@radix-ui/react-roving-focus@1.1.11": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-roving-focus",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-roving-focus\\LICENSE"
+  },
+  "@radix-ui/react-slot@1.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-primitive\\node_modules\\@radix-ui\\react-slot",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-primitive\\node_modules\\@radix-ui\\react-slot\\LICENSE"
+  },
+  "@radix-ui/react-slot@1.2.4": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-slot",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-slot\\LICENSE"
+  },
+  "@radix-ui/react-use-callback-ref@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-callback-ref",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-callback-ref\\README.md"
+  },
+  "@radix-ui/react-use-controllable-state@1.2.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-controllable-state",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-controllable-state\\LICENSE"
+  },
+  "@radix-ui/react-use-effect-event@0.0.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-effect-event",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-effect-event\\LICENSE"
+  },
+  "@radix-ui/react-use-escape-keydown@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-escape-keydown",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-escape-keydown\\README.md"
+  },
+  "@radix-ui/react-use-layout-effect@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-layout-effect",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-layout-effect\\README.md"
+  },
+  "@radix-ui/react-use-rect@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-rect",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-rect\\README.md"
+  },
+  "@radix-ui/react-use-size@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-size",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\react-use-size\\README.md"
+  },
+  "@radix-ui/rect@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/radix-ui/primitives",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\rect",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@radix-ui\\rect\\README.md"
+  },
+  "@supabase/auth-js@2.86.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/supabase-js",
+    "publisher": "Supabase",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\auth-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\auth-js\\LICENSE"
+  },
+  "@supabase/functions-js@2.86.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/supabase-js",
+    "publisher": "Supabase",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\functions-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\functions-js\\README.md"
+  },
+  "@supabase/postgrest-js@2.86.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/supabase-js",
+    "publisher": "Supabase",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\postgrest-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\postgrest-js\\README.md"
+  },
+  "@supabase/realtime-js@2.86.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/supabase-js",
+    "publisher": "Supabase",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\realtime-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\realtime-js\\README.md"
+  },
+  "@supabase/ssr@0.8.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/ssr",
+    "publisher": "Supabase, Inc.",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\ssr",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\ssr\\LICENSE"
+  },
+  "@supabase/storage-js@2.86.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/supabase-js",
+    "publisher": "Supabase",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\storage-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\storage-js\\README.md"
+  },
+  "@supabase/supabase-js@2.86.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/supabase-js",
+    "publisher": "Supabase",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\supabase-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@supabase\\supabase-js\\README.md"
+  },
+  "@swc/helpers@0.5.15": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/swc-project/swc",
+    "publisher": "강동윤",
+    "email": "kdy1997.dev@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@swc\\helpers",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@swc\\helpers\\LICENSE"
+  },
+  "@tailwindcss/node@4.1.17": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tailwindlabs/tailwindcss",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tailwindcss\\node",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tailwindcss\\node\\LICENSE"
+  },
+  "@tailwindcss/oxide-win32-x64-msvc@4.1.17": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tailwindlabs/tailwindcss",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tailwindcss\\oxide-win32-x64-msvc",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tailwindcss\\oxide-win32-x64-msvc\\LICENSE"
+  },
+  "@tailwindcss/oxide@4.1.17": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tailwindlabs/tailwindcss",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tailwindcss\\oxide",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tailwindcss\\oxide\\LICENSE"
+  },
+  "@tailwindcss/postcss@4.1.17": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tailwindlabs/tailwindcss",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tailwindcss\\postcss",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tailwindcss\\postcss\\LICENSE"
+  },
+  "@tsparticles/basic@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\basic",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\basic\\LICENSE"
+  },
+  "@tsparticles/engine@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\engine",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\engine\\LICENSE"
+  },
+  "@tsparticles/interaction-external-attract@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-attract",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-attract\\LICENSE"
+  },
+  "@tsparticles/interaction-external-bounce@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-bounce",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-bounce\\LICENSE"
+  },
+  "@tsparticles/interaction-external-bubble@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-bubble",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-bubble\\LICENSE"
+  },
+  "@tsparticles/interaction-external-connect@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-connect",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-connect\\LICENSE"
+  },
+  "@tsparticles/interaction-external-grab@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-grab",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-grab\\LICENSE"
+  },
+  "@tsparticles/interaction-external-pause@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-pause",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-pause\\LICENSE"
+  },
+  "@tsparticles/interaction-external-push@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-push",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-push\\LICENSE"
+  },
+  "@tsparticles/interaction-external-remove@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-remove",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-remove\\LICENSE"
+  },
+  "@tsparticles/interaction-external-repulse@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-repulse",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-repulse\\LICENSE"
+  },
+  "@tsparticles/interaction-external-slow@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-slow",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-slow\\LICENSE"
+  },
+  "@tsparticles/interaction-external-trail@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-trail",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-external-trail\\LICENSE"
+  },
+  "@tsparticles/interaction-particles-attract@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-particles-attract",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-particles-attract\\LICENSE"
+  },
+  "@tsparticles/interaction-particles-collisions@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-particles-collisions",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-particles-collisions\\LICENSE"
+  },
+  "@tsparticles/interaction-particles-links@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-particles-links",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\interaction-particles-links\\LICENSE"
+  },
+  "@tsparticles/move-base@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\move-base",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\move-base\\LICENSE"
+  },
+  "@tsparticles/move-parallax@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\move-parallax",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\move-parallax\\LICENSE"
+  },
+  "@tsparticles/plugin-absorbers@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-absorbers",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-absorbers\\LICENSE"
+  },
+  "@tsparticles/plugin-easing-quad@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-easing-quad",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-easing-quad\\LICENSE"
+  },
+  "@tsparticles/plugin-emitters-shape-circle@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-emitters-shape-circle",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-emitters-shape-circle\\LICENSE"
+  },
+  "@tsparticles/plugin-emitters-shape-square@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-emitters-shape-square",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-emitters-shape-square\\LICENSE"
+  },
+  "@tsparticles/plugin-emitters@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-emitters",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-emitters\\LICENSE"
+  },
+  "@tsparticles/plugin-hex-color@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-hex-color",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-hex-color\\LICENSE"
+  },
+  "@tsparticles/plugin-hsl-color@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-hsl-color",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-hsl-color\\LICENSE"
+  },
+  "@tsparticles/plugin-rgb-color@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-rgb-color",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\plugin-rgb-color\\LICENSE"
+  },
+  "@tsparticles/react@3.0.0": {
+    "licenses": "MIT*",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\react",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\react\\LICENSE"
+  },
+  "@tsparticles/shape-circle@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-circle",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-circle\\LICENSE"
+  },
+  "@tsparticles/shape-emoji@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-emoji",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-emoji\\LICENSE"
+  },
+  "@tsparticles/shape-image@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-image",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-image\\LICENSE"
+  },
+  "@tsparticles/shape-line@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-line",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-line\\LICENSE"
+  },
+  "@tsparticles/shape-polygon@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-polygon",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-polygon\\LICENSE"
+  },
+  "@tsparticles/shape-square@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-square",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-square\\LICENSE"
+  },
+  "@tsparticles/shape-star@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-star",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-star\\LICENSE"
+  },
+  "@tsparticles/shape-text@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-text",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\shape-text\\LICENSE"
+  },
+  "@tsparticles/slim@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\slim",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\slim\\LICENSE"
+  },
+  "@tsparticles/updater-color@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-color",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-color\\LICENSE"
+  },
+  "@tsparticles/updater-destroy@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-destroy",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-destroy\\LICENSE"
+  },
+  "@tsparticles/updater-life@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-life",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-life\\LICENSE"
+  },
+  "@tsparticles/updater-opacity@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-opacity",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-opacity\\LICENSE"
+  },
+  "@tsparticles/updater-out-modes@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-out-modes",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-out-modes\\LICENSE"
+  },
+  "@tsparticles/updater-roll@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-roll",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-roll\\LICENSE"
+  },
+  "@tsparticles/updater-rotate@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-rotate",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-rotate\\LICENSE"
+  },
+  "@tsparticles/updater-size@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-size",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-size\\LICENSE"
+  },
+  "@tsparticles/updater-stroke-color@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-stroke-color",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-stroke-color\\LICENSE"
+  },
+  "@tsparticles/updater-tilt@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-tilt",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-tilt\\LICENSE"
+  },
+  "@tsparticles/updater-twinkle@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-twinkle",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-twinkle\\LICENSE"
+  },
+  "@tsparticles/updater-wobble@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-wobble",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@tsparticles\\updater-wobble\\LICENSE"
+  },
+  "@types/node@24.10.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\node",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\node\\LICENSE"
+  },
+  "@types/phoenix@1.6.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\phoenix",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\phoenix\\LICENSE"
+  },
+  "@types/react-dom@19.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\react-dom",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\react-dom\\LICENSE"
+  },
+  "@types/react@19.2.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\react",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\react\\LICENSE"
+  },
+  "@types/ws@8.18.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\ws",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@types\\ws\\LICENSE"
+  },
+  "@upstash/core-analytics@0.0.10": {
+    "licenses": "MIT",
+    "publisher": "Andreas Thomas",
+    "email": "andreas@upstash.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@upstash\\core-analytics",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@upstash\\core-analytics\\README.md"
+  },
+  "@upstash/ratelimit@2.0.7": {
+    "licenses": "MIT",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@upstash\\ratelimit",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@upstash\\ratelimit\\LICENSE"
+  },
+  "@upstash/redis@1.35.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/upstash/upstash-redis",
+    "publisher": "Andreas Thomas",
+    "email": "dev@chronark.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@upstash\\redis",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\@upstash\\redis\\LICENSE"
+  },
+  "ag_homepage@0.0.0": {
+    "licenses": "UNLICENSED",
+    "private": true,
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group"
+  },
+  "aria-hidden@1.2.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/theKashey/aria-hidden",
+    "publisher": "Anton Korzunov",
+    "email": "thekashey@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\aria-hidden",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\aria-hidden\\LICENSE"
+  },
+  "caniuse-lite@1.0.30001759": {
+    "licenses": "CC-BY-4.0",
+    "repository": "https://github.com/browserslist/caniuse-lite",
+    "publisher": "Ben Briggs",
+    "email": "beneb.info@gmail.com",
+    "url": "http://beneb.info",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\caniuse-lite",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\caniuse-lite\\LICENSE"
+  },
+  "class-variance-authority@0.7.1": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/joe-bell/cva",
+    "publisher": "Joe Bell",
+    "url": "https://joebell.co.uk",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\class-variance-authority",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\class-variance-authority\\LICENSE"
+  },
+  "client-only@0.0.1": {
+    "licenses": "MIT",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\client-only"
+  },
+  "clsx@2.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/lukeed/clsx",
+    "publisher": "Luke Edwards",
+    "email": "luke.edwards05@gmail.com",
+    "url": "https://lukeed.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\clsx",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\clsx\\license"
+  },
+  "cookie@1.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/jshttp/cookie",
+    "publisher": "Roman Shtylman",
+    "email": "shtylman@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\cookie",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\cookie\\LICENSE"
+  },
+  "core-js@3.47.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/zloirock/core-js",
+    "publisher": "Denis Pushkarev",
+    "email": "zloirock@zloirock.ru",
+    "url": "http://zloirock.ru",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\core-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\core-js\\LICENSE"
+  },
+  "cross-spawn@7.0.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/moxystudio/node-cross-spawn",
+    "publisher": "André Cruz",
+    "email": "andre@moxy.studio",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\cross-spawn",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\cross-spawn\\LICENSE"
+  },
+  "csstype@3.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/frenic/csstype",
+    "publisher": "Fredrik Nicol",
+    "email": "fredrik.nicol@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\csstype",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\csstype\\LICENSE"
+  },
+  "detect-libc@2.1.2": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/lovell/detect-libc",
+    "publisher": "Lovell Fuller",
+    "email": "npm@lovell.info",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\detect-libc",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\detect-libc\\LICENSE"
+  },
+  "detect-node-es@1.1.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/thekashey/detect-node",
+    "publisher": "Ilya Kantor",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\detect-node-es",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\detect-node-es\\LICENSE"
+  },
+  "enhanced-resolve@5.18.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/webpack/enhanced-resolve",
+    "publisher": "Tobias Koppers @sokra",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\enhanced-resolve",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\enhanced-resolve\\LICENSE"
+  },
+  "fflate@0.4.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/101arrowz/fflate",
+    "publisher": "Arjun Barrett",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\fflate",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\fflate\\LICENSE"
+  },
+  "framer-motion@12.23.25": {
+    "licenses": "MIT",
+    "repository": "https://github.com/motiondivision/motion",
+    "publisher": "Matt Perry",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\framer-motion",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\framer-motion\\LICENSE.md"
+  },
+  "get-nonce@1.0.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/theKashey/get-nonce",
+    "publisher": "Anton Korzunov",
+    "email": "thekashey@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\get-nonce",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\get-nonce\\LICENSE"
+  },
+  "graceful-fs@4.2.11": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/node-graceful-fs",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\graceful-fs",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\graceful-fs\\LICENSE"
+  },
+  "iceberg-js@0.8.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/supabase/iceberg-js",
+    "publisher": "mandarini",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\iceberg-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\iceberg-js\\LICENSE"
+  },
+  "isexe@2.0.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/isexe",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me/",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\isexe",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\isexe\\LICENSE"
+  },
+  "jiti@2.6.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/unjs/jiti",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\jiti",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\jiti\\LICENSE"
+  },
+  "lightningcss-win32-x64-msvc@1.30.2": {
+    "licenses": "MPL-2.0",
+    "repository": "https://github.com/parcel-bundler/lightningcss",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\lightningcss-win32-x64-msvc",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\lightningcss-win32-x64-msvc\\LICENSE"
+  },
+  "lightningcss@1.30.2": {
+    "licenses": "MPL-2.0",
+    "repository": "https://github.com/parcel-bundler/lightningcss",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\lightningcss",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\lightningcss\\LICENSE"
+  },
+  "lucide-react@0.556.0": {
+    "licenses": "ISC",
+    "repository": "https://github.com/lucide-icons/lucide",
+    "publisher": "Eric Fennis",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\lucide-react",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\lucide-react\\LICENSE"
+  },
+  "magic-string@0.30.21": {
+    "licenses": "MIT",
+    "repository": "https://github.com/Rich-Harris/magic-string",
+    "publisher": "Rich Harris",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\magic-string",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\magic-string\\LICENSE"
+  },
+  "motion-dom@12.23.23": {
+    "licenses": "MIT",
+    "repository": "https://github.com/motiondivision/motion",
+    "publisher": "Matt Perry",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\motion-dom",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\motion-dom\\LICENSE.md"
+  },
+  "motion-utils@12.23.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/motiondivision/motion",
+    "publisher": "Matt Perry",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\motion-utils",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\motion-utils\\LICENSE.md"
+  },
+  "nanoid@3.3.11": {
+    "licenses": "MIT",
+    "repository": "https://github.com/ai/nanoid",
+    "publisher": "Andrey Sitnik",
+    "email": "andrey@sitnik.ru",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\nanoid",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\nanoid\\LICENSE"
+  },
+  "next-themes@0.4.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/pacocoursey/next-themes",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\next-themes",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\next-themes\\license.md"
+  },
+  "next@16.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vercel/next.js",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\next",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\next\\license.md"
+  },
+  "path-key@3.1.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/path-key",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\path-key",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\path-key\\license"
+  },
+  "picocolors@1.1.1": {
+    "licenses": "ISC",
+    "repository": "https://github.com/alexeyraspopov/picocolors",
+    "publisher": "Alexey Raspopov",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\picocolors",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\picocolors\\LICENSE"
+  },
+  "postcss@8.4.31": {
+    "licenses": "MIT",
+    "repository": "https://github.com/postcss/postcss",
+    "publisher": "Andrey Sitnik",
+    "email": "andrey@sitnik.ru",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\next\\node_modules\\postcss",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\next\\node_modules\\postcss\\LICENSE"
+  },
+  "postcss@8.5.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/postcss/postcss",
+    "publisher": "Andrey Sitnik",
+    "email": "andrey@sitnik.ru",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\postcss",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\postcss\\LICENSE"
+  },
+  "posthog-js@1.302.2": {
+    "licenses": "MIT*",
+    "repository": "https://github.com/PostHog/posthog-js",
+    "publisher": "hey@posthog.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\posthog-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\posthog-js\\LICENSE"
+  },
+  "posthog-node@5.17.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/PostHog/posthog-js",
+    "publisher": "PostHog",
+    "email": "hey@posthog.com",
+    "url": "https://posthog.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\posthog-node",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\posthog-node\\LICENSE"
+  },
+  "preact@10.28.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/preactjs/preact",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\preact",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\preact\\LICENSE"
+  },
+  "react-dom@19.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react-dom",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react-dom\\LICENSE"
+  },
+  "react-remove-scroll-bar@2.3.8": {
+    "licenses": "MIT",
+    "repository": "https://github.com/theKashey/react-remove-scroll-bar",
+    "publisher": "Anton Korzunov",
+    "email": "thekashey@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react-remove-scroll-bar",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react-remove-scroll-bar\\README.md"
+  },
+  "react-remove-scroll@2.7.2": {
+    "licenses": "MIT",
+    "repository": "https://github.com/theKashey/react-remove-scroll",
+    "publisher": "Anton Korzunov",
+    "email": "thekashey@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react-remove-scroll",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react-remove-scroll\\LICENSE"
+  },
+  "react-style-singleton@2.2.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/theKashey/react-style-singleton",
+    "publisher": "Anton Korzunov",
+    "url": "thekashey@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react-style-singleton",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react-style-singleton\\LICENSE"
+  },
+  "react@19.2.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\react\\LICENSE"
+  },
+  "scheduler@0.27.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/facebook/react",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\scheduler",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\scheduler\\LICENSE"
+  },
+  "semver@7.7.3": {
+    "licenses": "ISC",
+    "repository": "https://github.com/npm/node-semver",
+    "publisher": "GitHub Inc.",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\sharp\\node_modules\\semver",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\sharp\\node_modules\\semver\\LICENSE"
+  },
+  "sharp@0.34.5": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/lovell/sharp",
+    "publisher": "Lovell Fuller",
+    "email": "npm@lovell.info",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\sharp",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\sharp\\LICENSE"
+  },
+  "shebang-command@2.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/kevva/shebang-command",
+    "publisher": "Kevin Mårtensson",
+    "email": "kevinmartensson@gmail.com",
+    "url": "github.com/kevva",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\shebang-command",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\shebang-command\\license"
+  },
+  "shebang-regex@3.0.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/sindresorhus/shebang-regex",
+    "publisher": "Sindre Sorhus",
+    "email": "sindresorhus@gmail.com",
+    "url": "sindresorhus.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\shebang-regex",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\shebang-regex\\license"
+  },
+  "sonner@2.0.7": {
+    "licenses": "MIT",
+    "repository": "https://github.com/emilkowalski/sonner",
+    "publisher": "Emil Kowalski",
+    "email": "e@emilkowal.ski",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\sonner",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\sonner\\LICENSE.md"
+  },
+  "source-map-js@1.2.1": {
+    "licenses": "BSD-3-Clause",
+    "repository": "https://github.com/7rulnik/source-map-js",
+    "publisher": "Valentin 7rulnik Semirulnik",
+    "email": "v7rulnik@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\source-map-js",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\source-map-js\\LICENSE"
+  },
+  "styled-jsx@5.1.6": {
+    "licenses": "MIT",
+    "repository": "https://github.com/vercel/styled-jsx",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\styled-jsx",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\styled-jsx\\license.md"
+  },
+  "tailwind-merge@3.4.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/dcastil/tailwind-merge",
+    "publisher": "Dany Castillo",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tailwind-merge",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tailwind-merge\\LICENSE.md"
+  },
+  "tailwindcss-animate@1.0.7": {
+    "licenses": "MIT",
+    "publisher": "Jamie Kyle",
+    "email": "me@thejameskyle.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tailwindcss-animate",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tailwindcss-animate\\LICENSE"
+  },
+  "tailwindcss@4.1.17": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tailwindlabs/tailwindcss",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tailwindcss",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tailwindcss\\LICENSE"
+  },
+  "tapable@2.3.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/webpack/tapable",
+    "publisher": "Tobias Koppers @sokra",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tapable",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tapable\\LICENSE"
+  },
+  "tslib@2.8.1": {
+    "licenses": "0BSD",
+    "repository": "https://github.com/Microsoft/tslib",
+    "publisher": "Microsoft Corp.",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tslib",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tslib\\LICENSE.txt"
+  },
+  "tsparticles@3.9.1": {
+    "licenses": "MIT",
+    "repository": "https://github.com/tsparticles/tsparticles",
+    "publisher": "Matteo Bruni",
+    "email": "matteo.bruni@me.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tsparticles",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\tsparticles\\LICENSE"
+  },
+  "uncrypto@0.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/unjs/uncrypto",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\uncrypto",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\uncrypto\\LICENSE"
+  },
+  "undici-types@7.16.0": {
+    "licenses": "MIT",
+    "repository": "https://github.com/nodejs/undici",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\undici-types",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\undici-types\\LICENSE"
+  },
+  "use-callback-ref@1.3.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/theKashey/use-callback-ref",
+    "publisher": "theKashey",
+    "email": "thekashey@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\use-callback-ref",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\use-callback-ref\\LICENSE"
+  },
+  "use-sidecar@1.1.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/theKashey/use-sidecar",
+    "publisher": "theKashey",
+    "email": "thekashey@gmail.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\use-sidecar",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\use-sidecar\\LICENSE"
+  },
+  "web-vitals@4.2.4": {
+    "licenses": "Apache-2.0",
+    "repository": "https://github.com/GoogleChrome/web-vitals",
+    "publisher": "Philip Walton",
+    "email": "philip@philipwalton.com",
+    "url": "http://philipwalton.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\web-vitals",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\web-vitals\\LICENSE"
+  },
+  "which@2.0.2": {
+    "licenses": "ISC",
+    "repository": "https://github.com/isaacs/node-which",
+    "publisher": "Isaac Z. Schlueter",
+    "email": "i@izs.me",
+    "url": "http://blog.izs.me",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\which",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\which\\LICENSE"
+  },
+  "ws@8.18.3": {
+    "licenses": "MIT",
+    "repository": "https://github.com/websockets/ws",
+    "publisher": "Einar Otto Stangvik",
+    "email": "einaros@gmail.com",
+    "url": "http://2x.io",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\ws",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\ws\\LICENSE"
+  },
+  "zod@4.1.13": {
+    "licenses": "MIT",
+    "repository": "https://github.com/colinhacks/zod",
+    "publisher": "Colin McDonnell",
+    "email": "zod@colinhacks.com",
+    "path": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\zod",
+    "licenseFile": "C:\\Users\\Bluejutzu\\AdvantisGroup\\advantis-group\\node_modules\\zod\\LICENSE"
+  }
+}
