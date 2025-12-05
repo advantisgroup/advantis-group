@@ -1,6 +1,8 @@
 'use client'
 
-import { TrendingUp, Zap, Target } from 'lucide-react'
+import React, { useState } from 'react'
+
+import { TrendingUp, Zap, Target, Sparkles } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -11,51 +13,107 @@ interface HomeFeaturesProps {
 }
 
 export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
+    const [hoveredCard, setHoveredCard] = useState<number | null>(null)
+    const [shinePosition, setShinePosition] = useState({ x: 0, y: 0 })
+
     const features = [
         {
             icon: TrendingUp,
             title: 'Sales-Teams erfolgreich machen',
             desc: 'Durch gezielte Strategien und praxisnahe Unterstützung helfen wir Ihren Teams, ihre Ziele zu erreichen und nachhaltig zu wachsen.',
+            gradient: 'from-orange-500/20 to-red-500/20',
+            iconBg: 'bg-orange-500/10',
+            iconBorder: 'border-orange-500/30',
+            glowColor: 'shadow-orange-500/20',
         },
         {
             icon: Zap,
             title: 'Vertrieb smarter gestalten',
             desc: 'Mit modernen Tools und bewährten Methoden optimieren wir Ihre Vertriebsprozesse für maximale Effizienz.',
+            gradient: 'from-primary/20 to-purple-500/20',
+            iconBg: 'bg-primary/10',
+            iconBorder: 'border-primary/30',
+            glowColor: 'shadow-primary/20',
         },
         {
             icon: Target,
             title: 'Nachhaltige Ergebnisse liefern',
             desc: 'Über 15 Jahre Erfahrung gepaart mit innovativen Ansätzen für langfristigen Erfolg, der überzeugt.',
+            gradient: 'from-blue-500/20 to-cyan-500/20',
+            iconBg: 'bg-blue-500/10',
+            iconBorder: 'border-blue-500/30',
+            glowColor: 'shadow-blue-500/20',
         },
     ]
 
+    const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>, idx: number) => {
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = ((e.clientX - rect.left) / rect.width) * 100
+        const y = ((e.clientY - rect.top) / rect.height) * 100
+        setShinePosition({ x, y })
+        setHoveredCard(idx)
+    }
+
+    const handleMouseLeave = () => {
+        setHoveredCard(null)
+    }
+
     return (
         <section className="relative py-32 overflow-hidden">
-            {/* Background with smooth blend */}
-            <div className="absolute inset-0 bg-linear-to-b from-background via-background to-transparent" />
-            <div className="absolute inset-0 dot-pattern opacity-20" />
+            {/* Animated background elements */}
+            <div className="absolute inset-0 bg-linear-to-b from-background via-background/95 to-background" />
+
+            {/* Floating orbs */}
+            <div className="absolute top-20 right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
+            <div className="absolute bottom-20 left-[15%] w-96 h-96 bg-orange-500/5 rounded-full blur-3xl animate-pulse-slower" />
+
+            {/* Subtle grid pattern */}
+            <div className="absolute inset-0 dot-pattern opacity-10" />
 
             <div className="container mx-auto px-4 relative z-10">
-                <div className="max-w-6xl mx-auto space-y-16">
+                <div className="max-w-7xl mx-auto space-y-20">
                     {/* Header */}
                     <div
                         className={cn(
-                            'text-center space-y-4 opacity-0 -translate-y-8 transition-all duration-1000',
+                            'text-center space-y-6 opacity-0 -translate-y-8 transition-all duration-1000',
                             isVisible && 'opacity-100 translate-y-0'
                         )}
                     >
-                        <h2 className="text-4xl md:text-6xl font-bold">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
+                            <Sparkles className="w-4 h-4" />
+                            <span>Unsere Stärken</span>
+                        </div>
+                        <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
                             Warum <BrandText brand="advantis">Advantis Group</BrandText>?
                         </h2>
-                        <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-                            Wir kombinieren Erfahrung, Innovation und Leidenschaft
+                        <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                            Wir kombinieren über 15 Jahre Erfahrung mit innovativen Ansätzen, um Ihren Vertrieb auf das
+                            nächste Level zu bringen.
                         </p>
                     </div>
 
-                    {/* Feature Cards */}
-                    <div className="grid md:grid-cols-3 gap-8">
+                    {/* Feature Cards - Bento Grid Style */}
+                    <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
                         {features.map((feature, idx) => {
                             const Icon = feature.icon
+                            const isHovered = hoveredCard === idx
+
+                            // Calculate shine direction based on mouse entry point
+                            const getShineTransform = () => {
+                                if (!isHovered) return '-translate-x-full'
+
+                                // Determine direction based on mouse position
+                                const { x } = shinePosition
+
+                                // If mouse enters from left side
+                                if (x < 50) {
+                                    return 'translate-x-full'
+                                }
+                                // If mouse enters from right side
+                                else {
+                                    return '-translate-x-full'
+                                }
+                            }
 
                             return (
                                 <div
@@ -66,29 +124,140 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                                     )}
                                     style={{ transitionDelay: `${200 + idx * 150}ms` }}
                                 >
-                                    <div className="group relative h-full p-8 rounded-2xl bg-card/40 backdrop-blur-xl border-2 border-border/50 hover:border-primary/50 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-primary/10">
-                                        {/* Glow effect */}
-                                        <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl" />
+                                    <div
+                                        className="group relative h-full"
+                                        onMouseEnter={(e) => handleMouseEnter(e, idx)}
+                                        onMouseLeave={handleMouseLeave}
+                                    >
+                                        {/* Card */}
+                                        <div
+                                            className={cn(
+                                                'relative h-full p-8 rounded-3xl bg-card/50 backdrop-blur-sm border border-border/50',
+                                                'hover:border-primary/50 transition-all duration-500',
+                                                'hover:scale-[1.02] hover:shadow-2xl',
+                                                feature.glowColor
+                                            )}
+                                        >
+                                            {/* Gradient overlay */}
+                                            <div
+                                                className={cn(
+                                                    'absolute inset-0 bg-linear-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl',
+                                                    feature.gradient
+                                                )}
+                                            />
 
-                                        <div className="relative space-y-4">
-                                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary/10 border border-primary/20 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-                                                <Icon className="w-8 h-8 text-primary" />
+                                            {/* Shine effect on hover */}
+                                            <div className="absolute inset-0 rounded-3xl overflow-hidden">
+                                                <div
+                                                    className={cn(
+                                                        'absolute inset-0 transition-transform duration-1000 bg-linear-to-r from-transparent via-white/10 to-transparent',
+                                                        getShineTransform()
+                                                    )}
+                                                />
                                             </div>
-                                            <h3 className="text-2xl font-bold leading-tight">{feature.title}</h3>
-                                            <p className="text-base text-muted-foreground leading-relaxed">
-                                                {feature.desc}
-                                            </p>
+
+                                            <div className="relative space-y-6">
+                                                {/* Icon */}
+                                                <div
+                                                    className={cn(
+                                                        'inline-flex items-center justify-center w-16 h-16 rounded-2xl border',
+                                                        'group-hover:scale-110 group-hover:rotate-3 transition-all duration-300',
+                                                        feature.iconBg,
+                                                        feature.iconBorder
+                                                    )}
+                                                >
+                                                    <Icon className="w-8 h-8 text-primary" />
+                                                </div>
+
+                                                {/* Content */}
+                                                <div className="space-y-3">
+                                                    <h3 className="text-2xl font-bold leading-tight">
+                                                        {feature.title}
+                                                    </h3>
+                                                    <p className="text-muted-foreground leading-relaxed">
+                                                        {feature.desc}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Floating number badge */}
+                                        <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-sm font-bold text-primary backdrop-blur-sm">
+                                            {idx + 1}
                                         </div>
                                     </div>
                                 </div>
                             )
                         })}
                     </div>
+
+                    {/* Bottom stats or CTA */}
+                    <div
+                        className={cn(
+                            'flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-0 translate-y-8 transition-all duration-1000 delay-700',
+                            isVisible && 'opacity-100 translate-y-0'
+                        )}
+                    >
+                        <div className="text-center space-y-1">
+                            <div className="text-4xl md:text-5xl font-bold text-primary">15+</div>
+                            <div className="text-sm text-muted-foreground">Jahre Erfahrung</div>
+                        </div>
+                        <div className="hidden md:block w-px h-12 bg-border" />
+                        <div className="text-center space-y-1">
+                            <div className="text-4xl md:text-5xl font-bold text-primary">4</div>
+                            <div className="text-sm text-muted-foreground">Marken</div>
+                        </div>
+                        <div className="hidden md:block w-px h-12 bg-border" />
+                        <div className="text-center space-y-1">
+                            <div className="text-4xl md:text-5xl font-bold text-primary">500</div>
+                            <div className="text-sm text-muted-foreground">Erfolgreiche Projekte</div>
+                        </div>
+                        <div className="hidden md:block w-px h-12 bg-border" />
+                        <div className="text-center space-y-1">
+                            <div className="text-4xl md:text-5xl font-bold text-primary">100%</div>
+                            <div className="text-sm text-muted-foreground">Leidenschaft</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Bottom blend to next section */}
-            <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-b from-transparent to-background/50 pointer-events-none" />
+            {/* Bottom gradient blend */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-b from-transparent to-background pointer-events-none" />
+
+            {/* CSS for custom animations */}
+            <style jsx>{`
+                @keyframes pulse-slow {
+                    0%,
+                    100% {
+                        opacity: 0.3;
+                        transform: scale(1);
+                    }
+                    50% {
+                        opacity: 0.5;
+                        transform: scale(1.1);
+                    }
+                }
+
+                @keyframes pulse-slower {
+                    0%,
+                    100% {
+                        opacity: 0.2;
+                        transform: scale(1);
+                    }
+                    50% {
+                        opacity: 0.4;
+                        transform: scale(1.15);
+                    }
+                }
+
+                .animate-pulse-slow {
+                    animation: pulse-slow 8s ease-in-out infinite;
+                }
+
+                .animate-pulse-slower {
+                    animation: pulse-slower 12s ease-in-out infinite;
+                }
+            `}</style>
         </section>
     )
 }

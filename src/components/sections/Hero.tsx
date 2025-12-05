@@ -8,7 +8,6 @@ import { useIsMobile } from '@/hooks/use-mobile'
 
 import { BrandText } from '../effects/BrandText'
 import GradientBackground from '../effects/GradientBackground'
-import { ShapeParticles } from '../effects/ShapeParticles'
 import { SectionDivider } from '../layout/SectionDivider'
 import { Button } from '../ui/button'
 
@@ -22,21 +21,6 @@ export const Hero = () => {
 
                 {/* Smooth fade-out at bottom for seamless transition */}
                 <div className="absolute bottom-0 left-0 right-0 h-64 bg-linear-to-b from-transparent via-background/60 to-background pointer-events-none" />
-            </div>
-
-            {/* Enhanced Shape Particles - More particles for richer effect */}
-            <div className="absolute inset-0 -z-5">
-                <ShapeParticles
-                    shape="diamond"
-                    particleCount={180}
-                    className="w-full h-full opacity-70"
-                    // More fluid physics
-                    interactionRadius={200}
-                    repelForce={1.8}
-                    returnForce={0.018}
-                    damping={0.86}
-                    maxVelocity={12}
-                />
             </div>
 
             {/* Additional decorative floating elements */}
@@ -59,7 +43,7 @@ export const Hero = () => {
                 }}
             />
 
-            <div className="container mx-auto px-4 w-full relative z-10 -top-[10vh]">
+            <div className="container mx-auto px-4 w-full relative z-10 -top-[3vh]">
                 <div className="md:max-w-7xl max-w-full mx-auto text-center space-y-6">
                     <div className="space-y-2">
                         <div className="inline-flex group items-center gap-2 px-3 py-1 rounded-3xl border border-border bg-background/50 text-sm backdrop-blur-sm">

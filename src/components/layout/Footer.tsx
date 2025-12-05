@@ -213,6 +213,12 @@ export const Footer = () => {
                                 >
                                     Datenschutz
                                 </Link>
+                                <Link
+                                    href="/lizenzen"
+                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    Lizenzen
+                                </Link>
                             </div>
                         </div>
                     </div>

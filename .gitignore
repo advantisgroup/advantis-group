@@ -51,3 +51,5 @@ next-env.d.ts
 .idx
 
 .env.local
+
+/public/licenses.json

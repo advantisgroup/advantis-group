@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { TrendingUp, Zap, BookOpen, Brain, ArrowRight, ExternalLink, Sparkles, ChevronDown } from 'lucide-react'
 
 import { BrandText } from '@/components/effects/BrandText'
-import GradientBackground from '@/components/effects/GradientBackground'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -104,12 +103,6 @@ export default function UnsereMarken() {
         <div className="min-h-screen bg-background">
             {/* Immersive Hero Section */}
             <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-                {/* Animated gradient background */}
-                <div className="absolute inset-0 -z-10">
-                    <GradientBackground backdropBlurAmount="xl" className="h-full w-full opacity-50" />
-                    <div className="absolute inset-0 bg-linear-to-b from-transparent via-background/20 to-background" />
-                </div>
-
                 {/* Large floating orbs */}
                 <div className="absolute top-20 left-[10%] w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
                 <div
