@@ -41,11 +41,11 @@ export const metadata: Metadata = {
     ],
     authors: [{ name: 'Advantis Group GmbH' }],
     creator: 'Advantis Group GmbH',
-    metadataBase: new URL('https://advantis-group.de'),
+    metadataBase: new URL('https://advantisgroup.de'),
     openGraph: {
         type: 'website',
         locale: 'de_DE',
-        url: 'https://advantis-group.de',
+        url: 'https://advantisgroup.de',
         title: 'Advantis Group GmbH',
         description:
             'Ganzheitliche Sales Power: von Marketingstrategie und Leadgenerierung über Akquise Support, Sales Trainings bis hin zur Implementierung von KI-Tools.',
