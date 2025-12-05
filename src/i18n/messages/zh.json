@@ -1,0 +1,81 @@
+{
+    "nav": {
+        "home": "主页",
+        "brands": "我们的品牌",
+        "about": "关于我们",
+        "team": "团队",
+        "contact": "联系方式",
+        "privacy": "隐私政策",
+        "imprint": "版权信息",
+        "licenses": "许可证"
+    },
+    "hero": {
+        "badge": "Advantis Group",
+        "title": "不仅仅是一家公司，完整的",
+        "titleHighlight": "销售力量",
+        "subtitle": "我们将您的销售提升到新的水平！",
+        "ctaPrimary": "立即联系我们",
+        "ctaSecondary": "探索我们的品牌"
+    },
+    "features": {
+        "badge": "我们的优势",
+        "title": "为什么选择",
+        "titleBrand": "Advantis Group",
+        "subtitle": "我们结合超过15年的经验和创新方法，将您的销售提升到新的水平。",
+        "feature1": {
+            "title": "让销售团队成功",
+            "description": "通过有针对性的策略和实用的支持，我们帮助您的团队实现目标并可持续增长。"
+        },
+        "feature2": {
+            "title": "让销售更智能",
+            "description": "通过现代工具和经过验证的方法，我们优化您的销售流程以实现最高效率。"
+        },
+        "feature3": {
+            "title": "提供可持续的结果",
+            "description": "超过15年的经验与创新方法相结合，实现令人信服的长期成功。"
+        },
+        "stats": {
+            "experience": "年经验",
+            "brands": "品牌",
+            "projects": "成功项目",
+            "passion": "热情"
+        }
+    },
+    "brands": {
+        "title": "我们的",
+        "titleHighlight": "品牌",
+        "subtitle": "四个强大的品牌，一个共同的目标：您的销售成功",
+        "salespirates": {
+            "tagline": "外部销售代理",
+            "description": "我们提供销售线索或以可衡量的结果支持您的销售。积极、有针对性和有效。"
+        },
+        "rodeo": {
+            "tagline": "战略咨询",
+            "description": "销售就像狂野西部。我们重新调整您的销售，使其可扩展，并以高效率实现增长。"
+        },
+        "oldschool": {
+            "tagline": "真实的培训",
+            "description": "真正有效的销售辅导。经验、同理心和实际实践与现代学习方法相结合。"
+        },
+        "salesai": {
+            "tagline": "销售人工智能",
+            "description": "我们展示哪些AI工具对销售真正有意义，以及如何让您的销售更智能。"
+        },
+        "cta": "探索所有品牌"
+    },
+    "cta": {
+        "title": "准备好迎接下一个",
+        "titleHighlight": "水平？",
+        "subtitle": "让我们一起找出如何转型您的销售。",
+        "primary": "立即联系我们",
+        "secondary": "发送电子邮件",
+        "benefits": "免费初次咨询 • 无义务 • 个性化解决方案"
+    },
+    "footer": {
+        "description": "我们是您成功销售的合作伙伴。凭借超过15年的经验和四个强大的品牌，我们推动您的业务向前发展。",
+        "quickLinks": "快速链接",
+        "legal": "法律信息",
+        "followUs": "关注我们",
+        "copyright": "版权所有。"
+    }
+}

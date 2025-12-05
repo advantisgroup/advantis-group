@@ -1,0 +1,81 @@
+{
+    "nav": {
+        "home": "Accueil",
+        "brands": "Nos Marques",
+        "about": "À Propos",
+        "team": "Équipe",
+        "contact": "Contact",
+        "privacy": "Politique de Confidentialité",
+        "imprint": "Mentions Légales",
+        "licenses": "Licences"
+    },
+    "hero": {
+        "badge": "Advantis Group",
+        "title": "Plus qu'une entreprise, une",
+        "titleHighlight": "Puissance Commerciale",
+        "subtitle": "Nous portons vos ventes au niveau supérieur !",
+        "ctaPrimary": "Contactez-nous Maintenant",
+        "ctaSecondary": "Découvrir Nos Marques"
+    },
+    "features": {
+        "badge": "Nos Forces",
+        "title": "Pourquoi",
+        "titleBrand": "Advantis Group",
+        "subtitle": "Nous combinons plus de 15 ans d'expérience avec des approches innovantes pour porter vos ventes au niveau supérieur.",
+        "feature1": {
+            "title": "Rendre les Équipes Commerciales Performantes",
+            "description": "Grâce à des stratégies ciblées et un soutien pratique, nous aidons vos équipes à atteindre leurs objectifs et à croître durablement."
+        },
+        "feature2": {
+            "title": "Rendre les Ventes Plus Intelligentes",
+            "description": "Avec des outils modernes et des méthodes éprouvées, nous optimisons vos processus de vente pour une efficacité maximale."
+        },
+        "feature3": {
+            "title": "Fournir des Résultats Durables",
+            "description": "Plus de 15 ans d'expérience combinés à des approches innovantes pour un succès à long terme qui convainc."
+        },
+        "stats": {
+            "experience": "Années d'Expérience",
+            "brands": "Marques",
+            "projects": "Projets Réussis",
+            "passion": "Passion"
+        }
+    },
+    "brands": {
+        "title": "Nos",
+        "titleHighlight": "Marques",
+        "subtitle": "Quatre marques fortes, un objectif commun : Votre succès commercial",
+        "salespirates": {
+            "tagline": "Agence de Vente Externe",
+            "description": "Nous fournissons des leads ou soutenons vos ventes avec des résultats mesurables. Actif, ciblé et efficace."
+        },
+        "rodeo": {
+            "tagline": "Conseil Stratégique",
+            "description": "La vente, c'est le Far West. Nous réalignons vos ventes, les rendons évolutives et conduisons à la croissance avec efficacité."
+        },
+        "oldschool": {
+            "tagline": "Formations Authentiques",
+            "description": "Coaching commercial qui fait vraiment la différence. L'expérience, l'empathie et la pratique réelle rencontrent des méthodes d'apprentissage modernes."
+        },
+        "salesai": {
+            "tagline": "IA pour les Ventes",
+            "description": "Nous montrons quels outils d'IA ont vraiment du sens pour les ventes et comment rendre vos ventes plus intelligentes."
+        },
+        "cta": "Découvrir Toutes les Marques"
+    },
+    "cta": {
+        "title": "Prêt pour le prochain",
+        "titleHighlight": "Niveau ?",
+        "subtitle": "Découvrons ensemble comment nous pouvons transformer vos ventes.",
+        "primary": "Contactez-nous Maintenant",
+        "secondary": "Envoyer un E-mail",
+        "benefits": "Consultation Initiale Gratuite • Sans Engagement • Solutions Individuelles"
+    },
+    "footer": {
+        "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et quatre marques fortes, nous faisons avancer votre entreprise.",
+        "quickLinks": "Liens Rapides",
+        "legal": "Mentions Légales",
+        "followUs": "Suivez-nous",
+        "copyright": "Tous droits réservés."
+    }
+}

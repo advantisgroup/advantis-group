@@ -1,11 +1,11 @@
 'use client'
 
-import Link from 'next/link'
-
 import { ArrowRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
 import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
 interface HomeBrandsProps {
@@ -13,37 +13,35 @@ interface HomeBrandsProps {
 }
 
 export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
+    const t = useTranslations('brands')
+
     const brands = [
         {
             name: 'Salespirates',
             brand: 'salespirates' as const,
-            tagline: 'Externe Vertriebsagentur',
-            description:
-                'Wir liefern Leads oder unterstützen Ihren Vertrieb mit messbaren Ergebnissen. Aktiv, zielgerichtet und effektiv.',
+            tagline: t('salespirates.tagline'),
+            description: t('salespirates.description'),
             brandColor: 'text-salespirates',
         },
         {
             name: 'Rodeo-Consulting',
             brand: 'rodeo' as const,
-            tagline: 'Strategische Beratung',
-            description:
-                'Sales ist Wild West. Wir richten Ihren Vertrieb neu aus, machen ihn skalierbar und führen mit Effizienz zum Wachstum.',
+            tagline: t('rodeo.tagline'),
+            description: t('rodeo.description'),
             brandColor: 'text-rodeo',
         },
         {
             name: 'Oldschool-train',
             brand: 'oldschool-train' as const,
-            tagline: 'Authentische Trainings',
-            description:
-                'Sales-Coachings die wirklich weiterbringen. Erfahrung, Empathie und echte Praxis treffen auf moderne Lernmethoden.',
+            tagline: t('oldschool.tagline'),
+            description: t('oldschool.description'),
             brandColor: 'text-oldschool',
         },
         {
             name: 'Sales-AI-Germany',
             brand: 'sales-ai-germany' as const,
-            tagline: 'KI für den Vertrieb',
-            description:
-                'Wir zeigen, welche KI-Tools für Sales wirklich Sinn machen und wie Sie Ihren Vertrieb smarter gestalten.',
+            tagline: t('salesai.tagline'),
+            description: t('salesai.description'),
             brandColor: 'text-sales-ai',
         },
     ]
@@ -67,11 +65,9 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                         )}
                     >
                         <h2 className="text-5xl md:text-7xl font-bold tracking-tight">
-                            Unsere <span className="text-primary">Marken</span>
+                            {t('title')} <span className="text-primary">{t('titleHighlight')}</span>
                         </h2>
-                        <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-                            Vier starke Marken, ein gemeinsames Ziel: Ihr Vertriebserfolg
-                        </p>
+                        <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">{t('subtitle')}</p>
                     </div>
 
                     {/* Brand Grid */}
@@ -125,7 +121,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                     >
                         <Button asChild size="lg" variant="outline" className="group">
                             <Link href="/unsere-marken">
-                                Alle Marken entdecken
+                                {t('cta')}
                                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                             </Link>
                         </Button>

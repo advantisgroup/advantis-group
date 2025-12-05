@@ -5,10 +5,9 @@ import { Outfit, Manrope } from 'next/font/google'
 import { type Metadata } from 'next'
 
 import './global.css'
-import { Footer } from '@/components/layout/Footer'
-import { Header } from '@/components/layout/Header'
 import { ThemeProvider } from '@/components/theme/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
+
 const outfit = Outfit({
     subsets: ['latin'],
     variable: '--font-outfit',
@@ -37,13 +36,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="de" suppressHydrationWarning>
+        <html suppressHydrationWarning>
             <body className={`bg-background antialiased scroll-smooth ${manrope.variable} ${outfit.variable}`}>
                 <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                    <Header />
                     {children}
                     <Toaster />
-                    <Footer />
                 </ThemeProvider>
             </body>
         </html>

@@ -2,14 +2,20 @@
 
 import React from 'react'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
+import { useTranslations } from 'next-intl'
+
 import { useIsMobile } from '@/hooks/use-mobile'
+import { Link } from '@/i18n/navigation'
+
+import { LanguageSwitcher } from './LanguageSwitcher'
+import { ModeToggle } from '../theme/theme-toggle'
 
 export const Header = () => {
     const pathname = usePathname()
     const isMobile = useIsMobile()
+    const t = useTranslations('nav')
 
     const [isScrolled, setIsScrolled] = React.useState(false)
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
@@ -36,19 +42,19 @@ export const Header = () => {
 
     const navLinks = [
         {
-            label: 'Über uns',
+            label: t('about'),
             path: '/uber-uns',
         },
         {
-            label: 'Unsere Marken',
+            label: t('brands'),
             path: '/unsere-marken',
         },
         {
-            label: 'Team',
+            label: t('team'),
             path: '/team',
         },
         {
-            label: 'Kontakt',
+            label: t('contact'),
             path: '/kontakt',
         },
     ]
@@ -125,30 +131,34 @@ export const Header = () => {
                         </Link>
                     )}
 
-                    <ul className="hidden md:flex items-center gap-6 text-sm">
-                        {navLinks.map((link, i) => (
-                            <li key={`${link.label}_${i}`}>
-                                <Link
-                                    href={link.path}
-                                    className={`relative transition-colors group/link ${
-                                        pathname === link.path
-                                            ? 'text-foreground'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                >
-                                    <span className="relative z-10">{link.label}</span>
-                                    {/* Animated underline */}
-                                    <span
-                                        className={`absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
-                                            pathname === link.path ? 'w-full' : 'w-0 group-hover/link:w-full'
+                    <div className="hidden md:flex items-center gap-4">
+                        <ul className="flex items-center gap-6 text-sm">
+                            {navLinks.map((link, i) => (
+                                <li key={`${link.label}_${i}`}>
+                                    <Link
+                                        href={link.path}
+                                        className={`relative transition-colors group/link ${
+                                            pathname === link.path
+                                                ? 'text-foreground'
+                                                : 'text-muted-foreground hover:text-foreground'
                                         }`}
-                                    />
-                                    {/* Subtle glow on hover */}
-                                    <span className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 blur-sm bg-advantis/5" />
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
+                                    >
+                                        <span className="relative z-10">{link.label}</span>
+                                        {/* Animated underline */}
+                                        <span
+                                            className={`absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
+                                                pathname === link.path ? 'w-full' : 'w-0 group-hover/link:w-full'
+                                            }`}
+                                        />
+                                        {/* Subtle glow on hover */}
+                                        <span className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 blur-sm bg-advantis/5" />
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                        <LanguageSwitcher />
+                        <ModeToggle />
+                    </div>
 
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

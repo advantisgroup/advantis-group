@@ -1,0 +1,81 @@
+{
+    "nav": {
+        "home": "Startseite",
+        "brands": "Unsere Marken",
+        "about": "Über Uns",
+        "team": "Team",
+        "contact": "Kontakt",
+        "privacy": "Datenschutz",
+        "imprint": "Impressum",
+        "licenses": "Lizenzen"
+    },
+    "hero": {
+        "badge": "Advantis Group",
+        "title": "Mehr als ein Unternehmen, komplette",
+        "titleHighlight": "Sales Power",
+        "subtitle": "Wir bringen Ihren Vertrieb auf das nächste Level!",
+        "ctaPrimary": "Jetzt Kontakt aufnehmen",
+        "ctaSecondary": "Unsere Marken entdecken"
+    },
+    "features": {
+        "badge": "Unsere Stärken",
+        "title": "Warum",
+        "titleBrand": "Advantis Group",
+        "subtitle": "Wir kombinieren über 15 Jahre Erfahrung mit innovativen Ansätzen, um Ihren Vertrieb auf das nächste Level zu bringen.",
+        "feature1": {
+            "title": "Sales-Teams erfolgreich machen",
+            "description": "Durch gezielte Strategien und praxisnahe Unterstützung helfen wir Ihren Teams, ihre Ziele zu erreichen und nachhaltig zu wachsen."
+        },
+        "feature2": {
+            "title": "Vertrieb smarter gestalten",
+            "description": "Mit modernen Tools und bewährten Methoden optimieren wir Ihre Vertriebsprozesse für maximale Effizienz."
+        },
+        "feature3": {
+            "title": "Nachhaltige Ergebnisse liefern",
+            "description": "Über 15 Jahre Erfahrung gepaart mit innovativen Ansätzen für langfristigen Erfolg, der überzeugt."
+        },
+        "stats": {
+            "experience": "Jahre Erfahrung",
+            "brands": "Marken",
+            "projects": "Erfolgreiche Projekte",
+            "passion": "Leidenschaft"
+        }
+    },
+    "brands": {
+        "title": "Unsere",
+        "titleHighlight": "Marken",
+        "subtitle": "Vier starke Marken, ein gemeinsames Ziel: Ihr Vertriebserfolg",
+        "salespirates": {
+            "tagline": "Externe Vertriebsagentur",
+            "description": "Wir liefern Leads oder unterstützen Ihren Vertrieb mit messbaren Ergebnissen. Aktiv, zielgerichtet und effektiv."
+        },
+        "rodeo": {
+            "tagline": "Strategische Beratung",
+            "description": "Sales ist Wild West. Wir richten Ihren Vertrieb neu aus, machen ihn skalierbar und führen mit Effizienz zum Wachstum."
+        },
+        "oldschool": {
+            "tagline": "Authentische Trainings",
+            "description": "Sales-Coachings die wirklich weiterbringen. Erfahrung, Empathie und echte Praxis treffen auf moderne Lernmethoden."
+        },
+        "salesai": {
+            "tagline": "KI für den Vertrieb",
+            "description": "Wir zeigen, welche KI-Tools für Sales wirklich Sinn machen und wie Sie Ihren Vertrieb smarter gestalten."
+        },
+        "cta": "Alle Marken entdecken"
+    },
+    "cta": {
+        "title": "Bereit für das nächste",
+        "titleHighlight": "Level?",
+        "subtitle": "Lassen Sie uns gemeinsam herausfinden, wie wir Ihren Vertrieb transformieren können.",
+        "primary": "Jetzt Kontakt aufnehmen",
+        "secondary": "E-Mail schreiben",
+        "benefits": "Kostenlose Erstberatung • Keine Verpflichtungen • Individuelle Lösungen"
+    },
+    "footer": {
+        "description": "Wir sind Ihr Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und vier starken Marken bringen wir Ihr Unternehmen voran.",
+        "quickLinks": "Quick Links",
+        "legal": "Rechtliches",
+        "followUs": "Folgen Sie uns",
+        "copyright": "Alle Rechte vorbehalten."
+    }
+}

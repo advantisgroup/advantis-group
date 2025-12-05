@@ -1,0 +1,81 @@
+{
+    "nav": {
+        "home": "Home",
+        "brands": "Our Brands",
+        "about": "About Us",
+        "team": "Team",
+        "contact": "Contact",
+        "privacy": "Privacy Policy",
+        "imprint": "Imprint",
+        "licenses": "Licenses"
+    },
+    "hero": {
+        "badge": "Advantis Group",
+        "title": "More than a company, complete",
+        "titleHighlight": "Sales Power",
+        "subtitle": "We take your sales to the next level!",
+        "ctaPrimary": "Contact Us Now",
+        "ctaSecondary": "Discover Our Brands"
+    },
+    "features": {
+        "badge": "Our Strengths",
+        "title": "Why",
+        "titleBrand": "Advantis Group",
+        "subtitle": "We combine over 15 years of experience with innovative approaches to take your sales to the next level.",
+        "feature1": {
+            "title": "Making Sales Teams Successful",
+            "description": "Through targeted strategies and practical support, we help your teams achieve their goals and grow sustainably."
+        },
+        "feature2": {
+            "title": "Making Sales Smarter",
+            "description": "With modern tools and proven methods, we optimize your sales processes for maximum efficiency."
+        },
+        "feature3": {
+            "title": "Delivering Sustainable Results",
+            "description": "Over 15 years of experience combined with innovative approaches for long-term success that convinces."
+        },
+        "stats": {
+            "experience": "Years of Experience",
+            "brands": "Brands",
+            "projects": "Successful Projects",
+            "passion": "Passion"
+        }
+    },
+    "brands": {
+        "title": "Our",
+        "titleHighlight": "Brands",
+        "subtitle": "Four strong brands, one common goal: Your sales success",
+        "salespirates": {
+            "tagline": "External Sales Agency",
+            "description": "We deliver leads or support your sales with measurable results. Active, targeted, and effective."
+        },
+        "rodeo": {
+            "tagline": "Strategic Consulting",
+            "description": "Sales is the Wild West. We realign your sales, make it scalable, and lead to growth with efficiency."
+        },
+        "oldschool": {
+            "tagline": "Authentic Training",
+            "description": "Sales coaching that really makes a difference. Experience, empathy, and real practice meet modern learning methods."
+        },
+        "salesai": {
+            "tagline": "AI for Sales",
+            "description": "We show which AI tools really make sense for sales and how you can make your sales smarter."
+        },
+        "cta": "Discover All Brands"
+    },
+    "cta": {
+        "title": "Ready for the next",
+        "titleHighlight": "Level?",
+        "subtitle": "Let's find out together how we can transform your sales.",
+        "primary": "Contact Us Now",
+        "secondary": "Send Email",
+        "benefits": "Free Initial Consultation • No Obligations • Individual Solutions"
+    },
+    "footer": {
+        "description": "We are your partner for successful sales. With over 15 years of experience and four strong brands, we move your business forward.",
+        "quickLinks": "Quick Links",
+        "legal": "Legal",
+        "followUs": "Follow Us",
+        "copyright": "All rights reserved."
+    }
+}

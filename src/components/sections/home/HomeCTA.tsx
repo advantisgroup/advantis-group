@@ -1,9 +1,9 @@
 'use client'
 
-import Link from 'next/link'
-
 import { ArrowRight, Mail } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
 import { Button } from '../../ui/button'
@@ -13,6 +13,8 @@ interface HomeCTAProps {
 }
 
 export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
+    const t = useTranslations('cta')
+
     return (
         <section className="relative py-40 overflow-hidden">
             {/* Background with smooth blend */}
@@ -38,9 +40,9 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
                         )}
                     >
                         <h2 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-                            Bereit für das nächste{' '}
+                            {t('title')}{' '}
                             <span className="bg-linear-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
-                                Level?
+                                {t('titleHighlight')}
                             </span>
                         </h2>
                     </div>
@@ -52,7 +54,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
                         )}
                         style={{ transitionDelay: '200ms' }}
                     >
-                        Lassen Sie uns gemeinsam herausfinden, wie wir Ihren Vertrieb transformieren können.
+                        {t('subtitle')}
                     </p>
 
                     <div
@@ -68,7 +70,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
                             className="group shadow-2xl shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all duration-300 px-8 py-7 text-lg"
                         >
                             <Link href="/kontakt">
-                                Jetzt Kontakt aufnehmen
+                                {t('primary')}
                                 <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                             </Link>
                         </Button>
@@ -76,7 +78,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
                         <Button asChild size="lg" variant="outline" className="px-8 py-7 text-lg">
                             <Link href="mailto:touch@advantis-group.de">
                                 <Mail className="w-5 h-5 mr-2" />
-                                E-Mail schreiben
+                                {t('secondary')}
                             </Link>
                         </Button>
                     </div>
@@ -88,7 +90,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
                         )}
                         style={{ transitionDelay: '600ms' }}
                     >
-                        Kostenlose Erstberatung • Keine Verpflichtungen • Individuelle Lösungen
+                        {t('benefits')}
                     </p>
                 </div>
             </div>

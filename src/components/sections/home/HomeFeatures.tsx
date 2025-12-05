@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 
 import { TrendingUp, Zap, Target, Sparkles } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
 
@@ -13,14 +14,15 @@ interface HomeFeaturesProps {
 }
 
 export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
+    const t = useTranslations('features')
     const [hoveredCard, setHoveredCard] = useState<number | null>(null)
     const [shinePosition, setShinePosition] = useState({ x: 0, y: 0 })
 
     const features = [
         {
             icon: TrendingUp,
-            title: 'Sales-Teams erfolgreich machen',
-            desc: 'Durch gezielte Strategien und praxisnahe Unterstützung helfen wir Ihren Teams, ihre Ziele zu erreichen und nachhaltig zu wachsen.',
+            title: t('feature1.title'),
+            desc: t('feature1.description'),
             gradient: 'from-orange-500/20 to-red-500/20',
             iconBg: 'bg-orange-500/10',
             iconBorder: 'border-orange-500/30',
@@ -28,8 +30,8 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
         },
         {
             icon: Zap,
-            title: 'Vertrieb smarter gestalten',
-            desc: 'Mit modernen Tools und bewährten Methoden optimieren wir Ihre Vertriebsprozesse für maximale Effizienz.',
+            title: t('feature2.title'),
+            desc: t('feature2.description'),
             gradient: 'from-primary/20 to-purple-500/20',
             iconBg: 'bg-primary/10',
             iconBorder: 'border-primary/30',
@@ -37,8 +39,8 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
         },
         {
             icon: Target,
-            title: 'Nachhaltige Ergebnisse liefern',
-            desc: 'Über 15 Jahre Erfahrung gepaart mit innovativen Ansätzen für langfristigen Erfolg, der überzeugt.',
+            title: t('feature3.title'),
+            desc: t('feature3.description'),
             gradient: 'from-blue-500/20 to-cyan-500/20',
             iconBg: 'bg-blue-500/10',
             iconBorder: 'border-blue-500/30',
@@ -81,14 +83,13 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
                             <Sparkles className="w-4 h-4" />
-                            <span>Unsere Stärken</span>
+                            <span>{t('badge')}</span>
                         </div>
                         <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                            Warum <BrandText brand="advantis">Advantis Group</BrandText>?
+                            {t('title')} <BrandText brand="advantis">{t('titleBrand')}</BrandText>?
                         </h2>
                         <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                            Wir kombinieren über 15 Jahre Erfahrung mit innovativen Ansätzen, um Ihren Vertrieb auf das
-                            nächste Level zu bringen.
+                            {t('subtitle')}
                         </p>
                     </div>
 
@@ -200,22 +201,22 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     >
                         <div className="text-center space-y-1">
                             <div className="text-4xl md:text-5xl font-bold text-primary">15+</div>
-                            <div className="text-sm text-muted-foreground">Jahre Erfahrung</div>
+                            <div className="text-sm text-muted-foreground">{t('stats.experience')}</div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
                             <div className="text-4xl md:text-5xl font-bold text-primary">4</div>
-                            <div className="text-sm text-muted-foreground">Marken</div>
+                            <div className="text-sm text-muted-foreground">{t('stats.brands')}</div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
                             <div className="text-4xl md:text-5xl font-bold text-primary">500</div>
-                            <div className="text-sm text-muted-foreground">Erfolgreiche Projekte</div>
+                            <div className="text-sm text-muted-foreground">{t('stats.projects')}</div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
                             <div className="text-4xl md:text-5xl font-bold text-primary">100%</div>
-                            <div className="text-sm text-muted-foreground">Leidenschaft</div>
+                            <div className="text-sm text-muted-foreground">{t('stats.passion')}</div>
                         </div>
                     </div>
                 </div>

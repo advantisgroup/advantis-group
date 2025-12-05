@@ -1,28 +1,21 @@
 'use client'
 
-import Link from 'next/link'
-
 import { ArrowRight, Sparkles, ChevronDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { useIsMobile } from '@/hooks/use-mobile'
+import { Link } from '@/i18n/navigation'
 
 import { BrandText } from '../effects/BrandText'
-import GradientBackground from '../effects/GradientBackground'
 import { SectionDivider } from '../layout/SectionDivider'
 import { Button } from '../ui/button'
 
 export const Hero = () => {
     const isMobile = useIsMobile()
+    const t = useTranslations('hero')
+
     return (
         <section className="relative h-screen flex items-center">
-            {/* Enhanced Gradient Background */}
-            <div className="absolute inset-0 -z-10 h-full w-full overflow-hidden">
-                <GradientBackground backdropBlurAmount="lg" className="h-full w-full opacity-60" />
-
-                {/* Smooth fade-out at bottom for seamless transition */}
-                <div className="absolute bottom-0 left-0 right-0 h-64 bg-linear-to-b from-transparent via-background/60 to-background pointer-events-none" />
-            </div>
-
             {/* Additional decorative floating elements */}
             <div className="absolute top-[20%] left-[15%] w-96 h-96 bg-primary/8 rounded-full blur-3xl animate-pulse-slow" />
             <div
@@ -55,40 +48,38 @@ export const Hero = () => {
                                 groupHover
                                 className="group-hover:text-shadow-xs text-shadow-black/30 duration-300"
                             >
-                                Advantis Group
+                                {t('badge')}
                             </BrandText>
                         </div>
 
                         {isMobile ? (
                             <h1 className="font-bold">
-                                <span className="text-3xl">Mehr als ein Unternehmen</span> <br />
-                                <span className="text-4xl">komplette Sales Power</span>
+                                <span className="text-3xl">{t('title')}</span> <br />
+                                <span className="text-4xl">{t('titleHighlight')}</span>
                             </h1>
                         ) : (
                             <h1 className="text-4xl group md:text-8xl font-bold leading-tight">
-                                Mehr als ein Unternehmen, komplette{' '}
+                                {t('title')}{' '}
                                 <BrandText hoverable groupHover>
-                                    Sales Power
+                                    {t('titleHighlight')}
                                 </BrandText>
                             </h1>
                         )}
 
                         {!isMobile && (
-                            <p className="text-lg md:text-3xl text-muted-foreground font-medium">
-                                Wir bringen Ihren Vertrieb auf das nächste Level!
-                            </p>
+                            <p className="text-lg md:text-3xl text-muted-foreground font-medium">{t('subtitle')}</p>
                         )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 md:pt-1">
                         <Button asChild size="lg">
                             <Link href="/kontakt">
-                                Jetzt Kontakt aufnehmen
+                                {t('ctaPrimary')}
                                 <ArrowRight className="w-4 h-4" />
                             </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg">
-                            <Link href="/unsere-marken">Unsere Marken entdecken</Link>
+                            <Link href="/unsere-marken">{t('ctaSecondary')}</Link>
                         </Button>
                     </div>
                 </div>
