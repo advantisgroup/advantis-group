@@ -74,8 +74,192 @@
     "footer": {
         "description": "We are your partner for successful sales. With over 15 years of experience and four strong brands, we move your business forward.",
         "quickLinks": "Quick Links",
+        "ourBrands": "Our Brands",
+        "contact": "Contact",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
         "legal": "Legal",
         "followUs": "Follow Us",
         "copyright": "All rights reserved."
+    },
+    "contact": {
+        "title": "Contact",
+        "subtitle": "Let's work together on your sales success",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address",
+        "tabs": {
+            "writeMessage": "Write a message",
+            "requestCallback": "Request callback",
+            "writeMessageShort": "Message",
+            "requestCallbackShort": "Callback"
+        },
+        "form": {
+            "company": "Your Company Name",
+            "firstName": "First Name",
+            "lastName": "Last Name",
+            "email": "Email",
+            "phone": "Phone",
+            "message": "Message",
+            "submit": "Submit",
+            "callbackRequest": "Request Callback",
+            "phonePlaceholder": "+1 234 567890",
+            "desiredTime": "When can we reach you?",
+            "notes": "Notes (optional)",
+            "notesPlaceholder": "What is the call about?",
+            "callbackEmailNote": "For confirmation of your callback",
+            "callbackTimeNote": "We will call you at the requested time",
+            "privacyPrefix": "By submitting the form, you agree that",
+            "privacySuffix": "uses your provided data for the purpose of processing your request. Your data will only be stored to answer your request and will not be passed on to third parties.",
+            "privacySuffixCallback": "uses your provided data for the purpose of the callback arrangement.",
+            "privacyLink": "More information can be found in our privacy policy.",
+            "privacyNoteLabel": "PRIVACY NOTICE:"
+        },
+        "sidebar": {
+            "title": "Why",
+            "description1": "Whether you are looking for support in active sales, strategic consulting, or the selection of modern AI solutions – we help you!",
+            "descriptionMessage": "Contact us for a non-binding consultation and let's work on your sales success together.",
+            "descriptionCallback": "Schedule a callback and we will discuss together how we can move your sales forward.",
+            "closingMessage": "We look forward to your inquiry!",
+            "closingCallback": "We look forward to your call!"
+        },
+        "messages": {
+            "writeUs": "Write to us",
+            "writeUsDesc": "Send us a message and we will get back to you within 24 hours",
+            "callback": "Schedule a callback",
+            "callbackDesc": "Let us know when we can best reach you",
+            "successTitle": "Sent!",
+            "successDesc": "We will get back to you within 24 hours.",
+            "callSuccessTitle": "Callback requested!",
+            "callSuccessDesc": "We will call you at the requested time.",
+            "errorTitle": "Something went wrong",
+            "errorDesc": "Please check your entries"
+        }
+    },
+    "about": {
+        "hero": {
+            "badge": "About Us",
+            "titlePart1": "Your Home for",
+            "titlePart2": "Excellent Sales",
+            "subtitle": "The <brand>Advantis-group GmbH</brand> unites over 15 years of sales experience under one roof – with passion, pragmatism, and a clear focus on success."
+        },
+        "mission": {
+            "badge": "Mission",
+            "title": "Sales as a Craft and Attitude",
+            "description": "We understand sales not as a coincidence, but as a craft. Our claim: sustainable, effective, and practical solutions that work."
+        },
+        "vision": {
+            "badge": "Vision",
+            "title": "Familiar, Professional, Honest",
+            "description": "We are familiar in our interactions, professional in implementation, and honest in results – for long-term partnerships that create trust."
+        },
+        "story": {
+            "badge": "Our Story",
+            "text1": "The <brand>Advantis-Group GmbH</brand> was founded in 2025 by <founder>Andrea Reichl</founder> and unites over 15 years of sales experience in various industries under one roof.",
+            "text2": "What began years ago as a sole proprietorship is now a group of companies with strong brands and a common focus: 100% Sales.",
+            "text3": "We don't do frills – we haven't reinvented the wheel, just put on some fancy rims. Pragmatic, effective, sustainable."
+        },
+        "stats": {
+            "experience": "Years Experience",
+            "projects": "Successful Projects",
+            "brands": "Strong Brands"
+        },
+        "values": {
+            "badge": "Our Values",
+            "experienceTitle": "Experience",
+            "experienceDesc": "Over 15 years of sales experience in various industries",
+            "innovationTitle": "Innovation",
+            "innovationDesc": "Modern tools and proven methods for maximum efficiency",
+            "passionTitle": "Passion",
+            "passionDesc": "Sustainable results through commitment and expertise"
+        },
+        "cta": {
+            "title": "Ready for the Next Step?",
+            "description": "Let us work together on your sales success. Whether support in active sales, strategic consulting, or modern AI solutions – we help you.",
+            "button": "Contact Us"
+        }
+    },
+    "team": {
+        "hero": {
+            "badge": "The Team",
+            "titlePart1": "The Faces Behind",
+            "subtitle": "Experts, visionaries, and doers. United by the passion for excellent sales."
+        },
+        "founder": {
+            "role": "CEO / Managing Director",
+            "badge": "Leadership",
+            "quote": "\"Sales is not just a job, it's an attitude.\"",
+            "bio": "Sales enthusiast, strategist, and doer. With over 15 years of experience in sales, coaching, and company building, Andrea leads the advantis-group with passion, pragmatism, and a clear focus on success and humanity.",
+            "contactBtn": "Contact"
+        },
+        "roles": {
+            "inbound": "Team Lead Inbound Sales",
+            "outbound": "Team Lead Outbound Sales",
+            "it": "IT Project Manager",
+            "hr": "HR Specialist",
+            "marketing": "Online Marketing Manager",
+            "coach": "Coach and Trainer",
+            "quality": "Data Protection Officer and Quality Manager"
+        },
+        "grid": {
+            "title": "Our Team",
+            "subtitle": "The experts by your side",
+            "cardFooter": "Advantis Team"
+        }
+    },
+    "brandsPage": {
+        "hero": {
+            "badge": "Four Premium Brands – One Goal",
+            "titlePrefix": "Our",
+            "titleSuffix": "Brands",
+            "subtitle": "Tailored sales solutions for sustainable success",
+            "scroll": "Discover our brands"
+        },
+        "items": {
+            "salespirates": {
+                "tagline": "Your external sales agency",
+                "description": "Your external sales agency for inbound or outbound sales. We deliver leads or support your sales - actively, targeted, and with measurable results.",
+                "highlights": {
+                    "0": "Lead Generation & Qualification",
+                    "1": "Inbound & Outbound Sales",
+                    "2": "Measurable Performance"
+                }
+            },
+            "rodeo": {
+                "tagline": "Strategic Sales Consulting",
+                "description": "Sales is the Wild West and with Rodeo we know our way around! We deliver strategic sales consulting that realigns your sales, makes it absolutely scalable, and leads to growth with efficiency.",
+                "highlights": {
+                    "0": "Strategic Realignment",
+                    "1": "Scalable Processes",
+                    "2": "Growth-Oriented"
+                }
+            },
+            "oldschool": {
+                "tagline": "Authentic Sales Trainings",
+                "description": "The world doesn't need new sales gimmicks. We bring your sales teams to the max with authentic sales coaching! The magic word here is sustainability. You can book 1000 sales coachings without ever being successful in daily business - we have the one training that really moves you and your team forward. Experience, empathy, and real practice meet modern learning methods.",
+                "highlights": {
+                    "0": "Sustainable Trainings",
+                    "1": "Practice-Oriented",
+                    "2": "Modern Learning Methods"
+                }
+            },
+            "salesai": {
+                "tagline": "AI for Intelligent Sales",
+                "description": "Everyone is talking about AI tools. We advise you on which AI tools currently make sense for sales teams and bring real added value. We show you how AI technology actually makes your sales smarter.",
+                "highlights": {
+                    "0": "AI Tool Consulting",
+                    "1": "Practical Integration",
+                    "2": "Real Added Value"
+                }
+            }
+        },
+        "cta": {
+            "titlePart1": "Which brand",
+            "titlePart2": "suits you?",
+            "description": "Let's find out together how we can take your sales to the next level.",
+            "button": "Contact Now"
+        },
+        "learnMore": "Learn More"
     }
 }

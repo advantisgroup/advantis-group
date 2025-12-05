@@ -2,15 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-import Link from 'next/link'
-
 import { Mail, Phone, MapPin } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+
+import { Link } from '@/i18n/navigation'
 
 import { SectionDivider } from './SectionDivider'
 import { BrandText } from '../effects/BrandText'
 import { ModeToggle } from '../theme/theme-toggle'
 
 export const Footer = () => {
+    const t = useTranslations()
     const footerRef = useRef<HTMLElement>(null)
     const [scrollProgress, setScrollProgress] = useState(0)
 
@@ -39,23 +41,23 @@ export const Footer = () => {
 
     const footerLinks = [
         {
-            label: 'Home',
+            label: t('nav.home'),
             path: '/',
         },
         {
-            label: 'Über uns',
+            label: t('nav.about'),
             path: '/uber-uns',
         },
         {
-            label: 'Unsere Marken',
+            label: t('nav.brands'),
             path: '/unsere-marken',
         },
         {
-            label: 'Team',
+            label: t('nav.team'),
             path: '/team',
         },
         {
-            label: 'Kontakt',
+            label: t('nav.contact'),
             path: '/kontakt',
         },
     ]
@@ -103,7 +105,7 @@ export const Footer = () => {
                     {/* Large animated company name */}
                     <div className="mb-24 overflow-hidden">
                         <div className="text-center mb-4">
-                            <p className="text-sm text-muted-foreground">Ihre Heimat für exzellenten Vertrieb</p>
+                            <p className="text-sm text-muted-foreground">{t('footer.description')}</p>
                         </div>
                         <h2 className="text-[11vw] md:text-[12vw] lg:text-[8rem] font-bold leading-none tracking-tighter text-center">
                             {letters.map((letter, index) => (
@@ -124,15 +126,12 @@ export const Footer = () => {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-10 mb-12">
                         {/* Company Info */}
                         <div className="space-y-4">
-                            <h3 className="text-sm font-semibold">Über uns</h3>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                                Die <BrandText brand="advantis">Advantis-group GmbH</BrandText> vereint über 15 Jahre
-                                Vertriebserfahrung unter einem Dach. Wir bringen Ihren Vertrieb auf das nächste Level.
-                            </p>
+                            <h3 className="text-sm font-semibold">{t('nav.about')}</h3>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{t('footer.description')}</p>
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="text-sm font-semibold">Navigation</h3>
+                            <h3 className="text-sm font-semibold">{t('footer.quickLinks')}</h3>
                             <ul className="space-y-3 text-sm">
                                 {footerLinks.map((link, i) => (
                                     <li key={`${link.label}_${i}`}>
@@ -148,7 +147,7 @@ export const Footer = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="text-sm font-semibold">Unsere Marken</h3>
+                            <h3 className="text-sm font-semibold">{t('footer.ourBrands')}</h3>
                             <ul className="space-y-3 text-sm">
                                 {brandLinks.map((brand, i) => (
                                     <li key={`${brand.name}_${i}`}>
@@ -164,7 +163,7 @@ export const Footer = () => {
                         </div>
 
                         <div className="space-y-4">
-                            <h3 className="text-sm font-semibold">Kontakt</h3>
+                            <h3 className="text-sm font-semibold">{t('footer.contact')}</h3>
                             <ul className="space-y-3 text-sm">
                                 <li>
                                     <Link
@@ -197,7 +196,7 @@ export const Footer = () => {
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
                             <p className="text-xs text-muted-foreground">
                                 © {new Date().getFullYear().toString()}{' '}
-                                <BrandText brand="advantis">Advantis Group</BrandText> GmbH. Alle Rechte vorbehalten.
+                                <BrandText brand="advantis">Advantis Group</BrandText> GmbH. {t('footer.copyright')}
                             </p>
                             <div className="flex items-center gap-6">
                                 <ModeToggle />
@@ -205,19 +204,19 @@ export const Footer = () => {
                                     href="/impressum"
                                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                                 >
-                                    Impressum
+                                    {t('nav.imprint')}
                                 </Link>
                                 <Link
                                     href="/datenschutz"
                                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                                 >
-                                    Datenschutz
+                                    {t('nav.privacy')}
                                 </Link>
                                 <Link
                                     href="/lizenzen"
                                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                                 >
-                                    Lizenzen
+                                    {t('nav.licenses')}
                                 </Link>
                             </div>
                         </div>

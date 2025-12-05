@@ -1,8 +1,7 @@
 'use client'
 
-import Link from 'next/link'
-
 import { Mail, ArrowRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
 import GradientBackground from '@/components/effects/GradientBackground'
@@ -10,49 +9,51 @@ import { ScrollReveal } from '@/components/effects/ScrollReveal'
 import { ShapeParticles } from '@/components/effects/ShapeParticles'
 import { SectionDivider } from '@/components/layout/SectionDivider'
 import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/navigation'
 
 export default function Team() {
+    const t = useTranslations('team')
     const teamMembers = [
         {
             name: 'Andrea Reichl',
-            role: 'Geschäftsführerin',
+            role: t('founder.role'),
             initials: 'AR',
-            bio: 'Sales-Enthusiastin, Strategin und Macherin. Mit über 15 Jahren Erfahrung im Vertrieb, Coaching und Unternehmensaufbau führt Andrea die advantis-group mit Leidenschaft, Pragmatismus und einem klaren Fokus auf Erfolg und Menschlichkeit.',
+            bio: t('founder.bio'),
             email: 'ar@advantis-group.de',
         },
         {
             name: 'Andrea Lautenbacher',
-            role: 'Teamlead Inbound Sales',
+            role: t('roles.inbound'),
             initials: 'AL',
         },
         {
             name: 'Jessica Blume',
-            role: 'Teamlead Outbound Sales',
+            role: t('roles.outbound'),
             initials: 'JB',
         },
         {
             name: 'Kaleb Daniel',
-            role: 'IT Projektleiter',
+            role: t('roles.it'),
             initials: 'KD',
         },
         {
             name: 'Morena Azzuro',
-            role: 'HR Specialist',
+            role: t('roles.hr'),
             initials: 'MA',
         },
         {
             name: 'Sebastian Kämpfer',
-            role: 'Online Marketing Manager',
+            role: t('roles.marketing'),
             initials: 'SK',
         },
         {
             name: 'Sabine Sagasser',
-            role: 'Coach und Trainerin',
+            role: t('roles.coach'),
             initials: 'SS',
         },
         {
             name: 'Martin Bergmüller',
-            role: 'Datenschutzbeauftragter und Qualitätsmanager',
+            role: t('roles.quality'),
             initials: 'MB',
         },
     ]
@@ -81,10 +82,10 @@ export default function Team() {
                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                                         <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                                     </span>
-                                    Meet the Team
+                                    {t('hero.badge')}
                                 </div>
                                 <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
-                                    Die Gesichter hinter <br />
+                                    {t('hero.titlePart1')} <br />
                                     <BrandText
                                         brand="advantis"
                                         className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary/60"
@@ -93,8 +94,7 @@ export default function Team() {
                                     </BrandText>
                                 </h1>
                                 <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                                    Experten, Visionäre und Macher. Vereint durch die Leidenschaft für exzellenten
-                                    Vertrieb.
+                                    {t('hero.subtitle')}
                                 </p>
                             </div>
                         </ScrollReveal>
@@ -138,7 +138,7 @@ export default function Team() {
                                             >
                                                 <Link href={`mailto:${teamMembers[0].email}`}>
                                                     <Mail className="w-4 h-4 mr-2" />
-                                                    Kontaktieren
+                                                    {t('founder.contactBtn')}
                                                 </Link>
                                             </Button>
                                         )}
@@ -146,10 +146,10 @@ export default function Team() {
 
                                     <div className="md:col-span-8 space-y-6">
                                         <div className="inline-block px-3 py-1 rounded-md bg-primary/10 text-xs font-semibold tracking-wider uppercase text-primary mb-2">
-                                            Leadership
+                                            {t('founder.badge')}
                                         </div>
                                         <h3 className="text-2xl md:text-4xl font-bold leading-tight">
-                                            "Sales ist nicht nur ein Job, es ist eine Haltung."
+                                            {t('founder.quote')}
                                         </h3>
                                         <p className="text-lg text-muted-foreground leading-relaxed">
                                             {teamMembers[0].bio}
@@ -167,8 +167,8 @@ export default function Team() {
                     {/* Team Grid */}
                     <section>
                         <ScrollReveal delay={100} className="mb-12 text-center md:text-left">
-                            <h2 className="text-3xl md:text-4xl font-bold">Unser Team</h2>
-                            <p className="text-muted-foreground mt-2">Die Experten an Ihrer Seite</p>
+                            <h2 className="text-3xl md:text-4xl font-bold">{t('grid.title')}</h2>
+                            <p className="text-muted-foreground mt-2">{t('grid.subtitle')}</p>
                         </ScrollReveal>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -195,7 +195,7 @@ export default function Team() {
 
                                             <div className="mt-auto pt-4 border-t border-border/50 w-full opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
                                                 <span className="text-xs font-medium text-primary uppercase tracking-wider">
-                                                    Advantis Team
+                                                    {t('grid.cardFooter')}
                                                 </span>
                                             </div>
                                         </div>

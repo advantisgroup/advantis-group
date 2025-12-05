@@ -74,8 +74,192 @@
     "footer": {
         "description": "我们是您成功销售的合作伙伴。凭借超过15年的经验和四个强大的品牌，我们推动您的业务向前发展。",
         "quickLinks": "快速链接",
+        "ourBrands": "我们的品牌",
+        "contact": "联系方式",
+        "email": "电子邮件",
+        "phone": "电话",
+        "address": "地址",
         "legal": "法律信息",
         "followUs": "关注我们",
         "copyright": "版权所有。"
+    },
+    "contact": {
+        "title": "联系我们",
+        "subtitle": "让我们共同致力于您的销售成功",
+        "email": "电子邮件",
+        "phone": "电话",
+        "address": "地址",
+        "tabs": {
+            "writeMessage": "写信留言",
+            "requestCallback": "请求回电",
+            "writeMessageShort": "留言",
+            "requestCallbackShort": "回电"
+        },
+        "form": {
+            "company": "您的公司名称",
+            "firstName": "名字",
+            "lastName": "姓氏",
+            "email": "电子邮件",
+            "phone": "电话",
+            "message": "留言内容",
+            "submit": "提交",
+            "callbackRequest": "请求回电",
+            "phonePlaceholder": "+86 123 4567890",
+            "desiredTime": "我们什么时候可以联系您？",
+            "notes": "备注（可选）",
+            "notesPlaceholder": "通话的主要内容是什么？",
+            "callbackEmailNote": "用于确认您的回电请求",
+            "callbackTimeNote": "我们将按您要求的时间给您致电",
+            "privacyPrefix": "提交表格即表示您同意",
+            "privacySuffix": "将您提供的数据用于处理您的请求。您的数据仅用于回复您的查询，不会传递给第三方。",
+            "privacySuffixCallback": "将您提供的数据用于安排回电。",
+            "privacyLink": "更多信息请参阅我们的隐私政策。",
+            "privacyNoteLabel": "隐私声明："
+        },
+        "sidebar": {
+            "title": "为什么选择",
+            "description1": "无论您是在寻找积极销售支持、战略咨询还是现代人工智能解决方案的选择 - 我们都能为您提供帮助！",
+            "descriptionMessage": "联系我们进行无义务咨询，让我们共同致力于您的销售成功。",
+            "descriptionCallback": "安排回电，我们将共同讨论如何推动您的销售。",
+            "closingMessage": "我们期待您的垂询！",
+            "closingCallback": "我们期待您的来电！"
+        },
+        "messages": {
+            "writeUs": "写信给我们",
+            "writeUsDesc": "给我们发送消息，我们将在24小时内回复您",
+            "callback": "安排回电",
+            "callbackDesc": "请告诉我们什么时候最方便联系您",
+            "successTitle": "已发送！",
+            "successDesc": "我们将在24小时内回复您。",
+            "callSuccessTitle": "已请求回电！",
+            "callSuccessDesc": "我们将按您要求的时间给您致电。",
+            "errorTitle": "出错了",
+            "errorDesc": "请检查您的输入"
+        }
+    },
+    "about": {
+        "hero": {
+            "badge": "关于我们",
+            "titlePart1": "您卓越销售的",
+            "titlePart2": "家园",
+            "subtitle": "<brand>Advantis-group GmbH</brand> 汇集了超过15年的销售经验——充满激情、务实且专注于成功。"
+        },
+        "mission": {
+            "badge": "使命",
+            "title": "销售作为一门手艺和态度",
+            "description": "我们将销售理解为手艺，而非巧合。我们的主张：可持续、有效且实用的解决方案。"
+        },
+        "vision": {
+            "badge": "愿景",
+            "title": "亲切、专业、诚实",
+            "description": "我们在交往中亲切，在执行中专业，在结果上诚实——建立信任的长期合作伙伴关系。"
+        },
+        "story": {
+            "badge": "我们的故事",
+            "text1": "<brand>Advantis-Group GmbH</brand> 于2025年由 <founder>Andrea Reichl</founder> 创立，汇集了不同行业超过15年的销售经验。",
+            "text2": "几年前的一家独资企业，现在已成为拥有强大品牌和共同焦点的企业集团：100% 销售。",
+            "text3": "我们不搞花哨——我们没有重新发明轮子，只是装了一些漂亮的轮辋。务实、有效、可持续。"
+        },
+        "stats": {
+            "experience": "年经验",
+            "projects": "成功项目",
+            "brands": "强大品牌"
+        },
+        "values": {
+            "badge": "我们的价值观",
+            "experienceTitle": "经验",
+            "experienceDesc": "不同行业超过15年的销售经验",
+            "innovationTitle": "创新",
+            "innovationDesc": "现代工具和经过验证的方法实现最大效率",
+            "passionTitle": "激情",
+            "passionDesc": "通过承诺和专业知识实现可持续成果"
+        },
+        "cta": {
+            "title": "准备好迈出下一步了吗？",
+            "description": "让我们共同致力于您的销售成功。无论是积极销售支持、战略咨询还是现代人工智能解决方案——我们都能为您提供帮助。",
+            "button": "联系我们"
+        }
+    },
+    "team": {
+        "hero": {
+            "badge": "团队",
+            "titlePart1": "背后的面孔",
+            "subtitle": "专家、远见者和实干家。因对卓越销售的热情而团结在一起。"
+        },
+        "founder": {
+            "role": "首席执行官 / 总经理",
+            "badge": "领导层",
+            "quote": "“销售不仅仅是一份工作，更是一种态度。”",
+            "bio": "销售爱好者、战略家和实干家。凭借超过 15 年的销售、辅导和公司建设经验，Andrea 以热情、务实以及对成功和人性的清晰关注领导着 advantis-group。",
+            "contactBtn": "联系"
+        },
+        "roles": {
+            "inbound": "入站销售团队负责人",
+            "outbound": "外呼销售团队负责人",
+            "it": "IT 项目经理",
+            "hr": "人力资源专家",
+            "marketing": "在线营销经理",
+            "coach": "教练和培训师",
+            "quality": "数据保护官和质量经理"
+        },
+        "grid": {
+            "title": "我们的团队",
+            "subtitle": "您身边的专家",
+            "cardFooter": "Advantis 团队"
+        }
+    },
+    "brandsPage": {
+        "hero": {
+            "badge": "四个优质品牌——一个目标",
+            "titlePrefix": "我们的",
+            "titleSuffix": "品牌",
+            "subtitle": "为可持续成功量身定制的销售解决方案",
+            "scroll": "发现我们的品牌"
+        },
+        "items": {
+            "salespirates": {
+                "tagline": "您的外部销售代理",
+                "description": "您用于呼入或呼出销售的外部销售代理。我们提供潜在客户或支持您的销售——积极、有针对性且结果可衡量。",
+                "highlights": {
+                    "0": "潜在客户生成和资格认证",
+                    "1": "呼入和呼出销售",
+                    "2": "可衡量的绩效"
+                }
+            },
+            "rodeo": {
+                "tagline": "战略销售咨询",
+                "description": "销售就是狂野的西部，而在 Rodeo，我们对此了如指掌！我们为您提供战略销售咨询，重新调整您的销售，使其绝对可扩展，并高效地带来增长。",
+                "highlights": {
+                    "0": "战略重新调整",
+                    "1": "可扩展流程",
+                    "2": "以增长为导向"
+                }
+            },
+            "oldschool": {
+                "tagline": "正宗的销售培训",
+                "description": "世界不需要新的销售花招。我们通过正宗的销售辅导将您的销售团队提升到极致！这里的关键词是可持续性。您可以预订 1000 次销售辅导，但在日常业务中却从未成功——我们拥有真正推动您和您的团队前进的培训。经验、同理心和真正的实践在这里与现代学习方法相结合。",
+                "highlights": {
+                    "0": "可持续培训",
+                    "1": "注重实践",
+                    "2": "现代学习方法"
+                }
+            },
+            "salesai": {
+                "tagline": "智能销售人工智能",
+                "description": "每个人都在谈论人工智能工具。我们为您提供建议，告诉您哪些人工智能工具目前对销售团队有意义并带来真正的附加值。我们向您展示人工智能技术如何真正让您的销售更智能。",
+                "highlights": {
+                    "0": "人工智能工具咨询",
+                    "1": "实际整合",
+                    "2": "真正的附加值"
+                }
+            }
+        },
+        "cta": {
+            "titlePart1": "哪个品牌",
+            "titlePart2": "适合您？",
+            "description": "让我们共同找出如何将您的销售提升到一个新的水平。",
+            "button": "立即联系"
+        },
+        "learnMore": "了解更多"
     }
 }

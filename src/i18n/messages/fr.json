@@ -74,8 +74,192 @@
     "footer": {
         "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et quatre marques fortes, nous faisons avancer votre entreprise.",
         "quickLinks": "Liens Rapides",
+        "ourBrands": "Nos Marques",
+        "contact": "Contact",
+        "email": "E-mail",
+        "phone": "Téléphone",
+        "address": "Adresse",
         "legal": "Mentions Légales",
         "followUs": "Suivez-nous",
         "copyright": "Tous droits réservés."
+    },
+    "contact": {
+        "title": "Contact",
+        "subtitle": "Travaillons ensemble sur votre succès commercial",
+        "email": "E-mail",
+        "phone": "Téléphone",
+        "address": "Adresse",
+        "tabs": {
+            "writeMessage": "Écrire un message",
+            "requestCallback": "Demander un rappel",
+            "writeMessageShort": "Message",
+            "requestCallbackShort": "Rappel"
+        },
+        "form": {
+            "company": "Votre nom d'entreprise",
+            "firstName": "Prénom",
+            "lastName": "Nom",
+            "email": "E-mail",
+            "phone": "Téléphone",
+            "message": "Message",
+            "submit": "Envoyer",
+            "callbackRequest": "Demander un rappel",
+            "phonePlaceholder": "+33 1 23 45 67 89",
+            "desiredTime": "Quand pouvons-nous vous joindre ?",
+            "notes": "Remarques (optionnel)",
+            "notesPlaceholder": "De quoi s'agit-il ?",
+            "callbackEmailNote": "Pour la confirmation de votre rappel",
+            "callbackTimeNote": "Nous vous appellerons à l'heure souhaitée",
+            "privacyPrefix": "En soumettant ce formulaire, vous acceptez que",
+            "privacySuffix": "utilise les données fournies pour traiter votre demande. Vos données ne seront stockées que pour répondre à votre demande et ne seront pas transmises à des tiers.",
+            "privacySuffixCallback": "utilise les données fournies pour organiser le rappel.",
+            "privacyLink": "Plus d'informations dans notre politique de confidentialité.",
+            "privacyNoteLabel": "AVIS DE CONFIDENTIALITÉ :"
+        },
+        "sidebar": {
+            "title": "Pourquoi",
+            "description1": "Que vous recherchiez un soutien dans la vente active, des conseils stratégiques ou la sélection de solutions d'IA modernes, nous vous aidons !",
+            "descriptionMessage": "Contactez-nous pour une consultation sans engagement et travaillons ensemble sur votre succès commercial.",
+            "descriptionCallback": "Planifiez un rappel et nous discuterons ensemble de la manière dont nous pouvons faire avancer vos ventes.",
+            "closingMessage": "Nous attendons votre demande avec impatience !",
+            "closingCallback": "Nous attendons votre appel avec impatience !"
+        },
+        "messages": {
+            "writeUs": "Écrivez-nous",
+            "writeUsDesc": "Envoyez-nous un message et nous vous répondrons dans les 24 heures",
+            "callback": "Planifier un rappel",
+            "callbackDesc": "Dites-nous quand nous pouvons vous joindre le mieux",
+            "successTitle": "Envoyé !",
+            "successDesc": "Nous vous répondrons dans les 24 heures.",
+            "callSuccessTitle": "Rappel demandé !",
+            "callSuccessDesc": "Nous vous appellerons à l'heure souhaitée.",
+            "errorTitle": "Une erreur s'est produite",
+            "errorDesc": "Veuillez vérifier vos saisies"
+        }
+    },
+    "about": {
+        "hero": {
+            "badge": "À Propos",
+            "titlePart1": "Votre maison pour",
+            "titlePart2": "l'excellence commerciale",
+            "subtitle": "<brand>Advantis-group GmbH</brand> réunit plus de 15 ans d'expérience commerciale sous un même toit – avec passion, pragmatisme et une focalisation claire sur le succès."
+        },
+        "mission": {
+            "badge": "Mission",
+            "title": "La vente comme artisanat et attitude",
+            "description": "Nous comprenons la vente non pas comme un hasard, mais comme un artisanat. Notre ambition : des solutions durables, efficaces et pratiques qui fonctionnent."
+        },
+        "vision": {
+            "badge": "Vision",
+            "title": "Familial, professionnel, honnête",
+            "description": "Nous sommes familiers dans nos échanges, professionnels dans la mise en œuvre et honnêtes dans les résultats – pour des partenariats à long terme qui créent la confiance."
+        },
+        "story": {
+            "badge": "Notre Histoire",
+            "text1": "<brand>Advantis-Group GmbH</brand> a été fondée en 2025 par <founder>Andrea Reichl</founder> et réunit plus de 15 ans d'expérience commerciale dans divers secteurs sous un même toit.",
+            "text2": "Ce qui a commencé il y a des années comme une entreprise individuelle est maintenant un groupe d'entreprises avec des marques fortes et un objectif commun : 100 % Sales.",
+            "text3": "Nous n'aimons pas le superflu – nous n'avons pas réinventé la roue, juste mis de belles jantes. Pragmatique, efficace, durable."
+        },
+        "stats": {
+            "experience": "Années d'Expérience",
+            "projects": "Projets Réussis",
+            "brands": "Marques Fortes"
+        },
+        "values": {
+            "badge": "Nos Valeurs",
+            "experienceTitle": "Expérience",
+            "experienceDesc": "Plus de 15 ans d'expérience commerciale dans divers secteurs",
+            "innovationTitle": "Innovation",
+            "innovationDesc": "Outils modernes et méthodes éprouvées pour une efficacité maximale",
+            "passionTitle": "Passion",
+            "passionDesc": "Résultats durables grâce à l'engagement et à l'expertise"
+        },
+        "cta": {
+            "title": "Prêt pour la prochaine étape ?",
+            "description": "Laissez-nous travailler ensemble sur votre succès commercial. Que ce soit pour un soutien dans la vente active, des conseils stratégiques ou des solutions d'IA modernes – nous vous aidons.",
+            "button": "Contactez-nous"
+        }
+    },
+    "team": {
+        "hero": {
+            "badge": "L'Équipe",
+            "titlePart1": "Les visages derrière",
+            "subtitle": "Experts, visionnaires et faiseurs. Unis par la passion de l'excellence commerciale."
+        },
+        "founder": {
+            "role": "PDG / Directrice Générale",
+            "badge": "Leadership",
+            "quote": "« La vente n'est pas seulement un travail, c'est une attitude. »",
+            "bio": "Passionnée de vente, stratège et faiseuse. Avec plus de 15 ans d'expérience dans la vente, le coaching et la création d'entreprise, Andrea dirige le groupe advantis avec passion, pragmatisme et un accent clair sur le succès et l'humain.",
+            "contactBtn": "Contacter"
+        },
+        "roles": {
+            "inbound": "Chef d'équipe Inbound Sales",
+            "outbound": "Chef d'équipe Outbound Sales",
+            "it": "Chef de projet IT",
+            "hr": "Spécialiste RH",
+            "marketing": "Responsable Marketing en ligne",
+            "coach": "Coach et Formatrice",
+            "quality": "Délégué à la protection des données et responsable qualité"
+        },
+        "grid": {
+            "title": "Notre Équipe",
+            "subtitle": "Les experts à vos côtés",
+            "cardFooter": "Équipe Advantis"
+        }
+    },
+    "brandsPage": {
+        "hero": {
+            "badge": "Quatre marques premium – Un objectif",
+            "titlePrefix": "Nos",
+            "titleSuffix": "Marques",
+            "subtitle": "Des solutions de vente sur mesure pour un succès durable",
+            "scroll": "Découvrez nos marques"
+        },
+        "items": {
+            "salespirates": {
+                "tagline": "Votre agence commerciale externe",
+                "description": "Votre agence commerciale externe pour les ventes Inbound ou Outbound. Nous fournissons des leads ou soutenons vos ventes – activement, de manière ciblée et avec des résultats mesurables.",
+                "highlights": {
+                    "0": "Génération & Qualification de leads",
+                    "1": "Ventes Inbound & Outbound",
+                    "2": "Performance mesurable"
+                }
+            },
+            "rodeo": {
+                "tagline": "Conseil stratégique en vente",
+                "description": "La vente c'est le Far West et avec Rodeo, on s'y connaît ! Nous vous fournissons un conseil stratégique en vente qui réoriente vos ventes, les rend absolument évolutives et mène à la croissance avec efficacité.",
+                "highlights": {
+                    "0": "Réorientation stratégique",
+                    "1": "Processus évolutifs",
+                    "2": "Axé sur la croissance"
+                }
+            },
+            "oldschool": {
+                "tagline": "Formations commerciales authentiques",
+                "description": "Le monde n'a pas besoin de nouveaux gadgets commerciaux. Nous portons vos équipes de vente au maximum avec des coachings commerciaux authentiques ! Le mot magique ici est durabilité. Vous pouvez réserver 1000 coachings commerciaux sans jamais réussir dans les affaires quotidiennes – nous avons la formation qui vous fait vraiment avancer, vous et votre équipe. Expérience, empathie et pratique réelle rencontrent chez nous des méthodes d'apprentissage modernes.",
+                "highlights": {
+                    "0": "Formations durables",
+                    "1": "Axé sur la pratique",
+                    "2": "Méthodes d'apprentissage modernes"
+                }
+            },
+            "salesai": {
+                "tagline": "IA pour une vente intelligente",
+                "description": "Tout le monde parle d'outils d'IA. Nous vous conseillons sur les outils d'IA qui ont actuellement du sens pour les équipes de vente et apportent une réelle valeur ajoutée. Nous vous montrons comment la technologie IA rend votre vente réellement plus intelligente.",
+                "highlights": {
+                    "0": "Conseil en outils IA",
+                    "1": "Intégration pratique",
+                    "2": "Valeur ajoutée réelle"
+                }
+            }
+        },
+        "cta": {
+            "titlePart1": "Quelle marque",
+            "titlePart2": "vous correspond ?",
+            "description": "Découvrons ensemble comment nous pouvons faire passer vos ventes au niveau supérieur.",
+            "button": "Contactez-nous maintenant"
+        },
+        "learnMore": "En savoir plus"
     }
 }

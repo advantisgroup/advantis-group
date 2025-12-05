@@ -1,13 +1,27 @@
 'use client'
+import React, { isValidElement } from 'react'
+
 import { cn } from '@/lib/utils'
 
 interface BrandTextProps {
     brand?: 'salespirates' | 'advantis' | 'rodeo' | 'oldschool-train' | 'sales-ai-germany'
-    children: string
+    children: React.ReactNode
     className?: string
     hoverable?: boolean
     keepRestColor?: boolean
     groupHover?: boolean
+}
+
+const extractText = (node: React.ReactNode): string => {
+    if (node === null || node === undefined) return ''
+    if (typeof node === 'string') return node
+    if (typeof node === 'number') return String(node)
+    if (Array.isArray(node)) return node.map(extractText).join('')
+    if (isValidElement(node)) {
+        const props = node.props as { children?: React.ReactNode }
+        return extractText(props.children)
+    }
+    return ''
 }
 
 const BRAND_CONFIGS = {
@@ -75,24 +89,26 @@ export const BrandText = ({
     let color: string
     let hoverColor: string
 
+    const content = extractText(children)
+
     if (config) {
-        ;[firstPart, rest] = config.split(children)
+        ;[firstPart, rest] = config.split(content)
         color = config.color
         hoverColor = config.hoverColor
     } else {
-        const spaceIndex = children.indexOf(' ')
+        const spaceIndex = content.indexOf(' ')
         if (spaceIndex === -1) {
-            firstPart = children
+            firstPart = content
             rest = ''
         } else {
-            firstPart = children.substring(0, spaceIndex)
-            rest = children.substring(spaceIndex)
+            firstPart = content.substring(0, spaceIndex)
+            rest = content.substring(spaceIndex)
         }
 
         const brandClass = brand
             ? brand.toLowerCase().replace(/\s+/g, '')
-            : children
-              ? children.toLowerCase().replace(/\s+/g, '')
+            : content
+              ? content.toLowerCase().replace(/\s+/g, '')
               : ''
         color = brandClass ? `text-${brandClass}` : ''
         hoverColor = brandClass ? (groupHover ? `group-hover:text-${brandClass}` : `hover:text-${brandClass}`) : ''

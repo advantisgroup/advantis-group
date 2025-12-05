@@ -1,14 +1,11 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
-
 import { Globe } from 'lucide-react'
 import { useLocale } from 'next-intl'
 
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { useRouter } from '@/i18n/navigation'
-import { type Locale, locales } from '@/i18n/request'
+import { usePathname, useRouter } from '@/i18n/navigation'
 
 const languages = [
     { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
@@ -23,18 +20,8 @@ export function LanguageSwitcher() {
     const pathname = usePathname()
 
     const switchLanguage = (newLocale: string) => {
-        // Extract the path without the current locale
-        // pathname is like "/de/about" or "/en" or "/zh/team"
-        const segments = pathname.split('/').filter(Boolean)
-
-        // Remove the first segment if it's a locale
-        if (segments && segments.length > 0 && locales.includes(segments[0] as Locale)) {
-            segments.shift()
-        }
-
-        // Build the new path with the new locale
-        const pathWithoutLocale = segments && segments.length > 0 ? `/${segments.join('/')}` : ''
-        router.push(`/${newLocale}${pathWithoutLocale}`)
+        // The router from next-intl navigation automatically handles locale switching
+        router.replace(pathname, { locale: newLocale })
     }
 
     const currentLanguage = languages.find((lang) => lang.code === locale)

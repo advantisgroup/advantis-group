@@ -22,5 +22,9 @@ export function useBrandLogo(): string {
         return '/white_logo_transparent_background.png'
     }
 
+    if (theme === 'system') {
+        return '/base_logo_transparent_background.png'
+    }
+
     return '/black_logo_transparent_background.png'
 }

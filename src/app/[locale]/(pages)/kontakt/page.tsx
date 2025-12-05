@@ -1,10 +1,8 @@
 'use client'
-
 import React, { useState } from 'react'
 
-import Link from 'next/link'
-
 import { Mail, Phone, MapPin, Send, X, Check, Loader2, MessageSquare } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 import posthog from 'posthog-js'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -13,6 +11,7 @@ import { BrandText } from '@/components/effects/BrandText'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { Link } from '@/i18n/navigation'
 import { FormDataSchema } from '@/lib/schema'
 import { cn } from '@/lib/utils'
 
@@ -26,27 +25,6 @@ interface ContactInfoItem {
     value: string
     href: string
 }
-
-const contactInfoData: ContactInfoItem[] = [
-    {
-        icon: Mail,
-        label: 'E-Mail',
-        value: 'touch@advantis-group.de',
-        href: 'mailto:touch@advantis-group.de',
-    },
-    {
-        icon: Phone,
-        label: 'Telefon',
-        value: '[folgt]',
-        href: 'tel:',
-    },
-    {
-        icon: MapPin,
-        label: 'Adresse',
-        value: 'Bienweg 8, 90425 Nürnberg',
-        href: '#',
-    },
-]
 
 function ContactInfoMobile({ items }: { items: ContactInfoItem[] }) {
     return (
@@ -111,6 +89,8 @@ interface TabNavigationProps {
 }
 
 function TabNavigation({ contactMode, onModeChange }: TabNavigationProps) {
+    const t = useTranslations('contact.tabs')
+
     return (
         <div className="border-b border-border bg-muted/30">
             <div className="flex">
@@ -124,8 +104,8 @@ function TabNavigation({ contactMode, onModeChange }: TabNavigationProps) {
                     )}
                 >
                     <MessageSquare className="w-4 h-4" />
-                    <span className="hidden sm:inline">Nachricht schreiben</span>
-                    <span className="sm:hidden">Nachricht</span>
+                    <span className="hidden sm:inline">{t('writeMessage')}</span>
+                    <span className="sm:hidden">{t('writeMessageShort')}</span>
                     {contactMode === 'message' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
                 </button>
                 <button
@@ -138,8 +118,8 @@ function TabNavigation({ contactMode, onModeChange }: TabNavigationProps) {
                     )}
                 >
                     <Phone className="w-4 h-4" />
-                    <span className="hidden sm:inline">Rückruf vereinbaren</span>
-                    <span className="sm:hidden">Rückruf</span>
+                    <span className="hidden sm:inline">{t('requestCallback')}</span>
+                    <span className="sm:hidden">{t('requestCallbackShort')}</span>
                     {contactMode === 'callback' && (
                         <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                     )}
@@ -227,11 +207,13 @@ interface MessageFormProps {
 }
 
 function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange, onSubmit }: MessageFormProps) {
+    const t = useTranslations('contact.form')
+
     return (
         <form className="space-y-4" onSubmit={onSubmit}>
             <div>
                 <label htmlFor="company" className="block text-sm font-medium mb-2">
-                    Ihr Firmenname
+                    {t('company')}
                 </label>
                 <input
                     type="text"
@@ -246,7 +228,7 @@ function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="w-full md:w-1/2">
                     <label htmlFor="firstName" className="block text-sm font-medium mb-2">
-                        Vorname
+                        {t('firstName')}
                     </label>
                     <input
                         type="text"
@@ -259,7 +241,7 @@ function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange
                 </div>
                 <div className="w-full md:w-1/2">
                     <label htmlFor="lastName" className="block text-sm font-medium mb-2">
-                        Nachname
+                        {t('lastName')}
                     </label>
                     <input
                         type="text"
@@ -274,7 +256,7 @@ function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange
 
             <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2">
-                    E-Mail
+                    {t('email')}
                 </label>
                 <input
                     type="email"
@@ -288,7 +270,7 @@ function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange
 
             <div>
                 <label htmlFor="phone" className="block text-sm font-medium mb-2">
-                    Telefon
+                    {t('phone')}
                 </label>
                 <input
                     type="tel"
@@ -301,7 +283,7 @@ function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange
 
             <div>
                 <label htmlFor="message" className="block text-sm font-medium mb-2">
-                    Nachricht
+                    {t('message')}
                 </label>
                 <textarea
                     id="message"
@@ -315,16 +297,13 @@ function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange
 
             <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
-                    <strong>HINWEIS AUF DATENSCHUTZ:</strong> Mit dem Absenden des Formulars erklären Sie sich damit
-                    einverstanden, dass die <BrandText brand="advantis">Advantis-group GmbH</BrandText> Ihre angegebenen
-                    Daten zum Zweck der Bearbeitung Ihrer Anfrage verwendet. Ihre Daten werden ausschließlich zur
-                    Beantwortung Ihrer Anfrage gespeichert und nicht an Dritte weitergegeben. Sie können Ihre
-                    Einwilligung jederzeit per E-Mail an touch@advantis-group.de widerrufen.{' '}
+                    <strong>{t('privacyNoteLabel')}</strong> {t('privacyPrefix')}{' '}
+                    <BrandText brand="advantis">Advantis-group GmbH</BrandText> {t('privacySuffix')}{' '}
                     <Link href="/datenschutz" className="underline hover:text-foreground">
-                        Weitere Informationen finden Sie in unserer Datenschutzerklärung.
+                        {t('privacyLink')}
                     </Link>
                 </p>
-                <AnimatedButton buttonState={buttonState} idleText="Absenden" idleIcon={Send} disabled={true} />
+                <AnimatedButton buttonState={buttonState} idleText={t('submit')} idleIcon={Send} disabled={true} />
             </div>
         </form>
     )
@@ -336,11 +315,13 @@ interface CallbackFormProps {
 }
 
 function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
+    const t = useTranslations('contact.form')
+
     return (
         <form className="space-y-4" onSubmit={onSubmit}>
             <div>
                 <label htmlFor="callback-company" className="block text-sm font-medium mb-2">
-                    Ihr Firmenname*
+                    {t('company')}*
                 </label>
                 <input
                     type="text"
@@ -353,7 +334,7 @@ function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="w-full md:w-1/2">
                     <label htmlFor="callback-firstName" className="block text-sm font-medium mb-2">
-                        Vorname*
+                        {t('firstName')}*
                     </label>
                     <input
                         type="text"
@@ -364,7 +345,7 @@ function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                 </div>
                 <div className="w-full md:w-1/2">
                     <label htmlFor="callback-lastName" className="block text-sm font-medium mb-2">
-                        Nachname*
+                        {t('lastName')}*
                     </label>
                     <input
                         type="text"
@@ -377,20 +358,20 @@ function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
 
             <div>
                 <label htmlFor="callback-phone" className="block text-sm font-medium mb-2">
-                    Telefonnummer*
+                    {t('phone')}*
                 </label>
                 <input
                     type="tel"
                     id="callback-phone"
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-                    placeholder="+49 123 456789"
+                    placeholder={t('phonePlaceholder')}
                     required
                 />
             </div>
 
             <div>
                 <label htmlFor="callback-email" className="block text-sm font-medium mb-2">
-                    E-Mail*
+                    {t('email')}*
                 </label>
                 <input
                     type="email"
@@ -398,12 +379,12 @@ function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                     required
                 />
-                <p className="text-xs text-muted-foreground mt-1">Für die Bestätigung Ihres Rückrufs</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('callbackEmailNote')}</p>
             </div>
 
             <div>
                 <label htmlFor="callback-datetime" className="block text-sm font-medium mb-2">
-                    Wann können wir Sie erreichen?*
+                    {t('desiredTime')}*
                 </label>
                 <input
                     type="datetime-local"
@@ -411,33 +392,32 @@ function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                     required
                 />
-                <p className="text-xs text-muted-foreground mt-1">Wir rufen Sie zum gewünschten Zeitpunkt an</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('callbackTimeNote')}</p>
             </div>
 
             <div>
                 <label htmlFor="callback-notes" className="block text-sm font-medium mb-2">
-                    Anmerkungen (optional)
+                    {t('notes')}
                 </label>
                 <textarea
                     id="callback-notes"
                     rows={3}
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
-                    placeholder="Worum geht es in dem Gespräch?"
+                    placeholder={t('notesPlaceholder')}
                 />
             </div>
 
             <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
-                    <strong>HINWEIS AUF DATENSCHUTZ:</strong> Mit dem Absenden des Formulars erklären Sie sich damit
-                    einverstanden, dass die <BrandText brand="advantis">Advantis-group GmbH</BrandText> Ihre angegebenen
-                    Daten zum Zweck der Rückrufvereinbarung verwendet.{' '}
+                    <strong>{t('privacyNoteLabel')}</strong> {t('privacyPrefix')}{' '}
+                    <BrandText brand="advantis">Advantis-group GmbH</BrandText> {t('privacySuffixCallback')}{' '}
                     <Link href="/datenschutz" className="underline hover:text-foreground">
-                        Weitere Informationen finden Sie in unserer Datenschutzerklärung.
+                        {t('privacyLink')}
                     </Link>
                 </p>
                 <AnimatedButton
                     buttonState={buttonState}
-                    idleText="Rückruf anfordern"
+                    idleText={t('callbackRequest')}
                     idleIcon={Phone}
                     disabled={true}
                 />
@@ -451,26 +431,23 @@ interface WhyAdvantisSidebarProps {
 }
 
 function WhyAdvantisSidebar({ contactMode }: WhyAdvantisSidebarProps) {
+    const t = useTranslations('contact.sidebar')
+
     return (
         <Card className="border-0 rounded-none">
             <CardHeader>
                 <CardTitle className="text-xl md:text-2xl">
-                    Warum <BrandText brand="advantis">Advantis Group</BrandText>?
+                    {t('title')} <BrandText brand="advantis">Advantis Group</BrandText>?
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+                <CardDescription className="text-base">{t('description1')}</CardDescription>
                 <CardDescription className="text-base">
-                    Ob Sie Unterstützung im aktiven Vertrieb, in der strategischen Beratung oder bei der Auswahl
-                    moderner KI-Lösungen suchen – wir helfen Ihnen dabei!
-                </CardDescription>
-                <CardDescription className="text-base">
-                    {contactMode === 'message'
-                        ? 'Kontaktieren Sie uns für ein unverbindliches Beratungsgespräch und lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten.'
-                        : 'Vereinbaren Sie einen Rückruf und wir besprechen gemeinsam, wie wir Ihren Vertrieb voranbringen können.'}
+                    {contactMode === 'message' ? t('descriptionMessage') : t('descriptionCallback')}
                 </CardDescription>
                 <div className="pt-4 border-t border-border">
                     <p className="text-sm text-muted-foreground">
-                        Wir freuen uns auf {contactMode === 'message' ? 'Ihre Anfrage' : 'Ihren Anruf'}!
+                        {contactMode === 'message' ? t('closingMessage') : t('closingCallback')}
                     </p>
                 </div>
             </CardContent>
@@ -479,6 +456,9 @@ function WhyAdvantisSidebar({ contactMode }: WhyAdvantisSidebarProps) {
 }
 
 export default function Kontakt() {
+    const t = useTranslations('contact')
+    const tMessages = useTranslations('contact.messages')
+
     const isMobile = useIsMobile()
     const [contactMode, setContactMode] = useState<ContactMode>('message')
     const [buttonState, setButtonState] = useState<ButtonState>('idle')
@@ -494,6 +474,27 @@ export default function Kontakt() {
     })
     const [errors, setErrors] = useState<z.ZodFlattenedError<FormData>['fieldErrors']>({})
 
+    const contactInfoData: ContactInfoItem[] = [
+        {
+            icon: Mail,
+            label: t('email'),
+            value: 'touch@advantis-group.de',
+            href: 'mailto:touch@advantis-group.de',
+        },
+        {
+            icon: Phone,
+            label: t('phone'),
+            value: '[folgt]',
+            href: 'tel:',
+        },
+        {
+            icon: MapPin,
+            label: t('address'),
+            value: 'Bienweg 8, 90425 Nürnberg',
+            href: '#',
+        },
+    ]
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setButtonState('loading')
@@ -506,8 +507,8 @@ export default function Kontakt() {
             setErrors(flatten.errors as z.ZodFlattenedError<FormData>['fieldErrors'])
             setButtonState('error')
 
-            toast.error('Etwas ist schiefgelaufen', {
-                description: 'Bitte überprüfen Sie Ihre Eingaben',
+            toast.error(tMessages('errorTitle'), {
+                description: tMessages('errorDesc'),
                 icon: <X />,
             })
 
@@ -545,15 +546,15 @@ export default function Kontakt() {
                     icon: <X />,
                 })
             } else {
-                toast.error('Etwas ist schiefgelaufen', {
+                toast.error(tMessages('errorTitle'), {
                     description: 'Fals das problem anhalt versuchen sie es spater nochmal',
                     icon: <X />,
                 })
             }
         } else {
             setButtonState('success')
-            toast.success('Gesendet!', {
-                description: 'Wir werden uns in bis zu 24h bei ihnen melden.',
+            toast.success(tMessages('successTitle'), {
+                description: tMessages('successDesc'),
             })
         }
 
@@ -570,8 +571,8 @@ export default function Kontakt() {
         await new Promise((resolve) => setTimeout(resolve, 1500))
 
         setCallbackButtonState('success')
-        toast.success('Rückruf angefordert!', {
-            description: 'Wir rufen Sie zum gewünschten Zeitpunkt an.',
+        toast.success(tMessages('callSuccessTitle'), {
+            description: tMessages('callSuccessDesc'),
         })
 
         setTimeout(() => {
@@ -584,10 +585,8 @@ export default function Kontakt() {
             <main className="container mx-auto px-4 pt-24 pb-24 space-y-16 md:space-y-24">
                 {/* Hero Section */}
                 <section className="max-w-4xl mx-auto space-y-6 md:space-y-8 text-center">
-                    <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold">Kontakt</h1>
-                    <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                        Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten
-                    </p>
+                    <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold">{t('title')}</h1>
+                    <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">{t('subtitle')}</p>
                 </section>
 
                 {/* Contact Section */}
@@ -607,12 +606,12 @@ export default function Kontakt() {
                             <Card className={`border-0 rounded-none ${isMobile ? 'border-b' : ''}`}>
                                 <CardHeader>
                                     <CardTitle className="text-xl md:text-2xl">
-                                        {contactMode === 'message' ? 'Schreiben Sie uns' : 'Rückruf vereinbaren'}
+                                        {contactMode === 'message' ? tMessages('writeUs') : tMessages('callback')}
                                     </CardTitle>
                                     <CardDescription>
                                         {contactMode === 'message'
-                                            ? 'Senden Sie uns eine Nachricht und wir melden uns innerhalb von 24 Stunden'
-                                            : 'Teilen Sie uns mit, wann wir Sie am besten erreichen können'}
+                                            ? tMessages('writeUsDesc')
+                                            : tMessages('callbackDesc')}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>

@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-import Link from 'next/link'
-
 import { TrendingUp, Zap, BookOpen, Brain, ArrowRight, ExternalLink, Sparkles, ChevronDown } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
 import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
 export default function UnsereMarken() {
+    const t = useTranslations('brandsPage')
     const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set())
     const [activeSection, setActiveSection] = useState<number | null>(null)
     const sectionRefs = useRef<(HTMLElement | null)[]>([])
@@ -20,10 +21,13 @@ export default function UnsereMarken() {
             icon: TrendingUp,
             name: 'Salespirates',
             brand: 'salespirates' as const,
-            tagline: 'Ihre externe Vertriebsagentur',
-            description:
-                'Ihre externe Vertriebsagentur für den Inbound- oder Outboundsales. Wir liefern Leads oder unterstützen Ihren Vertrieb – aktiv, zielgerichtet und mit messbaren Ergebnissen.',
-            highlights: ['Lead-Generierung & Qualifizierung', 'Inbound & Outbound Sales', 'Messbare Performance'],
+            tagline: t('items.salespirates.tagline'),
+            description: t('items.salespirates.description'),
+            highlights: [
+                t('items.salespirates.highlights.0'),
+                t('items.salespirates.highlights.1'),
+                t('items.salespirates.highlights.2'),
+            ],
             url: 'https://salespirates.de',
             brandColor: 'text-salespirates',
             bgGradient: 'from-salespirates/10 via-background to-background',
@@ -33,10 +37,9 @@ export default function UnsereMarken() {
             icon: Zap,
             name: 'Rodeo-Consulting',
             brand: 'rodeo' as const,
-            tagline: 'Strategische Sales-Beratung',
-            description:
-                'Sales ist Wild West und mit Rodeo kennen wir uns aus! Wir liefern Ihnen eine strategische Sales-Beratung, die Ihren Vertrieb neu ausrichtet, absolut skalierbar macht und mit Effizienz zum Wachstum führt.',
-            highlights: ['Strategische Neuausrichtung', 'Skalierbare Prozesse', 'Wachstumsorientiert'],
+            tagline: t('items.rodeo.tagline'),
+            description: t('items.rodeo.description'),
+            highlights: [t('items.rodeo.highlights.0'), t('items.rodeo.highlights.1'), t('items.rodeo.highlights.2')],
             url: 'https://rodeoconsulting.de',
             brandColor: 'text-rodeo',
             bgGradient: 'from-rodeo/10 via-background to-background',
@@ -46,10 +49,13 @@ export default function UnsereMarken() {
             icon: BookOpen,
             name: 'Oldschool-train',
             brand: 'oldschool-train' as const,
-            tagline: 'Authentische Sales-Trainings',
-            description:
-                'Die Welt braucht keinen neuen Sales Schnick-Schnack. Wir bringen Ihre Sales Teams mit authentischen Sales-Coachings to the Max! Das Zauberwort hier ist Nachhaltigkeit. Sie können 1000 Sales Coachings buchen, ohne im daily Business jemals erfolgreich damit zu sein – wir haben das eine Training, dass Sie und Ihr Team wirklich weiterbringt. Erfahrung, Empathie und echte Praxis treffen bei uns auf moderne Lernmethoden.',
-            highlights: ['Nachhaltige Trainings', 'Praxisorientiert', 'Moderne Lernmethoden'],
+            tagline: t('items.oldschool.tagline'),
+            description: t('items.oldschool.description'),
+            highlights: [
+                t('items.oldschool.highlights.0'),
+                t('items.oldschool.highlights.1'),
+                t('items.oldschool.highlights.2'),
+            ],
             url: 'https://oldschool-train.de',
             brandColor: 'text-oldschool',
             bgGradient: 'from-oldschool/10 via-background to-background',
@@ -59,10 +65,13 @@ export default function UnsereMarken() {
             icon: Brain,
             name: 'Sales-AI-Germany',
             brand: 'sales-ai-germany' as const,
-            tagline: 'KI für intelligenten Vertrieb',
-            description:
-                'Alle sprechen über KI Tools. Wir beraten Sie, welche KI-Tools für Sales-Teams aktuell Sinn machen und einen echten Mehrwert bringen. Wir zeigen Ihnen, wie KI Technologie Ihren Vertrieb tatsächlich smarter macht.',
-            highlights: ['KI-Tool Beratung', 'Praktische Integration', 'Echter Mehrwert'],
+            tagline: t('items.salesai.tagline'),
+            description: t('items.salesai.description'),
+            highlights: [
+                t('items.salesai.highlights.0'),
+                t('items.salesai.highlights.1'),
+                t('items.salesai.highlights.2'),
+            ],
             url: 'https://sales-ai-germany.de',
             brandColor: 'text-sales-ai',
             bgGradient: 'from-sales-ai/10 via-background to-background',
@@ -116,16 +125,16 @@ export default function UnsereMarken() {
                         <div className="animate-fade-in-down">
                             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-primary/10 backdrop-blur-xl border border-primary/30 text-primary font-semibold shadow-xl shadow-primary/10">
                                 <Sparkles className="w-5 h-5 animate-pulse-slow" />
-                                <span className="text-sm md:text-base">Vier Premium Marken – Ein Ziel</span>
+                                <span className="text-sm md:text-base">{t('hero.badge')}</span>
                             </div>
                         </div>
 
                         {/* Massive headline */}
                         <div className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                             <h1 className="text-6xl md:text-8xl lg:text-9xl font-bold tracking-tighter leading-[0.9]">
-                                <span className="block">Unsere</span>
+                                <span className="block">{t('hero.titlePrefix')}</span>
                                 <span className="block bg-linear-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
-                                    Marken
+                                    {t('hero.titleSuffix')}
                                 </span>
                             </h1>
                         </div>
@@ -135,13 +144,13 @@ export default function UnsereMarken() {
                             className="text-xl md:text-3xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light animate-fade-in-up"
                             style={{ animationDelay: '0.4s' }}
                         >
-                            Maßgeschneiderte Sales-Lösungen für nachhaltigen Erfolg
+                            {t('hero.subtitle')}
                         </p>
 
                         {/* Scroll indicator */}
                         <div className="pt-12 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
                             <div className="flex flex-col items-center gap-3 text-muted-foreground animate-bounce">
-                                <span className="text-sm font-medium">Entdecken Sie unsere Marken</span>
+                                <span className="text-sm font-medium">{t('hero.scroll')}</span>
                                 <ChevronDown className="w-6 h-6" />
                             </div>
                         </div>
@@ -293,7 +302,9 @@ export default function UnsereMarken() {
                                                         rel="noopener noreferrer"
                                                         className="gap-3"
                                                     >
-                                                        <span className="text-base font-semibold">Mehr erfahren</span>
+                                                        <span className="text-base font-semibold">
+                                                            {t('learnMore')}
+                                                        </span>
                                                         <ExternalLink className="w-5 h-5 transition-transform duration-300 group-hover/btn:rotate-12" />
                                                     </Link>
                                                 </Button>
@@ -393,15 +404,14 @@ export default function UnsereMarken() {
                 <div className="container mx-auto px-4 relative z-10">
                     <div className="max-w-4xl mx-auto text-center space-y-10">
                         <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                            Welche Marke{' '}
+                            {t('cta.titlePart1')}{' '}
                             <span className="bg-linear-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
-                                passt zu Ihnen?
+                                {t('cta.titlePart2')}
                             </span>
                         </h2>
 
                         <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                            Lassen Sie uns gemeinsam herausfinden, wie wir Ihren Vertrieb auf das nächste Level bringen
-                            können.
+                            {t('cta.description')}
                         </p>
 
                         <div className="pt-6">
@@ -411,7 +421,7 @@ export default function UnsereMarken() {
                                 className="group/cta shadow-2xl shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 hover:scale-105 px-8 py-7 text-lg"
                             >
                                 <Link href="/kontakt">
-                                    <span>Jetzt Kontakt aufnehmen</span>
+                                    <span>{t('cta.button')}</span>
                                     <ArrowRight className="w-6 h-6 ml-3 transition-transform duration-300 group-hover/cta:translate-x-2" />
                                 </Link>
                             </Button>

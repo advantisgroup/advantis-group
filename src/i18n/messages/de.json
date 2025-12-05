@@ -74,8 +74,192 @@
     "footer": {
         "description": "Wir sind Ihr Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und vier starken Marken bringen wir Ihr Unternehmen voran.",
         "quickLinks": "Quick Links",
+        "ourBrands": "Unsere Marken",
+        "contact": "Kontakt",
+        "email": "E-Mail",
+        "phone": "Telefon",
+        "address": "Adresse",
         "legal": "Rechtliches",
         "followUs": "Folgen Sie uns",
         "copyright": "Alle Rechte vorbehalten."
+    },
+    "contact": {
+        "title": "Kontakt",
+        "subtitle": "Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten",
+        "email": "E-Mail",
+        "phone": "Telefon",
+        "address": "Adresse",
+        "tabs": {
+            "writeMessage": "Nachricht schreiben",
+            "requestCallback": "Rückruf vereinbaren",
+            "writeMessageShort": "Nachricht",
+            "requestCallbackShort": "Rückruf"
+        },
+        "form": {
+            "company": "Ihr Firmenname",
+            "firstName": "Vorname",
+            "lastName": "Nachname",
+            "email": "E-Mail",
+            "phone": "Telefon",
+            "message": "Nachricht",
+            "submit": "Absenden",
+            "callbackRequest": "Rückruf anfordern",
+            "phonePlaceholder": "+49 123 456789",
+            "desiredTime": "Wann können wir Sie erreichen?",
+            "notes": "Anmerkungen (optional)",
+            "notesPlaceholder": "Worum geht es in dem Gespräch?",
+            "callbackEmailNote": "Für die Bestätigung Ihres Rückrufs",
+            "callbackTimeNote": "Wir rufen Sie zum gewünschten Zeitpunkt an",
+            "privacyPrefix": "Mit dem Absenden des Formulars erklären Sie sich damit einverstanden, dass die",
+            "privacySuffix": "Ihre angegebenen Daten zum Zweck der Bearbeitung Ihrer Anfrage verwendet. Ihre Daten werden ausschließlich zur Beantwortung Ihrer Anfrage gespeichert und nicht an Dritte weitergegeben.",
+            "privacySuffixCallback": "Ihre angegebenen Daten zum Zweck der Rückrufvereinbarung verwendet.",
+            "privacyLink": "Weitere Informationen finden Sie in unserer Datenschutzerklärung.",
+            "privacyNoteLabel": "HINWEIS AUF DATENSCHUTZ:"
+        },
+        "sidebar": {
+            "title": "Warum",
+            "description1": "Ob Sie Unterstützung im aktiven Vertrieb, in der strategischen Beratung oder bei der Auswahl moderner KI-Lösungen suchen – wir helfen Ihnen dabei!",
+            "descriptionMessage": "Kontaktieren Sie uns für ein unverbindliches Beratungsgespräch und lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten.",
+            "descriptionCallback": "Vereinbaren Sie einen Rückruf und wir besprechen gemeinsam, wie wir Ihren Vertrieb voranbringen können.",
+            "closingMessage": "Wir freuen uns auf Ihre Anfrage!",
+            "closingCallback": "Wir freuen uns auf Ihren Anruf!"
+        },
+        "messages": {
+            "writeUs": "Schreiben Sie uns",
+            "writeUsDesc": "Senden Sie uns eine Nachricht und wir melden uns innerhalb von 24 Stunden",
+            "callback": "Rückruf vereinbaren",
+            "callbackDesc": "Teilen Sie uns mit, wann wir Sie am besten erreichen können",
+            "successTitle": "Gesendet!",
+            "successDesc": "Wir werden uns in bis zu 24h bei ihnen melden.",
+            "callSuccessTitle": "Rückruf angefordert!",
+            "callSuccessDesc": "Wir rufen Sie zum gewünschten Zeitpunkt an.",
+            "errorTitle": "Etwas ist schiefgelaufen",
+            "errorDesc": "Bitte überprüfen Sie Ihre Eingaben"
+        }
+    },
+    "about": {
+        "hero": {
+            "badge": "Über uns",
+            "titlePart1": "Ihre Heimat für",
+            "titlePart2": "exzellenten Vertrieb",
+            "subtitle": "Die <brand>Advantis-group GmbH</brand> vereint über 15 Jahre Vertriebserfahrung unter einem Dach – mit Leidenschaft, Pragmatismus und einem klaren Fokus auf Erfolg."
+        },
+        "mission": {
+            "badge": "Mission",
+            "title": "Vertrieb als Handwerk und Haltung",
+            "description": "Wir verstehen Vertrieb nicht als Zufall, sondern als Handwerk. Unser Anspruch: nachhaltige, effektive und praxisnahe Lösungen, die funktionieren."
+        },
+        "vision": {
+            "badge": "Vision",
+            "title": "Familiär, professionell, ehrlich",
+            "description": "Dabei sind wir familiär im Umgang, professionell in der Umsetzung und ehrlich im Ergebnis – für langfristige Partnerschaften, die Vertrauen schaffen."
+        },
+        "story": {
+            "badge": "Unsere Geschichte",
+            "text1": "Die <brand>Advantis-Group GmbH</brand> wurde 2025 von <founder>Andrea Reichl</founder> gegründet und vereint über 15 Jahre Vertriebserfahrung in unterschiedlichen Branchen unter einem Dach.",
+            "text2": "Was vor Jahren als Einzelunternehmen begann, ist nun eine Unternehmensgruppe mit starken Marken und einem gemeinsamen Focus: 100 % Sales.",
+            "text3": "Schnick-schnack liegt uns nicht – wir haben das Rad nicht neu erfunden, nur ein paar schicke Felgen aufgezogen. Pragmatisch, effektiv, nachhaltig."
+        },
+        "stats": {
+            "experience": "Jahre Erfahrung",
+            "projects": "Erfolgreiche Projekte",
+            "brands": "Starke Marken"
+        },
+        "values": {
+            "badge": "Unsere Werte",
+            "experienceTitle": "Erfahrung",
+            "experienceDesc": "Über 15 Jahre Vertriebserfahrung in unterschiedlichen Branchen",
+            "innovationTitle": "Innovation",
+            "innovationDesc": "Moderne Tools und bewährte Methoden für maximale Effizienz",
+            "passionTitle": "Leidenschaft",
+            "passionDesc": "Nachhaltige Ergebnisse durch Engagement und Expertise"
+        },
+        "cta": {
+            "title": "Bereit für den nächsten Schritt?",
+            "description": "Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten. Ob Unterstützung im aktiven Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen Ihnen dabei.",
+            "button": "Kontakt aufnehmen"
+        }
+    },
+    "team": {
+        "hero": {
+            "badge": "Das Team",
+            "titlePart1": "Die Gesichter hinter",
+            "subtitle": "Experten, Visionäre und Macher. Vereint durch die Leidenschaft für exzellenten Vertrieb."
+        },
+        "founder": {
+            "role": "Geschäftsführerin",
+            "badge": "Leadership",
+            "quote": "\"Sales ist nicht nur ein Job, es ist eine Haltung.\"",
+            "bio": "Sales-Enthusiastin, Strategin und Macherin. Mit über 15 Jahren Erfahrung im Vertrieb, Coaching und Unternehmensaufbau führt Andrea die advantis-group mit Leidenschaft, Pragmatismus und einem klaren Fokus auf Erfolg und Menschlichkeit.",
+            "contactBtn": "Kontaktieren"
+        },
+        "roles": {
+            "inbound": "Teamlead Inbound Sales",
+            "outbound": "Teamlead Outbound Sales",
+            "it": "IT Projektleiter",
+            "hr": "HR Specialist",
+            "marketing": "Online Marketing Manager",
+            "coach": "Coach und Trainerin",
+            "quality": "Datenschutzbeauftragter und Qualitätsmanager"
+        },
+        "grid": {
+            "title": "Unser Team",
+            "subtitle": "Die Experten an Ihrer Seite",
+            "cardFooter": "Advantis Team"
+        }
+    },
+    "brandsPage": {
+        "hero": {
+            "badge": "Vier Premium Marken – Ein Ziel",
+            "titlePrefix": "Unsere",
+            "titleSuffix": "Marken",
+            "subtitle": "Maßgeschneiderte Sales-Lösungen für nachhaltigen Erfolg",
+            "scroll": "Entdecken Sie unsere Marken"
+        },
+        "items": {
+            "salespirates": {
+                "tagline": "Ihre externe Vertriebsagentur",
+                "description": "Ihre externe Vertriebsagentur für den Inbound- oder Outboundsales. Wir liefern Leads oder unterstützen Ihren Vertrieb – aktiv, zielgerichtet und mit messbaren Ergebnissen.",
+                "highlights": {
+                    "0": "Lead-Generierung & Qualifizierung",
+                    "1": "Inbound & Outbound Sales",
+                    "2": "Messbare Performance"
+                }
+            },
+            "rodeo": {
+                "tagline": "Strategische Sales-Beratung",
+                "description": "Sales ist Wild West und mit Rodeo kennen wir uns aus! Wir liefern Ihnen eine strategische Sales-Beratung, die Ihren Vertrieb neu ausrichtet, absolut skalierbar macht und mit Effizienz zum Wachstum führt.",
+                "highlights": {
+                    "0": "Strategische Neuausrichtung",
+                    "1": "Skalierbare Prozesse",
+                    "2": "Wachstumsorientiert"
+                }
+            },
+            "oldschool": {
+                "tagline": "Authentische Sales-Trainings",
+                "description": "Die Welt braucht keinen neuen Sales Schnick-Schnack. Wir bringen Ihre Sales Teams mit authentischen Sales-Coachings to the Max! Das Zauberwort hier ist Nachhaltigkeit. Sie können 1000 Sales Coachings buchen, ohne im daily Business jemals erfolgreich damit zu sein – wir haben das eine Training, dass Sie und Ihr Team wirklich weiterbringt. Erfahrung, Empathie und echte Praxis treffen bei uns auf moderne Lernmethoden.",
+                "highlights": {
+                    "0": "Nachhaltige Trainings",
+                    "1": "Praxisorientiert",
+                    "2": "Moderne Lernmethoden"
+                }
+            },
+            "salesai": {
+                "tagline": "KI für intelligenten Vertrieb",
+                "description": "Alle sprechen über KI Tools. Wir beraten Sie, welche KI-Tools für Sales-Teams aktuell Sinn machen und einen echten Mehrwert bringen. Wir zeigen Ihnen, wie KI Technologie Ihren Vertrieb tatsächlich smarter macht.",
+                "highlights": {
+                    "0": "KI-Tool Beratung",
+                    "1": "Praktische Integration",
+                    "2": "Echter Mehrwert"
+                }
+            }
+        },
+        "cta": {
+            "titlePart1": "Welche Marke",
+            "titlePart2": "passt zu Ihnen?",
+            "description": "Lassen Sie uns gemeinsam herausfinden, wie wir Ihren Vertrieb auf das nächste Level bringen können.",
+            "button": "Jetzt Kontakt aufnehmen"
+        },
+        "learnMore": "Mehr erfahren"
     }
 }

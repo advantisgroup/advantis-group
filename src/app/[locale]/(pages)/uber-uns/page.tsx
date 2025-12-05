@@ -1,9 +1,11 @@
 'use client'
 
+import React from 'react'
+
 import Image from 'next/image'
-import Link from 'next/link'
 
 import { Target, Zap, Heart, ArrowRight, TrendingUp, Users, Award } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
 import GradientBackground from '@/components/effects/GradientBackground'
@@ -11,24 +13,26 @@ import { ScrollReveal } from '@/components/effects/ScrollReveal'
 import { SectionDivider } from '@/components/layout/SectionDivider'
 import { Button } from '@/components/ui/button'
 import { useBrandLogo } from '@/hooks/use-logo'
+import { Link } from '@/i18n/navigation'
 
 export default function UberUns() {
+    const t = useTranslations('about')
     const logo = useBrandLogo()
     const values = [
         {
             icon: Target,
-            title: 'Erfahrung',
-            description: 'Über 15 Jahre Vertriebserfahrung in unterschiedlichen Branchen',
+            title: t('values.experienceTitle'),
+            description: t('values.experienceDesc'),
         },
         {
             icon: Zap,
-            title: 'Innovation',
-            description: 'Moderne Tools und bewährte Methoden für maximale Effizienz',
+            title: t('values.innovationTitle'),
+            description: t('values.innovationDesc'),
         },
         {
             icon: Heart,
-            title: 'Leidenschaft',
-            description: 'Nachhaltige Ergebnisse durch Engagement und Expertise',
+            title: t('values.passionTitle'),
+            description: t('values.passionDesc'),
         },
     ]
 
@@ -36,17 +40,17 @@ export default function UberUns() {
         {
             icon: TrendingUp,
             value: '15+',
-            label: 'Jahre Erfahrung',
+            label: t('stats.experience'),
         },
         {
             icon: Users,
             value: '500+',
-            label: 'Erfolgreiche Projekte',
+            label: t('stats.projects'),
         },
         {
             icon: Award,
             value: '4',
-            label: 'Starke Marken',
+            label: t('stats.brands'),
         },
     ]
 
@@ -66,16 +70,16 @@ export default function UberUns() {
                         <ScrollReveal>
                             <div className="max-w-4xl">
                                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8">
-                                    Über uns
+                                    {t('hero.badge')}
                                 </div>
                                 <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight">
-                                    Ihre Heimat für <br />
-                                    exzellenten Vertrieb
+                                    {t('hero.titlePart1')} <br />
+                                    {t('hero.titlePart2')}
                                 </h1>
                                 <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl">
-                                    Die <BrandText brand="advantis">Advantis-group GmbH</BrandText> vereint über 15
-                                    Jahre Vertriebserfahrung unter einem Dach – mit Leidenschaft, Pragmatismus und einem
-                                    klaren Fokus auf Erfolg.
+                                    {t.rich('hero.subtitle', {
+                                        brand: (chunks) => <BrandText brand="advantis">{chunks as string}</BrandText>,
+                                    })}
                                 </p>
                             </div>
                         </ScrollReveal>
@@ -91,27 +95,25 @@ export default function UberUns() {
                             <div className="grid md:grid-cols-2 gap-8">
                                 <div className="bg-card/40 backdrop-blur-sm border border-border/50 rounded-2xl p-8 md:p-10">
                                     <div className="inline-block px-3 py-1 rounded-md bg-primary/10 text-xs font-semibold tracking-wider uppercase text-primary mb-6">
-                                        Mission
+                                        {t('mission.badge')}
                                     </div>
                                     <h2 className="text-2xl md:text-3xl font-bold mb-4 leading-tight">
-                                        Vertrieb als Handwerk und Haltung
+                                        {t('mission.title')}
                                     </h2>
                                     <p className="text-lg text-muted-foreground leading-relaxed">
-                                        Wir verstehen Vertrieb nicht als Zufall, sondern als Handwerk. Unser Anspruch:
-                                        nachhaltige, effektive und praxisnahe Lösungen, die funktionieren.
+                                        {t('mission.description')}
                                     </p>
                                 </div>
 
                                 <div className="bg-card/40 backdrop-blur-sm border border-border/50 rounded-2xl p-8 md:p-10">
                                     <div className="inline-block px-3 py-1 rounded-md bg-primary/10 text-xs font-semibold tracking-wider uppercase text-primary mb-6">
-                                        Vision
+                                        {t('vision.badge')}
                                     </div>
                                     <h2 className="text-2xl md:text-3xl font-bold mb-4 leading-tight">
-                                        Familiär, professionell, ehrlich
+                                        {t('vision.title')}
                                     </h2>
                                     <p className="text-lg text-muted-foreground leading-relaxed">
-                                        Dabei sind wir familiär im Umgang, professionell in der Umsetzung und ehrlich im
-                                        Ergebnis – für langfristige Partnerschaften, die Vertrauen schaffen.
+                                        {t('vision.description')}
                                     </p>
                                 </div>
                             </div>
@@ -124,26 +126,29 @@ export default function UberUns() {
                             <div className="grid md:grid-cols-12 gap-12 md:gap-16">
                                 <div className="md:col-span-4">
                                     <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                        Unsere Geschichte
+                                        {t('story.badge')}
                                     </h2>
                                     <div className="w-12 h-1 bg-primary rounded-full" />
                                 </div>
                                 <div className="md:col-span-8 space-y-6">
                                     <p className="text-lg leading-relaxed">
-                                        Die <BrandText brand="advantis">Advantis-Group GmbH</BrandText> wurde 2025 von{' '}
-                                        <span className="font-semibold">Andrea Reichl</span> gegründet und vereint über
-                                        15 Jahre Vertriebserfahrung in unterschiedlichen Branchen unter einem Dach.
+                                        {t.rich('story.text1', {
+                                            brand: (chunks) => (
+                                                <BrandText brand="advantis">{chunks as string}</BrandText>
+                                            ),
+                                            founder: (chunks) => <span className="font-semibold">{chunks}</span>,
+                                        })}
                                     </p>
 
                                     <p className="text-lg text-muted-foreground leading-relaxed">
-                                        Was vor Jahren als Einzelunternehmen begann, ist nun eine Unternehmensgruppe mit
-                                        starken Marken und einem gemeinsamen Focus: 100 % Sales.
+                                        {t.rich('story.text2', {
+                                            brand: (chunks) => (
+                                                <BrandText brand="advantis">{chunks as string}</BrandText>
+                                            ),
+                                        })}
                                     </p>
 
-                                    <p className="text-lg text-muted-foreground leading-relaxed">
-                                        Schnick-schnack liegt uns nicht – wir haben das Rad nicht neu erfunden, nur ein
-                                        paar schicke Felgen aufgezogen. Pragmatisch, effektiv, nachhaltig.
-                                    </p>
+                                    <p className="text-lg text-muted-foreground leading-relaxed">{t('story.text3')}</p>
                                 </div>
                             </div>
                         </section>
@@ -179,7 +184,7 @@ export default function UberUns() {
                         <section className="mb-32">
                             <div className="mb-12">
                                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                                    Unsere Werte
+                                    {t('values.badge')}
                                 </h2>
                                 <div className="w-12 h-1 bg-primary rounded-full" />
                             </div>
@@ -229,17 +234,13 @@ export default function UberUns() {
                     <ScrollReveal delay={100}>
                         <section className="border-t border-border/50 pt-16">
                             <div className="max-w-3xl">
-                                <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                                    Bereit für den nächsten Schritt?
-                                </h2>
+                                <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('cta.title')}</h2>
                                 <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                                    Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten. Ob Unterstützung im
-                                    aktiven Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen Ihnen
-                                    dabei.
+                                    {t('cta.description')}
                                 </p>
                                 <Button asChild size="lg">
                                     <Link href="/kontakt" className="inline-flex items-center gap-2 group">
-                                        <span>Kontakt aufnehmen</span>
+                                        <span>{t('cta.button')}</span>
                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </Link>
                                 </Button>
