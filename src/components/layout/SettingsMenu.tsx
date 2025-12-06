@@ -1,0 +1,261 @@
+'use client'
+
+import React from 'react'
+
+import { motion } from 'framer-motion'
+import { Monitor, Moon, Sun } from 'lucide-react'
+import { useLocale } from 'next-intl'
+import { useTheme } from 'next-themes'
+
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { usePathname, useRouter } from '@/i18n/navigation'
+import { cn } from '@/lib/utils'
+
+const languages = [
+    { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'en', name: 'English', flag: '🇬🇧' },
+    { code: 'zh', name: '中文', flag: '🇨🇳' },
+    { code: 'fr', name: 'Français', flag: '🇫🇷' },
+]
+
+export const SettingsMenu = () => {
+    const locale = useLocale()
+    const router = useRouter()
+    const pathname = usePathname()
+    const { setTheme, theme } = useTheme()
+    const [isOpen, setIsOpen] = React.useState(false)
+    const [isHovered, setIsHovered] = React.useState(false)
+
+    const switchLanguage = (newLocale: string) => {
+        router.replace(pathname, { locale: newLocale })
+    }
+
+    return (
+        <DropdownMenu onOpenChange={setIsOpen}>
+            <DropdownMenuTrigger asChild>
+                <button
+                    className="p-2 relative group/settings outline-none w-10 h-10 flex items-center justify-center"
+                    aria-label="Settings"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                >
+                    {/* Subtle hover glow */}
+                    <div className="absolute inset-0 opacity-0 group-hover/settings:opacity-100 transition-opacity duration-300 blur-md bg-advantis/10 rounded-full" />
+
+                    <div className="flex flex-col gap-[3px] items-center justify-center relative z-10 h-full w-full">
+                        {/* Row 1 (Top) */}
+                        <motion.div
+                            className="flex gap-[3px]"
+                            animate={
+                                isOpen
+                                    ? {
+                                          y: [-10, 0], // Jump up 10px then slam down to 0
+                                      }
+                                    : {
+                                          y: 0,
+                                      }
+                            }
+                            transition={
+                                isOpen
+                                    ? {
+                                          duration: 0.3,
+                                          times: [0, 1],
+                                          type: 'spring',
+                                          stiffness: 300,
+                                          damping: 15,
+                                      }
+                                    : { duration: 0.2 }
+                            }
+                        >
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis' : 'group-hover/settings:bg-advantis'
+                                )}
+                                animate={{ x: isHovered || isOpen ? 7 : 0 }}
+                                transition={{ duration: 0.2 }}
+                            />
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis' : 'group-hover/settings:bg-advantis'
+                                )}
+                            />
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis' : 'group-hover/settings:bg-advantis'
+                                )}
+                                animate={{ x: isHovered || isOpen ? -7 : 0 }}
+                                transition={{ duration: 0.2 }}
+                            />
+                        </motion.div>
+
+                        {/* Row 2 (Middle) */}
+                        <motion.div
+                            className="flex gap-[3px]"
+                            animate={
+                                isOpen
+                                    ? {
+                                          y: [0, 2, 0],
+                                      }
+                                    : {
+                                          y: 0,
+                                      }
+                            }
+                            transition={
+                                isOpen
+                                    ? {
+                                          delay: 0.15,
+                                          duration: 0.2,
+                                      }
+                                    : { duration: 0.2 }
+                            }
+                        >
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis opacity-80' : 'group-hover/settings:bg-advantis'
+                                )}
+                                animate={{ x: isHovered || isOpen ? 7 : 0 }}
+                                transition={{ duration: 0.2 }}
+                            />
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis opacity-80' : 'group-hover/settings:bg-advantis'
+                                )}
+                            />
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis opacity-80' : 'group-hover/settings:bg-advantis'
+                                )}
+                                animate={{ x: isHovered || isOpen ? -7 : 0 }}
+                                transition={{ duration: 0.2 }}
+                            />
+                        </motion.div>
+
+                        {/* Row 3 (Bottom) */}
+                        <motion.div
+                            className="flex gap-[3px]"
+                            animate={
+                                isOpen
+                                    ? {
+                                          y: [0, 4, 0],
+                                          scale: [1, 0.8, 1],
+                                      }
+                                    : {
+                                          y: 0,
+                                          scale: 1,
+                                      }
+                            }
+                            transition={
+                                isOpen
+                                    ? {
+                                          delay: 0.25,
+                                          duration: 0.3,
+                                      }
+                                    : { duration: 0.2 }
+                            }
+                        >
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis' : 'group-hover/settings:bg-advantis'
+                                )}
+                                animate={{ x: isHovered || isOpen ? 7 : 0 }}
+                                transition={{ duration: 0.2 }}
+                            />
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis' : 'group-hover/settings:bg-advantis'
+                                )}
+                            />
+                            <motion.span
+                                className={cn(
+                                    'block w-1 h-1 rounded-full bg-foreground',
+                                    isOpen ? 'bg-advantis' : 'group-hover/settings:bg-advantis'
+                                )}
+                                animate={{ x: isHovered || isOpen ? -7 : 0 }}
+                                transition={{ duration: 0.2 }}
+                            />
+                        </motion.div>
+                    </div>
+                </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+                align="end"
+                className="w-56 p-0 overflow-hidden border-none bg-transparent shadow-none"
+            >
+                {/* 
+                   We wrap the actual content in a motion div to animate the "jump out".
+                   Since it's in a Portal, 'align="end"' puts it correctly.
+                   We animate scale/opacity. 
+                */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8, y: -20, transformOrigin: 'top right' }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                    transition={{
+                        type: 'spring',
+                        stiffness: 350,
+                        damping: 25,
+                        delay: 0.3, // Sync with the bottom dot "launching" it
+                    }}
+                    className="bg-popover border border-border rounded-md p-2 shadow-md"
+                >
+                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider">
+                        Language
+                    </DropdownMenuLabel>
+                    <div className="grid grid-cols-2 gap-1 mb-2">
+                        {languages.map((language) => (
+                            <DropdownMenuItem
+                                key={language.code}
+                                onClick={() => switchLanguage(language.code)}
+                                className={cn(
+                                    'cursor-pointer flex items-center justify-center gap-2',
+                                    language.code === locale && 'bg-accent text-accent-foreground font-medium'
+                                )}
+                            >
+                                <span className="text-lg">{language.flag}</span>
+                                <span>{language.code.toUpperCase()}</span>
+                            </DropdownMenuItem>
+                        ))}
+                    </div>
+
+                    <DropdownMenuSeparator />
+
+                    <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider mt-2">
+                        Appearance
+                    </DropdownMenuLabel>
+                    <div className="flex flex-col gap-1">
+                        <DropdownMenuItem onClick={() => setTheme('light')} className="cursor-pointer">
+                            <Sun className="mr-2 h-4 w-4" />
+                            <span>Light</span>
+                            {theme === 'light' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme('dark')} className="cursor-pointer">
+                            <Moon className="mr-2 h-4 w-4" />
+                            <span>Dark</span>
+                            {theme === 'dark' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setTheme('system')} className="cursor-pointer">
+                            <Monitor className="mr-2 h-4 w-4" />
+                            <span>System</span>
+                            {theme === 'system' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />}
+                        </DropdownMenuItem>
+                    </div>
+                </motion.div>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    )
+}

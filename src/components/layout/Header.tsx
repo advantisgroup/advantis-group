@@ -9,8 +9,8 @@ import { useTranslations } from 'next-intl'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Link } from '@/i18n/navigation'
 
-import { LanguageSwitcher } from './LanguageSwitcher'
-import { ModeToggle } from '../theme/theme-toggle'
+import { SettingsMenu } from './SettingsMenu'
+import { ShimmerText } from '../ui/Shimmer'
 
 export const Header = () => {
     const pathname = usePathname()
@@ -61,18 +61,6 @@ export const Header = () => {
 
     return (
         <>
-            <style jsx global>{`
-                @keyframes shimmer {
-                    0%,
-                    100% {
-                        background-position: 0% 0%;
-                    }
-                    50% {
-                        background-position: 200% 0%;
-                    }
-                }
-            `}</style>
-
             <header
                 className={`fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-all duration-300 ${!isScrolled ? '' : 'border-b border-border shadow-sm'}`}
             >
@@ -88,28 +76,12 @@ export const Header = () => {
                                 transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                             }}
                         >
-                            <span
-                                className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground group-hover:from-advantis group-hover:via-white group-hover:to-advantis transition-all duration-500"
-                                style={{
-                                    backgroundSize: '200% 100%',
-                                    animation: 'shimmer 4s ease-in-out infinite',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                }}
-                            >
+                            <ShimmerText className="group-hover:text-advantis transition-colors duration-500">
                                 ADVANTIS
-                            </span>
-                            <span
-                                className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground  duration-500"
-                                style={{
-                                    backgroundSize: '200% 100%',
-                                    animation: 'shimmer 6s ease-in-out infinite',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent',
-                                }}
-                            >
+                            </ShimmerText>
+                            <ShimmerText className="group-hover:text-foreground transition-colors duration-500">
                                 GROUP
-                            </span>
+                            </ShimmerText>
                         </Link>
                     ) : (
                         <Link
@@ -122,12 +94,12 @@ export const Header = () => {
                                 transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                             }}
                         >
-                            <span className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground group-hover:from-advantis group-hover:via-white group-hover:to-advantis transition-all duration-500">
+                            <ShimmerText className="group-hover:text-advantis transition-colors duration-500">
                                 ADVANTIS
-                            </span>
-                            <span className="bg-clip-text text-transparent bg-linear-to-r from-foreground via-white/60 to-foreground  duration-500">
+                            </ShimmerText>
+                            <ShimmerText className="group-hover:text-foreground transition-colors duration-500">
                                 GROUP
-                            </span>
+                            </ShimmerText>
                         </Link>
                     )}
 
@@ -156,8 +128,7 @@ export const Header = () => {
                                 </li>
                             ))}
                         </ul>
-                        <LanguageSwitcher />
-                        <ModeToggle />
+                        <SettingsMenu />
                     </div>
 
                     <button
