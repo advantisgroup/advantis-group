@@ -28,3 +28,27 @@ export function useBrandLogo(): string {
 
     return '/black_logo_transparent_background.png'
 }
+
+export function useSingleLetterLogo(): string {
+    const { theme } = useTheme()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted) {
+        return '/base_logo_tb_First.png'
+    }
+
+    if (theme === 'dark') {
+        return '/white_logo_tb_First.png'
+    }
+
+    // specific check for system to match requirement, though fallback covers it
+    if (theme === 'system') {
+        return '/base_logo_tb_First.png'
+    }
+
+    return '/base_logo_tb_First.png'
+}

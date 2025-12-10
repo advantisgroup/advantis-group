@@ -2,10 +2,12 @@
 
 import React from 'react'
 
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 
 import { useTranslations } from 'next-intl'
 
+import { useSingleLetterLogo } from '@/hooks/use-logo'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Link } from '@/i18n/navigation'
 
@@ -14,6 +16,7 @@ import { ShimmerText } from '../effects/Shimmer'
 
 export const Header = () => {
     const pathname = usePathname()
+    const logo = useSingleLetterLogo()
     const isMobile = useIsMobile()
     const t = useTranslations('nav')
 
@@ -76,6 +79,15 @@ export const Header = () => {
                                 transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                             }}
                         >
+                            <div className="relative w-8 h-8 mr-1">
+                                <Image
+                                    src={logo}
+                                    alt="Advantis Logo"
+                                    fill
+                                    className="object-contain"
+                                    sizes="32px"
+                                />
+                            </div>
                             <ShimmerText duration='5s' className="group-hover:text-advantis transition-colors duration-300" >
                                 ADVANTIS
                             </ShimmerText>
@@ -94,6 +106,15 @@ export const Header = () => {
                                 transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                             }}
                         >
+                            <div className="relative w-8 h-8 mr-1">
+                                <Image
+                                    src={logo}
+                                    alt="Advantis Logo"
+                                    fill
+                                    className="object-contain"
+                                    sizes="32px"
+                                />
+                            </div>
                             <ShimmerText className="group-hover:text-advantis transition-colors duration-500">
                                 ADVANTIS
                             </ShimmerText>
@@ -109,18 +130,16 @@ export const Header = () => {
                                 <li key={`${link.label}_${i}`}>
                                     <Link
                                         href={link.path}
-                                        className={`relative transition-colors group/link ${
-                                            pathname === link.path
-                                                ? 'text-foreground'
-                                                : 'text-muted-foreground hover:text-foreground'
-                                        }`}
+                                        className={`relative transition-colors group/link ${pathname === link.path
+                                            ? 'text-foreground'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                            }`}
                                     >
                                         <span className="relative z-10">{link.label}</span>
                                         {/* Animated underline */}
                                         <span
-                                            className={`absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
-                                                pathname === link.path ? 'w-full' : 'w-0 group-hover/link:w-full'
-                                            }`}
+                                            className={`absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${pathname === link.path ? 'w-full' : 'w-0 group-hover/link:w-full'
+                                                }`}
                                         />
                                         {/* Subtle glow on hover */}
                                         <span className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 blur-sm bg-advantis/5" />
@@ -164,11 +183,10 @@ export const Header = () => {
                                 >
                                     <Link
                                         href={link.path}
-                                        className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${
-                                            pathname === link.path
-                                                ? 'text-foreground font-medium translate-x-1'
-                                                : 'text-muted-foreground'
-                                        }`}
+                                        className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${pathname === link.path
+                                            ? 'text-foreground font-medium translate-x-1'
+                                            : 'text-muted-foreground'
+                                            }`}
                                         onClick={() => setMobileMenuOpen(false)}
                                     >
                                         {link.label}
