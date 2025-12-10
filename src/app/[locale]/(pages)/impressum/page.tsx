@@ -11,7 +11,7 @@ export default function Impressum() {
             content: (
                 <div className="space-y-2">
                     <p className="font-semibold">
-                        <BrandText brand="advantis">Advantis-group GmbH</BrandText>
+                        <BrandText brand="advantis">Advantis Group GmbH</BrandText>
                     </p>
                     <p className="text-muted-foreground">Bienweg 8</p>
                     <p className="text-muted-foreground">90425 Nürnberg</p>
@@ -25,7 +25,7 @@ export default function Impressum() {
             content: (
                 <div className="space-y-2">
                     <p className="text-muted-foreground">
-                        <span className="font-semibold">E-Mail:</span> touch@advantis-group.de
+                        <span className="font-semibold">E-Mail:</span> touch@advantisgroup.de
                     </p>
                     <p className="text-muted-foreground">
                         <span className="font-semibold">Telefon:</span> [folgt]
@@ -91,7 +91,7 @@ export default function Impressum() {
                         <CardContent className="space-y-2 text-muted-foreground">
                             <p>Andrea Reichl</p>
                             <p>
-                                <BrandText brand="advantis">Advantis-group GmbH</BrandText>
+                                <BrandText brand="advantis">Advantis Group GmbH</BrandText>
                             </p>
                             <p>Bienweg 8</p>
                             <p>90425 Nürnberg</p>

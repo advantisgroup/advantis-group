@@ -5,6 +5,7 @@ import { Outfit, Manrope } from 'next/font/google'
 import { type Metadata } from 'next'
 
 import './global.css'
+import SmoothScrolling from '@/components/effects/SmoothScrolling'
 import { ThemeProvider } from '@/components/theme/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -89,8 +90,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html suppressHydrationWarning>
             <body className={`bg-background antialiased scroll-smooth ${manrope.variable} ${outfit.variable}`}>
                 <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-                    {children}
-                    <Toaster />
+                    <SmoothScrolling>
+                        {children}
+                        <Toaster />
+                    </SmoothScrolling>
                 </ThemeProvider>
             </body>
         </html>

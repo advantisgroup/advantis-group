@@ -176,11 +176,11 @@ export const Footer = () => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="mailto:touch@advantis-group.de"
+                                        href="mailto:touch@advantisgroup.de"
                                         className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                                     >
                                         <Mail className="w-4 h-4" />
-                                        <span>touch@advantis-group.de</span>
+                                        <span>touch@advantisgroup.de</span>
                                     </Link>
                                 </li>
                                 <li className="flex items-center gap-2 text-muted-foreground">

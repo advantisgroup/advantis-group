@@ -19,7 +19,7 @@ export default function Team() {
             role: t('founder.role'),
             initials: 'AR',
             bio: t('founder.bio'),
-            email: 'ar@advantis-group.de',
+            email: 'ar@advantisgroup.de',
         },
         {
             name: 'Andrea Lautenbacher',

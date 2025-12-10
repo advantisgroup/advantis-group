@@ -10,7 +10,7 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { Link } from '@/i18n/navigation'
 
 import { SettingsMenu } from './SettingsMenu'
-import { ShimmerText } from '../ui/Shimmer'
+import { ShimmerText } from '../effects/Shimmer'
 
 export const Header = () => {
     const pathname = usePathname()
@@ -76,10 +76,10 @@ export const Header = () => {
                                 transition: 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
                             }}
                         >
-                            <ShimmerText className="group-hover:text-advantis transition-colors duration-500">
+                            <ShimmerText duration='5s' className="group-hover:text-advantis transition-colors duration-300" >
                                 ADVANTIS
                             </ShimmerText>
-                            <ShimmerText className="group-hover:text-foreground transition-colors duration-500">
+                            <ShimmerText duration='6s' className="group-hover:text-foreground transition-colors duration-300">
                                 GROUP
                             </ShimmerText>
                         </Link>

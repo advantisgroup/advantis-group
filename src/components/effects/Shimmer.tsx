@@ -1,7 +1,9 @@
 'use client'
 
 import React from 'react'
+
 import { useTheme } from 'next-themes'
+
 import { cn } from '@/lib/utils'
 
 interface ShimmerTextProps {
@@ -46,3 +48,4 @@ export const ShimmerText = ({ children, className, shimmerWidth = '200%', durati
         </span>
     )
 }
+    

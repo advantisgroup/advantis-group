@@ -102,12 +102,12 @@ export default function Datenschutz() {
                         </p>
                         <div className="bg-muted/20 p-6 rounded-lg space-y-1">
                             <p className="font-semibold text-foreground">
-                                <BrandText brand="advantis">Advantis-group GmbH</BrandText>
+                                <BrandText brand="advantis">Advantis Group GmbH</BrandText>
                             </p>
                             <p className="text-foreground/80">Andrea Reichl</p>
                             <p className="text-foreground/80">Bienweg 8</p>
                             <p className="text-foreground/80">90425 Nürnberg</p>
-                            <p className="text-foreground/80 mt-3">E-Mail: touch@advantis-group.de</p>
+                            <p className="text-foreground/80 mt-3">E-Mail: touch@advantisgroup.de</p>
                         </div>
                     </div>
                 ),

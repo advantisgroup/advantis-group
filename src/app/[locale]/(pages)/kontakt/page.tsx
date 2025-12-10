@@ -298,7 +298,7 @@ function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange
             <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
                     <strong>{t('privacyNoteLabel')}</strong> {t('privacyPrefix')}{' '}
-                    <BrandText brand="advantis">Advantis-group GmbH</BrandText> {t('privacySuffix')}{' '}
+                    <BrandText brand="advantis">Advantis Group GmbH</BrandText> {t('privacySuffix')}{' '}
                     <Link href="/datenschutz" className="underline hover:text-foreground">
                         {t('privacyLink')}
                     </Link>
@@ -410,7 +410,7 @@ function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
             <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
                     <strong>{t('privacyNoteLabel')}</strong> {t('privacyPrefix')}{' '}
-                    <BrandText brand="advantis">Advantis-group GmbH</BrandText> {t('privacySuffixCallback')}{' '}
+                    <BrandText brand="advantis">Advantis Group GmbH</BrandText> {t('privacySuffixCallback')}{' '}
                     <Link href="/datenschutz" className="underline hover:text-foreground">
                         {t('privacyLink')}
                     </Link>
@@ -478,8 +478,8 @@ export default function Kontakt() {
         {
             icon: Mail,
             label: t('email'),
-            value: 'touch@advantis-group.de',
-            href: 'mailto:touch@advantis-group.de',
+            value: 'touch@advantisgroup.de',
+            href: 'mailto:touch@advantisgroup.de',
         },
         {
             icon: Phone,

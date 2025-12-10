@@ -76,7 +76,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
                         </Button>
 
                         <Button asChild size="lg" variant="outline" className="px-8 py-7 text-lg">
-                            <Link href="mailto:touch@advantis-group.de">
+                            <Link href="mailto:touch@advantisgroup.de">
                                 <Mail className="w-5 h-5 mr-2" />
                                 {t('secondary')}
                             </Link>
