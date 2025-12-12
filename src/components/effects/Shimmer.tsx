@@ -48,4 +48,3 @@ export const ShimmerText = ({ children, className, shimmerWidth = '200%', durati
         </span>
     )
 }
-    

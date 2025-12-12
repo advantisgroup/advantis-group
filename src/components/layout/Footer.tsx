@@ -232,20 +232,14 @@ export const Footer = () => {
                     className="absolute right-0 bottom-0 pointer-events-none transition-transform duration-500 ease-out z-10"
                     style={{
                         transform: `translateX(${(1 - Math.pow(scrollProgress, 3)) * 100}%)`,
-                        opacity: Math.min(1, Math.max(0, (scrollProgress - 0.7) * 3))
+                        opacity: Math.min(1, Math.max(0, (scrollProgress - 0.7) * 3)),
                     }}
                 >
                     <div className="relative w-32 h-32 md:w-48 md:h-48 ">
-                        <Image
-                            src={logo}
-                            alt="Advantis Logo"
-                            fill
-                            className="object-contain"
-                        />
+                        <Image src={logo} alt="Advantis Logo" fill className="object-contain" />
                     </div>
                 </div>
             </footer>
         </>
     )
 }
-        
