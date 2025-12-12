@@ -1,5 +1,6 @@
 'use client'
-import React, { use } from 'react'
+
+import { use, useEffect } from 'react'
 
 import { ScrollReveal } from '@/components/effects/ScrollReveal'
 import { Hero } from '@/components/sections/Hero'
@@ -10,7 +11,7 @@ import { HomeFeatures } from '@/components/sections/home/HomeFeatures'
 export default function Page({ params }: { params: Promise<{ locale: string }> }) {
     const { locale } = use(params)
 
-    React.useEffect(() => {
+    useEffect(() => {
         window.localStorage.setItem('NEXT_LOCALE', locale)
     }, [locale])
 
