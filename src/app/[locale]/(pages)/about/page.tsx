@@ -8,7 +8,6 @@ import { Target, Zap, Heart, ArrowRight, TrendingUp, Users, Award } from 'lucide
 import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
-import GradientBackground from '@/components/effects/GradientBackground'
 import { ScrollReveal } from '@/components/effects/ScrollReveal'
 import { SectionDivider } from '@/components/layout/SectionDivider'
 import { Button } from '@/components/ui/button'
@@ -56,13 +55,6 @@ export default function UberUns() {
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-background">
-            {/* Global Background */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-background/90 backdrop-blur-[1px] z-10" />
-                <GradientBackground className="opacity-20" />
-                <div className="absolute inset-0 noise-texture opacity-20 z-20" />
-            </div>
-
             <main className="relative z-30">
                 {/* Hero Section */}
                 <section className="relative pt-32 pb-20 md:pt-40 md:pb-32">
@@ -239,7 +231,7 @@ export default function UberUns() {
                                     {t('cta.description')}
                                 </p>
                                 <Button asChild size="lg">
-                                    <Link href="/kontakt" className="inline-flex items-center gap-2 group">
+                                    <Link href="/contact" className="inline-flex items-center gap-2 group">
                                         <span>{t('cta.button')}</span>
                                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                     </Link>

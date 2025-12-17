@@ -3,7 +3,7 @@
 import { use, useEffect } from 'react'
 
 import { ScrollReveal } from '@/components/effects/ScrollReveal'
-import { Hero } from '@/components/sections/Hero'
+import { Hero } from '@/components/sections/home/Hero'
 import { HomeBrands } from '@/components/sections/home/HomeBrands'
 import { HomeCTA } from '@/components/sections/home/HomeCTA'
 import { HomeFeatures } from '@/components/sections/home/HomeFeatures'

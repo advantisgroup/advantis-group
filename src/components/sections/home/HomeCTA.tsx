@@ -69,7 +69,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
                             size="lg"
                             className="group shadow-2xl shadow-primary/20 hover:shadow-primary/30 hover:scale-105 transition-all duration-300 px-8 py-7 text-lg"
                         >
-                            <Link href="/kontakt">
+                            <Link href="/contact">
                                 {t('primary')}
                                 <ArrowRight className="w-5 h-5 ml-2 transition-transform group-hover:translate-x-1" />
                             </Link>

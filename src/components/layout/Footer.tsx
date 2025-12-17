@@ -12,7 +12,6 @@ import { Link } from '@/i18n/navigation'
 
 import { SectionDivider } from './SectionDivider'
 import { BrandText } from '../effects/BrandText'
-import { ModeToggle } from '../theme/theme-toggle'
 
 export const Footer = () => {
     const t = useTranslations()
@@ -50,11 +49,11 @@ export const Footer = () => {
         },
         {
             label: t('nav.about'),
-            path: '/uber-uns',
+            path: '/about',
         },
         {
             label: t('nav.brands'),
-            path: '/unsere-marken',
+            path: '/brands',
         },
         {
             label: t('nav.team'),
@@ -62,7 +61,7 @@ export const Footer = () => {
         },
         {
             label: t('nav.contact'),
-            path: '/kontakt',
+            path: '/contact',
         },
     ]
 
@@ -203,7 +202,6 @@ export const Footer = () => {
                                 <BrandText brand="advantis">Advantis Group</BrandText> GmbH. {t('footer.copyright')}
                             </p>
                             <div className="flex items-center gap-6">
-                                <ModeToggle />
                                 <Link
                                     href="/impressum"
                                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -217,7 +215,7 @@ export const Footer = () => {
                                     {t('nav.privacy')}
                                 </Link>
                                 <Link
-                                    href="/lizenzen"
+                                    href="/licenses"
                                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     {t('nav.licenses')}
@@ -231,7 +229,7 @@ export const Footer = () => {
                 <div
                     className="absolute right-0 bottom-0 pointer-events-none transition-transform duration-500 ease-out z-10"
                     style={{
-                        transform: `translateX(${(1 - Math.pow(scrollProgress, 3)) * 100}%)`,
+                        transform: `translateX(${35 + (1 - scrollProgress) * 80}%) rotate(-${scrollProgress * 40}deg)`,
                         opacity: Math.min(1, Math.max(0, (scrollProgress - 0.7) * 3)),
                     }}
                 >

@@ -4,7 +4,6 @@ import { Mail, ArrowRight } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
-import GradientBackground from '@/components/effects/GradientBackground'
 import { ScrollReveal } from '@/components/effects/ScrollReveal'
 import { ShapeParticles } from '@/components/effects/ShapeParticles'
 import { SectionDivider } from '@/components/layout/SectionDivider'
@@ -60,13 +59,6 @@ export default function Team() {
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-background">
-            {/* Global Background Effects */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-background/80 backdrop-blur-[1px] z-10" />
-                <GradientBackground className="opacity-40" />
-                <div className="absolute inset-0 noise-texture opacity-30 z-20" />
-            </div>
-
             <main className="relative z-30">
                 {/* Hero Section */}
                 <section className="relative h-screen flex items-center justify-center pt-32 pb-20 overflow-hidden">

@@ -46,11 +46,11 @@ export const Header = () => {
     const navLinks = [
         {
             label: t('about'),
-            path: '/uber-uns',
+            path: '/about',
         },
         {
             label: t('brands'),
-            path: '/unsere-marken',
+            path: '/brands',
         },
         {
             label: t('team'),
@@ -58,7 +58,7 @@ export const Header = () => {
         },
         {
             label: t('contact'),
-            path: '/kontakt',
+            path: '/contact',
         },
     ]
 

@@ -6,9 +6,9 @@ import { useTranslations } from 'next-intl'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Link } from '@/i18n/navigation'
 
-import { BrandText } from '../effects/BrandText'
-import { SectionDivider } from '../layout/SectionDivider'
-import { Button } from '../ui/button'
+import { BrandText } from '../../effects/BrandText'
+import { SectionDivider } from '../../layout/SectionDivider'
+import { Button } from '../../ui/button'
 
 export const Hero = () => {
     const isMobile = useIsMobile()
@@ -41,14 +41,8 @@ export const Hero = () => {
                     <div className="space-y-2">
                         <div className="inline-flex group items-center gap-2 px-3 py-1 rounded-3xl border border-border bg-background/50 text-sm backdrop-blur-sm">
                             <Sparkles className="w-3.5 h-3.5" />
-                            <BrandText
-                                brand="advantis"
-                                hoverable
-                                keepRestColor
-                                groupHover
-                                className="group-hover:text-shadow-xs text-shadow-black/30 duration-300"
-                            >
-                                {t('badge')}
+                            <BrandText brand="advantis" hoverable keepRestColor groupHover>
+                                Advantis Group
                             </BrandText>
                         </div>
 
@@ -73,13 +67,13 @@ export const Hero = () => {
 
                     <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 md:pt-1">
                         <Button asChild size="lg">
-                            <Link href="/kontakt">
+                            <Link href="/contact">
                                 {t('ctaPrimary')}
                                 <ArrowRight className="w-4 h-4" />
                             </Link>
                         </Button>
                         <Button asChild variant="outline" size="lg">
-                            <Link href="/unsere-marken">{t('ctaSecondary')}</Link>
+                            <Link href="/brands">{t('ctaSecondary')}</Link>
                         </Button>
                     </div>
                 </div>

@@ -90,7 +90,7 @@ export default function UnsereMarken() {
                     entries.forEach((entry) => {
                         if (entry.isIntersecting) {
                             setVisibleSections((prev) => new Set(prev).add(index))
-                            if (entry.intersectionRatio > 0.5) {
+                            if (entry.intersectionRatio > 0.2) {
                                 setActiveSection(index)
                             }
                         }
@@ -420,7 +420,7 @@ export default function UnsereMarken() {
                                 size="lg"
                                 className="group/cta shadow-2xl shadow-primary/20 hover:shadow-primary/30 transition-all duration-300 hover:scale-105 px-8 py-7 text-lg"
                             >
-                                <Link href="/kontakt">
+                                <Link href="/contact">
                                     <span>{t('cta.button')}</span>
                                     <ArrowRight className="w-6 h-6 ml-3 transition-transform duration-300 group-hover/cta:translate-x-2" />
                                 </Link>

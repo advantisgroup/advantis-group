@@ -82,7 +82,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                                     )}
                                     style={{ transitionDelay: `${200 + idx * 100}ms` }}
                                 >
-                                    <Link href={`/unsere-marken#${brand.brand}`}>
+                                    <Link href={`/brands#${brand.brand}`}>
                                         <div className="group relative p-8 rounded-2xl bg-card/60 backdrop-blur-xl border-2 border-border/50 hover:border-primary/50 transition-all duration-500 hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/10 h-full">
                                             {/* Icon */}
                                             <div className="flex items-start gap-4 mb-6">
@@ -120,7 +120,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                         style={{ transitionDelay: '600ms' }}
                     >
                         <Button asChild size="lg" variant="outline" className="group">
-                            <Link href="/unsere-marken">
+                            <Link href="/brands">
                                 {t('cta')}
                                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                             </Link>
