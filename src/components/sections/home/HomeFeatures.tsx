@@ -108,9 +108,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     <div
                         className={cn(
                             'text-center space-y-6 transition-all duration-1000',
-                            isVisible
-                                ? 'opacity-100 translate-y-0'
-                                : 'opacity-0 -translate-y-8'
+                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8'
                         )}
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
@@ -134,11 +132,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                                 <motion.div
                                     key={idx}
                                     initial={{ opacity: 0, y: 20 }}
-                                    animate={
-                                        isVisible
-                                            ? { opacity: 1, y: 0 }
-                                            : { opacity: 0, y: 20 }
-                                    }
+                                    animate={isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                                     transition={{
                                         duration: 0.8,
                                         delay: 0.2 + idx * 0.1,
@@ -164,7 +158,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                                                 y: -8,
                                                 scale: 1.02,
                                                 boxShadow: '0 20px 40px -15px rgba(0,0,0,0.1)',
-                                            }
+                                            },
                                         }}
                                         transition={{
                                             type: 'spring',
@@ -191,7 +185,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                                                 )}
                                                 variants={{
                                                     rest: { rotate: 0, scale: 1 },
-                                                    hover: { rotate: [0, -5, 5, 0], scale: 1.1 }
+                                                    hover: { rotate: [0, -5, 5, 0], scale: 1.1 },
                                                 }}
                                                 transition={{ duration: 0.5 }}
                                             >
@@ -204,7 +198,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                                                     className="text-2xl font-bold leading-tight"
                                                     variants={{
                                                         rest: { y: 0 },
-                                                        hover: { y: -2 }
+                                                        hover: { y: -2 },
                                                     }}
                                                     transition={{ duration: 0.2 }}
                                                 >
@@ -214,7 +208,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                                                     className="text-muted-foreground leading-relaxed"
                                                     variants={{
                                                         rest: { y: 0 },
-                                                        hover: { y: -2 }
+                                                        hover: { y: -2 },
                                                     }}
                                                     transition={{ duration: 0.2, delay: 0.05 }}
                                                 >
@@ -237,45 +231,35 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     <div
                         className={cn(
                             'flex flex-wrap items-center justify-center gap-8 md:gap-12 transition-all duration-1000 delay-700',
-                            isVisible
-                                ? 'opacity-100 translate-y-0'
-                                : 'opacity-0 translate-y-8'
+                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                         )}
                     >
                         <div className="text-center space-y-1">
                             <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
                                 <CountUp to={15} suffix="+" />
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                                {t('stats.experience')}
-                            </div>
+                            <div className="text-sm text-muted-foreground">{t('stats.experience')}</div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
                             <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
                                 <CountUp to={4} />
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                                {t('stats.brands')}
-                            </div>
+                            <div className="text-sm text-muted-foreground">{t('stats.brands')}</div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
                             <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
                                 <CountUp to={500} />
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                                {t('stats.projects')}
-                            </div>
+                            <div className="text-sm text-muted-foreground">{t('stats.projects')}</div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
                             <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
                                 <CountUp to={100} suffix="%" />
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                                {t('stats.passion')}
-                            </div>
+                            <div className="text-sm text-muted-foreground">{t('stats.passion')}</div>
                         </div>
                     </div>
                 </div>
