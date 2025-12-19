@@ -59,24 +59,6 @@ export default function ParticleDemo() {
                             </Button>
                         ))}
                     </div>
-
-                    {/* Info 
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>How it works</CardTitle>
-                            <CardDescription>Antigravity-style interactive particles</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                                <li>Particles form different shapes based on selection</li>
-                                <li>Move your mouse over particles to push them away</li>
-                                <li>Particles smoothly return to their base positions</li>
-                                <li>Connections form between nearby particles</li>
-                                <li>Smooth morphing animation when changing shapes</li>
-                            </ul>
-                        </CardContent>
-                    </Card>
-                    */}
                 </div>
             </main>
         </div>

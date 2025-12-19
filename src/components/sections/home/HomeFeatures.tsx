@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useEffect, useRef } from 'react'
 
+import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import { TrendingUp, Zap, Target, Sparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -13,10 +14,51 @@ interface HomeFeaturesProps {
     isVisible: boolean
 }
 
+function CountUp({
+    to,
+    suffix = '',
+    prefix = '',
+    className,
+}: {
+    to: number
+    suffix?: string
+    prefix?: string
+    className?: string
+}) {
+    const ref = useRef<HTMLDivElement>(null)
+    const inView = useInView(ref, { once: true, margin: '-100px' })
+    const value = useMotionValue(0)
+    const springValue = useSpring(value, {
+        stiffness: 50,
+        damping: 20,
+        restDelta: 0.001,
+        duration: 3, // Gradual ease
+    })
+    const displayValue = useTransform(springValue, (current) => {
+        const val = Math.round(current)
+        // Pad to 3 digits like "001", "015", "103"
+        const formatted = val.toString().padStart(3, '0')
+        // Removing padding if it exceeds 3 digits naturally (e.g. 1000)
+        return formatted
+    })
+
+    useEffect(() => {
+        if (inView) {
+            value.set(to)
+        }
+    }, [inView, to, value])
+
+    return (
+        <span ref={ref} className={className}>
+            {prefix}
+            <motion.span>{displayValue}</motion.span>
+            {suffix}
+        </span>
+    )
+}
+
 export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
     const t = useTranslations('features')
-    const [hoveredCard, setHoveredCard] = useState<number | null>(null)
-    const [shinePosition, setShinePosition] = useState({ x: 0, y: 0 })
 
     const features = [
         {
@@ -48,18 +90,6 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
         },
     ]
 
-    const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>, idx: number) => {
-        const rect = e.currentTarget.getBoundingClientRect()
-        const x = ((e.clientX - rect.left) / rect.width) * 100
-        const y = ((e.clientY - rect.top) / rect.height) * 100
-        setShinePosition({ x, y })
-        setHoveredCard(idx)
-    }
-
-    const handleMouseLeave = () => {
-        setHoveredCard(null)
-    }
-
     return (
         <section className="relative py-32 overflow-hidden">
             {/* Animated background elements */}
@@ -77,8 +107,10 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     {/* Header */}
                     <div
                         className={cn(
-                            'text-center space-y-6 opacity-0 -translate-y-8 transition-all duration-1000',
-                            isVisible && 'opacity-100 translate-y-0'
+                            'text-center space-y-6 transition-all duration-1000',
+                            isVisible
+                                ? 'opacity-100 translate-y-0'
+                                : 'opacity-0 -translate-y-8'
                         )}
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary">
@@ -97,126 +129,153 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
                         {features.map((feature, idx) => {
                             const Icon = feature.icon
-                            const isHovered = hoveredCard === idx
-
-                            // Calculate shine direction based on mouse entry point
-                            const getShineTransform = () => {
-                                if (!isHovered) return '-translate-x-full'
-
-                                // Determine direction based on mouse position
-                                const { x } = shinePosition
-
-                                // If mouse enters from left side
-                                if (x < 50) {
-                                    return 'translate-x-full'
-                                }
-                                // If mouse enters from right side
-                                else {
-                                    return '-translate-x-full'
-                                }
-                            }
 
                             return (
-                                <div
+                                <motion.div
                                     key={idx}
-                                    className={cn(
-                                        'opacity-0 translate-y-12 transition-all duration-1000',
-                                        isVisible && 'opacity-100 translate-y-0'
-                                    )}
-                                    style={{ transitionDelay: `${200 + idx * 150}ms` }}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={
+                                        isVisible
+                                            ? { opacity: 1, y: 0 }
+                                            : { opacity: 0, y: 20 }
+                                    }
+                                    transition={{
+                                        duration: 0.8,
+                                        delay: 0.2 + idx * 0.1,
+                                    }}
+                                    className="group relative h-full"
                                 >
-                                    <div
-                                        className="group relative h-full"
-                                        onMouseEnter={(e) => handleMouseEnter(e, idx)}
-                                        onMouseLeave={handleMouseLeave}
+                                    <motion.div
+                                        className={cn(
+                                            'relative h-full p-8 rounded-3xl bg-card/50 backdrop-blur-sm border border-border/50',
+                                            'overflow-hidden',
+                                            feature.glowColor
+                                        )}
+                                        whileHover="hover"
+                                        initial="rest"
+                                        animate="rest"
+                                        variants={{
+                                            rest: {
+                                                y: 0,
+                                                scale: 1,
+                                                boxShadow: '0 0px 0px rgba(0,0,0,0)',
+                                            },
+                                            hover: {
+                                                y: -8,
+                                                scale: 1.02,
+                                                boxShadow: '0 20px 40px -15px rgba(0,0,0,0.1)',
+                                            }
+                                        }}
+                                        transition={{
+                                            type: 'spring',
+                                            stiffness: 300,
+                                            damping: 20,
+                                        }}
                                     >
-                                        {/* Card */}
+                                        {/* Gradient Background that fades in */}
                                         <div
                                             className={cn(
-                                                'relative h-full p-8 rounded-3xl bg-card/50 backdrop-blur-sm border border-border/50',
-                                                'hover:border-primary/50 transition-all duration-500',
-                                                'hover:scale-[1.02] hover:shadow-2xl',
-                                                feature.glowColor
+                                                'absolute inset-0 bg-linear-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500',
+                                                feature.gradient
                                             )}
-                                        >
-                                            {/* Gradient overlay */}
-                                            <div
+                                        />
+
+                                        {/* Content container */}
+                                        <div className="relative space-y-6 z-10">
+                                            {/* Icon */}
+                                            <motion.div
                                                 className={cn(
-                                                    'absolute inset-0 bg-linear-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl',
-                                                    feature.gradient
+                                                    'inline-flex items-center justify-center w-16 h-16 rounded-2xl border',
+                                                    feature.iconBg,
+                                                    feature.iconBorder
                                                 )}
-                                            />
+                                                variants={{
+                                                    rest: { rotate: 0, scale: 1 },
+                                                    hover: { rotate: [0, -5, 5, 0], scale: 1.1 }
+                                                }}
+                                                transition={{ duration: 0.5 }}
+                                            >
+                                                <Icon className="w-8 h-8 text-primary" />
+                                            </motion.div>
 
-                                            {/* Shine effect on hover */}
-                                            <div className="absolute inset-0 rounded-3xl overflow-hidden">
-                                                <div
-                                                    className={cn(
-                                                        'absolute inset-0 transition-transform duration-1000 bg-linear-to-r from-transparent via-white/10 to-transparent',
-                                                        getShineTransform()
-                                                    )}
-                                                />
-                                            </div>
-
-                                            <div className="relative space-y-6">
-                                                {/* Icon */}
-                                                <div
-                                                    className={cn(
-                                                        'inline-flex items-center justify-center w-16 h-16 rounded-2xl border',
-                                                        'group-hover:scale-110 group-hover:rotate-3 transition-all duration-300',
-                                                        feature.iconBg,
-                                                        feature.iconBorder
-                                                    )}
+                                            {/* Text Content */}
+                                            <div className="space-y-3">
+                                                <motion.h3
+                                                    className="text-2xl font-bold leading-tight"
+                                                    variants={{
+                                                        rest: { y: 0 },
+                                                        hover: { y: -2 }
+                                                    }}
+                                                    transition={{ duration: 0.2 }}
                                                 >
-                                                    <Icon className="w-8 h-8 text-primary" />
-                                                </div>
-
-                                                {/* Content */}
-                                                <div className="space-y-3">
-                                                    <h3 className="text-2xl font-bold leading-tight">
-                                                        {feature.title}
-                                                    </h3>
-                                                    <p className="text-muted-foreground leading-relaxed">
-                                                        {feature.desc}
-                                                    </p>
-                                                </div>
+                                                    {feature.title}
+                                                </motion.h3>
+                                                <motion.p
+                                                    className="text-muted-foreground leading-relaxed"
+                                                    variants={{
+                                                        rest: { y: 0 },
+                                                        hover: { y: -2 }
+                                                    }}
+                                                    transition={{ duration: 0.2, delay: 0.05 }}
+                                                >
+                                                    {feature.desc}
+                                                </motion.p>
                                             </div>
                                         </div>
+                                    </motion.div>
 
-                                        {/* Floating number badge */}
-                                        <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-sm font-bold text-primary backdrop-blur-sm">
-                                            {idx + 1}
-                                        </div>
+                                    {/* Floating number badge */}
+                                    <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-sm font-bold text-primary backdrop-blur-sm z-20">
+                                        {'00' + (idx + 1)}
                                     </div>
-                                </div>
+                                </motion.div>
                             )
                         })}
                     </div>
 
-                    {/* Bottom stats or CTA */}
+                    {/* Bottom stats */}
                     <div
                         className={cn(
-                            'flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-0 translate-y-8 transition-all duration-1000 delay-700',
-                            isVisible && 'opacity-100 translate-y-0'
+                            'flex flex-wrap items-center justify-center gap-8 md:gap-12 transition-all duration-1000 delay-700',
+                            isVisible
+                                ? 'opacity-100 translate-y-0'
+                                : 'opacity-0 translate-y-8'
                         )}
                     >
                         <div className="text-center space-y-1">
-                            <div className="text-4xl md:text-5xl font-bold text-primary">15+</div>
-                            <div className="text-sm text-muted-foreground">{t('stats.experience')}</div>
+                            <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
+                                <CountUp to={15} suffix="+" />
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                                {t('stats.experience')}
+                            </div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
-                            <div className="text-4xl md:text-5xl font-bold text-primary">4</div>
-                            <div className="text-sm text-muted-foreground">{t('stats.brands')}</div>
+                            <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
+                                <CountUp to={4} />
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                                {t('stats.brands')}
+                            </div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
-                            <div className="text-4xl md:text-5xl font-bold text-primary">500</div>
-                            <div className="text-sm text-muted-foreground">{t('stats.projects')}</div>
+                            <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
+                                <CountUp to={500} />
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                                {t('stats.projects')}
+                            </div>
                         </div>
                         <div className="hidden md:block w-px h-12 bg-border" />
                         <div className="text-center space-y-1">
-                            <div className="text-4xl md:text-5xl font-bold text-primary">100%</div>
-                            <div className="text-sm text-muted-foreground">{t('stats.passion')}</div>
+                            <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
+                                <CountUp to={100} suffix="%" />
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                                {t('stats.passion')}
+                            </div>
                         </div>
                     </div>
                 </div>
