@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 
 import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion'
-import { TrendingUp, Zap, Target, Sparkles } from 'lucide-react'
+import { Sparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
@@ -62,7 +62,6 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
 
     const features = [
         {
-            icon: TrendingUp,
             title: t('feature1.title'),
             desc: t('feature1.description'),
             gradient: 'from-orange-500/20 to-red-500/20',
@@ -71,7 +70,6 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
             glowColor: 'shadow-orange-500/20',
         },
         {
-            icon: Zap,
             title: t('feature2.title'),
             desc: t('feature2.description'),
             gradient: 'from-primary/20 to-purple-500/20',
@@ -80,7 +78,6 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
             glowColor: 'shadow-primary/20',
         },
         {
-            icon: Target,
             title: t('feature3.title'),
             desc: t('feature3.description'),
             gradient: 'from-blue-500/20 to-cyan-500/20',
@@ -126,8 +123,6 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     {/* Feature Cards - Bento Grid Style */}
                     <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
                         {features.map((feature, idx) => {
-                            const Icon = feature.icon
-
                             return (
                                 <motion.div
                                     key={idx}
@@ -176,22 +171,6 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
 
                                         {/* Content container */}
                                         <div className="relative space-y-6 z-10">
-                                            {/* Icon */}
-                                            <motion.div
-                                                className={cn(
-                                                    'inline-flex items-center justify-center w-16 h-16 rounded-2xl border',
-                                                    feature.iconBg,
-                                                    feature.iconBorder
-                                                )}
-                                                variants={{
-                                                    rest: { rotate: 0, scale: 1 },
-                                                    hover: { rotate: [0, -5, 5, 0], scale: 1.1 },
-                                                }}
-                                                transition={{ duration: 0.5 }}
-                                            >
-                                                <Icon className="w-8 h-8 text-primary" />
-                                            </motion.div>
-
                                             {/* Text Content */}
                                             <div className="space-y-3">
                                                 <motion.h3
@@ -217,11 +196,6 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                                             </div>
                                         </div>
                                     </motion.div>
-
-                                    {/* Floating number badge */}
-                                    <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-sm font-bold text-primary backdrop-blur-sm z-20">
-                                        {'00' + (idx + 1)}
-                                    </div>
                                 </motion.div>
                             )
                         })}

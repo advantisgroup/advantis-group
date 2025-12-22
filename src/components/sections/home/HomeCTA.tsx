@@ -16,7 +16,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
     const t = useTranslations('cta')
 
     return (
-        <section className="relative py-40 overflow-hidden">
+        <section className="relative py-40 overflow-hidden h-screen">
             {/* Background with smooth blend */}
             <div className="absolute inset-0 bg-linear-to-b from-primary/5 via-background to-background" />
             <div className="absolute inset-0 dot-pattern opacity-20" />
@@ -31,7 +31,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
                 style={{ animationDelay: '1.5s' }}
             />
 
-            <div className="container mx-auto px-4 relative z-10">
+            <div className="container mx-auto top-[10vh] px-3 relative z-10">
                 <div className="max-w-4xl mx-auto text-center space-y-10">
                     <div
                         className={cn(

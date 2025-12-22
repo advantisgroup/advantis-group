@@ -48,11 +48,11 @@ export const Hero = () => {
 
                         {isMobile ? (
                             <h1 className="font-bold">
-                                <span className="text-3xl">{t('title')}</span> <br />
-                                <span className="text-4xl">{t('titleHighlight')}</span>
+                                <span className="text-4xl font-bold leading-tight">{t('title')}</span> 
+                                <span className="text-4xl font-bold leading-tight">{t('titleHighlight')}</span>
                             </h1>
                         ) : (
-                            <h1 className="text-4xl group md:text-8xl font-bold leading-tight">
+                            <h1 className="text-4xl group md:text-6xl lg:text-8xl font-bold leading-tight">
                                 {t('title')}{' '}
                                 <BrandText hoverable groupHover>
                                     {t('titleHighlight')}
@@ -61,7 +61,7 @@ export const Hero = () => {
                         )}
 
                         {!isMobile && (
-                            <p className="text-lg md:text-3xl text-muted-foreground font-medium">{t('subtitle')}</p>
+                            <p className="text-lg md:text-2xl lg:text-3xl text-muted-foreground font-medium">{t('subtitle')}</p>
                         )}
                     </div>
 
