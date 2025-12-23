@@ -52,3 +52,29 @@ export function useSingleLetterLogo(): string {
 
     return '/base_logo_tb_First.png'
 }
+
+type HolidayThemes = 'christmas' | 'halloween'
+
+export function useSeasonalLogo(type: HolidayThemes): string {
+    const { theme } = useTheme()
+    const [mounted, setMounted] = React.useState(false)
+
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted) {
+        return `/base_logo_tb_First-${type}.png`
+    }
+
+    if (theme === 'dark') {
+        return `/white_logo_tb_First-${type}.png`
+    }
+
+    // specific check for system to match requirement, though fallback covers it
+    if (theme === 'system') {
+        return `/base_logo_tb_First-${type}.png`
+    }
+
+    return `/base_logo_tb_First-${type}.png`
+}

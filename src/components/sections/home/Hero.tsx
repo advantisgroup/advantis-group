@@ -7,7 +7,6 @@ import { useIsMobile } from '@/hooks/use-mobile'
 import { Link } from '@/i18n/navigation'
 
 import { BrandText } from '../../effects/BrandText'
-import { SectionDivider } from '../../layout/SectionDivider'
 import { Button } from '../../ui/button'
 
 export const Hero = () => {
@@ -82,16 +81,16 @@ export const Hero = () => {
             </div>
 
             {/* Scroll indicator */}
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 animate-bounce">
+            <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 animate-bounce">
                 <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <ChevronDown className="w-5 h-5" />
                 </div>
             </div>
 
             {/* Section divider at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 z-10">
+            {/* <div className="absolute bottom-0 left-0 right-0 z-10">
                 <SectionDivider variant="dots" opacity={0.3} />
-            </div>
+            </div> */}
         </section>
     )
 }
