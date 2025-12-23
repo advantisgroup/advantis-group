@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
         source: '/ingest/:path*',
         destination: 'https://eu.i.posthog.com/:path*',
       },
+      {
+        source: '/api/:path*',
+        destination: '/api/:path*',
+        locale: false, 
+      },
     ]
   },
   // This is required to support PostHog trailing slash API requests

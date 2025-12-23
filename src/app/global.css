@@ -64,7 +64,6 @@
     animation: gradient-x 15s ease infinite;
 }
 
-
 .animate-shake {
     animation: shake 0.5s ease-in-out;
 }

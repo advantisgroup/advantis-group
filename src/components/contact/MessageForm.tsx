@@ -104,7 +104,7 @@ export function MessageForm({ formData, errors, buttonState, isMobile, onFormDat
                         {t('privacyLink')}
                     </Link>
                 </p>
-                <AnimatedButton buttonState={buttonState} idleText={t('submit')} idleIcon={Send} disabled />
+                <AnimatedButton buttonState={buttonState} idleText={t('submit')} idleIcon={Send} />
             </div>
         </form>
     )

@@ -48,7 +48,7 @@ export const Hero = () => {
 
                         {isMobile ? (
                             <h1 className="font-bold">
-                                <span className="text-4xl font-bold leading-tight">{t('title')}</span> 
+                                <span className="text-4xl font-bold leading-tight">{t('title')}</span>
                                 <span className="text-4xl font-bold leading-tight">{t('titleHighlight')}</span>
                             </h1>
                         ) : (
@@ -61,7 +61,9 @@ export const Hero = () => {
                         )}
 
                         {!isMobile && (
-                            <p className="text-lg md:text-2xl lg:text-3xl text-muted-foreground font-medium">{t('subtitle')}</p>
+                            <p className="text-lg md:text-2xl lg:text-3xl text-muted-foreground font-medium">
+                                {t('subtitle')}
+                            </p>
                         )}
                     </div>
 

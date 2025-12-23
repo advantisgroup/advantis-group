@@ -108,7 +108,7 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                         {t('privacyLink')}
                     </Link>
                 </p>
-                <AnimatedButton buttonState={buttonState} idleText={t('callbackRequest')} idleIcon={Phone} disabled />
+                <AnimatedButton buttonState={buttonState} idleText={t('callbackRequest')} idleIcon={Phone} />
             </div>
         </form>
     )

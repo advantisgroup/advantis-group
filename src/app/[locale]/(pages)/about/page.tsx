@@ -1,51 +1,18 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
-
 import Image from 'next/image'
 
-import { motion, useInView, useSpring } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Target, Zap, Heart, ArrowRight, TrendingUp, Users, Award, ChevronDown, Sparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
+import { CountUp } from '@/components/effects/CountUp'
 import { ScrollReveal } from '@/components/effects/ScrollReveal'
 import { SectionDivider } from '@/components/layout/SectionDivider'
 import { Button } from '@/components/ui/button'
 import { useSingleLetterLogo } from '@/hooks/use-logo'
 import { Link } from '@/i18n/navigation'
-
-function Counter({ value, className }: { value: string; className?: string }) {
-    const ref = useRef<HTMLSpanElement>(null)
-    const inView = useInView(ref, { once: true, margin: '-10px' })
-    const numericValue = parseInt(value.replace(/\D/g, '')) || 0
-    const springValue = useSpring(0, {
-        stiffness: 50,
-        damping: 20,
-        duration: 2000,
-    })
-
-    useEffect(() => {
-        if (inView) {
-            springValue.set(numericValue)
-        }
-    }, [inView, numericValue, springValue])
-
-    const [displayValue, setDisplayValue] = useState('0')
-
-    useEffect(() => {
-        return springValue.on('change', (latest) => {
-            setDisplayValue(Math.floor(latest).toLocaleString())
-        })
-    }, [springValue])
-
-    return (
-        <span ref={ref} className={className}>
-            {inView ? displayValue : '0'}
-            {value.includes('+') ? '+' : ''}
-        </span>
-    )
-}
 
 export default function UberUns() {
     const t = useTranslations('about')
@@ -57,22 +24,22 @@ export default function UberUns() {
             icon: Target,
             title: t('values.experienceTitle'),
             description: t('values.experienceDesc'),
-            gradient: "from-blue-500/20 to-cyan-500/20",
-            iconColor: "text-blue-500"
+            gradient: 'from-blue-500/20 to-cyan-500/20',
+            iconColor: 'text-blue-500',
         },
         {
             icon: Zap,
             title: t('values.innovationTitle'),
             description: t('values.innovationDesc'),
-            gradient: "from-amber-500/20 to-orange-500/20",
-            iconColor: "text-amber-500"
+            gradient: 'from-amber-500/20 to-orange-500/20',
+            iconColor: 'text-amber-500',
         },
         {
             icon: Heart,
             title: t('values.passionTitle'),
             description: t('values.passionDesc'),
-            gradient: "from-red-500/20 to-rose-500/20",
-            iconColor: "text-red-500"
+            gradient: 'from-red-500/20 to-rose-500/20',
+            iconColor: 'text-red-500',
         },
     ]
 
@@ -80,17 +47,17 @@ export default function UberUns() {
     const stats = [
         {
             icon: TrendingUp,
-            value: '15+',
+            value: 15,
             label: t('stats.experience'),
         },
         {
             icon: Users,
-            value: '500+',
+            value: 500,
             label: t('stats.projects'),
         },
         {
             icon: Award,
-            value: '4',
+            value: 4,
             label: t('stats.brands'),
         },
     ]
@@ -139,7 +106,11 @@ export default function UberUns() {
                             className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-10"
                         >
                             {t.rich('hero.subtitle', {
-                                brand: (chunks) => <BrandText brand="advantis" className="font-semibold">{chunks as string}</BrandText>,
+                                brand: (chunks) => (
+                                    <BrandText brand="advantis" className="font-semibold">
+                                        {chunks as string}
+                                    </BrandText>
+                                ),
                             })}
                         </motion.p>
                     </div>
@@ -219,13 +190,19 @@ export default function UberUns() {
                                     <div className="prose prose-lg dark:prose-invert max-w-none">
                                         <p className="text-xl leading-relaxed font-medium text-foreground">
                                             {t.rich('story.text1', {
-                                                brand: (chunks) => <BrandText brand="advantis">{chunks as string}</BrandText>,
-                                                founder: (chunks) => <span className="font-bold text-foreground">{chunks}</span>,
+                                                brand: (chunks) => (
+                                                    <BrandText brand="advantis">{chunks as string}</BrandText>
+                                                ),
+                                                founder: (chunks) => (
+                                                    <span className="font-bold text-foreground">{chunks}</span>
+                                                ),
                                             })}
                                         </p>
                                         <p className="text-lg text-muted-foreground leading-relaxed">
                                             {t.rich('story.text2', {
-                                                brand: (chunks) => <BrandText brand="advantis">{chunks as string}</BrandText>,
+                                                brand: (chunks) => (
+                                                    <BrandText brand="advantis">{chunks as string}</BrandText>
+                                                ),
                                             })}
                                         </p>
                                         <p className="text-lg text-muted-foreground leading-relaxed">
@@ -266,7 +243,7 @@ export default function UberUns() {
                                                     <Icon className="w-8 h-8 text-primary" />
                                                 </div>
                                                 <div className="text-5xl font-bold text-foreground mb-2 tracking-tight">
-                                                    <Counter value={stat.value} />
+                                                    <CountUp value={stat.value} />
                                                 </div>
                                                 <div className="text-sm text-muted-foreground font-semibold uppercase tracking-wider">
                                                     {stat.label}
@@ -297,17 +274,20 @@ export default function UberUns() {
                                             key={value.title}
                                             className="group relative bg-card/30 backdrop-blur-sm border border-border/50 rounded-3xl p-8 hover:-translate-y-2 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5"
                                         >
-                                            <div className={`absolute inset-0 bg-linear-to-br ${value.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl`} />
+                                            <div
+                                                className={`absolute inset-0 bg-linear-to-br ${value.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl`}
+                                            />
 
                                             <div className="relative z-10 flex flex-col items-center text-center">
-                                                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-background/80 mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-                                                    <Icon
-                                                        className={`w-8 h-8 ${value.iconColor}`}
-                                                        strokeWidth={1.5}
-                                                    />
+                                                <div
+                                                    className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-background/80 mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300`}
+                                                >
+                                                    <Icon className={`w-8 h-8 ${value.iconColor}`} strokeWidth={1.5} />
                                                 </div>
                                                 <h3 className="text-xl font-bold mb-4">{value.title}</h3>
-                                                <p className="text-muted-foreground leading-relaxed">{value.description}</p>
+                                                <p className="text-muted-foreground leading-relaxed">
+                                                    {value.description}
+                                                </p>
                                             </div>
                                         </div>
                                     )
@@ -327,7 +307,12 @@ export default function UberUns() {
                                 <p className="text-xl text-primary-foreground/80 leading-relaxed font-medium">
                                     {t('cta.description')}
                                 </p>
-                                <Button asChild size="lg" variant="secondary" className="h-14 px-8 text-lg rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105">
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    variant="secondary"
+                                    className="h-14 px-8 text-lg rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                                >
                                     <Link href="/contact" className="inline-flex items-center gap-2">
                                         <span>{t('cta.button')}</span>
                                         <ArrowRight className="w-5 h-5" />

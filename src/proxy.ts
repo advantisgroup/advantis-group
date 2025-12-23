@@ -6,9 +6,9 @@ export default createMiddleware({
     locales,
     defaultLocale,
     localePrefix: 'always',
-    localeDetection: true, // Enable automatic locale detection
+    localeDetection: true,
 })
 
 export const config = {
-    matcher: ['/', '/(de|en|zh|fr)/:path*', '/((?!_next|_vercel|.*\\..*).*)'],
+    matcher: ['/', '/(de|en|zh|fr)/:path*', '/((?!api|_next|_vercel|.*\\..*).*)'],
 }
