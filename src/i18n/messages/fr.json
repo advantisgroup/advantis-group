@@ -91,8 +91,10 @@
         "tabs": {
             "writeMessage": "Écrire un message",
             "requestCallback": "Demander un rappel",
+            "otherInquiries": "Autre demande",
             "writeMessageShort": "Message",
-            "requestCallbackShort": "Rappel"
+            "requestCallbackShort": "Rappel",
+            "otherInquiriesShort": "Demande"
         },
         "form": {
             "company": "Votre nom d'entreprise",
@@ -120,20 +122,36 @@
             "description1": "Que vous recherchiez un soutien dans la vente active, des conseils stratégiques ou la sélection de solutions d'IA modernes, nous vous aidons !",
             "descriptionMessage": "Contactez-nous pour une consultation sans engagement et travaillons ensemble sur votre succès commercial.",
             "descriptionCallback": "Planifiez un rappel et nous discuterons ensemble de la manière dont nous pouvons faire avancer vos ventes.",
+            "descriptionOther": "Utilisez ce formulaire pour les demandes générales, les questions sur vos droits ou d'autres sujets.",
             "closingMessage": "Nous attendons votre demande avec impatience !",
-            "closingCallback": "Nous attendons votre appel avec impatience !"
+            "closingCallback": "Nous attendons votre appel avec impatience !",
+            "closingOther": "Nous répondrons à votre demande dans les plus brefs délais !"
         },
         "messages": {
             "writeUs": "Écrivez-nous",
             "writeUsDesc": "Envoyez-nous un message et nous vous répondrons dans les 24 heures",
             "callback": "Planifier un rappel",
             "callbackDesc": "Dites-nous quand nous pouvons vous joindre le mieux",
+            "otherInquiry": "Autre demande",
+            "otherInquiryDesc": "Avez-vous des questions ou des demandes générales ? Nous sommes là pour vous aider !",
             "successTitle": "Envoyé !",
             "successDesc": "Nous vous répondrons dans les 24 heures.",
             "callSuccessTitle": "Rappel demandé !",
             "callSuccessDesc": "Nous vous appellerons à l'heure souhaitée.",
             "errorTitle": "Une erreur s'est produite",
             "errorDesc": "Veuillez vérifier vos saisies"
+        },
+        "otherForm": {
+            "topic": "Sujet",
+            "selectTopic": "Veuillez sélectionner un sujet",
+            "topics": {
+                "withdrawal": "Droit de rétractation",
+                "question": "Question",
+                "legal": "Juridique"
+            },
+            "subject": "Objet",
+            "subjectPlaceholder": "Entrez un objet spécifique",
+            "optional": "optionnel"
         }
     },
     "about": {
@@ -260,5 +278,103 @@
             "button": "Contactez-nous maintenant"
         },
         "learnMore": "En savoir plus"
+    },
+    "privacy": {
+        "title": "Politique de Confidentialité",
+        "subtitle": "Informations sur le traitement de vos données conformément au RGPD",
+        "tableOfContents": "Table des Matières",
+        "sections": {
+            "overview": {
+                "title": "Confidentialité en un Coup d'Œil",
+                "content": "Les informations suivantes fournissent un aperçu simple de ce qui arrive à vos données personnelles lorsque vous visitez ce site Web. Les données personnelles sont toutes les données qui peuvent être utilisées pour vous identifier personnellement."
+            },
+            "general": {
+                "title": "Informations Générales",
+                "content1": "Les opérateurs de ces pages prennent très au sérieux la protection de vos données personnelles. Nous traitons vos données personnelles de manière confidentielle et conformément aux réglementations légales en matière de protection des données ainsi qu'à cette politique de confidentialité.",
+                "content2": "Lorsque vous utilisez ce site Web, diverses données personnelles sont collectées. Cette politique de confidentialité explique quelles données nous collectons et à quoi nous les utilisons."
+            },
+            "responsible": {
+                "title": "Partie Responsable",
+                "intro": "La partie responsable du traitement des données sur ce site Web est :"
+            },
+            "collection": {
+                "title": "Collecte de Données",
+                "subtitle": "Quelles données collectons-nous ?",
+                "intro": "Lors de la visite de ce site Web, le serveur enregistre automatiquement les informations que votre navigateur transmet. Cela inclut :",
+                "items": {
+                    "ip": "Adresse IP",
+                    "browser": "Type et version du navigateur",
+                    "os": "Système d'exploitation utilisé",
+                    "datetime": "Date et heure d'accès",
+                    "referrer": "Sites Web à partir desquels le système de l'utilisateur a accédé à notre site Web"
+                },
+                "footer": "Ces données sont utilisées exclusivement pour assurer le fonctionnement et pour améliorer le service. Elles ne sont pas fusionnées avec d'autres sources de données."
+            },
+            "contact": {
+                "title": "Formulaire de Contact",
+                "content1": "Si vous nous envoyez des demandes par e-mail ou formulaire de contact, vos informations du formulaire de demande, y compris les coordonnées que vous avez fournies, seront stockées dans le but de traiter la demande et en cas de questions de suivi.",
+                "content2": "Nous ne partageons pas ces données sans votre consentement. Le traitement est basé sur l'Art. 6 para. 1 lit. b RGPD, si votre demande est liée à l'exécution d'un contrat ou est nécessaire pour la mise en œuvre de mesures précontractuelles."
+            },
+            "rights": {
+                "title": "Vos Droits",
+                "intro": "Vous avez le droit à tout moment à une information gratuite sur vos données personnelles stockées, leur origine et leurs destinataires, et l'objectif du traitement des données, ainsi que le droit de corriger ou de supprimer ces données.",
+                "subtitle": "Vos droits en un coup d'œil :",
+                "items": {
+                    "access": {
+                        "title": "Droit d'accès :",
+                        "description": "Vous pouvez demander des informations sur vos données stockées"
+                    },
+                    "rectification": {
+                        "title": "Droit de rectification :",
+                        "description": "Vous pouvez demander la correction de données inexactes"
+                    },
+                    "deletion": {
+                        "title": "Droit à l'effacement :",
+                        "description": "Vous pouvez demander la suppression de vos données"
+                    },
+                    "restriction": {
+                        "title": "Droit à la limitation du traitement :",
+                        "description": "Vous pouvez demander la limitation du traitement"
+                    },
+                    "objection": {
+                        "title": "Droit d'opposition :",
+                        "description": "Vous pouvez vous opposer au traitement"
+                    },
+                    "portability": {
+                        "title": "Droit à la portabilité des données :",
+                        "description": "Vous pouvez recevoir vos données dans un format structuré"
+                    }
+                },
+                "footer": "Pour cela et d'autres questions sur le sujet des données personnelles, vous pouvez toujours nous contacter à l'adresse indiquée dans les mentions légales."
+            }
+        }
+    },
+    "imprint": {
+        "title": "Mentions Légales",
+        "sections": {
+            "company": {
+                "title": "Informations selon § 5 TMG",
+                "country": "Allemagne"
+            },
+            "contact": {
+                "title": "Contact",
+                "email": "E-mail :",
+                "phone": "Téléphone :",
+                "phonePlaceholder": "[à suivre]"
+            },
+            "taxId": {
+                "title": "Numéro de TVA",
+                "content": "Numéro d'identification TVA selon § 27 a de la loi sur la taxe sur la valeur ajoutée : [à suivre]"
+            },
+            "register": {
+                "title": "Inscription au Registre du Commerce",
+                "intro": "Inscription au registre du commerce.",
+                "court": "Tribunal d'enregistrement : [à suivre, une fois l'entrée HR disponible]",
+                "number": "Numéro d'enregistrement : [à suivre]"
+            },
+            "responsible": {
+                "title": "Responsable du contenu selon § 55 para. 2 RStV :"
+            }
+        }
     }
 }

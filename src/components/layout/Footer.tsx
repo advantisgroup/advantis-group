@@ -203,13 +203,13 @@ export const Footer = () => {
                             </p>
                             <div className="flex items-center gap-6">
                                 <Link
-                                    href="/impressum"
+                                    href="/imprint"
                                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     {t('nav.imprint')}
                                 </Link>
                                 <Link
-                                    href="/datenschutz"
+                                    href="/privacy"
                                     className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     {t('nav.privacy')}

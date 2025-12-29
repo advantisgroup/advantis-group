@@ -91,8 +91,10 @@
         "tabs": {
             "writeMessage": "Write a message",
             "requestCallback": "Request callback",
+            "otherInquiries": "Other Inquiry",
             "writeMessageShort": "Message",
-            "requestCallbackShort": "Callback"
+            "requestCallbackShort": "Callback",
+            "otherInquiriesShort": "Inquiry"
         },
         "form": {
             "company": "Your Company Name",
@@ -120,20 +122,36 @@
             "description1": "Whether you are looking for support in active sales, strategic consulting, or the selection of modern AI solutions – we help you!",
             "descriptionMessage": "Contact us for a non-binding consultation and let's work on your sales success together.",
             "descriptionCallback": "Schedule a callback and we will discuss together how we can move your sales forward.",
+            "descriptionOther": "Use this form for general inquiries, questions about your rights, or other matters.",
             "closingMessage": "We look forward to your inquiry!",
-            "closingCallback": "We look forward to your call!"
+            "closingCallback": "We look forward to your call!",
+            "closingOther": "We will respond to your inquiry as quickly as possible!"
         },
         "messages": {
             "writeUs": "Write to us",
             "writeUsDesc": "Send us a message and we will get back to you within 24 hours",
             "callback": "Schedule a callback",
             "callbackDesc": "Let us know when we can best reach you",
+            "otherInquiry": "Other Inquiry",
+            "otherInquiryDesc": "Have questions or general inquiries? We're happy to help!",
             "successTitle": "Sent!",
             "successDesc": "We will get back to you within 24 hours.",
             "callSuccessTitle": "Callback requested!",
             "callSuccessDesc": "We will call you at the requested time.",
             "errorTitle": "Something went wrong",
             "errorDesc": "Please check your entries"
+        },
+        "otherForm": {
+            "topic": "Topic",
+            "selectTopic": "Please select a topic",
+            "topics": {
+                "withdrawal": "Right of Withdrawal",
+                "question": "Question",
+                "legal": "Legal"
+            },
+            "subject": "Subject",
+            "subjectPlaceholder": "Enter a specific subject",
+            "optional": "optional"
         }
     },
     "about": {
@@ -260,5 +278,103 @@
             "button": "Contact Now"
         },
         "learnMore": "Learn More"
+    },
+    "privacy": {
+        "title": "Privacy Policy",
+        "subtitle": "Information on the processing of your data in accordance with GDPR",
+        "tableOfContents": "Table of Contents",
+        "sections": {
+            "overview": {
+                "title": "Privacy at a Glance",
+                "content": "The following information provides a simple overview of what happens to your personal data when you visit this website. Personal data is any data that can be used to personally identify you."
+            },
+            "general": {
+                "title": "General Information",
+                "content1": "The operators of these pages take the protection of your personal data very seriously. We treat your personal data confidentially and in accordance with the legal data protection regulations as well as this privacy policy.",
+                "content2": "When you use this website, various personal data is collected. This privacy policy explains what data we collect and what we use it for."
+            },
+            "responsible": {
+                "title": "Responsible Party",
+                "intro": "The party responsible for data processing on this website is:"
+            },
+            "collection": {
+                "title": "Data Collection",
+                "subtitle": "What data do we collect?",
+                "intro": "When visiting this website, the server automatically stores information that your browser transmits. This includes:",
+                "items": {
+                    "ip": "IP address",
+                    "browser": "Browser type and version",
+                    "os": "Operating system used",
+                    "datetime": "Date and time of access",
+                    "referrer": "Websites from which the user's system accessed our website"
+                },
+                "footer": "This data is used exclusively to ensure the operation and to improve the service. It is not merged with other data sources."
+            },
+            "contact": {
+                "title": "Contact Form",
+                "content1": "If you send us inquiries via email or contact form, your information from the inquiry form including the contact data you provided will be stored for the purpose of processing the inquiry and in case of follow-up questions.",
+                "content2": "We do not share this data without your consent. Processing is based on Art. 6 para. 1 lit. b GDPR, if your inquiry is related to the fulfillment of a contract or is necessary for the implementation of pre-contractual measures."
+            },
+            "rights": {
+                "title": "Your Rights",
+                "intro": "You have the right at any time to free information about your stored personal data, its origin and recipients, and the purpose of data processing, as well as the right to correct or delete this data.",
+                "subtitle": "Your rights at a glance:",
+                "items": {
+                    "access": {
+                        "title": "Right of access:",
+                        "description": "You can request information about your stored data"
+                    },
+                    "rectification": {
+                        "title": "Right to rectification:",
+                        "description": "You can request the correction of inaccurate data"
+                    },
+                    "deletion": {
+                        "title": "Right to deletion:",
+                        "description": "You can request the deletion of your data"
+                    },
+                    "restriction": {
+                        "title": "Right to restriction of processing:",
+                        "description": "You can request the restriction of processing"
+                    },
+                    "objection": {
+                        "title": "Right to object:",
+                        "description": "You can object to the processing"
+                    },
+                    "portability": {
+                        "title": "Right to data portability:",
+                        "description": "You can receive your data in a structured format"
+                    }
+                },
+                "footer": "For this and other questions on the subject of personal data, you can always contact us at the address given in the imprint."
+            }
+        }
+    },
+    "imprint": {
+        "title": "Imprint",
+        "sections": {
+            "company": {
+                "title": "Information according to § 5 TMG",
+                "country": "Germany"
+            },
+            "contact": {
+                "title": "Contact",
+                "email": "Email:",
+                "phone": "Phone:",
+                "phonePlaceholder": "[to follow]"
+            },
+            "taxId": {
+                "title": "VAT ID",
+                "content": "VAT identification number according to § 27 a of the Value Added Tax Act: [to follow]"
+            },
+            "register": {
+                "title": "Commercial Register Entry",
+                "intro": "Entry in the commercial register.",
+                "court": "Registration court: [to follow, once HR entry is available]",
+                "number": "Registration number: [to follow]"
+            },
+            "responsible": {
+                "title": "Responsible for the content according to § 55 para. 2 RStV:"
+            }
+        }
     }
 }

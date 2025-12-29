@@ -1,3 +1,5 @@
+import React from 'react'
+
 import { Phone } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
@@ -7,7 +9,7 @@ import { type CallbackFormProps } from '@/types/contact'
 import { BrandText } from '../effects/BrandText'
 import { AnimatedButton } from '../ui/AnimatedButton'
 
-export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
+export function CallbackForm({ formData, errors, buttonState, onFormDataChange, onSubmit }: CallbackFormProps) {
     const t = useTranslations('contact.form')
 
     return (
@@ -19,9 +21,12 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                 <input
                     type="text"
                     id="callback-company"
+                    value={formData.company}
+                    onChange={(e) => onFormDataChange({ ...formData, company: e.target.value })}
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                     required
                 />
+                {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company[0]}</p>}
             </div>
 
             <div className="flex flex-col md:flex-row gap-4">
@@ -32,9 +37,12 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                     <input
                         type="text"
                         id="callback-firstName"
+                        value={formData.firstName}
+                        onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })}
                         className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                         required
                     />
+                    {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
                 </div>
                 <div className="w-full md:w-1/2">
                     <label htmlFor="callback-lastName" className="block text-sm font-medium mb-2">
@@ -43,9 +51,12 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                     <input
                         type="text"
                         id="callback-lastName"
+                        value={formData.lastName}
+                        onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })}
                         className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                         required
                     />
+                    {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName[0]}</p>}
                 </div>
             </div>
 
@@ -56,10 +67,13 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                 <input
                     type="tel"
                     id="callback-phone"
+                    value={formData.phone}
+                    onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                     placeholder={t('phonePlaceholder')}
                     required
                 />
+                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone[0]}</p>}
             </div>
 
             <div>
@@ -69,9 +83,12 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                 <input
                     type="email"
                     id="callback-email"
+                    value={formData.email}
+                    onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                     required
                 />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
                 <p className="text-xs text-muted-foreground mt-1">{t('callbackEmailNote')}</p>
             </div>
 
@@ -82,9 +99,12 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                 <input
                     type="datetime-local"
                     id="callback-datetime"
+                    value={formData.dateTime}
+                    onChange={(e) => onFormDataChange({ ...formData, dateTime: e.target.value })}
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
                     required
                 />
+                {errors.dateTime && <p className="text-red-500 text-sm mt-1">{errors.dateTime[0]}</p>}
                 <p className="text-xs text-muted-foreground mt-1">{t('callbackTimeNote')}</p>
             </div>
 
@@ -94,6 +114,8 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                 </label>
                 <textarea
                     id="callback-notes"
+                    value={formData.notes || ''}
+                    onChange={(e) => onFormDataChange({ ...formData, notes: e.target.value })}
                     rows={3}
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
                     placeholder={t('notesPlaceholder')}
@@ -104,7 +126,7 @@ export function CallbackForm({ buttonState, onSubmit }: CallbackFormProps) {
                 <p className="text-xs text-muted-foreground">
                     <strong>{t('privacyNoteLabel')}</strong> {t('privacyPrefix')}{' '}
                     <BrandText brand="advantis">Advantis Group GmbH</BrandText> {t('privacySuffixCallback')}{' '}
-                    <Link href="/datenschutz" className="underline hover:text-foreground">
+                    <Link href="/privacy" className="underline hover:text-foreground">
                         {t('privacyLink')}
                     </Link>
                 </p>

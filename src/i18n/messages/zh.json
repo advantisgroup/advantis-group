@@ -91,8 +91,10 @@
         "tabs": {
             "writeMessage": "写信留言",
             "requestCallback": "请求回电",
+            "otherInquiries": "其他咨询",
             "writeMessageShort": "留言",
-            "requestCallbackShort": "回电"
+            "requestCallbackShort": "回电",
+            "otherInquiriesShort": "咨询"
         },
         "form": {
             "company": "您的公司名称",
@@ -120,20 +122,36 @@
             "description1": "无论您是在寻找积极销售支持、战略咨询还是现代人工智能解决方案的选择 - 我们都能为您提供帮助！",
             "descriptionMessage": "联系我们进行无义务咨询，让我们共同致力于您的销售成功。",
             "descriptionCallback": "安排回电，我们将共同讨论如何推动您的销售。",
+            "descriptionOther": "使用此表格进行一般查询、权利相关问题或其他事项。",
             "closingMessage": "我们期待您的垂询！",
-            "closingCallback": "我们期待您的来电！"
+            "closingCallback": "我们期待您的来电！",
+            "closingOther": "我们将尽快回复您的咨询！"
         },
         "messages": {
             "writeUs": "写信给我们",
             "writeUsDesc": "给我们发送消息，我们将在24小时内回复您",
             "callback": "安排回电",
             "callbackDesc": "请告诉我们什么时候最方便联系您",
+            "otherInquiry": "其他咨询",
+            "otherInquiryDesc": "有问题或一般咨询？我们很乐意为您提供帮助！",
             "successTitle": "已发送！",
             "successDesc": "我们将在24小时内回复您。",
             "callSuccessTitle": "已请求回电！",
             "callSuccessDesc": "我们将按您要求的时间给您致电。",
             "errorTitle": "出错了",
             "errorDesc": "请检查您的输入"
+        },
+        "otherForm": {
+            "topic": "主题",
+            "selectTopic": "请选择一个主题",
+            "topics": {
+                "withdrawal": "撤回权",
+                "question": "问题",
+                "legal": "法律"
+            },
+            "subject": "主题",
+            "subjectPlaceholder": "输入具体主题",
+            "optional": "可选"
         }
     },
     "about": {
@@ -260,5 +278,103 @@
             "button": "立即联系"
         },
         "learnMore": "了解更多"
+    },
+    "privacy": {
+        "title": "隐私政策",
+        "subtitle": "根据GDPR处理您数据的相关信息",
+        "tableOfContents": "目录",
+        "sections": {
+            "overview": {
+                "title": "隐私概览",
+                "content": "以下信息简要概述了当您访问本网站时您的个人数据会发生什么。个人数据是可以用于识别您个人身份的任何数据。"
+            },
+            "general": {
+                "title": "一般信息",
+                "content1": "本网站的运营者非常重视保护您的个人数据。我们根据法律数据保护法规以及本隐私政策以保密方式处理您的个人数据。",
+                "content2": "当您使用本网站时，会收集各种个人数据。本隐私政策解释了我们收集哪些数据以及我们如何使用这些数据。"
+            },
+            "responsible": {
+                "title": "责任方",
+                "intro": "本网站数据处理的责任方为："
+            },
+            "collection": {
+                "title": "数据收集",
+                "subtitle": "我们收集哪些数据？",
+                "intro": "访问本网站时，服务器会自动存储您的浏览器传输的信息。这包括：",
+                "items": {
+                    "ip": "IP地址",
+                    "browser": "浏览器类型和版本",
+                    "os": "使用的操作系统",
+                    "datetime": "访问日期和时间",
+                    "referrer": "用户系统访问我们网站的来源网站"
+                },
+                "footer": "这些数据仅用于确保运营和改善服务。不会与其他数据源合并。"
+            },
+            "contact": {
+                "title": "联系表单",
+                "content1": "如果您通过电子邮件或联系表单向我们发送查询，您在查询表单中的信息（包括您提供的联系数据）将被存储，用于处理查询和后续问题。",
+                "content2": "未经您的同意，我们不会分享这些数据。如果您的查询与履行合同相关或为实施合同前措施所必需，处理将基于GDPR第6条第1款b项。"
+            },
+            "rights": {
+                "title": "您的权利",
+                "intro": "您有权随时免费获取有关您存储的个人数据、其来源和接收者以及数据处理目的的信息，以及更正或删除这些数据的权利。",
+                "subtitle": "您的权利概览：",
+                "items": {
+                    "access": {
+                        "title": "访问权：",
+                        "description": "您可以请求获取有关您存储数据的信息"
+                    },
+                    "rectification": {
+                        "title": "更正权：",
+                        "description": "您可以请求更正不准确的数据"
+                    },
+                    "deletion": {
+                        "title": "删除权：",
+                        "description": "您可以请求删除您的数据"
+                    },
+                    "restriction": {
+                        "title": "限制处理权：",
+                        "description": "您可以请求限制处理"
+                    },
+                    "objection": {
+                        "title": "反对权：",
+                        "description": "您可以反对处理"
+                    },
+                    "portability": {
+                        "title": "数据可携带权：",
+                        "description": "您可以以结构化格式接收您的数据"
+                    }
+                },
+                "footer": "关于此问题和其他个人数据问题，您可以随时通过版权信息中给出的地址联系我们。"
+            }
+        }
+    },
+    "imprint": {
+        "title": "版权信息",
+        "sections": {
+            "company": {
+                "title": "根据§ 5 TMG的信息",
+                "country": "德国"
+            },
+            "contact": {
+                "title": "联系方式",
+                "email": "电子邮件：",
+                "phone": "电话：",
+                "phonePlaceholder": "[待定]"
+            },
+            "taxId": {
+                "title": "增值税ID",
+                "content": "根据《增值税法》第27条a款的增值税识别号：[待定]"
+            },
+            "register": {
+                "title": "商业登记条目",
+                "intro": "商业登记注册。",
+                "court": "登记法院：[待定，HR条目可用后]",
+                "number": "登记号：[待定]"
+            },
+            "responsible": {
+                "title": "根据§ 55第2款RStV负责内容："
+            }
+        }
     }
 }

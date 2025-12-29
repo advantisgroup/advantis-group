@@ -91,8 +91,10 @@
         "tabs": {
             "writeMessage": "Nachricht schreiben",
             "requestCallback": "Rückruf vereinbaren",
+            "otherInquiries": "Andere Anfrage",
             "writeMessageShort": "Nachricht",
-            "requestCallbackShort": "Rückruf"
+            "requestCallbackShort": "Rückruf",
+            "otherInquiriesShort": "Anfrage"
         },
         "form": {
             "company": "Ihr Firmenname",
@@ -120,20 +122,36 @@
             "description1": "Ob Sie Unterstützung im aktiven Vertrieb, in der strategischen Beratung oder bei der Auswahl moderner KI-Lösungen suchen – wir helfen Ihnen dabei!",
             "descriptionMessage": "Kontaktieren Sie uns für ein unverbindliches Beratungsgespräch und lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten.",
             "descriptionCallback": "Vereinbaren Sie einen Rückruf und wir besprechen gemeinsam, wie wir Ihren Vertrieb voranbringen können.",
+            "descriptionOther": "Nutzen Sie dieses Formular für allgemeine Anfragen, Fragen zu Ihren Rechten oder andere Anliegen.",
             "closingMessage": "Wir freuen uns auf Ihre Anfrage!",
-            "closingCallback": "Wir freuen uns auf Ihren Anruf!"
+            "closingCallback": "Wir freuen uns auf Ihren Anruf!",
+            "closingOther": "Wir beantworten Ihre Anfrage schnellstmöglich!"
         },
         "messages": {
             "writeUs": "Schreiben Sie uns",
             "writeUsDesc": "Senden Sie uns eine Nachricht und wir melden uns innerhalb von 24 Stunden",
             "callback": "Rückruf vereinbaren",
             "callbackDesc": "Teilen Sie uns mit, wann wir Sie am besten erreichen können",
+            "otherInquiry": "Andere Anfrage",
+            "otherInquiryDesc": "Haben Sie Fragen oder allgemeine Anliegen? Wir helfen Ihnen gerne!",
             "successTitle": "Gesendet!",
             "successDesc": "Wir werden uns in bis zu 24h bei ihnen melden.",
             "callSuccessTitle": "Rückruf angefordert!",
             "callSuccessDesc": "Wir rufen Sie zum gewünschten Zeitpunkt an.",
             "errorTitle": "Etwas ist schiefgelaufen",
             "errorDesc": "Bitte überprüfen Sie Ihre Eingaben"
+        },
+        "otherForm": {
+            "topic": "Thema",
+            "selectTopic": "Bitte wählen Sie ein Thema",
+            "topics": {
+                "withdrawal": "Widerrufsrecht",
+                "question": "Frage",
+                "legal": "Rechtliches"
+            },
+            "subject": "Betreff",
+            "subjectPlaceholder": "Geben Sie einen spezifischen Betreff ein",
+            "optional": "optional"
         }
     },
     "about": {
@@ -260,5 +278,103 @@
             "button": "Jetzt Kontakt aufnehmen"
         },
         "learnMore": "Mehr erfahren"
+    },
+    "privacy": {
+        "title": "Datenschutzerklärung",
+        "subtitle": "Informationen zur Verarbeitung Ihrer Daten gemäß DSGVO",
+        "tableOfContents": "Inhaltsverzeichnis",
+        "sections": {
+            "overview": {
+                "title": "Datenschutz auf einen Blick",
+                "content": "Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können."
+            },
+            "general": {
+                "title": "Allgemeine Hinweise",
+                "content1": "Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzbestimmungen sowie dieser Datenschutzerklärung.",
+                "content2": "Wenn Sie diese Website benutzen, werden verschiedene personenbezogene Daten erhoben. Diese Datenschutzerklärung erläutert, welche Daten wir erheben und wofür wir sie nutzen."
+            },
+            "responsible": {
+                "title": "Verantwortliche Stelle",
+                "intro": "Verantwortlich für die Datenverarbeitung auf dieser Website ist:"
+            },
+            "collection": {
+                "title": "Datenerfassung",
+                "subtitle": "Welche Daten erfassen wir?",
+                "intro": "Beim Besuch dieser Website speichert der Server automatisch Informationen, die Ihr Browser übermittelt. Dies sind:",
+                "items": {
+                    "ip": "IP-Adresse",
+                    "browser": "Browsertyp und Browserversion",
+                    "os": "Verwendetes Betriebssystem",
+                    "datetime": "Datum und Uhrzeit des Zugriffs",
+                    "referrer": "Websites, von denen das System des Nutzers auf unsere Website gelangt"
+                },
+                "footer": "Diese Daten werden ausschließlich zur Sicherstellung des Betriebs und zur Verbesserung des Angebots genutzt. Eine Zusammenführung mit anderen Datenquellen wird nicht vorgenommen."
+            },
+            "contact": {
+                "title": "Kontaktformular",
+                "content1": "Wenn Sie uns per E-Mail oder Kontaktformular Anfragen zukommen lassen, werden Ihre Angaben aus dem Anfrageformular inklusive der von Ihnen dort angegebenen Kontaktdaten zwecks Bearbeitung der Anfrage und für den Fall von Anschlussfragen bei uns gespeichert.",
+                "content2": "Diese Daten geben wir nicht ohne Ihre Einwilligung weiter. Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO, sofern Ihre Anfrage mit der Erfüllung eines Vertrags zusammenhängt oder zur Durchführung vorvertraglicher Maßnahmen erforderlich ist."
+            },
+            "rights": {
+                "title": "Ihre Rechte",
+                "intro": "Sie haben jederzeit das Recht auf unentgeltliche Auskunft über Ihre gespeicherten personenbezogenen Daten, deren Herkunft und Empfänger und den Zweck der Datenverarbeitung sowie ein Recht auf Berichtigung oder Löschung dieser Daten.",
+                "subtitle": "Ihre Rechte im Überblick:",
+                "items": {
+                    "access": {
+                        "title": "Auskunftsrecht:",
+                        "description": "Sie können Auskunft über Ihre gespeicherten Daten verlangen"
+                    },
+                    "rectification": {
+                        "title": "Berichtigungsrecht:",
+                        "description": "Sie können die Berichtigung unrichtiger Daten verlangen"
+                    },
+                    "deletion": {
+                        "title": "Löschungsrecht:",
+                        "description": "Sie können die Löschung Ihrer Daten verlangen"
+                    },
+                    "restriction": {
+                        "title": "Einschränkung der Verarbeitung:",
+                        "description": "Sie können die Einschränkung der Verarbeitung verlangen"
+                    },
+                    "objection": {
+                        "title": "Widerspruchsrecht:",
+                        "description": "Sie können der Verarbeitung widersprechen"
+                    },
+                    "portability": {
+                        "title": "Datenübertragbarkeit:",
+                        "description": "Sie können Ihre Daten in einem strukturierten Format erhalten"
+                    }
+                },
+                "footer": "Hierzu sowie zu weiteren Fragen zum Thema personenbezogene Daten können Sie sich jederzeit unter der im Impressum angegebenen Adresse an uns wenden."
+            }
+        }
+    },
+    "imprint": {
+        "title": "Impressum",
+        "sections": {
+            "company": {
+                "title": "Angaben gemäß § 5 TMG",
+                "country": "Deutschland"
+            },
+            "contact": {
+                "title": "Kontakt",
+                "email": "E-Mail:",
+                "phone": "Telefon:",
+                "phonePlaceholder": "[folgt]"
+            },
+            "taxId": {
+                "title": "Umsatzsteuer-ID",
+                "content": "Umsatzsteuer-ID gemäß § 27 a Umsatzsteuergesetz: [folgt]"
+            },
+            "register": {
+                "title": "Registereintrag",
+                "intro": "Eintragung im Handelsregister.",
+                "court": "Registergericht: [folgt, sobald HR-Eintrag vorliegt]",
+                "number": "Registernummer: [folgt]"
+            },
+            "responsible": {
+                "title": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:"
+            }
+        }
     }
 }

@@ -1,42 +1,44 @@
-/* eslint-disable no-console */
 'use client'
 import React, { useState } from 'react'
 
-import { Mail, Phone, MapPin, X } from 'lucide-react'
+import { Mail, Phone, MapPin } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import posthog from 'posthog-js'
-import { toast } from 'sonner'
-import { z } from 'zod'
 
 import { CallbackForm } from '@/components/contact/CallbackForm'
 import { ContactInfoDesktop, ContactInfoMobile } from '@/components/contact/ContactInfo'
 import { MessageForm } from '@/components/contact/MessageForm'
+import { OtherForm } from '@/components/contact/OtherForm'
 import { TabNavigation } from '@/components/contact/TabNavigation'
 import { WhyAdvantisSidebar } from '@/components/contact/WhyAdvantis'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useContactForm } from '@/hooks/use-contact-form'
 import { useIsMobile } from '@/hooks/use-mobile'
-import { api } from '@/lib/eden'
-import { FormDataSchema } from '@/lib/schema'
-import { type ButtonState, type ContactInfoItem, type ContactMode, type FormData } from '@/types/contact'
+import { type ContactInfoItem, type ContactMode } from '@/types/contact'
 
 export default function Kontakt() {
     const t = useTranslations('contact')
     const tMessages = useTranslations('contact.messages')
-
     const isMobile = useIsMobile()
+
+    // UI State for tab navigation
     const [contactMode, setContactMode] = useState<ContactMode>('message')
-    const [buttonState, setButtonState] = useState<ButtonState>('idle')
-    const [callbackButtonState, setCallbackButtonState] = useState<ButtonState>('idle')
-    const [formData, setFormData] = useState<FormData>({
-        company: '',
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        message: '',
-        mode: '',
-    })
-    const [errors, setErrors] = useState<z.ZodFlattenedError<FormData>['fieldErrors']>({})
+
+    // Custom hook handling all form logic
+    const {
+        formData,
+        setFormData,
+        otherFormData,
+        setOtherFormData,
+        callbackFormData,
+        setCallbackFormData,
+        errors,
+        otherErrors,
+        callbackErrors,
+        getButtonState,
+        handleMessageSubmit,
+        handleCallbackSubmit,
+        handleOtherSubmit,
+    } = useContactForm()
 
     const contactInfoData: ContactInfoItem[] = [
         {
@@ -59,94 +61,69 @@ export default function Kontakt() {
         },
     ]
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        await sendEmail(e, 'message')
+    const getFormTitle = () => {
+        switch (contactMode) {
+            case 'message':
+                return tMessages('writeUs')
+            case 'callback':
+                return tMessages('callback')
+            case 'other':
+                return tMessages('otherInquiry')
+            default:
+                return tMessages('writeUs')
+        }
     }
 
-    const handleCallbackSubmit = async (e: React.FormEvent) => {
-        await sendEmail(e, 'callback')
+    const getFormDescription = () => {
+        switch (contactMode) {
+            case 'message':
+                return tMessages('writeUsDesc')
+            case 'callback':
+                return tMessages('callbackDesc')
+            case 'other':
+                return tMessages('otherInquiryDesc')
+            default:
+                return tMessages('writeUsDesc')
+        }
     }
 
-    const sendEmail = async (e: React.FormEvent, type: ContactMode) => {
-        e.preventDefault()
-        setButtonState('loading')
-        posthog.capture(`User - ${type} Submitted`)
-
-        setFormData({
-            company: formData.company,
-            email: formData.email,
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            message: formData.message,
-            phone: formData.phone,
-            mode: type,
-        })
-
-        console.log(formData)
-
-        const result = FormDataSchema.safeParse(formData)
-
-        if (!result.success) {
-            const flatten = z.treeifyError(result.error)
-            setErrors(flatten.errors as z.ZodFlattenedError<FormData>['fieldErrors'])
-            setButtonState('error')
-
-            console.log(result)
-
-            toast.error(tMessages('errorTitle'), {
-                description: tMessages('errorDesc'),
-                icon: <X />,
-            })
-
-            setTimeout(() => {
-                setButtonState('idle')
-            }, 3000)
-            return
+    const renderForm = () => {
+        switch (contactMode) {
+            case 'message':
+                return (
+                    <MessageForm
+                        formData={formData}
+                        errors={errors}
+                        buttonState={getButtonState('message')}
+                        isMobile={isMobile}
+                        onFormDataChange={setFormData}
+                        onSubmit={handleMessageSubmit}
+                    />
+                )
+            case 'callback':
+                return (
+                    <CallbackForm
+                        formData={callbackFormData}
+                        errors={callbackErrors}
+                        buttonState={getButtonState('callback')}
+                        onFormDataChange={setCallbackFormData}
+                        onSubmit={handleCallbackSubmit}
+                    />
+                )
+            case 'other':
+                return (
+                    <OtherForm
+                        formData={otherFormData}
+                        errors={otherErrors}
+                        buttonState={getButtonState('other')}
+                        isMobile={isMobile}
+                        onFormDataChange={setOtherFormData}
+                        onSubmit={handleOtherSubmit}
+                    />
+                )
+            default:
+                return null
         }
-
-        setErrors({})
-
-        try {
-            const response = await api.send.post({
-                ...formData,
-                adresses: [process.env.NEXT_PUBLIC_EMAIL_ADRESS!],
-                cc: [formData.email],
-                subject: `User Request - ${formData.mode}`,
-            })
-
-            console.log(response)
-
-            if (response.status === 500) {
-                setButtonState('error')
-                return toast.error(tMessages('errorTitle'), {
-                    description: 'Falls das Problem anhält versuchen sie es später nochmal',
-                    icon: <X />,
-                })
-            } else if (response.status === 429) {
-                setButtonState('error')
-                return toast.error('Rate Limit', {
-                    description: 'Sie haben zu viele Anfragen geschickt. Versuchen sie es später nochmal',
-                    icon: <X />,
-                })
-            } else {
-                setButtonState('success')
-                toast.success(tMessages('successTitle'), {
-                    description: tMessages('successDesc'),
-                })
-            }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            console.log(error)
-            setButtonState('error')
-
-            toast.error(tMessages('errorTitle'), {
-                description: 'Falls das Problem anhält versuchen sie es später nochmal',
-                icon: <X />,
-            })
-        }
-        setTimeout(() => {
-            setCallbackButtonState('idle')
-        }, 3000)
     }
 
     return (
@@ -174,32 +151,10 @@ export default function Kontakt() {
                         <div className={`grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 divide-x'} divide-border`}>
                             <Card className={`border-0 rounded-none ${isMobile ? 'border-b' : ''}`}>
                                 <CardHeader>
-                                    <CardTitle className="text-xl md:text-2xl">
-                                        {contactMode === 'message' ? tMessages('writeUs') : tMessages('callback')}
-                                    </CardTitle>
-                                    <CardDescription>
-                                        {contactMode === 'message'
-                                            ? tMessages('writeUsDesc')
-                                            : tMessages('callbackDesc')}
-                                    </CardDescription>
+                                    <CardTitle className="text-xl md:text-2xl">{getFormTitle()}</CardTitle>
+                                    <CardDescription>{getFormDescription()}</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    {contactMode === 'message' ? (
-                                        <MessageForm
-                                            formData={formData}
-                                            errors={errors}
-                                            buttonState={buttonState}
-                                            isMobile={isMobile}
-                                            onFormDataChange={setFormData}
-                                            onSubmit={handleSubmit}
-                                        />
-                                    ) : (
-                                        <CallbackForm
-                                            buttonState={callbackButtonState}
-                                            onSubmit={handleCallbackSubmit}
-                                        />
-                                    )}
-                                </CardContent>
+                                <CardContent>{renderForm()}</CardContent>
                             </Card>
 
                             <WhyAdvantisSidebar contactMode={contactMode} />

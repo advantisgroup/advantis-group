@@ -3,22 +3,21 @@ import type React from 'react'
 import { type LucideIcon } from 'lucide-react'
 import { type z } from 'zod'
 
-import { type FormDataSchema } from '@/lib/schema'
+import { type FormDataSchema, type OtherFormDataSchema, type CallbackFormDataSchema } from '@/lib/schema'
 
 export type FormData = z.infer<typeof FormDataSchema>
-export type ContactMode = 'message' | 'callback'
+export type OtherFormData = z.infer<typeof OtherFormDataSchema>
+export type CallbackFormData = z.infer<typeof CallbackFormDataSchema>
+
+export type ContactMode = 'message' | 'callback' | 'other'
 export type ButtonState = 'idle' | 'loading' | 'success' | 'error'
+export type InquiryTopic = 'withdrawal' | 'question' | 'legal'
 
 export interface ContactInfoItem {
     icon: LucideIcon
     label: string
     value: string
     href: string
-}
-
-export interface CallbackFormProps {
-    buttonState: ButtonState
-    onSubmit: (e: React.FormEvent) => void
 }
 
 export interface AnimatedButtonProps {
@@ -35,6 +34,23 @@ export interface MessageFormProps {
     buttonState: ButtonState
     isMobile: boolean
     onFormDataChange: (data: FormData) => void
+    onSubmit: (e: React.FormEvent) => void
+}
+
+export interface CallbackFormProps {
+    formData: CallbackFormData
+    errors: z.ZodFlattenedError<CallbackFormData>['fieldErrors']
+    buttonState: ButtonState
+    onFormDataChange: (data: CallbackFormData) => void
+    onSubmit: (e: React.FormEvent) => void
+}
+
+export interface OtherFormProps {
+    formData: OtherFormData
+    errors: z.ZodFlattenedError<OtherFormData>['fieldErrors']
+    buttonState: ButtonState
+    isMobile: boolean
+    onFormDataChange: (data: OtherFormData) => void
     onSubmit: (e: React.FormEvent) => void
 }
 

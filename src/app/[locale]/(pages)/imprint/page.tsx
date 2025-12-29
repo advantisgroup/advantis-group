@@ -1,13 +1,18 @@
+'use client'
+
 import { Building2, Mail, FileText } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function Impressum() {
+    const t = useTranslations('imprint')
+
     const sections = [
         {
             icon: Building2,
-            title: 'Angaben gemäß § 5 TMG',
+            title: t('sections.company.title'),
             content: (
                 <div className="space-y-2">
                     <p className="font-semibold">
@@ -15,30 +20,31 @@ export default function Impressum() {
                     </p>
                     <p className="text-muted-foreground">Bienweg 8</p>
                     <p className="text-muted-foreground">90425 Nürnberg</p>
-                    <p className="text-muted-foreground">Deutschland</p>
+                    <p className="text-muted-foreground">{t('sections.company.country')}</p>
                 </div>
             ),
         },
         {
             icon: Mail,
-            title: 'Kontakt',
+            title: t('sections.contact.title'),
             content: (
                 <div className="space-y-2">
                     <p className="text-muted-foreground">
-                        <span className="font-semibold">E-Mail:</span> touch@advantisgroup.de
+                        <span className="font-semibold">{t('sections.contact.email')}</span> touch@advantisgroup.de
                     </p>
                     <p className="text-muted-foreground">
-                        <span className="font-semibold">Telefon:</span> [folgt]
+                        <span className="font-semibold">{t('sections.contact.phone')}</span>{' '}
+                        {t('sections.contact.phonePlaceholder')}
                     </p>
                 </div>
             ),
         },
         {
             icon: FileText,
-            title: 'Umsatzsteuer-ID',
+            title: t('sections.taxId.title'),
             content: (
                 <div className="space-y-2">
-                    <p className="text-muted-foreground">Umsatzsteuer-ID gemäß § 27 a Umsatzsteuergesetz: [folgt]</p>
+                    <p className="text-muted-foreground">{t('sections.taxId.content')}</p>
                 </div>
             ),
         },
@@ -48,7 +54,7 @@ export default function Impressum() {
         <div className="min-h-screen">
             <main className="container mx-auto px-4 pt-24 pb-24 space-y-24">
                 <section className="max-w-4xl mx-auto space-y-8 text-center">
-                    <h1 className="text-5xl md:text-7xl font-bold">Impressum</h1>
+                    <h1 className="text-5xl md:text-7xl font-bold">{t('title')}</h1>
                 </section>
 
                 <section className="max-w-6xl mx-auto space-y-12">
@@ -73,20 +79,18 @@ export default function Impressum() {
 
                     <Card className="border border-border">
                         <CardHeader>
-                            <CardTitle className="text-2xl">Registereintrag</CardTitle>
+                            <CardTitle className="text-2xl">{t('sections.register.title')}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-muted-foreground">
-                            <p>Eintragung im Handelsregister.</p>
-                            <p>Registergericht: [folgt, sobald HR-Eintrag vorliegt]</p>
-                            <p>Registernummer: [folgt]</p>
+                            <p>{t('sections.register.intro')}</p>
+                            <p>{t('sections.register.court')}</p>
+                            <p>{t('sections.register.number')}</p>
                         </CardContent>
                     </Card>
 
                     <Card className="border border-border">
                         <CardHeader>
-                            <CardTitle className="text-2xl">
-                                Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:
-                            </CardTitle>
+                            <CardTitle className="text-2xl">{t('sections.responsible.title')}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-muted-foreground">
                             <p>Andrea Reichl</p>
