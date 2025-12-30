@@ -19,7 +19,8 @@ export default defineConfig([
       ".cache",
       "public",
       "*.config.js",
-      "*.config.ts"
+      "*.config.ts",
+      "./convex/"
     ] 
   },
   js.configs.recommended,

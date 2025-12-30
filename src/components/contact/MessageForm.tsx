@@ -14,7 +14,7 @@ export function MessageForm({ formData, errors, buttonState, isMobile, onFormDat
         <form className="space-y-4" onSubmit={onSubmit}>
             <div>
                 <label htmlFor="company" className="block text-sm font-medium mb-2">
-                    {t('company')}
+                    {t('company')} <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
@@ -29,7 +29,7 @@ export function MessageForm({ formData, errors, buttonState, isMobile, onFormDat
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="w-full md:w-1/2">
                     <label htmlFor="firstName" className="block text-sm font-medium mb-2">
-                        {t('firstName')}
+                        {t('firstName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -42,7 +42,7 @@ export function MessageForm({ formData, errors, buttonState, isMobile, onFormDat
                 </div>
                 <div className="w-full md:w-1/2">
                     <label htmlFor="lastName" className="block text-sm font-medium mb-2">
-                        {t('lastName')}
+                        {t('lastName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -57,7 +57,7 @@ export function MessageForm({ formData, errors, buttonState, isMobile, onFormDat
 
             <div>
                 <label htmlFor="email" className="block text-sm font-medium mb-2">
-                    {t('email')}
+                    {t('email')} <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="email"
@@ -84,7 +84,7 @@ export function MessageForm({ formData, errors, buttonState, isMobile, onFormDat
 
             <div>
                 <label htmlFor="message" className="block text-sm font-medium mb-2">
-                    {t('message')}
+                    {t('message')} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                     id="message"

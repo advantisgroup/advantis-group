@@ -5,6 +5,7 @@ import { Outfit, Manrope } from 'next/font/google'
 import { type Metadata } from 'next'
 
 import './global.css'
+import ConvexClientProvider from '@/components/ConvexClientProvider'
 import SmoothScrolling from '@/components/effects/SmoothScrolling'
 import { ThemeProvider } from '@/components/theme/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
@@ -91,8 +92,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <body className={`bg-background antialiased scroll-smooth ${manrope.variable} ${outfit.variable}`}>
                 <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
                     <SmoothScrolling>
-                        {children}
-                        <Toaster />
+                        <ConvexClientProvider>
+                            {children}
+                            <Toaster />
+                        </ConvexClientProvider>
                     </SmoothScrolling>
                 </ThemeProvider>
             </body>

@@ -125,6 +125,7 @@ export function useContactForm() {
                     lastName: formData.lastName,
                     message: formData.message,
                     email: formData.email,
+                    phone: formData.phone,
                     subject: `User Request - message`,
                 },
                 'User - message Submitted'
@@ -155,6 +156,7 @@ export function useContactForm() {
                     firstName: callbackFormData.firstName,
                     lastName: callbackFormData.lastName,
                     message,
+                    phone: callbackFormData.phone,
                     email: callbackFormData.email,
                     subject: `User Request - callback`,
                 },
@@ -189,6 +191,7 @@ export function useContactForm() {
                     lastName: otherFormData.lastName || '',
                     message,
                     email: otherFormData.email,
+                    phone: otherFormData.phone,
                     subject: `Inquiry - ${otherFormData.topic}: ${otherFormData.subject}`,
                 },
                 'User - other Submitted'

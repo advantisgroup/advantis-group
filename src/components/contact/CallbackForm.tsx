@@ -16,7 +16,7 @@ export function CallbackForm({ formData, errors, buttonState, onFormDataChange, 
         <form className="space-y-4" onSubmit={onSubmit}>
             <div>
                 <label htmlFor="callback-company" className="block text-sm font-medium mb-2">
-                    {t('company')}*
+                    {t('company')} <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="text"
@@ -32,7 +32,7 @@ export function CallbackForm({ formData, errors, buttonState, onFormDataChange, 
             <div className="flex flex-col md:flex-row gap-4">
                 <div className="w-full md:w-1/2">
                     <label htmlFor="callback-firstName" className="block text-sm font-medium mb-2">
-                        {t('firstName')}*
+                        {t('firstName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -46,7 +46,7 @@ export function CallbackForm({ formData, errors, buttonState, onFormDataChange, 
                 </div>
                 <div className="w-full md:w-1/2">
                     <label htmlFor="callback-lastName" className="block text-sm font-medium mb-2">
-                        {t('lastName')}*
+                        {t('lastName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="text"
@@ -62,7 +62,7 @@ export function CallbackForm({ formData, errors, buttonState, onFormDataChange, 
 
             <div>
                 <label htmlFor="callback-phone" className="block text-sm font-medium mb-2">
-                    {t('phone')}*
+                    {t('phone')} <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="tel"
@@ -78,7 +78,7 @@ export function CallbackForm({ formData, errors, buttonState, onFormDataChange, 
 
             <div>
                 <label htmlFor="callback-email" className="block text-sm font-medium mb-2">
-                    {t('email')}*
+                    {t('email')} <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="email"
@@ -94,7 +94,7 @@ export function CallbackForm({ formData, errors, buttonState, onFormDataChange, 
 
             <div>
                 <label htmlFor="callback-datetime" className="block text-sm font-medium mb-2">
-                    {t('desiredTime')}*
+                    {t('desiredTime')} <span className="text-red-500">*</span>
                 </label>
                 <input
                     type="datetime-local"

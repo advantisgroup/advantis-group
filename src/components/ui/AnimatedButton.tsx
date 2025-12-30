@@ -11,21 +11,20 @@ export function AnimatedButton({
 }: AnimatedButtonProps) {
     return (
         <Button type={type} disabled={disabled} className="w-full relative overflow-hidden">
-            <span className="relative flex items-center justify-center gap-2">
-                {!(buttonState === 'loading') && idleText}
+            <span
+                className={`flex items-center justify-center gap-2 transition-all duration-500 ${
+                    buttonState === 'idle' ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'
+                }`}
+            >
+                {idleText}
+                <IdleIcon className="w-4 h-4" />
+            </span>
 
-                {/* Idle Icon - flies away when transitioning */}
-                <span
-                    className={`inline-flex transition-all duration-500 ${
-                        buttonState === 'idle' ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'
-                    }`}
-                >
-                    <IdleIcon className="w-4 h-4" />
-                </span>
-
+            {/* State Icons Overlay */}
+            <div className="absolute inset-0 grid place-items-center pointer-events-none">
                 {/* Loading Spinner */}
                 <span
-                    className={`absolute transition-all duration-500 ${
+                    className={`col-start-1 row-start-1 transition-all duration-500 ${
                         buttonState === 'loading'
                             ? 'translate-x-0 opacity-100 scale-100'
                             : buttonState === 'idle'
@@ -38,7 +37,7 @@ export function AnimatedButton({
 
                 {/* Success Checkmark */}
                 <span
-                    className={`absolute transition-all duration-500 ${
+                    className={`col-start-1 row-start-1 transition-all duration-500 ${
                         buttonState === 'success'
                             ? 'translate-x-0 opacity-100 scale-100'
                             : '-translate-x-12 opacity-0 scale-50'
@@ -49,7 +48,7 @@ export function AnimatedButton({
 
                 {/* Error X with shake animation */}
                 <span
-                    className={`absolute transition-all duration-500 ${
+                    className={`col-start-1 row-start-1 transition-all duration-500 ${
                         buttonState === 'error'
                             ? 'translate-x-0 opacity-100 scale-100 animate-shake'
                             : '-translate-x-12 opacity-0 scale-50'
@@ -57,7 +56,7 @@ export function AnimatedButton({
                 >
                     <X className="w-5 h-5" />
                 </span>
-            </span>
+            </div>
         </Button>
     )
 }

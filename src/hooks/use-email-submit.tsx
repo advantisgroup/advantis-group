@@ -16,6 +16,7 @@ interface EmailPayload {
     message: string
     subject: string
     email: string
+    phone?: string
 }
 
 interface UseEmailSubmitOptions {
@@ -55,6 +56,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
                     firstName: payload.firstName,
                     lastName: payload.lastName,
                     message: payload.message,
+                    phone: payload.phone,
                     adresses: [process.env.NEXT_PUBLIC_EMAIL_ADRESS!],
                     cc: [payload.email],
                     subject: payload.subject,
