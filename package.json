@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bun convex codegen && next build",
     "start": "next start",
     "fix": "bun lint && bun format",
     "lint": "eslint .",
