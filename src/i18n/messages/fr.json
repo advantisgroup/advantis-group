@@ -376,5 +376,15 @@
                 "title": "Responsable du contenu selon § 55 para. 2 RStV :"
             }
         }
+    },
+    "email": {
+        "greeting": "Bonjour {firstName} {lastName},",
+        "bodyIntro": "merci pour votre message. Ceci est une copie de la demande que nous venons de recevoir.",
+        "bodyOutro": "Nous examinons votre demande et vous répondrons dès que possible – généralement dans les prochaines 24 heures.",
+        "yourMessage": "Votre message :",
+        "poweredBy": "Propulsé par",
+        "rightsReserved": "Tous droits réservés.",
+        "subject": "Objet",
+        "topic": "Sujet"
     }
 }

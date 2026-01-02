@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ConvexHttpClient } from 'convex/browser'
 import { Elysia, t } from 'elysia'
 import { Resend } from 'resend'
 
-import { EmailTemplate } from '@/components/email/email-template'
-
 import { api } from '@/../convex/_generated/api'
+import { EmailTemplate } from '@/components/email/email-template'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -14,7 +12,7 @@ const convex = process.env.NEXT_PUBLIC_CONVEX_URL ? new ConvexHttpClient(process
 export const email = new Elysia().post(
     '/send',
     async ({ body, set }) => {
-        const { firstName, lastName, adresses, cc, bcc, subject, message, phone } = body
+        const { firstName, lastName, adresses, cc, bcc, subject, message, phone, locale, topic } = body
 
         // Log attempt
         if (convex) {
@@ -33,7 +31,7 @@ export const email = new Elysia().post(
                 bcc: bcc,
                 cc: cc,
                 subject: subject,
-                react: EmailTemplate({ firstName, lastName, message }),
+                react: EmailTemplate({ firstName, lastName, message, locale: locale, subject, topic }),
             })
 
             const status = error ? 'failed' : 'sent'
@@ -108,6 +106,8 @@ export const email = new Elysia().post(
             bcc: t.Optional(t.Array(t.String())),
             subject: t.String(),
             message: t.String(),
+            locale: t.Optional(t.String()),
+            topic: t.Optional(t.String()),
         }),
         response: {
             200: t.Object({

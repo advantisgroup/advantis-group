@@ -376,5 +376,15 @@
                 "title": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:"
             }
         }
+    },
+    "email": {
+        "greeting": "Hallo {firstName} {lastName},",
+        "bodyIntro": "vielen Dank für Ihre Nachricht. Dies ist eine Kopie der Anfrage, die wir soeben erhalten haben.",
+        "bodyOutro": "Wir prüfen Ihr Anliegen und werden uns schnellstmöglich – in der Regel innerhalb der nächsten 24 Stunden – bei Ihnen melden.",
+        "yourMessage": "Ihre Nachricht:",
+        "poweredBy": "Powered by",
+        "rightsReserved": "Alle Rechte vorbehalten.",
+        "subject": "Betreff",
+        "topic": "Thema"
     }
 }

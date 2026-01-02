@@ -376,5 +376,15 @@
                 "title": "Responsible for the content according to § 55 para. 2 RStV:"
             }
         }
+    },
+    "email": {
+        "greeting": "Hello {firstName} {lastName},",
+        "bodyIntro": "thank you for your message. This is a copy of the request we just received.",
+        "bodyOutro": "We are reviewing your request and will get back to you as soon as possible – usually within the next 24 hours.",
+        "yourMessage": "Your message:",
+        "poweredBy": "Powered by",
+        "rightsReserved": "All rights reserved.",
+        "subject": "Subject",
+        "topic": "Topic"
     }
 }

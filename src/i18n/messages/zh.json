@@ -376,5 +376,15 @@
                 "title": "根据§ 55第2款RStV负责内容："
             }
         }
+    },
+    "email": {
+        "greeting": "你好 {firstName} {lastName}，",
+        "bodyIntro": "感谢您的留言。这是我们刚刚收到的请求的副本。",
+        "bodyOutro": "我们正在审核您的请求，并将尽快回复您——通常在接下来的 24 小时内。",
+        "yourMessage": "您的留言：",
+        "poweredBy": "Powered by",
+        "rightsReserved": "版权所有。",
+        "subject": "主题",
+        "topic": "主题"
     }
 }

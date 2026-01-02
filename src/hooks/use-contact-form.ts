@@ -43,6 +43,7 @@ const initialCallbackFormData: CallbackFormData = {
 
 export function useContactForm() {
     const tMessages = useTranslations('contact.messages')
+    const tOtherForm = useTranslations('contact.otherForm')
 
     // Form data states
     const [formData, setFormData] = useState<FormData>(initialFormData)
@@ -126,9 +127,9 @@ export function useContactForm() {
                     message: formData.message,
                     email: formData.email,
                     phone: formData.phone,
-                    subject: `User Request - message`,
+                    subject: `User Request - Message`,
                 },
-                'User - message Submitted'
+                'User - Message Submitted'
             )
         },
         [formData, messageSubmit, validateAndShowError, tMessages]
@@ -158,9 +159,9 @@ export function useContactForm() {
                     message,
                     phone: callbackFormData.phone,
                     email: callbackFormData.email,
-                    subject: `User Request - callback`,
+                    subject: `User Request - Callback`,
                 },
-                'User - callback Submitted'
+                'User - Callback Submitted'
             )
         },
         [callbackFormData, callbackSubmit, validateAndShowError, tMessages]
@@ -183,21 +184,22 @@ export function useContactForm() {
                 return
             }
 
-            const message = `[Topic: ${otherFormData.topic}]\n[Subject: ${otherFormData.subject}]\n\n${otherFormData.message}`
+            const topicValue = tOtherForm(`topics.${otherFormData.topic}`)
 
             await otherSubmit.sendEmail(
                 {
                     firstName: otherFormData.firstName,
                     lastName: otherFormData.lastName || '',
-                    message,
+                    message: otherFormData.message,
                     email: otherFormData.email,
                     phone: otherFormData.phone,
-                    subject: `Inquiry - ${otherFormData.topic}: ${otherFormData.subject}`,
+                    subject: otherFormData.subject,
+                    topic: topicValue,
                 },
-                'User - other Submitted'
+                'User - Other Submitted'
             )
         },
-        [otherFormData, otherSubmit, validateAndShowError, tMessages]
+        [otherFormData, otherSubmit, validateAndShowError, tMessages, tOtherForm]
     )
 
     return {

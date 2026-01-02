@@ -17,6 +17,7 @@ interface EmailPayload {
     subject: string
     email: string
     phone?: string
+    topic?: string
 }
 
 interface UseEmailSubmitOptions {
@@ -50,7 +51,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         async (payload: EmailPayload, trackingEvent: string) => {
             setButtonState('loading')
             posthog.capture(trackingEvent)
-
+            const locale = window.localStorage.getItem('NEXT_LOCALE')
             try {
                 const response = await api.send.post({
                     firstName: payload.firstName,
@@ -60,6 +61,8 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
                     adresses: [process.env.NEXT_PUBLIC_EMAIL_ADRESS!],
                     cc: [payload.email],
                     subject: payload.subject,
+                    locale: locale || 'de',
+                    topic: payload.topic,
                 })
 
                 console.log(response)
