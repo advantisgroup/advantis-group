@@ -70,7 +70,7 @@ export function CallbackForm({ formData, errors, buttonState, onFormDataChange, 
                     value={formData.phone}
                     onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
                     className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-                    placeholder={t('phonePlaceholder')}
+                    placeholder={process.env.NEXT_PUBLIC_PHONE_NUMBER}
                     required
                 />
                 {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone[0]}</p>}
