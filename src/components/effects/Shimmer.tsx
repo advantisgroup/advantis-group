@@ -16,6 +16,12 @@ interface ShimmerTextProps {
 export const ShimmerText = ({ children, className, shimmerWidth = '200%', duration = '30s' }: ShimmerTextProps) => {
     const { resolvedTheme } = useTheme()
     const [isHovered, setIsHovered] = React.useState(false)
+    const [mounted, setMounted] = React.useState(false)
+
+    // Wait for mount to avoid hydration mismatch
+    React.useEffect(() => {
+        setMounted(true)
+    }, [])
 
     // Dark mode: Stronger shimmer (white/60), standard spread
     // Light mode: More subtle shimmer (white/40), thinner spread to be less distracting
@@ -28,6 +34,15 @@ export const ShimmerText = ({ children, className, shimmerWidth = '200%', durati
     const endStop = resolvedTheme === 'dark' ? '100%' : '60%'
 
     const gradient = `linear-gradient(to right, var(--foreground) ${startStop}, ${shimmerColor} 50%, var(--foreground) ${endStop})`
+
+    // Before mount, render without shimmer styles to match server
+    if (!mounted) {
+        return (
+            <span className={cn('transition-all duration-500', className)}>
+                {children}
+            </span>
+        )
+    }
 
     return (
         <span

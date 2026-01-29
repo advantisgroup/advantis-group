@@ -109,8 +109,8 @@ export const Header = () => {
                                 <Link
                                     href={link.path}
                                     className={`relative transition-colors group/link ${pathname === link.path
-                                            ? 'text-foreground'
-                                            : 'text-muted-foreground hover:text-foreground'
+                                        ? 'text-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                 >
                                     <span className="relative z-10">{link.label}</span>
@@ -163,8 +163,8 @@ export const Header = () => {
                                     <Link
                                         href={link.path}
                                         className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${pathname === link.path
-                                                ? 'text-foreground font-medium translate-x-1'
-                                                : 'text-muted-foreground'
+                                            ? 'text-foreground font-medium translate-x-1'
+                                            : 'text-muted-foreground'
                                             }`}
                                         onClick={() => setMobileMenuOpen(false)}
                                     >
@@ -179,12 +179,7 @@ export const Header = () => {
                             className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300"
                             style={{ animationDelay: `${navLinks.length * 50}ms` }}
                         >
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-muted-foreground uppercase tracking-wider">
-                                    {t('settings') || 'Settings'}
-                                </span>
-                                <SettingsMenu />
-                            </div>
+                            <SettingsMenu isMobile />
                         </div>
                     </div>
                 </div>

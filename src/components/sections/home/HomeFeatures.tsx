@@ -236,41 +236,6 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
 
             {/* Bottom gradient blend */}
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-b from-transparent to-background pointer-events-none" />
-
-            {/* CSS for custom animations */}
-            <style jsx>{`
-                @keyframes pulse-slow {
-                    0%,
-                    100% {
-                        opacity: 0.3;
-                        transform: scale(1);
-                    }
-                    50% {
-                        opacity: 0.5;
-                        transform: scale(1.1);
-                    }
-                }
-
-                @keyframes pulse-slower {
-                    0%,
-                    100% {
-                        opacity: 0.2;
-                        transform: scale(1);
-                    }
-                    50% {
-                        opacity: 0.4;
-                        transform: scale(1.15);
-                    }
-                }
-
-                .animate-pulse-slow {
-                    animation: pulse-slow 8s ease-in-out infinite;
-                }
-
-                .animate-pulse-slower {
-                    animation: pulse-slower 12s ease-in-out infinite;
-                }
-            `}</style>
         </section>
     )
 }

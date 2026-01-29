@@ -3,7 +3,7 @@
 import Image from 'next/image'
 
 import { motion } from 'framer-motion'
-import { Target, Zap, Heart, ArrowRight, TrendingUp, Users, Award, ChevronDown, Sparkles } from 'lucide-react'
+import { Target, Zap, Heart, ArrowRight, TrendingUp, Users, Award, ChevronDown } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { BrandText } from '@/components/effects/BrandText'
@@ -18,7 +18,6 @@ export default function UberUns() {
     const t = useTranslations('about')
     const logo = useSingleLetterLogo()
 
-    // Values Data
     const values = [
         {
             icon: Target,
@@ -43,7 +42,6 @@ export default function UberUns() {
         },
     ]
 
-    // Stats Data
     const stats = [
         {
             icon: TrendingUp,
