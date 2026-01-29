@@ -170,11 +170,11 @@ export const Footer = () => {
                             <ul className="space-y-3 text-sm">
                                 <li>
                                     <Link
-                                        href="tel:"
+                                        href={`tel:${process.env.NEXT_PUBLIC_PHONE_NUMBER}`}
                                         className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                                     >
                                         <Phone className="w-4 h-4" />
-                                        <span>[folgt]</span>
+                                        <span>{process.env.NEXT_PUBLIC_PHONE_NUMBER}</span>
                                     </Link>
                                 </li>
                                 <li>

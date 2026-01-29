@@ -34,7 +34,7 @@ export default function Impressum() {
                     </p>
                     <p className="text-muted-foreground">
                         <span className="font-semibold">{t('sections.contact.phone')}</span>{' '}
-                        {t('sections.contact.phonePlaceholder')}
+                        {process.env.NEXT_PUBLIC_PHONE_NUMBER}
                     </p>
                 </div>
             ),
