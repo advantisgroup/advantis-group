@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 
 import { useTranslations } from 'next-intl'
 
-import { useSeasonalLogo } from '@/hooks/use-logo'
+import { useSingleLetterLogo } from '@/hooks/use-logo'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Link } from '@/i18n/navigation'
 
@@ -16,7 +16,7 @@ import { ShimmerText } from '../effects/Shimmer'
 
 export const Header = () => {
     const pathname = usePathname()
-    const logo = useSeasonalLogo('christmas')
+    const logo = useSingleLetterLogo('christmas')
     const isMobile = useIsMobile()
     const t = useTranslations('nav')
 
