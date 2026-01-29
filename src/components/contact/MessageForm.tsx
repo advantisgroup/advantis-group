@@ -2,12 +2,12 @@ import { Send } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { Link } from '@/i18n/navigation'
-import { type MessageFormProps } from '@/types/contact'
+import { type FormData, type FormProps } from '@/types/contact'
 
 import { BrandText } from '../effects/BrandText'
 import { AnimatedButton } from '../ui/AnimatedButton'
 
-export function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange, onSubmit }: MessageFormProps) {
+export function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange, onSubmit }: FormProps<FormData>) {
     const t = useTranslations('contact.form')
 
     return (

@@ -28,30 +28,14 @@ export interface AnimatedButtonProps {
     disabled?: boolean
 }
 
-export interface MessageFormProps {
-    formData: FormData
-    errors: z.ZodFlattenedError<FormData>['fieldErrors']
+export interface FormProps<T> {
+    formData: T
+    errors: z.ZodFlattenedError<T>['fieldErrors']
     buttonState: ButtonState
-    isMobile: boolean
-    onFormDataChange: (data: FormData) => void
-    onSubmit: (e: React.FormEvent) => void
-}
-
-export interface CallbackFormProps {
-    formData: CallbackFormData
-    errors: z.ZodFlattenedError<CallbackFormData>['fieldErrors']
-    buttonState: ButtonState
-    onFormDataChange: (data: CallbackFormData) => void
-    onSubmit: (e: React.FormEvent) => void
-}
-
-export interface OtherFormProps {
-    formData: OtherFormData
-    errors: z.ZodFlattenedError<OtherFormData>['fieldErrors']
-    buttonState: ButtonState
-    isMobile: boolean
-    onFormDataChange: (data: OtherFormData) => void
-    onSubmit: (e: React.FormEvent) => void
+    isMobile?: boolean
+    disabled?: boolean,
+    onFormDataChange: (data: T) => void
+    onSubmit: (e: React.SubmitEvent) => void
 }
 
 export interface WhyAdvantisSidebarProps {

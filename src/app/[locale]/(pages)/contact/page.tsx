@@ -95,7 +95,7 @@ export default function Kontakt() {
                         formData={formData}
                         errors={errors}
                         buttonState={getButtonState('message')}
-                        isMobile={isMobile}
+                        disabled={process.env.NODE_ENV === 'production'}
                         onFormDataChange={setFormData}
                         onSubmit={handleMessageSubmit}
                     />
@@ -105,6 +105,7 @@ export default function Kontakt() {
                     <CallbackForm
                         formData={callbackFormData}
                         errors={callbackErrors}
+                        disabled={process.env.NODE_ENV === 'production'}
                         buttonState={getButtonState('callback')}
                         onFormDataChange={setCallbackFormData}
                         onSubmit={handleCallbackSubmit}
@@ -116,6 +117,7 @@ export default function Kontakt() {
                         formData={otherFormData}
                         errors={otherErrors}
                         buttonState={getButtonState('other')}
+                        disabled={process.env.NODE_ENV === 'production'}
                         isMobile={isMobile}
                         onFormDataChange={setOtherFormData}
                         onSubmit={handleOtherSubmit}
