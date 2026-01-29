@@ -227,6 +227,7 @@
             'Segoe UI',
             sans-serif;
         cursor: default;
+        overflow-x: hidden;
     }
 
     p,
