@@ -16,7 +16,7 @@ import { ShimmerText } from '../effects/Shimmer'
 
 export const Header = () => {
     const pathname = usePathname()
-    const logo = useSingleLetterLogo('christmas')
+    const logo = useSingleLetterLogo()
     const isMobile = useIsMobile()
     const t = useTranslations('nav')
 
