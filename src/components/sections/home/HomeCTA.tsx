@@ -24,10 +24,10 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
             {/* Extended top blend from previous section for smooth transition */}
             <div className="absolute top-0 left-0 right-0 h-64 bg-linear-to-b from-primary/5 via-primary/3 to-transparent pointer-events-none" />
 
-            {/* Floating orbs */}
-            <div className="absolute top-1/4 left-[10%] w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
+            {/* Floating orbs - hidden on mobile to prevent overflow */}
+            <div className="hidden md:block absolute top-1/4 left-[10%] w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
             <div
-                className="absolute bottom-1/4 right-[10%] w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse-slow"
+                className="hidden md:block absolute bottom-1/4 right-[10%] w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse-slow"
                 style={{ animationDelay: '1.5s' }}
             />
 

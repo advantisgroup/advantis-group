@@ -112,10 +112,10 @@ export default function UnsereMarken() {
         <div className="min-h-screen bg-background">
             {/* Immersive Hero Section */}
             <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-                {/* Large floating orbs */}
-                <div className="absolute top-20 left-[10%] w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
+                {/* Large floating orbs - hidden on mobile to prevent overflow */}
+                <div className="hidden md:block absolute top-20 left-[10%] w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
                 <div
-                    className="absolute bottom-20 right-[10%] w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl animate-pulse-slow"
+                    className="hidden md:block absolute bottom-20 right-[10%] w-[500px] h-[500px] bg-secondary/10 rounded-full blur-3xl animate-pulse-slow"
                     style={{ animationDelay: '2s' }}
                 />
 
@@ -195,10 +195,10 @@ export default function UnsereMarken() {
                                 <div className="absolute inset-0 noise-texture opacity-20" />
                             </div>
 
-                            {/* Floating decorative elements */}
+                            {/* Floating decorative elements - hidden on mobile */}
                             <div
                                 className={cn(
-                                    'absolute top-1/4 right-[5%] w-80 h-80 rounded-full blur-3xl transition-all duration-1000',
+                                    'hidden md:block absolute top-1/4 right-[5%] w-80 h-80 rounded-full blur-3xl transition-all duration-1000',
                                     brand.brandColor,
                                     'opacity-0',
                                     isActive && 'opacity-5'
@@ -394,10 +394,10 @@ export default function UnsereMarken() {
                     <div className="absolute inset-0 dot-pattern opacity-30" />
                 </div>
 
-                {/* Floating orbs */}
-                <div className="absolute top-1/4 left-[10%] w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
+                {/* Floating orbs - hidden on mobile to prevent overflow */}
+                <div className="hidden md:block absolute top-1/4 left-[10%] w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
                 <div
-                    className="absolute bottom-1/4 right-[10%] w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse-slow"
+                    className="hidden md:block absolute bottom-1/4 right-[10%] w-96 h-96 bg-secondary/5 rounded-full blur-3xl animate-pulse-slow"
                     style={{ animationDelay: '1.5s' }}
                 />
 

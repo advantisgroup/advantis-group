@@ -108,18 +108,16 @@ export const Header = () => {
                             <li key={`${link.label}_${i}`}>
                                 <Link
                                     href={link.path}
-                                    className={`relative transition-colors group/link ${
-                                        pathname === link.path
+                                    className={`relative transition-colors group/link ${pathname === link.path
                                             ? 'text-foreground'
                                             : 'text-muted-foreground hover:text-foreground'
-                                    }`}
+                                        }`}
                                 >
                                     <span className="relative z-10">{link.label}</span>
                                     {/* Animated underline */}
                                     <span
-                                        className={`absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
-                                            pathname === link.path ? 'w-full' : 'w-0 group-hover/link:w-full'
-                                        }`}
+                                        className={`absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${pathname === link.path ? 'w-full' : 'w-0 group-hover/link:w-full'
+                                            }`}
                                     />
                                     {/* Subtle glow on hover */}
                                     <span className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 blur-sm bg-advantis/5" />
@@ -154,27 +152,41 @@ export const Header = () => {
 
             {mobileMenuOpen && (
                 <div className="md:hidden border-t border-border bg-background animate-in slide-in-from-top-2 duration-300">
-                    <ul className="container mx-auto px-4 py-4 space-y-4">
-                        {navLinks.map((link, i) => (
-                            <li
-                                key={`mobile_${link.label}_${i}`}
-                                className="animate-in slide-in-from-left-2 duration-300"
-                                style={{ animationDelay: `${i * 50}ms` }}
-                            >
-                                <Link
-                                    href={link.path}
-                                    className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${
-                                        pathname === link.path
-                                            ? 'text-foreground font-medium translate-x-1'
-                                            : 'text-muted-foreground'
-                                    }`}
-                                    onClick={() => setMobileMenuOpen(false)}
+                    <div className="container mx-auto px-4 py-4 space-y-4">
+                        <ul className="space-y-4">
+                            {navLinks.map((link, i) => (
+                                <li
+                                    key={`mobile_${link.label}_${i}`}
+                                    className="animate-in slide-in-from-left-2 duration-300"
+                                    style={{ animationDelay: `${i * 50}ms` }}
                                 >
-                                    {link.label}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
+                                    <Link
+                                        href={link.path}
+                                        className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${pathname === link.path
+                                                ? 'text-foreground font-medium translate-x-1'
+                                                : 'text-muted-foreground'
+                                            }`}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+
+                        {/* Settings Section */}
+                        <div
+                            className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300"
+                            style={{ animationDelay: `${navLinks.length * 50}ms` }}
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                                    {t('settings') || 'Settings'}
+                                </span>
+                                <SettingsMenu />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
         </header>

@@ -15,14 +15,14 @@ export const Hero = () => {
 
     return (
         <section className="relative h-screen flex items-center">
-            {/* Additional decorative floating elements */}
-            <div className="absolute top-[20%] left-[15%] w-96 h-96 bg-primary/8 rounded-full blur-3xl animate-pulse-slow" />
+            {/* Additional decorative floating elements - hidden on mobile to prevent overflow */}
+            <div className="hidden md:block absolute top-[20%] left-[15%] w-96 h-96 bg-primary/8 rounded-full blur-3xl animate-pulse-slow" />
             <div
-                className="absolute top-[30%] right-[10%] w-[500px] h-[500px] bg-secondary/8 rounded-full blur-3xl animate-pulse-slow"
+                className="hidden md:block absolute top-[30%] right-[10%] w-[500px] h-[500px] bg-secondary/8 rounded-full blur-3xl animate-pulse-slow"
                 style={{ animationDelay: '2.5s' }}
             />
             <div
-                className="absolute bottom-[25%] left-[25%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow"
+                className="hidden md:block absolute bottom-[25%] left-[25%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow"
                 style={{ animationDelay: '1.2s' }}
             />
 

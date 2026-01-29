@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 
 import { motion, useInView, useMotionValue, useSpring, useTransform } from 'framer-motion'
-import { Sparkles } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 
 import { cn } from '@/lib/utils'
@@ -92,9 +91,9 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
             {/* Animated background elements */}
             <div className="absolute inset-0 bg-linear-to-b from-background via-background/95 to-background" />
 
-            {/* Floating orbs */}
-            <div className="absolute top-20 right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-            <div className="absolute bottom-20 left-[15%] w-96 h-96 bg-orange-500/5 rounded-full blur-3xl animate-pulse-slower" />
+            {/* Floating orbs - hidden on mobile to prevent overflow */}
+            <div className="hidden md:block absolute top-20 right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
+            <div className="hidden md:block absolute bottom-20 left-[15%] w-96 h-96 bg-orange-500/5 rounded-full blur-3xl animate-pulse-slower" />
 
             {/* Subtle grid pattern */}
             <div className="absolute inset-0 dot-pattern opacity-10" />
@@ -107,7 +106,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                             'text-center space-y-6 transition-all duration-1000',
                             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-8'
                         )}
-                   >
+                    >
                         <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
                             {t('title')} <BrandText brand="advantis">{t('titleBrand')}</BrandText>?
                         </h2>
