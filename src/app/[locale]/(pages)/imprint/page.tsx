@@ -18,8 +18,7 @@ export default function Impressum() {
                     <p className="font-semibold">
                         <BrandText brand="advantis">Advantis Group GmbH</BrandText>
                     </p>
-                    <p className="text-muted-foreground">Bienweg 8</p>
-                    <p className="text-muted-foreground">90425 Nürnberg</p>
+                    <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
                     <p className="text-muted-foreground">{t('sections.company.country')}</p>
                 </div>
             ),
@@ -30,7 +29,7 @@ export default function Impressum() {
             content: (
                 <div className="space-y-2">
                     <p className="text-muted-foreground">
-                        <span className="font-semibold">{t('sections.contact.email')}</span> touch@advantisgroup.de
+                        <span className="font-semibold">{t('sections.contact.email')}</span> {process.env.NEXT_PUBLIC_EMAIL_ADRESS}
                     </p>
                     <p className="text-muted-foreground">
                         <span className="font-semibold">{t('sections.contact.phone')}</span>{' '}
@@ -97,8 +96,7 @@ export default function Impressum() {
                             <p>
                                 <BrandText brand="advantis">Advantis Group GmbH</BrandText>
                             </p>
-                            <p>Bienweg 8</p>
-                            <p>90425 Nürnberg</p>
+                            <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
                         </CardContent>
                     </Card>
                 </section>

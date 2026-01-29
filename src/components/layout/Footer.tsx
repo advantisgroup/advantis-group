@@ -179,16 +179,16 @@ export const Footer = () => {
                                 </li>
                                 <li>
                                     <Link
-                                        href="mailto:touch@advantisgroup.de"
+                                        href={`mailto:${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`}
                                         className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                                     >
                                         <Mail className="w-4 h-4" />
-                                        <span>touch@advantisgroup.de</span>
+                                        <span>{process.env.NEXT_PUBLIC_EMAIL_ADRESS}</span>
                                     </Link>
                                 </li>
                                 <li className="flex items-center gap-2 text-muted-foreground">
                                     <MapPin className="w-4 h-4" />
-                                    <span>Bienweg 8, 90425 Nürnberg</span>
+                                    <span>{process.env.NEXT_PUBLIC_ADRESS}</span>
                                 </li>
                             </ul>
                         </div>

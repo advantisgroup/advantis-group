@@ -50,9 +50,8 @@ export default function Datenschutz() {
                         <div className="bg-muted/20 p-6 rounded-lg space-y-1">
                             <p className="font-semibold text-foreground">Advantis Group GmbH</p>
                             <p className="text-foreground/80">Andrea Reichl</p>
-                            <p className="text-foreground/80">Bienweg 8</p>
-                            <p className="text-foreground/80">90425 Nürnberg</p>
-                            <p className="text-foreground/80 mt-3">E-Mail: touch@advantisgroup.de</p>
+                            <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
+                            <p className="text-foreground/80 mt-3">E-Mail: {process.env.NEXT_PUBLIC_EMAIL_ADRESS}</p>
                         </div>
                     </div>
                 ),

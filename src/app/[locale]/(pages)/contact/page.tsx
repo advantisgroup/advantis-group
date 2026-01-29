@@ -44,8 +44,8 @@ export default function Kontakt() {
         {
             icon: Mail,
             label: t('email'),
-            value: 'touch@advantisgroup.de',
-            href: 'mailto:touch@advantisgroup.de',
+            value: `${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`,
+            href: `mailto:${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`,
         },
         {
             icon: Phone,
@@ -56,7 +56,7 @@ export default function Kontakt() {
         {
             icon: MapPin,
             label: t('address'),
-            value: 'Bienweg 8, 90425 Nürnberg',
+            value: `${process.env.NEXT_PUBLIC_ADRESS}`,
             href: '#',
         },
     ]
