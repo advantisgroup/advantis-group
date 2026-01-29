@@ -50,7 +50,7 @@ export default function Kontakt() {
         {
             icon: Phone,
             label: t('phone'),
-            value: '[folgt]',
+            value: `${process.env.NEXT_PUBLIC_PHONE_NUMBER}`,
             href: 'tel:',
         },
         {
