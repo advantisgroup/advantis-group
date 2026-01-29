@@ -77,16 +77,6 @@ export default function UberUns() {
                 {/* Hero Section */}
                 <section className="relative h-screen min-h-[800px] flex items-center justify-center pt-20">
                     <div className="container mx-auto px-4 relative z-10 text-center">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.8 }}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 text-secondary-foreground text-sm font-medium mb-8 backdrop-blur-sm"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            {t('hero.badge')}
-                        </motion.div>
-
                         <motion.h1
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
