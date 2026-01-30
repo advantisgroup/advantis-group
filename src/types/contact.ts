@@ -33,7 +33,7 @@ export interface FormProps<T> {
     errors: z.ZodFlattenedError<T>['fieldErrors']
     buttonState: ButtonState
     isMobile?: boolean
-    disabled?: boolean,
+    disabled?: boolean
     onFormDataChange: (data: T) => void
     onSubmit: (e: React.SubmitEvent) => void
 }

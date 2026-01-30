@@ -52,9 +52,7 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
             <div className="space-y-4">
                 {/* Language Section */}
                 <div className="space-y-2">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider block">
-                        Language
-                    </span>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider block">Language</span>
                     <div className="flex gap-2 flex-wrap">
                         {languages.map((language) => (
                             <button
@@ -76,9 +74,7 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
 
                 {/* Theme Section */}
                 <div className="space-y-2">
-                    <span className="text-xs text-muted-foreground uppercase tracking-wider block">
-                        Appearance
-                    </span>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider block">Appearance</span>
                     <div className="flex gap-2">
                         <button
                             onClick={() => setTheme('light')}
@@ -145,21 +141,21 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                             animate={
                                 isOpen
                                     ? {
-                                        y: [-10, 0], // Jump up 10px then slam down to 0
-                                    }
+                                          y: [-10, 0], // Jump up 10px then slam down to 0
+                                      }
                                     : {
-                                        y: 0,
-                                    }
+                                          y: 0,
+                                      }
                             }
                             transition={
                                 isOpen
                                     ? {
-                                        duration: 0.3,
-                                        times: [0, 1],
-                                        type: 'spring',
-                                        stiffness: 300,
-                                        damping: 15,
-                                    }
+                                          duration: 0.3,
+                                          times: [0, 1],
+                                          type: 'spring',
+                                          stiffness: 300,
+                                          damping: 15,
+                                      }
                                     : { duration: 0.2 }
                             }
                         >
@@ -193,18 +189,18 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                             animate={
                                 isOpen
                                     ? {
-                                        y: [0, 2, 0],
-                                    }
+                                          y: [0, 2, 0],
+                                      }
                                     : {
-                                        y: 0,
-                                    }
+                                          y: 0,
+                                      }
                             }
                             transition={
                                 isOpen
                                     ? {
-                                        delay: 0.15,
-                                        duration: 0.2,
-                                    }
+                                          delay: 0.15,
+                                          duration: 0.2,
+                                      }
                                     : { duration: 0.2 }
                             }
                         >
@@ -238,20 +234,20 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                             animate={
                                 isOpen
                                     ? {
-                                        y: [0, 4, 0],
-                                        scale: [1, 0.8, 1],
-                                    }
+                                          y: [0, 4, 0],
+                                          scale: [1, 0.8, 1],
+                                      }
                                     : {
-                                        y: 0,
-                                        scale: 1,
-                                    }
+                                          y: 0,
+                                          scale: 1,
+                                      }
                             }
                             transition={
                                 isOpen
                                     ? {
-                                        delay: 0.25,
-                                        duration: 0.3,
-                                    }
+                                          delay: 0.25,
+                                          duration: 0.3,
+                                      }
                                     : { duration: 0.2 }
                             }
                         >
@@ -330,17 +326,23 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                         <DropdownMenuItem onClick={() => setTheme('light')} className="cursor-pointer">
                             <Sun className="mr-2 h-4 w-4" />
                             <span>Light</span>
-                            {mounted && theme === 'light' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />}
+                            {mounted && theme === 'light' && (
+                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />
+                            )}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTheme('dark')} className="cursor-pointer">
                             <Moon className="mr-2 h-4 w-4" />
                             <span>Dark</span>
-                            {mounted && theme === 'dark' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />}
+                            {mounted && theme === 'dark' && (
+                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />
+                            )}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => setTheme('system')} className="cursor-pointer">
                             <Monitor className="mr-2 h-4 w-4" />
                             <span>System</span>
-                            {mounted && theme === 'system' && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />}
+                            {mounted && theme === 'system' && (
+                                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />
+                            )}
                         </DropdownMenuItem>
                     </div>
                 </motion.div>
@@ -348,4 +350,3 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
         </DropdownMenu>
     )
 }
-

@@ -9,11 +9,17 @@ import { type FormProps, type CallbackFormData } from '@/types/contact'
 import { BrandText } from '../effects/BrandText'
 import { AnimatedButton } from '../ui/AnimatedButton'
 
-export function CallbackForm({ formData, errors, buttonState, onFormDataChange, onSubmit }: FormProps<CallbackFormData>) {
+export function CallbackForm({
+    formData,
+    errors,
+    buttonState,
+    onFormDataChange,
+    onSubmit,
+}: FormProps<CallbackFormData>) {
     const t = useTranslations('contact.form')
 
     return (
-        <form className="space-y-4" onSubmit={onSubmit} >
+        <form className="space-y-4" onSubmit={onSubmit}>
             <div>
                 <label htmlFor="callback-company" className="block text-sm font-medium mb-2">
                     {t('company')} <span className="text-red-500">*</span>

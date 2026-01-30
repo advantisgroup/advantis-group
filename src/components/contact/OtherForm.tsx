@@ -7,7 +7,14 @@ import { type OtherFormData, type InquiryTopic, type FormProps } from '@/types/c
 import { BrandText } from '../effects/BrandText'
 import { AnimatedButton } from '../ui/AnimatedButton'
 
-export function OtherForm({ formData, errors, buttonState, isMobile, onFormDataChange, onSubmit }: FormProps<OtherFormData>) {
+export function OtherForm({
+    formData,
+    errors,
+    buttonState,
+    isMobile,
+    onFormDataChange,
+    onSubmit,
+}: FormProps<OtherFormData>) {
     const t = useTranslations('contact.form')
     const tOther = useTranslations('contact.otherForm')
 

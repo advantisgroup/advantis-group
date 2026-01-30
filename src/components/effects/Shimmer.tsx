@@ -37,11 +37,7 @@ export const ShimmerText = ({ children, className, shimmerWidth = '200%', durati
 
     // Before mount, render without shimmer styles to match server
     if (!mounted) {
-        return (
-            <span className={cn('transition-all duration-500', className)}>
-                {children}
-            </span>
-        )
+        return <span className={cn('transition-all duration-500', className)}>{children}</span>
     }
 
     return (

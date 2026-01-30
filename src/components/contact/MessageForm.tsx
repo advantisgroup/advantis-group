@@ -7,7 +7,14 @@ import { type FormData, type FormProps } from '@/types/contact'
 import { BrandText } from '../effects/BrandText'
 import { AnimatedButton } from '../ui/AnimatedButton'
 
-export function MessageForm({ formData, errors, buttonState, isMobile, onFormDataChange, onSubmit }: FormProps<FormData>) {
+export function MessageForm({
+    formData,
+    errors,
+    buttonState,
+    isMobile,
+    onFormDataChange,
+    onSubmit,
+}: FormProps<FormData>) {
     const t = useTranslations('contact.form')
 
     return (
