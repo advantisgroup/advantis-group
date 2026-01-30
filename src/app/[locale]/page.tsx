@@ -1,34 +1,38 @@
-'use client'
+"use client";
 
-import { use, useEffect } from 'react'
+import { use, useEffect } from "react";
 
-import { ScrollReveal } from '@/components/effects/ScrollReveal'
-import { Hero } from '@/components/sections/home/Hero'
-import { HomeBrands } from '@/components/sections/home/HomeBrands'
-import { HomeCTA } from '@/components/sections/home/HomeCTA'
-import { HomeFeatures } from '@/components/sections/home/HomeFeatures'
+import { ScrollReveal } from "@/components/effects/ScrollReveal";
+import { Hero } from "@/components/sections/home/Hero";
+import { HomeBrands } from "@/components/sections/home/HomeBrands";
+import { HomeCTA } from "@/components/sections/home/HomeCTA";
+import { HomeFeatures } from "@/components/sections/home/HomeFeatures";
 
-export default function Page({ params }: { params: Promise<{ locale: string }> }) {
-    const { locale } = use(params)
+export default function Page({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = use(params);
 
-    useEffect(() => {
-        window.localStorage.setItem('NEXT_LOCALE', locale)
-    }, [locale])
+  useEffect(() => {
+    window.localStorage.setItem("NEXT_LOCALE", locale);
+  }, [locale]);
 
-    return (
-        <div className="min-h-screen bg-background">
-            <ScrollReveal>
-                <Hero />
-            </ScrollReveal>
-            <ScrollReveal>
-                <HomeFeatures isVisible={true} />
-            </ScrollReveal>
-            <ScrollReveal>
-                <HomeBrands isVisible={true} />
-            </ScrollReveal>
-            <ScrollReveal>
-                <HomeCTA isVisible={true} />
-            </ScrollReveal>
-        </div>
-    )
+  return (
+    <div className="min-h-screen bg-background">
+      <ScrollReveal>
+        <Hero />
+      </ScrollReveal>
+      <ScrollReveal>
+        <HomeFeatures isVisible={true} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <HomeBrands isVisible={true} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <HomeCTA isVisible={true} />
+      </ScrollReveal>
+    </div>
+  );
 }

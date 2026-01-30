@@ -1,15 +1,15 @@
-'use client'
+"use client";
 
-import * as React from 'react'
+import * as React from "react";
 
-import { redirect } from 'next/navigation'
+import { redirect } from "next/navigation";
 
 export default function RootPage() {
-    React.useEffect(() => {
-        const locale = window.localStorage.getItem('NEXT_LOCALE')
-        if (!locale) {
-            redirect('/de')
-        }
-        redirect(`/${locale}`)
-    }, [])
+  React.useEffect(() => {
+    const locale = window.localStorage.getItem("NEXT_LOCALE");
+    if (!locale) {
+      redirect("/de");
+    }
+    redirect(`/${locale}`);
+  }, []);
 }
