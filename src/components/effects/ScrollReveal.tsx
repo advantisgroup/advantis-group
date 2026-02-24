@@ -37,7 +37,7 @@ export const ScrollReveal = ({
       {
         threshold,
         rootMargin: "0px 0px -50px 0px",
-      },
+      }
     );
 
     const node = ref.current;
@@ -67,7 +67,7 @@ export const ScrollReveal = ({
     return cn(
       baseClasses,
       !isVisible && hiddenClasses[direction],
-      isVisible && visibleClasses,
+      isVisible && visibleClasses
     );
   };
 
@@ -86,7 +86,7 @@ export const ScrollReveal = ({
               className={cn(
                 "transition-all duration-700 ease-out",
                 !isVisible && "translate-y-8 opacity-0",
-                isVisible && "translate-y-0 opacity-100",
+                isVisible && "translate-y-0 opacity-100"
               )}
               style={{
                 transitionDelay: `${delay + index * staggerDelay}ms`,

@@ -59,7 +59,7 @@ export function useContactForm() {
   const [otherFormData, setOtherFormData] =
     useState<OtherFormData>(initialOtherFormData);
   const [callbackFormData, setCallbackFormData] = useState<CallbackFormData>(
-    initialCallbackFormData,
+    initialCallbackFormData
   );
 
   // Validation errors
@@ -96,7 +96,7 @@ export function useContactForm() {
       messageSubmit.buttonState,
       callbackSubmit.buttonState,
       otherSubmit.buttonState,
-    ],
+    ]
   );
 
   // Validation helper
@@ -105,17 +105,14 @@ export function useContactForm() {
       schema: z.ZodType<T>,
       data: unknown,
       setErrorsFn: (errors: Record<string, string[] | undefined>) => void,
-      setButtonError: () => void,
+      setButtonError: () => void
     ): data is T => {
       const result = schema.safeParse(data);
 
       if (!result.success) {
         const flatten = result.error.flatten();
         setErrorsFn(
-          flatten.fieldErrors as unknown as Record<
-            string,
-            string[] | undefined
-          >,
+          flatten.fieldErrors as unknown as Record<string, string[] | undefined>
         );
         setButtonError();
 
@@ -127,7 +124,7 @@ export function useContactForm() {
       setErrorsFn({});
       return true;
     },
-    [],
+    []
   );
 
   // Message form submit handler
@@ -156,10 +153,10 @@ export function useContactForm() {
           phone: formData.phone,
           subject: `User Request - Message`,
         },
-        "User - Message Submitted",
+        "User - Message Submitted"
       );
     },
-    [formData, messageSubmit, validateAndShowError, tMessages],
+    [formData, messageSubmit, validateAndShowError, tMessages]
   );
 
   // Callback form submit handler
@@ -176,7 +173,7 @@ export function useContactForm() {
             callbackSubmit.setButtonState("error");
             callbackSubmit.showErrorToast(tMessages("errorDesc"));
             callbackSubmit.resetButtonState();
-          },
+          }
         )
       ) {
         return;
@@ -193,10 +190,10 @@ export function useContactForm() {
           email: callbackFormData.email,
           subject: `User Request - Callback`,
         },
-        "User - Callback Submitted",
+        "User - Callback Submitted"
       );
     },
-    [callbackFormData, callbackSubmit, validateAndShowError, tMessages],
+    [callbackFormData, callbackSubmit, validateAndShowError, tMessages]
   );
 
   // Other form submit handler
@@ -215,7 +212,7 @@ export function useContactForm() {
             otherSubmit.setButtonState("error");
             otherSubmit.showErrorToast(tMessages("errorDesc"));
             otherSubmit.resetButtonState();
-          },
+          }
         )
       ) {
         return;
@@ -233,10 +230,10 @@ export function useContactForm() {
           subject: otherFormData.subject,
           topic: topicValue,
         },
-        "User - Other Submitted",
+        "User - Other Submitted"
       );
     },
-    [otherFormData, otherSubmit, validateAndShowError, tMessages, tOtherForm],
+    [otherFormData, otherSubmit, validateAndShowError, tMessages, tOtherForm]
   );
 
   return {

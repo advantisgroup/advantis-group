@@ -40,18 +40,6 @@ export const ShimmerText = ({
   // Thinner (Light mode): 40% -> 50% -> 60% (concentrates the shimmer in the middle)
   const startStop = resolvedTheme === "dark" ? "0%" : "40%";
   const endStop = resolvedTheme === "dark" ? "100%" : "60%";
-
-<<<<<<< HEAD
-    const gradient = `linear-gradient(to right, var(--foreground) ${startStop}, ${shimmerColor} 50%, var(--foreground) ${endStop})`
-
-    // Before mount, render without shimmer styles to match server
-    if (!mounted) {
-        return <span className={cn('transition-all duration-500', className)}>{children}</span>
-    }
-=======
-  const gradient = `linear-gradient(to right, var(--foreground) ${startStop}, ${shimmerColor} 50%, var(--foreground) ${endStop})`;
->>>>>>> 37a6b46f1babd9e82dbe7b959d1555cc642d712e
-
   // Before mount, render without shimmer styles to match server
   if (!mounted) {
     return (
@@ -61,11 +49,13 @@ export const ShimmerText = ({
     );
   }
 
+  const gradient = `linear-gradient(to right, var(--foreground) ${startStop}, ${shimmerColor} 50%, var(--foreground) ${endStop})`;
+
   return (
     <span
       className={cn(
         "bg-clip-text text-transparent transition-all duration-500",
-        className,
+        className
       )}
       style={{
         backgroundImage: isHovered ? "none" : gradient,

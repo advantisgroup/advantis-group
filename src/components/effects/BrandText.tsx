@@ -127,7 +127,7 @@ export const BrandText = ({
     <span
       className={cn(
         className,
-        hoverable && "group cursor-pointer inline-block",
+        hoverable && "group cursor-pointer inline-block"
       )}
     >
       <span
@@ -135,7 +135,7 @@ export const BrandText = ({
           className,
           "transition-colors duration-300",
           color,
-          hoverable ? cn(hoverColor) : "",
+          hoverable ? cn(hoverColor) : ""
         )}
       >
         {firstPart}
@@ -149,7 +149,7 @@ export const BrandText = ({
                 ? ""
                 : "group-hover:text-foreground"
               : "",
-            groupHover ? "group-hover:text-foreground" : "",
+            groupHover ? "group-hover:text-foreground" : ""
           )}
         >
           {rest}

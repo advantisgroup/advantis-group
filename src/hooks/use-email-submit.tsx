@@ -38,7 +38,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         icon: <X />,
       });
     },
-    [tMessages],
+    [tMessages]
   );
 
   const resetButtonState = useCallback(() => {
@@ -70,7 +70,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         if (response.status === 500) {
           setButtonState("error");
           showErrorToast(
-            "Falls das Problem anhält versuchen sie es später nochmal",
+            "Falls das Problem anhält versuchen sie es später nochmal"
           );
           resetButtonState();
           onError?.(new Error("Server error"));
@@ -100,14 +100,14 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         console.log(error);
         setButtonState("error");
         showErrorToast(
-          "Falls das Problem anhält versuchen sie es später nochmal",
+          "Falls das Problem anhält versuchen sie es später nochmal"
         );
         resetButtonState();
         onError?.(error);
         return false;
       }
     },
-    [onSuccess, onError, showErrorToast, resetButtonState, tMessages],
+    [onSuccess, onError, showErrorToast, resetButtonState, tMessages]
   );
 
   return {

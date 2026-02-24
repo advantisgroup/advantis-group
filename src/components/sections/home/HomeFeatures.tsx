@@ -39,7 +39,7 @@ function CountUp({
     restDelta: 0.001,
     duration: 3, // Gradual ease
   });
-  const displayValue = useTransform(springValue, (current) => {
+  const displayValue = useTransform(springValue, current => {
     const val = Math.round(current);
     // Pad to 3 digits like "001", "015", "103"
     const formatted = val.toString().padStart(3, "0");
@@ -112,7 +112,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
               "text-center space-y-6 transition-all duration-1000",
               isVisible
                 ? "opacity-100 translate-y-0"
-                : "opacity-0 -translate-y-8",
+                : "opacity-0 -translate-y-8"
             )}
           >
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
@@ -144,7 +144,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     className={cn(
                       "relative h-full p-8 rounded-3xl bg-card/50 backdrop-blur-sm border border-border/50",
                       "overflow-hidden",
-                      feature.glowColor,
+                      feature.glowColor
                     )}
                     whileHover="hover"
                     initial="rest"
@@ -171,7 +171,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                     <div
                       className={cn(
                         "absolute inset-0 bg-linear-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-                        feature.gradient,
+                        feature.gradient
                       )}
                     />
 
@@ -213,7 +213,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
               "flex flex-wrap items-center justify-center gap-8 md:gap-12 transition-all duration-1000 delay-700",
               isVisible
                 ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-8",
+                : "opacity-0 translate-y-8"
             )}
           >
             <div className="text-center space-y-1">

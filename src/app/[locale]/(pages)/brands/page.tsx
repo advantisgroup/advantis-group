@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 export default function UnsereMarken() {
   const t = useTranslations("brandsPage");
   const [visibleSections, setVisibleSections] = useState<Set<number>>(
-    new Set(),
+    new Set()
   );
   const [activeSection, setActiveSection] = useState<number | null>(null);
   const sectionRefs = useRef<(HTMLElement | null)[]>([]);
@@ -101,17 +101,17 @@ export default function UnsereMarken() {
       if (!section) return;
 
       const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
+        entries => {
+          entries.forEach(entry => {
             if (entry.isIntersecting) {
-              setVisibleSections((prev) => new Set(prev).add(index));
+              setVisibleSections(prev => new Set(prev).add(index));
               if (entry.intersectionRatio > 0.2) {
                 setActiveSection(index);
               }
             }
           });
         },
-        { threshold: [0.1, 0.5] },
+        { threshold: [0.1, 0.5] }
       );
 
       observer.observe(section);
@@ -119,7 +119,7 @@ export default function UnsereMarken() {
     });
 
     return () => {
-      observers.forEach((observer) => observer.disconnect());
+      observers.forEach(observer => observer.disconnect());
     };
   }, []);
 
@@ -194,12 +194,12 @@ export default function UnsereMarken() {
             <section
               id={brand.brand}
               key={index}
-              ref={(el) => {
+              ref={el => {
                 sectionRefs.current[index] = el;
               }}
               className={cn(
                 "relative min-h-screen flex items-center py-32 transition-all duration-1000",
-                "border-b border-border/30",
+                "border-b border-border/30"
               )}
             >
               {/* Brand-specific gradient background */}
@@ -209,7 +209,7 @@ export default function UnsereMarken() {
                     "absolute inset-0 opacity-0 transition-opacity duration-1000 bg-linear-to-br",
                     brand.bgGradient,
                     isVisible && "opacity-100",
-                    !isActive && "opacity-0",
+                    !isActive && "opacity-0"
                   )}
                 />
                 {/* Noise texture */}
@@ -222,7 +222,7 @@ export default function UnsereMarken() {
                   "hidden md:block absolute top-1/4 right-[5%] w-80 h-80 rounded-full blur-3xl transition-all duration-1000",
                   brand.brandColor,
                   "opacity-0",
-                  isActive && "opacity-5",
+                  isActive && "opacity-5"
                 )}
                 style={{ background: "currentColor" }}
               />
@@ -241,7 +241,7 @@ export default function UnsereMarken() {
                         // ordering and text alignment on large screens
                         isEven
                           ? "lg:order-last lg:text-right lg:pr-12"
-                          : "lg:order-first lg:text-left lg:pl-12",
+                          : "lg:order-first lg:text-left lg:pl-12"
                       )}
                       style={{ transitionDelay: "200ms" }}
                     >
@@ -249,7 +249,7 @@ export default function UnsereMarken() {
                       <div
                         className={cn(
                           "inline-flex w-full",
-                          isEven ? "lg:justify-end" : "lg:justify-start",
+                          isEven ? "lg:justify-end" : "lg:justify-start"
                         )}
                       ></div>
 
@@ -258,7 +258,7 @@ export default function UnsereMarken() {
                         <p
                           className={cn(
                             "text-sm uppercase tracking-[0.3em] font-bold transition-colors duration-500",
-                            brand.brandColor,
+                            brand.brandColor
                           )}
                         >
                           {brand.tagline}
@@ -283,7 +283,7 @@ export default function UnsereMarken() {
                             key={idx}
                             className={cn(
                               "flex items-center gap-4 opacity-0 translate-x-4 transition-all duration-700",
-                              isVisible && "opacity-100 translate-x-0",
+                              isVisible && "opacity-100 translate-x-0"
                             )}
                             style={{ transitionDelay: `${400 + idx * 100}ms` }}
                           >
@@ -292,7 +292,7 @@ export default function UnsereMarken() {
                                 "w-3 h-3 rounded-full transition-all duration-500",
                                 brand.brandColor,
                                 isActive && "shadow-lg scale-125",
-                                brand.glowColor,
+                                brand.glowColor
                               )}
                               style={{ background: "currentColor" }}
                             />
@@ -307,7 +307,7 @@ export default function UnsereMarken() {
                       <div
                         className={cn(
                           "pt-6 flex",
-                          isEven ? "lg:justify-end" : "lg:justify-start",
+                          isEven ? "lg:justify-end" : "lg:justify-start"
                         )}
                       >
                         <Button
@@ -315,7 +315,7 @@ export default function UnsereMarken() {
                           size="lg"
                           className={cn(
                             "group/btn shadow-2xl transition-all duration-300 hover:scale-105",
-                            brand.glowColor,
+                            brand.glowColor
                           )}
                         >
                           <Link
@@ -342,14 +342,14 @@ export default function UnsereMarken() {
                           (isEven ? "-translate-x-12" : "translate-x-12"),
                         isVisible && "opacity-100 translate-x-0",
                         // ordering so visual appears opposite the content when isEven
-                        isEven ? "lg:order-first" : "lg:order-last",
+                        isEven ? "lg:order-first" : "lg:order-last"
                       )}
                       style={{ transitionDelay: "400ms" }}
                     >
                       <div
                         className={cn(
                           "relative group",
-                          isEven ? "lg:pl-12" : "lg:pr-12",
+                          isEven ? "lg:pl-12" : "lg:pr-12"
                         )}
                       >
                         {/* Glow effect */}
@@ -357,7 +357,7 @@ export default function UnsereMarken() {
                           className={cn(
                             "absolute -inset-4 rounded-3xl blur-2xl opacity-0 transition-opacity duration-500",
                             brand.brandColor,
-                            isActive && "opacity-20",
+                            isActive && "opacity-20"
                           )}
                           style={{ background: "currentColor" }}
                         />
@@ -379,14 +379,14 @@ export default function UnsereMarken() {
                                     className={cn(
                                       "p-6 rounded-2xl bg-background/50 backdrop-blur-sm border border-border/30",
                                       idx === 2 && "col-span-2",
-                                      "hover:border-primary/50 transition-all duration-300 hover:scale-105",
+                                      "hover:border-primary/50 transition-all duration-300 hover:scale-105"
                                     )}
                                   >
                                     <div className="space-y-2">
                                       <div
                                         className={cn(
                                           "w-8 h-1 rounded-full",
-                                          brand.brandColor,
+                                          brand.brandColor
                                         )}
                                         style={{ background: "currentColor" }}
                                       />
@@ -403,7 +403,7 @@ export default function UnsereMarken() {
                               <Icon
                                 className={cn(
                                   "w-32 h-32 opacity-10",
-                                  brand.brandColor,
+                                  brand.brandColor
                                 )}
                               />
                             </div>

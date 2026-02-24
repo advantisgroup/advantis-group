@@ -36,7 +36,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
           <div
             className={cn(
               "opacity-0 -translate-y-8 transition-all duration-1000",
-              isVisible && "opacity-100 translate-y-0",
+              isVisible && "opacity-100 translate-y-0"
             )}
           >
             <h2 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
@@ -50,7 +50,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
           <p
             className={cn(
               "text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed opacity-0 -translate-y-8 transition-all duration-1000",
-              isVisible && "opacity-100 translate-y-0",
+              isVisible && "opacity-100 translate-y-0"
             )}
             style={{ transitionDelay: "200ms" }}
           >
@@ -60,7 +60,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
           <div
             className={cn(
               "flex flex-col sm:flex-row gap-4 justify-center items-center opacity-0 translate-y-8 transition-all duration-1000",
-              isVisible && "opacity-100 translate-y-0",
+              isVisible && "opacity-100 translate-y-0"
             )}
             style={{ transitionDelay: "400ms" }}
           >
@@ -91,7 +91,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
           <p
             className={cn(
               "text-sm text-muted-foreground opacity-0 transition-all duration-1000",
-              isVisible && "opacity-100",
+              isVisible && "opacity-100"
             )}
             style={{ transitionDelay: "600ms" }}
           >

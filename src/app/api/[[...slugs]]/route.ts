@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Elysia, t } from "elysia";
 
 import { email } from "@/app/api/[[...slugs]]/email";

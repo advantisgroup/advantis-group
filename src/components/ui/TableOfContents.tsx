@@ -17,7 +17,7 @@ export const TableOfContents = ({
   onSectionClick: (id: string) => void;
 }) => (
   <nav className="space-y-2">
-    {sections.map((section) => {
+    {sections.map(section => {
       const Icon = section.icon;
       return (
         <button
@@ -27,7 +27,7 @@ export const TableOfContents = ({
             "w-full text-left px-4 py-3 rounded-lg transition-all flex items-center gap-3 group",
             activeSection === section.id
               ? "bg-primary/10 text-primary font-medium"
-              : "text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+              : "text-muted-foreground hover:bg-muted/40 hover:text-foreground"
           )}
         >
           <Icon
@@ -35,7 +35,7 @@ export const TableOfContents = ({
               "w-4 h-4 shrink-0",
               activeSection === section.id
                 ? "text-primary"
-                : "text-muted-foreground group-hover:text-foreground",
+                : "text-muted-foreground group-hover:text-foreground"
             )}
           />
           <span className="text-sm">{section.title}</span>
