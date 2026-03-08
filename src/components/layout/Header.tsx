@@ -109,17 +109,19 @@ export const Header = () => {
               <li key={`${link.label}_${i}`}>
                 <Link
                   href={link.path}
-                  className={`relative transition-colors group/link ${pathname === link.path
+                  className={`relative transition-colors group/link ${
+                    pathname === link.path
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
-                    }`}
+                  }`}
                 >
                   <span className="relative z-10">{link.label}</span>
                   <span
-                    className={`absolute bottom-0 left-0 h-0.5 bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${pathname === link.path
+                    className={`absolute bottom-0 left-0 h-0.5 bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
+                      pathname === link.path
                         ? "w-full"
                         : "w-0 group-hover/link:w-full"
-                      }`}
+                    }`}
                   />
                   <span className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 blur-sm bg-advantis/5" />
                 </Link>
@@ -139,20 +141,23 @@ export const Header = () => {
 
           <div className="space-y-1.5 relative z-10">
             <span
-              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen
+              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${
+                mobileMenuOpen
                   ? "rotate-45 translate-y-2"
                   : "group-hover/menu:w-5"
-                }`}
+              }`}
             />
             <span
-              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : "group-hover/menu:bg-advantis"
-                }`}
+              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${
+                mobileMenuOpen ? "opacity-0" : "group-hover/menu:bg-advantis"
+              }`}
             />
             <span
-              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen
+              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${
+                mobileMenuOpen
                   ? "-rotate-45 -translate-y-2"
                   : "group-hover/menu:w-4"
-                }`}
+              }`}
             />
           </div>
         </button>
@@ -171,10 +176,11 @@ export const Header = () => {
                 >
                   <Link
                     href={link.path}
-                    className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${pathname === link.path
+                    className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${
+                      pathname === link.path
                         ? "text-foreground font-medium translate-x-1"
                         : "text-muted-foreground"
-                      }`}
+                    }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}

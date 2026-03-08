@@ -30,7 +30,7 @@ export function SubmissionBanner({
       <div
         className={cn(
           "hidden md:flex items-center gap-4 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-amber-200",
-          className,
+          className
         )}
         role="alert"
       >
@@ -68,7 +68,7 @@ export function SubmissionBanner({
       <div
         className={cn(
           "flex flex-col gap-3 md:hidden w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-4 text-amber-200",
-          className,
+          className
         )}
         role="alert"
       >

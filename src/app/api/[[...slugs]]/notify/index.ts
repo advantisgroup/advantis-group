@@ -26,7 +26,6 @@ export const notify = new Elysia().post(
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
       const result = await convex.mutation(api.notifyEmails.saveNotifyEmail, {
         email: body.email.trim().toLowerCase(),
       });
@@ -56,5 +55,5 @@ export const notify = new Elysia().post(
       400: t.Object({ error: t.String() }),
       500: t.Object({ error: t.String() }),
     },
-  },
+  }
 );

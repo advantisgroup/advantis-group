@@ -51,9 +51,6 @@ export const ShimmerText = ({
       </span>
     );
   }
-
-  const gradient = `linear-gradient(to right, var(--foreground) ${startStop}, ${shimmerColor} 50%, var(--foreground) ${endStop})`;
-
   return (
     <span
       className={cn(

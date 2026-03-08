@@ -95,7 +95,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
             <div
               className={cn(
                 "flex h-14 w-14 items-center justify-center rounded-full",
-                `${state === "duplicate" ? "bg-yellow-500/10 border border-yellow-500/30" : "bg-green-500/10 border border-green-500/30"}`,
+                `${state === "duplicate" ? "bg-yellow-500/10 border border-yellow-500/30" : "bg-green-500/10 border border-green-500/30"}`
               )}
             >
               {state !== "duplicate" ? (
@@ -138,7 +138,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={e => setEmail(e.target.value)}
                   required
                   disabled={state === "loading"}
                   className="pl-9"

@@ -105,9 +105,9 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                 </button>
               );
             })}
-          </div >
-        </div >
-      </div >
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -132,14 +132,14 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                 animate={
                   isOpen
                     ? {
-                      y:
-                        row === 0
-                          ? [-10, 0]
-                          : row === 1
-                            ? [0, 2, 0]
-                            : [0, 4, 0],
-                      scale: row === 2 ? [1, 0.8, 1] : 1,
-                    }
+                        y:
+                          row === 0
+                            ? [-10, 0]
+                            : row === 1
+                              ? [0, 2, 0]
+                              : [0, 4, 0],
+                        scale: row === 2 ? [1, 0.8, 1] : 1,
+                      }
                     : { y: 0, scale: 1 }
                 }
                 transition={{ duration: 0.25 }}
@@ -197,7 +197,7 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                 className={cn(
                   "cursor-pointer flex items-center justify-center gap-2",
                   language.code === locale &&
-                  "bg-accent text-accent-foreground font-medium"
+                    "bg-accent text-accent-foreground font-medium"
                 )}
               >
                 <span className="text-lg">{language.flag}</span>
