@@ -39,35 +39,61 @@ export function EmailTemplate({
               .replace("{firstName}", firstName)
               .replace("{lastName}", lastName)}
           </h1>
-          <p style={paragraph}>{t.bodyIntro}</p>
-          <p style={paragraph}>{t.bodyOutro}</p>
+
+          {/* Prominent confirmation message */}
+          <div style={confirmationContainer}>
+            <h2 style={confirmationHeading}>Wir haben Ihre Anfrage erhalten</h2>
+            <p style={confirmationText}>
+              Vielen Dank für Ihre Nachricht. Wir haben Ihr Anliegen erfasst und
+              werden uns so schnell wie möglich bei Ihnen melden.
+            </p>
+            {/* lightweight supporting text (from translations if available) */}
+            {t.bodyIntro && <p style={supportingText}>{t.bodyIntro}</p>}
+          </div>
+
           <div style={divider} />
-          <h2 style={subjectHeading}>
-            <span style={subjectLabel}>{t.subject}:</span> {subject}
-          </h2>
-          {topic && (
-            <h2 style={subjectHeading}>
-              <span style={subjectLabel}>{t.topic}:</span> {topic}
-            </h2>
-          )}
+
+          {/* Subject / Topic */}
+          <div style={metaGrid}>
+            <div>
+              <h3 style={metaLabel}>{t.subject}</h3>
+              <p style={metaValue}>{subject}</p>
+            </div>
+            {topic && (
+              <div>
+                <h3 style={metaLabel}>{t.topic}</h3>
+                <p style={metaValue}>{topic}</p>
+              </div>
+            )}
+          </div>
+
+          {/* User message (de-emphasized) */}
           <p style={messageLabel}>{t.yourMessage}</p>
-          <p style={messageBox}>{message}</p>
+          <div style={subtleMessageBox}>
+            <p style={subtleMessageText}>{message}</p>
+          </div>
         </div>
+
         <div style={footer}>
           <div style={divider} />
           <p style={footerText}>{t.poweredBy}</p>
           <img
             src="https://advantisgroup.de/base_logo_tb_First.png"
             width="100"
-            alt="First"
+            alt="Advantis Group"
             style={footerLogo}
           />
+
           <p style={copyright}>
             &copy; {new Date().getFullYear()} Advantis Group GmbH.{" "}
             {t.rightsReserved}
             <br />
             <a href="https://advantisgroup.de" style={link}>
               advantisgroup.de
+            </a>
+            {" • "}
+            <a href="https://advantisgroup.de/privacy" style={link}>
+              Datenschutzerklärung
             </a>
           </p>
         </div>
@@ -105,49 +131,11 @@ const heading = {
   margin: "0 0 20px",
 };
 
-const paragraph = {
-  color: "#4a4a4a",
-  fontSize: "16px",
-  lineHeight: "1.6",
-  margin: "0 0 20px",
-  whiteSpace: "pre-wrap" as const,
-};
-
-const subjectHeading = {
-  color: "#1a1a1a",
-  fontSize: "22px",
-  fontWeight: "700",
-  margin: "0 0 16px",
-  lineHeight: "1.3",
-};
-
-const subjectLabel = {
-  color: "#666666",
-  fontSize: "14px",
-  fontWeight: "600",
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.5px",
-  display: "block",
-  marginBottom: "4px",
-};
-
 const messageLabel = {
   color: "#1a1a1a",
   fontSize: "14px",
   fontWeight: "600",
   margin: "0 0 10px",
-};
-
-const messageBox = {
-  backgroundColor: "#f9f9f9",
-  borderRadius: "4px",
-  padding: "16px",
-  borderLeft: "4px solid #DE5618",
-  color: "#4a4a4a",
-  fontSize: "16px",
-  lineHeight: "1.6",
-  margin: "0 0 20px",
-  whiteSpace: "pre-wrap" as const,
 };
 
 const footer = {
@@ -184,4 +172,68 @@ const copyright = {
 const link = {
   color: "#DE5618", // Advantis Orange approximation
   textDecoration: "none",
+};
+
+// New styles for confirmation and de-emphasized message
+const confirmationContainer = {
+  backgroundColor: "#fff7f2",
+  borderRadius: "8px",
+  padding: "18px",
+  border: "1px solid #fde6da",
+  marginBottom: "20px",
+};
+
+const confirmationHeading = {
+  color: "#DE5618",
+  fontSize: "18px",
+  fontWeight: "700",
+  margin: "0 0 8px",
+};
+
+const confirmationText = {
+  color: "#1f2937",
+  fontSize: "15px",
+  margin: "0 0 8px",
+};
+
+const supportingText = {
+  color: "#6b7280",
+  fontSize: "13px",
+  margin: "0",
+};
+
+const metaGrid = {
+  display: "flex",
+  gap: "24px",
+  marginBottom: "16px",
+};
+
+const metaLabel = {
+  color: "#6b7280",
+  fontSize: "12px",
+  textTransform: "uppercase" as const,
+  margin: "0 0 4px",
+  letterSpacing: "0.6px",
+};
+
+const metaValue = {
+  color: "#111827",
+  fontSize: "15px",
+  margin: "0",
+};
+
+const subtleMessageBox = {
+  backgroundColor: "#fbfbfb",
+  borderRadius: "6px",
+  padding: "12px",
+  border: "1px solid #f0f0f0",
+  margin: "0 0 20px",
+};
+
+const subtleMessageText = {
+  color: "#6b7280",
+  fontSize: "14px",
+  lineHeight: "1.5",
+  margin: "0",
+  whiteSpace: "pre-wrap" as const,
 };

@@ -60,9 +60,10 @@ export default function Impressum() {
         </section>
 
         <section className="max-w-6xl mx-auto space-y-12">
+          {/* Top Info Grid */}
           <div className="border border-border">
             <div className="grid md:grid-cols-3 divide-x divide-border">
-              {sections.map((section) => {
+              {sections.map(section => {
                 const Icon = section.icon;
                 return (
                   <Card key={section.title} className="border-0 rounded-none">
@@ -79,6 +80,7 @@ export default function Impressum() {
             </div>
           </div>
 
+          {/* Register Section */}
           <Card className="border border-border">
             <CardHeader>
               <CardTitle className="text-2xl">
@@ -92,6 +94,7 @@ export default function Impressum() {
             </CardContent>
           </Card>
 
+          {/* Responsible Section */}
           <Card className="border border-border">
             <CardHeader>
               <CardTitle className="text-2xl">

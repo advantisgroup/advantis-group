@@ -34,7 +34,7 @@ export const Footer = () => {
       // Progress from 0 to 1 as we scroll through the footer
       const progress = Math.min(
         Math.max(scrollIntoFooter / footerHeight, 0),
-        1,
+        1
       );
       setScrollProgress(progress);
     };

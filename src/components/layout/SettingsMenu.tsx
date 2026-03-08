@@ -34,6 +34,7 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
+
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
@@ -46,17 +47,18 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
     router.replace(pathname, { locale: newLocale });
   };
 
-  // Mobile-specific inline layout
+  /* ---------------- MOBILE VERSION ---------------- */
+
   if (isMobile) {
     return (
       <div className="space-y-4">
-        {/* Language Section */}
+        {/* Language */}
         <div className="space-y-2">
           <span className="text-xs text-muted-foreground uppercase tracking-wider block">
             Language
           </span>
           <div className="flex gap-2 flex-wrap">
-            {languages.map((language) => (
+            {languages.map(language => (
               <button
                 key={language.code}
                 onClick={() => switchLanguage(language.code)}
@@ -64,7 +66,7 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                   "px-3 py-1.5 rounded-md text-sm flex items-center gap-1.5 transition-all duration-200",
                   language.code === locale
                     ? "bg-advantis/20 text-advantis font-medium ring-1 ring-advantis/30"
-                    : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground",
+                    : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
                 )}
               >
                 <span className="text-base">{language.flag}</span>
@@ -74,58 +76,43 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
           </div>
         </div>
 
-        {/* Theme Section */}
+        {/* Theme */}
         <div className="space-y-2">
           <span className="text-xs text-muted-foreground uppercase tracking-wider block">
             Appearance
           </span>
+
           <div className="flex gap-2">
-            <button
-              onClick={() => setTheme("light")}
-              className={cn(
-                "p-2 rounded-md transition-all duration-200 flex items-center gap-1.5",
-                mounted && theme === "light"
-                  ? "bg-advantis/20 text-advantis ring-1 ring-advantis/30"
-                  : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground",
-              )}
-              aria-label="Light mode"
-            >
-              <Sun className="h-4 w-4" />
-              <span className="text-sm">Light</span>
-            </button>
-            <button
-              onClick={() => setTheme("dark")}
-              className={cn(
-                "p-2 rounded-md transition-all duration-200 flex items-center gap-1.5",
-                mounted && theme === "dark"
-                  ? "bg-advantis/20 text-advantis ring-1 ring-advantis/30"
-                  : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground",
-              )}
-              aria-label="Dark mode"
-            >
-              <Moon className="h-4 w-4" />
-              <span className="text-sm">Dark</span>
-            </button>
-            <button
-              onClick={() => setTheme("system")}
-              className={cn(
-                "p-2 rounded-md transition-all duration-200 flex items-center gap-1.5",
-                mounted && theme === "system"
-                  ? "bg-advantis/20 text-advantis ring-1 ring-advantis/30"
-                  : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground",
-              )}
-              aria-label="System theme"
-            >
-              <Monitor className="h-4 w-4" />
-              <span className="text-sm">Auto</span>
-            </button>
-          </div>
-        </div>
-      </div>
+            {["light", "dark", "system"].map(mode => {
+              const Icon =
+                mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+
+              return (
+                <button
+                  key={mode}
+                  onClick={() => setTheme(mode)}
+                  className={cn(
+                    "p-2 rounded-md transition-all duration-200 flex items-center gap-1.5",
+                    mounted && theme === mode
+                      ? "bg-advantis/20 text-advantis ring-1 ring-advantis/30"
+                      : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="text-sm capitalize">
+                    {mode === "system" ? "Auto" : mode}
+                  </span>
+                </button>
+              );
+            })}
+          </div >
+        </div >
+      </div >
     );
   }
 
-  // Desktop dropdown layout
+  /* ---------------- DESKTOP VERSION ---------------- */
+
   return (
     <DropdownMenu onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
@@ -135,196 +122,82 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          {/* Subtle hover glow */}
           <div className="absolute inset-0 opacity-0 group-hover/settings:opacity-100 transition-opacity duration-300 blur-md bg-advantis/10 rounded-full" />
 
-          <div className="flex flex-col gap-0.75 items-center justify-center relative z-10 h-full w-full">
-            {/* Row 1 (Top) */}
-            <motion.div
-              className="flex gap-0.75"
-              animate={
-                isOpen
-                  ? {
-                      y: [-10, 0], // Jump up 10px then slam down to 0
-                    }
-                  : {
-                      y: 0,
-                    }
-              }
-              transition={
-                isOpen
-                  ? {
-                      duration: 0.3,
-                      times: [0, 1],
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 15,
-                    }
-                  : { duration: 0.2 }
-              }
-            >
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
-                  isOpen ? "bg-advantis" : "group-hover/settings:bg-advantis",
-                )}
-                animate={{ x: isHovered || isOpen ? 7 : 0 }}
-                transition={{ duration: 0.2 }}
-              />
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
-                  isOpen ? "bg-advantis" : "group-hover/settings:bg-advantis",
-                )}
-              />
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
-                  isOpen ? "bg-advantis" : "group-hover/settings:bg-advantis",
-                )}
-                animate={{ x: isHovered || isOpen ? -7 : 0 }}
-                transition={{ duration: 0.2 }}
-              />
-            </motion.div>
-
-            {/* Row 2 (Middle) */}
-            <motion.div
-              className="flex gap-0.75"
-              animate={
-                isOpen
-                  ? {
-                      y: [0, 2, 0],
-                    }
-                  : {
-                      y: 0,
-                    }
-              }
-              transition={
-                isOpen
-                  ? {
-                      delay: 0.15,
-                      duration: 0.2,
-                    }
-                  : { duration: 0.2 }
-              }
-            >
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
+          <div className="flex flex-col gap-0.75 items-center justify-center relative z-10">
+            {[0, 1, 2].map(row => (
+              <motion.div
+                key={row}
+                className="flex gap-0.75"
+                animate={
                   isOpen
-                    ? "bg-advantis opacity-80"
-                    : "group-hover/settings:bg-advantis",
-                )}
-                animate={{ x: isHovered || isOpen ? 7 : 0 }}
-                transition={{ duration: 0.2 }}
-              />
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
-                  isOpen
-                    ? "bg-advantis opacity-80"
-                    : "group-hover/settings:bg-advantis",
-                )}
-              />
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
-                  isOpen
-                    ? "bg-advantis opacity-80"
-                    : "group-hover/settings:bg-advantis",
-                )}
-                animate={{ x: isHovered || isOpen ? -7 : 0 }}
-                transition={{ duration: 0.2 }}
-              />
-            </motion.div>
-
-            {/* Row 3 (Bottom) */}
-            <motion.div
-              className="flex gap-0.75"
-              animate={
-                isOpen
-                  ? {
-                      y: [0, 4, 0],
-                      scale: [1, 0.8, 1],
+                    ? {
+                      y:
+                        row === 0
+                          ? [-10, 0]
+                          : row === 1
+                            ? [0, 2, 0]
+                            : [0, 4, 0],
+                      scale: row === 2 ? [1, 0.8, 1] : 1,
                     }
-                  : {
-                      y: 0,
-                      scale: 1,
-                    }
-              }
-              transition={
-                isOpen
-                  ? {
-                      delay: 0.25,
-                      duration: 0.3,
-                    }
-                  : { duration: 0.2 }
-              }
-            >
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
-                  isOpen ? "bg-advantis" : "group-hover/settings:bg-advantis",
-                )}
-                animate={{ x: isHovered || isOpen ? 7 : 0 }}
-                transition={{ duration: 0.2 }}
-              />
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
-                  isOpen ? "bg-advantis" : "group-hover/settings:bg-advantis",
-                )}
-              />
-              <motion.span
-                className={cn(
-                  "block w-1 h-1 rounded-full bg-foreground",
-                  isOpen ? "bg-advantis" : "group-hover/settings:bg-advantis",
-                )}
-                animate={{ x: isHovered || isOpen ? -7 : 0 }}
-                transition={{ duration: 0.2 }}
-              />
-            </motion.div>
+                    : { y: 0, scale: 1 }
+                }
+                transition={{ duration: 0.25 }}
+              >
+                {[0, 1, 2].map(dot => (
+                  <motion.span
+                    key={dot}
+                    className={cn(
+                      "block w-1 h-1 rounded-full bg-foreground",
+                      isOpen
+                        ? "bg-advantis"
+                        : "group-hover/settings:bg-advantis"
+                    )}
+                    animate={{
+                      x:
+                        dot === 0
+                          ? isHovered || isOpen
+                            ? 7
+                            : 0
+                          : dot === 2
+                            ? isHovered || isOpen
+                              ? -7
+                              : 0
+                            : 0,
+                    }}
+                    transition={{ duration: 0.2 }}
+                  />
+                ))}
+              </motion.div>
+            ))}
           </div>
         </button>
       </DropdownMenuTrigger>
+
       <DropdownMenuContent
         align="end"
         className="w-56 p-0 overflow-hidden border-none bg-transparent shadow-none"
       >
-        {/* 
-                   We wrap the actual content in a motion div to animate the "jump out".
-                   Since it's in a Portal, 'align="end"' puts it correctly.
-                   We animate scale/opacity. 
-                 */}
         <motion.div
-          initial={{
-            opacity: 0,
-            scale: 0.8,
-            y: -20,
-            transformOrigin: "top right",
-          }}
+          initial={{ opacity: 0, scale: 0.8, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -10 }}
-          transition={{
-            type: "spring",
-            stiffness: 350,
-            damping: 25,
-            delay: 0.3, // Sync with the bottom dot "launching" it
-          }}
+          transition={{ type: "spring", stiffness: 350, damping: 25 }}
           className="bg-popover border border-border rounded-md p-2 shadow-md"
         >
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider">
             Language
           </DropdownMenuLabel>
+
           <div className="grid grid-cols-2 gap-1 mb-2">
-            {languages.map((language) => (
+            {languages.map(language => (
               <DropdownMenuItem
                 key={language.code}
                 onClick={() => switchLanguage(language.code)}
                 className={cn(
                   "cursor-pointer flex items-center justify-center gap-2",
                   language.code === locale &&
-                    "bg-accent text-accent-foreground font-medium",
+                  "bg-accent text-accent-foreground font-medium"
                 )}
               >
                 <span className="text-lg">{language.flag}</span>
@@ -338,37 +211,28 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider mt-2">
             Appearance
           </DropdownMenuLabel>
+
           <div className="flex flex-col gap-1">
-            <DropdownMenuItem
-              onClick={() => setTheme("light")}
-              className="cursor-pointer"
-            >
-              <Sun className="mr-2 h-4 w-4" />
-              <span>Light</span>
-              {mounted && theme === "light" && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setTheme("dark")}
-              className="cursor-pointer"
-            >
-              <Moon className="mr-2 h-4 w-4" />
-              <span>Dark</span>
-              {mounted && theme === "dark" && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setTheme("system")}
-              className="cursor-pointer"
-            >
-              <Monitor className="mr-2 h-4 w-4" />
-              <span>System</span>
-              {mounted && theme === "system" && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />
-              )}
-            </DropdownMenuItem>
+            {["light", "dark", "system"].map(mode => {
+              const Icon =
+                mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+
+              return (
+                <DropdownMenuItem
+                  key={mode}
+                  onClick={() => setTheme(mode)}
+                  className="cursor-pointer"
+                >
+                  <Icon className="mr-2 h-4 w-4" />
+                  <span className="capitalize">
+                    {mode === "system" ? "System" : mode}
+                  </span>
+                  {mounted && theme === mode && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
           </div>
         </motion.div>
       </DropdownMenuContent>

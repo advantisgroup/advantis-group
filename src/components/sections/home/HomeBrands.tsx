@@ -61,7 +61,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
           <div
             className={cn(
               "text-center space-y-6 opacity-0 -translate-y-8 transition-all duration-1000",
-              isVisible && "opacity-100 translate-y-0",
+              isVisible && "opacity-100 translate-y-0"
             )}
           >
             <h2 className="text-5xl md:text-7xl font-bold tracking-tight">
@@ -81,7 +81,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                   key={idx}
                   className={cn(
                     "opacity-0 translate-y-12 transition-all duration-1000",
-                    isVisible && "opacity-100 translate-y-0",
+                    isVisible && "opacity-100 translate-y-0"
                   )}
                   style={{ transitionDelay: `${200 + idx * 100}ms` }}
                 >
@@ -118,7 +118,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
           <div
             className={cn(
               "text-center opacity-0 translate-y-8 transition-all duration-1000",
-              isVisible && "opacity-100 translate-y-0",
+              isVisible && "opacity-100 translate-y-0"
             )}
             style={{ transitionDelay: "600ms" }}
           >

@@ -32,28 +32,14 @@ export const Header = () => {
   };
 
   const navLinks = [
-    {
-      label: t("about"),
-      path: "/about",
-    },
-    {
-      label: t("brands"),
-      path: "/brands",
-    },
-    {
-      label: t("team"),
-      path: "/team",
-    },
-    {
-      label: t("contact"),
-      path: "/contact",
-    },
+    { label: t("about"), path: "/about" },
+    { label: t("brands"), path: "/brands" },
+    { label: t("team"), path: "/team" },
+    { label: t("contact"), path: "/contact" },
   ];
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-all duration-300 'border-b border-border shadow-sm`}
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 transition-all duration-300 border-b border-border shadow-sm">
       <nav className="container mx-auto flex items-center justify-between h-16 px-4">
         {!isMobile ? (
           <Link
@@ -123,22 +109,18 @@ export const Header = () => {
               <li key={`${link.label}_${i}`}>
                 <Link
                   href={link.path}
-                  className={`relative transition-colors group/link ${
-                    pathname === link.path
+                  className={`relative transition-colors group/link ${pathname === link.path
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   <span className="relative z-10">{link.label}</span>
-                  {/* Animated underline */}
                   <span
-                    className={`absolute bottom-0 left-0 h-0.5 bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
-                      pathname === link.path
+                    className={`absolute bottom-0 left-0 h-0.5 bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${pathname === link.path
                         ? "w-full"
                         : "w-0 group-hover/link:w-full"
-                    }`}
+                      }`}
                   />
-                  {/* Subtle glow on hover */}
                   <span className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 blur-sm bg-advantis/5" />
                 </Link>
               </li>
@@ -147,28 +129,36 @@ export const Header = () => {
           <SettingsMenu />
         </div>
 
+        {/* Mobile Button */}
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden p-2 relative group/menu"
           aria-label="Toggle menu"
         >
-          {/* Subtle hover glow */}
           <div className="absolute inset-0 opacity-0 group-hover/menu:opacity-100 transition-opacity duration-300 blur-md bg-advantis/10 rounded-full" />
 
           <div className="space-y-1.5 relative z-10">
             <span
-              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-2" : "group-hover/menu:w-5"}`}
+              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen
+                  ? "rotate-45 translate-y-2"
+                  : "group-hover/menu:w-5"
+                }`}
             />
             <span
-              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : "group-hover/menu:bg-advantis"}`}
+              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : "group-hover/menu:bg-advantis"
+                }`}
             />
             <span
-              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-2" : "group-hover/menu:w-4"}`}
+              className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen
+                  ? "-rotate-45 -translate-y-2"
+                  : "group-hover/menu:w-4"
+                }`}
             />
           </div>
         </button>
       </nav>
 
+      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-background animate-in slide-in-from-top-2 duration-300">
           <div className="container mx-auto px-4 py-4 space-y-4">
@@ -181,11 +171,10 @@ export const Header = () => {
                 >
                   <Link
                     href={link.path}
-                    className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${
-                      pathname === link.path
+                    className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${pathname === link.path
                         ? "text-foreground font-medium translate-x-1"
                         : "text-muted-foreground"
-                    }`}
+                      }`}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
@@ -194,7 +183,6 @@ export const Header = () => {
               ))}
             </ul>
 
-            {/* Settings Section */}
             <div
               className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300"
               style={{ animationDelay: `${navLinks.length * 50}ms` }}

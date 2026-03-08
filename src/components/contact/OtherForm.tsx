@@ -40,7 +40,7 @@ export function OtherForm({
             type="text"
             id="firstName"
             value={formData.firstName}
-            onChange={(e) =>
+            onChange={e =>
               onFormDataChange({ ...formData, firstName: e.target.value })
             }
             className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -60,7 +60,7 @@ export function OtherForm({
             type="text"
             id="lastName"
             value={formData.lastName || ""}
-            onChange={(e) =>
+            onChange={e =>
               onFormDataChange({ ...formData, lastName: e.target.value })
             }
             className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -76,7 +76,7 @@ export function OtherForm({
           type="email"
           id="email"
           value={formData.email}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, email: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -97,7 +97,7 @@ export function OtherForm({
           type="tel"
           id="phone"
           value={formData.phone || ""}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, phone: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -111,7 +111,7 @@ export function OtherForm({
         <select
           id="topic"
           value={formData.topic || ""}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({
               ...formData,
               topic: e.target.value as InquiryTopic,
@@ -120,7 +120,7 @@ export function OtherForm({
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         >
           <option value="">{tOther("selectTopic")}</option>
-          {topics.map((topic) => (
+          {topics.map(topic => (
             <option key={topic.value} value={topic.value}>
               {topic.label}
             </option>
@@ -139,7 +139,7 @@ export function OtherForm({
           type="text"
           id="subject"
           value={formData.subject}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, subject: e.target.value })
           }
           placeholder={tOther("subjectPlaceholder")}
@@ -157,7 +157,7 @@ export function OtherForm({
         <textarea
           id="message"
           value={formData.message}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, message: e.target.value })
           }
           rows={isMobile ? 4 : 6}

@@ -28,7 +28,7 @@ export default function GlobalNotFoundClient() {
         delay: `${Math.random() * 5}s`,
         duration: `${5 + Math.random() * 10}s`,
         opacity: Number(clamp(Math.random(), 0.5, 1).toFixed(2)),
-      }),
+      })
     );
 
     // console.log(...generatedParticles)

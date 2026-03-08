@@ -52,11 +52,13 @@ export const ShimmerText = ({
     );
   }
 
+  const gradient = `linear-gradient(to right, var(--foreground) ${startStop}, ${shimmerColor} 50%, var(--foreground) ${endStop})`;
+
   return (
     <span
       className={cn(
         "bg-clip-text text-transparent transition-all duration-500",
-        className,
+        className
       )}
       style={{
         backgroundImage: isHovered ? "none" : gradient,

@@ -114,7 +114,7 @@ export function CountUp({
           });
         }
       },
-      { threshold: 0.1 },
+      { threshold: 0.1 }
     );
 
     if (containerRef.current) observer.observe(containerRef.current);
@@ -138,7 +138,7 @@ export function CountUp({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value, animationConfig, hasAnimated, triggerOnView, onAnimationComplete],
+    [value, animationConfig, hasAnimated, triggerOnView, onAnimationComplete]
   );
 
   const colorClass =
@@ -166,7 +166,7 @@ export function CountUp({
       // Using cn directly with string literals for classes
       className={cn(
         "inline-flex items-center justify-center text-4xl font-bold text-black dark:textwhite",
-        className,
+        className
       )}
     >
       <motion.div
@@ -174,7 +174,7 @@ export function CountUp({
         className={cn(
           "flex items-center transition-all",
           colorClass,
-          numberClassName,
+          numberClassName
         )}
         style={
           colorScheme === "custom" && customColor

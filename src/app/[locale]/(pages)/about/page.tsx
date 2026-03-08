@@ -103,7 +103,7 @@ export default function UberUns() {
               className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-10"
             >
               {t.rich("hero.subtitle", {
-                brand: (chunks) => (
+                brand: chunks => (
                   <BrandText brand="advantis" className="font-semibold">
                     {chunks as string}
                   </BrandText>
@@ -191,12 +191,12 @@ export default function UberUns() {
                   <div className="prose prose-lg dark:prose-invert max-w-none">
                     <p className="text-xl leading-relaxed font-medium text-foreground">
                       {t.rich("story.text1", {
-                        brand: (chunks) => (
+                        brand: chunks => (
                           <BrandText brand="advantis">
                             {chunks as string}
                           </BrandText>
                         ),
-                        founder: (chunks) => (
+                        founder: chunks => (
                           <span className="font-bold text-foreground">
                             {chunks}
                           </span>
@@ -205,7 +205,7 @@ export default function UberUns() {
                     </p>
                     <p className="text-lg text-muted-foreground leading-relaxed">
                       {t.rich("story.text2", {
-                        brand: (chunks) => (
+                        brand: chunks => (
                           <BrandText brand="advantis">
                             {chunks as string}
                           </BrandText>

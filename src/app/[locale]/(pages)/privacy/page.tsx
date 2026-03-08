@@ -164,7 +164,7 @@ export default function Datenschutz() {
         ),
       },
     ],
-    [t],
+    [t]
   );
 
   const scrollToSection = (id: string) => {
@@ -266,7 +266,7 @@ export default function Datenschutz() {
               <aside
                 className={cn(
                   "fixed top-24 right-0 w-80 max-w-[85vw] h-[calc(100vh-6rem)] bg-background border-l border-border z-50 transition-transform duration-300 overflow-y-auto",
-                  sidebarOpen ? "translate-x-0" : "translate-x-full",
+                  sidebarOpen ? "translate-x-0" : "translate-x-full"
                 )}
               >
                 <Card className="border-0 rounded-none h-full">
@@ -288,7 +288,7 @@ export default function Datenschutz() {
 
             {/* Main Content */}
             <div className="flex-1 space-y-12">
-              {sections.map((section) => {
+              {sections.map(section => {
                 return (
                   <section
                     key={section.id}

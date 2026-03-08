@@ -32,7 +32,7 @@ export function CallbackForm({
           type="text"
           id="callback-company"
           value={formData.company}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, company: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -55,7 +55,7 @@ export function CallbackForm({
             type="text"
             id="callback-firstName"
             value={formData.firstName}
-            onChange={(e) =>
+            onChange={e =>
               onFormDataChange({ ...formData, firstName: e.target.value })
             }
             className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -76,7 +76,7 @@ export function CallbackForm({
             type="text"
             id="callback-lastName"
             value={formData.lastName}
-            onChange={(e) =>
+            onChange={e =>
               onFormDataChange({ ...formData, lastName: e.target.value })
             }
             className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -99,7 +99,7 @@ export function CallbackForm({
           type="tel"
           id="callback-phone"
           value={formData.phone}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, phone: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -122,7 +122,7 @@ export function CallbackForm({
           type="email"
           id="callback-email"
           value={formData.email}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, email: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -147,7 +147,7 @@ export function CallbackForm({
           type="datetime-local"
           id="callback-datetime"
           value={formData.dateTime}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, dateTime: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -171,7 +171,7 @@ export function CallbackForm({
         <textarea
           id="callback-notes"
           value={formData.notes || ""}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, notes: e.target.value })
           }
           rows={3}

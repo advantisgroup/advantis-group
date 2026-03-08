@@ -28,7 +28,7 @@ export function MessageForm({
           type="text"
           id="company"
           value={formData.company}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, company: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -47,7 +47,7 @@ export function MessageForm({
             type="text"
             id="firstName"
             value={formData.firstName}
-            onChange={(e) =>
+            onChange={e =>
               onFormDataChange({ ...formData, firstName: e.target.value })
             }
             className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -64,7 +64,7 @@ export function MessageForm({
             type="text"
             id="lastName"
             value={formData.lastName}
-            onChange={(e) =>
+            onChange={e =>
               onFormDataChange({ ...formData, lastName: e.target.value })
             }
             className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -83,7 +83,7 @@ export function MessageForm({
           type="email"
           id="email"
           value={formData.email}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, email: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -101,7 +101,7 @@ export function MessageForm({
           type="tel"
           id="phone"
           value={formData.phone}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, phone: e.target.value })
           }
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
@@ -115,7 +115,7 @@ export function MessageForm({
         <textarea
           id="message"
           value={formData.message}
-          onChange={(e) =>
+          onChange={e =>
             onFormDataChange({ ...formData, message: e.target.value })
           }
           rows={isMobile ? 4 : 6}

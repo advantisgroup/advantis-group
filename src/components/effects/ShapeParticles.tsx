@@ -127,7 +127,7 @@ export const ShapeParticles = ({
 
       return points;
     },
-    [],
+    []
   );
 
   useEffect(() => {
@@ -150,11 +150,11 @@ export const ShapeParticles = ({
         particleCount,
         shape,
         canvas.width,
-        canvas.height,
+        canvas.height
       );
 
       if (particlesRef.current.length === 0) {
-        particlesRef.current = points.map((point) => ({
+        particlesRef.current = points.map(point => ({
           x: point.x,
           y: point.y,
           baseX: point.x,
@@ -195,7 +195,7 @@ export const ShapeParticles = ({
 
       const mouse = mouseRef.current;
 
-      particlesRef.current.forEach((particle) => {
+      particlesRef.current.forEach(particle => {
         // Mouse interaction - repel particles
         const dx = mouse.x - particle.x;
         const dy = mouse.y - particle.y;
@@ -221,7 +221,7 @@ export const ShapeParticles = ({
 
         // Clamp velocity to max
         const speed = Math.sqrt(
-          particle.vx * particle.vx + particle.vy * particle.vy,
+          particle.vx * particle.vx + particle.vy * particle.vy
         );
         if (speed > maxVelocity) {
           particle.vx = (particle.vx / speed) * maxVelocity;

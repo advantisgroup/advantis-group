@@ -2,8 +2,9 @@ import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
-import { api } from "@/../convex/_generated/api";
 import { EmailTemplate } from "@/components/email/email-template";
+
+import { api } from "@/../convex/_generated/api";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -123,7 +124,7 @@ export const email = new Elysia().post(
     body: t.Object({
       firstName: t.String(),
       lastName: t.String(),
-      phone: t.String(),
+      phone: t.Optional(t.String()),
       adresses: t.Array(t.String()),
       cc: t.Optional(t.Array(t.String())),
       bcc: t.Optional(t.Array(t.String())),
@@ -140,5 +141,5 @@ export const email = new Elysia().post(
         error: t.String(),
       }),
     },
-  },
+  }
 );
