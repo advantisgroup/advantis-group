@@ -8,25 +8,15 @@ import { BrandText } from "../effects/BrandText";
 import { AnimatedButton } from "../ui/AnimatedButton";
 
 export function MessageForm({
-<<<<<<< HEAD
-    formData,
-    errors,
-    buttonState,
-    isMobile,
-    onFormDataChange,
-    onSubmit,
-}: FormProps<FormData>) {
-    const t = useTranslations('contact.form')
-=======
   formData,
   errors,
   buttonState,
   isMobile,
+  disabled = false,
   onFormDataChange,
   onSubmit,
 }: FormProps<FormData>) {
   const t = useTranslations("contact.form");
->>>>>>> 37a6b46f1babd9e82dbe7b959d1555cc642d712e
 
   return (
     <form className="space-y-4" onSubmit={onSubmit}>
@@ -149,6 +139,7 @@ export function MessageForm({
           buttonState={buttonState}
           idleText={t("submit")}
           idleIcon={Send}
+          disabled={disabled}
         />
       </div>
     </form>

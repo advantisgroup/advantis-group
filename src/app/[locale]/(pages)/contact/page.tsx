@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 
 import { Mail, Phone, MapPin } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { CallbackForm } from "@/components/contact/CallbackForm";
 import {
@@ -10,7 +10,9 @@ import {
   ContactInfoMobile,
 } from "@/components/contact/ContactInfo";
 import { MessageForm } from "@/components/contact/MessageForm";
+import { NotifyModal } from "@/components/contact/NotifyModal";
 import { OtherForm } from "@/components/contact/OtherForm";
+import { SubmissionBanner } from "@/components/contact/SubmissionBanner";
 import { TabNavigation } from "@/components/contact/TabNavigation";
 import { WhyAdvantisSidebar } from "@/components/contact/WhyAdvantis";
 import {
@@ -24,15 +26,30 @@ import { useContactForm } from "@/hooks/use-contact-form";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { type ContactInfoItem, type ContactMode } from "@/types/contact";
 
+const ALLOW_SUBMISSIONS = process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS === "true";
+
+// Per-locale submission texts. Static map so Next.js can analyse each process.env ref.
+// Fallback chain: locale-specific → base NEXT_PUBLIC_SUBMISSION_TEXT → undefined
+const SUBMISSION_TEXT_BY_LOCALE: Record<string, string | undefined> = {
+  en: process.env.NEXT_PUBLIC_SUBMISSION_TEXT,
+  de: process.env.NEXT_PUBLIC_SUBMISSION_TEXT_DE,
+  zh: process.env.NEXT_PUBLIC_SUBMISSION_TEXT_ZH,
+  fr: process.env.NEXT_PUBLIC_SUBMISSION_TEXT_FR,
+};
+
 export default function Kontakt() {
   const t = useTranslations("contact");
   const tMessages = useTranslations("contact.messages");
+  const locale = useLocale();
   const isMobile = useIsMobile();
 
-  // UI State for tab navigation
-  const [contactMode, setContactMode] = useState<ContactMode>("message");
+  const submissionText =
+    SUBMISSION_TEXT_BY_LOCALE[locale] ??
+    process.env.NEXT_PUBLIC_SUBMISSION_TEXT;
 
-  // Custom hook handling all form logic
+  const [contactMode, setContactMode] = useState<ContactMode>("message");
+  const [notifyOpen, setNotifyOpen] = useState(false);
+
   const {
     formData,
     setFormData,
@@ -104,7 +121,7 @@ export default function Kontakt() {
             formData={formData}
             errors={errors}
             buttonState={getButtonState("message")}
-            disabled={process.env.NODE_ENV === "production"}
+            disabled={!ALLOW_SUBMISSIONS}
             onFormDataChange={setFormData}
             onSubmit={handleMessageSubmit}
           />
@@ -114,7 +131,7 @@ export default function Kontakt() {
           <CallbackForm
             formData={callbackFormData}
             errors={callbackErrors}
-            disabled={process.env.NODE_ENV === "production"}
+            disabled={!ALLOW_SUBMISSIONS}
             buttonState={getButtonState("callback")}
             onFormDataChange={setCallbackFormData}
             onSubmit={handleCallbackSubmit}
@@ -126,7 +143,7 @@ export default function Kontakt() {
             formData={otherFormData}
             errors={otherErrors}
             buttonState={getButtonState("other")}
-            disabled={process.env.NODE_ENV === "production"}
+            disabled={!ALLOW_SUBMISSIONS}
             isMobile={isMobile}
             onFormDataChange={setOtherFormData}
             onSubmit={handleOtherSubmit}
@@ -159,6 +176,14 @@ export default function Kontakt() {
             <ContactInfoDesktop items={contactInfoData} />
           )}
 
+          {/* Submission guard banner — shown only when submissions are disabled */}
+          {!ALLOW_SUBMISSIONS && (
+            <SubmissionBanner
+              text={submissionText}
+              onNotifyClick={() => setNotifyOpen(true)}
+            />
+          )}
+
           {/* Contact Form Container */}
           <div className="border border-border rounded-b-lg overflow-hidden">
             <TabNavigation
@@ -186,6 +211,9 @@ export default function Kontakt() {
           </div>
         </section>
       </main>
+
+      {/* Notification sign-up modal */}
+      <NotifyModal open={notifyOpen} onOpenChange={setNotifyOpen} />
     </div>
   );
 }

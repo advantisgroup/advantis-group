@@ -14,4 +14,8 @@ export default defineSchema({
         status: v.string(), // 'sent', 'failed'
         error: v.optional(v.string()),
     }),
+    notifyEmails: defineTable({
+        email: v.string(),
+        createdAt: v.number(),
+    }).index('by_email', ['email']),
 })

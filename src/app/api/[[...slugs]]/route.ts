@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Elysia, t } from "elysia";
 
 import { email } from "@/app/api/[[...slugs]]/email";
+import { notify } from "@/app/api/[[...slugs]]/notify";
 
 const app = new Elysia({ prefix: "/api" })
   .get("/", "Hello Nextjs")
@@ -10,7 +10,8 @@ const app = new Elysia({ prefix: "/api" })
       name: t.String(),
     }),
   })
-  .use(email);
+  .use(email)
+  .use(notify);
 
 export type App = typeof app;
 

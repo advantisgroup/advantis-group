@@ -10,35 +10,10 @@ import { BrandText } from "../effects/BrandText";
 import { AnimatedButton } from "../ui/AnimatedButton";
 
 export function CallbackForm({
-<<<<<<< HEAD
-    formData,
-    errors,
-    buttonState,
-    onFormDataChange,
-    onSubmit,
-}: FormProps<CallbackFormData>) {
-    const t = useTranslations('contact.form')
-
-    return (
-        <form className="space-y-4" onSubmit={onSubmit}>
-            <div>
-                <label htmlFor="callback-company" className="block text-sm font-medium mb-2">
-                    {t('company')} <span className="text-red-500">*</span>
-                </label>
-                <input
-                    type="text"
-                    id="callback-company"
-                    value={formData.company}
-                    onChange={(e) => onFormDataChange({ ...formData, company: e.target.value })}
-                    className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
-                    required
-                />
-                {errors.company && <p className="text-red-500 text-sm mt-1">{errors.company[0]}</p>}
-            </div>
-=======
   formData,
   errors,
   buttonState,
+  disabled = false,
   onFormDataChange,
   onSubmit,
 }: FormProps<CallbackFormData>) {
@@ -67,7 +42,6 @@ export function CallbackForm({
           <p className="text-red-500 text-sm mt-1">{errors.company[0]}</p>
         )}
       </div>
->>>>>>> 37a6b46f1babd9e82dbe7b959d1555cc642d712e
 
       <div className="flex flex-col md:flex-row gap-4">
         <div className="w-full md:w-1/2">
@@ -219,6 +193,7 @@ export function CallbackForm({
           buttonState={buttonState}
           idleText={t("callbackRequest")}
           idleIcon={Phone}
+          disabled={disabled}
         />
       </div>
     </form>

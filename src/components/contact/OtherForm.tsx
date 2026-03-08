@@ -12,27 +12,16 @@ import { BrandText } from "../effects/BrandText";
 import { AnimatedButton } from "../ui/AnimatedButton";
 
 export function OtherForm({
-<<<<<<< HEAD
-    formData,
-    errors,
-    buttonState,
-    isMobile,
-    onFormDataChange,
-    onSubmit,
-}: FormProps<OtherFormData>) {
-    const t = useTranslations('contact.form')
-    const tOther = useTranslations('contact.otherForm')
-=======
   formData,
   errors,
   buttonState,
   isMobile,
+  disabled = false,
   onFormDataChange,
   onSubmit,
 }: FormProps<OtherFormData>) {
   const t = useTranslations("contact.form");
   const tOther = useTranslations("contact.otherForm");
->>>>>>> 37a6b46f1babd9e82dbe7b959d1555cc642d712e
 
   const topics: { value: InquiryTopic; label: string }[] = [
     { value: "withdrawal", label: tOther("topics.withdrawal") },
@@ -192,6 +181,7 @@ export function OtherForm({
           buttonState={buttonState}
           idleText={t("submit")}
           idleIcon={Send}
+          disabled={disabled}
         />
       </div>
     </form>

@@ -117,40 +117,6 @@ export const Header = () => {
           </Link>
         )}
 
-<<<<<<< HEAD
-                <div className="hidden md:flex items-center gap-4">
-                    <ul className="flex items-center gap-6 text-sm">
-                        {navLinks.map((link, i) => (
-                            <li key={`${link.label}_${i}`}>
-                                <Link
-                                    href={link.path}
-                                    className={`relative transition-colors group/link ${
-                                        pathname === link.path
-                                            ? 'text-foreground'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                >
-                                    <span className="relative z-10">{link.label}</span>
-                                    {/* Animated underline */}
-                                    <span
-                                        className={`absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
-                                            pathname === link.path ? 'w-full' : 'w-0 group-hover/link:w-full'
-                                        }`}
-                                    />
-                                    {/* Subtle glow on hover */}
-                                    <span className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 blur-sm bg-advantis/5" />
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                    <SettingsMenu />
-                </div>
-
-                <button
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    className="md:hidden p-2 relative group/menu"
-                    aria-label="Toggle menu"
-=======
         <div className="hidden md:flex items-center gap-4">
           <ul className="flex items-center gap-6 text-sm">
             {navLinks.map((link, i) => (
@@ -162,12 +128,11 @@ export const Header = () => {
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
->>>>>>> 37a6b46f1babd9e82dbe7b959d1555cc642d712e
                 >
                   <span className="relative z-10">{link.label}</span>
                   {/* Animated underline */}
                   <span
-                    className={`absolute bottom-0 left-0 h-[2px] bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
+                    className={`absolute bottom-0 left-0 h-0.5 bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
                       pathname === link.path
                         ? "w-full"
                         : "w-0 group-hover/link:w-full"
@@ -190,32 +155,6 @@ export const Header = () => {
           {/* Subtle hover glow */}
           <div className="absolute inset-0 opacity-0 group-hover/menu:opacity-100 transition-opacity duration-300 blur-md bg-advantis/10 rounded-full" />
 
-<<<<<<< HEAD
-            {mobileMenuOpen && (
-                <div className="md:hidden border-t border-border bg-background animate-in slide-in-from-top-2 duration-300">
-                    <div className="container mx-auto px-4 py-4 space-y-4">
-                        <ul className="space-y-4">
-                            {navLinks.map((link, i) => (
-                                <li
-                                    key={`mobile_${link.label}_${i}`}
-                                    className="animate-in slide-in-from-left-2 duration-300"
-                                    style={{ animationDelay: `${i * 50}ms` }}
-                                >
-                                    <Link
-                                        href={link.path}
-                                        className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${
-                                            pathname === link.path
-                                                ? 'text-foreground font-medium translate-x-1'
-                                                : 'text-muted-foreground'
-                                        }`}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        {link.label}
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-=======
           <div className="space-y-1.5 relative z-10">
             <span
               className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-2" : "group-hover/menu:w-5"}`}
@@ -229,7 +168,6 @@ export const Header = () => {
           </div>
         </button>
       </nav>
->>>>>>> 37a6b46f1babd9e82dbe7b959d1555cc642d712e
 
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-background animate-in slide-in-from-top-2 duration-300">
