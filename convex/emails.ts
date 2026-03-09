@@ -20,3 +20,51 @@ export const saveEmail = mutation({
         })
     },
 })
+
+export const saveNotifyEmail = mutation({
+    args: {
+        email: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db
+            .query('notifyEmails')
+            .withIndex('by_email', q => q.eq('email', args.email))
+            .first()
+
+        if (existing) {
+            return { duplicate: true }
+        }
+
+        await ctx.db.insert('notifyEmails', {
+            email: args.email,
+            createdAt: Date.now(),
+        })
+
+        return { duplicate: false }
+    },
+})
+
+export const deleteNotifyEmail = mutation({
+    args: {
+        email: v.string(),
+    },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db
+            .query('notifyEmails')
+            .withIndex('by_email', q => q.eq('email', args.email))
+            .first()
+
+        if (!existing) {
+            return { deleted: false, email: null, error: "No email found in database matching arg" }
+        }
+
+        try {
+            await ctx.db.delete(existing._id)
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err)
+            return { deleted: false, email: existing.email, error: message }
+        }
+
+        return { deleted: true, email: existing.email, error: null }
+    },
+})
