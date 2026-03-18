@@ -387,5 +387,25 @@
     "rightsReserved": "版权所有。",
     "subject": "主题",
     "topic": "主题"
+  },
+  "auth": {
+    "badge": "安全访问",
+    "menuLabel": "账户",
+    "guest": "访客",
+    "loading": "正在加载 Clerk…",
+    "missingConfig": "请添加 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY 和 NEXT_PUBLIC_CLERK_FRONTEND_API_URL 以启用身份验证。",
+    "loadError": "当前浏览器会话无法加载 Clerk。",
+    "signIn": "登录",
+    "signUp": "创建账户",
+    "signedIn": "已通过 Clerk 登录",
+    "accountCta": "管理账户",
+    "signInTitle": "欢迎回到 Advantis Group",
+    "signInSubtitle": "使用 Clerk 登录后，你可以在一个地方管理个人资料、安全设置以及未来的受保护体验。",
+    "signUpTitle": "创建你的 Advantis 账户",
+    "signUpSubtitle": "使用 Clerk 创建安全账户，并集中管理个人资料、登录方式以及未来的会员体验。",
+    "accountBadge": "账户中心",
+    "accountTitle": "你的账户",
+    "accountSubtitle": "在 Clerk 托管的账户中心管理你的个人资料、安全设置和活跃会话。",
+    "signInRequired": "请先登录后再访问账户设置。"
   }
 }

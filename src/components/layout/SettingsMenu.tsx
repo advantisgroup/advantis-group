@@ -4,9 +4,10 @@ import React from "react";
 
 import { motion } from "framer-motion";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 
+import { ClerkAuthControls } from "@/components/auth/ClerkAuthControls";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +35,7 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
+  const t = useTranslations("nav");
 
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
@@ -52,6 +54,7 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
   if (isMobile) {
     return (
       <div className="space-y-4">
+        <ClerkAuthControls isMobile />
         {/* Language */}
         <div className="space-y-2">
           <span className="text-xs text-muted-foreground uppercase tracking-wider block">
@@ -187,6 +190,14 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
           className="bg-popover border border-border rounded-md p-2 shadow-md"
         >
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider">
+            {t("settings")}
+          </DropdownMenuLabel>
+
+          <ClerkAuthControls />
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider mt-2">
             Language
           </DropdownMenuLabel>
 

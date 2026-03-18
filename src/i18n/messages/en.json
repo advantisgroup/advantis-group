@@ -387,5 +387,25 @@
     "rightsReserved": "All rights reserved.",
     "subject": "Subject",
     "topic": "Topic"
+  },
+  "auth": {
+    "badge": "Secure access",
+    "menuLabel": "Account",
+    "guest": "Guest user",
+    "loading": "Loading Clerk…",
+    "missingConfig": "Add NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY and NEXT_PUBLIC_CLERK_FRONTEND_API_URL to enable authentication.",
+    "loadError": "Clerk could not be loaded in this browser session.",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "signedIn": "Signed in with Clerk",
+    "accountCta": "Manage account",
+    "signInTitle": "Welcome back to Advantis Group",
+    "signInSubtitle": "Sign in with Clerk to manage your profile, security settings, and future protected experiences from one place.",
+    "signUpTitle": "Create your Advantis account",
+    "signUpSubtitle": "Use Clerk to create a secure account and manage your profile, sign-in methods, and future member-only experiences.",
+    "accountBadge": "Account center",
+    "accountTitle": "Your account",
+    "accountSubtitle": "Manage your profile, security settings, and active sessions in Clerk’s hosted account center.",
+    "signInRequired": "Please sign in first to access your account settings."
   }
 }
