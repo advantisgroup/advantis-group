@@ -10,7 +10,7 @@ const intlMiddleware = createMiddleware({
   localeDetection: true,
 });
 
-export default clerkMiddleware(async (_auth, req) => intlMiddleware(req));
+export default clerkMiddleware((_auth, req) => intlMiddleware(req));
 
 export const config = {
   matcher: [

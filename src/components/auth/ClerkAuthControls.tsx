@@ -2,13 +2,7 @@
 
 import { useMemo } from "react";
 
-import {
-  Show,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 import { LogIn, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -23,6 +17,7 @@ export const ClerkAuthControls = ({
   const locale = useLocale();
   const t = useTranslations("auth");
   const { user } = useUser();
+  const isSignedIn = Boolean(user);
 
   const displayName = useMemo(() => {
     const nameFromParts = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
@@ -43,7 +38,7 @@ export const ClerkAuthControls = ({
             {t("menuLabel")}
           </span>
 
-          <Show when="signed-in">
+          {isSignedIn ? (
             <div className="space-y-3 rounded-xl border border-border bg-card/60 p-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -58,9 +53,7 @@ export const ClerkAuthControls = ({
                 </Link>
               </Button>
             </div>
-          </Show>
-
-          <Show when="signed-out">
+          ) : (
             <div className="space-y-3 rounded-xl border border-border bg-card/60 p-3">
               <p className="text-sm text-muted-foreground">{t("providerHint")}</p>
               <div className="flex flex-col gap-2">
@@ -83,7 +76,7 @@ export const ClerkAuthControls = ({
                 <Link href="/sign-up" locale={locale}>{t("signUpPageCta")}</Link>
               </div>
             </div>
-          </Show>
+          )}
         </div>
       </div>
     );
@@ -95,7 +88,7 @@ export const ClerkAuthControls = ({
         {t("menuLabel")}
       </span>
 
-      <Show when="signed-in">
+      {isSignedIn ? (
         <div className="rounded-xl border border-border bg-card/60 p-3">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -110,9 +103,7 @@ export const ClerkAuthControls = ({
             </Link>
           </Button>
         </div>
-      </Show>
-
-      <Show when="signed-out">
+      ) : (
         <div className="space-y-3 px-2">
           <p className="text-xs leading-5 text-muted-foreground">{t("providerHint")}</p>
           <div className="grid grid-cols-2 gap-2">
@@ -133,7 +124,7 @@ export const ClerkAuthControls = ({
             <Link href="/sign-up" locale={locale}>{t("signUpPageCta")}</Link>
           </div>
         </div>
-      </Show>
+      )}
     </div>
   );
 };
