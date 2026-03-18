@@ -387,5 +387,25 @@
     "rightsReserved": "All rights reserved.",
     "subject": "Subject",
     "topic": "Topic"
+  },
+  "auth": {
+    "badge": "Secure access",
+    "menuLabel": "Account",
+    "guest": "Guest user",
+    "providerHint": "Continue with Apple, Google, or Microsoft through Clerk, or use your email to create an account.",
+    "signInPageCta": "Open sign-in page",
+    "signUpPageCta": "Open sign-up page",
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "signedIn": "Signed in with Clerk",
+    "accountCta": "Manage account",
+    "signInTitle": "Welcome back to Advantis Group",
+    "signInSubtitle": "Sign in with Clerk to manage your profile, security settings, and future protected experiences from one place.",
+    "signUpTitle": "Create your Advantis account",
+    "signUpSubtitle": "Use Clerk to create a secure account and manage your profile, sign-in methods, and future member-only experiences.",
+    "accountBadge": "Account center",
+    "accountTitle": "Your account",
+    "accountSubtitle": "Manage your profile, security settings, and active sessions in Clerk’s hosted account center.",
+    "signInRequired": "Please sign in first to access your account settings."
   }
 }

@@ -1,14 +1,20 @@
+import { clerkMiddleware } from "@clerk/nextjs/server";
 import createMiddleware from "next-intl/middleware";
 
-import { locales, defaultLocale } from "./i18n/request";
+import { defaultLocale, locales } from "./i18n/request";
 
-export default createMiddleware({
+const intlMiddleware = createMiddleware({
   locales,
   defaultLocale,
   localePrefix: "always",
   localeDetection: true,
 });
 
+export default clerkMiddleware((_auth, req) => intlMiddleware(req));
+
 export const config = {
-  matcher: ["/", "/(de|en|zh|fr)/:path*", "/((?!api|_next|_vercel|.*\\..*).*)"],
+  matcher: [
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
 };
