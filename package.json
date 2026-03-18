@@ -52,7 +52,8 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "tsparticles": "^3.9.1"
+    "tsparticles": "^3.9.1",
+    "@clerk/nextjs": "^6.20.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

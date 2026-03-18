@@ -2,6 +2,7 @@ import React from "react";
 
 import { Outfit, Manrope } from "next/font/google";
 
+import { ClerkProvider } from "@clerk/nextjs";
 import { type Metadata } from "next";
 
 import "./global.css";
@@ -96,14 +97,16 @@ export default function RootLayout({
       <body
         className={`bg-background antialiased scroll-smooth ${manrope.variable} ${outfit.variable}`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SmoothScrolling>
-            <ConvexClientProvider>
-              {children}
-              <Toaster />
-            </ConvexClientProvider>
-          </SmoothScrolling>
-        </ThemeProvider>
+        <ClerkProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <SmoothScrolling>
+              <ConvexClientProvider>
+                {children}
+                <Toaster />
+              </ConvexClientProvider>
+            </SmoothScrolling>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

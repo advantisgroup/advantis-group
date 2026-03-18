@@ -1,26 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-
+import { UserProfile } from "@clerk/nextjs";
 import { useLocale, useTranslations } from "next-intl";
-
-import { ClerkMount } from "@/components/auth/ClerkMount";
-import { useClerkAuth } from "@/components/auth/ClerkAuthProvider";
-import { useRouter } from "@/i18n/navigation";
 
 export const ClerkAccountPage = () => {
   const locale = useLocale();
-  const router = useRouter();
   const t = useTranslations("auth");
-  const { isEnabled, isLoaded, isSignedIn } = useClerkAuth();
-
-  useEffect(() => {
-    if (!isEnabled || !isLoaded || isSignedIn) {
-      return;
-    }
-
-    router.replace(`/${locale}/sign-in`);
-  }, [isEnabled, isLoaded, isSignedIn, locale, router]);
 
   return (
     <section className="min-h-[calc(100vh-4rem)] bg-background px-4 py-28">
@@ -37,8 +22,8 @@ export const ClerkAccountPage = () => {
           </p>
         </div>
 
-        <div className="rounded-[2rem] border border-border bg-card/70 p-4 shadow-2xl shadow-black/20 backdrop-blur md:p-6">
-          <ClerkMount variant="userProfile" />
+        <div className="overflow-hidden rounded-[2rem] border border-border bg-card/70 p-4 shadow-2xl shadow-black/20 backdrop-blur md:p-6">
+          <UserProfile path={`/${locale}/account`} routing="path" />
         </div>
       </div>
     </section>

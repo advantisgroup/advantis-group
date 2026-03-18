@@ -1,8 +1,7 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-
-import { ClerkMount } from "@/components/auth/ClerkMount";
+import { SignIn, SignUp } from "@clerk/nextjs";
+import { useLocale, useTranslations } from "next-intl";
 
 export const ClerkAuthCard = ({
   title,
@@ -13,7 +12,11 @@ export const ClerkAuthCard = ({
   subtitle: string;
   variant: "signIn" | "signUp";
 }) => {
+  const locale = useLocale();
   const t = useTranslations("auth");
+
+  const signInPath = `/${locale}/sign-in`;
+  const signUpPath = `/${locale}/sign-up`;
 
   return (
     <section className="min-h-[calc(100vh-4rem)] bg-background px-4 py-28">
@@ -29,11 +32,28 @@ export const ClerkAuthCard = ({
             <p className="max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
               {subtitle}
             </p>
+            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+              {t("providerHint")}
+            </p>
           </div>
         </div>
 
         <div className="rounded-[2rem] border border-border bg-card/70 p-4 shadow-2xl shadow-black/20 backdrop-blur md:p-6">
-          <ClerkMount variant={variant} />
+          {variant === "signIn" ? (
+            <SignIn
+              path={signInPath}
+              routing="path"
+              signUpUrl={signUpPath}
+              fallbackRedirectUrl={`/${locale}/account`}
+            />
+          ) : (
+            <SignUp
+              path={signUpPath}
+              routing="path"
+              signInUrl={signInPath}
+              fallbackRedirectUrl={`/${locale}/account`}
+            />
+          )}
         </div>
       </div>
     </section>
