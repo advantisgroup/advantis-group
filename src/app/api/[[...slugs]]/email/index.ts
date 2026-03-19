@@ -6,13 +6,11 @@ import { Resend } from "resend";
 import { api } from "@/../convex/_generated/api";
 import { EmailTemplate } from "@/components/email/email-template";
 
-
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const convex = process.env.NEXT_PUBLIC_CONVEX_URL
   ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
   : null;
-
 
 export const email = new Elysia().post(
   "/send",
@@ -56,7 +54,9 @@ export const email = new Elysia().post(
       });
 
       const status = error ? "failed" : "sent";
-      const errorMsg = error ? error.message || "Failed to send email" : undefined;
+      const errorMsg = error
+        ? error.message || "Failed to send email"
+        : undefined;
 
       if (convex) {
         try {

@@ -66,7 +66,9 @@ export const notify = new Elysia()
         return { error: "Server configuration error." };
       }
 
-      const decodedEmail = decodeURIComponent(params.email).trim().toLowerCase();
+      const decodedEmail = decodeURIComponent(params.email)
+        .trim()
+        .toLowerCase();
 
       if (!decodedEmail) {
         set.status = 400;
@@ -113,4 +115,4 @@ export const notify = new Elysia()
         500: t.Object({ error: t.String() }),
       },
     }
-  )
+  );

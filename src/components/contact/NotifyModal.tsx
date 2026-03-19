@@ -30,7 +30,13 @@ interface NotifyModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-type ModalState = "idle" | "loading" | "success" | "duplicate" | "removed" | "error";
+type ModalState =
+  | "idle"
+  | "loading"
+  | "success"
+  | "duplicate"
+  | "removed"
+  | "error";
 type ModalMode = "subscribe" | "remove";
 
 export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
@@ -67,14 +73,19 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
     try {
       if (mode === "subscribe") {
         const res = await api.notify.post({
-          email: encodeURIComponent(email.trim().toLowerCase())
-        })
+          email: encodeURIComponent(email.trim().toLowerCase()),
+        });
 
-        const data = res.data
+        const data = res.data;
 
         if (res.error) {
           const errValue = res.error.value;
-          const msg = typeof errValue === "string" ? errValue : ("error" in errValue ? errValue.error : "Something went wrong. Please try again.");
+          const msg =
+            typeof errValue === "string"
+              ? errValue
+              : "error" in errValue
+                ? errValue.error
+                : "Something went wrong. Please try again.";
           setErrorMsg(msg);
           setState("error");
           return;
@@ -87,7 +98,12 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
 
         if (res.error) {
           const errValue = res.error.value;
-          const msg = typeof errValue === "string" ? errValue : ("error" in errValue ? errValue.error : "Something went wrong. Please try again.");
+          const msg =
+            typeof errValue === "string"
+              ? errValue
+              : "error" in errValue
+                ? errValue.error
+                : "Something went wrong. Please try again.";
           setErrorMsg(msg);
           setState("error");
           return;
@@ -101,7 +117,8 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
     }
   };
 
-  const isFinished = state === "success" || state === "duplicate" || state === "removed";
+  const isFinished =
+    state === "success" || state === "duplicate" || state === "removed";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -204,7 +221,9 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
                 variant="link"
                 size="sm"
                 disabled={state === "loading"}
-                onClick={() => switchMode(mode === "subscribe" ? "remove" : "subscribe")}
+                onClick={() =>
+                  switchMode(mode === "subscribe" ? "remove" : "subscribe")
+                }
                 className="mr-auto px-0 text-xs text-muted-foreground"
               >
                 {mode === "subscribe"
@@ -224,7 +243,10 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
                 type="submit"
                 size="sm"
                 disabled={!email.trim() || state === "loading"}
-                className={cn("gap-1.5", mode === "remove" && "bg-red-600 hover:bg-red-700 text-white")}
+                className={cn(
+                  "gap-1.5",
+                  mode === "remove" && "bg-red-600 hover:bg-red-700 text-white"
+                )}
               >
                 {state === "loading" ? (
                   <>
@@ -250,4 +272,3 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
     </Dialog>
   );
 }
-

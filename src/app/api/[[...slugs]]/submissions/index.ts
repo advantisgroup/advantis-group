@@ -8,7 +8,6 @@ const convex = process.env.NEXT_PUBLIC_CONVEX_URL
   ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
   : null;
 
-
 export const submissions = new Elysia().get(
   "/submissions",
   async ({ set }) => {
@@ -25,9 +24,12 @@ export const submissions = new Elysia().get(
     }
 
     try {
-      const submissions = await convex.query(api.emails.listEmailsByClerkUserId, {
-        clerkUserId: userId,
-      });
+      const submissions = await convex.query(
+        api.emails.listEmailsByClerkUserId,
+        {
+          clerkUserId: userId,
+        }
+      );
 
       return { submissions };
     } catch (error) {
