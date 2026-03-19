@@ -4,7 +4,7 @@ import React from "react";
 
 import { motion } from "framer-motion";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 
 import { ClerkAuthControls } from "@/components/auth/ClerkAuthControls";
@@ -35,7 +35,6 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
-  const t = useTranslations("nav");
 
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
