@@ -161,10 +161,13 @@
       "signedInAs": "当前登录：{email}",
       "emailNote": "如果后续沟通更适合使用公司邮箱，你仍然可以修改表单中的邮箱。为了避免混淆，我们会同时保存两者。",
       "useAccount": "使用我的账户信息",
+      "useAccountSuccess": "已填入表单",
       "signedOutTitle": "想更快提交联系表单？",
       "signedOutDescription": "先登录，我们就能自动预填你的联系信息，并把你的咨询记录集中展示在账户中。",
       "signInCta": "登录并预填",
-      "storedAccountNote": "登录后提交时，我们会同时记录你的登录账户和你在表单中填写的联系邮箱，方便后续跟进。"
+      "storedAccountNote": "登录后提交时，我们会同时记录你的登录账户和你在表单中填写的联系邮箱，方便后续跟进。",
+      "successNotice": "你的登录信息现在已经填写到下方表单中。",
+      "scrollNotice": "你的登录信息已添加到下方表单。"
     }
   },
   "about": {
@@ -411,6 +414,7 @@
     "signUp": "创建账户",
     "signedIn": "已通过 Clerk 登录",
     "accountCta": "管理账户",
+    "signOut": "退出登录",
     "signInTitle": "欢迎回到 Advantis Group",
     "signInSubtitle": "使用 Clerk 登录后，你可以在一个地方管理个人资料、安全设置以及未来的受保护体验。",
     "signUpTitle": "创建你的 Advantis 账户",
@@ -426,7 +430,7 @@
       "title": "你的咨询记录",
       "subtitle": "查看你登录后提交的联系表单，并追踪当时使用的联系邮箱和公司信息。",
       "newSubmissionCta": "再次提交咨询",
-      "accountCta": "返回账户",
+      "accountCta": "管理账户",
       "loading": "正在加载你的提交记录…",
       "errorTitle": "无法加载你的提交记录。",
       "errorDescription": "请稍后再试。",

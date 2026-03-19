@@ -3,13 +3,6 @@ import { useTranslations } from "next-intl";
 import { type WhyAdvantisSidebarProps } from "@/types/contact";
 
 import { BrandText } from "../effects/BrandText";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
 
 export function WhyAdvantisSidebar({ contactMode }: WhyAdvantisSidebarProps) {
   const t = useTranslations("contact.sidebar");
@@ -41,23 +34,24 @@ export function WhyAdvantisSidebar({ contactMode }: WhyAdvantisSidebarProps) {
   };
 
   return (
-    <Card className="border-0 rounded-none">
-      <CardHeader>
-        <CardTitle className="text-xl md:text-2xl">
+    <aside className="flex h-full flex-col justify-between bg-muted/20 p-6 md:p-8">
+      <div className="space-y-5">
+        <h3 className="text-xl font-semibold text-foreground md:text-2xl">
           {t("title")} <BrandText brand="advantis">Advantis Group</BrandText>?
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <CardDescription className="text-base">
+        </h3>
+        <p className="text-base leading-7 text-muted-foreground">
           {t("description1")}
-        </CardDescription>
-        <CardDescription className="text-base">
+        </p>
+        <p className="text-base leading-7 text-muted-foreground">
           {getDescription()}
-        </CardDescription>
-        <div className="pt-4 border-t border-border">
-          <p className="text-sm text-muted-foreground">{getClosing()}</p>
-        </div>
-      </CardContent>
-    </Card>
+        </p>
+      </div>
+
+      <div className="mt-8 border-t border-border/70 pt-5">
+        <p className="text-sm leading-6 text-muted-foreground">
+          {getClosing()}
+        </p>
+      </div>
+    </aside>
   );
 }

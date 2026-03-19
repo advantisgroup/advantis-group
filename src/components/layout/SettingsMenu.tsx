@@ -4,10 +4,9 @@ import React from "react";
 
 import { motion } from "framer-motion";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useLocale } from "next-intl";
 import { useTheme } from "next-themes";
 
-import { ClerkAuthControls } from "@/components/auth/ClerkAuthControls";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,8 +34,6 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
-  const t = useTranslations("nav");
-
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
@@ -52,7 +49,6 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
   if (isMobile) {
     return (
       <div className="space-y-5">
-        <ClerkAuthControls isMobile />
         <div className="space-y-3">
           <span className="block text-xs uppercase tracking-wider text-muted-foreground">
             Language
@@ -81,25 +77,25 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
             Appearance
           </span>
           <div className="grid grid-cols-1 gap-2">
-            {['light', 'dark', 'system'].map(mode => {
+            {["light", "dark", "system"].map(mode => {
               const Icon =
-                mode === 'light' ? Sun : mode === 'dark' ? Moon : Monitor;
+                mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
 
               return (
                 <button
-                  disabled={mode === 'light' || mode === 'system'}
+                  disabled={mode === "light" || mode === "system"}
                   key={mode}
                   onClick={() => setTheme(mode)}
                   className={cn(
-                    'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200',
+                    "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
                     mounted && theme === mode
-                      ? 'border-advantis/40 bg-advantis/10 text-advantis'
-                      : 'border-border bg-card/60 text-muted-foreground hover:text-foreground'
+                      ? "border-advantis/40 bg-advantis/10 text-advantis"
+                      : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
                   )}
                 >
                   <Icon className="h-4 w-4" />
                   <span className="capitalize">
-                    {mode === 'system' ? 'Auto' : mode}
+                    {mode === "system" ? "Auto" : mode}
                   </span>
                 </button>
               );
@@ -145,8 +141,10 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                   <motion.span
                     key={dot}
                     className={cn(
-                      'block h-1 w-1 rounded-full bg-foreground',
-                      isOpen ? 'bg-advantis' : 'group-hover/settings:bg-advantis'
+                      "block h-1 w-1 rounded-full bg-foreground",
+                      isOpen
+                        ? "bg-advantis"
+                        : "group-hover/settings:bg-advantis"
                     )}
                     animate={{
                       x:
@@ -177,13 +175,9 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
           initial={{ opacity: 0, scale: 0.8, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -10 }}
-          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          transition={{ type: "spring", stiffness: 350, damping: 25 }}
           className="rounded-2xl border border-border bg-popover p-3 shadow-md"
         >
-          <ClerkAuthControls />
-
-          <DropdownMenuSeparator className="my-3" />
-
           <DropdownMenuLabel className="mt-1 px-2 text-xs font-normal uppercase tracking-wider text-muted-foreground">
             Language
           </DropdownMenuLabel>
@@ -194,9 +188,9 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                 key={language.code}
                 onClick={() => switchLanguage(language.code)}
                 className={cn(
-                  'flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent py-2',
+                  "flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent py-2",
                   language.code === locale &&
-                    'border-advantis/30 bg-advantis/10 font-medium text-advantis'
+                    "border-advantis/30 bg-advantis/10 font-medium text-advantis"
                 )}
               >
                 <span className="text-lg">{language.flag}</span>
@@ -212,25 +206,25 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
           </DropdownMenuLabel>
 
           <div className="mt-2 flex flex-col gap-2">
-            {['light', 'dark', 'system'].map(mode => {
+            {["light", "dark", "system"].map(mode => {
               const Icon =
-                mode === 'light' ? Sun : mode === 'dark' ? Moon : Monitor;
+                mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
 
               return (
                 <DropdownMenuItem
-                  disabled={mode === 'light' || mode === 'system'}
+                  disabled={mode === "light" || mode === "system"}
                   key={mode}
                   onClick={() => setTheme(mode)}
                   className="cursor-pointer rounded-xl py-2"
                 >
                   <Icon className="mr-2 h-4 w-4" />
                   <span className="capitalize">
-                    {mode === 'system' ? 'System' : mode}{' '}
-                    {mode === 'light'
-                      ? '(Disabled)'
-                      : mode === 'system'
-                        ? '(Disabled)'
-                        : ''}
+                    {mode === "system" ? "System" : mode}{" "}
+                    {mode === "light"
+                      ? "(Disabled)"
+                      : mode === "system"
+                        ? "(Disabled)"
+                        : ""}
                   </span>
                   {mounted && theme === mode && (
                     <span className="ml-auto h-1.5 w-1.5 rounded-full bg-advantis" />

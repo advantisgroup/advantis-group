@@ -2,8 +2,6 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@clerk/nextjs/server";
 
-import { ClerkAccountPage } from "@/components/auth/ClerkAccountPage";
-
 export default async function AccountPage({
   params,
 }: {
@@ -15,5 +13,5 @@ export default async function AccountPage({
     redirect(`/${locale}/sign-in`);
   }
 
-  return <ClerkAccountPage />;
+  redirect(`/${locale}/account/submissions`);
 }

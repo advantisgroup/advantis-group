@@ -1,8 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { CheckCircle2, Mail, MapPin, Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { AccountContactHelper } from "@/components/contact/AccountContactHelper";
@@ -17,13 +17,7 @@ import { OtherForm } from "@/components/contact/OtherForm";
 import { SubmissionBanner } from "@/components/contact/SubmissionBanner";
 import { TabNavigation } from "@/components/contact/TabNavigation";
 import { WhyAdvantisSidebar } from "@/components/contact/WhyAdvantis";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useContactForm } from "@/hooks/use-contact-form";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { type ContactInfoItem, type ContactMode } from "@/types/contact";
@@ -44,6 +38,7 @@ export default function Kontakt() {
   const locale = useLocale();
   const isMobile = useIsMobile();
   const { isSignedIn } = useUser();
+  const formSectionRef = useRef<HTMLElement | null>(null);
 
   const submissionText =
     SUBMISSION_TEXT_BY_LOCALE[locale] ??
@@ -64,6 +59,7 @@ export default function Kontakt() {
     callbackErrors,
     getButtonState,
     accountProfile,
+    accountPrefillState,
     applyAccountProfile,
     handleMessageSubmit,
     handleCallbackSubmit,
@@ -117,6 +113,21 @@ export default function Kontakt() {
     }
   };
 
+  const handleUseAccount = () => {
+    const didApply = applyAccountProfile();
+
+    if (!didApply) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      formSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
   const renderForm = () => {
     switch (contactMode) {
       case "message":
@@ -162,7 +173,9 @@ export default function Kontakt() {
     <div className="min-h-screen">
       <main className="container mx-auto space-y-16 px-4 pb-24 pt-24 md:space-y-24">
         <section className="mx-auto max-w-4xl space-y-6 text-center md:space-y-8">
-          <h1 className="text-4xl font-bold md:text-5xl lg:text-7xl">{t("title")}</h1>
+          <h1 className="text-4xl font-bold md:text-5xl lg:text-7xl">
+            {t("title")}
+          </h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl">
             {t("subtitle")}
           </p>
@@ -178,10 +191,11 @@ export default function Kontakt() {
           {accountProfile ? (
             <AccountContactHelper
               accountProfile={accountProfile}
-              onUseAccount={applyAccountProfile}
+              buttonState={accountPrefillState}
+              onUseAccount={handleUseAccount}
             />
           ) : (
-            <div className="rounded-3xl border border-border bg-card/70 p-5 shadow-sm">
+            <div className="rounded-[2rem] border border-border/70 bg-background/80 p-5 md:p-6">
               <h2 className="text-xl font-semibold text-foreground">
                 {tAccountHelper("signedOutTitle")}
               </h2>
@@ -190,9 +204,7 @@ export default function Kontakt() {
               </p>
               <div className="mt-4">
                 <SignInButton>
-                  <button type="button" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
-                    {tAccountHelper("signInCta")}
-                  </button>
+                  <Button type="button">{tAccountHelper("signInCta")}</Button>
                 </SignInButton>
               </div>
             </div>
@@ -205,33 +217,47 @@ export default function Kontakt() {
             />
           )}
 
-          <div className="overflow-hidden rounded-[2rem] border border-border bg-card/30 shadow-2xl shadow-black/10">
+          <section
+            ref={formSectionRef}
+            className="overflow-hidden rounded-[2rem] border border-border/70 bg-background/70 shadow-xl shadow-black/5"
+          >
             <TabNavigation
               contactMode={contactMode}
               onModeChange={setContactMode}
             />
 
             <div
-              className={`grid ${isMobile ? "grid-cols-1" : "md:grid-cols-2 divide-x"} divide-border`}
+              className={`grid ${isMobile ? "grid-cols-1" : "md:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]"}`}
             >
-              <Card className={`border-0 rounded-none ${isMobile ? "border-b" : ""}`}>
-                <CardHeader>
-                  <CardTitle className="text-xl md:text-2xl">
+              <div className="space-y-6 p-6 md:p-8">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-semibold text-foreground md:text-3xl">
                     {getFormTitle()}
-                  </CardTitle>
-                  <CardDescription>{getFormDescription()}</CardDescription>
+                  </h2>
+                  <p className="text-base text-muted-foreground">
+                    {getFormDescription()}
+                  </p>
+                  {accountPrefillState === "success" ? (
+                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                      <CheckCircle2 className="h-4 w-4" />
+                      {tAccountHelper("scrollNotice")}
+                    </div>
+                  ) : null}
                   {isSignedIn ? (
-                    <p className="rounded-xl border border-advantis/20 bg-advantis/5 px-3 py-2 text-sm text-muted-foreground">
+                    <p className="rounded-2xl border border-advantis/20 bg-advantis/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
                       {tAccountHelper("storedAccountNote")}
                     </p>
                   ) : null}
-                </CardHeader>
-                <CardContent>{renderForm()}</CardContent>
-              </Card>
+                </div>
 
-              <WhyAdvantisSidebar contactMode={contactMode} />
+                {renderForm()}
+              </div>
+
+              <div className="border-t border-border/70 md:border-l md:border-t-0">
+                <WhyAdvantisSidebar contactMode={contactMode} />
+              </div>
             </div>
-          </div>
+          </section>
         </section>
       </main>
 

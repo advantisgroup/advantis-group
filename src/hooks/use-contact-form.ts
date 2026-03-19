@@ -72,6 +72,9 @@ export function useContactForm() {
   const [callbackErrors, setCallbackErrors] = useState<
     z.ZodFlattenedError<CallbackFormData>["fieldErrors"]
   >({});
+  const [accountPrefillState, setAccountPrefillState] = useState<
+    "idle" | "success"
+  >("idle");
 
   const messageSubmit = useEmailSubmit();
   const callbackSubmit = useEmailSubmit();
@@ -86,13 +89,15 @@ export function useContactForm() {
       email: user.primaryEmailAddress?.emailAddress || "",
       firstName: user.firstName || "",
       lastName: user.lastName || "",
-      fullName: user.fullName || [user.firstName, user.lastName].filter(Boolean).join(" "),
+      fullName:
+        user.fullName ||
+        [user.firstName, user.lastName].filter(Boolean).join(" "),
     };
   }, [isSignedIn, user]);
 
   const applyAccountProfile = useCallback(() => {
     if (!accountProfile) {
-      return;
+      return false;
     }
 
     setFormData(current => ({
@@ -115,10 +120,12 @@ export function useContactForm() {
       lastName: accountProfile.lastName || current.lastName,
       email: accountProfile.email || current.email,
     }));
+
+    setAccountPrefillState("success");
+    window.setTimeout(() => setAccountPrefillState("idle"), 2500);
+
+    return true;
   }, [accountProfile]);
-
-
-
 
   const getButtonState = useCallback(
     (mode: ContactMode) => {
@@ -294,6 +301,7 @@ export function useContactForm() {
     otherButtonState: otherSubmit.buttonState,
     isSignedIn,
     accountProfile,
+    accountPrefillState,
     applyAccountProfile,
     handleMessageSubmit,
     handleCallbackSubmit,

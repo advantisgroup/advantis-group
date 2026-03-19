@@ -161,10 +161,13 @@
       "signedInAs": "Connecté en tant que {email}",
       "emailNote": "Vous pouvez tout de même remplacer l’e-mail du formulaire par une adresse d’entreprise si c’est mieux pour le suivi. Nous garderons les deux pour plus de clarté.",
       "useAccount": "Utiliser les infos de mon compte",
+      "useAccountSuccess": "Ajouté au formulaire",
       "signedOutTitle": "Envoyer vos formulaires plus vite ?",
       "signedOutDescription": "Connectez-vous d’abord pour préremplir automatiquement vos coordonnées et retrouver toutes vos demandes envoyées dans votre compte.",
       "signInCta": "Se connecter pour préremplir",
-      "storedAccountNote": "Lorsque vous envoyez une demande en étant connecté, nous enregistrons à la fois votre compte connecté et l’e-mail saisi dans le formulaire pour éviter toute ambiguïté."
+      "storedAccountNote": "Lorsque vous envoyez une demande en étant connecté, nous enregistrons à la fois votre compte connecté et l’e-mail saisi dans le formulaire pour éviter toute ambiguïté.",
+      "successNotice": "Vos informations de compte figurent maintenant dans le formulaire ci-dessous.",
+      "scrollNotice": "Vos informations de compte ont été ajoutées au formulaire ci-dessous."
     }
   },
   "about": {
@@ -411,6 +414,7 @@
     "signUp": "Créer un compte",
     "signedIn": "Connecté avec Clerk",
     "accountCta": "Gérer le compte",
+    "signOut": "Se déconnecter",
     "signInTitle": "Bon retour chez Advantis Group",
     "signInSubtitle": "Connectez-vous avec Clerk pour gérer votre profil, vos paramètres de sécurité et les futures expériences protégées depuis un seul endroit.",
     "signUpTitle": "Créez votre compte Advantis",
@@ -426,7 +430,7 @@
       "title": "Vos demandes",
       "subtitle": "Consultez les formulaires de contact envoyés pendant votre session et voyez quelle adresse e-mail et quelles informations d’entreprise vous avez partagées.",
       "newSubmissionCta": "Envoyer une autre demande",
-      "accountCta": "Retour au compte",
+      "accountCta": "Gérer le compte",
       "loading": "Chargement de vos demandes…",
       "errorTitle": "Impossible de charger vos demandes.",
       "errorDescription": "Veuillez réessayer dans un instant.",
