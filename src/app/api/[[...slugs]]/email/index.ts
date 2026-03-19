@@ -1,15 +1,18 @@
+import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
-import { api } from "@/../convex/_generated/api";
 import { EmailTemplate } from "@/components/email/email-template";
+
+import { api } from "@/../convex/_generated/api";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const convex = process.env.NEXT_PUBLIC_CONVEX_URL
   ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
   : null;
+
 
 export const email = new Elysia().post(
   "/send",
@@ -25,49 +28,53 @@ export const email = new Elysia().post(
       phone,
       locale,
       topic,
+      company,
+      submissionType,
+      desiredDateTime,
+      notes,
+      accountEmail,
+      accountName,
     } = body;
 
-    // Log attempt
-    if (convex) {
-      try {
-        // We can't insert before sending because we want the status, but we could log "sending" state.
-        // For now, let's just log after attempt.
-      } catch (e) {
-        console.error("Failed to log to convex", e);
-      }
-    }
+    const { userId } = await auth();
 
     try {
       const { data, error } = await resend.emails.send({
         from: `Advantis Group <${process.env.NEXT_PUBLIC_EMAIL_ADRESS}>`,
         to: adresses,
-        bcc: bcc,
-        cc: cc,
-        subject: subject,
+        bcc,
+        cc,
+        subject,
         react: EmailTemplate({
           firstName,
           lastName,
           message,
-          locale: locale,
+          locale,
           subject,
           topic,
         }),
       });
 
       const status = error ? "failed" : "sent";
-      const errorMsg = error
-        ? error.message || "Failed to send email"
-        : undefined;
+      const errorMsg = error ? error.message || "Failed to send email" : undefined;
 
       if (convex) {
         try {
           await convex.mutation(api.emails.saveEmail, {
             firstName,
             lastName,
-            phone: phone || "unknown",
-            email: cc?.[0] || "unknown", // Assuming the first CC is the user's email
+            phone: phone || "",
+            email: cc?.[0] || "",
             subject,
             message,
+            company: company || "",
+            submissionType,
+            topic: topic || "",
+            desiredDateTime: desiredDateTime || "",
+            notes: notes || "",
+            accountEmail,
+            accountName,
+            clerkUserId: userId || "",
             status,
             error: errorMsg,
             messageId: data?.id,
@@ -102,10 +109,18 @@ export const email = new Elysia().post(
           await convex.mutation(api.emails.saveEmail, {
             firstName,
             lastName,
-            email: cc?.[0] || "unknown",
-            phone: phone || "unknown",
+            email: cc?.[0] || "",
+            phone: phone || "",
             subject,
             message,
+            company: company || "",
+            submissionType,
+            topic: topic || "",
+            desiredDateTime: desiredDateTime || "",
+            notes: notes || "",
+            accountEmail,
+            accountName,
+            clerkUserId: userId || "",
             status: "failed",
             error: errorMessage,
           });
@@ -131,6 +146,12 @@ export const email = new Elysia().post(
       message: t.String(),
       locale: t.Optional(t.String()),
       topic: t.Optional(t.String()),
+      company: t.Optional(t.String()),
+      submissionType: t.String(),
+      desiredDateTime: t.Optional(t.String()),
+      notes: t.Optional(t.String()),
+      accountEmail: t.String(),
+      accountName: t.String(),
     }),
     response: {
       200: t.Object({

@@ -49,27 +49,24 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
     router.replace(pathname, { locale: newLocale });
   };
 
-  /* ---------------- MOBILE VERSION ---------------- */
-
   if (isMobile) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-5">
         <ClerkAuthControls isMobile />
-        {/* Language */}
-        <div className="space-y-2">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider block">
+        <div className="space-y-3">
+          <span className="block text-xs uppercase tracking-wider text-muted-foreground">
             Language
           </span>
-          <div className="flex gap-2 flex-wrap">
+          <div className="grid grid-cols-2 gap-2">
             {languages.map(language => (
               <button
                 key={language.code}
                 onClick={() => switchLanguage(language.code)}
                 className={cn(
-                  "px-3 py-1.5 rounded-md text-sm flex items-center gap-1.5 transition-all duration-200",
+                  "flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
                   language.code === locale
-                    ? "bg-advantis/20 text-advantis font-medium ring-1 ring-advantis/30"
-                    : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                    ? "border-advantis/40 bg-advantis/10 text-advantis"
+                    : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
                 )}
               >
                 <span className="text-base">{language.flag}</span>
@@ -79,32 +76,30 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
           </div>
         </div>
 
-        {/* Theme */}
-        <div className="space-y-2">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider block">
+        <div className="space-y-3">
+          <span className="block text-xs uppercase tracking-wider text-muted-foreground">
             Appearance
           </span>
-
-          <div className="flex gap-2">
-            {["light", "dark", "system"].map(mode => {
+          <div className="grid grid-cols-1 gap-2">
+            {['light', 'dark', 'system'].map(mode => {
               const Icon =
-                mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+                mode === 'light' ? Sun : mode === 'dark' ? Moon : Monitor;
 
               return (
                 <button
-                  disabled={mode === "light" || mode === "system"}
+                  disabled={mode === 'light' || mode === 'system'}
                   key={mode}
                   onClick={() => setTheme(mode)}
                   className={cn(
-                    "p-2 rounded-md transition-all duration-200 flex items-center gap-1.5",
+                    'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200',
                     mounted && theme === mode
-                      ? "bg-advantis/20 text-advantis ring-1 ring-advantis/30"
-                      : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                      ? 'border-advantis/40 bg-advantis/10 text-advantis'
+                      : 'border-border bg-card/60 text-muted-foreground hover:text-foreground'
                   )}
                 >
                   <Icon className="h-4 w-4" />
-                  <span className="text-sm capitalize">
-                    {mode === "system" ? "Auto" : mode}
+                  <span className="capitalize">
+                    {mode === 'system' ? 'Auto' : mode}
                   </span>
                 </button>
               );
@@ -115,20 +110,18 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
     );
   }
 
-  /* ---------------- DESKTOP VERSION ---------------- */
-
   return (
     <DropdownMenu onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <button
-          className="p-2 relative group/settings outline-none w-10 h-10 flex items-center justify-center"
+          className="relative flex h-10 w-10 items-center justify-center p-2 outline-none group/settings"
           aria-label="Settings"
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <div className="absolute inset-0 opacity-0 group-hover/settings:opacity-100 transition-opacity duration-300 blur-md bg-advantis/10 rounded-full" />
+          <div className="absolute inset-0 rounded-full bg-advantis/10 opacity-0 blur-md transition-opacity duration-300 group-hover/settings:opacity-100" />
 
-          <div className="flex flex-col gap-0.75 items-center justify-center relative z-10">
+          <div className="relative z-10 flex flex-col items-center justify-center gap-0.75">
             {[0, 1, 2].map(row => (
               <motion.div
                 key={row}
@@ -152,10 +145,8 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                   <motion.span
                     key={dot}
                     className={cn(
-                      "block w-1 h-1 rounded-full bg-foreground",
-                      isOpen
-                        ? "bg-advantis"
-                        : "group-hover/settings:bg-advantis"
+                      'block h-1 w-1 rounded-full bg-foreground',
+                      isOpen ? 'bg-advantis' : 'group-hover/settings:bg-advantis'
                     )}
                     animate={{
                       x:
@@ -180,36 +171,32 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
 
       <DropdownMenuContent
         align="end"
-        className="w-56 p-0 overflow-hidden border-none bg-transparent shadow-none"
+        className="w-72 overflow-hidden border-none bg-transparent p-0 shadow-none"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.8, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: -10 }}
-          transition={{ type: "spring", stiffness: 350, damping: 25 }}
-          className="bg-popover border border-border rounded-md p-2 shadow-md"
+          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          className="rounded-2xl border border-border bg-popover p-3 shadow-md"
         >
-          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider">
-            {t("settings")}
-          </DropdownMenuLabel>
-
           <ClerkAuthControls />
 
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="my-3" />
 
-          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider mt-2">
+          <DropdownMenuLabel className="mt-1 px-2 text-xs font-normal uppercase tracking-wider text-muted-foreground">
             Language
           </DropdownMenuLabel>
 
-          <div className="grid grid-cols-2 gap-1 mb-2">
+          <div className="mb-2 mt-2 grid grid-cols-2 gap-2">
             {languages.map(language => (
               <DropdownMenuItem
                 key={language.code}
                 onClick={() => switchLanguage(language.code)}
                 className={cn(
-                  "cursor-pointer flex items-center justify-center gap-2",
+                  'flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent py-2',
                   language.code === locale &&
-                    "bg-accent text-accent-foreground font-medium"
+                    'border-advantis/30 bg-advantis/10 font-medium text-advantis'
                 )}
               >
                 <span className="text-lg">{language.flag}</span>
@@ -218,35 +205,35 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
             ))}
           </div>
 
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="my-3" />
 
-          <DropdownMenuLabel className="text-xs font-normal text-muted-foreground uppercase tracking-wider mt-2">
+          <DropdownMenuLabel className="mt-1 px-2 text-xs font-normal uppercase tracking-wider text-muted-foreground">
             Appearance
           </DropdownMenuLabel>
 
-          <div className="flex flex-col gap-1">
-            {["light", "dark", "system"].map(mode => {
+          <div className="mt-2 flex flex-col gap-2">
+            {['light', 'dark', 'system'].map(mode => {
               const Icon =
-                mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+                mode === 'light' ? Sun : mode === 'dark' ? Moon : Monitor;
 
               return (
                 <DropdownMenuItem
-                  disabled={mode === "light" || mode === "system"}
+                  disabled={mode === 'light' || mode === 'system'}
                   key={mode}
                   onClick={() => setTheme(mode)}
-                  className="cursor-pointer"
+                  className="cursor-pointer rounded-xl py-2"
                 >
                   <Icon className="mr-2 h-4 w-4" />
                   <span className="capitalize">
-                    {mode === "system" ? "System" : mode}{" "}
-                    {mode === "light"
-                      ? "(Disabled)"
-                      : mode === "system"
-                        ? "(Disabled)"
-                        : ""}
+                    {mode === 'system' ? 'System' : mode}{' '}
+                    {mode === 'light'
+                      ? '(Disabled)'
+                      : mode === 'system'
+                        ? '(Disabled)'
+                        : ''}
                   </span>
                   {mounted && theme === mode && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-advantis" />
+                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-advantis" />
                   )}
                 </DropdownMenuItem>
               );

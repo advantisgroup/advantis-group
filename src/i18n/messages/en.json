@@ -153,6 +153,18 @@
       "subject": "Subject",
       "subjectPlaceholder": "Enter a specific subject",
       "optional": "optional"
+    },
+    "accountHelper": {
+      "badge": "Signed-in shortcut",
+      "title": "Use your current account details",
+      "description": "If you are reaching out from your own Clerk account, we can prefill your name and email so sending a contact request is faster.",
+      "signedInAs": "Signed in as {email}",
+      "emailNote": "You can still replace the form email with a company address if that is the best address for follow-up. We will store both for clarity.",
+      "useAccount": "Use my account details",
+      "signedOutTitle": "Want faster contact forms?",
+      "signedOutDescription": "Sign in first and we can prefill your contact details automatically and keep your submitted inquiries together in your account.",
+      "signInCta": "Sign in to prefill",
+      "storedAccountNote": "When you submit while signed in, we store both your logged-in account and the contact email you entered so follow-up stays clear."
     }
   },
   "about": {
@@ -406,6 +418,37 @@
     "accountBadge": "Account center",
     "accountTitle": "Your account",
     "accountSubtitle": "Manage your profile, security settings, and active sessions in Clerk’s hosted account center.",
-    "signInRequired": "Please sign in first to access your account settings."
+    "signInRequired": "Please sign in first to access your account settings.",
+    "submissionsCta": "View submissions",
+    "contactCta": "Send a new inquiry",
+    "submissions": {
+      "badge": "Submission history",
+      "title": "Your inquiries",
+      "subtitle": "Review the contact forms you sent while signed in and keep track of which email address and company details you shared with us.",
+      "newSubmissionCta": "Submit another inquiry",
+      "accountCta": "Back to account",
+      "loading": "Loading your submissions…",
+      "errorTitle": "We could not load your submissions.",
+      "errorDescription": "Please try again in a moment.",
+      "emptyTitle": "No submissions yet",
+      "emptyDescription": "Once you send a contact form while signed in, it will appear here with its status and submitted details.",
+      "contactEmail": "Contact email used",
+      "accountEmail": "Signed-in account",
+      "company": "Company",
+      "desiredTime": "Requested callback time",
+      "message": "Message",
+      "topic": "Topic",
+      "notes": "Notes",
+      "deliveryIssue": "Delivery issue",
+      "types": {
+        "message": "Message",
+        "callback": "Callback",
+        "other": "Other inquiry"
+      },
+      "status": {
+        "sent": "Sent",
+        "failed": "Needs attention"
+      }
+    }
   }
 }

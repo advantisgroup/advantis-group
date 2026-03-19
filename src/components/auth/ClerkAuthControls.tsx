@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
-import { LogIn, UserRound } from "lucide-react";
+import { LogIn, ReceiptText, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -30,101 +30,103 @@ export const ClerkAuthControls = ({
     );
   }, [t, user]);
 
-  if (isMobile) {
-    return (
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <span className="block text-xs uppercase tracking-wider text-muted-foreground">
-            {t("menuLabel")}
-          </span>
+  const accountEmail = user?.primaryEmailAddress?.emailAddress;
 
-          {isSignedIn ? (
-            <div className="space-y-3 rounded-xl border border-border bg-card/60 p-3">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{displayName}</p>
-                  <p className="text-xs text-muted-foreground">{t("signedIn")}</p>
-                </div>
-                <UserButton />
-              </div>
-              <Button asChild className="w-full">
-                <Link href="/account" locale={locale}>
-                  {t("accountCta")}
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3 rounded-xl border border-border bg-card/60 p-3">
-              <p className="text-sm text-muted-foreground">{t("providerHint")}</p>
-              <div className="flex flex-col gap-2">
-                <SignInButton>
-                  <Button className="w-full">
-                    <LogIn className="mr-2 h-4 w-4" />
-                    {t("signIn")}
-                  </Button>
-                </SignInButton>
-                <SignUpButton>
-                  <Button variant="outline" className="w-full">
-                    <UserRound className="mr-2 h-4 w-4" />
-                    {t("signUp")}
-                  </Button>
-                </SignUpButton>
-              </div>
-              <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                <Link href="/sign-in" locale={locale}>{t("signInPageCta")}</Link>
-                <span>•</span>
-                <Link href="/sign-up" locale={locale}>{t("signUpPageCta")}</Link>
-              </div>
-            </div>
-          )}
+  if (isMobile) {
+    return isSignedIn ? (
+      <div className="rounded-2xl border border-border bg-card/70 p-4 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-base font-semibold text-foreground">{displayName}</p>
+            {accountEmail ? (
+              <p className="truncate text-sm text-muted-foreground">{accountEmail}</p>
+            ) : null}
+            <p className="mt-1 text-xs uppercase tracking-[0.2em] text-advantis">
+              {t("signedIn")}
+            </p>
+          </div>
+          <UserButton />
+        </div>
+        <div className="mt-4 grid gap-2">
+          <Button asChild className="w-full">
+            <Link href="/account" locale={locale}>
+              {t("accountCta")}
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="w-full">
+            <Link href="/account/submissions" locale={locale}>
+              <ReceiptText className="mr-2 h-4 w-4" />
+              {t("submissionsCta")}
+            </Link>
+          </Button>
+        </div>
+      </div>
+    ) : (
+      <div className="rounded-2xl border border-border bg-card/70 p-4 shadow-sm">
+        <p className="text-sm leading-6 text-muted-foreground">{t("providerHint")}</p>
+        <div className="mt-4 flex flex-col gap-2">
+          <SignInButton>
+            <Button className="w-full">
+              <LogIn className="mr-2 h-4 w-4" />
+              {t("signIn")}
+            </Button>
+          </SignInButton>
+          <SignUpButton>
+            <Button variant="outline" className="w-full">
+              <UserRound className="mr-2 h-4 w-4" />
+              {t("signUp")}
+            </Button>
+          </SignUpButton>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-2">
-      <span className="block px-2 text-xs font-normal uppercase tracking-wider text-muted-foreground">
-        {t("menuLabel")}
-      </span>
-
-      {isSignedIn ? (
-        <div className="rounded-xl border border-border bg-card/60 p-3">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
-              <p className="text-xs text-muted-foreground">{t("signedIn")}</p>
-            </div>
-            <UserButton />
-          </div>
-          <Button asChild size="sm" className="w-full">
-            <Link href="/account" locale={locale}>
-              {t("accountCta")}
-            </Link>
+  return isSignedIn ? (
+    <div className="rounded-[1.75rem] border border-border bg-card/80 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-base font-semibold text-foreground">{displayName}</p>
+          {accountEmail ? (
+            <p className="truncate text-sm text-muted-foreground">{accountEmail}</p>
+          ) : null}
+          <p className="mt-1 text-xs uppercase tracking-[0.2em] text-advantis">
+            {t("signedIn")}
+          </p>
+        </div>
+        <div className="shrink-0">
+          <UserButton />
+        </div>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <Button asChild size="sm" className="w-full">
+          <Link href="/account" locale={locale}>
+            {t("accountCta")}
+          </Link>
+        </Button>
+        <Button asChild size="sm" variant="outline" className="w-full">
+          <Link href="/account/submissions" locale={locale}>
+            <ReceiptText className="mr-2 h-4 w-4" />
+            {t("submissionsCta")}
+          </Link>
+        </Button>
+      </div>
+    </div>
+  ) : (
+    <div className="rounded-[1.75rem] border border-border bg-card/80 p-4 shadow-sm">
+      <p className="text-sm leading-6 text-muted-foreground">{t("providerHint")}</p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <SignInButton>
+          <Button size="sm" className="w-full">
+            {t("signIn")}
           </Button>
-        </div>
-      ) : (
-        <div className="space-y-3 px-2">
-          <p className="text-xs leading-5 text-muted-foreground">{t("providerHint")}</p>
-          <div className="grid grid-cols-2 gap-2">
-            <SignInButton>
-              <Button size="sm" className="w-full">
-                {t("signIn")}
-              </Button>
-            </SignInButton>
-            <SignUpButton>
-              <Button size="sm" variant="outline" className="w-full">
-                {t("signUp")}
-              </Button>
-            </SignUpButton>
-          </div>
-          <div className="flex gap-2 text-xs text-muted-foreground">
-            <Link href="/sign-in" locale={locale}>{t("signInPageCta")}</Link>
-            <span>•</span>
-            <Link href="/sign-up" locale={locale}>{t("signUpPageCta")}</Link>
-          </div>
-        </div>
-      )}
+        </SignInButton>
+        <SignUpButton>
+          <Button size="sm" variant="outline" className="w-full">
+            {t("signUp")}
+          </Button>
+        </SignUpButton>
+      </div>
     </div>
   );
 };

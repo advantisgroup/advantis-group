@@ -17,6 +17,36 @@ export type ContactMode = "message" | "callback" | "other";
 export type ButtonState = "idle" | "loading" | "success" | "error";
 export type InquiryTopic = "withdrawal" | "question" | "legal";
 
+export interface AccountContactProfile {
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+}
+
+export interface ContactSubmissionRecord {
+  _id: string;
+  _creationTime: number;
+  messageId?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  company: string;
+  submissionType: string;
+  topic: string;
+  desiredDateTime: string;
+  notes: string;
+  accountEmail: string;
+  accountName: string;
+  clerkUserId: string;
+  sentAt: number;
+  status: string;
+  error?: string;
+}
+
 export interface ContactInfoItem {
   icon: LucideIcon;
   label: string;

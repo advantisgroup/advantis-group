@@ -1,7 +1,7 @@
-/* eslint-disable no-console */
 "use client";
-import { type FormEvent, useState, useCallback } from "react";
+import { type FormEvent, useState, useCallback, useMemo } from "react";
 
+import { useUser } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 import { type z } from "zod";
 
@@ -11,6 +11,7 @@ import {
   CallbackFormDataSchema,
 } from "@/lib/schema";
 import {
+  type AccountContactProfile,
   type FormData,
   type OtherFormData,
   type CallbackFormData,
@@ -53,8 +54,8 @@ const initialCallbackFormData: CallbackFormData = {
 export function useContactForm() {
   const tMessages = useTranslations("contact.messages");
   const tOtherForm = useTranslations("contact.otherForm");
+  const { user, isSignedIn } = useUser();
 
-  // Form data states
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [otherFormData, setOtherFormData] =
     useState<OtherFormData>(initialOtherFormData);
@@ -62,7 +63,6 @@ export function useContactForm() {
     initialCallbackFormData
   );
 
-  // Validation errors
   const [errors, setErrors] = useState<
     z.ZodFlattenedError<FormData>["fieldErrors"]
   >({});
@@ -73,12 +73,53 @@ export function useContactForm() {
     z.ZodFlattenedError<CallbackFormData>["fieldErrors"]
   >({});
 
-  // Email submission hooks for each form type
   const messageSubmit = useEmailSubmit();
   const callbackSubmit = useEmailSubmit();
   const otherSubmit = useEmailSubmit();
 
-  // Get button state by contact mode
+  const accountProfile = useMemo<AccountContactProfile | null>(() => {
+    if (!isSignedIn || !user) {
+      return null;
+    }
+
+    return {
+      email: user.primaryEmailAddress?.emailAddress || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
+      fullName: user.fullName || [user.firstName, user.lastName].filter(Boolean).join(" "),
+    };
+  }, [isSignedIn, user]);
+
+  const applyAccountProfile = useCallback(() => {
+    if (!accountProfile) {
+      return;
+    }
+
+    setFormData(current => ({
+      ...current,
+      firstName: accountProfile.firstName || current.firstName,
+      lastName: accountProfile.lastName || current.lastName,
+      email: accountProfile.email || current.email,
+    }));
+
+    setOtherFormData(current => ({
+      ...current,
+      firstName: accountProfile.firstName || current.firstName,
+      lastName: accountProfile.lastName || current.lastName,
+      email: accountProfile.email || current.email,
+    }));
+
+    setCallbackFormData(current => ({
+      ...current,
+      firstName: accountProfile.firstName || current.firstName,
+      lastName: accountProfile.lastName || current.lastName,
+      email: accountProfile.email || current.email,
+    }));
+  }, [accountProfile]);
+
+
+
+
   const getButtonState = useCallback(
     (mode: ContactMode) => {
       switch (mode) {
@@ -99,7 +140,6 @@ export function useContactForm() {
     ]
   );
 
-  // Validation helper
   const validateAndShowError = useCallback(
     <T>(
       schema: z.ZodType<T>,
@@ -116,8 +156,6 @@ export function useContactForm() {
         );
         setButtonError();
 
-        console.log(result);
-
         return false;
       }
 
@@ -127,7 +165,6 @@ export function useContactForm() {
     []
   );
 
-  // Message form submit handler
   const handleMessageSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -151,6 +188,8 @@ export function useContactForm() {
           message: formData.message,
           email: formData.email,
           phone: formData.phone,
+          company: formData.company,
+          submissionType: "message",
           subject: `User Request - Message`,
         },
         "User - Message Submitted"
@@ -159,7 +198,6 @@ export function useContactForm() {
     [formData, messageSubmit, validateAndShowError, tMessages]
   );
 
-  // Callback form submit handler
   const handleCallbackSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -188,6 +226,10 @@ export function useContactForm() {
           message,
           phone: callbackFormData.phone,
           email: callbackFormData.email,
+          company: callbackFormData.company,
+          submissionType: "callback",
+          desiredDateTime: callbackFormData.dateTime,
+          notes: callbackFormData.notes,
           subject: `User Request - Callback`,
         },
         "User - Callback Submitted"
@@ -196,7 +238,6 @@ export function useContactForm() {
     [callbackFormData, callbackSubmit, validateAndShowError, tMessages]
   );
 
-  // Other form submit handler
   const handleOtherSubmit = useCallback(
     async (e: FormEvent) => {
       e.preventDefault();
@@ -227,6 +268,7 @@ export function useContactForm() {
           message: otherFormData.message,
           email: otherFormData.email,
           phone: otherFormData.phone,
+          submissionType: "other",
           subject: otherFormData.subject,
           topic: topicValue,
         },
@@ -237,26 +279,22 @@ export function useContactForm() {
   );
 
   return {
-    // Form data
     formData,
     setFormData,
     otherFormData,
     setOtherFormData,
     callbackFormData,
     setCallbackFormData,
-
-    // Errors
     errors,
     otherErrors,
     callbackErrors,
-
-    // Button states
     getButtonState,
     messageButtonState: messageSubmit.buttonState,
     callbackButtonState: callbackSubmit.buttonState,
     otherButtonState: otherSubmit.buttonState,
-
-    // Submit handlers
+    isSignedIn,
+    accountProfile,
+    applyAccountProfile,
     handleMessageSubmit,
     handleCallbackSubmit,
     handleOtherSubmit,

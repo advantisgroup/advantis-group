@@ -2,6 +2,7 @@
 "use client";
 import { useState, useCallback } from "react";
 
+import { useUser } from "@clerk/nextjs";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
@@ -18,6 +19,10 @@ interface EmailPayload {
   email: string;
   phone?: string;
   topic?: string;
+  company?: string;
+  submissionType: "message" | "callback" | "other";
+  desiredDateTime?: string;
+  notes?: string;
 }
 
 interface UseEmailSubmitOptions {
@@ -30,6 +35,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
   const { onSuccess, onError, resetDelayMs = 3000 } = options;
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
   const tMessages = useTranslations("contact.messages");
+  const { user } = useUser();
 
   const showErrorToast = useCallback(
     (description: string) => {
@@ -63,9 +69,13 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           subject: payload.subject,
           locale: locale || "de",
           topic: payload.topic,
+          company: payload.company,
+          submissionType: payload.submissionType,
+          desiredDateTime: payload.desiredDateTime,
+          notes: payload.notes,
+          accountEmail: user?.primaryEmailAddress?.emailAddress || "",
+          accountName: user?.fullName || "",
         });
-
-        console.log(response);
 
         if (response.status === 500) {
           setButtonState("error");
@@ -107,7 +117,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         return false;
       }
     },
-    [onSuccess, onError, showErrorToast, resetButtonState, tMessages]
+    [onSuccess, onError, resetButtonState, showErrorToast, tMessages, user]
   );
 
   return {

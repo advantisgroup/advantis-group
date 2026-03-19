@@ -1,7 +1,11 @@
 "use client";
 
 import { UserProfile } from "@clerk/nextjs";
+import { ReceiptText } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+
+import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/navigation";
 
 export const ClerkAccountPage = () => {
   const locale = useLocale();
@@ -9,7 +13,7 @@ export const ClerkAccountPage = () => {
 
   return (
     <section className="min-h-[calc(100vh-4rem)] bg-background px-4 py-28">
-      <div className="mx-auto max-w-5xl space-y-4">
+      <div className="mx-auto max-w-6xl space-y-6">
         <div className="space-y-3">
           <span className="inline-flex rounded-full border border-advantis/30 bg-advantis/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-advantis">
             {t("accountBadge")}
@@ -22,8 +26,26 @@ export const ClerkAccountPage = () => {
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-[2rem] border border-border bg-card/70 p-4 shadow-2xl shadow-black/20 backdrop-blur md:p-6">
-          <UserProfile path={`/${locale}/account`} routing="path" />
+        <div className="flex flex-wrap gap-3">
+          <Button asChild variant="outline">
+            <Link href="/account/submissions" locale={locale}>
+              <ReceiptText className="mr-2 h-4 w-4" />
+              {t("submissionsCta")}
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/contact" locale={locale}>
+              {t("contactCta")}
+            </Link>
+          </Button>
+        </div>
+
+        <div className="rounded-[2rem] border border-border bg-card/70 p-4 shadow-2xl shadow-black/20 backdrop-blur md:p-6 lg:p-8">
+          <div className="mx-auto flex w-full justify-center">
+            <div className="w-full max-w-[1100px] overflow-hidden rounded-[1.5rem] bg-white">
+              <UserProfile path={`/${locale}/account`} routing="path" />
+            </div>
+          </div>
         </div>
       </div>
     </section>

@@ -1,9 +1,11 @@
 "use client";
 import React, { useState } from "react";
 
-import { Mail, Phone, MapPin } from "lucide-react";
+import { SignInButton, useUser } from "@clerk/nextjs";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { AccountContactHelper } from "@/components/contact/AccountContactHelper";
 import { CallbackForm } from "@/components/contact/CallbackForm";
 import {
   ContactInfoDesktop,
@@ -28,8 +30,6 @@ import { type ContactInfoItem, type ContactMode } from "@/types/contact";
 
 const ALLOW_SUBMISSIONS = process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS === "true";
 
-// Per-locale submission texts. Static map so Next.js can analyse each process.env ref.
-// Fallback chain: locale-specific → base NEXT_PUBLIC_SUBMISSION_TEXT → undefined
 const SUBMISSION_TEXT_BY_LOCALE: Record<string, string | undefined> = {
   en: process.env.NEXT_PUBLIC_SUBMISSION_TEXT,
   de: process.env.NEXT_PUBLIC_SUBMISSION_TEXT_DE,
@@ -40,8 +40,10 @@ const SUBMISSION_TEXT_BY_LOCALE: Record<string, string | undefined> = {
 export default function Kontakt() {
   const t = useTranslations("contact");
   const tMessages = useTranslations("contact.messages");
+  const tAccountHelper = useTranslations("contact.accountHelper");
   const locale = useLocale();
   const isMobile = useIsMobile();
+  const { isSignedIn } = useUser();
 
   const submissionText =
     SUBMISSION_TEXT_BY_LOCALE[locale] ??
@@ -61,6 +63,8 @@ export default function Kontakt() {
     otherErrors,
     callbackErrors,
     getButtonState,
+    accountProfile,
+    applyAccountProfile,
     handleMessageSubmit,
     handleCallbackSubmit,
     handleOtherSubmit,
@@ -156,27 +160,44 @@ export default function Kontakt() {
 
   return (
     <div className="min-h-screen">
-      <main className="container mx-auto px-4 pt-24 pb-24 space-y-16 md:space-y-24">
-        {/* Hero Section */}
-        <section className="max-w-4xl mx-auto space-y-6 md:space-y-8 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold">
-            {t("title")}
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+      <main className="container mx-auto space-y-16 px-4 pb-24 pt-24 md:space-y-24">
+        <section className="mx-auto max-w-4xl space-y-6 text-center md:space-y-8">
+          <h1 className="text-4xl font-bold md:text-5xl lg:text-7xl">{t("title")}</h1>
+          <p className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl">
             {t("subtitle")}
           </p>
         </section>
 
-        {/* Contact Section */}
-        <section className="max-w-6xl mx-auto space-y-8 md:space-y-12">
-          {/* Contact Info Cards */}
+        <section className="mx-auto max-w-6xl space-y-8 md:space-y-12">
           {isMobile ? (
             <ContactInfoMobile items={contactInfoData} />
           ) : (
             <ContactInfoDesktop items={contactInfoData} />
           )}
 
-          {/* Submission guard banner — shown only when submissions are disabled */}
+          {accountProfile ? (
+            <AccountContactHelper
+              accountProfile={accountProfile}
+              onUseAccount={applyAccountProfile}
+            />
+          ) : (
+            <div className="rounded-3xl border border-border bg-card/70 p-5 shadow-sm">
+              <h2 className="text-xl font-semibold text-foreground">
+                {tAccountHelper("signedOutTitle")}
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                {tAccountHelper("signedOutDescription")}
+              </p>
+              <div className="mt-4">
+                <SignInButton>
+                  <button type="button" className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
+                    {tAccountHelper("signInCta")}
+                  </button>
+                </SignInButton>
+              </div>
+            </div>
+          )}
+
           {!ALLOW_SUBMISSIONS && (
             <SubmissionBanner
               text={submissionText}
@@ -184,8 +205,7 @@ export default function Kontakt() {
             />
           )}
 
-          {/* Contact Form Container */}
-          <div className="border border-border rounded-b-lg overflow-hidden">
+          <div className="overflow-hidden rounded-[2rem] border border-border bg-card/30 shadow-2xl shadow-black/10">
             <TabNavigation
               contactMode={contactMode}
               onModeChange={setContactMode}
@@ -194,14 +214,17 @@ export default function Kontakt() {
             <div
               className={`grid ${isMobile ? "grid-cols-1" : "md:grid-cols-2 divide-x"} divide-border`}
             >
-              <Card
-                className={`border-0 rounded-none ${isMobile ? "border-b" : ""}`}
-              >
+              <Card className={`border-0 rounded-none ${isMobile ? "border-b" : ""}`}>
                 <CardHeader>
                   <CardTitle className="text-xl md:text-2xl">
                     {getFormTitle()}
                   </CardTitle>
                   <CardDescription>{getFormDescription()}</CardDescription>
+                  {isSignedIn ? (
+                    <p className="rounded-xl border border-advantis/20 bg-advantis/5 px-3 py-2 text-sm text-muted-foreground">
+                      {tAccountHelper("storedAccountNote")}
+                    </p>
+                  ) : null}
                 </CardHeader>
                 <CardContent>{renderForm()}</CardContent>
               </Card>
@@ -212,7 +235,6 @@ export default function Kontakt() {
         </section>
       </main>
 
-      {/* Notification sign-up modal */}
       <NotifyModal open={notifyOpen} onOpenChange={setNotifyOpen} />
     </div>
   );
