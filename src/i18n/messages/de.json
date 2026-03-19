@@ -161,10 +161,13 @@
       "signedInAs": "Angemeldet als {email}",
       "emailNote": "Du kannst die Formular-E-Mail trotzdem durch eine Firmenadresse ersetzen, wenn sie besser für die Rückmeldung ist. Zur Klarheit speichern wir beide.",
       "useAccount": "Meine Kontodaten verwenden",
+      "useAccountSuccess": "In das Formular übernommen",
       "signedOutTitle": "Kontaktformulare schneller ausfüllen?",
       "signedOutDescription": "Melde dich zuerst an. Dann füllen wir deine Kontaktdaten automatisch voraus und halten deine gesendeten Anfragen im Konto zusammen.",
       "signInCta": "Zum Vorausfüllen anmelden",
-      "storedAccountNote": "Wenn du angemeldet sendest, speichern wir sowohl dein eingeloggtes Konto als auch die im Formular eingetragene Kontakt-E-Mail für eine klare Zuordnung."
+      "storedAccountNote": "Wenn du angemeldet sendest, speichern wir sowohl dein eingeloggtes Konto als auch die im Formular eingetragene Kontakt-E-Mail für eine klare Zuordnung.",
+      "successNotice": "Deine angemeldeten Daten stehen jetzt im Formular unten.",
+      "scrollNotice": "Deine angemeldeten Daten wurden unten ins Formular übernommen."
     }
   },
   "about": {
@@ -411,6 +414,7 @@
     "signUp": "Konto erstellen",
     "signedIn": "Mit Clerk angemeldet",
     "accountCta": "Konto verwalten",
+    "signOut": "Abmelden",
     "signInTitle": "Willkommen zurück bei der Advantis Group",
     "signInSubtitle": "Melde dich mit Clerk an, um dein Profil, deine Sicherheitseinstellungen und künftige geschützte Bereiche zentral zu verwalten.",
     "signUpTitle": "Erstelle dein Advantis-Konto",
@@ -426,7 +430,7 @@
       "title": "Deine Anfragen",
       "subtitle": "Prüfe die Kontaktformulare, die du während deiner Anmeldung gesendet hast, und behalte im Blick, welche E-Mail-Adresse und Firmendaten du verwendet hast.",
       "newSubmissionCta": "Weitere Anfrage senden",
-      "accountCta": "Zurück zum Konto",
+      "accountCta": "Konto verwalten",
       "loading": "Deine Anfragen werden geladen…",
       "errorTitle": "Deine Anfragen konnten nicht geladen werden.",
       "errorDescription": "Bitte versuche es gleich noch einmal.",
