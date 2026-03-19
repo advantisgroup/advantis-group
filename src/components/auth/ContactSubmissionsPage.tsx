@@ -2,7 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { AlertCircle, Building2, Clock3, Mail, MessageSquareText } from "lucide-react";
+import { useClerk } from "@clerk/nextjs";
+import {
+  AlertCircle,
+  Building2,
+  Clock3,
+  Mail,
+  MessageSquareText,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -12,8 +19,11 @@ import { type ContactSubmissionRecord } from "@/types/contact";
 export const ContactSubmissionsPage = () => {
   const locale = useLocale();
   const t = useTranslations("auth.submissions");
+  const { openUserProfile } = useClerk();
   const [submissions, setSubmissions] = useState<ContactSubmissionRecord[]>([]);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "error">(
+    "loading"
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -69,10 +79,8 @@ export const ContactSubmissionsPage = () => {
               {t("newSubmissionCta")}
             </Link>
           </Button>
-          <Button asChild>
-            <Link href="/account" locale={locale}>
-              {t("accountCta")}
-            </Link>
+          <Button type="button" onClick={() => void openUserProfile()}>
+            {t("accountCta")}
           </Button>
         </div>
 
@@ -86,13 +94,17 @@ export const ContactSubmissionsPage = () => {
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
                 <p className="font-medium">{t("errorTitle")}</p>
-                <p className="mt-1 text-sm text-red-100/80">{t("errorDescription")}</p>
+                <p className="mt-1 text-sm text-red-100/80">
+                  {t("errorDescription")}
+                </p>
               </div>
             </div>
           </div>
         ) : submissions.length === 0 ? (
           <div className="rounded-[2rem] border border-border bg-card/70 p-8 shadow-2xl shadow-black/20 backdrop-blur">
-            <p className="text-lg font-medium text-foreground">{t("emptyTitle")}</p>
+            <p className="text-lg font-medium text-foreground">
+              {t("emptyTitle")}
+            </p>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               {t("emptyDescription")}
             </p>
@@ -114,7 +126,9 @@ export const ContactSubmissionsPage = () => {
                         {t(`status.${submission.status}`)}
                       </span>
                     </div>
-                    <h2 className="text-2xl font-semibold text-foreground">{submission.subject}</h2>
+                    <h2 className="text-2xl font-semibold text-foreground">
+                      {submission.subject}
+                    </h2>
                     <p className="text-sm text-muted-foreground">
                       {formatter.format(new Date(submission.sentAt))}
                     </p>
@@ -124,7 +138,9 @@ export const ContactSubmissionsPage = () => {
                     <div className="flex items-start gap-2">
                       <Mail className="mt-0.5 h-4 w-4 shrink-0" />
                       <div>
-                        <p className="font-medium text-foreground">{submission.email}</p>
+                        <p className="font-medium text-foreground">
+                          {submission.email}
+                        </p>
                         <p>{t("contactEmail")}</p>
                       </div>
                     </div>
@@ -132,7 +148,9 @@ export const ContactSubmissionsPage = () => {
                       <div className="flex items-start gap-2">
                         <Building2 className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
-                          <p className="font-medium text-foreground">{submission.company}</p>
+                          <p className="font-medium text-foreground">
+                            {submission.company}
+                          </p>
                           <p>{t("company")}</p>
                         </div>
                       </div>
@@ -141,7 +159,9 @@ export const ContactSubmissionsPage = () => {
                       <div className="flex items-start gap-2">
                         <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
-                          <p className="font-medium text-foreground">{submission.desiredDateTime}</p>
+                          <p className="font-medium text-foreground">
+                            {submission.desiredDateTime}
+                          </p>
                           <p>{t("desiredTime")}</p>
                         </div>
                       </div>
@@ -150,7 +170,9 @@ export const ContactSubmissionsPage = () => {
                       <div className="flex items-start gap-2">
                         <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
-                          <p className="font-medium text-foreground">{submission.accountEmail}</p>
+                          <p className="font-medium text-foreground">
+                            {submission.accountEmail}
+                          </p>
                           <p>{t("accountEmail")}</p>
                         </div>
                       </div>
@@ -174,7 +196,9 @@ export const ContactSubmissionsPage = () => {
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                           {t("topic")}
                         </p>
-                        <p className="mt-1 text-sm text-foreground">{submission.topic}</p>
+                        <p className="mt-1 text-sm text-foreground">
+                          {submission.topic}
+                        </p>
                       </div>
                     ) : null}
                     {submission.notes ? (
@@ -192,7 +216,9 @@ export const ContactSubmissionsPage = () => {
                         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                           {t("deliveryIssue")}
                         </p>
-                        <p className="mt-1 text-sm text-red-300">{submission.error}</p>
+                        <p className="mt-1 text-sm text-red-300">
+                          {submission.error}
+                        </p>
                       </div>
                     ) : null}
                   </div>

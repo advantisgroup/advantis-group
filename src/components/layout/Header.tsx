@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "@/i18n/navigation";
 
 import { SettingsMenu } from "./SettingsMenu";
+import { AccountMenu } from "../auth/AccountMenu";
 import { ShimmerText } from "../effects/Shimmer";
 
 export const Header = () => {
@@ -128,6 +129,7 @@ export const Header = () => {
               </li>
             ))}
           </ul>
+          <AccountMenu />
           <SettingsMenu />
         </div>
 
@@ -193,6 +195,7 @@ export const Header = () => {
               className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300"
               style={{ animationDelay: `${navLinks.length * 50}ms` }}
             >
+              <AccountMenu isMobile />
               <SettingsMenu isMobile />
             </div>
           </div>

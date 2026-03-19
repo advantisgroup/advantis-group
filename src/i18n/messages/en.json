@@ -161,10 +161,13 @@
       "signedInAs": "Signed in as {email}",
       "emailNote": "You can still replace the form email with a company address if that is the best address for follow-up. We will store both for clarity.",
       "useAccount": "Use my account details",
+      "useAccountSuccess": "Added to the form",
       "signedOutTitle": "Want faster contact forms?",
       "signedOutDescription": "Sign in first and we can prefill your contact details automatically and keep your submitted inquiries together in your account.",
       "signInCta": "Sign in to prefill",
-      "storedAccountNote": "When you submit while signed in, we store both your logged-in account and the contact email you entered so follow-up stays clear."
+      "storedAccountNote": "When you submit while signed in, we store both your logged-in account and the contact email you entered so follow-up stays clear.",
+      "successNotice": "Your signed-in details are now in the form below.",
+      "scrollNotice": "Your signed-in details were added below."
     }
   },
   "about": {
@@ -411,6 +414,7 @@
     "signUp": "Create account",
     "signedIn": "Signed in with Clerk",
     "accountCta": "Manage account",
+    "signOut": "Sign out",
     "signInTitle": "Welcome back to Advantis Group",
     "signInSubtitle": "Sign in with Clerk to manage your profile, security settings, and future protected experiences from one place.",
     "signUpTitle": "Create your Advantis account",
@@ -426,7 +430,7 @@
       "title": "Your inquiries",
       "subtitle": "Review the contact forms you sent while signed in and keep track of which email address and company details you shared with us.",
       "newSubmissionCta": "Submit another inquiry",
-      "accountCta": "Back to account",
+      "accountCta": "Manage account",
       "loading": "Loading your submissions…",
       "errorTitle": "We could not load your submissions.",
       "errorDescription": "Please try again in a moment.",
