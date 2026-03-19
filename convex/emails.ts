@@ -39,10 +39,13 @@ export const listEmailsByClerkUserId = query({
         }
 
         return await ctx.db
-            .query('emails')
-            .withIndex('by_clerkUserId_sentAt', q => q.eq('clerkUserId', args.clerkUserId))
-            .order('desc')
-            .take(50)
+  .query('emails')
+  .withIndex('by_clerkUserId_sentAt', q =>
+    q.eq('clerkUserId', args.clerkUserId)
+     .gte('sentAt', 0) 
+  )
+  .order('desc')
+  .take(50)
     },
 })
 
