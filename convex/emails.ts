@@ -1,5 +1,5 @@
 import { v } from 'convex/values'
-import { mutation } from './_generated/server'
+import { mutation, query } from './_generated/server'
 
 export const saveEmail = mutation({
     args: {
@@ -10,14 +10,39 @@ export const saveEmail = mutation({
         phone: v.string(),
         subject: v.string(),
         message: v.string(),
+        company: v.string(),
+        submissionType: v.string(),
+        topic: v.string(),
+        desiredDateTime: v.string(),
+        notes: v.string(),
+        accountEmail: v.string(),
+        accountName: v.string(),
+        clerkUserId: v.string(),
         status: v.string(),
         error: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        await ctx.db.insert('emails', {
+        return await ctx.db.insert('emails', {
             ...args,
             sentAt: Date.now(),
         })
+    },
+})
+
+export const listEmailsByClerkUserId = query({
+    args: {
+        clerkUserId: v.string(),
+    },
+    handler: async (ctx, args) => {
+        if (!args.clerkUserId) {
+            return []
+        }
+
+        return await ctx.db
+            .query('emails')
+            .withIndex('by_clerkUserId_sentAt', q => q.eq('clerkUserId', args.clerkUserId))
+            .order('desc')
+            .take(50)
     },
 })
 
@@ -55,7 +80,7 @@ export const deleteNotifyEmail = mutation({
             .first()
 
         if (!existing) {
-            return { deleted: false, email: null, error: "No email found in database matching arg" }
+            return { deleted: false, email: null, error: 'No email found in database matching arg' }
         }
 
         try {

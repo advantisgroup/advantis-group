@@ -153,6 +153,18 @@
       "subject": "Betreff",
       "subjectPlaceholder": "Geben Sie einen spezifischen Betreff ein",
       "optional": "optional"
+    },
+    "accountHelper": {
+      "badge": "Konto-Shortcut",
+      "title": "Nutze deine aktuellen Kontodaten",
+      "description": "Wenn du uns über dein aktuelles Clerk-Konto kontaktierst, können wir deinen Namen und deine E-Mail-Adresse vorausfüllen, damit die Anfrage schneller rausgeht.",
+      "signedInAs": "Angemeldet als {email}",
+      "emailNote": "Du kannst die Formular-E-Mail trotzdem durch eine Firmenadresse ersetzen, wenn sie besser für die Rückmeldung ist. Zur Klarheit speichern wir beide.",
+      "useAccount": "Meine Kontodaten verwenden",
+      "signedOutTitle": "Kontaktformulare schneller ausfüllen?",
+      "signedOutDescription": "Melde dich zuerst an. Dann füllen wir deine Kontaktdaten automatisch voraus und halten deine gesendeten Anfragen im Konto zusammen.",
+      "signInCta": "Zum Vorausfüllen anmelden",
+      "storedAccountNote": "Wenn du angemeldet sendest, speichern wir sowohl dein eingeloggtes Konto als auch die im Formular eingetragene Kontakt-E-Mail für eine klare Zuordnung."
     }
   },
   "about": {
@@ -387,5 +399,56 @@
     "rightsReserved": "Alle Rechte vorbehalten.",
     "subject": "Betreff",
     "topic": "Thema"
+  },
+  "auth": {
+    "badge": "Sicherer Zugang",
+    "menuLabel": "Konto",
+    "guest": "Gast",
+    "providerHint": "Fahre mit Apple, Google oder Microsoft über Clerk fort oder erstelle dein Konto per E-Mail.",
+    "signInPageCta": "Anmeldeseite öffnen",
+    "signUpPageCta": "Registrierungsseite öffnen",
+    "signIn": "Anmelden",
+    "signUp": "Konto erstellen",
+    "signedIn": "Mit Clerk angemeldet",
+    "accountCta": "Konto verwalten",
+    "signInTitle": "Willkommen zurück bei der Advantis Group",
+    "signInSubtitle": "Melde dich mit Clerk an, um dein Profil, deine Sicherheitseinstellungen und künftige geschützte Bereiche zentral zu verwalten.",
+    "signUpTitle": "Erstelle dein Advantis-Konto",
+    "signUpSubtitle": "Nutze Clerk für ein sicheres Konto und verwalte Profil, Anmeldemethoden und künftige Mitgliederbereiche an einem Ort.",
+    "accountBadge": "Kontozentrale",
+    "accountTitle": "Dein Konto",
+    "accountSubtitle": "Verwalte dein Profil, deine Sicherheitseinstellungen und aktive Sitzungen im gehosteten Account Center von Clerk.",
+    "signInRequired": "Bitte melde dich zuerst an, um deine Kontoeinstellungen aufzurufen.",
+    "submissionsCta": "Anfragen ansehen",
+    "contactCta": "Neue Anfrage senden",
+    "submissions": {
+      "badge": "Anfrageverlauf",
+      "title": "Deine Anfragen",
+      "subtitle": "Prüfe die Kontaktformulare, die du während deiner Anmeldung gesendet hast, und behalte im Blick, welche E-Mail-Adresse und Firmendaten du verwendet hast.",
+      "newSubmissionCta": "Weitere Anfrage senden",
+      "accountCta": "Zurück zum Konto",
+      "loading": "Deine Anfragen werden geladen…",
+      "errorTitle": "Deine Anfragen konnten nicht geladen werden.",
+      "errorDescription": "Bitte versuche es gleich noch einmal.",
+      "emptyTitle": "Noch keine Anfragen",
+      "emptyDescription": "Sobald du angemeldet ein Kontaktformular sendest, erscheint es hier mit Status und den übermittelten Angaben.",
+      "contactEmail": "Verwendete Kontakt-E-Mail",
+      "accountEmail": "Angemeldetes Konto",
+      "company": "Unternehmen",
+      "desiredTime": "Gewünschte Rückrufzeit",
+      "message": "Nachricht",
+      "topic": "Thema",
+      "notes": "Notizen",
+      "deliveryIssue": "Zustellproblem",
+      "types": {
+        "message": "Nachricht",
+        "callback": "Rückruf",
+        "other": "Sonstige Anfrage"
+      },
+      "status": {
+        "sent": "Gesendet",
+        "failed": "Benötigt Aufmerksamkeit"
+      }
+    }
   }
 }

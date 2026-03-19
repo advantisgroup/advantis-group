@@ -153,6 +153,18 @@
       "subject": "主题",
       "subjectPlaceholder": "输入具体主题",
       "optional": "可选"
+    },
+    "accountHelper": {
+      "badge": "登录捷径",
+      "title": "使用你当前的账户信息",
+      "description": "如果你正使用当前 Clerk 账户联系我们，我们可以预填姓名和邮箱，让提交更快。",
+      "signedInAs": "当前登录：{email}",
+      "emailNote": "如果后续沟通更适合使用公司邮箱，你仍然可以修改表单中的邮箱。为了避免混淆，我们会同时保存两者。",
+      "useAccount": "使用我的账户信息",
+      "signedOutTitle": "想更快提交联系表单？",
+      "signedOutDescription": "先登录，我们就能自动预填你的联系信息，并把你的咨询记录集中展示在账户中。",
+      "signInCta": "登录并预填",
+      "storedAccountNote": "登录后提交时，我们会同时记录你的登录账户和你在表单中填写的联系邮箱，方便后续跟进。"
     }
   },
   "about": {
@@ -387,5 +399,56 @@
     "rightsReserved": "版权所有。",
     "subject": "主题",
     "topic": "主题"
+  },
+  "auth": {
+    "badge": "安全访问",
+    "menuLabel": "账户",
+    "guest": "访客",
+    "providerHint": "可通过 Clerk 使用 Apple、Google 或 Microsoft 登录，也可以使用邮箱创建账户。",
+    "signInPageCta": "打开登录页",
+    "signUpPageCta": "打开注册页",
+    "signIn": "登录",
+    "signUp": "创建账户",
+    "signedIn": "已通过 Clerk 登录",
+    "accountCta": "管理账户",
+    "signInTitle": "欢迎回到 Advantis Group",
+    "signInSubtitle": "使用 Clerk 登录后，你可以在一个地方管理个人资料、安全设置以及未来的受保护体验。",
+    "signUpTitle": "创建你的 Advantis 账户",
+    "signUpSubtitle": "使用 Clerk 创建安全账户，并集中管理个人资料、登录方式以及未来的会员体验。",
+    "accountBadge": "账户中心",
+    "accountTitle": "你的账户",
+    "accountSubtitle": "在 Clerk 托管的账户中心管理你的个人资料、安全设置和活跃会话。",
+    "signInRequired": "请先登录后再访问账户设置。",
+    "submissionsCta": "查看提交记录",
+    "contactCta": "发送新咨询",
+    "submissions": {
+      "badge": "提交历史",
+      "title": "你的咨询记录",
+      "subtitle": "查看你登录后提交的联系表单，并追踪当时使用的联系邮箱和公司信息。",
+      "newSubmissionCta": "再次提交咨询",
+      "accountCta": "返回账户",
+      "loading": "正在加载你的提交记录…",
+      "errorTitle": "无法加载你的提交记录。",
+      "errorDescription": "请稍后再试。",
+      "emptyTitle": "还没有提交记录",
+      "emptyDescription": "当你登录后发送联系表单，它会显示在这里，并附带状态和提交详情。",
+      "contactEmail": "提交时使用的联系邮箱",
+      "accountEmail": "当前登录账户",
+      "company": "公司",
+      "desiredTime": "期望回电时间",
+      "message": "消息",
+      "topic": "主题",
+      "notes": "备注",
+      "deliveryIssue": "发送问题",
+      "types": {
+        "message": "留言",
+        "callback": "回电请求",
+        "other": "其他咨询"
+      },
+      "status": {
+        "sent": "已发送",
+        "failed": "需要处理"
+      }
+    }
   }
 }

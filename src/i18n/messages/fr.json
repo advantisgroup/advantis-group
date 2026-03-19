@@ -153,6 +153,18 @@
       "subject": "Objet",
       "subjectPlaceholder": "Entrez un objet spécifique",
       "optional": "optionnel"
+    },
+    "accountHelper": {
+      "badge": "Raccourci connecté",
+      "title": "Utilisez les informations de votre compte actuel",
+      "description": "Si vous nous contactez avec votre compte Clerk actuel, nous pouvons préremplir votre nom et votre e-mail pour aller plus vite.",
+      "signedInAs": "Connecté en tant que {email}",
+      "emailNote": "Vous pouvez tout de même remplacer l’e-mail du formulaire par une adresse d’entreprise si c’est mieux pour le suivi. Nous garderons les deux pour plus de clarté.",
+      "useAccount": "Utiliser les infos de mon compte",
+      "signedOutTitle": "Envoyer vos formulaires plus vite ?",
+      "signedOutDescription": "Connectez-vous d’abord pour préremplir automatiquement vos coordonnées et retrouver toutes vos demandes envoyées dans votre compte.",
+      "signInCta": "Se connecter pour préremplir",
+      "storedAccountNote": "Lorsque vous envoyez une demande en étant connecté, nous enregistrons à la fois votre compte connecté et l’e-mail saisi dans le formulaire pour éviter toute ambiguïté."
     }
   },
   "about": {
@@ -387,5 +399,56 @@
     "rightsReserved": "Tous droits réservés.",
     "subject": "Objet",
     "topic": "Sujet"
+  },
+  "auth": {
+    "badge": "Accès sécurisé",
+    "menuLabel": "Compte",
+    "guest": "Invité",
+    "providerHint": "Continuez avec Apple, Google ou Microsoft via Clerk, ou utilisez votre e-mail pour créer un compte.",
+    "signInPageCta": "Ouvrir la connexion",
+    "signUpPageCta": "Ouvrir l’inscription",
+    "signIn": "Se connecter",
+    "signUp": "Créer un compte",
+    "signedIn": "Connecté avec Clerk",
+    "accountCta": "Gérer le compte",
+    "signInTitle": "Bon retour chez Advantis Group",
+    "signInSubtitle": "Connectez-vous avec Clerk pour gérer votre profil, vos paramètres de sécurité et les futures expériences protégées depuis un seul endroit.",
+    "signUpTitle": "Créez votre compte Advantis",
+    "signUpSubtitle": "Utilisez Clerk pour créer un compte sécurisé et gérer votre profil, vos méthodes de connexion et les futures expériences réservées aux membres.",
+    "accountBadge": "Centre de compte",
+    "accountTitle": "Votre compte",
+    "accountSubtitle": "Gérez votre profil, vos paramètres de sécurité et vos sessions actives dans le centre de compte hébergé de Clerk.",
+    "signInRequired": "Veuillez vous connecter pour accéder à vos paramètres de compte.",
+    "submissionsCta": "Voir les demandes",
+    "contactCta": "Envoyer une nouvelle demande",
+    "submissions": {
+      "badge": "Historique des demandes",
+      "title": "Vos demandes",
+      "subtitle": "Consultez les formulaires de contact envoyés pendant votre session et voyez quelle adresse e-mail et quelles informations d’entreprise vous avez partagées.",
+      "newSubmissionCta": "Envoyer une autre demande",
+      "accountCta": "Retour au compte",
+      "loading": "Chargement de vos demandes…",
+      "errorTitle": "Impossible de charger vos demandes.",
+      "errorDescription": "Veuillez réessayer dans un instant.",
+      "emptyTitle": "Aucune demande pour le moment",
+      "emptyDescription": "Dès que vous envoyez un formulaire de contact en étant connecté, il apparaîtra ici avec son statut et les détails transmis.",
+      "contactEmail": "E-mail de contact utilisé",
+      "accountEmail": "Compte connecté",
+      "company": "Entreprise",
+      "desiredTime": "Heure de rappel souhaitée",
+      "message": "Message",
+      "topic": "Sujet",
+      "notes": "Notes",
+      "deliveryIssue": "Problème d’envoi",
+      "types": {
+        "message": "Message",
+        "callback": "Rappel",
+        "other": "Autre demande"
+      },
+      "status": {
+        "sent": "Envoyé",
+        "failed": "À vérifier"
+      }
+    }
   }
 }
