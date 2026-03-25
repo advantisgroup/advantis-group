@@ -15,7 +15,6 @@ const normalizeBaseUrl = (value: string) => {
 };
 
 const configuredDomain = process.env.NEXT_PUBLIC_DOMAIN;
-const fallbackBaseUrl = dev ? "http://localhost:3000" : "https://advantisgroup.de";
 const runtimeOrigin =
   typeof window !== "undefined" ? window.location.origin : undefined;
 
