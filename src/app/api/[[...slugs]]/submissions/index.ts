@@ -2,11 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 
-import { api } from "@/../convex/_generated/api";
-
-const convex = process.env.NEXT_PUBLIC_CONVEX_URL
-  ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
-  : null;
+import { api } from "../../../../../convex/_generated/api";
 
 export const submissions = new Elysia().get(
   "/submissions",
@@ -18,7 +14,9 @@ export const submissions = new Elysia().get(
       return { error: "Unauthorized" };
     }
 
-    if (!convex) {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+
+    if (!convexUrl) {
       set.status = 500;
       return {
         error: "Server configuration error.",
@@ -28,6 +26,8 @@ export const submissions = new Elysia().get(
       };
     }
 
+    const convex = new ConvexHttpClient(convexUrl);
+
     try {
       const submissions = await convex.query(
         api.emails.listEmailsByClerkUserId,
@@ -35,7 +35,13 @@ export const submissions = new Elysia().get(
           clerkUserId: userId,
         }
       );
-console.log("[submissions] raw result:", JSON.stringify(submissions, null, 2)); 
+      if (!submissions) {
+        set.status = 404;
+        return {
+          error: "Failed to get submissions.",
+          code: "convex_query_null",
+        };
+      }
       return { submissions };
     } catch (error) {
       console.error("[submissions] Convex error:", error);
@@ -44,7 +50,9 @@ console.log("[submissions] raw result:", JSON.stringify(submissions, null, 2));
         error: "Failed to load submissions.",
         code: "convex_query_failed",
         detail:
-          error instanceof Error ? error.message : "Unknown Convex query error.",
+          error instanceof Error
+            ? error.message
+            : "Unknown Convex query error.",
       };
     }
   },
@@ -76,7 +84,11 @@ console.log("[submissions] raw result:", JSON.stringify(submissions, null, 2));
           })
         ),
       }),
-      401: t.Object({ error: t.String() }),
+      401: t.Object({
+        error: t.String(),
+        code: t.Optional(t.String()),
+        detail: t.Optional(t.String()),
+      }),
       500: t.Object({
         error: t.String(),
         code: t.Optional(t.String()),

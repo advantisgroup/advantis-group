@@ -1,7 +1,6 @@
-import { redirect } from "next/navigation";
-
 import { auth } from "@clerk/nextjs/server";
 
+import { redirect } from "@/i18n/navigation";
 export default async function AccountPage({
   params,
 }: {
@@ -10,8 +9,8 @@ export default async function AccountPage({
   const [{ locale }, { userId }] = await Promise.all([params, auth()]);
 
   if (!userId) {
-    redirect(`/${locale}/sign-in`);
+    redirect({ href: `/${locale}/sign-in`, locale });
   }
 
-  redirect(`/${locale}/account/submissions`);
+  redirect({ href: `/${locale}/account/submissions`, locale });
 }

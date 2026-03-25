@@ -8,7 +8,17 @@
     "privacy": "Privacy Policy",
     "imprint": "Imprint",
     "licenses": "Licenses",
-    "settings": "Settings"
+    "settings": "Settings",
+    "toggleMenu": "Toggle menu",
+    "settingsMenu": {
+      "label": "Settings",
+      "language": "Language",
+      "appearance": "Appearance",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "auto": "Auto"
+    }
   },
   "hero": {
     "title": "More than a company, complete",
@@ -141,6 +151,48 @@
       "callSuccessDesc": "We will call you at the requested time.",
       "errorTitle": "Something went wrong",
       "errorDesc": "Please check your entries"
+    },
+    "submissionBanner": {
+      "title": "Forms temporarily unavailable",
+      "defaultMessage": "Contact forms are not being processed at this time.",
+      "notifyCta": "Get notified when forms go live",
+      "dismiss": "Dismiss notice"
+    },
+    "notify": {
+      "close": "Close",
+      "cancel": "Cancel",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "you@example.com",
+      "switchToRemove": "Remove email from list",
+      "switchToSubscribe": "← Back to notifications",
+      "errors": {
+        "generic": "Something went wrong. Please try again.",
+        "network": "Network error. Please check your connection and try again."
+      },
+      "subscribe": {
+        "title": "Stay in the loop",
+        "description": "Enter your email and we'll notify you as soon as our contact forms are back online.",
+        "cta": "Notify me",
+        "loading": "Saving…"
+      },
+      "remove": {
+        "title": "Remove your email",
+        "description": "Enter the email address you'd like to remove from our notification list.",
+        "cta": "Remove",
+        "loading": "Removing…"
+      },
+      "success": {
+        "title": "You're on the list!",
+        "description": "We'll send you a notification as soon as the contact forms go live."
+      },
+      "duplicate": {
+        "title": "You're already on the list!",
+        "description": "We already have your email. We'll reach out as soon as forms are live."
+      },
+      "removed": {
+        "title": "Email removed",
+        "description": "Your email has been removed from our notification list. You won't receive any further updates."
+      }
     },
     "otherForm": {
       "topic": "Topic",
@@ -407,7 +459,7 @@
     "badge": "Secure access",
     "menuLabel": "Account",
     "guest": "Guest user",
-    "providerHint": "Continue with Apple, Google, or Microsoft through Clerk, or use your email to create an account.",
+    "providerHint": "Continue with  Google or use your email to create an account.",
     "signInPageCta": "Open sign-in page",
     "signUpPageCta": "Open sign-up page",
     "signIn": "Sign in",

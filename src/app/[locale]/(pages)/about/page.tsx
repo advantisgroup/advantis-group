@@ -32,8 +32,8 @@ export default function UberUns() {
       icon: Target,
       title: t("values.experienceTitle"),
       description: t("values.experienceDesc"),
-      gradient: "from-blue-500/20 to-cyan-500/20",
-      iconColor: "text-blue-500",
+      gradient: "from-rodeo/18 to-primary/10",
+      iconColor: "text-rodeo",
     },
     {
       icon: Zap,
@@ -46,8 +46,8 @@ export default function UberUns() {
       icon: Heart,
       title: t("values.passionTitle"),
       description: t("values.passionDesc"),
-      gradient: "from-red-500/20 to-rose-500/20",
-      iconColor: "text-red-500",
+      gradient: "from-primary/22 to-secondary/16",
+      iconColor: "text-primary",
     },
   ];
 

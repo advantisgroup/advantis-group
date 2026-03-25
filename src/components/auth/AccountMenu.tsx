@@ -40,7 +40,13 @@ const getInitials = (fullName: string, email?: string | null) => {
     .join("");
 };
 
-export const AccountMenu = ({ isMobile = false }: { isMobile?: boolean }) => {
+export const AccountMenu = ({
+  isMobile = false,
+  onMobileNavigate,
+}: {
+  isMobile?: boolean;
+  onMobileNavigate?: () => void;
+}) => {
   const locale = useLocale();
   const t = useTranslations("auth");
   const { openUserProfile } = useClerk();
@@ -84,7 +90,10 @@ export const AccountMenu = ({ isMobile = false }: { isMobile?: boolean }) => {
           <Button
             type="button"
             className="w-full justify-between"
-            onClick={() => void openUserProfile()}
+            onClick={() => {
+              onMobileNavigate?.();
+              void openUserProfile();
+            }}
           >
             <span className="flex items-center gap-2">
               <Settings2 className="h-4 w-4" />
@@ -93,7 +102,11 @@ export const AccountMenu = ({ isMobile = false }: { isMobile?: boolean }) => {
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button asChild variant="outline" className="w-full justify-between">
-            <Link href="/account/submissions" locale={locale}>
+            <Link
+              href="/account/submissions"
+              locale={locale}
+              onClick={() => onMobileNavigate?.()}
+            >
               <span className="flex items-center gap-2">
                 <ReceiptText className="h-4 w-4" />
                 {t("submissionsCta")}
@@ -131,13 +144,22 @@ export const AccountMenu = ({ isMobile = false }: { isMobile?: boolean }) => {
 
         <div className="grid grid-cols-2 gap-2">
           <SignInButton>
-            <Button type="button" className="w-full">
+            <Button
+              type="button"
+              className="w-full"
+              onClick={() => onMobileNavigate?.()}
+            >
               <LogIn className="h-4 w-4" />
               {t("signIn")}
             </Button>
           </SignInButton>
           <SignUpButton>
-            <Button type="button" variant="outline" className="w-full">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => onMobileNavigate?.()}
+            >
               <UserRound className="h-4 w-4" />
               {t("signUp")}
             </Button>

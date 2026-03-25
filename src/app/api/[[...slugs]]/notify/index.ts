@@ -1,7 +1,7 @@
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 
-import { api } from "@/../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 
 const convex = process.env.NEXT_PUBLIC_CONVEX_URL
   ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
@@ -50,7 +50,9 @@ export const notify = new Elysia()
           error: "Failed to save email. Please try again.",
           code: "convex_mutation_failed",
           detail:
-            err instanceof Error ? err.message : "Unknown Convex mutation error.",
+            err instanceof Error
+              ? err.message
+              : "Unknown Convex mutation error.",
         };
       }
     },
@@ -110,7 +112,8 @@ export const notify = new Elysia()
           return {
             error: "Failed to delete email. Please try again.",
             code: "notify_delete_failed",
-            detail: result.error || "Delete mutation returned an unknown error.",
+            detail:
+              result.error || "Delete mutation returned an unknown error.",
           };
         }
 
@@ -125,7 +128,9 @@ export const notify = new Elysia()
           error: "Failed to delete email. Please try again.",
           code: "convex_mutation_failed",
           detail:
-            err instanceof Error ? err.message : "Unknown Convex mutation error.",
+            err instanceof Error
+              ? err.message
+              : "Unknown Convex mutation error.",
         };
       }
     },

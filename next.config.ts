@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: false,
   reactCompiler: true,
+  typedRoutes: false,
   experimental: {
     globalNotFound: true,
   },
@@ -15,15 +16,17 @@ const nextConfig: NextConfig = {
       {
         source: '/ingest/static/:path*',
         destination: 'https://eu-assets.i.posthog.com/static/:path*',
+        locale: false,
       },
       {
         source: '/ingest/:path*',
         destination: 'https://eu.i.posthog.com/:path*',
+        locale: false,
       },
       {
         source: '/api/:path*',
         destination: '/api/:path*',
-        locale: false, 
+        locale: false,
       },
     ]
   },

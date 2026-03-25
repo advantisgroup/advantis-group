@@ -8,7 +8,17 @@
     "privacy": "Datenschutz",
     "imprint": "Impressum",
     "licenses": "Lizenzen",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "toggleMenu": "Menü umschalten",
+    "settingsMenu": {
+      "label": "Einstellungen",
+      "language": "Sprache",
+      "appearance": "Darstellung",
+      "light": "Hell",
+      "dark": "Dunkel",
+      "system": "System",
+      "auto": "Automatisch"
+    }
   },
   "hero": {
     "title": "Mehr als ein Unternehmen, komplette",
@@ -141,6 +151,48 @@
       "callSuccessDesc": "Wir rufen Sie zum gewünschten Zeitpunkt an.",
       "errorTitle": "Etwas ist schiefgelaufen",
       "errorDesc": "Bitte überprüfen Sie Ihre Eingaben"
+    },
+    "submissionBanner": {
+      "title": "Formulare vorübergehend nicht verfügbar",
+      "defaultMessage": "Kontaktformulare werden derzeit nicht verarbeitet.",
+      "notifyCta": "Benachrichtigen, wenn Formulare wieder live sind",
+      "dismiss": "Hinweis schließen"
+    },
+    "notify": {
+      "close": "Schließen",
+      "cancel": "Abbrechen",
+      "emailLabel": "E-Mail-Adresse",
+      "emailPlaceholder": "du@example.com",
+      "switchToRemove": "E-Mail aus Liste entfernen",
+      "switchToSubscribe": "← Zurück zu Benachrichtigungen",
+      "errors": {
+        "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+        "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+      },
+      "subscribe": {
+        "title": "Bleiben Sie auf dem Laufenden",
+        "description": "Tragen Sie Ihre E-Mail ein und wir benachrichtigen Sie, sobald unsere Kontaktformulare wieder online sind.",
+        "cta": "Benachrichtigen",
+        "loading": "Speichern…"
+      },
+      "remove": {
+        "title": "E-Mail entfernen",
+        "description": "Geben Sie die E-Mail-Adresse ein, die aus unserer Benachrichtigungsliste entfernt werden soll.",
+        "cta": "Entfernen",
+        "loading": "Entfernen…"
+      },
+      "success": {
+        "title": "Sie stehen auf der Liste!",
+        "description": "Wir senden Ihnen eine Benachrichtigung, sobald die Kontaktformulare wieder live sind."
+      },
+      "duplicate": {
+        "title": "Sie stehen bereits auf der Liste!",
+        "description": "Ihre E-Mail-Adresse ist bereits hinterlegt. Wir melden uns, sobald die Formulare wieder live sind."
+      },
+      "removed": {
+        "title": "E-Mail entfernt",
+        "description": "Ihre E-Mail-Adresse wurde aus unserer Benachrichtigungsliste entfernt. Sie erhalten keine weiteren Updates."
+      }
     },
     "otherForm": {
       "topic": "Thema",
@@ -407,7 +459,7 @@
     "badge": "Sicherer Zugang",
     "menuLabel": "Konto",
     "guest": "Gast",
-    "providerHint": "Fahre mit Apple, Google oder Microsoft über Clerk fort oder erstelle dein Konto per E-Mail.",
+    "providerHint": "Fahre mit Google oder erstelle dein Konto per E-Mail.",
     "signInPageCta": "Anmeldeseite öffnen",
     "signUpPageCta": "Registrierungsseite öffnen",
     "signIn": "Anmelden",

@@ -69,10 +69,10 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
     {
       title: t("feature1.title"),
       desc: t("feature1.description"),
-      gradient: "from-orange-500/20 to-red-500/20",
-      iconBg: "bg-orange-500/10",
-      iconBorder: "border-orange-500/30",
-      glowColor: "shadow-orange-500/20",
+      gradient: "from-primary/18 to-secondary/16",
+      iconBg: "bg-primary/10",
+      iconBorder: "border-primary/30",
+      glowColor: "shadow-primary/20",
     },
     {
       title: t("feature2.title"),
@@ -85,10 +85,10 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
     {
       title: t("feature3.title"),
       desc: t("feature3.description"),
-      gradient: "from-blue-500/20 to-cyan-500/20",
-      iconBg: "bg-blue-500/10",
-      iconBorder: "border-blue-500/30",
-      glowColor: "shadow-blue-500/20",
+      gradient: "from-rodeo/18 to-sales-ai/10",
+      iconBg: "bg-rodeo/10",
+      iconBorder: "border-rodeo/30",
+      glowColor: "shadow-rodeo/20",
     },
   ];
 
@@ -99,7 +99,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
 
       {/* Floating orbs - hidden on mobile to prevent overflow */}
       <div className="hidden md:block absolute top-20 right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-      <div className="hidden md:block absolute bottom-20 left-[15%] w-96 h-96 bg-orange-500/5 rounded-full blur-3xl animate-pulse-slower" />
+      <div className="hidden md:block absolute bottom-20 left-[15%] w-96 h-96 bg-secondary/8 rounded-full blur-3xl animate-pulse-slower" />
 
       {/* Subtle grid pattern */}
       <div className="absolute inset-0 dot-pattern opacity-10" />

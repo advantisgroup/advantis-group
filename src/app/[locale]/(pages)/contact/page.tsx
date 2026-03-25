@@ -195,7 +195,7 @@ export default function Kontakt() {
               onUseAccount={handleUseAccount}
             />
           ) : (
-            <div className="rounded-[2rem] border border-border/70 bg-background/80 p-5 md:p-6">
+            <div className="rounded-4xl border border-border/70 bg-background/80 p-5 md:p-6">
               <h2 className="text-xl font-semibold text-foreground">
                 {tAccountHelper("signedOutTitle")}
               </h2>
@@ -219,7 +219,7 @@ export default function Kontakt() {
 
           <section
             ref={formSectionRef}
-            className="overflow-hidden rounded-[2rem] border border-border/70 bg-background/70 shadow-xl shadow-black/5"
+            className="overflow-hidden rounded-4xl border border-border/70 bg-background/70 shadow-xl shadow-black/5"
           >
             <TabNavigation
               contactMode={contactMode}
@@ -238,7 +238,7 @@ export default function Kontakt() {
                     {getFormDescription()}
                   </p>
                   {accountPrefillState === "success" ? (
-                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                    <div className="inline-flex items-center gap-2 rounded-full border border-success/35 bg-success/14 px-3 py-1 text-sm font-medium text-success-foreground">
                       <CheckCircle2 className="h-4 w-4" />
                       {tAccountHelper("scrollNotice")}
                     </div>

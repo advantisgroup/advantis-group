@@ -53,5 +53,3 @@ next-env.d.ts
 
 .env.local
 archived/
-
-/convex/_generated/

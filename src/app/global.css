@@ -51,9 +51,11 @@
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
@@ -94,6 +96,10 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning: var(--warning);
+  --color-success-foreground: var(--success-foreground);
+  --color-success: var(--success);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -120,46 +126,40 @@
 }
 
 @layer base {
-  /* Dark theme - Rich, warm dark palette with depth */
   :root {
-    /* Base colors - Deep charcoal with warm undertones instead of pure black */
     --background: oklch(23.613% 0.00152 16.294);
     --foreground: oklch(96% 0.005 80);
 
-    /* Card colors - Elevated surface with subtle warmth */
-    --card: oklch(29% 0.0066 48.52);
+    --card: oklch(21% 0.0066 48.52);
     --card-foreground: oklch(96% 0.005 80);
     --card-border: oklch(32% 0.025 240);
 
-    --popover: oklch(20% 0.016 255);
+    --popover: oklch(13.613% 0.00152 16.294);
     --popover-foreground: oklch(96% 0.005 80);
 
-    /* Primary - Using your brand orange (keeping it) */
     --primary: oklch(0.6441 0.2026 14);
     --primary-foreground: oklch(98% 0.003 80);
 
-    /* Secondary - Using your brand secondary (keeping it) */
     --secondary: oklch(76.51% 0.16454 68.86);
     --secondary-foreground: oklch(18% 0.015 260);
 
-    /* Muted colors - Warm mid-tones for subtle elements */
     --muted: oklch(73.177% 0.00739 88.639 / 0.821);
     --muted-foreground: oklch(72% 0.015 70);
 
-    /* Accent - Vibrant purple/blue for interactive elements */
     --accent: oklch(18.674% 0.00002 271.152 / 0.772);
     --accent-foreground: oklch(98% 0.003 80);
 
-    /* Destructive - Warm red with good contrast */
     --destructive: oklch(58% 0.2 25);
     --destructive-foreground: oklch(98% 0.003 80);
+    --warning: oklch(74% 0.13 75);
+    --warning-foreground: oklch(36% 0.355 62);
+    --success: oklch(70% 0.11 150);
+    --success-foreground: oklch(18% 0.02 150);
 
-    /* Borders and inputs - Visible but elegant */
     --border: oklch(0.5072 0.0256 80.56);
     --input: oklch(28% 0.02 245);
     --ring: oklch(0.6441 0.2026 14);
 
-    /* Brand colors - same in both modes */
     --salespirates: oklch(75% 0.15 85);
     --advantis: oklch(0.6441 0.2026 14);
     --rodeo: oklch(65% 0.2 240);
@@ -167,48 +167,60 @@
     --oldschool: oklch(25% 0.5 10);
 
     --radius: 0.5rem;
+
+    --clerk-color-primary: var(--primary);
+    --clerk-color-primary-foreground: var(--primary-foreground);
+    --clerk-color-danger: var(--destructive);
+    --clerk-color-success: var(--secondary);
+    --clerk-color-warning: var(--primary);
+    --clerk-color-neutral: var(--card-foreground);
+    --clerk-color-foreground: var(--foreground);
+    --clerk-color-muted-foreground: var(--muted-foreground);
+    --clerk-color-background: var(--background);
+    --clerk-color-input: var(--input);
+    --clerk-color-input-foreground: var(--foreground);
+    --clerk-color-ring: var(--ring);
+    --clerk-color-shimmer: var(--card);
+    --clerk-color-modal-backdrop: oklch(0% 0 0 / 0.7);
+    --clerk-border-radius: 0.375rem;
+    --clerk-spacing: 1rem;
+    --clerk-color-muted: #141414;
   }
 
   :root.light {
-    /* Base – warm near-white with slight tint */
-    --background: oklch(98.5% 0.006 90);
-    --foreground: oklch(20% 0.015 260);
-    /* soft charcoal */
+    --background: oklch(97.6% 0.012 88);
+    --foreground: oklch(27% 0.018 60);
 
-    /* Cards – slightly elevated warm whites */
-    --card: oklch(99.741% 0.0029 84.357);
-    --card-foreground: oklch(20% 0.015 260);
-    --card-border: oklch(88% 0.01 90);
+    --card: oklch(98.9% 0.009 87);
+    --card-foreground: oklch(27% 0.018 60);
+    --card-border: oklch(89% 0.013 86);
 
-    --popover: oklch(99% 0.004 95);
-    --popover-foreground: oklch(20% 0.015 260);
+    --popover: oklch(99.2% 0.008 88);
+    --popover-foreground: oklch(27% 0.018 60);
 
-    /* Primary (brand orange) – identical hue, slightly softened foreground */
     --primary: oklch(0.6441 0.2026 14);
     --primary-foreground: oklch(99% 0.002 95);
 
-    /* Secondary – derived from dark mode but corrected for light backgrounds */
-    --secondary: oklch(90% 0.07 68.86);
-    --secondary-foreground: oklch(25% 0.02 260);
+    --secondary: oklch(92% 0.04 76);
+    --secondary-foreground: oklch(28% 0.02 60);
 
-    /* Muted – warm neutral grays with tint */
-    --muted: oklch(60.247% 0.01189 84.54);
-    --muted-foreground: oklch(45% 0.015 260);
+    --muted: oklch(94.8% 0.01 86);
+    --muted-foreground: oklch(50% 0.017 62);
 
-    /* Accent – mirrors dark theme purple/blue but in light tones */
-    --accent: oklch(92% 0.03 280);
-    --accent-foreground: oklch(25% 0.015 260);
+    --accent: oklch(94.5% 0.018 80);
+    --accent-foreground: oklch(28% 0.02 60);
 
-    /* Destructive – consistent red tone with clear accessibility */
     --destructive: oklch(60% 0.2 25);
     --destructive-foreground: oklch(99% 0.002 95);
+    --warning: oklch(85% 0.09 78);
+    --warning-foreground: oklch(36% 0.055 62);
+    --success: oklch(88% 0.07 150);
+    --success-foreground: oklch(33% 0.05 150);
 
-    /* Borders & Inputs – slightly darker than card but still soft */
-    --border: oklch(86% 0.01 90);
-    --input: oklch(92% 0.01 90);
+    --border: oklch(88% 0.013 86);
+    --input: oklch(95.5% 0.01 87);
     --ring: oklch(0.6441 0.2026 14);
 
-    /* Brand colors – recalibrated for readability in light theme */
     --salespirates: oklch(70% 0.13 85);
     --advantis: oklch(60% 0.2 14);
     --rodeo: oklch(62% 0.18 240);
@@ -216,6 +228,24 @@
     --oldschool: oklch(32% 0.5 10);
 
     --radius: 0.5rem;
+
+    --clerk-color-primary: var(--primary);
+    --clerk-color-primary-foreground: var(--primary-foreground);
+    --clerk-color-danger: var(--destructive);
+    --clerk-color-success: var(--secondary);
+    --clerk-color-warning: var(--primary);
+    --clerk-color-neutral: var(--card-foreground);
+    --clerk-color-foreground: var(--foreground);
+    --clerk-color-muted-foreground: var(--muted-foreground);
+    --clerk-color-background: var(--background);
+    --clerk-color-input: var(--input);
+    --clerk-color-input-foreground: var(--foreground);
+    --clerk-color-ring: var(--ring);
+    --clerk-color-shimmer: var(--card);
+    --clerk-color-modal-backdrop: var(--foreground);
+    --clerk-border-radius: 0.375rem;
+    --clerk-spacing: 1rem;
+    --clerk-color-muted: #f1e4e4;
   }
 
   body {
