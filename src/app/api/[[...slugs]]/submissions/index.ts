@@ -35,7 +35,7 @@ export const submissions = new Elysia().get(
           clerkUserId: userId,
         }
       );
-
+console.log("[submissions] raw result:", JSON.stringify(submissions, null, 2)); 
       return { submissions };
     } catch (error) {
       console.error("[submissions] Convex error:", error);
