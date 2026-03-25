@@ -4,21 +4,19 @@ import { Elysia, t } from "elysia";
 
 import { api } from "@/../convex/_generated/api";
 
-const convex = process.env.NEXT_PUBLIC_CONVEX_URL
-  ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
-  : null;
-
 export const submissions = new Elysia().get(
   "/submissions",
   async ({ set }) => {
-    const { userId } = await auth();
+    const { userId, getToken } = await auth();
 
     if (!userId) {
       set.status = 401;
       return { error: "Unauthorized" };
     }
 
-    if (!convex) {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+
+    if (!convexUrl) {
       set.status = 500;
       return {
         error: "Server configuration error.",
@@ -28,6 +26,21 @@ export const submissions = new Elysia().get(
       };
     }
 
+    const token = await getToken({ template: "convex" });
+
+    if (!token) {
+      set.status = 401;
+      return {
+        error: "Unauthorized",
+        code: "no_token",
+        detail:
+          "Could not get Convex auth token. Check that the 'convex' JWT template exists in Clerk.",
+      };
+    }
+
+    const convex = new ConvexHttpClient(convexUrl);
+    convex.setAuth(token);
+
     try {
       const submissions = await convex.query(
         api.emails.listEmailsByClerkUserId,
@@ -35,7 +48,6 @@ export const submissions = new Elysia().get(
           clerkUserId: userId,
         }
       );
-console.log("[submissions] raw result:", JSON.stringify(submissions, null, 2)); 
       return { submissions };
     } catch (error) {
       console.error("[submissions] Convex error:", error);
@@ -76,7 +88,11 @@ console.log("[submissions] raw result:", JSON.stringify(submissions, null, 2));
           })
         ),
       }),
-      401: t.Object({ error: t.String() }),
+      401: t.Object({
+        error: t.String(),
+        code: t.Optional(t.String()),
+        detail: t.Optional(t.String()),
+      }),
       500: t.Object({
         error: t.String(),
         code: t.Optional(t.String()),
