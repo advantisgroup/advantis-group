@@ -22,6 +22,8 @@ jobs:
   quality:
     name: Format and lint
     runs-on: ubuntu-latest
+    env:
+      CONVEX_DEPLOYMENT: ${{ secrets.CONVEX_DEPLOYMENT }}
 
     steps:
       - name: Check out repository
