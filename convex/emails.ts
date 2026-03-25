@@ -38,7 +38,7 @@ export const listEmailsByClerkUserId = query({
             return []
         }
 
-        return await ctx.db
+        const existing = await ctx.db
   .query('emails')
   .withIndex('by_clerkUserId_sentAt', q =>
     q.eq('clerkUserId', args.clerkUserId)
@@ -46,6 +46,10 @@ export const listEmailsByClerkUserId = query({
   )
   .order('desc')
   .take(50)
+
+        if (!existing) return []
+
+        return existing
     },
 })
 
