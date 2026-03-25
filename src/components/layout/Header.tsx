@@ -195,8 +195,14 @@ export const Header = () => {
               className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300"
               style={{ animationDelay: `${navLinks.length * 50}ms` }}
             >
-              <AccountMenu isMobile />
-              <SettingsMenu isMobile />
+              <AccountMenu
+                isMobile
+                onMobileNavigate={() => setMobileMenuOpen(false)}
+              />
+              <SettingsMenu
+                isMobile
+                onMobileNavigate={() => setMobileMenuOpen(false)}
+              />
             </div>
           </div>
         </div>

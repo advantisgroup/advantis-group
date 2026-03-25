@@ -27,9 +27,13 @@ const languages = [
 
 interface SettingsMenuProps {
   isMobile?: boolean;
+  onMobileNavigate?: () => void;
 }
 
-export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
+export const SettingsMenu = ({
+  isMobile = false,
+  onMobileNavigate,
+}: SettingsMenuProps) => {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -44,6 +48,7 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
   }, []);
 
   const switchLanguage = (newLocale: string) => {
+    onMobileNavigate?.();
     router.replace(pathname, { locale: newLocale });
   };
 
@@ -56,9 +61,9 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
           </span>
           <div className="grid grid-cols-2 gap-2">
             {languages.map(language => (
-              <button
-                key={language.code}
-                onClick={() => switchLanguage(language.code)}
+                <button
+                  key={language.code}
+                  onClick={() => switchLanguage(language.code)}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
                   language.code === locale
@@ -86,7 +91,10 @@ export const SettingsMenu = ({ isMobile = false }: SettingsMenuProps) => {
                 <button
                   disabled={mode === "light" || mode === "system"}
                   key={mode}
-                  onClick={() => setTheme(mode)}
+                  onClick={() => {
+                    onMobileNavigate?.();
+                    setTheme(mode);
+                  }}
                   className={cn(
                     "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
                     mounted && theme === mode

@@ -39,7 +39,6 @@ export const listEmailsByClerkUserId = query({
             return []
         }
             const existing = await ctx.db.query("emails").withIndex("by_clerkUserId_sentAt", q => q.eq("clerkUserId", args.clerkUserId).gte("sentAt", 0)).order("desc").take(50)
-            console.log(args.clerkUserId, existing)
 
             if (!existing) {
                 console.error("No submissions found for user", args.clerkUserId)
