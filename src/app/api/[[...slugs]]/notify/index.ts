@@ -23,7 +23,12 @@ export const notify = new Elysia()
 
       if (!convex) {
         set.status = 500;
-        return { error: "Server configuration error." };
+        return {
+          error: "Server configuration error.",
+          code: "convex_not_configured",
+          detail:
+            "NEXT_PUBLIC_CONVEX_URL is missing, so notify emails cannot be saved.",
+        };
       }
 
       try {
@@ -41,7 +46,12 @@ export const notify = new Elysia()
       } catch (err) {
         console.error("[notify] Convex error:", err);
         set.status = 500;
-        return { error: "Failed to save email. Please try again." };
+        return {
+          error: "Failed to save email. Please try again.",
+          code: "convex_mutation_failed",
+          detail:
+            err instanceof Error ? err.message : "Unknown Convex mutation error.",
+        };
       }
     },
     {
@@ -54,7 +64,11 @@ export const notify = new Elysia()
           duplicate: t.Boolean(),
         }),
         400: t.Object({ error: t.String() }),
-        500: t.Object({ error: t.String() }),
+        500: t.Object({
+          error: t.String(),
+          code: t.Optional(t.String()),
+          detail: t.Optional(t.String()),
+        }),
       },
     }
   )
@@ -63,7 +77,12 @@ export const notify = new Elysia()
     async ({ params, set }) => {
       if (!convex) {
         set.status = 500;
-        return { error: "Server configuration error." };
+        return {
+          error: "Server configuration error.",
+          code: "convex_not_configured",
+          detail:
+            "NEXT_PUBLIC_CONVEX_URL is missing, so notify emails cannot be removed.",
+        };
       }
 
       const decodedEmail = decodeURIComponent(params.email)
@@ -88,7 +107,11 @@ export const notify = new Elysia()
 
           console.error("[notify] Delete error:", result.error);
           set.status = 500;
-          return { error: "Failed to delete email. Please try again." };
+          return {
+            error: "Failed to delete email. Please try again.",
+            code: "notify_delete_failed",
+            detail: result.error || "Delete mutation returned an unknown error.",
+          };
         }
 
         return {
@@ -98,7 +121,12 @@ export const notify = new Elysia()
       } catch (err) {
         console.error("[notify] Convex error:", err);
         set.status = 500;
-        return { error: "Failed to delete email. Please try again." };
+        return {
+          error: "Failed to delete email. Please try again.",
+          code: "convex_mutation_failed",
+          detail:
+            err instanceof Error ? err.message : "Unknown Convex mutation error.",
+        };
       }
     },
     {
@@ -112,7 +140,11 @@ export const notify = new Elysia()
         }),
         400: t.Object({ error: t.String() }),
         404: t.Object({ error: t.String() }),
-        500: t.Object({ error: t.String() }),
+        500: t.Object({
+          error: t.String(),
+          code: t.Optional(t.String()),
+          detail: t.Optional(t.String()),
+        }),
       },
     }
   );
