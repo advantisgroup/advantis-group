@@ -16,6 +16,16 @@ const normalizeBaseUrl = (value: string) => {
 
 const configuredDomain = process.env.NEXT_PUBLIC_DOMAIN;
 const fallbackBaseUrl = dev ? "http://localhost:3000" : "https://advantisgroup.de";
+const runtimeOrigin =
+  typeof window !== "undefined" ? window.location.origin : undefined;
+
+if (!configuredDomain && !runtimeOrigin && !dev) {
+  throw new Error(
+    "NEXT_PUBLIC_DOMAIN must be set for production server-side API requests.",
+  );
+}
+
+const fallbackBaseUrl = runtimeOrigin || "http://localhost:3000"
 const domain = normalizeBaseUrl(configuredDomain || fallbackBaseUrl);
 
 console.debug(dev, domain, process.env.NODE_ENV);
