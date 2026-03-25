@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { treaty } from "@elysiajs/eden";
 
 import type { App } from "../app/api/[[...slugs]]/route";
@@ -27,7 +26,5 @@ if (!configuredDomain && !runtimeOrigin && !dev) {
 const fallbackBaseUrl = runtimeOrigin || "http://localhost:3000";
 const domain = normalizeBaseUrl(configuredDomain || fallbackBaseUrl);
 
-console.debug(dev, domain, process.env.NODE_ENV);
-
 // this require .api to enter /api prefix
-export const api = treaty<App>(domain!).api;
+export const api = treaty<App>(domain).api;

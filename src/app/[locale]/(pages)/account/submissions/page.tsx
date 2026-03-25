@@ -11,7 +11,7 @@ export default async function AccountSubmissionsRoute({
   const [{ locale }, { userId }] = await Promise.all([params, auth()]);
 
   if (!userId) {
-    redirect(`/${locale}/sign-in`);
+    redirect({ href: `/${locale}/sign-in`, locale });
   }
 
   return <ContactSubmissionsPage />;

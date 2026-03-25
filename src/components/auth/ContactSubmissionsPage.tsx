@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -115,11 +114,11 @@ export const ContactSubmissionsPage = () => {
         </div>
 
         {status === "loading" ? (
-          <div className="rounded-[2rem] border border-border bg-card/70 p-8 text-sm text-muted-foreground shadow-2xl shadow-black/20 backdrop-blur">
+          <div className="rounded-4xl border border-border bg-card/70 p-8 text-sm text-muted-foreground shadow-2xl shadow-black/20 backdrop-blur">
             {t("loading")}
           </div>
         ) : status === "error" ? (
-          <div className="rounded-[2rem] border border-red-500/30 bg-red-500/5 p-8 shadow-2xl shadow-black/20 backdrop-blur">
+          <div className="rounded-4xl border border-red-500/30 bg-red-500/5 p-8 shadow-2xl shadow-black/20 backdrop-blur">
             <div className="flex items-start gap-3 text-red-200">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
@@ -136,7 +135,7 @@ export const ContactSubmissionsPage = () => {
             </div>
           </div>
         ) : submissions.length === 0 ? (
-          <div className="rounded-[2rem] border border-border bg-card/70 p-8 shadow-2xl shadow-black/20 backdrop-blur">
+          <div className="rounded-4xl border border-border bg-card/70 p-8 shadow-2xl shadow-black/20 backdrop-blur">
             <p className="text-lg font-medium text-foreground">
               {t("emptyTitle")}
             </p>
@@ -149,7 +148,7 @@ export const ContactSubmissionsPage = () => {
             {submissions.map(submission => (
               <article
                 key={submission._id}
-                className="rounded-[2rem] border border-border bg-card/70 p-6 shadow-2xl shadow-black/20 backdrop-blur"
+                className="rounded-4xl border border-border bg-card/70 p-6 shadow-2xl shadow-black/20 backdrop-blur"
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
