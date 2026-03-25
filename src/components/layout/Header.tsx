@@ -138,7 +138,7 @@ export const Header = () => {
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden p-2 relative group/menu"
-          aria-label="Toggle menu"
+          aria-label={t("toggleMenu")}
         >
           <div className="absolute inset-0 opacity-0 group-hover/menu:opacity-100 transition-opacity duration-300 blur-md bg-advantis/10 rounded-full" />
 

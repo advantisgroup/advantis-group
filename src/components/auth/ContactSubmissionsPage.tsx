@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useClerk } from "@clerk/nextjs";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import {
   AlertCircle,
   Building2,
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { type ContactSubmissionRecord } from "@/types/contact";
 
-const submissionsContainerVariants = {
+const submissionsContainerVariants: Variants = {
   hidden: {},
   visible: {
     transition: {
@@ -27,7 +27,7 @@ const submissionsContainerVariants = {
   },
 };
 
-const submissionItemVariants = {
+const submissionItemVariants: Variants = {
   hidden: {
     opacity: 0,
     y: 8,
@@ -37,7 +37,7 @@ const submissionItemVariants = {
     y: 0,
     transition: {
       duration: 0.24,
-      ease: "easeOut",
+      ease: [0, 0, 0.2, 1],
     },
   },
 };
@@ -51,7 +51,40 @@ const toFallbackLabel = (value: string) =>
     .replace(/\s+/g, " ")
     .replace(/\b\w/g, char => char.toUpperCase());
 
+const getDisplayLabel = (
+  value: string,
+  labels: Record<string, string>,
+  fallback: string
+) => {
+  const key = toLookupKey(value);
+  const translated = labels[key];
+
+  if (typeof translated === "string" && translated.trim().length > 0) {
+    return translated;
+  }
+
+  const normalizedFallback = toFallbackLabel(value);
+
+  if (normalizedFallback.length > 0) {
+    return normalizedFallback;
+  }
+
+  return fallback;
+};
+
 const parseSubmissionDate = (value: string) => {
+  const trimmed = value.trim();
+
+  if (/^\d+$/.test(trimmed)) {
+    const numericValue = Number(trimmed);
+    const timestamp = trimmed.length <= 10 ? numericValue * 1000 : numericValue;
+    const numericDate = new Date(timestamp);
+
+    if (!Number.isNaN(numericDate.getTime())) {
+      return numericDate;
+    }
+  }
+
   const parsed = new Date(value);
 
   if (!Number.isNaN(parsed.getTime())) {
@@ -197,16 +230,16 @@ export const ContactSubmissionsPage = () => {
             {t("loading")}
           </div>
         ) : status === "error" ? (
-          <div className="rounded-4xl border border-red-500/30 bg-red-500/5 p-8 shadow-2xl shadow-black/20 backdrop-blur">
-            <div className="flex items-start gap-3 text-red-200">
+          <div className="rounded-4xl border border-destructive/30 bg-destructive/8 p-8 shadow-2xl shadow-black/20 backdrop-blur">
+            <div className="flex items-start gap-3 text-destructive">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
                 <p className="font-medium">{t("errorTitle")}</p>
-                <p className="mt-1 text-sm text-red-100/80">
+                <p className="mt-1 text-sm text-destructive/80">
                   {t("errorDescription")}
                 </p>
                 {errorDetail ? (
-                  <p className="mt-2 rounded-md border border-red-300/20 bg-black/20 px-3 py-2 font-mono text-xs text-red-100/90">
+                  <p className="mt-2 rounded-md border border-destructive/20 bg-card/60 px-3 py-2 font-mono text-xs text-destructive/90">
                     {errorDetail}
                   </p>
                 ) : null}
@@ -230,11 +263,19 @@ export const ContactSubmissionsPage = () => {
             animate="visible"
           >
             {submissions.map(submission => {
-              const submissionTypeKey = toLookupKey(submission.submissionType);
-              const submissionStatusKey = toLookupKey(submission.status);
               const desiredDate = submission.desiredDateTime
                 ? parseSubmissionDate(submission.desiredDateTime)
                 : null;
+              const submissionTypeLabel = getDisplayLabel(
+                submission.submissionType,
+                submissionTypeLabels,
+                "Submission"
+              );
+              const submissionStatusLabel = getDisplayLabel(
+                submission.status,
+                submissionStatusLabels,
+                "Status"
+              );
 
               return (
                 <motion.article
@@ -242,119 +283,115 @@ export const ContactSubmissionsPage = () => {
                   variants={submissionItemVariants}
                   className="rounded-4xl border border-border bg-card/70 p-6 shadow-2xl shadow-black/20 backdrop-blur"
                 >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-advantis/30 bg-advantis/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-advantis">
-                        {submissionTypeLabels[
-                          submissionTypeKey as keyof typeof submissionTypeLabels
-                        ] ?? toFallbackLabel(submission.submissionType)}
-                      </span>
-                      <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-                        {submissionStatusLabels[
-                          submissionStatusKey as keyof typeof submissionStatusLabels
-                        ] ?? toFallbackLabel(submission.status)}
-                      </span>
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-advantis/30 bg-advantis/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-advantis">
+                          {submissionTypeLabel}
+                        </span>
+                        <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
+                          {submissionStatusLabel}
+                        </span>
+                      </div>
+                      <h2 className="text-2xl font-semibold text-foreground">
+                        {submission.subject}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {formatter.format(new Date(submission.sentAt))}
+                      </p>
                     </div>
-                    <h2 className="text-2xl font-semibold text-foreground">
-                      {submission.subject}
-                    </h2>
-                    <p className="text-sm text-muted-foreground">
-                      {formatter.format(new Date(submission.sentAt))}
-                    </p>
-                  </div>
 
-                  <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:min-w-[320px]">
-                    <div className="flex items-start gap-2">
-                      <Mail className="mt-0.5 h-4 w-4 shrink-0" />
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {submission.email}
-                        </p>
-                        <p>{t("contactEmail")}</p>
+                    <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2 lg:min-w-[320px]">
+                      <div className="flex items-start gap-2">
+                        <Mail className="mt-0.5 h-4 w-4 shrink-0" />
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {submission.email}
+                          </p>
+                          <p>{t("contactEmail")}</p>
+                        </div>
                       </div>
+                      {submission.company ? (
+                        <div className="flex items-start gap-2">
+                          <Building2 className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {submission.company}
+                            </p>
+                            <p>{t("company")}</p>
+                          </div>
+                        </div>
+                      ) : null}
+                      {submission.desiredDateTime ? (
+                        <div className="flex items-start gap-2">
+                          <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {desiredDate
+                                ? formatter.format(desiredDate)
+                                : submission.desiredDateTime}
+                            </p>
+                            <p>{t("desiredTime")}</p>
+                          </div>
+                        </div>
+                      ) : null}
+                      {submission.accountEmail ? (
+                        <div className="flex items-start gap-2">
+                          <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0" />
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {submission.accountEmail}
+                            </p>
+                            <p>{t("accountEmail")}</p>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
-                    {submission.company ? (
-                      <div className="flex items-start gap-2">
-                        <Building2 className="mt-0.5 h-4 w-4 shrink-0" />
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {submission.company}
-                          </p>
-                          <p>{t("company")}</p>
-                        </div>
-                      </div>
-                    ) : null}
-                    {submission.desiredDateTime ? (
-                      <div className="flex items-start gap-2">
-                        <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {desiredDate
-                              ? formatter.format(desiredDate)
-                              : submission.desiredDateTime}
-                          </p>
-                          <p>{t("desiredTime")}</p>
-                        </div>
-                      </div>
-                    ) : null}
-                    {submission.accountEmail ? (
-                      <div className="flex items-start gap-2">
-                        <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0" />
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {submission.accountEmail}
-                          </p>
-                          <p>{t("accountEmail")}</p>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="mt-5 grid gap-4 border-t border-border/70 pt-5 lg:grid-cols-[1.5fr_1fr]">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                      {t("message")}
-                    </p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                      {submission.message}
-                    </p>
                   </div>
 
-                  <div className="space-y-3">
-                    {submission.topic ? (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                          {t("topic")}
-                        </p>
-                        <p className="mt-1 text-sm text-foreground">
-                          {submission.topic}
-                        </p>
-                      </div>
-                    ) : null}
-                    {submission.notes ? (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                          {t("notes")}
-                        </p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
-                          {submission.notes}
-                        </p>
-                      </div>
-                    ) : null}
-                    {submission.error ? (
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                          {t("deliveryIssue")}
-                        </p>
-                        <p className="mt-1 text-sm text-red-300">
-                          {submission.error}
-                        </p>
-                      </div>
-                    ) : null}
+                  <div className="mt-5 grid gap-4 border-t border-border/70 pt-5 lg:grid-cols-[1.5fr_1fr]">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        {t("message")}
+                      </p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
+                        {submission.message}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {submission.topic ? (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            {t("topic")}
+                          </p>
+                          <p className="mt-1 text-sm text-foreground">
+                            {submission.topic}
+                          </p>
+                        </div>
+                      ) : null}
+                      {submission.notes ? (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            {t("notes")}
+                          </p>
+                          <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">
+                            {submission.notes}
+                          </p>
+                        </div>
+                      ) : null}
+                      {submission.error ? (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                            {t("deliveryIssue")}
+                          </p>
+                          <p className="mt-1 text-sm text-destructive">
+                            {submission.error}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
                 </motion.article>
               );
             })}

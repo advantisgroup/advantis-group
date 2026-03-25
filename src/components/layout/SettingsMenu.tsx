@@ -4,7 +4,7 @@ import React from "react";
 
 import { motion } from "framer-motion";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 
 import {
@@ -35,6 +35,7 @@ export const SettingsMenu = ({
   onMobileNavigate,
 }: SettingsMenuProps) => {
   const locale = useLocale();
+  const t = useTranslations("nav.settingsMenu");
   const router = useRouter();
   const pathname = usePathname();
   const { setTheme, theme } = useTheme();
@@ -69,7 +70,7 @@ export const SettingsMenu = ({
           className="space-y-3"
         >
           <span className="block text-xs uppercase tracking-wider text-muted-foreground">
-            Language
+            {t("language")}
           </span>
           <div className="grid grid-cols-2 gap-2">
             {languages.map(language => (
@@ -98,7 +99,7 @@ export const SettingsMenu = ({
           className="space-y-3"
         >
           <span className="block text-xs uppercase tracking-wider text-muted-foreground">
-            Appearance
+            {t("appearance")}
           </span>
           <div className="grid grid-cols-1 gap-2">
             {["light", "dark", "system"].map(mode => {
@@ -112,7 +113,7 @@ export const SettingsMenu = ({
                     onMobileNavigate?.();
                     setTheme(mode);
                   }}
-                  className={cn( 
+                  className={cn(
                     "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
                     mounted && theme === mode
                       ? "border-advantis/40 bg-advantis/10 text-advantis"
@@ -121,7 +122,11 @@ export const SettingsMenu = ({
                 >
                   <Icon className="h-4 w-4" />
                   <span className="capitalize">
-                    {mode === "system" ? "Auto" : mode}
+                    {mode === "light"
+                      ? t("light")
+                      : mode === "dark"
+                        ? t("dark")
+                        : t("auto")}
                   </span>
                 </button>
               );
@@ -137,7 +142,7 @@ export const SettingsMenu = ({
       <DropdownMenuTrigger asChild>
         <button
           className="relative flex h-10 w-10 items-center justify-center p-2 outline-none group/settings"
-          aria-label="Settings"
+          aria-label={t("label")}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
@@ -205,7 +210,7 @@ export const SettingsMenu = ({
           className="rounded-2xl border border-border bg-popover p-3 shadow-md"
         >
           <DropdownMenuLabel className="mt-1 px-2 text-xs font-normal uppercase tracking-wider text-muted-foreground">
-            Language
+            {t("language")}
           </DropdownMenuLabel>
 
           <div className="mb-2 mt-2 grid grid-cols-2 gap-2">
@@ -228,33 +233,38 @@ export const SettingsMenu = ({
           <DropdownMenuSeparator className="my-3" />
 
           <DropdownMenuLabel className="mt-1 px-2 text-xs font-normal uppercase tracking-wider text-muted-foreground">
-            Appearance
+            {t("appearance")}
           </DropdownMenuLabel>
 
-          <div className="mt-2 flex flex-col gap-2">
+          <div className="mt-2 grid grid-cols-3 gap-2 rounded-2xl bg-muted/10 p-1">
             {["light", "dark", "system"].map(mode => {
               const Icon =
                 mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+              const label =
+                mode === "light"
+                  ? t("light")
+                  : mode === "dark"
+                    ? t("dark")
+                    : t("system");
+              const isActive = mounted && theme === mode;
 
               return (
-                <DropdownMenuItem
+                <button
+                  type="button"
                   key={mode}
                   onClick={() => setTheme(mode)}
-                  className="cursor-pointer rounded-xl py-2"
-                >
-                  <Icon className="mr-2 h-4 w-4" />
-                  <span className="capitalize">
-                    {mode === "system" ? "System" : mode}{" "}
-                    {mode === "light"
-                      ? "(Disabled)"
-                      : mode === "system"
-                        ? "(Disabled)"
-                        : ""}
-                  </span>
-                  {mounted && theme === mode && (
-                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-advantis" />
+                  aria-label={label}
+                  title={label}
+                  className={cn(
+                    "flex h-11 items-center justify-center rounded-xl border text-muted-foreground transition-all duration-200",
+                    isActive
+                      ? "border-border bg-background text-foreground shadow-sm"
+                      : "border-transparent bg-transparent hover:border-border/60 hover:bg-background/60 hover:text-foreground"
                   )}
-                </DropdownMenuItem>
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="sr-only">{label}</span>
+                </button>
               );
             })}
           </div>

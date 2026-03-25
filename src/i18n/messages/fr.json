@@ -8,7 +8,17 @@
     "privacy": "Politique de Confidentialité",
     "imprint": "Mentions Légales",
     "licenses": "Licences",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "toggleMenu": "Basculer le menu",
+    "settingsMenu": {
+      "label": "Paramètres",
+      "language": "Langue",
+      "appearance": "Apparence",
+      "light": "Clair",
+      "dark": "Sombre",
+      "system": "Système",
+      "auto": "Auto"
+    }
   },
   "hero": {
     "title": "Plus qu'une entreprise, une",
@@ -141,6 +151,48 @@
       "callSuccessDesc": "Nous vous appellerons à l'heure souhaitée.",
       "errorTitle": "Une erreur s'est produite",
       "errorDesc": "Veuillez vérifier vos saisies"
+    },
+    "submissionBanner": {
+      "title": "Formulaires temporairement indisponibles",
+      "defaultMessage": "Les formulaires de contact ne sont pas traités pour le moment.",
+      "notifyCta": "M'avertir quand les formulaires reviennent",
+      "dismiss": "Fermer l'avertissement"
+    },
+    "notify": {
+      "close": "Fermer",
+      "cancel": "Annuler",
+      "emailLabel": "Adresse e-mail",
+      "emailPlaceholder": "vous@example.com",
+      "switchToRemove": "Retirer l'e-mail de la liste",
+      "switchToSubscribe": "← Retour aux notifications",
+      "errors": {
+        "generic": "Une erreur s'est produite. Veuillez réessayer.",
+        "network": "Erreur réseau. Vérifiez votre connexion puis réessayez."
+      },
+      "subscribe": {
+        "title": "Restez informé",
+        "description": "Saisissez votre e-mail et nous vous informerons dès que nos formulaires de contact seront à nouveau disponibles.",
+        "cta": "M'avertir",
+        "loading": "Enregistrement…"
+      },
+      "remove": {
+        "title": "Supprimer votre e-mail",
+        "description": "Saisissez l'adresse e-mail que vous souhaitez retirer de notre liste de notification.",
+        "cta": "Supprimer",
+        "loading": "Suppression…"
+      },
+      "success": {
+        "title": "Vous êtes sur la liste !",
+        "description": "Nous vous enverrons une notification dès que les formulaires de contact seront à nouveau disponibles."
+      },
+      "duplicate": {
+        "title": "Vous êtes déjà sur la liste !",
+        "description": "Nous avons déjà votre e-mail. Nous vous contacterons dès que les formulaires seront à nouveau disponibles."
+      },
+      "removed": {
+        "title": "E-mail supprimé",
+        "description": "Votre e-mail a été retiré de notre liste de notification. Vous ne recevrez plus d'autres mises à jour."
+      }
     },
     "otherForm": {
       "topic": "Sujet",
@@ -407,7 +459,7 @@
     "badge": "Accès sécurisé",
     "menuLabel": "Compte",
     "guest": "Invité",
-    "providerHint": "Continuez avec Apple, Google ou Microsoft via Clerk, ou utilisez votre e-mail pour créer un compte.",
+    "providerHint": "Continuez avec Google ou utilisez votre e-mail pour créer un compte.",
     "signInPageCta": "Ouvrir la connexion",
     "signUpPageCta": "Ouvrir l’inscription",
     "signIn": "Se connecter",

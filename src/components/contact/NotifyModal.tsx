@@ -11,6 +11,7 @@ import {
   Trash2,
   XCircle,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -40,6 +41,7 @@ type ModalState =
 type ModalMode = "subscribe" | "remove";
 
 export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
+  const t = useTranslations("contact.notify");
   const [email, setEmail] = useState("");
   const [mode, setMode] = useState<ModalMode>("subscribe");
   const [state, setState] = useState<ModalState>("idle");
@@ -76,16 +78,14 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
       };
 
       const baseMessage =
-        payload.detail ||
-        payload.error ||
-        "Something went wrong. Please try again.";
+        payload.detail || payload.error || t("errors.generic");
 
       return payload.code
         ? `${baseMessage} (code: ${payload.code})`
         : baseMessage;
     }
 
-    return "Something went wrong. Please try again.";
+    return t("errors.generic");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,7 +123,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
         setState("removed");
       }
     } catch {
-      setErrorMsg("Network error. Please check your connection and try again.");
+      setErrorMsg(t("errors.network"));
       setState("error");
     }
   };
@@ -139,19 +139,19 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
             {mode === "subscribe" ? (
               <>
                 <Bell className="h-5 w-5 text-amber-400" />
-                Stay in the loop
+                {t("subscribe.title")}
               </>
             ) : (
               <>
-                <Trash2 className="h-5 w-5 text-red-400" />
-                Remove your email
+                <Trash2 className="h-5 w-5 text-destructive" />
+                {t("remove.title")}
               </>
             )}
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {mode === "subscribe"
-              ? "Enter your email and we'll notify you as soon as our contact forms are back online."
-              : "Enter the email address you'd like to remove from our notification list."}
+              ? t("subscribe.description")
+              : t("remove.description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -161,34 +161,34 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
               className={cn(
                 "flex h-14 w-14 items-center justify-center rounded-full",
                 state === "duplicate"
-                  ? "bg-yellow-500/10 border border-yellow-500/30"
+                  ? "border border-warning/35 bg-warning/12"
                   : state === "removed"
-                    ? "bg-red-500/10 border border-red-500/30"
-                    : "bg-green-500/10 border border-green-500/30"
+                    ? "border border-destructive/30 bg-destructive/10"
+                    : "border border-success/35 bg-success/14"
               )}
             >
               {state === "duplicate" ? (
-                <SmilePlusIcon className="h-7 w-7 text-yellow-400" />
+                <SmilePlusIcon className="h-7 w-7 text-warning-foreground" />
               ) : state === "removed" ? (
-                <XCircle className="h-7 w-7 text-red-400" />
+                <XCircle className="h-7 w-7 text-destructive" />
               ) : (
-                <CheckCircle2 className="h-7 w-7 text-green-400" />
+                <CheckCircle2 className="h-7 w-7 text-success-foreground" />
               )}
             </div>
             <div>
               <p className="font-semibold text-foreground">
                 {state === "duplicate"
-                  ? "You're already on the list!"
+                  ? t("duplicate.title")
                   : state === "removed"
-                    ? "Email removed"
-                    : "You're on the list!"}
+                    ? t("removed.title")
+                    : t("success.title")}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {state === "duplicate"
-                  ? "We already have your email. We'll reach out as soon as forms are live."
+                  ? t("duplicate.description")
                   : state === "removed"
-                    ? "Your email has been removed from our notification list. You won't receive any further updates."
-                    : "We'll send you a notification as soon as the contact forms go live."}
+                    ? t("removed.description")
+                    : t("success.description")}
               </p>
             </div>
             <Button
@@ -197,21 +197,21 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
               className="mt-2"
               onClick={() => handleOpenChange(false)}
             >
-              Close
+              {t("close")}
             </Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <div className="space-y-1.5">
               <Label htmlFor="notify-email" className="text-sm font-medium">
-                Email address
+                {t("emailLabel")}
               </Label>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   id="notify-email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder={t("emailPlaceholder")}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
@@ -238,8 +238,8 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
                 className="mr-auto px-0 text-xs text-muted-foreground"
               >
                 {mode === "subscribe"
-                  ? "Remove email from list"
-                  : "← Back to notifications"}
+                  ? t("switchToRemove")
+                  : t("switchToSubscribe")}
               </Button>
               <Button
                 type="button"
@@ -248,7 +248,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
                 disabled={state === "loading"}
                 onClick={() => handleOpenChange(false)}
               >
-                Cancel
+                {t("cancel")}
               </Button>
               <Button
                 type="submit"
@@ -256,23 +256,26 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
                 disabled={!email.trim() || state === "loading"}
                 className={cn(
                   "gap-1.5",
-                  mode === "remove" && "bg-red-600 hover:bg-red-700 text-white"
+                  mode === "remove" &&
+                    "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 )}
               >
                 {state === "loading" ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    {mode === "subscribe" ? "Saving…" : "Removing…"}
+                    {mode === "subscribe"
+                      ? t("subscribe.loading")
+                      : t("remove.loading")}
                   </>
                 ) : mode === "subscribe" ? (
                   <>
                     <Bell className="h-3.5 w-3.5" />
-                    Notify me
+                    {t("subscribe.cta")}
                   </>
                 ) : (
                   <>
                     <Trash2 className="h-3.5 w-3.5" />
-                    Remove
+                    {t("remove.cta")}
                   </>
                 )}
               </Button>

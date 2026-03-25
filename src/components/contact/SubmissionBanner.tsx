@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 
 import { AlertTriangle, Bell, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,28 +19,29 @@ export function SubmissionBanner({
   onNotifyClick,
   className,
 }: SubmissionBannerProps) {
+  const t = useTranslations("contact.submissionBanner");
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) return null;
 
-  const message = text || "Contact forms are not being processed at this time.";
+  const message = text || t("defaultMessage");
 
   return (
     <>
       {/* Desktop banner */}
       <div
         className={cn(
-          "hidden md:flex items-center gap-4 w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-5 py-4 text-amber-200",
+          "hidden md:flex items-center gap-4 w-full rounded-lg border border-warning/45 bg-warning/12 px-5 py-4 text-warning-foreground",
           className
         )}
         role="alert"
       >
         <AlertTriangle
-          className="h-5 w-5 shrink-0 text-amber-400"
+          className="h-5 w-5 shrink-0 text-warning-foreground/80"
           aria-hidden="true"
         />
 
-        <p className="flex-1 text-sm font-medium leading-snug text-amber-100">
+        <p className="flex-1 text-sm font-medium leading-snug text-white">
           {message}
         </p>
 
@@ -47,16 +49,16 @@ export function SubmissionBanner({
           <Button
             size="sm"
             variant="outline"
-            className="border-amber-500/50 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100 gap-1.5 transition-colors"
+            className="gap-1.5 border-warning/50 bg-background/55 text-white/80 hover:bg-warning/18 transition-colors"
             onClick={onNotifyClick}
           >
             <Bell className="h-3.5 w-3.5" />
-            Get notified when forms go live
+            {t("notifyCta")}
           </Button>
 
           <button
-            className="ml-1 rounded p-1 text-amber-400/60 hover:text-amber-300 transition-colors"
-            aria-label="Dismiss notice"
+            className="ml-1 rounded p-1 text-white/30 hover:text-warning-foreground transition-colors"
+            aria-label={t("dismiss")}
             onClick={() => setDismissed(true)}
           >
             <X className="h-4 w-4" />
@@ -67,27 +69,27 @@ export function SubmissionBanner({
       {/* Mobile banner */}
       <div
         className={cn(
-          "flex flex-col gap-3 md:hidden w-full rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-4 text-amber-200",
+          "flex flex-col gap-3 md:hidden w-full rounded-lg border border-warning/45 bg-warning/12 px-4 py-4 text-warning-foreground",
           className
         )}
         role="alert"
       >
         <div className="flex items-start gap-3">
           <AlertTriangle
-            className="h-5 w-5 mt-0.5 shrink-0 text-amber-400"
+            className="mt-0.5 h-5 w-5 shrink-0 text-warning-foreground/80"
             aria-hidden="true"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-amber-100 leading-snug">
-              Forms temporarily unavailable
+            <p className="text-sm font-semibold leading-snug text-warning-foreground">
+              {t("title")}
             </p>
-            <p className="mt-0.5 text-xs text-amber-200/80 leading-relaxed">
+            <p className="mt-0.5 text-xs leading-relaxed text-warning-foreground/80">
               {message}
             </p>
           </div>
           <button
-            className="rounded p-1 text-amber-400/60 hover:text-amber-300 transition-colors shrink-0"
-            aria-label="Dismiss notice"
+            className="shrink-0 rounded p-1 text-warning-foreground/55 hover:text-warning-foreground transition-colors"
+            aria-label={t("dismiss")}
             onClick={() => setDismissed(true)}
           >
             <X className="h-4 w-4" />
@@ -97,11 +99,11 @@ export function SubmissionBanner({
         <Button
           size="sm"
           variant="outline"
-          className="w-full border-amber-500/50 bg-amber-500/10 text-amber-200 hover:bg-amber-500/20 hover:text-amber-100 gap-2 transition-colors"
+          className="w-full gap-2 border-warning/50 bg-background/55 text-warning-foreground hover:bg-warning/18 hover:text-warning-foreground transition-colors"
           onClick={onNotifyClick}
         >
           <Bell className="h-4 w-4" />
-          Get notified when forms go live
+          {t("notifyCta")}
         </Button>
       </div>
     </>

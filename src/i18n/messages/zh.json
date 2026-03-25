@@ -8,7 +8,17 @@
     "privacy": "隐私政策",
     "imprint": "版权信息",
     "licenses": "许可证",
-    "settings": "设置"
+    "settings": "设置",
+    "toggleMenu": "切换菜单",
+    "settingsMenu": {
+      "label": "设置",
+      "language": "语言",
+      "appearance": "外观",
+      "light": "浅色",
+      "dark": "深色",
+      "system": "系统",
+      "auto": "自动"
+    }
   },
   "hero": {
     "title": "不仅仅是一家公司，完整的",
@@ -141,6 +151,48 @@
       "callSuccessDesc": "我们将按您要求的时间给您致电。",
       "errorTitle": "出错了",
       "errorDesc": "请检查您的输入"
+    },
+    "submissionBanner": {
+      "title": "表单暂时不可用",
+      "defaultMessage": "联系表单当前暂时无法处理。",
+      "notifyCta": "表单恢复时通知我",
+      "dismiss": "关闭提示"
+    },
+    "notify": {
+      "close": "关闭",
+      "cancel": "取消",
+      "emailLabel": "电子邮件地址",
+      "emailPlaceholder": "you@example.com",
+      "switchToRemove": "从列表中移除邮箱",
+      "switchToSubscribe": "← 返回通知",
+      "errors": {
+        "generic": "发生了一些问题。请再试一次。",
+        "network": "网络错误。请检查连接后重试。"
+      },
+      "subscribe": {
+        "title": "保持关注",
+        "description": "输入你的邮箱，一旦联系表单重新开放，我们会立即通知你。",
+        "cta": "通知我",
+        "loading": "保存中…"
+      },
+      "remove": {
+        "title": "移除邮箱",
+        "description": "输入你想从通知列表中移除的邮箱地址。",
+        "cta": "移除",
+        "loading": "移除中…"
+      },
+      "success": {
+        "title": "你已加入列表！",
+        "description": "一旦联系表单重新开放，我们会向你发送通知。"
+      },
+      "duplicate": {
+        "title": "你已经在列表中！",
+        "description": "我们已经保存了你的邮箱。表单恢复后会第一时间通知你。"
+      },
+      "removed": {
+        "title": "邮箱已移除",
+        "description": "你的邮箱已从通知列表中移除。你将不会再收到后续更新。"
+      }
     },
     "otherForm": {
       "topic": "主题",
@@ -407,7 +459,7 @@
     "badge": "安全访问",
     "menuLabel": "账户",
     "guest": "访客",
-    "providerHint": "可通过 Clerk 使用 Apple、Google 或 Microsoft 登录，也可以使用邮箱创建账户。",
+    "providerHint": "可通过 Clerk Google 登录，也可以使用邮箱创建账户。",
     "signInPageCta": "打开登录页",
     "signUpPageCta": "打开注册页",
     "signIn": "登录",
