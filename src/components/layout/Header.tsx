@@ -5,6 +5,7 @@ import React from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 import { useSingleLetterLogo } from "@/hooks/use-logo";
@@ -166,47 +167,56 @@ export const Header = () => {
       </nav>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-background animate-in slide-in-from-top-2 duration-300">
-          <div className="container mx-auto px-4 py-4 space-y-4">
-            <ul className="space-y-4">
-              {navLinks.map((link, i) => (
-                <li
-                  key={`mobile_${link.label}_${i}`}
-                  className="animate-in slide-in-from-left-2 duration-300"
-                  style={{ animationDelay: `${i * 50}ms` }}
-                >
-                  <Link
-                    href={link.path}
-                    className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${
-                      pathname === link.path
-                        ? "text-foreground font-medium translate-x-1"
-                        : "text-muted-foreground"
-                    }`}
-                    onClick={() => setMobileMenuOpen(false)}
+      <AnimatePresence initial={false}>
+        {mobileMenuOpen && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className="md:hidden border-t border-border bg-background"
+          >
+            <div className="container mx-auto px-4 py-4 space-y-4">
+              <ul className="space-y-4">
+                {navLinks.map((link, i) => (
+                  <li
+                    key={`mobile_${link.label}_${i}`}
+                    className="animate-in slide-in-from-left-2 duration-300"
+                    style={{ animationDelay: `${i * 50}ms` }}
                   >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+                    <Link
+                      href={link.path}
+                      className={`block text-sm hover:text-foreground hover:translate-x-1 transition-all duration-200 ${
+                        pathname === link.path
+                          ? "text-foreground font-medium translate-x-1"
+                          : "text-muted-foreground"
+                      }`}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
 
-            <div
-              className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300"
-              style={{ animationDelay: `${navLinks.length * 50}ms` }}
-            >
-              <AccountMenu
-                isMobile
-                onMobileNavigate={() => setMobileMenuOpen(false)}
-              />
-              <SettingsMenu
-                isMobile
-                onMobileNavigate={() => setMobileMenuOpen(false)}
-              />
+              <div
+                className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300"
+                style={{ animationDelay: `${navLinks.length * 50}ms` }}
+              >
+                <AccountMenu
+                  isMobile
+                  onMobileNavigate={() => setMobileMenuOpen(false)}
+                />
+                <SettingsMenu
+                  isMobile
+                  onMobileNavigate={() => setMobileMenuOpen(false)}
+                />
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 };

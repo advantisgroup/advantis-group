@@ -54,16 +54,28 @@ export const SettingsMenu = ({
 
   if (isMobile) {
     return (
-      <div className="space-y-5">
-        <div className="space-y-3">
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 4 }}
+        transition={{ duration: 0.18, ease: "easeOut", delay: 0.03 }}
+        className="space-y-5"
+      >
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 4 }}
+          transition={{ duration: 0.18, ease: "easeOut", delay: 0.05 }}
+          className="space-y-3"
+        >
           <span className="block text-xs uppercase tracking-wider text-muted-foreground">
             Language
           </span>
           <div className="grid grid-cols-2 gap-2">
             {languages.map(language => (
-                <button
-                  key={language.code}
-                  onClick={() => switchLanguage(language.code)}
+              <button
+                key={language.code}
+                onClick={() => switchLanguage(language.code)}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
                   language.code === locale
@@ -76,9 +88,15 @@ export const SettingsMenu = ({
               </button>
             ))}
           </div>
-        </div>
+        </motion.div>
 
-        <div className="space-y-3">
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 4 }}
+          transition={{ duration: 0.18, ease: "easeOut", delay: 0.08 }}
+          className="space-y-3"
+        >
           <span className="block text-xs uppercase tracking-wider text-muted-foreground">
             Appearance
           </span>
@@ -89,13 +107,12 @@ export const SettingsMenu = ({
 
               return (
                 <button
-                  disabled={mode === "light" || mode === "system"}
                   key={mode}
                   onClick={() => {
                     onMobileNavigate?.();
                     setTheme(mode);
                   }}
-                  className={cn(
+                  className={cn( 
                     "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
                     mounted && theme === mode
                       ? "border-advantis/40 bg-advantis/10 text-advantis"
@@ -110,8 +127,8 @@ export const SettingsMenu = ({
               );
             })}
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 
@@ -221,7 +238,6 @@ export const SettingsMenu = ({
 
               return (
                 <DropdownMenuItem
-                  disabled={mode === "light" || mode === "system"}
                   key={mode}
                   onClick={() => setTheme(mode)}
                   className="cursor-pointer rounded-xl py-2"

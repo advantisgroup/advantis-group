@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useClerk } from "@clerk/nextjs";
+import { motion } from "framer-motion";
 import {
   AlertCircle,
   Building2,
@@ -15,6 +16,67 @@ import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { type ContactSubmissionRecord } from "@/types/contact";
+
+const submissionsContainerVariants = {
+  hidden: {},
+  visible: {
+    transition: {
+      staggerChildren: 0.04,
+      delayChildren: 0.03,
+    },
+  },
+};
+
+const submissionItemVariants = {
+  hidden: {
+    opacity: 0,
+    y: 8,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.24,
+      ease: "easeOut",
+    },
+  },
+};
+
+const toLookupKey = (value: string) => value.trim().toLowerCase();
+
+const toFallbackLabel = (value: string) =>
+  value
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, char => char.toUpperCase());
+
+const parseSubmissionDate = (value: string) => {
+  const parsed = new Date(value);
+
+  if (!Number.isNaN(parsed.getTime())) {
+    return parsed;
+  }
+
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const [, year, month, day, hours, minutes, seconds] = match;
+
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hours),
+    Number(minutes),
+    seconds ? Number(seconds) : 0
+  );
+};
 
 export const ContactSubmissionsPage = () => {
   const locale = useLocale();
@@ -87,6 +149,23 @@ export const ContactSubmissionsPage = () => {
     [locale]
   );
 
+  const submissionTypeLabels = useMemo(
+    () => ({
+      message: t("types.message"),
+      callback: t("types.callback"),
+      other: t("types.other"),
+    }),
+    [t]
+  );
+
+  const submissionStatusLabels = useMemo(
+    () => ({
+      sent: t("status.sent"),
+      failed: t("status.failed"),
+    }),
+    [t]
+  );
+
   return (
     <section className="min-h-[calc(100vh-4rem)] bg-background px-4 py-28">
       <div className="mx-auto max-w-6xl space-y-8">
@@ -144,20 +223,37 @@ export const ContactSubmissionsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="grid gap-4">
-            {submissions.map(submission => (
-              <article
-                key={submission._id}
-                className="rounded-4xl border border-border bg-card/70 p-6 shadow-2xl shadow-black/20 backdrop-blur"
-              >
+          <motion.div
+            className="grid gap-4"
+            variants={submissionsContainerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {submissions.map(submission => {
+              const submissionTypeKey = toLookupKey(submission.submissionType);
+              const submissionStatusKey = toLookupKey(submission.status);
+              const desiredDate = submission.desiredDateTime
+                ? parseSubmissionDate(submission.desiredDateTime)
+                : null;
+
+              return (
+                <motion.article
+                  key={submission._id}
+                  variants={submissionItemVariants}
+                  className="rounded-4xl border border-border bg-card/70 p-6 shadow-2xl shadow-black/20 backdrop-blur"
+                >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full border border-advantis/30 bg-advantis/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-advantis">
-                        {t(`types.${submission.submissionType}`)}
+                        {submissionTypeLabels[
+                          submissionTypeKey as keyof typeof submissionTypeLabels
+                        ] ?? toFallbackLabel(submission.submissionType)}
                       </span>
                       <span className="rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground">
-                        {t(`status.${submission.status}`)}
+                        {submissionStatusLabels[
+                          submissionStatusKey as keyof typeof submissionStatusLabels
+                        ] ?? toFallbackLabel(submission.status)}
                       </span>
                     </div>
                     <h2 className="text-2xl font-semibold text-foreground">
@@ -194,12 +290,9 @@ export const ContactSubmissionsPage = () => {
                         <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
                           <p className="font-medium text-foreground">
-                            {new Date(
-                              submission.desiredDateTime
-                            ).toLocaleString(locale, {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            })}
+                            {desiredDate
+                              ? formatter.format(desiredDate)
+                              : submission.desiredDateTime}
                           </p>
                           <p>{t("desiredTime")}</p>
                         </div>
@@ -262,9 +355,10 @@ export const ContactSubmissionsPage = () => {
                     ) : null}
                   </div>
                 </div>
-              </article>
-            ))}
-          </div>
+                </motion.article>
+              );
+            })}
+          </motion.div>
         )}
       </div>
     </section>
