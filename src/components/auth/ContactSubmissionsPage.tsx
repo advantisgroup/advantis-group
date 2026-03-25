@@ -24,14 +24,38 @@ export const ContactSubmissionsPage = () => {
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading"
   );
+  const [errorDetail, setErrorDetail] = useState("");
 
   useEffect(() => {
     const load = async () => {
       try {
+        setErrorDetail("");
         const response = await fetch("/api/submissions", { cache: "no-store" });
 
         if (!response.ok) {
-          throw new Error(`Failed with status ${response.status}`);
+          let reason = `Failed with status ${response.status}`;
+
+          try {
+            const errorData = (await response.json()) as {
+              error?: string;
+              code?: string;
+              detail?: string;
+            };
+
+            if (errorData.detail) {
+              reason = errorData.detail;
+            } else if (errorData.error) {
+              reason = errorData.error;
+            }
+
+            if (errorData.code) {
+              reason = `${reason} (code: ${errorData.code})`;
+            }
+          } catch {
+            // Keep fallback reason when response body is not JSON.
+          }
+
+          throw new Error(reason);
         }
 
         const data = (await response.json()) as {
@@ -42,6 +66,11 @@ export const ContactSubmissionsPage = () => {
         setStatus("ready");
       } catch (error) {
         console.error("Failed to load contact submissions", error);
+        setErrorDetail(
+          error instanceof Error
+            ? error.message
+            : "Unknown error while loading submissions."
+        );
         setStatus("error");
       }
     };
@@ -97,6 +126,11 @@ export const ContactSubmissionsPage = () => {
                 <p className="mt-1 text-sm text-red-100/80">
                   {t("errorDescription")}
                 </p>
+                {errorDetail ? (
+                  <p className="mt-2 rounded-md border border-red-300/20 bg-black/20 px-3 py-2 font-mono text-xs text-red-100/90">
+                    {errorDetail}
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
