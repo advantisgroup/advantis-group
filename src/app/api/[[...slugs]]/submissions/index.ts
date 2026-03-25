@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 
-import { api } from "@/../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 
 export const submissions = new Elysia().get(
   "/submissions",

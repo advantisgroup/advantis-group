@@ -3,8 +3,9 @@ import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
-import { api } from "@/../convex/_generated/api";
 import { EmailTemplate } from "@/components/email/email-template";
+
+import { api } from "../../../../../convex/_generated/api";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
