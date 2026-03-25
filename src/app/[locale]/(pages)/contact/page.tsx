@@ -188,27 +188,29 @@ export default function Kontakt() {
             <ContactInfoDesktop items={contactInfoData} />
           )}
 
-          {accountProfile ? (
-            <AccountContactHelper
-              accountProfile={accountProfile}
-              buttonState={accountPrefillState}
-              onUseAccount={handleUseAccount}
-            />
-          ) : (
-            <div className="rounded-4xl border border-border/70 bg-background/80 p-5 md:p-6">
-              <h2 className="text-xl font-semibold text-foreground">
-                {tAccountHelper("signedOutTitle")}
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                {tAccountHelper("signedOutDescription")}
-              </p>
-              <div className="mt-4">
-                <SignInButton>
-                  <Button type="button">{tAccountHelper("signInCta")}</Button>
-                </SignInButton>
+          {ALLOW_SUBMISSIONS ?
+            accountProfile ? (
+              <AccountContactHelper
+                accountProfile={accountProfile}
+                buttonState={accountPrefillState}
+                onUseAccount={handleUseAccount}
+              />
+            ) : (
+              <div className="rounded-4xl border border-border/70 bg-background/80 p-5 md:p-6">
+                <h2 className="text-xl font-semibold text-foreground">
+                  {tAccountHelper("signedOutTitle")}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+                  {tAccountHelper("signedOutDescription")}
+                </p>
+                <div className="mt-4">
+                  <SignInButton>
+                    <Button type="button">{tAccountHelper("signInCta")}</Button>
+                  </SignInButton>
+                </div>
               </div>
-            </div>
-          )}
+            ) : (<></>)
+          }
 
           {!ALLOW_SUBMISSIONS && (
             <SubmissionBanner
@@ -237,13 +239,13 @@ export default function Kontakt() {
                   <p className="text-base text-muted-foreground">
                     {getFormDescription()}
                   </p>
-                  {accountPrefillState === "success" ? (
+                  {accountPrefillState === "success" && ALLOW_SUBMISSIONS ? (
                     <div className="inline-flex items-center gap-2 rounded-full border border-success/35 bg-success/14 px-3 py-1 text-sm font-medium text-success-foreground">
                       <CheckCircle2 className="h-4 w-4" />
                       {tAccountHelper("scrollNotice")}
                     </div>
                   ) : null}
-                  {isSignedIn ? (
+                  {isSignedIn  && ALLOW_SUBMISSIONS ? (
                     <p className="rounded-2xl border border-advantis/20 bg-advantis/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
                       {tAccountHelper("storedAccountNote")}
                     </p>
