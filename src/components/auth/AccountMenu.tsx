@@ -152,22 +152,22 @@ export const AccountMenu = ({ isMobile = false }: { isMobile?: boolean }) => {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="group/account relative inline-flex h-10 w-10 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="group/account relative inline-flex h-8 w-8 items-center justify-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           aria-label={t("menuLabel")}
         >
           <span className="absolute inset-0 rounded-full bg-advantis/10 opacity-0 blur-md transition-opacity duration-300 group-hover/account:opacity-100" />
-          <Avatar className="relative z-10 h-10 w-10 border-border/80 bg-background transition-colors duration-200 group-hover/account:border-advantis/40">
+          <Avatar className="relative z-10 h-8 w-8 border-border/80 bg-background transition-colors duration-200 group-hover/account:border-advantis/40">
             {isSignedIn ? (
               <AvatarImage src={user.imageUrl} alt={displayName} />
             ) : null}
             <AvatarFallback
               className={
                 isSignedIn
-                  ? "bg-advantis/10 text-advantis"
+                  ? "bg-advantis/10 text-xs text-advantis"
                   : "bg-muted text-muted-foreground"
               }
             >
-              {isSignedIn ? initials : <UserRound className="h-4 w-4" />}
+              {isSignedIn ? initials : <UserRound className="h-3.5 w-3.5" />}
             </AvatarFallback>
           </Avatar>
         </button>

@@ -20,7 +20,12 @@ export const submissions = new Elysia().get(
 
     if (!convex) {
       set.status = 500;
-      return { error: "Server configuration error." };
+      return {
+        error: "Server configuration error.",
+        code: "convex_not_configured",
+        detail:
+          "NEXT_PUBLIC_CONVEX_URL is missing, so submissions cannot be loaded.",
+      };
     }
 
     try {
@@ -35,7 +40,12 @@ export const submissions = new Elysia().get(
     } catch (error) {
       console.error("[submissions] Convex error:", error);
       set.status = 500;
-      return { error: "Failed to load submissions." };
+      return {
+        error: "Failed to load submissions.",
+        code: "convex_query_failed",
+        detail:
+          error instanceof Error ? error.message : "Unknown Convex query error.",
+      };
     }
   },
   {
@@ -67,7 +77,11 @@ export const submissions = new Elysia().get(
         ),
       }),
       401: t.Object({ error: t.String() }),
-      500: t.Object({ error: t.String() }),
+      500: t.Object({
+        error: t.String(),
+        code: t.Optional(t.String()),
+        detail: t.Optional(t.String()),
+      }),
     },
   }
 );

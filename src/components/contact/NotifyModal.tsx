@@ -63,6 +63,29 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
     setErrorMsg("");
   };
 
+  const formatApiError = (errorValue: unknown) => {
+    if (typeof errorValue === "string") {
+      return errorValue;
+    }
+
+    if (errorValue && typeof errorValue === "object") {
+      const payload = errorValue as {
+        error?: string;
+        code?: string;
+        detail?: string;
+      };
+
+      const baseMessage =
+        payload.detail || payload.error || "Something went wrong. Please try again.";
+
+      return payload.code
+        ? `${baseMessage} (code: ${payload.code})`
+        : baseMessage;
+    }
+
+    return "Something went wrong. Please try again.";
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || state === "loading") return;
@@ -73,20 +96,13 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
     try {
       if (mode === "subscribe") {
         const res = await api.notify.post({
-          email: encodeURIComponent(email.trim().toLowerCase()),
+          email: email.trim().toLowerCase(),
         });
 
         const data = res.data;
 
         if (res.error) {
-          const errValue = res.error.value;
-          const msg =
-            typeof errValue === "string"
-              ? errValue
-              : "error" in errValue
-                ? errValue.error
-                : "Something went wrong. Please try again.";
-          setErrorMsg(msg);
+          setErrorMsg(formatApiError(res.error.value));
           setState("error");
           return;
         }
@@ -97,14 +113,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
         const res = await api.notify({ email: encoded }).delete();
 
         if (res.error) {
-          const errValue = res.error.value;
-          const msg =
-            typeof errValue === "string"
-              ? errValue
-              : "error" in errValue
-                ? errValue.error
-                : "Something went wrong. Please try again.";
-          setErrorMsg(msg);
+          setErrorMsg(formatApiError(res.error.value));
           setState("error");
           return;
         }
