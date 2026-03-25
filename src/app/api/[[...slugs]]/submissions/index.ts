@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
@@ -7,7 +9,7 @@ import { api } from "@/../convex/_generated/api";
 export const submissions = new Elysia().get(
   "/submissions",
   async ({ set }) => {
-    const { userId, getToken } = await auth();
+    const { userId } = await auth();
 
     if (!userId) {
       set.status = 401;
@@ -26,20 +28,7 @@ export const submissions = new Elysia().get(
       };
     }
 
-    const token = await getToken({ template: "convex" });
-
-    if (!token) {
-      set.status = 401;
-      return {
-        error: "Unauthorized",
-        code: "no_token",
-        detail:
-          "Could not get Convex auth token. Check that the 'convex' JWT template exists in Clerk.",
-      };
-    }
-
     const convex = new ConvexHttpClient(convexUrl);
-    convex.setAuth(token);
 
     try {
       const submissions = await convex.query(
@@ -48,6 +37,13 @@ export const submissions = new Elysia().get(
           clerkUserId: userId,
         }
       );
+      if (!submissions) {
+        set.status = 404;
+        return {
+          error: "Failed to get submissions.",
+          code: "convex_query_null",
+        };
+      }
       return { submissions };
     } catch (error) {
       console.error("[submissions] Convex error:", error);
@@ -56,7 +52,9 @@ export const submissions = new Elysia().get(
         error: "Failed to load submissions.",
         code: "convex_query_failed",
         detail:
-          error instanceof Error ? error.message : "Unknown Convex query error.",
+          error instanceof Error
+            ? error.message
+            : "Unknown Convex query error.",
       };
     }
   },

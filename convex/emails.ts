@@ -22,7 +22,7 @@ export const saveEmail = mutation({
         error: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
-        return await ctx.db.insert('emails', {
+        return await ctx.db.insert("emails", {
             ...args,
             sentAt: Date.now(),
         })
@@ -35,24 +35,20 @@ export const listEmailsByClerkUserId = query({
     },
     handler: async (ctx, args) => {
         if (!args.clerkUserId) {
+            console.error("No clerk user id provided")
             return []
         }
+            const existing = await ctx.db.query("emails").withIndex("by_clerkUserId_sentAt", q => q.eq("clerkUserId", args.clerkUserId).gte("sentAt", 0)).order("desc").take(50)
+            console.log(args.clerkUserId, existing)
 
-        const existing = await ctx.db
-  .query('emails')
-  .withIndex('by_clerkUserId_sentAt', q =>
-    q.eq('clerkUserId', args.clerkUserId)
-     .gte('sentAt', 0) 
-  )
-  .order('desc')
-  .take(50)
+            if (!existing) {
+                console.error("No submissions found for user", args.clerkUserId)
+                return []
+            }
 
-        if (!existing) return []
-
-        return existing
+            return existing
     },
 })
-
 export const saveNotifyEmail = mutation({
     args: {
         email: v.string(),

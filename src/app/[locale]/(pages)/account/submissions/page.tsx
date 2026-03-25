@@ -1,8 +1,7 @@
-import { redirect } from "next/navigation";
-
 import { auth } from "@clerk/nextjs/server";
 
 import { ContactSubmissionsPage } from "@/components/auth/ContactSubmissionsPage";
+import { redirect } from "@/i18n/navigation";
 
 export default async function AccountSubmissionsRoute({
   params,

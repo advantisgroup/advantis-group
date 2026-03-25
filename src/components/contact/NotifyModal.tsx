@@ -76,7 +76,9 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
       };
 
       const baseMessage =
-        payload.detail || payload.error || "Something went wrong. Please try again.";
+        payload.detail ||
+        payload.error ||
+        "Something went wrong. Please try again.";
 
       return payload.code
         ? `${baseMessage} (code: ${payload.code})`

@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -194,7 +195,12 @@ export const ContactSubmissionsPage = () => {
                         <Clock3 className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
                           <p className="font-medium text-foreground">
-                            {submission.desiredDateTime}
+                            {new Date(
+                              submission.desiredDateTime
+                            ).toLocaleString(locale, {
+                              dateStyle: "medium",
+                              timeStyle: "short",
+                            })}
                           </p>
                           <p>{t("desiredTime")}</p>
                         </div>
