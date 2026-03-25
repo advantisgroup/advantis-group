@@ -8,8 +8,8 @@
     "build": "bun convex codegen && next build",
     "start": "next start",
     "fix": "bun lint && bun format",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix",
     "format:check": "bunx prettier --check ./src",
     "format": "bunx prettier --write ./src",
     "licenses": "bunx license-checker --json --production --out ./public/licenses.json"

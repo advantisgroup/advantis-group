@@ -188,7 +188,7 @@ export default function Kontakt() {
             <ContactInfoDesktop items={contactInfoData} />
           )}
 
-          {ALLOW_SUBMISSIONS ?
+          {ALLOW_SUBMISSIONS ? (
             accountProfile ? (
               <AccountContactHelper
                 accountProfile={accountProfile}
@@ -209,8 +209,10 @@ export default function Kontakt() {
                   </SignInButton>
                 </div>
               </div>
-            ) : (<></>)
-          }
+            )
+          ) : (
+            <></>
+          )}
 
           {!ALLOW_SUBMISSIONS && (
             <SubmissionBanner
@@ -245,7 +247,7 @@ export default function Kontakt() {
                       {tAccountHelper("scrollNotice")}
                     </div>
                   ) : null}
-                  {isSignedIn  && ALLOW_SUBMISSIONS ? (
+                  {isSignedIn && ALLOW_SUBMISSIONS ? (
                     <p className="rounded-2xl border border-advantis/20 bg-advantis/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
                       {tAccountHelper("storedAccountNote")}
                     </p>
