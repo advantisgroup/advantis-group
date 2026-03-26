@@ -3,14 +3,12 @@
 import { ArrowRight, Sparkles, ChevronDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "@/i18n/navigation";
 
 import { BrandText } from "../../effects/BrandText";
 import { Button } from "../../ui/button";
 
 export const Hero = () => {
-  const isMobile = useIsMobile();
   const t = useTranslations("hero");
 
   return (
@@ -46,29 +44,19 @@ export const Hero = () => {
               </BrandText>
             </div>
 
-            {isMobile ? (
-              <h1 className="font-bold">
-                <span className="text-4xl font-bold leading-tight">
-                  {t("title")}
-                </span>
-                <span className="text-4xl font-bold leading-tight">
-                  {t("titleHighlight")}
-                </span>
-              </h1>
-            ) : (
-              <h1 className="text-4xl group md:text-6xl lg:text-8xl font-bold leading-tight">
-                {t("title")}{" "}
+            <h1 className="text-4xl group font-bold leading-tight md:text-6xl lg:text-8xl">
+              {t("title")}{" "}
+              <span className="md:hidden">{t("titleHighlight")}</span>
+              <span className="hidden md:inline">
                 <BrandText hoverable groupHover>
                   {t("titleHighlight")}
                 </BrandText>
-              </h1>
-            )}
+              </span>
+            </h1>
 
-            {!isMobile && (
-              <p className="text-lg md:text-2xl lg:text-3xl text-muted-foreground font-medium">
-                {t("subtitle")}
-              </p>
-            )}
+            <p className="hidden text-lg text-muted-foreground font-medium md:block md:text-2xl lg:text-3xl">
+              {t("subtitle")}
+            </p>
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4 md:pt-1">

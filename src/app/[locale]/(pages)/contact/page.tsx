@@ -19,7 +19,6 @@ import { TabNavigation } from "@/components/contact/TabNavigation";
 import { WhyAdvantisSidebar } from "@/components/contact/WhyAdvantis";
 import { Button } from "@/components/ui/button";
 import { useContactForm } from "@/hooks/use-contact-form";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { type ContactInfoItem, type ContactMode } from "@/types/contact";
 
 const ALLOW_SUBMISSIONS = process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS === "true";
@@ -36,7 +35,6 @@ export default function Kontakt() {
   const tMessages = useTranslations("contact.messages");
   const tAccountHelper = useTranslations("contact.accountHelper");
   const locale = useLocale();
-  const isMobile = useIsMobile();
   const { isSignedIn } = useUser();
   const formSectionRef = useRef<HTMLElement | null>(null);
 
@@ -159,7 +157,6 @@ export default function Kontakt() {
             errors={otherErrors}
             buttonState={getButtonState("other")}
             disabled={!ALLOW_SUBMISSIONS}
-            isMobile={isMobile}
             onFormDataChange={setOtherFormData}
             onSubmit={handleOtherSubmit}
           />
@@ -182,11 +179,12 @@ export default function Kontakt() {
         </section>
 
         <section className="mx-auto max-w-6xl space-y-8 md:space-y-12">
-          {isMobile ? (
+          <div className="md:hidden">
             <ContactInfoMobile items={contactInfoData} />
-          ) : (
+          </div>
+          <div className="hidden md:block">
             <ContactInfoDesktop items={contactInfoData} />
-          )}
+          </div>
 
           {ALLOW_SUBMISSIONS ? (
             accountProfile ? (
@@ -230,9 +228,7 @@ export default function Kontakt() {
               onModeChange={setContactMode}
             />
 
-            <div
-              className={`grid ${isMobile ? "grid-cols-1" : "md:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]"}`}
-            >
+            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
               <div className="space-y-6 p-6 md:p-8">
                 <div className="space-y-3">
                   <h2 className="text-2xl font-semibold text-foreground md:text-3xl">
