@@ -43,7 +43,7 @@ export function SubmissionBanner({
           <p className="md:hidden text-sm font-semibold leading-snug text-warning-foreground">
             {t("title")}
           </p>
-          <p className="mt-0.5 md:mt-0 text-xs md:text-sm font-medium leading-relaxed md:leading-snug text-warning-foreground/80 md:text-white">
+          <p className="mt-0.5 md:mt-0 text-xs md:text-sm font-medium leading-relaxed md:leading-snug text-warning-foreground/80">
             {message}
           </p>
         </div>
@@ -61,7 +61,7 @@ export function SubmissionBanner({
           {t("notifyCta")}
         </Button>
         <button
-          className="shrink-0 rounded p-1 text-warning-foreground/30 md:text-white/30 hover:text-warning-foreground transition-colors"
+          className="shrink-0 rounded p-1 text-warning-foreground/30 hover:text-warning-foreground transition-colors"
           aria-label={t("dismiss")}
           onClick={() => setDismissed(true)}
         >
