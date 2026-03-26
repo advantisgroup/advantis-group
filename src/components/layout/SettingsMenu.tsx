@@ -8,6 +8,11 @@ import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 
 import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -55,85 +60,95 @@ export const SettingsMenu = ({
 
   if (isMobile) {
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 4 }}
-        transition={{ duration: 0.18, ease: "easeOut", delay: 0.03 }}
-        className="space-y-5"
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 4 }}
-          transition={{ duration: 0.18, ease: "easeOut", delay: 0.05 }}
-          className="space-y-3"
-        >
-          <span className="block text-xs uppercase tracking-wider text-muted-foreground">
-            {t("language")}
-          </span>
-          <div className="grid grid-cols-2 gap-2">
-            {languages.map(language => (
-              <button
-                key={language.code}
-                onClick={() => switchLanguage(language.code)}
-                className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
-                  language.code === locale
-                    ? "border-advantis/40 bg-advantis/10 text-advantis"
-                    : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <span className="text-base">{language.flag}</span>
-                <span>{language.code.toUpperCase()}</span>
-              </button>
-            ))}
-          </div>
-        </motion.div>
+      <Drawer>
+        <DrawerTrigger asChild>
+          <button
+            type="button"
+            className="w-full rounded-xl border border-border bg-card/60 px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t("label")}
+          </button>
+        </DrawerTrigger>
 
-        <motion.div
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 4 }}
-          transition={{ duration: 0.18, ease: "easeOut", delay: 0.08 }}
-          className="space-y-3"
-        >
-          <span className="block text-xs uppercase tracking-wider text-muted-foreground">
-            {t("appearance")}
-          </span>
-          <div className="grid grid-cols-1 gap-2">
-            {["light", "dark", "system"].map(mode => {
-              const Icon =
-                mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+        <DrawerContent className="space-y-5">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="space-y-5"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut", delay: 0.03 }}
+              className="space-y-3"
+            >
+              <span className="block text-xs uppercase tracking-wider text-muted-foreground">
+                {t("language")}
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                {languages.map(language => (
+                  <button
+                    key={language.code}
+                    onClick={() => switchLanguage(language.code)}
+                    className={cn(
+                      "flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
+                      language.code === locale
+                        ? "border-advantis/40 bg-advantis/10 text-advantis"
+                        : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <span className="text-base">{language.flag}</span>
+                    <span>{language.code.toUpperCase()}</span>
+                  </button>
+                ))}
+              </div>
+            </motion.div>
 
-              return (
-                <button
-                  key={mode}
-                  onClick={() => {
-                    onMobileNavigate?.();
-                    setTheme(mode);
-                  }}
-                  className={cn(
-                    "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
-                    mounted && theme === mode
-                      ? "border-advantis/40 bg-advantis/10 text-advantis"
-                      : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="capitalize">
-                    {mode === "light"
-                      ? t("light")
-                      : mode === "dark"
-                        ? t("dark")
-                        : t("auto")}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </motion.div>
-      </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.18, ease: "easeOut", delay: 0.07 }}
+              className="space-y-3"
+            >
+              <span className="block text-xs uppercase tracking-wider text-muted-foreground">
+                {t("appearance")}
+              </span>
+              <div className="grid grid-cols-1 gap-2">
+                {["light", "dark", "system"].map(mode => {
+                  const Icon =
+                    mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+
+                  return (
+                    <button
+                      key={mode}
+                      onClick={() => {
+                        onMobileNavigate?.();
+                        setTheme(mode);
+                      }}
+                      className={cn(
+                        "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
+                        mounted && theme === mode
+                          ? "border-advantis/40 bg-advantis/10 text-advantis"
+                          : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="capitalize">
+                        {mode === "light"
+                          ? t("light")
+                          : mode === "dark"
+                            ? t("dark")
+                            : t("auto")}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        </DrawerContent>
+      </Drawer>
     );
   }
 
