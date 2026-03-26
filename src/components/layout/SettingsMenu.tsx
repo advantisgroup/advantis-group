@@ -76,7 +76,9 @@ export const SettingsMenu = ({
                 <Settings2 className="h-4 w-4" />
               </span>
               <div className="space-y-0.5">
-                <p className="text-sm font-medium text-foreground">{t("label")}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {t("label")}
+                </p>
                 <p className="text-xs text-muted-foreground">
                   {t("language")} & {t("appearance")}
                 </p>

@@ -7,7 +7,11 @@ const Drawer = ({
   shouldScaleBackground = true,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
+  <DrawerPrimitive.Root
+    modal
+    shouldScaleBackground={shouldScaleBackground}
+    {...props}
+  />
 );
 Drawer.displayName = "Drawer";
 
@@ -55,7 +59,10 @@ const DrawerHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("space-y-1.5 px-5 pb-2 pt-3 text-left", className)} {...props} />
+  <div
+    className={cn("space-y-1.5 px-5 pb-2 pt-3 text-left", className)}
+    {...props}
+  />
 );
 DrawerHeader.displayName = "DrawerHeader";
 
