@@ -24,6 +24,40 @@ export const Header = () => {
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
+  const scrollYRef = React.useRef(0);
+
+  React.useEffect(() => {
+    if (!isMobile && mobileMenuOpen) {
+      setMobileMenuOpen(false);
+    }
+  }, [isMobile, mobileMenuOpen]);
+
+  React.useEffect(() => {
+    if (!isMobile || !mobileMenuOpen) {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.documentElement.style.overflow = "";
+      return;
+    }
+
+    scrollYRef.current = window.scrollY;
+    document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollYRef.current}px`;
+    document.body.style.width = "100%";
+    document.documentElement.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.documentElement.style.overflow = "";
+      window.scrollTo(0, scrollYRef.current);
+    };
+  }, [isMobile, mobileMenuOpen]);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -200,19 +234,19 @@ export const Header = () => {
                 ))}
               </ul>
 
-              <div
-                className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300"
-                style={{ animationDelay: `${navLinks.length * 50}ms` }}
-              >
-                <AccountMenu
-                  isMobile
-                  onMobileNavigate={() => setMobileMenuOpen(false)}
-                />
-                <SettingsMenu
-                  isMobile
-                  onMobileNavigate={() => setMobileMenuOpen(false)}
-                />
-              </div>
+             <div
+  className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300 space-y-3"
+  style={{ animationDelay: `${navLinks.length * 50}ms` }}
+>
+  <AccountMenu
+    isMobile
+    onMobileNavigate={() => setMobileMenuOpen(false)}
+  />
+  <SettingsMenu
+    isMobile
+    onMobileNavigate={() => setMobileMenuOpen(false)}
+  />
+</div>
             </div>
           </motion.div>
         )}
