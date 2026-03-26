@@ -11,7 +11,6 @@ export function MessageForm({
   formData,
   errors,
   buttonState,
-  isMobile,
   disabled = false,
   onFormDataChange,
   onSubmit,
@@ -118,8 +117,8 @@ export function MessageForm({
           onChange={e =>
             onFormDataChange({ ...formData, message: e.target.value })
           }
-          rows={isMobile ? 4 : 6}
-          className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
+          rows={6}
+          className="min-h-28 md:min-h-40 w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
         />
         {errors.message && (
           <p className="text-red-500 text-sm mt-1">{errors.message[0]}</p>
