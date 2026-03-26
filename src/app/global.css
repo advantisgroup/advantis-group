@@ -188,47 +188,36 @@
   }
 
   :root.light {
-    --background: oklch(97.6% 0.012 88);
-    --foreground: oklch(27% 0.018 60);
-
-    --card: oklch(98.9% 0.009 87);
-    --card-foreground: oklch(27% 0.018 60);
-    --card-border: oklch(89% 0.013 86);
-
-    --popover: oklch(99.2% 0.008 88);
-    --popover-foreground: oklch(27% 0.018 60);
-
-    --primary: oklch(0.6441 0.2026 14);
+    --background: oklch(96.8% 0.018 88);       
+    --foreground: oklch(26% 0.022 62);          
+    --card: oklch(98.2% 0.014 87);             
+    --card-foreground: oklch(26% 0.022 62);
+    --card-border: oklch(88% 0.022 82);         
+    --popover: oklch(99% 0.012 88);
+    --popover-foreground: oklch(26% 0.022 62);
+    --primary: oklch(0.6441 0.2026 14);          
     --primary-foreground: oklch(99% 0.002 95);
-
-    --secondary: oklch(92% 0.04 76);
-    --secondary-foreground: oklch(28% 0.02 60);
-
-    --muted: oklch(94.8% 0.01 86);
-    --muted-foreground: oklch(50% 0.017 62);
-
-    --accent: oklch(94.5% 0.018 80);
-    --accent-foreground: oklch(28% 0.02 60);
-
+    --secondary: oklch(91% 0.055 78);            
+    --secondary-foreground: oklch(27% 0.025 62);
+    --muted: oklch(93.5% 0.018 84);              
+    --muted-foreground: oklch(50% 0.022 64);    
+    --accent: oklch(92.5% 0.028 78);             
+    --accent-foreground: oklch(27% 0.025 62);
     --destructive: oklch(60% 0.2 25);
     --destructive-foreground: oklch(99% 0.002 95);
-    --warning: oklch(85% 0.09 78);
-    --warning-foreground: oklch(36% 0.055 62);
-    --success: oklch(88% 0.07 150);
-    --success-foreground: oklch(33% 0.05 150);
-
-    --border: oklch(88% 0.013 86);
-    --input: oklch(95.5% 0.01 87);
+    --warning: oklch(87% 0.1 76);               
+    --warning-foreground: oklch(36% 0.06 62);
+    --success: oklch(87% 0.075 148);
+    --success-foreground: oklch(32% 0.055 148);
+    --border: oklch(87% 0.022 82);              
+    --input: oklch(95% 0.016 86);               
     --ring: oklch(0.6441 0.2026 14);
-
     --salespirates: oklch(70% 0.13 85);
     --advantis: oklch(60% 0.2 14);
     --rodeo: oklch(62% 0.18 240);
     --sales-ai: oklch(48% 0.9 240);
     --oldschool: oklch(32% 0.5 10);
-
     --radius: 0.5rem;
-
     --clerk-color-primary: var(--primary);
     --clerk-color-primary-foreground: var(--primary-foreground);
     --clerk-color-danger: var(--destructive);
@@ -242,10 +231,10 @@
     --clerk-color-input-foreground: var(--foreground);
     --clerk-color-ring: var(--ring);
     --clerk-color-shimmer: var(--card);
-    --clerk-color-modal-backdrop: var(--foreground);
+    --clerk-color-modal-backdrop: oklch(26% 0.022 62 / 0.6);
     --clerk-border-radius: 0.375rem;
     --clerk-spacing: 1rem;
-    --clerk-color-muted: #f1e4e4;
+    --clerk-color-muted: oklch(92% 0.025 80);   
   }
 
   body {
