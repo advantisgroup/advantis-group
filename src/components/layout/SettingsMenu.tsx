@@ -3,13 +3,17 @@
 import React from "react";
 
 import { motion } from "framer-motion";
-import { Monitor, Moon, Sun } from "lucide-react";
+import { ChevronUp, Monitor, Moon, Settings2, Sun } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 
 import {
   Drawer,
+  DrawerClose,
   DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import {
@@ -48,6 +52,7 @@ export const SettingsMenu = ({
   const [isOpen, setIsOpen] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = React.useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -60,23 +65,35 @@ export const SettingsMenu = ({
 
   if (isMobile) {
     return (
-      <Drawer>
+      <Drawer open={mobileDrawerOpen} onOpenChange={setMobileDrawerOpen}>
         <DrawerTrigger asChild>
           <button
             type="button"
-            className="w-full rounded-xl border border-border bg-card/60 px-3 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="group flex w-full items-center justify-between rounded-2xl border border-border bg-card/70 px-4 py-3 text-left transition-all duration-200 hover:border-advantis/30 hover:bg-card"
           >
-            {t("label")}
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-advantis/15 text-advantis">
+                <Settings2 className="h-4 w-4" />
+              </span>
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium text-foreground">{t("label")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t("language")} & {t("appearance")}
+                </p>
+              </div>
+            </div>
+            <ChevronUp className="h-4 w-4 rotate-90 text-muted-foreground transition-colors group-hover:text-foreground" />
           </button>
         </DrawerTrigger>
 
-        <DrawerContent className="space-y-5">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="space-y-5"
-          >
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>{t("label")}</DrawerTitle>
+            <DrawerDescription>
+              {t("language")} & {t("appearance")}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="space-y-5 overflow-y-auto px-5 pb-6 pt-1">
             <motion.div
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
@@ -88,19 +105,20 @@ export const SettingsMenu = ({
               </span>
               <div className="grid grid-cols-2 gap-2">
                 {languages.map(language => (
-                  <button
-                    key={language.code}
-                    onClick={() => switchLanguage(language.code)}
-                    className={cn(
-                      "flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
-                      language.code === locale
-                        ? "border-advantis/40 bg-advantis/10 text-advantis"
-                        : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    <span className="text-base">{language.flag}</span>
-                    <span>{language.code.toUpperCase()}</span>
-                  </button>
+                  <DrawerClose asChild key={language.code}>
+                    <button
+                      onClick={() => switchLanguage(language.code)}
+                      className={cn(
+                        "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
+                        language.code === locale
+                          ? "border-advantis/40 bg-advantis/10 text-advantis"
+                          : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      <span className="text-base">{language.flag}</span>
+                      <span>{language.code.toUpperCase()}</span>
+                    </button>
+                  </DrawerClose>
                 ))}
               </div>
             </motion.div>
@@ -120,33 +138,34 @@ export const SettingsMenu = ({
                     mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
 
                   return (
-                    <button
-                      key={mode}
-                      onClick={() => {
-                        onMobileNavigate?.();
-                        setTheme(mode);
-                      }}
-                      className={cn(
-                        "flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition-all duration-200",
-                        mounted && theme === mode
-                          ? "border-advantis/40 bg-advantis/10 text-advantis"
-                          : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
-                      )}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span className="capitalize">
-                        {mode === "light"
-                          ? t("light")
-                          : mode === "dark"
-                            ? t("dark")
-                            : t("auto")}
-                      </span>
-                    </button>
+                    <DrawerClose asChild key={mode}>
+                      <button
+                        onClick={() => {
+                          onMobileNavigate?.();
+                          setTheme(mode);
+                        }}
+                        className={cn(
+                          "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
+                          mounted && theme === mode
+                            ? "border-advantis/40 bg-advantis/10 text-advantis"
+                            : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span className="capitalize">
+                          {mode === "light"
+                            ? t("light")
+                            : mode === "dark"
+                              ? t("dark")
+                              : t("auto")}
+                        </span>
+                      </button>
+                    </DrawerClose>
                   );
                 })}
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         </DrawerContent>
       </Drawer>
     );
