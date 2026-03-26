@@ -40,10 +40,10 @@ export function SubmissionBanner({
           aria-hidden="true"
         />
         <div className="flex-1 min-w-0">
-          <p className="md:hidden text-sm font-semibold leading-snug text-warning-foreground">
+          <p className="md:hidden text-sm font-semibold leading-snug text-warning-foreground md:text-white/30">
             {t("title")}
           </p>
-          <p className="mt-0.5 md:mt-0 text-xs md:text-sm font-medium leading-relaxed md:leading-snug text-warning-foreground/80">
+          <p className="mt-0.5 md:mt-0 text-xs md:text-sm font-medium leading-relaxed md:leading-snug text-warning-foreground/80 md:text-white">
             {message}
           </p>
         </div>
@@ -57,11 +57,11 @@ export function SubmissionBanner({
           className="flex-1 md:flex-none gap-1.5 border-warning/50 bg-background/55 text-white/80 hover:bg-warning/18 transition-colors"
           onClick={onNotifyClick}
         >
-          <Bell className="h-3.5 w-3.5 md:h-3.5 md:w-3.5 h-4 w-4" />
+          <Bell className="h-3.5 w-3.5 md:h-3.5 md:w-3.5 h-4 w-4 md:text-white" />
           {t("notifyCta")}
         </Button>
         <button
-          className="shrink-0 rounded p-1 text-warning-foreground/30 hover:text-warning-foreground transition-colors"
+          className="shrink-0 rounded p-1 text-warning-foreground/30 hover:text-warning-foreground md:text-white transition-colors"
           aria-label={t("dismiss")}
           onClick={() => setDismissed(true)}
         >
