@@ -54,7 +54,7 @@ export function SubmissionBanner({
         <Button
           size="sm"
           variant="outline"
-          className="flex-1 md:flex-none gap-1.5 border-warning/50 bg-background/55 text-white/80 hover:bg-warning/18 transition-colors"
+          className="flex-1 md:flex-none gap-1.5 border-warning/50 bg-background/55 text-warning-foreground/30 hover:bg-warning/18 transition-colors"
           onClick={onNotifyClick}
         >
           <Bell className="h-3.5 w-3.5 md:h-3.5 md:w-3.5 h-4 w-4 md:text-white" />
