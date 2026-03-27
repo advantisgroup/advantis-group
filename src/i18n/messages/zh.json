@@ -29,6 +29,7 @@
   },
   "features": {
     "badge": "我们的优势",
+    "eyebrow": "咨询引擎",
     "title": "为什么选择",
     "titleBrand": "Advantis Group",
     "subtitle": "我们结合超过15年的经验和创新方法，将您的销售提升到新的水平。",
@@ -52,6 +53,7 @@
     }
   },
   "brands": {
+    "eyebrow": "品牌架构",
     "title": "我们的",
     "titleHighlight": "品牌",
     "subtitle": "四个强大的品牌，一个共同的目标：您的销售成功",
