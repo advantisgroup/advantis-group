@@ -97,13 +97,11 @@ export const Header = () => {
               />
             </div>
             <div
-              duration="8s"
               className="group-hover:text-advantis transition-colors duration-300"
             >
               ADVANTIS
             </div>
             <div
-              duration="6s"
               className="group-hover:text-foreground transition-colors duration-300"
             >
               GROUP
