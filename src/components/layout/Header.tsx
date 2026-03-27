@@ -14,7 +14,6 @@ import { Link } from "@/i18n/navigation";
 
 import { SettingsMenu } from "./SettingsMenu";
 import { AccountMenu } from "../auth/AccountMenu";
-import { ShimmerText } from "../effects/Shimmer";
 
 export const Header = () => {
   const pathname = usePathname();
@@ -97,18 +96,16 @@ export const Header = () => {
                 sizes="32px"
               />
             </div>
-            <ShimmerText
-              duration="8s"
+            <div
               className="group-hover:text-advantis transition-colors duration-300"
             >
               ADVANTIS
-            </ShimmerText>
-            <ShimmerText
-              duration="6s"
+            </div>
+            <div
               className="group-hover:text-foreground transition-colors duration-300"
             >
               GROUP
-            </ShimmerText>
+            </div>
           </Link>
         ) : (
           <Link
@@ -130,12 +127,12 @@ export const Header = () => {
                 sizes="32px"
               />
             </div>
-            <ShimmerText className="group-hover:text-advantis transition-colors duration-500">
+            <div className="group-hover:text-advantis transition-colors duration-500">
               ADVANTIS
-            </ShimmerText>
-            <ShimmerText className="group-hover:text-foreground transition-colors duration-500">
+            </div>
+            <div className="group-hover:text-foreground transition-colors duration-500">
               GROUP
-            </ShimmerText>
+            </div>
           </Link>
         )}
 

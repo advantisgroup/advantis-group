@@ -30,9 +30,7 @@ export default function Page({
       <ScrollReveal>
         <HomeBrands isVisible={true} />
       </ScrollReveal>
-      <ScrollReveal>
-        <HomeCTA isVisible={true} />
-      </ScrollReveal>
+      <HomeCTA />
     </div>
   );
 }
