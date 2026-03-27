@@ -4,15 +4,10 @@ import { ArrowRight, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
 
 import { Button } from "../../ui/button";
 
-interface HomeCTAProps {
-  isVisible: boolean;
-}
-
-export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
+export const HomeCTA = () => {
   const t = useTranslations("cta");
 
   return (
@@ -33,12 +28,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
 
       <div className="container mx-auto px-3 relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-10">
-          <div
-            className={cn(
-              "opacity-0 -translate-y-8 transition-all duration-1000",
-              isVisible && "opacity-100 translate-y-0"
-            )}
-          >
+          <div>
             <h2 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
               {t("title")}{" "}
               <span className="bg-linear-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
@@ -47,23 +37,11 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
             </h2>
           </div>
 
-          <p
-            className={cn(
-              "text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed opacity-0 -translate-y-8 transition-all duration-1000",
-              isVisible && "opacity-100 translate-y-0"
-            )}
-            style={{ transitionDelay: "200ms" }}
-          >
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             {t("subtitle")}
           </p>
 
-          <div
-            className={cn(
-              "flex flex-col sm:flex-row gap-4 justify-center items-center opacity-0 translate-y-8 transition-all duration-1000",
-              isVisible && "opacity-100 translate-y-0"
-            )}
-            style={{ transitionDelay: "400ms" }}
-          >
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button
               asChild
               size="lg"
@@ -88,15 +66,7 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
             </Button>
           </div>
 
-          <p
-            className={cn(
-              "text-sm text-muted-foreground opacity-0 transition-all duration-1000",
-              isVisible && "opacity-100"
-            )}
-            style={{ transitionDelay: "600ms" }}
-          >
-            {t("benefits")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("benefits")}</p>
         </div>
       </div>
     </section>
