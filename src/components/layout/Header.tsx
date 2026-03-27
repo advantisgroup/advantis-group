@@ -130,12 +130,12 @@ export const Header = () => {
                 sizes="32px"
               />
             </div>
-            <ShimmerText className="group-hover:text-advantis transition-colors duration-500">
+            <div className="group-hover:text-advantis transition-colors duration-500">
               ADVANTIS
-            </ShimmerText>
-            <ShimmerText className="group-hover:text-foreground transition-colors duration-500">
+            </div>
+            <div className="group-hover:text-foreground transition-colors duration-500">
               GROUP
-            </ShimmerText>
+            </div>
           </Link>
         )}
 
