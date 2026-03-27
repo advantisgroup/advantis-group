@@ -14,7 +14,6 @@ import { Link } from "@/i18n/navigation";
 
 import { SettingsMenu } from "./SettingsMenu";
 import { AccountMenu } from "../auth/AccountMenu";
-import { ShimmerText } from "../effects/Shimmer";
 
 export const Header = () => {
   const pathname = usePathname();
