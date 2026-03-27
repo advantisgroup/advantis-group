@@ -11,8 +11,6 @@ import {
 } from "framer-motion";
 import { useTranslations } from "next-intl";
 
-import { cn } from "@/lib/utils";
-
 import { BrandText } from "../../effects/BrandText";
 
 interface HomeFeaturesProps {
@@ -22,29 +20,25 @@ interface HomeFeaturesProps {
 function CountUp({
   to,
   suffix = "",
-  prefix = "",
   className,
 }: {
   to: number;
   suffix?: string;
-  prefix?: string;
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
   const value = useMotionValue(0);
   const springValue = useSpring(value, {
-    stiffness: 50,
-    damping: 20,
+    stiffness: 55,
+    damping: 18,
     restDelta: 0.001,
-    duration: 3, // Gradual ease
+    duration: 2.5,
   });
+
   const displayValue = useTransform(springValue, current => {
     const val = Math.round(current);
-    // Pad to 3 digits like "001", "015", "103"
-    const formatted = val.toString().padStart(3, "0");
-    // Removing padding if it exceeds 3 digits naturally (e.g. 1000)
-    return formatted;
+    return val.toString().padStart(3, "0");
   });
 
   useEffect(() => {
@@ -55,7 +49,6 @@ function CountUp({
 
   return (
     <span ref={ref} className={className}>
-      {prefix}
       <motion.span>{displayValue}</motion.span>
       {suffix}
     </span>
@@ -65,198 +58,121 @@ function CountUp({
 export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
   const t = useTranslations("features");
 
-  const features = [
+  const principles = [
     {
+      id: "01",
       title: t("feature1.title"),
-      desc: t("feature1.description"),
-      gradient: "from-primary/18 to-secondary/16",
-      iconBg: "bg-primary/10",
-      iconBorder: "border-primary/30",
-      glowColor: "shadow-primary/20",
+      description: t("feature1.description"),
     },
     {
+      id: "02",
       title: t("feature2.title"),
-      desc: t("feature2.description"),
-      gradient: "from-primary/20 to-purple-500/20",
-      iconBg: "bg-primary/10",
-      iconBorder: "border-primary/30",
-      glowColor: "shadow-primary/20",
+      description: t("feature2.description"),
     },
     {
+      id: "03",
       title: t("feature3.title"),
-      desc: t("feature3.description"),
-      gradient: "from-rodeo/18 to-sales-ai/10",
-      iconBg: "bg-rodeo/10",
-      iconBorder: "border-rodeo/30",
-      glowColor: "shadow-rodeo/20",
+      description: t("feature3.description"),
     },
   ];
 
   return (
-    <section className="relative py-32 overflow-hidden">
-      {/* Animated background elements */}
+    <section className="relative overflow-hidden py-24 md:py-32">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.64_0.2_14_/_0.2),transparent_40%),radial-gradient(circle_at_85%_0%,oklch(0.76_0.16_68_/_0.12),transparent_45%)]" />
       <div className="absolute inset-0 bg-linear-to-b from-background via-background/95 to-background" />
 
-      {/* Floating orbs - hidden on mobile to prevent overflow */}
-      <div className="hidden md:block absolute top-20 right-[10%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />
-      <div className="hidden md:block absolute bottom-20 left-[15%] w-96 h-96 bg-secondary/8 rounded-full blur-3xl animate-pulse-slower" />
+      <div className="container relative z-10 mx-auto px-4">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
+            <div
+              className={`space-y-8 transition-all duration-1000 ${
+                isVisible
+                  ? "translate-y-0 opacity-100"
+                  : "-translate-y-8 opacity-0"
+              }`}
+            >
+              <p className="font-[family-name:var(--font-outfit)] text-xs uppercase tracking-[0.35em] text-primary/80">
+                {t("eyebrow")}
+              </p>
+              <h2 className="font-[family-name:var(--font-outfit)] text-4xl leading-[1.05] md:text-6xl lg:text-7xl">
+                {t("title")}{" "}
+                <BrandText brand="advantis">{t("titleBrand")}</BrandText>?
+              </h2>
+              <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">
+                {t("subtitle")}
+              </p>
 
-      {/* Subtle grid pattern */}
-      <div className="absolute inset-0 dot-pattern opacity-10" />
+              <div className="grid grid-cols-2 gap-x-8 gap-y-6 border-l border-primary/30 pl-6">
+                <div>
+                  <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
+                    <CountUp to={15} suffix="+" />
+                  </p>
+                  <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
+                    {t("stats.experience")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
+                    <CountUp to={500} suffix="+" />
+                  </p>
+                  <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
+                    {t("stats.projects")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
+                    <CountUp to={4} />
+                  </p>
+                  <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
+                    {t("stats.brands")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
+                    <CountUp to={100} suffix="%" />
+                  </p>
+                  <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
+                    {t("stats.passion")}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-7xl mx-auto space-y-20">
-          {/* Header */}
-          <div
-            className={cn(
-              "text-center space-y-6 transition-all duration-1000",
-              isVisible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 -translate-y-8"
-            )}
-          >
-            <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-              {t("title")}{" "}
-              <BrandText brand="advantis">{t("titleBrand")}</BrandText>?
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              {t("subtitle")}
-            </p>
-          </div>
-
-          {/* Feature Cards - Bento Grid Style */}
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {features.map((feature, idx) => {
-              return (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={
-                    isVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }
-                  }
-                  transition={{
-                    duration: 0.8,
-                    delay: 0.2 + idx * 0.1,
-                  }}
-                  className="group relative h-full"
-                >
-                  <motion.div
-                    className={cn(
-                      "relative h-full p-8 rounded-3xl bg-card/50 backdrop-blur-sm border border-border/50",
-                      "overflow-hidden",
-                      feature.glowColor
-                    )}
-                    whileHover="hover"
-                    initial="rest"
-                    animate="rest"
-                    variants={{
-                      rest: {
-                        y: 0,
-                        scale: 1,
-                        boxShadow: "0 0px 0px rgba(0,0,0,0)",
-                      },
-                      hover: {
-                        y: -8,
-                        scale: 1.02,
-                        boxShadow: "0 20px 40px -15px rgba(0,0,0,0.1)",
-                      },
-                    }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 20,
-                    }}
-                  >
-                    {/* Gradient Background that fades in */}
-                    <div
-                      className={cn(
-                        "absolute inset-0 bg-linear-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500",
-                        feature.gradient
-                      )}
-                    />
-
-                    {/* Content container */}
-                    <div className="relative space-y-6 z-10">
-                      {/* Text Content */}
-                      <div className="space-y-3">
-                        <motion.h3
-                          className="text-2xl font-bold leading-tight"
-                          variants={{
-                            rest: { y: 0 },
-                            hover: { y: -2 },
-                          }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          {feature.title}
-                        </motion.h3>
-                        <motion.p
-                          className="text-muted-foreground leading-relaxed"
-                          variants={{
-                            rest: { y: 0 },
-                            hover: { y: -2 },
-                          }}
-                          transition={{ duration: 0.2, delay: 0.05 }}
-                        >
-                          {feature.desc}
-                        </motion.p>
+            <div
+              className={`transition-all duration-1000 delay-150 ${
+                isVisible
+                  ? "translate-y-0 opacity-100"
+                  : "translate-y-8 opacity-0"
+              }`}
+            >
+              <ul className="divide-y divide-border/60 rounded-[2rem] border border-border/60 bg-card/30 backdrop-blur-xl">
+                {principles.map(principle => {
+                  return (
+                    <li
+                      key={principle.id}
+                      className="group px-6 py-7 md:px-10 md:py-9"
+                    >
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
+                        <span className="font-[family-name:var(--font-outfit)] text-sm tracking-[0.3em] text-primary/70 transition-colors group-hover:text-primary">
+                          {principle.id}
+                        </span>
+                        <div className="space-y-2">
+                          <h3 className="font-[family-name:var(--font-outfit)] text-2xl md:text-3xl">
+                            {principle.title}
+                          </h3>
+                          <p className="text-base leading-relaxed text-muted-foreground md:text-lg">
+                            {principle.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Bottom stats */}
-          <div
-            className={cn(
-              "flex flex-wrap items-center justify-center gap-8 md:gap-12 transition-all duration-1000 delay-700",
-              isVisible
-                ? "opacity-100 translate-y-0"
-                : "opacity-0 translate-y-8"
-            )}
-          >
-            <div className="text-center space-y-1">
-              <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
-                <CountUp to={15} suffix="+" />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {t("stats.experience")}
-              </div>
-            </div>
-            <div className="hidden md:block w-px h-12 bg-border" />
-            <div className="text-center space-y-1">
-              <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
-                <CountUp to={4} />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {t("stats.brands")}
-              </div>
-            </div>
-            <div className="hidden md:block w-px h-12 bg-border" />
-            <div className="text-center space-y-1">
-              <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
-                <CountUp to={500} />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {t("stats.projects")}
-              </div>
-            </div>
-            <div className="hidden md:block w-px h-12 bg-border" />
-            <div className="text-center space-y-1">
-              <div className="text-4xl md:text-5xl font-bold text-primary tabular-nums">
-                <CountUp to={100} suffix="%" />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {t("stats.passion")}
-              </div>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Bottom gradient blend */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-linear-to-b from-transparent to-background pointer-events-none" />
     </section>
   );
 };

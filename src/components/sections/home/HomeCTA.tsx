@@ -18,11 +18,11 @@ export const HomeCTA = ({ isVisible }: HomeCTAProps) => {
   return (
     <section className="relative py-40 overflow-hidden">
       {/* Background with smooth blend */}
-      <div className="absolute inset-0 bg-linear-to-b from-primary/5 via-background to-background" />
+      <div className="absolute inset-0 bg-linear-to-b from-primary/10 via-background/95 to-background" />
       <div className="absolute inset-0 dot-pattern opacity-20" />
 
       {/* Extended top blend from previous section for smooth transition */}
-      <div className="absolute top-0 left-0 right-0 h-64 bg-linear-to-b from-primary/5 via-primary/3 to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-44 bg-linear-to-b from-primary/12 via-primary/8 to-transparent pointer-events-none" />
 
       {/* Floating orbs - hidden on mobile to prevent overflow */}
       <div className="hidden md:block absolute top-1/4 left-[10%] w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse-slow" />

@@ -29,6 +29,7 @@
   },
   "features": {
     "badge": "Nos Forces",
+    "eyebrow": "Moteur Conseil",
     "title": "Pourquoi",
     "titleBrand": "Advantis Group",
     "subtitle": "Nous combinons plus de 15 ans d'expérience avec des approches innovantes pour porter vos ventes au niveau supérieur.",
@@ -52,6 +53,7 @@
     }
   },
   "brands": {
+    "eyebrow": "Architecture de Marque",
     "title": "Nos",
     "titleHighlight": "Marques",
     "subtitle": "Quatre marques fortes, un objectif commun : Votre succès commercial",
