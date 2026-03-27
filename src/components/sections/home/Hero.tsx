@@ -37,13 +37,6 @@ export const Hero = () => {
       <div className="container mx-auto px-4 w-full relative z-10 -top-[3vh]">
         <div className="md:max-w-7xl max-w-full mx-auto text-center space-y-6">
           <div className="space-y-2">
-            <div className="inline-flex group items-center gap-2 px-3 py-1 rounded-3xl border border-border bg-background/50 text-sm backdrop-blur-sm">
-              <Sparkles className="w-3.5 h-3.5" />
-              <BrandText brand="advantis" hoverable keepRestColor groupHover>
-                Advantis Group
-              </BrandText>
-            </div>
-
             <h1 className="text-4xl group font-bold leading-tight md:text-6xl lg:text-8xl">
               {t("title")}{" "}
               <span className="md:hidden">{t("titleHighlight")}</span>
