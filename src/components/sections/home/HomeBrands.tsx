@@ -59,7 +59,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
             )}
           >
             <p className="font-[family-name:var(--font-outfit)] text-xs uppercase tracking-[0.35em] text-primary/80">
-              Brand Architecture
+              {t("eyebrow")}
             </p>
             <h2 className="font-[family-name:var(--font-outfit)] text-4xl leading-[1.05] md:text-6xl lg:text-7xl">
               {t("title")}{" "}
