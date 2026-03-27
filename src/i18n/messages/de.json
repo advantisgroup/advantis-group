@@ -29,6 +29,7 @@
   },
   "features": {
     "badge": "Unsere Stärken",
+    "eyebrow": "Beratungs-Engine",
     "title": "Warum",
     "titleBrand": "Advantis Group",
     "subtitle": "Wir kombinieren über 15 Jahre Erfahrung mit innovativen Ansätzen, um Ihren Vertrieb auf das nächste Level zu bringen.",
@@ -52,6 +53,7 @@
     }
   },
   "brands": {
+    "eyebrow": "Markenarchitektur",
     "title": "Unsere",
     "titleHighlight": "Marken",
     "subtitle": "Vier starke Marken, ein gemeinsames Ziel: Ihr Vertriebserfolg",
