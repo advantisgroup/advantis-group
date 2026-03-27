@@ -45,4 +45,4 @@ jobs:
         run: bun run format:check
 
       - name: Run linter
-        run: bun run lint:fix
+        run: bun run lint
