@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/kaleb/Advantisgroup/advantis-group/src -type d -name *pages*)",
+      "Bash(find /c/Users/kaleb/Advantisgroup/advantis-group/src -type f \\\\\\(-name *auto* -o -name *account* -o -name *banner* \\\\\\))",
+      "Bash(grep -r \"use-email-submit\\\\|useEmailSubmit\" /c/Users/kaleb/Advantisgroup/advantis-group/src --include=*.ts --include=*.tsx)",
+      "Bash(git stash:*)",
+      "Bash(git pull:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx --package typescript tsc --noEmit --pretty)",
+      "Bash(bun install:*)",
+      "Bash(bun lint:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr:*)"
+    ]
+  }
+}
