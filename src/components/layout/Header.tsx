@@ -96,14 +96,10 @@ export const Header = () => {
                 sizes="32px"
               />
             </div>
-            <div
-              className="group-hover:text-advantis transition-colors duration-300"
-            >
+            <div className="group-hover:text-advantis transition-colors duration-300">
               ADVANTIS
             </div>
-            <div
-              className="group-hover:text-foreground transition-colors duration-300"
-            >
+            <div className="group-hover:text-foreground transition-colors duration-300">
               GROUP
             </div>
           </Link>
