@@ -2,10 +2,9 @@
 import React, { useRef, useState } from "react";
 
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { CheckCircle2, Mail, MapPin, Phone } from "lucide-react";
+import { CheckCircle2, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { AccountContactHelper } from "@/components/contact/AccountContactHelper";
 import { CallbackForm } from "@/components/contact/CallbackForm";
 import {
   ContactInfoDesktop,
@@ -17,8 +16,8 @@ import { OtherForm } from "@/components/contact/OtherForm";
 import { SubmissionBanner } from "@/components/contact/SubmissionBanner";
 import { TabNavigation } from "@/components/contact/TabNavigation";
 import { WhyAdvantisSidebar } from "@/components/contact/WhyAdvantis";
-import { Button } from "@/components/ui/button";
 import { useContactForm } from "@/hooks/use-contact-form";
+import { cn } from "@/lib/utils";
 import { type ContactInfoItem, type ContactMode } from "@/types/contact";
 
 const ALLOW_SUBMISSIONS = process.env.NEXT_PUBLIC_ALLOW_SUBMISSIONS === "true";
@@ -186,32 +185,6 @@ export default function Kontakt() {
             <ContactInfoDesktop items={contactInfoData} />
           </div>
 
-          {ALLOW_SUBMISSIONS ? (
-            accountProfile ? (
-              <AccountContactHelper
-                accountProfile={accountProfile}
-                buttonState={accountPrefillState}
-                onUseAccount={handleUseAccount}
-              />
-            ) : (
-              <div className="rounded-4xl border border-border/70 bg-background/80 p-5 md:p-6">
-                <h2 className="text-xl font-semibold text-foreground">
-                  {tAccountHelper("signedOutTitle")}
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-                  {tAccountHelper("signedOutDescription")}
-                </p>
-                <div className="mt-4">
-                  <SignInButton>
-                    <Button type="button">{tAccountHelper("signInCta")}</Button>
-                  </SignInButton>
-                </div>
-              </div>
-            )
-          ) : (
-            <></>
-          )}
-
           {!ALLOW_SUBMISSIONS && (
             <SubmissionBanner
               text={submissionText}
@@ -230,24 +203,50 @@ export default function Kontakt() {
 
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
               <div className="space-y-6 p-6 md:p-8">
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h2 className="text-2xl font-semibold text-foreground md:text-3xl">
                     {getFormTitle()}
                   </h2>
-                  <p className="text-base text-muted-foreground">
-                    {getFormDescription()}
-                  </p>
-                  {accountPrefillState === "success" && ALLOW_SUBMISSIONS ? (
-                    <div className="inline-flex items-center gap-2 rounded-full border border-success/35 bg-success/14 px-3 py-1 text-sm font-medium text-success-foreground">
-                      <CheckCircle2 className="h-4 w-4" />
-                      {tAccountHelper("scrollNotice")}
-                    </div>
-                  ) : null}
-                  {isSignedIn && ALLOW_SUBMISSIONS ? (
-                    <p className="rounded-2xl border border-advantis/20 bg-advantis/5 px-4 py-3 text-sm leading-6 text-muted-foreground">
-                      {tAccountHelper("storedAccountNote")}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <p className="text-base text-muted-foreground">
+                      {getFormDescription()}
                     </p>
-                  ) : null}
+                    {ALLOW_SUBMISSIONS &&
+                      (accountProfile ? (
+                        <button
+                          type="button"
+                          onClick={handleUseAccount}
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                            accountPrefillState === "success"
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                              : "border-advantis/25 bg-advantis/8 text-advantis hover:bg-advantis/15"
+                          )}
+                        >
+                          {accountPrefillState === "success" ? (
+                            <>
+                              <CheckCircle2 className="h-3 w-3" />
+                              {tAccountHelper("useAccountSuccess")}
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="h-3 w-3" />
+                              {tAccountHelper("useAccount")}
+                            </>
+                          )}
+                        </button>
+                      ) : !isSignedIn ? (
+                        <SignInButton>
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            <Sparkles className="h-3 w-3" />
+                            {tAccountHelper("signInCta")}
+                          </button>
+                        </SignInButton>
+                      ) : null)}
+                  </div>
                 </div>
 
                 {renderForm()}
