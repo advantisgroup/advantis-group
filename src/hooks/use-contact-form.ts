@@ -151,16 +151,14 @@ export function useContactForm() {
     <T>(
       schema: z.ZodType<T>,
       data: unknown,
-      setErrorsFn: (errors: Record<string, string[] | undefined>) => void,
+      setErrorsFn: (errors: Partial<Record<string, string[]>>) => void,
       setButtonError: () => void
     ): data is T => {
       const result = schema.safeParse(data);
 
       if (!result.success) {
-        const flatten = result.error.flatten();
-        setErrorsFn(
-          flatten.fieldErrors as unknown as Record<string, string[] | undefined>
-        );
+        const { fieldErrors } = result.error.flatten();
+        setErrorsFn(fieldErrors);
         setButtonError();
 
         return false;

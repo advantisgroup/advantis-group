@@ -455,7 +455,16 @@
     "poweredBy": "Propulsé par",
     "rightsReserved": "Tous droits réservés.",
     "subject": "Objet",
-    "topic": "Sujet"
+    "topic": "Sujet",
+    "confirmationTitle": "Nous avons reçu votre demande",
+    "confirmationBody": "Merci pour votre message. Nous avons enregistré votre demande et vous répondrons dans les plus brefs délais.",
+    "submissionType": "Type de demande",
+    "contactEmail": "E-mail",
+    "contactPhone": "Téléphone",
+    "company": "Entreprise",
+    "typeMessage": "Message",
+    "typeCallback": "Rappel",
+    "typeOther": "Autre"
   },
   "auth": {
     "badge": "Accès sécurisé",
