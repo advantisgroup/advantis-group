@@ -455,7 +455,16 @@
     "poweredBy": "Powered by",
     "rightsReserved": "All rights reserved.",
     "subject": "Subject",
-    "topic": "Topic"
+    "topic": "Topic",
+    "confirmationTitle": "We have received your request",
+    "confirmationBody": "Thank you for your message. We have recorded your request and will get back to you as soon as possible.",
+    "submissionType": "Request type",
+    "contactEmail": "Email",
+    "contactPhone": "Phone",
+    "company": "Company",
+    "typeMessage": "Message",
+    "typeCallback": "Callback",
+    "typeOther": "Other"
   },
   "auth": {
     "badge": "Secure access",

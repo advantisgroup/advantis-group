@@ -455,7 +455,16 @@
     "poweredBy": "Powered by",
     "rightsReserved": "版权所有。",
     "subject": "主题",
-    "topic": "主题"
+    "topic": "主题",
+    "confirmationTitle": "我们已收到您的请求",
+    "confirmationBody": "感谢您的留言。我们已记录您的请求，将尽快与您联系。",
+    "submissionType": "请求类型",
+    "contactEmail": "电子邮件",
+    "contactPhone": "电话",
+    "company": "公司",
+    "typeMessage": "消息",
+    "typeCallback": "回电",
+    "typeOther": "其他"
   },
   "auth": {
     "badge": "安全访问",

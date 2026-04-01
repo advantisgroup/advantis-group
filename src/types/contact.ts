@@ -31,19 +31,19 @@ export interface ContactSubmissionRecord {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
+  phone?: string;
   subject: string;
   message: string;
-  company: string;
-  submissionType: string;
-  topic: string;
-  desiredDateTime: string;
-  notes: string;
+  company?: string;
+  submissionType: "message" | "callback" | "other";
+  topic?: string;
+  desiredDateTime?: string;
+  notes?: string;
   accountEmail: string;
   accountName: string;
   clerkUserId: string;
   sentAt: number;
-  status: string;
+  status: "sent" | "failed";
   error?: string;
 }
 
