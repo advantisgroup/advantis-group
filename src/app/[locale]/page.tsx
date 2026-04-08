@@ -2,7 +2,6 @@
 
 import { use, useEffect } from "react";
 
-import { ScrollReveal } from "@/components/effects/ScrollReveal";
 import { Hero } from "@/components/sections/home/Hero";
 import { HomeBrands } from "@/components/sections/home/HomeBrands";
 import { HomeCTA } from "@/components/sections/home/HomeCTA";
@@ -21,15 +20,9 @@ export default function Page({
 
   return (
     <div className="min-h-screen bg-background">
-      <ScrollReveal>
-        <Hero />
-      </ScrollReveal>
-      <ScrollReveal>
-        <HomeFeatures isVisible={true} />
-      </ScrollReveal>
-      <ScrollReveal>
-        <HomeBrands isVisible={true} />
-      </ScrollReveal>
+      <Hero />
+      <HomeFeatures />
+      <HomeBrands />
       <HomeCTA />
     </div>
   );

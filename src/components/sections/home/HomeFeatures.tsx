@@ -13,10 +13,6 @@ import { useTranslations } from "next-intl";
 
 import { BrandText } from "../../effects/BrandText";
 
-interface HomeFeaturesProps {
-  isVisible: boolean;
-}
-
 function CountUp({
   to,
   suffix = "",
@@ -55,8 +51,10 @@ function CountUp({
   );
 }
 
-export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
+export const HomeFeatures = () => {
   const t = useTranslations("features");
+  const sectionRef = useRef<HTMLElement>(null);
+  const isVisible = useInView(sectionRef, { once: true, margin: "-100px" });
 
   const principles = [
     {
@@ -77,7 +75,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
   ];
 
   return (
-    <section className="relative overflow-hidden py-24 md:py-32">
+    <section ref={sectionRef} className="relative overflow-hidden py-24 md:py-32">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.64_0.2_14_/_0.2),transparent_40%),radial-gradient(circle_at_85%_0%,oklch(0.76_0.16_68_/_0.12),transparent_45%)]" />
       <div className="absolute inset-0 bg-linear-to-b from-background via-background/95 to-background" />
 
@@ -90,6 +88,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                   ? "translate-y-0 opacity-100"
                   : "-translate-y-8 opacity-0"
               }`}
+              style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
             >
               <p className="font-[family-name:var(--font-outfit)] text-xs uppercase tracking-[0.35em] text-primary/80">
                 {t("eyebrow")}
@@ -144,8 +143,9 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
                   ? "translate-y-0 opacity-100"
                   : "translate-y-8 opacity-0"
               }`}
+              style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
             >
-              <ul className="divide-y divide-border/60 rounded-[2rem] border border-border/60 bg-card/30 backdrop-blur-sm">
+              <ul className="divide-y divide-border/60 rounded-[2rem] border border-border/60 bg-card/50">
                 {principles.map(principle => {
                   return (
                     <li
