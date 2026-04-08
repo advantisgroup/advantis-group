@@ -13,20 +13,13 @@ export const Hero = () => {
 
   return (
     <section className="relative h-screen flex items-center">
-      {/* Additional decorative floating elements - hidden on mobile to prevent overflow */}
-      <div className="hidden md:block absolute top-[20%] left-[15%] w-96 h-96 bg-primary/8 rounded-full blur-3xl animate-pulse-slow" />
-      <div
-        className="hidden md:block absolute top-[30%] right-[10%] w-[500px] h-[500px] bg-secondary/8 rounded-full blur-3xl animate-pulse-slow"
-        style={{ animationDelay: "2.5s" }}
-      />
-      <div
-        className="hidden md:block absolute bottom-[25%] left-[25%] w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse-slow"
-        style={{ animationDelay: "1.2s" }}
-      />
+      {/* Decorative floating elements - static, no animation to avoid GPU overhead */}
+      <div className="hidden md:block absolute top-[20%] left-[15%] w-96 h-96 bg-primary/6 rounded-full blur-2xl" />
+      <div className="hidden md:block absolute top-[30%] right-[10%] w-[500px] h-[500px] bg-secondary/6 rounded-full blur-2xl" />
 
-      {/* Additional blur overlay at bottom edge for extra smoothness */}
+      {/* Bottom fade overlay */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-32 bg-background/90 backdrop-blur-md pointer-events-none"
+        className="absolute bottom-0 left-0 right-0 h-32 bg-background/90 pointer-events-none"
         style={{
           maskImage: "linear-gradient(to top, black 0%, transparent 100%)",
           WebkitMaskImage:

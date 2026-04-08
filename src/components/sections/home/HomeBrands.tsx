@@ -52,7 +52,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
         <div className="mx-auto max-w-7xl space-y-14 md:space-y-16">
           <div
             className={cn(
-              "space-y-5 text-left transition-all duration-1000",
+              "space-y-5 text-left transition-[transform,opacity] duration-1000",
               isVisible
                 ? "translate-y-0 opacity-100"
                 : "-translate-y-8 opacity-0"
@@ -78,7 +78,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                   href={`/brands#${brand.brand}`}
                   className={cn(
                     "group block border-b border-border/60 last:border-b-0",
-                    "transition-all duration-700",
+                    "transition-[transform,opacity] duration-700",
                     isVisible
                       ? "translate-y-0 opacity-100"
                       : "translate-y-8 opacity-0"
@@ -112,7 +112,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
 
           <div
             className={cn(
-              "pt-2 transition-all duration-1000 delay-500",
+              "pt-2 transition-[transform,opacity] duration-1000 delay-500",
               isVisible
                 ? "translate-y-0 opacity-100"
                 : "translate-y-8 opacity-0"
