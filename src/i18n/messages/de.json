@@ -455,7 +455,16 @@
     "poweredBy": "Powered by",
     "rightsReserved": "Alle Rechte vorbehalten.",
     "subject": "Betreff",
-    "topic": "Thema"
+    "topic": "Thema",
+    "confirmationTitle": "Wir haben Ihre Anfrage erhalten",
+    "confirmationBody": "Vielen Dank für Ihre Nachricht. Wir haben Ihr Anliegen erfasst und werden uns so schnell wie möglich bei Ihnen melden.",
+    "submissionType": "Anfragetyp",
+    "contactEmail": "E-Mail",
+    "contactPhone": "Telefon",
+    "company": "Unternehmen",
+    "typeMessage": "Nachricht",
+    "typeCallback": "Rückruf",
+    "typeOther": "Sonstiges"
   },
   "auth": {
     "badge": "Sicherer Zugang",

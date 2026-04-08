@@ -64,7 +64,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
           lastName: payload.lastName,
           message: payload.message,
           phone: payload.phone,
-          adresses: [process.env.NEXT_PUBLIC_EMAIL_ADRESS!],
+          addresses: [process.env.NEXT_PUBLIC_EMAIL_ADRESS!],
           cc: [payload.email],
           subject: payload.subject,
           locale: locale || "de",

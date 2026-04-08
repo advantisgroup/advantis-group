@@ -13,13 +13,19 @@ const convex = process.env.NEXT_PUBLIC_CONVEX_URL
   ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)
   : null;
 
+const submissionTypeSchema = t.Union([
+  t.Literal("message"),
+  t.Literal("callback"),
+  t.Literal("other"),
+]);
+
 export const email = new Elysia().post(
   "/send",
   async ({ body, set }) => {
     const {
       firstName,
       lastName,
-      adresses,
+      addresses,
       cc,
       bcc,
       subject,
@@ -40,17 +46,21 @@ export const email = new Elysia().post(
     try {
       const { data, error } = await resend.emails.send({
         from: `Advantis Group <${process.env.NEXT_PUBLIC_EMAIL_ADRESS}>`,
-        to: adresses,
+        to: addresses,
         bcc,
         cc,
         subject,
         react: EmailTemplate({
           firstName,
           lastName,
+          email: cc?.[0],
+          phone,
+          company,
           message,
           locale,
           subject,
           topic,
+          submissionType,
         }),
       });
 
@@ -64,15 +74,15 @@ export const email = new Elysia().post(
           await convex.mutation(api.emails.saveEmail, {
             firstName,
             lastName,
-            phone: phone || "",
+            phone: phone || undefined,
             email: cc?.[0] || "",
             subject,
             message,
-            company: company || "",
+            company: company || undefined,
             submissionType,
-            topic: topic || "",
-            desiredDateTime: desiredDateTime || "",
-            notes: notes || "",
+            topic: topic || undefined,
+            desiredDateTime: desiredDateTime || undefined,
+            notes: notes || undefined,
             accountEmail,
             accountName,
             clerkUserId: userId || "",
@@ -111,14 +121,14 @@ export const email = new Elysia().post(
             firstName,
             lastName,
             email: cc?.[0] || "",
-            phone: phone || "",
+            phone: phone || undefined,
             subject,
             message,
-            company: company || "",
+            company: company || undefined,
             submissionType,
-            topic: topic || "",
-            desiredDateTime: desiredDateTime || "",
-            notes: notes || "",
+            topic: topic || undefined,
+            desiredDateTime: desiredDateTime || undefined,
+            notes: notes || undefined,
             accountEmail,
             accountName,
             clerkUserId: userId || "",
@@ -140,7 +150,7 @@ export const email = new Elysia().post(
       firstName: t.String(),
       lastName: t.String(),
       phone: t.Optional(t.String()),
-      adresses: t.Array(t.String()),
+      addresses: t.Array(t.String()),
       cc: t.Optional(t.Array(t.String())),
       bcc: t.Optional(t.Array(t.String())),
       subject: t.String(),
@@ -148,7 +158,7 @@ export const email = new Elysia().post(
       locale: t.Optional(t.String()),
       topic: t.Optional(t.String()),
       company: t.Optional(t.String()),
-      submissionType: t.String(),
+      submissionType: submissionTypeSchema,
       desiredDateTime: t.Optional(t.String()),
       notes: t.Optional(t.String()),
       accountEmail: t.String(),
@@ -157,6 +167,9 @@ export const email = new Elysia().post(
     response: {
       200: t.Object({
         id: t.String(),
+      }),
+      429: t.Object({
+        error: t.String(),
       }),
       500: t.Object({
         error: t.String(),
