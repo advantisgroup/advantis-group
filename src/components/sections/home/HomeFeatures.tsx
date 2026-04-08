@@ -85,7 +85,7 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
             <div
-              className={`space-y-8 transition-all duration-1000 ${
+              className={`space-y-8 transition-[transform,opacity] duration-1000 ${
                 isVisible
                   ? "translate-y-0 opacity-100"
                   : "-translate-y-8 opacity-0"
@@ -139,13 +139,13 @@ export const HomeFeatures = ({ isVisible }: HomeFeaturesProps) => {
             </div>
 
             <div
-              className={`transition-all duration-1000 delay-150 ${
+              className={`transition-[transform,opacity] duration-1000 delay-150 ${
                 isVisible
                   ? "translate-y-0 opacity-100"
                   : "translate-y-8 opacity-0"
               }`}
             >
-              <ul className="divide-y divide-border/60 rounded-[2rem] border border-border/60 bg-card/30 backdrop-blur-xl">
+              <ul className="divide-y divide-border/60 rounded-[2rem] border border-border/60 bg-card/30 backdrop-blur-sm">
                 {principles.map(principle => {
                   return (
                     <li

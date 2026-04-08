@@ -55,7 +55,7 @@ export const ScrollReveal = ({
   const getDirectionClasses = () => {
     if (direction === "none") return "";
 
-    const baseClasses = "transition-all duration-700 ease-out";
+    const baseClasses = "transition-[transform,opacity] duration-700 ease-out";
     const hiddenClasses = {
       up: "translate-y-8 opacity-0",
       down: "-translate-y-8 opacity-0",
@@ -84,7 +84,7 @@ export const ScrollReveal = ({
             <div
               key={index}
               className={cn(
-                "transition-all duration-700 ease-out",
+                "transition-[transform,opacity] duration-700 ease-out",
                 !isVisible && "translate-y-8 opacity-0",
                 isVisible && "translate-y-0 opacity-100"
               )}
