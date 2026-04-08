@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 import { ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -8,12 +10,33 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
 
-interface HomeBrandsProps {
-  isVisible: boolean;
-}
-
-export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
+export const HomeBrands = () => {
   const t = useTranslations("brands");
+  const sectionRef = useRef<HTMLElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -100px 0px" }
+    );
+
+    const node = sectionRef.current;
+    if (node) observer.observe(node);
+    return () => {
+      if (node) observer.unobserve(node);
+    };
+  }, []);
 
   const brands = [
     {
@@ -43,7 +66,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
   ];
 
   return (
-    <section className="relative overflow-hidden py-24 md:py-32">
+    <section ref={sectionRef} className="relative overflow-hidden py-24 md:py-32">
       <div className="absolute inset-0 bg-linear-to-b from-background via-primary/4 to-primary/8" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent,oklch(0.64_0.2_14_/_0.12),transparent)] [background-size:100%_1px] [background-position:0_30%] [background-repeat:no-repeat]" />
       <div className="absolute bottom-0 left-0 right-0 h-36 bg-linear-to-b from-transparent via-primary/8 to-primary/10 pointer-events-none" />
@@ -57,6 +80,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                 ? "translate-y-0 opacity-100"
                 : "-translate-y-8 opacity-0"
             )}
+            style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
           >
             <p className="font-[family-name:var(--font-outfit)] text-xs uppercase tracking-[0.35em] text-primary/80">
               {t("eyebrow")}
@@ -83,7 +107,10 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                       ? "translate-y-0 opacity-100"
                       : "translate-y-8 opacity-0"
                   )}
-                  style={{ transitionDelay: `${idx * 120 + 180}ms` }}
+                  style={{
+                    transitionDelay: `${idx * 120 + 180}ms`,
+                    willChange: isVisible ? "auto" : "transform, opacity",
+                  }}
                 >
                   <div className="grid gap-5 px-2 py-7 md:grid-cols-[1.3fr_1fr_auto] md:items-center md:gap-8 md:px-4 md:py-9">
                     <div>
@@ -117,6 +144,7 @@ export const HomeBrands = ({ isVisible }: HomeBrandsProps) => {
                 ? "translate-y-0 opacity-100"
                 : "translate-y-8 opacity-0"
             )}
+            style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
           >
             <Button
               asChild

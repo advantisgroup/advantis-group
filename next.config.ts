@@ -5,7 +5,6 @@ const withNextIntl = createNextIntlPlugin()
 
 const nextConfig: NextConfig = {
   /* config options here */
-  cacheComponents: false,
   reactCompiler: true,
   typedRoutes: false,
   experimental: {

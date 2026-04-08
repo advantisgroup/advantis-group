@@ -24,9 +24,17 @@ export const ScrollReveal = ({
   threshold = 0.1,
 }: ScrollRevealProps) => {
   const [isVisible, setIsVisible] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mq.matches) {
+      setReducedMotion(true);
+      setIsVisible(true);
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -53,7 +61,7 @@ export const ScrollReveal = ({
   }, [threshold]);
 
   const getDirectionClasses = () => {
-    if (direction === "none") return "";
+    if (direction === "none" || reducedMotion) return "";
 
     const baseClasses = "transition-[transform,opacity] duration-700 ease-out";
     const hiddenClasses = {
@@ -76,7 +84,8 @@ export const ScrollReveal = ({
       ref={ref}
       className={cn(getDirectionClasses(), className)}
       style={{
-        transitionDelay: `${delay}ms`,
+        transitionDelay: reducedMotion ? "0ms" : `${delay}ms`,
+        willChange: isVisible ? "auto" : "transform, opacity",
       }}
     >
       {stagger && Array.isArray(children)
@@ -84,12 +93,16 @@ export const ScrollReveal = ({
             <div
               key={index}
               className={cn(
-                "transition-[transform,opacity] duration-700 ease-out",
-                !isVisible && "translate-y-8 opacity-0",
-                isVisible && "translate-y-0 opacity-100"
+                !reducedMotion &&
+                  "transition-[transform,opacity] duration-700 ease-out",
+                !reducedMotion && !isVisible && "translate-y-8 opacity-0",
+                (reducedMotion || isVisible) && "translate-y-0 opacity-100"
               )}
               style={{
-                transitionDelay: `${delay + index * staggerDelay}ms`,
+                transitionDelay: reducedMotion
+                  ? "0ms"
+                  : `${delay + index * staggerDelay}ms`,
+                willChange: isVisible ? "auto" : "transform, opacity",
               }}
             >
               {child}
