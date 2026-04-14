@@ -13,13 +13,14 @@ import { cn } from "@/lib/utils";
 export const HomeBrands = () => {
   const t = useTranslations("brands");
   const sectionRef = useRef<HTMLElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setIsVisible(true);
-      return;
-    }
+    if (isVisible) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -36,7 +37,7 @@ export const HomeBrands = () => {
     return () => {
       if (node) observer.unobserve(node);
     };
-  }, []);
+  }, [isVisible]);
 
   const brands = [
     {
@@ -66,7 +67,10 @@ export const HomeBrands = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden py-24 md:py-32">
+    <section
+      ref={sectionRef}
+      className="relative overflow-hidden py-24 md:py-32"
+    >
       <div className="absolute inset-0 bg-linear-to-b from-background via-primary/4 to-primary/8" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent,oklch(0.64_0.2_14_/_0.12),transparent)] [background-size:100%_1px] [background-position:0_30%] [background-repeat:no-repeat]" />
       <div className="absolute bottom-0 left-0 right-0 h-36 bg-linear-to-b from-transparent via-primary/8 to-primary/10 pointer-events-none" />
