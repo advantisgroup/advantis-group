@@ -13,13 +13,14 @@ import { cn } from "@/lib/utils";
 export const HomeBrands = () => {
   const t = useTranslations("brands");
   const sectionRef = useRef<HTMLElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isVisible, setIsVisible] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setIsVisible(true);
-      return;
-    }
+    if (isVisible) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -36,7 +37,7 @@ export const HomeBrands = () => {
     return () => {
       if (node) observer.unobserve(node);
     };
-  }, []);
+  }, [isVisible]);
 
   const brands = [
     {

@@ -23,17 +23,15 @@ export const ScrollReveal = ({
   staggerDelay = 100,
   threshold = 0.1,
 }: ScrollRevealProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const prefersReducedMotion = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const [reducedMotion] = useState(prefersReducedMotion);
+  const [isVisible, setIsVisible] = useState(prefersReducedMotion);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mq.matches) {
-      setReducedMotion(true);
-      setIsVisible(true);
-      return;
-    }
+    if (reducedMotion) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -58,7 +56,7 @@ export const ScrollReveal = ({
         observer.unobserve(node);
       }
     };
-  }, [threshold]);
+  }, [threshold, reducedMotion]);
 
   const getDirectionClasses = () => {
     if (direction === "none" || reducedMotion) return "";
