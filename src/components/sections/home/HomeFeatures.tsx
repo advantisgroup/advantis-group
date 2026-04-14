@@ -75,7 +75,10 @@ export const HomeFeatures = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden py-24 md:py-32">
+    <section
+      ref={sectionRef}
+      className="relative overflow-hidden py-24 md:py-32"
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.64_0.2_14_/_0.2),transparent_40%),radial-gradient(circle_at_85%_0%,oklch(0.76_0.16_68_/_0.12),transparent_45%)]" />
       <div className="absolute inset-0 bg-linear-to-b from-background via-background/95 to-background" />
 

@@ -5,7 +5,12 @@ import React from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+} from "framer-motion";
 import { useTranslations } from "next-intl";
 
 import { useSingleLetterLogo } from "@/hooks/use-logo";
@@ -30,7 +35,7 @@ export const Header = () => {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const scrollYRef = React.useRef(0);
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
+  useMotionValueEvent(scrollY, "change", latest => {
     setIsScrolled(latest > SCROLL_THRESHOLD);
   });
 
@@ -166,8 +171,12 @@ export const Header = () => {
                 sizes="32px"
               />
             </div>
-            <span className="group-hover:text-advantis transition-colors duration-500">ADVANTIS</span>
-            <span className="group-hover:text-foreground transition-colors duration-500">GROUP</span>
+            <span className="group-hover:text-advantis transition-colors duration-500">
+              ADVANTIS
+            </span>
+            <span className="group-hover:text-foreground transition-colors duration-500">
+              GROUP
+            </span>
           </Link>
         )}
 
@@ -178,7 +187,10 @@ export const Header = () => {
             {/* Frosted-glass pill backdrop */}
             <motion.div
               className="absolute inset-0 rounded-full border border-border/70 bg-muted/40 backdrop-blur-sm"
-              animate={{ opacity: isScrolled ? 1 : 0, scale: isScrolled ? 1 : 0.94 }}
+              animate={{
+                opacity: isScrolled ? 1 : 0,
+                scale: isScrolled ? 1 : 0.94,
+              }}
               transition={{ duration: 0.35, ease: EASE }}
               style={{ pointerEvents: "none" }}
             />
@@ -244,7 +256,9 @@ export const Header = () => {
           <div className="space-y-1.5 relative z-10">
             <span
               className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${
-                mobileMenuOpen ? "rotate-45 translate-y-2" : "group-hover/menu:w-5"
+                mobileMenuOpen
+                  ? "rotate-45 translate-y-2"
+                  : "group-hover/menu:w-5"
               }`}
             />
             <span
@@ -254,7 +268,9 @@ export const Header = () => {
             />
             <span
               className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${
-                mobileMenuOpen ? "-rotate-45 -translate-y-2" : "group-hover/menu:w-4"
+                mobileMenuOpen
+                  ? "-rotate-45 -translate-y-2"
+                  : "group-hover/menu:w-4"
               }`}
             />
           </div>
