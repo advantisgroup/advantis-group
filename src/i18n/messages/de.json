@@ -167,9 +167,14 @@
       "emailPlaceholder": "du@example.com",
       "switchToRemove": "E-Mail aus Liste entfernen",
       "switchToSubscribe": "← Zurück zu Benachrichtigungen",
+      "tabs": {
+        "subscribe": "Abonnieren",
+        "remove": "Abbestellen"
+      },
       "errors": {
         "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-        "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
+        "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "invalidEmail": "Bitte eine gültige E-Mail-Adresse eingeben."
       },
       "subscribe": {
         "title": "Bleiben Sie auf dem Laufenden",

@@ -167,9 +167,14 @@
       "emailPlaceholder": "you@example.com",
       "switchToRemove": "Remove email from list",
       "switchToSubscribe": "← Back to notifications",
+      "tabs": {
+        "subscribe": "Subscribe",
+        "remove": "Unsubscribe"
+      },
       "errors": {
         "generic": "Something went wrong. Please try again.",
-        "network": "Network error. Please check your connection and try again."
+        "network": "Network error. Please check your connection and try again.",
+        "invalidEmail": "Enter a valid email address."
       },
       "subscribe": {
         "title": "Stay in the loop",
