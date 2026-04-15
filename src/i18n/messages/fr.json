@@ -167,9 +167,14 @@
       "emailPlaceholder": "vous@example.com",
       "switchToRemove": "Retirer l'e-mail de la liste",
       "switchToSubscribe": "← Retour aux notifications",
+      "tabs": {
+        "subscribe": "S'abonner",
+        "remove": "Se désabonner"
+      },
       "errors": {
         "generic": "Une erreur s'est produite. Veuillez réessayer.",
-        "network": "Erreur réseau. Vérifiez votre connexion puis réessayez."
+        "network": "Erreur réseau. Vérifiez votre connexion puis réessayez.",
+        "invalidEmail": "Saisissez une adresse e-mail valide."
       },
       "subscribe": {
         "title": "Restez informé",

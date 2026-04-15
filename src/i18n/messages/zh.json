@@ -167,9 +167,14 @@
       "emailPlaceholder": "you@example.com",
       "switchToRemove": "从列表中移除邮箱",
       "switchToSubscribe": "← 返回通知",
+      "tabs": {
+        "subscribe": "订阅",
+        "remove": "取消订阅"
+      },
       "errors": {
         "generic": "发生了一些问题。请再试一次。",
-        "network": "网络错误。请检查连接后重试。"
+        "network": "网络错误。请检查连接后重试。",
+        "invalidEmail": "请输入有效的电子邮件地址。"
       },
       "subscribe": {
         "title": "保持关注",
