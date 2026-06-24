@@ -89,8 +89,8 @@ export default function Impressum() {
             </CardHeader>
             <CardContent className="space-y-2 text-muted-foreground">
               <p>{t("sections.register.intro")}</p>
-              <p>{t("sections.register.court")}</p>
-              <p>{t("sections.register.number")}</p>
+              <p>{t("sections.register.court")} Amtsgericht Nürnberg</p>
+              <p>{t("sections.register.number")} HRB 46148</p>
             </CardContent>
           </Card>
 
