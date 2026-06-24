@@ -444,8 +444,8 @@
       "register": {
         "title": "商业登记条目",
         "intro": "商业登记注册。",
-        "court": "登记法院：[待定，HR条目可用后]",
-        "number": "登记号：[待定]"
+        "court": "登记法院",
+        "number": "登记号"
       },
       "responsible": {
         "title": "根据§ 55第2款RStV负责内容："

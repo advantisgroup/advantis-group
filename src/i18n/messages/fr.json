@@ -444,8 +444,8 @@
       "register": {
         "title": "Inscription au Registre du Commerce",
         "intro": "Inscription au registre du commerce.",
-        "court": "Tribunal d'enregistrement : [à suivre, une fois l'entrée HR disponible]",
-        "number": "Numéro d'enregistrement : [à suivre]"
+        "court": "Tribunal d'enregistrement :",
+        "number": "Numéro d'enregistrement :"
       },
       "responsible": {
         "title": "Responsable du contenu selon § 55 para. 2 RStV :"

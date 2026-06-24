@@ -444,8 +444,8 @@
       "register": {
         "title": "Commercial Register Entry",
         "intro": "Entry in the commercial register.",
-        "court": "Registration court: [to follow, once HR entry is available]",
-        "number": "Registration number: [to follow]"
+        "court": "Registration court:",
+        "number": "Registration number:"
       },
       "responsible": {
         "title": "Responsible for the content according to § 55 para. 2 RStV:"
