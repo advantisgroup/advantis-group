@@ -444,8 +444,8 @@
       "register": {
         "title": "Registereintrag",
         "intro": "Eintragung im Handelsregister.",
-        "court": "Registergericht: [folgt, sobald HR-Eintrag vorliegt]",
-        "number": "Registernummer: [folgt]"
+        "court": "Registergericht:",
+        "number": "Registernummer:"
       },
       "responsible": {
         "title": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV:"
