@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { NextIntlClientProvider } from "next-intl";
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const locale = await getLocale();
   const messages = await getMessages();
@@ -27,7 +28,11 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased">
-        <ClerkProvider>
+        <ClerkProvider
+          publishableKey={
+            process.env.NEXT_PUBLIC_INTRANET_CLERK_PUBLISHABLE_KEY
+          }
+        >
           <NextIntlClientProvider locale={locale} messages={messages}>
             <ConvexClientProvider>
               <ThemeProvider

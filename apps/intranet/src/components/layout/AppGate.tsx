@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
 
@@ -23,7 +25,7 @@ function FullScreenLoader() {
   );
 }
 
-export function AppGate({ children }: { children: React.ReactNode }) {
+export function AppGate({ children }: { children: ReactNode }) {
   const ensure = useMutation(api.users.ensureCurrentUser);
   const me = useQuery(api.users.me);
   const ensured = useRef(false);

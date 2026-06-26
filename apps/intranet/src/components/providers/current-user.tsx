@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { createContext, useContext } from "react";
 
 import { type Role } from "@advantis/types";
@@ -29,7 +31,7 @@ export function CurrentUserProvider({
   children,
 }: {
   user: CurrentUser;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <CurrentUserContext.Provider value={user}>

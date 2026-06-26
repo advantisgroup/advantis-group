@@ -209,7 +209,6 @@ export function ConversationView({
                       )}
                       {m.attachments.map(a =>
                         a.kind === "image" && a.url ? (
-                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             key={a.storageId}
                             src={a.url}

@@ -1,5 +1,7 @@
 "use client";
 
+import type { ChangeEvent } from "react";
+
 import { useMutation } from "convex/react";
 import { useState } from "react";
 
@@ -51,7 +53,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onAvatar(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {

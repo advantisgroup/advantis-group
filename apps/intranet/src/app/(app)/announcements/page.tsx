@@ -253,7 +253,6 @@ export default function AnnouncementsPage() {
                 <div className="flex flex-wrap gap-2">
                   {a.attachments.map(att =>
                     att.url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
                       <a
                         key={att.storageId}
                         href={att.url}
