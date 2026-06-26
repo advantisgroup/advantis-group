@@ -236,7 +236,6 @@ export function ConversationView({
                           className="mt-1 block overflow-hidden rounded-lg border bg-background text-foreground"
                         >
                           {lp.image && (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={lp.image}
                               alt=""

@@ -1,7 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
-
 import { useQuery } from "convex/react";
 import { CalendarDays, Megaphone, MessageSquare, Plane } from "lucide-react";
 
@@ -16,13 +14,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
 
+const now = Date.now();
+
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
   const user = useCurrentUser();
   const isManager = useIsManager();
-
-  const now = useMemo(() => Date.now(), []);
   const events = useQuery(api.events.listForRange, {
     start: now,
     end: now + 30 * 24 * 60 * 60 * 1000,
