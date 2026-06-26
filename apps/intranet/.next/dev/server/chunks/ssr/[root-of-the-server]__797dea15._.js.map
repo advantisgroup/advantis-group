@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 14, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Bluejutzu/AdvantisGroup/advantis-group/apps/intranet/src/app/sign-in/%5B%5B...sign-in%5D%5D/page.tsx"],"sourcesContent":["import { SignIn } from \"@clerk/nextjs\";\n\nexport default function SignInPage() {\n  return (\n    <div className=\"flex min-h-screen items-center justify-center bg-muted/30 p-4\">\n      <SignIn />\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;AAAA;;;AAEe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;kBACb,cAAA,8OAAC,gMAAM;;;;;;;;;;AAGb"}}]
+}

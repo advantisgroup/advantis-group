@@ -1,0 +1,16 @@
+{
+  "/(app)/absences/page": "app/(app)/absences/page.js",
+  "/(app)/admin/page": "app/(app)/admin/page.js",
+  "/(app)/announcements/page": "app/(app)/announcements/page.js",
+  "/(app)/calendar/page": "app/(app)/calendar/page.js",
+  "/(app)/chat/page": "app/(app)/chat/page.js",
+  "/(app)/directory/page": "app/(app)/directory/page.js",
+  "/(app)/page": "app/(app)/page.js",
+  "/(app)/settings/page": "app/(app)/settings/page.js",
+  "/_global-error/page": "app/_global-error/page.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/guest/login/page": "app/guest/login/page.js",
+  "/guest/page": "app/guest/page.js",
+  "/sign-in/[[...sign-in]]/page": "app/sign-in/[[...sign-in]]/page.js",
+  "/sign-up/[[...sign-up]]/page": "app/sign-up/[[...sign-up]]/page.js"
+}

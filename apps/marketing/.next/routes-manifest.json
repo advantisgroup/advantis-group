@@ -1,0 +1,178 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [],
+  "headers": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [
+      {
+        "source": "/ingest/static/:path*",
+        "destination": "https://eu-assets.i.posthog.com/static/:path*",
+        "locale": false,
+        "regex": "^/ingest/static(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+      },
+      {
+        "source": "/ingest/:path*",
+        "destination": "https://eu.i.posthog.com/:path*",
+        "locale": false,
+        "regex": "^/ingest(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+      },
+      {
+        "source": "/api/:path*",
+        "destination": "/api/:path*",
+        "locale": false,
+        "regex": "^/api(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))?(?:/)?$"
+      }
+    ],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/[[...slugs]]",
+      "regex": "^/api(?:/(.+?))?(?:/)?$",
+      "routeKeys": {
+        "nxtPslugs": "nxtPslugs"
+      },
+      "namedRegex": "^/api(?:/(?<nxtPslugs>.+?))?(?:/)?$"
+    },
+    {
+      "page": "/[locale]",
+      "regex": "^/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/[locale]/about",
+      "regex": "^/([^/]+?)/about(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/about(?:/)?$"
+    },
+    {
+      "page": "/[locale]/account/submissions",
+      "regex": "^/([^/]+?)/account/submissions(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/account/submissions(?:/)?$"
+    },
+    {
+      "page": "/[locale]/account/[[...account]]",
+      "regex": "^/([^/]+?)/account(?:/(.+?))?(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale",
+        "nxtPaccount": "nxtPaccount"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/account(?:/(?<nxtPaccount>.+?))?(?:/)?$"
+    },
+    {
+      "page": "/[locale]/brands",
+      "regex": "^/([^/]+?)/brands(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/brands(?:/)?$"
+    },
+    {
+      "page": "/[locale]/contact",
+      "regex": "^/([^/]+?)/contact(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/contact(?:/)?$"
+    },
+    {
+      "page": "/[locale]/imprint",
+      "regex": "^/([^/]+?)/imprint(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/imprint(?:/)?$"
+    },
+    {
+      "page": "/[locale]/privacy",
+      "regex": "^/([^/]+?)/privacy(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/privacy(?:/)?$"
+    },
+    {
+      "page": "/[locale]/sign-in/[[...sign-in]]",
+      "regex": "^/([^/]+?)/sign\\-in(?:/(.+?))?(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale",
+        "nxtPsignin": "nxtPsign-in"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/sign\\-in(?:/(?<nxtPsignin>.+?))?(?:/)?$"
+    },
+    {
+      "page": "/[locale]/sign-up/[[...sign-up]]",
+      "regex": "^/([^/]+?)/sign\\-up(?:/(.+?))?(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale",
+        "nxtPsignup": "nxtPsign-up"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/sign\\-up(?:/(?<nxtPsignup>.+?))?(?:/)?$"
+    },
+    {
+      "page": "/[locale]/team",
+      "regex": "^/([^/]+?)/team(?:/)?$",
+      "routeKeys": {
+        "nxtPlocale": "nxtPlocale"
+      },
+      "namedRegex": "^/(?<nxtPlocale>[^/]+?)/team(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

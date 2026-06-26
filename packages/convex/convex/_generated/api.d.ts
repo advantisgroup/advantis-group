@@ -8,7 +8,23 @@
  * @module
  */
 
+import type * as absences from "../absences.js";
+import type * as accessRequests from "../accessRequests.js";
+import type * as announcements from "../announcements.js";
+import type * as chat from "../chat.js";
+import type * as clerkSync from "../clerkSync.js";
+import type * as clockodoSync from "../clockodoSync.js";
 import type * as emails from "../emails.js";
+import type * as events from "../events.js";
+import type * as files from "../files.js";
+import type * as guest from "../guest.js";
+import type * as invites from "../invites.js";
+import type * as lib_audience from "../lib/audience.js";
+import type * as lib_auth from "../lib/auth.js";
+import type * as lib_notify from "../lib/notify.js";
+import type * as notifications from "../notifications.js";
+import type * as outbound from "../outbound.js";
+import type * as users from "../users.js";
 
 import type {
   ApiFromModules,
@@ -17,7 +33,23 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  absences: typeof absences;
+  accessRequests: typeof accessRequests;
+  announcements: typeof announcements;
+  chat: typeof chat;
+  clerkSync: typeof clerkSync;
+  clockodoSync: typeof clockodoSync;
   emails: typeof emails;
+  events: typeof events;
+  files: typeof files;
+  guest: typeof guest;
+  invites: typeof invites;
+  "lib/audience": typeof lib_audience;
+  "lib/auth": typeof lib_auth;
+  "lib/notify": typeof lib_notify;
+  notifications: typeof notifications;
+  outbound: typeof outbound;
+  users: typeof users;
 }>;
 
 /**

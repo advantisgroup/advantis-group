@@ -1,0 +1,70 @@
+{
+  "app": {
+    "[project]/apps/marketing/src/app/[locale]/(pages)/about/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/account/[[...account]]/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/account/submissions/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/brands/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/contact/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/imprint/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/privacy/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/sign-in/[[...sign-in]]/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/sign-up/[[...sign-up]]/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/(pages)/team/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/[locale]/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/_not-found/page": [
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ],
+    "[project]/apps/marketing/src/app/page": [
+      "static/media/1b99372b3eaef0c8-s.p.758e15a8.woff2",
+      "static/media/a343f882a40d2cc9-s.p.71e1367e.woff2",
+      "static/media/83afe278b6a6bb3c-s.p.3a6ba036.woff2"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}

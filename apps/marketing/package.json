@@ -1,20 +1,23 @@
 {
-  "name": "ag_homepage",
+  "name": "@advantis/marketing",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "bun convex codegen && next build",
+    "build": "next build",
     "start": "next start",
     "fix": "bun lint && bun format",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
+    "type-check": "tsc --noEmit",
     "format:check": "bunx prettier --check ./src",
     "format": "bunx prettier --write ./src",
     "licenses": "bunx license-checker --json --production --out ./public/licenses.json"
   },
   "dependencies": {
+    "@advantis/convex": "workspace:*",
+    "@advantis/types": "workspace:*",
     "@clerk/nextjs": "^6.20.0",
     "@elysiajs/eden": "^1.4.6",
     "@gsap/react": "^2.1.2",

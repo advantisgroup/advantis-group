@@ -1,0 +1,12 @@
+{
+  "extends": "@advantis/config/tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "types": ["bun-types"],
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "jsx": "react-jsx"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,17 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/[locale]/layout,_N_T_/[locale]/(pages)/layout,_N_T_/[locale]/(pages)/contact/layout,_N_T_/[locale]/(pages)/contact/page,_N_T_/zh/contact"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/$d$locale/!KHBhZ2VzKQ/contact/__PAGE__",
+    "/$d$locale/!KHBhZ2VzKQ/contact",
+    "/$d$locale/!KHBhZ2VzKQ",
+    "/$d$locale",
+    "/_index",
+    "/_head"
+  ]
+}

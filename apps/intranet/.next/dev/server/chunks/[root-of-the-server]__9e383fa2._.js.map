@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 52, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Bluejutzu/AdvantisGroup/advantis-group/apps/intranet/src/proxy.ts"],"sourcesContent":["import { clerkMiddleware, createRouteMatcher } from \"@clerk/nextjs/server\";\n\n// Public routes that don't require an authenticated session.\nconst isPublicRoute = createRouteMatcher([\n  \"/sign-in(.*)\",\n  \"/sign-up(.*)\",\n  // Temporary guest tour — token-gated, no Clerk session.\n  \"/guest(.*)\",\n]);\n\nexport default clerkMiddleware(async (auth, req) => {\n  if (!isPublicRoute(req)) {\n    await auth.protect();\n  }\n});\n\nexport const config = {\n  matcher: [\n    // Skip Next internals and static files, run on everything else\n    \"/((?!_next|[^?]*\\\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)\",\n    \"/(api|trpc)(.*)\",\n  ],\n};\n"],"names":[],"mappings":";;;;;;AAAA;AAAA;;AAEA,6DAA6D;AAC7D,MAAM,gBAAgB,IAAA,gMAAkB,EAAC;IACvC;IACA;IACA,wDAAwD;IACxD;CACD;uCAEc,IAAA,gMAAe,EAAC,OAAO,MAAM;IAC1C,IAAI,CAAC,cAAc,MAAM;QACvB,MAAM,KAAK,OAAO;IACpB;AACF;AAEO,MAAM,SAAS;IACpB,SAAS;QACP,+DAA+D;QAC/D;QACA;KACD;AACH"}}]
+}
