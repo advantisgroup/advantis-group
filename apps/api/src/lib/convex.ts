@@ -7,8 +7,7 @@ let client: ConvexHttpClient | null = null;
 /** Shared Convex HTTP client (server-side). */
 export function getConvex(): ConvexHttpClient {
   if (!client) {
-    const url =
-      process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
+    const url = process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
     if (!url) throw new Error("CONVEX_URL / NEXT_PUBLIC_CONVEX_URL not set");
     client = new ConvexHttpClient(url);
   }

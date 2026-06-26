@@ -34,12 +34,17 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Language" disabled={pending}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Language"
+          disabled={pending}
+        >
           <Languages className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {locales.map((locale) => (
+        {locales.map(locale => (
           <DropdownMenuItem
             key={locale}
             onClick={() => choose(locale)}

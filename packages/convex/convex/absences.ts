@@ -16,7 +16,9 @@ const absenceType = v.union(
 
 function displayName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
-  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+  return (
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+  );
 }
 
 /** Approvers for a given employee: their manager, plus all admins. */
@@ -28,14 +30,14 @@ async function approverIds(
   if (employee.managerId) ids.add(employee.managerId);
   const admins = await ctx.db
     .query("users")
-    .withIndex("by_role", (q) => q.eq("role", "admin"))
+    .withIndex("by_role", q => q.eq("role", "admin"))
     .collect();
   for (const a of admins) if (a.status === "active") ids.add(a._id);
   // Fallback: if no manager and no admins, notify all managers.
   if (ids.size === 0) {
     const managers = await ctx.db
       .query("users")
-      .withIndex("by_role", (q) => q.eq("role", "manager"))
+      .withIndex("by_role", q => q.eq("role", "manager"))
       .collect();
     for (const m of managers) if (m.status === "active") ids.add(m._id);
   }
@@ -92,11 +94,11 @@ export const createRequest = mutation({
 
 export const myAbsences = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const user = await requireUser(ctx);
     return ctx.db
       .query("absences")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", q => q.eq("userId", user._id))
       .order("desc")
       .take(100);
   },
@@ -105,15 +107,15 @@ export const myAbsences = query({
 /** Pending requests this manager/admin may act on. */
 export const pendingForApproval = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const reviewer = await requireManager(ctx);
     const pending = await ctx.db
       .query("absences")
-      .withIndex("by_status", (q) => q.eq("status", "pending"))
+      .withIndex("by_status", q => q.eq("status", "pending"))
       .collect();
 
     const withUser = await Promise.all(
-      pending.map(async (a) => {
+      pending.map(async a => {
         const u = await ctx.db.get(a.userId);
         return { absence: a, user: u };
       })
@@ -122,9 +124,9 @@ export const pendingForApproval = query({
     const visible =
       reviewer.role === "admin"
         ? withUser
-        : withUser.filter((row) => row.user?.managerId === reviewer._id);
+        : withUser.filter(row => row.user?.managerId === reviewer._id);
 
-    return visible.map((row) => ({
+    return visible.map(row => ({
       ...row.absence,
       userName: displayName(row.user),
       userDepartment: row.user?.department ?? null,
@@ -159,7 +161,10 @@ export const approve = mutation({
     const reviewer = await requireManager(ctx);
     const absence = await ctx.db.get(absenceId);
     if (!absence || absence.status !== "pending") {
-      throw new ConvexError({ code: "not_found", message: "No pending absence" });
+      throw new ConvexError({
+        code: "not_found",
+        message: "No pending absence",
+      });
     }
     await assertCanReview(ctx, reviewer, absence);
     await ctx.db.patch(absenceId, {
@@ -186,7 +191,10 @@ export const deny = mutation({
     const reviewer = await requireManager(ctx);
     const absence = await ctx.db.get(absenceId);
     if (!absence || absence.status !== "pending") {
-      throw new ConvexError({ code: "not_found", message: "No pending absence" });
+      throw new ConvexError({
+        code: "not_found",
+        message: "No pending absence",
+      });
     }
     await assertCanReview(ctx, reviewer, absence);
     await ctx.db.patch(absenceId, {
@@ -213,7 +221,10 @@ export const cancel = mutation({
     const user = await requireUser(ctx);
     const absence = await ctx.db.get(absenceId);
     if (!absence) {
-      throw new ConvexError({ code: "not_found", message: "Absence not found" });
+      throw new ConvexError({
+        code: "not_found",
+        message: "Absence not found",
+      });
     }
     const isOwner = absence.userId === user._id;
     const isAdmin = user.role === "admin";
@@ -235,13 +246,13 @@ export const listForCalendar = query({
     await requireUser(ctx);
     const approved = await ctx.db
       .query("absences")
-      .withIndex("by_status", (q) => q.eq("status", "approved"))
+      .withIndex("by_status", q => q.eq("status", "approved"))
       .collect();
-    const overlapping = approved.filter((a) =>
+    const overlapping = approved.filter(a =>
       rangesOverlap(a.startDate, a.endDate, start, end)
     );
     return Promise.all(
-      overlapping.map(async (a) => {
+      overlapping.map(async a => {
         const u = await ctx.db.get(a.userId);
         return {
           _id: a._id,

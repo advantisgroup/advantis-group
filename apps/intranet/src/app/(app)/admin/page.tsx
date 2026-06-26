@@ -11,7 +11,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import {
+  useCurrentUser,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,7 +47,11 @@ function RoleSelect({
 }) {
   const t = useTranslations("Roles");
   return (
-    <Select value={value} onValueChange={(v) => onChange(v as Role)} disabled={disabled}>
+    <Select
+      value={value}
+      onValueChange={v => onChange(v as Role)}
+      disabled={disabled}
+    >
       <SelectTrigger className="h-8 w-36">
         <SelectValue />
       </SelectTrigger>
@@ -65,22 +72,30 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
   const [roles, setRoles] = useState<Record<string, Role>>({});
 
   if (requests && requests.length === 0) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">{t("noRequests")}</p>;
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">
+        {t("noRequests")}
+      </p>
+    );
   }
   return (
     <div className="space-y-2">
-      {requests?.map((r) => (
+      {requests?.map(r => (
         <Card nested key={r._id}>
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-3">
             <div className="min-w-0">
               <p className="font-medium">{r.name ?? r.email}</p>
               <p className="text-xs text-muted-foreground">{r.email}</p>
-              {r.message && <p className="mt-1 text-xs text-muted-foreground">{r.message}</p>}
+              {r.message && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {r.message}
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <RoleSelect
                 value={roles[r._id] ?? "employee"}
-                onChange={(role) => setRoles((s) => ({ ...s, [r._id]: role }))}
+                onChange={role => setRoles(s => ({ ...s, [r._id]: role }))}
                 canElevate={isAdmin}
               />
               <Button
@@ -93,7 +108,10 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
               <Button
                 size="sm"
                 onClick={() =>
-                  approve({ requestId: r._id, role: roles[r._id] ?? "employee" })
+                  approve({
+                    requestId: r._id,
+                    role: roles[r._id] ?? "employee",
+                  })
                     .then(() => toast.success(t("approve")))
                     .catch(err)
                 }
@@ -133,7 +151,7 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
-  const pending = invites?.filter((i) => i.status === "pending") ?? [];
+  const pending = invites?.filter(i => i.status === "pending") ?? [];
 
   return (
     <div className="space-y-4">
@@ -144,7 +162,7 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
               type="email"
               placeholder={t("inviteEmail")}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
             />
           </div>
           <RoleSelect value={role} onChange={setRole} canElevate={isAdmin} />
@@ -156,10 +174,12 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
       </Card>
 
       {pending.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{t("noInvites")}</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          {t("noInvites")}
+        </p>
       ) : (
         <div className="space-y-2">
-          {pending.map((i) => (
+          {pending.map(i => (
             <Card nested key={i._id}>
               <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
                 <div className="min-w-0">
@@ -174,7 +194,11 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => resend({ inviteId: i._id }).then(() => toast.success(t("resend"))).catch(err)}
+                    onClick={() =>
+                      resend({ inviteId: i._id })
+                        .then(() => toast.success(t("resend")))
+                        .catch(err)
+                    }
                   >
                     <RotateCw className="mr-1 h-3.5 w-3.5" />
                     {t("resend")}
@@ -206,7 +230,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <div className="space-y-2">
-      {members?.map((m) => (
+      {members?.map(m => (
         <Card nested key={m._id}>
           <CardContent className="flex flex-wrap items-center justify-between gap-3 p-3">
             <div className="flex min-w-0 items-center gap-3">
@@ -218,7 +242,9 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
               </Avatar>
               <div className="min-w-0">
                 <p className="truncate font-medium">{m.name}</p>
-                <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {m.email}
+                </p>
               </div>
               {m.status === "suspended" && (
                 <Badge variant="destructive">{t("suspend")}</Badge>
@@ -230,7 +256,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                   <RoleSelect
                     value={m.role}
                     canElevate
-                    onChange={(role) =>
+                    onChange={role =>
                       setRole({ userId: m._id as Id<"users">, role })
                         .then(() => toast.success(tRoles(role)))
                         .catch(err)
@@ -291,8 +317,7 @@ function GuestLogins() {
   }
 
   function copyLink(token: string) {
-    const origin =
-      typeof window !== "undefined" ? window.location.origin : "";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
     void navigator.clipboard.writeText(`${origin}/guest/login?token=${token}`);
     toast.success(t("copied"));
   }
@@ -308,21 +333,21 @@ function GuestLogins() {
             <Input
               placeholder={t("guestLabel")}
               value={label}
-              onChange={(e) => setLabel(e.target.value)}
+              onChange={e => setLabel(e.target.value)}
             />
           </div>
           <Input
             type="email"
             placeholder={t("guestEmail")}
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={e => setEmail(e.target.value)}
             className="w-48"
           />
           <Input
             type="number"
             min={1}
             value={hours}
-            onChange={(e) => setHours(e.target.value)}
+            onChange={e => setHours(e.target.value)}
             className="w-20"
             aria-label={t("guestHours")}
           />
@@ -339,7 +364,7 @@ function GuestLogins() {
         </p>
       ) : (
         <div className="space-y-2">
-          {logins?.map((g) => (
+          {logins?.map(g => (
             <Card nested key={g._id}>
               <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
                 <div className="min-w-0">

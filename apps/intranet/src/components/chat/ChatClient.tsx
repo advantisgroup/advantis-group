@@ -46,7 +46,7 @@ export function ChatClient() {
               {t("noConversations")}
             </p>
           )}
-          {conversations?.map((c) => (
+          {conversations?.map(c => (
             <button
               key={c._id}
               onClick={() => select(c._id)}

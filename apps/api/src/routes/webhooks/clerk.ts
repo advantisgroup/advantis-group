@@ -25,7 +25,7 @@ interface ClerkEvent {
 
 function primaryEmail(data: ClerkUserData): string | undefined {
   const list = data.email_addresses ?? [];
-  const primary = list.find((e) => e.id === data.primary_email_address_id);
+  const primary = list.find(e => e.id === data.primary_email_address_id);
   return (primary ?? list[0])?.email_address;
 }
 

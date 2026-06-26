@@ -37,7 +37,8 @@ export function RequestAccessGate() {
   }
 
   const state = status?.status ?? "none";
-  const domainAllowed = status && "domainAllowed" in status ? status.domainAllowed : true;
+  const domainAllowed =
+    status && "domainAllowed" in status ? status.domainAllowed : true;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
@@ -48,7 +49,8 @@ export function RequestAccessGate() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            {t("signedInAs")} <span className="font-medium text-foreground">{email}</span>
+            {t("signedInAs")}{" "}
+            <span className="font-medium text-foreground">{email}</span>
           </p>
 
           {state === "pending" && (
@@ -73,10 +75,14 @@ export function RequestAccessGate() {
                   <Textarea
                     placeholder={t("messageLabel")}
                     value={message}
-                    onChange={(e) => setMessage(e.target.value)}
+                    onChange={e => setMessage(e.target.value)}
                     rows={3}
                   />
-                  <Button className="w-full" onClick={submit} disabled={submitting}>
+                  <Button
+                    className="w-full"
+                    onClick={submit}
+                    disabled={submitting}
+                  >
                     {t("requestButton")}
                   </Button>
                 </>

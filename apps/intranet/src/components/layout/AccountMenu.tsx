@@ -57,7 +57,9 @@ export function AccountMenu() {
           <SettingsIcon className="mr-2 h-4 w-4" />
           {tNav("settings")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => void signOut({ redirectUrl: "/sign-in" })}>
+        <DropdownMenuItem
+          onClick={() => void signOut({ redirectUrl: "/sign-in" })}
+        >
           <LogOut className="mr-2 h-4 w-4" />
           {tNav("signOut")}
         </DropdownMenuItem>

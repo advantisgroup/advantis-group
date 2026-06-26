@@ -13,7 +13,7 @@ import { clockodoWebhookRoute } from "./routes/webhooks/clockodo";
 export const app = new Elysia()
   .use(
     cors({
-      origin: (request) => {
+      origin: request => {
         const origin = request.headers.get("origin");
         if (!origin) return false;
         return isAllowedOrigin(origin);

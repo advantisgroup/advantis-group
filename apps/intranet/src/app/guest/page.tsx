@@ -86,7 +86,7 @@ export default function GuestTourPage() {
           {content.announcements.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("empty")}</p>
           ) : (
-            content.announcements.map((a) => (
+            content.announcements.map(a => (
               <Card nested key={a._id}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-base">{a.title}</CardTitle>
@@ -110,13 +110,15 @@ export default function GuestTourPage() {
           {content.events.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("empty")}</p>
           ) : (
-            content.events.map((e) => (
+            content.events.map(e => (
               <Card nested key={e._id}>
                 <CardContent className="flex items-center justify-between gap-3 p-4">
                   <div className="min-w-0">
                     <p className="font-medium">{e.title}</p>
                     {e.location && (
-                      <p className="text-xs text-muted-foreground">{e.location}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {e.location}
+                      </p>
                     )}
                   </div>
                   <span className="shrink-0 text-xs text-muted-foreground">

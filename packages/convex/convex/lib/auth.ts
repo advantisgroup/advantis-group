@@ -11,8 +11,8 @@ function parseList(value: string | undefined): string[] {
   if (!value) return [];
   return value
     .split(/[,;\s]+/)
-    .map((entry) => entry.trim().toLowerCase())
-    .filter((entry) => entry.length > 0);
+    .map(entry => entry.trim().toLowerCase())
+    .filter(entry => entry.length > 0);
 }
 
 /** Admin emails seeded via the `ADMIN_EMAILS` Convex env var. */
@@ -48,7 +48,7 @@ export async function getUserByClerkId(
 ): Promise<Doc<"users"> | null> {
   return ctx.db
     .query("users")
-    .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", clerkUserId))
+    .withIndex("by_clerkUserId", q => q.eq("clerkUserId", clerkUserId))
     .unique();
 }
 
@@ -71,7 +71,10 @@ export async function requireUser(
 ): Promise<Doc<"users">> {
   const user = await getCurrentUser(ctx);
   if (!user) {
-    throw new ConvexError({ code: "unauthenticated", message: "Not signed in" });
+    throw new ConvexError({
+      code: "unauthenticated",
+      message: "Not signed in",
+    });
   }
   if (user.status === "suspended") {
     throw new ConvexError({ code: "forbidden", message: "Account suspended" });
@@ -168,8 +171,8 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
   if (email) {
     const invite = await ctx.db
       .query("invites")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .filter((q) => q.eq(q.field("status"), "pending"))
+      .withIndex("by_email", q => q.eq("email", email))
+      .filter(q => q.eq(q.field("status"), "pending"))
       .first();
 
     if (invite && invite.expiresAt > now) {

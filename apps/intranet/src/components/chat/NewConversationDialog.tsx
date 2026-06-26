@@ -42,7 +42,7 @@ export function NewConversationDialog({
   const [groupName, setGroupName] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const others = people?.filter((p) => p._id !== me._id) ?? [];
+  const others = people?.filter(p => p._id !== me._id) ?? [];
 
   function reset() {
     setGroupMode(false);
@@ -77,7 +77,7 @@ export function NewConversationDialog({
   }
 
   function toggle(id: string) {
-    setSelected((s) => {
+    setSelected(s => {
       const next = new Set(s);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -88,7 +88,7 @@ export function NewConversationDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={(o) => {
+      onOpenChange={o => {
         setOpen(o);
         if (!o) reset();
       }}
@@ -125,12 +125,12 @@ export function NewConversationDialog({
           <Input
             placeholder={t("groupName")}
             value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
+            onChange={e => setGroupName(e.target.value)}
           />
         )}
 
         <ScrollArea className="h-72 rounded-md border">
-          {others.map((p) => (
+          {others.map(p => (
             <div
               key={p._id}
               className="flex items-center gap-3 border-b px-3 py-2 last:border-b-0"

@@ -13,7 +13,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import {
+  useCurrentUser,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -105,13 +108,13 @@ function CreateDialog() {
           <Input
             placeholder={tc("create")}
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={e => setTitle(e.target.value)}
           />
           <Textarea
             placeholder={t("bodyLabel")}
             rows={6}
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={e => setBody(e.target.value)}
           />
           <div className="space-y-1.5">
             <Label>{t("audience")}</Label>
@@ -121,7 +124,7 @@ function CreateDialog() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("everyone")}</SelectItem>
-                {departments.map((d) => (
+                {departments.map(d => (
                   <SelectItem key={d} value={d}>
                     {t("department")}: {d}
                   </SelectItem>
@@ -134,7 +137,7 @@ function CreateDialog() {
               <input
                 type="checkbox"
                 checked={pinned}
-                onChange={(e) => setPinned(e.target.checked)}
+                onChange={e => setPinned(e.target.checked)}
               />
               {t("pin")}
             </label>
@@ -142,7 +145,7 @@ function CreateDialog() {
               <input
                 type="checkbox"
                 checked={guestVisible}
-                onChange={(e) => setGuestVisible(e.target.checked)}
+                onChange={e => setGuestVisible(e.target.checked)}
               />
               {t("guestVisible")}
             </label>
@@ -153,13 +156,13 @@ function CreateDialog() {
                 type="file"
                 multiple
                 className="hidden"
-                onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                onChange={e => setFiles(Array.from(e.target.files ?? []))}
               />
             </label>
           </div>
           {files.length > 0 && (
             <p className="text-xs text-muted-foreground">
-              {files.map((f) => f.name).join(", ")}
+              {files.map(f => f.name).join(", ")}
             </p>
           )}
         </div>
@@ -167,7 +170,10 @@ function CreateDialog() {
           <Button variant="ghost" onClick={() => setOpen(false)}>
             {tc("cancel")}
           </Button>
-          <Button onClick={submit} disabled={busy || !title.trim() || !body.trim()}>
+          <Button
+            onClick={submit}
+            disabled={busy || !title.trim() || !body.trim()}
+          >
             {tc("create")}
           </Button>
         </DialogFooter>
@@ -205,7 +211,7 @@ export default function AnnouncementsPage() {
         </p>
       )}
       <div className="space-y-4">
-        {announcements?.map((a) => (
+        {announcements?.map(a => (
           <Card
             key={a._id}
             nested
@@ -219,7 +225,9 @@ export default function AnnouncementsPage() {
                     {t("pinned")}
                   </Badge>
                 )}
-                {!a.read && <span className="h-2 w-2 rounded-full bg-primary" />}
+                {!a.read && (
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                )}
                 <h2 className="flex-1 text-lg font-semibold">{a.title}</h2>
                 {(a.authorId === me._id || me.role === "admin") && (
                   <Button
@@ -243,7 +251,7 @@ export default function AnnouncementsPage() {
               </div>
               {a.attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {a.attachments.map((att) =>
+                  {a.attachments.map(att =>
                     att.url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <a

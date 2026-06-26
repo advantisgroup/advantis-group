@@ -9,7 +9,7 @@ export const list = query({
     const user = await requireUser(ctx);
     return ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", q => q.eq("userId", user._id))
       .order("desc")
       .take(limit ?? 50);
   },
@@ -17,14 +17,14 @@ export const list = query({
 
 export const unreadCount = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const user = await requireUser(ctx);
     const recent = await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", q => q.eq("userId", user._id))
       .order("desc")
       .take(100);
-    return recent.filter((n) => !n.readAt).length;
+    return recent.filter(n => !n.readAt).length;
   },
 });
 
@@ -43,18 +43,18 @@ export const markRead = mutation({
 
 export const markAllRead = mutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const user = await requireUser(ctx);
     const unread = await ctx.db
       .query("notifications")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", q => q.eq("userId", user._id))
       .order("desc")
       .take(200);
     const now = Date.now();
     await Promise.all(
       unread
-        .filter((n) => !n.readAt)
-        .map((n) => ctx.db.patch(n._id, { readAt: now }))
+        .filter(n => !n.readAt)
+        .map(n => ctx.db.patch(n._id, { readAt: now }))
     );
     return { ok: true };
   },

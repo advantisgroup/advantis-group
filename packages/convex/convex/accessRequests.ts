@@ -20,15 +20,15 @@ const roleArg = v.union(
 async function managerIds(ctx: MutationCtx): Promise<Doc<"users">["_id"][]> {
   const admins = await ctx.db
     .query("users")
-    .withIndex("by_role", (q) => q.eq("role", "admin"))
+    .withIndex("by_role", q => q.eq("role", "admin"))
     .collect();
   const managers = await ctx.db
     .query("users")
-    .withIndex("by_role", (q) => q.eq("role", "manager"))
+    .withIndex("by_role", q => q.eq("role", "manager"))
     .collect();
   return [...admins, ...managers]
-    .filter((u) => u.status === "active")
-    .map((u) => u._id);
+    .filter(u => u.status === "active")
+    .map(u => u._id);
 }
 
 /**
@@ -65,8 +65,8 @@ export const create = mutation({
 
     const prior = await ctx.db
       .query("accessRequests")
-      .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", identity.subject))
-      .filter((q) => q.eq(q.field("status"), "pending"))
+      .withIndex("by_clerkUserId", q => q.eq("clerkUserId", identity.subject))
+      .filter(q => q.eq(q.field("status"), "pending"))
       .first();
     if (prior) return { status: "pending" as const };
 
@@ -93,14 +93,14 @@ export const create = mutation({
 /** Current user's own latest request status (for the request-access screen). */
 export const myStatus = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
     const member = await getUserByClerkId(ctx, identity.subject);
     if (member) return { status: "member" as const };
     const request = await ctx.db
       .query("accessRequests")
-      .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", identity.subject))
+      .withIndex("by_clerkUserId", q => q.eq("clerkUserId", identity.subject))
       .order("desc")
       .first();
     return {
@@ -121,7 +121,7 @@ export const list = query({
       .query("accessRequests")
       .order("desc")
       .take(200);
-    return status ? requests.filter((r) => r.status === status) : requests;
+    return status ? requests.filter(r => r.status === status) : requests;
   },
 });
 

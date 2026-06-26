@@ -11,7 +11,7 @@ const issuerDomains = [
 ].filter((domain): domain is string => Boolean(domain));
 
 export default {
-  providers: issuerDomains.map((domain) => ({
+  providers: issuerDomains.map(domain => ({
     domain,
     applicationID: "convex",
   })),

@@ -19,7 +19,7 @@ async function resolveActiveToken(
   if (!token) return null;
   const login = await ctx.db
     .query("tempLogins")
-    .withIndex("by_token", (q) => q.eq("token", token))
+    .withIndex("by_token", q => q.eq("token", token))
     .first();
   if (!login) return null;
   if (login.status !== "active") return null;
@@ -55,9 +55,9 @@ export const getTourContent = query({
       .order("desc")
       .take(200);
     const announcements = announcementDocs
-      .filter((a) => a.guestVisible === true)
+      .filter(a => a.guestVisible === true)
       .slice(0, 50)
-      .map((a) => ({
+      .map(a => ({
         _id: a._id,
         title: a.title,
         body: a.body,
@@ -67,12 +67,12 @@ export const getTourContent = query({
     const now = Date.now();
     const eventDocs = await ctx.db
       .query("events")
-      .withIndex("by_start", (q) => q.gte("start", now - 7 * 86400000))
+      .withIndex("by_start", q => q.gte("start", now - 7 * 86400000))
       .take(200);
     const events = eventDocs
-      .filter((e) => e.guestVisible === true)
+      .filter(e => e.guestVisible === true)
       .slice(0, 50)
-      .map((e) => ({
+      .map(e => ({
         _id: e._id,
         title: e.title,
         description: e.description ?? null,
@@ -82,7 +82,12 @@ export const getTourContent = query({
         allDay: e.allDay,
       }));
 
-    return { label: login.label, expiresAt: login.expiresAt, announcements, events };
+    return {
+      label: login.label,
+      expiresAt: login.expiresAt,
+      announcements,
+      events,
+    };
   },
 });
 
@@ -130,11 +135,11 @@ export const createTempLogin = mutation({
 
 export const listTempLogins = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     await requireAdmin(ctx);
     const logins = await ctx.db.query("tempLogins").order("desc").take(100);
     const now = Date.now();
-    return logins.map((l) => ({
+    return logins.map(l => ({
       _id: l._id,
       label: l.label,
       email: l.email ?? null,

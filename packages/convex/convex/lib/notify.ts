@@ -35,6 +35,6 @@ export async function notifyUsers(
   args: Omit<NotifyArgs, "userId">
 ): Promise<void> {
   await Promise.all(
-    userIds.map((userId) => createNotification(ctx, { ...args, userId }))
+    userIds.map(userId => createNotification(ctx, { ...args, userId }))
   );
 }

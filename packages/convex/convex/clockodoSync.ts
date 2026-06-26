@@ -66,16 +66,14 @@ async function resolveUser(
 ): Promise<Doc<"users"> | null> {
   const byClockodo = await ctx.db
     .query("users")
-    .withIndex("by_clockodoUserId", (q) =>
-      q.eq("clockodoUserId", clockodoUserId)
-    )
+    .withIndex("by_clockodoUserId", q => q.eq("clockodoUserId", clockodoUserId))
     .first();
   if (byClockodo) return byClockodo;
 
   if (email) {
     const byEmail = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
+      .withIndex("by_email", q => q.eq("email", email.toLowerCase()))
       .first();
     if (byEmail) {
       // Backfill the Clockodo link for next time.
@@ -126,7 +124,7 @@ export const upsertAbsenceFromClockodo = mutation({
 
     const existing = await ctx.db
       .query("absences")
-      .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
+      .withIndex("by_externalId", q => q.eq("externalId", args.externalId))
       .first();
 
     if (existing) {
@@ -147,7 +145,7 @@ export const deleteAbsenceByExternalId = mutation({
     assertServerKey(args.serverKey);
     const existing = await ctx.db
       .query("absences")
-      .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
+      .withIndex("by_externalId", q => q.eq("externalId", args.externalId))
       .first();
     if (!existing) return { deleted: false };
     await ctx.db.delete(existing._id);
@@ -157,12 +155,16 @@ export const deleteAbsenceByExternalId = mutation({
 
 /** Link an intranet user to their Clockodo coworker id (admin tooling). */
 export const linkClockodoUserByEmail = mutation({
-  args: { serverKey: v.string(), email: v.string(), clockodoUserId: v.number() },
+  args: {
+    serverKey: v.string(),
+    email: v.string(),
+    clockodoUserId: v.number(),
+  },
   handler: async (ctx, args) => {
     assertServerKey(args.serverKey);
     const user = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
+      .withIndex("by_email", q => q.eq("email", args.email.toLowerCase()))
       .first();
     if (!user) return { linked: false };
     await ctx.db.patch(user._id, { clockodoUserId: args.clockodoUserId });

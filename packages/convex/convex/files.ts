@@ -11,7 +11,7 @@ import { getCurrentUser, requireUser } from "./lib/auth";
  */
 export const generateUploadUrl = mutation({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     await requireUser(ctx);
     return ctx.storage.generateUploadUrl();
   },
@@ -32,7 +32,7 @@ export const getUrls = query({
   handler: async (ctx, { storageIds }) => {
     await requireUser(ctx);
     const entries = await Promise.all(
-      storageIds.map(async (id) => [id, await ctx.storage.getUrl(id)] as const)
+      storageIds.map(async id => [id, await ctx.storage.getUrl(id)] as const)
     );
     return Object.fromEntries(entries) as Record<Id<"_storage">, string | null>;
   },
@@ -48,7 +48,10 @@ export const deleteFile = mutation({
   handler: async (ctx, { storageId }) => {
     const user = await getCurrentUser(ctx);
     if (!user) {
-      throw new ConvexError({ code: "unauthenticated", message: "Not signed in" });
+      throw new ConvexError({
+        code: "unauthenticated",
+        message: "Not signed in",
+      });
     }
     await ctx.storage.delete(storageId);
     return { deleted: true };

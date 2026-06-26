@@ -13,7 +13,11 @@ import { useEffect, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { type LinkPreview, type MessageAttachment, type UnfurlResult } from "@advantis/types";
+import {
+  type LinkPreview,
+  type MessageAttachment,
+  type UnfurlResult,
+} from "@advantis/types";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -108,7 +112,10 @@ export function ConversationView({
     try {
       const attachments: MessageAttachment[] = [];
       for (const file of files) {
-        const storageId = await uploadToConvex(() => generateUploadUrl({}), file);
+        const storageId = await uploadToConvex(
+          () => generateUploadUrl({}),
+          file
+        );
         attachments.push({
           storageId,
           kind: isImage(file) ? "image" : "file",
@@ -166,7 +173,7 @@ export function ConversationView({
           </div>
         )}
         <div className="space-y-3">
-          {messages.map((m) => {
+          {messages.map(m => {
             const mine = m.senderId === me._id;
             return (
               <div
@@ -183,9 +190,7 @@ export function ConversationView({
                 <div
                   className={cn(
                     "group max-w-[75%] rounded-2xl px-3 py-2 text-sm",
-                    mine
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted"
+                    mine ? "bg-primary text-primary-foreground" : "bg-muted"
                   )}
                 >
                   {!mine && conversation?.type === "group" && (
@@ -197,8 +202,12 @@ export function ConversationView({
                     <p className="italic opacity-70">{t("deleted")}</p>
                   ) : (
                     <>
-                      {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
-                      {m.attachments.map((a) =>
+                      {m.body && (
+                        <p className="whitespace-pre-wrap break-words">
+                          {m.body}
+                        </p>
+                      )}
+                      {m.attachments.map(a =>
                         a.kind === "image" && a.url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -219,7 +228,7 @@ export function ConversationView({
                           </a>
                         ) : null
                       )}
-                      {m.linkPreviews.map((lp) => (
+                      {m.linkPreviews.map(lp => (
                         <a
                           key={lp.url}
                           href={lp.url}
@@ -229,10 +238,16 @@ export function ConversationView({
                         >
                           {lp.image && (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={lp.image} alt="" className="h-28 w-full object-cover" />
+                            <img
+                              src={lp.image}
+                              alt=""
+                              className="h-28 w-full object-cover"
+                            />
                           )}
                           <span className="block p-2">
-                            <span className="block text-xs font-semibold">{lp.title}</span>
+                            <span className="block text-xs font-semibold">
+                              {lp.title}
+                            </span>
                             {lp.description && (
                               <span className="line-clamp-2 text-xs text-muted-foreground">
                                 {lp.description}
@@ -281,22 +296,22 @@ export function ConversationView({
             type="file"
             multiple
             className="hidden"
-            onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+            onChange={e => setFiles(Array.from(e.target.files ?? []))}
           />
         </label>
         <div className="flex-1">
           {files.length > 0 && (
             <p className="mb-1 truncate text-xs text-muted-foreground">
-              {files.map((f) => f.name).join(", ")}
+              {files.map(f => f.name).join(", ")}
             </p>
           )}
           <Textarea
             value={body}
-            onChange={(e) => onType(e.target.value)}
+            onChange={e => onType(e.target.value)}
             placeholder={t("messagePlaceholder")}
             rows={1}
             className="min-h-9 resize-none"
-            onKeyDown={(e) => {
+            onKeyDown={e => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 void send();
@@ -304,7 +319,12 @@ export function ConversationView({
             }}
           />
         </div>
-        <Button size="icon" onClick={send} disabled={sending} aria-label={t("title")}>
+        <Button
+          size="icon"
+          onClick={send}
+          disabled={sending}
+          aria-label={t("title")}
+        >
           {sending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
