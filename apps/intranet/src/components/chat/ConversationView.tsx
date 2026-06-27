@@ -259,155 +259,154 @@ export function ConversationView({
                   </div>
                 )}
                 <div
-                  className={cn(
-                    "group flex gap-2",
-                    mine && "flex-row-reverse"
-                  )}
+                  className={cn("group flex gap-2", mine && "flex-row-reverse")}
                 >
-                {!mine && (
-                  <Avatar className="mt-auto h-7 w-7 shrink-0">
-                    <AvatarFallback className="text-[10px]">
-                      {initials(m.senderName)}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
-                <div
-                  className={cn(
-                    "flex min-w-0 max-w-[78%] flex-col gap-1",
-                    mine ? "items-end" : "items-start"
+                  {!mine && (
+                    <Avatar className="mt-auto h-7 w-7 shrink-0">
+                      <AvatarFallback className="text-[10px]">
+                        {initials(m.senderName)}
+                      </AvatarFallback>
+                    </Avatar>
                   )}
-                >
                   <div
                     className={cn(
-                      "flex items-center gap-1",
-                      mine && "flex-row-reverse"
+                      "flex min-w-0 max-w-[78%] flex-col gap-1",
+                      mine ? "items-end" : "items-start"
                     )}
                   >
                     <div
                       className={cn(
-                        "min-w-0 rounded-2xl px-3 py-2 text-sm",
-                        mine
-                          ? "rounded-br-md bg-primary text-primary-foreground"
-                          : "rounded-bl-md bg-muted"
+                        "flex items-center gap-1",
+                        mine && "flex-row-reverse"
                       )}
                     >
-                      {!mine && conversation?.type === "group" && (
-                        <p className="mb-0.5 text-xs font-semibold opacity-80">
-                          {m.senderName}
-                        </p>
-                      )}
-                      {m.deleted ? (
-                        <p className="italic opacity-70">{t("deleted")}</p>
-                      ) : (
-                        <>
-                          {m.body && (
-                            <p className="whitespace-pre-wrap break-words">
-                              {m.body}
-                            </p>
-                          )}
-                          {m.attachments.map(a =>
-                            a.kind === "image" && a.url ? (
-                              <img
-                                key={a.storageId}
-                                src={a.url}
-                                alt={a.name}
-                                className="mt-1 max-h-64 rounded-lg"
-                              />
-                            ) : a.url ? (
-                              <a
-                                key={a.storageId}
-                                href={a.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-1 flex items-center gap-1 underline"
-                              >
-                                <Paperclip className="h-3 w-3" /> {a.name}
-                              </a>
-                            ) : null
-                          )}
-                          {m.linkPreviews.map(lp => (
-                            <a
-                              key={lp.url}
-                              href={lp.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="mt-1 block overflow-hidden rounded-lg border bg-background text-foreground"
-                            >
-                              {lp.image && (
-                                <img
-                                  src={lp.image}
-                                  alt=""
-                                  className="h-28 w-full object-cover"
-                                />
-                              )}
-                              <span className="block p-2">
-                                <span className="block text-xs font-semibold">
-                                  {lp.title}
-                                </span>
-                                {lp.description && (
-                                  <span className="line-clamp-2 text-xs text-muted-foreground">
-                                    {lp.description}
-                                  </span>
-                                )}
-                              </span>
-                            </a>
-                          ))}
-                        </>
-                      )}
                       <div
                         className={cn(
-                          "mt-0.5 flex items-center gap-1 text-[10px] opacity-60",
-                          mine && "justify-end"
+                          "min-w-0 rounded-2xl px-3 py-2 text-sm",
+                          mine
+                            ? "rounded-br-md bg-primary text-primary-foreground"
+                            : "rounded-bl-md bg-muted"
                         )}
                       >
-                        <span>{formatTime(m.createdAt, locale)}</span>
-                        {m.edited && !m.deleted && <span>· {t("edited")}</span>}
-                        {mine &&
-                          !m.deleted &&
-                          (seen ? (
-                            <CheckCheck
-                              className="h-3.5 w-3.5"
-                              aria-label={t("seenBy", {
-                                names: m.seenBy.join(", "),
-                              })}
-                            />
-                          ) : (
-                            <Check className="h-3.5 w-3.5" />
-                          ))}
+                        {!mine && conversation?.type === "group" && (
+                          <p className="mb-0.5 text-xs font-semibold opacity-80">
+                            {m.senderName}
+                          </p>
+                        )}
+                        {m.deleted ? (
+                          <p className="italic opacity-70">{t("deleted")}</p>
+                        ) : (
+                          <>
+                            {m.body && (
+                              <p className="whitespace-pre-wrap break-words">
+                                {m.body}
+                              </p>
+                            )}
+                            {m.attachments.map(a =>
+                              a.kind === "image" && a.url ? (
+                                <img
+                                  key={a.storageId}
+                                  src={a.url}
+                                  alt={a.name}
+                                  className="mt-1 max-h-64 rounded-lg"
+                                />
+                              ) : a.url ? (
+                                <a
+                                  key={a.storageId}
+                                  href={a.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="mt-1 flex items-center gap-1 underline"
+                                >
+                                  <Paperclip className="h-3 w-3" /> {a.name}
+                                </a>
+                              ) : null
+                            )}
+                            {m.linkPreviews.map(lp => (
+                              <a
+                                key={lp.url}
+                                href={lp.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-1 block overflow-hidden rounded-lg border bg-background text-foreground"
+                              >
+                                {lp.image && (
+                                  <img
+                                    src={lp.image}
+                                    alt=""
+                                    className="h-28 w-full object-cover"
+                                  />
+                                )}
+                                <span className="block p-2">
+                                  <span className="block text-xs font-semibold">
+                                    {lp.title}
+                                  </span>
+                                  {lp.description && (
+                                    <span className="line-clamp-2 text-xs text-muted-foreground">
+                                      {lp.description}
+                                    </span>
+                                  )}
+                                </span>
+                              </a>
+                            ))}
+                          </>
+                        )}
+                        <div
+                          className={cn(
+                            "mt-0.5 flex items-center gap-1 text-[10px] opacity-60",
+                            mine && "justify-end"
+                          )}
+                        >
+                          <span>{formatTime(m.createdAt, locale)}</span>
+                          {m.edited && !m.deleted && (
+                            <span>· {t("edited")}</span>
+                          )}
+                          {mine &&
+                            !m.deleted &&
+                            (seen ? (
+                              <CheckCheck
+                                className="h-3.5 w-3.5"
+                                aria-label={t("seenBy", {
+                                  names: m.seenBy.join(", "),
+                                })}
+                              />
+                            ) : (
+                              <Check className="h-3.5 w-3.5" />
+                            ))}
+                        </div>
                       </div>
+
+                      {!m.deleted && (
+                        <div className="flex items-center gap-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                          <ReactionPicker
+                            onPick={emoji =>
+                              void toggleReaction({ messageId: m._id, emoji })
+                            }
+                            side="top"
+                            align={mine ? "end" : "start"}
+                          />
+                          {mine && (
+                            <button
+                              className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                              aria-label={tc("delete")}
+                              onClick={() => void onDeleteMessage(m._id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </div>
 
-                    {!m.deleted && (
-                      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                        <ReactionPicker
-                          onPick={emoji =>
-                            void toggleReaction({ messageId: m._id, emoji })
-                          }
-                          side="top"
-                          align={mine ? "end" : "start"}
-                        />
-                        {mine && (
-                          <button
-                            className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
-                            aria-label={tc("delete")}
-                            onClick={() => void onDeleteMessage(m._id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        )}
-                      </div>
+                    {!m.deleted && m.reactions.length > 0 && (
+                      <ReactionChips
+                        reactions={m.reactions}
+                        onToggle={emoji =>
+                          void toggleReaction({ messageId: m._id, emoji })
+                        }
+                      />
                     )}
                   </div>
-
-                  {!m.deleted && m.reactions.length > 0 && (
-                    <ReactionChips
-                      reactions={m.reactions}
-                      onToggle={emoji =>
-                        void toggleReaction({ messageId: m._id, emoji })
-                      }
-                    />
-                  )}
-                </div>
                 </div>
               </Fragment>
             );

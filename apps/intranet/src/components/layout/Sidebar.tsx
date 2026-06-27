@@ -20,12 +20,25 @@ import { useTranslations } from "next-intl";
 
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
-import { WordmarkLogo } from "@/components/Logo";
+import { MarkLogo, WordmarkLogo } from "@/components/Logo";
 import {
   useCurrentUser,
   useIsManager,
 } from "@/components/providers/current-user";
-import { cn } from "@/lib/utils";
+import {
+  Sidebar as SidebarShell,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarLabel,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
 
 interface NavItem {
   href: string;
@@ -35,11 +48,17 @@ interface NavItem {
   managerOnly?: boolean;
 }
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+interface NavGroup {
+  labelKey: string;
+  items: NavItem[];
+}
+
+export function Sidebar() {
   const t = useTranslations("Nav");
   const pathname = usePathname();
   const isManager = useIsManager();
   const user = useCurrentUser();
+  const { setOpenMobile, state } = useSidebar();
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
@@ -47,86 +66,123 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const hasGuidebooks = accessibleGuidebooks(user).length > 0;
 
-  const items: NavItem[] = [
-    { href: "/", labelKey: "dashboard", icon: LayoutDashboard },
-    { href: "/calendar", labelKey: "calendar", icon: Calendar },
-    { href: "/absences", labelKey: "absences", icon: Plane },
+  const groups: NavGroup[] = [
     {
-      href: "/announcements",
-      labelKey: "announcements",
-      icon: Megaphone,
-      badge: announcementUnread,
+      labelKey: "groupGeneral",
+      items: [{ href: "/", labelKey: "dashboard", icon: LayoutDashboard }],
     },
-    { href: "/chat", labelKey: "chat", icon: MessageSquare, badge: chatUnread },
-    ...(hasGuidebooks
-      ? [{ href: "/guidebooks", labelKey: "guidebooks", icon: BookOpen }]
-      : []),
-    { href: "/directory", labelKey: "directory", icon: Users },
     {
-      href: "/admin",
-      labelKey: "admin",
-      icon: ShieldCheck,
-      managerOnly: true,
+      labelKey: "groupWorkspace",
+      items: [
+        { href: "/calendar", labelKey: "calendar", icon: Calendar },
+        { href: "/absences", labelKey: "absences", icon: Plane },
+        {
+          href: "/announcements",
+          labelKey: "announcements",
+          icon: Megaphone,
+          badge: announcementUnread,
+        },
+        {
+          href: "/chat",
+          labelKey: "chat",
+          icon: MessageSquare,
+          badge: chatUnread,
+        },
+      ],
     },
-    { href: "/settings", labelKey: "settings", icon: Settings },
+    {
+      labelKey: "groupResources",
+      items: [
+        ...(hasGuidebooks
+          ? [{ href: "/guidebooks", labelKey: "guidebooks", icon: BookOpen }]
+          : []),
+        { href: "/directory", labelKey: "directory", icon: Users },
+      ],
+    },
+    {
+      labelKey: "groupAdministration",
+      items: [
+        {
+          href: "/admin",
+          labelKey: "admin",
+          icon: ShieldCheck,
+          managerOnly: true,
+        },
+        { href: "/settings", labelKey: "settings", icon: Settings },
+      ],
+    },
   ];
 
+  const close = () => setOpenMobile(false);
+
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-16 items-center px-5">
-        <Link href="/" onClick={onNavigate} aria-label="Advantis Intranet">
-          <WordmarkLogo />
+    <SidebarShell ariaLabel="Advantis Intranet">
+      <SidebarHeader>
+        <Link
+          href="/"
+          onClick={close}
+          aria-label="Advantis Intranet"
+          className="flex items-center"
+        >
+          {state === "collapsed" ? (
+            <MarkLogo size={28} className="size-7" />
+          ) : (
+            <WordmarkLogo />
+          )}
         </Link>
-      </div>
-      <nav className="flex flex-1 flex-col gap-0.5 px-3 py-3">
-        {items
-          .filter(item => !item.managerOnly || isManager)
-          .map(item => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                <span
-                  className={cn(
-                    "absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-primary transition-all",
-                    active ? "opacity-100" : "opacity-0 group-hover:opacity-40"
-                  )}
-                />
-                <Icon
-                  className={cn(
-                    "h-[18px] w-[18px] shrink-0 transition-transform",
-                    active
-                      ? "text-primary"
-                      : "text-muted-foreground group-hover:scale-110 group-hover:text-foreground"
-                  )}
-                />
-                <span className="flex-1 truncate">{t(item.labelKey)}</span>
-                {item.badge ? (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold tabular-nums text-primary-foreground">
-                    {item.badge > 99 ? "99+" : item.badge}
-                  </span>
-                ) : null}
-              </Link>
-            );
-          })}
-      </nav>
-      <div className="px-5 py-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground/60">
-        Advantis Group
-      </div>
-    </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        {groups.map(group => {
+          const items = group.items.filter(
+            item => !item.managerOnly || isManager
+          );
+          if (items.length === 0) return null;
+          return (
+            <SidebarGroup key={group.labelKey}>
+              <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
+              <SidebarMenu>
+                {items.map(item => {
+                  const active =
+                    item.href === "/"
+                      ? pathname === "/"
+                      : pathname.startsWith(item.href);
+                  const Icon = item.icon;
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        active={active}
+                        tooltip={t(item.labelKey)}
+                      >
+                        <Link
+                          href={item.href}
+                          onClick={close}
+                          aria-current={active ? "page" : undefined}
+                        >
+                          <Icon />
+                          <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
+                          {item.badge ? (
+                            <SidebarMenuBadge>
+                              {item.badge > 99 ? "99+" : item.badge}
+                            </SidebarMenuBadge>
+                          ) : null}
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+          );
+        })}
+      </SidebarContent>
+
+      <SidebarFooter>
+        <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
+          Advantis Group
+        </p>
+      </SidebarFooter>
+    </SidebarShell>
   );
 }

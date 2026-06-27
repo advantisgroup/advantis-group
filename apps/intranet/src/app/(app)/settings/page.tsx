@@ -10,8 +10,7 @@ import { api } from "@advantis/convex/api";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
-import { ThemeToggle } from "@/components/layout/ThemeToggle";
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -170,8 +169,7 @@ export default function SettingsPage() {
             </p>
           </div>
           <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background p-1">
-            <LanguageSwitcher />
-            <ThemeToggle />
+            <SettingsMenu />
           </div>
         </CardContent>
       </Card>
