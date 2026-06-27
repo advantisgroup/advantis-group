@@ -2,7 +2,7 @@ import { Resend } from "resend";
 
 import { type NotificationEmailKind } from "@advantis/types";
 
-import { Errors } from "./errors";
+import { Errors } from "./errors.js";
 
 let resend: Resend | null = null;
 function getResend(): Resend {

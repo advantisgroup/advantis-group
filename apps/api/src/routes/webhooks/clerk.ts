@@ -3,8 +3,8 @@ import { Webhook } from "svix";
 
 import { api } from "@advantis/convex/api";
 
-import { getConvex, getConvexServerKey } from "../../lib/convex";
-import { Errors } from "../../lib/errors";
+import { getConvex, getConvexServerKey } from "../../lib/convex.js";
+import { Errors } from "../../lib/errors.js";
 
 interface ClerkEmail {
   id: string;

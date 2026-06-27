@@ -1,6 +1,6 @@
 import { ConvexHttpClient } from "convex/browser";
 
-import { requireEnv } from "./env";
+import { requireEnv } from "./env.js";
 
 let client: ConvexHttpClient | null = null;
 

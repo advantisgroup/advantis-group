@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 
-import { requireAuth } from "../lib/middleware";
+import { requireAuth } from "../lib/middleware.js";
 
 /** GET /me — the authenticated intranet identity (verified Clerk session). */
 export const meRoute = new Elysia().get(

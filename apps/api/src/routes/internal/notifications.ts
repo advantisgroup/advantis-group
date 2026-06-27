@@ -1,7 +1,7 @@
 import { Elysia, t } from "elysia";
 
-import { requireServerKey } from "../../lib/middleware";
-import { sendNotificationEmail } from "../../lib/resend";
+import { requireServerKey } from "../../lib/middleware.js";
+import { sendNotificationEmail } from "../../lib/resend.js";
 
 /**
  * POST /internal/notifications — server-key gated. Convex internal actions call

@@ -1,4 +1,4 @@
-import { Errors } from "./errors";
+import { Errors } from "./errors.js";
 
 const BASE_URL = process.env.CLOCKODO_API_URL ?? "https://my.clockodo.com/api";
 

@@ -1,5 +1,5 @@
-import { type AuthedUser, authenticate } from "./clerk";
-import { Errors } from "./errors";
+import { type AuthedUser, authenticate } from "./clerk.js";
+import { Errors } from "./errors.js";
 
 /** Require a valid intranet Clerk session, or throw 401. */
 export async function requireAuth(request: Request): Promise<AuthedUser> {

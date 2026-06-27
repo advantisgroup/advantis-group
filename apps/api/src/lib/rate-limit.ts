@@ -1,7 +1,7 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-import { Errors } from "./errors";
+import { Errors } from "./errors.js";
 
 let redis: Redis | null = null;
 const limiters = new Map<string, Ratelimit>();

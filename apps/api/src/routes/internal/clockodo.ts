@@ -2,9 +2,9 @@ import { Elysia, t } from "elysia";
 
 import { api } from "@advantis/convex/api";
 
-import { getUserEmail, listAbsences } from "../../lib/clockodo";
-import { getConvex, getConvexServerKey } from "../../lib/convex";
-import { requireServerKey } from "../../lib/middleware";
+import { getUserEmail, listAbsences } from "../../lib/clockodo.js";
+import { getConvex, getConvexServerKey } from "../../lib/convex.js";
+import { requireServerKey } from "../../lib/middleware.js";
 
 /**
  * POST /internal/clockodo/import — server-key gated backfill. Pulls a year of

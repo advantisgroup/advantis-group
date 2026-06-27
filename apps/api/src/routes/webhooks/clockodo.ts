@@ -2,8 +2,8 @@ import { Elysia, t } from "elysia";
 
 import { api } from "@advantis/convex/api";
 
-import { getAbsence, getUserEmail } from "../../lib/clockodo";
-import { getConvex, getConvexServerKey } from "../../lib/convex";
+import { getAbsence, getUserEmail } from "../../lib/clockodo.js";
+import { getConvex, getConvexServerKey } from "../../lib/convex.js";
 
 interface ClockodoWebhookBody {
   event_name?: string;

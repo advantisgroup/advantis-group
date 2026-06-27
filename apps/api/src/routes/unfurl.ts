@@ -2,9 +2,9 @@ import { Elysia, t } from "elysia";
 
 import { type UnfurlResult } from "@advantis/types";
 
-import { Errors } from "../lib/errors";
-import { requireAuth } from "../lib/middleware";
-import { rateLimit } from "../lib/rate-limit";
+import { Errors } from "../lib/errors.js";
+import { requireAuth } from "../lib/middleware.js";
+import { rateLimit } from "../lib/rate-limit.js";
 
 const MAX_BYTES = 512 * 1024; // only read the first 512KB of <head>
 

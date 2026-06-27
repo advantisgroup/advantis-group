@@ -1,14 +1,14 @@
 import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 
-import { isAllowedOrigin, PORT } from "./lib/env";
-import { ApiError } from "./lib/errors";
-import { internalClockodoImportRoute } from "./routes/internal/clockodo";
-import { internalNotificationsRoute } from "./routes/internal/notifications";
-import { meRoute } from "./routes/me";
-import { unfurlRoute } from "./routes/unfurl";
-import { clerkWebhookRoute } from "./routes/webhooks/clerk";
-import { clockodoWebhookRoute } from "./routes/webhooks/clockodo";
+import { isAllowedOrigin, PORT } from "./lib/env.js";
+import { ApiError } from "./lib/errors.js";
+import { internalClockodoImportRoute } from "./routes/internal/clockodo.js";
+import { internalNotificationsRoute } from "./routes/internal/notifications.js";
+import { meRoute } from "./routes/me.js";
+import { unfurlRoute } from "./routes/unfurl.js";
+import { clerkWebhookRoute } from "./routes/webhooks/clerk.js";
+import { clockodoWebhookRoute } from "./routes/webhooks/clockodo.js";
 
 export const app = new Elysia()
   .use(
