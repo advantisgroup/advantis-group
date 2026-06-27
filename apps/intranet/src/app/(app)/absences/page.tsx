@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Clock, Plus } from "lucide-react";
+import { Clock, Plane, Plus } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
@@ -97,7 +97,7 @@ function RequestDialog() {
         <DialogHeader>
           <DialogTitle>{t("newRequest")}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div className="space-y-1.5">
             <Label>{t("type")}</Label>
             <Select value={type} onValueChange={v => setType(v as AbsenceType)}>
@@ -112,35 +112,41 @@ function RequestDialog() {
               </SelectContent>
             </Select>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>{t("start")}</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={e => setStart(e.target.value)}
-              />
+
+          <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>{t("start")}</Label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={e => setStart(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("end")}</Label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={e => setEnd(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>{t("end")}</Label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={e => setEnd(e.target.value)}
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <Checkbox
+                checked={halfDay}
+                onCheckedChange={v => setHalfDay(!!v)}
               />
-            </div>
+              {t("halfDay")}
+            </label>
           </div>
-          <label className="flex items-center gap-2 text-sm">
-            <Checkbox
-              checked={halfDay}
-              onCheckedChange={v => setHalfDay(!!v)}
-            />
-            {t("halfDay")}
-          </label>
+
           <div className="space-y-1.5">
             <Label>
               {t("reason")}{" "}
-              <span className="text-muted-foreground">({tc("optional")})</span>
+              <span className="font-normal text-muted-foreground">
+                ({tc("optional")})
+              </span>
             </Label>
             <Textarea
               value={reason}
@@ -169,15 +175,18 @@ function MyAbsences() {
 
   if (absences && absences.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-muted-foreground">
-        {t("noAbsences")}
-      </p>
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <Plane className="h-5 w-5" />
+        </span>
+        <p className="text-sm text-muted-foreground">{t("noAbsences")}</p>
+      </div>
     );
   }
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {absences?.map(a => (
-        <Card key={a._id}>
+        <Card key={a._id} className="transition-colors hover:border-border">
           <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -236,15 +245,18 @@ function Approvals() {
 
   if (pending && pending.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-muted-foreground">
-        {t("noPending")}
-      </p>
+      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
+        <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <Clock className="h-5 w-5" />
+        </span>
+        <p className="text-sm text-muted-foreground">{t("noPending")}</p>
+      </div>
     );
   }
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {pending?.map(a => (
-        <Card key={a._id}>
+        <Card key={a._id} className="transition-colors hover:border-border">
           <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">
               <span className="font-medium">{a.userName}</span>

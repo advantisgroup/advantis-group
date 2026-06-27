@@ -3,6 +3,7 @@
 import type { ChangeEvent } from "react";
 
 import { useMutation } from "convex/react";
+import { Camera } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
@@ -14,8 +15,9 @@ import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { initials } from "@/lib/format";
@@ -24,6 +26,7 @@ import { uploadToConvex } from "@/lib/upload";
 export default function SettingsPage() {
   const t = useTranslations("Settings");
   const tc = useTranslations("Common");
+  const tRoles = useTranslations("Roles");
   const user = useCurrentUser();
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
@@ -72,20 +75,19 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader title={t("title")} />
 
-      <Card nested>
-        <CardHeader>
-          <CardTitle className="text-base">{t("profile")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
+      {/* Personal identity hero */}
+      <Card className="overflow-hidden">
+        <div className="app-atmosphere flex items-center gap-4 border-b border-border/60 px-5 py-5">
+          <div className="relative">
+            <Avatar className="size-16 ring-2 ring-background">
               {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-              <AvatarFallback>{initials(user.name, user.email)}</AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                {initials(user.name, user.email)}
+              </AvatarFallback>
             </Avatar>
-            <label className="cursor-pointer">
-              <Button variant="outline" size="sm" asChild>
-                <span>{t("uploadAvatar")}</span>
-              </Button>
+            <label className="absolute -bottom-1 -right-1 flex size-7 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-accent">
+              <Camera className="size-3.5" />
+              <span className="sr-only">{t("uploadAvatar")}</span>
               <input
                 type="file"
                 accept="image/*"
@@ -94,7 +96,20 @@ export default function SettingsPage() {
               />
             </label>
           </div>
+          <div className="min-w-0">
+            <h2 className="truncate font-display text-xl font-bold tracking-tight">
+              {user.name}
+            </h2>
+            <p className="truncate text-sm text-muted-foreground">
+              {user.email}
+            </p>
+            <Badge variant="muted" className="mt-1.5">
+              {tRoles(user.role)}
+            </Badge>
+          </div>
+        </div>
 
+        <CardContent className="space-y-4 pt-5">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{t("firstName")}</Label>
@@ -131,21 +146,28 @@ export default function SettingsPage() {
               <Input value={phone} onChange={e => setPhone(e.target.value)} />
             </div>
           </div>
-          <Button onClick={save} disabled={busy}>
-            {tc("save")}
-          </Button>
+          <div className="flex justify-end pt-1">
+            <Button onClick={save} disabled={busy}>
+              {tc("save")}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
-      <Card nested>
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("language")} & {t("theme")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center gap-3">
-          <LanguageSwitcher />
-          <ThemeToggle />
+      <Card>
+        <CardContent className="flex items-center justify-between gap-3 p-5">
+          <div>
+            <p className="font-semibold tracking-tight">
+              {t("language")} &amp; {t("theme")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {t("themeSystem")} · {t("themeLight")} / {t("themeDark")}
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background p-1">
+            <LanguageSwitcher />
+            <ThemeToggle />
+          </div>
         </CardContent>
       </Card>
     </div>

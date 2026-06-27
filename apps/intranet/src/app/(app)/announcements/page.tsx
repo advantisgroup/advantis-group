@@ -17,9 +17,8 @@ import {
   useCurrentUser,
   useIsManager,
 } from "@/components/providers/current-user";
-import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +28,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -38,7 +36,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDateTime } from "@/lib/format";
+import { cn } from "@/lib/utils";
+import { formatDateTime, initials } from "@/lib/format";
 import { uploadToConvex } from "@/lib/upload";
 
 function CreateDialog() {
@@ -104,20 +103,26 @@ function CreateDialog() {
         <DialogHeader>
           <DialogTitle>{t("new")}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <Input
-            placeholder={tc("create")}
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-          />
-          <Textarea
-            placeholder={t("bodyLabel")}
-            rows={6}
-            value={body}
-            onChange={e => setBody(e.target.value)}
-          />
-          <div className="space-y-1.5">
-            <Label>{t("audience")}</Label>
+        <div className="space-y-5">
+          <div className="space-y-3">
+            <Input
+              placeholder={tc("create")}
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              className="h-11 text-base font-medium"
+            />
+            <Textarea
+              placeholder={t("bodyLabel")}
+              rows={6}
+              value={body}
+              onChange={e => setBody(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("audience")}
+            </p>
             <Select value={audience} onValueChange={setAudience}>
               <SelectTrigger>
                 <SelectValue />
@@ -131,40 +136,42 @@ function CreateDialog() {
                 ))}
               </SelectContent>
             </Select>
+            <div className="flex flex-wrap items-center gap-4 pt-1">
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--primary)]"
+                  checked={pinned}
+                  onChange={e => setPinned(e.target.checked)}
+                />
+                {t("pin")}
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--primary)]"
+                  checked={guestVisible}
+                  onChange={e => setGuestVisible(e.target.checked)}
+                />
+                {t("guestVisible")}
+              </label>
+              <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                <Paperclip className="h-4 w-4" />
+                {t("attachments")}
+                <input
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={e => setFiles(Array.from(e.target.files ?? []))}
+                />
+              </label>
+            </div>
+            {files.length > 0 && (
+              <p className="text-xs text-muted-foreground">
+                {files.map(f => f.name).join(", ")}
+              </p>
+            )}
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={pinned}
-                onChange={e => setPinned(e.target.checked)}
-              />
-              {t("pin")}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={guestVisible}
-                onChange={e => setGuestVisible(e.target.checked)}
-              />
-              {t("guestVisible")}
-            </label>
-            <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <Paperclip className="h-4 w-4" />
-              {t("attachments")}
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                onChange={e => setFiles(Array.from(e.target.files ?? []))}
-              />
-            </label>
-          </div>
-          {files.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {files.map(f => f.name).join(", ")}
-            </p>
-          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>
@@ -206,70 +213,91 @@ export default function AnnouncementsPage() {
         action={isManager ? <CreateDialog /> : undefined}
       />
       {announcements && announcements.length === 0 && (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          {t("title")}
-        </p>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
+          <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Pin className="h-5 w-5" />
+          </span>
+          <p className="text-sm text-muted-foreground">{t("title")}</p>
+        </div>
       )}
-      <div className="space-y-4">
-        {announcements?.map(a => (
-          <Card
-            key={a._id}
-            nested
-            className={a.pinned ? "border-primary/40" : undefined}
-          >
-            <CardHeader className="space-y-1 pb-2">
-              <div className="flex items-center gap-2">
-                {a.pinned && (
-                  <Badge variant="muted" className="gap-1">
-                    <Pin className="h-3 w-3" />
-                    {t("pinned")}
-                  </Badge>
-                )}
-                {!a.read && (
-                  <span className="h-2 w-2 rounded-full bg-primary" />
-                )}
-                <h2 className="flex-1 text-lg font-semibold">{a.title}</h2>
-                {(a.authorId === me._id || me.role === "admin") && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Delete"
-                    onClick={() => void remove({ announcementId: a._id })}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {t("by", { name: a.authorName })} ·{" "}
-                {formatDateTime(a.publishedAt, locale)}
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="prose prose-sm max-w-none dark:prose-invert">
-                <Markdown remarkPlugins={[remarkGfm]}>{a.body}</Markdown>
-              </div>
-              {a.attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {a.attachments.map(att =>
-                    att.url ? (
-                      <a
-                        key={att.storageId}
-                        href={att.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs hover:bg-muted"
+      <div className="space-y-3">
+        {announcements?.map(a => {
+          const canDelete = a.authorId === me._id || me.role === "admin";
+          return (
+            <article
+              key={a._id}
+              className={cn(
+                "group relative overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
+                a.pinned && "border-primary/30"
+              )}
+            >
+              {a.pinned && (
+                <span className="absolute inset-y-0 left-0 w-1 bg-primary" />
+              )}
+              <div className="flex gap-3.5 p-4 pl-5">
+                <Avatar className="mt-0.5 size-9 shrink-0">
+                  <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                    {initials(a.authorName, a.authorName)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    {a.pinned && (
+                      <Pin
+                        className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
+                        aria-label={t("pinned")}
+                      />
+                    )}
+                    <h2 className="truncate text-base font-semibold leading-tight">
+                      {a.title}
+                    </h2>
+                    {!a.read && (
+                      <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+                    )}
+                    {canDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Delete"
+                        className="ml-auto size-8 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                        onClick={() => void remove({ announcementId: a._id })}
                       >
-                        <Paperclip className="h-3 w-3" />
-                        {t("attachments")}
-                      </a>
-                    ) : null
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground/70">
+                      {a.authorName}
+                    </span>{" "}
+                    · {formatDateTime(a.publishedAt, locale)}
+                  </p>
+                  <div className="prose prose-sm mt-2.5 max-w-none text-sm dark:prose-invert prose-p:my-1.5 prose-headings:mt-3">
+                    <Markdown remarkPlugins={[remarkGfm]}>{a.body}</Markdown>
+                  </div>
+                  {a.attachments.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {a.attachments.map(att =>
+                        att.url ? (
+                          <a
+                            key={att.storageId}
+                            href={att.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium transition-colors hover:bg-accent"
+                          >
+                            <Paperclip className="h-3 w-3" />
+                            {t("attachments")}
+                          </a>
+                        ) : null
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </div>
+            </article>
+          );
+        })}
       </div>
     </div>
   );

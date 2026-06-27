@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 import { BrandLogo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 
 export function RequestAccessGate() {
@@ -41,20 +41,21 @@ export function RequestAccessGate() {
     status && "domainAllowed" in status ? status.domainAllowed : true;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="items-center text-center">
-          <BrandLogo className="mb-4" />
-          <CardTitle>{t("title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {t("signedInAs")}{" "}
-            <span className="font-medium text-foreground">{email}</span>
-          </p>
-
+    <div className="app-atmosphere relative flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-md overflow-hidden">
+        <div className="flex flex-col items-center gap-4 border-b border-border/60 px-6 pb-5 pt-7 text-center">
+          <BrandLogo />
+          <div>
+            <CardTitle className="font-display text-xl">{t("title")}</CardTitle>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              {t("signedInAs")}{" "}
+              <span className="font-medium text-foreground">{email}</span>
+            </p>
+          </div>
+        </div>
+        <CardContent className="space-y-4 pt-5">
           {state === "pending" && (
-            <div className="flex items-start gap-3 rounded-lg border bg-background p-4 text-sm">
+            <div className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
               <Clock className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
               <span>{t("pending")}</span>
             </div>

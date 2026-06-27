@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 border-r bg-card md:block">
+      <aside className="hidden w-64 shrink-0 border-r border-border/70 bg-card/60 md:block">
         <div className="sticky top-0 h-screen">
           <Sidebar />
         </div>
@@ -29,10 +29,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in-0"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-64 border-r bg-card shadow-xl">
+          <div className="absolute left-0 top-0 h-full w-64 border-r border-border/70 bg-card shadow-2xl animate-in slide-in-from-left">
             <Button
               variant="ghost"
               size="icon"
@@ -51,7 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <header
           className={cn(
-            "sticky top-0 z-30 flex h-16 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur"
+            "sticky top-0 z-30 flex h-16 items-center gap-1 border-b border-border/70 bg-background/70 px-4 backdrop-blur-xl"
           )}
         >
           <Button
@@ -67,9 +67,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <NotificationsMenu />
           <LanguageSwitcher />
           <ThemeToggle />
+          <div className="mx-1 h-6 w-px bg-border/70" />
           <AccountMenu />
         </header>
-        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
       </div>
     </div>
   );

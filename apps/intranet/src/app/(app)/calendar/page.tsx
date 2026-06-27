@@ -113,58 +113,67 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
         <DialogHeader>
           <DialogTitle>{t("addEvent")}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
-          <Input
-            placeholder={t("eventTitle")}
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-          />
-          <Input
-            placeholder={t("location")}
-            value={location}
-            onChange={e => setLocation(e.target.value)}
-          />
-          <Textarea
-            placeholder={t("description")}
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-          />
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label>{t("start")}</Label>
-              <Input
-                type="datetime-local"
-                value={start}
-                onChange={e => setStart(e.target.value)}
-              />
+        <div className="space-y-5">
+          <div className="space-y-3">
+            <Input
+              placeholder={t("eventTitle")}
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              className="h-11 text-base font-medium"
+            />
+            <Input
+              placeholder={t("location")}
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+            />
+            <Textarea
+              placeholder={t("description")}
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>{t("start")}</Label>
+                <Input
+                  type="datetime-local"
+                  value={start}
+                  onChange={e => setStart(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>{t("end")}</Label>
+                <Input
+                  type="datetime-local"
+                  value={end}
+                  onChange={e => setEnd(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <Label>{t("end")}</Label>
-              <Input
-                type="datetime-local"
-                value={end}
-                onChange={e => setEnd(e.target.value)}
-              />
+            <div className="flex flex-wrap items-center gap-4 pt-1">
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--primary)]"
+                  checked={allDay}
+                  onChange={e => setAllDay(e.target.checked)}
+                />
+                {t("allDay")}
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  className="size-4 accent-[var(--primary)]"
+                  checked={guestVisible}
+                  onChange={e => setGuestVisible(e.target.checked)}
+                />
+                {t("guestVisible")}
+              </label>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={allDay}
-                onChange={e => setAllDay(e.target.checked)}
-              />
-              {t("allDay")}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={guestVisible}
-                onChange={e => setGuestVisible(e.target.checked)}
-              />
-              {t("guestVisible")}
-            </label>
-          </div>
+
           <Select value={audience} onValueChange={setAudience}>
             <SelectTrigger>
               <SelectValue />

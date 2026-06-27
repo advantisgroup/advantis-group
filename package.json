@@ -18,8 +18,30 @@
     "lint:fix": "turbo run lint:fix",
     "type-check": "turbo run type-check",
     "format": "turbo run format",
-    "convex:dev": "turbo run convex:dev",
-    "convex:deploy": "turbo run convex:deploy",
+
+    "dev:intranet": "turbo run dev --filter=@advantis/intranet",
+    "build:intranet": "turbo run build --filter=@advantis/intranet",
+    "lint:intranet": "turbo run lint --filter=@advantis/intranet",
+    "type-check:intranet": "turbo run type-check --filter=@advantis/intranet",
+    "format:intranet": "turbo run format --filter=@advantis/intranet",
+
+    "dev:marketing": "turbo run dev --filter=@advantis/marketing",
+    "build:marketing": "turbo run build --filter=@advantis/marketing",
+    "lint:marketing": "turbo run lint --filter=@advantis/marketing",
+    "type-check:marketing": "turbo run type-check --filter=@advantis/marketing",
+    "format:marketing": "turbo run format --filter=@advantis/marketing",
+
+    "dev:api": "turbo run dev --filter=@advantis/api",
+    "build:api": "turbo run build --filter=@advantis/api",
+    "lint:api": "turbo run lint --filter=@advantis/api",
+    "type-check:api": "turbo run type-check --filter=@advantis/api",
+
+    "dev:convex": "turbo run dev --filter=@advantis/convex",
+    "lint:convex": "turbo run lint --filter=@advantis/convex",
+    "type-check:convex": "turbo run type-check --filter=@advantis/convex",
+
+    "convex:dev": "turbo run dev --filter=@advantis/convex",
+    "convex:deploy": "turbo run convex:deploy --filter=@advantis/convex",
     "setup-env": "bun scripts/setup-env.mjs"
   },
   "devDependencies": {

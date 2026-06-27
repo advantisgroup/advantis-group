@@ -1,9 +1,19 @@
 import { SignIn } from "@clerk/nextjs";
 
+import { AuthShell } from "@/components/layout/AuthShell";
+
 export default function SignInPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <SignIn />
-    </div>
+    <AuthShell>
+      <SignIn
+        appearance={{
+          elements: {
+            rootBox: "w-full flex justify-center",
+            cardBox:
+              "shadow-xl shadow-black/5 border border-border/70 rounded-2xl",
+          },
+        }}
+      />
+    </AuthShell>
   );
 }
