@@ -17,7 +17,14 @@ export interface NotifyArgs {
 export async function createNotification(
   ctx: MutationCtx,
   args: NotifyArgs
-): Promise<Id<"notifications">> {
+): Promise<Id<"notifications"> | null> {
+  // Respect the recipient's notification preferences — skip muted types.
+  const prefs = await ctx.db
+    .query("notificationPreferences")
+    .withIndex("by_user", q => q.eq("userId", args.userId))
+    .unique();
+  if (prefs?.mutedTypes.includes(args.type)) return null;
+
   return ctx.db.insert("notifications", {
     userId: args.userId,
     type: args.type,

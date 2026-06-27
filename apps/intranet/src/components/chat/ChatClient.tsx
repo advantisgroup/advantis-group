@@ -28,11 +28,11 @@ export function ChatClient() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-6xl overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04),0_16px_40px_-24px_rgb(0_0_0/0.18)]">
+    <div className="-mx-4 -my-6 flex h-[calc(100vh-4rem)] overflow-hidden bg-background md:-mx-8 md:-my-8">
       {/* Conversation list */}
       <div
         className={cn(
-          "flex w-full flex-col border-r border-border/70 md:w-80",
+          "flex w-full flex-col border-r border-border/70 bg-card/40 md:w-80",
           selected && "hidden md:flex"
         )}
       >

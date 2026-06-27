@@ -33,6 +33,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     department: user.department ?? null,
     jobTitle: user.jobTitle ?? null,
     phone: user.phone ?? null,
+    teams: user.teams ?? [],
     managerId: user.managerId ?? null,
     status: user.status,
     avatar,
@@ -148,6 +149,21 @@ export const setRole = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { role });
+    return { ok: true };
+  },
+});
+
+export const setTeams = mutation({
+  args: { userId: v.id("users"), teams: v.array(v.string()) },
+  handler: async (ctx, { userId, teams }) => {
+    await requireAdmin(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    // De-dupe and drop blanks.
+    const clean = [...new Set(teams.map(t => t.trim()).filter(Boolean))];
+    await ctx.db.patch(userId, { teams: clean });
     return { ok: true };
   },
 });

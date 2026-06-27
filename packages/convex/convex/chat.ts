@@ -265,11 +265,20 @@ export const getConversation = query({
           ? (conversation.name ?? "Group")
           : memberDisplay(others[0] ?? null),
       avatar,
-      members: memberUsers.map(u => ({
-        _id: u._id,
-        name: memberDisplay(u),
-        role: u.role,
-      })),
+      members: await Promise.all(
+        memberUsers.map(async u => {
+          const pres = await ctx.db
+            .query("presence")
+            .withIndex("by_user", q => q.eq("userId", u._id))
+            .unique();
+          return {
+            _id: u._id,
+            name: memberDisplay(u),
+            role: u.role,
+            lastActiveAt: pres?.lastActiveAt ?? u.lastSeenAt ?? null,
+          };
+        })
+      ),
     };
   },
 });

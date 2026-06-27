@@ -76,6 +76,8 @@ export default defineSchema({
     department: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
     phone: v.optional(v.string()),
+    /** Team tags (e.g. "customer-care") controlling guidebook access. */
+    teams: v.optional(v.array(v.string())),
     avatarStorageId: v.optional(v.id("_storage")),
     avatarUrl: v.optional(v.string()),
     managerId: v.optional(v.id("users")),
@@ -275,6 +277,14 @@ export default defineSchema({
     link: v.optional(v.string()),
     readAt: v.optional(v.number()),
     createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // Per-user notification preferences. `mutedTypes` holds the raw notification
+  // `type` strings the user has opted out of (e.g. "announcement").
+  notificationPreferences: defineTable({
+    userId: v.id("users"),
+    mutedTypes: v.array(v.string()),
+    updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 
   presence: defineTable({

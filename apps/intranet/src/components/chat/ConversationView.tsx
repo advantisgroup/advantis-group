@@ -11,7 +11,7 @@ import {
   SendHorizonal,
   Trash2,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -30,7 +30,7 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { formatTime, initials } from "@/lib/format";
+import { formatTime, initials, relativeTime } from "@/lib/format";
 import { isImage, uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +75,27 @@ export function ConversationView({
 
   const messages = [...results].reverse();
 
+  const other =
+    conversation?.type === "dm"
+      ? conversation.members.find(m => m._id !== me._id)
+      : undefined;
+  const online =
+    !!other?.lastActiveAt && Date.now() - other.lastActiveAt < 90_000;
+
+  function dayLabel(ts: number): string {
+    const d = new Date(ts);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return t("today");
+    if (d.toDateString() === yesterday.toDateString()) return t("yesterday");
+    return d.toLocaleDateString(locale, {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    });
+  }
+
   // Mark read whenever the latest message changes.
   useEffect(() => {
     void markRead({ conversationId });
@@ -115,6 +136,7 @@ export function ConversationView({
   async function onDeleteMessage(messageId: Id<"messages">) {
     const ok = await confirm({
       title: t("deleteMessage"),
+      description: t("deleteMessageHint"),
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });
@@ -175,22 +197,37 @@ export function ConversationView({
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <Avatar className="size-9 shrink-0">
-          {conversation?.avatar && (
-            <AvatarImage src={conversation.avatar} alt={conversation.title} />
+        <div className="relative shrink-0">
+          <Avatar className="size-9">
+            {conversation?.avatar && (
+              <AvatarImage src={conversation.avatar} alt={conversation.title} />
+            )}
+            <AvatarFallback className="text-xs">
+              {initials(conversation?.title ?? "")}
+            </AvatarFallback>
+          </Avatar>
+          {conversation?.type === "dm" && online && (
+            <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-card bg-success" />
           )}
-          <AvatarFallback className="text-xs">
-            {initials(conversation?.title ?? "")}
-          </AvatarFallback>
-        </Avatar>
+        </div>
         <div className="min-w-0">
           <p className="truncate font-semibold leading-tight">
             {conversation?.title}
           </p>
-          {conversation?.type === "group" && (
+          {conversation?.type === "group" ? (
             <p className="text-xs text-muted-foreground">
               {conversation.members.length} {t("members")}
             </p>
+          ) : online ? (
+            <p className="flex items-center gap-1 text-xs text-success">
+              {t("online")}
+            </p>
+          ) : other?.lastActiveAt ? (
+            <p className="truncate text-xs text-muted-foreground">
+              {t("lastSeen", { time: relativeTime(other.lastActiveAt) })}
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">{t("offline")}</p>
           )}
         </div>
       </div>
@@ -205,17 +242,28 @@ export function ConversationView({
           </div>
         )}
         <div className="space-y-3">
-          {messages.map(m => {
+          {messages.map((m, i) => {
             const mine = m.senderId === me._id;
             const seen = mine && m.seenBy.length > 0;
+            const showDay =
+              i === 0 ||
+              new Date(messages[i - 1].createdAt).toDateString() !==
+                new Date(m.createdAt).toDateString();
             return (
-              <div
-                key={m._id}
-                className={cn(
-                  "group flex gap-2",
-                  mine && "flex-row-reverse"
+              <Fragment key={m._id}>
+                {showDay && (
+                  <div className="flex items-center justify-center py-1">
+                    <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      {dayLabel(m.createdAt)}
+                    </span>
+                  </div>
                 )}
-              >
+                <div
+                  className={cn(
+                    "group flex gap-2",
+                    mine && "flex-row-reverse"
+                  )}
+                >
                 {!mine && (
                   <Avatar className="mt-auto h-7 w-7 shrink-0">
                     <AvatarFallback className="text-[10px]">
@@ -360,7 +408,8 @@ export function ConversationView({
                     />
                   )}
                 </div>
-              </div>
+                </div>
+              </Fragment>
             );
           })}
           <div ref={bottomRef} />

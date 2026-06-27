@@ -59,3 +59,37 @@ export const markAllRead = mutation({
     return { ok: true };
   },
 });
+
+export const getPreferences = query({
+  args: {},
+  handler: async ctx => {
+    const user = await requireUser(ctx);
+    const prefs = await ctx.db
+      .query("notificationPreferences")
+      .withIndex("by_user", q => q.eq("userId", user._id))
+      .unique();
+    return { mutedTypes: prefs?.mutedTypes ?? [] };
+  },
+});
+
+export const setPreferences = mutation({
+  args: { mutedTypes: v.array(v.string()) },
+  handler: async (ctx, { mutedTypes }) => {
+    const user = await requireUser(ctx);
+    const existing = await ctx.db
+      .query("notificationPreferences")
+      .withIndex("by_user", q => q.eq("userId", user._id))
+      .unique();
+    const now = Date.now();
+    if (existing) {
+      await ctx.db.patch(existing._id, { mutedTypes, updatedAt: now });
+    } else {
+      await ctx.db.insert("notificationPreferences", {
+        userId: user._id,
+        mutedTypes,
+        updatedAt: now,
+      });
+    }
+    return { ok: true };
+  },
+});

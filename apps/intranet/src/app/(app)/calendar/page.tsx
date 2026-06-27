@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import {
   addMonths,
+  addWeeks,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
@@ -13,12 +14,16 @@ import {
   startOfMonth,
   startOfWeek,
   subMonths,
+  subWeeks,
 } from "date-fns";
 import { useMutation, useQuery } from "convex/react";
 import {
   CalendarClock,
+  CalendarDays,
+  CalendarRange,
   ChevronLeft,
   ChevronRight,
+  List,
   MapPin,
   Plane,
   Plus,
@@ -43,6 +48,7 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -68,8 +74,21 @@ const ABSENCE_COLORS: Record<string, string> = {
   other: "bg-zinc-500/20 text-zinc-700 dark:text-zinc-300",
 };
 
+const ABSENCE_DOTS: Record<string, string> = {
+  vacation: "bg-sky-500",
+  sick: "bg-rose-500",
+  personal: "bg-violet-500",
+  other: "bg-zinc-500",
+};
+
+const ABSENCE_TYPES = ["vacation", "sick", "personal", "other"] as const;
+
 function isoDay(d: Date): string {
   return format(d, "yyyy-MM-dd");
+}
+
+function firstName(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] ?? fullName;
 }
 
 function EventDialog({ defaultDate }: { defaultDate?: Date }) {
@@ -130,6 +149,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("addEvent")}</DialogTitle>
+          <DialogDescription>{t("addEventHint")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-5">
           <div className="space-y-3">
@@ -225,6 +245,8 @@ type DetailState =
   | { kind: "absence"; id: Id<"absences"> }
   | null;
 
+type CalendarView = "month" | "week" | "list";
+
 export default function CalendarPage() {
   const t = useTranslations("Calendar");
   const tc = useTranslations("Common");
@@ -236,22 +258,40 @@ export default function CalendarPage() {
   const removeEvent = useMutation(api.events.remove);
   const [cursor, setCursor] = useState(() => new Date());
   const [detail, setDetail] = useState<DetailState>(null);
+  const [view, setView] = useState<CalendarView>("month");
 
-  const gridStart = startOfWeek(startOfMonth(cursor), { weekStartsOn: 1 });
-  const gridEnd = endOfWeek(endOfMonth(cursor), { weekStartsOn: 1 });
-  const days = useMemo(
-    () => eachDayOfInterval({ start: gridStart, end: gridEnd }),
-    [gridStart, gridEnd]
-  );
+  // The queried range depends on the active view: the month grid spans whole
+  // weeks; the week view a single week; the agenda the whole month.
+  let rangeStart: Date;
+  let rangeEnd: Date;
+  if (view === "week") {
+    rangeStart = startOfWeek(cursor, { weekStartsOn: 1 });
+    rangeEnd = endOfWeek(cursor, { weekStartsOn: 1 });
+  } else if (view === "list") {
+    rangeStart = startOfMonth(cursor);
+    rangeEnd = endOfMonth(cursor);
+  } else {
+    rangeStart = startOfWeek(startOfMonth(cursor), { weekStartsOn: 1 });
+    rangeEnd = endOfWeek(endOfMonth(cursor), { weekStartsOn: 1 });
+  }
+
+  const gridDays = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
 
   const events = useQuery(api.events.listForRange, {
-    start: gridStart.getTime(),
-    end: gridEnd.getTime(),
+    start: rangeStart.getTime(),
+    end: rangeEnd.getTime(),
   });
   const absences = useQuery(api.absences.listForCalendar, {
-    start: isoDay(gridStart),
-    end: isoDay(gridEnd),
+    start: isoDay(rangeStart),
+    end: isoDay(rangeEnd),
   });
+
+  function goPrev() {
+    setCursor(c => (view === "week" ? subWeeks(c, 1) : subMonths(c, 1)));
+  }
+  function goNext() {
+    setCursor(c => (view === "week" ? addWeeks(c, 1) : addMonths(c, 1)));
+  }
 
   const weekdays = useMemo(() => {
     const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -315,6 +355,92 @@ export default function CalendarPage() {
     }
   }
 
+  function eventsOn(day: Date): CalEvent[] {
+    return events?.filter(e => isSameDay(new Date(e.start), day)) ?? [];
+  }
+  function absencesOn(day: Date): CalAbsence[] {
+    const iso = isoDay(day);
+    return absences?.filter(a => a.startDate <= iso && iso <= a.endDate) ?? [];
+  }
+
+  const headerLabel =
+    view === "week"
+      ? `${rangeStart.toLocaleDateString(locale, {
+          day: "numeric",
+          month: "short",
+        })} – ${rangeEnd.toLocaleDateString(locale, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })}`
+      : cursor.toLocaleDateString(locale, { month: "long", year: "numeric" });
+
+  // Only days that actually have entries, for the agenda view.
+  const agendaDays = gridDays
+    .map(day => ({
+      day,
+      dayEvents: eventsOn(day),
+      dayAbsences: absencesOn(day),
+    }))
+    .filter(d => d.dayEvents.length > 0 || d.dayAbsences.length > 0);
+
+  function EventChip({ e }: { e: CalEvent }) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={ev => {
+          ev.stopPropagation();
+          setDetail({ kind: "event", id: e._id });
+        }}
+        onKeyDown={ev => {
+          if (ev.key === "Enter") {
+            ev.stopPropagation();
+            setDetail({ kind: "event", id: e._id });
+          }
+        }}
+        className="flex items-center gap-1 truncate rounded bg-primary/15 px-1 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/25"
+        title={e.title}
+      >
+        {!e.allDay && (
+          <span className="tabular-nums opacity-70">
+            {format(new Date(e.start), "HH:mm")}
+          </span>
+        )}
+        <span className="truncate">{e.title}</span>
+      </div>
+    );
+  }
+
+  function AbsenceChip({ a }: { a: CalAbsence }) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={ev => {
+          ev.stopPropagation();
+          setDetail({ kind: "absence", id: a._id });
+        }}
+        onKeyDown={ev => {
+          if (ev.key === "Enter") {
+            ev.stopPropagation();
+            setDetail({ kind: "absence", id: a._id });
+          }
+        }}
+        className={cn(
+          "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[11px] font-medium",
+          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other
+        )}
+        title={`${a.userName} · ${tAbs(a.type)}`}
+      >
+        <Plane className="size-3 shrink-0 opacity-70" />
+        <span className="truncate">
+          {firstName(a.userName)} · {tAbs(a.type)}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader
@@ -322,133 +448,261 @@ export default function CalendarPage() {
         action={isManager ? <EventDialog defaultDate={cursor} /> : undefined}
       />
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setCursor(c => subMonths(c, 1))}
-          aria-label="Previous month"
+          onClick={goPrev}
+          aria-label="Previous"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <Button
           variant="outline"
           size="icon"
-          onClick={() => setCursor(c => addMonths(c, 1))}
-          aria-label="Next month"
+          onClick={goNext}
+          aria-label="Next"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
         <Button variant="ghost" onClick={() => setCursor(new Date())}>
           {t("today")}
         </Button>
-        <span className="ml-2 font-display text-xl font-semibold capitalize tracking-tight">
-          {cursor.toLocaleDateString(locale, {
-            month: "long",
-            year: "numeric",
-          })}
+        <span className="ml-1 font-display text-xl font-semibold capitalize tracking-tight">
+          {headerLabel}
         </span>
-      </div>
 
-      <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-border/70 bg-card text-sm shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]">
-        {weekdays.map(d => (
-          <div
-            key={d}
-            className="border-b border-r border-border/60 bg-muted/30 p-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground last:border-r-0"
-          >
-            {d}
-          </div>
-        ))}
-        {days.map(day => {
-          const dayIso = isoDay(day);
-          const dayEvents =
-            events?.filter(e => isSameDay(new Date(e.start), day)) ?? [];
-          const dayAbsences =
-            absences?.filter(
-              a => a.startDate <= dayIso && dayIso <= a.endDate
-            ) ?? [];
-          const inMonth = isSameMonth(day, cursor);
-          const isToday = isSameDay(day, new Date());
-          const overflow = dayEvents.length + dayAbsences.length - 3;
-          return (
-            <button
-              type="button"
-              key={day.toISOString()}
-              onClick={() => setDetail({ kind: "day", day: dayIso })}
-              className={cn(
-                "min-h-24 space-y-1 border-b border-r border-border/60 p-1.5 text-left align-top transition-colors last:border-r-0 hover:bg-accent/50",
-                !inMonth && "bg-muted/20 text-muted-foreground"
-              )}
-            >
-              <div
+        {/* View switcher */}
+        <div className="ml-auto flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+          {(
+            [
+              { key: "month", label: t("viewMonth"), icon: CalendarDays },
+              { key: "week", label: t("viewWeek"), icon: CalendarRange },
+              { key: "list", label: t("viewList"), icon: List },
+            ] as const
+          ).map(v => {
+            const Icon = v.icon;
+            return (
+              <button
+                key={v.key}
+                type="button"
+                onClick={() => setView(v.key)}
+                aria-pressed={view === v.key}
                 className={cn(
-                  "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
-                  isToday && "bg-primary font-semibold text-primary-foreground"
+                  "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors",
+                  view === v.key
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 )}
               >
-                {day.getDate()}
-              </div>
-              {dayEvents.slice(0, 3).map(e => (
-                <div
-                  key={e._id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={ev => {
-                    ev.stopPropagation();
-                    setDetail({ kind: "event", id: e._id });
-                  }}
-                  onKeyDown={ev => {
-                    if (ev.key === "Enter") {
-                      ev.stopPropagation();
-                      setDetail({ kind: "event", id: e._id });
-                    }
-                  }}
-                  className="flex items-center gap-1 truncate rounded bg-primary/15 px-1 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/25"
-                  title={e.title}
-                >
-                  {!e.allDay && (
-                    <span className="tabular-nums opacity-70">
-                      {format(new Date(e.start), "HH:mm")}
-                    </span>
-                  )}
-                  <span className="truncate">{e.title}</span>
-                </div>
-              ))}
-              {dayAbsences
-                .slice(0, Math.max(0, 3 - dayEvents.length))
-                .map(a => (
-                  <div
-                    key={a._id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={ev => {
-                      ev.stopPropagation();
-                      setDetail({ kind: "absence", id: a._id });
-                    }}
-                    onKeyDown={ev => {
-                      if (ev.key === "Enter") {
-                        ev.stopPropagation();
-                        setDetail({ kind: "absence", id: a._id });
-                      }
-                    }}
-                    className={cn(
-                      "truncate rounded px-1 py-0.5 text-[11px] font-medium",
-                      ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other
-                    )}
-                    title={`${a.userName} · ${a.type}`}
-                  >
-                    {a.userName}
-                  </div>
-                ))}
-              {overflow > 0 && (
-                <div className="px-1 text-[10px] font-medium text-muted-foreground">
-                  +{overflow}
-                </div>
-              )}
-            </button>
-          );
-        })}
+                <Icon className="size-4" />
+                <span className="hidden sm:inline">{v.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Legend */}
+      <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+        <span className="font-medium">{t("legend")}:</span>
+        <span className="flex items-center gap-1.5">
+          <span className="size-2.5 rounded-full bg-primary" />
+          {t("event")}
+        </span>
+        {ABSENCE_TYPES.map(ty => (
+          <span key={ty} className="flex items-center gap-1.5">
+            <span className={cn("size-2.5 rounded-full", ABSENCE_DOTS[ty])} />
+            {tAbs(ty)}
+          </span>
+        ))}
+      </div>
+
+      {/* Month grid */}
+      {view === "month" && (
+        <div className="grid grid-cols-7 overflow-hidden rounded-xl border border-border/70 bg-card text-sm shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]">
+          {weekdays.map(d => (
+            <div
+              key={d}
+              className="border-b border-r border-border/60 bg-muted/30 p-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground last:border-r-0"
+            >
+              {d}
+            </div>
+          ))}
+          {gridDays.map(day => {
+            const dayEvents = eventsOn(day);
+            const dayAbsences = absencesOn(day);
+            const inMonth = isSameMonth(day, cursor);
+            const isToday = isSameDay(day, new Date());
+            const overflow = dayEvents.length + dayAbsences.length - 3;
+            return (
+              <button
+                type="button"
+                key={day.toISOString()}
+                onClick={() => setDetail({ kind: "day", day: isoDay(day) })}
+                className={cn(
+                  "min-h-24 space-y-1 border-b border-r border-border/60 p-1.5 text-left align-top transition-colors last:border-r-0 hover:bg-accent/50",
+                  !inMonth && "bg-muted/20 text-muted-foreground"
+                )}
+              >
+                <div
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
+                    isToday &&
+                      "bg-primary font-semibold text-primary-foreground"
+                  )}
+                >
+                  {day.getDate()}
+                </div>
+                {dayEvents.slice(0, 3).map(e => (
+                  <EventChip key={e._id} e={e} />
+                ))}
+                {dayAbsences
+                  .slice(0, Math.max(0, 3 - dayEvents.length))
+                  .map(a => (
+                    <AbsenceChip key={a._id} a={a} />
+                  ))}
+                {overflow > 0 && (
+                  <div className="px-1 text-[10px] font-medium text-muted-foreground">
+                    +{overflow}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Week view — one column per day, all entries listed */}
+      {view === "week" && (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
+          {gridDays.map(day => {
+            const dayEvents = eventsOn(day);
+            const dayAbsences = absencesOn(day);
+            const isToday = isSameDay(day, new Date());
+            return (
+              <div
+                key={day.toISOString()}
+                className={cn(
+                  "flex min-h-48 flex-col rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]",
+                  isToday && "border-primary/40 ring-1 ring-primary/20"
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => setDetail({ kind: "day", day: isoDay(day) })}
+                  className="flex items-center justify-between border-b border-border/60 px-2.5 py-2 text-left hover:bg-accent/40"
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {day.toLocaleDateString(locale, { weekday: "short" })}
+                  </span>
+                  <span
+                    className={cn(
+                      "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-semibold",
+                      isToday && "bg-primary text-primary-foreground"
+                    )}
+                  >
+                    {day.getDate()}
+                  </span>
+                </button>
+                <div className="flex-1 space-y-1 p-1.5">
+                  {dayEvents.length === 0 && dayAbsences.length === 0 ? (
+                    <p className="px-1 py-2 text-[11px] text-muted-foreground/70">
+                      {t("noEntries")}
+                    </p>
+                  ) : (
+                    <>
+                      {dayEvents.map(e => (
+                        <EventChip key={e._id} e={e} />
+                      ))}
+                      {dayAbsences.map(a => (
+                        <AbsenceChip key={a._id} a={a} />
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Agenda / list view */}
+      {view === "list" && (
+        <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]">
+          {agendaDays.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-16 text-center">
+              <CalendarClock className="h-7 w-7 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">{t("noUpcoming")}</p>
+            </div>
+          ) : (
+            agendaDays.map(({ day, dayEvents, dayAbsences }) => (
+              <div
+                key={day.toISOString()}
+                className="flex gap-4 border-b border-border/60 px-4 py-3 last:border-b-0"
+              >
+                <div className="w-28 shrink-0">
+                  <p
+                    className={cn(
+                      "text-sm font-semibold capitalize",
+                      isSameDay(day, new Date()) && "text-primary"
+                    )}
+                  >
+                    {day.toLocaleDateString(locale, {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </p>
+                </div>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  {dayEvents.map(e => (
+                    <button
+                      key={e._id}
+                      onClick={() => setDetail({ kind: "event", id: e._id })}
+                      className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
+                    >
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <CalendarClock className="size-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {e.title}
+                      </span>
+                      <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                        {e.allDay
+                          ? t("allDay")
+                          : `${formatTime(e.start, locale)}`}
+                      </span>
+                    </button>
+                  ))}
+                  {dayAbsences.map(a => (
+                    <button
+                      key={a._id}
+                      onClick={() => setDetail({ kind: "absence", id: a._id })}
+                      className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
+                    >
+                      <span
+                        className={cn(
+                          "flex size-7 shrink-0 items-center justify-center rounded-md",
+                          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other
+                        )}
+                      >
+                        <Plane className="size-3.5" />
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                        {a.userName}
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {tAbs(a.type)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Detail dialog (Google-Calendar style) */}
       <Dialog open={detail !== null} onOpenChange={o => !o && setDetail(null)}>

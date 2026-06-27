@@ -28,6 +28,34 @@ export function BrandLogo({
   );
 }
 
+/**
+ * Single-letter mark + "AG Intranet" wordmark — "AG" in the Advantis brand color.
+ */
+export function WordmarkLogo({ className }: { className?: string }) {
+  const src = useSingleLetterLogo();
+  return (
+    <span
+      className={cn(
+        "flex items-center gap-1.5 text-lg font-bold tracking-tight",
+        className
+      )}
+    >
+      <span className="relative mr-1 size-7 shrink-0">
+        <Image
+          src={src}
+          alt="Advantis"
+          fill
+          sizes="28px"
+          priority
+          className="object-contain"
+        />
+      </span>
+      <span className="text-advantis">AG</span>
+      <span className="text-foreground">Intranet</span>
+    </span>
+  );
+}
+
 /** Compact single-letter mark for collapsed nav / avatars. */
 export function MarkLogo({
   className,

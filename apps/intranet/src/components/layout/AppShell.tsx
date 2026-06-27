@@ -2,9 +2,13 @@
 
 import type { ReactNode } from "react";
 
+import { useMutation } from "convex/react";
 import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { api } from "@advantis/convex/api";
+
+import { CommandPalette } from "@/components/CommandPalette";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
@@ -15,6 +19,14 @@ import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const heartbeat = useMutation(api.presence.heartbeat);
+
+  // Keep presence fresh while the app is open so chat can show online state.
+  useEffect(() => {
+    void heartbeat({});
+    const id = setInterval(() => void heartbeat({}), 30_000);
+    return () => clearInterval(id);
+  }, [heartbeat]);
 
   return (
     <div className="flex min-h-screen">
@@ -63,7 +75,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="flex-1" />
+          <div className="flex flex-1 justify-start">
+            <CommandPalette />
+          </div>
           <NotificationsMenu />
           <LanguageSwitcher />
           <ThemeToggle />

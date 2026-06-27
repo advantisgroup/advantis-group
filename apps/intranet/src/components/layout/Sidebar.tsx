@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 import { useQuery } from "convex/react";
 import {
+  BookOpen,
   Calendar,
   LayoutDashboard,
   Megaphone,
@@ -17,9 +18,13 @@ import {
 import { api } from "@advantis/convex/api";
 import { useTranslations } from "next-intl";
 
+import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
-import { BrandLogo } from "@/components/Logo";
-import { useIsManager } from "@/components/providers/current-user";
+import { WordmarkLogo } from "@/components/Logo";
+import {
+  useCurrentUser,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -34,11 +39,13 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("Nav");
   const pathname = usePathname();
   const isManager = useIsManager();
+  const user = useCurrentUser();
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
   const chatUnread =
     chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
+  const hasGuidebooks = accessibleGuidebooks(user).length > 0;
 
   const items: NavItem[] = [
     { href: "/", labelKey: "dashboard", icon: LayoutDashboard },
@@ -51,6 +58,9 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       badge: announcementUnread,
     },
     { href: "/chat", labelKey: "chat", icon: MessageSquare, badge: chatUnread },
+    ...(hasGuidebooks
+      ? [{ href: "/guidebooks", labelKey: "guidebooks", icon: BookOpen }]
+      : []),
     { href: "/directory", labelKey: "directory", icon: Users },
     {
       href: "/admin",
@@ -65,7 +75,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center px-5">
         <Link href="/" onClick={onNavigate} aria-label="Advantis Intranet">
-          <BrandLogo />
+          <WordmarkLogo />
         </Link>
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 px-3 py-3">

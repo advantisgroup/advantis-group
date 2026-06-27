@@ -1,13 +1,14 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Bell } from "lucide-react";
+import { Bell, ChevronRight } from "lucide-react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useLocale, useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,6 +27,16 @@ export function NotificationsMenu() {
   const unread = useQuery(api.notifications.unreadCount) ?? 0;
   const markRead = useMutation(api.notifications.markRead);
   const markAllRead = useMutation(api.notifications.markAllRead);
+
+  // Surface unread first so read items never bury fresh ones.
+  const ordered = notifications
+    ? [...notifications].sort((a, b) => {
+        const au = a.readAt ? 1 : 0;
+        const bu = b.readAt ? 1 : 0;
+        if (au !== bu) return au - bu;
+        return b.createdAt - a.createdAt;
+      })
+    : undefined;
 
   return (
     <DropdownMenu>
@@ -57,8 +68,8 @@ export function NotificationsMenu() {
           )}
         </div>
         <ScrollArea className="max-h-96">
-          {notifications && notifications.length > 0 ? (
-            notifications.map(n => (
+          {ordered && ordered.length > 0 ? (
+            ordered.slice(0, 8).map(n => (
               <button
                 key={n._id}
                 onClick={() => {
@@ -66,19 +77,34 @@ export function NotificationsMenu() {
                   if (n.link) router.push(n.link);
                 }}
                 className={cn(
-                  "flex w-full flex-col items-start gap-0.5 border-b px-3 py-2.5 text-left text-sm hover:bg-muted",
+                  "flex w-full items-start gap-2.5 border-b px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted",
                   !n.readAt && "bg-primary/5"
                 )}
               >
-                <span className="font-medium">{n.title}</span>
-                {n.body && (
-                  <span className="text-xs text-muted-foreground">
-                    {n.body}
+                <span
+                  className={cn(
+                    "mt-1.5 size-1.5 shrink-0 rounded-full",
+                    n.readAt ? "bg-transparent" : "bg-primary"
+                  )}
+                />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span
+                    className={cn(
+                      "truncate",
+                      n.readAt ? "font-medium text-muted-foreground" : "font-semibold"
+                    )}
+                  >
+                    {n.title}
                   </span>
-                )}
-                <span className="text-[10px] text-muted-foreground">
-                  {relativeTime(n.createdAt)} ·{" "}
-                  {new Date(n.createdAt).toLocaleDateString(locale)}
+                  {n.body && (
+                    <span className="line-clamp-2 text-xs text-muted-foreground">
+                      {n.body}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-muted-foreground">
+                    {relativeTime(n.createdAt)} ·{" "}
+                    {new Date(n.createdAt).toLocaleDateString(locale)}
+                  </span>
                 </span>
               </button>
             ))
@@ -88,6 +114,13 @@ export function NotificationsMenu() {
             </p>
           )}
         </ScrollArea>
+        <Link
+          href="/notifications"
+          className="flex items-center justify-center gap-1 border-t px-3 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-muted"
+        >
+          {t("viewAll")}
+          <ChevronRight className="size-4" />
+        </Link>
       </DropdownMenuContent>
     </DropdownMenu>
   );

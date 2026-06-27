@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 
+import { AlertTriangle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -61,12 +63,19 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>{opts?.title}</DialogTitle>
-            {opts?.description && (
-              <DialogDescription className="pt-1">
-                {opts.description}
-              </DialogDescription>
-            )}
+            <div className="flex items-start gap-3">
+              {opts?.destructive !== false && (
+                <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-destructive-subtle text-destructive">
+                  <AlertTriangle className="size-[18px]" />
+                </span>
+              )}
+              <div className="min-w-0 space-y-1">
+                <DialogTitle>{opts?.title}</DialogTitle>
+                {opts?.description && (
+                  <DialogDescription>{opts.description}</DialogDescription>
+                )}
+              </div>
+            </div>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => settle(false)}>

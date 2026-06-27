@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -101,6 +102,7 @@ export function NewConversationDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{groupMode ? t("newGroup") : t("newChat")}</DialogTitle>
+          <DialogDescription>{t("newConversationHint")}</DialogDescription>
         </DialogHeader>
 
         {others.length > 0 && (

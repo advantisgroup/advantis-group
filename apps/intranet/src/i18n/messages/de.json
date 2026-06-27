@@ -6,6 +6,7 @@
     "absences": "Abwesenheiten",
     "announcements": "Ankündigungen",
     "chat": "Chat",
+    "guidebooks": "Leitfäden",
     "directory": "Mitarbeiter",
     "admin": "Verwaltung",
     "settings": "Einstellungen",
@@ -70,12 +71,21 @@
     "organizer": "Organisator",
     "noEntries": "Nichts geplant",
     "absence": "Abwesenheit",
-    "deleteEvent": "Diesen Termin löschen?"
+    "deleteEvent": "Diesen Termin löschen?",
+    "addEventHint": "Lege Titel, Zeit und Zielgruppe fest — alle Ausgewählten sehen den Termin in ihrem Kalender.",
+    "viewMonth": "Monat",
+    "viewWeek": "Woche",
+    "viewList": "Agenda",
+    "event": "Termin",
+    "upcoming": "Anstehend",
+    "noUpcoming": "Nichts in Sicht",
+    "legend": "Legende"
   },
   "Absences": {
     "title": "Abwesenheiten",
     "myRequests": "Meine Abwesenheiten",
     "newRequest": "Abwesenheit beantragen",
+    "newRequestHint": "Beantrage Abwesenheit zur Genehmigung. Deine Führungskraft wird benachrichtigt.",
     "approvals": "Genehmigungen",
     "type": "Art",
     "vacation": "Urlaub",
@@ -102,6 +112,7 @@
   "Announcements": {
     "title": "Ankündigungen",
     "new": "Neue Ankündigung",
+    "newHint": "Teile ein Update mit deinem Team. Hefte es an, um es oben zu halten.",
     "pinned": "Angeheftet",
     "markRead": "Als gelesen markieren",
     "audience": "Zielgruppe",
@@ -144,7 +155,14 @@
     "send": "Senden",
     "seenBy": "Gesehen von {names}",
     "seen": "Gesehen",
-    "addReaction": "Reaktion hinzufügen"
+    "addReaction": "Reaktion hinzufügen",
+    "deleteMessageHint": "Die Nachricht wird für alle in der Unterhaltung entfernt.",
+    "newConversationHint": "Wähle eine Person für eine Direktnachricht oder mehrere für eine Gruppe.",
+    "online": "Gerade aktiv",
+    "lastSeen": "Zuletzt aktiv {time}",
+    "offline": "Offline",
+    "today": "Heute",
+    "yesterday": "Gestern"
   },
   "Directory": {
     "title": "Mitarbeiter",
@@ -188,7 +206,48 @@
     "expired": "Abgelaufen",
     "active": "Aktiv",
     "revoked": "Widerrufen",
-    "noGuests": "Keine Gast-Zugänge"
+    "noGuests": "Keine Gast-Zugänge",
+    "teams": "Teams"
+  },
+  "Teams": {
+    "customerCare": "Customer Care",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "dashboard": "Dashboard"
+  },
+  "Guidebooks": {
+    "eyebrow": "Wissensdatenbank",
+    "title": "Leitfäden",
+    "subtitle": "Anleitungen und Tools für dein Team",
+    "empty": "Noch keine Leitfäden für dich",
+    "emptyHint": "Leitfäden für dein Team erscheinen hier.",
+    "notFound": "Leitfaden nicht gefunden",
+    "notFoundHint": "Er wurde möglicherweise verschoben oder entfernt.",
+    "noAccess": "Kein Zugriff auf diesen Leitfaden",
+    "noAccessHint": "Er ist anderen Teams vorbehalten. Wende dich an einen Admin, wenn du Zugriff brauchst.",
+    "caseSearch": {
+      "title": "Case Management — Stichwortsuche",
+      "description": "Stichwort eingeben und sofort die passenden Case-Felder und Queue finden."
+    }
+  },
+  "CaseSearch": {
+    "searchPlaceholder": "z.B. PIN, Chargeback, Blocking, Refund, Invoice …",
+    "clear": "Leeren",
+    "allTypes": "Alle",
+    "emptyTitle": "Stichwort eingeben oder Record Type wählen",
+    "casesAvailable": "{count} Cases verfügbar",
+    "noResultsTitle": "Keine Treffer für „{query}“",
+    "noResultsHint": "Anderen Begriff versuchen oder Record-Type-Filter entfernen.",
+    "resultsCount": "{count, plural, one {# Treffer} other {# Treffer}}",
+    "topN": "(Top {n})",
+    "whenToUse": "Wann verwenden:",
+    "mandatoryTitle": "Pflichtangaben im Case",
+    "mandatoryHint": "Hake sie ab, während du den Case vorbereitest — alle sind erforderlich.",
+    "reset": "Zurücksetzen",
+    "fieldCategory": "Category",
+    "fieldSubcategory": "Subcategory",
+    "fieldSubcategoryDetail": "Subcategory Detail",
+    "fieldProcessor": "Processor / Queue"
   },
   "Settings": {
     "title": "Einstellungen",
@@ -219,8 +278,30 @@
   },
   "Notifications": {
     "title": "Benachrichtigungen",
+    "subtitle": "Genehmigungen, Ankündigungen und Updates an einem Ort",
     "markAllRead": "Alle gelesen",
-    "empty": "Keine Benachrichtigungen"
+    "empty": "Keine Benachrichtigungen",
+    "unread": "Ungelesen",
+    "all": "Alle",
+    "earlier": "Früher",
+    "seeAll": "Alle ansehen",
+    "viewAll": "Alle Benachrichtigungen ansehen",
+    "allCaughtUp": "Du bist auf dem neuesten Stand",
+    "unreadOnly": "Nur ungelesene",
+    "preferences": "Benachrichtigungseinstellungen",
+    "preferencesHint": "Wähle, welche Benachrichtigungen du erhalten möchtest.",
+    "cat_absence": "Abwesenheiten",
+    "cat_announcement": "Ankündigungen",
+    "cat_system": "System"
+  },
+  "Command": {
+    "placeholder": "Seiten, Personen, Ankündigungen suchen…",
+    "pages": "Seiten",
+    "people": "Personen",
+    "announcements": "Ankündigungen",
+    "guidebooks": "Leitfäden",
+    "noResults": "Keine Ergebnisse gefunden",
+    "hint": "Suchen"
   },
   "Guest": {
     "loginTitle": "Gast-Tour",

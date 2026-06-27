@@ -20,6 +20,7 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -97,6 +98,7 @@ function RequestDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("newRequest")}</DialogTitle>
+          <DialogDescription>{t("newRequestHint")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-5">
           <div className="space-y-1.5">

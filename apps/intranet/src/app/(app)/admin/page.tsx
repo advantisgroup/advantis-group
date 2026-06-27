@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Copy, KeyRound, Mail, RotateCw, Trash2 } from "lucide-react";
+import { Copy, KeyRound, Mail, RotateCw, Trash2, Users2 } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
@@ -20,6 +20,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateTime, initials } from "@/lib/format";
+import { TEAMS, teamLabelKey } from "@/lib/teams";
 
 function err(e: unknown) {
   toast.error(e instanceof Error ? e.message : "Error");
@@ -233,10 +241,57 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
+function TeamsEditor({
+  userId,
+  teams,
+}: {
+  userId: Id<"users">;
+  teams: string[];
+}) {
+  const t = useTranslations("Admin");
+  const tTeams = useTranslations("Teams");
+  const setTeams = useMutation(api.users.setTeams);
+
+  function toggle(id: string) {
+    const next = teams.includes(id)
+      ? teams.filter(x => x !== id)
+      : [...teams, id];
+    setTeams({ userId, teams: next }).catch(err);
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline" className="h-8">
+          <Users2 className="mr-1.5 h-3.5 w-3.5" />
+          {t("teams")}
+          {teams.length > 0 && (
+            <span className="ml-1 tabular-nums">· {teams.length}</span>
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel>{t("teams")}</DropdownMenuLabel>
+        {TEAMS.map(team => (
+          <DropdownMenuCheckboxItem
+            key={team.id}
+            checked={teams.includes(team.id)}
+            onCheckedChange={() => toggle(team.id)}
+            onSelect={e => e.preventDefault()}
+          >
+            {tTeams(team.labelKey)}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function Members({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
+  const tTeams = useTranslations("Teams");
   const me = useCurrentUser();
   const confirm = useConfirm();
   const members = useQuery(api.users.list, { includeSuspended: true });
@@ -276,35 +331,49 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                 <p className="truncate text-xs text-muted-foreground">
                   {m.email}
                 </p>
+                {m.teams.length > 0 && (
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {m.teams.map(team => (
+                      <Badge key={team} variant="muted" className="text-[10px]">
+                        {tTeams(teamLabelKey(team))}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
               {m.status === "suspended" && (
                 <Badge variant="destructive">{t("suspend")}</Badge>
               )}
             </div>
             <div className="flex items-center gap-2">
-              {isAdmin && m._id !== me._id ? (
+              {isAdmin ? (
                 <>
-                  <RoleSelect
-                    value={m.role}
-                    canElevate
-                    onChange={role =>
-                      setRole({ userId: m._id as Id<"users">, role })
-                        .then(() => toast.success(tRoles(role)))
-                        .catch(err)
-                    }
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      void toggleStatus(
-                        m._id as Id<"users">,
-                        m.status === "active"
-                      )
-                    }
-                  >
-                    {m.status === "active" ? t("suspend") : t("activate")}
-                  </Button>
+                  <TeamsEditor userId={m._id as Id<"users">} teams={m.teams} />
+                  {m._id !== me._id && (
+                    <>
+                      <RoleSelect
+                        value={m.role}
+                        canElevate
+                        onChange={role =>
+                          setRole({ userId: m._id as Id<"users">, role })
+                            .then(() => toast.success(tRoles(role)))
+                            .catch(err)
+                        }
+                      />
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void toggleStatus(
+                            m._id as Id<"users">,
+                            m.status === "active"
+                          )
+                        }
+                      >
+                        {m.status === "active" ? t("suspend") : t("activate")}
+                      </Button>
+                    </>
+                  )}
                 </>
               ) : (
                 <Badge variant="muted">{tRoles(m.role)}</Badge>

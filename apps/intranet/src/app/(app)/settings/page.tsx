@@ -12,7 +12,6 @@ import { toast } from "sonner";
 
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
-import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -73,8 +72,6 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader title={t("title")} description={t("subtitle")} />
-
       {/* Personal identity hero */}
       <Card className="overflow-hidden">
         <div className="app-atmosphere flex items-center gap-4 border-b border-border/60 px-5 py-5">

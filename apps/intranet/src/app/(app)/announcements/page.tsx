@@ -21,6 +21,7 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -105,6 +106,7 @@ function CreateDialog() {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("new")}</DialogTitle>
+          <DialogDescription>{t("newHint")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-5">
           <div className="space-y-3">

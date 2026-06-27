@@ -24,6 +24,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_notify from "../lib/notify.js";
 import type * as notifications from "../notifications.js";
 import type * as outbound from "../outbound.js";
+import type * as presence from "../presence.js";
 import type * as users from "../users.js";
 
 import type {
@@ -49,6 +50,7 @@ declare const fullApi: ApiFromModules<{
   "lib/notify": typeof lib_notify;
   notifications: typeof notifications;
   outbound: typeof outbound;
+  presence: typeof presence;
   users: typeof users;
 }>;
 

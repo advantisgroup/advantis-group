@@ -6,6 +6,7 @@
     "absences": "Absences",
     "announcements": "Announcements",
     "chat": "Chat",
+    "guidebooks": "Guidebooks",
     "directory": "Directory",
     "admin": "Admin",
     "settings": "Settings",
@@ -70,12 +71,21 @@
     "organizer": "Organizer",
     "noEntries": "Nothing scheduled",
     "absence": "Absence",
-    "deleteEvent": "Delete this event?"
+    "deleteEvent": "Delete this event?",
+    "addEventHint": "Set a title, time and audience — everyone you pick sees it on their calendar.",
+    "viewMonth": "Month",
+    "viewWeek": "Week",
+    "viewList": "Agenda",
+    "event": "Event",
+    "upcoming": "Upcoming",
+    "noUpcoming": "Nothing coming up",
+    "legend": "Legend"
   },
   "Absences": {
     "title": "Absences",
     "myRequests": "My absences",
     "newRequest": "Request absence",
+    "newRequestHint": "Submit time off for approval. Your manager will be notified.",
     "approvals": "Approvals",
     "type": "Type",
     "vacation": "Vacation",
@@ -102,6 +112,7 @@
   "Announcements": {
     "title": "Announcements",
     "new": "New announcement",
+    "newHint": "Share an update with your team. Pin it to keep it at the top.",
     "pinned": "Pinned",
     "markRead": "Mark as read",
     "audience": "Audience",
@@ -144,7 +155,14 @@
     "send": "Send",
     "seenBy": "Seen by {names}",
     "seen": "Seen",
-    "addReaction": "Add reaction"
+    "addReaction": "Add reaction",
+    "deleteMessageHint": "This removes the message for everyone in the conversation.",
+    "newConversationHint": "Pick one person for a direct message, or add several to start a group.",
+    "online": "Active now",
+    "lastSeen": "Last seen {time}",
+    "offline": "Offline",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "Directory": {
     "title": "Directory",
@@ -188,7 +206,48 @@
     "expired": "Expired",
     "active": "Active",
     "revoked": "Revoked",
-    "noGuests": "No guest logins"
+    "noGuests": "No guest logins",
+    "teams": "Teams"
+  },
+  "Teams": {
+    "customerCare": "Customer Care",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "dashboard": "Dashboard"
+  },
+  "Guidebooks": {
+    "eyebrow": "Knowledge base",
+    "title": "Guidebooks",
+    "subtitle": "Reference guides and tools for your team",
+    "empty": "No guidebooks for you yet",
+    "emptyHint": "Guidebooks assigned to your team will appear here.",
+    "notFound": "Guidebook not found",
+    "notFoundHint": "It may have been moved or removed.",
+    "noAccess": "No access to this guidebook",
+    "noAccessHint": "It's restricted to other teams. Ask an admin if you need access.",
+    "caseSearch": {
+      "title": "Case Management — Keyword Search",
+      "description": "Type a keyword to instantly find the matching case fields and queue."
+    }
+  },
+  "CaseSearch": {
+    "searchPlaceholder": "e.g. PIN, Chargeback, Blocking, Refund, Invoice …",
+    "clear": "Clear",
+    "allTypes": "All",
+    "emptyTitle": "Enter a keyword or pick a record type",
+    "casesAvailable": "{count} cases available",
+    "noResultsTitle": "No matches for “{query}”",
+    "noResultsHint": "Try another term or remove the record-type filter.",
+    "resultsCount": "{count, plural, one {# match} other {# matches}}",
+    "topN": "(top {n})",
+    "whenToUse": "When to use:",
+    "mandatoryTitle": "Mandatory fields in the case",
+    "mandatoryHint": "Tick these off while you prepare the case — all are required.",
+    "reset": "Reset",
+    "fieldCategory": "Category",
+    "fieldSubcategory": "Subcategory",
+    "fieldSubcategoryDetail": "Subcategory Detail",
+    "fieldProcessor": "Processor / Queue"
   },
   "Settings": {
     "title": "Settings",
@@ -219,8 +278,30 @@
   },
   "Notifications": {
     "title": "Notifications",
+    "subtitle": "Approvals, announcements and updates in one place",
     "markAllRead": "Mark all read",
-    "empty": "No notifications"
+    "empty": "No notifications",
+    "unread": "Unread",
+    "all": "All",
+    "earlier": "Earlier",
+    "seeAll": "See all",
+    "viewAll": "View all notifications",
+    "allCaughtUp": "You're all caught up",
+    "unreadOnly": "Unread only",
+    "preferences": "Notification preferences",
+    "preferencesHint": "Choose which notifications you want to receive.",
+    "cat_absence": "Absences",
+    "cat_announcement": "Announcements",
+    "cat_system": "System"
+  },
+  "Command": {
+    "placeholder": "Search pages, people, announcements…",
+    "pages": "Pages",
+    "people": "People",
+    "announcements": "Announcements",
+    "guidebooks": "Guidebooks",
+    "noResults": "No results found",
+    "hint": "Search"
   },
   "Guest": {
     "loginTitle": "Guest tour",

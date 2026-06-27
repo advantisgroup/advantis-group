@@ -17,6 +17,7 @@ export interface CurrentUser {
   department: string | null;
   jobTitle: string | null;
   phone: string | null;
+  teams: string[];
   managerId: string | null;
   status: "active" | "suspended";
   avatar: string | null;
