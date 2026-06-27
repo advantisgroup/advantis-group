@@ -5,6 +5,7 @@ on:
       - main
     paths:
       - "packages/convex/**"
+      - ".github/workflows/convex-deploy.yml"
 permissions:
   contents: read
 concurrency:
