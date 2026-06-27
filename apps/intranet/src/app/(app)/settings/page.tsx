@@ -117,7 +117,7 @@ export default function SettingsPage() {
           <p className="-mt-2 text-xs text-muted-foreground">
             {t("accountHint")}
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>{t("firstName")}</Label>
               <Input
@@ -140,7 +140,7 @@ export default function SettingsPage() {
               onChange={e => setJobTitle(e.target.value)}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>{t("department")}</Label>
               <Input

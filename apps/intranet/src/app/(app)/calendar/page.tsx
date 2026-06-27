@@ -30,7 +30,7 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -172,7 +172,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
           </div>
 
           <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>{t("start")}</Label>
                 <Input
@@ -260,6 +260,17 @@ export default function CalendarPage() {
   const [detail, setDetail] = useState<DetailState>(null);
   const [view, setView] = useState<CalendarView>("month");
 
+  // The dense month grid is hard to read on phones, so default to the agenda
+  // (list) view there. Runs once on mount; users can still switch freely.
+  useEffect(() => {
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 767px)").matches
+    ) {
+      setView("list");
+    }
+  }, []);
+
   // The queried range depends on the active view: the month grid spans whole
   // weeks; the week view a single week; the agenda the whole month.
   let rangeStart: Date;
@@ -316,7 +327,9 @@ export default function CalendarPage() {
   const detailDay = detail?.kind === "day" ? detail.day : null;
   const dayEntries = detailDay
     ? {
-        events: (events ?? []).filter(e => isoDay(new Date(e.start)) === detailDay),
+        events: (events ?? []).filter(
+          e => isoDay(new Date(e.start)) === detailDay
+        ),
         absences: (absences ?? []).filter(
           a => a.startDate <= detailDay && detailDay <= a.endDate
         ),
@@ -798,8 +811,7 @@ export default function CalendarPage() {
               when={eventWhen(detailEvent)}
               canDelete={
                 isManager &&
-                (detailEvent.createdByUserId === me._id ||
-                  me.role === "admin")
+                (detailEvent.createdByUserId === me._id || me.role === "admin")
               }
               onDelete={() => onDeleteEvent(detailEvent._id)}
             />
