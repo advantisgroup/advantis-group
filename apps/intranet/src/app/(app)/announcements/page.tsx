@@ -361,7 +361,7 @@ export default function AnnouncementsPage() {
                       variant="ghost"
                       size="icon"
                       aria-label={tc("delete")}
-                      className="size-8 text-muted-foreground opacity-0 transition-opacity hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+                      className="size-8 text-muted-foreground opacity-100 transition-opacity hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
                       onClick={() => void onDelete(a._id)}
                     >
                       <Trash2 className="h-4 w-4" />

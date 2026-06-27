@@ -28,7 +28,7 @@ export function ChatClient() {
   }
 
   return (
-    <div className="-mx-4 -my-6 flex h-[calc(100vh-4rem)] overflow-hidden bg-background md:-mx-8 md:-my-8">
+    <div className="-mx-4 -my-6 flex h-[calc(100dvh-3.5rem)] overflow-hidden bg-background md:-mx-8 md:-my-8 md:h-[calc(100dvh-4rem)]">
       {/* Conversation list */}
       <div
         className={cn(

@@ -15,6 +15,7 @@ import { api } from "@advantis/convex/api";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -26,12 +27,13 @@ interface NavItem {
 
 /**
  * Mobile-only bottom tab bar. Gives one-tap access to the primary
- * destinations on phones, where the sidebar is hidden behind a drawer.
- * The trailing "More" button opens the full navigation drawer.
+ * destinations on phones, where the sidebar is hidden behind a sheet.
+ * The trailing "More" button opens the full navigation sidebar.
  */
-export function BottomNav({ onMore }: { onMore: () => void }) {
+export function BottomNav() {
   const t = useTranslations("Nav");
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
@@ -91,7 +93,7 @@ export function BottomNav({ onMore }: { onMore: () => void }) {
         })}
         <button
           type="button"
-          onClick={onMore}
+          onClick={() => setOpenMobile(true)}
           aria-label={t("more")}
           className="flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
         >

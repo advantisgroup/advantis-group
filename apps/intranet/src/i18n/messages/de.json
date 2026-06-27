@@ -1,5 +1,7 @@
 {
-  "App": { "name": "Advantis Intranet" },
+  "App": {
+    "name": "Advantis Intranet"
+  },
   "Nav": {
     "dashboard": "Übersicht",
     "calendar": "Kalender",
@@ -11,6 +13,10 @@
     "admin": "Verwaltung",
     "settings": "Einstellungen",
     "more": "Mehr",
+    "groupGeneral": "Allgemein",
+    "groupWorkspace": "Arbeitsbereich",
+    "groupResources": "Ressourcen",
+    "groupAdministration": "Verwaltung",
     "signOut": "Abmelden"
   },
   "Common": {
@@ -266,6 +272,7 @@
     "avatar": "Profilbild",
     "uploadAvatar": "Bild hochladen",
     "language": "Sprache",
+    "appearance": "Darstellung",
     "theme": "Darstellung",
     "themeLight": "Hell",
     "themeDark": "Dunkel",
