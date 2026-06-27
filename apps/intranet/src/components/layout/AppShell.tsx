@@ -10,6 +10,7 @@ import { usePathname } from "next/navigation";
 import { api } from "@advantis/convex/api";
 
 import { CommandPalette } from "@/components/CommandPalette";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
@@ -57,7 +58,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             immersive ? "pb-6" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
           )}
         >
-          {children}
+          {/* Isolate page crashes so the surrounding shell stays usable.
+              Keyed by route so navigating away clears a previous error. */}
+          <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
         </main>
       </SidebarInset>
 

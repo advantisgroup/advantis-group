@@ -64,6 +64,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -95,6 +96,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
   const t = useTranslations("Calendar");
   const tc = useTranslations("Common");
   const create = useMutation(api.events.create);
+  const handleError = useErrorHandler();
   const departments = useQuery(api.users.departments) ?? [];
   const [open, setOpen] = useState(false);
   const base = defaultDate ? format(defaultDate, "yyyy-MM-dd") : "";
@@ -132,7 +134,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
       setLocation("");
       setGuestVisible(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -256,6 +258,7 @@ export default function CalendarPage() {
   const me = useCurrentUser();
   const confirm = useConfirm();
   const removeEvent = useMutation(api.events.remove);
+  const handleError = useErrorHandler();
   const [cursor, setCursor] = useState(() => new Date());
   const [detail, setDetail] = useState<DetailState>(null);
   const [view, setView] = useState<CalendarView>("month");
@@ -364,7 +367,7 @@ export default function CalendarPage() {
       setDetail(null);
       toast.success(tc("delete"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     }
   }
 

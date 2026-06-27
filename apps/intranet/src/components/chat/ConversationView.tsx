@@ -21,7 +21,6 @@ import {
   type UnfurlResult,
 } from "@advantis/types";
 import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -30,6 +29,7 @@ import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatTime, initials, relativeTime } from "@/lib/format";
 import { isImage, uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
@@ -66,6 +66,7 @@ export function ConversationView({
   const markRead = useMutation(api.chat.markRead);
   const setTyping = useMutation(api.chat.setTyping);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const handleError = useErrorHandler();
 
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
@@ -144,7 +145,7 @@ export function ConversationView({
       try {
         await deleteMessage({ messageId });
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Error");
+        handleError(e);
       }
     }
   }
@@ -178,7 +179,7 @@ export function ConversationView({
       setBody("");
       setFiles([]);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     } finally {
       setSending(false);
     }

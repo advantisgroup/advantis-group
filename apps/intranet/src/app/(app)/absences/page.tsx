@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 
 type Status = "pending" | "approved" | "denied" | "cancelled";
@@ -56,6 +57,7 @@ function RequestDialog() {
   const t = useTranslations("Absences");
   const tc = useTranslations("Common");
   const create = useMutation(api.absences.createRequest);
+  const handleError = useErrorHandler();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<AbsenceType>("vacation");
   const [startDate, setStart] = useState("");
@@ -81,7 +83,7 @@ function RequestDialog() {
       setStart("");
       setEnd("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -177,6 +179,7 @@ function MyAbsences() {
   const confirm = useConfirm();
   const absences = useQuery(api.absences.myAbsences);
   const cancel = useMutation(api.absences.cancel);
+  const handleError = useErrorHandler();
 
   async function onCancel(id: Id<"absences">) {
     const ok = await confirm({
@@ -189,7 +192,7 @@ function MyAbsences() {
       try {
         await cancel({ absenceId: id });
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Error");
+        handleError(e);
       }
     }
   }
@@ -250,6 +253,7 @@ function Approvals() {
   const pending = useQuery(api.absences.pendingForApproval);
   const approve = useMutation(api.absences.approve);
   const deny = useMutation(api.absences.deny);
+  const handleError = useErrorHandler();
 
   async function act(
     fn: typeof approve,
@@ -260,7 +264,7 @@ function Approvals() {
       await fn({ absenceId });
       toast.success(label);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     }
   }
 

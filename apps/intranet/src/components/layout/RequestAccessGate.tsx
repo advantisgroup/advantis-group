@@ -13,12 +13,14 @@ import { BrandLogo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 
 export function RequestAccessGate() {
   const t = useTranslations("Access");
   const { user } = useUser();
   const status = useQuery(api.accessRequests.myStatus);
   const requestAccess = useMutation(api.accessRequests.create);
+  const handleError = useErrorHandler();
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -30,7 +32,7 @@ export function RequestAccessGate() {
       await requestAccess({ message: message.trim() || undefined });
       toast.success(t("pending"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     } finally {
       setSubmitting(false);
     }

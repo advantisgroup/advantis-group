@@ -324,5 +324,17 @@
     "announcements": "Announcements",
     "events": "Events",
     "empty": "Nothing shared yet"
+  },
+  "Errors": {
+    "generic": "Something went wrong. Please try again.",
+    "unauthenticated": "You're signed out. Please sign in again.",
+    "forbidden": "You don't have permission to do that.",
+    "not_found": "We couldn't find what you were looking for.",
+    "bad_request": "Some of the details look off. Please check and try again.",
+    "conflict": "That conflicts with something that already exists.",
+    "boundaryTitle": "Something went wrong",
+    "boundaryDescription": "An unexpected error occurred while loading this page. You can try again.",
+    "retry": "Try again",
+    "reload": "Reload page"
   }
 }
