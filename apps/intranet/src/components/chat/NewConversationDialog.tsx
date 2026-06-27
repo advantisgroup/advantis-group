@@ -7,7 +7,6 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 
 export function NewConversationDialog({
@@ -37,6 +37,7 @@ export function NewConversationDialog({
   const people = useQuery(api.users.list, {});
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
   const createGroup = useMutation(api.chat.createGroup);
+  const handleError = useErrorHandler();
 
   const [open, setOpen] = useState(false);
   const [groupMode, setGroupMode] = useState(false);
@@ -58,7 +59,7 @@ export function NewConversationDialog({
       reset();
       onCreated(conversationId);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     }
   }
 
@@ -73,7 +74,7 @@ export function NewConversationDialog({
       reset();
       onCreated(conversationId);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     }
   }
 
