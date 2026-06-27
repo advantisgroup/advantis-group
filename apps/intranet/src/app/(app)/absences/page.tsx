@@ -117,7 +117,7 @@ function RequestDialog() {
           </div>
 
           <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>{t("start")}</Label>
                 <Input

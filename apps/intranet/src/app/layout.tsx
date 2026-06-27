@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import { Manrope, Outfit } from "next/font/google";
@@ -29,6 +29,18 @@ export const metadata: Metadata = {
   title: "Advantis Intranet",
   description: "Internal portal for Advantis Group employees",
   robots: { index: false, follow: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Cover the display so safe-area insets work on notched phones; the
+  // mobile bottom nav and dialogs pad themselves against these insets.
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f3ec" },
+    { media: "(prefers-color-scheme: dark)", color: "#211e1b" },
+  ],
 };
 
 export default async function RootLayout({

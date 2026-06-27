@@ -6,10 +6,13 @@ import { useMutation } from "convex/react";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import { usePathname } from "next/navigation";
+
 import { api } from "@advantis/convex/api";
 
 import { CommandPalette } from "@/components/CommandPalette";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { LanguageSwitcher } from "@/components/layout/LanguageSwitcher";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -19,7 +22,12 @@ import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
   const heartbeat = useMutation(api.presence.heartbeat);
+
+  // Chat is a full-screen, self-managing view on mobile (its own header and
+  // sticky composer), so it opts out of the bottom nav and its clearance.
+  const immersive = pathname.startsWith("/chat");
 
   // Keep presence fresh while the app is open so chat can show online state.
   useEffect(() => {
@@ -84,8 +92,18 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="mx-1 h-6 w-px bg-border/70" />
           <AccountMenu />
         </header>
-        <main className="flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+        <main
+          className={cn(
+            "flex-1 px-4 pt-6 md:px-8 md:pt-8 md:pb-8",
+            immersive ? "pb-6" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
+          )}
+        >
+          {children}
+        </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      {!immersive && <BottomNav onMore={() => setMobileOpen(true)} />}
     </div>
   );
 }
