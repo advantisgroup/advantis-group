@@ -4,7 +4,7 @@ on:
     branches:
       - main
     paths:
-      - 'convex/**'
+      - "convex/**"
 permissions:
   contents: read
 concurrency:

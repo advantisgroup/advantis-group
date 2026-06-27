@@ -38,11 +38,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Generate Convex types
-        run: bunx convex codegen
-
       - name: Check formatting
-        run: bun run format:check
+        run: bunx prettier --check .
 
       - name: Run linter
         run: bun run lint

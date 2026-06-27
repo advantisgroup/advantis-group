@@ -1,0 +1,59 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "globalEnv": [
+    "NODE_ENV",
+    "CONVEX_DEPLOYMENT",
+    "CONVEX_DEPLOY_KEY",
+    "CONVEX_URL",
+    "CONVEX_SERVER_KEY",
+    "NEXT_PUBLIC_CONVEX_URL",
+    "NEXT_PUBLIC_CONVEX_SITE_URL",
+    "NEXT_PUBLIC_DOMAIN",
+    "NEXT_PUBLIC_API_URL",
+    "ADMIN_EMAILS",
+    "ALLOWED_EMAIL_DOMAINS",
+    "CLERK_JWT_ISSUER_DOMAIN",
+    "CLERK_SECRET_KEY",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+    "INTRANET_CLERK_JWT_ISSUER_DOMAIN",
+    "INTRANET_CLERK_SECRET_KEY",
+    "NEXT_PUBLIC_INTRANET_CLERK_PUBLISHABLE_KEY",
+    "CLERK_WEBHOOK_SECRET",
+    "RESEND_API_KEY",
+    "KV_URL",
+    "KV_REST_API_URL",
+    "KV_REST_API_TOKEN",
+    "KV_REST_API_READ_ONLY_TOKEN",
+    "REDIS_URL",
+    "NEXT_PUBLIC_POSTHOG_KEY",
+    "NEXT_PUBLIC_POSTHOG_HOST"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {},
+    "lint:fix": {
+      "cache": false
+    },
+    "type-check": {
+      "dependsOn": ["^build"]
+    },
+    "format": {
+      "cache": false
+    },
+    "convex:dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "convex:deploy": {
+      "cache": false
+    }
+  }
+}
