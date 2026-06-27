@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery } from "convex/react";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, UsersRound } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
@@ -103,25 +103,27 @@ export function NewConversationDialog({
           <DialogTitle>{groupMode ? t("newGroup") : t("newChat")}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center justify-between">
-          <Button
-            variant={groupMode ? "outline" : "default"}
-            size="sm"
-            onClick={() => setGroupMode(false)}
-          >
-            {t("newChat")}
-          </Button>
-          <Button
-            variant={groupMode ? "default" : "outline"}
-            size="sm"
-            onClick={() => setGroupMode(true)}
-          >
-            <Users className="mr-2 h-4 w-4" />
-            {t("newGroup")}
-          </Button>
-        </div>
+        {others.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted/40 p-1">
+            <Button
+              variant={groupMode ? "ghost" : "default"}
+              size="sm"
+              onClick={() => setGroupMode(false)}
+            >
+              {t("newChat")}
+            </Button>
+            <Button
+              variant={groupMode ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setGroupMode(true)}
+            >
+              <Users className="mr-2 h-4 w-4" />
+              {t("newGroup")}
+            </Button>
+          </div>
+        )}
 
-        {groupMode && (
+        {groupMode && others.length > 0 && (
           <Input
             placeholder={t("groupName")}
             value={groupName}
@@ -129,38 +131,52 @@ export function NewConversationDialog({
           />
         )}
 
-        <ScrollArea className="h-72 rounded-md border">
-          {others.map(p => (
-            <div
-              key={p._id}
-              className="flex items-center gap-3 border-b px-3 py-2 last:border-b-0"
-            >
-              {groupMode && (
-                <Checkbox
-                  checked={selected.has(p._id)}
-                  onCheckedChange={() => toggle(p._id)}
-                />
-              )}
-              <Avatar className="h-8 w-8">
-                {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                <AvatarFallback className="text-xs">
-                  {initials(p.name, p.email)}
-                </AvatarFallback>
-              </Avatar>
-              <button
-                className="min-w-0 flex-1 text-left"
-                onClick={() => (groupMode ? toggle(p._id) : startDm(p._id))}
-              >
-                <p className="truncate text-sm font-medium">{p.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {p.jobTitle || p.email}
-                </p>
-              </button>
+        {others.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-dashed border-border py-12 text-center">
+            <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <UsersRound className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">{t("noPeople")}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {t("noPeopleHint")}
+              </p>
             </div>
-          ))}
-        </ScrollArea>
+          </div>
+        ) : (
+          <ScrollArea className="h-72 rounded-lg border border-border">
+            {others.map(p => (
+              <div
+                key={p._id}
+                className="flex items-center gap-3 border-b border-border/60 px-3 py-2 last:border-b-0 hover:bg-accent"
+              >
+                {groupMode && (
+                  <Checkbox
+                    checked={selected.has(p._id)}
+                    onCheckedChange={() => toggle(p._id)}
+                  />
+                )}
+                <Avatar className="size-8">
+                  {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+                  <AvatarFallback className="text-xs">
+                    {initials(p.name, p.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  className="min-w-0 flex-1 text-left"
+                  onClick={() => (groupMode ? toggle(p._id) : startDm(p._id))}
+                >
+                  <p className="truncate text-sm font-medium">{p.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {p.jobTitle || p.email}
+                  </p>
+                </button>
+              </div>
+            ))}
+          </ScrollArea>
+        )}
 
-        {groupMode && (
+        {groupMode && others.length > 0 && (
           <DialogFooter>
             <Button
               onClick={makeGroup}

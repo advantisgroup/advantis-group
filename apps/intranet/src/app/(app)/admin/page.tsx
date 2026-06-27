@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -128,11 +129,23 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
 
 function Invites({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
   const locale = useLocale();
+  const confirm = useConfirm();
   const invites = useQuery(api.invites.list, {});
   const create = useMutation(api.invites.create);
   const revoke = useMutation(api.invites.revoke);
   const resend = useMutation(api.invites.resend);
+
+  async function onRevoke(id: Id<"invites">) {
+    const ok = await confirm({
+      title: t("revoke"),
+      description: tc("deleteWarning"),
+      confirmLabel: t("revoke"),
+      cancelLabel: tc("cancel"),
+    });
+    if (ok) revoke({ inviteId: id }).catch(err);
+  }
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("employee");
   const [busy, setBusy] = useState(false);
@@ -206,7 +219,7 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => revoke({ inviteId: i._id }).catch(err)}
+                    onClick={() => void onRevoke(i._id)}
                   >
                     {t("revoke")}
                   </Button>
@@ -222,11 +235,29 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
 
 function Members({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const me = useCurrentUser();
+  const confirm = useConfirm();
   const members = useQuery(api.users.list, { includeSuspended: true });
   const setRole = useMutation(api.users.setRole);
   const setStatus = useMutation(api.users.setStatus);
+
+  async function toggleStatus(userId: Id<"users">, active: boolean) {
+    if (active) {
+      const ok = await confirm({
+        title: t("suspend"),
+        description: tc("deleteWarning"),
+        confirmLabel: t("suspend"),
+        cancelLabel: tc("cancel"),
+      });
+      if (!ok) return;
+    }
+    setStatus({
+      userId,
+      status: active ? "suspended" : "active",
+    }).catch(err);
+  }
 
   return (
     <div className="space-y-2">
@@ -266,10 +297,10 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                     size="sm"
                     variant="outline"
                     onClick={() =>
-                      setStatus({
-                        userId: m._id as Id<"users">,
-                        status: m.status === "active" ? "suspended" : "active",
-                      }).catch(err)
+                      void toggleStatus(
+                        m._id as Id<"users">,
+                        m.status === "active"
+                      )
                     }
                   >
                     {m.status === "active" ? t("suspend") : t("activate")}
@@ -288,10 +319,22 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
 
 function GuestLogins() {
   const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
   const locale = useLocale();
+  const confirm = useConfirm();
   const logins = useQuery(api.guest.listTempLogins, {});
   const create = useMutation(api.guest.createTempLogin);
   const revoke = useMutation(api.guest.revokeTempLogin);
+
+  async function onRevoke(id: Id<"tempLogins">) {
+    const ok = await confirm({
+      title: t("revoke"),
+      description: tc("deleteWarning"),
+      confirmLabel: t("revoke"),
+      cancelLabel: tc("cancel"),
+    });
+    if (ok) revoke({ id }).catch(err);
+  }
   const [label, setLabel] = useState("");
   const [email, setEmail] = useState("");
   const [hours, setHours] = useState("48");
@@ -395,7 +438,7 @@ function GuestLogins() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={() => revoke({ id: g._id }).catch(err)}
+                        onClick={() => void onRevoke(g._id)}
                       >
                         {t("revoke")}
                       </Button>

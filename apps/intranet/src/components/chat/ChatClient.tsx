@@ -28,55 +28,82 @@ export function ChatClient() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-7rem)] max-w-6xl overflow-hidden rounded-lg border bg-card">
+    <div className="mx-auto flex h-[calc(100vh-8rem)] max-w-6xl overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04),0_16px_40px_-24px_rgb(0_0_0/0.18)]">
       {/* Conversation list */}
       <div
         className={cn(
-          "flex w-full flex-col border-r md:w-80",
+          "flex w-full flex-col border-r border-border/70 md:w-80",
           selected && "hidden md:flex"
         )}
       >
-        <div className="flex items-center justify-between border-b p-3">
-          <h2 className="font-semibold">{t("title")}</h2>
+        <div className="flex items-center justify-between gap-2 border-b border-border/70 px-4 py-3">
+          <h2 className="font-display text-lg font-semibold tracking-tight">
+            {t("title")}
+          </h2>
           <NewConversationDialog onCreated={select} />
         </div>
         <ScrollArea className="flex-1">
           {conversations && conversations.length === 0 && (
-            <p className="p-6 text-center text-sm text-muted-foreground">
-              {t("noConversations")}
-            </p>
+            <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
+              <span className="flex size-11 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                <MessageSquare className="h-5 w-5" />
+              </span>
+              <p className="text-sm text-muted-foreground">
+                {t("noConversations")}
+              </p>
+            </div>
           )}
-          {conversations?.map(c => (
-            <button
-              key={c._id}
-              onClick={() => select(c._id)}
-              className={cn(
-                "flex w-full items-center gap-3 border-b px-3 py-2.5 text-left hover:bg-muted",
-                selected === c._id && "bg-muted"
-              )}
-            >
-              <Avatar className="h-10 w-10">
-                {c.avatar && <AvatarImage src={c.avatar} alt={c.title} />}
-                <AvatarFallback>{initials(c.title)}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate font-medium">{c.title}</span>
-                  <span className="shrink-0 text-[10px] text-muted-foreground">
-                    {c.lastMessageAt ? relativeTime(c.lastMessageAt) : ""}
-                  </span>
+          <div className="p-2">
+            {conversations?.map(c => (
+              <button
+                key={c._id}
+                onClick={() => select(c._id)}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left transition-colors hover:bg-accent",
+                  selected === c._id && "bg-accent"
+                )}
+              >
+                <Avatar className="size-10 shrink-0">
+                  {c.avatar && <AvatarImage src={c.avatar} alt={c.title} />}
+                  <AvatarFallback className="text-xs">
+                    {initials(c.title)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={cn(
+                        "truncate text-sm",
+                        c.unread > 0 ? "font-semibold" : "font-medium"
+                      )}
+                    >
+                      {c.title}
+                    </span>
+                    <span className="shrink-0 text-[10px] text-muted-foreground">
+                      {c.lastMessageAt ? relativeTime(c.lastMessageAt) : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <p
+                      className={cn(
+                        "truncate text-xs",
+                        c.unread > 0
+                          ? "text-foreground/80"
+                          : "text-muted-foreground"
+                      )}
+                    >
+                      {c.lastMessagePreview}
+                    </p>
+                    {c.unread > 0 && (
+                      <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+                        {c.unread}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="truncate text-xs text-muted-foreground">
-                  {c.lastMessagePreview}
-                </p>
-              </div>
-              {c.unread > 0 && (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
-                  {c.unread}
-                </span>
-              )}
-            </button>
-          ))}
+              </button>
+            ))}
+          </div>
         </ScrollArea>
       </div>
 
@@ -88,9 +115,16 @@ export function ChatClient() {
             onBack={() => router.push("/chat")}
           />
         ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
-            <MessageSquare className="h-10 w-10" />
-            <p className="text-sm">{t("selectConversation")}</p>
+          <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-muted-foreground">
+            <span className="flex size-14 items-center justify-center rounded-2xl bg-muted">
+              <MessageSquare className="h-7 w-7" />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-foreground">
+                {t("selectConversation")}
+              </p>
+              <p className="mt-0.5 text-xs">{t("selectConversationHint")}</p>
+            </div>
           </div>
         )}
       </div>

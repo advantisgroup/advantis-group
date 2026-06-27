@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 
 import { useQuery } from "convex/react";
 import {
-  ArrowUpRight,
   CalendarDays,
+  MapPin,
   Megaphone,
   MessageSquare,
   Plane,
@@ -19,9 +19,16 @@ import {
   useCurrentUser,
   useIsManager,
 } from "@/components/providers/current-user";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
+import { htmlToText } from "@/components/ui/rich-text";
 import { cn } from "@/lib/utils";
-import { formatDateTime, formatIsoDate } from "@/lib/format";
+import {
+  formatDateTime,
+  formatIsoDate,
+  initials,
+  relativeTime,
+} from "@/lib/format";
 
 const now = Date.now();
 
@@ -62,25 +69,46 @@ function Empty({ children }: { children: ReactNode }) {
   );
 }
 
+/** Rich list row: optional leading visual, title, subtitle, trailing meta. */
 function Row({
   href,
-  children,
+  leading,
+  title,
+  subtitle,
+  trailing,
 }: {
   href: string;
-  children: ReactNode;
+  leading?: ReactNode;
+  title: string;
+  subtitle?: string | null;
+  trailing?: ReactNode;
 }) {
   return (
     <Link
       href={href}
-      className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent"
+      className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent"
     >
-      {children}
+      {leading}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium leading-tight">{title}</p>
+        {subtitle ? (
+          <p className="truncate text-xs leading-tight text-muted-foreground">
+            {subtitle}
+          </p>
+        ) : null}
+      </div>
+      {trailing ? (
+        <div className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+          {trailing}
+        </div>
+      ) : null}
     </Link>
   );
 }
 
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
+  const tAbs = useTranslations("Absences");
   const locale = useLocale();
   const user = useCurrentUser();
   const isManager = useIsManager();
@@ -129,12 +157,24 @@ export default function DashboardPage() {
               <Empty>{t("noEvents")}</Empty>
             ) : (
               events.slice(0, 5).map(e => (
-                <Row key={e._id} href="/calendar">
-                  <span className="truncate font-medium">{e.title}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {formatDateTime(e.start, locale)}
-                  </span>
-                </Row>
+                <Row
+                  key={e._id}
+                  href="/calendar"
+                  title={e.title}
+                  subtitle={e.location}
+                  leading={
+                    e.location ? (
+                      <MapPin className="size-4 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <span className="size-1.5 shrink-0 rounded-full bg-primary/60" />
+                    )
+                  }
+                  trailing={
+                    <span className="whitespace-nowrap">
+                      {formatDateTime(e.start, locale)}
+                    </span>
+                  }
+                />
               ))
             )}
           </DashCard>
@@ -146,14 +186,32 @@ export default function DashboardPage() {
               <Empty>{t("noAnnouncements")}</Empty>
             ) : (
               announcements.slice(0, 5).map(a => (
-                <Row key={a._id} href="/announcements">
-                  <span className="truncate font-medium">{a.title}</span>
-                  {!a.read ? (
-                    <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-                  ) : (
-                    <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
-                  )}
-                </Row>
+                <Row
+                  key={a._id}
+                  href="/announcements"
+                  title={a.title}
+                  subtitle={htmlToText(a.body) || undefined}
+                  leading={
+                    <Avatar className="size-8 shrink-0">
+                      {a.authorAvatar && (
+                        <AvatarImage src={a.authorAvatar} alt={a.authorName} />
+                      )}
+                      <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
+                        {initials(a.authorName, a.authorName)}
+                      </AvatarFallback>
+                    </Avatar>
+                  }
+                  trailing={
+                    <>
+                      <span className="whitespace-nowrap">
+                        {relativeTime(a.publishedAt)}
+                      </span>
+                      {!a.read && (
+                        <span className="h-2 w-2 rounded-full bg-primary" />
+                      )}
+                    </>
+                  }
+                />
               ))
             )}
           </DashCard>
@@ -169,12 +227,32 @@ export default function DashboardPage() {
               <Empty>{t("noUnread")}</Empty>
             ) : (
               unreadChats.slice(0, 5).map(c => (
-                <Row key={c._id} href="/chat">
-                  <span className="truncate font-medium">{c.title}</span>
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
-                    {c.unread}
-                  </span>
-                </Row>
+                <Row
+                  key={c._id}
+                  href={`/chat?c=${c._id}`}
+                  title={c.title}
+                  subtitle={c.lastMessagePreview}
+                  leading={
+                    <Avatar className="size-8 shrink-0">
+                      {c.avatar && <AvatarImage src={c.avatar} alt={c.title} />}
+                      <AvatarFallback className="text-[10px]">
+                        {initials(c.title)}
+                      </AvatarFallback>
+                    </Avatar>
+                  }
+                  trailing={
+                    <>
+                      {c.lastMessageAt && (
+                        <span className="whitespace-nowrap">
+                          {relativeTime(c.lastMessageAt)}
+                        </span>
+                      )}
+                      <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
+                        {c.unread}
+                      </span>
+                    </>
+                  }
+                />
               ))
             )}
           </DashCard>
@@ -191,12 +269,24 @@ export default function DashboardPage() {
                 <Empty>{t("noApprovals")}</Empty>
               ) : (
                 pending.slice(0, 5).map(a => (
-                  <Row key={a._id} href="/absences">
-                    <span className="truncate font-medium">{a.userName}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatIsoDate(a.startDate, locale)}
-                    </span>
-                  </Row>
+                  <Row
+                    key={a._id}
+                    href="/absences"
+                    title={a.userName}
+                    subtitle={tAbs(a.type)}
+                    leading={
+                      <Avatar className="size-8 shrink-0">
+                        <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
+                          {initials(a.userName)}
+                        </AvatarFallback>
+                      </Avatar>
+                    }
+                    trailing={
+                      <span className="whitespace-nowrap">
+                        {formatIsoDate(a.startDate, locale)}
+                      </span>
+                    }
+                  />
                 ))
               )}
             </DashCard>

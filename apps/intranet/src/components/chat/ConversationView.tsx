@@ -4,6 +4,8 @@ import { useAuth } from "@clerk/nextjs";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import {
   ArrowLeft,
+  Check,
+  CheckCheck,
   Loader2,
   Paperclip,
   SendHorizonal,
@@ -22,8 +24,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useCurrentUser } from "@/components/providers/current-user";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTime, initials } from "@/lib/format";
@@ -43,8 +47,10 @@ export function ConversationView({
   onBack: () => void;
 }) {
   const t = useTranslations("Chat");
+  const tc = useTranslations("Common");
   const locale = useLocale();
   const me = useCurrentUser();
+  const confirm = useConfirm();
   const { getToken } = useAuth();
 
   const conversation = useQuery(api.chat.getConversation, { conversationId });
@@ -56,6 +62,7 @@ export function ConversationView({
   const typingNames = useQuery(api.chat.whoIsTyping, { conversationId }) ?? [];
   const sendMessage = useMutation(api.chat.sendMessage);
   const deleteMessage = useMutation(api.chat.deleteMessage);
+  const toggleReaction = useMutation(api.chat.toggleReaction);
   const markRead = useMutation(api.chat.markRead);
   const setTyping = useMutation(api.chat.setTyping);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
@@ -105,6 +112,21 @@ export function ConversationView({
     }
   }
 
+  async function onDeleteMessage(messageId: Id<"messages">) {
+    const ok = await confirm({
+      title: t("deleteMessage"),
+      confirmLabel: tc("delete"),
+      cancelLabel: tc("cancel"),
+    });
+    if (ok) {
+      try {
+        await deleteMessage({ messageId });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Error");
+      }
+    }
+  }
+
   async function send() {
     const text = body.trim();
     if (!text && files.length === 0) return;
@@ -143,18 +165,28 @@ export function ConversationView({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b p-3">
+      <div className="flex items-center gap-3 border-b border-border/70 px-4 py-3">
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden"
+          className="-ml-1 md:hidden"
           onClick={onBack}
           aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <p className="font-semibold">{conversation?.title}</p>
+        <Avatar className="size-9 shrink-0">
+          {conversation?.avatar && (
+            <AvatarImage src={conversation.avatar} alt={conversation.title} />
+          )}
+          <AvatarFallback className="text-xs">
+            {initials(conversation?.title ?? "")}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <p className="truncate font-semibold leading-tight">
+            {conversation?.title}
+          </p>
           {conversation?.type === "group" && (
             <p className="text-xs text-muted-foreground">
               {conversation.members.length} {t("members")}
@@ -168,20 +200,24 @@ export function ConversationView({
         {status === "CanLoadMore" && (
           <div className="mb-2 flex justify-center">
             <Button variant="ghost" size="sm" onClick={() => loadMore(30)}>
-              {t("title")}…
+              {t("loadMore")}
             </Button>
           </div>
         )}
         <div className="space-y-3">
           {messages.map(m => {
             const mine = m.senderId === me._id;
+            const seen = mine && m.seenBy.length > 0;
             return (
               <div
                 key={m._id}
-                className={cn("flex gap-2", mine && "flex-row-reverse")}
+                className={cn(
+                  "group flex gap-2",
+                  mine && "flex-row-reverse"
+                )}
               >
                 {!mine && (
-                  <Avatar className="h-7 w-7 shrink-0">
+                  <Avatar className="mt-auto h-7 w-7 shrink-0">
                     <AvatarFallback className="text-[10px]">
                       {initials(m.senderName)}
                     </AvatarFallback>
@@ -189,86 +225,140 @@ export function ConversationView({
                 )}
                 <div
                   className={cn(
-                    "group max-w-[75%] rounded-2xl px-3 py-2 text-sm",
-                    mine ? "bg-primary text-primary-foreground" : "bg-muted"
+                    "flex min-w-0 max-w-[78%] flex-col gap-1",
+                    mine ? "items-end" : "items-start"
                   )}
                 >
-                  {!mine && conversation?.type === "group" && (
-                    <p className="mb-0.5 text-xs font-semibold opacity-80">
-                      {m.senderName}
-                    </p>
-                  )}
-                  {m.deleted ? (
-                    <p className="italic opacity-70">{t("deleted")}</p>
-                  ) : (
-                    <>
-                      {m.body && (
-                        <p className="whitespace-pre-wrap break-words">
-                          {m.body}
+                  <div
+                    className={cn(
+                      "flex items-center gap-1",
+                      mine && "flex-row-reverse"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "min-w-0 rounded-2xl px-3 py-2 text-sm",
+                        mine
+                          ? "rounded-br-md bg-primary text-primary-foreground"
+                          : "rounded-bl-md bg-muted"
+                      )}
+                    >
+                      {!mine && conversation?.type === "group" && (
+                        <p className="mb-0.5 text-xs font-semibold opacity-80">
+                          {m.senderName}
                         </p>
                       )}
-                      {m.attachments.map(a =>
-                        a.kind === "image" && a.url ? (
-                          <img
-                            key={a.storageId}
-                            src={a.url}
-                            alt={a.name}
-                            className="mt-1 max-h-64 rounded-lg"
-                          />
-                        ) : a.url ? (
-                          <a
-                            key={a.storageId}
-                            href={a.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="mt-1 flex items-center gap-1 underline"
-                          >
-                            <Paperclip className="h-3 w-3" /> {a.name}
-                          </a>
-                        ) : null
-                      )}
-                      {m.linkPreviews.map(lp => (
-                        <a
-                          key={lp.url}
-                          href={lp.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="mt-1 block overflow-hidden rounded-lg border bg-background text-foreground"
-                        >
-                          {lp.image && (
-                            <img
-                              src={lp.image}
-                              alt=""
-                              className="h-28 w-full object-cover"
-                            />
+                      {m.deleted ? (
+                        <p className="italic opacity-70">{t("deleted")}</p>
+                      ) : (
+                        <>
+                          {m.body && (
+                            <p className="whitespace-pre-wrap break-words">
+                              {m.body}
+                            </p>
                           )}
-                          <span className="block p-2">
-                            <span className="block text-xs font-semibold">
-                              {lp.title}
-                            </span>
-                            {lp.description && (
-                              <span className="line-clamp-2 text-xs text-muted-foreground">
-                                {lp.description}
+                          {m.attachments.map(a =>
+                            a.kind === "image" && a.url ? (
+                              <img
+                                key={a.storageId}
+                                src={a.url}
+                                alt={a.name}
+                                className="mt-1 max-h-64 rounded-lg"
+                              />
+                            ) : a.url ? (
+                              <a
+                                key={a.storageId}
+                                href={a.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="mt-1 flex items-center gap-1 underline"
+                              >
+                                <Paperclip className="h-3 w-3" /> {a.name}
+                              </a>
+                            ) : null
+                          )}
+                          {m.linkPreviews.map(lp => (
+                            <a
+                              key={lp.url}
+                              href={lp.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 block overflow-hidden rounded-lg border bg-background text-foreground"
+                            >
+                              {lp.image && (
+                                <img
+                                  src={lp.image}
+                                  alt=""
+                                  className="h-28 w-full object-cover"
+                                />
+                              )}
+                              <span className="block p-2">
+                                <span className="block text-xs font-semibold">
+                                  {lp.title}
+                                </span>
+                                {lp.description && (
+                                  <span className="line-clamp-2 text-xs text-muted-foreground">
+                                    {lp.description}
+                                  </span>
+                                )}
                               </span>
-                            )}
-                          </span>
-                        </a>
-                      ))}
-                    </>
-                  )}
-                  <div className="mt-0.5 flex items-center gap-1 text-[10px] opacity-60">
-                    <span>{formatTime(m.createdAt, locale)}</span>
-                    {m.edited && !m.deleted && <span>· {t("edited")}</span>}
-                    {mine && !m.deleted && (
-                      <button
-                        className="opacity-0 transition group-hover:opacity-100"
-                        aria-label="Delete"
-                        onClick={() => void deleteMessage({ messageId: m._id })}
+                            </a>
+                          ))}
+                        </>
+                      )}
+                      <div
+                        className={cn(
+                          "mt-0.5 flex items-center gap-1 text-[10px] opacity-60",
+                          mine && "justify-end"
+                        )}
                       >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                        <span>{formatTime(m.createdAt, locale)}</span>
+                        {m.edited && !m.deleted && <span>· {t("edited")}</span>}
+                        {mine &&
+                          !m.deleted &&
+                          (seen ? (
+                            <CheckCheck
+                              className="h-3.5 w-3.5"
+                              aria-label={t("seenBy", {
+                                names: m.seenBy.join(", "),
+                              })}
+                            />
+                          ) : (
+                            <Check className="h-3.5 w-3.5" />
+                          ))}
+                      </div>
+                    </div>
+
+                    {!m.deleted && (
+                      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                        <ReactionPicker
+                          onPick={emoji =>
+                            void toggleReaction({ messageId: m._id, emoji })
+                          }
+                          side="top"
+                          align={mine ? "end" : "start"}
+                        />
+                        {mine && (
+                          <button
+                            className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                            aria-label={tc("delete")}
+                            onClick={() => void onDeleteMessage(m._id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
+
+                  {!m.deleted && m.reactions.length > 0 && (
+                    <ReactionChips
+                      reactions={m.reactions}
+                      onToggle={emoji =>
+                        void toggleReaction({ messageId: m._id, emoji })
+                      }
+                    />
+                  )}
                 </div>
               </div>
             );
@@ -287,48 +377,51 @@ export function ConversationView({
       )}
 
       {/* Composer */}
-      <div className="flex items-end gap-2 border-t p-3">
-        <label className="cursor-pointer text-muted-foreground hover:text-foreground">
-          <Paperclip className="h-5 w-5" />
-          <input
-            type="file"
-            multiple
-            className="hidden"
-            onChange={e => setFiles(Array.from(e.target.files ?? []))}
-          />
-        </label>
-        <div className="flex-1">
-          {files.length > 0 && (
-            <p className="mb-1 truncate text-xs text-muted-foreground">
-              {files.map(f => f.name).join(", ")}
-            </p>
-          )}
-          <Textarea
-            value={body}
-            onChange={e => onType(e.target.value)}
-            placeholder={t("messagePlaceholder")}
-            rows={1}
-            className="min-h-9 resize-none"
-            onKeyDown={e => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void send();
-              }
-            }}
-          />
+      <div className="border-t border-border/70 p-3">
+        <div className="flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
+          <label className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+            <Paperclip className="h-5 w-5" />
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={e => setFiles(Array.from(e.target.files ?? []))}
+            />
+          </label>
+          <div className="flex-1 self-center">
+            {files.length > 0 && (
+              <p className="mb-1 truncate px-1 text-xs text-muted-foreground">
+                {files.map(f => f.name).join(", ")}
+              </p>
+            )}
+            <Textarea
+              value={body}
+              onChange={e => onType(e.target.value)}
+              placeholder={t("messagePlaceholder")}
+              rows={1}
+              className="min-h-9 resize-none border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
+              onKeyDown={e => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void send();
+                }
+              }}
+            />
+          </div>
+          <Button
+            size="icon"
+            className="size-9 shrink-0 rounded-lg"
+            onClick={send}
+            disabled={sending}
+            aria-label={t("send")}
+          >
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <SendHorizonal className="h-4 w-4" />
+            )}
+          </Button>
         </div>
-        <Button
-          size="icon"
-          onClick={send}
-          disabled={sending}
-          aria-label={t("title")}
-        >
-          {sending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <SendHorizonal className="h-4 w-4" />
-          )}
-        </Button>
       </div>
     </div>
   );

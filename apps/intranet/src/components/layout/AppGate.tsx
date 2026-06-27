@@ -14,6 +14,7 @@ import {
   CurrentUserProvider,
 } from "@/components/providers/current-user";
 import { BrandLogo } from "@/components/Logo";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 
 function FullScreenLoader() {
   return (
@@ -42,7 +43,9 @@ export function AppGate({ children }: { children: ReactNode }) {
 
   return (
     <CurrentUserProvider user={me as CurrentUser}>
-      <AppShell>{children}</AppShell>
+      <ConfirmProvider>
+        <AppShell>{children}</AppShell>
+      </ConfirmProvider>
     </CurrentUserProvider>
   );
 }

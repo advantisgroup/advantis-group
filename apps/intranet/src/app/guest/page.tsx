@@ -6,9 +6,6 @@ import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
-import Markdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-
 import { api } from "@advantis/convex/api";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -16,6 +13,7 @@ import { BrandLogo } from "@/components/Logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RichText } from "@/components/ui/rich-text";
 import { formatDateTime } from "@/lib/format";
 import { clearGuestToken, getGuestToken } from "@/lib/guest";
 
@@ -90,8 +88,8 @@ export default function GuestTourPage() {
                     {formatDateTime(a.publishedAt, locale)}
                   </p>
                 </CardHeader>
-                <CardContent className="prose prose-sm max-w-none dark:prose-invert">
-                  <Markdown remarkPlugins={[remarkGfm]}>{a.body}</Markdown>
+                <CardContent>
+                  <RichText html={a.body} />
                 </CardContent>
               </Card>
             ))

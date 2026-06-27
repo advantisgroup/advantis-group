@@ -27,7 +27,9 @@
     "optional": "optional",
     "send": "Senden",
     "close": "Schließen",
-    "open": "Öffnen"
+    "open": "Öffnen",
+    "areYouSure": "Bist du sicher?",
+    "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "Access": {
     "title": "Zugang anfragen",
@@ -63,7 +65,12 @@
     "start": "Beginn",
     "end": "Ende",
     "allDay": "Ganztägig",
-    "guestVisible": "Für Gäste sichtbar"
+    "guestVisible": "Für Gäste sichtbar",
+    "details": "Details",
+    "organizer": "Organisator",
+    "noEntries": "Nichts geplant",
+    "absence": "Abwesenheit",
+    "deleteEvent": "Diesen Termin löschen?"
   },
   "Absences": {
     "title": "Abwesenheiten",
@@ -102,10 +109,15 @@
     "department": "Abteilung",
     "specificPeople": "Bestimmte Personen",
     "attachments": "Anhänge",
-    "bodyLabel": "Inhalt",
+    "bodyLabel": "Schreibe deine Ankündigung…",
+    "titlePlaceholder": "Titel",
     "pin": "Oben anheften",
     "guestVisible": "Für Gäste sichtbar",
-    "by": "von {name}"
+    "by": "von {name}",
+    "deleteConfirm": "Diese Ankündigung löschen?",
+    "empty": "Noch keine Ankündigungen",
+    "viewedBy": "{count, plural, =0 {Noch nicht gesehen} one {# Aufruf} other {# Aufrufe}}",
+    "noViews": "Noch niemand hat das gesehen"
   },
   "Chat": {
     "title": "Chat",
@@ -121,8 +133,18 @@
     "members": "Mitglieder",
     "noConversations": "Noch keine Unterhaltungen",
     "selectConversation": "Wähle eine Unterhaltung aus",
+    "selectConversationHint": "Wähle links eine Unterhaltung oder starte eine neue.",
     "attachImage": "Bild anhängen",
-    "attachFile": "Datei anhängen"
+    "attachFile": "Datei anhängen",
+    "noPeople": "Niemand zum Chatten verfügbar",
+    "noPeopleHint": "Sobald weitere Personen beigetreten sind, erscheinen sie hier.",
+    "loadMore": "Ältere Nachrichten laden",
+    "deleteMessage": "Diese Nachricht löschen?",
+    "startConversation": "Unterhaltung beginnen",
+    "send": "Senden",
+    "seenBy": "Gesehen von {names}",
+    "seen": "Gesehen",
+    "addReaction": "Reaktion hinzufügen"
   },
   "Directory": {
     "title": "Mitarbeiter",
@@ -170,6 +192,11 @@
   },
   "Settings": {
     "title": "Einstellungen",
+    "subtitle": "Verwalte dein persönliches Konto und deine Vorlieben",
+    "account": "Mein Konto",
+    "accountHint": "Diese Angaben gelten nur für dich und sind für Kolleg:innen sichtbar.",
+    "personalInfo": "Persönliche Daten",
+    "preferences": "Meine Vorlieben",
     "profile": "Profil",
     "firstName": "Vorname",
     "lastName": "Nachname",

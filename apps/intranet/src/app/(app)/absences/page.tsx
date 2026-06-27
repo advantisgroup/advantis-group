@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -169,9 +170,27 @@ function RequestDialog() {
 
 function MyAbsences() {
   const t = useTranslations("Absences");
+  const tc = useTranslations("Common");
   const locale = useLocale();
+  const confirm = useConfirm();
   const absences = useQuery(api.absences.myAbsences);
   const cancel = useMutation(api.absences.cancel);
+
+  async function onCancel(id: Id<"absences">) {
+    const ok = await confirm({
+      title: t("cancelRequest"),
+      description: tc("deleteWarning"),
+      confirmLabel: t("cancelRequest"),
+      cancelLabel: tc("close"),
+    });
+    if (ok) {
+      try {
+        await cancel({ absenceId: id });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Error");
+      }
+    }
+  }
 
   if (absences && absences.length === 0) {
     return (
@@ -210,7 +229,7 @@ function MyAbsences() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => void cancel({ absenceId: a._id })}
+                    onClick={() => void onCancel(a._id)}
                   >
                     {t("cancelRequest")}
                   </Button>

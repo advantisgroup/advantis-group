@@ -201,7 +201,17 @@ export default defineSchema({
     readAt: v.number(),
   })
     .index("by_announcement_user", ["announcementId", "userId"])
+    .index("by_announcement", ["announcementId"])
     .index("by_user", ["userId"]),
+
+  announcementReactions: defineTable({
+    announcementId: v.id("announcements"),
+    userId: v.id("users"),
+    emoji: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_announcement", ["announcementId"])
+    .index("by_announcement_user", ["announcementId", "userId"]),
 
   // --- Chat ----------------------------------------------------------------
   conversations: defineTable({
@@ -237,6 +247,16 @@ export default defineSchema({
     deletedAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_conversation", ["conversationId"]),
+
+  messageReactions: defineTable({
+    messageId: v.id("messages"),
+    conversationId: v.id("conversations"),
+    userId: v.id("users"),
+    emoji: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_message_user", ["messageId", "userId"]),
 
   typing: defineTable({
     conversationId: v.id("conversations"),

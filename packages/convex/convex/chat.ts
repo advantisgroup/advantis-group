@@ -251,6 +251,12 @@ export const getConversation = query({
       await Promise.all(members.map(m => ctx.db.get(m.userId)))
     ).filter((u): u is Doc<"users"> => u !== null);
     const others = memberUsers.filter(u => u._id !== user._id);
+    const avatar =
+      conversation.type === "dm" && others[0]
+        ? others[0].avatarStorageId
+          ? await ctx.storage.getUrl(others[0].avatarStorageId)
+          : (others[0].avatarUrl ?? null)
+        : null;
     return {
       _id: conversation._id,
       type: conversation.type,
@@ -258,6 +264,7 @@ export const getConversation = query({
         conversation.type === "group"
           ? (conversation.name ?? "Group")
           : memberDisplay(others[0] ?? null),
+      avatar,
       members: memberUsers.map(u => ({
         _id: u._id,
         name: memberDisplay(u),
@@ -268,6 +275,24 @@ export const getConversation = query({
 });
 
 // --- Messages ----------------------------------------------------------------
+
+function aggregateReactions(
+  rows: { emoji: string; userId: Id<"users"> }[],
+  meId: Id<"users">
+): { emoji: string; count: number; mine: boolean }[] {
+  const map = new Map<string, { count: number; mine: boolean }>();
+  for (const r of rows) {
+    const entry = map.get(r.emoji) ?? { count: 0, mine: false };
+    entry.count += 1;
+    if (r.userId === meId) entry.mine = true;
+    map.set(r.emoji, entry);
+  }
+  return [...map.entries()].map(([emoji, e]) => ({
+    emoji,
+    count: e.count,
+    mine: e.mine,
+  }));
+}
 
 export const getMessages = query({
   args: {
@@ -284,9 +309,33 @@ export const getMessages = query({
       .order("desc")
       .paginate(paginationOpts);
 
+    // Members + their read cursors, for per-message "seen by".
+    const members = await ctx.db
+      .query("conversationMembers")
+      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+      .collect();
+    const memberNames = new Map<Id<"users">, string>();
+    await Promise.all(
+      members.map(async mb =>
+        memberNames.set(mb.userId, memberDisplay(await ctx.db.get(mb.userId)))
+      )
+    );
+
     const items = await Promise.all(
       page.page.map(async m => {
         const sender = await ctx.db.get(m.senderUserId);
+        const reactionRows = await ctx.db
+          .query("messageReactions")
+          .withIndex("by_message", q => q.eq("messageId", m._id))
+          .collect();
+        // Members (excluding the sender) whose read cursor is at/after this
+        // message — i.e. who have seen it.
+        const seenBy = members
+          .filter(
+            mb =>
+              mb.userId !== m.senderUserId && mb.lastReadAt >= m.createdAt
+          )
+          .map(mb => memberNames.get(mb.userId) ?? "Unknown");
         return {
           _id: m._id,
           conversationId: m.conversationId,
@@ -299,12 +348,56 @@ export const getMessages = query({
             ? []
             : await attachmentUrls(ctx, m.attachments),
           linkPreviews: m.deletedAt ? [] : m.linkPreviews,
+          reactions: m.deletedAt
+            ? []
+            : aggregateReactions(reactionRows, user._id),
+          seenBy,
           createdAt: m.createdAt,
         };
       })
     );
 
     return { ...page, page: items };
+  },
+});
+
+export const toggleReaction = mutation({
+  args: { messageId: v.id("messages"), emoji: v.string() },
+  handler: async (ctx, { messageId, emoji }) => {
+    const user = await requireUser(ctx);
+    const message = await ctx.db.get(messageId);
+    if (!message || message.deletedAt) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Message not found",
+      });
+    }
+    await requireMembership(ctx, message.conversationId, user._id);
+
+    // WhatsApp-style: one reaction per user per message.
+    const existing = await ctx.db
+      .query("messageReactions")
+      .withIndex("by_message_user", q =>
+        q.eq("messageId", messageId).eq("userId", user._id)
+      )
+      .first();
+
+    if (existing) {
+      if (existing.emoji === emoji) {
+        await ctx.db.delete(existing._id); // toggle off
+      } else {
+        await ctx.db.patch(existing._id, { emoji, createdAt: Date.now() });
+      }
+    } else {
+      await ctx.db.insert("messageReactions", {
+        messageId,
+        conversationId: message.conversationId,
+        userId: user._id,
+        emoji,
+        createdAt: Date.now(),
+      });
+    }
+    return { ok: true };
   },
 });
 
@@ -386,6 +479,12 @@ export const deleteMessage = mutation({
     for (const attachment of message.attachments) {
       await ctx.storage.delete(attachment.storageId);
     }
+    // Remove reactions on the deleted message.
+    const reactions = await ctx.db
+      .query("messageReactions")
+      .withIndex("by_message", q => q.eq("messageId", messageId))
+      .collect();
+    await Promise.all(reactions.map(r => ctx.db.delete(r._id)));
     await ctx.db.patch(messageId, {
       deletedAt: Date.now(),
       body: "",

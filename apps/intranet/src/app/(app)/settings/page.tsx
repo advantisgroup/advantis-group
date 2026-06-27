@@ -73,7 +73,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader title={t("title")} />
+      <PageHeader title={t("title")} description={t("subtitle")} />
 
       {/* Personal identity hero */}
       <Card className="overflow-hidden">
@@ -97,6 +97,9 @@ export default function SettingsPage() {
             </label>
           </div>
           <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+              {t("account")}
+            </p>
             <h2 className="truncate font-display text-xl font-bold tracking-tight">
               {user.name}
             </h2>
@@ -110,6 +113,13 @@ export default function SettingsPage() {
         </div>
 
         <CardContent className="space-y-4 pt-5">
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-semibold">{t("personalInfo")}</p>
+            <span className="h-px flex-1 bg-border/60" />
+          </div>
+          <p className="-mt-2 text-xs text-muted-foreground">
+            {t("accountHint")}
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{t("firstName")}</Label>
@@ -157,11 +167,9 @@ export default function SettingsPage() {
       <Card>
         <CardContent className="flex items-center justify-between gap-3 p-5">
           <div>
-            <p className="font-semibold tracking-tight">
-              {t("language")} &amp; {t("theme")}
-            </p>
+            <p className="font-semibold tracking-tight">{t("preferences")}</p>
             <p className="text-sm text-muted-foreground">
-              {t("themeSystem")} · {t("themeLight")} / {t("themeDark")}
+              {t("language")} &amp; {t("theme")}
             </p>
           </div>
           <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background p-1">

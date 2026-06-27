@@ -1,9 +1,17 @@
 import { ConvexError, v } from "convex/values";
 
+import { type Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { requireManager, requireUser } from "./lib/auth";
 import { audienceValidator } from "./schema";
 import { userMatchesAudience } from "./lib/audience";
+
+function displayName(user: Doc<"users"> | null): string {
+  if (!user) return "Unknown";
+  return (
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+  );
+}
 
 export const create = mutation({
   args: {
@@ -90,9 +98,11 @@ export const listForRange = query({
       .query("events")
       .withIndex("by_start", q => q.lte("start", end))
       .collect();
-    return events
-      .filter(e => e.end >= start && userMatchesAudience(user, e.audience))
-      .map(e => ({
+    const visible = events.filter(
+      e => e.end >= start && userMatchesAudience(user, e.audience)
+    );
+    return Promise.all(
+      visible.map(async e => ({
         _id: e._id,
         title: e.title,
         description: e.description ?? null,
@@ -102,6 +112,8 @@ export const listForRange = query({
         allDay: e.allDay,
         color: e.color ?? null,
         createdByUserId: e.createdByUserId,
-      }));
+        createdByName: displayName(await ctx.db.get(e.createdByUserId)),
+      }))
+    );
   },
 });
