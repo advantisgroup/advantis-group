@@ -126,9 +126,12 @@ http.route({
 
     let inserted = 0;
     if (accepted.length > 0) {
-      const result = await ctx.runMutation(internal.activity.ingest.recordSamples, {
-        samples: accepted,
-      });
+      const result = await ctx.runMutation(
+        internal.activity.ingest.recordSamples,
+        {
+          samples: accepted,
+        }
+      );
       inserted = result.inserted;
       if (result.throttled && inserted === 0) {
         return new Response("rate limited", {
@@ -185,9 +188,12 @@ http.route({
   path: "/agent/verify-password",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    if ((await authenticateDevice(ctx, request)) === null) return unauthorized();
+    if ((await authenticateDevice(ctx, request)) === null)
+      return unauthorized();
 
-    const body = (await readJson(request)) as { password?: unknown } | undefined;
+    const body = (await readJson(request)) as
+      | { password?: unknown }
+      | undefined;
     if (!body || typeof body.password !== "string") return badRequest();
 
     const row = await ctx.runQuery(internal.activity.settings.getByKey, {

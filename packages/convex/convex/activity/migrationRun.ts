@@ -24,7 +24,12 @@ const BATCH_SIZE = 200;
 // Per-table upsert mutation reference.
 const UPSERT: Record<
   MigrationTable,
-  FunctionReference<"mutation", "internal", { migrationId: any; rows: any[] }, { warnings: number }>
+  FunctionReference<
+    "mutation",
+    "internal",
+    { migrationId: any; rows: any[] },
+    { warnings: number }
+  >
 > = {
   people: internal.activity.migration.upsertPeople,
   devices: internal.activity.migration.upsertDevices,

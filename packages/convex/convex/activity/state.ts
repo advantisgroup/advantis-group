@@ -107,7 +107,11 @@ export const pushSignal = mutation({
     const finalState = computeEmployeeState(signalsOf(merged));
 
     if (existing) {
-      await ctx.db.patch(existing._id, { ...patch, finalState, updatedAt: now });
+      await ctx.db.patch(existing._id, {
+        ...patch,
+        finalState,
+        updatedAt: now,
+      });
     } else {
       await ctx.db.insert("employeeStates", {
         employeeId: args.employeeId,

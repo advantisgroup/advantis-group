@@ -7,15 +7,9 @@ if (!appDir) {
   process.exit(1);
 }
 
-const ignoredDirs = [
-  "scripts/",
-  "docs/",
-  ".github/",
-];
+const ignoredDirs = ["scripts/", "docs/", ".github/"];
 
-const alwaysBuildDirs = [
-  "packages/",
-];
+const alwaysBuildDirs = ["packages/"];
 
 const alwaysBuildFiles = [
   "package.json",
@@ -34,12 +28,12 @@ function isInside(file, dir) {
 }
 
 function isIgnored(file) {
-  return ignoredDirs.some((dir) => isInside(file, dir));
+  return ignoredDirs.some(dir => isInside(file, dir));
 }
 
 function isAlwaysBuild(file) {
   return (
-    alwaysBuildDirs.some((dir) => isInside(file, dir)) ||
+    alwaysBuildDirs.some(dir => isInside(file, dir)) ||
     alwaysBuildFiles.includes(file)
   );
 }
@@ -63,14 +57,14 @@ try {
 }
 
 console.log("Changed files:");
-console.log(changedFiles.map((file) => `- ${file}`).join("\n"));
+console.log(changedFiles.map(file => `- ${file}`).join("\n"));
 
 if (changedFiles.length === 0) {
   console.log("No changed files detected. Building.");
   process.exit(1);
 }
 
-const shouldBuild = changedFiles.some((file) => {
+const shouldBuild = changedFiles.some(file => {
   if (isIgnored(file)) return false;
   if (isAlwaysBuild(file)) return true;
   if (isRelevantToApp(file)) return true;

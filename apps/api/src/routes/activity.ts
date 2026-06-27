@@ -50,7 +50,11 @@ function str(body: unknown, key: string): string | null {
 }
 
 const ok = (body: Record<string, unknown> = {}) => ({ ok: true, ...body });
-const fail = (set: { status?: number | string }, status: number, error: string) => {
+const fail = (
+  set: { status?: number | string },
+  status: number,
+  error: string
+) => {
   set.status = status;
   return { ok: false, error };
 };
@@ -63,12 +67,25 @@ export const activityRoute = new Elysia()
     const windowsUser = str(body, "windowsUser");
     const agentVersion = str(body, "agentVersion");
     const claimNonce = str(body, "claimNonce");
-    if (!deviceId || !hostname || !windowsUser || !agentVersion || !claimNonce) {
+    if (
+      !deviceId ||
+      !hostname ||
+      !windowsUser ||
+      !agentVersion ||
+      !claimNonce
+    ) {
       return fail(set, 400, "bad_request");
     }
     const { status } = await getConvex().mutation(
       api.activity.devices.requestEnrollment,
-      { secret: signalSecret(), deviceId, hostname, windowsUser, agentVersion, claimNonce }
+      {
+        secret: signalSecret(),
+        deviceId,
+        hostname,
+        windowsUser,
+        agentVersion,
+        claimNonce,
+      }
     );
     return ok({ status });
   })
@@ -95,7 +112,8 @@ export const activityRoute = new Elysia()
     const b = (body ?? {}) as Record<string, unknown>;
     const employeeId = typeof b.employeeId === "string" ? b.employeeId : null;
     const deviceIdle = typeof b.deviceIdle === "boolean" ? b.deviceIdle : null;
-    const idleSeconds = typeof b.idleSeconds === "number" ? b.idleSeconds : null;
+    const idleSeconds =
+      typeof b.idleSeconds === "number" ? b.idleSeconds : null;
     if (employeeId === null || deviceIdle === null || idleSeconds === null) {
       return fail(set, 400, "bad_request");
     }
@@ -138,7 +156,8 @@ export const activityRoute = new Elysia()
       return fail(set, 401, "unauthorized");
     }
     const b = (body ?? {}) as { employeeId?: string; genesysUserId?: string };
-    if (!b?.employeeId || !b?.genesysUserId) return fail(set, 400, "bad_request");
+    if (!b?.employeeId || !b?.genesysUserId)
+      return fail(set, 400, "bad_request");
     const result = await getConvex().action(api.activity.genesys.syncGenesys, {
       secret: signalSecret(),
       employeeId: b.employeeId,
@@ -154,7 +173,9 @@ export const activityRoute = new Elysia()
 
       // A. Validation handshake — surface the secret and acknowledge.
       if (typeof b.secret === "string" && !b.event_name && !b.employeeId) {
-        console.warn(`[activity/clockodo] webhook validation secret: ${b.secret}`);
+        console.warn(
+          `[activity/clockodo] webhook validation secret: ${b.secret}`
+        );
         return ok();
       }
 
@@ -165,17 +186,24 @@ export const activityRoute = new Elysia()
           keyMatches(token, process.env.CLOCKODO_WEBHOOK_TOKEN) ||
           keyMatches(token, process.env.ACTIVITYTRACK_WEBHOOK_SECRET);
         if (!tokenOk) return fail(set, 401, "unauthorized");
-        const payload = (b.payload ?? {}) as { entry?: { id?: number | string } };
+        const payload = (b.payload ?? {}) as {
+          entry?: { id?: number | string };
+        };
         const entryId = payload.entry?.id;
         if (entryId == null) return ok({ ignored: true });
         return await getConvex().action(
           api.activity.clockodo.refreshClockodoByEntry,
-          { secret: signalSecret(), entryId: String(entryId), eventName: b.event_name }
+          {
+            secret: signalSecret(),
+            entryId: String(entryId),
+            eventName: b.event_name,
+          }
         );
       }
 
       // C. Legacy adapter shapes.
-      const secret = bearer(headers) ?? (query as Record<string, string>)?.secret ?? null;
+      const secret =
+        bearer(headers) ?? (query as Record<string, string>)?.secret ?? null;
       if (!keyMatches(secret, process.env.ACTIVITYTRACK_WEBHOOK_SECRET)) {
         return fail(set, 401, "unauthorized");
       }

@@ -35,7 +35,11 @@ const TOOLS: (Cmd | "divider")[] = [
   },
   "divider",
   { icon: Link2, label: "Insert link", action: "link" },
-  { icon: RemoveFormatting, label: "Clear formatting", command: "removeFormat" },
+  {
+    icon: RemoveFormatting,
+    label: "Clear formatting",
+    command: "removeFormat",
+  },
 ];
 
 export function RichTextEditor({

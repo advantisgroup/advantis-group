@@ -55,9 +55,7 @@ export default function ActivitySettingsPage() {
         id={key}
         type="number"
         value={form[key]}
-        onChange={e =>
-          setForm(f => ({ ...f, [key]: Number(e.target.value) }))
-        }
+        onChange={e => setForm(f => ({ ...f, [key]: Number(e.target.value) }))}
         className="w-48"
       />
     </div>

@@ -112,7 +112,10 @@ export const resume = mutation({
     await requireAdmin(ctx);
     const migration = await ctx.db.get(migrationId);
     if (!migration) throw appError("notFound.migration", "Migration not found");
-    await ctx.db.patch(migrationId, { status: "running", finishedAt: undefined });
+    await ctx.db.patch(migrationId, {
+      status: "running",
+      finishedAt: undefined,
+    });
     // Reset any failed step back to pending (keeping its cursor) so it retries.
     const steps = await ctx.db
       .query("activityMigrationSteps")
@@ -196,7 +199,10 @@ export const advanceStep = internalMutation({
     warningsDelta: v.number(),
     done: v.boolean(),
   },
-  handler: async (ctx, { stepId, cursor, processedDelta, warningsDelta, done }) => {
+  handler: async (
+    ctx,
+    { stepId, cursor, processedDelta, warningsDelta, done }
+  ) => {
     const step = await ctx.db.get(stepId);
     if (!step) return;
     await ctx.db.patch(stepId, {
@@ -272,7 +278,8 @@ export const upsertPeople = internalMutation({
     for (const row of rows) {
       const employeeId: string | undefined = row.employeeId ?? undefined;
       const email: string | undefined = row.email ?? undefined;
-      const clockodoUserId: string | undefined = row.clockodoUserId ?? undefined;
+      const clockodoUserId: string | undefined =
+        row.clockodoUserId ?? undefined;
 
       // Resolve the intranet user link.
       let userId: Id<"users"> | undefined;
@@ -330,7 +337,13 @@ export const upsertPeople = internalMutation({
         targetId = await ctx.db.insert("people", fields);
       }
       if (row._id) {
-        await recordIdMap(ctx, migrationId, "people", String(row._id), targetId);
+        await recordIdMap(
+          ctx,
+          migrationId,
+          "people",
+          String(row._id),
+          targetId
+        );
       }
     }
     return { warnings };

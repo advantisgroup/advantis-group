@@ -28,7 +28,9 @@ export function StatCard({
             <span className="text-muted-foreground [&_svg]:size-4">{icon}</span>
           )}
         </div>
-        <p className={cn("mt-2 font-display text-2xl font-bold tracking-tight")}>
+        <p
+          className={cn("mt-2 font-display text-2xl font-bold tracking-tight")}
+        >
           {value}
         </p>
         {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}

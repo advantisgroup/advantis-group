@@ -56,7 +56,9 @@ interface Absence {
 
 async function fetchAbsences(year: number): Promise<Absence[]> {
   const qs = `year=${year}&filter[scope]=viewableAbsences`;
-  const body = await clockodoGet<{ data?: Absence[] }>(`/api/v4/absences?${qs}`);
+  const body = await clockodoGet<{ data?: Absence[] }>(
+    `/api/v4/absences?${qs}`
+  );
   return body.data ?? [];
 }
 
@@ -218,10 +220,13 @@ export const refreshClockodoByEntry = action({
         return { ok: true as const, ignored: true as const };
       }
 
-      const employeeId = await ctx.runQuery(api.activity.state.resolveEmployeeId, {
-        secret,
-        clockodoUserId,
-      });
+      const employeeId = await ctx.runQuery(
+        api.activity.state.resolveEmployeeId,
+        {
+          secret,
+          clockodoUserId,
+        }
+      );
       if (!employeeId) {
         await reportHealth(ctx, "clockodo", "ok");
         return { ok: true as const, unmapped: true as const };

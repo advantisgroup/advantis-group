@@ -44,7 +44,9 @@ export default function ActivityMigrationPage() {
   const [busy, setBusy] = useState(false);
 
   if (!isAdmin) {
-    return <p className="py-20 text-center text-sm text-muted-foreground">403</p>;
+    return (
+      <p className="py-20 text-center text-sm text-muted-foreground">403</p>
+    );
   }
 
   async function onStart() {
@@ -102,7 +104,9 @@ export default function ActivityMigrationPage() {
       ) : (
         <>
           <div className="mb-4 flex items-center gap-2">
-            <span className="text-sm font-medium">{t("migration.status")}:</span>
+            <span className="text-sm font-medium">
+              {t("migration.status")}:
+            </span>
             <Badge variant={statusVariant(migration.status)}>
               {migration.status}
             </Badge>
@@ -137,7 +141,8 @@ export default function ActivityMigrationPage() {
                             variant="outline"
                             onClick={() =>
                               retryStep({
-                                stepId: step._id as Id<"activityMigrationSteps">,
+                                stepId:
+                                  step._id as Id<"activityMigrationSteps">,
                               }).catch(handleError)
                             }
                           >

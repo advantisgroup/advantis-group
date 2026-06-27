@@ -107,7 +107,9 @@ export default function ActivityTimelinePage({
                   <TableHead>{t("overview.lastSeen")}</TableHead>
                   <TableHead>{t("devices.user")}</TableHead>
                   <TableHead className="text-right">Idle</TableHead>
-                  <TableHead className="text-right">{t("people.active")}</TableHead>
+                  <TableHead className="text-right">
+                    {t("people.active")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

@@ -341,8 +341,7 @@ export const getMessages = query({
         // message — i.e. who have seen it.
         const seenBy = members
           .filter(
-            mb =>
-              mb.userId !== m.senderUserId && mb.lastReadAt >= m.createdAt
+            mb => mb.userId !== m.senderUserId && mb.lastReadAt >= m.createdAt
           )
           .map(mb => memberNames.get(mb.userId) ?? "Unknown");
         return {

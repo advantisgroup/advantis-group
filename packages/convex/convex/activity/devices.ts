@@ -29,7 +29,9 @@ export const list = query({
 
     return devices.map(d => ({
       ...d,
-      personName: d.personId ? (peopleById.get(d.personId)?.name ?? null) : null,
+      personName: d.personId
+        ? (peopleById.get(d.personId)?.name ?? null)
+        : null,
     }));
   },
 });

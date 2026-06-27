@@ -149,7 +149,10 @@ export function Sidebar() {
             )}
           >
             <div
-              className={cn("w-1/2 shrink-0", isActivity && "pointer-events-none")}
+              className={cn(
+                "w-1/2 shrink-0",
+                isActivity && "pointer-events-none"
+              )}
               aria-hidden={isActivity}
             >
               {groups.map(group => {

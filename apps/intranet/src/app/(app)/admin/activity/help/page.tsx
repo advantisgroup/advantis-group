@@ -34,8 +34,8 @@ export default function ActivityHelpPage() {
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
               {t("states.ACTIVE")} · {t("states.IN_CALL")} ·{" "}
-              {t("states.WRAP_UP")} · {t("states.BREAK")} ·{" "}
-              {t("states.IDLE")} · {t("states.ABSENT")}
+              {t("states.WRAP_UP")} · {t("states.BREAK")} · {t("states.IDLE")} ·{" "}
+              {t("states.ABSENT")}
             </p>
             <p>{t("overview.empty")}</p>
           </CardContent>

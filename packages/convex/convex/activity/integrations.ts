@@ -16,7 +16,9 @@ export const pollAll = internalAction({
   args: {},
   handler: async ctx => {
     const secret = signalSecret();
-    const mappings = await ctx.runQuery(api.activity.state.mappings, { secret });
+    const mappings = await ctx.runQuery(api.activity.state.mappings, {
+      secret,
+    });
     await pollGenesys(ctx, mappings);
     await pollClockodo(ctx, secret, mappings);
   },

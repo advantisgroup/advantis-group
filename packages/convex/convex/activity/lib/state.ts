@@ -35,7 +35,7 @@ export const STATE_PRIORITY: Record<EmployeeState, number> =
       acc[state] = i;
       return acc;
     },
-    {} as Record<EmployeeState, number>,
+    {} as Record<EmployeeState, number>
   );
 
 /** Genesys routing status values (per /routingstatus). */
@@ -112,7 +112,11 @@ export function computeEmployeeState(signals: StateSignals): EmployeeState {
 export const activityUpdateSchema = z.object({
   employeeId: z.string().min(1).max(128),
   deviceIdle: z.boolean(),
-  idleSeconds: z.number().int().nonnegative().max(7 * 24 * 60 * 60),
+  idleSeconds: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(7 * 24 * 60 * 60),
   timestamp: z.string().datetime(),
 });
 export type ActivityUpdate = z.infer<typeof activityUpdateSchema>;
@@ -147,7 +151,7 @@ export type ClockodoSignal = z.infer<typeof clockodoSignalSchema>;
 //     optional WebSocket worker, which run in different runtimes) -----------
 
 export function normalizeRoutingStatus(
-  raw: string | undefined,
+  raw: string | undefined
 ): GenesysRoutingStatus | undefined {
   switch (raw?.toUpperCase()) {
     case "IDLE":
@@ -168,7 +172,7 @@ export function normalizeRoutingStatus(
  * the long tail (Meeting, Training, Break, Meal, …) onto the nearest bucket.
  */
 export function normalizePresence(
-  raw: string | undefined,
+  raw: string | undefined
 ): GenesysPresence | undefined {
   switch (raw?.toUpperCase()) {
     case "AVAILABLE":
@@ -221,14 +225,14 @@ export interface ParsedGenesysEvent {
  * it's a heartbeat / unrelated topic. Topic id shape: `v2.users.{id}.{kind}`.
  */
 export function parseGenesysNotification(
-  raw: unknown,
+  raw: unknown
 ): ParsedGenesysEvent | null {
   const msg = raw as { topicName?: string; eventBody?: unknown };
   const topic = msg?.topicName;
   if (!topic) return null;
 
   const m = /^v2\.users\.([^.]+)\.(routingStatus|presence|conversations)$/.exec(
-    topic,
+    topic
   );
   if (!m) return null;
   const genesysUserId = m[1]!;
@@ -259,7 +263,7 @@ export function parseGenesysNotification(
       | Array<{ wrapupRequired?: boolean; state?: string }>
       | undefined) ?? [];
   const inWrapUp = participants.some(
-    (p) => p.state?.toLowerCase() === "wrapup" || p.wrapupRequired === true,
+    p => p.state?.toLowerCase() === "wrapup" || p.wrapupRequired === true
   );
   return { genesysUserId, wrapUp: inWrapUp };
 }

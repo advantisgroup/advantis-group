@@ -42,7 +42,8 @@ interface ConvexErrorData {
 
 function isErrorCode(value: unknown): value is ErrorCode {
   return (
-    typeof value === "string" && (KNOWN_CODES as readonly string[]).includes(value)
+    typeof value === "string" &&
+    (KNOWN_CODES as readonly string[]).includes(value)
   );
 }
 
@@ -89,5 +90,7 @@ export function getErrorMessage(
   const { code, message } = parseError(error);
   if (message) return message;
   const byCode = code ? fallbacks[code] : undefined;
-  return byCode ?? fallbacks.generic ?? "Something went wrong. Please try again.";
+  return (
+    byCode ?? fallbacks.generic ?? "Something went wrong. Please try again."
+  );
 }
