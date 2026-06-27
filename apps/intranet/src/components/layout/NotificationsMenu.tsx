@@ -58,7 +58,7 @@ export function NotificationsMenu() {
         </div>
         <ScrollArea className="max-h-96">
           {notifications && notifications.length > 0 ? (
-            notifications.map((n) => (
+            notifications.map(n => (
               <button
                 key={n._id}
                 onClick={() => {
@@ -72,10 +72,13 @@ export function NotificationsMenu() {
               >
                 <span className="font-medium">{n.title}</span>
                 {n.body && (
-                  <span className="text-xs text-muted-foreground">{n.body}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {n.body}
+                  </span>
                 )}
                 <span className="text-[10px] text-muted-foreground">
-                  {relativeTime(n.createdAt)} · {new Date(n.createdAt).toLocaleDateString(locale)}
+                  {relativeTime(n.createdAt)} ·{" "}
+                  {new Date(n.createdAt).toLocaleDateString(locale)}
                 </span>
               </button>
             ))

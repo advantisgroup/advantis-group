@@ -28,7 +28,9 @@ const linkPreviewArg = v.object({
 
 function memberDisplay(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
-  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+  return (
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+  );
 }
 
 async function getMembership(
@@ -38,7 +40,7 @@ async function getMembership(
 ): Promise<Doc<"conversationMembers"> | null> {
   return ctx.db
     .query("conversationMembers")
-    .withIndex("by_user_conversation", (q) =>
+    .withIndex("by_user_conversation", q =>
       q.eq("userId", userId).eq("conversationId", conversationId)
     )
     .unique();
@@ -68,7 +70,7 @@ async function attachmentUrls(
   attachments: Doc<"messages">["attachments"]
 ) {
   return Promise.all(
-    attachments.map(async (a) => ({
+    attachments.map(async a => ({
       ...a,
       url: await ctx.storage.getUrl(a.storageId),
     }))
@@ -79,36 +81,36 @@ async function attachmentUrls(
 
 export const listConversations = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const user = await requireUser(ctx);
     const memberships = await ctx.db
       .query("conversationMembers")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", q => q.eq("userId", user._id))
       .collect();
 
     const rows = await Promise.all(
-      memberships.map(async (membership) => {
+      memberships.map(async membership => {
         const conversation = await ctx.db.get(membership.conversationId);
         if (!conversation) return null;
 
         // Other members (for DM naming / group avatars).
         const allMembers = await ctx.db
           .query("conversationMembers")
-          .withIndex("by_conversation", (q) =>
+          .withIndex("by_conversation", q =>
             q.eq("conversationId", conversation._id)
           )
           .collect();
         const others = (
           await Promise.all(
             allMembers
-              .filter((m) => m.userId !== user._id)
-              .map((m) => ctx.db.get(m.userId))
+              .filter(m => m.userId !== user._id)
+              .map(m => ctx.db.get(m.userId))
           )
         ).filter((u): u is Doc<"users"> => u !== null);
 
         const lastMessage = await ctx.db
           .query("messages")
-          .withIndex("by_conversation", (q) =>
+          .withIndex("by_conversation", q =>
             q.eq("conversationId", conversation._id)
           )
           .order("desc")
@@ -117,13 +119,13 @@ export const listConversations = query({
         // Unread = messages after my lastReadAt not sent by me.
         const recent = await ctx.db
           .query("messages")
-          .withIndex("by_conversation", (q) =>
+          .withIndex("by_conversation", q =>
             q.eq("conversationId", conversation._id)
           )
           .order("desc")
           .take(50);
         const unread = recent.filter(
-          (m) =>
+          m =>
             m.createdAt > membership.lastReadAt && m.senderUserId !== user._id
         ).length;
 
@@ -183,7 +185,7 @@ export const getOrCreateDm = mutation({
     const key = dmKeyFor(user._id, otherUserId);
     const existing = await ctx.db
       .query("conversations")
-      .withIndex("by_dmKey", (q) => q.eq("dmKey", key))
+      .withIndex("by_dmKey", q => q.eq("dmKey", key))
       .first();
     if (existing) return { conversationId: existing._id };
 
@@ -243,14 +245,12 @@ export const getConversation = query({
     if (!conversation) return null;
     const members = await ctx.db
       .query("conversationMembers")
-      .withIndex("by_conversation", (q) =>
-        q.eq("conversationId", conversationId)
-      )
+      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
       .collect();
     const memberUsers = (
-      await Promise.all(members.map((m) => ctx.db.get(m.userId)))
+      await Promise.all(members.map(m => ctx.db.get(m.userId)))
     ).filter((u): u is Doc<"users"> => u !== null);
-    const others = memberUsers.filter((u) => u._id !== user._id);
+    const others = memberUsers.filter(u => u._id !== user._id);
     return {
       _id: conversation._id,
       type: conversation.type,
@@ -258,7 +258,7 @@ export const getConversation = query({
         conversation.type === "group"
           ? (conversation.name ?? "Group")
           : memberDisplay(others[0] ?? null),
-      members: memberUsers.map((u) => ({
+      members: memberUsers.map(u => ({
         _id: u._id,
         name: memberDisplay(u),
         role: u.role,
@@ -280,14 +280,12 @@ export const getMessages = query({
 
     const page = await ctx.db
       .query("messages")
-      .withIndex("by_conversation", (q) =>
-        q.eq("conversationId", conversationId)
-      )
+      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
       .order("desc")
       .paginate(paginationOpts);
 
     const items = await Promise.all(
-      page.page.map(async (m) => {
+      page.page.map(async m => {
         const sender = await ctx.db.get(m.senderUserId);
         return {
           _id: m._id,
@@ -297,7 +295,9 @@ export const getMessages = query({
           body: m.deletedAt ? "" : m.body,
           deleted: !!m.deletedAt,
           edited: !!m.editedAt,
-          attachments: m.deletedAt ? [] : await attachmentUrls(ctx, m.attachments),
+          attachments: m.deletedAt
+            ? []
+            : await attachmentUrls(ctx, m.attachments),
           linkPreviews: m.deletedAt ? [] : m.linkPreviews,
           createdAt: m.createdAt,
         };
@@ -354,7 +354,10 @@ export const editMessage = mutation({
     const user = await requireUser(ctx);
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) {
-      throw new ConvexError({ code: "not_found", message: "Message not found" });
+      throw new ConvexError({
+        code: "not_found",
+        message: "Message not found",
+      });
     }
     if (message.senderUserId !== user._id) {
       throw new ConvexError({
@@ -414,7 +417,7 @@ export const setTyping = mutation({
     await requireMembership(ctx, conversationId, user._id);
     const existing = await ctx.db
       .query("typing")
-      .withIndex("by_conversation_user", (q) =>
+      .withIndex("by_conversation_user", q =>
         q.eq("conversationId", conversationId).eq("userId", user._id)
       )
       .unique();
@@ -440,15 +443,13 @@ export const whoIsTyping = query({
     const cutoff = Date.now() - TYPING_WINDOW_MS;
     const rows = await ctx.db
       .query("typing")
-      .withIndex("by_conversation", (q) =>
-        q.eq("conversationId", conversationId)
-      )
+      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
       .collect();
     const active = rows.filter(
-      (r) => r.userId !== user._id && r.updatedAt > cutoff
+      r => r.userId !== user._id && r.updatedAt > cutoff
     );
     const names = await Promise.all(
-      active.map(async (r) => memberDisplay(await ctx.db.get(r.userId)))
+      active.map(async r => memberDisplay(await ctx.db.get(r.userId)))
     );
     return names;
   },

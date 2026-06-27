@@ -7,22 +7,20 @@ import { api } from "@advantis/convex/api";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  useCurrentUser,
+  useIsManager,
+} from "@/components/providers/current-user";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
+
+const now = Date.now();
 
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
   const user = useCurrentUser();
   const isManager = useIsManager();
-
-  const now = Date.now();
   const events = useQuery(api.events.listForRange, {
     start: now,
     end: now + 30 * 24 * 60 * 60 * 1000,
@@ -34,7 +32,7 @@ export default function DashboardPage() {
     isManager ? {} : "skip"
   );
 
-  const unreadChats = conversations?.filter((c) => c.unread > 0) ?? [];
+  const unreadChats = conversations?.filter(c => c.unread > 0) ?? [];
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -52,7 +50,7 @@ export default function DashboardPage() {
             {events === undefined ? null : events.length === 0 ? (
               <p className="text-muted-foreground">{t("noEvents")}</p>
             ) : (
-              events.slice(0, 5).map((e) => (
+              events.slice(0, 5).map(e => (
                 <Link
                   key={e._id}
                   href="/calendar"
@@ -79,7 +77,7 @@ export default function DashboardPage() {
             {announcements === undefined ? null : announcements.length === 0 ? (
               <p className="text-muted-foreground">{t("noAnnouncements")}</p>
             ) : (
-              announcements.slice(0, 5).map((a) => (
+              announcements.slice(0, 5).map(a => (
                 <Link
                   key={a._id}
                   href="/announcements"
@@ -104,7 +102,7 @@ export default function DashboardPage() {
             {conversations === undefined ? null : unreadChats.length === 0 ? (
               <p className="text-muted-foreground">{t("noUnread")}</p>
             ) : (
-              unreadChats.slice(0, 5).map((c) => (
+              unreadChats.slice(0, 5).map(c => (
                 <Link
                   key={c._id}
                   href="/chat"
@@ -132,7 +130,7 @@ export default function DashboardPage() {
               {pending === undefined ? null : pending.length === 0 ? (
                 <p className="text-muted-foreground">{t("noApprovals")}</p>
               ) : (
-                pending.slice(0, 5).map((a) => (
+                pending.slice(0, 5).map(a => (
                   <Link
                     key={a._id}
                     href="/absences"

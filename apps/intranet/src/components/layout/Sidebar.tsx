@@ -70,8 +70,8 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </div>
       <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
         {items
-          .filter((item) => !item.managerOnly || isManager)
-          .map((item) => {
+          .filter(item => !item.managerOnly || isManager)
+          .map(item => {
             const active =
               item.href === "/"
                 ? pathname === "/"

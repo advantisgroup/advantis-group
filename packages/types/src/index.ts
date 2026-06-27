@@ -30,12 +30,7 @@ export type AccessRequestStatus = "pending" | "approved" | "denied";
 // Domain enums
 // ---------------------------------------------------------------------------
 
-export const ABSENCE_TYPES = [
-  "vacation",
-  "sick",
-  "personal",
-  "other",
-] as const;
+export const ABSENCE_TYPES = ["vacation", "sick", "personal", "other"] as const;
 export type AbsenceType = (typeof ABSENCE_TYPES)[number];
 
 export type AbsenceStatus = "pending" | "approved" | "denied" | "cancelled";

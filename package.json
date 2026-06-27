@@ -19,7 +19,8 @@
     "type-check": "turbo run type-check",
     "format": "turbo run format",
     "convex:dev": "turbo run convex:dev",
-    "convex:deploy": "turbo run convex:deploy"
+    "convex:deploy": "turbo run convex:deploy",
+    "setup-env": "bun scripts/setup-env.mjs"
   },
   "devDependencies": {
     "prettier": "^3.4.2",

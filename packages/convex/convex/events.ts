@@ -88,11 +88,11 @@ export const listForRange = query({
     const user = await requireUser(ctx);
     const events = await ctx.db
       .query("events")
-      .withIndex("by_start", (q) => q.lte("start", end))
+      .withIndex("by_start", q => q.lte("start", end))
       .collect();
     return events
-      .filter((e) => e.end >= start && userMatchesAudience(user, e.audience))
-      .map((e) => ({
+      .filter(e => e.end >= start && userMatchesAudience(user, e.audience))
+      .map(e => ({
         _id: e._id,
         title: e.title,
         description: e.description ?? null,

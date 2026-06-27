@@ -117,17 +117,17 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
           <Input
             placeholder={t("eventTitle")}
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={e => setTitle(e.target.value)}
           />
           <Input
             placeholder={t("location")}
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={e => setLocation(e.target.value)}
           />
           <Textarea
             placeholder={t("description")}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={e => setDescription(e.target.value)}
           />
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -135,7 +135,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
               <Input
                 type="datetime-local"
                 value={start}
-                onChange={(e) => setStart(e.target.value)}
+                onChange={e => setStart(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
@@ -143,7 +143,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
               <Input
                 type="datetime-local"
                 value={end}
-                onChange={(e) => setEnd(e.target.value)}
+                onChange={e => setEnd(e.target.value)}
               />
             </div>
           </div>
@@ -152,7 +152,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
               <input
                 type="checkbox"
                 checked={allDay}
-                onChange={(e) => setAllDay(e.target.checked)}
+                onChange={e => setAllDay(e.target.checked)}
               />
               {t("allDay")}
             </label>
@@ -160,7 +160,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
               <input
                 type="checkbox"
                 checked={guestVisible}
-                onChange={(e) => setGuestVisible(e.target.checked)}
+                onChange={e => setGuestVisible(e.target.checked)}
               />
               {t("guestVisible")}
             </label>
@@ -171,7 +171,7 @@ function EventDialog({ defaultDate }: { defaultDate?: Date }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{tc("all")}</SelectItem>
-              {departments.map((d) => (
+              {departments.map(d => (
                 <SelectItem key={d} value={d}>
                   {d}
                 </SelectItem>
@@ -231,22 +231,33 @@ export default function CalendarPage() {
       />
 
       <div className="mb-3 flex items-center gap-2">
-        <Button variant="outline" size="icon" onClick={() => setCursor((c) => subMonths(c, 1))}>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setCursor(c => subMonths(c, 1))}
+        >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="icon" onClick={() => setCursor((c) => addMonths(c, 1))}>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setCursor(c => addMonths(c, 1))}
+        >
           <ChevronRight className="h-4 w-4" />
         </Button>
         <Button variant="ghost" onClick={() => setCursor(new Date())}>
           {t("today")}
         </Button>
         <span className="ml-2 text-lg font-semibold">
-          {cursor.toLocaleDateString(locale, { month: "long", year: "numeric" })}
+          {cursor.toLocaleDateString(locale, {
+            month: "long",
+            year: "numeric",
+          })}
         </span>
       </div>
 
       <div className="grid grid-cols-7 overflow-hidden rounded-lg border bg-card text-sm">
-        {weekdays.map((d) => (
+        {weekdays.map(d => (
           <div
             key={d}
             className="border-b border-r p-2 text-center text-xs font-medium text-muted-foreground last:border-r-0"
@@ -254,13 +265,13 @@ export default function CalendarPage() {
             {d}
           </div>
         ))}
-        {days.map((day) => {
+        {days.map(day => {
           const dayIso = isoDay(day);
           const dayEvents =
-            events?.filter((e) => isSameDay(new Date(e.start), day)) ?? [];
+            events?.filter(e => isSameDay(new Date(e.start), day)) ?? [];
           const dayAbsences =
             absences?.filter(
-              (a) => a.startDate <= dayIso && dayIso <= a.endDate
+              a => a.startDate <= dayIso && dayIso <= a.endDate
             ) ?? [];
           const inMonth = isSameMonth(day, cursor);
           const isToday = isSameDay(day, new Date());
@@ -280,7 +291,7 @@ export default function CalendarPage() {
               >
                 {day.getDate()}
               </div>
-              {dayEvents.map((e) => (
+              {dayEvents.map(e => (
                 <div
                   key={e._id}
                   className="truncate rounded bg-primary/15 px-1 py-0.5 text-[11px] text-primary"
@@ -290,7 +301,7 @@ export default function CalendarPage() {
                   {e.title}
                 </div>
               ))}
-              {dayAbsences.map((a) => (
+              {dayAbsences.map(a => (
                 <div
                   key={a._id}
                   className={cn(

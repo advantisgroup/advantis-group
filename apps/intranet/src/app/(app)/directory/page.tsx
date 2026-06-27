@@ -58,7 +58,7 @@ export default function DirectoryPage() {
           <Input
             placeholder={t("searchPlaceholder")}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={e => setSearch(e.target.value)}
             className="pl-9"
           />
         </div>
@@ -68,7 +68,7 @@ export default function DirectoryPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{tCommon("all")}</SelectItem>
-            {departments.map((d) => (
+            {departments.map(d => (
               <SelectItem key={d} value={d}>
                 {d}
               </SelectItem>
@@ -83,7 +83,7 @@ export default function DirectoryPage() {
         </p>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {people?.map((p) => (
+          {people?.map(p => (
             <Card key={p._id}>
               <CardContent className="flex items-center gap-3 p-4">
                 <Avatar className="h-12 w-12">

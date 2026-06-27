@@ -43,7 +43,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
 
 export const me = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const user = await getCurrentUser(ctx);
     if (!user) return null;
     return withAvatar(ctx, user);
@@ -53,7 +53,7 @@ export const me = query({
 /** Provision the signed-in identity. Called by the intranet on app load. */
 export const ensureCurrentUser = mutation({
   args: {},
-  handler: async (ctx) => ensureUser(ctx),
+  handler: async ctx => ensureUser(ctx),
 });
 
 export const list = query({
@@ -67,26 +67,26 @@ export const list = query({
     let users = await ctx.db.query("users").collect();
 
     if (!args.includeSuspended) {
-      users = users.filter((u) => u.status === "active");
+      users = users.filter(u => u.status === "active");
     }
     if (args.department) {
       users = users.filter(
-        (u) => u.department?.toLowerCase() === args.department!.toLowerCase()
+        u => u.department?.toLowerCase() === args.department!.toLowerCase()
       );
     }
     if (args.search) {
       const q = args.search.toLowerCase();
-      users = users.filter((u) =>
+      users = users.filter(u =>
         [u.firstName, u.lastName, u.email, u.jobTitle, u.department]
           .filter(Boolean)
-          .some((field) => field!.toLowerCase().includes(q))
+          .some(field => field!.toLowerCase().includes(q))
       );
     }
 
     users.sort((a, b) =>
       (a.firstName ?? a.email).localeCompare(b.firstName ?? b.email)
     );
-    return Promise.all(users.map((u) => withAvatar(ctx, u)));
+    return Promise.all(users.map(u => withAvatar(ctx, u)));
   },
 });
 
@@ -185,7 +185,7 @@ export const setStatus = mutation({
 /** Distinct department names for filters. */
 export const departments = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     await requireUser(ctx);
     const users = await ctx.db.query("users").collect();
     const set = new Set<string>();

@@ -19,7 +19,7 @@ export function userMatchesAudience(
         user.department.toLowerCase() === audience.department.toLowerCase()
       );
     case "users":
-      return audience.userIds.some((id) => id === user._id);
+      return audience.userIds.some(id => id === user._id);
   }
 }
 

@@ -88,7 +88,8 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
         code?: string;
         detail?: string;
       };
-      const baseMessage = payload.detail || payload.error || t("errors.generic");
+      const baseMessage =
+        payload.detail || payload.error || t("errors.generic");
       return payload.code
         ? `${baseMessage} (code: ${payload.code})`
         : baseMessage;
@@ -171,9 +172,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
     },
   };
 
-  const finished = isFinished
-    ? finishedConfig[state as FinishedState]
-    : null;
+  const finished = isFinished ? finishedConfig[state as FinishedState] : null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -189,9 +188,7 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
               ) : (
                 <Trash2 className="h-5 w-5 text-destructive" />
               )}
-              {mode === "subscribe"
-                ? t("subscribe.title")
-                : t("remove.title")}
+              {mode === "subscribe" ? t("subscribe.title") : t("remove.title")}
             </span>
           </DialogTitle>
           <DialogDescription
@@ -219,7 +216,9 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
             </div>
             <div>
               <p className="font-semibold text-foreground">{finished.title}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{finished.desc}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {finished.desc}
+              </p>
             </div>
             <Button
               variant="outline"
@@ -273,7 +272,9 @@ export function NotifyModal({ open, onOpenChange }: NotifyModalProps) {
                 <Mail
                   className={cn(
                     "pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-colors duration-150",
-                    showEmailError ? "text-destructive/70" : "text-muted-foreground"
+                    showEmailError
+                      ? "text-destructive/70"
+                      : "text-muted-foreground"
                   )}
                 />
                 <Input

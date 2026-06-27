@@ -41,7 +41,7 @@ export const create = mutation({
 
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", email))
+      .withIndex("by_email", q => q.eq("email", email))
       .first();
     if (existingUser) {
       throw new ConvexError({
@@ -55,8 +55,8 @@ export const create = mutation({
 
     const existingInvite = await ctx.db
       .query("invites")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .filter((q) => q.eq(q.field("status"), "pending"))
+      .withIndex("by_email", q => q.eq("email", email))
+      .filter(q => q.eq(q.field("status"), "pending"))
       .first();
 
     let inviteId;
@@ -145,10 +145,10 @@ export const list = query({
     await requireManager(ctx);
     const invites = await ctx.db.query("invites").order("desc").take(200);
     const filtered = status
-      ? invites.filter((i) => i.status === status)
+      ? invites.filter(i => i.status === status)
       : invites;
     return Promise.all(
-      filtered.map(async (invite) => {
+      filtered.map(async invite => {
         const inviter = await ctx.db.get(invite.invitedByUserId);
         return {
           ...invite,
@@ -168,7 +168,7 @@ export const getByToken = query({
   handler: async (ctx, { token }) => {
     const invite = await ctx.db
       .query("invites")
-      .withIndex("by_token", (q) => q.eq("token", token))
+      .withIndex("by_token", q => q.eq("token", token))
       .first();
     if (!invite) return null;
     return {

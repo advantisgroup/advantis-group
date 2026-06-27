@@ -29,9 +29,7 @@ export const syncFromClerk = mutation({
     assertServerKey(args.serverKey);
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkUserId", (q) =>
-        q.eq("clerkUserId", args.clerkUserId)
-      )
+      .withIndex("by_clerkUserId", q => q.eq("clerkUserId", args.clerkUserId))
       .unique();
     if (!user) return { synced: false };
     await ctx.db.patch(user._id, {
@@ -50,9 +48,7 @@ export const deactivateFromClerk = mutation({
     assertServerKey(args.serverKey);
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkUserId", (q) =>
-        q.eq("clerkUserId", args.clerkUserId)
-      )
+      .withIndex("by_clerkUserId", q => q.eq("clerkUserId", args.clerkUserId))
       .unique();
     if (!user) return { deactivated: false };
     await ctx.db.patch(user._id, { status: "suspended" });

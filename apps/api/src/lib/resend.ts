@@ -12,8 +12,11 @@ function getResend(): Resend {
   return resend;
 }
 
-const FROM = process.env.INTRANET_EMAIL_FROM ?? "Advantis Intranet <noreply@intranet.advantisgroup.de>";
-const INTRANET_URL = process.env.INTRANET_URL ?? "https://intranet.advantisgroup.de";
+const FROM =
+  process.env.INTRANET_EMAIL_FROM ??
+  "Advantis Intranet <noreply@intranet.advantisgroup.de>";
+const INTRANET_URL =
+  process.env.INTRANET_URL ?? "https://intranet.advantisgroup.de";
 
 function layout(title: string, bodyHtml: string): string {
   return `<!doctype html><html><body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b">
@@ -33,9 +36,13 @@ function button(href: string, label: string): string {
 }
 
 type Data = Record<string, unknown>;
-const str = (d: Data, k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
+const str = (d: Data, k: string) =>
+  typeof d[k] === "string" ? (d[k] as string) : "";
 
-function render(kind: NotificationEmailKind, data: Data): {
+function render(
+  kind: NotificationEmailKind,
+  data: Data
+): {
   subject: string;
   html: string;
 } {

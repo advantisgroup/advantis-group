@@ -1,5 +1,7 @@
 "use client";
 
+import type { ChangeEvent } from "react";
+
 import { useMutation } from "convex/react";
 import { useState } from "react";
 
@@ -51,7 +53,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function onAvatar(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onAvatar(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
@@ -96,25 +98,37 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{t("firstName")}</Label>
-              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              <Input
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>{t("lastName")}</Label>
-              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+              <Input
+                value={lastName}
+                onChange={e => setLastName(e.target.value)}
+              />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>{t("jobTitle")}</Label>
-            <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
+            <Input
+              value={jobTitle}
+              onChange={e => setJobTitle(e.target.value)}
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{t("department")}</Label>
-              <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
+              <Input
+                value={department}
+                onChange={e => setDepartment(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>{t("phone")}</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <Input value={phone} onChange={e => setPhone(e.target.value)} />
             </div>
           </div>
           <Button onClick={save} disabled={busy}>
@@ -125,7 +139,9 @@ export default function SettingsPage() {
 
       <Card nested>
         <CardHeader>
-          <CardTitle className="text-base">{t("language")} & {t("theme")}</CardTitle>
+          <CardTitle className="text-base">
+            {t("language")} & {t("theme")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex items-center gap-3">
           <LanguageSwitcher />

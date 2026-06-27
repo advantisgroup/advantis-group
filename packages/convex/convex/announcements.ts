@@ -10,7 +10,9 @@ import { audienceValidator } from "./schema";
 
 function authorName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
-  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+  return (
+    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
+  );
 }
 
 async function resolveAudienceUserIds(
@@ -19,9 +21,9 @@ async function resolveAudienceUserIds(
 ): Promise<Id<"users">[]> {
   const all = await ctx.db
     .query("users")
-    .withIndex("by_status", (q) => q.eq("status", "active"))
+    .withIndex("by_status", q => q.eq("status", "active"))
     .collect();
-  return all.filter((u) => userMatchesAudience(u, audience)).map((u) => u._id);
+  return all.filter(u => userMatchesAudience(u, audience)).map(u => u._id);
 }
 
 export const create = mutation({
@@ -48,9 +50,9 @@ export const create = mutation({
       createdAt: now,
     });
 
-    const recipients = (await resolveAudienceUserIds(ctx, args.audience)).filter(
-      (uid) => uid !== author._id
-    );
+    const recipients = (
+      await resolveAudienceUserIds(ctx, args.audience)
+    ).filter(uid => uid !== author._id);
     await notifyUsers(ctx, recipients, {
       type: "announcement",
       title: "New announcement",
@@ -114,11 +116,11 @@ export const remove = mutation({
     // Remove read receipts.
     const reads = await ctx.db
       .query("announcementReads")
-      .withIndex("by_announcement_user", (q) =>
+      .withIndex("by_announcement_user", q =>
         q.eq("announcementId", announcementId)
       )
       .collect();
-    await Promise.all(reads.map((r) => ctx.db.delete(r._id)));
+    await Promise.all(reads.map(r => ctx.db.delete(r._id)));
     await ctx.db.delete(announcementId);
     return { ok: true };
   },
@@ -134,21 +136,21 @@ export const list = query({
       .order("desc")
       .take(limit ?? 100);
 
-    const visible = announcements.filter((a) =>
+    const visible = announcements.filter(a =>
       userMatchesAudience(user, a.audience)
     );
 
     const myReads = await ctx.db
       .query("announcementReads")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", q => q.eq("userId", user._id))
       .collect();
-    const readSet = new Set(myReads.map((r) => r.announcementId));
+    const readSet = new Set(myReads.map(r => r.announcementId));
 
     const enriched = await Promise.all(
-      visible.map(async (a) => {
+      visible.map(async a => {
         const author = await ctx.db.get(a.authorUserId);
         const attachments = await Promise.all(
-          a.attachmentStorageIds.map(async (sid) => ({
+          a.attachmentStorageIds.map(async sid => ({
             storageId: sid,
             url: await ctx.storage.getUrl(sid),
           }))
@@ -183,7 +185,7 @@ export const markRead = mutation({
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("announcementReads")
-      .withIndex("by_announcement_user", (q) =>
+      .withIndex("by_announcement_user", q =>
         q.eq("announcementId", announcementId).eq("userId", user._id)
       )
       .first();
@@ -200,21 +202,21 @@ export const markRead = mutation({
 
 export const unreadCount = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const user = await requireUser(ctx);
     const announcements = await ctx.db
       .query("announcements")
       .withIndex("by_publishedAt")
       .order("desc")
       .take(100);
-    const visible = announcements.filter((a) =>
+    const visible = announcements.filter(a =>
       userMatchesAudience(user, a.audience)
     );
     const myReads = await ctx.db
       .query("announcementReads")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", q => q.eq("userId", user._id))
       .collect();
-    const readSet = new Set(myReads.map((r) => r.announcementId));
-    return visible.filter((a) => !readSet.has(a._id)).length;
+    const readSet = new Set(myReads.map(r => r.announcementId));
+    return visible.filter(a => !readSet.has(a._id)).length;
   },
 });

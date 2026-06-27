@@ -66,7 +66,13 @@ function RequestDialog() {
     if (!startDate || !endDate) return;
     setBusy(true);
     try {
-      await create({ type, startDate, endDate, halfDay, reason: reason || undefined });
+      await create({
+        type,
+        startDate,
+        endDate,
+        halfDay,
+        reason: reason || undefined,
+      });
       toast.success(t("newRequest"));
       setOpen(false);
       setReason("");
@@ -94,7 +100,7 @@ function RequestDialog() {
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label>{t("type")}</Label>
-            <Select value={type} onValueChange={(v) => setType(v as AbsenceType)}>
+            <Select value={type} onValueChange={v => setType(v as AbsenceType)}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -109,15 +115,26 @@ function RequestDialog() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>{t("start")}</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStart(e.target.value)} />
+              <Input
+                type="date"
+                value={startDate}
+                onChange={e => setStart(e.target.value)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>{t("end")}</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEnd(e.target.value)} />
+              <Input
+                type="date"
+                value={endDate}
+                onChange={e => setEnd(e.target.value)}
+              />
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={halfDay} onCheckedChange={(v) => setHalfDay(!!v)} />
+            <Checkbox
+              checked={halfDay}
+              onCheckedChange={v => setHalfDay(!!v)}
+            />
             {t("halfDay")}
           </label>
           <div className="space-y-1.5">
@@ -125,7 +142,10 @@ function RequestDialog() {
               {t("reason")}{" "}
               <span className="text-muted-foreground">({tc("optional")})</span>
             </Label>
-            <Textarea value={reason} onChange={(e) => setReason(e.target.value)} />
+            <Textarea
+              value={reason}
+              onChange={e => setReason(e.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
@@ -148,11 +168,15 @@ function MyAbsences() {
   const cancel = useMutation(api.absences.cancel);
 
   if (absences && absences.length === 0) {
-    return <p className="py-10 text-center text-sm text-muted-foreground">{t("noAbsences")}</p>;
+    return (
+      <p className="py-10 text-center text-sm text-muted-foreground">
+        {t("noAbsences")}
+      </p>
+    );
   }
   return (
     <div className="space-y-2">
-      {absences?.map((a) => (
+      {absences?.map(a => (
         <Card key={a._id}>
           <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">
@@ -165,7 +189,8 @@ function MyAbsences() {
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                {formatIsoDate(a.startDate, locale)} – {formatIsoDate(a.endDate, locale)}
+                {formatIsoDate(a.startDate, locale)} –{" "}
+                {formatIsoDate(a.endDate, locale)}
                 {a.halfDay ? " · ½" : ""}
               </p>
             </div>
@@ -210,11 +235,15 @@ function Approvals() {
   }
 
   if (pending && pending.length === 0) {
-    return <p className="py-10 text-center text-sm text-muted-foreground">{t("noPending")}</p>;
+    return (
+      <p className="py-10 text-center text-sm text-muted-foreground">
+        {t("noPending")}
+      </p>
+    );
   }
   return (
     <div className="space-y-2">
-      {pending?.map((a) => (
+      {pending?.map(a => (
         <Card key={a._id}>
           <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">
@@ -223,13 +252,22 @@ function Approvals() {
                 {t(a.type)} · {formatIsoDate(a.startDate, locale)} –{" "}
                 {formatIsoDate(a.endDate, locale)}
               </p>
-              {a.reason && <p className="text-xs text-muted-foreground">{a.reason}</p>}
+              {a.reason && (
+                <p className="text-xs text-muted-foreground">{a.reason}</p>
+              )}
             </div>
             <div className="flex shrink-0 gap-2">
-              <Button size="sm" variant="outline" onClick={() => void act(deny, a._id, t("denied"))}>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void act(deny, a._id, t("denied"))}
+              >
                 {t("deny")}
               </Button>
-              <Button size="sm" onClick={() => void act(approve, a._id, t("approved"))}>
+              <Button
+                size="sm"
+                onClick={() => void act(approve, a._id, t("approved"))}
+              >
                 {t("approve")}
               </Button>
             </div>

@@ -1,1 +1,0 @@
-(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,58583,e=>{"use strict";var t=e.i(71645),c=e.i(18566);function i(){t.useEffect(()=>{let e=window.localStorage.getItem("NEXT_LOCALE");e||(0,c.redirect)("/de"),(0,c.redirect)(`/${e}`)},[])}e.s(["default",()=>i])}]);

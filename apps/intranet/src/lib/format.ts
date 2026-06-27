@@ -1,5 +1,8 @@
 /** Two-letter initials for an avatar fallback. */
-export function initials(name: string | null | undefined, email?: string): string {
+export function initials(
+  name: string | null | undefined,
+  email?: string
+): string {
   const source = (name && name.trim()) || email || "?";
   const parts = source.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();

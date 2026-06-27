@@ -25,7 +25,9 @@ function headers(): Record<string, string> {
   const user = process.env.CLOCKODO_API_USER;
   const key = process.env.CLOCKODO_API_KEY;
   if (!user || !key) {
-    throw Errors.internal("CLOCKODO_API_USER / CLOCKODO_API_KEY not configured");
+    throw Errors.internal(
+      "CLOCKODO_API_USER / CLOCKODO_API_KEY not configured"
+    );
   }
   return {
     "X-ClockodoApiUser": user,
@@ -65,7 +67,9 @@ export async function listAbsences(year: number): Promise<ClockodoAbsence[]> {
 let userCache: { map: Map<number, string>; expiresAt: number } | null = null;
 const USER_CACHE_TTL_MS = 5 * 60 * 1000;
 
-export async function getUserEmail(usersId: number): Promise<string | undefined> {
+export async function getUserEmail(
+  usersId: number
+): Promise<string | undefined> {
   if (!userCache || userCache.expiresAt < Date.now()) {
     const data = await clockodoGet<{ users: ClockodoUser[] }>(`/v2/users`);
     const map = new Map<number, string>();

@@ -20,10 +20,7 @@ function GuestLogin() {
   const router = useRouter();
   const params = useSearchParams();
   const [token, setToken] = useState(params.get("token") ?? "");
-  const probe = useQuery(
-    api.guest.validateToken,
-    token ? { token } : "skip"
-  );
+  const probe = useQuery(api.guest.validateToken, token ? { token } : "skip");
 
   // Auto-enter when arriving via an email link with a valid token.
   useEffect(() => {
@@ -56,16 +53,12 @@ function GuestLogin() {
           <Input
             placeholder={t("codePlaceholder")}
             value={token}
-            onChange={(e) => setToken(e.target.value.trim())}
+            onChange={e => setToken(e.target.value.trim())}
           />
           {token && probe && !probe.valid && (
             <p className="text-sm text-destructive">{t("invalid")}</p>
           )}
-          <Button
-            className="w-full"
-            onClick={enter}
-            disabled={!probe?.valid}
-          >
+          <Button className="w-full" onClick={enter} disabled={!probe?.valid}>
             {t("enter")}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

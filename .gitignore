@@ -36,8 +36,11 @@ yarn-error.log*
 /coverage
 
 # next.js
-/.next/
-/out/
+.next/
+out/
+
+# turbo
+.turbo/
 
 *.tsbuildinfo
 next-env.d.ts
