@@ -31,13 +31,13 @@ async function pbkdf2(
 ): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(password) as BufferSource,
+    new TextEncoder().encode(password) as unknown as ArrayBuffer,
     "PBKDF2",
     false,
     ["deriveBits"]
   );
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: salt as BufferSource, iterations, hash: "SHA-256" },
+    { name: "PBKDF2", salt: salt as unknown as ArrayBuffer, iterations, hash: "SHA-256" },
     key,
     256
   );
@@ -74,7 +74,7 @@ export async function verifyPassword(
 /** SHA-256 hex digest of an arbitrary string. */
 export async function sha256hex(input: string): Promise<string> {
   const bytes = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest("SHA-256", bytes as BufferSource);
+  const hash = await crypto.subtle.digest("SHA-256", bytes as unknown as ArrayBuffer);
   return Array.from(new Uint8Array(hash))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
