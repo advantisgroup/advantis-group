@@ -36,12 +36,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, initials } from "@/lib/format";
 import { TEAMS, teamLabelKey } from "@/lib/teams";
-
-function err(e: unknown) {
-  toast.error(e instanceof Error ? e.message : "Error");
-}
 
 function RoleSelect({
   value,
@@ -78,6 +75,7 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
   const requests = useQuery(api.accessRequests.list, { status: "pending" });
   const approve = useMutation(api.accessRequests.approve);
   const deny = useMutation(api.accessRequests.deny);
+  const handleError = useErrorHandler();
   const [roles, setRoles] = useState<Record<string, Role>>({});
 
   if (requests && requests.length === 0) {
@@ -110,7 +108,7 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => deny({ requestId: r._id }).catch(err)}
+                onClick={() => deny({ requestId: r._id }).catch(handleError)}
               >
                 {t("deny")}
               </Button>
@@ -122,7 +120,7 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
                     role: roles[r._id] ?? "employee",
                   })
                     .then(() => toast.success(t("approve")))
-                    .catch(err)
+                    .catch(handleError)
                 }
               >
                 {t("approve")}
@@ -144,6 +142,7 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
   const create = useMutation(api.invites.create);
   const revoke = useMutation(api.invites.revoke);
   const resend = useMutation(api.invites.resend);
+  const handleError = useErrorHandler();
 
   async function onRevoke(id: Id<"invites">) {
     const ok = await confirm({
@@ -152,7 +151,7 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
       confirmLabel: t("revoke"),
       cancelLabel: tc("cancel"),
     });
-    if (ok) revoke({ inviteId: id }).catch(err);
+    if (ok) revoke({ inviteId: id }).catch(handleError);
   }
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("employee");
@@ -166,7 +165,7 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
       toast.success(t("sendInvite"));
       setEmail("");
     } catch (e) {
-      err(e);
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -218,7 +217,7 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
                     onClick={() =>
                       resend({ inviteId: i._id })
                         .then(() => toast.success(t("resend")))
-                        .catch(err)
+                        .catch(handleError)
                     }
                   >
                     <RotateCw className="mr-1 h-3.5 w-3.5" />
@@ -251,12 +250,13 @@ function TeamsEditor({
   const t = useTranslations("Admin");
   const tTeams = useTranslations("Teams");
   const setTeams = useMutation(api.users.setTeams);
+  const handleError = useErrorHandler();
 
   function toggle(id: string) {
     const next = teams.includes(id)
       ? teams.filter(x => x !== id)
       : [...teams, id];
-    setTeams({ userId, teams: next }).catch(err);
+    setTeams({ userId, teams: next }).catch(handleError);
   }
 
   return (
@@ -297,6 +297,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const members = useQuery(api.users.list, { includeSuspended: true });
   const setRole = useMutation(api.users.setRole);
   const setStatus = useMutation(api.users.setStatus);
+  const handleError = useErrorHandler();
 
   async function toggleStatus(userId: Id<"users">, active: boolean) {
     if (active) {
@@ -311,7 +312,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     setStatus({
       userId,
       status: active ? "suspended" : "active",
-    }).catch(err);
+    }).catch(handleError);
   }
 
   return (
@@ -357,7 +358,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                         onChange={role =>
                           setRole({ userId: m._id as Id<"users">, role })
                             .then(() => toast.success(tRoles(role)))
-                            .catch(err)
+                            .catch(handleError)
                         }
                       />
                       <Button
@@ -394,6 +395,7 @@ function GuestLogins() {
   const logins = useQuery(api.guest.listTempLogins, {});
   const create = useMutation(api.guest.createTempLogin);
   const revoke = useMutation(api.guest.revokeTempLogin);
+  const handleError = useErrorHandler();
 
   async function onRevoke(id: Id<"tempLogins">) {
     const ok = await confirm({
@@ -402,7 +404,7 @@ function GuestLogins() {
       confirmLabel: t("revoke"),
       cancelLabel: tc("cancel"),
     });
-    if (ok) revoke({ id }).catch(err);
+    if (ok) revoke({ id }).catch(handleError);
   }
   const [label, setLabel] = useState("");
   const [email, setEmail] = useState("");
@@ -422,7 +424,7 @@ function GuestLogins() {
       setLabel("");
       setEmail("");
     } catch (e) {
-      err(e);
+      handleError(e);
     } finally {
       setBusy(false);
     }

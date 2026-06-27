@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { uploadToConvex } from "@/lib/upload";
 
@@ -29,6 +30,7 @@ export default function SettingsPage() {
   const user = useCurrentUser();
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const handleError = useErrorHandler();
 
   const [firstName, setFirstName] = useState(user.firstName ?? "");
   const [lastName, setLastName] = useState(user.lastName ?? "");
@@ -49,7 +51,7 @@ export default function SettingsPage() {
       });
       toast.success(t("saved"));
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -65,8 +67,8 @@ export default function SettingsPage() {
       );
       await updateProfile({ avatarStorageId });
       toast.success(t("saved"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error");
+    } catch (e) {
+      handleError(e);
     }
   }
 

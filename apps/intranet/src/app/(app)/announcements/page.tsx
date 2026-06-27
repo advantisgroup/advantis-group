@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 import { formatDateTime, initials } from "@/lib/format";
 import { uploadToConvex } from "@/lib/upload";
@@ -47,6 +48,7 @@ function CreateDialog() {
   const tc = useTranslations("Common");
   const create = useMutation(api.announcements.create);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const handleError = useErrorHandler();
   const departments = useQuery(api.users.departments) ?? [];
 
   const [open, setOpen] = useState(false);
@@ -89,7 +91,7 @@ function CreateDialog() {
       setPinned(false);
       setGuestVisible(false);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error");
+      handleError(e);
     } finally {
       setBusy(false);
     }
@@ -267,6 +269,7 @@ export default function AnnouncementsPage() {
   const markRead = useMutation(api.announcements.markRead);
   const remove = useMutation(api.announcements.remove);
   const toggleReaction = useMutation(api.announcements.toggleReaction);
+  const handleError = useErrorHandler();
 
   async function onDelete(id: Id<"announcements">) {
     const ok = await confirm({
@@ -279,7 +282,7 @@ export default function AnnouncementsPage() {
       try {
         await remove({ announcementId: id });
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Error");
+        handleError(e);
       }
     }
   }
