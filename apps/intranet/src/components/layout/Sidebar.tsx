@@ -19,12 +19,14 @@ import { api } from "@advantis/convex/api";
 import { useTranslations } from "next-intl";
 
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
+import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
 import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
 import {
   useCurrentUser,
   useIsManager,
 } from "@/components/providers/current-user";
+import { cn } from "@/lib/utils";
 import {
   Sidebar as SidebarShell,
   SidebarContent,
@@ -59,6 +61,10 @@ export function Sidebar() {
   const isManager = useIsManager();
   const user = useCurrentUser();
   const { setOpenMobile, state } = useSidebar();
+
+  // Context-aware nav: inside the ActivityTrack area the main nav slides out and
+  // the activity nav slides in (see the sliding container below).
+  const isActivity = pathname.startsWith("/admin/activity");
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
@@ -133,49 +139,74 @@ export function Sidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {groups.map(group => {
-          const items = group.items.filter(
-            item => !item.managerOnly || isManager
-          );
-          if (items.length === 0) return null;
-          return (
-            <SidebarGroup key={group.labelKey}>
-              <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
-              <SidebarMenu>
-                {items.map(item => {
-                  const active =
-                    item.href === "/"
-                      ? pathname === "/"
-                      : pathname.startsWith(item.href);
-                  const Icon = item.icon;
-                  return (
-                    <SidebarMenuItem key={item.href}>
-                      <SidebarMenuButton
-                        asChild
-                        active={active}
-                        tooltip={t(item.labelKey)}
-                      >
-                        <Link
-                          href={item.href}
-                          onClick={close}
-                          aria-current={active ? "page" : undefined}
-                        >
-                          <Icon />
-                          <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
-                          {item.badge ? (
-                            <SidebarMenuBadge>
-                              {item.badge > 99 ? "99+" : item.badge}
-                            </SidebarMenuBadge>
-                          ) : null}
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroup>
-          );
-        })}
+        {/* Two nav panels laid out side-by-side; translate-X swaps between them
+            when entering/leaving the activity area. Respects reduced motion. */}
+        <div className="relative overflow-x-hidden">
+          <div
+            className={cn(
+              "flex w-[200%] transition-transform duration-200 ease-out motion-reduce:transition-none",
+              isActivity ? "-translate-x-1/2" : "translate-x-0"
+            )}
+          >
+            <div
+              className={cn("w-1/2 shrink-0", isActivity && "pointer-events-none")}
+              aria-hidden={isActivity}
+            >
+              {groups.map(group => {
+                const items = group.items.filter(
+                  item => !item.managerOnly || isManager
+                );
+                if (items.length === 0) return null;
+                return (
+                  <SidebarGroup key={group.labelKey}>
+                    <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
+                    <SidebarMenu>
+                      {items.map(item => {
+                        const active =
+                          item.href === "/"
+                            ? pathname === "/"
+                            : pathname.startsWith(item.href);
+                        const Icon = item.icon;
+                        return (
+                          <SidebarMenuItem key={item.href}>
+                            <SidebarMenuButton
+                              asChild
+                              active={active}
+                              tooltip={t(item.labelKey)}
+                            >
+                              <Link
+                                href={item.href}
+                                onClick={close}
+                                aria-current={active ? "page" : undefined}
+                              >
+                                <Icon />
+                                <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
+                                {item.badge ? (
+                                  <SidebarMenuBadge>
+                                    {item.badge > 99 ? "99+" : item.badge}
+                                  </SidebarMenuBadge>
+                                ) : null}
+                              </Link>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroup>
+                );
+              })}
+            </div>
+            <div
+              className={cn(
+                "w-1/2 shrink-0",
+                !isActivity && "pointer-events-none"
+              )}
+              aria-hidden={!isActivity}
+            >
+              <ActivitySidebar />
+            </div>
+          </div>
+        </div>
       </SidebarContent>
 
       <SidebarFooter>
