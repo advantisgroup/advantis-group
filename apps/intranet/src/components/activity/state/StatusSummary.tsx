@@ -41,7 +41,7 @@ export function StatusSummary({
   className?: string;
 }) {
   const { t, lang } = useI18n();
-  const { headlineKey, tone, live, showIdleFor } = describeStatus(status);
+  const { headlineKey, tone, showIdleFor } = describeStatus(status);
   const lg = size === "lg";
 
   const idleFor =
@@ -53,17 +53,14 @@ export function StatusSummary({
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      {live ? (
-        <span className={cn("signal-dot shrink-0", lg && "!h-2.5 !w-2.5")} />
-      ) : (
-        <span
-          className={cn(
-            "shrink-0 rounded-full",
-            lg ? "h-2.5 w-2.5" : "h-2 w-2",
-            TONE_DOT[tone]
-          )}
-        />
-      )}
+      {/* Static colour-coded dot — no pulse, intentionally calm. */}
+      <span
+        className={cn(
+          "shrink-0 rounded-full",
+          lg ? "h-2.5 w-2.5" : "h-2 w-2",
+          TONE_DOT[tone]
+        )}
+      />
       <div className="min-w-0">
         <p
           className={cn(
