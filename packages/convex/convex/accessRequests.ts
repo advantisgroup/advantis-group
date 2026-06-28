@@ -155,6 +155,7 @@ export const approve = mutation({
         lastName: request.name?.split(" ").slice(1).join(" ") || undefined,
         role: grantedRole,
         status: "active",
+        external: !isEmailDomainAllowed(request.email),
         createdAt: now,
       });
     }

@@ -82,6 +82,12 @@ export default defineSchema({
     avatarUrl: v.optional(v.string()),
     managerId: v.optional(v.id("users")),
     status: v.union(v.literal("active"), v.literal("suspended")),
+    /**
+     * True when the user's email domain is outside `ALLOWED_EMAIL_DOMAINS`.
+     * Externals are full members (their role applies normally); the flag only
+     * drives the admin "External" grouping. Set at provisioning time.
+     */
+    external: v.optional(v.boolean()),
     /** Clockodo coworker id, for linking absence mirrors to this user. */
     clockodoUserId: v.optional(v.number()),
     createdAt: v.number(),
@@ -97,6 +103,8 @@ export default defineSchema({
     email: v.string(),
     role: roleValidator,
     invitedByUserId: v.id("users"),
+    /** True when the invited email is outside the allowed company domains. */
+    external: v.optional(v.boolean()),
     token: v.string(),
     status: v.union(
       v.literal("pending"),

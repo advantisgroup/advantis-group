@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { isAllowedOrigin, PORT } from "./lib/env.js";
 import { ApiError } from "./lib/errors.js";
 import { activityRoute } from "./routes/activity.js";
+import { internalClerkInvitationsRoute } from "./routes/internal/clerk-invitations.js";
 import { internalClockodoImportRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { meRoute } from "./routes/me.js";
@@ -50,6 +51,7 @@ export const app = new Elysia()
   .use(clerkWebhookRoute)
   .use(clockodoWebhookRoute)
   .use(internalNotificationsRoute)
+  .use(internalClerkInvitationsRoute)
   .use(internalClockodoImportRoute)
   .use(activityRoute);
 

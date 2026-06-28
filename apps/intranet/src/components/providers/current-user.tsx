@@ -20,6 +20,7 @@ export interface CurrentUser {
   teams: string[];
   managerId: string | null;
   status: "active" | "suspended";
+  external: boolean;
   avatar: string | null;
   lastSeenAt: number | null;
   createdAt: number;

@@ -215,7 +215,14 @@
     "active": "Active",
     "revoked": "Revoked",
     "noGuests": "No guest logins",
-    "teams": "Teams"
+    "teams": "Teams",
+    "external": "External",
+    "externalMembers": "External members",
+    "externalMembersHint": "Members whose email is outside your company domains. They have full access according to their role.",
+    "inviteExternalHint": "External address — they'll be invited as a full member with the selected role.",
+    "inviteExternalForbidden": "Only admins can invite external email addresses.",
+    "inviteExternalTitle": "Invite an external user?",
+    "inviteExternalBody": "{email} is outside your company domains. They'll receive a Clerk invitation and get full access as the selected role. Send it anyway?"
   },
   "Teams": {
     "customerCare": "Customer Care",

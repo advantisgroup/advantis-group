@@ -138,6 +138,10 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
   const firstName = identity.givenName ?? undefined;
   const lastName = identity.familyName ?? undefined;
 
+  // Whether this identity's email domain sits outside the company allowlist.
+  // Externals are full members; the flag only drives the admin grouping.
+  const external = email ? !isEmailDomainAllowed(email) : false;
+
   const existing = await getUserByClerkId(ctx, clerkUserId);
   if (existing) {
     await ctx.db.patch(existing._id, {
@@ -146,6 +150,8 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
       ...(firstName && !existing.firstName ? { firstName } : {}),
       ...(lastName && !existing.lastName ? { lastName } : {}),
       ...(email && existing.email !== email ? { email } : {}),
+      // backfill the external flag for rows provisioned before it existed
+      ...(existing.external === undefined ? { external } : {}),
     });
     return { status: "active", userId: existing._id, role: existing.role };
   }
@@ -161,6 +167,7 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
       lastName,
       role: "admin",
       status: "active",
+      external,
       createdAt: now,
       lastSeenAt: now,
     });
@@ -183,6 +190,7 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
         lastName,
         role: invite.role,
         status: "active",
+        external,
         createdAt: now,
         lastSeenAt: now,
       });
