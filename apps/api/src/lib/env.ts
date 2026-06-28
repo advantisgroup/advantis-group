@@ -14,7 +14,7 @@ export const PORT = Number(process.env.PORT ?? 3002);
 
 /** Origins allowed by CORS. Extend via CORS_ORIGINS (comma-separated). */
 export const allowedOrigins = [
-  process.env.INTERNAL_URL ?? "https://intranet.advantisgroup.de",
+  process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de",
   process.env.SITE_URL ?? "https://advantisgroup.de",
   "http://localhost:3000",
   "http://localhost:3001",

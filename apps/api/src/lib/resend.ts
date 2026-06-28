@@ -14,9 +14,9 @@ function getResend(): Resend {
 
 const FROM =
   process.env.INTERNAL_EMAIL_FROM ??
-  "Advantis Intranet <noreply@intranet.advantisgroup.de>";
+  "Advantis Intranet <noreply@intern.advantisgroup.de>";
 const INTERNAL_URL =
-  process.env.INTERNAL_URL ?? "https://intranet.advantisgroup.de";
+  process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
 
 function layout(title: string, bodyHtml: string): string {
   return `<!doctype html><html><body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b">

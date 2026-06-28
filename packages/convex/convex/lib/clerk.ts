@@ -137,7 +137,7 @@ export async function createClerkInvitation(opts: {
 
   const redirectUrl =
     opts.redirectUrl ??
-    `${process.env.INTERNAL_URL ?? "https://intranet.advantisgroup.de"}/sign-up`;
+    `${process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de"}/sign-up`;
 
   const res = await clerkFetch("/invitations", {
     method: "POST",
