@@ -12,6 +12,10 @@ import {
   type StateName,
 } from "@/lib/activity/activity";
 import { STATE_COLOR } from "@/components/activity/charts/theme";
+import {
+  StateStrip,
+  StateStripLegend,
+} from "@/components/activity/charts/StateStrip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -95,20 +99,7 @@ export function DayDetailTab({
           </label>
         </div>
         {/* Legend */}
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-          {STATE_NAMES.map(s => (
-            <span
-              key={s}
-              className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
-            >
-              <span
-                className="h-2.5 w-2.5 rounded-[3px]"
-                style={{ background: STATE_COLOR[s] }}
-              />
-              {stateLabel(s)}
-            </span>
-          ))}
-        </div>
+        <StateStripLegend states={STATE_NAMES} label={stateLabel} />
       </CardHeader>
       <CardContent className="pt-0 sm:pt-0">
         {!employeeId ? (
@@ -124,39 +115,13 @@ export function DayDetailTab({
         ) : (
           <div className="space-y-5">
             {/* ── Horizontal day strip ── */}
-            <div>
-              <div className="relative h-7 w-full overflow-hidden rounded-md border border-border bg-panel-2">
-                {segments.map((seg, i) => {
-                  const left = ((seg.start - dayStart) / DAY_MS) * 100;
-                  const width = ((seg.end - seg.start) / DAY_MS) * 100;
-                  return (
-                    <div
-                      key={i}
-                      className="absolute inset-y-0"
-                      style={{
-                        left: `${left}%`,
-                        width: `${width}%`,
-                        background: STATE_COLOR[seg.state],
-                      }}
-                      title={`${hhmm(seg.start)}–${hhmm(seg.end)} · ${stateLabel(seg.state)}`}
-                    />
-                  );
-                })}
-                {nowPct != null && nowPct >= 0 && nowPct <= 100 && (
-                  <div
-                    className="absolute inset-y-0 w-px bg-fg"
-                    style={{ left: `${nowPct}%` }}
-                    title={t("timeline.day.now")}
-                  />
-                )}
-              </div>
-              {/* Hour ticks: 00, 06, 12, 18, 24 */}
-              <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
-                {[0, 6, 12, 18, 24].map(h => (
-                  <span key={h}>{String(h).padStart(2, "0")}</span>
-                ))}
-              </div>
-            </div>
+            <StateStrip
+              segments={segments}
+              dayStart={dayStart}
+              label={stateLabel}
+              nowPct={nowPct}
+              nowLabel={t("timeline.day.now")}
+            />
 
             {/* ── Per-minute grid (24 rows × 60 minutes) ── */}
             <div className="space-y-0.5">

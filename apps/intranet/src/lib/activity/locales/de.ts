@@ -158,9 +158,8 @@ export const de: Dict = {
   "timeline.kpi.status": "Status",
   "timeline.kpi.lastSeen": "Zuletzt gesehen",
   "timeline.now.heading": "Gerade jetzt",
-  "timeline.now.todaySummary":
-    "Heute bisher {active} aktiv und {idle} inaktiv.",
-  "timeline.now.daySummary": "Am {date}: {active} aktiv, {idle} inaktiv.",
+  "timeline.now.activeShare": "Aktiv-Anteil",
+  "timeline.now.dayTimeline": "Statusverlauf",
   "timeline.trend.heading": "Aktivität der letzten 14 Tage",
   "timeline.trend.sub": "Aktive vs. inaktive Stunden pro Tag.",
   "timeline.intraday.heading": "Tagesverlauf",
