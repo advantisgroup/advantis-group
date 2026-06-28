@@ -16,6 +16,7 @@ import {
 import { useDayParam } from "@/lib/activity/useDayParam";
 import {
   dailyTrend,
+  dayStateSegments,
   hourlyStateBreakdown,
   lastActiveDay,
   timelineCharts,
@@ -28,6 +29,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SourceSignals } from "@/components/activity/state/StateBits";
 import { StatusSummary } from "@/components/activity/state/StatusSummary";
+import {
+  StateStrip,
+  StateStripLegend,
+} from "@/components/activity/charts/StateStrip";
 import { DayNav } from "@/components/activity/timeline/DayNav";
 import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
 import { RawTab } from "@/components/activity/timeline/RawTab";
@@ -92,36 +97,42 @@ export default function TimelinePage({
   );
 
   // Aggregations (memoised; samples can be up to 1000 rows).
-  const { trend, heatmap, intraday, hourlyStates, lastActive } = useMemo(() => {
-    const tzOffset = new Date().getTimezoneOffset();
-    const s: Sample[] = samples ?? [];
-    const { heatmap, intraday } = timelineCharts(s, selectedDay, tzOffset);
-    return {
-      trend: dailyTrend(daily ?? [], startDay, today),
-      heatmap,
-      intraday,
-      lastActive: lastActiveDay(s, tzOffset),
-      hourlyStates: hourlyStateBreakdown(
-        // For *today* strip the prepended prior-day row (it would credit
-        // yesterday's state to hours 00-NN before work started). For a past day
-        // we keep it so the strip fills from that day's midnight.
-        (stateHistory ?? []).filter(x => !isToday || x.at >= dayStartMs),
-        dayStartMs,
-        isToday ? nowMs() : dayEndMs,
-        tzOffset
-      ),
-    };
-  }, [
-    samples,
-    daily,
-    startDay,
-    today,
-    selectedDay,
-    isToday,
-    stateHistory,
-    dayStartMs,
-    dayEndMs,
-  ]);
+  const { trend, heatmap, intraday, hourlyStates, daySegments, lastActive } =
+    useMemo(() => {
+      const tzOffset = new Date().getTimezoneOffset();
+      const s: Sample[] = samples ?? [];
+      const { heatmap, intraday } = timelineCharts(s, selectedDay, tzOffset);
+      // For *today* strip the prepended prior-day row (it would credit
+      // yesterday's state to hours 00-NN before work started). For a past day
+      // we keep it so the strip fills from that day's midnight.
+      const dayHistory = (stateHistory ?? []).filter(
+        x => !isToday || x.at >= dayStartMs
+      );
+      const windowEnd = isToday ? nowMs() : dayEndMs;
+      return {
+        trend: dailyTrend(daily ?? [], startDay, today),
+        heatmap,
+        intraday,
+        lastActive: lastActiveDay(s, tzOffset),
+        hourlyStates: hourlyStateBreakdown(
+          dayHistory,
+          dayStartMs,
+          windowEnd,
+          tzOffset
+        ),
+        daySegments: dayStateSegments(dayHistory, dayStartMs, windowEnd),
+      };
+    }, [
+      samples,
+      daily,
+      startDay,
+      today,
+      selectedDay,
+      isToday,
+      stateHistory,
+      dayStartMs,
+      dayEndMs,
+    ]);
 
   // Localised state labels for the hourly chart legend/tooltip.
   const stateLabels = useMemo(
@@ -148,14 +159,30 @@ export default function TimelinePage({
 
   const title = device?.personName ?? device?.hostname ?? deviceId;
   const fileLabel = device?.personName ?? device?.hostname ?? deviceId;
-  // Short label for the selected day, e.g. "26.06." / "06/26" — used on the
-  // per-day KPI labels when the user has rewound to a past day.
+  // Short label for the selected day, e.g. "26.06." / "06/26" — appended to the
+  // state-timeline heading when the user has rewound to a past day.
   const shortDate = new Date(`${selectedDay}T00:00:00`).toLocaleDateString(
     lang,
     { day: "2-digit", month: "2-digit" }
   );
   // Whether the selected day has anything to show (raw samples or a daily row).
   const hasDataToday = intraday.length > 0 || dayStats != null;
+
+  // Derived figures for the "right now" card's descriptive numbers + strip.
+  const activeSeconds = dayStats?.activeSeconds ?? 0;
+  const idleSeconds = dayStats?.idleSeconds ?? 0;
+  const trackedSeconds = activeSeconds + idleSeconds;
+  const activeShare =
+    trackedSeconds > 0
+      ? Math.round((activeSeconds / trackedSeconds) * 100)
+      : null;
+  // Only legend the states that actually occur in the day, ordered canonically.
+  const presentStates = STATE_NAMES.filter(s =>
+    daySegments.some(seg => seg.state === s)
+  );
+  // "Now" marker position on the strip (today only).
+  const nowPct = isToday ? ((nowMs() - dayStartMs) / 86_400_000) * 100 : null;
+  const stateLabel = (s: StateName) => t(`empstate.${s}`);
 
   return (
     <section className="space-y-6">
@@ -184,88 +211,139 @@ export default function TimelinePage({
               {t("timeline.now.heading")}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 pt-0 sm:pt-0">
-            <StatusSummary
-              size="lg"
-              status={{
-                online: device.online,
-                deviceIdle: device.deviceIdle,
-                idleSeconds:
-                  device.stateIdleSeconds ??
-                  (device.idleMs != null
-                    ? Math.round(device.idleMs / 1000)
-                    : null),
-                genesysRoutingStatus: device.genesysRoutingStatus,
-                genesysWrapUp: device.genesysWrapUp,
-                clockodoWorking: device.clockodoWorking,
-                clockodoBreak: device.clockodoBreak,
-                clockodoAbsent: device.clockodoAbsent,
-                active: device.active,
-              }}
-            />
+          <CardContent className="pt-0 sm:pt-0">
+            <div className="grid gap-5 lg:grid-cols-2">
+              {/* LEFT — the plain-language description + per-source breakdown. */}
+              <div className="space-y-3">
+                <StatusSummary
+                  size="lg"
+                  status={{
+                    online: device.online,
+                    deviceIdle: device.deviceIdle,
+                    idleSeconds:
+                      device.stateIdleSeconds ??
+                      (device.idleMs != null
+                        ? Math.round(device.idleMs / 1000)
+                        : null),
+                    genesysRoutingStatus: device.genesysRoutingStatus,
+                    genesysWrapUp: device.genesysWrapUp,
+                    clockodoWorking: device.clockodoWorking,
+                    clockodoBreak: device.clockodoBreak,
+                    clockodoAbsent: device.clockodoAbsent,
+                    active: device.active,
+                  }}
+                />
 
-            {/* The day's figures, woven into a sentence instead of stat tiles. */}
-            <p className="text-sm text-fg/80">
-              {t(
-                isToday
-                  ? "timeline.now.todaySummary"
-                  : "timeline.now.daySummary",
-                {
-                  active: formatDuration(dayStats?.activeSeconds ?? 0, lang),
-                  idle: formatDuration(dayStats?.idleSeconds ?? 0, lang),
-                  date: shortDate,
-                }
-              )}
-            </p>
+                <p className="text-xs text-muted-foreground">
+                  <span
+                    className={
+                      device.online
+                        ? "font-medium text-ok"
+                        : "font-medium text-muted-foreground"
+                    }
+                  >
+                    {device.online
+                      ? t("timeline.online")
+                      : t("timeline.offline")}
+                  </span>
+                  {" · "}
+                  {t("overview.lastSeen")}{" "}
+                  <span className="font-medium text-fg/80">
+                    {formatRelativeTime(device.lastSeen, lang)}
+                  </span>
+                </p>
 
-            <p className="text-xs text-muted-foreground">
-              <span
-                className={
-                  device.online
-                    ? "font-medium text-ok"
-                    : "font-medium text-muted-foreground"
-                }
-              >
-                {device.online ? t("timeline.online") : t("timeline.offline")}
-              </span>
-              {" · "}
-              {t("overview.lastSeen")}{" "}
-              <span className="font-medium text-fg/80">
-                {formatRelativeTime(device.lastSeen, lang)}
-              </span>
-            </p>
-
-            {/* Per-source breakdown — what each signal says — for linked devices. */}
-            {employeeId && (
-              <div className="border-t border-border-soft pt-3">
-                {liveState === undefined ? (
-                  <Skeleton className="h-20 w-full" />
-                ) : liveState === null ? (
-                  <p className="py-1 text-sm text-muted-foreground">
-                    {t("timeline.state.empty")}
-                  </p>
-                ) : (
-                  <>
-                    <SourceSignals
-                      deviceIdle={liveState.deviceIdle ?? null}
-                      genesysRoutingStatus={
-                        liveState.genesysRoutingStatus ?? null
-                      }
-                      genesysPresence={liveState.genesysPresence ?? null}
-                      clockodoWorking={liveState.clockodoWorking ?? null}
-                      clockodoBreak={liveState.clockodoBreak ?? null}
-                      clockodoAbsent={liveState.clockodoAbsent ?? null}
-                    />
-                    <p className="mt-3 border-t border-border-soft pt-2.5 font-mono text-[11px] text-muted-foreground">
-                      {t("state.updated")}{" "}
-                      <span className="text-fg/80">
-                        {formatRelativeTime(liveState.updatedAt, lang)}
-                      </span>
-                    </p>
-                  </>
+                {employeeId && (
+                  <div className="border-t border-border-soft pt-3">
+                    {liveState === undefined ? (
+                      <Skeleton className="h-20 w-full" />
+                    ) : liveState === null ? (
+                      <p className="py-1 text-sm text-muted-foreground">
+                        {t("timeline.state.empty")}
+                      </p>
+                    ) : (
+                      <>
+                        <SourceSignals
+                          deviceIdle={liveState.deviceIdle ?? null}
+                          genesysRoutingStatus={
+                            liveState.genesysRoutingStatus ?? null
+                          }
+                          genesysPresence={liveState.genesysPresence ?? null}
+                          clockodoWorking={liveState.clockodoWorking ?? null}
+                          clockodoBreak={liveState.clockodoBreak ?? null}
+                          clockodoAbsent={liveState.clockodoAbsent ?? null}
+                        />
+                        <p className="mt-3 border-t border-border-soft pt-2.5 font-mono text-[11px] text-muted-foreground">
+                          {t("state.updated")}{" "}
+                          <span className="text-fg/80">
+                            {formatRelativeTime(liveState.updatedAt, lang)}
+                          </span>
+                        </p>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
+
+              {/* RIGHT — descriptive numbers + the day's state timeline, filling
+                  the space the verdict alone used to leave empty. */}
+              <div className="space-y-4 lg:border-l lg:border-border-soft lg:pl-5">
+                <div className="flex flex-wrap gap-x-6 gap-y-3">
+                  <div>
+                    <p className="kicker">{t("common.active")}</p>
+                    <p className="text-xl font-semibold tabular-nums text-ok">
+                      {formatDuration(activeSeconds, lang)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="kicker">{t("common.idle")}</p>
+                    <p className="text-xl font-semibold tabular-nums text-warn">
+                      {formatDuration(idleSeconds, lang)}
+                    </p>
+                  </div>
+                  {activeShare != null && (
+                    <div>
+                      <p className="kicker">{t("timeline.now.activeShare")}</p>
+                      <p className="text-xl font-semibold tabular-nums text-fg">
+                        {activeShare}%
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <p className="kicker mb-2">
+                    {t("timeline.now.dayTimeline")}
+                    {!isToday && ` · ${shortDate}`}
+                  </p>
+                  {!employeeId ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("timeline.hourly.unlinked")}
+                    </p>
+                  ) : stateHistory === undefined ? (
+                    <Skeleton className="h-12 w-full" />
+                  ) : daySegments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {t("timeline.day.empty")}
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      <StateStrip
+                        segments={daySegments}
+                        dayStart={dayStartMs}
+                        label={stateLabel}
+                        nowPct={nowPct}
+                        nowLabel={t("timeline.day.now")}
+                      />
+                      <StateStripLegend
+                        states={presentStates}
+                        label={stateLabel}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}
