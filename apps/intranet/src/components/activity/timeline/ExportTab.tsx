@@ -43,12 +43,12 @@ export function ExportTab({
       });
       const base = `${fileLabel}_${exportStart}_${exportEnd}`.replace(
         /[^\w.-]+/g,
-        "-",
+        "-"
       );
       if (format === "json") {
         downloadFile(`${base}.json`, "application/json", toJson(data));
       } else {
-        const rows = data.samples.map((s) => ({
+        const rows = data.samples.map(s => ({
           capturedAt: new Date(s.capturedAt).toISOString(),
           active: s.active,
           idleMs: s.idleMs,
@@ -81,7 +81,9 @@ export function ExportTab({
         <CardTitle className="text-base">
           {t("timeline.export.heading")}
         </CardTitle>
-        <p className="text-sm text-muted-foreground">{t("timeline.export.sub")}</p>
+        <p className="text-sm text-muted-foreground">
+          {t("timeline.export.sub")}
+        </p>
       </CardHeader>
       <CardContent className="space-y-4 pt-0 sm:pt-0">
         <div className="flex flex-wrap items-end gap-3">
@@ -91,7 +93,7 @@ export function ExportTab({
               type="date"
               value={exportStart}
               max={exportEnd}
-              onChange={(e) => setExportStart(e.target.value)}
+              onChange={e => setExportStart(e.target.value)}
               className="w-40"
             />
           </label>
@@ -102,7 +104,7 @@ export function ExportTab({
               value={exportEnd}
               min={exportStart}
               max={today}
-              onChange={(e) => setExportEnd(e.target.value)}
+              onChange={e => setExportEnd(e.target.value)}
               className="w-40"
             />
           </label>

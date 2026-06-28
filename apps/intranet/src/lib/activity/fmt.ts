@@ -39,7 +39,9 @@ export function formatRelativeTime(ts: number, lang: Lang): string {
 
   if (d >= 1) {
     if (lang === "de")
-      return future ? `in ${d} Tag${d > 1 ? "en" : ""}` : `vor ${d} Tag${d > 1 ? "en" : ""}`;
+      return future
+        ? `in ${d} Tag${d > 1 ? "en" : ""}`
+        : `vor ${d} Tag${d > 1 ? "en" : ""}`;
     return future ? `in ${d}d` : `${d}d ago`;
   }
   if (h >= 1) {

@@ -18,15 +18,15 @@ export default function HelpPage() {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
 
-  const sections = FAQ_SECTIONS.map((s) => ({
+  const sections = FAQ_SECTIONS.map(s => ({
     id: s.id,
-    entries: s.entries.filter((e) => {
+    entries: s.entries.filter(e => {
       if (!needle) return true;
       return `${t(`faq.q.${e.id}`)} ${t(`faq.a.${e.id}`)}`
         .toLowerCase()
         .includes(needle);
     }),
-  })).filter((s) => s.entries.length > 0);
+  })).filter(s => s.entries.length > 0);
 
   return (
     <section className="space-y-6">
@@ -34,14 +34,16 @@ export default function HelpPage() {
         <h2 className="font-display text-lg font-semibold tracking-tightest text-fg">
           {t("help.title")}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("help.subtitle")}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("help.subtitle")}
+        </p>
       </div>
 
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={e => setQuery(e.target.value)}
           placeholder={t("help.search")}
           className="pl-9"
         />
@@ -54,13 +56,13 @@ export default function HelpPage() {
           </p>
         </Card>
       ) : (
-        sections.map((s) => (
+        sections.map(s => (
           <div key={s.id} className="space-y-2">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {t(`faq.section.${s.id}`)}
             </h3>
             <div className="space-y-2">
-              {s.entries.map((e) => (
+              {s.entries.map(e => (
                 <Card key={e.id} className="overflow-hidden">
                   <details className="group">
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-medium text-fg transition-colors hover:bg-panel-2">

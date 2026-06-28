@@ -63,14 +63,14 @@ export default function DevicesPage() {
   // action buttons so a double-click can't fire two requests.
   const [busyId, setBusyId] = useState<GenericId<"devices"> | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<GenericId<"devices"> | null>(
-    null,
+    null
   );
 
   // Wrap a row mutation so its buttons show a disabled/pending state while it
   // runs; useMutationWithToast already swallows errors and toasts them.
   async function runWithBusy(
     id: GenericId<"devices">,
-    fn: () => Promise<unknown>,
+    fn: () => Promise<unknown>
   ) {
     setBusyId(id);
     try {
@@ -96,12 +96,12 @@ export default function DevicesPage() {
   // user / linked person, so a larger fleet stays scannable.
   const visibleDevices = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (devices ?? []).filter((d) => {
+    return (devices ?? []).filter(d => {
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
       if (!q) return true;
       return [d.hostname, d.lastWindowsUser, d.personName]
         .filter(Boolean)
-        .some((s) => String(s).toLowerCase().includes(q));
+        .some(s => String(s).toLowerCase().includes(q));
     });
   }, [devices, statusFilter, search]);
 
@@ -109,9 +109,9 @@ export default function DevicesPage() {
     const list = devices ?? [];
     return {
       total: list.length,
-      active: list.filter((d) => d.status === "active").length,
-      pending: list.filter((d) => d.status === "pending").length,
-      disabled: list.filter((d) => d.status === "disabled").length,
+      active: list.filter(d => d.status === "active").length,
+      pending: list.filter(d => d.status === "pending").length,
+      disabled: list.filter(d => d.status === "disabled").length,
     };
   }, [devices]);
 
@@ -160,7 +160,7 @@ export default function DevicesPage() {
               placeholder={t("devices.filter.search")}
               aria-label={t("devices.filter.search")}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={e => setSearch(e.target.value)}
               className="w-full sm:w-48"
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -171,9 +171,7 @@ export default function DevicesPage() {
                 <SelectItem value="all">{t("devices.filter.all")}</SelectItem>
                 <SelectItem value="active">{t("status.active")}</SelectItem>
                 <SelectItem value="pending">{t("status.pending")}</SelectItem>
-                <SelectItem value="disabled">
-                  {t("status.disabled")}
-                </SelectItem>
+                <SelectItem value="disabled">{t("status.disabled")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -205,7 +203,7 @@ export default function DevicesPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                visibleDevices.map((d) => (
+                visibleDevices.map(d => (
                   <TableRow key={d._id}>
                     <TableCell className="font-medium text-fg">
                       <Link
@@ -245,7 +243,7 @@ export default function DevicesPage() {
                       {isManager ? (
                         <Select
                           value={d.personId ?? "__none__"}
-                          onValueChange={(value) =>
+                          onValueChange={value =>
                             void link(
                               {
                                 deviceId: d._id,
@@ -254,7 +252,7 @@ export default function DevicesPage() {
                                     ? null
                                     : (value as (typeof people)[number]["_id"]),
                               },
-                              { success: t("devices.linked") },
+                              { success: t("devices.linked") }
                             )
                           }
                         >
@@ -265,7 +263,7 @@ export default function DevicesPage() {
                             <SelectItem value="__none__">
                               {t("devices.none")}
                             </SelectItem>
-                            {people.map((p) => (
+                            {people.map(p => (
                               <SelectItem key={p._id} value={p._id}>
                                 {p.name}
                               </SelectItem>
@@ -295,8 +293,8 @@ export default function DevicesPage() {
                                   void runWithBusy(d._id, () =>
                                     approve(
                                       { deviceId: d._id },
-                                      { success: t("devices.approved") },
-                                    ),
+                                      { success: t("devices.approved") }
+                                    )
                                   )
                                 }
                               >
@@ -313,8 +311,8 @@ export default function DevicesPage() {
                                   void runWithBusy(d._id, () =>
                                     disable(
                                       { deviceId: d._id },
-                                      { success: t("devices.disabled") },
-                                    ),
+                                      { success: t("devices.disabled") }
+                                    )
                                   )
                                 }
                               >
@@ -353,7 +351,7 @@ export default function DevicesPage() {
           setDeleteTarget(null);
           if (id) {
             await runWithBusy(id, () =>
-              removeDevice({ deviceId: id }, { success: t("devices.deleted") }),
+              removeDevice({ deviceId: id }, { success: t("devices.deleted") })
             );
           }
         }}

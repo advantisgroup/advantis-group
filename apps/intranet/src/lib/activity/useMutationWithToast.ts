@@ -31,7 +31,7 @@ export function useMutationWithToast<
   return useCallback(
     async (
       args: FunctionArgs<Mutation>,
-      opts?: { success?: string },
+      opts?: { success?: string }
     ): Promise<FunctionReturnType<Mutation> | undefined> => {
       try {
         const result = (await mutate(args)) as FunctionReturnType<Mutation>;
@@ -45,6 +45,6 @@ export function useMutationWithToast<
         return undefined;
       }
     },
-    [mutate, toast, t],
+    [mutate, toast, t]
   );
 }

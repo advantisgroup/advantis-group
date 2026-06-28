@@ -39,7 +39,7 @@ export function InfoTip({
             aria-label={text}
             className={cn(
               "inline-flex text-muted-foreground transition-colors hover:text-fg focus-visible:text-fg focus:outline-none",
-              className,
+              className
             )}
           >
             <Info className="h-3.5 w-3.5" />

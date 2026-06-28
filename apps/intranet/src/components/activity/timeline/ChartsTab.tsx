@@ -46,7 +46,9 @@ export function ChartsTab({
             <CardTitle className="text-base">
               {t("timeline.trend.heading")}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">{t("timeline.trend.sub")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("timeline.trend.sub")}
+            </p>
           </CardHeader>
           <CardContent className="pt-0 sm:pt-0">
             <DailyTrendChart
@@ -62,7 +64,9 @@ export function ChartsTab({
             <CardTitle className="text-base">
               {t("timeline.intraday.heading")}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">{t("timeline.intraday.sub")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("timeline.intraday.sub")}
+            </p>
           </CardHeader>
           <CardContent className="pt-0 sm:pt-0">
             {intraday.length === 0 ? (
@@ -84,7 +88,9 @@ export function ChartsTab({
           <CardTitle className="text-base">
             {t("timeline.heatmap.heading")}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">{t("timeline.heatmap.sub")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("timeline.heatmap.sub")}
+          </p>
         </CardHeader>
         <CardContent className="pt-0 sm:pt-0">
           <HourHeatmap data={heatmap} />
@@ -97,7 +103,9 @@ export function ChartsTab({
           <CardTitle className="text-base">
             {t("timeline.hourly.heading")}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">{t("timeline.hourly.sub")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("timeline.hourly.sub")}
+          </p>
         </CardHeader>
         <CardContent className="pt-0 sm:pt-0">
           {!employeeId ? (

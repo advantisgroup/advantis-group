@@ -93,9 +93,14 @@ export interface DailyStat {
 export function dailyTrend(
   stats: DailyStat[],
   startDay: string,
-  endDay: string,
-): Array<{ day: string; label: string; activeHours: number; idleHours: number }> {
-  const byDay = new Map(stats.map((s) => [s.day, s]));
+  endDay: string
+): Array<{
+  day: string;
+  label: string;
+  activeHours: number;
+  idleHours: number;
+}> {
+  const byDay = new Map(stats.map(s => [s.day, s]));
   const out: Array<{
     day: string;
     label: string;
@@ -127,7 +132,7 @@ export function dailyTrend(
  */
 export function hourOfDayActivity(
   samples: Sample[],
-  tzOffsetMinutes = 0,
+  tzOffsetMinutes = 0
 ): Array<{ hour: number; ratio: number; total: number }> {
   const buckets = Array.from({ length: 24 }, (_, hour) => ({
     hour,
@@ -139,7 +144,7 @@ export function hourOfDayActivity(
     buckets[h].total += 1;
     if (s.active) buckets[h].active += 1;
   }
-  return buckets.map((b) => ({
+  return buckets.map(b => ({
     hour: b.hour,
     total: b.total,
     ratio: b.total === 0 ? 0 : b.active / b.total,
@@ -177,7 +182,7 @@ export interface StateSample {
  */
 export function isWorkingState(
   finalState: StateName | null | undefined,
-  fallbackActive: boolean,
+  fallbackActive: boolean
 ): boolean {
   if (finalState == null) return fallbackActive;
   return (
@@ -213,7 +218,7 @@ export function hourlyStateBreakdown(
   samples: StateSample[],
   windowStart: number,
   windowEnd: number,
-  tzOffsetMinutes = 0,
+  tzOffsetMinutes = 0
 ): HourStateBucket[] {
   const buckets = emptyHourBuckets();
   if (samples.length === 0 || windowEnd <= windowStart) return buckets;
@@ -256,7 +261,7 @@ export function hourlyStateBreakdown(
  */
 export function intradayTimeline(
   samples: Sample[],
-  slotMinutes = 30,
+  slotMinutes = 30
 ): Array<{ t: number; label: string; activePct: number }> {
   if (samples.length === 0) return [];
   const slotMs = slotMinutes * 60_000;
@@ -289,13 +294,13 @@ export function intradayTimeline(
 export function timelineCharts(
   samples: Sample[],
   day: string,
-  tzOffsetMinutes = 0,
+  tzOffsetMinutes = 0
 ): {
   heatmap: ReturnType<typeof hourOfDayActivity>;
   intraday: ReturnType<typeof intradayTimeline>;
 } {
   const inDay = samples.filter(
-    (s) => localDay(s.capturedAt, tzOffsetMinutes) === day,
+    s => localDay(s.capturedAt, tzOffsetMinutes) === day
   );
   return {
     heatmap: hourOfDayActivity(inDay, tzOffsetMinutes),
@@ -310,7 +315,7 @@ export function timelineCharts(
  */
 export function lastActiveDay(
   samples: Sample[],
-  tzOffsetMinutes = 0,
+  tzOffsetMinutes = 0
 ): string | null {
   return samples.length > 0
     ? localDay(samples[0].capturedAt, tzOffsetMinutes)
@@ -334,7 +339,7 @@ export interface StateSegment {
 export function dayStateSegments(
   samples: StateSample[],
   dayStart: number,
-  dayEnd: number,
+  dayEnd: number
 ): StateSegment[] {
   const segments: StateSegment[] = [];
   if (samples.length === 0 || dayEnd <= dayStart) return segments;
@@ -363,10 +368,13 @@ export function dayStateSegments(
 export function minuteStates(
   samples: StateSample[],
   dayStart: number,
-  dayEnd: number,
+  dayEnd: number
 ): Array<StateName | null> {
   const totalMinutes = Math.max(0, Math.round((dayEnd - dayStart) / 60_000));
-  const out: Array<StateName | null> = Array.from({ length: totalMinutes }, () => null);
+  const out: Array<StateName | null> = Array.from(
+    { length: totalMinutes },
+    () => null
+  );
   for (const seg of dayStateSegments(samples, dayStart, dayEnd)) {
     const from = Math.floor((seg.start - dayStart) / 60_000);
     const to = Math.ceil((seg.end - dayStart) / 60_000);
@@ -389,7 +397,7 @@ export function sumDaily(daily: DailyStat[]): {
       activeSeconds: acc.activeSeconds + d.activeSeconds,
       idleSeconds: acc.idleSeconds + d.idleSeconds,
     }),
-    { activeSeconds: 0, idleSeconds: 0 },
+    { activeSeconds: 0, idleSeconds: 0 }
   );
 }
 
@@ -408,7 +416,7 @@ export function weekStartOf(day: string): string {
 export function weeklyTrend(
   daily: DailyStat[],
   startDay: string,
-  endDay: string,
+  endDay: string
 ): Array<{
   weekStart: string;
   label: string;

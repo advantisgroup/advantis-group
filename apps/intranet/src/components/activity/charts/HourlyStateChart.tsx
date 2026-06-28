@@ -9,7 +9,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { STATE_NAMES, type HourStateBucket, type StateName } from "@/lib/activity/activity";
+import {
+  STATE_NAMES,
+  type HourStateBucket,
+  type StateName,
+} from "@/lib/activity/activity";
 import { CHART, STATE_COLOR, tooltipStyle } from "./theme";
 
 /**
@@ -48,7 +52,7 @@ export function HourlyStateChart({
         />
         <Tooltip
           {...tooltipStyle}
-          labelFormatter={(h) => `${String(h).padStart(2, "0")}:00`}
+          labelFormatter={h => `${String(h).padStart(2, "0")}:00`}
         />
         {STATE_NAMES.map((state, i) => (
           <Bar

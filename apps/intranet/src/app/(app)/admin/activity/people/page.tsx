@@ -50,17 +50,20 @@ function EditableId({
         value={value}
         disabled={disabled}
         placeholder={placeholder}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={e => setValue(e.target.value)}
         onBlur={() => {
           if (value !== initial) onSave(value);
         }}
-        onKeyDown={(e) => {
+        onKeyDown={e => {
           if (e.key === "Enter") (e.target as HTMLInputElement).blur();
         }}
         className="h-8 flex-1 font-mono text-xs"
       />
       {value.trim() !== "" && (
-        <CopyButton value={value} label={`${t("common.copy")} · ${placeholder}`} />
+        <CopyButton
+          value={value}
+          label={`${t("common.copy")} · ${placeholder}`}
+        />
       )}
     </div>
   );
@@ -78,7 +81,7 @@ export default function PeoplePage() {
   const [email, setEmail] = useState("");
   const [query, setQuery] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(
-    null,
+    null
   );
 
   const canEdit = me?.role === "admin" || me?.role === "manager";
@@ -88,10 +91,10 @@ export default function PeoplePage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q || !people) return people ?? [];
-    return people.filter((p) =>
+    return people.filter(p =>
       [p.name, p.email, p.employeeId, p.genesysUserId, p.clockodoUserId]
         .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q)),
+        .some(v => String(v).toLowerCase().includes(q))
     );
   }, [people, query]);
 
@@ -123,13 +126,13 @@ export default function PeoplePage() {
             >
               <Input
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 placeholder={t("people.name")}
                 className="sm:flex-1"
               />
               <Input
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder={t("people.email")}
                 className="sm:flex-1"
               />
@@ -153,7 +156,7 @@ export default function PeoplePage() {
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={e => setQuery(e.target.value)}
                 placeholder={t("common.search")}
                 aria-label={t("common.search")}
                 className="pl-9"
@@ -194,19 +197,21 @@ export default function PeoplePage() {
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map((p) => (
+            {filtered.map(p => (
               <TableRow key={p._id}>
                 <TableCell className="text-fg">{p.name}</TableCell>
-                <TableCell className="text-muted-foreground">{p.email ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {p.email ?? "—"}
+                </TableCell>
                 <TableCell>
                   <EditableId
                     initial={p.employeeId ?? ""}
                     disabled={!canEdit}
                     placeholder={t("people.employeeId")}
-                    onSave={(value) =>
+                    onSave={value =>
                       void update(
                         { personId: p._id, employeeId: value },
-                        { success: t("people.updated") },
+                        { success: t("people.updated") }
                       )
                     }
                   />
@@ -216,10 +221,10 @@ export default function PeoplePage() {
                     initial={p.genesysUserId ?? ""}
                     disabled={!canEdit}
                     placeholder={t("people.genesysId")}
-                    onSave={(value) =>
+                    onSave={value =>
                       void update(
                         { personId: p._id, genesysUserId: value },
-                        { success: t("people.updated") },
+                        { success: t("people.updated") }
                       )
                     }
                   />
@@ -229,10 +234,10 @@ export default function PeoplePage() {
                     initial={p.clockodoUserId ?? ""}
                     disabled={!canEdit}
                     placeholder={t("people.clockodoId")}
-                    onSave={(value) =>
+                    onSave={value =>
                       void update(
                         { personId: p._id, clockodoUserId: value },
-                        { success: t("people.updated") },
+                        { success: t("people.updated") }
                       )
                     }
                   />
@@ -242,10 +247,10 @@ export default function PeoplePage() {
                     checked={p.active}
                     disabled={!canEdit}
                     aria-label={t("people.active")}
-                    onCheckedChange={(checked) => {
+                    onCheckedChange={checked => {
                       void update(
                         { personId: p._id, active: checked === true },
-                        { success: t("people.updated") },
+                        { success: t("people.updated") }
                       );
                     }}
                   />
@@ -277,7 +282,7 @@ export default function PeoplePage() {
           if (deleteTarget) {
             await remove(
               { personId: deleteTarget },
-              { success: t("people.deleted") },
+              { success: t("people.deleted") }
             );
           }
           setDeleteTarget(null);

@@ -28,9 +28,12 @@ export function CopyButton({
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    []
+  );
 
   async function copy() {
     try {
@@ -56,9 +59,11 @@ export function CopyButton({
       className={cn(
         "grid shrink-0 place-items-center rounded-md transition-colors duration-150",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/60",
-        copied ? "text-ok" : "text-muted-foreground hover:bg-panel-2 hover:text-fg",
+        copied
+          ? "text-ok"
+          : "text-muted-foreground hover:bg-panel-2 hover:text-fg",
         box,
-        className,
+        className
       )}
     >
       {copied ? (

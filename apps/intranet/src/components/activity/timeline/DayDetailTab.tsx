@@ -53,16 +53,14 @@ export function DayDetailTab({
 
   const history = useQuery(
     api.activity.state.history,
-    employeeId ? { employeeId, since: dayStart, until: dayEnd } : "skip",
+    employeeId ? { employeeId, since: dayStart, until: dayEnd } : "skip"
   );
 
   const { segments, minutes } = useMemo(() => {
     // The backend prepends the prior-day state so past days render correctly
     // across midnight. For today, that row would extend yesterday's state from
     // 00:00 even if work hadn't started yet — filter it out.
-    const rows = (history ?? []).filter(
-      (r) => day !== today || r.at >= dayStart,
-    );
+    const rows = (history ?? []).filter(r => day !== today || r.at >= dayStart);
     return {
       segments: dayStateSegments(rows, dayStart, effectiveDayEnd),
       minutes: minuteStates(rows, dayStart, effectiveDayEnd),
@@ -71,8 +69,7 @@ export function DayDetailTab({
 
   const stateLabel = (s: StateName) => t(`empstate.${s}`);
   // Mark "now" on the strip when viewing today.
-  const nowPct =
-    day === today ? ((nowMs() - dayStart) / DAY_MS) * 100 : null;
+  const nowPct = day === today ? ((nowMs() - dayStart) / DAY_MS) * 100 : null;
 
   return (
     <Card className="animate-fade-up">
@@ -82,7 +79,9 @@ export function DayDetailTab({
             <CardTitle className="text-base">
               {t("timeline.day.heading")}
             </CardTitle>
-            <p className="text-sm text-muted-foreground">{t("timeline.day.sub")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("timeline.day.sub")}
+            </p>
           </div>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             {t("timeline.day.date")}
@@ -90,14 +89,14 @@ export function DayDetailTab({
               type="date"
               value={day}
               max={today}
-              onChange={(e) => onSelectDay(e.target.value || today)}
+              onChange={e => onSelectDay(e.target.value || today)}
               className="w-40"
             />
           </label>
         </div>
         {/* Legend */}
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-          {STATE_NAMES.map((s) => (
+          {STATE_NAMES.map(s => (
             <span
               key={s}
               className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
@@ -153,7 +152,7 @@ export function DayDetailTab({
               </div>
               {/* Hour ticks: 00, 06, 12, 18, 24 */}
               <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
-                {[0, 6, 12, 18, 24].map((h) => (
+                {[0, 6, 12, 18, 24].map(h => (
                   <span key={h}>{String(h).padStart(2, "0")}</span>
                 ))}
               </div>
@@ -175,9 +174,7 @@ export function DayDetailTab({
                           key={m}
                           className="h-3 flex-1 rounded-[1px]"
                           style={{
-                            background: st
-                              ? STATE_COLOR[st]
-                              : "var(--muted)",
+                            background: st ? STATE_COLOR[st] : "var(--muted)",
                           }}
                           title={
                             st

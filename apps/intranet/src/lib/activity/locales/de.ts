@@ -239,7 +239,8 @@ export const de: Dict = {
   "devices.slots.copy": "Kopieren",
   "devices.slots.copied": "Kopiert!",
   "devices.slots.revoke": "Widerrufen",
-  "devices.slots.confirmRevoke": "Diesen Registrierungscode wirklich widerrufen?",
+  "devices.slots.confirmRevoke":
+    "Diesen Registrierungscode wirklich widerrufen?",
   "devices.slots.status.active": "Aktiv",
   "devices.slots.status.used": "Eingelöst",
   "devices.slots.status.expired": "Abgelaufen",

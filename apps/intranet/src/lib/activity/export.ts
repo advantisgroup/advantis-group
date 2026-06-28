@@ -5,7 +5,11 @@
  */
 
 /** Trigger a browser download of `content` as a file named `name`. */
-export function downloadFile(name: string, mime: string, content: string): void {
+export function downloadFile(
+  name: string,
+  mime: string,
+  content: string
+): void {
   const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -34,10 +38,10 @@ function csvCell(value: unknown): string {
  */
 export function toCsv<T extends Record<string, unknown>>(
   rows: T[],
-  columns: (keyof T)[],
+  columns: (keyof T)[]
 ): string {
-  const header = columns.map((c) => csvCell(String(c))).join(",");
-  const body = rows.map((r) => columns.map((c) => csvCell(r[c])).join(","));
+  const header = columns.map(c => csvCell(String(c))).join(",");
+  const body = rows.map(r => columns.map(c => csvCell(r[c])).join(","));
   return [header, ...body].join("\r\n");
 }
 

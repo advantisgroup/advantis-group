@@ -38,7 +38,7 @@ export function SetupChecklist() {
   const items = [
     {
       id: "approve",
-      done: devices.some((d) => d.status === "active"),
+      done: devices.some(d => d.status === "active"),
       href: "/admin/activity/devices",
     },
     {
@@ -48,12 +48,12 @@ export function SetupChecklist() {
     },
     {
       id: "link",
-      done: devices.some((d) => d.personId != null),
+      done: devices.some(d => d.personId != null),
       href: "/admin/activity/devices",
     },
     { id: "debugpw", done: debugPwSet, href: "/admin/activity/settings" },
   ];
-  const remaining = items.filter((i) => !i.done).length;
+  const remaining = items.filter(i => !i.done).length;
   if (remaining === 0) return null; // fully set up — don't nag.
 
   return (
@@ -65,9 +65,11 @@ export function SetupChecklist() {
             {t("setup.remaining", { count: remaining })}
           </span>
         </div>
-        <p className="mt-0.5 text-sm text-muted-foreground">{t("setup.subtitle")}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {t("setup.subtitle")}
+        </p>
         <ul className="mt-3 space-y-1">
-          {items.map((i) => (
+          {items.map(i => (
             <li key={i.id}>
               <Link
                 href={i.href}
@@ -81,7 +83,7 @@ export function SetupChecklist() {
                 <span
                   className={cn(
                     "text-sm",
-                    i.done ? "text-muted-foreground line-through" : "text-fg",
+                    i.done ? "text-muted-foreground line-through" : "text-fg"
                   )}
                 >
                   {t(`setup.item.${i.id}`)}

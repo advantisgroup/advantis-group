@@ -22,7 +22,10 @@ import { SkeletonCard } from "@/components/activity/Skeleton";
 import { QueryState } from "@/components/activity/QueryState";
 import { SetupChecklist } from "@/components/activity/SetupChecklist";
 import { Stagger, StaggerItem } from "@/components/activity/motion/Stagger";
-import { HealthBanner, StateBadge } from "@/components/activity/state/StateBits";
+import {
+  HealthBanner,
+  StateBadge,
+} from "@/components/activity/state/StateBits";
 
 /** The four headline figures for the whole fleet. */
 function FleetSummary({
@@ -36,9 +39,9 @@ function FleetSummary({
   // state exists yet — keeps the count in step with the per-card badges.
   const isWorking = (d: { active: boolean; finalState: string | null }) =>
     isWorkingState(d.finalState as StateName | null, d.active);
-  const working = rows.filter((d) => d.online && isWorking(d)).length;
-  const idle = rows.filter((d) => d.online && !isWorking(d)).length;
-  const offline = rows.filter((d) => !d.online).length;
+  const working = rows.filter(d => d.online && isWorking(d)).length;
+  const idle = rows.filter(d => d.online && !isWorking(d)).length;
+  const offline = rows.filter(d => !d.online).length;
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -105,7 +108,7 @@ export default function OverviewPage() {
           </Card>
         }
       >
-        {(rows) => (
+        {rows => (
           <div className="space-y-6">
             <HealthBanner />
             <FleetSummary rows={rows} />
@@ -182,7 +185,7 @@ export default function OverviewPage() {
                             <ChevronRight
                               className={cn(
                                 "h-4 w-4 text-muted-foreground transition-transform duration-150",
-                                "group-hover:translate-x-0.5 group-hover:text-signal",
+                                "group-hover:translate-x-0.5 group-hover:text-signal"
                               )}
                             />
                           </div>

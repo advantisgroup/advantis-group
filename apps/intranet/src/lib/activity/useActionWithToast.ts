@@ -22,7 +22,7 @@ import { errorMessage } from "./errors";
  * rejection.
  */
 export function useActionWithToast<Action extends FunctionReference<"action">>(
-  actionRef: Action,
+  actionRef: Action
 ) {
   const run = useAction(actionRef);
   const toast = useToast();
@@ -31,7 +31,7 @@ export function useActionWithToast<Action extends FunctionReference<"action">>(
   return useCallback(
     async (
       args: FunctionArgs<Action>,
-      opts?: { success?: string },
+      opts?: { success?: string }
     ): Promise<FunctionReturnType<Action> | undefined> => {
       try {
         const result = (await run(args)) as FunctionReturnType<Action>;
@@ -45,6 +45,6 @@ export function useActionWithToast<Action extends FunctionReference<"action">>(
         return undefined;
       }
     },
-    [run, toast, t],
+    [run, toast, t]
   );
 }

@@ -47,7 +47,7 @@ export function AuditPanel() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((r) => (
+          {rows.map(r => (
             <TableRow key={r._id}>
               <TableCell className="whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground">
                 {formatTime(r.at, lang)}
@@ -58,7 +58,9 @@ export function AuditPanel() {
                   {r.action}
                 </Badge>
               </TableCell>
-              <TableCell className="text-muted-foreground">{r.target ?? "—"}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {r.target ?? "—"}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -52,7 +52,7 @@ function addDays(day: string, n: number): string {
 function rangeFor(
   tf: TimeFrame,
   today: string,
-  custom: { from: string; to: string },
+  custom: { from: string; to: string }
 ): { startDay: string; endDay: string } {
   const thisWeekStart = weekStartOf(today);
   switch (tf) {
@@ -85,24 +85,27 @@ export default function ReportsPage() {
 
   const { startDay, endDay } = useMemo(
     () => rangeFor(timeFrame, today, custom),
-    [timeFrame, today, custom],
+    [timeFrame, today, custom]
   );
 
-  const report = useQuery(api.activity.reports.weeklyOverview, { startDay, endDay });
+  const report = useQuery(api.activity.reports.weeklyOverview, {
+    startDay,
+    endDay,
+  });
 
   // Filtered + sorted device rows with their range totals.
   const rows = useMemo(() => {
     const base = (report ?? []).filter(
-      (d) => deviceFilter === "__all__" || d.deviceId === deviceFilter,
+      d => deviceFilter === "__all__" || d.deviceId === deviceFilter
     );
     return base
-      .map((d) => ({ ...d, totals: sumDaily(d.daily as DailyStat[]) }))
+      .map(d => ({ ...d, totals: sumDaily(d.daily as DailyStat[]) }))
       .sort((a, b) => b.totals.activeSeconds - a.totals.activeSeconds);
   }, [report, deviceFilter]);
 
   // Weekly trend across the currently filtered devices (summed per week).
   const trend = useMemo(() => {
-    const flat: DailyStat[] = rows.flatMap((d) => d.daily as DailyStat[]);
+    const flat: DailyStat[] = rows.flatMap(d => d.daily as DailyStat[]);
     return weeklyTrend(flat, startDay, endDay);
   }, [rows, startDay, endDay]);
 
@@ -121,7 +124,7 @@ export default function ReportsPage() {
       idle: rows.reduce((s, d) => s + d.totals.idleSeconds, 0),
       devices: rows.length,
     }),
-    [rows],
+    [rows]
   );
 
   return (
@@ -130,7 +133,9 @@ export default function ReportsPage() {
         <h1 className="text-2xl font-bold tracking-tight text-fg">
           {t("reports.title")}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t("reports.subtitle")}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("reports.subtitle")}
+        </p>
       </div>
 
       {/* Controls: time frame, optional custom range, device filter */}
@@ -139,13 +144,13 @@ export default function ReportsPage() {
           {t("reports.timeframe")}
           <Select
             value={timeFrame}
-            onValueChange={(v) => setTimeFrame(v as TimeFrame)}
+            onValueChange={v => setTimeFrame(v as TimeFrame)}
           >
             <SelectTrigger className="w-full sm:w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {timeFrames.map((tf) => (
+              {timeFrames.map(tf => (
                 <SelectItem key={tf} value={tf}>
                   {t(`reports.tf.${tf}`)}
                 </SelectItem>
@@ -162,9 +167,7 @@ export default function ReportsPage() {
                 type="date"
                 value={custom.from}
                 max={custom.to}
-                onChange={(e) =>
-                  setCustom((c) => ({ ...c, from: e.target.value }))
-                }
+                onChange={e => setCustom(c => ({ ...c, from: e.target.value }))}
                 className="w-full sm:w-40"
               />
             </label>
@@ -175,9 +178,7 @@ export default function ReportsPage() {
                 value={custom.to}
                 min={custom.from}
                 max={today}
-                onChange={(e) =>
-                  setCustom((c) => ({ ...c, to: e.target.value }))
-                }
+                onChange={e => setCustom(c => ({ ...c, to: e.target.value }))}
                 className="w-full sm:w-40"
               />
             </label>
@@ -192,7 +193,7 @@ export default function ReportsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">{t("reports.filterAll")}</SelectItem>
-              {(report ?? []).map((d) => (
+              {(report ?? []).map(d => (
                 <SelectItem key={d.deviceId} value={d.deviceId}>
                   {d.personName ?? d.hostname}
                 </SelectItem>
@@ -232,7 +233,9 @@ export default function ReportsPage() {
           <CardTitle className="text-base">
             {t("reports.trend.heading")}
           </CardTitle>
-          <p className="text-sm text-muted-foreground">{t("reports.trend.sub")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("reports.trend.sub")}
+          </p>
         </CardHeader>
         <CardContent className="pt-0 sm:pt-0">
           {report === undefined ? (
@@ -284,9 +287,8 @@ export default function ReportsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map((d) => {
-                const total =
-                  d.totals.activeSeconds + d.totals.idleSeconds;
+              rows.map(d => {
+                const total = d.totals.activeSeconds + d.totals.idleSeconds;
                 return (
                   <TableRow key={d.deviceId} className="group">
                     <TableCell>

@@ -23,7 +23,9 @@ export default function SettingsPage() {
         <h2 className="text-lg font-bold tracking-tight text-fg">
           {t("settings.heading")}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{t("settings.subtitle")}</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("settings.subtitle")}
+        </p>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>

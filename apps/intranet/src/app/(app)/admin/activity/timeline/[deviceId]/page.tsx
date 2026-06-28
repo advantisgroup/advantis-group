@@ -29,7 +29,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/activity/StatCard";
-import { StateBadge, SourceSignals } from "@/components/activity/state/StateBits";
+import {
+  StateBadge,
+  SourceSignals,
+} from "@/components/activity/state/StateBits";
 import { DayNav } from "@/components/activity/timeline/DayNav";
 import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
 import { RawTab } from "@/components/activity/timeline/RawTab";
@@ -48,7 +51,10 @@ export default function TimelinePage({
   const [tab, setTab] = useTabParam("charts");
   const deviceId = decodeURIComponent(rawDeviceId);
 
-  const samples = useQuery(api.activity.stats.recentSamples, { deviceId, limit: 1000 });
+  const samples = useQuery(api.activity.stats.recentSamples, {
+    deviceId,
+    limit: 1000,
+  });
   const today = todayLocalDay();
   // The day the charts are scoped to (URL `?day=`; defaults to today). Drives
   // every per-day view so a stale device never shows old data as "today".
@@ -67,8 +73,8 @@ export default function TimelinePage({
   });
   const team = useQuery(api.activity.stats.teamOverview);
 
-  const device = team?.find((d) => d.deviceId === deviceId) ?? null;
-  const dayStats = daily?.find((d) => d.day === selectedDay);
+  const device = team?.find(d => d.deviceId === deviceId) ?? null;
+  const dayStats = daily?.find(d => d.day === selectedDay);
   const employeeId = device?.personEmployeeId ?? null;
 
   // Local midnight → next local midnight for the selected day (epoch ms).
@@ -81,13 +87,13 @@ export default function TimelinePage({
   // history (open-ended for today so it runs up to "now").
   const liveState = useQuery(
     api.activity.state.get,
-    employeeId ? { employeeId } : "skip",
+    employeeId ? { employeeId } : "skip"
   );
   const stateHistory = useQuery(
     api.activity.state.history,
     employeeId
       ? { employeeId, since: dayStartMs, until: isToday ? undefined : dayEndMs }
-      : "skip",
+      : "skip"
   );
 
   // Aggregations (memoised; samples can be up to 1000 rows).
@@ -104,10 +110,10 @@ export default function TimelinePage({
         // For *today* strip the prepended prior-day row (it would credit
         // yesterday's state to hours 00-NN before work started). For a past day
         // we keep it so the strip fills from that day's midnight.
-        (stateHistory ?? []).filter((x) => !isToday || x.at >= dayStartMs),
+        (stateHistory ?? []).filter(x => !isToday || x.at >= dayStartMs),
         dayStartMs,
         isToday ? nowMs() : dayEndMs,
-        tzOffset,
+        tzOffset
       ),
     };
   }, [
@@ -126,9 +132,9 @@ export default function TimelinePage({
   const stateLabels = useMemo(
     () =>
       Object.fromEntries(
-        STATE_NAMES.map((s) => [s, t(`empstate.${s}`)]),
+        STATE_NAMES.map(s => [s, t(`empstate.${s}`)])
       ) as Record<StateName, string>,
-    [t],
+    [t]
   );
 
   if (samples === undefined) {
@@ -151,7 +157,7 @@ export default function TimelinePage({
   // per-day KPI labels when the user has rewound to a past day.
   const shortDate = new Date(`${selectedDay}T00:00:00`).toLocaleDateString(
     lang,
-    { day: "2-digit", month: "2-digit" },
+    { day: "2-digit", month: "2-digit" }
   );
   // Whether the selected day has anything to show (raw samples or a daily row).
   const hasDataToday = intraday.length > 0 || dayStats != null;
@@ -168,7 +174,9 @@ export default function TimelinePage({
 
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-fg">{title}</h1>
-        <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{deviceId}</p>
+        <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+          {deviceId}
+        </p>
       </div>
 
       {/* KPI row — active/idle follow the selected day; status/last-seen are
@@ -215,7 +223,9 @@ export default function TimelinePage({
       {employeeId && (
         <Card className="animate-fade-up">
           <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
-            <CardTitle className="text-base">{t("timeline.state.heading")}</CardTitle>
+            <CardTitle className="text-base">
+              {t("timeline.state.heading")}
+            </CardTitle>
             {liveState && <StateBadge state={liveState.finalState} />}
           </CardHeader>
           <CardContent className="pt-0 sm:pt-0">

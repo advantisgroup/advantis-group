@@ -49,7 +49,7 @@ export function StatCard({
     <Card
       className={cn(
         "transition-shadow duration-200 hover:shadow-card-hover",
-        className,
+        className
       )}
     >
       <CardContent className="flex flex-col gap-2.5 p-5">
@@ -62,7 +62,7 @@ export function StatCard({
             <span
               className={cn(
                 "grid h-8 w-8 shrink-0 place-items-center rounded-lg ring-1 ring-inset",
-                TILE[tone],
+                TILE[tone]
               )}
             >
               {icon}
@@ -73,12 +73,14 @@ export function StatCard({
           className={cn(
             "text-3xl font-semibold leading-none tabular-nums tracking-tight",
             TONE[tone],
-            valueClassName,
+            valueClassName
           )}
         >
           {value}
         </div>
-        {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
+        {hint && (
+          <p className="truncate text-xs text-muted-foreground">{hint}</p>
+        )}
       </CardContent>
     </Card>
   );

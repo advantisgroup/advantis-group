@@ -24,7 +24,9 @@ export function RawTab({ samples }: { samples: RawSample[] }) {
   const { t, lang } = useI18n();
   if (samples.length === 0) {
     return (
-      <p className="py-8 text-center text-muted-foreground">{t("timeline.empty")}</p>
+      <p className="py-8 text-center text-muted-foreground">
+        {t("timeline.empty")}
+      </p>
     );
   }
   return (
@@ -38,7 +40,7 @@ export function RawTab({ samples }: { samples: RawSample[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {samples.map((s) => (
+          {samples.map(s => (
             <TableRow key={s._id}>
               <TableCell className="tabular-nums">
                 {formatTime(s.capturedAt, lang)}

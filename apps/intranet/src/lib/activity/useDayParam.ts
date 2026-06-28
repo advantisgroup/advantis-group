@@ -25,7 +25,7 @@ export function useDayParam(today: string) {
       if (!value || !DAY_RE.test(value) || value > today) return today;
       return value;
     },
-    [today],
+    [today]
   );
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export function useDayParam(today: string) {
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [router, pathname, clamp, today],
+    [router, pathname, clamp, today]
   );
 
   return [day, setDay] as const;

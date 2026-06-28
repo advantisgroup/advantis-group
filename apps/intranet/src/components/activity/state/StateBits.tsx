@@ -164,12 +164,12 @@ export function SourceSignals({
 export function HealthBanner() {
   const { t } = useI18n();
   const health = useQuery(api.activity.state.health);
-  const degraded = (health ?? []).filter((h) => h.status !== "ok");
+  const degraded = (health ?? []).filter(h => h.status !== "ok");
   if (degraded.length === 0) return null;
 
   return (
     <div className="space-y-2">
-      {degraded.map((h) => {
+      {degraded.map(h => {
         const source = t(`state.source.${h.source}`);
         const text =
           h.status === "unconfigured"
@@ -186,7 +186,9 @@ export function HealthBanner() {
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" />
             <div className="min-w-0">
               <p className="text-sm text-fg">{text}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{t("state.health.degraded")}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {t("state.health.degraded")}
+              </p>
             </div>
           </div>
         );

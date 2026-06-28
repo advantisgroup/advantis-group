@@ -48,7 +48,7 @@ function NumberField({
           type="number"
           inputMode="numeric"
           value={value}
-          onChange={(e) =>
+          onChange={e =>
             onChange(e.target.value === "" ? "" : Number(e.target.value))
           }
           className="w-32"
@@ -98,14 +98,16 @@ export function ConfigPanel() {
         offlineThresholdSeconds: offline,
         retentionDays: retention,
       },
-      { success: t("settings.config.saved") },
+      { success: t("settings.config.saved") }
     );
     setSavingCfg(false);
   }
 
   // ── Tracker debug password ────────────────────────────────────────────
   const isSet = useQuery(api.activity.settings.debugPasswordIsSet);
-  const setDebugPassword = useActionWithToast(api.activity.settings.setDebugPassword);
+  const setDebugPassword = useActionWithToast(
+    api.activity.settings.setDebugPassword
+  );
   const [pw, setPw] = useState("");
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -126,7 +128,7 @@ export function ConfigPanel() {
     setBusy(true);
     const result = await setDebugPassword(
       { password: pw },
-      { success: t("settings.debugPw.saved") },
+      { success: t("settings.debugPw.saved") }
     );
     setBusy(false);
     if (result !== undefined) {
@@ -213,7 +215,7 @@ export function ConfigPanel() {
             <Input
               type="password"
               value={pw}
-              onChange={(e) => setPw(e.target.value)}
+              onChange={e => setPw(e.target.value)}
               placeholder={t("settings.debugPw.new")}
               className="flex-1"
             />
