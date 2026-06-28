@@ -154,7 +154,10 @@ export const run = internalAction({
         migrationId,
       });
       if (!run || run.migration.status !== "running") {
-        console.log("[migration] stopping — status:", run?.migration.status ?? "not found");
+        console.log(
+          "[migration] stopping — status:",
+          run?.migration.status ?? "not found"
+        );
         return;
       }
 
@@ -169,7 +172,9 @@ export const run = internalAction({
       }
 
       const table = step.table as MigrationTable;
-      console.log(`[migration] batch ${batches + 1}/${MAX_BATCHES_PER_RUN} — table="${table}" cursor=${JSON.stringify(step.cursor ?? null)} processed=${step.processed}`);
+      console.log(
+        `[migration] batch ${batches + 1}/${MAX_BATCHES_PER_RUN} — table="${table}" cursor=${JSON.stringify(step.cursor ?? null)} processed=${step.processed}`
+      );
 
       await ctx.runMutation(internal.activity.migration.markStepRunning, {
         stepId: step._id,
@@ -184,7 +189,9 @@ export const run = internalAction({
           BATCH_SIZE
         );
 
-        console.log(`[migration] fetched ${result.page.length} rows from old deployment — isDone=${result.isDone}`);
+        console.log(
+          `[migration] fetched ${result.page.length} rows from old deployment — isDone=${result.isDone}`
+        );
 
         const { warnings } = await ctx.runMutation(UPSERT[table], {
           migrationId,
@@ -192,7 +199,9 @@ export const run = internalAction({
         });
 
         if (warnings > 0) {
-          console.warn(`[migration] ${warnings} warning(s) in table="${table}" (unlinked records)`);
+          console.warn(
+            `[migration] ${warnings} warning(s) in table="${table}" (unlinked records)`
+          );
         }
 
         await ctx.runMutation(internal.activity.migration.advanceStep, {
