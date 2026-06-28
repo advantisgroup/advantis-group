@@ -157,6 +157,10 @@ export const de: Dict = {
   "timeline.kpi.idleOn": "Inaktiv am {date}",
   "timeline.kpi.status": "Status",
   "timeline.kpi.lastSeen": "Zuletzt gesehen",
+  "timeline.now.heading": "Gerade jetzt",
+  "timeline.now.todaySummary":
+    "Heute bisher {active} aktiv und {idle} inaktiv.",
+  "timeline.now.daySummary": "Am {date}: {active} aktiv, {idle} inaktiv.",
   "timeline.trend.heading": "Aktivität der letzten 14 Tage",
   "timeline.trend.sub": "Aktive vs. inaktive Stunden pro Tag.",
   "timeline.intraday.heading": "Tagesverlauf",
@@ -298,6 +302,19 @@ export const de: Dict = {
   "empstate.WRAP_UP": "Nachbearbeitung",
   "empstate.ACTIVE": "Aktiv",
   "empstate.IDLE": "Inaktiv",
+
+  // Plain-language status headlines — der ausgeschriebene „Was macht die Person
+  // gerade?“-Status auf den Übersichtskarten und im Timeline-Header.
+  // (`livestatus.*`, damit es nicht mit den Geräte-`status.*`-Schlüsseln kollidiert.)
+  "livestatus.offline": "Computer offline",
+  "livestatus.absent": "Abwesend",
+  "livestatus.break": "In der Pause",
+  "livestatus.inCall": "Im Gespräch",
+  "livestatus.wrapUp": "Anruf-Nachbearbeitung",
+  "livestatus.clockedInInactive": "Eingestempelt, aber inaktiv",
+  "livestatus.inactive": "Inaktiv",
+  "livestatus.clockedInWorking": "Eingestempelt und aktiv",
+  "livestatus.active": "Aktiv",
 
   // Error toasts — shown when an action fails. Keyed by the backend error code.
   "error.generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",

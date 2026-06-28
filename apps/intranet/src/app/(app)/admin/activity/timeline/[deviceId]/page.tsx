@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { use, useMemo } from "react";
 import { useQuery } from "convex/react";
-import { ArrowLeft, Clock, Coffee, Radio } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { api } from "@advantis/convex/api";
-import type { EmployeeState } from "@/lib/activity/format";
 import { useI18n } from "@/lib/activity/i18n";
 import { useTabParam } from "@/lib/activity/useTabParam";
 import {
@@ -25,14 +24,10 @@ import {
   type StateName,
 } from "@/lib/activity/activity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StatCard } from "@/components/activity/StatCard";
-import {
-  StateBadge,
-  SourceSignals,
-} from "@/components/activity/state/StateBits";
+import { SourceSignals } from "@/components/activity/state/StateBits";
+import { StatusSummary } from "@/components/activity/state/StatusSummary";
 import { DayNav } from "@/components/activity/timeline/DayNav";
 import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
 import { RawTab } from "@/components/activity/timeline/RawTab";
@@ -179,86 +174,97 @@ export default function TimelinePage({
         </p>
       </div>
 
-      {/* KPI row — active/idle follow the selected day; status/last-seen are
-          the device's live state regardless of which day is being viewed. */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard
-          icon={<Clock className="h-4 w-4" />}
-          label={
-            isToday
-              ? t("timeline.kpi.activeToday")
-              : t("timeline.kpi.activeOn", { date: shortDate })
-          }
-          tone="ok"
-          value={formatDuration(dayStats?.activeSeconds ?? 0, lang)}
-        />
-        <StatCard
-          icon={<Coffee className="h-4 w-4" />}
-          label={
-            isToday
-              ? t("timeline.kpi.idleToday")
-              : t("timeline.kpi.idleOn", { date: shortDate })
-          }
-          tone="warn"
-          value={formatDuration(dayStats?.idleSeconds ?? 0, lang)}
-        />
-        <StatCard
-          icon={<Radio className="h-4 w-4" />}
-          label={t("timeline.kpi.status")}
-          value={
-            <Badge variant={device?.online ? "success" : "muted"}>
-              {device?.online ? t("timeline.online") : t("timeline.offline")}
-            </Badge>
-          }
-        />
-        <StatCard
-          icon={<Clock className="h-4 w-4" />}
-          label={t("timeline.kpi.lastSeen")}
-          value={device ? formatRelativeTime(device.lastSeen, lang) : "—"}
-          valueClassName="text-xl"
-        />
-      </div>
-
-      {/* Current fused state (workstation + Genesys + Clockodo) */}
-      {employeeId && (
+      {/* "Right now" — a descriptive section, not bare number tiles: the verdict
+          in plain words, the day's active/idle described in a sentence,
+          connectivity, and (for linked devices) the per-source breakdown. */}
+      {device && (
         <Card className="animate-fade-up">
-          <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+          <CardHeader>
             <CardTitle className="text-base">
-              {t("timeline.state.heading")}
+              {t("timeline.now.heading")}
             </CardTitle>
-            {liveState && <StateBadge state={liveState.finalState} />}
           </CardHeader>
-          <CardContent className="pt-0 sm:pt-0">
-            {liveState === undefined ? (
-              <Skeleton className="h-20 w-full" />
-            ) : liveState === null ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                {t("timeline.state.empty")}
-              </p>
-            ) : (
-              <>
-                {liveState.deviceIdle && liveState.idleSeconds != null && (
-                  <p className="mb-1 text-xs text-muted-foreground">
-                    {t("state.idleFor", {
-                      duration: formatDuration(liveState.idleSeconds, lang),
-                    })}
+          <CardContent className="space-y-3 pt-0 sm:pt-0">
+            <StatusSummary
+              size="lg"
+              status={{
+                online: device.online,
+                deviceIdle: device.deviceIdle,
+                idleSeconds:
+                  device.stateIdleSeconds ??
+                  (device.idleMs != null
+                    ? Math.round(device.idleMs / 1000)
+                    : null),
+                genesysRoutingStatus: device.genesysRoutingStatus,
+                genesysWrapUp: device.genesysWrapUp,
+                clockodoWorking: device.clockodoWorking,
+                clockodoBreak: device.clockodoBreak,
+                clockodoAbsent: device.clockodoAbsent,
+                active: device.active,
+              }}
+            />
+
+            {/* The day's figures, woven into a sentence instead of stat tiles. */}
+            <p className="text-sm text-fg/80">
+              {t(
+                isToday
+                  ? "timeline.now.todaySummary"
+                  : "timeline.now.daySummary",
+                {
+                  active: formatDuration(dayStats?.activeSeconds ?? 0, lang),
+                  idle: formatDuration(dayStats?.idleSeconds ?? 0, lang),
+                  date: shortDate,
+                }
+              )}
+            </p>
+
+            <p className="text-xs text-muted-foreground">
+              <span
+                className={
+                  device.online
+                    ? "font-medium text-ok"
+                    : "font-medium text-muted-foreground"
+                }
+              >
+                {device.online ? t("timeline.online") : t("timeline.offline")}
+              </span>
+              {" · "}
+              {t("overview.lastSeen")}{" "}
+              <span className="font-medium text-fg/80">
+                {formatRelativeTime(device.lastSeen, lang)}
+              </span>
+            </p>
+
+            {/* Per-source breakdown — what each signal says — for linked devices. */}
+            {employeeId && (
+              <div className="border-t border-border-soft pt-3">
+                {liveState === undefined ? (
+                  <Skeleton className="h-20 w-full" />
+                ) : liveState === null ? (
+                  <p className="py-1 text-sm text-muted-foreground">
+                    {t("timeline.state.empty")}
                   </p>
+                ) : (
+                  <>
+                    <SourceSignals
+                      deviceIdle={liveState.deviceIdle ?? null}
+                      genesysRoutingStatus={
+                        liveState.genesysRoutingStatus ?? null
+                      }
+                      genesysPresence={liveState.genesysPresence ?? null}
+                      clockodoWorking={liveState.clockodoWorking ?? null}
+                      clockodoBreak={liveState.clockodoBreak ?? null}
+                      clockodoAbsent={liveState.clockodoAbsent ?? null}
+                    />
+                    <p className="mt-3 border-t border-border-soft pt-2.5 font-mono text-[11px] text-muted-foreground">
+                      {t("state.updated")}{" "}
+                      <span className="text-fg/80">
+                        {formatRelativeTime(liveState.updatedAt, lang)}
+                      </span>
+                    </p>
+                  </>
                 )}
-                <SourceSignals
-                  deviceIdle={liveState.deviceIdle ?? null}
-                  genesysRoutingStatus={liveState.genesysRoutingStatus ?? null}
-                  genesysPresence={liveState.genesysPresence ?? null}
-                  clockodoWorking={liveState.clockodoWorking ?? null}
-                  clockodoBreak={liveState.clockodoBreak ?? null}
-                  clockodoAbsent={liveState.clockodoAbsent ?? null}
-                />
-                <p className="mt-3 border-t border-border-soft pt-2.5 font-mono text-[11px] text-muted-foreground">
-                  {t("state.updated")}{" "}
-                  <span className="text-fg/80">
-                    {formatRelativeTime(liveState.updatedAt, lang)}
-                  </span>
-                </p>
-              </>
+              </div>
             )}
           </CardContent>
         </Card>

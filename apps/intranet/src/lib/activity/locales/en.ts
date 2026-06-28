@@ -156,6 +156,9 @@ export const en: Dict = {
   "timeline.kpi.idleOn": "Idle {date}",
   "timeline.kpi.status": "Status",
   "timeline.kpi.lastSeen": "Last seen",
+  "timeline.now.heading": "Right now",
+  "timeline.now.todaySummary": "Active {active} and idle {idle} so far today.",
+  "timeline.now.daySummary": "Active {active} and idle {idle} on {date}.",
   "timeline.trend.heading": "Last 14 days",
   "timeline.trend.sub": "Active vs idle hours per day.",
   "timeline.intraday.heading": "Across the day",
@@ -292,6 +295,19 @@ export const en: Dict = {
   "empstate.WRAP_UP": "Wrap-up",
   "empstate.ACTIVE": "Active",
   "empstate.IDLE": "Idle",
+
+  // Plain-language status headlines — the written "what are they doing now"
+  // verdict shown on the Overview cards and the device timeline hero. (Namespaced
+  // `livestatus.*` to avoid colliding with the device `status.*` keys above.)
+  "livestatus.offline": "Computer offline",
+  "livestatus.absent": "On leave",
+  "livestatus.break": "On a break",
+  "livestatus.inCall": "On a call",
+  "livestatus.wrapUp": "Wrapping up a call",
+  "livestatus.clockedInInactive": "Clocked in but inactive",
+  "livestatus.inactive": "Inactive",
+  "livestatus.clockedInWorking": "Clocked in and working",
+  "livestatus.active": "Active",
 
   // Error toasts — shown when an action fails. Keyed by the backend error code.
   "error.generic": "Something went wrong. Please try again.",
