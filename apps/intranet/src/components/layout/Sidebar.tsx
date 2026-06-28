@@ -181,7 +181,9 @@ export function Sidebar() {
                           item.href === "/"
                             ? pathname === "/"
                             : item.href === "/admin"
-                              ? pathname === "/admin" || (pathname.startsWith("/admin") && !pathname.startsWith("/admin/activity"))
+                              ? pathname === "/admin" ||
+                                (pathname.startsWith("/admin") &&
+                                  !pathname.startsWith("/admin/activity"))
                               : pathname.startsWith(item.href);
                         const Icon = item.icon;
                         return (

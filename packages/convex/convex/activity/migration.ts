@@ -220,7 +220,9 @@ export const failStep = internalMutation({
   handler: async (ctx, { stepId, error }) => {
     const step = await ctx.db.get(stepId);
     if (!step) return;
-    console.error(`[migration:failStep] table="${step.table}" error="${error}"`);
+    console.error(
+      `[migration:failStep] table="${step.table}" error="${error}"`
+    );
     await ctx.db.patch(stepId, {
       status: "failed",
       failed: step.failed + 1,
@@ -303,7 +305,9 @@ export const upsertPeople = internalMutation({
         if (u) userId = u._id;
       }
       if (!userId) {
-        console.warn(`[migration:upsertPeople] no userId match for row — name="${row.name}" email="${email}" clockodoUserId="${clockodoUserId}"`);
+        console.warn(
+          `[migration:upsertPeople] no userId match for row — name="${row.name}" email="${email}" clockodoUserId="${clockodoUserId}"`
+        );
         warnings++;
       }
 

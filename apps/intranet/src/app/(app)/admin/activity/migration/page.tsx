@@ -17,6 +17,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { type BadgeVariant } from "@/lib/activity/format";
 
+/**
+ * Collapse whitespace and clamp a step's error so a long backend message (or a
+ * stray raw response) can't blow out the card layout. Pair with `break-words`
+ * and a scroll cap on the container for safety.
+ */
+function shortError(msg: string, max = 240): string {
+  const oneLine = msg.replace(/\s+/g, " ").trim();
+  return oneLine.length > max ? `${oneLine.slice(0, max)}…` : oneLine;
+}
+
 function statusVariant(status: string): BadgeVariant {
   switch (status) {
     case "completed":
@@ -172,8 +182,11 @@ export default function ActivityMigrationPage() {
                     </div>
 
                     {step.lastError && (
-                      <p className="mt-1.5 rounded-md bg-destructive/10 px-2 py-1 text-xs text-destructive">
-                        {t("migration.lastError")}: {step.lastError}
+                      <p
+                        className="mt-1.5 max-h-24 overflow-y-auto whitespace-pre-wrap break-words rounded-md bg-destructive/10 px-2 py-1 text-xs text-destructive"
+                        title={step.lastError}
+                      >
+                        {t("migration.lastError")}: {shortError(step.lastError)}
                       </p>
                     )}
                   </CardContent>
