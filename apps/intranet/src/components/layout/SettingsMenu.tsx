@@ -30,7 +30,7 @@ const MODES = [
  * so it stays compact on mobile — ported from the marketing site's settings
  * menu, adapted to the intranet's locale action and primitives.
  */
-export function SettingsMenu() {
+export function SettingsMenu({ className }: { className?: string }) {
   const t = useTranslations("Settings");
   const current = useLocale() as Locale;
   const router = useRouter();
@@ -55,7 +55,12 @@ export function SettingsMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={t("preferences")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t("preferences")}
+          className={className}
+        >
           <SlidersHorizontal className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>

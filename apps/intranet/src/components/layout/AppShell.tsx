@@ -42,15 +42,17 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <Sidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-1 border-b border-border/70 bg-background/70 px-3 backdrop-blur-xl md:h-16 md:px-4">
+        <header className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl md:h-16 md:px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex flex-1 justify-start">
             <CommandPalette />
           </div>
           <NotificationsMenu />
-          <SettingsMenu />
-          <div className="mx-1 h-6 w-px bg-border/70" />
-          <AccountMenu />
+          {/* Preferences + account live in the top bar on desktop, but move to
+              the sidebar footer on mobile to keep the header compact. */}
+          <SettingsMenu className="hidden md:inline-flex" />
+          <div className="mx-1 hidden h-6 w-px bg-border/70 md:block" />
+          <AccountMenu triggerClassName="hidden md:flex" />
         </header>
         <main
           className={cn(

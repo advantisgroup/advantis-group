@@ -19,8 +19,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { initials } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
-export function AccountMenu() {
+/**
+ * Account dropdown. `triggerClassName` lets callers restyle the trigger — the
+ * top bar uses the compact default, while the sidebar footer passes a
+ * full-width, left-aligned variant so it reads as a row.
+ */
+export function AccountMenu({
+  triggerClassName,
+  onNavigate,
+}: {
+  triggerClassName?: string;
+  /** Fired when an item navigates — used to close the mobile sidebar sheet. */
+  onNavigate?: () => void;
+}) {
   const user = useCurrentUser();
   const { signOut } = useClerk();
   const router = useRouter();
@@ -30,14 +43,17 @@ export function AccountMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-9 gap-2 px-1.5">
-          <Avatar className="h-7 w-7">
+        <Button
+          variant="ghost"
+          className={cn("h-9 gap-2 px-1.5", triggerClassName)}
+        >
+          <Avatar className="h-7 w-7 shrink-0">
             {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
             <AvatarFallback className="text-xs">
               {initials(user.name, user.email)}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden max-w-32 truncate text-sm font-medium sm:block">
+          <span className="max-w-32 truncate text-sm font-medium">
             {user.name}
           </span>
         </Button>
@@ -53,7 +69,12 @@ export function AccountMenu() {
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/settings")}>
+        <DropdownMenuItem
+          onClick={() => {
+            onNavigate?.();
+            router.push("/settings");
+          }}
+        >
           <SettingsIcon className="mr-2 h-4 w-4" />
           {tNav("settings")}
         </DropdownMenuItem>

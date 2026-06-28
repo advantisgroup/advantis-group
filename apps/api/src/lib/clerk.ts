@@ -20,6 +20,57 @@ export function getClerkClient(): ClerkClient {
   return clerkClient;
 }
 
+/**
+ * Create a Clerk invitation for `email`, having Clerk send the invitation
+ * email. Any still-pending invitation for the same address is revoked first so
+ * re-inviting / resending always produces a single fresh ticket. The granted
+ * role is stored in `publicMetadata` for reference; the Convex invite row is the
+ * authoritative source on acceptance.
+ */
+export async function createClerkInvitation(opts: {
+  email: string;
+  role: "admin" | "manager" | "employee";
+  invitedByName?: string;
+  redirectUrl?: string;
+}): Promise<{ invitationId: string }> {
+  const clerk = getClerkClient();
+  const emailAddress = opts.email.trim().toLowerCase();
+
+  // Best-effort: revoke any still-pending invitations for this address so
+  // re-inviting/resending doesn't leave stale tickets around. `ignoreExisting`
+  // below guarantees the new invitation is still created even if this fails.
+  try {
+    const existing = await clerk.invitations.getInvitationList({
+      status: "pending",
+      query: emailAddress,
+      limit: 100,
+    });
+    await Promise.all(
+      existing.data
+        .filter(inv => inv.emailAddress.toLowerCase() === emailAddress)
+        .map(inv => clerk.invitations.revokeInvitation(inv.id))
+    );
+  } catch (error) {
+    console.error("[clerk] failed to revoke prior invitations:", error);
+  }
+
+  const redirectUrl =
+    opts.redirectUrl ??
+    `${process.env.INTRANET_URL ?? "https://intranet.advantisgroup.de"}/sign-up`;
+
+  const invitation = await clerk.invitations.createInvitation({
+    emailAddress,
+    redirectUrl,
+    notify: true,
+    ignoreExisting: true,
+    publicMetadata: {
+      intranetRole: opts.role,
+      ...(opts.invitedByName ? { invitedBy: opts.invitedByName } : {}),
+    },
+  });
+  return { invitationId: invitation.id };
+}
+
 export interface AuthedUser {
   clerkUserId: string;
   sessionId: string | null;

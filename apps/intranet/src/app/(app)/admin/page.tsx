@@ -133,16 +133,25 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
+/** True when `email`'s domain is outside the configured company domains. */
+function isExternalEmail(email: string, allowedDomains: string[]): boolean {
+  if (allowedDomains.length === 0) return false;
+  const domain = email.split("@")[1]?.trim().toLowerCase() ?? "";
+  return domain.length > 0 && !allowedDomains.includes(domain);
+}
+
 function Invites({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const locale = useLocale();
   const confirm = useConfirm();
   const invites = useQuery(api.invites.list, {});
+  const config = useQuery(api.invites.config, {});
   const create = useMutation(api.invites.create);
   const revoke = useMutation(api.invites.revoke);
   const resend = useMutation(api.invites.resend);
   const handleError = useErrorHandler();
+  const allowedDomains = config?.allowedDomains ?? [];
 
   async function onRevoke(id: Id<"invites">) {
     const ok = await confirm({
@@ -158,10 +167,28 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
   const [busy, setBusy] = useState(false);
 
   async function send() {
-    if (!email.trim()) return;
+    const trimmed = email.trim();
+    if (!trimmed) return;
+
+    // Emails outside the company domains are admin-only and need an explicit
+    // confirmation before Clerk sends the invitation.
+    if (isExternalEmail(trimmed, allowedDomains)) {
+      if (!isAdmin) {
+        toast.error(t("inviteExternalForbidden"));
+        return;
+      }
+      const ok = await confirm({
+        title: t("inviteExternalTitle"),
+        description: t("inviteExternalBody", { email: trimmed }),
+        confirmLabel: t("sendInvite"),
+        cancelLabel: tc("cancel"),
+      });
+      if (!ok) return;
+    }
+
     setBusy(true);
     try {
-      await create({ email: email.trim(), role });
+      await create({ email: trimmed, role });
       toast.success(t("sendInvite"));
       setEmail("");
     } catch (e) {
@@ -171,25 +198,37 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
     }
   }
 
+  const enteredExternal = isExternalEmail(email.trim(), allowedDomains);
+
   const pending = invites?.filter(i => i.status === "pending") ?? [];
 
   return (
     <div className="space-y-4">
       <Card nested>
-        <CardContent className="flex flex-wrap items-end gap-2 p-3">
-          <div className="flex-1">
-            <Input
-              type="email"
-              placeholder={t("inviteEmail")}
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
+        <CardContent className="flex flex-col gap-2 p-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex-1">
+              <Input
+                type="email"
+                placeholder={t("inviteEmail")}
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+              />
+            </div>
+            <RoleSelect value={role} onChange={setRole} canElevate={isAdmin} />
+            <Button
+              onClick={send}
+              disabled={busy || !email.trim() || (enteredExternal && !isAdmin)}
+            >
+              <Mail className="mr-2 h-4 w-4" />
+              {t("sendInvite")}
+            </Button>
           </div>
-          <RoleSelect value={role} onChange={setRole} canElevate={isAdmin} />
-          <Button onClick={send} disabled={busy || !email.trim()}>
-            <Mail className="mr-2 h-4 w-4" />
-            {t("sendInvite")}
-          </Button>
+          {enteredExternal && (
+            <p className="text-xs text-amber-600 dark:text-amber-500">
+              {isAdmin ? t("inviteExternalHint") : t("inviteExternalForbidden")}
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -210,6 +249,9 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
+                  {i.external && (
+                    <Badge variant="warning">{t("external")}</Badge>
+                  )}
                   <Badge variant="muted">{i.role}</Badge>
                   <Button
                     size="sm"
@@ -315,74 +357,98 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     }).catch(handleError);
   }
 
+  type Member = NonNullable<typeof members>[number];
+
+  function renderMember(m: Member) {
+    return (
+      <Card nested key={m._id}>
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <Avatar className="h-9 w-9">
+              {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
+              <AvatarFallback className="text-xs">
+                {initials(m.name, m.email)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="truncate font-medium">{m.name}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {m.email}
+              </p>
+              {m.teams.length > 0 && (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {m.teams.map(team => (
+                    <Badge key={team} variant="muted" className="text-[10px]">
+                      {tTeams(teamLabelKey(team))}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+            {m.status === "suspended" && (
+              <Badge variant="destructive">{t("suspend")}</Badge>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {isAdmin ? (
+              <>
+                <TeamsEditor userId={m._id as Id<"users">} teams={m.teams} />
+                {m._id !== me._id && (
+                  <>
+                    <RoleSelect
+                      value={m.role}
+                      canElevate
+                      onChange={role =>
+                        setRole({ userId: m._id as Id<"users">, role })
+                          .then(() => toast.success(tRoles(role)))
+                          .catch(handleError)
+                      }
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        void toggleStatus(
+                          m._id as Id<"users">,
+                          m.status === "active"
+                        )
+                      }
+                    >
+                      {m.status === "active" ? t("suspend") : t("activate")}
+                    </Button>
+                  </>
+                )}
+              </>
+            ) : (
+              <Badge variant="muted">{tRoles(m.role)}</Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const internal = members?.filter(m => !m.external) ?? [];
+  const external = members?.filter(m => m.external) ?? [];
+
   return (
     <div className="space-y-2">
-      {members?.map(m => (
-        <Card nested key={m._id}>
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <Avatar className="h-9 w-9">
-                {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
-                <AvatarFallback className="text-xs">
-                  {initials(m.name, m.email)}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="truncate font-medium">{m.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {m.email}
-                </p>
-                {m.teams.length > 0 && (
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {m.teams.map(team => (
-                      <Badge key={team} variant="muted" className="text-[10px]">
-                        {tTeams(teamLabelKey(team))}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {m.status === "suspended" && (
-                <Badge variant="destructive">{t("suspend")}</Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {isAdmin ? (
-                <>
-                  <TeamsEditor userId={m._id as Id<"users">} teams={m.teams} />
-                  {m._id !== me._id && (
-                    <>
-                      <RoleSelect
-                        value={m.role}
-                        canElevate
-                        onChange={role =>
-                          setRole({ userId: m._id as Id<"users">, role })
-                            .then(() => toast.success(tRoles(role)))
-                            .catch(handleError)
-                        }
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          void toggleStatus(
-                            m._id as Id<"users">,
-                            m.status === "active"
-                          )
-                        }
-                      >
-                        {m.status === "active" ? t("suspend") : t("activate")}
-                      </Button>
-                    </>
-                  )}
-                </>
-              ) : (
-                <Badge variant="muted">{tRoles(m.role)}</Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+      {internal.map(renderMember)}
+
+      {external.length > 0 && (
+        <div className="space-y-2 pt-4">
+          <div className="flex items-center gap-2 px-1">
+            <h3 className="text-sm font-semibold text-muted-foreground">
+              {t("externalMembers")}
+            </h3>
+            <Badge variant="warning">{external.length}</Badge>
+          </div>
+          <p className="px-1 text-xs text-muted-foreground">
+            {t("externalMembersHint")}
+          </p>
+          {external.map(renderMember)}
+        </div>
+      )}
     </div>
   );
 }

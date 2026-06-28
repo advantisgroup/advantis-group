@@ -36,6 +36,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     teams: user.teams ?? [],
     managerId: user.managerId ?? null,
     status: user.status,
+    external: user.external ?? false,
     avatar,
     lastSeenAt: user.lastSeenAt ?? null,
     createdAt: user.createdAt,

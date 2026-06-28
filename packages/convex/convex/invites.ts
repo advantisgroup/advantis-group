@@ -2,7 +2,11 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
-import { isEmailDomainAllowed, requireManager } from "./lib/auth";
+import {
+  getAllowedDomains,
+  isEmailDomainAllowed,
+  requireManager,
+} from "./lib/auth";
 
 const roleArg = v.union(
   v.literal("admin"),
@@ -32,10 +36,13 @@ export const create = mutation({
         message: "Only admins can invite admins or managers",
       });
     }
-    if (!isEmailDomainAllowed(email)) {
+    // Emails outside the company domains can still be invited, but only by an
+    // admin (the UI also asks for an explicit confirmation before sending).
+    const external = !isEmailDomainAllowed(email);
+    if (external && inviter.role !== "admin") {
       throw new ConvexError({
-        code: "bad_request",
-        message: "Email domain is not in the allowed company domains",
+        code: "forbidden",
+        message: "Only admins can invite external email addresses",
       });
     }
 
@@ -65,6 +72,8 @@ export const create = mutation({
         role: args.role,
         token,
         invitedByUserId: inviter._id,
+        external,
+        status: "pending",
         expiresAt: now + INVITE_TTL_MS,
         createdAt: now,
       });
@@ -74,6 +83,7 @@ export const create = mutation({
         email,
         role: args.role,
         invitedByUserId: inviter._id,
+        external,
         token,
         status: "pending",
         expiresAt: now + INVITE_TTL_MS,
@@ -81,16 +91,16 @@ export const create = mutation({
       });
     }
 
-    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
-      kind: "invite",
-      to: email,
-      data: {
-        role: args.role,
-        token,
-        invitedByName:
-          [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
-          inviter.email,
-      },
+    // Delivery is handled by Clerk's invitation flow (Clerk sends the email and
+    // gates sign-up to the invited address, which also lets external domains in
+    // past any Clerk sign-up restriction). The Convex invite row above remains
+    // the source of truth for the granted role on acceptance (see ensureUser).
+    await ctx.scheduler.runAfter(0, internal.outbound.sendClerkInvitation, {
+      email,
+      role: args.role,
+      invitedByName:
+        [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
+        inviter.email,
     });
 
     return { inviteId, token };
@@ -113,16 +123,12 @@ export const resend = mutation({
       token,
       expiresAt: Date.now() + INVITE_TTL_MS,
     });
-    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
-      kind: "invite",
-      to: invite.email,
-      data: {
-        role: invite.role,
-        token,
-        invitedByName:
-          [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
-          inviter.email,
-      },
+    await ctx.scheduler.runAfter(0, internal.outbound.sendClerkInvitation, {
+      email: invite.email,
+      role: invite.role,
+      invitedByName:
+        [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
+        inviter.email,
     });
     return { ok: true };
   },
@@ -159,6 +165,19 @@ export const list = query({
         };
       })
     );
+  },
+});
+
+/**
+ * Invite-form config for managers: the configured company domains so the UI can
+ * tell whether an entered address is external (and gate/confirm accordingly).
+ * Empty list means no allowlist is configured (nothing is treated as external).
+ */
+export const config = query({
+  args: {},
+  handler: async ctx => {
+    await requireManager(ctx);
+    return { allowedDomains: getAllowedDomains() };
   },
 });
 

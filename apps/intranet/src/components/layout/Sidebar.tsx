@@ -20,7 +20,9 @@ import { api } from "@advantis/convex/api";
 import { useTranslations } from "next-intl";
 
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
+import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
 import {
@@ -228,7 +230,17 @@ export function Sidebar() {
         </div>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="gap-3">
+        {/* The top bar stays minimal on mobile, so the account and preferences
+            controls live here at the bottom-left of the sidebar. On desktop
+            they remain in the header, so this row is hidden there. */}
+        <div className="flex items-center gap-1 border-b border-sidebar-border pb-3 md:hidden">
+          <AccountMenu
+            triggerClassName="h-10 flex-1 justify-start hover:bg-sidebar-accent"
+            onNavigate={close}
+          />
+          <SettingsMenu className="shrink-0 hover:bg-sidebar-accent" />
+        </div>
         <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
           Advantis Group
         </p>
