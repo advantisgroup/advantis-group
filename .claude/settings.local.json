@@ -21,7 +21,8 @@
       "Read(//c/Users/Bluejutzu/code/bluejutzu-project/bluejutzu/**)",
       "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('apps/intranet/src/i18n/messages/de.json','utf8'\\)\\); JSON.parse\\(require\\('fs'\\).readFileSync\\('apps/intranet/src/i18n/messages/en.json','utf8'\\)\\); console.log\\('JSON OK'\\)\")",
       "Bash(bun run *)",
-      "Bash(node -e \"['de','en'].forEach\\(l=>JSON.parse\\(require\\('fs'\\).readFileSync\\('apps/intranet/src/i18n/messages/'+l+'.json','utf8'\\)\\)\\); console.log\\('messages JSON OK'\\)\")"
+      "Bash(node -e \"['de','en'].forEach\\(l=>JSON.parse\\(require\\('fs'\\).readFileSync\\('apps/intranet/src/i18n/messages/'+l+'.json','utf8'\\)\\)\\); console.log\\('messages JSON OK'\\)\")",
+      "Bash(timeout 30 npx convex dev --no-open)"
     ]
   }
 }
