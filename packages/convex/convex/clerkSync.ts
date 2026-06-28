@@ -51,7 +51,7 @@ export const deactivateFromClerk = mutation({
       .withIndex("by_clerkUserId", q => q.eq("clerkUserId", args.clerkUserId))
       .unique();
     if (!user) return { deactivated: false };
-    await ctx.db.patch(user._id, { status: "suspended" });
+    await ctx.db.delete(user._id);
     return { deactivated: true };
   },
 });

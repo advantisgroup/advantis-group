@@ -60,6 +60,34 @@ async function pendingInvitations(email: string): Promise<ClerkInvitation[]> {
 }
 
 /**
+ * Lock a Clerk user account (blocks sign-in without deleting the account).
+ * Treats 404 as success for idempotency.
+ */
+export async function lockClerkUser(clerkUserId: string): Promise<void> {
+  const res = await clerkFetch(`/users/${clerkUserId}/lock`, { method: "POST" });
+  if (!res.ok && res.status !== 404) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not lock the user (HTTP ${res.status}). ${await res.text()}`,
+    });
+  }
+}
+
+/**
+ * Unlock a previously locked Clerk user account.
+ * Treats 404 as success for idempotency.
+ */
+export async function unlockClerkUser(clerkUserId: string): Promise<void> {
+  const res = await clerkFetch(`/users/${clerkUserId}/unlock`, { method: "POST" });
+  if (!res.ok && res.status !== 404) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not unlock the user (HTTP ${res.status}). ${await res.text()}`,
+    });
+  }
+}
+
+/**
  * Permanently delete a Clerk user (revokes their ability to sign in). Treats a
  * 404 as success so removing a member whose Clerk account is already gone still
  * resolves. Throws a `ConvexError` on other failures so the caller can surface

@@ -434,7 +434,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const confirm = useConfirm();
   const members = useQuery(api.users.list, { includeSuspended: true });
   const setRole = useMutation(api.users.setRole);
-  const setStatus = useMutation(api.users.setStatus);
+  const setStatus = useAction(api.users.setStatus);
   const removeMember = useAction(api.members.remove);
   const reinvite = useAction(api.members.reinvite);
   const handleError = useErrorHandler();

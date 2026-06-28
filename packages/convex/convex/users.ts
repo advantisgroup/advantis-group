@@ -2,13 +2,15 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
 import { type QueryCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
+import { internal } from "./_generated/api";
 import {
   ensureUser,
   getCurrentUser,
   requireAdmin,
   requireUser,
 } from "./lib/auth";
+import { lockClerkUser, unlockClerkUser } from "./lib/clerk";
 
 const roleArg = v.union(
   v.literal("admin"),
@@ -181,7 +183,7 @@ export const setManager = mutation({
   },
 });
 
-export const setStatus = mutation({
+export const applyStatus = internalMutation({
   args: {
     userId: v.id("users"),
     status: v.union(v.literal("active"), v.literal("suspended")),
@@ -194,7 +196,33 @@ export const setStatus = mutation({
         message: "You cannot suspend yourself",
       });
     }
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
     await ctx.db.patch(userId, { status });
+    return { clerkUserId: target.clerkUserId };
+  },
+});
+
+/** Suspend or re-activate a member using Clerk's lock feature. */
+export const setStatus = action({
+  args: {
+    userId: v.id("users"),
+    status: v.union(v.literal("active"), v.literal("suspended")),
+  },
+  handler: async (ctx, { userId, status }): Promise<{ ok: true }> => {
+    const { clerkUserId } = await ctx.runMutation(internal.users.applyStatus, {
+      userId,
+      status,
+    });
+    if (clerkUserId) {
+      if (status === "suspended") {
+        await lockClerkUser(clerkUserId);
+      } else {
+        await unlockClerkUser(clerkUserId);
+      }
+    }
     return { ok: true };
   },
 });

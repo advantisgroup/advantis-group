@@ -31,7 +31,7 @@ export const prepareRemove = internalMutation({
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
-    await ctx.db.patch(userId, { status: "suspended" });
+    await ctx.db.delete(userId);
     return { clerkUserId: target.clerkUserId };
   },
 });
