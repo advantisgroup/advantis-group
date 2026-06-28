@@ -128,52 +128,108 @@
   --radius-lg: calc(var(--radius) + 4px);
   --radius-xl: calc(var(--radius) + 8px);
   --radius-xxl: calc(var(--radius) + 16px);
+
+  /* ── ActivityTrack design tokens (ported) ──────────────────────────────
+     Semantic surface/text/status colours used by the activity dashboard
+     components, mapped onto the intranet's theme variables so they flip with
+     light/dark automatically. */
+  --color-fg: var(--foreground);
+  --color-bg: var(--background);
+  --color-bg-2: var(--sidebar);
+  --color-panel: var(--card);
+  --color-panel-2: var(--muted);
+  --color-hover: var(--muted);
+  --color-border-soft: var(--border);
+  --color-glass: var(--popover);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-idle: var(--warn);
+  --color-danger: var(--destructive);
+  --color-info: var(--info);
+  --color-signal: var(--signal);
+  --color-accent-2: var(--signal);
+  --color-accent-fg: oklch(98% 0.01 30);
+
+  /* Editorial display sizes (used by activity hero headings). */
+  --text-display-sm: 1.75rem;
+  --text-display-sm--line-height: 1.1;
+  --text-display-sm--letter-spacing: -0.02em;
+  --text-display-md: 2.25rem;
+  --text-display-md--line-height: 1.05;
+  --text-display-md--letter-spacing: -0.02em;
+
+  --tracking-tightest: -0.025em;
+  --tracking-tighter: -0.015em;
+
+  /* Card/elevation shadows. */
+  --shadow-soft: 0 1px 2px rgba(28, 22, 14, 0.04);
+  --shadow-card:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(20, 16, 10, 0.035);
+  --shadow-card-hover:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.04),
+    0 2px 10px -4px rgba(20, 16, 10, 0.1);
+  --shadow-overlay:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
+    0 24px 60px -16px rgba(8, 6, 3, 0.5);
+  --shadow-glow: 0 8px 24px -10px rgba(60, 120, 240, 0.4);
+
+  /* Motion — ease-out entrances ≤260ms; transform & opacity only. */
+  --animate-fade-up: fade-up 260ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-fade-in: fade-in 200ms linear both;
+  --animate-scale-in: scale-in 200ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-rise: rise 240ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+  --animate-pulse-ring: pulse-ring 2.4s cubic-bezier(0.23, 1, 0.32, 1) infinite;
 }
 
 @layer base {
   :root {
-    /* Dark — deep warm charcoal with the Advantis red as a sharp accent */
-    --background: oklch(18.5% 0.008 40);
-    --foreground: oklch(95% 0.008 80);
+    /* Dark — ActivityTrack "Canvas" / Claude dark mode: warm charcoal neutrals
+       with a faint clay undertone, kept on the Advantis red brand accent.
+       Surface/text/border values ported verbatim from ActivityTrack web's
+       `.dark` palette (RGB channels). */
+    --background: rgb(23 22 20);
+    --foreground: rgb(240 238 232);
 
-    --card: oklch(22% 0.009 45);
-    --card-foreground: oklch(95% 0.008 80);
-    --card-border: oklch(30% 0.012 50);
+    --card: rgb(34 32 29);
+    --card-foreground: rgb(240 238 232);
+    --card-border: rgb(53 50 45);
 
-    --popover: oklch(20.5% 0.009 45);
-    --popover-foreground: oklch(95% 0.008 80);
+    --popover: rgb(28 27 24);
+    --popover-foreground: rgb(240 238 232);
 
     --primary: oklch(0.6441 0.2026 14);
     --primary-foreground: oklch(98% 0.01 30);
 
-    --secondary: oklch(30% 0.018 55);
-    --secondary-foreground: oklch(94% 0.01 80);
+    --secondary: rgb(45 42 38);
+    --secondary-foreground: rgb(240 238 232);
 
-    --muted: oklch(26.5% 0.01 48);
-    --muted-foreground: oklch(70% 0.014 70);
+    --muted: rgb(45 42 38);
+    --muted-foreground: rgb(165 158 147);
 
-    --accent: oklch(28% 0.013 52);
-    --accent-foreground: oklch(96% 0.008 80);
+    --accent: rgb(45 42 38);
+    --accent-foreground: rgb(240 238 232);
 
-    --destructive: oklch(62% 0.17 25);
+    --destructive: rgb(240 110 100);
     --destructive-foreground: oklch(98% 0.003 80);
-    --destructive-subtle: oklch(30% 0.06 25);
-    --warning: oklch(74% 0.13 75);
+    --destructive-subtle: rgb(63 38 35);
+    --warning: rgb(228 156 66);
     --warning-foreground: oklch(20% 0.04 62);
-    --success: oklch(70% 0.11 150);
+    --success: rgb(52 199 144);
     --success-foreground: oklch(18% 0.02 150);
 
-    --border: oklch(30% 0.012 50);
-    --input: oklch(30% 0.012 50);
+    --border: rgb(53 50 45);
+    --input: rgb(53 50 45);
     --ring: oklch(0.6441 0.2026 14);
 
-    --sidebar: oklch(20.5% 0.009 45);
-    --sidebar-foreground: oklch(95% 0.008 80);
+    --sidebar: rgb(28 27 24);
+    --sidebar-foreground: rgb(240 238 232);
     --sidebar-primary: oklch(0.6441 0.2026 14);
     --sidebar-primary-foreground: oklch(98% 0.01 30);
-    --sidebar-accent: oklch(28% 0.013 52);
-    --sidebar-accent-foreground: oklch(96% 0.008 80);
-    --sidebar-border: oklch(30% 0.012 50);
+    --sidebar-accent: rgb(45 42 38);
+    --sidebar-accent-foreground: rgb(240 238 232);
+    --sidebar-border: rgb(53 50 45);
     --sidebar-ring: oklch(0.6441 0.2026 14);
 
     --salespirates: oklch(75% 0.15 85);
@@ -181,6 +237,26 @@
     --rodeo: oklch(65% 0.2 240);
     --sales-ai: oklch(45% 0.9 240);
     --oldschool: oklch(25% 0.5 10);
+
+    /* ActivityTrack semantic status colours (dark) — traffic-light + signal
+       blue. Ported from ActivityTrack web's `.dark` palette. */
+    --ok: rgb(52 199 144);
+    --warn: rgb(228 156 66);
+    --info: rgb(88 162 232);
+    --signal: rgb(96 150 248);
+
+    /* ActivityTrack chart tokens (dark) */
+    --chart-active: #34c790;
+    --chart-idle: #e49c42;
+    --chart-accent: #6096f8;
+    --chart-accent-2: #7ba7fa;
+    --chart-info: #58a2e8;
+    --chart-grid: #353229;
+    --chart-axis: #a59e93;
+    --chart-panel: #22201d;
+    --chart-fg: #f0eee8;
+    --chart-cursor: rgba(96, 150, 248, 0.14);
+    --chart-tooltip-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
 
     --radius: 0.75rem;
 
@@ -243,6 +319,26 @@
     --rodeo: oklch(62% 0.18 240);
     --sales-ai: oklch(48% 0.9 240);
     --oldschool: oklch(32% 0.5 10);
+
+    /* ActivityTrack semantic status colours (light) */
+    --ok: rgb(22 158 110);
+    --warn: rgb(190 112 12);
+    --info: rgb(14 142 196);
+    --signal: rgb(43 96 232);
+
+    /* ActivityTrack chart tokens (light) */
+    --chart-active: #129e6e;
+    --chart-idle: #be700c;
+    --chart-accent: #2b60e8;
+    --chart-accent-2: #436ee5;
+    --chart-info: #0e8ec4;
+    --chart-grid: #e4ded3;
+    --chart-axis: #6d665b;
+    --chart-panel: #fffffe;
+    --chart-fg: #25221e;
+    --chart-cursor: rgba(43, 96, 232, 0.07);
+    --chart-tooltip-shadow: 0 10px 30px -12px rgba(40, 33, 22, 0.22);
+
     --radius: 0.75rem;
     --clerk-color-primary: var(--primary);
     --clerk-color-primary-foreground: var(--primary-foreground);
@@ -608,5 +704,117 @@ html.lenis body {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ActivityTrack helpers + keyframes (ported). Plain classes used by the
+   activity dashboard components (.kicker labels, live signal dot, tabular
+   nums, glass surfaces) plus the entrance/loop keyframes referenced by the
+   --animate-* theme tokens above.
+   ───────────────────────────────────────────────────────────────────────── */
+.kicker {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.signal-dot {
+  position: relative;
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--ok);
+}
+.signal-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--ok) 50%, transparent);
+  animation: pulse-ring 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.glass {
+  background-color: color-mix(in oklch, var(--popover) 72%, transparent);
+  backdrop-filter: blur(12px) saturate(135%);
+  -webkit-backdrop-filter: blur(12px) saturate(135%);
+  border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
+}
+
+@keyframes fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.7);
+    opacity: 0.5;
+  }
+  80%,
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
   }
 }
