@@ -102,6 +102,10 @@ export const de: Dict = {
   "settings.tabs.system": "Systemstatus",
   "settings.tabs.users": "Benutzer",
   "settings.tabs.audit": "Protokoll",
+  "settings.users.heading": "Benutzer & Rollen",
+  "settings.users.body":
+    "Benutzerkonten, Rollen, Einladungen und Zugriffsanträge werden zentral im Intranet-Adminbereich verwaltet — nicht separat für das Aktivitäts-Dashboard.",
+  "settings.users.cta": "Adminbereich öffnen",
   "settings.config.heading": "Konfiguration",
   "settings.config.hint":
     "Legt fest, ab wann jemand als inaktiv oder ein Gerät als offline gilt und wie lange Daten aufbewahrt werden.",

@@ -101,6 +101,10 @@ export const en: Dict = {
   "settings.tabs.system": "System health",
   "settings.tabs.users": "Users",
   "settings.tabs.audit": "Audit log",
+  "settings.users.heading": "Users & roles",
+  "settings.users.body":
+    "User accounts, roles, invitations and access requests are managed centrally in the intranet admin area — not separately for the activity dashboard.",
+  "settings.users.cta": "Open admin area",
   "settings.config.heading": "Configuration",
   "settings.config.hint":
     "Controls when someone counts as inactive, when a device is offline, and how long data is kept.",
