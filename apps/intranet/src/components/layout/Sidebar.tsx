@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 
 import { useQuery } from "convex/react";
 import {
+  Activity,
   BookOpen,
   Calendar,
   LayoutDashboard,
@@ -24,6 +25,7 @@ import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
 import {
   useCurrentUser,
+  useIsAdmin,
   useIsManager,
 } from "@/components/providers/current-user";
 import { cn } from "@/lib/utils";
@@ -48,6 +50,7 @@ interface NavItem {
   icon: typeof LayoutDashboard;
   badge?: number;
   managerOnly?: boolean;
+  adminOnly?: boolean;
 }
 
 interface NavGroup {
@@ -59,6 +62,7 @@ export function Sidebar() {
   const t = useTranslations("Nav");
   const pathname = usePathname();
   const isManager = useIsManager();
+  const isAdmin = useIsAdmin();
   const user = useCurrentUser();
   const { setOpenMobile, state } = useSidebar();
 
@@ -114,6 +118,12 @@ export function Sidebar() {
           icon: ShieldCheck,
           managerOnly: true,
         },
+        {
+          href: "/admin/activity",
+          labelKey: "activity",
+          icon: Activity,
+          adminOnly: true,
+        },
         { href: "/settings", labelKey: "settings", icon: Settings },
       ],
     },
@@ -157,7 +167,9 @@ export function Sidebar() {
             >
               {groups.map(group => {
                 const items = group.items.filter(
-                  item => !item.managerOnly || isManager
+                  item =>
+                    (!item.managerOnly || isManager) &&
+                    (!item.adminOnly || isAdmin)
                 );
                 if (items.length === 0) return null;
                 return (
@@ -168,7 +180,9 @@ export function Sidebar() {
                         const active =
                           item.href === "/"
                             ? pathname === "/"
-                            : pathname.startsWith(item.href);
+                            : item.href === "/admin"
+                              ? pathname === "/admin" || (pathname.startsWith("/admin") && !pathname.startsWith("/admin/activity"))
+                              : pathname.startsWith(item.href);
                         const Icon = item.icon;
                         return (
                           <SidebarMenuItem key={item.href}>
