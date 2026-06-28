@@ -69,6 +69,54 @@ function EditableId({
   );
 }
 
+/**
+ * Inline-editable text cell for free-form fields (name, email). Saves on blur
+ * (and Enter) only when the trimmed value changed. A `required` field reverts
+ * to its previous value rather than saving an empty string; otherwise an empty
+ * value clears the field. When the viewer can't edit, it renders as plain text.
+ */
+function EditableText({
+  initial,
+  disabled,
+  placeholder,
+  className,
+  required,
+  onSave,
+}: {
+  initial: string;
+  disabled: boolean;
+  placeholder: string;
+  className?: string;
+  required?: boolean;
+  onSave: (value: string) => void;
+}) {
+  const [value, setValue] = useState(initial);
+
+  if (disabled) {
+    return <span className={className}>{initial.trim() || "—"}</span>;
+  }
+
+  return (
+    <Input
+      value={value}
+      placeholder={placeholder}
+      onChange={e => setValue(e.target.value)}
+      onBlur={() => {
+        const next = value.trim();
+        if (required && next === "") {
+          setValue(initial);
+          return;
+        }
+        if (next !== initial) onSave(next);
+      }}
+      onKeyDown={e => {
+        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+      }}
+      className="h-8 w-full min-w-[8rem]"
+    />
+  );
+}
+
 export default function PeoplePage() {
   const { t } = useI18n();
   const me = useQuery(api.users.me);
@@ -199,9 +247,34 @@ export default function PeoplePage() {
             )}
             {filtered.map(p => (
               <TableRow key={p._id}>
-                <TableCell className="text-fg">{p.name}</TableCell>
+                <TableCell className="text-fg">
+                  <EditableText
+                    initial={p.name}
+                    disabled={!canEdit}
+                    required
+                    placeholder={t("people.name")}
+                    className="text-fg"
+                    onSave={value =>
+                      void update(
+                        { personId: p._id, name: value },
+                        { success: t("people.updated") }
+                      )
+                    }
+                  />
+                </TableCell>
                 <TableCell className="text-muted-foreground">
-                  {p.email ?? "—"}
+                  <EditableText
+                    initial={p.email ?? ""}
+                    disabled={!canEdit}
+                    placeholder={t("people.email")}
+                    className="text-muted-foreground"
+                    onSave={value =>
+                      void update(
+                        { personId: p._id, email: value },
+                        { success: t("people.updated") }
+                      )
+                    }
+                  />
                 </TableCell>
                 <TableCell>
                   <EditableId

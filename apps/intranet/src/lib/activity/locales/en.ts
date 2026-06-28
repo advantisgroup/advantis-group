@@ -101,6 +101,10 @@ export const en: Dict = {
   "settings.tabs.system": "System health",
   "settings.tabs.users": "Users",
   "settings.tabs.audit": "Audit log",
+  "settings.users.heading": "Users & roles",
+  "settings.users.body":
+    "User accounts, roles, invitations and access requests are managed centrally in the intranet admin area — not separately for the activity dashboard.",
+  "settings.users.cta": "Open admin area",
   "settings.config.heading": "Configuration",
   "settings.config.hint":
     "Controls when someone counts as inactive, when a device is offline, and how long data is kept.",
@@ -129,17 +133,16 @@ export const en: Dict = {
   "settings.debugPw.tooShort": "At least 6 characters.",
   "settings.access.heading": "Access control",
   "settings.access.hint":
-    "Choose which email domains may sign in to the dashboard.",
-  "settings.access.placeholder": "example.com, company.com",
+    "Who may sign in to the intranet. Managed centrally on the server — shown here for reference.",
+  "settings.access.domainsLabel": "Allowed email domains",
   "settings.access.note":
-    "Comma-separated. Anyone with one of these domains can sign in as a viewer. Empty means admins only.",
-  "settings.access.save": "Save domains",
-  "settings.access.saved": "Access list saved.",
+    "Set via the ALLOWED_EMAIL_DOMAINS server environment variable. New sign-ins still go through the access-requests flow in the intranet admin area.",
+  "settings.access.noDomains":
+    "No domain restriction configured — any email domain is permitted.",
   "settings.access.adminsLabel": "Administrators",
   "settings.access.adminsHint":
-    "Set via the ACTIVITYTRACK_ADMIN_EMAILS server environment variable — always full access.",
-  "settings.access.noAdmins":
-    "None set — the first person to sign in becomes admin automatically.",
+    "Seeded via the ADMIN_EMAILS server environment variable, plus anyone granted the admin role in the intranet admin area.",
+  "settings.access.noAdmins": "None set.",
 
   "timeline.heading": "Timeline",
   "timeline.back": "Back to overview",
