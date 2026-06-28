@@ -51,7 +51,16 @@ export const run = internalAction({
   handler: async (ctx, { migrationId }) => {
     const oldUrl = process.env.ACTIVITYTRACK_OLD_CONVEX_URL;
     const secret = process.env.ACTIVITYTRACK_SIGNAL_SECRET;
+
+    console.log("[migration] run invoked", {
+      migrationId,
+      hasOldUrl: !!oldUrl,
+      hasSecret: !!secret,
+      oldUrlPrefix: oldUrl ? oldUrl.slice(0, 40) : null,
+    });
+
     if (!oldUrl || !secret) {
+      console.error("[migration] missing env vars — failing next pending step");
       const run = await ctx.runQuery(internal.activity.migration.getRun, {
         migrationId,
       });
@@ -73,10 +82,14 @@ export const run = internalAction({
       const run = await ctx.runQuery(internal.activity.migration.getRun, {
         migrationId,
       });
-      if (!run || run.migration.status !== "running") return;
+      if (!run || run.migration.status !== "running") {
+        console.log("[migration] stopping — status:", run?.migration.status ?? "not found");
+        return;
+      }
 
       const step = run.steps.find(s => s.status !== "completed");
       if (!step) {
+        console.log("[migration] all steps completed — finishing");
         await ctx.runMutation(internal.activity.migration.finishMigration, {
           migrationId,
           status: "completed",
@@ -85,6 +98,8 @@ export const run = internalAction({
       }
 
       const table = step.table as MigrationTable;
+      console.log(`[migration] batch ${batches + 1}/${MAX_BATCHES_PER_RUN} — table="${table}" cursor=${JSON.stringify(step.cursor ?? null)} processed=${step.processed}`);
+
       await ctx.runMutation(internal.activity.migration.markStepRunning, {
         stepId: step._id,
       });
@@ -97,10 +112,16 @@ export const run = internalAction({
           numItems: BATCH_SIZE,
         })) as { page: any[]; continueCursor: string; isDone: boolean };
 
+        console.log(`[migration] fetched ${result.page.length} rows from old deployment — isDone=${result.isDone}`);
+
         const { warnings } = await ctx.runMutation(UPSERT[table], {
           migrationId,
           rows: result.page,
         });
+
+        if (warnings > 0) {
+          console.warn(`[migration] ${warnings} warning(s) in table="${table}" (unlinked records)`);
+        }
 
         await ctx.runMutation(internal.activity.migration.advanceStep, {
           stepId: step._id,
@@ -110,9 +131,12 @@ export const run = internalAction({
           done: result.isDone,
         });
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const stack = err instanceof Error ? err.stack : undefined;
+        console.error(`[migration] FAILED table="${table}"`, { message, stack, err });
         await ctx.runMutation(internal.activity.migration.failStep, {
           stepId: step._id,
-          error: err instanceof Error ? err.message : String(err),
+          error: message,
         });
         return;
       }

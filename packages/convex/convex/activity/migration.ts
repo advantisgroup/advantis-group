@@ -220,6 +220,7 @@ export const failStep = internalMutation({
   handler: async (ctx, { stepId, error }) => {
     const step = await ctx.db.get(stepId);
     if (!step) return;
+    console.error(`[migration:failStep] table="${step.table}" error="${error}"`);
     await ctx.db.patch(stepId, {
       status: "failed",
       failed: step.failed + 1,
@@ -274,6 +275,7 @@ async function recordIdMap(
 export const upsertPeople = internalMutation({
   args: { migrationId: v.id("activityMigrations"), rows: v.array(v.any()) },
   handler: async (ctx, { migrationId, rows }) => {
+    console.log(`[migration:upsertPeople] upserting ${rows.length} rows`);
     let warnings = 0;
     for (const row of rows) {
       const employeeId: string | undefined = row.employeeId ?? undefined;
@@ -300,7 +302,10 @@ export const upsertPeople = internalMutation({
           .unique();
         if (u) userId = u._id;
       }
-      if (!userId) warnings++; // unmatched person, surfaced in status UI
+      if (!userId) {
+        console.warn(`[migration:upsertPeople] no userId match for row — name="${row.name}" email="${email}" clockodoUserId="${clockodoUserId}"`);
+        warnings++;
+      }
 
       const fields = {
         name: row.name ?? "(unknown)",
