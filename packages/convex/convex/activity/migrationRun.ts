@@ -133,9 +133,10 @@ export const run = internalAction({
       } catch (err) {
         // ConvexHttpClient errors sometimes have empty .message but carry
         // details in .data (ConvexError payload) or other own properties.
+        // Capture ALL own props, including non-enumerable ones.
         let message: string;
         if (err instanceof Error) {
-          const extra = Object.keys(err)
+          const extra = Object.getOwnPropertyNames(err)
             .filter(k => !["stack", "message", "name"].includes(k))
             .map(k => `${k}=${JSON.stringify((err as any)[k])}`)
             .join(" ");
@@ -147,17 +148,59 @@ export const run = internalAction({
             message = String(err);
           }
         }
+
+        // The HTTP client strips the real failure reason; re-issue the same
+        // query as a raw fetch to capture the actual wire response, where
+        // Convex puts errorMessage/errorData. Best-effort — never masks the
+        // original error, and we log only the RESPONSE (the request body
+        // carries the secret, so it is never logged).
+        let probe: { status?: number; body?: string; error?: string } = {};
+        try {
+          const resp = await fetch(`${oldUrl.replace(/\/$/, "")}/api/query`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              path: "activity/migrationExport:exportTable",
+              args: {
+                secret,
+                table,
+                cursor: step.cursor ?? null,
+                numItems: BATCH_SIZE,
+              },
+              format: "json",
+            }),
+          });
+          probe = {
+            status: resp.status,
+            body: (await resp.text()).slice(0, 2000),
+          };
+        } catch (probeErr) {
+          probe = {
+            error:
+              probeErr instanceof Error ? probeErr.message : String(probeErr),
+          };
+        }
+
         console.error(`[migration] FAILED table="${table}"`, {
           message,
           name: err instanceof Error ? err.name : undefined,
           data: (err as any)?.data,
           status: (err as any)?.status,
           cause: (err as any)?.cause,
+          rawProbe: probe,
           stack: err instanceof Error ? err.stack : undefined,
         });
+
+        // Prefer the raw probe body — it carries the real reason.
+        const finalError = probe.body
+          ? `${message} :: rawResponse[${probe.status}]=${probe.body}`
+          : probe.error
+            ? `${message} :: probeFailed=${probe.error}`
+            : message;
+
         await ctx.runMutation(internal.activity.migration.failStep, {
           stepId: step._id,
-          error: message,
+          error: finalError,
         });
         return;
       }
