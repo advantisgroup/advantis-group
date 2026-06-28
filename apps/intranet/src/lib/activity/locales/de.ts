@@ -130,17 +130,16 @@ export const de: Dict = {
   "settings.debugPw.tooShort": "Mindestens 6 Zeichen.",
   "settings.access.heading": "Zugriffskontrolle",
   "settings.access.hint":
-    "Legen Sie fest, welche E-Mail-Domains sich am Dashboard anmelden dürfen.",
-  "settings.access.placeholder": "example.com, firma.de",
+    "Wer sich im Intranet anmelden darf. Zentral auf dem Server verwaltet — hier nur zur Information.",
+  "settings.access.domainsLabel": "Erlaubte E-Mail-Domains",
   "settings.access.note":
-    "Kommagetrennt. Jeder mit einer dieser Domains kann sich als Betrachter anmelden. Leer bedeutet: nur Administratoren.",
-  "settings.access.save": "Domains speichern",
-  "settings.access.saved": "Zugriffsliste gespeichert.",
+    "Festgelegt über die Server-Umgebungsvariable ALLOWED_EMAIL_DOMAINS. Neue Anmeldungen durchlaufen weiterhin den Zugriffsantrag-Prozess im Intranet-Adminbereich.",
+  "settings.access.noDomains":
+    "Keine Domain-Beschränkung konfiguriert — jede E-Mail-Domain ist zulässig.",
   "settings.access.adminsLabel": "Administratoren",
   "settings.access.adminsHint":
-    "Festgelegt über die Server-Umgebungsvariable ACTIVITYTRACK_ADMIN_EMAILS — immer voller Zugriff.",
-  "settings.access.noAdmins":
-    "Keine festgelegt — der erste Anmeldende wird automatisch Administrator.",
+    "Über die Server-Umgebungsvariable ADMIN_EMAILS gesetzt, sowie alle, denen im Intranet-Adminbereich die Admin-Rolle zugewiesen wurde.",
+  "settings.access.noAdmins": "Keine festgelegt.",
 
   "timeline.heading": "Verlauf",
   "timeline.back": "Zurück zur Übersicht",

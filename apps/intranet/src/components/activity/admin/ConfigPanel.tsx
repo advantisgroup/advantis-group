@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useQuery } from "convex/react";
 import {
+  Building2,
   CheckCircle2,
   KeyRound,
   Loader2,
@@ -102,6 +103,12 @@ export function ConfigPanel() {
     );
     setSavingCfg(false);
   }
+
+  // ── Access control (read-only) ────────────────────────────────────────
+  // The intranet governs sign-in centrally (env-configured domains + the
+  // access-requests flow), so this card reflects that configuration but does
+  // not let it be edited here — editing would not change real gating.
+  const access = useQuery(api.activity.access.getAccessControl);
 
   // ── Tracker debug password ────────────────────────────────────────────
   const isSet = useQuery(api.activity.settings.debugPasswordIsSet);
@@ -231,6 +238,73 @@ export function ConfigPanel() {
               {t("settings.debugPw.saved")}
             </p>
           </Reveal>
+        </CardContent>
+      </Card>
+
+      {/* Access control — informational. Sign-in is governed at the intranet
+          level, so domains and admins are shown read-only here. */}
+      <Card className="animate-fade-up lg:col-span-2">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
+              <Building2 className="h-4 w-4" />
+            </span>
+            <CardTitle className="text-base">
+              {t("settings.access.heading")}
+            </CardTitle>
+          </div>
+          <CardDescription>{t("settings.access.hint")}</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-0 sm:pt-0">
+          {access === undefined ? (
+            <Skeleton className="h-24 w-full" />
+          ) : (
+            <div className="space-y-5">
+              <div>
+                <p className="text-sm font-medium text-fg">
+                  {t("settings.access.domainsLabel")}
+                </p>
+                {access.allowedDomains.length === 0 ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("settings.access.noDomains")}
+                  </p>
+                ) : (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {access.allowedDomains.map(domain => (
+                      <Badge key={domain} variant="muted">
+                        {domain}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t("settings.access.note")}
+                </p>
+              </div>
+
+              <div className="border-t border-border pt-4">
+                <p className="text-sm font-medium text-fg">
+                  {t("settings.access.adminsLabel")}
+                </p>
+                {access.adminEmails.length === 0 ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("settings.access.noAdmins")}
+                  </p>
+                ) : (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {access.adminEmails.map(email => (
+                      <Badge key={email} variant="muted">
+                        {email}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {t("settings.access.adminsHint")}
+                </p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
