@@ -293,6 +293,19 @@ export const en: Dict = {
   "empstate.ACTIVE": "Active",
   "empstate.IDLE": "Idle",
 
+  // Plain-language status headlines — the written "what are they doing now"
+  // verdict shown on the Overview cards and the device timeline hero. (Namespaced
+  // `livestatus.*` to avoid colliding with the device `status.*` keys above.)
+  "livestatus.offline": "Computer offline",
+  "livestatus.absent": "On leave",
+  "livestatus.break": "On a break",
+  "livestatus.inCall": "On a call",
+  "livestatus.wrapUp": "Wrapping up a call",
+  "livestatus.clockedInInactive": "Clocked in but inactive",
+  "livestatus.inactive": "Inactive",
+  "livestatus.clockedInWorking": "Clocked in and working",
+  "livestatus.active": "Active",
+
   // Error toasts — shown when an action fails. Keyed by the backend error code.
   "error.generic": "Something went wrong. Please try again.",
   "error.network": "Can't reach the server. Please try again shortly.",

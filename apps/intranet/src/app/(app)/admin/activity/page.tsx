@@ -14,18 +14,14 @@ import { useI18n } from "@/lib/activity/i18n";
 import { formatDuration, formatRelativeTime } from "@/lib/activity/fmt";
 import { cn } from "@/lib/utils";
 import { isWorkingState, type StateName } from "@/lib/activity/activity";
-import type { EmployeeState } from "@/lib/activity/format";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/activity/StatCard";
 import { SkeletonCard } from "@/components/activity/Skeleton";
 import { QueryState } from "@/components/activity/QueryState";
 import { SetupChecklist } from "@/components/activity/SetupChecklist";
 import { Stagger, StaggerItem } from "@/components/activity/motion/Stagger";
-import {
-  HealthBanner,
-  StateBadge,
-} from "@/components/activity/state/StateBits";
+import { HealthBanner } from "@/components/activity/state/StateBits";
+import { StatusSummary } from "@/components/activity/state/StatusSummary";
 
 /** The four headline figures for the whole fleet. */
 function FleetSummary({
@@ -113,88 +109,71 @@ export default function OverviewPage() {
             <HealthBanner />
             <FleetSummary rows={rows} />
             <Stagger className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {rows.map((d, index) => {
-                const offline = !d.online;
-                const basic = offline
-                  ? "offline"
-                  : d.active
-                    ? "working"
-                    : "idle";
-                const basicVariant =
-                  basic === "working"
-                    ? "success"
-                    : basic === "idle"
-                      ? "warning"
-                      : "muted";
-                const basicLabel =
-                  basic === "working"
-                    ? t("overview.working")
-                    : basic === "idle"
-                      ? t("overview.idleNow")
-                      : t("overview.offline");
-                const showFused = !offline && d.finalState != null;
-                return (
-                  <StaggerItem key={d.deviceId} index={index}>
-                    <Link
-                      href={`/admin/activity/timeline/${encodeURIComponent(d.deviceId)}`}
-                      className="group block h-full"
-                    >
-                      <Card className="relative h-full overflow-hidden transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-signal/40 group-hover:shadow-card-hover">
-                        {/* signal line that ignites along the top edge on hover */}
-                        <span className="signal-line pointer-events-none absolute inset-x-0 top-0 h-px origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
-                        <CardContent className="p-5">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="truncate font-medium text-fg">
-                              {d.personName ?? d.hostname}
-                            </span>
-                            {showFused ? (
-                              <StateBadge
-                                state={d.finalState as EmployeeState}
-                              />
-                            ) : (
-                              <Badge
-                                variant={basicVariant}
-                                className="flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider"
-                              >
-                                {basic === "working" && (
-                                  <span className="signal-dot !h-1.5 !w-1.5" />
-                                )}
-                                {basicLabel}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="mt-1 truncate text-sm text-muted-foreground">
+              {rows.map((d, index) => (
+                <StaggerItem key={d.deviceId} index={index}>
+                  <Link
+                    href={`/admin/activity/timeline/${encodeURIComponent(d.deviceId)}`}
+                    className="group block h-full"
+                  >
+                    <Card className="relative h-full overflow-hidden transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-signal/40 group-hover:shadow-card-hover">
+                      {/* signal line that ignites along the top edge on hover */}
+                      <span className="signal-line pointer-events-none absolute inset-x-0 top-0 h-px origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+                      <CardContent className="p-5">
+                        <div className="min-w-0">
+                          <span className="block truncate font-medium text-fg">
+                            {d.personName ?? d.hostname}
+                          </span>
+                          <p className="mt-0.5 truncate text-sm text-muted-foreground">
                             {d.personName
                               ? d.hostname
                               : t("overview.unassigned")}{" "}
                             · {d.windowsUser}
                           </p>
-                          <p className="mt-5 text-3xl font-semibold tabular-nums tracking-tight text-fg">
-                            {formatDuration(d.todayActiveSeconds, lang)}
-                            <span className="ml-2 text-xs font-normal text-muted-foreground">
-                              {t("overview.todayActive")}
+                        </div>
+                        {/* The written verdict — the lead, not a cryptic badge. */}
+                        <StatusSummary
+                          className="mt-3.5"
+                          status={{
+                            online: d.online,
+                            deviceIdle: d.deviceIdle,
+                            idleSeconds:
+                              d.stateIdleSeconds ??
+                              (d.idleMs != null
+                                ? Math.round(d.idleMs / 1000)
+                                : null),
+                            genesysRoutingStatus: d.genesysRoutingStatus,
+                            genesysWrapUp: d.genesysWrapUp,
+                            clockodoWorking: d.clockodoWorking,
+                            clockodoBreak: d.clockodoBreak,
+                            clockodoAbsent: d.clockodoAbsent,
+                            active: d.active,
+                          }}
+                        />
+                        <p className="mt-4 text-2xl font-semibold tabular-nums tracking-tight text-fg">
+                          {formatDuration(d.todayActiveSeconds, lang)}
+                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                            {t("overview.todayActive")}
+                          </span>
+                        </p>
+                        <div className="mt-3 flex items-center justify-between border-t border-border-soft pt-3">
+                          <p className="text-[11px] text-muted-foreground">
+                            {t("overview.lastSeen")}{" "}
+                            <span className="font-medium text-fg/80">
+                              {formatRelativeTime(d.lastSeen, lang)}
                             </span>
                           </p>
-                          <div className="mt-3 flex items-center justify-between border-t border-border-soft pt-3">
-                            <p className="text-[11px] text-muted-foreground">
-                              {t("overview.lastSeen")}{" "}
-                              <span className="font-medium text-fg/80">
-                                {formatRelativeTime(d.lastSeen, lang)}
-                              </span>
-                            </p>
-                            <ChevronRight
-                              className={cn(
-                                "h-4 w-4 text-muted-foreground transition-transform duration-150",
-                                "group-hover:translate-x-0.5 group-hover:text-signal"
-                              )}
-                            />
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </Link>
-                  </StaggerItem>
-                );
-              })}
+                          <ChevronRight
+                            className={cn(
+                              "h-4 w-4 text-muted-foreground transition-transform duration-150",
+                              "group-hover:translate-x-0.5 group-hover:text-signal"
+                            )}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </StaggerItem>
+              ))}
             </Stagger>
           </div>
         )}

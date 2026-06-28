@@ -5,7 +5,6 @@ import { use, useMemo } from "react";
 import { useQuery } from "convex/react";
 import { ArrowLeft, Clock, Coffee, Radio } from "lucide-react";
 import { api } from "@advantis/convex/api";
-import type { EmployeeState } from "@/lib/activity/format";
 import { useI18n } from "@/lib/activity/i18n";
 import { useTabParam } from "@/lib/activity/useTabParam";
 import {
@@ -29,10 +28,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatCard } from "@/components/activity/StatCard";
-import {
-  StateBadge,
-  SourceSignals,
-} from "@/components/activity/state/StateBits";
+import { SourceSignals } from "@/components/activity/state/StateBits";
+import { StatusSummary } from "@/components/activity/state/StatusSummary";
 import { DayNav } from "@/components/activity/timeline/DayNav";
 import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
 import { RawTab } from "@/components/activity/timeline/RawTab";
@@ -179,6 +176,40 @@ export default function TimelinePage({
         </p>
       </div>
 
+      {/* Status hero — the plain-language verdict for *right now*, the headline
+          answer this page exists to give. Built from the device's live signals so
+          it works whether or not the device is linked to a person. */}
+      {device && (
+        <Card className="animate-fade-up">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-5">
+            <StatusSummary
+              size="lg"
+              status={{
+                online: device.online,
+                deviceIdle: device.deviceIdle,
+                idleSeconds:
+                  device.stateIdleSeconds ??
+                  (device.idleMs != null
+                    ? Math.round(device.idleMs / 1000)
+                    : null),
+                genesysRoutingStatus: device.genesysRoutingStatus,
+                genesysWrapUp: device.genesysWrapUp,
+                clockodoWorking: device.clockodoWorking,
+                clockodoBreak: device.clockodoBreak,
+                clockodoAbsent: device.clockodoAbsent,
+                active: device.active,
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              {t("overview.lastSeen")}{" "}
+              <span className="font-medium text-fg/80">
+                {formatRelativeTime(device.lastSeen, lang)}
+              </span>
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
       {/* KPI row — active/idle follow the selected day; status/last-seen are
           the device's live state regardless of which day is being viewed. */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -222,11 +253,10 @@ export default function TimelinePage({
       {/* Current fused state (workstation + Genesys + Clockodo) */}
       {employeeId && (
         <Card className="animate-fade-up">
-          <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+          <CardHeader>
             <CardTitle className="text-base">
               {t("timeline.state.heading")}
             </CardTitle>
-            {liveState && <StateBadge state={liveState.finalState} />}
           </CardHeader>
           <CardContent className="pt-0 sm:pt-0">
             {liveState === undefined ? (

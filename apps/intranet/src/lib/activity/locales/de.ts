@@ -299,6 +299,19 @@ export const de: Dict = {
   "empstate.ACTIVE": "Aktiv",
   "empstate.IDLE": "Inaktiv",
 
+  // Plain-language status headlines — der ausgeschriebene „Was macht die Person
+  // gerade?“-Status auf den Übersichtskarten und im Timeline-Header.
+  // (`livestatus.*`, damit es nicht mit den Geräte-`status.*`-Schlüsseln kollidiert.)
+  "livestatus.offline": "Computer offline",
+  "livestatus.absent": "Abwesend",
+  "livestatus.break": "In der Pause",
+  "livestatus.inCall": "Im Gespräch",
+  "livestatus.wrapUp": "Anruf-Nachbearbeitung",
+  "livestatus.clockedInInactive": "Eingestempelt, aber inaktiv",
+  "livestatus.inactive": "Inaktiv",
+  "livestatus.clockedInWorking": "Eingestempelt und aktiv",
+  "livestatus.active": "Aktiv",
+
   // Error toasts — shown when an action fails. Keyed by the backend error code.
   "error.generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
   "error.network":
