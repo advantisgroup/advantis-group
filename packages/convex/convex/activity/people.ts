@@ -78,7 +78,8 @@ export const update = mutation({
     if (!person) throw appError("notFound.person", "Person not found");
     await ctx.db.patch(personId, {
       ...(name !== undefined ? { name } : {}),
-      ...(email !== undefined ? { email } : {}),
+      // Empty string clears the address (patching to undefined drops the field).
+      ...(email !== undefined ? { email: normalizeId(email) } : {}),
       ...(userId !== undefined ? { userId: userId ?? undefined } : {}),
       ...(active !== undefined ? { active } : {}),
       ...(employeeId !== undefined
