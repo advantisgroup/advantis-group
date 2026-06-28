@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 import { useMutation } from "convex/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { usePathname } from "next/navigation";
 
@@ -26,6 +26,13 @@ import { cn } from "@/lib/utils";
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const heartbeat = useMutation(api.presence.heartbeat);
+  const mainRef = useRef<HTMLElement>(null);
+
+  // The main pane is the scroll container (not the window), so reset it to the
+  // top on navigation — otherwise a new page would open mid-scroll.
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [pathname]);
 
   // Chat is a full-screen, self-managing view on mobile (its own header and
   // sticky composer), so it opts out of the bottom nav and its clearance.
@@ -44,8 +51,13 @@ export function AppShell({ children }: { children: ReactNode }) {
       <SidebarInset>
         <header className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl md:h-16 md:px-4">
           <SidebarTrigger className="-ml-1" />
+          {/* Search lives in the desktop header, but on mobile it moves to the
+              reachable bottom bar — so here it's just a flex spacer. The
+              component stays mounted so ⌘K and the bottom-bar trigger work. */}
           <div className="flex flex-1 justify-start">
-            <CommandPalette />
+            <div className="hidden w-full md:flex">
+              <CommandPalette />
+            </div>
           </div>
           <NotificationsMenu />
           {/* Preferences + account live in the top bar on desktop, but move to
@@ -55,8 +67,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <AccountMenu triggerClassName="hidden md:flex" />
         </header>
         <main
+          ref={mainRef}
           className={cn(
-            "flex-1 px-4 pt-6 md:px-8 md:pt-8 md:pb-8",
+            "min-h-0 flex-1 overflow-y-auto px-4 pt-6 md:px-8 md:pt-8 md:pb-8",
             immersive ? "pb-6" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
           )}
         >

@@ -6,7 +6,7 @@ import { mutation, query } from "./_generated/server";
 import { requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
-import { audienceValidator } from "./schema";
+import { attachmentValidator, audienceValidator } from "./schema";
 
 function authorName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
@@ -51,18 +51,34 @@ export const create = mutation({
     pinned: v.optional(v.boolean()),
     audience: audienceValidator,
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
+    attachments: v.optional(v.array(attachmentValidator)),
     guestVisible: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const author = await requireManager(ctx);
+    // Enforce the combined attachment size ceiling (5 MB) server-side too.
+    const totalBytes = (args.attachments ?? []).reduce(
+      (sum, a) => sum + (a.size ?? 0),
+      0
+    );
+    if (totalBytes > 5 * 1024 * 1024) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "Attachments exceed the 5 MB limit",
+      });
+    }
     const now = Date.now();
+    // Keep the flat storage-id list in sync (used for cleanup on edit/delete).
+    const storageIds =
+      args.attachments?.map(a => a.storageId) ?? args.attachmentStorageIds ?? [];
     const id = await ctx.db.insert("announcements", {
       title: args.title,
       body: args.body,
       authorUserId: author._id,
       pinned: args.pinned ?? false,
       audience: args.audience,
-      attachmentStorageIds: args.attachmentStorageIds ?? [],
+      attachmentStorageIds: storageIds,
+      attachments: args.attachments,
       guestVisible: args.guestVisible ?? false,
       publishedAt: now,
       createdAt: now,
@@ -176,12 +192,36 @@ export const list = query({
         const authorAvatar = author?.avatarStorageId
           ? await ctx.storage.getUrl(author.avatarStorageId)
           : (author?.avatarUrl ?? null);
-        const attachments = await Promise.all(
-          a.attachmentStorageIds.map(async sid => ({
-            storageId: sid,
-            url: await ctx.storage.getUrl(sid),
-          }))
-        );
+        // Prefer stored rich metadata; fall back to resolving the content type
+        // from system storage metadata for older rows that only kept ids.
+        const attachments =
+          a.attachments && a.attachments.length > 0
+            ? await Promise.all(
+                a.attachments.map(async att => ({
+                  storageId: att.storageId,
+                  kind: att.kind,
+                  name: att.name,
+                  size: att.size ?? null,
+                  contentType: att.contentType ?? null,
+                  url: await ctx.storage.getUrl(att.storageId),
+                }))
+              )
+            : await Promise.all(
+                a.attachmentStorageIds.map(async sid => {
+                  const meta = await ctx.db.system.get(sid);
+                  const contentType = meta?.contentType ?? null;
+                  return {
+                    storageId: sid,
+                    kind: contentType?.startsWith("image/")
+                      ? ("image" as const)
+                      : ("file" as const),
+                    name: "Attachment",
+                    size: meta?.size ?? null,
+                    contentType,
+                    url: await ctx.storage.getUrl(sid),
+                  };
+                })
+              );
         const reactionRows = await ctx.db
           .query("announcementReactions")
           .withIndex("by_announcement", q => q.eq("announcementId", a._id))

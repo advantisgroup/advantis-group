@@ -127,6 +127,11 @@ export default function DevicesPage() {
           label={t("devices.all")}
           value={counts.total}
           tone="fg"
+          hint={
+            counts.total > 0
+              ? `${counts.active} ${t("status.active")}`
+              : undefined
+          }
           icon={<MonitorSmartphone className="h-4 w-4" />}
         />
         <StatCard

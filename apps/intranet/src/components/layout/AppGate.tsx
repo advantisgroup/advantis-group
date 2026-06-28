@@ -14,7 +14,7 @@ import {
   CurrentUserProvider,
 } from "@/components/providers/current-user";
 import { BrandLogo } from "@/components/Logo";
-import { ConfirmProvider } from "@/components/ui/confirm-dialog";
+import { ConfirmProvider } from "@/components/ui/dialog";
 
 function FullScreenLoader() {
   return (

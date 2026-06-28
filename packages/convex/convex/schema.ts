@@ -16,7 +16,7 @@ export const audienceValidator = v.union(
   v.object({ kind: v.literal("users"), userIds: v.array(v.id("users")) })
 );
 
-const attachmentValidator = v.object({
+export const attachmentValidator = v.object({
   storageId: v.id("_storage"),
   kind: v.union(v.literal("image"), v.literal("file")),
   name: v.string(),
@@ -195,7 +195,10 @@ export default defineSchema({
     authorUserId: v.id("users"),
     pinned: v.boolean(),
     audience: audienceValidator,
+    /** Flat storage ids — kept for cleanup + older rows without rich metadata. */
     attachmentStorageIds: v.array(v.id("_storage")),
+    /** Rich attachments (name, kind, type) for newer announcements. */
+    attachments: v.optional(v.array(attachmentValidator)),
     /** Visible to temporary guest logins on the curated tour. */
     guestVisible: v.optional(v.boolean()),
     publishedAt: v.number(),

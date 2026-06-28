@@ -8,12 +8,7 @@ import { PanelLeft } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import {
   Tooltip,
   TooltipContent,
@@ -22,7 +17,6 @@ import {
 } from "@/components/ui/tooltip";
 
 const SIDEBAR_WIDTH = "16rem";
-const SIDEBAR_WIDTH_MOBILE = "17rem";
 const SIDEBAR_WIDTH_ICON = "3.25rem";
 const SIDEBAR_STORAGE_KEY = "advantis:sidebar";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
@@ -119,7 +113,7 @@ export function SidebarProvider({
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
             } as React.CSSProperties
           }
-          className={cn("flex min-h-screen w-full", className)}
+          className={cn("flex h-svh w-full overflow-hidden", className)}
         >
           {children}
         </div>
@@ -146,21 +140,13 @@ export function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile}>
-        <SheetContent
-          side="left"
-          className="w-[var(--sidebar-width-mobile)] border-sidebar-border bg-sidebar p-0 text-sidebar-foreground [&>button]:top-3.5"
-          style={
-            {
-              "--sidebar-width-mobile": SIDEBAR_WIDTH_MOBILE,
-            } as React.CSSProperties
-          }
-        >
-          <SheetTitle className="sr-only">{ariaLabel}</SheetTitle>
-          <SheetDescription className="sr-only">{ariaLabel}</SheetDescription>
-          <div className="flex h-full w-full flex-col">{children}</div>
-        </SheetContent>
-      </Sheet>
+      <MobileDrawer
+        open={openMobile}
+        onOpenChange={setOpenMobile}
+        ariaLabel={ariaLabel}
+      >
+        {children}
+      </MobileDrawer>
     );
   }
 
@@ -169,7 +155,7 @@ export function Sidebar({
       data-state={state}
       aria-label={ariaLabel}
       className={cn(
-        "group/sidebar sticky top-0 z-30 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear md:flex",
+        "group/sidebar z-30 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear md:flex",
         state === "collapsed"
           ? "w-[var(--sidebar-width-icon)]"
           : "w-[var(--sidebar-width)]",
@@ -190,7 +176,7 @@ export function SidebarInset({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-w-0 flex-1 flex-col", className)}>
+    <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", className)}>
       {children}
     </div>
   );

@@ -25,7 +25,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";

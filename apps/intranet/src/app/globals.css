@@ -70,6 +70,18 @@
   }
 }
 
+/* Drift the dotted backdrop by exactly one tile so the loop is seamless.
+   Negative offsets move the dots toward the top-left. */
+@keyframes dialog-dot-drift {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: -24px -24px;
+  }
+}
+
 .animate-gradient-x {
   background-size: 200% 200%;
   animation: gradient-x 15s ease infinite;
@@ -206,6 +218,9 @@
     --popover: rgb(28 27 24);
     --popover-foreground: rgb(240 238 232);
 
+    /* Brand red — used for text-primary, links, focus rings and other accents.
+       The white "primary button" look is handled by the Button component
+       itself (bg-foreground), so this token stays on-brand in dark mode. */
     --primary: oklch(0.6441 0.2026 14);
     --primary-foreground: oklch(98% 0.01 30);
 
@@ -497,6 +512,30 @@ html.lenis body {
         transparent 1px
       );
     background-size: 32px 32px;
+  }
+
+  /* Dotted grid used behind the Dialog backdrop. The dots slowly drift toward
+     the top-left. `data-animated="false"` is set by the dialog on low-end
+     devices (few CPU cores / little memory) or when reduced motion is
+     requested, so the decorative loop never costs those clients any frames. */
+  .dialog-dot-grid {
+    background-image: radial-gradient(
+      circle at 1px 1px,
+      color-mix(in oklch, var(--foreground) 14%, transparent) 1px,
+      transparent 0
+    );
+    background-size: 24px 24px;
+    will-change: background-position;
+  }
+
+  .dialog-dot-grid[data-animated="true"] {
+    animation: dialog-dot-drift 9s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dialog-dot-grid[data-animated="true"] {
+      animation: none;
+    }
   }
 
   /* Rich-text content (announcements, etc.) — typography plugin isn't installed */

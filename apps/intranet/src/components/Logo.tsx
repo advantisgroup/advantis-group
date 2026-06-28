@@ -2,29 +2,37 @@
 
 import Image from "next/image";
 
-import { useBrandLogo, useSingleLetterLogo } from "@/hooks/use-logo";
+import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { cn } from "@/lib/utils";
 
-/** Full Advantis wordmark logo (theme-aware). */
+/**
+ * Full Advantis wordmark, rendered as text to match the new monochrome
+ * "ADVANTIS / ALL ABOUT SALES" brand mark. Pass `tagline={false}` for tight
+ * placements where only the wordmark should show.
+ */
 export function BrandLogo({
   className,
-  width = 132,
-  height = 32,
+  tagline = true,
 }: {
   className?: string;
-  width?: number;
-  height?: number;
+  tagline?: boolean;
 }) {
-  const src = useBrandLogo();
   return (
-    <Image
-      src={src}
-      alt="Advantis Group"
-      width={width}
-      height={height}
-      priority
-      className={cn("h-8 w-auto object-contain", className)}
-    />
+    <span
+      className={cn(
+        "inline-flex flex-col items-center leading-none text-foreground",
+        className
+      )}
+    >
+      <span className="font-display text-2xl font-semibold uppercase tracking-[0.3em]">
+        Advantis
+      </span>
+      {tagline && (
+        <span className="mt-2 text-[0.5rem] font-medium uppercase tracking-[0.45em] text-muted-foreground">
+          All about sales
+        </span>
+      )}
+    </span>
   );
 }
 

@@ -1,8 +1,21 @@
 "use client";
 
 import { useAction, useMutation, useQuery } from "convex/react";
-import { Copy, KeyRound, Mail, RotateCw, Trash2, Users2 } from "lucide-react";
-import { useState } from "react";
+import {
+  Clock,
+  Copy,
+  KeyRound,
+  Mail,
+  MoreHorizontal,
+  RotateCw,
+  Search,
+  Send,
+  ShieldCheck,
+  UserMinus,
+  Users,
+  Users2,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -19,15 +32,24 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { StatCard } from "@/components/activity/StatCard";
 import {
   Select,
   SelectContent,
@@ -38,7 +60,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, initials } from "@/lib/format";
-import { TEAMS, teamLabelKey } from "@/lib/teams";
+import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
+import { cn } from "@/lib/utils";
 
 function RoleSelect({
   value,
@@ -307,27 +330,97 @@ function TeamsEditor({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button size="sm" variant="outline" className="h-8">
-          <Users2 className="mr-1.5 h-3.5 w-3.5" />
+          <Users2 className="size-3.5" />
           {t("teams")}
           {teams.length > 0 && (
-            <span className="ml-1 tabular-nums">· {teams.length}</span>
+            <span className="ml-0.5 flex items-center gap-1">
+              {teams.map(id => (
+                <span
+                  key={id}
+                  className={cn("size-1.5 rounded-full", teamColor(id))}
+                />
+              ))}
+            </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>{t("teams")}</DropdownMenuLabel>
-        {TEAMS.map(team => (
-          <DropdownMenuCheckboxItem
-            key={team.id}
-            checked={teams.includes(team.id)}
-            onCheckedChange={() => toggle(team.id)}
-            onSelect={e => e.preventDefault()}
-          >
-            {tTeams(team.labelKey)}
-          </DropdownMenuCheckboxItem>
-        ))}
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuLabel className="flex items-center justify-between">
+          <span>{t("teams")}</span>
+          <span className="text-xs font-normal tabular-nums text-muted-foreground">
+            {teams.length}/{TEAMS.length}
+          </span>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {TEAMS.map(team => {
+          const checked = teams.includes(team.id);
+          return (
+            <DropdownMenuCheckboxItem
+              key={team.id}
+              checked={checked}
+              onCheckedChange={() => toggle(team.id)}
+              onSelect={e => e.preventDefault()}
+              className="gap-2 py-1.5"
+            >
+              <span
+                className={cn(
+                  "size-2 rounded-full transition-opacity",
+                  teamColor(team.id),
+                  checked ? "opacity-100" : "opacity-40"
+                )}
+              />
+              <span className="flex-1">{tTeams(team.labelKey)}</span>
+            </DropdownMenuCheckboxItem>
+          );
+        })}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** KPI tiles so the admin landing reads at a glance instead of feeling empty. */
+function AdminOverview({ isAdmin }: { isAdmin: boolean }) {
+  const t = useTranslations("Admin");
+  const members = useQuery(api.users.list, { includeSuspended: true });
+  const requests = useQuery(api.accessRequests.list, { status: "pending" });
+  const invites = useQuery(api.invites.list, { status: "pending" });
+  const guests = useQuery(api.guest.listTempLogins, isAdmin ? {} : "skip");
+
+  const dash = (n: number | undefined) => (n === undefined ? "—" : n);
+  const activeMembers = members?.filter(m => m.status === "active").length;
+  const reqCount = requests?.length;
+  const invCount = invites?.length;
+  const guestCount = guests?.filter(g => g.status === "active").length;
+
+  return (
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <StatCard
+        label={t("overviewMembers")}
+        value={dash(activeMembers)}
+        tone="fg"
+        icon={<Users className="h-4 w-4" />}
+      />
+      <StatCard
+        label={t("overviewRequests")}
+        value={dash(reqCount)}
+        tone={reqCount ? "warn" : "muted"}
+        icon={<Clock className="h-4 w-4" />}
+      />
+      <StatCard
+        label={t("overviewInvites")}
+        value={dash(invCount)}
+        tone={invCount ? "accent" : "muted"}
+        icon={<Mail className="h-4 w-4" />}
+      />
+      {isAdmin && (
+        <StatCard
+          label={t("overviewGuests")}
+          value={dash(guestCount)}
+          tone={guestCount ? "ok" : "muted"}
+          icon={<KeyRound className="h-4 w-4" />}
+        />
+      )}
+    </div>
   );
 }
 
@@ -336,12 +429,42 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
+  const locale = useLocale();
   const me = useCurrentUser();
   const confirm = useConfirm();
   const members = useQuery(api.users.list, { includeSuspended: true });
   const setRole = useMutation(api.users.setRole);
   const setStatus = useMutation(api.users.setStatus);
+  const removeMember = useAction(api.members.remove);
+  const reinvite = useAction(api.members.reinvite);
   const handleError = useErrorHandler();
+
+  type Member = NonNullable<typeof members>[number];
+
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "suspended"
+  >("all");
+  const [teamFilter, setTeamFilter] = useState("all");
+  const [selectedId, setSelectedId] = useState<Id<"users"> | null>(null);
+
+  const filtered = useMemo(() => {
+    let list = members ?? [];
+    const q = search.trim().toLowerCase();
+    if (q)
+      list = list.filter(
+        m =>
+          m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
+      );
+    if (roleFilter !== "all") list = list.filter(m => m.role === roleFilter);
+    if (statusFilter !== "all")
+      list = list.filter(m => m.status === statusFilter);
+    if (teamFilter !== "all") list = list.filter(m => m.teams.includes(teamFilter));
+    return list;
+  }, [members, search, roleFilter, statusFilter, teamFilter]);
+
+  const selected = members?.find(m => m._id === selectedId) ?? null;
 
   async function toggleStatus(userId: Id<"users">, active: boolean) {
     if (active) {
@@ -353,104 +476,352 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
       });
       if (!ok) return;
     }
-    setStatus({
-      userId,
-      status: active ? "suspended" : "active",
-    }).catch(handleError);
+    setStatus({ userId, status: active ? "suspended" : "active" }).catch(
+      handleError
+    );
   }
 
-  type Member = NonNullable<typeof members>[number];
+  async function onRemove(m: Member) {
+    const ok = await confirm({
+      title: t("removeTitle", { name: m.name }),
+      description: t("removeBody"),
+      confirmLabel: t("removeMember"),
+      cancelLabel: tc("cancel"),
+    });
+    if (!ok) return;
+    setSelectedId(null);
+    removeMember({ userId: m._id as Id<"users"> })
+      .then(() => toast.success(t("removed")))
+      .catch(handleError);
+  }
 
-  function renderMember(m: Member) {
+  function onReinvite(m: Member) {
+    reinvite({ userId: m._id as Id<"users"> })
+      .then(() => toast.success(t("reinviteSent")))
+      .catch(handleError);
+  }
+
+  function copyEmail(email: string) {
+    void navigator.clipboard.writeText(email);
+    toast.success(t("emailCopied"));
+  }
+
+  function changeRole(m: Member, role: Role) {
+    setRole({ userId: m._id as Id<"users">, role })
+      .then(() => toast.success(tRoles(role)))
+      .catch(handleError);
+  }
+
+  function MemberMenu({ m }: { m: Member }) {
+    const isSelf = m._id === me._id;
     return (
-      <Card nested key={m._id}>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <Avatar className="h-9 w-9">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button size="icon-sm" variant="ghost" aria-label={t("moreActions")}>
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem
+            onClick={() => setSelectedId(m._id as Id<"users">)}
+          >
+            <Users2 className="size-4" /> {t("viewProfile")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => copyEmail(m.email)}>
+            <Copy className="size-4" /> {t("copyEmail")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onReinvite(m)}>
+            <Send className="size-4" /> {t("reinvite")}
+          </DropdownMenuItem>
+          {!isSelf && (
+            <DropdownMenuItem
+              onClick={() =>
+                void toggleStatus(m._id as Id<"users">, m.status === "active")
+              }
+            >
+              <ShieldCheck className="size-4" />{" "}
+              {m.status === "active" ? t("suspend") : t("activate")}
+            </DropdownMenuItem>
+          )}
+          {!isSelf && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => void onRemove(m)}
+              >
+                <UserMinus className="size-4" /> {t("removeMember")}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  function MemberRow(m: Member) {
+    return (
+      <Card
+        nested
+        key={m._id}
+        className="transition-colors hover:border-border"
+      >
+        <div className="flex items-center gap-3 p-3">
+          <button
+            type="button"
+            onClick={() => setSelectedId(m._id as Id<"users">)}
+            className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          >
+            <Avatar className="h-9 w-9 shrink-0">
               {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
               <AvatarFallback className="text-xs">
                 {initials(m.name, m.email)}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <p className="truncate font-medium">{m.name}</p>
+              <div className="flex items-center gap-2">
+                <p className="truncate font-medium">{m.name}</p>
+                {m.status === "suspended" && (
+                  <Badge variant="destructive" className="text-[10px]">
+                    {t("suspended")}
+                  </Badge>
+                )}
+                {m.external && (
+                  <Badge variant="warning" className="text-[10px]">
+                    {t("external")}
+                  </Badge>
+                )}
+              </div>
               <p className="truncate text-xs text-muted-foreground">
                 {m.email}
               </p>
-              {m.teams.length > 0 && (
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {m.teams.map(team => (
-                    <Badge key={team} variant="muted" className="text-[10px]">
+            </div>
+          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <Badge variant="muted" className="hidden sm:inline-flex">
+              {tRoles(m.role)}
+            </Badge>
+            {isAdmin && <MemberMenu m={m} />}
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Search + filters */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={t("searchMembers")}
+            className="pl-8"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Select
+            value={roleFilter}
+            onValueChange={v => setRoleFilter(v as "all" | Role)}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allRoles")}</SelectItem>
+              <SelectItem value="employee">{tRoles("employee")}</SelectItem>
+              <SelectItem value="manager">{tRoles("manager")}</SelectItem>
+              <SelectItem value="admin">{tRoles("admin")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={statusFilter}
+            onValueChange={v =>
+              setStatusFilter(v as "all" | "active" | "suspended")
+            }
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allStatuses")}</SelectItem>
+              <SelectItem value="active">{t("active")}</SelectItem>
+              <SelectItem value="suspended">{t("suspended")}</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={teamFilter} onValueChange={setTeamFilter}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allTeams")}</SelectItem>
+              {TEAMS.map(team => (
+                <SelectItem key={team.id} value={team.id}>
+                  {tTeams(team.labelKey)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {members === undefined ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          {tc("loading")}
+        </p>
+      ) : filtered.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          {t("noMembers")}
+        </p>
+      ) : (
+        <div className="space-y-2">{filtered.map(MemberRow)}</div>
+      )}
+
+      {/* Profile detail drawer */}
+      <Sheet
+        open={!!selected}
+        onOpenChange={o => {
+          if (!o) setSelectedId(null);
+        }}
+      >
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto p-6 sm:max-w-md"
+        >
+          {selected && (
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-14 w-14 shrink-0">
+                  {selected.avatar && (
+                    <AvatarImage src={selected.avatar} alt={selected.name} />
+                  )}
+                  <AvatarFallback>
+                    {initials(selected.name, selected.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <SheetTitle className="truncate">{selected.name}</SheetTitle>
+                  <SheetDescription className="truncate">
+                    {selected.email}
+                  </SheetDescription>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    <Badge variant="muted">{tRoles(selected.role)}</Badge>
+                    <Badge
+                      variant={
+                        selected.status === "active" ? "success" : "destructive"
+                      }
+                    >
+                      {selected.status === "active"
+                        ? t("active")
+                        : t("suspended")}
+                    </Badge>
+                    {selected.external && (
+                      <Badge variant="warning">{t("external")}</Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {isAdmin && (
+                <div className="space-y-3 rounded-lg border border-border/70 p-3">
+                  {/* Role can't be changed on your own account, but you can
+                      still manage your own team membership. */}
+                  {selected._id !== me._id && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {t("role")}
+                      </span>
+                      <RoleSelect
+                        value={selected.role}
+                        canElevate
+                        onChange={role => changeRole(selected, role)}
+                      />
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-muted-foreground">
+                      {t("teams")}
+                    </span>
+                    <TeamsEditor
+                      userId={selected._id as Id<"users">}
+                      teams={selected.teams}
+                    />
+                  </div>
+                </div>
+              )}
+
+              <dl className="space-y-2 rounded-lg border border-border/70 p-3 text-sm">
+                <div className="flex justify-between gap-2">
+                  <dt className="text-muted-foreground">{t("joined")}</dt>
+                  <dd className="tabular-nums">
+                    {formatDateTime(selected.createdAt, locale)}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-muted-foreground">{t("lastActive")}</dt>
+                  <dd className="tabular-nums">
+                    {selected.lastSeenAt
+                      ? formatDateTime(selected.lastSeenAt, locale)
+                      : t("never")}
+                  </dd>
+                </div>
+              </dl>
+
+              {selected.teams.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {selected.teams.map(team => (
+                    <Badge key={team} variant="muted" className="gap-1.5">
+                      <span
+                        className={cn("size-1.5 rounded-full", teamColor(team))}
+                      />
                       {tTeams(teamLabelKey(team))}
                     </Badge>
                   ))}
                 </div>
               )}
+
+              {isAdmin && (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onReinvite(selected)}
+                  >
+                    <Send /> {t("reinvite")}
+                  </Button>
+                  {selected._id !== me._id && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          void toggleStatus(
+                            selected._id as Id<"users">,
+                            selected.status === "active"
+                          )
+                        }
+                      >
+                        {selected.status === "active"
+                          ? t("suspend")
+                          : t("activate")}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => void onRemove(selected)}
+                      >
+                        <UserMinus /> {t("removeMember")}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-            {m.status === "suspended" && (
-              <Badge variant="destructive">{t("suspend")}</Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {isAdmin ? (
-              <>
-                <TeamsEditor userId={m._id as Id<"users">} teams={m.teams} />
-                {m._id !== me._id && (
-                  <>
-                    <RoleSelect
-                      value={m.role}
-                      canElevate
-                      onChange={role =>
-                        setRole({ userId: m._id as Id<"users">, role })
-                          .then(() => toast.success(tRoles(role)))
-                          .catch(handleError)
-                      }
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        void toggleStatus(
-                          m._id as Id<"users">,
-                          m.status === "active"
-                        )
-                      }
-                    >
-                      {m.status === "active" ? t("suspend") : t("activate")}
-                    </Button>
-                  </>
-                )}
-              </>
-            ) : (
-              <Badge variant="muted">{tRoles(m.role)}</Badge>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const internal = members?.filter(m => !m.external) ?? [];
-  const external = members?.filter(m => m.external) ?? [];
-
-  return (
-    <div className="space-y-2">
-      {internal.map(renderMember)}
-
-      {external.length > 0 && (
-        <div className="space-y-2 pt-4">
-          <div className="flex items-center gap-2 px-1">
-            <h3 className="text-sm font-semibold text-muted-foreground">
-              {t("externalMembers")}
-            </h3>
-            <Badge variant="warning">{external.length}</Badge>
-          </div>
-          <p className="px-1 text-xs text-muted-foreground">
-            {t("externalMembersHint")}
-          </p>
-          {external.map(renderMember)}
-        </div>
-      )}
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
@@ -606,8 +977,13 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <PageHeader title={t("title")} />
+    <div className="mx-auto max-w-6xl space-y-6">
+      <PageHeader
+        title={t("title")}
+        description={t("subtitle")}
+        icon={<ShieldCheck />}
+      />
+      <AdminOverview isAdmin={isAdmin} />
       <Tabs defaultValue="requests">
         <TabsList>
           <TabsTrigger value="requests">{t("accessRequests")}</TabsTrigger>

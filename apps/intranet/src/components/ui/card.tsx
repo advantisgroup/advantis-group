@@ -11,7 +11,9 @@ function Card({ className, nested = false, ...props }: CardProps) {
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col rounded-[var(--radius)] border border-border/70",
+        // A faint top-down sheen (a hair lighter at the top, fading out) gives
+        // surfaces subtle depth without reading as a coloured gradient.
+        "bg-card bg-gradient-to-b from-white/[0.025] to-transparent text-card-foreground flex flex-col rounded-[var(--radius)] border border-border/70",
         nested
           ? "shadow-none"
           : "shadow-[0_1px_2px_0_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.10)]",
@@ -26,7 +28,13 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-header"
-      className={cn("flex items-start gap-3 p-5 [.border-b]:pb-4", className)}
+      className={cn(
+        // Stack title over description vertically. (Previously a flex row, which
+        // pushed CardDescription to the right of the title.) For a right-aligned
+        // action, give the header a custom row layout at the call site.
+        "flex flex-col gap-1.5 p-5 [.border-b]:pb-4",
+        className
+      )}
       {...props}
     />
   );

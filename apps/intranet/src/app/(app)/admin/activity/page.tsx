@@ -38,6 +38,8 @@ function FleetSummary({
   const working = rows.filter(d => d.online && isWorking(d)).length;
   const idle = rows.filter(d => d.online && !isWorking(d)).length;
   const offline = rows.filter(d => !d.online).length;
+  const total = rows.length;
+  const onlineCount = working + idle;
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -58,12 +60,16 @@ function FleetSummary({
         label={t("overview.offline")}
         value={offline}
         tone="muted"
+        hint={total > 0 ? t("overview.ofTotal", { total }) : undefined}
         icon={<PowerOff className="h-4 w-4" />}
       />
       <StatCard
         label={t("overview.total")}
-        value={rows.length}
+        value={total}
         tone="fg"
+        hint={
+          total > 0 ? `${onlineCount} ${t("overview.online")}` : undefined
+        }
         icon={<MonitorSmartphone className="h-4 w-4" />}
       />
     </div>

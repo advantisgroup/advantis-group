@@ -81,6 +81,13 @@ export function CommandPalette() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Allow other surfaces (e.g. the mobile bottom bar) to open the palette.
+  useEffect(() => {
+    const open = () => setOpen(true);
+    window.addEventListener("command-palette:open", open);
+    return () => window.removeEventListener("command-palette:open", open);
+  }, []);
+
   useEffect(() => {
     if (open) {
       setQuery("");

@@ -7,6 +7,7 @@ import {
   Activity,
   BookOpen,
   Calendar,
+  ExternalLink,
   LayoutDashboard,
   Megaphone,
   MessageSquare,
@@ -53,6 +54,8 @@ interface NavItem {
   badge?: number;
   managerOnly?: boolean;
   adminOnly?: boolean;
+  /** Marks the item as leading to a separate area (shows an external-link hint). */
+  external?: boolean;
 }
 
 interface NavGroup {
@@ -125,6 +128,7 @@ export function Sidebar() {
           labelKey: "activity",
           icon: Activity,
           adminOnly: true,
+          external: true,
         },
         { href: "/settings", labelKey: "settings", icon: Settings },
       ],
@@ -202,6 +206,9 @@ export function Sidebar() {
                               >
                                 <Icon />
                                 <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
+                                {item.external ? (
+                                  <ExternalLink className="ml-auto size-3.5 shrink-0 text-muted-foreground/70 group-data-[state=collapsed]/sidebar:hidden" />
+                                ) : null}
                                 {item.badge ? (
                                   <SidebarMenuBadge>
                                     {item.badge > 99 ? "99+" : item.badge}

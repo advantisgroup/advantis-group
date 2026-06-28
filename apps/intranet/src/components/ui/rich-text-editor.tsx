@@ -11,7 +11,7 @@ import {
   Strikethrough,
   Underline,
 } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -42,6 +42,16 @@ const TOOLS: (Cmd | "divider")[] = [
   },
 ];
 
+/** Walk up from `node` (staying inside `root`) looking for a matching tag. */
+function isInsideTag(root: HTMLElement, node: Node | null, tag: string) {
+  let cur: Node | null = node;
+  while (cur && cur !== root) {
+    if (cur.nodeType === 1 && (cur as HTMLElement).tagName === tag) return true;
+    cur = cur.parentNode;
+  }
+  return false;
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -54,6 +64,9 @@ export function RichTextEditor({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Which toolbar styles apply to the current selection/caret — drives the
+  // active highlight so the user can see what's on without guessing.
+  const [active, setActive] = useState<Record<string, boolean>>({});
 
   // Keep the DOM in sync when the value is changed externally (e.g. reset).
   useEffect(() => {
@@ -63,6 +76,42 @@ export function RichTextEditor({
       el.setAttribute("data-empty", el.textContent ? "false" : "true");
     }
   }, [value]);
+
+  const refreshActive = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const sel = window.getSelection();
+    // Only reflect state when the caret/selection is actually inside the editor.
+    if (!sel || sel.rangeCount === 0 || !el.contains(sel.anchorNode)) return;
+    const next: Record<string, boolean> = {};
+    for (const tool of TOOLS) {
+      if (tool === "divider" || !("command" in tool)) continue;
+      if (tool.command === "formatBlock") {
+        next[tool.label] = isInsideTag(
+          el,
+          sel.anchorNode,
+          (tool.value ?? "").toUpperCase()
+        );
+      } else if (tool.command === "removeFormat") {
+        next[tool.label] = false;
+      } else {
+        try {
+          next[tool.label] = document.queryCommandState(tool.command);
+        } catch {
+          next[tool.label] = false;
+        }
+      }
+    }
+    next["Insert link"] = isInsideTag(el, sel.anchorNode, "A");
+    setActive(next);
+  }, []);
+
+  // Track selection changes globally; cheap because we early-out unless the
+  // selection is inside this editor.
+  useEffect(() => {
+    document.addEventListener("selectionchange", refreshActive);
+    return () => document.removeEventListener("selectionchange", refreshActive);
+  }, [refreshActive]);
 
   function emit() {
     const el = ref.current;
@@ -75,6 +124,7 @@ export function RichTextEditor({
     ref.current?.focus();
     document.execCommand(command, false, val);
     emit();
+    refreshActive();
   }
 
   function run(tool: Cmd) {
@@ -109,9 +159,15 @@ export function RichTextEditor({
               type="button"
               title={tool.label}
               aria-label={tool.label}
+              aria-pressed={!!active[tool.label]}
               onMouseDown={e => e.preventDefault()}
               onClick={() => run(tool)}
-              className="flex size-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground [&_svg]:size-[17px]"
+              className={cn(
+                "flex size-8 items-center justify-center rounded-md transition-colors [&_svg]:size-[17px]",
+                active[tool.label]
+                  ? "bg-signal/15 text-signal"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
             >
               <tool.icon />
             </button>
@@ -126,9 +182,11 @@ export function RichTextEditor({
         suppressContentEditableWarning
         onInput={emit}
         onBlur={emit}
+        onKeyUp={refreshActive}
+        onMouseUp={refreshActive}
         role="textbox"
         aria-multiline="true"
-        className="rich-text min-h-[8.5rem] max-h-80 overflow-y-auto px-3.5 py-3 outline-none"
+        className="rich-text min-h-[14rem] max-h-[28rem] overflow-y-auto px-3.5 py-3 outline-none"
       />
     </div>
   );

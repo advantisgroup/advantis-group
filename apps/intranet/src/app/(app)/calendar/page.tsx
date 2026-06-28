@@ -44,7 +44,6 @@ import {
 } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useConfirm } from "@/components/ui/confirm-dialog";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +52,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  useConfirm,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -464,32 +464,47 @@ export default function CalendarPage() {
         action={isManager ? <EventDialog defaultDate={cursor} /> : undefined}
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={goPrev}
-          aria-label="Previous"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={goNext}
-          aria-label="Next"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        <Button variant="ghost" onClick={() => setCursor(new Date())}>
-          {t("today")}
-        </Button>
-        <span className="ml-1 font-display text-xl font-semibold capitalize tracking-tight">
-          {headerLabel}
-        </span>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {/* Left: the period is the heading; navigation sits beneath it as a
+            grouped, secondary control cluster. */}
+        <div className="flex items-center gap-3">
+          <h2 className="min-w-[8rem] font-display text-2xl font-semibold capitalize tracking-tight">
+            {headerLabel}
+          </h2>
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center rounded-lg border border-border bg-card">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={goPrev}
+                aria-label="Previous"
+                className="rounded-r-none"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <span aria-hidden className="h-5 w-px bg-border" />
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={goNext}
+                aria-label="Next"
+                className="rounded-l-none"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCursor(new Date())}
+            >
+              {t("today")}
+            </Button>
+          </div>
+        </div>
 
         {/* View switcher */}
-        <div className="ml-auto flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
           {(
             [
               { key: "month", label: t("viewMonth"), icon: CalendarDays },

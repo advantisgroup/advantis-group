@@ -20,16 +20,28 @@ const TILE: Record<Tone, string> = {
   accent: "bg-signal/12 text-signal ring-signal/25",
 };
 
+const BAR: Record<Tone, string> = {
+  fg: "bg-foreground/70",
+  ok: "bg-ok",
+  warn: "bg-warn",
+  muted: "bg-muted-foreground/50",
+  accent: "bg-signal",
+};
+
 /**
- * A compact stat / KPI tile. Content hugs together — label + icon on one row,
- * the figure directly beneath it, then an optional sub-line — so the card is
- * only as tall as its content (no min-height, no top/bottom void). Tiles in a
- * row stay equal height because every tile shares this exact structure.
+ * A stat / KPI tile. The figure is the hero, but the body earns its height: a
+ * label + icon row, the value with an optional trailing share, a slim
+ * tone-tinted progress bar (when the value is part of a whole), and a hint line.
+ * Pass `progress` (0–1) for the bar and `hint` for context so the card never
+ * reduces to "a number floating in a box". Tiles in a row stay equal height
+ * because they share this structure.
  */
 export function StatCard({
   label,
   value,
   hint,
+  trailing,
+  progress,
   icon,
   tone = "fg",
   live,
@@ -39,12 +51,21 @@ export function StatCard({
   label: string;
   value: ReactNode;
   hint?: ReactNode;
+  /** Small text shown to the right of the value (e.g. a share "33%"). */
+  trailing?: ReactNode;
+  /** 0–1; renders a tone-tinted bar showing this value's share of a whole. */
+  progress?: number;
   icon?: ReactNode;
   tone?: Tone;
   live?: boolean;
   className?: string;
   valueClassName?: string;
 }) {
+  const pct =
+    progress === undefined
+      ? undefined
+      : Math.max(0, Math.min(100, Math.round(progress * 100)));
+
   return (
     <Card
       className={cn(
@@ -52,7 +73,7 @@ export function StatCard({
         className
       )}
     >
-      <CardContent className="flex flex-col gap-2.5 p-5">
+      <CardContent className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <span className="kicker flex items-center gap-1.5 truncate">
             {live && <span className="signal-dot !h-1.5 !w-1.5" />}
@@ -61,7 +82,7 @@ export function StatCard({
           {icon && (
             <span
               className={cn(
-                "grid h-8 w-8 shrink-0 place-items-center rounded-lg ring-1 ring-inset",
+                "grid h-9 w-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset",
                 TILE[tone]
               )}
             >
@@ -69,15 +90,42 @@ export function StatCard({
             </span>
           )}
         </div>
-        <div
-          className={cn(
-            "text-3xl font-semibold leading-none tabular-nums tracking-tight",
-            TONE[tone],
-            valueClassName
+
+        <div className="flex items-baseline justify-between gap-3">
+          <span
+            className={cn(
+              "text-3xl font-semibold leading-none tabular-nums tracking-tight",
+              TONE[tone],
+              valueClassName
+            )}
+          >
+            {value}
+          </span>
+          {trailing && (
+            <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+              {trailing}
+            </span>
           )}
-        >
-          {value}
         </div>
+
+        {pct !== undefined && (
+          <div
+            className="h-1.5 w-full overflow-hidden rounded-full bg-panel-2"
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className={cn(
+                "h-full rounded-full transition-[width] duration-500",
+                BAR[tone]
+              )}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        )}
+
         {hint && (
           <p className="truncate text-xs text-muted-foreground">{hint}</p>
         )}

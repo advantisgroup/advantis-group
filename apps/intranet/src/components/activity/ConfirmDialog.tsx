@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
 import { useI18n } from "@/lib/activity/i18n";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Props {
   open: boolean;
@@ -13,6 +19,13 @@ interface Props {
   onCancel: () => void;
 }
 
+/**
+ * Destructive confirmation used by the activity admin pages. Thin wrapper around
+ * the shared {@link Dialog} so it inherits the blurred/dotted backdrop, focus
+ * trapping and animations rather than re-implementing them. The controlled
+ * `open`/`onConfirm`/`onCancel` props are kept so existing call sites are
+ * unchanged.
+ */
 export function ConfirmDialog({
   open,
   heading,
@@ -22,84 +35,32 @@ export function ConfirmDialog({
   onCancel,
 }: Props) {
   const { t } = useI18n();
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const headingId = useId();
-  const bodyId = useId();
-
-  // Focus management + key handling while open. On open we remember what was
-  // focused (the trigger), move focus into the dialog, and trap Tab within it;
-  // on close we restore focus so keyboard users land back where they were.
-  useEffect(() => {
-    if (!open) return;
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    cancelRef.current?.focus();
-
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onCancel();
-        return;
-      }
-      if (e.key !== "Tab") return;
-      const focusable = dialogRef.current?.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      if (!focusable || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => {
-      document.removeEventListener("keydown", handler);
-      previouslyFocused?.focus();
-    };
-  }, [open, onCancel]);
-
-  if (!open) return null;
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
-        onClick={onCancel}
-      />
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div
-          ref={dialogRef}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={headingId}
-          aria-describedby={body ? bodyId : undefined}
-          className="w-full max-w-sm rounded-2xl border border-border bg-panel p-6 shadow-overlay animate-rise"
-        >
-          <h2
-            id={headingId}
-            className="font-display text-lg font-bold tracking-tightest text-fg"
-          >
-            {heading}
-          </h2>
+    <Dialog
+      open={open}
+      onOpenChange={o => {
+        if (!o) onCancel();
+      }}
+    >
+      <DialogContent className="max-w-md gap-0 p-0">
+        <div className="px-6 pb-5 pt-6 pr-12">
+          <DialogTitle className="leading-snug">{heading}</DialogTitle>
           {body && (
-            <p id={bodyId} className="mt-1.5 text-sm text-muted-foreground">
+            <DialogDescription className="mt-2 leading-relaxed">
               {body}
-            </p>
+            </DialogDescription>
           )}
-          <div className="mt-6 flex justify-end gap-2">
-            <Button ref={cancelRef} variant="secondary" onClick={onCancel}>
-              {t("people.cancel")}
-            </Button>
-            <Button variant="destructive" onClick={onConfirm}>
-              {confirmLabel}
-            </Button>
-          </div>
         </div>
-      </div>
-    </>
+        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
+          <Button variant="ghost" onClick={onCancel}>
+            {t("people.cancel")}
+          </Button>
+          <Button variant="destructive" onClick={onConfirm} autoFocus>
+            {confirmLabel}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

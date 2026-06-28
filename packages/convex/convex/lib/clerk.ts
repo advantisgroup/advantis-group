@@ -59,6 +59,22 @@ async function pendingInvitations(email: string): Promise<ClerkInvitation[]> {
   return list.filter(i => i.email_address.toLowerCase() === email);
 }
 
+/**
+ * Permanently delete a Clerk user (revokes their ability to sign in). Treats a
+ * 404 as success so removing a member whose Clerk account is already gone still
+ * resolves. Throws a `ConvexError` on other failures so the caller can surface
+ * it to the admin.
+ */
+export async function deleteClerkUser(clerkUserId: string): Promise<void> {
+  const res = await clerkFetch(`/users/${clerkUserId}`, { method: "DELETE" });
+  if (!res.ok && res.status !== 404) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not delete the user (HTTP ${res.status}). ${await res.text()}`,
+    });
+  }
+}
+
 /** Best-effort revoke of any still-pending Clerk invitations for `email`. */
 export async function revokeClerkInvitations(email: string): Promise<void> {
   const addr = email.trim().toLowerCase();

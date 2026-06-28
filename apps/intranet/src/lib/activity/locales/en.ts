@@ -46,6 +46,7 @@ export const en: Dict = {
   "overview.lastSeen": "Last seen",
   "overview.total": "Devices total",
   "overview.ofTotal": "of {total} devices",
+  "overview.online": "online",
 
   "devices.heading": "Devices",
   "devices.pending": "Pending approval",
