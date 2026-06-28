@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Tailwind v4 does not auto-load `tailwind.config.ts`, so register the
+   animation plugin here. Without this the `animate-in` / `slide-in-from-*` /
+   `fade-in-0` / `zoom-in-95` utilities used by Radix overlays (the mobile
+   sidebar sheet, command palette, dropdowns, tooltips) don't exist and those
+   surfaces pop in/out with no transition. */
+@plugin "tailwindcss-animate";
+
 @custom-variant dark (&:where(.dark, .dark *));
 
 @keyframes pulse-slow {

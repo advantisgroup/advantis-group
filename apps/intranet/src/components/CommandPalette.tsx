@@ -223,7 +223,7 @@ export function CommandPalette() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex w-full max-w-md items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        className="flex h-8 w-full max-w-xs items-center gap-2 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:h-9 md:max-w-md md:px-3"
       >
         <Search className="size-4 shrink-0" />
         <span className="flex-1 truncate text-left">{t("placeholder")}</span>
