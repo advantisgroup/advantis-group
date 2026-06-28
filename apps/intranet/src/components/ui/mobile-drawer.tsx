@@ -66,7 +66,7 @@ export function MobileDrawer({
           />
           <motion.div
             className={cn(
-              "absolute inset-x-0 bottom-0 flex max-h-[88vh] flex-col rounded-t-2xl border-t border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl shadow-black/40",
+              "absolute inset-x-0 bottom-0 flex h-[65vh] flex-col rounded-t-2xl border-t border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl shadow-black/40",
               className
             )}
             initial={{ y: "100%" }}
@@ -96,7 +96,7 @@ export function MobileDrawer({
               <span className="h-1.5 w-10 rounded-full bg-border" />
             </div>
             <div
-              className="flex min-h-0 w-full flex-1 flex-col"
+              className="flex min-h-0 w-full flex-1 flex-col overflow-y-auto"
               style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
             >
               {children}
