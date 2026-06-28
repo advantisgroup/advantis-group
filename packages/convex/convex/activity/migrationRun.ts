@@ -1,8 +1,6 @@
 "use node";
 
 import { v } from "convex/values";
-import { ConvexHttpClient } from "convex/browser";
-import { makeFunctionReference } from "convex/server";
 
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
@@ -42,9 +40,84 @@ const UPSERT: Record<
 };
 
 // Read-only paginated export query on the OLD deployment.
-const exportRef = makeFunctionReference<"query">(
-  "activity/migrationExport:exportTable"
-);
+const EXPORT_PATH = "activity/migrationExport:exportTable";
+
+type ExportBatch = { page: any[]; continueCursor: string; isDone: boolean };
+
+/**
+ * Read one batch from the OLD deployment via a plain HTTP POST to its
+ * `/api/query` endpoint.
+ *
+ * We deliberately do NOT use `ConvexHttpClient` here: the old and new
+ * deployments are independent Convex projects on different library versions,
+ * and the client's `convex_encoded_json` decode path throws on the old
+ * deployment's response even when the server reports success. The `json`
+ * format is stable across versions and lossless for this data (every migrated
+ * column is a string/number/boolean — no Int64 or Bytes), so a raw fetch is
+ * both simpler and more robust. Errors are kept short so they render cleanly in
+ * the admin UI. The request body carries the secret, so only failures (never
+ * the request) are logged, and never the body.
+ */
+async function fetchExportBatch(
+  oldUrl: string,
+  secret: string,
+  table: MigrationTable,
+  cursor: string | null,
+  numItems: number
+): Promise<ExportBatch> {
+  const endpoint = `${oldUrl.replace(/\/$/, "")}/api/query`;
+
+  let resp: Response;
+  try {
+    resp = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path: EXPORT_PATH,
+        args: { secret, table, cursor, numItems },
+        format: "json",
+      }),
+    });
+  } catch (e) {
+    throw new Error(
+      `could not reach old deployment: ${e instanceof Error ? e.message : String(e)}`
+    );
+  }
+
+  const bodyText = await resp.text();
+  if (!resp.ok) {
+    throw new Error(
+      `old deployment HTTP ${resp.status}: ${bodyText.slice(0, 200)}`
+    );
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(bodyText);
+  } catch {
+    throw new Error(`old deployment returned non-JSON (HTTP ${resp.status})`);
+  }
+
+  if (parsed.status === "error") {
+    const reason =
+      typeof parsed.errorMessage === "string" ? parsed.errorMessage : "";
+    throw new Error(
+      `old deployment rejected export${reason ? `: ${reason.slice(0, 200)}` : ""}`
+    );
+  }
+  if (parsed.status !== "success" || !parsed.value) {
+    throw new Error(
+      `unexpected response from old deployment (status=${String(parsed.status)})`
+    );
+  }
+
+  const value = parsed.value as Partial<ExportBatch>;
+  return {
+    page: Array.isArray(value.page) ? value.page : [],
+    continueCursor: value.continueCursor ?? "",
+    isDone: value.isDone ?? true,
+  };
+}
 
 export const run = internalAction({
   args: { migrationId: v.id("activityMigrations") },
@@ -75,8 +148,6 @@ export const run = internalAction({
       return;
     }
 
-    const client = new ConvexHttpClient(oldUrl);
-
     let batches = 0;
     while (batches < MAX_BATCHES_PER_RUN) {
       const run = await ctx.runQuery(internal.activity.migration.getRun, {
@@ -105,12 +176,13 @@ export const run = internalAction({
       });
 
       try {
-        const result = (await client.query(exportRef, {
+        const result = await fetchExportBatch(
+          oldUrl,
           secret,
           table,
-          cursor: step.cursor ?? null,
-          numItems: BATCH_SIZE,
-        })) as { page: any[]; continueCursor: string; isDone: boolean };
+          step.cursor ?? null,
+          BATCH_SIZE
+        );
 
         console.log(`[migration] fetched ${result.page.length} rows from old deployment — isDone=${result.isDone}`);
 
@@ -131,76 +203,13 @@ export const run = internalAction({
           done: result.isDone,
         });
       } catch (err) {
-        // ConvexHttpClient errors sometimes have empty .message but carry
-        // details in .data (ConvexError payload) or other own properties.
-        // Capture ALL own props, including non-enumerable ones.
-        let message: string;
-        if (err instanceof Error) {
-          const extra = Object.getOwnPropertyNames(err)
-            .filter(k => !["stack", "message", "name"].includes(k))
-            .map(k => `${k}=${JSON.stringify((err as any)[k])}`)
-            .join(" ");
-          message = [err.name, err.message, extra].filter(Boolean).join(" | ").trim() || "Unknown error (empty message)";
-        } else {
-          try {
-            message = JSON.stringify(err);
-          } catch {
-            message = String(err);
-          }
-        }
-
-        // The HTTP client strips the real failure reason; re-issue the same
-        // query as a raw fetch to capture the actual wire response, where
-        // Convex puts errorMessage/errorData. Best-effort — never masks the
-        // original error, and we log only the RESPONSE (the request body
-        // carries the secret, so it is never logged).
-        let probe: { status?: number; body?: string; error?: string } = {};
-        try {
-          const resp = await fetch(`${oldUrl.replace(/\/$/, "")}/api/query`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              path: "activity/migrationExport:exportTable",
-              args: {
-                secret,
-                table,
-                cursor: step.cursor ?? null,
-                numItems: BATCH_SIZE,
-              },
-              format: "json",
-            }),
-          });
-          probe = {
-            status: resp.status,
-            body: (await resp.text()).slice(0, 2000),
-          };
-        } catch (probeErr) {
-          probe = {
-            error:
-              probeErr instanceof Error ? probeErr.message : String(probeErr),
-          };
-        }
-
-        console.error(`[migration] FAILED table="${table}"`, {
-          message,
-          name: err instanceof Error ? err.name : undefined,
-          data: (err as any)?.data,
-          status: (err as any)?.status,
-          cause: (err as any)?.cause,
-          rawProbe: probe,
-          stack: err instanceof Error ? err.stack : undefined,
-        });
-
-        // Prefer the raw probe body — it carries the real reason.
-        const finalError = probe.body
-          ? `${message} :: rawResponse[${probe.status}]=${probe.body}`
-          : probe.error
-            ? `${message} :: probeFailed=${probe.error}`
-            : message;
-
+        const message = (
+          err instanceof Error ? err.message : String(err)
+        ).slice(0, 300);
+        console.error(`[migration] FAILED table="${table}": ${message}`);
         await ctx.runMutation(internal.activity.migration.failStep, {
           stepId: step._id,
-          error: finalError,
+          error: message,
         });
         return;
       }
