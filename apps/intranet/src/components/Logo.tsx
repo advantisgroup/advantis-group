@@ -50,8 +50,8 @@ export function WordmarkLogo({ className }: { className?: string }) {
           className="object-contain"
         />
       </span>
-      <span className="text-advantis">AG</span>
-      <span className="text-foreground">Intranet</span>
+      <span className="text-advantis">Advantis</span>
+      <span className="text-foreground">Group</span>
     </span>
   );
 }
