@@ -60,7 +60,7 @@ export default async function RootLayout({
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ClerkProvider
           publishableKey={
-            process.env.NEXT_PUBLIC_INTRANET_CLERK_PUBLISHABLE_KEY
+            process.env.NEXT_PUBLIC_INTERNAL_CLERK_PUBLISHABLE_KEY
           }
         >
           <NextIntlClientProvider locale={locale} messages={messages}>

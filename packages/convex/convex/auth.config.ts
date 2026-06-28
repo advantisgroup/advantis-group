@@ -7,7 +7,7 @@ import { type AuthConfig } from "convex/server";
 // user's primary email as an `email` claim (used by lib/auth.ensureUser).
 const issuerDomains = [
   process.env.CLERK_JWT_ISSUER_DOMAIN,
-  process.env.INTRANET_CLERK_JWT_ISSUER_DOMAIN,
+  process.env.INTERNAL_CLERK_JWT_ISSUER_DOMAIN,
 ].filter((domain): domain is string => Boolean(domain));
 
 export default {

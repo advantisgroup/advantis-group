@@ -6,14 +6,14 @@ let clerkClient: ClerkClient | null = null;
 export function getClerkClient(): ClerkClient {
   if (clerkClient) return clerkClient;
   const secretKey =
-    process.env.INTRANET_CLERK_SECRET_KEY ?? process.env.CLERK_SECRET_KEY;
+    process.env.INTERNAL_CLERK_SECRET_KEY ?? process.env.CLERK_SECRET_KEY;
   const publishableKey =
-    process.env.NEXT_PUBLIC_INTRANET_CLERK_PUBLISHABLE_KEY ??
-    process.env.INTRANET_CLERK_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_INTERNAL_CLERK_PUBLISHABLE_KEY ??
+    process.env.INTERNAL_CLERK_PUBLISHABLE_KEY ??
     process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (!secretKey || !publishableKey) {
     throw new Error(
-      "INTRANET_CLERK_SECRET_KEY and a publishable key must be set to verify requests"
+      "INTERNAL_CLERK_SECRET_KEY and a publishable key must be set to verify requests"
     );
   }
   clerkClient = createClerkClient({ secretKey, publishableKey });

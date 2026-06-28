@@ -15,8 +15,8 @@ export default clerkMiddleware(
     }
   },
   {
-    secretKey: process.env.INTRANET_CLERK_SECRET_KEY,
-    publishableKey: process.env.NEXT_PUBLIC_INTRANET_CLERK_PUBLISHABLE_KEY,
+    secretKey: process.env.INTERNAL_CLERK_SECRET_KEY,
+    publishableKey: process.env.NEXT_PUBLIC_INTERNAL_CLERK_PUBLISHABLE_KEY,
   }
 );
 

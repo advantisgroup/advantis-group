@@ -8,7 +8,7 @@ import { type Role } from "./auth";
  * Invitations are created straight from Convex actions rather than proxied
  * through the Elysia API. That removes a fragile server-key handshake between
  * two deployments — the only thing that needs configuring is the Clerk secret
- * key in the Convex environment (`INTRANET_CLERK_SECRET_KEY`). Clerk itself
+ * key in the Convex environment (`INTERNAL_CLERK_SECRET_KEY`). Clerk itself
  * sends the invitation email and gates sign-up to the invited address, which is
  * also what lets external domains through a restricted sign-up mode.
  */
@@ -17,13 +17,13 @@ const CLERK_API = "https://api.clerk.com/v1";
 
 function clerkSecretKey(): string {
   const key =
-    process.env.INTRANET_CLERK_SECRET_KEY ?? process.env.CLERK_SECRET_KEY;
+    process.env.INTERNAL_CLERK_SECRET_KEY ?? process.env.CLERK_SECRET_KEY;
   if (!key) {
     throw new ConvexError({
       code: "internal",
       message:
-        "Clerk is not configured for invitations. Set INTRANET_CLERK_SECRET_KEY " +
-        "in the Convex environment (npx convex env set INTRANET_CLERK_SECRET_KEY sk_...).",
+        "Clerk is not configured for invitations. Set INTERNAL_CLERK_SECRET_KEY " +
+        "in the Convex environment (npx convex env set INTERNAL_CLERK_SECRET_KEY sk_...).",
     });
   }
   return key;
@@ -93,7 +93,7 @@ export async function createClerkInvitation(opts: {
 
   const redirectUrl =
     opts.redirectUrl ??
-    `${process.env.INTRANET_URL ?? "https://intranet.advantisgroup.de"}/sign-up`;
+    `${process.env.INTERNAL_URL ?? "https://intranet.advantisgroup.de"}/sign-up`;
 
   const res = await clerkFetch("/invitations", {
     method: "POST",

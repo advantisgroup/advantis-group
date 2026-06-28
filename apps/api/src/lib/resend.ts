@@ -13,10 +13,10 @@ function getResend(): Resend {
 }
 
 const FROM =
-  process.env.INTRANET_EMAIL_FROM ??
+  process.env.INTERNAL_EMAIL_FROM ??
   "Advantis Intranet <noreply@intranet.advantisgroup.de>";
-const INTRANET_URL =
-  process.env.INTRANET_URL ?? "https://intranet.advantisgroup.de";
+const INTERNAL_URL =
+  process.env.INTERNAL_URL ?? "https://intranet.advantisgroup.de";
 
 function layout(title: string, bodyHtml: string): string {
   return `<!doctype html><html><body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b">
@@ -51,7 +51,7 @@ function render(
       const token = str(data, "token");
       const role = str(data, "role") || "employee";
       const by = str(data, "invitedByName");
-      const url = `${INTRANET_URL}/sign-up?invite=${encodeURIComponent(token)}`;
+      const url = `${INTERNAL_URL}/sign-up?invite=${encodeURIComponent(token)}`;
       return {
         subject: "You've been invited to the Advantis intranet",
         html: layout(
@@ -69,7 +69,7 @@ function render(
         html: layout(
           "Access approved",
           `<p style="margin:0 0 24px;line-height:1.6">Your request to access the Advantis intranet was approved (role: <strong>${role}</strong>). You can sign in now.</p>
-           ${button(INTRANET_URL, "Open the intranet")}`
+           ${button(INTERNAL_URL, "Open the intranet")}`
         ),
       };
     }
@@ -93,7 +93,7 @@ function render(
           `Absence ${decision}`,
           `<p style="margin:0 0 16px;line-height:1.6">Your <strong>${type}</strong> absence from <strong>${start}</strong> to <strong>${end}</strong> was <strong>${decision}</strong>.</p>
            ${note ? `<p style="margin:0 0 24px;line-height:1.6;color:#52525b">Note: ${note}</p>` : ""}
-           ${button(`${INTRANET_URL}/absences`, "View absences")}`
+           ${button(`${INTERNAL_URL}/absences`, "View absences")}`
         ),
       };
     }
@@ -101,7 +101,7 @@ function render(
       const token = str(data, "token");
       const label = str(data, "label") || "Guest";
       const hours = typeof data.hours === "number" ? data.hours : 48;
-      const url = `${INTRANET_URL}/guest/login?token=${encodeURIComponent(token)}`;
+      const url = `${INTERNAL_URL}/guest/login?token=${encodeURIComponent(token)}`;
       return {
         subject: "Your Advantis intranet guest tour",
         html: layout(
