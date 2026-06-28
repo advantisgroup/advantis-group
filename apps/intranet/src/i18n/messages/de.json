@@ -336,5 +336,118 @@
     "boundaryDescription": "Beim Laden dieser Seite ist ein unerwarteter Fehler aufgetreten. Du kannst es erneut versuchen.",
     "retry": "Erneut versuchen",
     "reload": "Seite neu laden"
+  },
+  "Activity": {
+    "title": "Aktivität",
+    "subtitle": "Dashboard zur Mitarbeiteraktivität",
+    "backToDashboard": "Zurück zum Dashboard",
+    "nav": {
+      "group": "Aktivität",
+      "overview": "Übersicht",
+      "devices": "Geräte",
+      "people": "Personen",
+      "reports": "Berichte",
+      "settings": "Einstellungen",
+      "help": "Hilfe",
+      "migration": "Migration"
+    },
+    "states": {
+      "ACTIVE": "Aktiv",
+      "IDLE": "Inaktiv",
+      "IN_CALL": "Im Gespräch",
+      "WRAP_UP": "Nachbearbeitung",
+      "BREAK": "Pause",
+      "ABSENT": "Abwesend",
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "overview": {
+      "title": "Team-Übersicht",
+      "empty": "Noch keine aktiven Geräte. Genehmige ein Gerät, um Aktivität zu sehen.",
+      "activeToday": "Heute aktiv",
+      "idleToday": "Heute inaktiv",
+      "lastSeen": "Zuletzt gesehen",
+      "working": "Arbeitet",
+      "noPerson": "Nicht zugeordnet"
+    },
+    "devices": {
+      "title": "Geräte",
+      "pending": "Warten auf Genehmigung",
+      "all": "Alle Geräte",
+      "hostname": "Hostname",
+      "user": "Benutzer",
+      "person": "Person",
+      "status": "Status",
+      "lastSeen": "Zuletzt gesehen",
+      "approve": "Genehmigen",
+      "disable": "Deaktivieren",
+      "remove": "Entfernen",
+      "link": "Person verknüpfen",
+      "unlink": "Verknüpfung lösen",
+      "empty": "Keine Geräte.",
+      "confirmRemove": "Dieses Gerät dauerhaft entfernen? Der Agent muss sich neu anmelden."
+    },
+    "people": {
+      "title": "Personen",
+      "add": "Person hinzufügen",
+      "name": "Name",
+      "email": "E-Mail",
+      "employeeId": "Mitarbeiter-ID",
+      "active": "Aktiv",
+      "edit": "Bearbeiten",
+      "remove": "Entfernen",
+      "save": "Speichern",
+      "empty": "Noch keine Personen.",
+      "linkedUser": "Verknüpfter Benutzer"
+    },
+    "reports": {
+      "title": "Berichte",
+      "range": "Zeitraum",
+      "device": "Gerät",
+      "person": "Person",
+      "active": "Aktiv",
+      "idle": "Inaktiv",
+      "empty": "Keine Daten für diesen Zeitraum."
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "configuration": "Konfiguration",
+      "inactivityThreshold": "Inaktivitätsschwelle (Sekunden)",
+      "offlineThreshold": "Offline-Schwelle (Sekunden)",
+      "retentionDays": "Datenaufbewahrung (Tage)",
+      "save": "Änderungen speichern",
+      "saved": "Einstellungen gespeichert"
+    },
+    "help": {
+      "title": "Hilfe",
+      "intro": "So funktioniert ActivityTrack und so liest du das Dashboard."
+    },
+    "migration": {
+      "title": "Datenmigration",
+      "description": "Einmaliger Import der ActivityTrack-Daten aus dem alten Deployment ins Intranet. Wiederaufnehmbar und idempotent — erneutes Ausführen ist sicher.",
+      "start": "Migration starten",
+      "resume": "Fortsetzen",
+      "retry": "Fehlgeschlagenen Schritt wiederholen",
+      "status": "Status",
+      "table": "Tabelle",
+      "progress": "Fortschritt",
+      "processed": "Verarbeitet",
+      "failed": "Fehlgeschlagen",
+      "warnings": "Nicht verknüpft",
+      "lastError": "Letzter Fehler",
+      "notStarted": "Es wurde noch keine Migration ausgeführt.",
+      "running": "Läuft",
+      "completed": "Abgeschlossen",
+      "paused": "Pausiert",
+      "pending": "Ausstehend",
+      "of": "von"
+    },
+    "common": {
+      "loading": "Lädt…",
+      "none": "—",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "search": "Suchen"
+    }
   }
 }

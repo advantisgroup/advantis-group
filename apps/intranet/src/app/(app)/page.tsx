@@ -156,26 +156,28 @@ export default function DashboardPage() {
             {events === undefined ? null : events.length === 0 ? (
               <Empty>{t("noEvents")}</Empty>
             ) : (
-              events.slice(0, 5).map(e => (
-                <Row
-                  key={e._id}
-                  href="/calendar"
-                  title={e.title}
-                  subtitle={e.location}
-                  leading={
-                    e.location ? (
-                      <MapPin className="size-4 shrink-0 text-muted-foreground" />
-                    ) : (
-                      <span className="size-1.5 shrink-0 rounded-full bg-primary/60" />
-                    )
-                  }
-                  trailing={
-                    <span className="whitespace-nowrap">
-                      {formatDateTime(e.start, locale)}
-                    </span>
-                  }
-                />
-              ))
+              events
+                .slice(0, 5)
+                .map(e => (
+                  <Row
+                    key={e._id}
+                    href="/calendar"
+                    title={e.title}
+                    subtitle={e.location}
+                    leading={
+                      e.location ? (
+                        <MapPin className="size-4 shrink-0 text-muted-foreground" />
+                      ) : (
+                        <span className="size-1.5 shrink-0 rounded-full bg-primary/60" />
+                      )
+                    }
+                    trailing={
+                      <span className="whitespace-nowrap">
+                        {formatDateTime(e.start, locale)}
+                      </span>
+                    }
+                  />
+                ))
             )}
           </DashCard>
         </div>

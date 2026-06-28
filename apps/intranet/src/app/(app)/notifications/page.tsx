@@ -270,13 +270,7 @@ export default function NotificationsPage() {
   );
 }
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="space-y-2">
       <p className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">

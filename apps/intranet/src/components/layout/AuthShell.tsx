@@ -49,7 +49,10 @@ export function AuthShell({ children }: { children: ReactNode }) {
           </p>
           <ul className="mt-8 space-y-3">
             {HIGHLIGHTS.map(item => (
-              <li key={item} className="flex items-start gap-3 text-sm text-white/90">
+              <li
+                key={item}
+                className="flex items-start gap-3 text-sm text-white/90"
+              >
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white" />
                 {item}
               </li>
