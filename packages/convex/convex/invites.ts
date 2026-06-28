@@ -1,12 +1,13 @@
 import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
-import { mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
 import {
   getAllowedDomains,
   isEmailDomainAllowed,
   requireManager,
 } from "./lib/auth";
+import { createClerkInvitation, revokeClerkInvitations } from "./lib/clerk";
 
 const roleArg = v.union(
   v.literal("admin"),
@@ -20,7 +21,12 @@ function newToken(): string {
   return `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
 }
 
-export const create = mutation({
+/**
+ * Validate + persist the invite row. Internal: only ever called from the
+ * `create` action below, which then hands delivery to Clerk. Auth is propagated
+ * from the action, so `requireManager` resolves the calling admin/manager.
+ */
+export const createInviteRecord = internalMutation({
   args: { email: v.string(), role: roleArg },
   handler: async (ctx, args) => {
     const inviter = await requireManager(ctx);
@@ -91,23 +97,38 @@ export const create = mutation({
       });
     }
 
-    // Delivery is handled by Clerk's invitation flow (Clerk sends the email and
-    // gates sign-up to the invited address, which also lets external domains in
-    // past any Clerk sign-up restriction). The Convex invite row above remains
-    // the source of truth for the granted role on acceptance (see ensureUser).
-    await ctx.scheduler.runAfter(0, internal.outbound.sendClerkInvitation, {
-      email,
-      role: args.role,
-      invitedByName:
-        [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
-        inviter.email,
-    });
+    const invitedByName =
+      [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
+      inviter.email;
 
-    return { inviteId, token };
+    return { inviteId, token, email, role: args.role, invitedByName };
   },
 });
 
-export const resend = mutation({
+/**
+ * Invite a user. Records the invite (source of truth for the granted role on
+ * acceptance) and then asks Clerk to send the invitation email. Runs as an
+ * action so the Clerk call is awaited and any failure surfaces to the admin
+ * rather than disappearing into a background job.
+ */
+export const create = action({
+  args: { email: v.string(), role: roleArg },
+  handler: async (ctx, args): Promise<{ inviteId: string; token: string }> => {
+    const rec = await ctx.runMutation(
+      internal.invites.createInviteRecord,
+      args
+    );
+    await createClerkInvitation({
+      email: rec.email,
+      role: rec.role,
+      invitedByName: rec.invitedByName,
+    });
+    return { inviteId: rec.inviteId, token: rec.token };
+  },
+});
+
+/** Refresh a pending invite's token + expiry; returns what Clerk needs. */
+export const refreshInviteToken = internalMutation({
   args: { inviteId: v.id("invites") },
   handler: async (ctx, { inviteId }) => {
     const inviter = await requireManager(ctx);
@@ -123,25 +144,58 @@ export const resend = mutation({
       token,
       expiresAt: Date.now() + INVITE_TTL_MS,
     });
-    await ctx.scheduler.runAfter(0, internal.outbound.sendClerkInvitation, {
+    return {
       email: invite.email,
       role: invite.role,
       invitedByName:
         [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
         inviter.email,
+    };
+  },
+});
+
+export const resend = action({
+  args: { inviteId: v.id("invites") },
+  handler: async (ctx, { inviteId }): Promise<{ ok: true }> => {
+    const rec = await ctx.runMutation(internal.invites.refreshInviteToken, {
+      inviteId,
+    });
+    await createClerkInvitation({
+      email: rec.email,
+      role: rec.role,
+      invitedByName: rec.invitedByName,
     });
     return { ok: true };
   },
 });
 
-export const revoke = mutation({
+/** Mark an invite revoked and return its email so Clerk can be revoked too. */
+export const markRevoked = internalMutation({
   args: { inviteId: v.id("invites") },
   handler: async (ctx, { inviteId }) => {
     await requireManager(ctx);
     const invite = await ctx.db.get(inviteId);
-    if (!invite) return { ok: false };
+    if (!invite) return { ok: false, email: null as string | null };
     await ctx.db.patch(inviteId, { status: "revoked" });
-    return { ok: true };
+    return { ok: true, email: invite.email };
+  },
+});
+
+export const revoke = action({
+  args: { inviteId: v.id("invites") },
+  handler: async (ctx, { inviteId }): Promise<{ ok: boolean }> => {
+    const res = await ctx.runMutation(internal.invites.markRevoked, {
+      inviteId,
+    });
+    // Kill the Clerk-side invitation link too (best-effort).
+    if (res.email) {
+      try {
+        await revokeClerkInvitations(res.email);
+      } catch {
+        // Local revoke already succeeded; Clerk cleanup is non-critical.
+      }
+    }
+    return { ok: res.ok };
   },
 });
 

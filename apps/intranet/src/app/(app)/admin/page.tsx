@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { Copy, KeyRound, Mail, RotateCw, Trash2, Users2 } from "lucide-react";
 import { useState } from "react";
 
@@ -147,9 +147,11 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
   const confirm = useConfirm();
   const invites = useQuery(api.invites.list, {});
   const config = useQuery(api.invites.config, {});
-  const create = useMutation(api.invites.create);
-  const revoke = useMutation(api.invites.revoke);
-  const resend = useMutation(api.invites.resend);
+  // create/resend/revoke are Convex actions: they call Clerk's Backend API
+  // directly and await it, so failures surface here as a rejected promise.
+  const create = useAction(api.invites.create);
+  const revoke = useAction(api.invites.revoke);
+  const resend = useAction(api.invites.resend);
   const handleError = useErrorHandler();
   const allowedDomains = config?.allowedDomains ?? [];
 
