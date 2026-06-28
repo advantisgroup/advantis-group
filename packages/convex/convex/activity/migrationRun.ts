@@ -131,9 +131,30 @@ export const run = internalAction({
           done: result.isDone,
         });
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        const stack = err instanceof Error ? err.stack : undefined;
-        console.error(`[migration] FAILED table="${table}"`, { message, stack, err });
+        // ConvexHttpClient errors sometimes have empty .message but carry
+        // details in .data (ConvexError payload) or other own properties.
+        let message: string;
+        if (err instanceof Error) {
+          const extra = Object.keys(err)
+            .filter(k => !["stack", "message", "name"].includes(k))
+            .map(k => `${k}=${JSON.stringify((err as any)[k])}`)
+            .join(" ");
+          message = [err.name, err.message, extra].filter(Boolean).join(" | ").trim() || "Unknown error (empty message)";
+        } else {
+          try {
+            message = JSON.stringify(err);
+          } catch {
+            message = String(err);
+          }
+        }
+        console.error(`[migration] FAILED table="${table}"`, {
+          message,
+          name: err instanceof Error ? err.name : undefined,
+          data: (err as any)?.data,
+          status: (err as any)?.status,
+          cause: (err as any)?.cause,
+          stack: err instanceof Error ? err.stack : undefined,
+        });
         await ctx.runMutation(internal.activity.migration.failStep, {
           stepId: step._id,
           error: message,
