@@ -84,35 +84,95 @@ export function describeStatus(input: StatusInput): StatusDescriptor {
   // These three are independent of the workstation, so they hold even when the
   // PC is asleep/offline — check them before the offline short-circuit.
   if (clockodoAbsent)
-    return { headlineKey: "livestatus.absent", tone: "muted", live: false, showIdleFor: false };
+    return {
+      headlineKey: "livestatus.absent",
+      tone: "muted",
+      live: false,
+      showIdleFor: false,
+    };
   if (clockodoBreak)
-    return { headlineKey: "livestatus.break", tone: "warn", live: false, showIdleFor: false };
+    return {
+      headlineKey: "livestatus.break",
+      tone: "warn",
+      live: false,
+      showIdleFor: false,
+    };
   if (genesysRoutingStatus === "INTERACTING")
-    return { headlineKey: "livestatus.inCall", tone: "info", live: true, showIdleFor: false };
+    return {
+      headlineKey: "livestatus.inCall",
+      tone: "info",
+      live: true,
+      showIdleFor: false,
+    };
   if (genesysWrapUp)
-    return { headlineKey: "livestatus.wrapUp", tone: "info", live: true, showIdleFor: false };
+    return {
+      headlineKey: "livestatus.wrapUp",
+      tone: "info",
+      live: true,
+      showIdleFor: false,
+    };
 
   // Beyond here the verdict comes from the workstation, which we can't read if
   // it's offline.
   if (!online)
-    return { headlineKey: "livestatus.offline", tone: "muted", live: false, showIdleFor: false };
+    return {
+      headlineKey: "livestatus.offline",
+      tone: "muted",
+      live: false,
+      showIdleFor: false,
+    };
 
   // No workstation idle signal at all → fall back to the raw active flag.
   if (deviceIdle == null) {
     if (clockodoWorking)
-      return { headlineKey: "livestatus.clockedInWorking", tone: "ok", live: true, showIdleFor: false };
+      return {
+        headlineKey: "livestatus.clockedInWorking",
+        tone: "ok",
+        live: true,
+        showIdleFor: false,
+      };
     return active
-      ? { headlineKey: "livestatus.active", tone: "ok", live: true, showIdleFor: false }
-      : { headlineKey: "livestatus.inactive", tone: "warn", live: false, showIdleFor: true };
+      ? {
+          headlineKey: "livestatus.active",
+          tone: "ok",
+          live: true,
+          showIdleFor: false,
+        }
+      : {
+          headlineKey: "livestatus.inactive",
+          tone: "warn",
+          live: false,
+          showIdleFor: true,
+        };
   }
 
   if (deviceIdle) {
     return clockodoWorking
-      ? { headlineKey: "livestatus.clockedInInactive", tone: "warn", live: false, showIdleFor: true }
-      : { headlineKey: "livestatus.inactive", tone: "warn", live: false, showIdleFor: true };
+      ? {
+          headlineKey: "livestatus.clockedInInactive",
+          tone: "warn",
+          live: false,
+          showIdleFor: true,
+        }
+      : {
+          headlineKey: "livestatus.inactive",
+          tone: "warn",
+          live: false,
+          showIdleFor: true,
+        };
   }
 
   return clockodoWorking
-    ? { headlineKey: "livestatus.clockedInWorking", tone: "ok", live: true, showIdleFor: false }
-    : { headlineKey: "livestatus.active", tone: "ok", live: true, showIdleFor: false };
+    ? {
+        headlineKey: "livestatus.clockedInWorking",
+        tone: "ok",
+        live: true,
+        showIdleFor: false,
+      }
+    : {
+        headlineKey: "livestatus.active",
+        tone: "ok",
+        live: true,
+        showIdleFor: false,
+      };
 }
