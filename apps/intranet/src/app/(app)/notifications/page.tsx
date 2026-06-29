@@ -100,7 +100,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6" data-tour="tour-notifications-feed">
       <PageHeader
         eyebrow={t("title")}
         title={t("title")}

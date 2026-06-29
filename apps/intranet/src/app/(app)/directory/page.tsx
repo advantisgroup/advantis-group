@@ -49,7 +49,7 @@ export default function DirectoryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl" data-tour="tour-directory-grid">
       <PageHeader title={t("title")} />
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">

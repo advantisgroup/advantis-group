@@ -56,6 +56,8 @@ interface NavItem {
   adminOnly?: boolean;
   /** Marks the item as leading to a separate area (shows an external-link hint). */
   external?: boolean;
+  /** Tour targeting attribute value. */
+  tourAttr?: string;
 }
 
 interface NavGroup {
@@ -84,24 +86,26 @@ export function Sidebar() {
   const groups: NavGroup[] = [
     {
       labelKey: "groupGeneral",
-      items: [{ href: "/", labelKey: "dashboard", icon: LayoutDashboard }],
+      items: [{ href: "/", labelKey: "dashboard", icon: LayoutDashboard, tourAttr: "tour-nav-dashboard" }],
     },
     {
       labelKey: "groupWorkspace",
       items: [
-        { href: "/calendar", labelKey: "calendar", icon: Calendar },
-        { href: "/absences", labelKey: "absences", icon: Plane },
+        { href: "/calendar", labelKey: "calendar", icon: Calendar, tourAttr: "tour-nav-calendar" },
+        { href: "/absences", labelKey: "absences", icon: Plane, tourAttr: "tour-nav-absences" },
         {
           href: "/announcements",
           labelKey: "announcements",
           icon: Megaphone,
           badge: announcementUnread,
+          tourAttr: "tour-nav-announcements",
         },
         {
           href: "/chat",
           labelKey: "chat",
           icon: MessageSquare,
           badge: chatUnread,
+          tourAttr: "tour-nav-chat",
         },
       ],
     },
@@ -109,9 +113,9 @@ export function Sidebar() {
       labelKey: "groupResources",
       items: [
         ...(hasGuidebooks
-          ? [{ href: "/guidebooks", labelKey: "guidebooks", icon: BookOpen }]
+          ? [{ href: "/guidebooks", labelKey: "guidebooks", icon: BookOpen, tourAttr: "tour-nav-guidebooks" }]
           : []),
-        { href: "/directory", labelKey: "directory", icon: Users },
+        { href: "/directory", labelKey: "directory", icon: Users, tourAttr: "tour-nav-directory" },
       ],
     },
     {
@@ -122,6 +126,7 @@ export function Sidebar() {
           labelKey: "admin",
           icon: ShieldCheck,
           managerOnly: true,
+          tourAttr: "tour-nav-admin",
         },
         {
           href: "/admin/activity",
@@ -129,8 +134,9 @@ export function Sidebar() {
           icon: Activity,
           adminOnly: true,
           external: true,
+          tourAttr: "tour-nav-activity",
         },
-        { href: "/settings", labelKey: "settings", icon: Settings },
+        { href: "/settings", labelKey: "settings", icon: Settings, tourAttr: "tour-nav-settings" },
       ],
     },
   ];
@@ -138,7 +144,7 @@ export function Sidebar() {
   const close = () => setOpenMobile(false);
 
   return (
-    <SidebarShell ariaLabel="Advantis Intranet">
+    <SidebarShell ariaLabel="Advantis Intranet" data-tour="tour-sidebar">
       <SidebarHeader>
         <Link
           href="/"
@@ -203,6 +209,7 @@ export function Sidebar() {
                                 href={item.href}
                                 onClick={close}
                                 aria-current={active ? "page" : undefined}
+                                data-tour={item.tourAttr}
                               >
                                 <Icon />
                                 <SidebarLabel>{t(item.labelKey)}</SidebarLabel>

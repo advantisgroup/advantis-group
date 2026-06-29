@@ -510,7 +510,7 @@ export default function AnnouncementsPage() {
   }, [announcements, markRead]);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl" data-tour="tour-announcements-list">
       <PageHeader
         title={t("title")}
         action={isManager ? <CreateDialog /> : undefined}

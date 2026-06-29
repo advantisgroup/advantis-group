@@ -131,7 +131,7 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl" data-tour="tour-dashboard-main">
       <div className="mb-8">
         <p className="text-sm font-medium capitalize text-muted-foreground">
           {today}

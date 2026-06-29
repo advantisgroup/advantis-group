@@ -31,6 +31,7 @@ export function ChatClient() {
     <div className="-mx-4 -my-6 flex h-[calc(100dvh-3.5rem)] overflow-hidden bg-background md:-mx-8 md:-my-8 md:h-[calc(100dvh-4rem)]">
       {/* Conversation list */}
       <div
+        data-tour="tour-chat-list"
         className={cn(
           "flex w-full flex-col border-r border-border/70 bg-card/40 md:w-80",
           selected && "hidden md:flex"

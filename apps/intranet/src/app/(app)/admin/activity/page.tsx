@@ -79,7 +79,7 @@ export default function OverviewPage() {
   const team = useQuery(api.activity.stats.teamOverview);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour="tour-activity-stats">
       <SetupChecklist />
       <QueryState
         data={team}

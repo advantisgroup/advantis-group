@@ -458,7 +458,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl" data-tour="tour-calendar-view">
       <PageHeader
         title={t("title")}
         action={isManager ? <EventDialog defaultDate={cursor} /> : undefined}

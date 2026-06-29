@@ -320,7 +320,7 @@ export default function AbsencesPage() {
   const isManager = useIsManager();
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl" data-tour="tour-absences-list">
       <PageHeader title={t("title")} action={<RequestDialog />} />
       {isManager ? (
         <Tabs defaultValue="mine">

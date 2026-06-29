@@ -2,10 +2,13 @@
 
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
+  CheckCircle2,
+  CircleDashed,
   Clock,
   Copy,
   KeyRound,
   Mail,
+  MinusCircle,
   MoreHorizontal,
   RotateCw,
   Search,
@@ -49,6 +52,7 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
 import { StatCard } from "@/components/activity/StatCard";
 import {
   Select,
@@ -63,6 +67,82 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDateTime, initials } from "@/lib/format";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
+
+function TourProgressChip({ userId }: { userId: Id<"users"> }) {
+  const progress = useQuery(api.tourProgress.getMemberProgress, { userId });
+  if (progress === undefined) return null;
+
+  let completed = 0;
+  const total = TOUR_CHECKPOINTS.length;
+  if (progress) {
+    try {
+      const statuses = JSON.parse(progress.checkpointStatuses) as Record<string, string>;
+      completed = Object.values(statuses).filter(s => s === "completed").length;
+    } catch {
+      // ignore parse errors
+    }
+  }
+
+  if (completed === 0)
+    return <Badge variant="muted" className="text-[10px]">Setup ○</Badge>;
+  if (completed < total)
+    return <Badge variant="warning" className="text-[10px]">Setup ◐</Badge>;
+  return <Badge variant="success" className="text-[10px]">Setup ✓</Badge>;
+}
+
+function MemberTourProgress({ userId }: { userId: Id<"users"> }) {
+  const progress = useQuery(api.tourProgress.getMemberProgress, { userId });
+  if (progress === undefined) return null;
+
+  const statuses: Record<string, string> = (() => {
+    if (!progress) return {};
+    try {
+      return JSON.parse(progress.checkpointStatuses) as Record<string, string>;
+    } catch {
+      return {};
+    }
+  })();
+
+  const completedCount = Object.values(statuses).filter(s => s === "completed").length;
+  const total = TOUR_CHECKPOINTS.length;
+
+  return (
+    <div className="space-y-2 rounded-lg border border-border/70 p-3 text-sm">
+      <div className="flex items-center justify-between">
+        <p className="font-medium">Onboarding tour</p>
+        <span className="text-xs text-muted-foreground">
+          {completedCount}/{total}
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        {TOUR_CHECKPOINTS.map(cp => {
+          const status = statuses[cp.id] ?? "pending";
+          return (
+            <div key={cp.id} className="flex items-center gap-2">
+              {status === "completed" ? (
+                <CheckCircle2 className="size-3.5 shrink-0 text-green-500" />
+              ) : status === "skipped" ? (
+                <MinusCircle className="size-3.5 shrink-0 text-amber-500" />
+              ) : (
+                <CircleDashed className="size-3.5 shrink-0 text-muted-foreground" />
+              )}
+              <span
+                className={cn(
+                  "text-xs",
+                  status === "completed"
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                {cp.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 function RoleSelect({
   value,
@@ -620,6 +700,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             <Badge variant="muted" className="hidden sm:inline-flex">
               {tRoles(m.role)}
             </Badge>
+            <TourProgressChip userId={m._id as Id<"users">} />
             {isAdmin && <MemberMenu m={m} />}
           </div>
         </div>
@@ -695,7 +776,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
           {t("noMembers")}
         </p>
       ) : (
-        <div className="space-y-2">{filtered.map(MemberRow)}</div>
+        <div className="space-y-2" data-tour="tour-admin-members">{filtered.map(MemberRow)}</div>
       )}
 
       {/* Profile detail drawer */}
@@ -809,6 +890,8 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                   ))}
                 </div>
               )}
+
+              <MemberTourProgress userId={selected._id as Id<"users">} />
 
               {isAdmin && (
                 <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
