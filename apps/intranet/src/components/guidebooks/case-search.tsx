@@ -2,13 +2,17 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import { Check, RotateCcw, Search, X } from "lucide-react";
+import { Check, List, Map, MessageSquare, RotateCcw, Search, X } from "lucide-react";
 
 import { useTranslations } from "next-intl";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+
+import { SOPPanel } from "./sop-panel";
+import { StationsFinder } from "./stations-finder";
+import { WikiChat } from "./wiki-chat";
 
 interface CaseRow {
   recordType: string;
@@ -2465,7 +2469,7 @@ const CHECKLIST = [
 
 const MAX_RESULTS = 40;
 
-export function CaseSearchGuidebook() {
+function CaseSearchTab() {
   const t = useTranslations("CaseSearch");
   const [query, setQuery] = useState("");
   const [selectedType, setSelectedType] = useState("All");
@@ -2730,6 +2734,54 @@ function Field({
       </div>
       <div className="text-sm font-medium leading-snug">
         {highlight(value, query)}
+      </div>
+    </div>
+  );
+}
+
+type Tab = "sop" | "search" | "wiki" | "stations";
+
+const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
+  { id: "sop", label: "Szenarien", icon: <List className="h-4 w-4" /> },
+  { id: "search", label: "Case-Suche", icon: <Search className="h-4 w-4" /> },
+  { id: "wiki", label: "Wiki", icon: <MessageSquare className="h-4 w-4" /> },
+  { id: "stations", label: "Stationsfinder", icon: <Map className="h-4 w-4" /> },
+];
+
+export function CaseSearchGuidebook() {
+  const [activeTab, setActiveTab] = useState<Tab>("sop");
+
+  return (
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      {/* Tab bar */}
+      <div className="flex gap-1 rounded-xl border border-border bg-muted/40 p-1">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+              activeTab === tab.id
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {tab.icon}
+            <span className="hidden sm:inline">{tab.label}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      <div className="min-h-0 flex-1">
+        {activeTab === "sop" && <SOPPanel />}
+        {activeTab === "search" && <CaseSearchTab />}
+        {activeTab === "wiki" && (
+          <div className="h-[600px]">
+            <WikiChat />
+          </div>
+        )}
+        {activeTab === "stations" && <StationsFinder />}
       </div>
     </div>
   );
