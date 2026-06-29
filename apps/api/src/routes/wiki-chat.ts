@@ -43,6 +43,20 @@ const storedMessageSchema = t.Object({
   error: t.Optional(t.Boolean()),
 });
 
+interface StoredMessage {
+  role: "user" | "assistant";
+  content: string;
+  error?: boolean;
+}
+
+interface ChatDTO {
+  id: string;
+  title: string;
+  messages: StoredMessage[];
+  createdAt: number;
+  updatedAt: number;
+}
+
 export const wikiChatRoute = new Elysia()
   .post(
     "/wiki-chat",
@@ -99,13 +113,13 @@ export const wikiChatRoute = new Elysia()
       serverKey: getConvexServerKey(),
       clerkUserId,
     });
-    const chats = [];
+    const chats: ChatDTO[] = [];
     for (const row of rows) {
       try {
         chats.push({
           id: row.id,
           title: decrypt(row.title),
-          messages: JSON.parse(decrypt(row.messages)),
+          messages: JSON.parse(decrypt(row.messages)) as StoredMessage[],
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,
         });
