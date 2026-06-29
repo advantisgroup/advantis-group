@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { isAllowedOrigin, PORT } from "./lib/env.js";
 import { ApiError } from "./lib/errors.js";
 import { activityRoute } from "./routes/activity.js";
+import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { internalClockodoImportRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { meRoute } from "./routes/me.js";
@@ -51,7 +52,8 @@ export const app = new Elysia()
   .use(clockodoWebhookRoute)
   .use(internalNotificationsRoute)
   .use(internalClockodoImportRoute)
-  .use(activityRoute);
+  .use(activityRoute)
+  .use(wikiChatRoute);
 
 export type App = typeof app;
 
