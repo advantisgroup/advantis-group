@@ -54,6 +54,7 @@ import type * as notifications from "../notifications.js";
 import type * as outbound from "../outbound.js";
 import type * as presence from "../presence.js";
 import type * as users from "../users.js";
+import type * as wikiChats from "../wikiChats.js";
 
 import type {
   ApiFromModules,
@@ -108,6 +109,7 @@ declare const fullApi: ApiFromModules<{
   outbound: typeof outbound;
   presence: typeof presence;
   users: typeof users;
+  wikiChats: typeof wikiChats;
 }>;
 
 /**

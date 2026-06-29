@@ -584,4 +584,16 @@ export default defineSchema({
     sourceId: v.string(),
     targetId: v.string(),
   }).index("by_migration_source", ["migrationId", "sourceTable", "sourceId"]),
+
+  // --- Wiki Chat (AI assistant history) ------------------------------------
+  // Per-user chat history for the Wiki AI assistant. Title and message blobs
+  // are stored as AES-256-GCM ciphertext (encrypted in the Elysia API with a
+  // server-held key); the database never contains plaintext chat content.
+  wikiChats: defineTable({
+    clerkUserId: v.string(),
+    title: v.string(), // ciphertext
+    messages: v.string(), // ciphertext (encrypted JSON of the message array)
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["clerkUserId"]),
 });
