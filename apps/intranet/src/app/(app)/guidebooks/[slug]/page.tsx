@@ -23,7 +23,7 @@ export default function GuidebookPage() {
   const allowed = guidebook ? canAccessGuidebook(user, guidebook) : false;
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-5xl">
       <Link
         href="/guidebooks"
         className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
