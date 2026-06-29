@@ -352,9 +352,7 @@ export function WikiChat() {
                 side="bottom"
                 className="max-w-[15rem] text-balance leading-relaxed"
               >
-                Deine Chats werden mit AES-256 verschlüsselt gespeichert und
-                sind nur für dich sichtbar. Der Schlüssel liegt serverseitig –
-                niemals im Browser, niemals im Klartext in der Datenbank.
+                Deine Chats sind verschlüsselt und nur für dich sichtbar.
               </TooltipContent>
             </Tooltip>
           </div>
