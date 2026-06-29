@@ -182,12 +182,25 @@ export const activityRoute = new Elysia()
         const tokenOk =
           keyMatches(token, process.env.CLOCKODO_WEBHOOK_TOKEN) ||
           keyMatches(token, process.env.ACTIVITYTRACK_WEBHOOK_SECRET);
-        if (!tokenOk) return fail(set, 401, "unauthorized");
+        if (!tokenOk) {
+          console.warn(
+            `[activity/clockodo] 401 token mismatch — event: ${b.event_name}, received token present: ${!!token}`
+          );
+          return fail(set, 401, "unauthorized");
+        }
         const payload = (b.payload ?? {}) as {
           entry?: { id?: number | string };
         };
         const entryId = payload.entry?.id;
-        if (entryId == null) return ok({ ignored: true });
+        if (entryId == null) {
+          console.log(
+            `[activity/clockodo] 200 ignored event with no entry id — event: ${b.event_name}`
+          );
+          return ok({ ignored: true });
+        }
+        console.log(
+          `[activity/clockodo] 200 processing entry event — event: ${b.event_name}, entryId: ${entryId}`
+        );
         return await getConvex().action(
           api.activity.clockodo.refreshClockodoByEntry,
           {
@@ -202,10 +215,14 @@ export const activityRoute = new Elysia()
       const secret =
         bearer(headers) ?? (query as Record<string, string>)?.secret ?? null;
       if (!keyMatches(secret, process.env.ACTIVITYTRACK_WEBHOOK_SECRET)) {
+        console.warn("[activity/clockodo] 401 legacy secret mismatch");
         return fail(set, 401, "unauthorized");
       }
       const raw = b as { employeeId?: string; clockodoUserId?: string };
       if (raw.employeeId && raw.clockodoUserId) {
+        console.log(
+          `[activity/clockodo] 200 legacy refresh — employeeId: ${raw.employeeId}, clockodoUserId: ${raw.clockodoUserId}`
+        );
         return await getConvex().action(api.activity.clockodo.refreshClockodo, {
           secret: signalSecret(),
           employeeId: raw.employeeId,

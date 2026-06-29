@@ -23,24 +23,49 @@ export const clockodoWebhookRoute = new Elysia().post(
   async ({ body, set }) => {
     const payload = body as ClockodoWebhookBody;
     const expectedToken = process.env.CLOCKODO_WEBHOOK_TOKEN;
+    // Also accept the ActivityTrack webhook secret so a single Clockodo webhook
+    // configuration can cover both the absence-sync and time-entry flows.
+    const altToken = process.env.ACTIVITYTRACK_WEBHOOK_SECRET;
 
     // URL-ownership handshake: Clockodo POSTs a confirmation secret with no
     // event_name when (re)registering. Log it and ack so setup can proceed.
     if (!payload.event_name) {
       console.warn(
-        "[clockodo] verification/handshake payload received:",
+        "[clockodo/webhook] handshake received:",
         JSON.stringify(payload)
       );
       return { ok: true, handshake: true };
     }
 
-    if (expectedToken && payload.token !== expectedToken) {
+    const hasToken = expectedToken || altToken;
+    const tokenValid =
+      !hasToken ||
+      payload.token === expectedToken ||
+      payload.token === altToken;
+
+    if (!tokenValid) {
+      console.warn(
+        `[clockodo/webhook] 401 token mismatch — event: ${payload.event_name}, received token present: ${!!payload.token}`
+      );
       set.status = 401;
       return { ok: false, error: "invalid token" };
     }
 
+    // Non-absence events (e.g. time-entry clock-in/out) reach this URL when a
+    // single webhook is registered in Clockodo for all events. Acknowledge them
+    // without attempting to parse an absence payload.
+    if (!payload.event_name.startsWith("absence.")) {
+      console.log(
+        `[clockodo/webhook] 200 ignored non-absence event: ${payload.event_name}`
+      );
+      return { ok: true, ignored: true };
+    }
+
     const absenceId = payload.payload?.absence?.id;
     if (typeof absenceId !== "number") {
+      console.warn(
+        `[clockodo/webhook] 400 missing absence id — event: ${payload.event_name}, payload: ${JSON.stringify(payload.payload)}`
+      );
       set.status = 400;
       return { ok: false, error: "missing absence id" };
     }
@@ -49,6 +74,9 @@ export const clockodoWebhookRoute = new Elysia().post(
     const serverKey = getConvexServerKey();
 
     if (payload.event_name === "absence.deleted") {
+      console.log(
+        `[clockodo/webhook] 200 deleting absence externalId=${absenceId}`
+      );
       await convex.mutation(api.clockodoSync.deleteAbsenceByExternalId, {
         serverKey,
         externalId: String(absenceId),
@@ -57,6 +85,9 @@ export const clockodoWebhookRoute = new Elysia().post(
     }
 
     // created / updated / approved → fetch + mirror.
+    console.log(
+      `[clockodo/webhook] 200 upserting absence externalId=${absenceId} event=${payload.event_name}`
+    );
     const absence = await getAbsence(absenceId);
     const email = await getUserEmail(absence.users_id);
     await convex.mutation(api.clockodoSync.upsertAbsenceFromClockodo, {
