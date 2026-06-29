@@ -8,20 +8,17 @@ import { getConvex } from "../lib/convex.js";
  * ActivityTrack desktop-agent + integration ingestion, ported from the old
  * ActivityTrack web app's Elysia layer into the shared Advantis API service.
  *
- * Paths are preserved verbatim so the deployed desktop agents keep working after
- * their base URL is repointed at this service during cutover:
- *   POST /api/agent/register      (unauthenticated; one-time pairing nonce)
- *   POST /api/agent/poll          (approval poll; returns the device token once)
- *   POST /api/activity/update     (device-token-authenticated workstation beat)
+ * Routes (no /api prefix — base URL is api.advantisgroup.de):
+ *   POST /agent/register               unauthenticated; one-time pairing nonce
+ *   POST /agent/poll                   approval poll; returns device token once
+ *   POST /activity/update              device-token-authenticated heartbeat
+ *   POST /integrations/genesys/notify  Genesys routing-status relay
+ *   POST /integrations/genesys/sync    on-demand single-user Genesys pull
+ *   POST /integrations/clockodo/webhook  time-entry webhook (distinct from
+ *                                        /webhooks/clockodo absence-sync route)
  *
- * The device-token-authenticated firehose (/ingest, /agent/event,
- * /agent/verify-password) stays on the Convex `.site` HTTP router (see
- * packages/convex/convex/http.ts). Genesys/Clockodo relays are integration
- * webhooks with configured URLs, so they live under /api/integrations/*.
- *
- * Auth model mirrors `state.pushSignal`: this server holds
- * ACTIVITYTRACK_SIGNAL_SECRET and attaches it to every Convex write; the agent
- * itself carries no shared secret.
+ * Auth model: this server holds ACTIVITYTRACK_SIGNAL_SECRET and attaches it
+ * to every Convex write; agents carry no shared secret.
  */
 
 function signalSecret(): string {
@@ -61,7 +58,7 @@ const fail = (
 
 export const activityRoute = new Elysia()
   // --- Desktop agent --------------------------------------------------------
-  .post("/api/agent/register", async ({ body, set }) => {
+  .post("/agent/register", async ({ body, set }) => {
     const deviceId = str(body, "deviceId");
     const hostname = str(body, "hostname");
     const windowsUser = str(body, "windowsUser");
@@ -89,7 +86,7 @@ export const activityRoute = new Elysia()
     );
     return ok({ status });
   })
-  .post("/api/agent/poll", async ({ body, set }) => {
+  .post("/agent/poll", async ({ body, set }) => {
     const deviceId = str(body, "deviceId");
     const claimNonce = str(body, "claimNonce");
     if (!deviceId || !claimNonce) return fail(set, 400, "bad_request");
@@ -100,7 +97,7 @@ export const activityRoute = new Elysia()
     });
     return ok(result);
   })
-  .post("/api/activity/update", async ({ body, headers, set }) => {
+  .post("/activity/update", async ({ body, headers, set }) => {
     const token = bearer(headers);
     if (!token) return fail(set, 401, "unauthorized");
     const valid = await getConvex().mutation(api.activity.deviceAuth.validate, {
@@ -130,7 +127,7 @@ export const activityRoute = new Elysia()
     return ok({ finalState });
   })
   // --- Genesys relay --------------------------------------------------------
-  .post("/api/integrations/genesys/notify", async ({ body, headers, set }) => {
+  .post("/integrations/genesys/notify", async ({ body, headers, set }) => {
     if (!keyMatches(bearer(headers), webhookSecret())) {
       return fail(set, 401, "unauthorized");
     }
@@ -151,7 +148,7 @@ export const activityRoute = new Elysia()
     );
     return ok({ finalState });
   })
-  .post("/api/integrations/genesys/sync", async ({ body, headers, set }) => {
+  .post("/integrations/genesys/sync", async ({ body, headers, set }) => {
     if (!keyMatches(bearer(headers), webhookSecret())) {
       return fail(set, 401, "unauthorized");
     }
@@ -165,9 +162,9 @@ export const activityRoute = new Elysia()
     });
     return result;
   })
-  // --- Clockodo relay (activity-specific; distinct from intranet absences) --
+  // --- Clockodo relay (time entries; distinct from /webhooks/clockodo absence-sync) ---
   .post(
-    "/api/integrations/clockodo/webhook",
+    "/integrations/clockodo/webhook",
     async ({ body, headers, query, set }) => {
       const b = (body ?? {}) as Record<string, unknown>;
 
