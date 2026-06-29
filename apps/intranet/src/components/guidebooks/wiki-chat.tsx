@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const API = process.env.NEXT_PUBLIC_API_URL;
+const API =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
+  "https://api.advantisgroup.de";
 
 interface Message {
   role: "user" | "assistant";
