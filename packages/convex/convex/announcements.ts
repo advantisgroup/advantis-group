@@ -70,7 +70,9 @@ export const create = mutation({
     const now = Date.now();
     // Keep the flat storage-id list in sync (used for cleanup on edit/delete).
     const storageIds =
-      args.attachments?.map(a => a.storageId) ?? args.attachmentStorageIds ?? [];
+      args.attachments?.map(a => a.storageId) ??
+      args.attachmentStorageIds ??
+      [];
     const id = await ctx.db.insert("announcements", {
       title: args.title,
       body: args.body,

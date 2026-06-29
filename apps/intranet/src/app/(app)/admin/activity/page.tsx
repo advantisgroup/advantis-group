@@ -67,9 +67,7 @@ function FleetSummary({
         label={t("overview.total")}
         value={total}
         tone="fg"
-        hint={
-          total > 0 ? `${onlineCount} ${t("overview.online")}` : undefined
-        }
+        hint={total > 0 ? `${onlineCount} ${t("overview.online")}` : undefined}
         icon={<MonitorSmartphone className="h-4 w-4" />}
       />
     </div>

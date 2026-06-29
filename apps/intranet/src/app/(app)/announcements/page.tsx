@@ -226,7 +226,6 @@ function CreateDialog() {
                       {previews
                         .filter(p => p.url)
                         .map(p => (
-                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             key={p.file.name}
                             src={p.url ?? ""}
@@ -605,7 +604,6 @@ export default function AnnouncementsPage() {
                               rel="noreferrer"
                               className="group/att block overflow-hidden rounded-lg border border-border"
                             >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={att.url ?? ""}
                                 alt={att.name}

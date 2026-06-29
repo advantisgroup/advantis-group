@@ -64,7 +64,9 @@ async function pendingInvitations(email: string): Promise<ClerkInvitation[]> {
  * Treats 404 as success for idempotency.
  */
 export async function lockClerkUser(clerkUserId: string): Promise<void> {
-  const res = await clerkFetch(`/users/${clerkUserId}/lock`, { method: "POST" });
+  const res = await clerkFetch(`/users/${clerkUserId}/lock`, {
+    method: "POST",
+  });
   if (!res.ok && res.status !== 404) {
     throw new ConvexError({
       code: "upstream",
@@ -78,7 +80,9 @@ export async function lockClerkUser(clerkUserId: string): Promise<void> {
  * Treats 404 as success for idempotency.
  */
 export async function unlockClerkUser(clerkUserId: string): Promise<void> {
-  const res = await clerkFetch(`/users/${clerkUserId}/unlock`, { method: "POST" });
+  const res = await clerkFetch(`/users/${clerkUserId}/unlock`, {
+    method: "POST",
+  });
   if (!res.ok && res.status !== 404) {
     throw new ConvexError({
       code: "upstream",
