@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { Anthropic } from "@anthropic-ai/sdk";
 import { Elysia, t } from "elysia";
 
 import { requireEnv } from "../lib/env.js";
