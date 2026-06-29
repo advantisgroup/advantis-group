@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { useAuth } from "@clerk/nextjs";
 import { Pencil, Plus, Send, ShieldCheck, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -88,6 +89,7 @@ function makeChat(): Chat {
 }
 
 export function WikiChat() {
+  const { getToken } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -98,12 +100,25 @@ export function WikiChat() {
   const [renameValue, setRenameValue] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // Cross-origin requests to the API can't rely on the Clerk cookie, so send
+  // the session token as a Bearer header (matches ConversationView).
+  async function authHeaders(
+    extra?: Record<string, string>
+  ): Promise<Record<string, string>> {
+    const token = await getToken();
+    return {
+      ...(token ? { authorization: `Bearer ${token}` } : {}),
+      ...extra,
+    };
+  }
+
   // --- Load encrypted history from the API --------------------------------
   useEffect(() => {
     void (async () => {
       try {
+        const token = await getToken();
         const res = await fetch(`${API}/wiki-chat/chats`, {
-          credentials: "include",
+          headers: token ? { authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) return;
         const data = (await res.json()) as { chats?: Omit<Chat, "remoteId">[] };
@@ -119,7 +134,7 @@ export function WikiChat() {
         // Offline / unauthenticated — start with an empty workspace.
       }
     })();
-  }, []);
+  }, [getToken]);
 
   const activeChat = useMemo(
     () => chats.find(c => c.id === activeId) ?? null,
@@ -164,10 +179,12 @@ export function WikiChat() {
   function deleteChat(id: string) {
     const chat = chats.find(c => c.id === id);
     if (chat?.remoteId) {
-      fetch(`${API}/wiki-chat/chats/${chat.remoteId}`, {
-        method: "DELETE",
-        credentials: "include",
-      }).catch(() => {});
+      void authHeaders().then(headers =>
+        fetch(`${API}/wiki-chat/chats/${chat.remoteId}`, {
+          method: "DELETE",
+          headers,
+        }).catch(() => {})
+      );
     }
     setChats(prev => {
       const next = prev.filter(c => c.id !== id);
@@ -188,12 +205,13 @@ export function WikiChat() {
       setChats(prev => prev.map(c => (c.id === id ? { ...c, title } : c)));
       const chat = chats.find(c => c.id === id);
       if (chat?.remoteId) {
-        fetch(`${API}/wiki-chat/chats/${chat.remoteId}`, {
-          method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title }),
-        }).catch(() => {});
+        void authHeaders({ "Content-Type": "application/json" }).then(headers =>
+          fetch(`${API}/wiki-chat/chats/${chat.remoteId}`, {
+            method: "PATCH",
+            headers,
+            body: JSON.stringify({ title }),
+          }).catch(() => {})
+        );
       }
     }
     setRenamingId(null);
@@ -210,15 +228,13 @@ export function WikiChat() {
       if (remoteId) {
         await fetch(`${API}/wiki-chat/chats/${remoteId}`, {
           method: "PATCH",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: await authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ title, messages: msgs }),
         });
       } else {
         const res = await fetch(`${API}/wiki-chat/chats`, {
           method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
+          headers: await authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ title, messages: msgs }),
         });
         if (res.ok) {
@@ -287,8 +303,7 @@ export function WikiChat() {
     try {
       const res = await fetch(`${API}/wiki-chat`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: await authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ messages: withUser }),
       });
       if (!res.ok || !res.body) throw new Error("Anfrage fehlgeschlagen");
