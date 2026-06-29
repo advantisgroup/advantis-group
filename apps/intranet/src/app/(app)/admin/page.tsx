@@ -59,6 +59,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDateTime, initials } from "@/lib/format";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
@@ -112,7 +113,7 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
     <div className="space-y-2">
       {requests?.map(r => (
         <Card nested key={r._id}>
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 p-3">
+          <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="min-w-0">
               <p className="font-medium">{r.name ?? r.email}</p>
               <p className="text-xs text-muted-foreground">{r.email}</p>
@@ -122,7 +123,7 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <RoleSelect
                 value={roles[r._id] ?? "employee"}
                 onChange={role => setRoles(s => ({ ...s, [r._id]: role }))}
@@ -131,12 +132,14 @@ function AccessRequests({ isAdmin }: { isAdmin: boolean }) {
               <Button
                 size="sm"
                 variant="outline"
+                className="flex-1 sm:flex-none"
                 onClick={() => deny({ requestId: r._id }).catch(handleError)}
               >
                 {t("deny")}
               </Button>
               <Button
                 size="sm"
+                className="flex-1 sm:flex-none"
                 onClick={() =>
                   approve({
                     requestId: r._id,
@@ -231,23 +234,31 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
     <div className="space-y-4">
       <Card nested>
         <CardContent className="flex flex-col gap-2 p-3">
-          <div className="flex flex-wrap items-end gap-2">
-            <div className="flex-1">
-              <Input
-                type="email"
-                placeholder={t("inviteEmail")}
-                value={email}
-                onChange={e => setEmail(e.target.value)}
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
+            <Input
+              type="email"
+              placeholder={t("inviteEmail")}
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="sm:flex-1"
+            />
+            <div className="flex gap-2">
+              <RoleSelect
+                value={role}
+                onChange={setRole}
+                canElevate={isAdmin}
               />
+              <Button
+                onClick={send}
+                disabled={
+                  busy || !email.trim() || (enteredExternal && !isAdmin)
+                }
+                className="flex-1 sm:flex-none"
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                {t("sendInvite")}
+              </Button>
             </div>
-            <RoleSelect value={role} onChange={setRole} canElevate={isAdmin} />
-            <Button
-              onClick={send}
-              disabled={busy || !email.trim() || (enteredExternal && !isAdmin)}
-            >
-              <Mail className="mr-2 h-4 w-4" />
-              {t("sendInvite")}
-            </Button>
           </div>
           {enteredExternal && (
             <p className="text-xs text-amber-600 dark:text-amber-500">
@@ -265,22 +276,29 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
         <div className="space-y-2">
           {pending.map(i => (
             <Card nested key={i._id}>
-              <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{i.email}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t("invitedBy", { name: i.invitedByName })} ·{" "}
-                    {formatDateTime(i.createdAt, locale)}
-                  </p>
+              <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{i.email}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {t("invitedBy", { name: i.invitedByName })} ·{" "}
+                      {formatDateTime(i.createdAt, locale)}
+                    </p>
+                  </div>
+                  {i.external && (
+                    <Badge variant="warning" className="shrink-0">
+                      {t("external")}
+                    </Badge>
+                  )}
+                  <Badge variant="muted" className="shrink-0">
+                    {i.role}
+                  </Badge>
                 </div>
                 <div className="flex items-center gap-2">
-                  {i.external && (
-                    <Badge variant="warning">{t("external")}</Badge>
-                  )}
-                  <Badge variant="muted">{i.role}</Badge>
                   <Button
                     size="sm"
                     variant="ghost"
+                    className="flex-1 sm:flex-none"
                     onClick={() =>
                       resend({ inviteId: i._id })
                         .then(() => toast.success(t("resend")))
@@ -293,6 +311,7 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
                   <Button
                     size="sm"
                     variant="ghost"
+                    className="flex-1 sm:flex-none"
                     onClick={() => void onRevoke(i._id)}
                   >
                     {t("revoke")}
@@ -432,6 +451,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const locale = useLocale();
   const me = useCurrentUser();
   const confirm = useConfirm();
+  const isMobile = useIsMobile();
   const members = useQuery(api.users.list, { includeSuspended: true });
   const setRole = useMutation(api.users.setRole);
   const setStatus = useAction(api.users.setStatus);
@@ -460,7 +480,8 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     if (roleFilter !== "all") list = list.filter(m => m.role === roleFilter);
     if (statusFilter !== "all")
       list = list.filter(m => m.status === statusFilter);
-    if (teamFilter !== "all") list = list.filter(m => m.teams.includes(teamFilter));
+    if (teamFilter !== "all")
+      list = list.filter(m => m.teams.includes(teamFilter));
     return list;
   }, [members, search, roleFilter, statusFilter, teamFilter]);
 
@@ -522,9 +543,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem
-            onClick={() => setSelectedId(m._id as Id<"users">)}
-          >
+          <DropdownMenuItem onClick={() => setSelectedId(m._id as Id<"users">)}>
             <Users2 className="size-4" /> {t("viewProfile")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => copyEmail(m.email)}>
@@ -621,12 +640,12 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             className="pl-8"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-3 gap-2 sm:flex">
           <Select
             value={roleFilter}
             onValueChange={v => setRoleFilter(v as "all" | Role)}
           >
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-full sm:w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -642,7 +661,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
               setStatusFilter(v as "all" | "active" | "suspended")
             }
           >
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-full sm:w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -652,7 +671,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             </SelectContent>
           </Select>
           <Select value={teamFilter} onValueChange={setTeamFilter}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="w-full sm:w-32">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -687,11 +706,20 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
         }}
       >
         <SheetContent
-          side="right"
-          className="w-full overflow-y-auto p-6 sm:max-w-md"
+          side={isMobile ? "bottom" : "right"}
+          className={cn(
+            "overflow-y-auto p-6",
+            isMobile ? "max-h-[90vh] rounded-t-2xl pt-3" : "w-full sm:max-w-md"
+          )}
         >
           {selected && (
             <div className="space-y-6">
+              {/* Drag-handle affordance for the mobile bottom sheet */}
+              {isMobile && (
+                <div className="-mt-1 flex justify-center">
+                  <span className="h-1.5 w-10 rounded-full bg-border" />
+                </div>
+              )}
               <div className="flex items-center gap-3">
                 <Avatar className="h-14 w-14 shrink-0">
                   {selected.avatar && (
@@ -783,10 +811,11 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
               )}
 
               {isAdmin && (
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size={isMobile ? "default" : "sm"}
+                    className="w-full sm:w-auto"
                     onClick={() => onReinvite(selected)}
                   >
                     <Send /> {t("reinvite")}
@@ -795,7 +824,8 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                     <>
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={isMobile ? "default" : "sm"}
+                        className="w-full sm:w-auto"
                         onClick={() =>
                           void toggleStatus(
                             selected._id as Id<"users">,
@@ -809,7 +839,8 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                       </Button>
                       <Button
                         variant="destructive"
-                        size="sm"
+                        size={isMobile ? "default" : "sm"}
+                        className="col-span-2 w-full sm:w-auto"
                         onClick={() => void onRemove(selected)}
                       >
                         <UserMinus /> {t("removeMember")}
@@ -881,33 +912,38 @@ function GuestLogins() {
   return (
     <div className="space-y-4">
       <Card nested>
-        <CardContent className="flex flex-wrap items-end gap-2 p-3">
-          <div className="flex-1">
-            <Input
-              placeholder={t("guestLabel")}
-              value={label}
-              onChange={e => setLabel(e.target.value)}
-            />
-          </div>
+        <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-end">
+          <Input
+            placeholder={t("guestLabel")}
+            value={label}
+            onChange={e => setLabel(e.target.value)}
+            className="sm:flex-1"
+          />
           <Input
             type="email"
             placeholder={t("guestEmail")}
             value={email}
             onChange={e => setEmail(e.target.value)}
-            className="w-48"
+            className="sm:w-48"
           />
-          <Input
-            type="number"
-            min={1}
-            value={hours}
-            onChange={e => setHours(e.target.value)}
-            className="w-20"
-            aria-label={t("guestHours")}
-          />
-          <Button onClick={make} disabled={busy || !label.trim()}>
-            <KeyRound className="mr-2 h-4 w-4" />
-            {t("createGuest")}
-          </Button>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={1}
+              value={hours}
+              onChange={e => setHours(e.target.value)}
+              className="w-20 shrink-0"
+              aria-label={t("guestHours")}
+            />
+            <Button
+              onClick={make}
+              disabled={busy || !label.trim()}
+              className="flex-1 sm:flex-none"
+            >
+              <KeyRound className="mr-2 h-4 w-4" />
+              {t("createGuest")}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -919,42 +955,44 @@ function GuestLogins() {
         <div className="space-y-2">
           {logins?.map(g => (
             <Card nested key={g._id}>
-              <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{g.label}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {g.email ?? "—"} · {t("expires")}{" "}
-                    {formatDateTime(g.expiresAt, locale)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={statusVariant(g.status)}>
+              <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{g.label}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {g.email ?? "—"} · {t("expires")}{" "}
+                      {formatDateTime(g.expiresAt, locale)}
+                    </p>
+                  </div>
+                  <Badge variant={statusVariant(g.status)} className="shrink-0">
                     {g.status === "active"
                       ? t("active")
                       : g.status === "expired"
                         ? t("expired")
                         : t("revoked")}
                   </Badge>
-                  {g.status === "active" && (
-                    <>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => copyLink(g.token)}
-                      >
-                        <Copy className="mr-1 h-3.5 w-3.5" />
-                        {t("copyLink")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => void onRevoke(g._id)}
-                      >
-                        {t("revoke")}
-                      </Button>
-                    </>
-                  )}
                 </div>
+                {g.status === "active" && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="flex-1 sm:flex-none"
+                      onClick={() => copyLink(g.token)}
+                    >
+                      <Copy className="mr-1 h-3.5 w-3.5" />
+                      {t("copyLink")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="flex-1 sm:flex-none"
+                      onClick={() => void onRevoke(g._id)}
+                    >
+                      {t("revoke")}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -985,11 +1023,29 @@ export default function AdminPage() {
       />
       <AdminOverview isAdmin={isAdmin} />
       <Tabs defaultValue="requests">
-        <TabsList>
-          <TabsTrigger value="requests">{t("accessRequests")}</TabsTrigger>
-          <TabsTrigger value="invites">{t("invites")}</TabsTrigger>
-          <TabsTrigger value="members">{t("members")}</TabsTrigger>
-          {isAdmin && <TabsTrigger value="guests">{t("guests")}</TabsTrigger>}
+        {/* On mobile the tabs become a full-width segmented control so each
+            target sits in the thumb zone; on desktop they revert to the
+            compact inline pill bar. */}
+        <TabsList
+          className={cn(
+            "grid h-auto w-full gap-1 p-1 sm:inline-flex sm:h-10 sm:w-auto sm:gap-0",
+            isAdmin ? "grid-cols-2" : "grid-cols-3"
+          )}
+        >
+          <TabsTrigger value="requests" className="py-2 sm:py-1.5">
+            {t("accessRequests")}
+          </TabsTrigger>
+          <TabsTrigger value="invites" className="py-2 sm:py-1.5">
+            {t("invites")}
+          </TabsTrigger>
+          <TabsTrigger value="members" className="py-2 sm:py-1.5">
+            {t("members")}
+          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="guests" className="py-2 sm:py-1.5">
+              {t("guests")}
+            </TabsTrigger>
+          )}
         </TabsList>
         <TabsContent value="requests">
           <AccessRequests isAdmin={isAdmin} />
