@@ -22,7 +22,7 @@ import type { TargetRect } from "./tour-types";
 
 const POPOUT_WIDTH = 320;
 const POPOUT_HEIGHT = 140; // estimated
-const HEADER_HEIGHT = 68; // h-16 + progress bar ~4px
+const HEADER_HEIGHT = 68; // sticky header (~h-16) the popout must clear
 const MOBILE_BREAKPOINT = 768;
 
 function computePosition(

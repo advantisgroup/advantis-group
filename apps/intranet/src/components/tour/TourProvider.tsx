@@ -177,23 +177,34 @@ export function TourProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    let rafId: number;
-    let attempts = 0;
-    const maxAttempts = 20;
+    // Target elements can mount well after navigation (route transition +
+    // async data), so poll for up to a few seconds rather than a fixed,
+    // tiny frame budget that gave up before slow pages were ready.
+    let cancelled = false;
+    let rafId = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const start = Date.now();
+    const MAX_WAIT_MS = 5000;
 
     function tryMeasure() {
+      if (cancelled) return;
       const rect = measureTarget(currentStep!.targetAttr);
       if (rect) {
         setTargetRect(rect);
         setPhase("active");
-      } else if (attempts < maxAttempts) {
-        attempts++;
-        rafId = requestAnimationFrame(tryMeasure);
+      } else if (Date.now() - start < MAX_WAIT_MS) {
+        timer = setTimeout(() => {
+          rafId = requestAnimationFrame(tryMeasure);
+        }, 60);
       }
     }
 
     rafId = requestAnimationFrame(tryMeasure);
-    return () => cancelAnimationFrame(rafId);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+      if (timer) clearTimeout(timer);
+    };
   }, [phase, currentStep]);
 
   // Re-measure on resize / scroll while active
@@ -246,7 +257,12 @@ export function TourProvider({ children }: { children: ReactNode }) {
       };
       persist(next);
       setState(next);
-      setPhase("measuring");
+      // Re-enter the navigating phase: the next step may live on a different
+      // route, so let the navigation effect push it (or fall through to
+      // measuring when we're already there). Going straight to "measuring"
+      // would try to measure a target that isn't on the current page yet,
+      // which left the tour stuck.
+      setPhase("navigating");
     } else {
       // Complete this checkpoint
       const completedCheckpoints = {
@@ -313,7 +329,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
       };
       persist(next);
       setState(next);
-      setPhase("measuring");
+      // Same as advance: the previous step may be on another route, so route
+      // through "navigating" rather than measuring on the wrong page.
+      setPhase("navigating");
     }
   }, [state, currentCheckpoint, persist]);
 

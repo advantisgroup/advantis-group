@@ -48,7 +48,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "Stay up to date with news and updates from across the organisation.",
         popoutSide: "right",
-        route: "/",
+        route: "/announcements",
         skipOnMobile: true,
       },
       {
@@ -74,7 +74,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "View and create events visible to everyone or specific teams.",
         popoutSide: "right",
-        route: "/",
+        route: "/calendar",
         skipOnMobile: true,
       },
       {
@@ -99,7 +99,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "Request and track vacation, sick days, and personal time.",
         popoutSide: "right",
-        route: "/",
+        route: "/absences",
         skipOnMobile: true,
       },
       {
@@ -124,7 +124,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "Direct messages and group conversations with your colleagues.",
         popoutSide: "right",
-        route: "/",
+        route: "/chat",
         skipOnMobile: true,
       },
       {
@@ -149,7 +149,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "Find colleagues, see their role, department, and start a chat.",
         popoutSide: "right",
-        route: "/",
+        route: "/directory",
         skipOnMobile: true,
       },
       {
@@ -175,7 +175,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "SOPs, case search, and team knowledge — all in one place.",
         popoutSide: "right",
-        route: "/",
+        route: "/guidebooks",
         skipOnMobile: true,
       },
       {
@@ -201,7 +201,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "The bell turns active when something needs your attention.",
         popoutSide: "bottom",
-        route: "/",
+        route: "/notifications",
       },
       {
         id: "notifications.feed",
@@ -226,7 +226,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "Personalise your profile, change your language, and pick a theme.",
         popoutSide: "right",
-        route: "/",
+        route: "/settings",
         skipOnMobile: true,
       },
       {
@@ -253,7 +253,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "Manage your team: invite members, approve access requests, and adjust roles.",
         popoutSide: "right",
-        route: "/",
+        route: "/admin",
         skipOnMobile: true,
       },
       {
@@ -280,7 +280,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         description:
           "Monitor device activity, employee states, and generate reports for your fleet.",
         popoutSide: "right",
-        route: "/",
+        route: "/admin/activity",
         skipOnMobile: true,
       },
       {
