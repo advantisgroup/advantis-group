@@ -1,10 +1,10 @@
+import type { ComponentType } from "react";
+
 import { FileSearch, type LucideIcon } from "lucide-react";
 
 import { type TeamId } from "@/lib/teams";
 
 import { CaseSearchGuidebook } from "./case-search";
-
-import type { ComponentType } from "react";
 
 export interface Guidebook {
   /** URL slug: /guidebooks/<slug> */

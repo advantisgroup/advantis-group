@@ -1,7 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
+import { useMutation, useQuery } from "convex/react";
 import {
   addMonths,
   addWeeks,
@@ -16,7 +20,6 @@ import {
   subMonths,
   subWeeks,
 } from "date-fns";
-import { useMutation, useQuery } from "convex/react";
 import {
   CalendarClock,
   CalendarDays,
@@ -30,10 +33,6 @@ import {
   Trash2,
   User,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -458,7 +457,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl" data-tour="tour-calendar-view">
       <PageHeader
         title={t("title")}
         action={isManager ? <EventDialog defaultDate={cursor} /> : undefined}

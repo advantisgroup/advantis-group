@@ -1,10 +1,9 @@
 "use client";
 
-import { useClerk } from "@clerk/nextjs";
-import { LogOut, Settings as SettingsIcon } from "lucide-react";
-
 import { useRouter } from "next/navigation";
 
+import { useClerk } from "@clerk/nextjs";
+import { LogOut, Settings as SettingsIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCurrentUser } from "@/components/providers/current-user";

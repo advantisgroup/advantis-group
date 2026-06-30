@@ -2,8 +2,15 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import { Check, List, Map, MessageSquare, RotateCcw, Search, X } from "lucide-react";
-
+import {
+  Check,
+  List,
+  Map,
+  MessageSquare,
+  RotateCcw,
+  Search,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -2745,7 +2752,11 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
   { id: "sop", label: "Szenarien", icon: <List className="h-4 w-4" /> },
   { id: "search", label: "Case-Suche", icon: <Search className="h-4 w-4" /> },
   { id: "wiki", label: "Wiki", icon: <MessageSquare className="h-4 w-4" /> },
-  { id: "stations", label: "Stationsfinder", icon: <Map className="h-4 w-4" /> },
+  {
+    id: "stations",
+    label: "Stationsfinder",
+    icon: <Map className="h-4 w-4" />,
+  },
 ];
 
 export function CaseSearchGuidebook() {

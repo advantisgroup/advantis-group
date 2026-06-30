@@ -1,7 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
+
+import Link from "next/link";
+
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   Ban,
@@ -10,18 +13,14 @@ import {
   MonitorSmartphone,
   Trash2,
 } from "lucide-react";
-import type { GenericId } from "convex/values";
-import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import { formatRelativeTime, formatTime } from "@/lib/activity/fmt";
-import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { InfoTip } from "@/components/activity/InfoTip";
 import { StatCard } from "@/components/activity/StatCard";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -37,6 +36,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatRelativeTime, formatTime } from "@/lib/activity/fmt";
+import { useI18n } from "@/lib/activity/i18n";
+import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+
+import type { GenericId } from "convex/values";
 
 const DEVICE_VARIANT: Record<string, "success" | "warning" | "destructive"> = {
   active: "success",

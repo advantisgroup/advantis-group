@@ -60,6 +60,54 @@ async function pendingInvitations(email: string): Promise<ClerkInvitation[]> {
 }
 
 /**
+ * Update a Clerk user's first and/or last name.
+ */
+export async function updateClerkUserName(
+  clerkUserId: string,
+  opts: { firstName?: string; lastName?: string }
+): Promise<void> {
+  const body: Record<string, string> = {};
+  if (opts.firstName !== undefined) body.first_name = opts.firstName;
+  if (opts.lastName !== undefined) body.last_name = opts.lastName;
+  if (Object.keys(body).length === 0) return;
+  const res = await clerkFetch(`/users/${clerkUserId}`, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not update the user name (HTTP ${res.status}). ${await res.text()}`,
+    });
+  }
+}
+
+/**
+ * Update a Clerk user's profile image by fetching from a URL and re-uploading.
+ * Best-effort — the avatar is already saved in Convex storage, so failures here
+ * don't affect the app display.
+ */
+export async function updateClerkUserAvatar(
+  clerkUserId: string,
+  imageUrl: string
+): Promise<void> {
+  try {
+    const imageRes = await fetch(imageUrl);
+    if (!imageRes.ok) return;
+    const blob = await imageRes.blob();
+    const form = new FormData();
+    form.append("file", blob, "avatar");
+    await fetch(`${CLERK_API}/users/${clerkUserId}/profile_image`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${clerkSecretKey()}` },
+      body: form,
+    });
+  } catch {
+    // Non-fatal: avatar is shown from Convex storage regardless.
+  }
+}
+
+/**
  * Lock a Clerk user account (blocks sign-in without deleting the account).
  * Treats 404 as success for idempotency.
  */

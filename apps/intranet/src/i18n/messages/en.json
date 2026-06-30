@@ -155,6 +155,7 @@
     "deleted": "Message deleted",
     "edited": "edited",
     "members": "Members",
+    "you": "you",
     "noConversations": "No conversations yet",
     "selectConversation": "Select a conversation to start chatting",
     "selectConversationHint": "Pick a conversation on the left, or start a new one.",
@@ -185,6 +186,172 @@
     "jobTitle": "Job title",
     "startChat": "Message",
     "noResults": "No people found"
+  },
+  "Profile": {
+    "title": "Profile",
+    "message": "Send message",
+    "contact": "Contact",
+    "mutual": "Mutual chats & groups",
+    "upcoming": "Upcoming time off",
+    "memberCount": "{count} members",
+    "notFound": "This member could not be found."
+  },
+  "Tour": {
+    "back": "Back",
+    "next": "Next",
+    "nextSection": "Next section",
+    "finish": "Finish",
+    "skipStep": "Skip this step",
+    "skipCheckpoint": "Skip section",
+    "snooze": "Snooze 24 h",
+    "endTour": "End tour",
+    "chipTitle": "Onboarding tour",
+    "chipStart": "Pick a section to get started.",
+    "chipRemaining": "{count, plural, one {# section left to explore.} other {# sections left to explore.}}",
+    "chipAria": "Onboarding tour: {done} of {total} checkpoints complete",
+    "viewInSettings": "View details in settings",
+    "settingsHint": "Review any checkpoint or restart the full tour from here.",
+    "restartTour": "Restart entire tour",
+    "redo": "Redo",
+    "skipCheckpointTitle": "Skip “{name}”?",
+    "skipCheckpointBody": "You can redo this section anytime from Settings → Tour.",
+    "skipConfirm": "Skip",
+    "keepGoing": "Keep going",
+    "endTourTitle": "End the tour?",
+    "endTourBody": "Your progress is saved. You can restart anytime from Settings → Tour.",
+    "doneTitle": "Congratulations!",
+    "doneBody": "You've completed the intranet tour.",
+    "getStarted": "Get started",
+    "redoTour": "Redo tour",
+    "checkpoints": {
+      "dashboard": "Dashboard",
+      "announcements": "Announcements",
+      "calendar": "Calendar",
+      "absences": "Absences",
+      "chat": "Chat",
+      "directory": "Directory",
+      "guidebooks": "Guidebooks",
+      "notifications": "Notifications",
+      "settings": "Settings",
+      "admin": "Admin Panel",
+      "activity": "Activity Tracking"
+    },
+    "steps": {
+      "dashboard": {
+        "sidebar": {
+          "title": "Your navigation",
+          "description": "Everything you need is in this sidebar. Quick access to all intranet sections."
+        },
+        "header": {
+          "title": "Quick actions",
+          "description": "Notifications, settings, and your account are always available up here."
+        },
+        "main": {
+          "title": "Your dashboard",
+          "description": "A snapshot of what's happening — upcoming events, latest news, and pending items."
+        }
+      },
+      "announcements": {
+        "nav": {
+          "title": "Company announcements",
+          "description": "Stay up to date with news and updates from across the organisation."
+        },
+        "list": {
+          "title": "The announcements feed",
+          "description": "Posts appear here in order. You can react with emoji and see attached files."
+        }
+      },
+      "calendar": {
+        "nav": {
+          "title": "Team calendar",
+          "description": "View and create events visible to everyone or specific teams."
+        },
+        "view": {
+          "title": "Events at a glance",
+          "description": "Browse upcoming events by day, week or month."
+        }
+      },
+      "absences": {
+        "nav": {
+          "title": "Absences",
+          "description": "Request and track vacation, sick days, and personal time."
+        },
+        "list": {
+          "title": "Your absence requests",
+          "description": "Submit a new request and track its approval status here."
+        }
+      },
+      "chat": {
+        "nav": {
+          "title": "Team messaging",
+          "description": "Direct messages and group conversations with your colleagues."
+        },
+        "list": {
+          "title": "Your conversations",
+          "description": "Start a new chat or pick up where you left off."
+        }
+      },
+      "directory": {
+        "nav": {
+          "title": "People directory",
+          "description": "Find colleagues, see their role, department, and start a chat."
+        },
+        "grid": {
+          "title": "Browse your team",
+          "description": "Search by name, filter by department, and connect instantly."
+        }
+      },
+      "guidebooks": {
+        "nav": {
+          "title": "Guidebooks",
+          "description": "SOPs, case search, and team knowledge — all in one place."
+        },
+        "list": {
+          "title": "Your knowledge base",
+          "description": "Open any guide to follow step-by-step procedures or search across topics."
+        }
+      },
+      "notifications": {
+        "bell": {
+          "title": "Notification bell",
+          "description": "The bell turns active when something needs your attention."
+        },
+        "feed": {
+          "title": "All notifications",
+          "description": "Absence approvals, new announcements, and system alerts collected here."
+        }
+      },
+      "settings": {
+        "nav": {
+          "title": "Your settings",
+          "description": "Personalise your profile, change your language, and pick a theme."
+        },
+        "profile": {
+          "title": "Profile card",
+          "description": "Keep your name, job title, and contact details up to date so colleagues can find you."
+        }
+      },
+      "admin": {
+        "nav": {
+          "title": "Admin panel",
+          "description": "Manage your team: invite members, approve access requests, and adjust roles."
+        },
+        "members": {
+          "title": "Member management",
+          "description": "The Members tab lets you change roles, manage teams, suspend, or remove users."
+        }
+      },
+      "activity": {
+        "nav": {
+          "title": "Activity tracking",
+          "description": "Monitor device activity, employee states, and generate reports for your fleet."
+        },
+        "stats": {
+          "title": "Fleet overview",
+          "description": "Live counts show who's active, idle, or offline across all tracked devices."
+        }
+      }
+    }
   },
   "Admin": {
     "title": "Administration",

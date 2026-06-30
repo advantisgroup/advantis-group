@@ -53,6 +53,7 @@ import type * as members from "../members.js";
 import type * as notifications from "../notifications.js";
 import type * as outbound from "../outbound.js";
 import type * as presence from "../presence.js";
+import type * as tourProgress from "../tourProgress.js";
 import type * as users from "../users.js";
 import type * as wikiChats from "../wikiChats.js";
 
@@ -108,6 +109,7 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   outbound: typeof outbound;
   presence: typeof presence;
+  tourProgress: typeof tourProgress;
   users: typeof users;
   wikiChats: typeof wikiChats;
 }>;

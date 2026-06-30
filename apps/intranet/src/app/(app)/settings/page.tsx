@@ -1,17 +1,25 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-
-import { useMutation } from "convex/react";
-import { Camera } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
+import { useAction, useMutation } from "convex/react";
+import {
+  Camera,
+  Check,
+  Circle,
+  RotateCcw,
+  RotateCw,
+  SkipForward,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { useCurrentUser } from "@/components/providers/current-user";
+import type { CheckpointStatus } from "@/components/tour/tour-types";
+import { useTour } from "@/components/tour/TourProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,12 +30,29 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { uploadToConvex } from "@/lib/upload";
 
+function CheckpointStatusIcon({ status }: { status: CheckpointStatus }) {
+  if (status === "completed")
+    return <Check className="size-3.5 text-green-500" />;
+  if (status === "skipped")
+    return <SkipForward className="size-3.5 text-muted-foreground" />;
+  if (status === "active")
+    return <Circle className="size-3.5 fill-blue-500 text-blue-500" />;
+  return <Circle className="size-3.5 text-muted-foreground/40" />;
+}
+
 export default function SettingsPage() {
   const t = useTranslations("Settings");
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
+  const tt = useTranslations("Tour");
   const user = useCurrentUser();
-  const updateProfile = useMutation(api.users.updateProfile);
+  const {
+    state: tourState,
+    visibleCheckpoints,
+    redoCheckpoint,
+    redoTour,
+  } = useTour();
+  const updateProfile = useAction(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
 
@@ -74,26 +99,26 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Personal identity hero */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" data-tour="tour-settings-profile">
         <div className="app-atmosphere flex items-center gap-4 border-b border-border/60 px-5 py-5">
-          <div className="relative">
+          <label className="group relative cursor-pointer">
             <Avatar className="size-16 ring-2 ring-background">
               {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
               <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
                 {initials(user.name, user.email)}
               </AvatarFallback>
             </Avatar>
-            <label className="absolute -bottom-1 -right-1 flex size-7 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-accent">
+            <span className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors group-hover:bg-accent">
               <Camera className="size-3.5" />
-              <span className="sr-only">{t("uploadAvatar")}</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onAvatar}
-              />
-            </label>
-          </div>
+            </span>
+            <span className="sr-only">{t("uploadAvatar")}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onAvatar}
+            />
+          </label>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">
               {t("account")}
@@ -175,6 +200,60 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Onboarding Tour */}
+      {tourState && (
+        <Card>
+          <CardContent className="space-y-4 pt-5">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold">{tt("chipTitle")}</p>
+              <span className="h-px flex-1 bg-border/60" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {tt("settingsHint")}
+            </p>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={redoTour}
+            >
+              <RotateCw className="size-3.5" />
+              {tt("restartTour")}
+            </Button>
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {visibleCheckpoints.map(cp => {
+                const cpState = tourState.checkpoints[cp.id];
+                const status: CheckpointStatus = cpState?.status ?? "pending";
+                return (
+                  <div
+                    key={cp.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border/70 px-3 py-2"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <CheckpointStatusIcon status={status} />
+                      <span className="truncate text-sm">
+                        {tt(`checkpoints.${cp.id}`)}
+                      </span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 shrink-0 gap-1 px-2 text-xs"
+                      onClick={() => redoCheckpoint(cp.id)}
+                    >
+                      <RotateCcw className="size-3" />
+                      {tt("redo")}
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

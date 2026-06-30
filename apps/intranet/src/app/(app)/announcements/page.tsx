@@ -1,5 +1,9 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+
+import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { useMutation, useQuery } from "convex/react";
 import {
@@ -13,10 +17,6 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -49,7 +49,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { cn } from "@/lib/utils";
 import { formatDateTime, initials } from "@/lib/format";
 import {
   formatFileSize,
@@ -57,6 +56,7 @@ import {
   type UploadedAttachment,
   uploadToConvex,
 } from "@/lib/upload";
+import { cn } from "@/lib/utils";
 
 /** Combined attachment size ceiling for a single announcement. */
 const MAX_ATTACH_BYTES = 5 * 1024 * 1024;
@@ -510,7 +510,7 @@ export default function AnnouncementsPage() {
   }, [announcements, markRead]);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl" data-tour="tour-announcements-list">
       <PageHeader
         title={t("title")}
         action={isManager ? <CreateDialog /> : undefined}

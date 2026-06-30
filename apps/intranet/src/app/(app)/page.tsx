@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   CalendarDays,
@@ -10,8 +11,6 @@ import {
   MessageSquare,
   Plane,
 } from "lucide-react";
-
-import { api } from "@advantis/convex/api";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -22,13 +21,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { htmlToText } from "@/components/ui/rich-text";
-import { cn } from "@/lib/utils";
 import {
   formatDateTime,
   formatIsoDate,
   initials,
   relativeTime,
 } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 const now = Date.now();
 
@@ -131,7 +130,7 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl" data-tour="tour-dashboard-main">
       <div className="mb-8">
         <p className="text-sm font-medium capitalize text-muted-foreground">
           {today}

@@ -10,7 +10,12 @@ import {
   requireAdmin,
   requireUser,
 } from "./lib/auth";
-import { lockClerkUser, unlockClerkUser } from "./lib/clerk";
+import {
+  lockClerkUser,
+  unlockClerkUser,
+  updateClerkUserAvatar,
+  updateClerkUserName,
+} from "./lib/clerk";
 
 const roleArg = v.union(
   v.literal("admin"),
@@ -104,18 +109,19 @@ export const get = query({
   },
 });
 
-export const updateProfile = mutation({
-  args: {
-    firstName: v.optional(v.string()),
-    lastName: v.optional(v.string()),
-    jobTitle: v.optional(v.string()),
-    department: v.optional(v.string()),
-    phone: v.optional(v.string()),
-    avatarStorageId: v.optional(v.id("_storage")),
-  },
+const profileArgs = {
+  firstName: v.optional(v.string()),
+  lastName: v.optional(v.string()),
+  jobTitle: v.optional(v.string()),
+  department: v.optional(v.string()),
+  phone: v.optional(v.string()),
+  avatarStorageId: v.optional(v.id("_storage")),
+};
+
+export const applyProfileUpdate = internalMutation({
+  args: profileArgs,
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
-    // If replacing the avatar, clean up the old stored object.
     if (
       args.avatarStorageId &&
       user.avatarStorageId &&
@@ -133,6 +139,31 @@ export const updateProfile = mutation({
         ? { avatarStorageId: args.avatarStorageId }
         : {}),
     });
+    const avatarUrl = args.avatarStorageId
+      ? await ctx.storage.getUrl(args.avatarStorageId)
+      : null;
+    return { clerkUserId: user.clerkUserId, avatarUrl };
+  },
+});
+
+export const updateProfile = action({
+  args: profileArgs,
+  handler: async (ctx, args): Promise<{ ok: true }> => {
+    const { clerkUserId, avatarUrl } = await ctx.runMutation(
+      internal.users.applyProfileUpdate,
+      args
+    );
+    if (clerkUserId) {
+      if (args.firstName !== undefined || args.lastName !== undefined) {
+        await updateClerkUserName(clerkUserId, {
+          firstName: args.firstName,
+          lastName: args.lastName,
+        });
+      }
+      if (avatarUrl) {
+        await updateClerkUserAvatar(clerkUserId, avatarUrl);
+      }
+    }
     return { ok: true };
   },
 });

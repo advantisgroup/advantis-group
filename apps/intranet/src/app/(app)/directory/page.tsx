@@ -1,16 +1,17 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { MessageSquare, Search } from "lucide-react";
 import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { MessageSquare, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { PageHeader } from "@/components/PageHeader";
+import { UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,7 @@ export default function DirectoryPage() {
 
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState<string>("all");
+  const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
 
   const departments = useQuery(api.users.departments) ?? [];
   const people = useQuery(api.users.list, {
@@ -49,7 +51,7 @@ export default function DirectoryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl" data-tour="tour-directory-grid">
       <PageHeader title={t("title")} />
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">
@@ -84,32 +86,39 @@ export default function DirectoryPage() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {people?.map(p => (
-            <Card key={p._id}>
+            <Card key={p._id} className="transition-colors hover:border-border">
               <CardContent className="flex items-center gap-3 p-4">
-                <Avatar className="h-12 w-12">
-                  {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                  <AvatarFallback>{initials(p.name, p.email)}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-medium">{p.name}</span>
-                    <Badge variant="muted" className="shrink-0">
-                      {tRoles(p.role)}
-                    </Badge>
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {p.jobTitle || p.email}
-                  </p>
-                  {p.department && (
+                <button
+                  type="button"
+                  onClick={() => setProfileId(p._id)}
+                  className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                >
+                  <Avatar className="h-12 w-12 shrink-0">
+                    {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+                    <AvatarFallback>{initials(p.name, p.email)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-medium">{p.name}</span>
+                      <Badge variant="muted" className="shrink-0">
+                        {tRoles(p.role)}
+                      </Badge>
+                    </div>
                     <p className="truncate text-xs text-muted-foreground">
-                      {p.department}
+                      {p.jobTitle || p.email}
                     </p>
-                  )}
-                </div>
+                    {p.department && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        {p.department}
+                      </p>
+                    )}
+                  </div>
+                </button>
                 {p._id !== me._id && (
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="shrink-0"
                     aria-label={t("startChat")}
                     onClick={() => void message(p._id)}
                   >
@@ -121,6 +130,14 @@ export default function DirectoryPage() {
           ))}
         </div>
       )}
+
+      <UserProfile
+        userId={profileId}
+        open={!!profileId}
+        onOpenChange={o => {
+          if (!o) setProfileId(null);
+        }}
+      />
     </div>
   );
 }

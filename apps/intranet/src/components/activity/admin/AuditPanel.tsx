@@ -1,12 +1,11 @@
 "use client";
 
-import { useQuery } from "convex/react";
 import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import { formatTime } from "@/lib/activity/fmt";
+import { useQuery } from "convex/react";
+
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -15,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatTime } from "@/lib/activity/fmt";
+import { useI18n } from "@/lib/activity/i18n";
 
 /** Append-only audit log of privileged actions (IT admin). Settings hub tab. */
 export function AuditPanel() {

@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+
 import { Users2 } from "lucide-react";
 
-import { useI18n } from "@/lib/activity/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useI18n } from "@/lib/activity/i18n";
 
 /**
  * Users & roles for the activity area. Roles, invitations and access requests

@@ -1,19 +1,24 @@
 "use client";
 
-import Link from "next/link";
 import { use, useMemo } from "react";
+
+import Link from "next/link";
+
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { ArrowLeft } from "lucide-react";
-import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import { useTabParam } from "@/lib/activity/useTabParam";
+
 import {
-  formatDuration,
-  formatRelativeTime,
-  nowMs,
-  todayLocalDay,
-} from "@/lib/activity/fmt";
-import { useDayParam } from "@/lib/activity/useDayParam";
+  StateStrip,
+  StateStripLegend,
+} from "@/components/activity/charts/StateStrip";
+import { SourceSignals } from "@/components/activity/state/StateBits";
+import { StatusSummary } from "@/components/activity/state/StatusSummary";
+import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
+import { DayDetailTab } from "@/components/activity/timeline/DayDetailTab";
+import { DayNav } from "@/components/activity/timeline/DayNav";
+import { RawTab } from "@/components/activity/timeline/RawTab";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   dailyTrend,
   dayStateSegments,
@@ -24,20 +29,18 @@ import {
   type Sample,
   type StateName,
 } from "@/lib/activity/activity";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  formatDuration,
+  formatRelativeTime,
+  nowMs,
+  todayLocalDay,
+} from "@/lib/activity/fmt";
+import { useI18n } from "@/lib/activity/i18n";
+import { useTabParam } from "@/lib/activity/useTabParam";
+import { useDayParam } from "@/lib/activity/useDayParam";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SourceSignals } from "@/components/activity/state/StateBits";
-import { StatusSummary } from "@/components/activity/state/StatusSummary";
-import {
-  StateStrip,
-  StateStripLegend,
-} from "@/components/activity/charts/StateStrip";
-import { DayNav } from "@/components/activity/timeline/DayNav";
-import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
-import { RawTab } from "@/components/activity/timeline/RawTab";
 import { ExportTab } from "@/components/activity/timeline/ExportTab";
-import { DayDetailTab } from "@/components/activity/timeline/DayDetailTab";
 
 const TREND_DAYS = 14;
 

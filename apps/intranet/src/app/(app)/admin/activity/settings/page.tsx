@@ -1,12 +1,12 @@
 "use client";
 
-import { useI18n } from "@/lib/activity/i18n";
-import { useTabParam } from "@/lib/activity/useTabParam";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AuditPanel } from "@/components/activity/admin/AuditPanel";
 import { ConfigPanel } from "@/components/activity/admin/ConfigPanel";
 import { SystemPanel } from "@/components/activity/admin/SystemPanel";
 import { UsersPanel } from "@/components/activity/admin/UsersPanel";
-import { AuditPanel } from "@/components/activity/admin/AuditPanel";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useI18n } from "@/lib/activity/i18n";
+import { useTabParam } from "@/lib/activity/useTabParam";
 
 /**
  * Admin hub: configuration, system health, and the audit log gathered under one

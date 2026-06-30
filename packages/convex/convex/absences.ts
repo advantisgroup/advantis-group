@@ -104,6 +104,34 @@ export const myAbsences = query({
   },
 });
 
+/**
+ * A user's approved absences that haven't ended yet — surfaced on their
+ * profile card so colleagues can see upcoming time off. Approved absences are
+ * already public on the shared calendar, so this is readable by any member.
+ */
+export const upcomingForUser = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    await requireUser(ctx);
+    const today = new Date().toISOString().slice(0, 10);
+    const absences = await ctx.db
+      .query("absences")
+      .withIndex("by_user", q => q.eq("userId", userId))
+      .collect();
+    return absences
+      .filter(a => a.status === "approved" && a.endDate >= today)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate))
+      .slice(0, 5)
+      .map(a => ({
+        _id: a._id,
+        type: a.type,
+        startDate: a.startDate,
+        endDate: a.endDate,
+        halfDay: a.halfDay ?? false,
+      }));
+  },
+});
+
 /** Pending requests this manager/admin may act on. */
 export const pendingForApproval = query({
   args: {},

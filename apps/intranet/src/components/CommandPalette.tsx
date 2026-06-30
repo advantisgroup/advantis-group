@@ -8,8 +8,12 @@ import {
   useState,
 } from "react";
 
-import { useMutation, useQuery } from "convex/react";
+import { useRouter } from "next/navigation";
+
+import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
+import { useMutation, useQuery } from "convex/react";
 import {
   BookOpen,
   Calendar,
@@ -22,11 +26,6 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-
-import { useRouter } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useTranslations } from "next-intl";
 
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
