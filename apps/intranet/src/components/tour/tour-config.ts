@@ -14,6 +14,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "Everything you need is in this sidebar. Quick access to all intranet sections.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "dashboard.header",
@@ -48,6 +49,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "Stay up to date with news and updates from across the organisation.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "announcements.list",
@@ -73,6 +75,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "View and create events visible to everyone or specific teams.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "calendar.view",
@@ -97,6 +100,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "Request and track vacation, sick days, and personal time.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "absences.list",
@@ -121,6 +125,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "Direct messages and group conversations with your colleagues.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "chat.list",
@@ -145,6 +150,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "Find colleagues, see their role, department, and start a chat.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "directory.grid",
@@ -170,6 +176,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "SOPs, case search, and team knowledge — all in one place.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "guidebooks.list",
@@ -220,6 +227,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "Personalise your profile, change your language, and pick a theme.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "settings.profile",
@@ -246,6 +254,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "Manage your team: invite members, approve access requests, and adjust roles.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "admin.members",
@@ -272,6 +281,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
           "Monitor device activity, employee states, and generate reports for your fleet.",
         popoutSide: "right",
         route: "/",
+        skipOnMobile: true,
       },
       {
         id: "activity.stats",

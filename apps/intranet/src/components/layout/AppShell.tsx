@@ -80,7 +80,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
                 <CommandPalette />
               </div>
             </div>
-            <div data-tour="tour-notifications-btn" className="contents">
+            <div data-tour="tour-notifications-btn" className="flex items-center">
               <NotificationsMenu />
             </div>
             {/* Preferences + account live in the top bar on desktop, but move to

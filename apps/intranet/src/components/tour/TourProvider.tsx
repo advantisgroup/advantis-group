@@ -10,6 +10,8 @@ import {
   useState,
 } from "react";
 
+const MOBILE_BREAKPOINT = 768;
+
 import { useRouter , usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
@@ -162,9 +164,19 @@ export function TourProvider({ children }: { children: ReactNode }) {
     }
   }, [pathname, phase, currentStep]);
 
+  // Keep a stable ref to advance so the measuring effect can call it
+  const advanceRef = useRef(advance);
+  advanceRef.current = advance;
+
   // Measure target once on route
   useEffect(() => {
     if (phase !== "measuring" || !currentStep) return;
+
+    // Skip sidebar-nav steps on mobile — those elements are hidden in the closed drawer
+    if (currentStep.skipOnMobile && window.innerWidth < MOBILE_BREAKPOINT) {
+      advanceRef.current();
+      return;
+    }
 
     let rafId: number;
     let attempts = 0;

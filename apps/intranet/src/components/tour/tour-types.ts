@@ -49,6 +49,8 @@ export interface TourStep {
   route: string;
   /** Optional action the tour performs before spotlighting (e.g. open mobile sidebar). */
   action?: "open-sidebar";
+  /** Skip this step on mobile (e.g. sidebar nav items that live in a closed drawer). */
+  skipOnMobile?: boolean;
 }
 
 export interface TourCheckpoint {
