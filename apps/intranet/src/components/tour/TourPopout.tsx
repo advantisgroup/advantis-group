@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { createPortal } from "react-dom";
 
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,7 @@ import {
 
 import { useTour } from "./TourProvider";
 import { useTourEndTour, useTourSkipCheckpoint } from "./TourSkipDialog";
+
 import type { TargetRect } from "./tour-types";
 
 const POPOUT_WIDTH = 320;
@@ -77,6 +78,7 @@ export function TourPopout() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const update = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     update();
@@ -84,16 +86,26 @@ export function TourPopout() {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  if (!mounted || !state?.active || phase !== "active" || !currentStep || !currentCheckpoint || !targetRect) {
+  if (
+    !mounted ||
+    !state?.active ||
+    phase !== "active" ||
+    !currentStep ||
+    !currentCheckpoint ||
+    !targetRect
+  ) {
     return null;
   }
 
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const checkpointIdx = visibleCheckpoints.findIndex(c => c.id === currentCheckpoint.id);
+  const checkpointIdx = visibleCheckpoints.findIndex(
+    c => c.id === currentCheckpoint.id
+  );
   const stepDisplay = `${state.currentStepIndex + 1} / ${currentCheckpoint.steps.length}`;
   const isFirstStep = state.currentStepIndex === 0;
-  const isLastStep = state.currentStepIndex >= currentCheckpoint.steps.length - 1;
+  const isLastStep =
+    state.currentStepIndex >= currentCheckpoint.steps.length - 1;
   const isLastCheckpoint = checkpointIdx === visibleCheckpoints.length - 1;
 
   const { top, left } = isMobile
@@ -130,16 +142,24 @@ export function TourPopout() {
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon-sm" className="size-6 shrink-0">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="size-6 shrink-0"
+                >
                   <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="text-sm">
-                <DropdownMenuItem onClick={skipStep}>Skip this step</DropdownMenuItem>
+                <DropdownMenuItem onClick={skipStep}>
+                  Skip this step
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={skipCheckpointDialog}>
                   Skip checkpoint
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={snooze}>Snooze 24 h</DropdownMenuItem>
+                <DropdownMenuItem onClick={snooze}>
+                  Snooze 24 h
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={endTourDialog}
                   className="text-destructive focus:text-destructive"
@@ -151,7 +171,9 @@ export function TourPopout() {
           </div>
 
           {/* Content */}
-          <p className="text-sm font-semibold leading-snug">{currentStep.title}</p>
+          <p className="text-sm font-semibold leading-snug">
+            {currentStep.title}
+          </p>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             {currentStep.description}
           </p>
@@ -159,14 +181,23 @@ export function TourPopout() {
           {/* Controls */}
           <div className="mt-4 flex items-center gap-2">
             {!isFirstStep && (
-              <Button variant="outline" size="sm" onClick={back} className="shrink-0">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={back}
+                className="shrink-0"
+              >
                 <ChevronLeft />
                 Back
               </Button>
             )}
             <div className="flex-1" />
             <Button size="sm" onClick={advance} className="shrink-0">
-              {isLastStep && isLastCheckpoint ? "Finish" : isLastStep ? "Next section" : "Next"}
+              {isLastStep && isLastCheckpoint
+                ? "Finish"
+                : isLastStep
+                  ? "Next section"
+                  : "Next"}
               {!isLastStep && <ChevronRight />}
             </Button>
           </div>

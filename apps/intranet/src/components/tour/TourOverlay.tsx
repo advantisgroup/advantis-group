@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useSpring, useTransform } from "framer-motion";
+import { motion, useSpring } from "framer-motion";
 
 import type { TargetRect } from "./tour-types";
 
@@ -13,7 +13,13 @@ interface Props {
 const SPRING = { stiffness: 280, damping: 32 };
 
 export function TourOverlay({ targetRect, visible, onClick }: Props) {
-  const defaultRect: TargetRect = { x: -200, y: -200, width: 100, height: 50, rx: 8 };
+  const defaultRect: TargetRect = {
+    x: -200,
+    y: -200,
+    width: 100,
+    height: 50,
+    rx: 8,
+  };
   const r = targetRect ?? defaultRect;
 
   const x = useSpring(r.x, SPRING);

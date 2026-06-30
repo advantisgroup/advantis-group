@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-
 import {
   createContext,
   useCallback,
@@ -11,17 +10,20 @@ import {
   useState,
 } from "react";
 
-import { useMutation } from "convex/react";
-import { useRouter } from "next/navigation";
-import { usePathname } from "next/navigation";
+import { useRouter , usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { useMutation } from "convex/react";
 
+import {
+  useCurrentUser,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { useSidebar } from "@/components/ui/sidebar";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 
 import { TOUR_CHECKPOINTS } from "./tour-config";
 import { getOrInitTourState, writeTourState } from "./tour-storage";
+
 import type {
   CheckpointId,
   TargetRect,
@@ -59,7 +61,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  const upsertProgress = useMutation(api.tourProgress.upsertMyProgress);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+  const upsertProgress = useMutation((api.tourProgress as any).upsertMyProgress);
 
   const [state, setState] = useState<TourLocalState | null>(null);
   const [phase, setPhase] = useState<TourPhase>("idle");
@@ -113,7 +116,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (!isManager) {
       for (const cp of TOUR_CHECKPOINTS) {
         if (cp.managerOnly && loaded.checkpoints[cp.id]) {
-          loaded.checkpoints[cp.id] = { status: "pending", currentStepIndex: 0 };
+          loaded.checkpoints[cp.id] = {
+            status: "pending",
+            currentStepIndex: 0,
+          };
         }
       }
     }
@@ -132,7 +138,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (loaded.active && !loaded.completedAt) {
       setPhase("navigating");
     }
-  }, [user._id, isManager]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user._id, isManager]);  
 
   // Navigate to step route when phase is navigating
   useEffect(() => {
@@ -191,7 +197,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
     const ro = new ResizeObserver(remeasure);
     ro.observe(document.body);
-    window.addEventListener("scroll", remeasure, { passive: true, capture: true });
+    window.addEventListener("scroll", remeasure, {
+      passive: true,
+      capture: true,
+    });
 
     return () => {
       ro.disconnect();
@@ -199,35 +208,17 @@ export function TourProvider({ children }: { children: ReactNode }) {
     };
   }, [phase, currentStep]);
 
-  function findNextCheckpoint(
-    current: CheckpointId
-  ): TourCheckpoint | null {
+  function findNextCheckpoint(current: CheckpointId): TourCheckpoint | null {
     const idx = visibleCheckpoints.findIndex(c => c.id === current);
     return visibleCheckpoints[idx + 1] ?? null;
   }
 
-  function goToCheckpoint(cp: TourCheckpoint, stepIdx = 0) {
-    setState(prev => {
-      if (!prev) return prev;
-      const next: TourLocalState = {
-        ...prev,
-        currentCheckpointId: cp.id,
-        currentStepIndex: stepIdx,
-        checkpoints: {
-          ...prev.checkpoints,
-          [cp.id]: { ...prev.checkpoints[cp.id], status: "active", currentStepIndex: stepIdx },
-        },
-      };
-      persist(next);
-      return next;
-    });
-    setPhase("navigating");
-  }
 
   const advance = useCallback(() => {
     if (!state || !currentCheckpoint || !currentStep) return;
 
-    const isLastStep = state.currentStepIndex >= currentCheckpoint.steps.length - 1;
+    const isLastStep =
+      state.currentStepIndex >= currentCheckpoint.steps.length - 1;
 
     if (!isLastStep) {
       // Next step within same checkpoint
@@ -345,7 +336,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
         currentStepIndex: 0,
         checkpoints: {
           ...skipped.checkpoints,
-          [nextCp.id]: { ...skipped.checkpoints[nextCp.id], status: "active", currentStepIndex: 0 },
+          [nextCp.id]: {
+            ...skipped.checkpoints[nextCp.id],
+            status: "active",
+            currentStepIndex: 0,
+          },
         },
       };
       persist(next);

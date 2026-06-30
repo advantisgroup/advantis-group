@@ -1,5 +1,10 @@
 "use client";
 
+import { useMemo, useState } from "react";
+
+import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
+import { type Role } from "@advantis/types";
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
   CheckCircle2,
@@ -18,19 +23,16 @@ import {
   Users,
   Users2,
 } from "lucide-react";
-import { useMemo, useState } from "react";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { type Role } from "@advantis/types";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { StatCard } from "@/components/activity/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import {
   useCurrentUser,
   useIsManager,
 } from "@/components/providers/current-user";
+import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,20 +49,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
-import { StatCard } from "@/components/activity/StatCard";
-import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -76,7 +76,10 @@ function TourProgressChip({ userId }: { userId: Id<"users"> }) {
   const total = TOUR_CHECKPOINTS.length;
   if (progress) {
     try {
-      const statuses = JSON.parse(progress.checkpointStatuses) as Record<string, string>;
+      const statuses = JSON.parse(progress.checkpointStatuses) as Record<
+        string,
+        string
+      >;
       completed = Object.values(statuses).filter(s => s === "completed").length;
     } catch {
       // ignore parse errors
@@ -84,10 +87,22 @@ function TourProgressChip({ userId }: { userId: Id<"users"> }) {
   }
 
   if (completed === 0)
-    return <Badge variant="muted" className="text-[10px]">Setup ○</Badge>;
+    return (
+      <Badge variant="muted" className="text-[10px]">
+        Setup ○
+      </Badge>
+    );
   if (completed < total)
-    return <Badge variant="warning" className="text-[10px]">Setup ◐</Badge>;
-  return <Badge variant="success" className="text-[10px]">Setup ✓</Badge>;
+    return (
+      <Badge variant="warning" className="text-[10px]">
+        Setup ◐
+      </Badge>
+    );
+  return (
+    <Badge variant="success" className="text-[10px]">
+      Setup ✓
+    </Badge>
+  );
 }
 
 function MemberTourProgress({ userId }: { userId: Id<"users"> }) {
@@ -103,7 +118,9 @@ function MemberTourProgress({ userId }: { userId: Id<"users"> }) {
     }
   })();
 
-  const completedCount = Object.values(statuses).filter(s => s === "completed").length;
+  const completedCount = Object.values(statuses).filter(
+    s => s === "completed"
+  ).length;
   const total = TOUR_CHECKPOINTS.length;
 
   return (
@@ -776,7 +793,9 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
           {t("noMembers")}
         </p>
       ) : (
-        <div className="space-y-2" data-tour="tour-admin-members">{filtered.map(MemberRow)}</div>
+        <div className="space-y-2" data-tour="tour-admin-members">
+          {filtered.map(MemberRow)}
+        </div>
       )}
 
       {/* Profile detail drawer */}

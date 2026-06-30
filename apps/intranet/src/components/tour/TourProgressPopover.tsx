@@ -10,7 +10,8 @@ import {
 } from "@/components/ui/popover";
 
 import { useTour } from "./TourProvider";
-import type { CheckpointId, CheckpointStatus, TourCheckpoint } from "./tour-types";
+
+import type { CheckpointStatus, TourCheckpoint } from "./tour-types";
 
 function StatusIcon({ status }: { status: CheckpointStatus }) {
   if (status === "completed")
@@ -58,7 +59,9 @@ export function TourProgressPopover({ checkpoint, index, total }: DotProps) {
         <div className="flex items-start gap-2">
           <StatusIcon status={status} />
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold leading-snug">{checkpoint.label}</p>
+            <p className="text-xs font-semibold leading-snug">
+              {checkpoint.label}
+            </p>
             {status === "completed" && completedAt && (
               <p className="text-[10px] text-muted-foreground">
                 Completed {new Date(completedAt).toLocaleDateString()}
@@ -80,7 +83,7 @@ export function TourProgressPopover({ checkpoint, index, total }: DotProps) {
             variant="ghost"
             size="sm"
             className="mt-2 h-7 w-full justify-start gap-1.5 px-2 text-xs"
-            onClick={() => redoCheckpoint(checkpoint.id as CheckpointId)}
+            onClick={() => redoCheckpoint(checkpoint.id)}
           >
             <RotateCcw className="size-3" />
             Redo this checkpoint

@@ -10,7 +10,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "dashboard.sidebar",
         targetAttr: "tour-sidebar",
         title: "Your navigation",
-        description: "Everything you need is in this sidebar. Quick access to all intranet sections.",
+        description:
+          "Everything you need is in this sidebar. Quick access to all intranet sections.",
         popoutSide: "right",
         route: "/",
       },
@@ -18,7 +19,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "dashboard.header",
         targetAttr: "tour-header",
         title: "Quick actions",
-        description: "Notifications, settings, and your account are always available up here.",
+        description:
+          "Notifications, settings, and your account are always available up here.",
         popoutSide: "bottom",
         route: "/",
       },
@@ -26,7 +28,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "dashboard.main",
         targetAttr: "tour-dashboard-main",
         title: "Your dashboard",
-        description: "A snapshot of what's happening — upcoming events, latest news, and pending items.",
+        description:
+          "A snapshot of what's happening — upcoming events, latest news, and pending items.",
         popoutSide: "top",
         route: "/",
       },
@@ -41,7 +44,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "announcements.nav",
         targetAttr: "tour-nav-announcements",
         title: "Company announcements",
-        description: "Stay up to date with news and updates from across the organisation.",
+        description:
+          "Stay up to date with news and updates from across the organisation.",
         popoutSide: "right",
         route: "/",
       },
@@ -49,7 +53,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "announcements.list",
         targetAttr: "tour-announcements-list",
         title: "The announcements feed",
-        description: "Posts appear here in order. You can react with emoji and see attached files.",
+        description:
+          "Posts appear here in order. You can react with emoji and see attached files.",
         popoutSide: "top",
         route: "/announcements",
       },
@@ -64,7 +69,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "calendar.nav",
         targetAttr: "tour-nav-calendar",
         title: "Team calendar",
-        description: "View and create events visible to everyone or specific teams.",
+        description:
+          "View and create events visible to everyone or specific teams.",
         popoutSide: "right",
         route: "/",
       },
@@ -87,7 +93,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "absences.nav",
         targetAttr: "tour-nav-absences",
         title: "Absences",
-        description: "Request and track vacation, sick days, and personal time.",
+        description:
+          "Request and track vacation, sick days, and personal time.",
         popoutSide: "right",
         route: "/",
       },
@@ -110,7 +117,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "chat.nav",
         targetAttr: "tour-nav-chat",
         title: "Team messaging",
-        description: "Direct messages and group conversations with your colleagues.",
+        description:
+          "Direct messages and group conversations with your colleagues.",
         popoutSide: "right",
         route: "/",
       },
@@ -133,7 +141,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "directory.nav",
         targetAttr: "tour-nav-directory",
         title: "People directory",
-        description: "Find colleagues, see their role, department, and start a chat.",
+        description:
+          "Find colleagues, see their role, department, and start a chat.",
         popoutSide: "right",
         route: "/",
       },
@@ -141,7 +150,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "directory.grid",
         targetAttr: "tour-directory-grid",
         title: "Browse your team",
-        description: "Search by name, filter by department, and connect instantly.",
+        description:
+          "Search by name, filter by department, and connect instantly.",
         popoutSide: "top",
         route: "/directory",
       },
@@ -156,7 +166,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "guidebooks.nav",
         targetAttr: "tour-nav-guidebooks",
         title: "Guidebooks",
-        description: "SOPs, case search, and team knowledge — all in one place.",
+        description:
+          "SOPs, case search, and team knowledge — all in one place.",
         popoutSide: "right",
         route: "/",
       },
@@ -164,7 +175,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "guidebooks.list",
         targetAttr: "tour-guidebooks-list",
         title: "Your knowledge base",
-        description: "Open any guide to follow step-by-step procedures or search across topics.",
+        description:
+          "Open any guide to follow step-by-step procedures or search across topics.",
         popoutSide: "top",
         route: "/guidebooks",
       },
@@ -179,7 +191,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "notifications.bell",
         targetAttr: "tour-notifications-btn",
         title: "Notification bell",
-        description: "The bell turns active when something needs your attention.",
+        description:
+          "The bell turns active when something needs your attention.",
         popoutSide: "bottom",
         route: "/",
       },
@@ -187,7 +200,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "notifications.feed",
         targetAttr: "tour-notifications-feed",
         title: "All notifications",
-        description: "Absence approvals, new announcements, and system alerts collected here.",
+        description:
+          "Absence approvals, new announcements, and system alerts collected here.",
         popoutSide: "top",
         route: "/notifications",
       },
@@ -202,7 +216,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "settings.nav",
         targetAttr: "tour-nav-settings",
         title: "Your settings",
-        description: "Personalise your profile, change your language, and pick a theme.",
+        description:
+          "Personalise your profile, change your language, and pick a theme.",
         popoutSide: "right",
         route: "/",
       },
@@ -210,7 +225,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "settings.profile",
         targetAttr: "tour-settings-profile",
         title: "Profile card",
-        description: "Keep your name, job title, and contact details up to date so colleagues can find you.",
+        description:
+          "Keep your name, job title, and contact details up to date so colleagues can find you.",
         popoutSide: "bottom",
         route: "/settings",
       },
@@ -226,7 +242,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "admin.nav",
         targetAttr: "tour-nav-admin",
         title: "Admin panel",
-        description: "Manage your team: invite members, approve access requests, and adjust roles.",
+        description:
+          "Manage your team: invite members, approve access requests, and adjust roles.",
         popoutSide: "right",
         route: "/",
       },
@@ -234,7 +251,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "admin.members",
         targetAttr: "tour-admin-members",
         title: "Member management",
-        description: "The Members tab lets you change roles, manage teams, suspend, or remove users.",
+        description:
+          "The Members tab lets you change roles, manage teams, suspend, or remove users.",
         popoutSide: "top",
         route: "/admin",
       },
@@ -250,7 +268,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "activity.nav",
         targetAttr: "tour-nav-activity",
         title: "Activity tracking",
-        description: "Monitor device activity, employee states, and generate reports for your fleet.",
+        description:
+          "Monitor device activity, employee states, and generate reports for your fleet.",
         popoutSide: "right",
         route: "/",
       },
@@ -258,7 +277,8 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "activity.stats",
         targetAttr: "tour-activity-stats",
         title: "Fleet overview",
-        description: "Live counts show who's active, idle, or offline across all tracked devices.",
+        description:
+          "Live counts show who's active, idle, or offline across all tracked devices.",
         popoutSide: "bottom",
         route: "/admin/activity",
       },
