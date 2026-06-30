@@ -164,9 +164,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
     }
   }, [pathname, phase, currentStep]);
 
-  // Keep a stable ref to advance so the measuring effect can call it
-  const advanceRef = useRef(advance);
-  advanceRef.current = advance;
+  // Stable ref — will be updated to the real advance after it is defined
+  const advanceRef = useRef<() => void>(() => undefined);
 
   // Measure target once on route
   useEffect(() => {
@@ -295,6 +294,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [state, currentCheckpoint, currentStep, persist, findNextCheckpoint]);
+  advanceRef.current = advance;
 
   const back = useCallback(() => {
     if (!state || !currentCheckpoint) return;
