@@ -1,12 +1,12 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { useQuery } from "convex/react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { BrandLogo } from "@/components/Logo";

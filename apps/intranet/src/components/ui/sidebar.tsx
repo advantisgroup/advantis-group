@@ -131,10 +131,12 @@ export function Sidebar({
   children,
   className,
   ariaLabel = "Sidebar",
+  "data-tour": dataTour,
 }: {
   children: React.ReactNode;
   className?: string;
   ariaLabel?: string;
+  "data-tour"?: string;
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
@@ -144,6 +146,7 @@ export function Sidebar({
         open={openMobile}
         onOpenChange={setOpenMobile}
         ariaLabel={ariaLabel}
+        data-tour={dataTour}
       >
         {children}
       </MobileDrawer>
@@ -153,6 +156,7 @@ export function Sidebar({
   return (
     <aside
       data-state={state}
+      data-tour={dataTour}
       aria-label={ariaLabel}
       className={cn(
         "group/sidebar z-30 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear md:flex",

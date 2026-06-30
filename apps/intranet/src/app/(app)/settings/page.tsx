@@ -1,17 +1,29 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-
-import { useMutation } from "convex/react";
-import { Camera } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
+import { useMutation } from "convex/react";
+import {
+  Camera,
+  Check,
+  Circle,
+  RotateCcw,
+  RotateCw,
+  SkipForward,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { useCurrentUser } from "@/components/providers/current-user";
+import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
+import type {
+  CheckpointId,
+  CheckpointStatus,
+} from "@/components/tour/tour-types";
+import { useTour } from "@/components/tour/TourProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,11 +34,27 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { uploadToConvex } from "@/lib/upload";
 
+function CheckpointStatusIcon({ status }: { status: CheckpointStatus }) {
+  if (status === "completed")
+    return <Check className="size-3.5 text-green-500" />;
+  if (status === "skipped")
+    return <SkipForward className="size-3.5 text-muted-foreground" />;
+  if (status === "active")
+    return <Circle className="size-3.5 fill-blue-500 text-blue-500" />;
+  return <Circle className="size-3.5 text-muted-foreground/40" />;
+}
+
 export default function SettingsPage() {
   const t = useTranslations("Settings");
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const user = useCurrentUser();
+  const {
+    state: tourState,
+    visibleCheckpoints,
+    redoCheckpoint,
+    redoTour,
+  } = useTour();
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
@@ -74,7 +102,7 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Personal identity hero */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" data-tour="tour-settings-profile">
         <div className="app-atmosphere flex items-center gap-4 border-b border-border/60 px-5 py-5">
           <div className="relative">
             <Avatar className="size-16 ring-2 ring-background">
@@ -175,6 +203,58 @@ export default function SettingsPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Onboarding Tour */}
+      {tourState && (
+        <Card>
+          <CardContent className="space-y-4 pt-5">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold">Onboarding Tour</p>
+              <span className="h-px flex-1 bg-border/60" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Review any checkpoint or restart the full tour from here.
+            </p>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={redoTour}
+            >
+              <RotateCw className="size-3.5" />
+              Restart entire tour
+            </Button>
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {visibleCheckpoints.map(cp => {
+                const cpState = tourState.checkpoints[cp.id];
+                const status: CheckpointStatus = cpState?.status ?? "pending";
+                return (
+                  <div
+                    key={cp.id}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border/70 px-3 py-2"
+                  >
+                    <div className="flex min-w-0 items-center gap-2">
+                      <CheckpointStatusIcon status={status} />
+                      <span className="truncate text-sm">{cp.label}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 shrink-0 gap-1 px-2 text-xs"
+                      onClick={() => redoCheckpoint(cp.id)}
+                    >
+                      <RotateCcw className="size-3" />
+                      Redo
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

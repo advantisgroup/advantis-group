@@ -1,10 +1,10 @@
 "use client";
 
-import { Monitor, Moon, SlidersHorizontal, Sun } from "lucide-react";
 import { useSyncExternalStore, useTransition } from "react";
 
 import { useRouter } from "next/navigation";
 
+import { Monitor, Moon, SlidersHorizontal, Sun } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 

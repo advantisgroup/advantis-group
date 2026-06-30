@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+
 import { ChevronDown, Search } from "lucide-react";
-import { useI18n } from "@/lib/activity/i18n";
-import { FAQ_SECTIONS } from "@/lib/activity/faq";
+
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { FAQ_SECTIONS } from "@/lib/activity/faq";
+import { useI18n } from "@/lib/activity/i18n";
 
 /**
  * In-app Help / FAQ. Common errors and "how do I…" questions in plain language,

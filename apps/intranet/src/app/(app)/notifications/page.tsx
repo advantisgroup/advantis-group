@@ -1,5 +1,11 @@
 "use client";
 
+import { type ReactNode, useState } from "react";
+
+import { useRouter } from "next/navigation";
+
+import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
   Bell,
@@ -9,13 +15,8 @@ import {
   Plane,
   ShieldCheck,
 } from "lucide-react";
-
-import { useRouter } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useLocale, useTranslations } from "next-intl";
-import { type ReactNode, useState } from "react";
+
 
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,10 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div
+      className="mx-auto max-w-3xl space-y-6"
+      data-tour="tour-notifications-feed"
+    >
       <PageHeader
         eyebrow={t("title")}
         title={t("title")}

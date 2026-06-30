@@ -1,18 +1,17 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { Plus, Search, Trash2 } from "lucide-react";
-import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import type { GenericId } from "convex/values";
+
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
-import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -22,6 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useI18n } from "@/lib/activity/i18n";
+import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+
+import type { GenericId } from "convex/values";
 
 /**
  * Inline-editable id cell. Saves on blur (and Enter) only when the value

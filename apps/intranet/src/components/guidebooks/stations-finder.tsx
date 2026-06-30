@@ -1,12 +1,22 @@
 "use client";
 
-import { ExternalLink, Fuel, MapPin, MonitorSmartphone, Network, Shield, Zap } from "lucide-react";
+import {
+  ExternalLink,
+  Fuel,
+  MapPin,
+  MonitorSmartphone,
+  Network,
+  Shield,
+  Zap,
+} from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 
 const STATION_URL = "https://www.uta.com/de-de/tools-services/stationsfinder";
-const DRIVE_APP_IOS = "https://apps.apple.com/de/app/uta-edenred-drive/id1661660308";
-const DRIVE_APP_ANDROID = "https://play.google.com/store/apps/details?id=com.edenred.uta.driver";
+const DRIVE_APP_IOS =
+  "https://apps.apple.com/de/app/uta-edenred-drive/id1661660308";
+const DRIVE_APP_ANDROID =
+  "https://play.google.com/store/apps/details?id=com.edenred.uta.driver";
 const SERVICE_CENTER_URL = "https://www.uta.com/de-de/service/servicecenter";
 
 const INFO_CARDS = [
@@ -55,10 +65,26 @@ const INFO_CARDS = [
 ];
 
 const QUICK_LINKS = [
-  { label: "Stationsfinder öffnen", href: STATION_URL, icon: <MapPin className="h-4 w-4" /> },
-  { label: "Drive App – iOS", href: DRIVE_APP_IOS, icon: <ExternalLink className="h-4 w-4" /> },
-  { label: "Drive App – Android", href: DRIVE_APP_ANDROID, icon: <ExternalLink className="h-4 w-4" /> },
-  { label: "UTA Service Center", href: SERVICE_CENTER_URL, icon: <ExternalLink className="h-4 w-4" /> },
+  {
+    label: "Stationsfinder öffnen",
+    href: STATION_URL,
+    icon: <MapPin className="h-4 w-4" />,
+  },
+  {
+    label: "Drive App – iOS",
+    href: DRIVE_APP_IOS,
+    icon: <ExternalLink className="h-4 w-4" />,
+  },
+  {
+    label: "Drive App – Android",
+    href: DRIVE_APP_ANDROID,
+    icon: <ExternalLink className="h-4 w-4" />,
+  },
+  {
+    label: "UTA Service Center",
+    href: SERVICE_CENTER_URL,
+    icon: <ExternalLink className="h-4 w-4" />,
+  },
 ];
 
 export function StationsFinder() {
@@ -73,7 +99,8 @@ export function StationsFinder() {
           <div>
             <h2 className="text-xl font-bold">UTA Stationsfinder</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              85.000+ Akzeptanzstellen in Europa. Kraftstoff, EV-Laden, Maut und mehr.
+              85.000+ Akzeptanzstellen in Europa. Kraftstoff, EV-Laden, Maut und
+              mehr.
             </p>
           </div>
           <a
@@ -93,12 +120,16 @@ export function StationsFinder() {
         {INFO_CARDS.map(card => (
           <Card key={card.title} className="border-border/60">
             <CardContent className="flex gap-3 p-4">
-              <div className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${card.bg} ${card.accent}`}>
+              <div
+                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${card.bg} ${card.accent}`}
+              >
                 {card.icon}
               </div>
               <div>
                 <p className="text-sm font-semibold">{card.title}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{card.text}</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  {card.text}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -107,7 +138,9 @@ export function StationsFinder() {
 
       {/* Quick links */}
       <div>
-        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Schnellzugriff</p>
+        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Schnellzugriff
+        </p>
         <div className="flex flex-wrap gap-2">
           {QUICK_LINKS.map(link => (
             <a

@@ -1,7 +1,9 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ReactNode } from "react";
+
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+
 import { MOTION } from "./motion-tokens";
 
 /**

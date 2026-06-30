@@ -1,24 +1,26 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "convex/react";
+
 import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import { nowMs } from "@/lib/activity/fmt";
+import { useQuery } from "convex/react";
+
+import {
+  StateStrip,
+  StateStripLegend,
+} from "@/components/activity/charts/StateStrip";
+import { STATE_COLOR } from "@/components/activity/charts/theme";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   dayStateSegments,
   minuteStates,
   STATE_NAMES,
   type StateName,
 } from "@/lib/activity/activity";
-import { STATE_COLOR } from "@/components/activity/charts/theme";
-import {
-  StateStrip,
-  StateStripLegend,
-} from "@/components/activity/charts/StateStrip";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { nowMs } from "@/lib/activity/fmt";
+import { useI18n } from "@/lib/activity/i18n";
 
 const DAY_MS = 86_400_000;
 

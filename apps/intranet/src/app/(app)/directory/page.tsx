@@ -1,13 +1,13 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { MessageSquare, Search } from "lucide-react";
 import { useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { MessageSquare, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { PageHeader } from "@/components/PageHeader";
@@ -49,7 +49,7 @@ export default function DirectoryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-5xl" data-tour="tour-directory-grid">
       <PageHeader title={t("title")} />
 
       <div className="mb-4 flex flex-col gap-2 sm:flex-row">

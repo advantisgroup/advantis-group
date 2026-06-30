@@ -1,6 +1,5 @@
 "use client";
 
-import { useI18n } from "@/lib/activity/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,6 +8,7 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useI18n } from "@/lib/activity/i18n";
 
 interface Props {
   open: boolean;

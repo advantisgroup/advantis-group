@@ -1,12 +1,12 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { MessageSquare } from "lucide-react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
+import { useQuery } from "convex/react";
+import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { ConversationView } from "@/components/chat/ConversationView";
@@ -31,6 +31,7 @@ export function ChatClient() {
     <div className="-mx-4 -my-6 flex h-[calc(100dvh-3.5rem)] overflow-hidden bg-background md:-mx-8 md:-my-8 md:h-[calc(100dvh-4rem)]">
       {/* Conversation list */}
       <div
+        data-tour="tour-chat-list"
         className={cn(
           "flex w-full flex-col border-r border-border/70 bg-card/40 md:w-80",
           selected && "hidden md:flex"

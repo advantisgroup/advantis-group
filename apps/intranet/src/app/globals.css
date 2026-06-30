@@ -82,6 +82,21 @@
   }
 }
 
+@keyframes tour-pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 oklch(60% 0.2 250 / 0.8);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px oklch(60% 0.2 250 / 0);
+  }
+}
+
+.tour-pulse {
+  animation: tour-pulse-ring 1.8s ease-in-out infinite;
+}
+
 .animate-gradient-x {
   background-size: 200% 200%;
   animation: gradient-x 15s ease infinite;

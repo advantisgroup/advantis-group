@@ -1,11 +1,11 @@
 "use client";
 
-import { SignOutButton, useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
-import { Clock, ShieldX } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
+import { SignOutButton, useUser } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
+import { Clock, ShieldX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 

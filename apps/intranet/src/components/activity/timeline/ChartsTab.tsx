@@ -1,19 +1,19 @@
 "use client";
 
-import { useI18n } from "@/lib/activity/i18n";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DailyTrendChart } from "@/components/activity/charts/DailyTrendChart";
-import { IntradayChart } from "@/components/activity/charts/IntradayChart";
 import { HourHeatmap } from "@/components/activity/charts/HourHeatmap";
 import { HourlyStateChart } from "@/components/activity/charts/HourlyStateChart";
+import { IntradayChart } from "@/components/activity/charts/IntradayChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  dailyTrend,
-  hourOfDayActivity,
-  hourlyStateBreakdown,
-  intradayTimeline,
+  type dailyTrend,
+  type hourOfDayActivity,
+  type hourlyStateBreakdown,
+  type intradayTimeline,
   type StateName,
 } from "@/lib/activity/activity";
+import { useI18n } from "@/lib/activity/i18n";
 
 /**
  * The default "Overview" tab on the device timeline page: trend, intraday,

@@ -585,6 +585,17 @@ export default defineSchema({
     targetId: v.string(),
   }).index("by_migration_source", ["migrationId", "sourceTable", "sourceId"]),
 
+  // --- Onboarding tour progress (for manager visibility) ------------------
+  // The tour itself is client-driven; this table is a thin sync record so
+  // managers can see other employees' onboarding completion in the admin panel.
+  tourProgress: defineTable({
+    userId: v.id("users"),
+    /** JSON-encoded Record<CheckpointId, CheckpointStatus> */
+    checkpointStatuses: v.string(),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs
   // are stored as AES-256-GCM ciphertext (encrypted in the Elysia API with a

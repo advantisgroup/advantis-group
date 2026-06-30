@@ -1,5 +1,14 @@
 "use client";
 
+import { Fragment, useEffect, useRef, useState } from "react";
+
+import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
+import {
+  type LinkPreview,
+  type MessageAttachment,
+  type UnfurlResult,
+} from "@advantis/types";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import {
@@ -11,15 +20,6 @@ import {
   SendHorizonal,
   Trash2,
 } from "lucide-react";
-import { Fragment, useEffect, useRef, useState } from "react";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import {
-  type LinkPreview,
-  type MessageAttachment,
-  type UnfurlResult,
-} from "@advantis/types";
 import { useLocale, useTranslations } from "next-intl";
 
 import { useCurrentUser } from "@/components/providers/current-user";

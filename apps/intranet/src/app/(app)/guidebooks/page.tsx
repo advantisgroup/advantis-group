@@ -1,7 +1,6 @@
 "use client";
 
 import { BookOpen, ChevronRight } from "lucide-react";
-
 import { useTranslations } from "next-intl";
 
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
@@ -16,7 +15,7 @@ export default function GuidebooksPage() {
   const guidebooks = accessibleGuidebooks(user);
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl" data-tour="tour-guidebooks-list">
       <PageHeader
         eyebrow={t("eyebrow")}
         title={t("title")}

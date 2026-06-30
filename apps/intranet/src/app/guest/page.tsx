@@ -1,12 +1,12 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { CalendarDays, LogOut, Megaphone } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { useMutation, useQuery } from "convex/react";
+import { CalendarDays, LogOut, Megaphone } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { BrandLogo } from "@/components/Logo";

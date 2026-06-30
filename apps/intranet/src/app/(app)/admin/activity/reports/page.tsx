@@ -1,18 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
+
+import Link from "next/link";
+
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { ChevronRight, Clock, Moon, Users } from "lucide-react";
-import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import { formatDuration, todayLocalDay } from "@/lib/activity/fmt";
-import {
-  sumDaily,
-  weekStartOf,
-  weeklyTrend,
-  type DailyStat,
-} from "@/lib/activity/activity";
+
+import { DailyTrendChart } from "@/components/activity/charts/DailyTrendChart";
 import { StatCard } from "@/components/activity/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -31,8 +28,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { DailyTrendChart } from "@/components/activity/charts/DailyTrendChart";
+import {
+  sumDaily,
+  weekStartOf,
+  weeklyTrend,
+  type DailyStat,
+} from "@/lib/activity/activity";
+import { formatDuration, todayLocalDay } from "@/lib/activity/fmt";
+import { useI18n } from "@/lib/activity/i18n";
 
 type TimeFrame =
   | "thisWeek"

@@ -1,8 +1,9 @@
 "use client";
 
 import { CalendarClock, History, X } from "lucide-react";
-import { useI18n } from "@/lib/activity/i18n";
+
 import { Button } from "@/components/ui/button";
+import { useI18n } from "@/lib/activity/i18n";
 
 /**
  * Day-context strip for the timeline. Two jobs, never both at once:
