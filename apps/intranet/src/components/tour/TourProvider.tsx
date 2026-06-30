@@ -61,8 +61,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-  const upsertProgress = useMutation((api.tourProgress as any).upsertMyProgress);
+  const upsertProgress = useMutation(api.tourProgress.upsertMyProgress);
 
   const [state, setState] = useState<TourLocalState | null>(null);
   const [phase, setPhase] = useState<TourPhase>("idle");
