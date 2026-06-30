@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Drawer } from "vaul";
 
 import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -49,7 +50,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatIsoDate, initials } from "@/lib/format";
@@ -537,39 +537,46 @@ export function UserProfile({ userId, open, onOpenChange }: UserProfileProps) {
   const close = () => onOpenChange(false);
   const title = user?.name ?? t("title");
 
-  const TitleSlot: ComponentType<{ className?: string; children: ReactNode }> =
-    isMobile ? SheetTitle : DialogTitle;
-
-  const inner = (
-    <>
-      <TitleSlot className="sr-only">{title}</TitleSlot>
-      {user ? (
-        <ProfileContent user={user} onClose={close} />
-      ) : (
-        <div className="p-10 text-center text-sm text-muted-foreground">
-          {user === null ? t("notFound") : ""}
-        </div>
-      )}
-    </>
+  const body = user ? (
+    <ProfileContent user={user} onClose={close} />
+  ) : (
+    <div className="p-10 text-center text-sm text-muted-foreground">
+      {user === null ? t("notFound") : ""}
+    </div>
   );
 
+  // Mobile: a vaul bottom-sheet that can be dragged to dismiss and animates
+  // open/closed. Drag-to-dismiss, snap-back, Escape, backdrop click, and body
+  // scroll lock are all handled by vaul internally.
   if (isMobile) {
     return (
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent
-          side="bottom"
-          className="overflow-hidden rounded-t-2xl p-0"
-        >
-          {inner}
-        </SheetContent>
-      </Sheet>
+      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+          <Drawer.Content
+            aria-describedby={undefined}
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-2xl shadow-black/40 outline-none"
+          >
+            <Drawer.Title className="sr-only">{title}</Drawer.Title>
+            {/* Visual drag handle — vaul makes the whole Content draggable */}
+            <div className="flex shrink-0 cursor-grab items-center justify-center pb-1 pt-3 active:cursor-grabbing">
+              <span className="h-1.5 w-10 rounded-full bg-border" />
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {body}
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
     );
   }
 
+  // Desktop: keep the centred dialog.
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] max-w-md gap-0 overflow-hidden p-0">
-        {inner}
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        {body}
       </DialogContent>
     </Dialog>
   );
