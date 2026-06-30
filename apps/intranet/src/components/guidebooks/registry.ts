@@ -6,7 +6,6 @@ import { type TeamId } from "@/lib/teams";
 
 import { CaseSearchGuidebook } from "./case-search";
 
-
 export interface Guidebook {
   /** URL slug: /guidebooks/<slug> */
   slug: string;

@@ -67,7 +67,10 @@ export const listMemberProgress = query({
           checkpointStatuses: row.checkpointStatuses,
           completedAt: row.completedAt,
           updatedAt: row.updatedAt,
-          name: user ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email : null,
+          name: user
+            ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
+              user.email
+            : null,
           email: user?.email ?? null,
         };
       })

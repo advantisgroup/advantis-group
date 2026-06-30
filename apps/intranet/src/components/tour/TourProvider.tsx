@@ -12,7 +12,7 @@ import {
 
 const MOBILE_BREAKPOINT = 768;
 
-import { useRouter , usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
@@ -139,7 +139,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     if (loaded.active && !loaded.completedAt) {
       setPhase("navigating");
     }
-  }, [user._id, isManager]);  
+  }, [user._id, isManager]);
 
   // Navigate to step route when phase is navigating
   useEffect(() => {
@@ -234,7 +234,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
     return visibleCheckpoints[idx + 1] ?? null;
   }
 
-
   const advance = useCallback(() => {
     if (!state || !currentCheckpoint || !currentStep) return;
 
@@ -310,6 +309,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [state, currentCheckpoint, currentStep, persist, findNextCheckpoint]);
+  // Update during render (not in an effect) so the measuring effect, which can
+  // call advanceRef.current() to auto-skip sidebar steps on mobile, always sees
+  // the current `advance` in the same commit rather than a stale closure.
+  // eslint-disable-next-line react-hooks/refs
   advanceRef.current = advance;
 
   const back = useCallback(() => {

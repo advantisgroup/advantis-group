@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { createPortal } from "react-dom";
