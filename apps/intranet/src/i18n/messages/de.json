@@ -155,6 +155,7 @@
     "deleted": "Nachricht gelöscht",
     "edited": "bearbeitet",
     "members": "Mitglieder",
+    "you": "du",
     "noConversations": "Noch keine Unterhaltungen",
     "selectConversation": "Wähle eine Unterhaltung aus",
     "selectConversationHint": "Wähle links eine Unterhaltung oder starte eine neue.",
@@ -185,6 +186,172 @@
     "jobTitle": "Position",
     "startChat": "Nachricht",
     "noResults": "Keine Personen gefunden"
+  },
+  "Profile": {
+    "title": "Profil",
+    "message": "Nachricht senden",
+    "contact": "Kontakt",
+    "mutual": "Gemeinsame Chats & Gruppen",
+    "upcoming": "Bevorstehende Abwesenheiten",
+    "memberCount": "{count} Mitglieder",
+    "notFound": "Dieses Mitglied wurde nicht gefunden."
+  },
+  "Tour": {
+    "back": "Zurück",
+    "next": "Weiter",
+    "nextSection": "Nächster Abschnitt",
+    "finish": "Fertig",
+    "skipStep": "Diesen Schritt überspringen",
+    "skipCheckpoint": "Abschnitt überspringen",
+    "snooze": "24 Std. zurückstellen",
+    "endTour": "Tour beenden",
+    "chipTitle": "Onboarding-Tour",
+    "chipStart": "Wähle einen Abschnitt, um zu beginnen.",
+    "chipRemaining": "{count, plural, one {Noch # Abschnitt zu entdecken.} other {Noch # Abschnitte zu entdecken.}}",
+    "chipAria": "Onboarding-Tour: {done} von {total} Abschnitten abgeschlossen",
+    "viewInSettings": "Details in den Einstellungen ansehen",
+    "settingsHint": "Sieh dir einzelne Abschnitte an oder starte die gesamte Tour hier neu.",
+    "restartTour": "Gesamte Tour neu starten",
+    "redo": "Wiederholen",
+    "skipCheckpointTitle": "„{name}“ überspringen?",
+    "skipCheckpointBody": "Du kannst diesen Abschnitt jederzeit unter Einstellungen → Tour wiederholen.",
+    "skipConfirm": "Überspringen",
+    "keepGoing": "Weitermachen",
+    "endTourTitle": "Tour beenden?",
+    "endTourBody": "Dein Fortschritt wird gespeichert. Du kannst jederzeit unter Einstellungen → Tour neu starten.",
+    "doneTitle": "Glückwunsch!",
+    "doneBody": "Du hast die Intranet-Tour abgeschlossen.",
+    "getStarted": "Loslegen",
+    "redoTour": "Tour wiederholen",
+    "checkpoints": {
+      "dashboard": "Dashboard",
+      "announcements": "Ankündigungen",
+      "calendar": "Kalender",
+      "absences": "Abwesenheiten",
+      "chat": "Chat",
+      "directory": "Mitarbeiter",
+      "guidebooks": "Leitfäden",
+      "notifications": "Benachrichtigungen",
+      "settings": "Einstellungen",
+      "admin": "Verwaltung",
+      "activity": "Aktivitätsverfolgung"
+    },
+    "steps": {
+      "dashboard": {
+        "sidebar": {
+          "title": "Deine Navigation",
+          "description": "Alles, was du brauchst, ist in dieser Seitenleiste. Schneller Zugriff auf alle Intranet-Bereiche."
+        },
+        "header": {
+          "title": "Schnellaktionen",
+          "description": "Benachrichtigungen, Einstellungen und dein Konto sind hier oben immer erreichbar."
+        },
+        "main": {
+          "title": "Dein Dashboard",
+          "description": "Ein Überblick über das Geschehen – anstehende Termine, aktuelle Neuigkeiten und offene Punkte."
+        }
+      },
+      "announcements": {
+        "nav": {
+          "title": "Unternehmensankündigungen",
+          "description": "Bleibe über Neuigkeiten und Updates aus dem ganzen Unternehmen auf dem Laufenden."
+        },
+        "list": {
+          "title": "Der Ankündigungs-Feed",
+          "description": "Beiträge erscheinen hier der Reihe nach. Du kannst mit Emojis reagieren und Anhänge sehen."
+        }
+      },
+      "calendar": {
+        "nav": {
+          "title": "Teamkalender",
+          "description": "Sieh dir Termine an und erstelle Termine für alle oder bestimmte Teams."
+        },
+        "view": {
+          "title": "Termine auf einen Blick",
+          "description": "Durchstöbere anstehende Termine nach Tag, Woche oder Monat."
+        }
+      },
+      "absences": {
+        "nav": {
+          "title": "Abwesenheiten",
+          "description": "Beantrage und verfolge Urlaub, Krankheitstage und persönliche Zeit."
+        },
+        "list": {
+          "title": "Deine Abwesenheitsanträge",
+          "description": "Reiche einen neuen Antrag ein und verfolge hier seinen Genehmigungsstatus."
+        }
+      },
+      "chat": {
+        "nav": {
+          "title": "Team-Nachrichten",
+          "description": "Direktnachrichten und Gruppenunterhaltungen mit deinen Kolleginnen und Kollegen."
+        },
+        "list": {
+          "title": "Deine Unterhaltungen",
+          "description": "Starte einen neuen Chat oder mach dort weiter, wo du aufgehört hast."
+        }
+      },
+      "directory": {
+        "nav": {
+          "title": "Mitarbeiterverzeichnis",
+          "description": "Finde Kolleginnen und Kollegen, sieh Rolle und Abteilung und starte einen Chat."
+        },
+        "grid": {
+          "title": "Durchstöbere dein Team",
+          "description": "Suche nach Namen, filtere nach Abteilung und vernetze dich sofort."
+        }
+      },
+      "guidebooks": {
+        "nav": {
+          "title": "Leitfäden",
+          "description": "SOPs, Fallsuche und Teamwissen – alles an einem Ort."
+        },
+        "list": {
+          "title": "Deine Wissensdatenbank",
+          "description": "Öffne einen Leitfaden, um Schritt-für-Schritt-Anleitungen zu folgen oder Themen zu durchsuchen."
+        }
+      },
+      "notifications": {
+        "bell": {
+          "title": "Benachrichtigungsglocke",
+          "description": "Die Glocke wird aktiv, wenn etwas deine Aufmerksamkeit braucht."
+        },
+        "feed": {
+          "title": "Alle Benachrichtigungen",
+          "description": "Abwesenheitsfreigaben, neue Ankündigungen und Systemhinweise sind hier gesammelt."
+        }
+      },
+      "settings": {
+        "nav": {
+          "title": "Deine Einstellungen",
+          "description": "Personalisiere dein Profil, ändere deine Sprache und wähle ein Design."
+        },
+        "profile": {
+          "title": "Profilkarte",
+          "description": "Halte Name, Position und Kontaktdaten aktuell, damit Kolleginnen und Kollegen dich finden."
+        }
+      },
+      "admin": {
+        "nav": {
+          "title": "Verwaltung",
+          "description": "Verwalte dein Team: lade Mitglieder ein, genehmige Zugriffsanfragen und passe Rollen an."
+        },
+        "members": {
+          "title": "Mitgliederverwaltung",
+          "description": "Im Tab „Mitglieder“ kannst du Rollen ändern, Teams verwalten, Nutzer sperren oder entfernen."
+        }
+      },
+      "activity": {
+        "nav": {
+          "title": "Aktivitätsverfolgung",
+          "description": "Überwache Geräteaktivität, Mitarbeiterstatus und erstelle Berichte für deine Flotte."
+        },
+        "stats": {
+          "title": "Flottenübersicht",
+          "description": "Live-Zählungen zeigen, wer aktiv, inaktiv oder offline ist – über alle erfassten Geräte."
+        }
+      }
+    }
   },
   "Admin": {
     "title": "Verwaltung",

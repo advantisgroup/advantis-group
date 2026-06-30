@@ -22,10 +22,16 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -71,6 +77,8 @@ export function ConversationView({
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
+  const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
+  const [membersOpen, setMembersOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const lastTyping = useRef(0);
 
@@ -198,39 +206,108 @@ export function ConversationView({
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="relative shrink-0">
-          <Avatar className="size-9">
-            {conversation?.avatar && (
-              <AvatarImage src={conversation.avatar} alt={conversation.title} />
-            )}
-            <AvatarFallback className="text-xs">
-              {initials(conversation?.title ?? "")}
-            </AvatarFallback>
-          </Avatar>
-          {conversation?.type === "dm" && online && (
-            <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-card bg-success" />
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="truncate font-semibold leading-tight">
-            {conversation?.title}
-          </p>
-          {conversation?.type === "group" ? (
-            <p className="text-xs text-muted-foreground">
-              {conversation.members.length} {t("members")}
-            </p>
-          ) : online ? (
-            <p className="flex items-center gap-1 text-xs text-success">
-              {t("online")}
-            </p>
-          ) : other?.lastActiveAt ? (
-            <p className="truncate text-xs text-muted-foreground">
-              {t("lastSeen", { time: relativeTime(other.lastActiveAt) })}
-            </p>
-          ) : (
-            <p className="text-xs text-muted-foreground">{t("offline")}</p>
-          )}
-        </div>
+        {/* The header doubles as the entry point to people: tapping a DM header
+            opens that colleague's profile; tapping a group header reveals the
+            member list, each row opening its own profile. */}
+        {conversation?.type === "group" ? (
+          <Popover open={membersOpen} onOpenChange={setMembersOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="-my-1 flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 pr-2 text-left transition-colors hover:bg-accent/50"
+              >
+                <Avatar className="size-9 shrink-0">
+                  {conversation.avatar && (
+                    <AvatarImage
+                      src={conversation.avatar}
+                      alt={conversation.title}
+                    />
+                  )}
+                  <AvatarFallback className="text-xs">
+                    {initials(conversation.title)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold leading-tight">
+                    {conversation.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {conversation.members.length} {t("members")}
+                  </p>
+                </div>
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-72 p-1.5">
+              <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {conversation.members.length} {t("members")}
+              </p>
+              <div className="max-h-72 space-y-0.5 overflow-y-auto">
+                {conversation.members.map(m => (
+                  <button
+                    key={m._id}
+                    type="button"
+                    onClick={() => {
+                      setMembersOpen(false);
+                      if (m._id !== me._id) setProfileId(m._id);
+                    }}
+                    className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent disabled:opacity-60"
+                    disabled={m._id === me._id}
+                  >
+                    <Avatar className="size-7 shrink-0">
+                      <AvatarFallback className="text-[10px]">
+                        {initials(m.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {m.name}
+                      {m._id === me._id ? ` (${t("you")})` : ""}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <button
+            type="button"
+            onClick={() => other && setProfileId(other._id)}
+            disabled={!other}
+            className="-my-1 flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 pr-2 text-left transition-colors hover:bg-accent/50 disabled:cursor-default disabled:hover:bg-transparent"
+          >
+            <div className="relative shrink-0">
+              <Avatar className="size-9">
+                {conversation?.avatar && (
+                  <AvatarImage
+                    src={conversation.avatar}
+                    alt={conversation.title}
+                  />
+                )}
+                <AvatarFallback className="text-xs">
+                  {initials(conversation?.title ?? "")}
+                </AvatarFallback>
+              </Avatar>
+              {online && (
+                <span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-card bg-success" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-semibold leading-tight">
+                {conversation?.title}
+              </p>
+              {online ? (
+                <p className="flex items-center gap-1 text-xs text-success">
+                  {t("online")}
+                </p>
+              ) : other?.lastActiveAt ? (
+                <p className="truncate text-xs text-muted-foreground">
+                  {t("lastSeen", { time: relativeTime(other.lastActiveAt) })}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">{t("offline")}</p>
+              )}
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Messages */}
@@ -472,6 +549,14 @@ export function ConversationView({
           </Button>
         </div>
       </div>
+
+      <UserProfile
+        userId={profileId}
+        open={!!profileId}
+        onOpenChange={o => {
+          if (!o) setProfileId(null);
+        }}
+      />
     </div>
   );
 }

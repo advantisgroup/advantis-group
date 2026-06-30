@@ -95,6 +95,14 @@ export function ActivitySidebar() {
                     href={item.href}
                     onClick={close}
                     aria-current={active ? "page" : undefined}
+                    // The main sidebar slides off-screen inside the activity
+                    // area, so the tour spotlights this Overview entry (the
+                    // first item) instead of the now-hidden main-nav link.
+                    data-tour={
+                      item.href === "/admin/activity"
+                        ? "tour-nav-activity"
+                        : undefined
+                    }
                   >
                     <Icon />
                     <SidebarLabel>{t(item.labelKey)}</SidebarLabel>

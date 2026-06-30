@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Trophy } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +11,7 @@ import { useTour } from "./TourProvider";
 
 export function TourCompletionScreen() {
   const { phase, endTour, redoTour } = useTour();
+  const tt = useTranslations("Tour");
   const isComplete = phase === "complete";
 
   return (
@@ -52,16 +54,14 @@ export function TourCompletionScreen() {
                 className="font-display text-4xl font-bold tracking-tight text-white"
                 style={{ fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}
               >
-                Congratulations!
+                {tt("doneTitle")}
               </h1>
-              <p className="mt-2 text-lg text-white/70">
-                You&apos;ve completed the intranet tour.
-              </p>
+              <p className="mt-2 text-lg text-white/70">{tt("doneBody")}</p>
             </div>
 
             <div className="flex flex-col items-center gap-2 sm:flex-row">
               <Button size="lg" onClick={endTour} className="min-w-36">
-                Get started
+                {tt("getStarted")}
               </Button>
               <Button
                 size="lg"
@@ -69,7 +69,7 @@ export function TourCompletionScreen() {
                 onClick={redoTour}
                 className="text-white/70 hover:text-white hover:bg-white/10"
               >
-                Redo tour
+                {tt("redoTour")}
               </Button>
             </div>
           </motion.div>

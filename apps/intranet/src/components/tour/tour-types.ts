@@ -43,8 +43,6 @@ export type PopoutSide = "top" | "bottom" | "left" | "right";
 export interface TourStep {
   id: string;
   targetAttr: string;
-  title: string;
-  description: string;
   popoutSide: PopoutSide;
   route: string;
   /** Optional action the tour performs before spotlighting (e.g. open mobile sidebar). */
@@ -55,7 +53,6 @@ export interface TourStep {
 
 export interface TourCheckpoint {
   id: CheckpointId;
-  label: string;
   route: string;
   /** Only shown for manager/admin roles. */
   managerOnly?: boolean;

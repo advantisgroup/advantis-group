@@ -1,19 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type Role } from "@advantis/types";
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
-  CheckCircle2,
-  CircleDashed,
   Clock,
   Copy,
   KeyRound,
   Mail,
-  MinusCircle,
   MoreHorizontal,
   RotateCw,
   Search,
@@ -26,13 +23,14 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { StatCard } from "@/components/activity/StatCard";
 import { PageHeader } from "@/components/PageHeader";
+import { UserProfile } from "@/components/profile/UserProfile";
 import {
   useCurrentUser,
   useIsManager,
 } from "@/components/providers/current-user";
 import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
+import { useTour } from "@/components/tour/TourProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,10 +38,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -55,17 +51,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { formatDateTime, initials } from "@/lib/format";
-import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
+import { TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
 function TourProgressChip({ userId }: { userId: Id<"users"> }) {
@@ -102,62 +91,6 @@ function TourProgressChip({ userId }: { userId: Id<"users"> }) {
     <Badge variant="success" className="text-[10px]">
       Setup ✓
     </Badge>
-  );
-}
-
-function MemberTourProgress({ userId }: { userId: Id<"users"> }) {
-  const progress = useQuery(api.tourProgress.getMemberProgress, { userId });
-  if (progress === undefined) return null;
-
-  const statuses: Record<string, string> = (() => {
-    if (!progress) return {};
-    try {
-      return JSON.parse(progress.checkpointStatuses) as Record<string, string>;
-    } catch {
-      return {};
-    }
-  })();
-
-  const completedCount = Object.values(statuses).filter(
-    s => s === "completed"
-  ).length;
-  const total = TOUR_CHECKPOINTS.length;
-
-  return (
-    <div className="space-y-2 rounded-lg border border-border/70 p-3 text-sm">
-      <div className="flex items-center justify-between">
-        <p className="font-medium">Onboarding tour</p>
-        <span className="text-xs text-muted-foreground">
-          {completedCount}/{total}
-        </span>
-      </div>
-      <div className="space-y-1.5">
-        {TOUR_CHECKPOINTS.map(cp => {
-          const status = statuses[cp.id] ?? "pending";
-          return (
-            <div key={cp.id} className="flex items-center gap-2">
-              {status === "completed" ? (
-                <CheckCircle2 className="size-3.5 shrink-0 text-green-500" />
-              ) : status === "skipped" ? (
-                <MinusCircle className="size-3.5 shrink-0 text-amber-500" />
-              ) : (
-                <CircleDashed className="size-3.5 shrink-0 text-muted-foreground" />
-              )}
-              <span
-                className={cn(
-                  "text-xs",
-                  status === "completed"
-                    ? "text-foreground"
-                    : "text-muted-foreground"
-                )}
-              >
-                {cp.label}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -423,78 +356,11 @@ function Invites({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-function TeamsEditor({
-  userId,
-  teams,
-}: {
-  userId: Id<"users">;
-  teams: string[];
-}) {
-  const t = useTranslations("Admin");
-  const tTeams = useTranslations("Teams");
-  const setTeams = useMutation(api.users.setTeams);
-  const handleError = useErrorHandler();
-
-  function toggle(id: string) {
-    const next = teams.includes(id)
-      ? teams.filter(x => x !== id)
-      : [...teams, id];
-    setTeams({ userId, teams: next }).catch(handleError);
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="outline" className="h-8">
-          <Users2 className="size-3.5" />
-          {t("teams")}
-          {teams.length > 0 && (
-            <span className="ml-0.5 flex items-center gap-1">
-              {teams.map(id => (
-                <span
-                  key={id}
-                  className={cn("size-1.5 rounded-full", teamColor(id))}
-                />
-              ))}
-            </span>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60">
-        <DropdownMenuLabel className="flex items-center justify-between">
-          <span>{t("teams")}</span>
-          <span className="text-xs font-normal tabular-nums text-muted-foreground">
-            {teams.length}/{TEAMS.length}
-          </span>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {TEAMS.map(team => {
-          const checked = teams.includes(team.id);
-          return (
-            <DropdownMenuCheckboxItem
-              key={team.id}
-              checked={checked}
-              onCheckedChange={() => toggle(team.id)}
-              onSelect={e => e.preventDefault()}
-              className="gap-2 py-1.5"
-            >
-              <span
-                className={cn(
-                  "size-2 rounded-full transition-opacity",
-                  teamColor(team.id),
-                  checked ? "opacity-100" : "opacity-40"
-                )}
-              />
-              <span className="flex-1">{tTeams(team.labelKey)}</span>
-            </DropdownMenuCheckboxItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-/** KPI tiles so the admin landing reads at a glance instead of feeling empty. */
+/**
+ * A compact stat strip for the admin landing. The old full KPI cards ate a
+ * whole screen of vertical space on mobile and pushed the actual member list
+ * below the fold, so this trades them for small inline pills that wrap.
+ */
 function AdminOverview({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const members = useQuery(api.users.list, { includeSuspended: true });
@@ -508,34 +374,67 @@ function AdminOverview({ isAdmin }: { isAdmin: boolean }) {
   const invCount = invites?.length;
   const guestCount = guests?.filter(g => g.status === "active").length;
 
+  const stats: {
+    label: string;
+    value: number | string;
+    icon: typeof Users;
+    accent: boolean;
+  }[] = [
+    {
+      label: t("overviewMembers"),
+      value: dash(activeMembers),
+      icon: Users,
+      accent: false,
+    },
+    {
+      label: t("overviewRequests"),
+      value: dash(reqCount),
+      icon: Clock,
+      accent: !!reqCount,
+    },
+    {
+      label: t("overviewInvites"),
+      value: dash(invCount),
+      icon: Mail,
+      accent: !!invCount,
+    },
+  ];
+  if (isAdmin)
+    stats.push({
+      label: t("overviewGuests"),
+      value: dash(guestCount),
+      icon: KeyRound,
+      accent: !!guestCount,
+    });
+
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <StatCard
-        label={t("overviewMembers")}
-        value={dash(activeMembers)}
-        tone="fg"
-        icon={<Users className="h-4 w-4" />}
-      />
-      <StatCard
-        label={t("overviewRequests")}
-        value={dash(reqCount)}
-        tone={reqCount ? "warn" : "muted"}
-        icon={<Clock className="h-4 w-4" />}
-      />
-      <StatCard
-        label={t("overviewInvites")}
-        value={dash(invCount)}
-        tone={invCount ? "accent" : "muted"}
-        icon={<Mail className="h-4 w-4" />}
-      />
-      {isAdmin && (
-        <StatCard
-          label={t("overviewGuests")}
-          value={dash(guestCount)}
-          tone={guestCount ? "ok" : "muted"}
-          icon={<KeyRound className="h-4 w-4" />}
-        />
-      )}
+    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+      {stats.map(s => {
+        const Icon = s.icon;
+        return (
+          <div
+            key={s.label}
+            className="flex items-center gap-2.5 rounded-lg border border-border/70 bg-card px-3 py-2 sm:flex-1 sm:basis-40"
+          >
+            <span
+              className={cn(
+                "grid size-7 shrink-0 place-items-center rounded-md ring-1 ring-inset",
+                s.accent
+                  ? "bg-signal/12 text-signal ring-signal/25"
+                  : "bg-panel-2 text-muted-foreground ring-border"
+              )}
+            >
+              <Icon className="size-3.5" />
+            </span>
+            <span className="text-lg font-semibold leading-none tabular-nums">
+              {s.value}
+            </span>
+            <span className="truncate text-xs text-muted-foreground">
+              {s.label}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -545,12 +444,9 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
-  const locale = useLocale();
   const me = useCurrentUser();
   const confirm = useConfirm();
-  const isMobile = useIsMobile();
   const members = useQuery(api.users.list, { includeSuspended: true });
-  const setRole = useMutation(api.users.setRole);
   const setStatus = useAction(api.users.setStatus);
   const removeMember = useAction(api.members.remove);
   const reinvite = useAction(api.members.reinvite);
@@ -581,8 +477,6 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
       list = list.filter(m => m.teams.includes(teamFilter));
     return list;
   }, [members, search, roleFilter, statusFilter, teamFilter]);
-
-  const selected = members?.find(m => m._id === selectedId) ?? null;
 
   async function toggleStatus(userId: Id<"users">, active: boolean) {
     if (active) {
@@ -622,12 +516,6 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   function copyEmail(email: string) {
     void navigator.clipboard.writeText(email);
     toast.success(t("emailCopied"));
-  }
-
-  function changeRole(m: Member, role: Role) {
-    setRole({ userId: m._id as Id<"users">, role })
-      .then(() => toast.success(tRoles(role)))
-      .catch(handleError);
   }
 
   function MemberMenu({ m }: { m: Member }) {
@@ -798,163 +686,16 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
         </div>
       )}
 
-      {/* Profile detail drawer */}
-      <Sheet
-        open={!!selected}
+      {/* Shared, Discord-style member profile (drawer on mobile, dialog on
+          desktop). It carries its own admin controls, so the heavy detail
+          sheet that used to live here is gone. */}
+      <UserProfile
+        userId={selectedId}
+        open={!!selectedId}
         onOpenChange={o => {
           if (!o) setSelectedId(null);
         }}
-      >
-        <SheetContent
-          side={isMobile ? "bottom" : "right"}
-          className={cn(
-            "overflow-y-auto p-6",
-            isMobile ? "max-h-[90vh] rounded-t-2xl pt-3" : "w-full sm:max-w-md"
-          )}
-        >
-          {selected && (
-            <div className="space-y-6">
-              {/* Drag-handle affordance for the mobile bottom sheet */}
-              {isMobile && (
-                <div className="-mt-1 flex justify-center">
-                  <span className="h-1.5 w-10 rounded-full bg-border" />
-                </div>
-              )}
-              <div className="flex items-center gap-3">
-                <Avatar className="h-14 w-14 shrink-0">
-                  {selected.avatar && (
-                    <AvatarImage src={selected.avatar} alt={selected.name} />
-                  )}
-                  <AvatarFallback>
-                    {initials(selected.name, selected.email)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <SheetTitle className="truncate">{selected.name}</SheetTitle>
-                  <SheetDescription className="truncate">
-                    {selected.email}
-                  </SheetDescription>
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    <Badge variant="muted">{tRoles(selected.role)}</Badge>
-                    <Badge
-                      variant={
-                        selected.status === "active" ? "success" : "destructive"
-                      }
-                    >
-                      {selected.status === "active"
-                        ? t("active")
-                        : t("suspended")}
-                    </Badge>
-                    {selected.external && (
-                      <Badge variant="warning">{t("external")}</Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {isAdmin && (
-                <div className="space-y-3 rounded-lg border border-border/70 p-3">
-                  {/* Role can't be changed on your own account, but you can
-                      still manage your own team membership. */}
-                  {selected._id !== me._id && (
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm text-muted-foreground">
-                        {t("role")}
-                      </span>
-                      <RoleSelect
-                        value={selected.role}
-                        canElevate
-                        onChange={role => changeRole(selected, role)}
-                      />
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-muted-foreground">
-                      {t("teams")}
-                    </span>
-                    <TeamsEditor
-                      userId={selected._id as Id<"users">}
-                      teams={selected.teams}
-                    />
-                  </div>
-                </div>
-              )}
-
-              <dl className="space-y-2 rounded-lg border border-border/70 p-3 text-sm">
-                <div className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground">{t("joined")}</dt>
-                  <dd className="tabular-nums">
-                    {formatDateTime(selected.createdAt, locale)}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-muted-foreground">{t("lastActive")}</dt>
-                  <dd className="tabular-nums">
-                    {selected.lastSeenAt
-                      ? formatDateTime(selected.lastSeenAt, locale)
-                      : t("never")}
-                  </dd>
-                </div>
-              </dl>
-
-              {selected.teams.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {selected.teams.map(team => (
-                    <Badge key={team} variant="muted" className="gap-1.5">
-                      <span
-                        className={cn("size-1.5 rounded-full", teamColor(team))}
-                      />
-                      {tTeams(teamLabelKey(team))}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              <MemberTourProgress userId={selected._id as Id<"users">} />
-
-              {isAdmin && (
-                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-                  <Button
-                    variant="outline"
-                    size={isMobile ? "default" : "sm"}
-                    className="w-full sm:w-auto"
-                    onClick={() => onReinvite(selected)}
-                  >
-                    <Send /> {t("reinvite")}
-                  </Button>
-                  {selected._id !== me._id && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size={isMobile ? "default" : "sm"}
-                        className="w-full sm:w-auto"
-                        onClick={() =>
-                          void toggleStatus(
-                            selected._id as Id<"users">,
-                            selected.status === "active"
-                          )
-                        }
-                      >
-                        {selected.status === "active"
-                          ? t("suspend")
-                          : t("activate")}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size={isMobile ? "default" : "sm"}
-                        className="col-span-2 w-full sm:w-auto"
-                        onClick={() => void onRemove(selected)}
-                      >
-                        <UserMinus /> {t("removeMember")}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
+      />
     </div>
   );
 }
@@ -1109,6 +850,16 @@ export default function AdminPage() {
   const isManager = useIsManager();
   const me = useCurrentUser();
   const isAdmin = me.role === "admin";
+  const { currentStep } = useTour();
+  const [tab, setTab] = useState("requests");
+
+  // The Members section is a tab, not its own route, so the onboarding tour
+  // can't reach it by navigating. When the tour spotlights member management,
+  // switch to that tab so the highlighted target is actually on screen.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (currentStep?.id === "admin.members") setTab("members");
+  }, [currentStep?.id]);
 
   if (!isManager) {
     return (
@@ -1124,7 +875,7 @@ export default function AdminPage() {
         icon={<ShieldCheck />}
       />
       <AdminOverview isAdmin={isAdmin} />
-      <Tabs defaultValue="requests">
+      <Tabs value={tab} onValueChange={setTab}>
         {/* On mobile the tabs become a full-width segmented control so each
             target sits in the thumb zone; on desktop they revert to the
             compact inline pill bar. */}

@@ -162,7 +162,6 @@ export function Sidebar() {
           icon: Activity,
           adminOnly: true,
           external: true,
-          tourAttr: "tour-nav-activity",
         },
         {
           href: "/settings",

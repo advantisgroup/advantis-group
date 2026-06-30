@@ -167,6 +167,74 @@ export const listConversations = query({
   },
 });
 
+/**
+ * Conversations the signed-in user and `otherUserId` are both members of —
+ * the "mutual chats & groups" shown on a colleague's profile card. Returns the
+ * shared DM (if any) plus every group they both belong to.
+ */
+export const mutualConversations = query({
+  args: { otherUserId: v.id("users") },
+  handler: async (ctx, { otherUserId }) => {
+    const user = await requireUser(ctx);
+    if (otherUserId === user._id) return [];
+
+    const theirConvIds = new Set(
+      (
+        await ctx.db
+          .query("conversationMembers")
+          .withIndex("by_user", q => q.eq("userId", otherUserId))
+          .collect()
+      ).map(m => m.conversationId)
+    );
+
+    const mine = await ctx.db
+      .query("conversationMembers")
+      .withIndex("by_user", q => q.eq("userId", user._id))
+      .collect();
+    const shared = mine.filter(m => theirConvIds.has(m.conversationId));
+
+    const rows = await Promise.all(
+      shared.map(async m => {
+        const conversation = await ctx.db.get(m.conversationId);
+        if (!conversation) return null;
+
+        const members = await ctx.db
+          .query("conversationMembers")
+          .withIndex("by_conversation", q =>
+            q.eq("conversationId", conversation._id)
+          )
+          .collect();
+
+        const other =
+          conversation.type === "dm"
+            ? await ctx.db.get(otherUserId)
+            : null;
+        const avatar =
+          conversation.type === "dm" && other
+            ? other.avatarStorageId
+              ? await ctx.storage.getUrl(other.avatarStorageId)
+              : (other.avatarUrl ?? null)
+            : null;
+
+        return {
+          _id: conversation._id,
+          type: conversation.type,
+          title:
+            conversation.type === "group"
+              ? (conversation.name ?? "Group")
+              : memberDisplay(other),
+          avatar,
+          memberCount: members.length,
+        };
+      })
+    );
+
+    return rows
+      .filter((r): r is NonNullable<typeof r> => r !== null)
+      .sort((a, b) => (a.type === "dm" ? -1 : b.type === "dm" ? 1 : 0));
+  },
+});
+
 export const getOrCreateDm = mutation({
   args: { otherUserId: v.id("users") },
   handler: async (ctx, { otherUserId }) => {

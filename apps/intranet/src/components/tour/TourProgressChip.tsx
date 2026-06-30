@@ -12,6 +12,7 @@ import {
   Settings2,
   SkipForward,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import {
@@ -46,6 +47,7 @@ function StatusDot({ status }: { status: CheckpointStatus }) {
 export function TourProgressChip() {
   const { state, visibleCheckpoints, currentCheckpoint, redoCheckpoint } =
     useTour();
+  const tt = useTranslations("Tour");
   const router = useRouter();
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
@@ -64,7 +66,7 @@ export function TourProgressChip() {
 
   const triggerClass =
     "group flex h-8 items-center gap-2 rounded-full border border-border/70 bg-background/60 px-2 text-xs font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-  const ariaLabel = `Onboarding tour: ${done} of ${total} checkpoints complete`;
+  const ariaLabel = tt("chipAria", { done, total });
 
   const triggerInner = (
     <>
@@ -90,7 +92,7 @@ export function TourProgressChip() {
     <div className="space-y-3">
       <div>
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">Onboarding tour</p>
+          <p className="text-sm font-semibold">{tt("chipTitle")}</p>
           <span className="text-xs tabular-nums text-muted-foreground">
             {done}/{total}
           </span>
@@ -104,8 +106,8 @@ export function TourProgressChip() {
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
           {done === 0
-            ? "Pick a section to get started."
-            : `${total - done} ${total - done === 1 ? "section" : "sections"} left to explore.`}
+            ? tt("chipStart")
+            : tt("chipRemaining", { count: total - done })}
         </p>
       </div>
 
@@ -129,7 +131,9 @@ export function TourProgressChip() {
                 )}
               >
                 <StatusDot status={status} />
-                <span className="flex-1 truncate">{cp.label}</span>
+                <span className="flex-1 truncate">
+                  {tt(`checkpoints.${cp.id}`)}
+                </span>
                 {status !== "completed" && (
                   <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" />
                 )}
@@ -149,7 +153,7 @@ export function TourProgressChip() {
       >
         <span className="flex items-center gap-1.5">
           <Settings2 className="size-3.5" />
-          View details in settings
+          {tt("viewInSettings")}
         </span>
         <ChevronRight className="size-3.5" />
       </button>
