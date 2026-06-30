@@ -2,8 +2,8 @@
 
 import { motion } from "framer-motion";
 
-import { useTour } from "./TourProvider";
 import { TourProgressPopover } from "./TourProgressPopover";
+import { useTour } from "./TourProvider";
 
 export function TourProgressBar() {
   const { state, visibleCheckpoints } = useTour();

@@ -5,8 +5,8 @@ import { Trophy } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-import { useTour } from "./TourProvider";
 import { TourConfetti } from "./TourConfetti";
+import { useTour } from "./TourProvider";
 
 export function TourCompletionScreen() {
   const { phase, endTour, redoTour } = useTour();
@@ -17,7 +17,11 @@ export function TourCompletionScreen() {
       {isComplete && (
         <motion.div
           className="fixed inset-0 flex flex-col items-center justify-center"
-          style={{ zIndex: 60, backdropFilter: "blur(12px)", background: "rgba(0,0,0,0.82)" }}
+          style={{
+            zIndex: 60,
+            backdropFilter: "blur(12px)",
+            background: "rgba(0,0,0,0.82)",
+          }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -56,11 +60,7 @@ export function TourCompletionScreen() {
             </div>
 
             <div className="flex flex-col items-center gap-2 sm:flex-row">
-              <Button
-                size="lg"
-                onClick={endTour}
-                className="min-w-36"
-              >
+              <Button size="lg" onClick={endTour} className="min-w-36">
                 Get started
               </Button>
               <Button

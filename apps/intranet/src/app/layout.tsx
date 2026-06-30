@@ -1,4 +1,3 @@
-import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 import { Manrope, Outfit } from "next/font/google";
@@ -10,6 +9,8 @@ import { getLocale, getMessages } from "next-intl/server";
 import ConvexClientProvider from "@/components/ConvexClientProvider";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+
+import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 

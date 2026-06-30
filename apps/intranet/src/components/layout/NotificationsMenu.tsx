@@ -1,11 +1,10 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { Bell, ChevronRight } from "lucide-react";
-
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { useMutation, useQuery } from "convex/react";
+import { Bell, ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";

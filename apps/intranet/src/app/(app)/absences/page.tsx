@@ -1,12 +1,12 @@
 "use client";
 
-import { useMutation, useQuery } from "convex/react";
-import { Clock, Plane, Plus } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type AbsenceType } from "@advantis/types";
+import { useMutation, useQuery } from "convex/react";
+import { Clock, Plane, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 

@@ -1,20 +1,29 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-
-import { useMutation } from "convex/react";
-import { Camera, Check, Circle, RotateCcw, RotateCw, SkipForward } from "lucide-react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
+import { useMutation } from "convex/react";
+import {
+  Camera,
+  Check,
+  Circle,
+  RotateCcw,
+  RotateCw,
+  SkipForward,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { useCurrentUser } from "@/components/providers/current-user";
-import { useTour } from "@/components/tour/TourProvider";
 import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
-import type { CheckpointId, CheckpointStatus } from "@/components/tour/tour-types";
+import type {
+  CheckpointId,
+  CheckpointStatus,
+} from "@/components/tour/tour-types";
+import { useTour } from "@/components/tour/TourProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,9 +35,12 @@ import { initials } from "@/lib/format";
 import { uploadToConvex } from "@/lib/upload";
 
 function CheckpointStatusIcon({ status }: { status: CheckpointStatus }) {
-  if (status === "completed") return <Check className="size-3.5 text-green-500" />;
-  if (status === "skipped") return <SkipForward className="size-3.5 text-muted-foreground" />;
-  if (status === "active") return <Circle className="size-3.5 fill-blue-500 text-blue-500" />;
+  if (status === "completed")
+    return <Check className="size-3.5 text-green-500" />;
+  if (status === "skipped")
+    return <SkipForward className="size-3.5 text-muted-foreground" />;
+  if (status === "active")
+    return <Circle className="size-3.5 fill-blue-500 text-blue-500" />;
   return <Circle className="size-3.5 text-muted-foreground/40" />;
 }
 
@@ -37,7 +49,12 @@ export default function SettingsPage() {
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const user = useCurrentUser();
-  const { state: tourState, visibleCheckpoints, redoCheckpoint, redoTour } = useTour();
+  const {
+    state: tourState,
+    visibleCheckpoints,
+    redoCheckpoint,
+    redoTour,
+  } = useTour();
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
@@ -226,7 +243,7 @@ export default function SettingsPage() {
                       variant="ghost"
                       size="sm"
                       className="h-7 shrink-0 gap-1 px-2 text-xs"
-                      onClick={() => redoCheckpoint(cp.id as CheckpointId)}
+                      onClick={() => redoCheckpoint(cp.id)}
                     >
                       <RotateCcw className="size-3" />
                       Redo

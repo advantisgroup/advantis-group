@@ -1,19 +1,18 @@
 "use client";
 
 import type { ReactNode } from "react";
-
-import { useMutation, useQuery } from "convex/react";
 import { useEffect, useRef } from "react";
 
 import { api } from "@advantis/convex/api";
+import { useMutation, useQuery } from "convex/react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { RequestAccessGate } from "@/components/layout/RequestAccessGate";
+import { BrandLogo } from "@/components/Logo";
 import {
   type CurrentUser,
   CurrentUserProvider,
 } from "@/components/providers/current-user";
-import { BrandLogo } from "@/components/Logo";
 import { ConfirmProvider } from "@/components/ui/dialog";
 
 function FullScreenLoader() {

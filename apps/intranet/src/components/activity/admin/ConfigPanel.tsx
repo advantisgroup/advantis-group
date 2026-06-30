@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   Building2,
@@ -9,12 +11,10 @@ import {
   Loader2,
   SlidersHorizontal,
 } from "lucide-react";
-import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import { useToast } from "@/lib/activity/useToast";
-import { useActionWithToast } from "@/lib/activity/useActionWithToast";
-import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+
 import { Reveal } from "@/components/activity/motion/Reveal";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -23,9 +23,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useI18n } from "@/lib/activity/i18n";
+import { useActionWithToast } from "@/lib/activity/useActionWithToast";
+import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+import { useToast } from "@/lib/activity/useToast";
 
 /** A single labelled numeric config field with a unit suffix. */
 function NumberField({

@@ -1,12 +1,13 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
-import { useQuery } from "convex/react";
 import { api } from "@advantis/convex/api";
+import { useQuery } from "convex/react";
+import { AlertTriangle } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
 import type { EmployeeState } from "@/lib/activity/format";
 import { useI18n } from "@/lib/activity/i18n";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 /**
  * Shared building blocks for the fused employee state, used on both the Overview

@@ -1,27 +1,16 @@
 "use client";
 
 import { useState } from "react";
+
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { AlertTriangle, CheckCircle2, WifiOff } from "lucide-react";
-import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import {
-  formatDuration,
-  formatRelativeTime,
-  formatTime,
-  roleAtLeast,
-  type Role,
-} from "@/lib/activity/fmt";
-import {
-  SEVERITY_DOT_CLASS as SEV_DOT,
-  type Severity,
-} from "@/lib/activity/ui";
-import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+
 import { InfoTip } from "@/components/activity/InfoTip";
-import { Card, CardContent } from "@/components/ui/card";
+import { SkeletonCard } from "@/components/activity/Skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { SkeletonCard } from "@/components/activity/Skeleton";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -31,6 +20,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  formatDuration,
+  formatRelativeTime,
+  formatTime,
+  roleAtLeast,
+  type Role,
+} from "@/lib/activity/fmt";
+import { useI18n } from "@/lib/activity/i18n";
+import {
+  SEVERITY_DOT_CLASS as SEV_DOT,
+  type Severity,
+} from "@/lib/activity/ui";
+import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
 
 const SEV_VARIANT: Record<Severity, "muted" | "warning" | "destructive"> = {
   info: "muted",

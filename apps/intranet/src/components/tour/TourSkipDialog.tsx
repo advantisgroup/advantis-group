@@ -27,7 +27,8 @@ export function useTourEndTour() {
   return async function triggerEndTour() {
     const ok = await confirm({
       title: "End the tour?",
-      description: "Your progress is saved. You can restart anytime from Settings → Tour.",
+      description:
+        "Your progress is saved. You can restart anytime from Settings → Tour.",
       confirmLabel: "End tour",
       cancelLabel: "Keep going",
     });

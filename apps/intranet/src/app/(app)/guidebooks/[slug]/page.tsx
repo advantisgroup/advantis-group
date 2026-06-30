@@ -1,9 +1,8 @@
 "use client";
 
-import { ArrowLeft, BookOpen } from "lucide-react";
-
 import { useParams } from "next/navigation";
 
+import { ArrowLeft, BookOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {

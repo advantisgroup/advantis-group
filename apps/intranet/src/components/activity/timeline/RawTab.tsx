@@ -1,7 +1,5 @@
 "use client";
 
-import { useI18n } from "@/lib/activity/i18n";
-import { formatDuration, formatTime } from "@/lib/activity/fmt";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -11,6 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDuration, formatTime } from "@/lib/activity/fmt";
+import { useI18n } from "@/lib/activity/i18n";
 
 interface RawSample {
   _id: string;

@@ -1,12 +1,12 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { MessageSquare } from "lucide-react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
+import { useQuery } from "convex/react";
+import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { ConversationView } from "@/components/chat/ConversationView";

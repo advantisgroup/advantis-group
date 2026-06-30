@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   Activity,
@@ -9,19 +11,19 @@ import {
   Moon,
   PowerOff,
 } from "lucide-react";
-import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
-import { formatDuration, formatRelativeTime } from "@/lib/activity/fmt";
-import { cn } from "@/lib/utils";
-import { isWorkingState, type StateName } from "@/lib/activity/activity";
-import { Card, CardContent } from "@/components/ui/card";
-import { StatCard } from "@/components/activity/StatCard";
-import { SkeletonCard } from "@/components/activity/Skeleton";
+
+import { Stagger, StaggerItem } from "@/components/activity/motion/Stagger";
 import { QueryState } from "@/components/activity/QueryState";
 import { SetupChecklist } from "@/components/activity/SetupChecklist";
-import { Stagger, StaggerItem } from "@/components/activity/motion/Stagger";
+import { SkeletonCard } from "@/components/activity/Skeleton";
+import { StatCard } from "@/components/activity/StatCard";
 import { HealthBanner } from "@/components/activity/state/StateBits";
 import { StatusSummary } from "@/components/activity/state/StatusSummary";
+import { Card, CardContent } from "@/components/ui/card";
+import { isWorkingState, type StateName } from "@/lib/activity/activity";
+import { formatDuration, formatRelativeTime } from "@/lib/activity/fmt";
+import { useI18n } from "@/lib/activity/i18n";
+import { cn } from "@/lib/utils";
 
 /** The four headline figures for the whole fleet. */
 function FleetSummary({

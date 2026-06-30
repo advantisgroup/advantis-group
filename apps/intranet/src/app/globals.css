@@ -83,7 +83,8 @@
 }
 
 @keyframes tour-pulse-ring {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 oklch(60% 0.2 250 / 0.8);
   }
 

@@ -9,11 +9,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
 import {
   STATE_NAMES,
   type HourStateBucket,
   type StateName,
 } from "@/lib/activity/activity";
+
 import { CHART, STATE_COLOR, tooltipStyle } from "./theme";
 
 /**

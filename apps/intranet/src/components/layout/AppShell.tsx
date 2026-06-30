@@ -1,13 +1,12 @@
 "use client";
 
 import type { ReactNode } from "react";
-
-import { useMutation } from "convex/react";
 import { useEffect, useRef } from "react";
 
 import { usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { useMutation } from "convex/react";
 
 import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -61,13 +60,17 @@ function AppShellInner({ children }: { children: ReactNode }) {
           data-tour="tour-header"
           className={cn(
             "sticky top-0 z-30 border-b border-border/70 bg-background/70 backdrop-blur-xl",
-            tourActive ? "flex flex-col" : "flex h-12 md:h-16 items-center gap-1 px-2.5 md:px-4"
+            tourActive
+              ? "flex flex-col"
+              : "flex h-12 md:h-16 items-center gap-1 px-2.5 md:px-4"
           )}
         >
-          <div className={cn(
-            "flex items-center gap-1 px-2.5 md:px-4",
-            tourActive ? "h-12 md:h-16" : "flex-1"
-          )}>
+          <div
+            className={cn(
+              "flex items-center gap-1 px-2.5 md:px-4",
+              tourActive ? "h-12 md:h-16" : "flex-1"
+            )}
+          >
             <SidebarTrigger className="-ml-1" />
             {/* Search lives in the desktop header, but on mobile it moves to the
                 reachable bottom bar — so here it's just a flex spacer. The
@@ -88,7 +91,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
           </div>
 
           {/* Tour progress bar — only shown when tour is active */}
-          {(tourState?.active || tourPhase === "complete") && <TourProgressBar />}
+          {(tourState?.active || tourPhase === "complete") && (
+            <TourProgressBar />
+          )}
         </header>
         <main
           ref={mainRef}
@@ -107,7 +112,11 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {!immersive && <BottomNav />}
 
       {/* Tour UI layers (portal-based, fixed position) */}
-      <TourOverlay targetRect={targetRect} visible={tourActive} onClick={advance} />
+      <TourOverlay
+        targetRect={targetRect}
+        visible={tourActive}
+        onClick={advance}
+      />
       <TourSpotlight targetRect={targetRect} visible={tourActive} />
       <TourPopout />
       <TourCompletionScreen />

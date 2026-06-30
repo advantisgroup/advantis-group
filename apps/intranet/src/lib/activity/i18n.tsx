@@ -2,13 +2,15 @@
 
 import { useCallback } from "react";
 
-import { useLocale } from "next-intl";
 import { useRouter } from "next/navigation";
+
+import { useLocale } from "next-intl";
 
 import { setLocale } from "@/i18n/locale-action";
 
 import { de } from "./locales/de";
 import { en } from "./locales/en";
+
 import type { Dict, Lang } from "./locales/types";
 
 export type { Lang } from "./locales/types";

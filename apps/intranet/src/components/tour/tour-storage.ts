@@ -1,5 +1,10 @@
-import type { CheckpointId, CheckpointStatus, TourLocalState } from "./tour-types";
 import { TOUR_CHECKPOINTS } from "./tour-config";
+
+import type {
+  CheckpointId,
+  CheckpointStatus,
+  TourLocalState,
+} from "./tour-types";
 
 const VERSION = 1 as const;
 
@@ -8,7 +13,10 @@ function storageKey(userId: string) {
 }
 
 function buildInitialState(): TourLocalState {
-  const checkpoints = {} as Record<CheckpointId, { status: CheckpointStatus; currentStepIndex: number }>;
+  const checkpoints = {} as Record<
+    CheckpointId,
+    { status: CheckpointStatus; currentStepIndex: number }
+  >;
   for (const cp of TOUR_CHECKPOINTS) {
     checkpoints[cp.id] = { status: "pending", currentStepIndex: 0 };
   }

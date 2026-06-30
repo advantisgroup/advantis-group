@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { CheckCircle2, ChevronRight, Circle } from "lucide-react";
-import { api } from "@advantis/convex/api";
-import { useI18n } from "@/lib/activity/i18n";
+
 import { Card, CardContent } from "@/components/ui/card";
+import { useI18n } from "@/lib/activity/i18n";
 import { cn } from "@/lib/utils";
 
 /**

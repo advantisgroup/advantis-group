@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   Activity,
@@ -16,8 +17,6 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-
-import { api } from "@advantis/convex/api";
 import { useTranslations } from "next-intl";
 
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
@@ -31,7 +30,6 @@ import {
   useIsAdmin,
   useIsManager,
 } from "@/components/providers/current-user";
-import { cn } from "@/lib/utils";
 import {
   Sidebar as SidebarShell,
   SidebarContent,
@@ -46,6 +44,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   href: string;
@@ -86,13 +85,30 @@ export function Sidebar() {
   const groups: NavGroup[] = [
     {
       labelKey: "groupGeneral",
-      items: [{ href: "/", labelKey: "dashboard", icon: LayoutDashboard, tourAttr: "tour-nav-dashboard" }],
+      items: [
+        {
+          href: "/",
+          labelKey: "dashboard",
+          icon: LayoutDashboard,
+          tourAttr: "tour-nav-dashboard",
+        },
+      ],
     },
     {
       labelKey: "groupWorkspace",
       items: [
-        { href: "/calendar", labelKey: "calendar", icon: Calendar, tourAttr: "tour-nav-calendar" },
-        { href: "/absences", labelKey: "absences", icon: Plane, tourAttr: "tour-nav-absences" },
+        {
+          href: "/calendar",
+          labelKey: "calendar",
+          icon: Calendar,
+          tourAttr: "tour-nav-calendar",
+        },
+        {
+          href: "/absences",
+          labelKey: "absences",
+          icon: Plane,
+          tourAttr: "tour-nav-absences",
+        },
         {
           href: "/announcements",
           labelKey: "announcements",
@@ -113,9 +129,21 @@ export function Sidebar() {
       labelKey: "groupResources",
       items: [
         ...(hasGuidebooks
-          ? [{ href: "/guidebooks", labelKey: "guidebooks", icon: BookOpen, tourAttr: "tour-nav-guidebooks" }]
+          ? [
+              {
+                href: "/guidebooks",
+                labelKey: "guidebooks",
+                icon: BookOpen,
+                tourAttr: "tour-nav-guidebooks",
+              },
+            ]
           : []),
-        { href: "/directory", labelKey: "directory", icon: Users, tourAttr: "tour-nav-directory" },
+        {
+          href: "/directory",
+          labelKey: "directory",
+          icon: Users,
+          tourAttr: "tour-nav-directory",
+        },
       ],
     },
     {
@@ -136,7 +164,12 @@ export function Sidebar() {
           external: true,
           tourAttr: "tour-nav-activity",
         },
-        { href: "/settings", labelKey: "settings", icon: Settings, tourAttr: "tour-nav-settings" },
+        {
+          href: "/settings",
+          labelKey: "settings",
+          icon: Settings,
+          tourAttr: "tour-nav-settings",
+        },
       ],
     },
   ];

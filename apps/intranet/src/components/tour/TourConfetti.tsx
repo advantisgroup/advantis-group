@@ -15,12 +15,12 @@ interface Particle {
 }
 
 const COLORS = [
-  "oklch(70% 0.18 250)",  // blue
-  "oklch(80% 0.18 150)",  // green
-  "oklch(85% 0.2 85)",    // yellow/gold
-  "oklch(70% 0.18 15)",   // red
-  "oklch(95% 0 0)",       // white
-  "oklch(75% 0.18 300)",  // purple
+  "oklch(70% 0.18 250)", // blue
+  "oklch(80% 0.18 150)", // green
+  "oklch(85% 0.2 85)", // yellow/gold
+  "oklch(70% 0.18 15)", // red
+  "oklch(95% 0 0)", // white
+  "oklch(75% 0.18 300)", // purple
 ];
 
 export function TourConfetti() {
@@ -44,7 +44,7 @@ export function TourConfetti() {
         y: Math.random() * canvas.height * 0.4 - 50,
         vx: (Math.random() - 0.5) * 5,
         vy: Math.random() * -8 - 2,
-        color: COLORS[Math.floor(Math.random() * COLORS.length)]!,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
         size: Math.random() * 7 + 4,
         rotation: Math.random() * Math.PI * 2,
         rotationSpeed: (Math.random() - 0.5) * 0.15,
@@ -62,7 +62,7 @@ export function TourConfetti() {
       let alive = 0;
       for (const p of particles) {
         p.vy += 0.18; // gravity
-        p.vx *= 0.99;  // air resistance
+        p.vx *= 0.99; // air resistance
         p.x += p.vx;
         p.y += p.vy;
         p.rotation += p.rotationSpeed;
@@ -73,7 +73,10 @@ export function TourConfetti() {
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
         ctx.fillStyle = p.color;
-        ctx.globalAlpha = Math.max(0, 1 - Math.max(0, p.y - canvas.height * 0.8) / (canvas.height * 0.2));
+        ctx.globalAlpha = Math.max(
+          0,
+          1 - Math.max(0, p.y - canvas.height * 0.8) / (canvas.height * 0.2)
+        );
 
         if (p.shape === "rect") {
           ctx.fillRect(-p.size / 2, -p.size / 4, p.size, p.size / 2);

@@ -12,7 +12,13 @@ interface Props {
 const SPRING = { stiffness: 280, damping: 32 };
 
 export function TourSpotlight({ targetRect, visible }: Props) {
-  const defaultRect: TargetRect = { x: -200, y: -200, width: 100, height: 50, rx: 8 };
+  const defaultRect: TargetRect = {
+    x: -200,
+    y: -200,
+    width: 100,
+    height: 50,
+    rx: 8,
+  };
   const r = targetRect ?? defaultRect;
 
   const x = useSpring(r.x, SPRING);

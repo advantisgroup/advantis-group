@@ -1,9 +1,8 @@
 "use client";
 
+import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { Menu, Search } from "lucide-react";
-
-import { api } from "@advantis/convex/api";
 import { useTranslations } from "next-intl";
 
 import { useSidebar } from "@/components/ui/sidebar";
