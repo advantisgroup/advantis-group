@@ -101,24 +101,24 @@ export default function SettingsPage() {
       {/* Personal identity hero */}
       <Card className="overflow-hidden" data-tour="tour-settings-profile">
         <div className="app-atmosphere flex items-center gap-4 border-b border-border/60 px-5 py-5">
-          <div className="relative">
+          <label className="group relative cursor-pointer">
             <Avatar className="size-16 ring-2 ring-background">
               {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
               <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
                 {initials(user.name, user.email)}
               </AvatarFallback>
             </Avatar>
-            <label className="absolute -bottom-1 -right-1 flex size-7 cursor-pointer items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors hover:bg-accent">
+            <span className="absolute -bottom-1 -right-1 flex size-7 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition-colors group-hover:bg-accent">
               <Camera className="size-3.5" />
-              <span className="sr-only">{t("uploadAvatar")}</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onAvatar}
-              />
-            </label>
-          </div>
+            </span>
+            <span className="sr-only">{t("uploadAvatar")}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onAvatar}
+            />
+          </label>
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">
               {t("account")}
