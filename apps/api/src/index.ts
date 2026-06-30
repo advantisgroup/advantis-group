@@ -4,13 +4,16 @@ import { Elysia } from "elysia";
 import { isAllowedOrigin, PORT } from "./lib/env.js";
 import { ApiError } from "./lib/errors.js";
 import { activityRoute } from "./routes/activity.js";
+import { onedriveRoute } from "./routes/onedrive.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { internalClockodoImportRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
+import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
 import { meRoute } from "./routes/me.js";
 import { unfurlRoute } from "./routes/unfurl.js";
 import { clerkWebhookRoute } from "./routes/webhooks/clerk.js";
 import { clockodoWebhookRoute } from "./routes/webhooks/clockodo.js";
+import { onedriveWebhookRoute } from "./routes/webhooks/onedrive.js";
 
 export const app = new Elysia()
   .use(
@@ -50,9 +53,12 @@ export const app = new Elysia()
   .use(unfurlRoute)
   .use(clerkWebhookRoute)
   .use(clockodoWebhookRoute)
+  .use(onedriveWebhookRoute)
   .use(internalNotificationsRoute)
   .use(internalClockodoImportRoute)
+  .use(internalOnedriveRoute)
   .use(activityRoute)
+  .use(onedriveRoute)
   .use(wikiChatRoute);
 
 export type App = typeof app;

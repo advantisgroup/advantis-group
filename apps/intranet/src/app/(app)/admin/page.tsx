@@ -10,12 +10,14 @@ import {
   Clock,
   Copy,
   KeyRound,
+  Lock,
   Mail,
   MoreHorizontal,
   RotateCw,
   Search,
   Send,
   ShieldCheck,
+  UploadCloud,
   UserMinus,
   Users,
   Users2,
@@ -23,6 +25,8 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { OneDriveAuditPanel } from "@/components/onedrive/OneDriveAuditPanel";
+import { UploadApprovalQueue } from "@/components/onedrive/UploadApprovalQueue";
 import { PageHeader } from "@/components/PageHeader";
 import { UserProfile } from "@/components/profile/UserProfile";
 import {
@@ -450,6 +454,8 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const setStatus = useAction(api.users.setStatus);
   const removeMember = useAction(api.members.remove);
   const reinvite = useAction(api.members.reinvite);
+  const setUploadPermission = useAction(api.users.setUploadPermission);
+  const setGfAccess = useAction(api.users.setGfAccess);
   const handleError = useErrorHandler();
 
   type Member = NonNullable<typeof members>[number];
@@ -518,6 +524,27 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     toast.success(t("emailCopied"));
   }
 
+  function toggleUploads(m: Member) {
+    setUploadPermission({
+      userId: m._id as Id<"users">,
+      enabled: !m.uploadRequestsEnabled,
+    })
+      .then(() =>
+        toast.success(
+          m.uploadRequestsEnabled ? t("uploadsDisabled") : t("uploadsEnabled")
+        )
+      )
+      .catch(handleError);
+  }
+
+  function toggleGf(m: Member) {
+    setGfAccess({ userId: m._id as Id<"users">, gfAccess: !m.gfAccess })
+      .then(() =>
+        toast.success(m.gfAccess ? t("gfRevoked") : t("gfGranted"))
+      )
+      .catch(handleError);
+  }
+
   function MemberMenu({ m }: { m: Member }) {
     const isSelf = m._id === me._id;
     return (
@@ -527,35 +554,54 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-52">
           <DropdownMenuItem onClick={() => setSelectedId(m._id as Id<"users">)}>
             <Users2 className="size-4" /> {t("viewProfile")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => copyEmail(m.email)}>
             <Copy className="size-4" /> {t("copyEmail")}
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onReinvite(m)}>
-            <Send className="size-4" /> {t("reinvite")}
+          {/* OneDrive: upload-request permission is manager-grantable. */}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => toggleUploads(m)}>
+            <UploadCloud className="size-4" />{" "}
+            {m.uploadRequestsEnabled ? t("disableUploads") : t("enableUploads")}
           </DropdownMenuItem>
-          {!isSelf && (
-            <DropdownMenuItem
-              onClick={() =>
-                void toggleStatus(m._id as Id<"users">, m.status === "active")
-              }
-            >
-              <ShieldCheck className="size-4" />{" "}
-              {m.status === "active" ? t("suspend") : t("activate")}
+          {isAdmin && (
+            <DropdownMenuItem onClick={() => toggleGf(m)}>
+              <Lock className="size-4" />{" "}
+              {m.gfAccess ? t("revokeGf") : t("grantGf")}
             </DropdownMenuItem>
           )}
-          {!isSelf && (
+          {isAdmin && (
             <>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={() => void onRemove(m)}
-              >
-                <UserMinus className="size-4" /> {t("removeMember")}
+              <DropdownMenuItem onClick={() => onReinvite(m)}>
+                <Send className="size-4" /> {t("reinvite")}
               </DropdownMenuItem>
+              {!isSelf && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    void toggleStatus(
+                      m._id as Id<"users">,
+                      m.status === "active"
+                    )
+                  }
+                >
+                  <ShieldCheck className="size-4" />{" "}
+                  {m.status === "active" ? t("suspend") : t("activate")}
+                </DropdownMenuItem>
+              )}
+              {!isSelf && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => void onRemove(m)}
+                  >
+                    <UserMinus className="size-4" /> {t("removeMember")}
+                  </DropdownMenuItem>
+                </>
+              )}
             </>
           )}
         </DropdownMenuContent>
@@ -602,11 +648,16 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             </div>
           </button>
           <div className="flex shrink-0 items-center gap-2">
+            {m.gfAccess && (
+              <Badge variant="muted" className="hidden text-[10px] sm:inline-flex">
+                GF
+              </Badge>
+            )}
             <Badge variant="muted" className="hidden sm:inline-flex">
               {tRoles(m.role)}
             </Badge>
             <TourProgressChip userId={m._id as Id<"users">} />
-            {isAdmin && <MemberMenu m={m} />}
+            <MemberMenu m={m} />
           </div>
         </div>
       </Card>
@@ -853,6 +904,13 @@ export default function AdminPage() {
   const { currentStep } = useTour();
   const [tab, setTab] = useState("requests");
 
+  // Deep-link support: upload-approval notifications link to /admin?tab=uploads.
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get("tab");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (param) setTab(param);
+  }, []);
+
   // The Members section is a tab, not its own route, so the onboarding tour
   // can't reach it by navigating. When the tour spotlights member management,
   // switch to that tab so the highlighted target is actually on screen.
@@ -882,7 +940,7 @@ export default function AdminPage() {
         <TabsList
           className={cn(
             "grid h-auto w-full gap-1 p-1 sm:inline-flex sm:h-10 sm:w-auto sm:gap-0",
-            isAdmin ? "grid-cols-2" : "grid-cols-3"
+            isAdmin ? "grid-cols-3" : "grid-cols-2"
           )}
         >
           <TabsTrigger value="requests" className="py-2 sm:py-1.5">
@@ -893,6 +951,13 @@ export default function AdminPage() {
           </TabsTrigger>
           <TabsTrigger value="members" className="py-2 sm:py-1.5">
             {t("members")}
+          </TabsTrigger>
+          <TabsTrigger
+            value="uploads"
+            className="py-2 sm:py-1.5"
+            data-tour="tour-admin-uploads"
+          >
+            {t("uploads")}
           </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="guests" className="py-2 sm:py-1.5">
@@ -908,6 +973,20 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="members">
           <Members isAdmin={isAdmin} />
+        </TabsContent>
+        <TabsContent value="uploads" className="space-y-8">
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+              {t("pendingUploads")}
+            </h3>
+            <UploadApprovalQueue />
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+              {t("oneDriveActivity")}
+            </h3>
+            <OneDriveAuditPanel />
+          </div>
         </TabsContent>
         {isAdmin && (
           <TabsContent value="guests">

@@ -90,6 +90,18 @@ export default defineSchema({
     external: v.optional(v.boolean()),
     /** Clockodo coworker id, for linking absence mirrors to this user. */
     clockodoUserId: v.optional(v.number()),
+    /**
+     * OneDrive: allowlist flag for the Geschäftsführung sub-tree. Access is a
+     * dedicated allowlist (admin-managed), NOT tied to manager rank — undefined
+     * or false means no access.
+     */
+    gfAccess: v.optional(v.boolean()),
+    /**
+     * OneDrive: whether this user may submit upload *requests* (still subject to
+     * manager approval). Default-on — undefined is treated as enabled; managers
+     * can revoke by setting false.
+     */
+    uploadRequestsEnabled: v.optional(v.boolean()),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })
@@ -595,6 +607,52 @@ export default defineSchema({
     completedAt: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // --- OneDrive integration ------------------------------------------------
+  // The intranet is the front page for one OneDrive subscription. Graph holds
+  // the bytes; Convex is the system-of-record for *who* uploaded/requested what,
+  // approvals/denials, and the suspicious-file scan reports. One row per upload
+  // or upload request. Managers' direct uploads also land here (status
+  // "approved") so every file in OneDrive traces back to a person.
+  onedriveUploads: defineTable({
+    requesterUserId: v.id("users"),
+    fileName: v.string(),
+    size: v.number(),
+    contentType: v.string(),
+    /** Target folder, AG-root-relative (e.g. "Team/Reports"). */
+    targetFolderPath: v.string(),
+    /** Convex storage blob holding the bytes while a request is pending. */
+    stagingStorageId: v.optional(v.id("_storage")),
+    /** JSON-encoded ScanReport from the in-house scanner. */
+    scanReport: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("denied"),
+      v.literal("uploading"),
+      v.literal("failed"),
+      v.literal("cancelled")
+    ),
+    /** Graph driveItem id, set once the bytes land in OneDrive. */
+    driveItemId: v.optional(v.string()),
+    reviewedByUserId: v.optional(v.id("users")),
+    reviewedAt: v.optional(v.number()),
+    decisionNote: v.optional(v.string()),
+    /** Last error when status is "failed", surfaced to the manager. */
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_user", ["requesterUserId"])
+    .index("by_driveItemId", ["driveItemId"]),
+
+  // Append-only audit of OneDrive actions (requests, approvals, deletes, …).
+  onedriveAudit: defineTable({
+    actorUserId: v.id("users"),
+    action: v.string(),
+    target: v.optional(v.string()),
+    at: v.number(),
+  }).index("by_at", ["at"]),
 
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs

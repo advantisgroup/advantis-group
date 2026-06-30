@@ -18,7 +18,8 @@
     "groupWorkspace": "Workspace",
     "groupResources": "Resources",
     "groupAdministration": "Administration",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "files": "Files"
   },
   "Common": {
     "save": "Save",
@@ -234,7 +235,8 @@
       "notifications": "Notifications",
       "settings": "Settings",
       "admin": "Admin Panel",
-      "activity": "Activity Tracking"
+      "activity": "Activity Tracking",
+      "files": "Files"
     },
     "steps": {
       "dashboard": {
@@ -350,6 +352,24 @@
           "title": "Fleet overview",
           "description": "Live counts show who's active, idle, or offline across all tracked devices."
         }
+      },
+      "files": {
+        "nav": {
+          "title": "Files",
+          "description": "Browse the team's OneDrive right here in the intranet."
+        },
+        "toolbar": {
+          "title": "Search, upload & more",
+          "description": "Find files, switch folders, and check storage at a glance."
+        },
+        "dropzone": {
+          "title": "Drag & drop to upload",
+          "description": "Drop files from your desktop, or use this button. Employee uploads go to a manager for approval first."
+        },
+        "browser": {
+          "title": "Open and preview",
+          "description": "Click a folder to open it, or a file to preview and download."
+        }
       }
     }
   },
@@ -418,7 +438,47 @@
     "inviteExternalHint": "External address — they'll be invited as a full member with the selected role.",
     "inviteExternalForbidden": "Only admins can invite external email addresses.",
     "inviteExternalTitle": "Invite an external user?",
-    "inviteExternalBody": "{email} is outside your company domains. They'll receive a Clerk invitation and get full access as the selected role. Send it anyway?"
+    "inviteExternalBody": "{email} is outside your company domains. They'll receive a Clerk invitation and get full access as the selected role. Send it anyway?",
+    "uploads": "Uploads",
+    "pendingUploads": "Pending approvals",
+    "oneDriveActivity": "OneDrive activity",
+    "noPendingUploads": "No uploads awaiting approval.",
+    "scan_clean": "Clean",
+    "scan_suspicious": "Suspicious",
+    "scan_blocked": "Blocked",
+    "scanReport": "Security scan",
+    "scanNoFlags": "No issues detected.",
+    "metaSize": "Size",
+    "metaType": "Type",
+    "metaRequestedAt": "Requested",
+    "metaTarget": "Destination",
+    "decisionNotePlaceholder": "Optional note to the requester…",
+    "uploadApproved": "Upload approved",
+    "uploadDenied": "Upload denied",
+    "genericError": "Something went wrong.",
+    "disableUploads": "Block upload requests",
+    "enableUploads": "Allow upload requests",
+    "revokeGf": "Revoke Geschäftsführung access",
+    "grantGf": "Grant Geschäftsführung access",
+    "uploadsDisabled": "Upload requests blocked",
+    "uploadsEnabled": "Upload requests allowed",
+    "gfRevoked": "Geschäftsführung access revoked",
+    "gfGranted": "Geschäftsführung access granted",
+    "noAudit": "No activity yet.",
+    "audit_request": "requested an upload of",
+    "audit_approve": "approved",
+    "audit_deny": "denied",
+    "audit_upload": "uploaded",
+    "audit_delete": "deleted",
+    "audit_mkdir": "created folder",
+    "audit_rename": "renamed",
+    "audit_move": "moved",
+    "audit_share": "shared",
+    "audit_restore": "restored",
+    "audit_grant_gf_access": "granted GF access to",
+    "audit_revoke_gf_access": "revoked GF access from",
+    "audit_enable_uploads": "enabled uploads for",
+    "audit_disable_uploads": "disabled uploads for"
   },
   "Teams": {
     "customerCare": "Customer Care",
@@ -653,5 +713,54 @@
       "cancel": "Cancel",
       "search": "Search"
     }
+  },
+  "Files": {
+    "title": "Files",
+    "quota": "{used} of {total} used",
+    "searchPlaceholder": "Search files…",
+    "newFolder": "New folder",
+    "folderName": "Folder name",
+    "create": "Create",
+    "cancel": "Cancel",
+    "save": "Save",
+    "upload": "Upload",
+    "requestUpload": "Request upload",
+    "colName": "Name",
+    "colUploadedBy": "Uploaded by",
+    "colModified": "Modified",
+    "colSize": "Size",
+    "actions": "Actions",
+    "preview": "Preview",
+    "download": "Download",
+    "versions": "Version history",
+    "share": "Share link",
+    "shareDesc": "Anyone with the link can view this file until it expires.",
+    "expiresIn": "Expires in",
+    "nDays": "{count, plural, one {# day} other {# days}}",
+    "createLink": "Create link",
+    "rename": "Rename",
+    "delete": "Delete",
+    "restore": "Restore",
+    "restored": "Version restored",
+    "noVersions": "No previous versions.",
+    "current": "current",
+    "folderCreated": "Folder created",
+    "renamed": "Renamed",
+    "noResults": "No matching files.",
+    "emptyFolder": "This folder is empty.",
+    "genericError": "Something went wrong.",
+    "uploadedCount": "{count, plural, one {# file uploaded} other {# files uploaded}}",
+    "requestedCount": "{count, plural, one {# file sent for approval} other {# files sent for approval}}",
+    "uploading": "Uploading…",
+    "deleteTitle": "Delete \"{name}\"?",
+    "deleteDesc": "This moves the item to the OneDrive recycle bin.",
+    "deleted": "Deleted",
+    "noPreview": "No preview available for this file.",
+    "dropTitle": "Drop files here",
+    "dropSubtitle": "Release to upload to this folder.",
+    "dropSubtitleApproval": "Release to send for manager approval.",
+    "uploadingApproval": "Sending for approval…",
+    "done": "Uploaded!",
+    "doneApproval": "Sent for approval!"
   }
 }

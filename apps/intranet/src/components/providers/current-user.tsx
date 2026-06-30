@@ -20,6 +20,8 @@ export interface CurrentUser {
   managerId: string | null;
   status: "active" | "suspended";
   external: boolean;
+  gfAccess: boolean;
+  uploadRequestsEnabled: boolean;
   avatar: string | null;
   lastSeenAt: number | null;
   createdAt: number;

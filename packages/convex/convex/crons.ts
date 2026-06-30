@@ -40,4 +40,13 @@ crons.daily(
   {}
 );
 
+// Keep the OneDrive change-notification subscription fresh (renew well within
+// its expiry) so the file-listing cache invalidates promptly on changes.
+crons.daily(
+  "onedrive: renew change subscription",
+  { hourUTC: 4, minuteUTC: 0 },
+  internal.onedrive.renewSubscription,
+  {}
+);
+
 export default crons;
