@@ -4,7 +4,7 @@ import type { ChangeEvent } from "react";
 import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
-import { useMutation } from "convex/react";
+import { useAction, useMutation } from "convex/react";
 import {
   Camera,
   Check,
@@ -52,7 +52,7 @@ export default function SettingsPage() {
     redoCheckpoint,
     redoTour,
   } = useTour();
-  const updateProfile = useMutation(api.users.updateProfile);
+  const updateProfile = useAction(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
 
