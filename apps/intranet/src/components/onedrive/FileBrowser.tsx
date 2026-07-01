@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import {
   type DriveQuota,
   type OneDriveItem,
@@ -55,6 +57,12 @@ import {
 import { FilePreviewDialog } from "./FilePreviewDialog";
 import { UploadDropOverlay } from "./UploadDropOverlay";
 
+/** Builds the shareable /files URL for a given OneDrive-relative path. */
+function pathToUrl(path: string): string {
+  const segments = path.split("/").filter(Boolean).map(encodeURIComponent);
+  return segments.length === 0 ? "/files" : `/files/${segments.join("/")}`;
+}
+
 /** File-type icon. Each branch renders a concrete (static) lucide component. */
 function ItemIcon({
   item,
@@ -105,14 +113,15 @@ function QuotaBar({ quota }: { quota: DriveQuota }) {
   );
 }
 
-export function FileBrowser() {
+export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   const t = useTranslations("Files");
   const od = useOneDriveApi();
   const confirm = useConfirm();
   const isMobile = useIsMobile();
+  const router = useRouter();
 
   const [configured, setConfigured] = useState<boolean | undefined>(undefined);
-  const [path, setPath] = useState("");
+  const [path, setPath] = useState(initialPath);
   const [listing, setListing] = useState<OneDriveListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [quota, setQuota] = useState<DriveQuota | null>(null);
@@ -128,20 +137,29 @@ export function FileBrowser() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // `push: false` updates the URL in place (initial load, browser back/forward);
+  // `push: true` (the default) adds a history entry so the back button steps
+  // back through folders the user drilled into.
   const load = useCallback(
-    async (next: string) => {
+    async (next: string, opts?: { push?: boolean }) => {
       setLoading(true);
       try {
         const data = await od.list(next);
         setListing(data);
         setPath(data.path);
+        const url = pathToUrl(data.path);
+        if (opts?.push === false) {
+          router.replace(url);
+        } else {
+          router.push(url);
+        }
       } catch (e) {
         toast.error(e instanceof Error ? e.message : t("genericError"));
       } finally {
         setLoading(false);
       }
     },
-    [od, t]
+    [od, t, router]
   );
 
   // Resolve whether OneDrive is configured before firing any Graph-backed calls.
@@ -152,10 +170,12 @@ export function FileBrowser() {
       .catch(() => setConfigured(false));
   }, [od]);
 
+  // Loads whatever folder the URL points at — on mount, and again whenever
+  // `initialPath` changes from outside (browser back/forward, a direct link).
   useEffect(() => {
     if (configured !== true) return;
-    void load("");
-  }, [configured, load]);
+    void load(initialPath, { push: false });
+  }, [configured, initialPath, load]);
 
   useEffect(() => {
     if (configured !== true) return;
@@ -165,7 +185,10 @@ export function FileBrowser() {
       .catch(() => setQuota(null));
   }, [configured, od]);
 
-  const refresh = useCallback(() => void load(path), [load, path]);
+  const refresh = useCallback(
+    () => void load(path, { push: false }),
+    [load, path]
+  );
 
   // Debounced search.
   useEffect(() => {
