@@ -137,21 +137,19 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // `push: false` updates the URL in place (initial load, browser back/forward);
-  // `push: true` (the default) adds a history entry so the back button steps
-  // back through folders the user drilled into.
+  // Fetches a folder's contents. The URL is expected to already point at
+  // `next` (navigate() below updates it up front); this only corrects the
+  // URL if the server resolves the path differently than requested.
   const load = useCallback(
-    async (next: string, opts?: { push?: boolean }) => {
+    async (next: string) => {
       setLoading(true);
       try {
         const data = await od.list(next);
         setListing(data);
         setPath(data.path);
         const url = pathToUrl(data.path);
-        if (opts?.push === false) {
+        if (url !== pathToUrl(next)) {
           router.replace(url);
-        } else {
-          router.push(url);
         }
       } catch (e) {
         toast.error(e instanceof Error ? e.message : t("genericError"));
@@ -162,6 +160,15 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     [od, t, router]
   );
 
+  // Pushes the target folder into the URL immediately; the effect below
+  // (reacting to the resulting `initialPath` change) does the actual fetch.
+  // This keeps navigation to a single load instead of loading the old
+  // folder first and only updating the URL once that fetch finishes.
+  const navigate = useCallback(
+    (next: string) => router.push(pathToUrl(next)),
+    [router]
+  );
+
   // Resolve whether OneDrive is configured before firing any Graph-backed calls.
   useEffect(() => {
     void od
@@ -170,11 +177,11 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       .catch(() => setConfigured(false));
   }, [od]);
 
-  // Loads whatever folder the URL points at — on mount, and again whenever
-  // `initialPath` changes from outside (browser back/forward, a direct link).
+  // Single source of truth for fetching: fires on mount and whenever the
+  // URL's path changes (navigate() above, or browser back/forward).
   useEffect(() => {
     if (configured !== true) return;
-    void load(initialPath, { push: false });
+    void load(initialPath);
   }, [configured, initialPath, load]);
 
   useEffect(() => {
@@ -185,10 +192,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       .catch(() => setQuota(null));
   }, [configured, od]);
 
-  const refresh = useCallback(
-    () => void load(path, { push: false }),
-    [load, path]
-  );
+  const refresh = useCallback(() => void load(path), [load, path]);
 
   // Debounced search.
   useEffect(() => {
@@ -258,7 +262,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   const open = (item: OneDriveItem) => {
     if (item.type === "folder") {
       setQuery("");
-      void load(item.path);
+      navigate(item.path);
     } else {
       setPreviewItem(item);
     }
@@ -306,7 +310,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
           listing={listing}
           onNavigate={p => {
             setQuery("");
-            void load(p);
+            navigate(p);
           }}
         />
         <div className="flex items-center gap-2">
