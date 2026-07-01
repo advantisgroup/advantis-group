@@ -27,15 +27,10 @@ import { toast } from "sonner";
 
 import { ConversationView } from "@/components/chat/ConversationView";
 import { NewConversationDialog } from "@/components/chat/NewConversationDialog";
+import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GroupAvatar } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChatNotifications } from "@/hooks/use-chat-notifications";
@@ -356,48 +351,39 @@ function ConversationRow({
       </button>
 
       {/* Row actions */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <ActionMenu
+        ariaLabel={t("conversationOptions")}
+        items={
+          [
+            {
+              key: "pin",
+              label: c.pinned ? t("unpin") : t("pin"),
+              icon: c.pinned ? <PinOff /> : <Pin />,
+              onSelect: run(() => togglePin({ conversationId: c._id })),
+            },
+            {
+              key: "mute",
+              label: c.muted ? t("unmute") : t("mute"),
+              icon: c.muted ? <Bell /> : <BellOff />,
+              onSelect: run(() => toggleMute({ conversationId: c._id })),
+            },
+            {
+              key: "archive",
+              label: c.archived ? t("unarchive") : t("archive"),
+              icon: c.archived ? <ArchiveRestore /> : <Archive />,
+              onSelect: run(() => toggleArchive({ conversationId: c._id })),
+            },
+          ] satisfies ActionMenuItem[]
+        }
+        trigger={
           <button
             aria-label={t("conversationOptions")}
             className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground opacity-100 transition-opacity hover:bg-background hover:text-foreground md:opacity-0 md:group-hover:opacity-100 data-[state=open]:opacity-100"
           >
             <MoreVertical className="h-4 w-4" />
           </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={run(() => togglePin({ conversationId: c._id }))}
-          >
-            {c.pinned ? (
-              <PinOff className="mr-2 h-4 w-4" />
-            ) : (
-              <Pin className="mr-2 h-4 w-4" />
-            )}
-            {c.pinned ? t("unpin") : t("pin")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={run(() => toggleMute({ conversationId: c._id }))}
-          >
-            {c.muted ? (
-              <Bell className="mr-2 h-4 w-4" />
-            ) : (
-              <BellOff className="mr-2 h-4 w-4" />
-            )}
-            {c.muted ? t("unmute") : t("mute")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={run(() => toggleArchive({ conversationId: c._id }))}
-          >
-            {c.archived ? (
-              <ArchiveRestore className="mr-2 h-4 w-4" />
-            ) : (
-              <Archive className="mr-2 h-4 w-4" />
-            )}
-            {c.archived ? t("unarchive") : t("archive")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        }
+      />
     </div>
   );
 }

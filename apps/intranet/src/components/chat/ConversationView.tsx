@@ -46,17 +46,12 @@ import { toast } from "sonner";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
+import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GroupAvatar } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, useConfirm } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import {
   Popover,
   PopoverContent,
@@ -65,6 +60,7 @@ import {
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { formatTime, initials, relativeTime } from "@/lib/format";
 import { isImage, uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
@@ -95,6 +91,7 @@ export function ConversationView({
   const me = useCurrentUser();
   const confirm = useConfirm();
   const { getToken } = useAuth();
+  const isMobile = useIsMobile();
 
   // Reactive: this re-runs the moment access changes (left, removed, deleted,
   // or a stale `?c=` link), so it never throws — it reports a status instead.
@@ -436,6 +433,86 @@ export function ConversationView({
     );
   }
 
+  const membersTrigger = conversation?.type === "group" && (
+    <button
+      type="button"
+      onClick={() => setMembersOpen(true)}
+      className="-my-1 flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 pr-2 text-left transition-colors hover:bg-accent/50"
+    >
+      <GroupAvatar
+        src={conversation.groupAvatar}
+        memberAvatars={conversation.members
+          .filter(m => m._id !== me._id)
+          .map(m => m.avatar)}
+        memberNames={conversation.members
+          .filter(m => m._id !== me._id)
+          .map(m => m.name)}
+        name={conversation.title}
+        className="size-9"
+      />
+      <div className="min-w-0">
+        <p className="truncate font-semibold leading-tight">
+          {conversation.title}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {conversation.members.length} {t("members")}
+        </p>
+      </div>
+    </button>
+  );
+
+  const membersList = conversation?.type === "group" && (
+    <>
+      {conversation.members.map(m => (
+        <button
+          key={m._id}
+          type="button"
+          onClick={() => {
+            setMembersOpen(false);
+            if (m._id !== me._id) setProfileId(m._id);
+          }}
+          className="flex w-full items-center gap-2.5 rounded-md px-2 py-2 text-left transition-colors hover:bg-accent active:bg-accent disabled:opacity-60"
+          disabled={m._id === me._id}
+        >
+          <Avatar className="size-7 shrink-0">
+            {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
+            <AvatarFallback className="text-[10px]">
+              {initials(m.name)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+            {m.name}
+            {m._id === me._id ? ` (${t("you")})` : ""}
+          </span>
+          {m.isCreator && (
+            <span className="text-[10px] text-muted-foreground">
+              {t("creator")}
+            </span>
+          )}
+        </button>
+      ))}
+    </>
+  );
+
+  const conversationOptionsItems: ActionMenuItem[] = conversation
+    ? [
+        {
+          key: "mute",
+          label: conversation.muted ? t("unmute") : t("mute"),
+          onSelect: () => void toggleMute({ conversationId }).catch(handleError),
+        },
+        { key: "sep", separator: true },
+        {
+          key: "leave",
+          label:
+            conversation.type === "group" ? t("leaveGroup") : t("leaveChat"),
+          icon: <LogOut />,
+          destructive: true,
+          onSelect: () => void onLeave(),
+        },
+      ]
+    : [];
+
   return (
     <div
       className="relative flex h-full flex-col"
@@ -462,69 +539,21 @@ export function ConversationView({
           <ArrowLeft className="h-5 w-5" />
         </Button>
         {conversation?.type === "group" ? (
-          <Popover open={membersOpen} onOpenChange={setMembersOpen}>
-            <PopoverTrigger asChild>
-              <button
-                type="button"
-                className="-my-1 flex min-w-0 flex-1 items-center gap-3 rounded-lg py-1 pr-2 text-left transition-colors hover:bg-accent/50"
-              >
-                <GroupAvatar
-                  src={conversation.groupAvatar}
-                  memberAvatars={conversation.members
-                    .filter(m => m._id !== me._id)
-                    .map(m => m.avatar)}
-                  memberNames={conversation.members
-                    .filter(m => m._id !== me._id)
-                    .map(m => m.name)}
-                  name={conversation.title}
-                  className="size-9"
-                />
-                <div className="min-w-0">
-                  <p className="truncate font-semibold leading-tight">
-                    {conversation.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {conversation.members.length} {t("members")}
-                  </p>
+          isMobile ? (
+            membersTrigger
+          ) : (
+            <Popover open={membersOpen} onOpenChange={setMembersOpen}>
+              <PopoverTrigger asChild>{membersTrigger}</PopoverTrigger>
+              <PopoverContent align="start" className="w-72 p-1.5">
+                <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {conversation.members.length} {t("members")}
+                </p>
+                <div className="max-h-72 space-y-0.5 overflow-y-auto">
+                  {membersList}
                 </div>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-72 p-1.5">
-              <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {conversation.members.length} {t("members")}
-              </p>
-              <div className="max-h-72 space-y-0.5 overflow-y-auto">
-                {conversation.members.map(m => (
-                  <button
-                    key={m._id}
-                    type="button"
-                    onClick={() => {
-                      setMembersOpen(false);
-                      if (m._id !== me._id) setProfileId(m._id);
-                    }}
-                    className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-accent disabled:opacity-60"
-                    disabled={m._id === me._id}
-                  >
-                    <Avatar className="size-7 shrink-0">
-                      {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
-                      <AvatarFallback className="text-[10px]">
-                        {initials(m.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {m.name}
-                      {m._id === me._id ? ` (${t("you")})` : ""}
-                    </span>
-                    {m.isCreator && (
-                      <span className="text-[10px] text-muted-foreground">
-                        {t("creator")}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover>
+          )
         ) : (
           <button
             type="button"
@@ -584,8 +613,10 @@ export function ConversationView({
             </Button>
           )}
           {conversation && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <ActionMenu
+              ariaLabel={t("conversationOptions")}
+              items={conversationOptionsItems}
+              trigger={
                 <Button
                   variant="ghost"
                   size="icon"
@@ -593,27 +624,8 @@ export function ConversationView({
                 >
                   <MoreVertical className="h-5 w-5" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() =>
-                    void toggleMute({ conversationId }).catch(handleError)
-                  }
-                >
-                  {conversation.muted ? t("unmute") : t("mute")}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={onLeave}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  {conversation.type === "group"
-                    ? t("leaveGroup")
-                    : t("leaveChat")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              }
+            />
           )}
         </div>
       </div>
@@ -947,7 +959,8 @@ export function ConversationView({
         <button
           onClick={scrollToBottom}
           aria-label={t("jumpToBottom")}
-          className="absolute bottom-24 right-5 flex size-9 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-transform hover:scale-105"
+          className="absolute right-5 flex size-9 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-md transition-transform hover:scale-105"
+          style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
         >
           <ArrowDown className="h-4 w-4" />
         </button>
@@ -963,7 +976,10 @@ export function ConversationView({
       )}
 
       {/* Composer */}
-      <div className="border-t border-border/70 p-3">
+      <div
+        className="border-t border-border/70 p-3"
+        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      >
         {(replyTo || editing) && (
           <div className="mb-2 flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-1.5 text-xs">
             {editing ? (
@@ -1104,6 +1120,21 @@ export function ConversationView({
         </div>
       )}
 
+      {conversation?.type === "group" && isMobile && (
+        <MobileDrawer
+          open={membersOpen}
+          onOpenChange={setMembersOpen}
+          ariaLabel={`${conversation.members.length} ${t("members")}`}
+        >
+          <div className="px-4 pb-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {conversation.members.length} {t("members")}
+            </p>
+          </div>
+          <div className="space-y-0.5 px-2 pb-2">{membersList}</div>
+        </MobileDrawer>
+      )}
+
       {conversation?.type === "group" && (
         <GroupSettingsDialog
           conversationId={conversationId}
@@ -1203,41 +1234,44 @@ function MessageMenu({
   onDelete: () => void;
   labels: { reply: string; copy: string; edit: string; delete: string };
 }) {
+  const items: ActionMenuItem[] = [
+    { key: "reply", label: labels.reply, icon: <Reply />, onSelect: onReply },
+    { key: "copy", label: labels.copy, icon: <Copy />, onSelect: onCopy },
+    ...(canEdit
+      ? [
+          {
+            key: "edit",
+            label: labels.edit,
+            icon: <Pencil />,
+            onSelect: onEdit,
+          } satisfies ActionMenuItem,
+        ]
+      : []),
+    ...(canDelete
+      ? [
+          {
+            key: "delete",
+            label: labels.delete,
+            icon: <Trash2 />,
+            destructive: true,
+            onSelect: onDelete,
+          } satisfies ActionMenuItem,
+        ]
+      : []),
+  ];
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <ActionMenu
+      ariaLabel={labels.reply}
+      items={items}
+      trigger={
         <button
           className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           aria-label={labels.reply}
         >
           <MoreVertical className="h-3.5 w-3.5" />
         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={onReply}>
-          <Reply className="mr-2 h-4 w-4" />
-          {labels.reply}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onCopy}>
-          <Copy className="mr-2 h-4 w-4" />
-          {labels.copy}
-        </DropdownMenuItem>
-        {canEdit && (
-          <DropdownMenuItem onClick={onEdit}>
-            <Pencil className="mr-2 h-4 w-4" />
-            {labels.edit}
-          </DropdownMenuItem>
-        )}
-        {canDelete && (
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive"
-            onClick={onDelete}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            {labels.delete}
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      }
+    />
   );
 }
