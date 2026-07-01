@@ -232,7 +232,12 @@
     "rejoinPrompt": "You've been invited to re-join a chat.",
     "rejoin": "Re-join",
     "rejoined": "You re-joined the chat",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "conversationDeleted": "This conversation was deleted",
+    "conversationDeletedHint": "It no longer exists — this can happen once a group is deleted or an abandoned chat is purged.",
+    "conversationNotFound": "You don't have access to this conversation",
+    "conversationNotFoundHint": "You may have left it, been removed, or the link is out of date.",
+    "backToChats": "Back to chats"
   },
   "Directory": {
     "title": "Directory",

@@ -232,7 +232,12 @@
     "rejoinPrompt": "Du wurdest eingeladen, einem Chat wieder beizutreten.",
     "rejoin": "Wieder beitreten",
     "rejoined": "Du bist dem Chat wieder beigetreten",
-    "dismiss": "Verwerfen"
+    "dismiss": "Verwerfen",
+    "conversationDeleted": "Diese Unterhaltung wurde gelöscht",
+    "conversationDeletedHint": "Sie existiert nicht mehr — das passiert, wenn eine Gruppe gelöscht oder ein verwaister Chat bereinigt wird.",
+    "conversationNotFound": "Du hast keinen Zugriff auf diese Unterhaltung",
+    "conversationNotFoundHint": "Möglicherweise hast du sie verlassen, wurdest entfernt, oder der Link ist veraltet.",
+    "backToChats": "Zurück zu den Chats"
   },
   "Directory": {
     "title": "Mitarbeiter",

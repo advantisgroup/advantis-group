@@ -96,13 +96,28 @@ export function ConversationView({
   const confirm = useConfirm();
   const { getToken } = useAuth();
 
-  const conversation = useQuery(api.chat.getConversation, { conversationId });
+  // Reactive: this re-runs the moment access changes (left, removed, deleted,
+  // or a stale `?c=` link), so it never throws — it reports a status instead.
+  // `conversation` stays undefined for anything but the "ok" case, which keeps
+  // all the rendering code below unchanged from before this existed.
+  const conversationQuery = useQuery(api.chat.getConversation, {
+    conversationId,
+  });
+  const conversation =
+    conversationQuery?.status === "ok" ? conversationQuery : undefined;
+  const unavailable =
+    conversationQuery && conversationQuery.status !== "ok"
+      ? conversationQuery.status
+      : null;
+
   const { results, status, loadMore } = usePaginatedQuery(
     api.chat.getMessages,
-    { conversationId },
+    unavailable ? "skip" : { conversationId },
     { initialNumItems: 30 }
   );
-  const typingNames = useQuery(api.chat.whoIsTyping, { conversationId }) ?? [];
+  const typingNames =
+    useQuery(api.chat.whoIsTyping, unavailable ? "skip" : { conversationId }) ??
+    [];
   const sendMessage = useMutation(api.chat.sendMessage);
   const editMessage = useMutation(api.chat.editMessage);
   const deleteMessage = useMutation(api.chat.deleteMessage);
@@ -203,6 +218,12 @@ export function ConversationView({
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [results.length]);
+
+  // A stale `?c=` link (left, removed, or the chat itself was deleted/purged)
+  // — show a clear, distinct message instead of a blank or broken thread.
+  if (unavailable) {
+    return <ConversationUnavailable status={unavailable} onBack={onBack} />;
+  }
 
   function onScroll() {
     const el = scrollRef.current;
@@ -1112,6 +1133,55 @@ export function ConversationView({
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/** Shown in place of the thread when a stale `?c=` link no longer resolves —
+ *  distinguishes a fully deleted conversation from one the caller just isn't
+ *  part of anymore (left, removed, or an unrelated link). */
+function ConversationUnavailable({
+  status,
+  onBack,
+}: {
+  status: "deleted" | "not_found";
+  onBack: () => void;
+}) {
+  const t = useTranslations("Chat");
+  const deleted = status === "deleted";
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center gap-3 border-b border-border/70 px-4 py-3 md:hidden">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-ml-1"
+          onClick={onBack}
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+      </div>
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+          {deleted ? (
+            <Trash2 className="h-7 w-7" />
+          ) : (
+            <LogOut className="h-7 w-7" />
+          )}
+        </span>
+        <div className="max-w-xs">
+          <p className="text-base font-semibold text-foreground">
+            {deleted ? t("conversationDeleted") : t("conversationNotFound")}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {deleted
+              ? t("conversationDeletedHint")
+              : t("conversationNotFoundHint")}
+          </p>
+        </div>
+        <Button onClick={onBack}>{t("backToChats")}</Button>
+      </div>
     </div>
   );
 }

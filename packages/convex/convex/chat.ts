@@ -406,9 +406,22 @@ export const getConversation = query({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
     const user = await requireUser(ctx);
-    const myMembership = await requireMembership(ctx, conversationId, user._id);
+
+    // A stale `?c=<id>` link (leave/delete happened here or in another tab)
+    // must degrade gracefully instead of throwing, since this query is live
+    // and re-runs the moment access changes. Distinguish the two ways access
+    // can go away: the conversation itself is gone ("deleted"), vs. it still
+    // exists but the caller isn't part of it anymore ("not_found" — covers
+    // leaving, being removed, or an unrelated/stale link).
     const conversation = await ctx.db.get(conversationId);
-    if (!conversation) return null;
+    if (!conversation) {
+      return { status: "deleted" as const };
+    }
+    const myMembership = await getMembership(ctx, conversationId, user._id);
+    if (!myMembership) {
+      return { status: "not_found" as const };
+    }
+
     const members = await ctx.db
       .query("conversationMembers")
       .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
@@ -435,6 +448,7 @@ export const getConversation = query({
         : null;
 
     return {
+      status: "ok" as const,
       _id: conversation._id,
       type: conversation.type,
       title:
@@ -503,7 +517,12 @@ export const getMessages = query({
   },
   handler: async (ctx, { conversationId, paginationOpts }) => {
     const user = await requireUser(ctx);
-    await requireMembership(ctx, conversationId, user._id);
+    // Reactive query: don't throw on a stale link (left/deleted mid-session) —
+    // the UI already shows a graceful state via getConversation's status.
+    const membership = await getMembership(ctx, conversationId, user._id);
+    if (!membership) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
 
     const page = await ctx.db
       .query("messages")
@@ -818,7 +837,9 @@ export const whoIsTyping = query({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, { conversationId }) => {
     const user = await requireUser(ctx);
-    await requireMembership(ctx, conversationId, user._id);
+    // Reactive query — degrade gracefully instead of throwing on a stale link.
+    const membership = await getMembership(ctx, conversationId, user._id);
+    if (!membership) return [];
     const cutoff = Date.now() - TYPING_WINDOW_MS;
     const rows = await ctx.db
       .query("typing")
@@ -1132,7 +1153,11 @@ export const listSharedMedia = query({
   },
   handler: async (ctx, { conversationId, paginationOpts }) => {
     const user = await requireUser(ctx);
-    await requireMembership(ctx, conversationId, user._id);
+    // Reactive query — degrade gracefully instead of throwing on a stale link.
+    const membership = await getMembership(ctx, conversationId, user._id);
+    if (!membership) {
+      return { page: [], isDone: true, continueCursor: "" };
+    }
     const page = await ctx.db
       .query("messages")
       .withIndex("by_conversation", q => q.eq("conversationId", conversationId))

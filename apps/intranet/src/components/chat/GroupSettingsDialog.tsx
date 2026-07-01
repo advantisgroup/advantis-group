@@ -55,7 +55,14 @@ export function GroupSettingsDialog({
   const confirm = useConfirm();
   const handleError = useErrorHandler();
 
-  const conversation = useQuery(api.chat.getConversation, { conversationId });
+  // Narrow to the "ok" shape only; if the group was deleted or the caller is
+  // no longer a member, all the fields below just stay undefined — the parent
+  // (ConversationView) is what actually surfaces that state to the user.
+  const conversationQuery = useQuery(api.chat.getConversation, {
+    conversationId,
+  });
+  const conversation =
+    conversationQuery?.status === "ok" ? conversationQuery : undefined;
   const renameGroup = useMutation(api.chat.renameGroup);
   const setGroupAvatar = useMutation(api.chat.setGroupAvatar);
   const addGroupMembers = useMutation(api.chat.addGroupMembers);
