@@ -654,6 +654,16 @@ export default defineSchema({
     at: v.number(),
   }).index("by_at", ["at"]),
 
+  // Singleton store for the delegated-auth (personal Microsoft account) refresh
+  // token. Personal-account refresh tokens rotate on every use, so the API
+  // persists the latest one here (AES-256-GCM ciphertext, encrypted in the API)
+  // to survive redeploys without re-authenticating. One row.
+  onedriveAuth: defineTable({
+    /** Encrypted refresh token (iv.tag.ciphertext), written by the API. */
+    refreshToken: v.string(),
+    updatedAt: v.number(),
+  }),
+
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs
   // are stored as AES-256-GCM ciphertext (encrypted in the Elysia API with a
