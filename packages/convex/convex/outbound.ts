@@ -18,6 +18,7 @@ export const sendNotificationEmail = internalAction({
       v.literal("absence-decision"),
       v.literal("upload-decision"),
       v.literal("guest-invite"),
+      v.literal("chat-reinvite"),
       v.literal("digest")
     ),
     to: v.string(),

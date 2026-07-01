@@ -126,6 +126,22 @@ function render(
         ),
       };
     }
+    case "chat-reinvite": {
+      const inviter = str(data, "inviterName") || "A colleague";
+      const conversationId = str(data, "conversationId");
+      const url = conversationId
+        ? `${INTERNAL_URL}/chat?rejoin=${encodeURIComponent(conversationId)}`
+        : `${INTERNAL_URL}/chat`;
+      return {
+        subject: `${inviter} wants to reconnect on the intranet chat`,
+        html: layout(
+          "You've been re-invited to a chat",
+          `<p style="margin:0 0 16px;line-height:1.6"><strong>${inviter}</strong> would like to keep chatting with you on the Advantis Group intranet.</p>
+           <p style="margin:0 0 24px;line-height:1.6">Re-join to keep the conversation — otherwise it will be deleted within 48 hours.</p>
+           ${button(url, "Re-join the chat")}`
+        ),
+      };
+    }
     case "digest":
       return {
         subject: "Your Advantis intranet digest",

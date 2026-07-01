@@ -246,10 +246,16 @@ export default defineSchema({
     lastMessageAt: v.number(),
     /** Sorted, joined member-id key for fast DM lookup (e.g. "id1:id2"). */
     dmKey: v.optional(v.string()),
+    /** Custom group photo. When unset, the UI shows a member-avatar collage. */
+    avatarStorageId: v.optional(v.id("_storage")),
+    /** Set when a DM is left by one side; the chat is purged once this passes
+     *  (unless the person who left rejoins, which clears it). */
+    deleteAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_lastMessageAt", ["lastMessageAt"])
-    .index("by_dmKey", ["dmKey"]),
+    .index("by_dmKey", ["dmKey"])
+    .index("by_deleteAt", ["deleteAt"]),
 
   conversationMembers: defineTable({
     conversationId: v.id("conversations"),
@@ -257,6 +263,12 @@ export default defineSchema({
     role: v.optional(v.union(v.literal("owner"), v.literal("member"))),
     lastReadAt: v.number(),
     joinedAt: v.number(),
+    /** Defensive marker; a left DM member row is normally deleted outright. */
+    leftAt: v.optional(v.number()),
+    /** Per-user conversation controls. */
+    pinnedAt: v.optional(v.number()),
+    archivedAt: v.optional(v.number()),
+    mutedAt: v.optional(v.number()),
   })
     .index("by_conversation", ["conversationId"])
     .index("by_user", ["userId"])
@@ -268,6 +280,10 @@ export default defineSchema({
     body: v.string(),
     attachments: v.array(attachmentValidator),
     linkPreviews: v.array(linkPreviewValidator),
+    /** Message this one is a reply to (quote preview in the UI). */
+    replyToId: v.optional(v.id("messages")),
+    /** Users @mentioned in this message (groups). */
+    mentions: v.optional(v.array(v.id("users"))),
     editedAt: v.optional(v.number()),
     deletedAt: v.optional(v.number()),
     createdAt: v.number(),

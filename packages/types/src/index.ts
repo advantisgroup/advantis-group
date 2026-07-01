@@ -77,6 +77,7 @@ export type NotificationEmailKind =
   | "absence-decision"
   | "upload-decision"
   | "guest-invite"
+  | "chat-reinvite"
   | "digest";
 
 /** Body for POST /internal/notifications (serverKey-gated, called by Convex). */

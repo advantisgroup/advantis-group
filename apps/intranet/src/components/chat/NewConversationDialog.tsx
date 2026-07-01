@@ -28,8 +28,12 @@ import { initials } from "@/lib/format";
 
 export function NewConversationDialog({
   onCreated,
+  triggerVariant = "icon",
 }: {
   onCreated: (id: Id<"conversations">) => void;
+  /** "icon" = the header plus button; "cta" = a labelled primary button used
+   *  inside empty states. */
+  triggerVariant?: "icon" | "cta";
 }) {
   const t = useTranslations("Chat");
   const tc = useTranslations("Common");
@@ -96,9 +100,16 @@ export function NewConversationDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button size="icon" variant="ghost" aria-label={t("newChat")}>
-          <Plus className="h-5 w-5" />
-        </Button>
+        {triggerVariant === "cta" ? (
+          <Button size="sm">
+            <Plus className="mr-1.5 h-4 w-4" />
+            {t("startConversationCta")}
+          </Button>
+        ) : (
+          <Button size="icon" variant="ghost" aria-label={t("newChat")}>
+            <Plus className="h-5 w-5" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
