@@ -10,7 +10,6 @@ import {
 } from "@advantis/types";
 import { useAuth } from "@clerk/nextjs";
 
-
 /**
  * Typed client for the OneDrive endpoints on the Advantis API. Cross-origin
  * requests can't rely on the Clerk cookie, so every call carries the session
@@ -93,6 +92,8 @@ export function useOneDriveApi() {
       );
 
     return {
+      status: () => get<{ configured: boolean }>("/onedrive/status"),
+
       list: (path: string) =>
         get<OneDriveListing>(
           `/onedrive/items?path=${encodeURIComponent(path)}`

@@ -9,6 +9,7 @@ import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { Errors } from "../lib/errors.js";
+import { requireAuth } from "../lib/middleware.js";
 import {
   assertCanRead,
   assertCanWrite,
@@ -36,6 +37,7 @@ import {
   getQuota,
   getThumbnailUrl,
   type GraphItem,
+  isConfigured,
   listChildrenById,
   listVersions,
   relPathOf,
@@ -152,6 +154,13 @@ async function readableItem(
 // --- routes -----------------------------------------------------------------
 
 export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
+  // Whether OneDrive credentials are configured — lets the UI show a friendly
+  // "not set up yet" state instead of failing every call. No Graph call.
+  .get("/status", async ({ request }) => {
+    await requireAuth(request);
+    return { configured: isConfigured() };
+  })
+
   // List a folder (defaults to the Advantis Group root).
   .get(
     "/items",

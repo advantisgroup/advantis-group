@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  */
 
 /** Badge tone + whether the state should show a live "signal" pulse. */
-export const STATE_STYLE: Record<
+const STATE_STYLE: Record<
   EmployeeState,
   {
     variant: "default" | "success" | "warning" | "destructive" | "muted";

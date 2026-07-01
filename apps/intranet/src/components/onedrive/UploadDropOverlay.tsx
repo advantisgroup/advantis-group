@@ -137,7 +137,9 @@ export function UploadDropOverlay({
                   {t("dropTitle")}
                 </p>
                 <p className="mt-1 text-sm text-blue-100/80">
-                  {requiresApproval ? t("dropSubtitleApproval") : t("dropSubtitle")}
+                  {requiresApproval
+                    ? t("dropSubtitleApproval")
+                    : t("dropSubtitle")}
                 </p>
               </div>
             </motion.div>

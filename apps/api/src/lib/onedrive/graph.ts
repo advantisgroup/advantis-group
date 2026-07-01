@@ -1,7 +1,7 @@
 import { type DriveQuota } from "@advantis/types";
 
 import { Errors } from "../errors.js";
-import { requireEnv } from "../env.js";
+import { optionalEnv, requireEnv } from "../env.js";
 import { folderConfig, normalizePath } from "./access.js";
 
 /**
@@ -13,6 +13,21 @@ import { folderConfig, normalizePath } from "./access.js";
  */
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
+
+/**
+ * True only when the credentials needed to talk to Graph are present. The
+ * `*_PATH` vars have defaults and the webhook vars aren't needed to browse, so
+ * they don't count. Lets the UI show a friendly "not set up yet" state instead
+ * of failing every call.
+ */
+export function isConfigured(): boolean {
+  return (
+    !!optionalEnv("MS_GRAPH_TENANT_ID") &&
+    !!optionalEnv("MS_GRAPH_CLIENT_ID") &&
+    !!optionalEnv("MS_GRAPH_CLIENT_SECRET") &&
+    !!optionalEnv("ONEDRIVE_DRIVE_USER")
+  );
+}
 const SMALL_UPLOAD_LIMIT = 4 * 1024 * 1024; // Graph's simple-PUT ceiling
 const UPLOAD_CHUNK = 5 * 1024 * 1024; // multiple of 320 KiB, per Graph rules
 
@@ -41,7 +56,10 @@ async function getToken(force = false): Promise<string> {
     console.error(`[onedrive] token request failed: ${res.status}`);
     throw Errors.upstream("Could not authenticate with OneDrive");
   }
-  const json = (await res.json()) as { access_token: string; expires_in: number };
+  const json = (await res.json()) as {
+    access_token: string;
+    expires_in: number;
+  };
   token = {
     accessToken: json.access_token,
     expiresAt: Date.now() + (json.expires_in - 60) * 1000,
@@ -56,10 +74,13 @@ function mapStatus(status: number, context: string): never {
     throw Errors.forbidden("OneDrive denied the request");
   }
   if (status === 404) throw Errors.notFound("File or folder not found");
-  if (status === 409) throw Errors.badRequest("A conflicting item already exists");
+  if (status === 409)
+    throw Errors.badRequest("A conflicting item already exists");
   if (status === 423) throw Errors.badRequest("The item is locked");
-  if (status === 429) throw Errors.rateLimited("OneDrive is throttling requests");
-  if (status >= 500) throw Errors.upstream("OneDrive is temporarily unavailable");
+  if (status === 429)
+    throw Errors.rateLimited("OneDrive is throttling requests");
+  if (status >= 500)
+    throw Errors.upstream("OneDrive is temporarily unavailable");
   console.error(`[onedrive] ${context} failed: ${status}`);
   throw Errors.upstream("OneDrive request failed");
 }
@@ -95,9 +116,10 @@ async function graphRequest(
     // Honour Graph throttling with bounded backoff.
     if (res.status === 429 && attempt < 3) {
       const retryAfter = Number(res.headers.get("retry-after"));
-      const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
-        ? retryAfter * 1000
-        : Math.min(2 ** attempt * 1000, 8000);
+      const waitMs =
+        Number.isFinite(retryAfter) && retryAfter > 0
+          ? retryAfter * 1000
+          : Math.min(2 ** attempt * 1000, 8000);
       await new Promise(r => setTimeout(r, waitMs));
       continue;
     }
@@ -185,7 +207,11 @@ export async function getItemById(id: string): Promise<GraphItem> {
 }
 
 export async function getItemByPath(relPath: string): Promise<GraphItem> {
-  return graphFetch<GraphItem>(pathUrl(relPath, `?${SELECT}`), {}, "getItemByPath");
+  return graphFetch<GraphItem>(
+    pathUrl(relPath, `?${SELECT}`),
+    {},
+    "getItemByPath"
+  );
 }
 
 interface ChildrenPage {
@@ -238,7 +264,11 @@ export async function getThumbnailUrl(id: string): Promise<string | undefined> {
 export async function getPreviewUrl(id: string): Promise<string | undefined> {
   const res = await graphFetch<{ getUrl?: string }>(
     itemUrl(id, "/preview"),
-    { method: "POST", headers: { "content-type": "application/json" }, body: "{}" },
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    },
     "preview"
   );
   return res.getUrl;

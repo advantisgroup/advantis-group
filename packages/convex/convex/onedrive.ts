@@ -395,7 +395,10 @@ export const cancelRequest = mutation({
     const user = await requireUser(ctx);
     const upload = await ctx.db.get(uploadId);
     if (!upload || upload.requesterUserId !== user._id) {
-      throw new ConvexError({ code: "not_found", message: "Request not found" });
+      throw new ConvexError({
+        code: "not_found",
+        message: "Request not found",
+      });
     }
     if (upload.status !== "pending") {
       throw new ConvexError({
@@ -429,7 +432,9 @@ export const renewSubscription = internalAction({
     const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
     const serverKey = process.env.CONVEX_SERVER_KEY;
     if (!baseUrl || !serverKey) {
-      console.warn("[onedrive] subscription renewal skipped — API not configured");
+      console.warn(
+        "[onedrive] subscription renewal skipped — API not configured"
+      );
       return { ok: false };
     }
     try {

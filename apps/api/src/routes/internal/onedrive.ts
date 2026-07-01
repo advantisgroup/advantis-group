@@ -25,7 +25,11 @@ export const internalOnedriveRoute = new Elysia().post(
         clientState,
         expiry
       );
-      return { ok: true, subscriptionId: sub.id, expiresAt: sub.expirationDateTime };
+      return {
+        ok: true,
+        subscriptionId: sub.id,
+        expiresAt: sub.expirationDateTime,
+      };
     } catch (error) {
       console.error("[onedrive] subscription create failed:", error);
       throw Errors.upstream("Could not create OneDrive subscription");

@@ -82,7 +82,10 @@ const isManagerRole = (role: Role): boolean =>
  * Effective permissions for `user` on the AG-relative `relPath`. The single
  * decision point — routes must call this and never trust client-supplied flags.
  */
-export function classifyAccess(user: AccessUser, relPath: string): AccessResult {
+export function classifyAccess(
+  user: AccessUser,
+  relPath: string
+): AccessResult {
   const zone = zoneOf(relPath);
   const manager = isManagerRole(user.role);
   const uploadAllowed = user.uploadRequestsEnabled !== false;

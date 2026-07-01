@@ -761,6 +761,8 @@
     "dropSubtitleApproval": "Loslassen, um zur Freigabe durch eine Führungskraft zu senden.",
     "uploadingApproval": "Wird zur Freigabe gesendet…",
     "done": "Hochgeladen!",
-    "doneApproval": "Zur Freigabe gesendet!"
+    "doneApproval": "Zur Freigabe gesendet!",
+    "notConfiguredTitle": "OneDrive ist noch nicht eingerichtet",
+    "notConfiguredBody": "Bitte einen Admin, die OneDrive-Konfiguration abzuschließen."
   }
 }

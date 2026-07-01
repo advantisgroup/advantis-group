@@ -539,9 +539,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
 
   function toggleGf(m: Member) {
     setGfAccess({ userId: m._id as Id<"users">, gfAccess: !m.gfAccess })
-      .then(() =>
-        toast.success(m.gfAccess ? t("gfRevoked") : t("gfGranted"))
-      )
+      .then(() => toast.success(m.gfAccess ? t("gfRevoked") : t("gfGranted")))
       .catch(handleError);
   }
 
@@ -649,7 +647,10 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
           </button>
           <div className="flex shrink-0 items-center gap-2">
             {m.gfAccess && (
-              <Badge variant="muted" className="hidden text-[10px] sm:inline-flex">
+              <Badge
+                variant="muted"
+                className="hidden text-[10px] sm:inline-flex"
+              >
                 GF
               </Badge>
             )}

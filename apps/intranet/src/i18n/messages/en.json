@@ -761,6 +761,8 @@
     "dropSubtitleApproval": "Release to send for manager approval.",
     "uploadingApproval": "Sending for approval…",
     "done": "Uploaded!",
-    "doneApproval": "Sent for approval!"
+    "doneApproval": "Sent for approval!",
+    "notConfiguredTitle": "OneDrive isn't set up yet",
+    "notConfiguredBody": "Ask an admin to finish the OneDrive configuration."
   }
 }

@@ -30,24 +30,78 @@ export interface Scanner {
 
 // Executable / script extensions that should never live in OneDrive.
 const BLOCKED_EXTENSIONS = new Set([
-  "exe", "scr", "com", "pif", "bat", "cmd", "msi", "msp", "hta", "cpl",
-  "js", "jse", "vbs", "vbe", "ws", "wsf", "wsh", "ps1", "ps1xml", "psm1",
-  "jar", "reg", "scf", "lnk", "dll", "sys", "drv", "ocx", "gadget", "msc",
+  "exe",
+  "scr",
+  "com",
+  "pif",
+  "bat",
+  "cmd",
+  "msi",
+  "msp",
+  "hta",
+  "cpl",
+  "js",
+  "jse",
+  "vbs",
+  "vbe",
+  "ws",
+  "wsf",
+  "wsh",
+  "ps1",
+  "ps1xml",
+  "psm1",
+  "jar",
+  "reg",
+  "scf",
+  "lnk",
+  "dll",
+  "sys",
+  "drv",
+  "ocx",
+  "gadget",
+  "msc",
 ]);
 
 // Macro-enabled Office documents — common malware delivery vector.
 const MACRO_EXTENSIONS = new Set([
-  "docm", "xlsm", "pptm", "dotm", "xltm", "potm", "xlam", "ppam",
+  "docm",
+  "xlsm",
+  "pptm",
+  "dotm",
+  "xltm",
+  "potm",
+  "xlam",
+  "ppam",
 ]);
 
 const ARCHIVE_EXTENSIONS = new Set([
-  "zip", "rar", "7z", "gz", "bz2", "tar", "iso", "cab",
+  "zip",
+  "rar",
+  "7z",
+  "gz",
+  "bz2",
+  "tar",
+  "iso",
+  "cab",
 ]);
 
 // Extensions that frequently precede a disguising second extension.
 const DOC_EXTENSIONS = new Set([
-  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv",
-  "jpg", "jpeg", "png", "gif", "webp", "rtf",
+  "pdf",
+  "doc",
+  "docx",
+  "xls",
+  "xlsx",
+  "ppt",
+  "pptx",
+  "txt",
+  "csv",
+  "jpg",
+  "jpeg",
+  "png",
+  "gif",
+  "webp",
+  "rtf",
 ]);
 
 const LARGE_FILE_BYTES = 100 * 1024 * 1024; // informational note above 100 MB
@@ -75,7 +129,11 @@ function verdictFor(flags: ScanFlag[]): ScanVerdict {
 
 /** Default heuristic scanner. */
 export class HeuristicScanner implements Scanner {
-  async scan({ bytes, fileName, declaredMime }: ScanInput): Promise<ScanReport> {
+  async scan({
+    bytes,
+    fileName,
+    declaredMime,
+  }: ScanInput): Promise<ScanReport> {
     const flags: ScanFlag[] = [];
     const exts = extensions(fileName);
     const finalExt = exts.at(-1) ?? "";
@@ -106,9 +164,7 @@ export class HeuristicScanner implements Scanner {
     // Double extension like "invoice.pdf.exe" — a doc-looking name hiding an
     // executable, or any extra extension before a blocked one.
     if (exts.length >= 2) {
-      const priorLooksDoc = exts
-        .slice(0, -1)
-        .some(e => DOC_EXTENSIONS.has(e));
+      const priorLooksDoc = exts.slice(0, -1).some(e => DOC_EXTENSIONS.has(e));
       if (priorLooksDoc && BLOCKED_EXTENSIONS.has(finalExt)) {
         flags.push({
           code: "double_extension",
@@ -139,7 +195,10 @@ export class HeuristicScanner implements Scanner {
       const detected = await fileTypeFromBuffer(bytes);
       if (detected) {
         const detectedExt = detected.ext.toLowerCase();
-        if (BLOCKED_EXTENSIONS.has(detectedExt) && !BLOCKED_EXTENSIONS.has(finalExt)) {
+        if (
+          BLOCKED_EXTENSIONS.has(detectedExt) &&
+          !BLOCKED_EXTENSIONS.has(finalExt)
+        ) {
           flags.push({
             code: "executable_content",
             severity: "danger",
@@ -157,7 +216,11 @@ export class HeuristicScanner implements Scanner {
             detail: `Content looks like ${detectedExt} but the file is named ".${finalExt}".`,
           });
         }
-        if (declaredMime && detected.mime && !mimeMatches(declaredMime, detected.mime)) {
+        if (
+          declaredMime &&
+          detected.mime &&
+          !mimeMatches(declaredMime, detected.mime)
+        ) {
           flags.push({
             code: "mime_mismatch",
             severity: "info",
@@ -190,7 +253,14 @@ function sameFamily(a: string, b: string): boolean {
 // Office/zip-container formats are detected as "zip" — don't flag those.
 function isContainerMismatch(detected: string, declared: string): boolean {
   const containerBacked = new Set([
-    "docx", "xlsx", "pptx", "odt", "ods", "odp", "epub", "jar",
+    "docx",
+    "xlsx",
+    "pptx",
+    "odt",
+    "ods",
+    "odp",
+    "epub",
+    "jar",
   ]);
   return detected === "zip" && containerBacked.has(declared);
 }

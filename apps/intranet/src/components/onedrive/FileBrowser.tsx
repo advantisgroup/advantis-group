@@ -17,6 +17,7 @@ import {
   FileText,
   Folder,
   FolderPlus,
+  Frown,
   Link2,
   Loader2,
   MoreVertical,
@@ -81,7 +82,8 @@ function ItemIcon({
 
 function QuotaBar({ quota }: { quota: DriveQuota }) {
   const t = useTranslations("Files");
-  const pct = quota.total > 0 ? Math.min(100, (quota.used / quota.total) * 100) : 0;
+  const pct =
+    quota.total > 0 ? Math.min(100, (quota.used / quota.total) * 100) : 0;
   return (
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
       <div className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-muted sm:block">
@@ -109,6 +111,7 @@ export function FileBrowser() {
   const confirm = useConfirm();
   const isMobile = useIsMobile();
 
+  const [configured, setConfigured] = useState<boolean | undefined>(undefined);
   const [path, setPath] = useState("");
   const [listing, setListing] = useState<OneDriveListing | null>(null);
   const [loading, setLoading] = useState(true);
@@ -141,16 +144,26 @@ export function FileBrowser() {
     [od, t]
   );
 
+  // Resolve whether OneDrive is configured before firing any Graph-backed calls.
   useEffect(() => {
-    void load("");
-  }, [load]);
+    void od
+      .status()
+      .then(s => setConfigured(s.configured))
+      .catch(() => setConfigured(false));
+  }, [od]);
 
   useEffect(() => {
+    if (configured !== true) return;
+    void load("");
+  }, [configured, load]);
+
+  useEffect(() => {
+    if (configured !== true) return;
     void od
       .quota()
       .then(setQuota)
       .catch(() => setQuota(null));
-  }, [od]);
+  }, [configured, od]);
 
   const refresh = useCallback(() => void load(path), [load, path]);
 
@@ -231,6 +244,19 @@ export function FileBrowser() {
   const items = results ?? listing?.items ?? [];
   const canWrite = listing?.canWrite ?? false;
   const canDrop = Boolean(listing && (listing.canWrite || listing.canRequest));
+
+  // OneDrive credentials aren't set — dim the whole tab with a plain-text notice.
+  if (configured === false) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center opacity-60">
+        <Frown className="size-10 text-muted-foreground" />
+        <p className="font-medium">{t("notConfiguredTitle")}</p>
+        <p className="max-w-xs text-sm text-muted-foreground">
+          {t("notConfiguredBody")}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -332,7 +358,9 @@ export function FileBrowser() {
             <thead>
               <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <th className="px-4 py-2.5 font-medium">{t("colName")}</th>
-                <th className="px-4 py-2.5 font-medium">{t("colUploadedBy")}</th>
+                <th className="px-4 py-2.5 font-medium">
+                  {t("colUploadedBy")}
+                </th>
                 <th className="px-4 py-2.5 font-medium">{t("colModified")}</th>
                 <th className="px-4 py-2.5 text-right font-medium">
                   {t("colSize")}
@@ -420,7 +448,9 @@ function Breadcrumbs({
   listing: OneDriveListing | null;
   onNavigate: (path: string) => void;
 }) {
-  const crumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis Group", path: "" }];
+  const crumbs = listing?.breadcrumbs ?? [
+    { id: "", name: "Advantis Group", path: "" },
+  ];
   return (
     <nav className="flex min-w-0 items-center gap-1 overflow-x-auto text-sm">
       {crumbs.map((c, i) => (

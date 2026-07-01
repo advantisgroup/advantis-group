@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components --
+   Next.js requires `metadata` and `viewport` to be exported from this layout. */
 import type { ReactNode } from "react";
 
 import { Manrope, Outfit } from "next/font/google";

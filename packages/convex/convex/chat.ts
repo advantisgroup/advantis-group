@@ -206,9 +206,7 @@ export const mutualConversations = query({
           .collect();
 
         const other =
-          conversation.type === "dm"
-            ? await ctx.db.get(otherUserId)
-            : null;
+          conversation.type === "dm" ? await ctx.db.get(otherUserId) : null;
         const avatar =
           conversation.type === "dm" && other
             ? other.avatarStorageId

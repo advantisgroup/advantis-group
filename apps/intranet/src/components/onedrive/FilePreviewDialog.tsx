@@ -39,7 +39,7 @@ export function FilePreviewDialog({
     // Reset when the previewed item changes, then fetch its fresh URL.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setUrl(null);
-     
+
     setLoading(true);
     void od
       .preview(item.id)

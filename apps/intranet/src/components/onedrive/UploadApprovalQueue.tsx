@@ -107,10 +107,7 @@ export function UploadApprovalQueue() {
         );
       })}
 
-      <InspectorDialog
-        upload={selected}
-        onClose={() => setSelected(null)}
-      />
+      <InspectorDialog upload={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
@@ -141,7 +138,9 @@ function InspectorDialog({
       const id = upload._id as Id<"onedriveUploads">;
       if (kind === "approve") await od.approve(id, note || undefined);
       else await od.deny(id, note || undefined);
-      toast.success(kind === "approve" ? t("uploadApproved") : t("uploadDenied"));
+      toast.success(
+        kind === "approve" ? t("uploadApproved") : t("uploadDenied")
+      );
       setNote("");
       onClose();
     } catch (e) {
@@ -157,7 +156,8 @@ function InspectorDialog({
         <DialogHeader>
           <DialogTitle className="truncate">{upload?.fileName}</DialogTitle>
           <DialogDescription>
-            {upload?.requesterName} → {upload?.targetFolderPath || "Advantis Group"}
+            {upload?.requesterName} →{" "}
+            {upload?.targetFolderPath || "Advantis Group"}
           </DialogDescription>
         </DialogHeader>
 
@@ -171,7 +171,10 @@ function InspectorDialog({
                 label={t("metaRequestedAt")}
                 value={new Date(upload.createdAt).toLocaleString()}
               />
-              <Meta label={t("metaTarget")} value={upload.targetFolderPath || "/"} />
+              <Meta
+                label={t("metaTarget")}
+                value={upload.targetFolderPath || "/"}
+              />
             </dl>
 
             {/* Scan report */}
