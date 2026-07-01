@@ -85,7 +85,7 @@ export function ChatClient() {
   }
 
   return (
-    <div className="-mx-4 -my-6 flex h-[calc(100dvh-3.5rem)] overflow-hidden bg-background md:-mx-8 md:-my-8 md:h-[calc(100dvh-4rem)]">
+    <div className="-mx-4 -my-6 flex h-full overflow-hidden bg-background md:-mx-8 md:-my-8">
       {/* Conversation list */}
       <div
         data-tour="tour-chat-list"

@@ -431,7 +431,7 @@ function ProfileContent({
   const hasContact = Boolean(user.email || user.phone || user.department);
 
   return (
-    <div className="flex max-h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
       <div className="flex items-start gap-3 border-b border-border/70 p-5">
         <Avatar className="size-16 shrink-0">
