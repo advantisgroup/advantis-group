@@ -158,7 +158,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
   // "not set up yet" state instead of failing every call. No Graph call.
   .get("/status", async ({ request }) => {
     await requireAuth(request);
-    return { configured: isConfigured() };
+    return { configured: await isConfigured() };
   })
 
   // List a folder (defaults to the Advantis Group root).

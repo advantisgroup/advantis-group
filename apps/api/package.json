@@ -13,6 +13,7 @@
     "dev": "bun --watch --verbose --no-clear-screen src/index.ts",
     "start": "bun run src/index.ts",
     "build": "tsc --noEmit",
+    "onedrive:auth": "bun run scripts/onedrive-auth.ts",
     "type-check": "tsc --noEmit",
     "lint": "echo \"@advantis/api: no lint\""
   },

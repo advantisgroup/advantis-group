@@ -1,51 +1,107 @@
+import { api } from "@advantis/convex/api";
 import { type DriveQuota } from "@advantis/types";
 
+import { getConvex, getConvexServerKey } from "../convex.js";
+import { decrypt, encrypt } from "../crypto.js";
 import { Errors } from "../errors.js";
 import { optionalEnv, requireEnv } from "../env.js";
 import { folderConfig, normalizePath } from "./access.js";
 
 /**
- * Microsoft Graph (OneDrive) client. App-only client-credentials flow against a
- * single service account; the token is cached in-process with an expiry buffer
- * (same shape as the Genesys client). Every failure is funnelled through
+ * Microsoft Graph (OneDrive) client. Because the drive belongs to a *personal*
+ * Microsoft account, this uses the delegated OAuth flow: a one-time interactive
+ * sign-in (see scripts/onedrive-auth.ts) yields a refresh token, which the API
+ * exchanges for short-lived access tokens against the `consumers` endpoint.
+ * Personal-account refresh tokens rotate on use, so the latest one is persisted
+ * (encrypted) in Convex to survive redeploys. Every failure is funnelled through
  * `graphFetch` and mapped to our `ApiError` taxonomy — raw Graph error bodies
  * and secrets never reach the caller, only get logged server-side.
  */
 
 const GRAPH_BASE = "https://graph.microsoft.com/v1.0";
+const GRAPH_SCOPE = "Files.ReadWrite.All offline_access";
+const authority = () => optionalEnv("ONEDRIVE_AUTHORITY") ?? "consumers";
 
 /**
- * True only when the credentials needed to talk to Graph are present. The
- * `*_PATH` vars have defaults and the webhook vars aren't needed to browse, so
- * they don't count. Lets the UI show a friendly "not set up yet" state instead
- * of failing every call.
+ * True only when OneDrive is wired up: the app credentials are present AND a
+ * refresh token exists (env seed or the persisted one in Convex). Lets the UI
+ * show a friendly "not set up yet" state instead of failing every call.
  */
-export function isConfigured(): boolean {
-  return (
-    !!optionalEnv("MS_GRAPH_TENANT_ID") &&
-    !!optionalEnv("MS_GRAPH_CLIENT_ID") &&
-    !!optionalEnv("MS_GRAPH_CLIENT_SECRET") &&
-    !!optionalEnv("ONEDRIVE_DRIVE_USER")
-  );
+export async function isConfigured(): Promise<boolean> {
+  if (
+    !optionalEnv("MS_GRAPH_CLIENT_ID") ||
+    !optionalEnv("MS_GRAPH_CLIENT_SECRET")
+  ) {
+    return false;
+  }
+  if (optionalEnv("ONEDRIVE_REFRESH_TOKEN")) return true;
+  try {
+    const stored = await getConvex().query(api.onedrive.apiGetRefreshToken, {
+      serverKey: getConvexServerKey(),
+    });
+    return Boolean(stored?.refreshToken);
+  } catch {
+    return false;
+  }
 }
+
 const SMALL_UPLOAD_LIMIT = 4 * 1024 * 1024; // Graph's simple-PUT ceiling
 const UPLOAD_CHUNK = 5 * 1024 * 1024; // multiple of 320 KiB, per Graph rules
 
-// --- Auth -------------------------------------------------------------------
+// --- Auth (delegated refresh-token flow) ------------------------------------
 
 let token: { accessToken: string; expiresAt: number } | null = null;
+let currentRefresh: string | null = null; // decrypted refresh token, in-memory
+
+/** Load the active refresh token: in-memory → persisted (Convex) → env seed. */
+async function loadRefreshToken(): Promise<string> {
+  if (currentRefresh) return currentRefresh;
+  try {
+    const stored = await getConvex().query(api.onedrive.apiGetRefreshToken, {
+      serverKey: getConvexServerKey(),
+    });
+    if (stored?.refreshToken) {
+      currentRefresh = decrypt(stored.refreshToken);
+      return currentRefresh;
+    }
+  } catch (error) {
+    console.error("[onedrive] could not read stored refresh token:", error);
+  }
+  const seed = optionalEnv("ONEDRIVE_REFRESH_TOKEN");
+  if (!seed) {
+    throw Errors.internal(
+      "OneDrive is not authenticated — run the auth bootstrap to obtain a refresh token"
+    );
+  }
+  currentRefresh = seed;
+  return seed;
+}
+
+/** Persist a rotated refresh token (encrypted) so it survives redeploys. */
+async function persistRefreshToken(next: string): Promise<void> {
+  currentRefresh = next;
+  try {
+    await getConvex().mutation(api.onedrive.apiSetRefreshToken, {
+      serverKey: getConvexServerKey(),
+      refreshToken: encrypt(next),
+    });
+  } catch (error) {
+    console.error("[onedrive] could not persist rotated refresh token:", error);
+  }
+}
 
 async function getToken(force = false): Promise<string> {
   if (!force && token && Date.now() < token.expiresAt) return token.accessToken;
-  const tenant = requireEnv("MS_GRAPH_TENANT_ID");
+  const refreshToken = await loadRefreshToken();
   const body = new URLSearchParams({
     client_id: requireEnv("MS_GRAPH_CLIENT_ID"),
     client_secret: requireEnv("MS_GRAPH_CLIENT_SECRET"),
-    scope: "https://graph.microsoft.com/.default",
-    grant_type: "client_credentials",
+    grant_type: "refresh_token",
+    refresh_token: refreshToken,
+    scope: GRAPH_SCOPE,
   });
   const res = await fetch(
-    `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
+    `https://login.microsoftonline.com/${authority()}/oauth2/v2.0/token`,
     {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -53,17 +109,24 @@ async function getToken(force = false): Promise<string> {
     }
   );
   if (!res.ok) {
-    console.error(`[onedrive] token request failed: ${res.status}`);
-    throw Errors.upstream("Could not authenticate with OneDrive");
+    console.error(`[onedrive] token refresh failed: ${res.status}`);
+    throw Errors.upstream(
+      "Could not authenticate with OneDrive — the refresh token may have expired; re-run the auth bootstrap"
+    );
   }
   const json = (await res.json()) as {
     access_token: string;
     expires_in: number;
+    refresh_token?: string;
   };
   token = {
     accessToken: json.access_token,
     expiresAt: Date.now() + (json.expires_in - 60) * 1000,
   };
+  // Personal-account refresh tokens rotate — persist the new one when it changes.
+  if (json.refresh_token && json.refresh_token !== refreshToken) {
+    await persistRefreshToken(json.refresh_token);
+  }
   return token.accessToken;
 }
 
@@ -142,9 +205,9 @@ async function graphFetch<T>(
 
 // --- Drive addressing -------------------------------------------------------
 
+// The delegated token *is* the drive owner (chefsache@), so address /me/drive.
 function driveBase(): string {
-  const user = requireEnv("ONEDRIVE_DRIVE_USER");
-  return `/users/${encodeURIComponent(user)}/drive`;
+  return "/me/drive";
 }
 
 function encodePath(fullPath: string): string {

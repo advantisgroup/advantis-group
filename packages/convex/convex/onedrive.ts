@@ -301,6 +301,37 @@ export const apiRecordAction = mutation({
   },
 });
 
+/**
+ * Read the stored (encrypted) delegated refresh token, or null. The API holds
+ * the encryption key; Convex only ever sees ciphertext.
+ */
+export const apiGetRefreshToken = query({
+  args: { serverKey: v.string() },
+  handler: async (ctx, { serverKey }) => {
+    assertServerKey(serverKey);
+    const row = await ctx.db.query("onedriveAuth").first();
+    return row ? { refreshToken: row.refreshToken } : null;
+  },
+});
+
+/** Upsert the rotating (encrypted) delegated refresh token. */
+export const apiSetRefreshToken = mutation({
+  args: { serverKey: v.string(), refreshToken: v.string() },
+  handler: async (ctx, { serverKey, refreshToken }) => {
+    assertServerKey(serverKey);
+    const row = await ctx.db.query("onedriveAuth").first();
+    if (row) {
+      await ctx.db.patch(row._id, { refreshToken, updatedAt: Date.now() });
+    } else {
+      await ctx.db.insert("onedriveAuth", {
+        refreshToken,
+        updatedAt: Date.now(),
+      });
+    }
+    return { ok: true };
+  },
+});
+
 /** Map driveItem ids → uploader display names, for the file browser. */
 export const apiUploadersByItemIds = query({
   args: { serverKey: v.string(), itemIds: v.array(v.string()) },
