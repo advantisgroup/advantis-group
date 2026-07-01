@@ -8,11 +8,13 @@ import {
   ensureUser,
   getCurrentUser,
   requireAdmin,
+  requireManager,
   requireUser,
 } from "./lib/auth";
 import {
   lockClerkUser,
   unlockClerkUser,
+  updateClerkPublicMetadata,
   updateClerkUserAvatar,
   updateClerkUserName,
 } from "./lib/clerk";
@@ -44,6 +46,8 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     managerId: user.managerId ?? null,
     status: user.status,
     external: user.external ?? false,
+    gfAccess: user.gfAccess ?? false,
+    uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
     avatar,
     lastSeenAt: user.lastSeenAt ?? null,
     createdAt: user.createdAt,
@@ -253,6 +257,78 @@ export const setStatus = action({
       } else {
         await unlockClerkUser(clerkUserId);
       }
+    }
+    return { ok: true };
+  },
+});
+
+// --- OneDrive permission flags (synced into Clerk public metadata) ----------
+
+export const applyGfAccess = internalMutation({
+  args: { userId: v.id("users"), gfAccess: v.boolean() },
+  handler: async (ctx, { userId, gfAccess }) => {
+    const admin = await requireAdmin(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    await ctx.db.patch(userId, { gfAccess });
+    await ctx.db.insert("onedriveAudit", {
+      actorUserId: admin._id,
+      action: gfAccess ? "grant_gf_access" : "revoke_gf_access",
+      target: target.email,
+      at: Date.now(),
+    });
+    return { clerkUserId: target.clerkUserId, gfAccess };
+  },
+});
+
+/** Grant/revoke Geschäftsführung access (admin only). Mirrors into Clerk. */
+export const setGfAccess = action({
+  args: { userId: v.id("users"), gfAccess: v.boolean() },
+  handler: async (ctx, args): Promise<{ ok: true }> => {
+    const { clerkUserId, gfAccess } = await ctx.runMutation(
+      internal.users.applyGfAccess,
+      args
+    );
+    if (clerkUserId) {
+      await updateClerkPublicMetadata(clerkUserId, { gfAccess });
+    }
+    return { ok: true };
+  },
+});
+
+export const applyUploadPermission = internalMutation({
+  args: { userId: v.id("users"), enabled: v.boolean() },
+  handler: async (ctx, { userId, enabled }) => {
+    const actor = await requireManager(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    await ctx.db.patch(userId, { uploadRequestsEnabled: enabled });
+    await ctx.db.insert("onedriveAudit", {
+      actorUserId: actor._id,
+      action: enabled ? "enable_uploads" : "disable_uploads",
+      target: target.email,
+      at: Date.now(),
+    });
+    return { clerkUserId: target.clerkUserId, enabled };
+  },
+});
+
+/** Enable/disable a user's ability to submit upload requests (manager+). */
+export const setUploadPermission = action({
+  args: { userId: v.id("users"), enabled: v.boolean() },
+  handler: async (ctx, args): Promise<{ ok: true }> => {
+    const { clerkUserId, enabled } = await ctx.runMutation(
+      internal.users.applyUploadPermission,
+      args
+    );
+    if (clerkUserId) {
+      await updateClerkPublicMetadata(clerkUserId, {
+        uploadRequestsEnabled: enabled,
+      });
     }
     return { ok: true };
   },

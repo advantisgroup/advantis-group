@@ -18,7 +18,8 @@
     "groupWorkspace": "Arbeitsbereich",
     "groupResources": "Ressourcen",
     "groupAdministration": "Verwaltung",
-    "signOut": "Abmelden"
+    "signOut": "Abmelden",
+    "files": "Dateien"
   },
   "Common": {
     "save": "Speichern",
@@ -234,7 +235,8 @@
       "notifications": "Benachrichtigungen",
       "settings": "Einstellungen",
       "admin": "Verwaltung",
-      "activity": "Aktivitätsverfolgung"
+      "activity": "Aktivitätsverfolgung",
+      "files": "Dateien"
     },
     "steps": {
       "dashboard": {
@@ -350,6 +352,24 @@
           "title": "Flottenübersicht",
           "description": "Live-Zählungen zeigen, wer aktiv, inaktiv oder offline ist – über alle erfassten Geräte."
         }
+      },
+      "files": {
+        "nav": {
+          "title": "Dateien",
+          "description": "Durchsuche das OneDrive des Teams direkt im Intranet."
+        },
+        "toolbar": {
+          "title": "Suchen, hochladen & mehr",
+          "description": "Dateien finden, Ordner wechseln und den Speicher im Blick behalten."
+        },
+        "dropzone": {
+          "title": "Per Drag & Drop hochladen",
+          "description": "Ziehe Dateien vom Desktop hierher oder nutze diesen Button. Uploads von Mitarbeitenden gehen zuerst zur Freigabe an eine Führungskraft."
+        },
+        "browser": {
+          "title": "Öffnen und Vorschau",
+          "description": "Klicke einen Ordner zum Öffnen oder eine Datei für Vorschau und Download."
+        }
       }
     }
   },
@@ -418,7 +438,47 @@
     "inviteExternalHint": "Externe Adresse – sie werden als vollwertiges Mitglied mit der gewählten Rolle eingeladen.",
     "inviteExternalForbidden": "Nur Admins können externe E-Mail-Adressen einladen.",
     "inviteExternalTitle": "Externen Benutzer einladen?",
-    "inviteExternalBody": "{email} liegt außerhalb Ihrer Firmendomains. Die Person erhält eine Clerk-Einladung und vollen Zugriff mit der gewählten Rolle. Trotzdem senden?"
+    "inviteExternalBody": "{email} liegt außerhalb Ihrer Firmendomains. Die Person erhält eine Clerk-Einladung und vollen Zugriff mit der gewählten Rolle. Trotzdem senden?",
+    "uploads": "Uploads",
+    "pendingUploads": "Ausstehende Freigaben",
+    "oneDriveActivity": "OneDrive-Aktivität",
+    "noPendingUploads": "Keine Uploads zur Freigabe.",
+    "scan_clean": "Unbedenklich",
+    "scan_suspicious": "Verdächtig",
+    "scan_blocked": "Blockiert",
+    "scanReport": "Sicherheitsprüfung",
+    "scanNoFlags": "Keine Auffälligkeiten.",
+    "metaSize": "Größe",
+    "metaType": "Typ",
+    "metaRequestedAt": "Angefragt",
+    "metaTarget": "Ziel",
+    "decisionNotePlaceholder": "Optionale Notiz an den Anfragenden…",
+    "uploadApproved": "Upload freigegeben",
+    "uploadDenied": "Upload abgelehnt",
+    "genericError": "Etwas ist schiefgelaufen.",
+    "disableUploads": "Upload-Anfragen sperren",
+    "enableUploads": "Upload-Anfragen erlauben",
+    "revokeGf": "Geschäftsführungs-Zugriff entziehen",
+    "grantGf": "Geschäftsführungs-Zugriff gewähren",
+    "uploadsDisabled": "Upload-Anfragen gesperrt",
+    "uploadsEnabled": "Upload-Anfragen erlaubt",
+    "gfRevoked": "Geschäftsführungs-Zugriff entzogen",
+    "gfGranted": "Geschäftsführungs-Zugriff gewährt",
+    "noAudit": "Noch keine Aktivität.",
+    "audit_request": "hat einen Upload angefragt:",
+    "audit_approve": "hat freigegeben",
+    "audit_deny": "hat abgelehnt",
+    "audit_upload": "hat hochgeladen",
+    "audit_delete": "hat gelöscht",
+    "audit_mkdir": "hat Ordner erstellt",
+    "audit_rename": "hat umbenannt",
+    "audit_move": "hat verschoben",
+    "audit_share": "hat geteilt",
+    "audit_restore": "hat wiederhergestellt",
+    "audit_grant_gf_access": "hat GF-Zugriff gewährt:",
+    "audit_revoke_gf_access": "hat GF-Zugriff entzogen:",
+    "audit_enable_uploads": "hat Uploads aktiviert für",
+    "audit_disable_uploads": "hat Uploads deaktiviert für"
   },
   "Teams": {
     "customerCare": "Customer Care",
@@ -653,5 +713,56 @@
       "cancel": "Abbrechen",
       "search": "Suchen"
     }
+  },
+  "Files": {
+    "title": "Dateien",
+    "quota": "{used} von {total} belegt",
+    "searchPlaceholder": "Dateien suchen…",
+    "newFolder": "Neuer Ordner",
+    "folderName": "Ordnername",
+    "create": "Erstellen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "upload": "Hochladen",
+    "requestUpload": "Upload anfragen",
+    "colName": "Name",
+    "colUploadedBy": "Hochgeladen von",
+    "colModified": "Geändert",
+    "colSize": "Größe",
+    "actions": "Aktionen",
+    "preview": "Vorschau",
+    "download": "Herunterladen",
+    "versions": "Versionsverlauf",
+    "share": "Freigabelink",
+    "shareDesc": "Jeder mit dem Link kann die Datei bis zum Ablauf ansehen.",
+    "expiresIn": "Läuft ab in",
+    "nDays": "{count, plural, one {# Tag} other {# Tage}}",
+    "createLink": "Link erstellen",
+    "rename": "Umbenennen",
+    "delete": "Löschen",
+    "restore": "Wiederherstellen",
+    "restored": "Version wiederhergestellt",
+    "noVersions": "Keine früheren Versionen.",
+    "current": "aktuell",
+    "folderCreated": "Ordner erstellt",
+    "renamed": "Umbenannt",
+    "noResults": "Keine passenden Dateien.",
+    "emptyFolder": "Dieser Ordner ist leer.",
+    "genericError": "Etwas ist schiefgelaufen.",
+    "uploadedCount": "{count, plural, one {# Datei hochgeladen} other {# Dateien hochgeladen}}",
+    "requestedCount": "{count, plural, one {# Datei zur Freigabe gesendet} other {# Dateien zur Freigabe gesendet}}",
+    "uploading": "Wird hochgeladen…",
+    "deleteTitle": "„{name}“ löschen?",
+    "deleteDesc": "Das Element wird in den OneDrive-Papierkorb verschoben.",
+    "deleted": "Gelöscht",
+    "noPreview": "Für diese Datei ist keine Vorschau verfügbar.",
+    "dropTitle": "Dateien hier ablegen",
+    "dropSubtitle": "Loslassen, um in diesen Ordner hochzuladen.",
+    "dropSubtitleApproval": "Loslassen, um zur Freigabe durch eine Führungskraft zu senden.",
+    "uploadingApproval": "Wird zur Freigabe gesendet…",
+    "done": "Hochgeladen!",
+    "doneApproval": "Zur Freigabe gesendet!",
+    "notConfiguredTitle": "OneDrive ist noch nicht eingerichtet",
+    "notConfiguredBody": "Bitte einen Admin, die OneDrive-Konfiguration abzuschließen."
   }
 }

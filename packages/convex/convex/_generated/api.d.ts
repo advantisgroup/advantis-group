@@ -51,6 +51,7 @@ import type * as lib_clerk from "../lib/clerk.js";
 import type * as lib_notify from "../lib/notify.js";
 import type * as members from "../members.js";
 import type * as notifications from "../notifications.js";
+import type * as onedrive from "../onedrive.js";
 import type * as outbound from "../outbound.js";
 import type * as presence from "../presence.js";
 import type * as tourProgress from "../tourProgress.js";
@@ -107,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   "lib/notify": typeof lib_notify;
   members: typeof members;
   notifications: typeof notifications;
+  onedrive: typeof onedrive;
   outbound: typeof outbound;
   presence: typeof presence;
   tourProgress: typeof tourProgress;

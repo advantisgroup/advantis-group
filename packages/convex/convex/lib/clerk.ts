@@ -108,6 +108,27 @@ export async function updateClerkUserAvatar(
 }
 
 /**
+ * Deep-merge keys into a Clerk user's public metadata. Uses Clerk's dedicated
+ * `/metadata` endpoint so existing keys (e.g. `intranetRole`) are preserved.
+ * Best-effort idempotency: a 404 (user already gone) is treated as success.
+ */
+export async function updateClerkPublicMetadata(
+  clerkUserId: string,
+  publicMetadata: Record<string, unknown>
+): Promise<void> {
+  const res = await clerkFetch(`/users/${clerkUserId}/metadata`, {
+    method: "PATCH",
+    body: JSON.stringify({ public_metadata: publicMetadata }),
+  });
+  if (!res.ok && res.status !== 404) {
+    throw new ConvexError({
+      code: "upstream",
+      message: `Clerk could not update user metadata (HTTP ${res.status}). ${await res.text()}`,
+    });
+  }
+}
+
+/**
  * Lock a Clerk user account (blocks sign-in without deleting the account).
  * Treats 404 as success for idempotency.
  */

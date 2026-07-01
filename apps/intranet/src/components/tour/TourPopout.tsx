@@ -71,9 +71,7 @@ function computePosition(
   };
 
   const fits = (s: Side) =>
-    s === "top" || s === "bottom"
-      ? room[s] >= ph + GAP
-      : room[s] >= pw + GAP;
+    s === "top" || s === "bottom" ? room[s] >= ph + GAP : room[s] >= pw + GAP;
 
   const order: Side[] = [
     preferred,

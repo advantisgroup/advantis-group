@@ -128,6 +128,37 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
     ],
   },
   {
+    id: "files",
+    route: "/files",
+    steps: [
+      {
+        id: "files.nav",
+        targetAttr: "tour-nav-files",
+        popoutSide: "right",
+        route: "/files",
+        skipOnMobile: true,
+      },
+      {
+        id: "files.toolbar",
+        targetAttr: "tour-files-toolbar",
+        popoutSide: "bottom",
+        route: "/files",
+      },
+      {
+        id: "files.dropzone",
+        targetAttr: "tour-files-upload",
+        popoutSide: "bottom",
+        route: "/files",
+      },
+      {
+        id: "files.browser",
+        targetAttr: "tour-files-browser",
+        popoutSide: "top",
+        route: "/files",
+      },
+    ],
+  },
+  {
     id: "guidebooks",
     route: "/guidebooks",
     steps: [

@@ -8,6 +8,7 @@ import {
   Activity,
   BookOpen,
   Calendar,
+  Cloud,
   ExternalLink,
   LayoutDashboard,
   Megaphone,
@@ -138,6 +139,12 @@ export function Sidebar() {
               },
             ]
           : []),
+        {
+          href: "/files",
+          labelKey: "files",
+          icon: Cloud,
+          tourAttr: "tour-nav-files",
+        },
         {
           href: "/directory",
           labelKey: "directory",

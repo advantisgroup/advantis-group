@@ -5,6 +5,7 @@ export type CheckpointId =
   | "absences"
   | "chat"
   | "directory"
+  | "files"
   | "guidebooks"
   | "notifications"
   | "settings"

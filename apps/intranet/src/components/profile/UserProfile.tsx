@@ -25,7 +25,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 
-import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
+import {
+  useCurrentUser,
+  useIsAdmin,
+} from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,13 +66,7 @@ function useUser(userId: Id<"users"> | null) {
 }
 
 /** A small labelled section so the profile reads like a tidy info card. */
-function Section({
-  label,
-  children,
-}: {
-  label: string;
-  children: ReactNode;
-}) {
+function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="space-y-2">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -210,7 +207,9 @@ function MutualConversations({
 }) {
   const t = useTranslations("Profile");
   const router = useRouter();
-  const mutual = useQuery(api.chat.mutualConversations, { otherUserId: userId });
+  const mutual = useQuery(api.chat.mutualConversations, {
+    otherUserId: userId,
+  });
 
   if (!mutual || mutual.length === 0) return null;
 
@@ -364,7 +363,11 @@ function AdminControls({
             <Send /> {t("reinvite")}
           </Button>
           {!isSelf && (
-            <Button variant="outline" size="sm" onClick={() => void toggleStatus()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void toggleStatus()}
+            >
               <ShieldCheck />
               {isActive ? t("suspend") : t("activate")}
             </Button>
@@ -495,7 +498,9 @@ function ProfileContent({
             <div className="flex flex-wrap gap-1">
               {user.teams.map(team => (
                 <Badge key={team} variant="muted" className="gap-1.5">
-                  <span className={cn("size-1.5 rounded-full", teamColor(team))} />
+                  <span
+                    className={cn("size-1.5 rounded-full", teamColor(team))}
+                  />
                   {tTeams(teamLabelKey(team))}
                 </Badge>
               ))}

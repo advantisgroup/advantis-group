@@ -21,6 +21,7 @@ export const internalNotificationsRoute = new Elysia().post(
         t.Literal("access-approved"),
         t.Literal("access-denied"),
         t.Literal("absence-decision"),
+        t.Literal("upload-decision"),
         t.Literal("guest-invite"),
         t.Literal("digest"),
       ]),

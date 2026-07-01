@@ -1,5 +1,8 @@
 "use client";
 
+/* eslint-disable react-refresh/only-export-components --
+   Context provider colocated with its hooks (useCurrentUser/useIsManager/
+   useIsAdmin), which are imported across the app. */
 import type { ReactNode } from "react";
 import { createContext, useContext } from "react";
 
@@ -20,6 +23,8 @@ export interface CurrentUser {
   managerId: string | null;
   status: "active" | "suspended";
   external: boolean;
+  gfAccess: boolean;
+  uploadRequestsEnabled: boolean;
   avatar: string | null;
   lastSeenAt: number | null;
   createdAt: number;

@@ -1,11 +1,14 @@
 "use client";
 
+/* eslint-disable react-refresh/only-export-components --
+   Provider colocated with its `useTour` hook, imported across the app. */
 import type { ReactNode } from "react";
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -73,8 +76,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const stateRef = useRef<TourLocalState | null>(null);
 
   // Checkpoints visible to this user (filter manager-only for employees)
-  const visibleCheckpoints: TourCheckpoint[] = TOUR_CHECKPOINTS.filter(
-    cp => !cp.managerOnly || isManager
+  const visibleCheckpoints: TourCheckpoint[] = useMemo(
+    () => TOUR_CHECKPOINTS.filter(cp => !cp.managerOnly || isManager),
+    [isManager]
   );
 
   // Persist state to localStorage and schedule Convex sync
@@ -229,10 +233,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
     };
   }, [phase, currentStep]);
 
-  function findNextCheckpoint(current: CheckpointId): TourCheckpoint | null {
-    const idx = visibleCheckpoints.findIndex(c => c.id === current);
-    return visibleCheckpoints[idx + 1] ?? null;
-  }
+  const findNextCheckpoint = useCallback(
+    (current: CheckpointId): TourCheckpoint | null => {
+      const idx = visibleCheckpoints.findIndex(c => c.id === current);
+      return visibleCheckpoints[idx + 1] ?? null;
+    },
+    [visibleCheckpoints]
+  );
 
   const advance = useCallback(() => {
     if (!state || !currentCheckpoint || !currentStep) return;

@@ -75,6 +75,7 @@ export type NotificationEmailKind =
   | "access-approved"
   | "access-denied"
   | "absence-decision"
+  | "upload-decision"
   | "guest-invite"
   | "digest";
 
@@ -84,3 +85,100 @@ export interface InternalNotificationRequest {
   to: string;
   data: Record<string, unknown>;
 }
+
+// ---------------------------------------------------------------------------
+// OneDrive / file store (api.advantisgroup.de → Microsoft Graph)
+//
+// The intranet is the front page for a single OneDrive subscription. Access is
+// enforced entirely in our API (Graph sees one all-powerful service account),
+// so these DTOs already carry the viewer's effective permissions.
+// ---------------------------------------------------------------------------
+
+export type OneDriveItemType = "folder" | "file";
+
+export interface OneDriveItem {
+  id: string;
+  name: string;
+  type: OneDriveItemType;
+  /** Size in bytes (folder = aggregate size reported by Graph). */
+  size: number;
+  /** ISO timestamp of the last modification. */
+  lastModified?: string;
+  /** MIME type for files. */
+  mimeType?: string;
+  /** Child count for folders. */
+  childCount?: number;
+  /** Path relative to the Advantis Group root, e.g. "Team/Reports". */
+  path: string;
+  /** Whether the current viewer may write here (upload/delete/rename/move). */
+  canWrite: boolean;
+  /** Thumbnail URL when Graph can render one (images / office / pdf). */
+  thumbnailUrl?: string;
+  /** Display name of the intranet user who uploaded this, when tracked. */
+  uploadedByName?: string;
+}
+
+export interface OneDriveBreadcrumb {
+  id: string;
+  name: string;
+  /** Path relative to the Advantis Group root. */
+  path: string;
+}
+
+export interface OneDriveListing {
+  folderId: string;
+  /** Path relative to the Advantis Group root ("" for the root). */
+  path: string;
+  breadcrumbs: OneDriveBreadcrumb[];
+  items: OneDriveItem[];
+  /** Viewer may create folders / upload directly here (manager+). */
+  canWrite: boolean;
+  /** Viewer may submit an upload request here (employee, default-on flag). */
+  canRequest: boolean;
+}
+
+/** Drive storage usage, for the 1 TB quota bar. */
+export interface DriveQuota {
+  used: number;
+  total: number;
+  remaining: number;
+}
+
+export type ScanVerdict = "clean" | "suspicious" | "blocked";
+export type ScanSeverity = "info" | "warning" | "danger";
+
+export interface ScanFlag {
+  /** Stable machine code, e.g. "blocked_extension", "extension_mismatch". */
+  code: string;
+  severity: ScanSeverity;
+  /** Human-readable explanation for the reviewing manager. */
+  detail: string;
+}
+
+export interface ScanReport {
+  verdict: ScanVerdict;
+  flags: ScanFlag[];
+  scannedAt: number;
+}
+
+export type UploadStatus =
+  | "pending"
+  | "approved"
+  | "denied"
+  | "uploading"
+  | "failed"
+  | "cancelled";
+
+export const UPLOAD_AUDIT_ACTIONS = [
+  "request",
+  "approve",
+  "deny",
+  "upload",
+  "delete",
+  "mkdir",
+  "rename",
+  "move",
+  "share",
+  "restore",
+] as const;
+export type UploadAuditAction = (typeof UPLOAD_AUDIT_ACTIONS)[number];

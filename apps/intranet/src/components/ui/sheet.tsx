@@ -65,34 +65,39 @@ interface SheetContentProps
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, topInset = 0, style, ...props }, ref) => {
-  const isVertical = side === "top" || side === "bottom";
-  // Bottom (and top) drawers cap their height so a tall one always leaves a
-  // safe gap from the opposite edge instead of crowding the status bar.
-  const safeStyle = isVertical
-    ? {
-        maxHeight: `calc(100dvh - ${DRAWER_SAFE_INSET} - env(safe-area-inset-top, 0px) - ${topInset}px)`,
-        ...style,
-      }
-    : style;
-  return (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content
-        ref={ref}
-        className={cn(sheetVariants({ side }), className)}
-        style={safeStyle}
-        {...props}
-      >
-        {children}
-      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring disabled:pointer-events-none">
-        <X className="h-5 w-5" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  );
-});
+>(
+  (
+    { side = "right", className, children, topInset = 0, style, ...props },
+    ref
+  ) => {
+    const isVertical = side === "top" || side === "bottom";
+    // Bottom (and top) drawers cap their height so a tall one always leaves a
+    // safe gap from the opposite edge instead of crowding the status bar.
+    const safeStyle = isVertical
+      ? {
+          maxHeight: `calc(100dvh - ${DRAWER_SAFE_INSET} - env(safe-area-inset-top, 0px) - ${topInset}px)`,
+          ...style,
+        }
+      : style;
+    return (
+      <SheetPortal>
+        <SheetOverlay />
+        <SheetPrimitive.Content
+          ref={ref}
+          className={cn(sheetVariants({ side }), className)}
+          style={safeStyle}
+          {...props}
+        >
+          {children}
+          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring disabled:pointer-events-none">
+            <X className="h-5 w-5" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  }
+);
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 
 const SheetTitle = React.forwardRef<

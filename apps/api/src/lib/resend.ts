@@ -97,6 +97,21 @@ function render(
         ),
       };
     }
+    case "upload-decision": {
+      const decision = str(data, "decision");
+      const fileName = str(data, "fileName");
+      const folder = str(data, "folder");
+      const note = str(data, "note");
+      return {
+        subject: `Upload ${decision}: ${fileName}`,
+        html: layout(
+          `Upload ${decision}`,
+          `<p style="margin:0 0 16px;line-height:1.6">Your upload <strong>${fileName}</strong>${folder ? ` to <strong>${folder}</strong>` : ""} was <strong>${decision}</strong>.</p>
+           ${note ? `<p style="margin:0 0 24px;line-height:1.6;color:#52525b">Note: ${note}</p>` : ""}
+           ${button(`${INTERNAL_URL}/files`, "Open files")}`
+        ),
+      };
+    }
     case "guest-invite": {
       const token = str(data, "token");
       const label = str(data, "label") || "Guest";
