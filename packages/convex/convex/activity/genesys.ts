@@ -109,20 +109,36 @@ async function pushGenesys(
   });
 }
 
-/** Poll slice: per-user routing status + presence for everyone mapped to Genesys. */
+/**
+ * Poll slice: per-user routing status + presence for everyone mapped to
+ * Genesys. Logs one aggregate summary per run; per-person state *transitions*
+ * are logged in `pushSignal` where they actually happen.
+ */
 export async function pollGenesys(
   ctx: ActionCtx,
   mappings: Mapping[]
 ): Promise<void> {
   const genesysPeople = mappings.filter(p => p.genesysUserId);
   if (genesysPeople.length === 0) return;
+  const tally = { interacting: 0, wrapUp: 0, available: 0 };
+  let processed = 0;
   try {
     for (const p of genesysPeople) {
       const s = await fetchGenesysUserState(p.genesysUserId!);
+      if (s.routingStatus === "INTERACTING") tally.interacting++;
+      if (s.wrapUp) tally.wrapUp++;
+      if (s.presence === "AVAILABLE") tally.available++;
       await pushGenesys(ctx, p.employeeId, s);
+      processed++;
     }
+    console.log(
+      `[genesys:poll] ${genesysPeople.length} people — interacting=${tally.interacting} wrapUp=${tally.wrapUp} available=${tally.available}`
+    );
     await reportHealth(ctx, "genesys", "ok");
   } catch (err) {
+    console.error(
+      `[genesys:poll] failed after processing ${processed}/${genesysPeople.length} people: ${errMessage(err)}`
+    );
     await reportHealth(ctx, "genesys", healthStatusOf(err), errMessage(err));
   }
 }

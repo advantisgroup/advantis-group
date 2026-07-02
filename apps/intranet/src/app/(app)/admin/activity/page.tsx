@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import Link from "next/link";
 
@@ -9,6 +9,8 @@ import { useQuery } from "convex/react";
 import {
   Activity,
   ChevronRight,
+  Clock,
+  Coffee,
   MonitorSmartphone,
   Moon,
   PowerOff,
@@ -31,9 +33,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   dayStateSegments,
-  isWorkingState,
   STATE_NAMES,
-  type StateName,
   type StateSegment,
 } from "@/lib/activity/activity";
 import {
@@ -42,6 +42,7 @@ import {
   todayLocalDay,
 } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
+import { formatCountdown, nextPollAt } from "@/lib/activity/pollSchedule";
 import { describeStatus, type StatusInput } from "@/lib/activity/status";
 import { useNow } from "@/lib/activity/useNow";
 import { useQueryParam } from "@/lib/activity/useQueryParam";
@@ -99,80 +100,115 @@ function bucketOf(d: TeamRow): Bucket {
   return "working";
 }
 
-/** The four headline figures for the whole fleet. */
-function FleetSummary({ rows }: { rows: TeamRow[] }) {
+/** Tally every row into its bucket — the one place this count is computed, so
+ * the stat tiles, the filter chips and the grid groups below can never
+ * disagree with each other about how many people are in a given bucket. */
+function countByBucket(rows: TeamRow[]): Record<Bucket, number> {
+  const c: Record<Bucket, number> = {
+    attention: 0,
+    working: 0,
+    away: 0,
+    offline: 0,
+  };
+  for (const d of rows) c[bucketOf(d)]++;
+  return c;
+}
+
+const BUCKET_TONE: Record<Bucket, "ok" | "warn" | "muted"> = {
+  working: "ok",
+  attention: "warn",
+  away: "muted",
+  offline: "muted",
+};
+
+/**
+ * The fleet headline figures, one tile per bucket plus a total — clicking a
+ * tile applies that bucket's filter (toggling back to "all" if it's already
+ * active), so "who is that?" is always one click away instead of a number
+ * with no way to trace it back to a card.
+ */
+function FleetSummary({
+  rows,
+  counts,
+  filter,
+  onFilterChange,
+}: {
+  rows: TeamRow[];
+  counts: Record<Bucket, number>;
+  filter: FilterValue;
+  onFilterChange: (v: FilterValue) => void;
+}) {
   const { t } = useI18n();
-  // "Working" follows the fused state (a person on BREAK/ABSENT isn't working,
-  // even if their PC is on), falling back to the raw active flag when no fused
-  // state exists yet — keeps the count in step with the per-card badges.
-  const isWorking = (d: TeamRow) =>
-    isWorkingState(d.finalState as StateName | null, d.active);
-  const working = rows.filter(d => d.online && isWorking(d)).length;
-  const idle = rows.filter(d => d.online && !isWorking(d)).length;
-  const offline = rows.filter(d => !d.online).length;
   const total = rows.length;
-  const onlineCount = working + idle;
+  const onlineCount = rows.filter(d => d.online).length;
+
+  const bucketIcon: Record<Bucket, ReactNode> = {
+    working: <Activity className="h-4 w-4" />,
+    attention: <Moon className="h-4 w-4" />,
+    away: <Coffee className="h-4 w-4" />,
+    offline: <PowerOff className="h-4 w-4" />,
+  };
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <StatCard
-        label={t("overview.working")}
-        value={working}
-        tone="ok"
-        live={working > 0}
-        progress={total > 0 ? working / total : 0}
-        icon={<Activity className="h-4 w-4" />}
-      />
-      <StatCard
-        label={t("overview.idleNow")}
-        value={idle}
-        tone="warn"
-        progress={total > 0 ? idle / total : 0}
-        icon={<Moon className="h-4 w-4" />}
-      />
-      <StatCard
-        label={t("overview.offline")}
-        value={offline}
-        tone="muted"
-        progress={total > 0 ? offline / total : 0}
-        hint={total > 0 ? t("overview.ofTotal", { total }) : undefined}
-        icon={<PowerOff className="h-4 w-4" />}
-      />
-      <StatCard
-        label={t("overview.total")}
-        value={total}
-        tone="fg"
-        hint={total > 0 ? `${onlineCount} ${t("overview.online")}` : undefined}
-        icon={<MonitorSmartphone className="h-4 w-4" />}
-      />
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      {BUCKET_ORDER.map(bucket => {
+        const active = filter === bucket;
+        return (
+          <button
+            key={bucket}
+            type="button"
+            aria-pressed={active}
+            onClick={() => onFilterChange(active ? "all" : bucket)}
+            className="block w-full appearance-none rounded-2xl border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50"
+          >
+            <StatCard
+              label={t(`overview.filter.${bucket}`)}
+              value={counts[bucket]}
+              tone={BUCKET_TONE[bucket]}
+              live={bucket === "working" && counts[bucket] > 0}
+              progress={total > 0 ? counts[bucket] / total : 0}
+              icon={bucketIcon[bucket]}
+              className={cn(active && "ring-2 ring-signal/60")}
+            />
+          </button>
+        );
+      })}
+      <button
+        type="button"
+        aria-pressed={filter === "all"}
+        onClick={() => onFilterChange("all")}
+        className="block w-full appearance-none rounded-2xl border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50"
+      >
+        <StatCard
+          label={t("overview.total")}
+          value={total}
+          tone="fg"
+          hint={
+            total > 0 ? `${onlineCount} ${t("overview.online")}` : undefined
+          }
+          icon={<MonitorSmartphone className="h-4 w-4" />}
+          className={cn(filter === "all" && "ring-2 ring-signal/60")}
+        />
+      </button>
     </div>
   );
 }
 
 /** Filter chips: All · Inactive · Working · Break/absent · Offline. */
 function BucketFilter({
-  rows,
+  total,
+  counts,
   value,
   onChange,
 }: {
-  rows: TeamRow[];
+  total: number;
+  counts: Record<Bucket, number>;
   value: FilterValue;
   onChange: (v: FilterValue) => void;
 }) {
   const { t } = useI18n();
-  const counts = useMemo(() => {
-    const c: Record<Bucket, number> = {
-      attention: 0,
-      working: 0,
-      away: 0,
-      offline: 0,
-    };
-    for (const d of rows) c[bucketOf(d)]++;
-    return c;
-  }, [rows]);
-
   const chips: { id: FilterValue; label: string; count: number }[] = [
-    { id: "all", label: t("overview.filter.all"), count: rows.length },
+    { id: "all", label: t("overview.filter.all"), count: total },
     ...BUCKET_ORDER.map(b => ({
       id: b,
       label: t(`overview.filter.${b}`),
@@ -291,6 +327,31 @@ function DeviceCard({
   );
 }
 
+/**
+ * "Next sync in …" — a live countdown to the next scheduled Genesys/Clockodo
+ * poll, computed client-side from the same cadence as `crons.ts` (no
+ * round-trip needed). Ticks every second in its own isolated subtree — the
+ * `useNow(1000)` here is local to this component, so the rest of the page
+ * doesn't re-render 60x/minute along with it. Data can also arrive sooner via
+ * webhook; the tooltip says so, since this is only the periodic fallback.
+ */
+function NextSyncBadge() {
+  const { t, lang } = useI18n();
+  const now = useNow(1000);
+  const target = nextPollAt(now);
+  return (
+    <span
+      title={t("overview.nextSyncHint")}
+      className="flex items-center gap-1.5 rounded-full border border-border bg-panel/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+    >
+      <Clock className="h-3 w-3" />
+      {t("overview.nextSync", {
+        duration: formatCountdown(target - now, lang),
+      })}
+    </span>
+  );
+}
+
 export default function OverviewPage() {
   const { t } = useI18n();
   const team = useQuery(api.activity.stats.teamOverview);
@@ -373,16 +434,19 @@ export default function OverviewPage() {
         icon={<Activity />}
         action={
           team !== undefined ? (
-            <span
-              title={t("overview.liveHint")}
-              className="flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-1 text-[11px] font-medium text-ok"
-            >
-              <span aria-hidden className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok opacity-60 motion-reduce:animate-none" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ok" />
+            <div className="flex items-center gap-2">
+              <NextSyncBadge />
+              <span
+                title={t("overview.liveHint")}
+                className="flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-1 text-[11px] font-medium text-ok"
+              >
+                <span aria-hidden className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok opacity-60 motion-reduce:animate-none" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ok" />
+                </span>
+                {t("overview.live")}
               </span>
-              {t("overview.live")}
-            </span>
+            </div>
           ) : undefined
         }
       />
@@ -439,14 +503,28 @@ export default function OverviewPage() {
             const cards = visible.filter(d => bucketOf(d) === bucket);
             return cards.length > 0 ? [{ bucket, cards }] : [];
           });
+          // Single source of truth for "how many people are in each bucket" —
+          // the stat tiles, the filter chips and the grid groups above all
+          // read from this same tally so their numbers can never disagree.
+          const counts = countByBucket(rows);
 
           return (
             <div className="space-y-6">
               <HealthBanner />
-              <FleetSummary rows={rows} />
+              <FleetSummary
+                rows={rows}
+                counts={counts}
+                filter={filter}
+                onFilterChange={setFilter}
+              />
 
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <BucketFilter rows={rows} value={filter} onChange={setFilter} />
+                <BucketFilter
+                  total={rows.length}
+                  counts={counts}
+                  value={filter}
+                  onChange={setFilter}
+                />
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="relative">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

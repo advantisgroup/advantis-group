@@ -139,6 +139,16 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
   onBreak: boolean;
   clockedOut: boolean;
   clockedOutCertain: boolean;
+  /**
+   * Epoch ms of Clockodo's own last-entry end — the true clock-out instant,
+   * independent of whenever this poll happened to notice it. Set whenever
+   * `clockedOut` is true; `pushSignal` anchors "since" and the state history
+   * to this instead of the poll's own wall-clock time, so a late-running
+   * evening poll (or one that missed a whole outage window) doesn't paint a
+   * multi-hour "still on break" gap between the real clock-out and whenever
+   * we got around to checking.
+   */
+  clockedOutSince: number | null;
 }> {
   const entries = await fetchTodayEntries(clockodoUserId);
   // "Currently clocked in" = an entry with no end time yet. Clockodo's `clocked`
@@ -152,6 +162,7 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
       onBreak: false,
       clockedOut: false,
       clockedOutCertain: false,
+      clockedOutSince: null,
     };
   }
   if (running) {
@@ -160,6 +171,27 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
       onBreak: false,
       clockedOut: false,
       clockedOutCertain: false,
+      clockedOutSince: null,
+    };
+  }
+  // Nothing running — find the true moment the last entry ended, straight
+  // from Clockodo, *before* deciding assumed vs certain, so both branches
+  // anchor to it. Unparseable end times are skipped so one odd entry can't
+  // poison the verdict.
+  let lastEnd = 0;
+  for (const e of entries) {
+    if (!e.time_until) continue;
+    const t = Date.parse(e.time_until);
+    if (Number.isFinite(t) && t > lastEnd) lastEnd = t;
+  }
+  if (lastEnd === 0) {
+    // Nothing parseable to anchor to — read it as a break rather than guess.
+    return {
+      working: false,
+      onBreak: true,
+      clockedOut: false,
+      clockedOutCertain: false,
+      clockedOutSince: null,
     };
   }
   // Worked today but nothing running. Past the business day-end hour that is
@@ -170,24 +202,18 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
       onBreak: false,
       clockedOut: true,
       clockedOutCertain: true,
+      clockedOutSince: lastEnd,
     };
   }
   // Before day-end: a short gap is a break, a long one is (assumed to be) the
-  // end of the day. Unparseable end times are skipped so one odd entry can't
-  // poison the verdict.
-  let lastEnd = 0;
-  for (const e of entries) {
-    if (!e.time_until) continue;
-    const t = Date.parse(e.time_until);
-    if (Number.isFinite(t) && t > lastEnd) lastEnd = t;
-  }
-  const clockedOut =
-    lastEnd > 0 && Date.now() - lastEnd > ASSUMED_CLOCKED_OUT_AFTER_MS;
+  // end of the day.
+  const clockedOut = Date.now() - lastEnd > ASSUMED_CLOCKED_OUT_AFTER_MS;
   return {
     working: false,
     onBreak: !clockedOut,
     clockedOut,
     clockedOutCertain: false,
+    clockedOutSince: clockedOut ? lastEnd : null,
   };
 }
 
@@ -209,7 +235,12 @@ async function fetchClockodoEntry(
   };
 }
 
-/** Poll slice: org-wide approved absences + each mapped user's working/break. */
+/**
+ * Poll slice: org-wide approved absences + each mapped user's working/break.
+ * Logs one aggregate summary per run rather than per-person — per-person
+ * *transitions* are logged where they actually happen, in `pushSignal`, so
+ * log volume tracks real events instead of poll frequency.
+ */
 export async function pollClockodo(
   ctx: ActionCtx,
   secret: string,
@@ -217,11 +248,17 @@ export async function pollClockodo(
 ): Promise<void> {
   const clockodoPeople = mappings.filter(p => p.clockodoUserId);
   if (clockodoPeople.length === 0) return;
+  const tally = { working: 0, onBreak: 0, clockedOut: 0, absent: 0 };
   try {
     const absences = await fetchAbsences(new Date().getFullYear());
     const day = today();
     for (const p of clockodoPeople) {
       const work = await fetchClockodoWork(p.clockodoUserId!);
+      const absent = isAbsentOn(absences, p.clockodoUserId!, day);
+      if (work.working) tally.working++;
+      if (work.onBreak) tally.onBreak++;
+      if (work.clockedOut) tally.clockedOut++;
+      if (absent) tally.absent++;
       await ctx.runMutation(api.activity.state.pushSignal, {
         secret,
         employeeId: p.employeeId,
@@ -230,11 +267,18 @@ export async function pollClockodo(
         clockodoBreak: work.onBreak,
         clockodoClockedOut: work.clockedOut,
         clockodoClockedOutCertain: work.clockedOutCertain,
-        clockodoAbsent: isAbsentOn(absences, p.clockodoUserId!, day),
+        clockodoClockedOutSince: work.clockedOutSince ?? undefined,
+        clockodoAbsent: absent,
       });
     }
+    console.log(
+      `[clockodo:poll] ${clockodoPeople.length} people — working=${tally.working} onBreak=${tally.onBreak} clockedOut=${tally.clockedOut} absent=${tally.absent}`
+    );
     await reportHealth(ctx, "clockodo", "ok");
   } catch (err) {
+    console.error(
+      `[clockodo:poll] failed after processing ${tally.working + tally.onBreak + tally.clockedOut} people: ${errMessage(err)}`
+    );
     await reportHealth(ctx, "clockodo", healthStatusOf(err), errMessage(err));
   }
 }
@@ -265,11 +309,18 @@ export const refreshClockodo = action({
         clockodoBreak: work.onBreak,
         clockodoClockedOut: work.clockedOut,
         clockodoClockedOutCertain: work.clockedOutCertain,
+        clockodoClockedOutSince: work.clockedOutSince ?? undefined,
         clockodoAbsent: absent,
       });
+      console.log(
+        `[clockodo:refresh] ${employeeId} — working=${work.working} onBreak=${work.onBreak} clockedOut=${work.clockedOut}${work.clockedOutCertain ? " (certain)" : ""} absent=${absent}`
+      );
       await reportHealth(ctx, "clockodo", "ok");
       return { ok: true as const };
     } catch (err) {
+      console.error(
+        `[clockodo:refresh] ${employeeId} failed: ${errMessage(err)}`
+      );
       await reportHealth(ctx, "clockodo", healthStatusOf(err), errMessage(err));
       return { ok: false, error: "clockodo_unavailable" as const };
     }
@@ -303,11 +354,17 @@ export const refreshClockodoByEntry = action({
     if (secret !== process.env.ACTIVITYTRACK_SIGNAL_SECRET) {
       return { ok: false, error: "forbidden" as const };
     }
+    console.log(
+      `[clockodo:webhook] received event="${eventName ?? "unknown"}" entry=${entryId}`
+    );
     try {
       const entry = await fetchClockodoEntry(entryId);
       const clockodoUserId = entry.usersId ?? usersId ?? null;
 
       if (!clockodoUserId) {
+        console.log(
+          `[clockodo:webhook] entry=${entryId} has no resolvable user (404 and no usersId in payload) — ignored`
+        );
         await reportHealth(ctx, "clockodo", "ok");
         return { ok: true as const, ignored: true as const };
       }
@@ -320,6 +377,9 @@ export const refreshClockodoByEntry = action({
         }
       );
       if (!employeeId) {
+        console.log(
+          `[clockodo:webhook] clockodoUserId=${clockodoUserId} is not mapped to any person — ignored`
+        );
         await reportHealth(ctx, "clockodo", "ok");
         return { ok: true as const, unmapped: true as const };
       }
@@ -338,6 +398,7 @@ export const refreshClockodoByEntry = action({
         clockodoBreak: work.onBreak,
         clockodoClockedOut: work.clockedOut,
         clockodoClockedOutCertain: work.clockedOutCertain,
+        clockodoClockedOutSince: work.clockedOutSince ?? undefined,
         clockodoAbsent: absent,
       });
 
@@ -362,6 +423,9 @@ export const refreshClockodoByEntry = action({
       await reportHealth(ctx, "clockodo", "ok");
       return { ok: true as const };
     } catch (err) {
+      console.error(
+        `[clockodo:webhook] entry=${entryId} event="${eventName ?? "unknown"}" failed: ${errMessage(err)}`
+      );
       await reportHealth(ctx, "clockodo", healthStatusOf(err), errMessage(err));
       return { ok: false, error: "clockodo_unavailable" as const };
     }

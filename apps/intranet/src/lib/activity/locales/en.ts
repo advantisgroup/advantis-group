@@ -56,6 +56,9 @@ export const en: Dict = {
   "overview.filter.offline": "Offline",
   "overview.noMatches": "Nobody is in this group right now.",
   "overview.live": "Live",
+  "overview.nextSync": "Next sync in {duration}",
+  "overview.nextSyncHint":
+    "Genesys and Clockodo are polled every 2 minutes during the day and every 10 minutes overnight — this counts down to that. Clockodo can also push updates sooner via webhook.",
   "overview.liveHint": "Updates in real time — no refresh needed.",
 
   "devices.heading": "Devices",

@@ -477,6 +477,10 @@ export default defineSchema({
     // after which the clock-out is final and never re-labelled.
     clockodoClockedOut: v.optional(v.boolean()),
     clockodoClockedOutCertain: v.optional(v.boolean()),
+    // Epoch ms of Clockodo's own last-entry end (the true clock-out instant),
+    // used to anchor `finalStateSince` and the state history instead of
+    // whenever a poll happened to notice — see `collapseIntoClockedOut`.
+    clockodoClockedOutSince: v.optional(v.number()),
     clockodoUpdatedAt: v.optional(v.number()),
 
     // Engine output.

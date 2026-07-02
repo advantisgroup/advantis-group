@@ -57,10 +57,37 @@ before merge.
 19-23,0-4 * * *` off-hours — so `pollAll` is a real fallback independent of
    webhook health, and the 20:00 certainty transition reliably fires even when
    the webhook is down.
+9. `fix(activity/state)` — entering `CLOCKED_OUT` used to timestamp "since" at
+   whenever the poll happened to notice, not the real clock-out. A poll outage
+   (or a late-running evening poll) then painted a fake multi-hour "still on
+   break" gap between the actual clock-out and the correction. Fixed by
+   plumbing Clockodo's own last-entry-end (`clockedOutSince`, ground truth)
+   through `fetchClockodoWork` → `pushSignal`, which now anchors
+   `finalStateSince` to it and collapses any stray samples recorded after it
+   (`collapseIntoClockedOut`) into one continuous stretch. Schema adds
+   `employeeStates.clockodoClockedOutSince` (additive, no migration).
+10. Overview stat tiles (`FleetSummary`) computed "Working/Idle/Offline"
+    independently from the grid's own `bucketOf` classification, so the
+    numbers never matched the filter chips or the cards below (e.g. "Idle 1"
+    with no way to find that person). Rewritten to derive every tile from the
+    same `bucketOf` tally the chips/grid use, and made clickable — clicking a
+    tile sets that bucket's filter.
+11. "Next sync in …" countdown badge in the Overview header
+    (`apps/intranet/src/lib/activity/pollSchedule.ts` — `nextPollAt`, pure,
+    mirrors the cron cadence client-side) so managers don't have to guess when
+    data will refresh; ticks every second in its own isolated component.
+12. Informative (non-data-dumping) `console.log`/`console.error` across the
+    poll/webhook/signal-fusion path — aggregate tallies per poll run, and a
+    line on every actual fused-state transition in `pushSignal` — so Convex
+    function logs explain _what happened_, not just that something ran.
+    Deliberately not added to the hot-path dashboard queries
+    (`overview`/`teamOverview`/`historyBatch`), which re-run on every
+    subscription push and would just spam.
 
-Verified: `tsc --noEmit` (convex/api/intranet), eslint clean, full
-`next build` passes. Visual verification against a live backend was skipped
-per the requester (no seeded data/credentials in the dev environment).
+Verified: `tsc --noEmit` (convex/api/intranet), eslint clean, prettier clean,
+full `next build` passes. Visual verification against a live backend was
+skipped per the requester (no seeded data/credentials in the dev
+environment).
 
 ## Context a follow-up agent will want
 

@@ -47,6 +47,42 @@ function signalsOf(row: Partial<Doc<"employeeStates">>): StateSignals {
 }
 
 /**
+ * Anchor entry into CLOCKED_OUT to Clockodo's own last-entry-end (`since`),
+ * not whenever this poll happened to run. Deletes every sample from `since`
+ * onward — a stray BREAK recorded before we knew the true instant, an earlier
+ * CLOCKED_OUT anchored at a now-stale time, or nothing at all if a poll outage
+ * meant the gap went unnoticed for hours — and replaces them with one fresh
+ * CLOCKED_OUT sample at `since`. Without this, a late-running evening poll (or
+ * one that missed an outage window entirely) would leave the real clock-out
+ * moment showing as a multi-hour "still on break" stretch, only flipping to
+ * "clocked out" at whenever the poll happened to notice.
+ */
+async function collapseIntoClockedOut(
+  ctx: MutationCtx,
+  employeeId: string,
+  since: number
+): Promise<void> {
+  const stray = await ctx.db
+    .query("stateSamples")
+    .withIndex("by_employee_time", q =>
+      q.eq("employeeId", employeeId).gte("at", since)
+    )
+    .take(1000);
+  for (const s of stray) await ctx.db.delete(s._id);
+  await ctx.db.insert("stateSamples", {
+    employeeId,
+    state: "CLOCKED_OUT",
+    at: since,
+  });
+  console.log(
+    `[activity:state] ${employeeId} CLOCKED_OUT anchored to ${new Date(since).toISOString()}` +
+      (stray.length > 0
+        ? ` — collapsed ${stray.length} stale sample(s) recorded after that`
+        : "")
+  );
+}
+
+/**
  * Withdraw the "assumed clocked out" interpretation for today: the person is
  * clocked in again (or a retro-added entry closed the gap), so every same-day
  * CLOCKED_OUT stretch was actually a break. Samples are patched in place — or
@@ -69,17 +105,24 @@ async function reclassifyClockedOutAsBreak(
     .take(1000);
 
   let prevState: string | null = null;
+  let touched = 0;
   for (const s of samples) {
     if (s.state === "CLOCKED_OUT") {
       if (prevState === "BREAK") {
         await ctx.db.delete(s._id); // merge into the preceding break
-        continue;
+      } else {
+        await ctx.db.patch(s._id, { state: "BREAK" });
       }
-      await ctx.db.patch(s._id, { state: "BREAK" });
       prevState = "BREAK";
+      touched++;
       continue;
     }
     prevState = s.state;
+  }
+  if (touched > 0) {
+    console.log(
+      `[activity:state] ${employeeId} CLOCKED_OUT withdrawn — ${touched} sample(s) reclassified to BREAK (clocked back in today)`
+    );
   }
 }
 
@@ -113,6 +156,7 @@ export const pushSignal = mutation({
     clockodoAbsent: v.optional(v.boolean()),
     clockodoClockedOut: v.optional(v.boolean()),
     clockodoClockedOutCertain: v.optional(v.boolean()),
+    clockodoClockedOutSince: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     assertSignalSecret(args.secret);
@@ -144,6 +188,8 @@ export const pushSignal = mutation({
         patch.clockodoClockedOut = args.clockodoClockedOut;
       if (args.clockodoClockedOutCertain !== undefined)
         patch.clockodoClockedOutCertain = args.clockodoClockedOutCertain;
+      if (args.clockodoClockedOutSince !== undefined)
+        patch.clockodoClockedOutSince = args.clockodoClockedOutSince;
       patch.clockodoUpdatedAt = now;
     }
 
@@ -173,24 +219,26 @@ export const pushSignal = mutation({
       : (existing.finalStateSince ?? existing.updatedAt);
 
     if (stateChanged) {
-      // Entering the assumed CLOCKED_OUT is a *reinterpretation* of the
-      // not-clocked-in gap that started at the BREAK transition (the actual
-      // clock-out) — so backdate: rewrite the trailing BREAK sample in place
-      // and keep "since" at the real clock-out moment, instead of pretending
-      // something new happened when the 1h threshold passed.
-      const trailing =
+      console.log(
+        `[activity:state] ${args.employeeId} ${existing?.finalState ?? "(new)"} -> ${finalState} (source=${args.source})`
+      );
+      // Entering CLOCKED_OUT (assumed or certain) is a *reinterpretation* of
+      // the not-clocked-in gap that started at the real clock-out — so anchor
+      // to Clockodo's own last-entry-end (`clockedOutSince`), not whenever
+      // this poll happened to run, and collapse anything recorded in between
+      // (a stray BREAK sample, or nothing at all across a poll outage) into
+      // one continuous stretch. Falls back to `now` if the source didn't
+      // supply an anchor (shouldn't happen on the clockodo path; defensive
+      // for any other caller).
+      const clockedOutSince =
         finalState === "CLOCKED_OUT"
-          ? await ctx.db
-              .query("stateSamples")
-              .withIndex("by_employee_time", q =>
-                q.eq("employeeId", args.employeeId)
-              )
-              .order("desc")
-              .first()
+          ? (patch.clockodoClockedOutSince ??
+            existing?.clockodoClockedOutSince ??
+            null)
           : null;
-      if (finalState === "CLOCKED_OUT" && trailing?.state === "BREAK") {
-        await ctx.db.patch(trailing._id, { state: "CLOCKED_OUT" });
-        finalStateSince = existing?.finalStateSince ?? trailing.at;
+      if (finalState === "CLOCKED_OUT" && clockedOutSince != null) {
+        await collapseIntoClockedOut(ctx, args.employeeId, clockedOutSince);
+        finalStateSince = clockedOutSince;
       } else {
         await ctx.db.insert("stateSamples", {
           employeeId: args.employeeId,
