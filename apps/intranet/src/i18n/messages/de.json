@@ -40,7 +40,8 @@
     "open": "Öffnen",
     "copy": "Kopieren",
     "areYouSure": "Bist du sicher?",
-    "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden."
+    "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "fromOneDrive": "Aus OneDrive"
   },
   "Access": {
     "title": "Zugang anfragen",
@@ -823,6 +824,7 @@
     "done": "Hochgeladen!",
     "doneApproval": "Zur Freigabe gesendet!",
     "notConfiguredTitle": "OneDrive ist noch nicht eingerichtet",
-    "notConfiguredBody": "Bitte einen Admin, die OneDrive-Konfiguration abzuschließen."
+    "notConfiguredBody": "Bitte einen Admin, die OneDrive-Konfiguration abzuschließen.",
+    "pickerTitle": "Datei aus OneDrive auswählen"
   }
 }

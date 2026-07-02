@@ -306,9 +306,9 @@ export function GroupSettingsDialog({
           <TabsContent value="members" className="pt-2">
             {adding ? (
               <AddMembersPanel
-                existingIds={new Set(
-                  (conversation?.members ?? []).map(m => m._id)
-                )}
+                existingIds={
+                  new Set((conversation?.members ?? []).map(m => m._id))
+                }
                 selected={selected}
                 onToggle={id =>
                   setSelected(s => {
@@ -380,7 +380,10 @@ export function GroupSettingsDialog({
 
           {/* Shared media */}
           <TabsContent value="media" className="pt-2">
-            <SharedMedia conversationId={conversationId} emptyLabel={t("noMedia")} />
+            <SharedMedia
+              conversationId={conversationId}
+              emptyLabel={t("noMedia")}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
@@ -483,7 +486,11 @@ function SharedMedia({
               rel="noreferrer"
               className="aspect-square overflow-hidden rounded-md border border-border"
             >
-              <img src={a.url} alt={a.name} className="h-full w-full object-cover" />
+              <img
+                src={a.url}
+                alt={a.name}
+                className="h-full w-full object-cover"
+              />
             </a>
           ) : a.url ? (
             <a

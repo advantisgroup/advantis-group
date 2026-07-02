@@ -40,7 +40,8 @@
     "open": "Open",
     "copy": "Copy",
     "areYouSure": "Are you sure?",
-    "deleteWarning": "This action can't be undone."
+    "deleteWarning": "This action can't be undone.",
+    "fromOneDrive": "From OneDrive"
   },
   "Access": {
     "title": "Request access",
@@ -823,6 +824,7 @@
     "done": "Uploaded!",
     "doneApproval": "Sent for approval!",
     "notConfiguredTitle": "OneDrive isn't set up yet",
-    "notConfiguredBody": "Ask an admin to finish the OneDrive configuration."
+    "notConfiguredBody": "Ask an admin to finish the OneDrive configuration.",
+    "pickerTitle": "Choose a file from OneDrive"
   }
 }

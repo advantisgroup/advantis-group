@@ -120,6 +120,27 @@ export function useOneDriveApi() {
         saveBlob(await res.blob(), name);
       },
 
+      /**
+       * Pull a drive file's bytes back as a `File`, so it can be dropped
+       * straight into any feature that already accepts local uploads
+       * (announcements, chat, …) without a separate attachment code path.
+       */
+      downloadAsFile: async (item: {
+        id: string;
+        name: string;
+        mimeType?: string;
+      }): Promise<File> => {
+        const res = await fetch(
+          `${API}/onedrive/download/${encodeURIComponent(item.id)}`,
+          { headers: await authHeaders() }
+        );
+        if (!res.ok) throw new Error("Download failed");
+        const blob = await res.blob();
+        return new File([blob], item.name, {
+          type: item.mimeType || blob.type || "application/octet-stream",
+        });
+      },
+
       /** Upload via XHR so the rocket animation can track real progress. */
       upload: (
         file: File,

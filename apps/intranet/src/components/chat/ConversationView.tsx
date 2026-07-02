@@ -15,6 +15,7 @@ import { type Id } from "@advantis/convex/dataModel";
 import {
   type LinkPreview,
   type MessageAttachment,
+  type OneDriveItem,
   type UnfurlResult,
 } from "@advantis/types";
 import { useAuth } from "@clerk/nextjs";
@@ -25,7 +26,9 @@ import {
   ArrowLeft,
   Check,
   CheckCheck,
+  Cloud,
   Copy,
+  ExternalLink,
   Loader2,
   LogOut,
   MoreVertical,
@@ -44,6 +47,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
+import { pathToUrl } from "@/components/onedrive/FileBrowser";
+import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
@@ -150,6 +155,12 @@ export function ConversationView({
 
   const [body, setBody] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  // Tracks which of `files` came from OneDrive, keyed by the File object
+  // itself so the source can ride along without reshaping the File[] state.
+  const [oneDriveSources, setOneDriveSources] = useState<
+    Map<File, { driveItemId: string; path: string }>
+  >(new Map());
+  const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
   const [membersOpen, setMembersOpen] = useState(false);
@@ -332,6 +343,14 @@ export function ConversationView({
     setReplyTo(null);
     setBody("");
     setFiles([]);
+    setOneDriveSources(new Map());
+  }
+
+  function addOneDriveFile(file: File, item: OneDriveItem) {
+    setFiles(prev => [...prev, file]);
+    setOneDriveSources(prev =>
+      new Map(prev).set(file, { driveItemId: item.id, path: item.path })
+    );
   }
 
   async function copyMessage(text: string) {
@@ -365,12 +384,15 @@ export function ConversationView({
           () => generateUploadUrl({}),
           file
         );
+        const source = oneDriveSources.get(file);
         attachments.push({
           storageId,
           kind: isImage(file) ? "image" : "file",
           name: file.name,
           size: file.size,
           contentType: file.type,
+          oneDriveItemId: source?.driveItemId,
+          oneDrivePath: source?.path,
         });
       }
       const linkPreviews = await unfurlFirstLink(text);
@@ -387,6 +409,7 @@ export function ConversationView({
       });
       setBody("");
       setFiles([]);
+      setOneDriveSources(new Map());
       setReplyTo(null);
       mentionedRef.current.clear();
       atBottomRef.current = true;
@@ -836,32 +859,67 @@ export function ConversationView({
                                     {highlightBody(m.body, m.mentions)}
                                   </p>
                                 )}
-                                {m.attachments.map(a =>
-                                  a.kind === "image" && a.url ? (
-                                    <button
-                                      type="button"
-                                      key={a.storageId}
-                                      onClick={() => setLightbox(a.url)}
-                                      className="mt-1 block"
-                                    >
-                                      <img
-                                        src={a.url}
-                                        alt={a.name}
-                                        className="max-h-64 rounded-lg"
-                                      />
-                                    </button>
-                                  ) : a.url ? (
+                                {m.attachments.map(a => {
+                                  const fromOneDrive = Boolean(a.oneDrivePath);
+                                  if (a.kind === "image" && a.url) {
+                                    return (
+                                      <button
+                                        type="button"
+                                        key={a.storageId}
+                                        onClick={() =>
+                                          fromOneDrive
+                                            ? (window.location.href = pathToUrl(
+                                                a.oneDrivePath!
+                                              ))
+                                            : setLightbox(a.url)
+                                        }
+                                        className="relative mt-1 block"
+                                      >
+                                        <img
+                                          src={a.url}
+                                          alt={a.name}
+                                          className="max-h-64 rounded-lg"
+                                        />
+                                        {fromOneDrive && (
+                                          <span
+                                            title={tc("fromOneDrive")}
+                                            className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
+                                          >
+                                            <Cloud className="size-3.5 text-blue-500" />
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  }
+                                  if (!a.url) return null;
+                                  return (
                                     <a
                                       key={a.storageId}
-                                      href={a.url}
-                                      target="_blank"
-                                      rel="noreferrer"
+                                      href={
+                                        fromOneDrive
+                                          ? pathToUrl(a.oneDrivePath!)
+                                          : a.url
+                                      }
+                                      target={
+                                        fromOneDrive ? undefined : "_blank"
+                                      }
+                                      rel={
+                                        fromOneDrive ? undefined : "noreferrer"
+                                      }
                                       className="mt-1 flex items-center gap-1 underline"
                                     >
-                                      <Paperclip className="h-3 w-3" /> {a.name}
+                                      {fromOneDrive ? (
+                                        <Cloud className="h-3 w-3 text-blue-500" />
+                                      ) : (
+                                        <Paperclip className="h-3 w-3" />
+                                      )}
+                                      {a.name}
+                                      {fromOneDrive && (
+                                        <ExternalLink className="h-3 w-3 text-blue-500" />
+                                      )}
                                     </a>
-                                  ) : null
-                                )}
+                                  );
+                                })}
                                 {m.linkPreviews.map(lp => (
                                   <a
                                     key={lp.url}
@@ -1083,6 +1141,18 @@ export function ConversationView({
             </label>
           )}
 
+          {!editing && (
+            <button
+              type="button"
+              aria-label={tc("fromOneDrive")}
+              title={tc("fromOneDrive")}
+              onClick={() => setOneDrivePickerOpen(true)}
+              className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <Cloud className="h-5 w-5" />
+            </button>
+          )}
+
           <Popover>
             <PopoverTrigger asChild>
               <button
@@ -1203,6 +1273,12 @@ export function ConversationView({
           )}
         </DialogContent>
       </Dialog>
+
+      <OneDrivePickerDialog
+        open={oneDrivePickerOpen}
+        onOpenChange={setOneDrivePickerOpen}
+        onSelect={addOneDriveFile}
+      />
     </div>
   );
 }

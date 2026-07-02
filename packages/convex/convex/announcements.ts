@@ -205,6 +205,8 @@ export const list = query({
                   name: att.name,
                   size: att.size ?? null,
                   contentType: att.contentType ?? null,
+                  oneDriveItemId: att.oneDriveItemId ?? null,
+                  oneDrivePath: att.oneDrivePath ?? null,
                   url: await ctx.storage.getUrl(att.storageId),
                 }))
               )
@@ -220,6 +222,8 @@ export const list = query({
                     name: "Attachment",
                     size: meta?.size ?? null,
                     contentType,
+                    oneDriveItemId: null,
+                    oneDrivePath: null,
                     url: await ctx.storage.getUrl(sid),
                   };
                 })
