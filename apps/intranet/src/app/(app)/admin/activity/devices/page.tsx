@@ -10,6 +10,7 @@ import {
   Ban,
   CheckCircle2,
   Clock3,
+  Monitor,
   MonitorSmartphone,
   Trash2,
 } from "lucide-react";
@@ -17,6 +18,7 @@ import {
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { InfoTip } from "@/components/activity/InfoTip";
 import { StatCard } from "@/components/activity/StatCard";
+import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -119,12 +121,27 @@ export default function DevicesPage() {
     };
   }, [devices]);
 
+  const header = (
+    <PageHeader
+      title={t("devices.heading")}
+      description={t("devices.sub")}
+      icon={<Monitor />}
+    />
+  );
+
   if (devices === undefined || people === undefined) {
-    return <p className="text-muted-foreground">{t("common.loading")}</p>;
+    return (
+      <section className="space-y-6">
+        {header}
+        <p className="text-muted-foreground">{t("common.loading")}</p>
+      </section>
+    );
   }
 
   return (
     <section className="space-y-6">
+      {header}
+
       {/* ── Fleet status summary ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard

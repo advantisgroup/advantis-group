@@ -6,10 +6,11 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { ChevronRight, Clock, Moon, Users } from "lucide-react";
+import { ChevronRight, Clock, FileBarChart, Moon, Users } from "lucide-react";
 
 import { DailyTrendChart } from "@/components/activity/charts/DailyTrendChart";
 import { StatCard } from "@/components/activity/StatCard";
+import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -132,14 +133,11 @@ export default function ReportsPage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-fg">
-          {t("reports.title")}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("reports.subtitle")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("reports.title")}
+        description={t("reports.subtitle")}
+        icon={<FileBarChart />}
+      />
 
       {/* Controls: time frame, optional custom range, device filter */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">

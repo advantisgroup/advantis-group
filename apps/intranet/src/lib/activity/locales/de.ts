@@ -58,6 +58,8 @@ export const de: Dict = {
   "overview.noMatches": "In dieser Gruppe ist gerade niemand.",
 
   "devices.heading": "Geräte",
+  "devices.sub":
+    "Neue Agents genehmigen, Computer Mitarbeitern zuordnen und die Flotte verwalten.",
   "devices.pending": "Wartet auf Genehmigung",
   "devices.all": "Alle Geräte",
   "devices.host": "Computer",
@@ -77,6 +79,8 @@ export const de: Dict = {
   "status.disabled": "Deaktiviert",
 
   "people.heading": "Mitarbeiter",
+  "people.sub":
+    "Die Stammliste: Namen, E-Mail und die Integrations-IDs hinter dem Live-Status.",
   "people.add": "Mitarbeiter hinzufügen",
   "people.name": "Name",
   "people.email": "E-Mail",

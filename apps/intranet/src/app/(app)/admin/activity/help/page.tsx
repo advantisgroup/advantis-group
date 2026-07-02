@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, HelpCircle, Search } from "lucide-react";
 
+import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -32,14 +33,11 @@ export default function HelpPage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="font-display text-lg font-semibold tracking-tightest text-fg">
-          {t("help.title")}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("help.subtitle")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("help.title")}
+        description={t("help.subtitle")}
+        icon={<HelpCircle />}
+      />
 
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

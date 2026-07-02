@@ -57,6 +57,8 @@ export const en: Dict = {
   "overview.noMatches": "Nobody is in this group right now.",
 
   "devices.heading": "Devices",
+  "devices.sub":
+    "Approve new agents, link computers to people, and manage the fleet.",
   "devices.pending": "Pending approval",
   "devices.all": "All devices",
   "devices.host": "Computer",
@@ -76,6 +78,8 @@ export const en: Dict = {
   "status.disabled": "Disabled",
 
   "people.heading": "People",
+  "people.sub":
+    "The roster: names, e-mail and the integration IDs behind the live status.",
   "people.add": "Add person",
   "people.name": "Name",
   "people.email": "Email",

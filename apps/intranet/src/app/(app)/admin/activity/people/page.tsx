@@ -4,10 +4,11 @@ import { useMemo, useState, type FormEvent } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, Users } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -149,8 +150,21 @@ export default function PeoplePage() {
     );
   }, [people, query]);
 
+  const header = (
+    <PageHeader
+      title={t("people.heading")}
+      description={t("people.sub")}
+      icon={<Users />}
+    />
+  );
+
   if (people === undefined) {
-    return <Skeleton className="h-64 w-full" />;
+    return (
+      <section className="space-y-6">
+        {header}
+        <Skeleton className="h-64 w-full" />
+      </section>
+    );
   }
 
   async function onAdd(e: FormEvent) {
@@ -168,6 +182,8 @@ export default function PeoplePage() {
 
   return (
     <section className="space-y-6">
+      {header}
+
       {canEdit && (
         <Card className="animate-fade-up">
           <CardContent className="p-3 sm:p-4">
