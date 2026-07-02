@@ -104,9 +104,18 @@ async function fetchTodayEntries(
   return body.entries ?? [];
 }
 
+/**
+ * Not-clocked-in gaps up to this long read as a break; anything longer is
+ * *assumed* to be the end of the working day (Clockodo has no explicit "day
+ * ended" event). The assumption is corrected back to BREAK if the person
+ * clocks in again the same day — see `pushSignal`.
+ */
+const ASSUMED_CLOCKED_OUT_AFTER_MS = 60 * 60_000;
+
 async function fetchClockodoWork(clockodoUserId: string): Promise<{
   working: boolean;
   onBreak: boolean;
+  clockedOut: boolean;
 }> {
   const entries = await fetchTodayEntries(clockodoUserId);
   // "Currently clocked in" = an entry with no end time yet. Clockodo's `clocked`
@@ -114,9 +123,22 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
   // true after clock-out, so using it here kept people "working" all day once
   // they had clocked in a single time.
   const running = entries.some(e => e.time_until == null);
-  return entries.length === 0
-    ? { working: false, onBreak: false }
-    : { working: running, onBreak: !running };
+  if (entries.length === 0) {
+    return { working: false, onBreak: false, clockedOut: false };
+  }
+  if (running) {
+    return { working: true, onBreak: false, clockedOut: false };
+  }
+  // Worked today but nothing running: a short gap is a break, a long one is
+  // (assumed to be) the end of the day.
+  const lastEnd = Math.max(
+    ...entries.map(e => (e.time_until ? Date.parse(e.time_until) : 0))
+  );
+  const clockedOut =
+    Number.isFinite(lastEnd) &&
+    lastEnd > 0 &&
+    Date.now() - lastEnd > ASSUMED_CLOCKED_OUT_AFTER_MS;
+  return { working: false, onBreak: !clockedOut, clockedOut };
 }
 
 async function fetchClockodoEntry(
@@ -156,6 +178,7 @@ export async function pollClockodo(
         source: "clockodo",
         clockodoWorking: work.working,
         clockodoBreak: work.onBreak,
+        clockodoClockedOut: work.clockedOut,
         clockodoAbsent: isAbsentOn(absences, p.clockodoUserId!, day),
       });
     }
@@ -189,6 +212,7 @@ export const refreshClockodo = action({
         source: "clockodo",
         clockodoWorking: work.working,
         clockodoBreak: work.onBreak,
+        clockodoClockedOut: work.clockedOut,
         clockodoAbsent: absent,
       });
       await reportHealth(ctx, "clockodo", "ok");
@@ -260,6 +284,7 @@ export const refreshClockodoByEntry = action({
         source: "clockodo",
         clockodoWorking: work.working,
         clockodoBreak: work.onBreak,
+        clockodoClockedOut: work.clockedOut,
         clockodoAbsent: absent,
       });
 
@@ -267,7 +292,7 @@ export const refreshClockodoByEntry = action({
         source: "backend",
         severity: "info",
         code: `clockodo.webhook.${eventName ?? "unknown"}`,
-        message: `entry=${entryId} employee=${employeeId} → working=${work.working} onBreak=${work.onBreak} (day recompute)`,
+        message: `entry=${entryId} employee=${employeeId} → working=${work.working} onBreak=${work.onBreak} clockedOut=${work.clockedOut} (day recompute)`,
         context: JSON.stringify({
           eventName,
           entryId,
@@ -276,6 +301,7 @@ export const refreshClockodoByEntry = action({
           entryRunning: entry.running,
           working: work.working,
           onBreak: work.onBreak,
+          clockedOut: work.clockedOut,
           absent,
         }),
       });

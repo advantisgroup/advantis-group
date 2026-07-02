@@ -38,6 +38,13 @@ before merge.
    - Devices: sortable columns, skeleton loading, empty→Help CTA.
    - Reports: CSV export of the filtered table.
    - Sidebar: pending-devices badge. "/" focuses search on all search pages.
+7. Assumed clocked-out state: a not-clocked-in gap ≤ 1h reads as BREAK; past
+   1h it becomes `CLOCKED_OUT` — always presented as an *assumption* (dotted
+   "corrects itself" marker + FAQ entry). The transition is backdated onto the
+   BREAK sample (since-line shows the real clock-out time); a same-day clock-in
+   rewrites the CLOCKED_OUT history back to BREAK (`reclassifyClockedOutAsBreak`
+   in `state.ts`). Schema adds `clockodoClockedOut` + the new union member
+   (additive, no migration).
 
 Verified: `tsc --noEmit` (convex/api/intranet), eslint clean, full
 `next build` passes. Visual verification against a live backend was skipped

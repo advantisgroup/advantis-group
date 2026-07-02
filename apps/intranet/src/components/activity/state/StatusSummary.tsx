@@ -48,7 +48,7 @@ export function StatusSummary({
   className?: string;
 }) {
   const { t, lang } = useI18n();
-  const { headlineKey, tone, showIdleFor } = describeStatus(status);
+  const { headlineKey, tone, showIdleFor, assumed } = describeStatus(status);
   const lg = size === "lg";
 
   const idleFor =
@@ -98,6 +98,19 @@ export function StatusSummary({
             )}
           >
             {subLine}
+          </p>
+        )}
+        {/* Provisional verdicts are labelled so a manager never mistakes a
+            guess for a reported fact; hover for the full explanation. */}
+        {assumed && (
+          <p
+            title={t("state.assumedHint")}
+            className={cn(
+              "truncate italic text-muted-foreground/80 underline decoration-dotted underline-offset-2",
+              lg ? "text-xs" : "text-[11px]"
+            )}
+          >
+            {t("state.assumed")}
           </p>
         )}
       </div>

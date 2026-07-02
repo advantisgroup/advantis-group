@@ -45,6 +45,7 @@ export const FAQ_SECTIONS: FaqSection[] = [
     entries: [
       { id: "integration_down", scope: "dashboard" },
       { id: "clockodo_setup", scope: "dashboard" },
+      { id: "assumed_out", scope: "dashboard" },
     ],
   },
   {

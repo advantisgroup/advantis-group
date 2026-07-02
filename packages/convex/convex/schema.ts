@@ -471,11 +471,15 @@ export default defineSchema({
     clockodoWorking: v.optional(v.boolean()),
     clockodoBreak: v.optional(v.boolean()),
     clockodoAbsent: v.optional(v.boolean()),
+    // Assumed "day has ended" (no entry running for over an hour). Always a
+    // guess — corrected back to BREAK if the person clocks in again today.
+    clockodoClockedOut: v.optional(v.boolean()),
     clockodoUpdatedAt: v.optional(v.number()),
 
     // Engine output.
     finalState: v.union(
       v.literal("ABSENT"),
+      v.literal("CLOCKED_OUT"),
       v.literal("BREAK"),
       v.literal("IN_CALL"),
       v.literal("WRAP_UP"),
@@ -488,11 +492,15 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_employeeId", ["employeeId"]),
 
-  // Append-only history of an employee's fused state (insert-on-change).
+  // History of an employee's fused state (insert-on-change). Mostly
+  // append-only; the one exception is the CLOCKED_OUT assumption, which is
+  // rewritten in place when it is made (BREAK backdated to CLOCKED_OUT) or
+  // withdrawn (CLOCKED_OUT corrected to BREAK on a same-day clock-in).
   stateSamples: defineTable({
     employeeId: v.string(),
     state: v.union(
       v.literal("ABSENT"),
+      v.literal("CLOCKED_OUT"),
       v.literal("BREAK"),
       v.literal("IN_CALL"),
       v.literal("WRAP_UP"),

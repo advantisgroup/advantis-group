@@ -319,11 +319,15 @@ export const de: Dict = {
   "state.source.clockodo": "Clockodo",
   "state.idleFor": "inaktiv seit {duration}",
   "state.sinceFor": "seit {time} · {duration}",
+  "state.assumed": "Annahme – korrigiert sich beim Wiedereinstempeln",
+  "state.assumedHint":
+    "Seit über einer Stunde läuft kein Clockodo-Eintrag – wir nehmen an, der Arbeitstag ist beendet. Stempelt die Person wieder ein, wird der gesamte Zeitraum automatisch als Pause gewertet und der Tag läuft normal weiter – es ist nichts zu tun.",
   "state.health.unavailable": "{source} nicht verfügbar: {reason}",
   "state.health.unconfigured": "{source} ist nicht konfiguriert.",
   "state.health.degraded":
     "Dieses Signal wird derzeit nicht berücksichtigt. Die übrigen Quellen bestimmen den Status weiterhin.",
   "empstate.ABSENT": "Abwesend",
+  "empstate.CLOCKED_OUT": "Ausgestempelt (angenommen)",
   "empstate.BREAK": "Pause",
   "empstate.IN_CALL": "Im Gespräch",
   "empstate.WRAP_UP": "Nachbearbeitung",
@@ -335,6 +339,7 @@ export const de: Dict = {
   // (`livestatus.*`, damit es nicht mit den Geräte-`status.*`-Schlüsseln kollidiert.)
   "livestatus.offline": "Computer offline",
   "livestatus.absent": "Abwesend",
+  "livestatus.clockedOut": "Vermutlich Feierabend",
   "livestatus.break": "In der Pause",
   "livestatus.inCall": "Im Gespräch",
   "livestatus.wrapUp": "Anruf-Nachbearbeitung",
@@ -494,6 +499,9 @@ export const de: Dict = {
   "faq.q.clockodo_setup": "Wie verbinde ich den Clockodo-Webhook?",
   "faq.a.clockodo_setup":
     "Richten Sie den Clockodo-Webhook auf /api/webhooks/clockodo. Beim ersten Speichern sendet Clockodo ein Validierungs-Secret, das einmalig in den Deploy-Logs erscheint — tragen Sie diesen Wert in das Feld „Token“ bei Clockodo ein.",
+  "faq.q.assumed_out": "Warum steht bei jemandem „Ausgestempelt (angenommen)“?",
+  "faq.a.assumed_out":
+    "Clockodo meldet kein „Feierabend“-Ereignis – es weiß nur, ob gerade ein Eintrag läuft. Eine kurze Lücke ohne laufenden Eintrag zählt als Pause; dauert die Lücke länger als eine Stunde, nimmt das Dashboard an, dass der Arbeitstag beendet ist, und zeigt „Ausgestempelt (angenommen)“.\nDas Wort „angenommen“ ist entscheidend: Es ist eine Vermutung, kein Fakt. Stempelt die Person am selben Tag wieder ein, wird der gesamte Zeitraum automatisch als Pause umgewertet und der Tag läuft normal weiter – nichts muss von Hand korrigiert werden. Alles, was als Annahme gekennzeichnet ist, korrigiert sich selbst, sobald neue Daten eintreffen.",
   "faq.q.privacy": "Was genau wird aufgezeichnet?",
   "faq.a.privacy":
     "Nur die Aktivitätszeit — ob der PC aktiv oder untätig ist und wie lange. Keine Screenshots, keine Tastenanschläge, keine Zwischenablage, keine Dateiinhalte. Erfasst wird die Eingabe-Zeit, nicht der Eingabe-Inhalt.",

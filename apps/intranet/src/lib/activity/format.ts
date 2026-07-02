@@ -7,6 +7,7 @@
 /** Fused employee states (mirrors the Convex `employeeStates.finalState` union). */
 export const EMPLOYEE_STATES = [
   "ABSENT",
+  "CLOCKED_OUT",
   "BREAK",
   "IN_CALL",
   "WRAP_UP",
@@ -47,6 +48,7 @@ export function stateBadgeVariant(
       return "warning";
     case "ABSENT":
       return "destructive";
+    case "CLOCKED_OUT":
     case "IDLE":
     default:
       return "muted";
@@ -65,6 +67,7 @@ export function stateChartColor(state: string): string {
       return "var(--color-warning, var(--primary))";
     case "ABSENT":
       return "var(--destructive)";
+    case "CLOCKED_OUT":
     case "IDLE":
     default:
       return "var(--muted-foreground)";

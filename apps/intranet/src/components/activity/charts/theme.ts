@@ -27,6 +27,7 @@ export const STATE_COLOR = {
   WRAP_UP: "var(--state-wrapup)", // violet (after-call work)
   IDLE: "var(--state-idle)", // amber (attention)
   BREAK: "var(--state-break)", // muted (legitimate pause)
+  CLOCKED_OUT: "var(--state-clockedout)", // dim (assumed done for the day)
   ABSENT: "var(--state-absent)", // dimmest (not expected in)
 } as const;
 

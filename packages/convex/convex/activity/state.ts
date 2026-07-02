@@ -42,7 +42,45 @@ function signalsOf(row: Partial<Doc<"employeeStates">>): StateSignals {
     clockodoWorking: row.clockodoWorking,
     clockodoBreak: row.clockodoBreak,
     clockodoAbsent: row.clockodoAbsent,
+    clockodoClockedOut: row.clockodoClockedOut,
   };
+}
+
+/**
+ * Withdraw the "assumed clocked out" interpretation for today: the person is
+ * clocked in again (or a retro-added entry closed the gap), so every same-day
+ * CLOCKED_OUT stretch was actually a break. Samples are patched in place — or
+ * deleted when the preceding sample is already BREAK, so the break reads as
+ * one uninterrupted stretch. Day boundary is UTC, matching the Clockodo
+ * poller's "today's entries" window; yesterday's assumption is left alone
+ * (ending the day and coming back tomorrow really was a clock-out).
+ */
+async function reclassifyClockedOutAsBreak(
+  ctx: MutationCtx,
+  employeeId: string
+): Promise<void> {
+  const dayStart = new Date().setUTCHours(0, 0, 0, 0);
+  const samples = await ctx.db
+    .query("stateSamples")
+    .withIndex("by_employee_time", q =>
+      q.eq("employeeId", employeeId).gte("at", dayStart)
+    )
+    .order("asc")
+    .take(1000);
+
+  let prevState: string | null = null;
+  for (const s of samples) {
+    if (s.state === "CLOCKED_OUT") {
+      if (prevState === "BREAK") {
+        await ctx.db.delete(s._id); // merge into the preceding break
+        continue;
+      }
+      await ctx.db.patch(s._id, { state: "BREAK" });
+      prevState = "BREAK";
+      continue;
+    }
+    prevState = s.state;
+  }
 }
 
 function assertSignalSecret(secret: string): void {
@@ -73,6 +111,7 @@ export const pushSignal = mutation({
     clockodoWorking: v.optional(v.boolean()),
     clockodoBreak: v.optional(v.boolean()),
     clockodoAbsent: v.optional(v.boolean()),
+    clockodoClockedOut: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     assertSignalSecret(args.secret);
@@ -100,7 +139,22 @@ export const pushSignal = mutation({
         patch.clockodoBreak = args.clockodoBreak;
       if (args.clockodoAbsent !== undefined)
         patch.clockodoAbsent = args.clockodoAbsent;
+      if (args.clockodoClockedOut !== undefined)
+        patch.clockodoClockedOut = args.clockodoClockedOut;
       patch.clockodoUpdatedAt = now;
+    }
+
+    // A Clockodo signal that ends an "assumed clocked out" stretch (they
+    // clocked back in, or a retro-added entry closed the gap) withdraws the
+    // assumption: today's CLOCKED_OUT history is corrected to BREAK before the
+    // new state lands.
+    if (
+      args.source === "clockodo" &&
+      args.clockodoClockedOut === false &&
+      (existing?.clockodoClockedOut === true ||
+        existing?.finalState === "CLOCKED_OUT")
+    ) {
+      await reclassifyClockedOutAsBreak(ctx, args.employeeId);
     }
 
     const merged = { ...(existing ?? {}), ...patch };
@@ -108,9 +162,37 @@ export const pushSignal = mutation({
     const stateChanged = !existing || existing.finalState !== finalState;
     // Track when the fused state last *changed*, so the dashboard can say
     // "inactive since 13:42" instead of only "updated 2m ago".
-    const finalStateSince = stateChanged
+    let finalStateSince = stateChanged
       ? now
       : (existing.finalStateSince ?? existing.updatedAt);
+
+    if (stateChanged) {
+      // Entering the assumed CLOCKED_OUT is a *reinterpretation* of the
+      // not-clocked-in gap that started at the BREAK transition (the actual
+      // clock-out) — so backdate: rewrite the trailing BREAK sample in place
+      // and keep "since" at the real clock-out moment, instead of pretending
+      // something new happened when the 1h threshold passed.
+      const trailing =
+        finalState === "CLOCKED_OUT"
+          ? await ctx.db
+              .query("stateSamples")
+              .withIndex("by_employee_time", q =>
+                q.eq("employeeId", args.employeeId)
+              )
+              .order("desc")
+              .first()
+          : null;
+      if (finalState === "CLOCKED_OUT" && trailing?.state === "BREAK") {
+        await ctx.db.patch(trailing._id, { state: "CLOCKED_OUT" });
+        finalStateSince = existing?.finalStateSince ?? trailing.at;
+      } else {
+        await ctx.db.insert("stateSamples", {
+          employeeId: args.employeeId,
+          state: finalState,
+          at: now,
+        });
+      }
+    }
 
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -126,14 +208,6 @@ export const pushSignal = mutation({
         finalState,
         finalStateSince,
         updatedAt: now,
-      });
-    }
-
-    if (stateChanged) {
-      await ctx.db.insert("stateSamples", {
-        employeeId: args.employeeId,
-        state: finalState,
-        at: now,
       });
     }
 
@@ -269,6 +343,7 @@ export const overview = query({
         clockodoWorking: row.clockodoWorking ?? null,
         clockodoBreak: row.clockodoBreak ?? null,
         clockodoAbsent: row.clockodoAbsent ?? null,
+        clockodoClockedOut: row.clockodoClockedOut ?? null,
         agentUpdatedAt: row.agentUpdatedAt ?? null,
         genesysUpdatedAt: row.genesysUpdatedAt ?? null,
         clockodoUpdatedAt: row.clockodoUpdatedAt ?? null,

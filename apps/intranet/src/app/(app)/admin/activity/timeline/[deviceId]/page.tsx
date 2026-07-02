@@ -357,6 +357,7 @@ export default function TimelinePage({
                     clockodoWorking: device.clockodoWorking,
                     clockodoBreak: device.clockodoBreak,
                     clockodoAbsent: device.clockodoAbsent,
+                    clockodoClockedOut: device.clockodoClockedOut,
                     active: device.active,
                   }}
                 />
@@ -399,6 +400,9 @@ export default function TimelinePage({
                           clockodoWorking={liveState.clockodoWorking ?? null}
                           clockodoBreak={liveState.clockodoBreak ?? null}
                           clockodoAbsent={liveState.clockodoAbsent ?? null}
+                          clockodoClockedOut={
+                            liveState.clockodoClockedOut ?? null
+                          }
                         />
                         <p className="mt-3 border-t border-border-soft pt-2.5 font-mono text-[11px] text-muted-foreground">
                           {t("state.updated")}{" "}

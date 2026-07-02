@@ -41,6 +41,12 @@ export interface StatusInput {
   /** Clockodo: an approved absence covers right now. */
   clockodoAbsent: boolean | null;
   /**
+   * Clockodo: not clocked in for over an hour → *assumed* done for the day.
+   * Always provisional — the backend re-labels the stretch as a break if the
+   * person clocks back in the same day.
+   */
+  clockodoClockedOut?: boolean | null;
+  /**
    * Raw device-active flag (online && not idle past the threshold). Used as the
    * fallback verdict for devices with no fused integration signals at all.
    */
@@ -56,14 +62,19 @@ export interface StatusDescriptor {
   live: boolean;
   /** Whether the caller should append the existing "idle for {duration}" line. */
   showIdleFor: boolean;
+  /**
+   * The verdict is an assumption, not a reported fact — the renderer must mark
+   * it as such (it auto-corrects when new data arrives).
+   */
+  assumed?: boolean;
 }
 
 /**
  * Resolve the written status for one device/employee from its raw signals.
  *
  * Order (highest-priority truth first):
- *   absent → break → on a call → wrap-up → offline → clocked-in-but-idle →
- *   idle → clocked-in-and-working → active.
+ *   absent → clocked out (assumed) → break → on a call → wrap-up → offline →
+ *   clocked-in-but-idle → idle → clocked-in-and-working → active.
  *
  * When no integration ever reported (all Clockodo/Genesys signals null and
  * `deviceIdle` unknown), fall back to the device reachability/active flags so an
@@ -78,10 +89,11 @@ export function describeStatus(input: StatusInput): StatusDescriptor {
     clockodoWorking,
     clockodoBreak,
     clockodoAbsent,
+    clockodoClockedOut,
     active,
   } = input;
 
-  // These three are independent of the workstation, so they hold even when the
+  // These are independent of the workstation, so they hold even when the
   // PC is asleep/offline — check them before the offline short-circuit.
   if (clockodoAbsent)
     return {
@@ -89,6 +101,14 @@ export function describeStatus(input: StatusInput): StatusDescriptor {
       tone: "muted",
       live: false,
       showIdleFor: false,
+    };
+  if (clockodoClockedOut)
+    return {
+      headlineKey: "livestatus.clockedOut",
+      tone: "muted",
+      live: false,
+      showIdleFor: false,
+      assumed: true,
     };
   if (clockodoBreak)
     return {

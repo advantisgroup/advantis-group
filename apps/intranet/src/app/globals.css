@@ -295,16 +295,17 @@
     --chart-cursor: rgba(96, 150, 248, 0.14);
     --chart-tooltip-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
 
-    /* Fused-state palette (dark) — the six employee states as they appear in
+    /* Fused-state palette (dark) — the employee states as they appear in
        timeline strips, the minute grid and the stacked hourly chart. The four
        chromatic states are CVD-validated against the card surface (#22201d);
-       BREAK/ABSENT are deliberately recessive "not working" grays whose
-       identity relief is the legend + hover labels. */
+       BREAK/CLOCKED_OUT/ABSENT are deliberately recessive "not working" grays
+       whose identity relief is the legend + hover labels. */
     --state-active: #22a06b;
     --state-incall: #2d76c4;
     --state-wrapup: #927cee;
     --state-idle: #c9821f;
     --state-break: #8a8275;
+    --state-clockedout: #6e675c;
     --state-absent: #5a554c;
 
     --radius: 0.75rem;
@@ -395,6 +396,7 @@
     --state-wrapup: #8f6ee8;
     --state-idle: #b06a0a;
     --state-break: #a49b8d;
+    --state-clockedout: #bcb4a5;
     --state-absent: #cfc8bb;
 
     --radius: 0.75rem;

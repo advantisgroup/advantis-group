@@ -151,9 +151,15 @@ export function hourOfDayActivity(
   }));
 }
 
-/** The six fused employee states, matching the backend `stateSamples.state`. */
+/**
+ * The fused employee states, matching the backend `stateSamples.state`.
+ * CLOCKED_OUT is always an *assumption* (no Clockodo entry for over an hour →
+ * "probably done for the day") and is corrected back to BREAK by the backend
+ * if the person clocks in again the same day.
+ */
 export type StateName =
   | "ABSENT"
+  | "CLOCKED_OUT"
   | "BREAK"
   | "IN_CALL"
   | "WRAP_UP"
@@ -166,6 +172,7 @@ export const STATE_NAMES: StateName[] = [
   "WRAP_UP",
   "IDLE",
   "BREAK",
+  "CLOCKED_OUT",
   "ABSENT",
 ];
 
@@ -202,6 +209,7 @@ function emptyHourBuckets(): HourStateBucket[] {
     WRAP_UP: 0,
     IDLE: 0,
     BREAK: 0,
+    CLOCKED_OUT: 0,
     ABSENT: 0,
   }));
 }

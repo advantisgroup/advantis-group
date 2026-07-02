@@ -17,9 +17,18 @@ import { z } from "zod";
  * shared verbatim by the Convex backend and the dashboard.
  */
 
-/** Final employee states, highest priority first. */
+/**
+ * Final employee states, highest priority first.
+ *
+ * CLOCKED_OUT is special: Clockodo has no "day ended" event, so it is always an
+ * *assumption* — no running entry for over an hour reads as "done for the day".
+ * If the person clocks back in the same day, the assumption is retroactively
+ * corrected to BREAK (see `pushSignal`), so the UI must present CLOCKED_OUT as
+ * provisional.
+ */
 export const EMPLOYEE_STATES = [
   "ABSENT",
+  "CLOCKED_OUT",
   "BREAK",
   "IN_CALL",
   "WRAP_UP",
@@ -84,17 +93,24 @@ export interface StateSignals {
   clockodoBreak?: boolean;
   /** Clockodo: an approved absence (vacation, sick, etc.) covers right now. */
   clockodoAbsent?: boolean;
+  /**
+   * Clockodo: no entry has been running for so long that we *assume* the
+   * working day has ended (see EMPLOYEE_STATES doc). Mutually exclusive with
+   * `clockodoBreak` — both derive from the same not-clocked-in gap.
+   */
+  clockodoClockedOut?: boolean;
 }
 
 /**
  * The state engine. Mirrors the documented priority order exactly:
  *
- *   ABSENT → BREAK → IN_CALL → WRAP_UP → ACTIVE → IDLE
+ *   ABSENT → CLOCKED_OUT → BREAK → IN_CALL → WRAP_UP → ACTIVE → IDLE
  *
  * A higher-priority condition always short-circuits the lower ones.
  */
 export function computeEmployeeState(signals: StateSignals): EmployeeState {
   if (signals.clockodoAbsent) return "ABSENT";
+  if (signals.clockodoClockedOut) return "CLOCKED_OUT";
   if (signals.clockodoBreak) return "BREAK";
   if (signals.genesysRoutingStatus === "INTERACTING") return "IN_CALL";
   if (signals.genesysWrapUp) return "WRAP_UP";
@@ -143,6 +159,7 @@ export const clockodoSignalSchema = z.object({
   working: z.boolean().optional(),
   onBreak: z.boolean().optional(),
   absent: z.boolean().optional(),
+  clockedOut: z.boolean().optional(),
   timestamp: z.string().datetime().optional(),
 });
 export type ClockodoSignal = z.infer<typeof clockodoSignalSchema>;

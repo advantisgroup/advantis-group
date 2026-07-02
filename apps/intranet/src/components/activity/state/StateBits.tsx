@@ -28,6 +28,7 @@ const STATE_STYLE: Record<
   WRAP_UP: { variant: "warning", live: true },
   ACTIVE: { variant: "success", live: true },
   BREAK: { variant: "muted" },
+  CLOCKED_OUT: { variant: "muted" },
   ABSENT: { variant: "muted" },
   IDLE: { variant: "warning" },
 };
@@ -95,6 +96,7 @@ export function SourceSignals({
   clockodoWorking,
   clockodoBreak,
   clockodoAbsent,
+  clockodoClockedOut = null,
 }: {
   deviceIdle: boolean | null;
   genesysRoutingStatus: string | null;
@@ -102,6 +104,7 @@ export function SourceSignals({
   clockodoWorking: boolean | null;
   clockodoBreak: boolean | null;
   clockodoAbsent: boolean | null;
+  clockodoClockedOut?: boolean | null;
 }) {
   const { t } = useI18n();
   const genesys = genesysRoutingStatus ?? genesysPresence;
@@ -144,13 +147,15 @@ export function SourceSignals({
         value={
           clockodoAbsent
             ? t("empstate.ABSENT")
-            : clockodoBreak
-              ? t("empstate.BREAK")
-              : clockodoWorking == null
-                ? null
-                : clockodoWorking
-                  ? t("common.active")
-                  : "—"
+            : clockodoClockedOut
+              ? t("empstate.CLOCKED_OUT")
+              : clockodoBreak
+                ? t("empstate.BREAK")
+                : clockodoWorking == null
+                  ? null
+                  : clockodoWorking
+                    ? t("common.active")
+                    : "—"
         }
       />
     </div>

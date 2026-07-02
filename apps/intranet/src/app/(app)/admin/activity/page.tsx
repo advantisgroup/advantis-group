@@ -69,6 +69,7 @@ function statusOf(d: TeamRow): StatusInput {
     clockodoWorking: d.clockodoWorking,
     clockodoBreak: d.clockodoBreak,
     clockodoAbsent: d.clockodoAbsent,
+    clockodoClockedOut: d.clockodoClockedOut,
     active: d.active,
   };
 }
@@ -88,7 +89,8 @@ function isFilterValue(v: string): v is FilterValue {
 }
 
 function bucketOf(d: TeamRow): Bucket {
-  if (d.clockodoAbsent || d.clockodoBreak) return "away";
+  if (d.clockodoAbsent || d.clockodoBreak || d.clockodoClockedOut)
+    return "away";
   if (!d.online) return "offline";
   const { tone } = describeStatus(statusOf(d));
   if (tone === "warn") return "attention";
