@@ -42,9 +42,9 @@ before merge.
    1h it becomes `CLOCKED_OUT` — presented as an _assumption_ (dotted
    "corrects itself" marker + FAQ entry). The transition is backdated onto the
    BREAK sample (since-line shows the real clock-out time); a same-day clock-in
-   rewrites the CLOCKED*OUT history back to BREAK (`reclassifyClockedOutAsBreak`
+   rewrites the `CLOCKED_OUT` history back to BREAK (`reclassifyClockedOutAsBreak`
    in `state.ts`). From 20:00 (Europe/Berlin; `CLOCKODO_DAY_END_HOUR` /
-   `CLOCKODO_TIMEZONE` env overrides) the clock-out is \_certain*: the marker
+   `CLOCKODO_TIMEZONE` env overrides) the clock-out is certain: the marker
    disappears, and a later clock-in starts a new stint instead of re-labelling
    the evening. Schema adds `clockodoClockedOut`, `clockodoClockedOutCertain`
    and the new union member (additive, no migration).
