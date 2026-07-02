@@ -188,8 +188,8 @@ http.route({
   path: "/agent/verify-password",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
-    if ((await authenticateDevice(ctx, request)) === null)
-      return unauthorized();
+    const deviceAuth = await authenticateDevice(ctx, request);
+    if (!deviceAuth) return unauthorized();
 
     const body = (await readJson(request)) as
       | { password?: unknown }
