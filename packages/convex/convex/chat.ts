@@ -7,20 +7,11 @@ import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 import { createNotification } from "./lib/notify";
+import { attachmentValidator } from "./schema";
 
 const TYPING_WINDOW_MS = 6000;
 /** How long a left DM lingers before it's purged, unless the leaver rejoins. */
 const DM_GRACE_MS = 48 * 60 * 60 * 1000;
-
-const attachmentArg = v.object({
-  storageId: v.id("_storage"),
-  kind: v.union(v.literal("image"), v.literal("file")),
-  name: v.string(),
-  width: v.optional(v.number()),
-  height: v.optional(v.number()),
-  size: v.optional(v.number()),
-  contentType: v.optional(v.string()),
-});
 
 const linkPreviewArg = v.object({
   url: v.string(),
@@ -658,7 +649,7 @@ export const sendMessage = mutation({
   args: {
     conversationId: v.id("conversations"),
     body: v.string(),
-    attachments: v.optional(v.array(attachmentArg)),
+    attachments: v.optional(v.array(attachmentValidator)),
     linkPreviews: v.optional(v.array(linkPreviewArg)),
     replyToId: v.optional(v.id("messages")),
     mentions: v.optional(v.array(v.id("users"))),

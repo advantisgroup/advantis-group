@@ -7,6 +7,9 @@ export interface UploadedAttachment {
   name: string;
   size?: number;
   contentType?: string;
+  /** Present when imported from OneDrive — links the attachment back to its source. */
+  oneDriveItemId?: string;
+  oneDrivePath?: string;
 }
 
 /**
@@ -32,9 +35,16 @@ export function isImage(file: File): boolean {
   return file.type.startsWith("image/");
 }
 
-/** Human-readable byte size, e.g. "24 KB" / "1.3 MB". */
+const FILE_SIZE_UNITS = ["B", "KB", "MB", "GB", "TB"] as const;
+
+/** Human-readable byte size, e.g. "24 KB" / "1.3 MB" / "2.1 GB" / "1 TB". */
 export function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes <= 0) return "0 B";
+  const exponent = Math.min(
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+    FILE_SIZE_UNITS.length - 1
+  );
+  const value = bytes / 1024 ** exponent;
+  const decimals = exponent === 0 ? 0 : value < 10 ? 2 : 1;
+  return `${value.toFixed(decimals)} ${FILE_SIZE_UNITS[exponent]}`;
 }

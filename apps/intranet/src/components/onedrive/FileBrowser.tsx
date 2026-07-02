@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -43,8 +43,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useOneDriveApi } from "@/lib/onedrive-api";
+import {
+  getCachedListing,
+  getCachedQuota,
+  invalidateListingCache,
+  isListingFresh,
+  isQuotaFresh,
+  setCachedListing,
+  setCachedQuota,
+} from "@/lib/onedrive-cache";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -58,13 +73,44 @@ import { FilePreviewDialog } from "./FilePreviewDialog";
 import { UploadDropOverlay } from "./UploadDropOverlay";
 
 /** Builds the shareable /files URL for a given OneDrive-relative path. */
-function pathToUrl(path: string): string {
+export function pathToUrl(path: string): string {
   const segments = path.split("/").filter(Boolean).map(encodeURIComponent);
   return segments.length === 0 ? "/files" : `/files/${segments.join("/")}`;
 }
 
+/** Wraps every case-insensitive occurrence of `query` in `text` with a mark. */
+export function HighlightMatch({
+  text,
+  query,
+}: {
+  text: string;
+  query: string;
+}) {
+  const q = query.trim();
+  if (!q) return <>{text}</>;
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
+  if (parts.length === 1) return <>{text}</>;
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === q.toLowerCase() ? (
+          <mark
+            key={i}
+            className="rounded-sm bg-yellow-300/80 text-inherit dark:bg-yellow-400/40"
+          >
+            {part}
+          </mark>
+        ) : (
+          <Fragment key={i}>{part}</Fragment>
+        )
+      )}
+    </>
+  );
+}
+
 /** File-type icon. Each branch renders a concrete (static) lucide component. */
-function ItemIcon({
+export function ItemIcon({
   item,
   className,
 }: {
@@ -92,24 +138,32 @@ function QuotaBar({ quota }: { quota: DriveQuota }) {
   const t = useTranslations("Files");
   const pct =
     quota.total > 0 ? Math.min(100, (quota.used / quota.total) * 100) : 0;
+  const pctLabel = pct > 0 && pct < 1 ? "<1%" : `${Math.round(pct)}%`;
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      <div className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-muted sm:block">
-        <div
-          className={cn(
-            "h-full rounded-full",
-            pct > 90 ? "bg-destructive" : "bg-primary"
-          )}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span>
-        {t("quota", {
-          used: formatFileSize(quota.used),
-          total: formatFileSize(quota.total),
-        })}
-      </span>
-    </div>
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="flex cursor-default items-center gap-2 text-xs text-muted-foreground">
+            <div className="hidden h-1.5 w-28 overflow-hidden rounded-full bg-muted sm:block">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-[width]",
+                  pct > 90 ? "bg-destructive" : "bg-primary"
+                )}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="tabular-nums">{pctLabel}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          {t("quota", {
+            used: formatFileSize(quota.used),
+            total: formatFileSize(quota.total),
+          })}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -140,19 +194,34 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   // Fetches a folder's contents. The URL is expected to already point at
   // `next` (navigate() below updates it up front); this only corrects the
   // URL if the server resolves the path differently than requested.
+  //
+  // Stale-while-revalidate: a folder visited in the last 45s is shown
+  // instantly from the in-memory cache with no network call at all — a
+  // drive change landing in that exact window is rare enough not to matter.
+  // Older cached data is still shown immediately (no skeleton flash) while a
+  // background refetch quietly brings it up to date.
   const load = useCallback(
     async (next: string) => {
-      setLoading(true);
+      const cached = getCachedListing(next);
+      if (cached) {
+        setListing(cached);
+        setPath(cached.path);
+        setLoading(false);
+        if (isListingFresh(next)) return;
+      } else {
+        setLoading(true);
+      }
       try {
         const data = await od.list(next);
         setListing(data);
         setPath(data.path);
+        setCachedListing(next, data);
         const url = pathToUrl(data.path);
         if (url !== pathToUrl(next)) {
           router.replace(url);
         }
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : t("genericError"));
+        if (!cached) toast.error(e instanceof Error ? e.message : t("genericError"));
       } finally {
         setLoading(false);
       }
@@ -186,13 +255,26 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
 
   useEffect(() => {
     if (configured !== true) return;
+    const cached = getCachedQuota();
+    if (cached) setQuota(cached);
+    if (cached && isQuotaFresh()) return;
     void od
       .quota()
-      .then(setQuota)
-      .catch(() => setQuota(null));
+      .then(q => {
+        setQuota(q);
+        setCachedQuota(q);
+      })
+      .catch(() => {
+        if (!cached) setQuota(null);
+      });
   }, [configured, od]);
 
-  const refresh = useCallback(() => void load(path), [load, path]);
+  // Any write invalidates the client cache too — the server's cache is
+  // already bumped by the mutation, so the next load() should hit the network.
+  const refresh = useCallback(() => {
+    invalidateListingCache();
+    void load(path);
+  }, [load, path]);
 
   // Debounced search.
   useEffect(() => {
@@ -375,6 +457,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
               <FileCard
                 key={item.id}
                 item={item}
+                highlightQuery={results !== null ? query.trim() : ""}
                 onOpen={open}
                 onAction={action => onRowAction(action, item)}
               />
@@ -400,6 +483,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                 <FileRow
                   key={item.id}
                   item={item}
+                  highlightQuery={results !== null ? query.trim() : ""}
                   onOpen={open}
                   onAction={action => onRowAction(action, item)}
                 />
@@ -573,10 +657,12 @@ function RowMenu({
 
 function FileRow({
   item,
+  highlightQuery = "",
   onOpen,
   onAction,
 }: {
   item: OneDriveItem;
+  highlightQuery?: string;
   onOpen: (item: OneDriveItem) => void;
   onAction: (a: RowActionType) => void;
 }) {
@@ -589,7 +675,9 @@ function FileRow({
           className="flex items-center gap-2.5 text-left"
         >
           <ItemIcon item={item} className="size-4 shrink-0" />
-          <span className="truncate font-medium">{item.name}</span>
+          <span className="truncate font-medium">
+            <HighlightMatch text={item.name} query={highlightQuery} />
+          </span>
         </button>
       </td>
       <td className="px-4 py-2.5 text-muted-foreground">
@@ -612,10 +700,12 @@ function FileRow({
 
 function FileCard({
   item,
+  highlightQuery = "",
   onOpen,
   onAction,
 }: {
   item: OneDriveItem;
+  highlightQuery?: string;
   onOpen: (item: OneDriveItem) => void;
   onAction: (a: RowActionType) => void;
 }) {
@@ -628,7 +718,9 @@ function FileCard({
       >
         <ItemIcon item={item} className="size-5 shrink-0" />
         <span className="min-w-0">
-          <span className="block truncate font-medium">{item.name}</span>
+          <span className="block truncate font-medium">
+            <HighlightMatch text={item.name} query={highlightQuery} />
+          </span>
           <span className="block truncate text-xs text-muted-foreground">
             {item.type === "file" ? formatFileSize(item.size) : ""}
             {item.uploadedByName ? ` · ${item.uploadedByName}` : ""}

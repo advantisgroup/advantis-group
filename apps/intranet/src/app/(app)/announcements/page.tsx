@@ -4,10 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
+import { type OneDriveItem } from "@advantis/types";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { useMutation, useQuery } from "convex/react";
 import {
+  Cloud,
   Download,
+  ExternalLink,
   Eye,
   FileText,
   Megaphone,
@@ -20,6 +23,8 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { pathToUrl } from "@/components/onedrive/FileBrowser";
+import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { PageHeader } from "@/components/PageHeader";
 import {
   useCurrentUser,
@@ -79,9 +84,16 @@ function CreateDialog() {
   const [guestVisible, setGuestVisible] = useState(false);
   const [audience, setAudience] = useState("all");
   const [files, setFiles] = useState<File[]>([]);
+  // Tracks which of `files` came from OneDrive (vs. a local upload), keyed by
+  // the File object itself so the source can be attached without reshaping
+  // the existing File[]-based attachment plumbing.
+  const [oneDriveSources, setOneDriveSources] = useState<
+    Map<File, { driveItemId: string; path: string }>
+  >(new Map());
   const [busy, setBusy] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [alwaysPreview, setAlwaysPreview] = useState(false);
+  const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
 
   // Restore the "always preview" preference.
   useEffect(() => {
@@ -111,20 +123,36 @@ function CreateDialog() {
     [previews]
   );
 
-  function addFiles(selected: File[]) {
+  function addFiles(selected: File[]): boolean {
     const next = [...files];
     for (const f of selected) {
       if (!next.some(x => x.name === f.name && x.size === f.size)) next.push(f);
     }
     if (next.reduce((s, f) => s + f.size, 0) > MAX_ATTACH_BYTES) {
       toast.error(t("attachTooLarge"));
-      return;
+      return false;
     }
     setFiles(next);
+    return true;
+  }
+
+  function addOneDriveFile(file: File, item: OneDriveItem) {
+    if (addFiles([file])) {
+      setOneDriveSources(prev =>
+        new Map(prev).set(file, { driveItemId: item.id, path: item.path })
+      );
+    }
   }
 
   function removeFile(idx: number) {
+    const removed = files[idx];
     setFiles(files.filter((_, i) => i !== idx));
+    setOneDriveSources(prev => {
+      if (!removed || !prev.has(removed)) return prev;
+      const next = new Map(prev);
+      next.delete(removed);
+      return next;
+    });
   }
 
   /** Send button: divert to preview first when the user opted into it. */
@@ -147,12 +175,15 @@ function CreateDialog() {
           () => generateUploadUrl({}),
           file
         );
+        const source = oneDriveSources.get(file);
         attachments.push({
           storageId,
           kind: isImage(file) ? "image" : "file",
           name: file.name,
           size: file.size,
           contentType: file.type || undefined,
+          oneDriveItemId: source?.driveItemId,
+          oneDrivePath: source?.path,
         });
       }
       await create({
@@ -172,6 +203,7 @@ function CreateDialog() {
       setTitle("");
       setBody("");
       setFiles([]);
+      setOneDriveSources(new Map());
       setPinned(false);
       setGuestVisible(false);
     } catch (e) {
@@ -328,6 +360,14 @@ function CreateDialog() {
                     }}
                   />
                 </label>
+                <button
+                  type="button"
+                  onClick={() => setOneDrivePickerOpen(true)}
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <Cloud className="h-4 w-4" />
+                  {tc("fromOneDrive")}
+                </button>
               </div>
 
               {files.length > 0 && (
@@ -337,7 +377,11 @@ function CreateDialog() {
                       key={`${f.name}-${i}`}
                       className="flex items-center gap-2 rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-xs"
                     >
-                      <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                      {oneDriveSources.has(f) ? (
+                        <Cloud className="size-3.5 shrink-0 text-blue-500" />
+                      ) : (
+                        <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                      )}
                       <span className="min-w-0 flex-1 truncate">{f.name}</span>
                       <span className="shrink-0 tabular-nums text-muted-foreground">
                         {formatFileSize(f.size)}
@@ -402,6 +446,11 @@ function CreateDialog() {
           )}
         </DialogFooter>
       </DialogContent>
+      <OneDrivePickerDialog
+        open={oneDrivePickerOpen}
+        onOpenChange={setOneDrivePickerOpen}
+        onSelect={addOneDriveFile}
+      />
     </Dialog>
   );
 }
@@ -596,21 +645,36 @@ export default function AnnouncementsPage() {
                       <div className="flex flex-wrap gap-2">
                         {a.attachments
                           .filter(att => att.kind === "image" && att.url)
-                          .map(att => (
-                            <a
-                              key={att.storageId}
-                              href={att.url ?? undefined}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="group/att block overflow-hidden rounded-lg border border-border"
-                            >
-                              <img
-                                src={att.url ?? ""}
-                                alt={att.name}
-                                className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
-                              />
-                            </a>
-                          ))}
+                          .map(att => {
+                            const fromOneDrive = Boolean(att.oneDrivePath);
+                            return (
+                              <a
+                                key={att.storageId}
+                                href={
+                                  fromOneDrive
+                                    ? pathToUrl(att.oneDrivePath!)
+                                    : (att.url ?? undefined)
+                                }
+                                target={fromOneDrive ? undefined : "_blank"}
+                                rel={fromOneDrive ? undefined : "noreferrer"}
+                                className="group/att relative block overflow-hidden rounded-lg border border-border"
+                              >
+                                <img
+                                  src={att.url ?? ""}
+                                  alt={att.name}
+                                  className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
+                                />
+                                {fromOneDrive && (
+                                  <span
+                                    title={tc("fromOneDrive")}
+                                    className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
+                                  >
+                                    <Cloud className="size-3.5 text-blue-500" />
+                                  </span>
+                                )}
+                              </a>
+                            );
+                          })}
                       </div>
                     )}
 
@@ -619,38 +683,55 @@ export default function AnnouncementsPage() {
                       <div className="flex flex-wrap gap-2">
                         {a.attachments
                           .filter(att => att.kind !== "image")
-                          .map(att => (
-                            <a
-                              key={att.storageId}
-                              href={att.url ?? undefined}
-                              target="_blank"
-                              rel="noreferrer"
-                              download={att.name}
-                              className="group/att flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-accent"
-                            >
-                              <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
-                                <FileText className="size-4" />
-                              </span>
-                              <span className="min-w-0">
-                                <span className="block max-w-[14rem] truncate text-sm font-medium">
-                                  {att.name}
+                          .map(att => {
+                            const fromOneDrive = Boolean(att.oneDrivePath);
+                            return (
+                              <a
+                                key={att.storageId}
+                                href={
+                                  fromOneDrive
+                                    ? pathToUrl(att.oneDrivePath!)
+                                    : (att.url ?? undefined)
+                                }
+                                target={fromOneDrive ? undefined : "_blank"}
+                                rel={fromOneDrive ? undefined : "noreferrer"}
+                                download={fromOneDrive ? undefined : att.name}
+                                className="group/att flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-accent"
+                              >
+                                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+                                  {fromOneDrive ? (
+                                    <Cloud className="size-4 text-blue-500" />
+                                  ) : (
+                                    <FileText className="size-4" />
+                                  )}
                                 </span>
-                                <span className="block text-xs text-muted-foreground">
-                                  {[
-                                    att.contentType
-                                      ?.split("/")[1]
-                                      ?.toUpperCase(),
-                                    att.size != null
-                                      ? formatFileSize(att.size)
-                                      : null,
-                                  ]
-                                    .filter(Boolean)
-                                    .join(" · ") || t("attachments")}
+                                <span className="min-w-0">
+                                  <span className="block max-w-[14rem] truncate text-sm font-medium">
+                                    {att.name}
+                                  </span>
+                                  <span className="block text-xs text-muted-foreground">
+                                    {fromOneDrive
+                                      ? tc("fromOneDrive")
+                                      : [
+                                          att.contentType
+                                            ?.split("/")[1]
+                                            ?.toUpperCase(),
+                                          att.size != null
+                                            ? formatFileSize(att.size)
+                                            : null,
+                                        ]
+                                          .filter(Boolean)
+                                          .join(" · ") || t("attachments")}
+                                  </span>
                                 </span>
-                              </span>
-                              <Download className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/att:opacity-100" />
-                            </a>
-                          ))}
+                                {fromOneDrive ? (
+                                  <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-0 transition-opacity group-hover/att:opacity-100" />
+                                ) : (
+                                  <Download className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/att:opacity-100" />
+                                )}
+                              </a>
+                            );
+                          })}
                       </div>
                     )}
                   </div>

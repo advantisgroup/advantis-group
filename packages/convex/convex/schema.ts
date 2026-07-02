@@ -24,6 +24,14 @@ export const attachmentValidator = v.object({
   height: v.optional(v.number()),
   size: v.optional(v.number()),
   contentType: v.optional(v.string()),
+  /**
+   * Present when this attachment was imported from OneDrive rather than
+   * uploaded locally — the bytes are still copied into Convex storage (so the
+   * attachment keeps working even if the drive file moves/is deleted), but
+   * these let the UI show its origin and link back to the Files tab.
+   */
+  oneDriveItemId: v.optional(v.string()),
+  oneDrivePath: v.optional(v.string()),
 });
 
 const linkPreviewValidator = v.object({

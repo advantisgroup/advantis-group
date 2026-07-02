@@ -252,9 +252,12 @@ const SELECT =
 
 /** AG-relative path of an item, or null when it lives outside the AG root. */
 export function relPathOf(item: GraphItem): string | null {
-  const prefix = "/drive/root:";
   let parent = item.parentReference?.path ?? "";
-  if (parent.startsWith(prefix)) parent = parent.slice(prefix.length);
+  // Listing/item calls return "/drive/root:/…", but search hits are addressed
+  // via "/drives/{drive-id}/root:/…" instead — strip up to whichever "root:"
+  // marker is present so both shapes resolve the same way.
+  const marker = parent.indexOf("root:");
+  if (marker !== -1) parent = parent.slice(marker + "root:".length);
   parent = parent.replace(/^\/+/, "");
   const full = normalizePath(parent ? `${parent}/${item.name}` : item.name);
   const root = normalizePath(fullPath(""));
@@ -345,7 +348,20 @@ export async function search(query: string): Promise<GraphItem[]> {
     {},
     "search"
   );
-  return res.value.filter(item => relPathOf(item) !== null);
+  // The search index doesn't reliably return a usable parentReference.path on
+  // the hit itself — re-fetch by id for anything that fails to resolve, since
+  // regular item lookups (already used by browsing) always include it.
+  const resolved = await Promise.all(
+    res.value.map(async hit => {
+      if (relPathOf(hit) !== null) return hit;
+      try {
+        return await getItemById(hit.id);
+      } catch {
+        return hit;
+      }
+    })
+  );
+  return resolved.filter(item => relPathOf(item) !== null);
 }
 
 // --- Write operations -------------------------------------------------------

@@ -47,6 +47,9 @@ export interface MessageAttachment {
   height?: number;
   size?: number;
   contentType?: string;
+  /** Present when imported from OneDrive — links the attachment back to its source. */
+  oneDriveItemId?: string;
+  oneDrivePath?: string;
 }
 
 export interface LinkPreview {
