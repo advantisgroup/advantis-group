@@ -56,6 +56,8 @@ export const de: Dict = {
   "overview.filter.away": "Pause / abwesend",
   "overview.filter.offline": "Offline",
   "overview.noMatches": "In dieser Gruppe ist gerade niemand.",
+  "overview.live": "Live",
+  "overview.liveHint": "Aktualisiert sich in Echtzeit – kein Neuladen nötig.",
 
   "devices.heading": "Geräte",
   "devices.sub":
@@ -74,6 +76,7 @@ export const de: Dict = {
   "devices.delete": "Löschen",
   "devices.link": "Zuordnen",
   "devices.none": "—",
+  "devices.emptyCta": "Wie verbinde ich ein Gerät? →",
   "status.pending": "Ausstehend",
   "status.active": "Aktiv",
   "status.disabled": "Deaktiviert",
@@ -175,9 +178,13 @@ export const de: Dict = {
   "timeline.now.dayTimeline": "Statusverlauf",
   "timeline.now.recent": "Statuswechsel",
   "timeline.now.recentEmpty": "Keine Statuswechsel aufgezeichnet.",
+  "timeline.now.showAll": "Alle {count} anzeigen",
+  "timeline.now.showFewer": "Weniger anzeigen",
   "timeline.now.numbers": "Tageswerte",
   "timeline.now.numbersHint":
     "Exakte Zahlen zur Validierung und für den Export.",
+  "timeline.prevPerson": "Vorherige Person",
+  "timeline.nextPerson": "Nächste Person",
   "timeline.trend.heading": "Aktivität der letzten 14 Tage",
   "timeline.trend.sub": "Aktive vs. inaktive Stunden pro Tag.",
   "timeline.intraday.heading": "Tagesverlauf",
@@ -192,6 +199,7 @@ export const de: Dict = {
     "Noch kein Statusverlauf für heute. Daten erscheinen, sobald Signale eintreffen.",
   "timeline.hourly.unlinked":
     "Dieses Gerät ist keinem Mitarbeiter mit Integrationen zugeordnet.",
+  "timeline.unlinkedCta": "Unter Mitarbeiter zuordnen →",
   "timeline.state.heading": "Aktueller Status",
   "timeline.state.empty": "Noch keine Statusdaten für diesen Mitarbeiter.",
   "timeline.tabs.charts": "Übersicht",
@@ -211,6 +219,7 @@ export const de: Dict = {
   "reports.title": "Wochenberichte",
   "reports.subtitle":
     "Wöchentliche Aktiv-/Inaktivzeiten über alle Geräte, filter- und zeitraumbasiert.",
+  "reports.exportCsv": "CSV exportieren",
   "reports.timeframe": "Zeitraum",
   "reports.tf.thisWeek": "Diese Woche",
   "reports.tf.lastWeek": "Letzte Woche",

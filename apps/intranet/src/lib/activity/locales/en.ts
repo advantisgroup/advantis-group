@@ -55,6 +55,8 @@ export const en: Dict = {
   "overview.filter.away": "Break / absent",
   "overview.filter.offline": "Offline",
   "overview.noMatches": "Nobody is in this group right now.",
+  "overview.live": "Live",
+  "overview.liveHint": "Updates in real time — no refresh needed.",
 
   "devices.heading": "Devices",
   "devices.sub":
@@ -73,6 +75,7 @@ export const en: Dict = {
   "devices.delete": "Delete",
   "devices.link": "Link",
   "devices.none": "—",
+  "devices.emptyCta": "How do I connect a device? →",
   "status.pending": "Pending",
   "status.active": "Active",
   "status.disabled": "Disabled",
@@ -174,8 +177,12 @@ export const en: Dict = {
   "timeline.now.dayTimeline": "State timeline",
   "timeline.now.recent": "State changes",
   "timeline.now.recentEmpty": "No state changes recorded.",
+  "timeline.now.showAll": "Show all {count}",
+  "timeline.now.showFewer": "Show fewer",
   "timeline.now.numbers": "Day totals",
   "timeline.now.numbersHint": "Exact figures for validation and export.",
+  "timeline.prevPerson": "Previous person",
+  "timeline.nextPerson": "Next person",
   "timeline.trend.heading": "Last 14 days",
   "timeline.trend.sub": "Active vs idle hours per day.",
   "timeline.intraday.heading": "Across the day",
@@ -190,6 +197,7 @@ export const en: Dict = {
     "No state history for today yet. Data appears as signals arrive.",
   "timeline.hourly.unlinked":
     "This device isn't linked to a person with integrations.",
+  "timeline.unlinkedCta": "Link it under People →",
   "timeline.state.heading": "Current state",
   "timeline.state.empty": "No state data for this person yet.",
   "timeline.tabs.charts": "Overview",
@@ -209,6 +217,7 @@ export const en: Dict = {
   "reports.title": "Weekly reports",
   "reports.subtitle":
     "Weekly active/idle time across every device, with filtering and time frames.",
+  "reports.exportCsv": "Export CSV",
   "reports.timeframe": "Time frame",
   "reports.tf.thisWeek": "This week",
   "reports.tf.lastWeek": "Last week",

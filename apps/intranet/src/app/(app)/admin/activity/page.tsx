@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Link from "next/link";
 
@@ -12,6 +12,7 @@ import {
   MonitorSmartphone,
   Moon,
   PowerOff,
+  Search,
 } from "lucide-react";
 
 import {
@@ -27,6 +28,7 @@ import { HealthBanner } from "@/components/activity/state/StateBits";
 import { StatusSummary } from "@/components/activity/state/StatusSummary";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   dayStateSegments,
   isWorkingState,
@@ -37,11 +39,13 @@ import {
 import {
   formatDuration,
   formatRelativeTime,
-  nowMs,
   todayLocalDay,
 } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import { describeStatus, type StatusInput } from "@/lib/activity/status";
+import { useNow } from "@/lib/activity/useNow";
+import { useQueryParam } from "@/lib/activity/useQueryParam";
+import { useSlashFocus } from "@/lib/activity/useSlashFocus";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
@@ -75,6 +79,12 @@ function statusOf(d: TeamRow): StatusInput {
  */
 type Bucket = "attention" | "working" | "away" | "offline";
 const BUCKET_ORDER: Bucket[] = ["attention", "working", "away", "offline"];
+
+type FilterValue = Bucket | "all";
+/** URL-param validator for `?filter=` (stable, so `useQueryParam` can dep on it). */
+function isFilterValue(v: string): v is FilterValue {
+  return v === "all" || (BUCKET_ORDER as string[]).includes(v);
+}
 
 function bucketOf(d: TeamRow): Bucket {
   if (d.clockodoAbsent || d.clockodoBreak) return "away";
@@ -142,8 +152,8 @@ function BucketFilter({
   onChange,
 }: {
   rows: TeamRow[];
-  value: Bucket | "all";
-  onChange: (v: Bucket | "all") => void;
+  value: FilterValue;
+  onChange: (v: FilterValue) => void;
 }) {
   const { t } = useI18n();
   const counts = useMemo(() => {
@@ -157,7 +167,7 @@ function BucketFilter({
     return c;
   }, [rows]);
 
-  const chips: { id: Bucket | "all"; label: string; count: number }[] = [
+  const chips: { id: FilterValue; label: string; count: number }[] = [
     { id: "all", label: t("overview.filter.all"), count: rows.length },
     ...BUCKET_ORDER.map(b => ({
       id: b,
@@ -280,7 +290,17 @@ function DeviceCard({
 export default function OverviewPage() {
   const { t } = useI18n();
   const team = useQuery(api.activity.stats.teamOverview);
-  const [filter, setFilter] = useState<Bucket | "all">("all");
+  // The active chip lives in `?filter=` so a reload or shared link keeps it.
+  const [filter, setFilter] = useQueryParam<FilterValue>(
+    "filter",
+    "all",
+    isFilterValue
+  );
+  const [search, setSearch] = useState("");
+  const searchRef = useSlashFocus<HTMLInputElement>();
+  // 30s tick so "last seen"/"since" labels and the now-marker stay fresh even
+  // while Convex has no data change to push.
+  const now = useNow();
 
   // Local midnight for the per-card day strips ("today" in the viewer's tz).
   const today = todayLocalDay();
@@ -288,7 +308,22 @@ export default function OverviewPage() {
     () => new Date(`${today}T00:00:00`).getTime(),
     [today]
   );
-  const nowPct = ((nowMs() - dayStart) / DAY_MS) * 100;
+  const nowPct = ((now - dayStart) / DAY_MS) * 100;
+
+  // Surface the attention count in the browser tab ("(2) …") so a manager with
+  // the dashboard pinned sees trouble without switching tabs.
+  const attentionCount = useMemo(
+    () => (team ?? []).filter(d => bucketOf(d) === "attention").length,
+    [team]
+  );
+  useEffect(() => {
+    if (attentionCount === 0) return;
+    const original = document.title;
+    document.title = `(${attentionCount}) ${original}`;
+    return () => {
+      document.title = original;
+    };
+  }, [attentionCount]);
 
   // One batched, reactive subscription for every linked person's day strip
   // (instead of one query per card).
@@ -309,12 +344,11 @@ export default function OverviewPage() {
   );
   const segmentsByEmployee = useMemo(() => {
     const map = new Map<string, StateSegment[]>();
-    const end = nowMs();
     for (const s of strips ?? []) {
-      map.set(s.employeeId, dayStateSegments(s.samples, dayStart, end));
+      map.set(s.employeeId, dayStateSegments(s.samples, dayStart, now));
     }
     return map;
-  }, [strips, dayStart]);
+  }, [strips, dayStart, now]);
 
   // Which states actually occur today, for the shared strip legend.
   const presentStates = useMemo(
@@ -333,6 +367,20 @@ export default function OverviewPage() {
         title={t("overview.heading")}
         description={t("overview.sub")}
         icon={<Activity />}
+        action={
+          team !== undefined ? (
+            <span
+              title={t("overview.liveHint")}
+              className="flex items-center gap-1.5 rounded-full border border-ok/30 bg-ok/10 px-2.5 py-1 text-[11px] font-medium text-ok"
+            >
+              <span aria-hidden className="relative flex h-1.5 w-1.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ok opacity-60 motion-reduce:animate-none" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-ok" />
+              </span>
+              {t("overview.live")}
+            </span>
+          ) : undefined
+        }
       />
       <SetupChecklist />
       <QueryState
@@ -363,21 +411,30 @@ export default function OverviewPage() {
         }
       >
         {rows => {
-          // Attention first, then working, away, offline — inside a bucket the
-          // order stays stable (by name) so cards don't jump around.
-          const sorted = [...rows].sort((a, b) => {
-            const rank =
-              BUCKET_ORDER.indexOf(bucketOf(a)) -
-              BUCKET_ORDER.indexOf(bucketOf(b));
-            if (rank !== 0) return rank;
-            return (a.personName ?? a.hostname).localeCompare(
+          // Name order inside a bucket keeps cards from jumping around; the
+          // bucket sections below take care of attention-first ordering.
+          const sorted = [...rows].sort((a, b) =>
+            (a.personName ?? a.hostname).localeCompare(
               b.personName ?? b.hostname
-            );
-          });
+            )
+          );
+          const q = search.trim().toLowerCase();
+          const searched = q
+            ? sorted.filter(d =>
+                [d.personName, d.hostname, d.windowsUser]
+                  .filter(Boolean)
+                  .some(s => String(s).toLowerCase().includes(q))
+              )
+            : sorted;
           const visible =
             filter === "all"
-              ? sorted
-              : sorted.filter(d => bucketOf(d) === filter);
+              ? searched
+              : searched.filter(d => bucketOf(d) === filter);
+          // Cards grouped under bucket headings, worst first.
+          const groups = BUCKET_ORDER.flatMap(bucket => {
+            const cards = visible.filter(d => bucketOf(d) === bucket);
+            return cards.length > 0 ? [{ bucket, cards }] : [];
+          });
 
           return (
             <div className="space-y-6">
@@ -386,10 +443,23 @@ export default function OverviewPage() {
 
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <BucketFilter rows={rows} value={filter} onChange={setFilter} />
-                <StateStripLegend
-                  states={presentStates}
-                  label={s => t(`empstate.${s}`)}
-                />
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      ref={searchRef}
+                      value={search}
+                      onChange={e => setSearch(e.target.value)}
+                      placeholder={t("common.search")}
+                      aria-label={t("common.search")}
+                      className="h-9 w-44 pl-9"
+                    />
+                  </div>
+                  <StateStripLegend
+                    states={presentStates}
+                    label={s => t(`empstate.${s}`)}
+                  />
+                </div>
               </div>
 
               {visible.length === 0 ? (
@@ -399,22 +469,33 @@ export default function OverviewPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <Stagger className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {visible.map((d, index) => (
-                    <StaggerItem key={d.deviceId} index={index}>
-                      <DeviceCard
-                        d={d}
-                        segments={
-                          d.personEmployeeId
-                            ? (segmentsByEmployee.get(d.personEmployeeId) ?? [])
-                            : null
-                        }
-                        dayStart={dayStart}
-                        nowPct={nowPct}
-                      />
-                    </StaggerItem>
-                  ))}
-                </Stagger>
+                groups.map(({ bucket, cards }) => (
+                  <section key={bucket} className="space-y-3">
+                    <h2 className="kicker flex items-center gap-2">
+                      {t(`overview.filter.${bucket}`)}
+                      <span className="tabular-nums text-muted-foreground">
+                        {cards.length}
+                      </span>
+                    </h2>
+                    <Stagger className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {cards.map((d, index) => (
+                        <StaggerItem key={d.deviceId} index={index}>
+                          <DeviceCard
+                            d={d}
+                            segments={
+                              d.personEmployeeId
+                                ? (segmentsByEmployee.get(d.personEmployeeId) ??
+                                  [])
+                                : null
+                            }
+                            dayStart={dayStart}
+                            nowPct={nowPct}
+                          />
+                        </StaggerItem>
+                      ))}
+                    </Stagger>
+                  </section>
+                ))
               )}
             </div>
           );

@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FAQ_SECTIONS } from "@/lib/activity/faq";
 import { useI18n } from "@/lib/activity/i18n";
+import { useSlashFocus } from "@/lib/activity/useSlashFocus";
 
 /**
  * In-app Help / FAQ. Common errors and "how do I…" questions in plain language,
@@ -19,6 +20,7 @@ import { useI18n } from "@/lib/activity/i18n";
 export default function HelpPage() {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
+  const searchRef = useSlashFocus<HTMLInputElement>();
   const needle = query.trim().toLowerCase();
 
   const sections = FAQ_SECTIONS.map(s => ({
@@ -42,6 +44,7 @@ export default function HelpPage() {
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          ref={searchRef}
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={t("help.search")}

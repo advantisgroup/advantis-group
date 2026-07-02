@@ -2,6 +2,8 @@
 
 import { usePathname } from "next/navigation";
 
+import { api } from "@advantis/convex/api";
+import { useQuery } from "convex/react";
 import {
   ArrowLeft,
   HelpCircle,
@@ -20,6 +22,7 @@ import {
   SidebarGroupLabel,
   SidebarLabel,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -59,6 +62,10 @@ export function ActivitySidebar() {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   const close = () => setOpenMobile(false);
+  // Registration queue: badge the Devices entry so a freshly installed agent
+  // waiting for approval doesn't sit unnoticed.
+  const pendingDevices = useQuery(api.activity.devices.listPending);
+  const pendingCount = pendingDevices?.length ?? 0;
 
   return (
     <>
@@ -106,6 +113,10 @@ export function ActivitySidebar() {
                   >
                     <Icon />
                     <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
+                    {item.href === "/admin/activity/devices" &&
+                      pendingCount > 0 && (
+                        <SidebarMenuBadge>{pendingCount}</SidebarMenuBadge>
+                      )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/lib/activity/i18n";
 import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+import { useSlashFocus } from "@/lib/activity/useSlashFocus";
 
 import type { GenericId } from "convex/values";
 
@@ -132,6 +133,7 @@ export default function PeoplePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [query, setQuery] = useState("");
+  const searchRef = useSlashFocus<HTMLInputElement>();
   const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(
     null
   );
@@ -222,6 +224,7 @@ export default function PeoplePage() {
             <div className="relative max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                ref={searchRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={t("common.search")}
