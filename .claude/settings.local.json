@@ -26,7 +26,10 @@
       "Bash(ls src/hooks)",
       "Bash(ls src/lib)",
       "Bash(ls tailwind.config*)",
-      "Bash(grep -rln \"prefers-reduced-motion\\\\|matchMedia\\\\|navigator.hardwareConcurrency\\\\|deviceMemory\" src)"
+      "Bash(grep -rln \"prefers-reduced-motion\\\\|matchMedia\\\\|navigator.hardwareConcurrency\\\\|deviceMemory\" src)",
+      "Bash(cp /root/.claude/uploads/22b85b40-65f6-56fc-8f0b-2ccff18cd8eb/d8c7575c-Problembehandlungen.docx apps/intranet/public/guidebooks/problembehandlungen/Problembehandlungen.docx)",
+      "Bash(cp /root/.claude/uploads/22b85b40-65f6-56fc-8f0b-2ccff18cd8eb/9ebd421c-Onedrive_Schulung.docx apps/intranet/public/guidebooks/onedrive-schulung/Onedrive_Schulung.docx)",
+      "Bash(git check-ignore *)"
     ]
   }
 }

@@ -571,7 +571,9 @@
     },
     "docViewer": {
       "onThisPage": "On this page",
-      "zoomImage": "Enlarge image"
+      "zoomImage": "Enlarge image",
+      "download": "Download",
+      "downloadHint": "Original document (Word)"
     }
   },
   "CaseSearch": {
