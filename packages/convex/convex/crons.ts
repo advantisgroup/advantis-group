@@ -10,11 +10,25 @@ import { internal } from "./_generated/api";
  */
 const crons = cronJobs();
 
-// Poll integrations during business hours on weekdays (UTC). Clockodo clock-ins
-// still arrive via webhook outside this window.
+// Poll integrations around the clock, every day. This is the *only* thing that
+// keeps the fused state honest when the Clockodo webhook is slow, misconfigured,
+// or disabled server-side (which has happened) — a webhook-only gap used to
+// leave people frozen in whatever state they were last seen in (e.g. "clocked
+// in and working" hours after they actually clocked out) until the next
+// business-hours poll picked it up. Frequent during the day for responsiveness,
+// less frequent overnight/weekends where less changes but staleness still must
+// resolve eventually — this cadence is also what lets the 20:00 "assumed →
+// certain clocked-out" transition (see clockodo.ts) actually fire promptly in
+// the evening instead of depending on a webhook that may not be there.
 crons.cron(
-  "activity: poll integrations",
-  "*/2 5-18 * * 1-5",
+  "activity: poll integrations (daytime)",
+  "*/2 5-18 * * *",
+  internal.activity.integrations.pollAll,
+  {}
+);
+crons.cron(
+  "activity: poll integrations (off-hours fallback)",
+  "*/10 19-23,0-4 * * *",
   internal.activity.integrations.pollAll,
   {}
 );

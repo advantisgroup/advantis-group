@@ -48,6 +48,15 @@ before merge.
    disappears, and a later clock-in starts a new stint instead of re-labelling
    the evening. Schema adds `clockodoClockedOut`, `clockodoClockedOutCertain`
    and the new union member (additive, no migration).
+8. `fix(activity/crons)` — the integration poller only ran 5-18 UTC on
+   weekdays, on the explicit assumption that the Clockodo webhook covered
+   everything else. When Clockodo disabled that webhook server-side, state
+   froze indefinitely outside that window (observed: "clocked in and working"
+   hours after an actual clock-out, with nothing to correct it). Poll is now
+   two crons covering the full day/week — `*/2 5-18 * * *` daytime, `*/10
+19-23,0-4 * * *` off-hours — so `pollAll` is a real fallback independent of
+   webhook health, and the 20:00 certainty transition reliably fires even when
+   the webhook is down.
 
 Verified: `tsc --noEmit` (convex/api/intranet), eslint clean, full
 `next build` passes. Visual verification against a live backend was skipped
