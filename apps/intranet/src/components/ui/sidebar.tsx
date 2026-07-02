@@ -113,7 +113,7 @@ export function SidebarProvider({
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
             } as React.CSSProperties
           }
-          className={cn("flex h-svh w-full overflow-hidden", className)}
+          className={cn("fixed inset-0 flex overflow-hidden", className)}
         >
           {children}
         </div>
