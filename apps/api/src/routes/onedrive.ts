@@ -88,14 +88,28 @@ async function buildListing(
   user: OneDriveUser,
   relPath: string
 ): Promise<OneDriveListing> {
-  const folder = await getItemByPath(relPath);
-  const folderRel = relPathOf(folder) ?? normalizePath(relPath);
+  let folder = await getItemByPath(relPath);
+  let folderRel = relPathOf(folder) ?? normalizePath(relPath);
   assertCanRead(user, folderRel);
+
+  // A deep link (e.g. a chat/announcement attachment) can point straight at
+  // a file rather than a folder — list its parent instead and flag the file
+  // itself so the client opens a preview once the listing has loaded.
+  let previewItem: OneDriveItem | undefined;
+  if (!folder.folder) {
+    previewItem = toItem(folder, user) ?? undefined;
+    const parentRel = folderRel.includes("/")
+      ? folderRel.slice(0, folderRel.lastIndexOf("/"))
+      : "";
+    folder = await getItemByPath(parentRel);
+    folderRel = relPathOf(folder) ?? normalizePath(parentRel);
+    assertCanRead(user, folderRel);
+  }
 
   const scope = `${user.role}:${user.gfAccess ? 1 : 0}`;
   const cacheKey = folderRel || "root";
   const cached = await getCachedListing<OneDriveListing>(cacheKey, scope);
-  if (cached) return cached;
+  if (cached) return previewItem ? { ...cached, previewItem } : cached;
 
   const children = await listChildrenById(folder.id);
   const items: OneDriveItem[] = [];
@@ -136,7 +150,7 @@ async function buildListing(
     canRequest: access.canRequest,
   };
   await setCachedListing(cacheKey, scope, listing);
-  return listing;
+  return previewItem ? { ...listing, previewItem } : listing;
 }
 
 /** Resolve a drive item id, ensure the user may read it, return its rel path. */
