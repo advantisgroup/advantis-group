@@ -574,6 +574,11 @@
       "zoomImage": "Bild vergrößern",
       "download": "Herunterladen",
       "downloadHint": "Original-Dokument (Word)"
+    },
+    "switcher": {
+      "label": "Wiki-Eintrag wechseln",
+      "previous": "Vorheriger Eintrag",
+      "next": "Nächster Eintrag"
     }
   },
   "CaseSearch": {

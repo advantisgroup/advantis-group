@@ -574,6 +574,11 @@
       "zoomImage": "Enlarge image",
       "download": "Download",
       "downloadHint": "Original document (Word)"
+    },
+    "switcher": {
+      "label": "Switch guidebook",
+      "previous": "Previous",
+      "next": "Next"
     }
   },
   "CaseSearch": {
