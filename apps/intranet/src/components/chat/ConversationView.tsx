@@ -71,9 +71,30 @@ const API_URL =
   "http://localhost:3002";
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
 const COMPOSER_EMOJIS = [
-  "😀", "😂", "😍", "😊", "😉", "😎", "🤔", "😮",
-  "😢", "😡", "👍", "👎", "🙏", "👏", "🙌", "💪",
-  "❤️", "🔥", "🎉", "✨", "✅", "❌", "💯", "👀",
+  "😀",
+  "😂",
+  "😍",
+  "😊",
+  "😉",
+  "😎",
+  "🤔",
+  "😮",
+  "😢",
+  "😡",
+  "👍",
+  "👎",
+  "🙏",
+  "👏",
+  "🙌",
+  "💪",
+  "❤️",
+  "🔥",
+  "🎉",
+  "✨",
+  "✅",
+  "❌",
+  "💯",
+  "👀",
 ];
 
 type Message = FunctionReturnType<typeof api.chat.getMessages>["page"][number];
@@ -173,10 +194,7 @@ export function ConversationView({
     return map;
   }, [conversation]);
 
-  if (
-    conversation &&
-    initialReadRef.current?.id !== conversationId
-  ) {
+  if (conversation && initialReadRef.current?.id !== conversationId) {
     initialReadRef.current = {
       id: conversationId,
       at: conversation.myLastReadAt,
@@ -240,9 +258,7 @@ export function ConversationView({
     const caret = textareaRef.current?.selectionStart ?? value.length;
     const upto = value.slice(0, caret);
     const m = /(?:^|\s)@([\w]*)$/.exec(upto);
-    setMention(
-      m && conversation?.type === "group" ? { query: m[1] } : null
-    );
+    setMention(m && conversation?.type === "group" ? { query: m[1] } : null);
     const now = Date.now();
     if (now - lastTyping.current > 3000) {
       lastTyping.current = now;
@@ -253,7 +269,9 @@ export function ConversationView({
   function pickMention(member: { _id: Id<"users">; name: string }) {
     const el = textareaRef.current;
     const caret = el?.selectionStart ?? body.length;
-    const before = body.slice(0, caret).replace(/@([\w]*)$/, `@${member.name} `);
+    const before = body
+      .slice(0, caret)
+      .replace(/@([\w]*)$/, `@${member.name} `);
     const after = body.slice(caret);
     mentionedRef.current.set(member.name, member._id);
     setBody(before + after);
@@ -499,7 +517,8 @@ export function ConversationView({
         {
           key: "mute",
           label: conversation.muted ? t("unmute") : t("mute"),
-          onSelect: () => void toggleMute({ conversationId }).catch(handleError),
+          onSelect: () =>
+            void toggleMute({ conversationId }).catch(handleError),
         },
         { key: "sep", separator: true },
         {
@@ -656,16 +675,12 @@ export function ConversationView({
       )}
 
       {/* Messages */}
-      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto p-4">
-        {status === "CanLoadMore" && (
-          <div className="mb-2 flex justify-center">
-            <Button variant="ghost" size="sm" onClick={() => loadMore(30)}>
-              {t("loadMore")}
-            </Button>
-          </div>
-        )}
-
-        {conversation && messages.length === 0 && (
+      <div
+        ref={scrollRef}
+        onScroll={onScroll}
+        className="flex-1 overflow-y-auto p-4"
+      >
+        {conversation && messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <span className="flex size-14 items-center justify-center rounded-2xl bg-blue-500/10 text-2xl">
               👋
@@ -683,275 +698,297 @@ export function ConversationView({
               </p>
             </div>
           </div>
-        )}
+        ) : (
+          // min-h-full + justify-end so a short thread sits against the
+          // composer like a real chat, instead of pinned to the top with
+          // dead space below — only kicks in when content doesn't already
+          // overflow, so normal scrolling is unaffected.
+          <div className="flex min-h-full flex-col justify-end">
+            {status === "CanLoadMore" && (
+              <div className="mb-2 flex justify-center">
+                <Button variant="ghost" size="sm" onClick={() => loadMore(30)}>
+                  {t("loadMore")}
+                </Button>
+              </div>
+            )}
 
-        <div className="space-y-3">
-          {messages.map((m, i) => {
-            const mine = m.senderId === me._id;
-            const prev = messages[i - 1];
-            const grouped =
-              !!prev &&
-              prev.senderId === m.senderId &&
-              !prev.deleted &&
-              m.createdAt - prev.createdAt < GROUP_WINDOW_MS &&
-              new Date(prev.createdAt).toDateString() ===
-                new Date(m.createdAt).toDateString();
-            const seen = mine && m.seenBy.length > 0;
-            const showDay =
-              i === 0 ||
-              new Date(messages[i - 1].createdAt).toDateString() !==
-                new Date(m.createdAt).toDateString();
-            return (
-              <Fragment key={m._id}>
-                {showDay && (
-                  <div className="flex items-center justify-center py-1">
-                    <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
-                      {dayLabel(m.createdAt)}
-                    </span>
-                  </div>
-                )}
-                {firstUnreadId === m._id && (
-                  <div className="flex items-center gap-2 py-1">
-                    <span className="h-px flex-1 bg-blue-500/30" />
-                    <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-500">
-                      {t("newMessages")}
-                    </span>
-                    <span className="h-px flex-1 bg-blue-500/30" />
-                  </div>
-                )}
-                <div
-                  id={`msg-${m._id}`}
-                  className={cn(
-                    "group flex gap-2 scroll-mt-4",
-                    mine && "flex-row-reverse",
-                    grouped ? "mt-0.5" : "mt-3"
-                  )}
-                >
-                  {!mine &&
-                    (grouped ? (
-                      <span className="w-7 shrink-0" />
-                    ) : (
-                      <Avatar className="mt-auto h-7 w-7 shrink-0">
-                        {m.senderAvatar ? (
-                          <AvatarImage src={m.senderAvatar} alt={m.senderName} />
-                        ) : null}
-                        <AvatarFallback className="text-[10px]">
-                          {initials(m.senderName)}
-                        </AvatarFallback>
-                      </Avatar>
-                    ))}
-                  <div
-                    className={cn(
-                      "flex min-w-0 max-w-[78%] flex-col gap-1",
-                      mine ? "items-end" : "items-start"
+            <div className="space-y-3">
+              {messages.map((m, i) => {
+                const mine = m.senderId === me._id;
+                const prev = messages[i - 1];
+                const grouped =
+                  !!prev &&
+                  prev.senderId === m.senderId &&
+                  !prev.deleted &&
+                  m.createdAt - prev.createdAt < GROUP_WINDOW_MS &&
+                  new Date(prev.createdAt).toDateString() ===
+                    new Date(m.createdAt).toDateString();
+                const seen = mine && m.seenBy.length > 0;
+                const showDay =
+                  i === 0 ||
+                  new Date(messages[i - 1].createdAt).toDateString() !==
+                    new Date(m.createdAt).toDateString();
+                return (
+                  <Fragment key={m._id}>
+                    {showDay && (
+                      <div className="flex items-center justify-center py-1">
+                        <span className="rounded-full bg-muted px-3 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          {dayLabel(m.createdAt)}
+                        </span>
+                      </div>
                     )}
-                  >
+                    {firstUnreadId === m._id && (
+                      <div className="flex items-center gap-2 py-1">
+                        <span className="h-px flex-1 bg-blue-500/30" />
+                        <span className="rounded-full bg-blue-500/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-blue-500">
+                          {t("newMessages")}
+                        </span>
+                        <span className="h-px flex-1 bg-blue-500/30" />
+                      </div>
+                    )}
                     <div
+                      id={`msg-${m._id}`}
                       className={cn(
-                        "flex items-center gap-1",
-                        mine && "flex-row-reverse"
+                        "group flex gap-2 scroll-mt-4",
+                        mine && "flex-row-reverse",
+                        grouped ? "mt-0.5" : "mt-3"
                       )}
                     >
+                      {!mine &&
+                        (grouped ? (
+                          <span className="w-7 shrink-0" />
+                        ) : (
+                          <Avatar className="mt-auto h-7 w-7 shrink-0">
+                            {m.senderAvatar ? (
+                              <AvatarImage
+                                src={m.senderAvatar}
+                                alt={m.senderName}
+                              />
+                            ) : null}
+                            <AvatarFallback className="text-[10px]">
+                              {initials(m.senderName)}
+                            </AvatarFallback>
+                          </Avatar>
+                        ))}
                       <div
                         className={cn(
-                          "min-w-0 rounded-2xl px-3 py-2 text-sm",
-                          mine
-                            ? "rounded-br-md bg-primary text-primary-foreground"
-                            : "rounded-bl-md bg-muted"
+                          "flex min-w-0 max-w-[78%] flex-col gap-1",
+                          mine ? "items-end" : "items-start"
                         )}
                       >
-                        {!mine &&
-                          conversation?.type === "group" &&
-                          !grouped && (
-                            <p className="mb-0.5 text-xs font-semibold text-blue-500">
-                              {m.senderName}
-                            </p>
-                          )}
-                        {m.replyTo && (
-                          <button
-                            type="button"
-                            onClick={() =>
-                              document
-                                .getElementById(`msg-${m.replyTo!._id}`)
-                                ?.scrollIntoView({
-                                  behavior: "smooth",
-                                  block: "center",
-                                })
-                            }
-                            className={cn(
-                              "mb-1 flex w-full flex-col rounded-md border-l-2 px-2 py-1 text-left text-xs",
-                              mine
-                                ? "border-primary-foreground/50 bg-primary-foreground/10"
-                                : "border-blue-500/60 bg-background/60"
-                            )}
-                          >
-                            <span className="font-semibold opacity-80">
-                              {m.replyTo.senderName}
-                            </span>
-                            <span className="truncate opacity-70">
-                              {m.replyTo.deleted
-                                ? t("deleted")
-                                : m.replyTo.body || t("attachment")}
-                            </span>
-                          </button>
-                        )}
-                        {m.deleted ? (
-                          <p className="italic opacity-70">{t("deleted")}</p>
-                        ) : (
-                          <>
-                            {m.body && (
-                              <p className="whitespace-pre-wrap break-words">
-                                {highlightBody(m.body, m.mentions)}
-                              </p>
-                            )}
-                            {m.attachments.map(a =>
-                              a.kind === "image" && a.url ? (
-                                <button
-                                  type="button"
-                                  key={a.storageId}
-                                  onClick={() => setLightbox(a.url)}
-                                  className="mt-1 block"
-                                >
-                                  <img
-                                    src={a.url}
-                                    alt={a.name}
-                                    className="max-h-64 rounded-lg"
-                                  />
-                                </button>
-                              ) : a.url ? (
-                                <a
-                                  key={a.storageId}
-                                  href={a.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="mt-1 flex items-center gap-1 underline"
-                                >
-                                  <Paperclip className="h-3 w-3" /> {a.name}
-                                </a>
-                              ) : null
-                            )}
-                            {m.linkPreviews.map(lp => (
-                              <a
-                                key={lp.url}
-                                href={lp.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-1 block overflow-hidden rounded-lg border bg-background text-foreground"
-                              >
-                                {lp.image && (
-                                  <img
-                                    src={lp.image}
-                                    alt=""
-                                    className="h-28 w-full object-cover"
-                                  />
-                                )}
-                                <span className="block p-2">
-                                  <span className="block text-xs font-semibold">
-                                    {lp.title}
-                                  </span>
-                                  {lp.description && (
-                                    <span className="line-clamp-2 text-xs text-muted-foreground">
-                                      {lp.description}
-                                    </span>
-                                  )}
-                                </span>
-                              </a>
-                            ))}
-                          </>
-                        )}
                         <div
                           className={cn(
-                            "mt-0.5 flex items-center gap-1 text-[10px] opacity-60",
-                            mine && "justify-end"
+                            "flex items-center gap-1",
+                            mine && "flex-row-reverse"
                           )}
                         >
-                          <span>{formatTime(m.createdAt, locale)}</span>
-                          {m.edited && !m.deleted && (
-                            <span>· {t("edited")}</span>
-                          )}
-                          {mine &&
-                            !m.deleted &&
-                            (seen ? (
-                              <CheckCheck
-                                className="h-3.5 w-3.5"
-                                aria-label={t("seenBy", {
-                                  names: m.seenBy.join(", "),
-                                })}
-                              />
+                          <div
+                            className={cn(
+                              "min-w-0 rounded-2xl px-3 py-2 text-sm",
+                              mine
+                                ? "rounded-br-md bg-primary text-primary-foreground"
+                                : "rounded-bl-md bg-muted"
+                            )}
+                          >
+                            {!mine &&
+                              conversation?.type === "group" &&
+                              !grouped && (
+                                <p className="mb-0.5 text-xs font-semibold text-blue-500">
+                                  {m.senderName}
+                                </p>
+                              )}
+                            {m.replyTo && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  document
+                                    .getElementById(`msg-${m.replyTo!._id}`)
+                                    ?.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "center",
+                                    })
+                                }
+                                className={cn(
+                                  "mb-1 flex w-full flex-col rounded-md border-l-2 px-2 py-1 text-left text-xs",
+                                  mine
+                                    ? "border-primary-foreground/50 bg-primary-foreground/10"
+                                    : "border-blue-500/60 bg-background/60"
+                                )}
+                              >
+                                <span className="font-semibold opacity-80">
+                                  {m.replyTo.senderName}
+                                </span>
+                                <span className="truncate opacity-70">
+                                  {m.replyTo.deleted
+                                    ? t("deleted")
+                                    : m.replyTo.body || t("attachment")}
+                                </span>
+                              </button>
+                            )}
+                            {m.deleted ? (
+                              <p className="italic opacity-70">
+                                {t("deleted")}
+                              </p>
                             ) : (
-                              <Check className="h-3.5 w-3.5" />
-                            ))}
-                        </div>
-                      </div>
+                              <>
+                                {m.body && (
+                                  <p className="whitespace-pre-wrap break-words">
+                                    {highlightBody(m.body, m.mentions)}
+                                  </p>
+                                )}
+                                {m.attachments.map(a =>
+                                  a.kind === "image" && a.url ? (
+                                    <button
+                                      type="button"
+                                      key={a.storageId}
+                                      onClick={() => setLightbox(a.url)}
+                                      className="mt-1 block"
+                                    >
+                                      <img
+                                        src={a.url}
+                                        alt={a.name}
+                                        className="max-h-64 rounded-lg"
+                                      />
+                                    </button>
+                                  ) : a.url ? (
+                                    <a
+                                      key={a.storageId}
+                                      href={a.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="mt-1 flex items-center gap-1 underline"
+                                    >
+                                      <Paperclip className="h-3 w-3" /> {a.name}
+                                    </a>
+                                  ) : null
+                                )}
+                                {m.linkPreviews.map(lp => (
+                                  <a
+                                    key={lp.url}
+                                    href={lp.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mt-1 block overflow-hidden rounded-lg border bg-background text-foreground"
+                                  >
+                                    {lp.image && (
+                                      <img
+                                        src={lp.image}
+                                        alt=""
+                                        className="h-28 w-full object-cover"
+                                      />
+                                    )}
+                                    <span className="block p-2">
+                                      <span className="block text-xs font-semibold">
+                                        {lp.title}
+                                      </span>
+                                      {lp.description && (
+                                        <span className="line-clamp-2 text-xs text-muted-foreground">
+                                          {lp.description}
+                                        </span>
+                                      )}
+                                    </span>
+                                  </a>
+                                ))}
+                              </>
+                            )}
+                            <div
+                              className={cn(
+                                "mt-0.5 flex items-center gap-1 text-[10px] opacity-60",
+                                mine && "justify-end"
+                              )}
+                            >
+                              <span>{formatTime(m.createdAt, locale)}</span>
+                              {m.edited && !m.deleted && (
+                                <span>· {t("edited")}</span>
+                              )}
+                              {mine &&
+                                !m.deleted &&
+                                (seen ? (
+                                  <CheckCheck
+                                    className="h-3.5 w-3.5"
+                                    aria-label={t("seenBy", {
+                                      names: m.seenBy.join(", "),
+                                    })}
+                                  />
+                                ) : (
+                                  <Check className="h-3.5 w-3.5" />
+                                ))}
+                            </div>
+                          </div>
 
-                      {!m.deleted && (
-                        <div className="flex items-center gap-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
-                          <ReactionPicker
-                            onPick={emoji =>
+                          {!m.deleted && (
+                            <div className="flex items-center gap-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+                              <ReactionPicker
+                                onPick={emoji =>
+                                  void toggleReaction({
+                                    messageId: m._id,
+                                    emoji,
+                                  })
+                                }
+                                side="top"
+                                align={mine ? "end" : "start"}
+                              />
+                              <MessageMenu
+                                canEdit={mine && !!m.body}
+                                canDelete={mine}
+                                onReply={() => {
+                                  setEditing(null);
+                                  setReplyTo(m);
+                                  textareaRef.current?.focus();
+                                }}
+                                onCopy={() => void copyMessage(m.body)}
+                                onEdit={() => startEdit(m)}
+                                onDelete={() => void onDeleteMessage(m._id)}
+                                labels={{
+                                  reply: t("reply"),
+                                  copy: tc("copy"),
+                                  edit: tc("edit"),
+                                  delete: tc("delete"),
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Group seen-by avatars on the reader side. */}
+                        {mine &&
+                          !m.deleted &&
+                          conversation?.type === "group" &&
+                          m.seenByUsers.length > 0 && (
+                            <div className="flex -space-x-1.5 pr-1">
+                              {m.seenByUsers.slice(0, 4).map(u => (
+                                <Avatar
+                                  key={u._id}
+                                  className="size-4 border border-card"
+                                >
+                                  {u.avatar && (
+                                    <AvatarImage src={u.avatar} alt={u.name} />
+                                  )}
+                                  <AvatarFallback className="text-[7px]">
+                                    {initials(u.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                              ))}
+                            </div>
+                          )}
+
+                        {!m.deleted && m.reactions.length > 0 && (
+                          <ReactionChips
+                            reactions={m.reactions}
+                            onToggle={emoji =>
                               void toggleReaction({ messageId: m._id, emoji })
                             }
-                            side="top"
-                            align={mine ? "end" : "start"}
                           />
-                          <MessageMenu
-                            canEdit={mine && !!m.body}
-                            canDelete={mine}
-                            onReply={() => {
-                              setEditing(null);
-                              setReplyTo(m);
-                              textareaRef.current?.focus();
-                            }}
-                            onCopy={() => void copyMessage(m.body)}
-                            onEdit={() => startEdit(m)}
-                            onDelete={() => void onDeleteMessage(m._id)}
-                            labels={{
-                              reply: t("reply"),
-                              copy: tc("copy"),
-                              edit: tc("edit"),
-                              delete: tc("delete"),
-                            }}
-                          />
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-
-                    {/* Group seen-by avatars on the reader side. */}
-                    {mine &&
-                      !m.deleted &&
-                      conversation?.type === "group" &&
-                      m.seenByUsers.length > 0 && (
-                        <div className="flex -space-x-1.5 pr-1">
-                          {m.seenByUsers.slice(0, 4).map(u => (
-                            <Avatar
-                              key={u._id}
-                              className="size-4 border border-card"
-                            >
-                              {u.avatar && (
-                                <AvatarImage src={u.avatar} alt={u.name} />
-                              )}
-                              <AvatarFallback className="text-[7px]">
-                                {initials(u.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                          ))}
-                        </div>
-                      )}
-
-                    {!m.deleted && m.reactions.length > 0 && (
-                      <ReactionChips
-                        reactions={m.reactions}
-                        onToggle={emoji =>
-                          void toggleReaction({ messageId: m._id, emoji })
-                        }
-                      />
-                    )}
-                  </div>
-                </div>
-              </Fragment>
-            );
-          })}
-          <div ref={bottomRef} />
-        </div>
+                  </Fragment>
+                );
+              })}
+              <div ref={bottomRef} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Jump to bottom */}
@@ -989,9 +1026,11 @@ export function ConversationView({
             )}
             <div className="min-w-0 flex-1">
               <p className="font-semibold text-blue-500">
-                {editing ? t("editingMessage") : t("replyingTo", {
-                  name: replyTo?.senderName ?? "",
-                })}
+                {editing
+                  ? t("editingMessage")
+                  : t("replyingTo", {
+                      name: replyTo?.senderName ?? "",
+                    })}
               </p>
               {replyTo && (
                 <p className="truncate text-muted-foreground">
