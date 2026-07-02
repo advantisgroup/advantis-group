@@ -116,11 +116,7 @@ const CALLOUT_STYLES = {
   },
 } as const;
 
-function DocImage({
-  block,
-}: {
-  block: Extract<DocBlock, { kind: "image" }>;
-}) {
+function DocImage({ block }: { block: Extract<DocBlock, { kind: "image" }> }) {
   const t = useTranslations("Guidebooks");
   const [open, setOpen] = useState(false);
 

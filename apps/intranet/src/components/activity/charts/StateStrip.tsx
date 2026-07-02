@@ -47,9 +47,7 @@ export function StateStrip({
       <div
         className={cn(
           "relative w-full overflow-hidden bg-panel-2",
-          compact
-            ? "h-2 rounded-full"
-            : "h-7 rounded-md border border-border"
+          compact ? "h-2 rounded-full" : "h-7 rounded-md border border-border"
         )}
       >
         {segments.map((seg, i) => {
