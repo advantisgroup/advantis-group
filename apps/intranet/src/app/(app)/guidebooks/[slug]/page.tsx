@@ -9,6 +9,10 @@ import {
   canAccessGuidebook,
   getGuidebook,
 } from "@/components/guidebooks/registry";
+import {
+  GuidebookPager,
+  GuidebookSwitcher,
+} from "@/components/guidebooks/switcher";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -23,13 +27,20 @@ export default function GuidebookPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <Link
-        href="/guidebooks"
-        className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        {t("title")}
-      </Link>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <Link
+          href="/guidebooks"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          {t("title")}
+        </Link>
+        {guidebook && allowed && (
+          <div className="hidden md:block">
+            <GuidebookSwitcher current={guidebook} />
+          </div>
+        )}
+      </div>
 
       {!guidebook || !allowed ? (
         <Card>
@@ -53,6 +64,7 @@ export default function GuidebookPage() {
             description={t(guidebook.descriptionKey)}
           />
           <guidebook.Component />
+          <GuidebookPager current={guidebook} />
         </>
       )}
     </div>

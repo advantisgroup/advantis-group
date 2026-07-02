@@ -5,7 +5,9 @@ import { Fragment, type ReactNode, useEffect, useState } from "react";
 import Image from "next/image";
 
 import {
+  Download,
   ExternalLink,
+  FileText,
   Info,
   Lightbulb,
   TriangleAlert,
@@ -51,6 +53,11 @@ export interface DocSection {
 
 export interface DocContent {
   sections: DocSection[];
+  /**
+   * Original source document (e.g. the .docx this content was converted
+   * from). Only rendered when the viewer is mounted with `downloadable`.
+   */
+  download?: { href: string; fileName: string };
 }
 
 /* ── Inline markup ──────────────────────────────────────────────────────── */
@@ -265,7 +272,14 @@ function DocBlockView({ block }: { block: DocBlock }) {
 
 /* ── Viewer ─────────────────────────────────────────────────────────────── */
 
-export function DocViewer({ doc }: { doc: DocContent }) {
+export function DocViewer({
+  doc,
+  downloadable = false,
+}: {
+  doc: DocContent;
+  /** Show a download card for the original document (`doc.download`). */
+  downloadable?: boolean;
+}) {
   const t = useTranslations("Guidebooks");
   const [activeId, setActiveId] = useState<string | null>(
     doc.sections[0]?.id ?? null
@@ -308,6 +322,31 @@ export function DocViewer({ doc }: { doc: DocContent }) {
 
       {/* Article */}
       <article className="min-w-0 space-y-12 pb-12">
+        {downloadable && doc.download && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <FileText className="size-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
+                  {doc.download.fileName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t("docViewer.downloadHint")}
+                </p>
+              </div>
+            </div>
+            <a
+              href={doc.download.href}
+              download={doc.download.fileName}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Download className="size-3.5" />
+              {t("docViewer.download")}
+            </a>
+          </div>
+        )}
         {doc.sections.map((section, i) => (
           <section key={section.id} id={section.id} className="scroll-mt-24">
             <div className="mb-4 flex items-baseline gap-3 border-b border-border pb-3">

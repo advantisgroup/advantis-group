@@ -8,6 +8,10 @@ import { type DocContent, DocViewer } from "../doc-viewer";
 const IMG = "/guidebooks/onedrive-schulung";
 
 const DOC: DocContent = {
+  download: {
+    href: `${IMG}/Onedrive_Schulung.docx`,
+    fileName: "Onedrive_Schulung.docx",
+  },
   sections: [
     {
       id: "onedrive-oeffnen",
@@ -154,5 +158,5 @@ const DOC: DocContent = {
 };
 
 export function OneDriveSchulungGuidebook() {
-  return <DocViewer doc={DOC} />;
+  return <DocViewer doc={DOC} downloadable />;
 }

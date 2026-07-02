@@ -8,6 +8,10 @@ import { type DocContent, DocViewer } from "../doc-viewer";
 const IMG = "/guidebooks/problembehandlungen";
 
 const DOC: DocContent = {
+  download: {
+    href: `${IMG}/Problembehandlungen.docx`,
+    fileName: "Problembehandlungen.docx",
+  },
   sections: [
     {
       id: "kein-ton",
@@ -327,5 +331,5 @@ const DOC: DocContent = {
 };
 
 export function ProblembehandlungenGuidebook() {
-  return <DocViewer doc={DOC} />;
+  return <DocViewer doc={DOC} downloadable />;
 }
