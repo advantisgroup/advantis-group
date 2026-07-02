@@ -48,8 +48,20 @@ export const de: Dict = {
   "overview.total": "Geräte gesamt",
   "overview.ofTotal": "von {total} Geräten",
   "overview.online": "online",
+  "overview.sub":
+    "Wer arbeitet gerade, wer ist still geworden – und seit wann. Auf einen Blick.",
+  "overview.filter.all": "Alle",
+  "overview.filter.attention": "Inaktiv",
+  "overview.filter.working": "Arbeitet",
+  "overview.filter.away": "Pause / abwesend",
+  "overview.filter.offline": "Offline",
+  "overview.noMatches": "In dieser Gruppe ist gerade niemand.",
+  "overview.live": "Live",
+  "overview.liveHint": "Aktualisiert sich in Echtzeit – kein Neuladen nötig.",
 
   "devices.heading": "Geräte",
+  "devices.sub":
+    "Neue Agents genehmigen, Computer Mitarbeitern zuordnen und die Flotte verwalten.",
   "devices.pending": "Wartet auf Genehmigung",
   "devices.all": "Alle Geräte",
   "devices.host": "Computer",
@@ -64,11 +76,14 @@ export const de: Dict = {
   "devices.delete": "Löschen",
   "devices.link": "Zuordnen",
   "devices.none": "—",
+  "devices.emptyCta": "Wie verbinde ich ein Gerät? →",
   "status.pending": "Ausstehend",
   "status.active": "Aktiv",
   "status.disabled": "Deaktiviert",
 
   "people.heading": "Mitarbeiter",
+  "people.sub":
+    "Die Stammliste: Namen, E-Mail und die Integrations-IDs hinter dem Live-Status.",
   "people.add": "Mitarbeiter hinzufügen",
   "people.name": "Name",
   "people.email": "E-Mail",
@@ -161,6 +176,15 @@ export const de: Dict = {
   "timeline.now.heading": "Gerade jetzt",
   "timeline.now.activeShare": "Aktiv-Anteil",
   "timeline.now.dayTimeline": "Statusverlauf",
+  "timeline.now.recent": "Statuswechsel",
+  "timeline.now.recentEmpty": "Keine Statuswechsel aufgezeichnet.",
+  "timeline.now.showAll": "Alle {count} anzeigen",
+  "timeline.now.showFewer": "Weniger anzeigen",
+  "timeline.now.numbers": "Tageswerte",
+  "timeline.now.numbersHint":
+    "Exakte Zahlen zur Validierung und für den Export.",
+  "timeline.prevPerson": "Vorherige Person",
+  "timeline.nextPerson": "Nächste Person",
   "timeline.trend.heading": "Aktivität der letzten 14 Tage",
   "timeline.trend.sub": "Aktive vs. inaktive Stunden pro Tag.",
   "timeline.intraday.heading": "Tagesverlauf",
@@ -175,6 +199,7 @@ export const de: Dict = {
     "Noch kein Statusverlauf für heute. Daten erscheinen, sobald Signale eintreffen.",
   "timeline.hourly.unlinked":
     "Dieses Gerät ist keinem Mitarbeiter mit Integrationen zugeordnet.",
+  "timeline.unlinkedCta": "Unter Mitarbeiter zuordnen →",
   "timeline.state.heading": "Aktueller Status",
   "timeline.state.empty": "Noch keine Statusdaten für diesen Mitarbeiter.",
   "timeline.tabs.charts": "Übersicht",
@@ -194,6 +219,7 @@ export const de: Dict = {
   "reports.title": "Wochenberichte",
   "reports.subtitle":
     "Wöchentliche Aktiv-/Inaktivzeiten über alle Geräte, filter- und zeitraumbasiert.",
+  "reports.exportCsv": "CSV exportieren",
   "reports.timeframe": "Zeitraum",
   "reports.tf.thisWeek": "Diese Woche",
   "reports.tf.lastWeek": "Letzte Woche",
@@ -292,6 +318,7 @@ export const de: Dict = {
   "state.source.genesys": "Genesys",
   "state.source.clockodo": "Clockodo",
   "state.idleFor": "inaktiv seit {duration}",
+  "state.sinceFor": "seit {time} · {duration}",
   "state.health.unavailable": "{source} nicht verfügbar: {reason}",
   "state.health.unconfigured": "{source} ist nicht konfiguriert.",
   "state.health.degraded":

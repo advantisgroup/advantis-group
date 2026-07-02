@@ -4,10 +4,11 @@ import { useMemo, useState, type FormEvent } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Plus, Search, Trash2 } from "lucide-react";
+import { Plus, Search, Trash2, Users } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
+import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { useI18n } from "@/lib/activity/i18n";
 import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+import { useSlashFocus } from "@/lib/activity/useSlashFocus";
 
 import type { GenericId } from "convex/values";
 
@@ -131,6 +133,7 @@ export default function PeoplePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [query, setQuery] = useState("");
+  const searchRef = useSlashFocus<HTMLInputElement>();
   const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(
     null
   );
@@ -149,8 +152,21 @@ export default function PeoplePage() {
     );
   }, [people, query]);
 
+  const header = (
+    <PageHeader
+      title={t("people.heading")}
+      description={t("people.sub")}
+      icon={<Users />}
+    />
+  );
+
   if (people === undefined) {
-    return <Skeleton className="h-64 w-full" />;
+    return (
+      <section className="space-y-6">
+        {header}
+        <Skeleton className="h-64 w-full" />
+      </section>
+    );
   }
 
   async function onAdd(e: FormEvent) {
@@ -168,6 +184,8 @@ export default function PeoplePage() {
 
   return (
     <section className="space-y-6">
+      {header}
+
       {canEdit && (
         <Card className="animate-fade-up">
           <CardContent className="p-3 sm:p-4">
@@ -206,6 +224,7 @@ export default function PeoplePage() {
             <div className="relative max-w-xs">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                ref={searchRef}
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={t("common.search")}

@@ -6,10 +6,19 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { ChevronRight, Clock, Moon, Users } from "lucide-react";
+import {
+  ChevronRight,
+  Clock,
+  Download,
+  FileBarChart,
+  Moon,
+  Users,
+} from "lucide-react";
 
 import { DailyTrendChart } from "@/components/activity/charts/DailyTrendChart";
 import { StatCard } from "@/components/activity/StatCard";
+import { PageHeader } from "@/components/PageHeader";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
@@ -34,6 +43,7 @@ import {
   weeklyTrend,
   type DailyStat,
 } from "@/lib/activity/activity";
+import { downloadFile, toCsv } from "@/lib/activity/export";
 import { formatDuration, todayLocalDay } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 
@@ -130,16 +140,51 @@ export default function ReportsPage() {
     [rows]
   );
 
+  // Download the table exactly as filtered — seconds for machine use plus the
+  // human-readable durations, so the file works for both validation and Excel.
+  function exportCsv() {
+    const data = rows.map(d => ({
+      person: d.personName ?? "",
+      computer: d.hostname,
+      deviceId: d.deviceId,
+      activeSeconds: d.totals.activeSeconds,
+      idleSeconds: d.totals.idleSeconds,
+      active: formatDuration(d.totals.activeSeconds, lang),
+      idle: formatDuration(d.totals.idleSeconds, lang),
+    }));
+    const csv = toCsv(data, [
+      "person",
+      "computer",
+      "deviceId",
+      "activeSeconds",
+      "idleSeconds",
+      "active",
+      "idle",
+    ]);
+    downloadFile(
+      `activity-report_${startDay}_${endDay}.csv`,
+      "text/csv;charset=utf-8",
+      csv
+    );
+  }
+
   return (
     <section className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-fg">
-          {t("reports.title")}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("reports.subtitle")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("reports.title")}
+        description={t("reports.subtitle")}
+        icon={<FileBarChart />}
+        action={
+          <Button
+            variant="secondary"
+            onClick={exportCsv}
+            disabled={report === undefined || rows.length === 0}
+          >
+            <Download className="h-4 w-4" />
+            {t("reports.exportCsv")}
+          </Button>
+        }
+      />
 
       {/* Controls: time frame, optional custom range, device filter */}
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">

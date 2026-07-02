@@ -189,7 +189,7 @@ export const activityRoute = new Elysia()
           return fail(set, 401, "unauthorized");
         }
         const payload = (b.payload ?? {}) as {
-          entry?: { id?: number | string };
+          entry?: { id?: number | string; users_id?: number | string };
         };
         const entryId = payload.entry?.id;
         if (entryId == null) {
@@ -201,12 +201,16 @@ export const activityRoute = new Elysia()
         console.log(
           `[activity/clockodo] 200 processing entry event — event: ${b.event_name}, entryId: ${entryId}`
         );
+        // users_id rides along so deleted entries (which can no longer be
+        // fetched) still resolve to a user for the day recompute.
+        const payloadUsersId = payload.entry?.users_id;
         return await getConvex().action(
           api.activity.clockodo.refreshClockodoByEntry,
           {
             secret: signalSecret(),
             entryId: String(entryId),
             eventName: b.event_name,
+            usersId: payloadUsersId != null ? String(payloadUsersId) : undefined,
           }
         );
       }

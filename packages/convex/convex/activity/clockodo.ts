@@ -109,19 +109,23 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
   onBreak: boolean;
 }> {
   const entries = await fetchTodayEntries(clockodoUserId);
-  const clockedIn = entries.some(e => e.clocked === true);
+  // "Currently clocked in" = an entry with no end time yet. Clockodo's `clocked`
+  // flag is NOT that — it marks entries recorded via the stopwatch and stays
+  // true after clock-out, so using it here kept people "working" all day once
+  // they had clocked in a single time.
+  const running = entries.some(e => e.time_until == null);
   return entries.length === 0
     ? { working: false, onBreak: false }
-    : { working: clockedIn, onBreak: !clockedIn };
+    : { working: running, onBreak: !running };
 }
 
 async function fetchClockodoEntry(
   id: string
-): Promise<{ usersId: string | null; clocked: boolean | null }> {
+): Promise<{ usersId: string | null; running: boolean | null }> {
   const res = await fetch(`${CLOCKODO_BASE()}/api/v2/entries/${id}`, {
     headers: clockodoHeaders(),
   });
-  if (res.status === 404) return { usersId: null, clocked: null };
+  if (res.status === 404) return { usersId: null, running: null };
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Clockodo GET entry ${id} failed: ${res.status} ${text}`);
@@ -129,7 +133,7 @@ async function fetchClockodoEntry(
   const body = (await res.json()) as { entry?: ClockodoEntry };
   return {
     usersId: body.entry?.users_id != null ? String(body.entry.users_id) : null,
-    clocked: body.entry?.clocked ?? null,
+    running: body.entry ? body.entry.time_until == null : null,
   };
 }
 
@@ -198,22 +202,34 @@ export const refreshClockodo = action({
 
 /**
  * Re-pull state from a Clockodo webhook event. Clockodo sends only the id of
- * the changed entry, so we fetch the entry (to learn the user AND its current
- * `clocked` state), then push the derived working/break/absent signal.
+ * the changed entry, so we fetch the entry to learn which user it belongs to,
+ * then recompute that user's *whole day* from the entries list — the exact
+ * derivation the poller uses.
+ *
+ * The single entry's fields are deliberately not trusted for the verdict:
+ * `clocked` means "recorded with the stopwatch" and stays true after clock-out,
+ * so an `entry.updated` fired by the clock-out itself used to read as "working
+ * again". Only `time_until == null` marks a running entry, and only the full
+ * day answers "is anything still running for this user".
+ *
+ * `usersId` (from the webhook payload) is the fallback for `entry.deleted`,
+ * where the entry can no longer be fetched — deleting the running entry must
+ * still clear the working state.
  */
 export const refreshClockodoByEntry = action({
   args: {
     secret: v.string(),
     entryId: v.string(),
     eventName: v.optional(v.string()),
+    usersId: v.optional(v.string()),
   },
-  handler: async (ctx, { secret, entryId, eventName }) => {
+  handler: async (ctx, { secret, entryId, eventName, usersId }) => {
     if (secret !== process.env.ACTIVITYTRACK_SIGNAL_SECRET) {
       return { ok: false, error: "forbidden" as const };
     }
     try {
-      const { usersId: clockodoUserId, clocked: entryClocked } =
-        await fetchClockodoEntry(entryId);
+      const entry = await fetchClockodoEntry(entryId);
+      const clockodoUserId = entry.usersId ?? usersId ?? null;
 
       if (!clockodoUserId) {
         await reportHealth(ctx, "clockodo", "ok");
@@ -232,51 +248,34 @@ export const refreshClockodoByEntry = action({
         return { ok: true as const, unmapped: true as const };
       }
 
-      const absences = await fetchAbsences(new Date().getFullYear());
+      const [work, absences] = await Promise.all([
+        fetchClockodoWork(clockodoUserId),
+        fetchAbsences(new Date().getFullYear()),
+      ]);
       const absent = isAbsentOn(absences, clockodoUserId, today());
-
-      let working: boolean;
-      let onBreak: boolean;
-
-      if (eventName === "entry.stopped") {
-        working = false;
-        onBreak = true;
-      } else {
-        working = entryClocked === true;
-        onBreak = entryClocked === false;
-      }
-
-      const resolution =
-        eventName === "entry.stopped"
-          ? "trusted_stop"
-          : entryClocked === true
-            ? "entry_clocked_true"
-            : "entry_clocked_false";
 
       await ctx.runMutation(api.activity.state.pushSignal, {
         secret,
         employeeId,
         source: "clockodo",
-        clockodoWorking: working,
-        clockodoBreak: onBreak,
+        clockodoWorking: work.working,
+        clockodoBreak: work.onBreak,
         clockodoAbsent: absent,
       });
 
-      const logSeverity =
-        working && eventName !== "entry.created" ? "warning" : "info";
       await ctx.runMutation(internal.activity.events.record, {
         source: "backend",
-        severity: logSeverity,
+        severity: "info",
         code: `clockodo.webhook.${eventName ?? "unknown"}`,
-        message: `entry=${entryId} employee=${employeeId} → working=${working} onBreak=${onBreak} (${resolution})`,
+        message: `entry=${entryId} employee=${employeeId} → working=${work.working} onBreak=${work.onBreak} (day recompute)`,
         context: JSON.stringify({
           eventName,
           entryId,
           clockodoUserId,
           employeeId,
-          entryClocked,
-          working,
-          onBreak,
+          entryRunning: entry.running,
+          working: work.working,
+          onBreak: work.onBreak,
           absent,
         }),
       });

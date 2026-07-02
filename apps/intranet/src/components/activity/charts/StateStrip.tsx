@@ -26,6 +26,7 @@ export function StateStrip({
   label,
   nowPct = null,
   nowLabel,
+  compact = false,
   className,
 }: {
   segments: StateSegment[];
@@ -37,11 +38,20 @@ export function StateStrip({
   nowPct?: number | null;
   /** Hover title for the now marker. */
   nowLabel?: string;
+  /** Slim, tick-less variant for the overview cards. */
+  compact?: boolean;
   className?: string;
 }) {
   return (
     <div className={className}>
-      <div className="relative h-7 w-full overflow-hidden rounded-md border border-border bg-panel-2">
+      <div
+        className={cn(
+          "relative w-full overflow-hidden bg-panel-2",
+          compact
+            ? "h-2 rounded-full"
+            : "h-7 rounded-md border border-border"
+        )}
+      >
         {segments.map((seg, i) => {
           const left = ((seg.start - dayStart) / DAY_MS) * 100;
           const width = ((seg.end - seg.start) / DAY_MS) * 100;
@@ -67,11 +77,13 @@ export function StateStrip({
         )}
       </div>
       {/* Hour ticks: 00, 06, 12, 18, 24 */}
-      <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
-        {[0, 6, 12, 18, 24].map(h => (
-          <span key={h}>{String(h).padStart(2, "0")}</span>
-        ))}
-      </div>
+      {!compact && (
+        <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
+          {[0, 6, 12, 18, 24].map(h => (
+            <span key={h}>{String(h).padStart(2, "0")}</span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

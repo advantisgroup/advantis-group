@@ -7,9 +7,13 @@ import Link from "next/link";
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Ban,
   CheckCircle2,
   Clock3,
+  Monitor,
   MonitorSmartphone,
   Trash2,
 } from "lucide-react";
@@ -17,6 +21,7 @@ import {
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { InfoTip } from "@/components/activity/InfoTip";
 import { StatCard } from "@/components/activity/StatCard";
+import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -39,6 +45,7 @@ import {
 import { formatRelativeTime, formatTime } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
+import { useSlashFocus } from "@/lib/activity/useSlashFocus";
 
 import type { GenericId } from "convex/values";
 
@@ -47,6 +54,50 @@ const DEVICE_VARIANT: Record<string, "success" | "warning" | "destructive"> = {
   pending: "warning",
   disabled: "destructive",
 };
+
+// ── column sorting ───────────────────────────────────────────────────────────
+
+type SortKey = "hostname" | "status" | "lastSeen";
+type Sort = { key: SortKey; dir: 1 | -1 };
+/** Actives first when sorting by status ascending. */
+const STATUS_RANK: Record<string, number> = {
+  active: 0,
+  pending: 1,
+  disabled: 2,
+};
+
+/** Header-cell sort button: label + direction indicator. */
+function SortHeader({
+  label,
+  sortKey,
+  sort,
+  onToggle,
+}: {
+  label: string;
+  sortKey: SortKey;
+  sort: Sort | null;
+  onToggle: (key: SortKey) => void;
+}) {
+  const active = sort?.key === sortKey;
+  const Icon = !active ? ArrowUpDown : sort.dir === 1 ? ArrowUp : ArrowDown;
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(sortKey)}
+      className="group inline-flex items-center gap-1 transition-colors hover:text-fg"
+    >
+      {label}
+      <Icon
+        aria-hidden
+        className={
+          active
+            ? "h-3.5 w-3.5 text-signal"
+            : "h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-60"
+        }
+      />
+    </button>
+  );
+}
 
 // ── page ───────────────────────────────────────────────────────────────────
 
@@ -63,6 +114,8 @@ export default function DevicesPage() {
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const searchRef = useSlashFocus<HTMLInputElement>();
+  const [sort, setSort] = useState<Sort | null>(null);
   // Per-row pending guard: while a device's mutation is in flight we disable its
   // action buttons so a double-click can't fire two requests.
   const [busyId, setBusyId] = useState<GenericId<"devices"> | null>(null);
@@ -97,17 +150,38 @@ export default function DevicesPage() {
   };
 
   // Filter the table by status and a free-text match on hostname / windows
-  // user / linked person, so a larger fleet stays scannable.
+  // user / linked person, so a larger fleet stays scannable. Then apply the
+  // user's column sort (registration order when none is chosen).
   const visibleDevices = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return (devices ?? []).filter(d => {
+    const filtered = (devices ?? []).filter(d => {
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
       if (!q) return true;
       return [d.hostname, d.lastWindowsUser, d.personName]
         .filter(Boolean)
         .some(s => String(s).toLowerCase().includes(q));
     });
-  }, [devices, statusFilter, search]);
+    if (!sort) return filtered;
+    return filtered.sort((a, b) => {
+      const cmp =
+        sort.key === "hostname"
+          ? a.hostname.localeCompare(b.hostname)
+          : sort.key === "status"
+            ? (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9)
+            : a.lastSeen - b.lastSeen;
+      return cmp * sort.dir;
+    });
+  }, [devices, statusFilter, search, sort]);
+
+  // First click sorts a column its natural way (last seen: newest first);
+  // clicking the same column again flips the direction.
+  function toggleSort(key: SortKey) {
+    setSort(s =>
+      s?.key === key
+        ? { key, dir: s.dir === 1 ? -1 : 1 }
+        : { key, dir: key === "lastSeen" ? -1 : 1 }
+    );
+  }
 
   const counts = useMemo(() => {
     const list = devices ?? [];
@@ -119,12 +193,32 @@ export default function DevicesPage() {
     };
   }, [devices]);
 
+  const header = (
+    <PageHeader
+      title={t("devices.heading")}
+      description={t("devices.sub")}
+      icon={<Monitor />}
+    />
+  );
+
   if (devices === undefined || people === undefined) {
-    return <p className="text-muted-foreground">{t("common.loading")}</p>;
+    return (
+      <section className="space-y-6">
+        {header}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <Skeleton className="h-72 w-full" />
+      </section>
+    );
   }
 
   return (
     <section className="space-y-6">
+      {header}
+
       {/* ── Fleet status summary ── */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
@@ -166,6 +260,7 @@ export default function DevicesPage() {
           </h2>
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <Input
+              ref={searchRef}
               placeholder={t("devices.filter.search")}
               aria-label={t("devices.filter.search")}
               value={search}
@@ -189,11 +284,56 @@ export default function DevicesPage() {
           <Table aria-label={t("devices.slots.heading.devices")}>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("devices.host")}</TableHead>
+                <TableHead
+                  aria-sort={
+                    sort?.key === "hostname"
+                      ? sort.dir === 1
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
+                >
+                  <SortHeader
+                    label={t("devices.host")}
+                    sortKey="hostname"
+                    sort={sort}
+                    onToggle={toggleSort}
+                  />
+                </TableHead>
                 <TableHead>{t("devices.user")}</TableHead>
-                <TableHead>{t("devices.status")}</TableHead>
+                <TableHead
+                  aria-sort={
+                    sort?.key === "status"
+                      ? sort.dir === 1
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
+                >
+                  <SortHeader
+                    label={t("devices.status")}
+                    sortKey="status"
+                    sort={sort}
+                    onToggle={toggleSort}
+                  />
+                </TableHead>
                 <TableHead>{t("devices.person")}</TableHead>
-                <TableHead>{t("devices.lastSeen")}</TableHead>
+                <TableHead
+                  aria-sort={
+                    sort?.key === "lastSeen"
+                      ? sort.dir === 1
+                        ? "ascending"
+                        : "descending"
+                      : undefined
+                  }
+                >
+                  <SortHeader
+                    label={t("devices.lastSeen")}
+                    sortKey="lastSeen"
+                    sort={sort}
+                    onToggle={toggleSort}
+                  />
+                </TableHead>
                 {(isAdmin || isManager) && (
                   <TableHead>{t("devices.actions")}</TableHead>
                 )}
@@ -206,9 +346,19 @@ export default function DevicesPage() {
                     colSpan={6}
                     className="py-8 text-center text-sm text-muted-foreground"
                   >
-                    {devices.length === 0
-                      ? t("devices.empty")
-                      : t("devices.noMatches")}
+                    {devices.length === 0 ? (
+                      <>
+                        {t("devices.empty")}{" "}
+                        <Link
+                          href="/admin/activity/help"
+                          className="whitespace-nowrap text-signal hover:underline"
+                        >
+                          {t("devices.emptyCta")}
+                        </Link>
+                      </>
+                    ) : (
+                      t("devices.noMatches")
+                    )}
                   </TableCell>
                 </TableRow>
               ) : (

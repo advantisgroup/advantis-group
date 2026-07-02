@@ -1,9 +1,12 @@
 "use client";
 
+import { Settings } from "lucide-react";
+
 import { AuditPanel } from "@/components/activity/admin/AuditPanel";
 import { ConfigPanel } from "@/components/activity/admin/ConfigPanel";
 import { SystemPanel } from "@/components/activity/admin/SystemPanel";
 import { UsersPanel } from "@/components/activity/admin/UsersPanel";
+import { PageHeader } from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/lib/activity/i18n";
 import { useTabParam } from "@/lib/activity/useTabParam";
@@ -20,14 +23,11 @@ export default function SettingsPage() {
   const [tab, setTab] = useTabParam("config");
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="text-lg font-bold tracking-tight text-fg">
-          {t("settings.heading")}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("settings.subtitle")}
-        </p>
-      </div>
+      <PageHeader
+        title={t("settings.heading")}
+        description={t("settings.subtitle")}
+        icon={<Settings />}
+      />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
