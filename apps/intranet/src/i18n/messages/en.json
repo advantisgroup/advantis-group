@@ -560,6 +560,18 @@
     "caseSearch": {
       "title": "Case Management — Keyword Search",
       "description": "Type a keyword to instantly find the matching case fields and queue."
+    },
+    "problembehandlungen": {
+      "title": "Troubleshooting — IT & Workstation",
+      "description": "First aid for audio, browser, display and internet problems — step by step with screenshots."
+    },
+    "onedriveSchulung": {
+      "title": "OneDrive — Training",
+      "description": "Open OneDrive, use bookmarks properly and upload files."
+    },
+    "docViewer": {
+      "onThisPage": "On this page",
+      "zoomImage": "Enlarge image"
     }
   },
   "CaseSearch": {
