@@ -105,11 +105,18 @@ export const pushSignal = mutation({
 
     const merged = { ...(existing ?? {}), ...patch };
     const finalState = computeEmployeeState(signalsOf(merged));
+    const stateChanged = !existing || existing.finalState !== finalState;
+    // Track when the fused state last *changed*, so the dashboard can say
+    // "inactive since 13:42" instead of only "updated 2m ago".
+    const finalStateSince = stateChanged
+      ? now
+      : (existing.finalStateSince ?? existing.updatedAt);
 
     if (existing) {
       await ctx.db.patch(existing._id, {
         ...patch,
         finalState,
+        finalStateSince,
         updatedAt: now,
       });
     } else {
@@ -117,11 +124,12 @@ export const pushSignal = mutation({
         employeeId: args.employeeId,
         ...patch,
         finalState,
+        finalStateSince,
         updatedAt: now,
       });
     }
 
-    if (!existing || existing.finalState !== finalState) {
+    if (stateChanged) {
       await ctx.db.insert("stateSamples", {
         employeeId: args.employeeId,
         state: finalState,
@@ -252,6 +260,7 @@ export const overview = query({
         personId: person?._id ?? null,
         personName: person?.name ?? null,
         finalState: row.finalState,
+        finalStateSince: row.finalStateSince ?? null,
         deviceIdle: row.deviceIdle ?? null,
         idleSeconds: row.idleSeconds ?? null,
         genesysRoutingStatus: row.genesysRoutingStatus ?? null,
@@ -275,6 +284,35 @@ export const get = query({
   handler: async (ctx, { employeeId }) => {
     await requireUser(ctx);
     return await getStateRow(ctx, employeeId);
+  },
+});
+
+/**
+ * Batched state history for the overview's per-card day strips: today's state
+ * changes for many employees in one reactive query, so the overview grid does
+ * not open one subscription per card. No prior-day row is prepended — the
+ * strips are today-only and must not extend yesterday's state from midnight.
+ */
+export const historyBatch = query({
+  args: { employeeIds: v.array(v.string()), since: v.number() },
+  handler: async (ctx, { employeeIds, since }) => {
+    await requireUser(ctx);
+    const ids = [...new Set(employeeIds)].slice(0, 100);
+    return await Promise.all(
+      ids.map(async employeeId => {
+        const rows = await ctx.db
+          .query("stateSamples")
+          .withIndex("by_employee_time", q =>
+            q.eq("employeeId", employeeId).gte("at", since)
+          )
+          .order("asc")
+          .take(500);
+        return {
+          employeeId,
+          samples: rows.map(r => ({ state: r.state, at: r.at })),
+        };
+      })
+    );
   },
 });
 

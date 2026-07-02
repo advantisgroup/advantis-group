@@ -474,6 +474,9 @@ export default defineSchema({
       v.literal("ACTIVE"),
       v.literal("IDLE")
     ),
+    // When `finalState` last *changed* (not merely re-confirmed) — powers the
+    // "inactive since 13:42" line on the dashboard.
+    finalStateSince: v.optional(v.number()),
     updatedAt: v.number(),
   }).index("by_employeeId", ["employeeId"]),
 

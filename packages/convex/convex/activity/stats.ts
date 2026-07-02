@@ -110,6 +110,7 @@ export const teamOverview = query({
           todayActiveSeconds: stats?.activeSeconds ?? 0,
           todayIdleSeconds: stats?.idleSeconds ?? 0,
           finalState: st?.finalState ?? null,
+          finalStateSince: st?.finalStateSince ?? null,
           deviceIdle: st?.deviceIdle ?? null,
           stateIdleSeconds: st?.idleSeconds ?? null,
           genesysRoutingStatus: st?.genesysRoutingStatus ?? null,
