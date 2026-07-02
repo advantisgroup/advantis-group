@@ -112,6 +112,7 @@ export const pushSignal = mutation({
     clockodoBreak: v.optional(v.boolean()),
     clockodoAbsent: v.optional(v.boolean()),
     clockodoClockedOut: v.optional(v.boolean()),
+    clockodoClockedOutCertain: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     assertSignalSecret(args.secret);
@@ -141,16 +142,21 @@ export const pushSignal = mutation({
         patch.clockodoAbsent = args.clockodoAbsent;
       if (args.clockodoClockedOut !== undefined)
         patch.clockodoClockedOut = args.clockodoClockedOut;
+      if (args.clockodoClockedOutCertain !== undefined)
+        patch.clockodoClockedOutCertain = args.clockodoClockedOutCertain;
       patch.clockodoUpdatedAt = now;
     }
 
     // A Clockodo signal that ends an "assumed clocked out" stretch (they
     // clocked back in, or a retro-added entry closed the gap) withdraws the
     // assumption: today's CLOCKED_OUT history is corrected to BREAK before the
-    // new state lands.
+    // new state lands. Once the clock-out became *certain* (past the business
+    // day-end hour) there is nothing to withdraw — a later clock-in starts a
+    // new stint and the evening stays clocked out.
     if (
       args.source === "clockodo" &&
       args.clockodoClockedOut === false &&
+      existing?.clockodoClockedOutCertain !== true &&
       (existing?.clockodoClockedOut === true ||
         existing?.finalState === "CLOCKED_OUT")
     ) {
@@ -344,6 +350,7 @@ export const overview = query({
         clockodoBreak: row.clockodoBreak ?? null,
         clockodoAbsent: row.clockodoAbsent ?? null,
         clockodoClockedOut: row.clockodoClockedOut ?? null,
+        clockodoClockedOutCertain: row.clockodoClockedOutCertain ?? null,
         agentUpdatedAt: row.agentUpdatedAt ?? null,
         genesysUpdatedAt: row.genesysUpdatedAt ?? null,
         clockodoUpdatedAt: row.clockodoUpdatedAt ?? null,

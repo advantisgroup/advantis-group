@@ -358,6 +358,7 @@ export default function TimelinePage({
                     clockodoBreak: device.clockodoBreak,
                     clockodoAbsent: device.clockodoAbsent,
                     clockodoClockedOut: device.clockodoClockedOut,
+                    clockodoClockedOutCertain: device.clockodoClockedOutCertain,
                     active: device.active,
                   }}
                 />

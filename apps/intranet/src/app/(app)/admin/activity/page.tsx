@@ -70,6 +70,7 @@ function statusOf(d: TeamRow): StatusInput {
     clockodoBreak: d.clockodoBreak,
     clockodoAbsent: d.clockodoAbsent,
     clockodoClockedOut: d.clockodoClockedOut,
+    clockodoClockedOutCertain: d.clockodoClockedOutCertain,
     active: d.active,
   };
 }

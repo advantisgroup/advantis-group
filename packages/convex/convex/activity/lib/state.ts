@@ -20,11 +20,12 @@ import { z } from "zod";
 /**
  * Final employee states, highest priority first.
  *
- * CLOCKED_OUT is special: Clockodo has no "day ended" event, so it is always an
+ * CLOCKED_OUT is special: Clockodo has no "day ended" event, so it starts as an
  * *assumption* — no running entry for over an hour reads as "done for the day".
  * If the person clocks back in the same day, the assumption is retroactively
  * corrected to BREAK (see `pushSignal`), so the UI must present CLOCKED_OUT as
- * provisional.
+ * provisional — until the business day-end hour, after which the clock-out is
+ * certain (`clockodoClockedOutCertain`) and final.
  */
 export const EMPLOYEE_STATES = [
   "ABSENT",

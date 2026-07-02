@@ -314,13 +314,13 @@ export const en: Dict = {
   "state.sinceFor": "since {time} · {duration}",
   "state.assumed": "Assumption — corrects itself if they clock back in",
   "state.assumedHint":
-    "No Clockodo entry for over an hour, so we assume the working day has ended. If the person clocks back in, this whole stretch is automatically re-labelled as a break and they continue as clocked in — no action needed.",
+    "No Clockodo entry for over an hour, so we assume the working day has ended. If the person clocks back in, this whole stretch is automatically re-labelled as a break and they continue as clocked in — no action needed. From 20:00 the assumption ends: anyone still not clocked in is definitively clocked out for the day.",
   "state.health.unavailable": "{source} unavailable: {reason}",
   "state.health.unconfigured": "{source} is not configured.",
   "state.health.degraded":
     "This signal is currently ignored. The remaining sources still drive the state.",
   "empstate.ABSENT": "Absent",
-  "empstate.CLOCKED_OUT": "Clocked out (assumed)",
+  "empstate.CLOCKED_OUT": "Clocked out",
   "empstate.BREAK": "Break",
   "empstate.IN_CALL": "On call",
   "empstate.WRAP_UP": "Wrap-up",
@@ -333,6 +333,7 @@ export const en: Dict = {
   "livestatus.offline": "Computer offline",
   "livestatus.absent": "On leave",
   "livestatus.clockedOut": "Done for the day (assumed)",
+  "livestatus.clockedOutCertain": "Done for the day",
   "livestatus.break": "On a break",
   "livestatus.inCall": "On a call",
   "livestatus.wrapUp": "Wrapping up a call",
@@ -483,9 +484,9 @@ export const en: Dict = {
   "faq.q.clockodo_setup": "How do I connect the Clockodo webhook?",
   "faq.a.clockodo_setup":
     "Point Clockodo's webhook at /api/webhooks/clockodo. On first save Clockodo sends a validation secret, which is logged once in the deploy logs — paste that value into Clockodo's 'Token' field to finish.",
-  "faq.q.assumed_out": "Why does someone show 'Clocked out (assumed)'?",
+  "faq.q.assumed_out": "Why does someone show 'Done for the day (assumed)'?",
   "faq.a.assumed_out":
-    "Clockodo doesn't report 'the day has ended' — it only knows whether an entry is running. A short gap without a running entry counts as a break; once the gap passes one hour, the dashboard assumes the person is done for the day and labels it 'Clocked out (assumed)'.\nThe word 'assumed' is the important part: it is a guess, not a fact. If the person clocks back in the same day, the whole stretch is automatically re-labelled as a break and their day continues — nothing needs to be fixed by hand. Everything marked as an assumption corrects itself as soon as new data arrives.",
+    "Clockodo doesn't report 'the day has ended' — it only knows whether an entry is running. A short gap without a running entry counts as a break; once the gap passes one hour, the dashboard assumes the person is done for the day.\nThe word 'assumed' is the important part: it is a guess, not a fact. If the person clocks back in the same day, the whole stretch is automatically re-labelled as a break and their day continues — nothing needs to be fixed by hand.\nAt 20:00 the guessing stops: anyone still not clocked in counts as definitively clocked out (the '(assumed)' marker disappears), and clocking in after that starts a new stint instead of turning the evening into a break.",
   "faq.q.privacy": "What exactly is recorded?",
   "faq.a.privacy":
     "Only activity timing — whether the PC is active or idle, and for how long. No screenshots, no keystrokes, no clipboard, no file contents. It detects input timing, not input data.",

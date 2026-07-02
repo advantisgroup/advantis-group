@@ -42,10 +42,15 @@ export interface StatusInput {
   clockodoAbsent: boolean | null;
   /**
    * Clockodo: not clocked in for over an hour → *assumed* done for the day.
-   * Always provisional — the backend re-labels the stretch as a break if the
-   * person clocks back in the same day.
+   * Provisional — the backend re-labels the stretch as a break if the person
+   * clocks back in the same day — until `clockodoClockedOutCertain`.
    */
   clockodoClockedOut?: boolean | null;
+  /**
+   * Past the business day-end hour the clock-out stops being a guess: it is
+   * final, and the "(assumed)" presentation must be dropped.
+   */
+  clockodoClockedOutCertain?: boolean | null;
   /**
    * Raw device-active flag (online && not idle past the threshold). Used as the
    * fallback verdict for devices with no fused integration signals at all.
@@ -90,6 +95,7 @@ export function describeStatus(input: StatusInput): StatusDescriptor {
     clockodoBreak,
     clockodoAbsent,
     clockodoClockedOut,
+    clockodoClockedOutCertain,
     active,
   } = input;
 
@@ -102,14 +108,18 @@ export function describeStatus(input: StatusInput): StatusDescriptor {
       live: false,
       showIdleFor: false,
     };
-  if (clockodoClockedOut)
+  if (clockodoClockedOut) {
+    const certain = clockodoClockedOutCertain === true;
     return {
-      headlineKey: "livestatus.clockedOut",
+      headlineKey: certain
+        ? "livestatus.clockedOutCertain"
+        : "livestatus.clockedOut",
       tone: "muted",
       live: false,
       showIdleFor: false,
-      assumed: true,
+      assumed: !certain,
     };
+  }
   if (clockodoBreak)
     return {
       headlineKey: "livestatus.break",

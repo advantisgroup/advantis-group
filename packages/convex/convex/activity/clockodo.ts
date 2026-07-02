@@ -112,10 +112,33 @@ async function fetchTodayEntries(
  */
 const ASSUMED_CLOCKED_OUT_AFTER_MS = 60 * 60_000;
 
+/**
+ * From this local hour the guessing stops: anyone who worked today and has
+ * nothing running is *definitively* clocked out — no "(assumed)" in the UI,
+ * and a later clock-in starts a new stint instead of re-labelling the evening
+ * as a break.
+ */
+const CLOCKED_OUT_CERTAIN_FROM_HOUR = Number(
+  process.env.CLOCKODO_DAY_END_HOUR ?? "20"
+);
+const BUSINESS_TIME_ZONE = process.env.CLOCKODO_TIMEZONE ?? "Europe/Berlin";
+
+function isPastDayEnd(): boolean {
+  const hour = Number(
+    new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric",
+      hourCycle: "h23",
+      timeZone: BUSINESS_TIME_ZONE,
+    }).format(new Date())
+  );
+  return hour >= CLOCKED_OUT_CERTAIN_FROM_HOUR;
+}
+
 async function fetchClockodoWork(clockodoUserId: string): Promise<{
   working: boolean;
   onBreak: boolean;
   clockedOut: boolean;
+  clockedOutCertain: boolean;
 }> {
   const entries = await fetchTodayEntries(clockodoUserId);
   // "Currently clocked in" = an entry with no end time yet. Clockodo's `clocked`
@@ -124,21 +147,48 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
   // they had clocked in a single time.
   const running = entries.some(e => e.time_until == null);
   if (entries.length === 0) {
-    return { working: false, onBreak: false, clockedOut: false };
+    return {
+      working: false,
+      onBreak: false,
+      clockedOut: false,
+      clockedOutCertain: false,
+    };
   }
   if (running) {
-    return { working: true, onBreak: false, clockedOut: false };
+    return {
+      working: true,
+      onBreak: false,
+      clockedOut: false,
+      clockedOutCertain: false,
+    };
   }
-  // Worked today but nothing running: a short gap is a break, a long one is
-  // (assumed to be) the end of the day.
-  const lastEnd = Math.max(
-    ...entries.map(e => (e.time_until ? Date.parse(e.time_until) : 0))
-  );
+  // Worked today but nothing running. Past the business day-end hour that is
+  // no longer a guess — the day is over, full stop.
+  if (isPastDayEnd()) {
+    return {
+      working: false,
+      onBreak: false,
+      clockedOut: true,
+      clockedOutCertain: true,
+    };
+  }
+  // Before day-end: a short gap is a break, a long one is (assumed to be) the
+  // end of the day. Unparseable end times are skipped so one odd entry can't
+  // poison the verdict.
+  let lastEnd = 0;
+  for (const e of entries) {
+    if (!e.time_until) continue;
+    const t = Date.parse(e.time_until);
+    if (Number.isFinite(t) && t > lastEnd) lastEnd = t;
+  }
   const clockedOut =
-    Number.isFinite(lastEnd) &&
-    lastEnd > 0 &&
-    Date.now() - lastEnd > ASSUMED_CLOCKED_OUT_AFTER_MS;
-  return { working: false, onBreak: !clockedOut, clockedOut };
+    lastEnd > 0 && Date.now() - lastEnd > ASSUMED_CLOCKED_OUT_AFTER_MS;
+  return {
+    working: false,
+    onBreak: !clockedOut,
+    clockedOut,
+    clockedOutCertain: false,
+  };
 }
 
 async function fetchClockodoEntry(
@@ -179,6 +229,7 @@ export async function pollClockodo(
         clockodoWorking: work.working,
         clockodoBreak: work.onBreak,
         clockodoClockedOut: work.clockedOut,
+        clockodoClockedOutCertain: work.clockedOutCertain,
         clockodoAbsent: isAbsentOn(absences, p.clockodoUserId!, day),
       });
     }
@@ -213,6 +264,7 @@ export const refreshClockodo = action({
         clockodoWorking: work.working,
         clockodoBreak: work.onBreak,
         clockodoClockedOut: work.clockedOut,
+        clockodoClockedOutCertain: work.clockedOutCertain,
         clockodoAbsent: absent,
       });
       await reportHealth(ctx, "clockodo", "ok");
@@ -285,6 +337,7 @@ export const refreshClockodoByEntry = action({
         clockodoWorking: work.working,
         clockodoBreak: work.onBreak,
         clockodoClockedOut: work.clockedOut,
+        clockodoClockedOutCertain: work.clockedOutCertain,
         clockodoAbsent: absent,
       });
 

@@ -471,9 +471,12 @@ export default defineSchema({
     clockodoWorking: v.optional(v.boolean()),
     clockodoBreak: v.optional(v.boolean()),
     clockodoAbsent: v.optional(v.boolean()),
-    // Assumed "day has ended" (no entry running for over an hour). Always a
-    // guess — corrected back to BREAK if the person clocks in again today.
+    // Assumed "day has ended" (no entry running for over an hour). A guess —
+    // corrected back to BREAK if the person clocks in again today — until
+    // `clockodoClockedOutCertain` flips true (past the business day-end hour),
+    // after which the clock-out is final and never re-labelled.
     clockodoClockedOut: v.optional(v.boolean()),
+    clockodoClockedOutCertain: v.optional(v.boolean()),
     clockodoUpdatedAt: v.optional(v.number()),
 
     // Engine output.

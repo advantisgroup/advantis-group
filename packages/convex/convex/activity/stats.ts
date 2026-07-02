@@ -120,6 +120,7 @@ export const teamOverview = query({
           clockodoBreak: st?.clockodoBreak ?? null,
           clockodoAbsent: st?.clockodoAbsent ?? null,
           clockodoClockedOut: st?.clockodoClockedOut ?? null,
+          clockodoClockedOutCertain: st?.clockodoClockedOutCertain ?? null,
           stateUpdatedAt: st?.updatedAt ?? null,
         };
       })
