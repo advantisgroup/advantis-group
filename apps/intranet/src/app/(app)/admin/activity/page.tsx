@@ -21,6 +21,7 @@ import {
   StateStrip,
   StateStripLegend,
 } from "@/components/activity/charts/StateStrip";
+import { InfoTip } from "@/components/activity/InfoTip";
 import { Stagger, StaggerItem } from "@/components/activity/motion/Stagger";
 import { QueryState } from "@/components/activity/QueryState";
 import { SetupChecklist } from "@/components/activity/SetupChecklist";
@@ -340,15 +341,14 @@ function NextSyncBadge() {
   const now = useNow(1000);
   const target = nextPollAt(now);
   return (
-    <span
-      title={t("overview.nextSyncHint")}
-      className="flex items-center gap-1.5 rounded-full border border-border bg-panel/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
-    >
-      <Clock className="h-3 w-3" />
-      {t("overview.nextSync", {
-        duration: formatCountdown(target - now, lang),
-      })}
-    </span>
+    <InfoTip text={t("overview.nextSyncHint")} side="bottom">
+      <span className="flex items-center gap-1.5 rounded-full border border-border bg-panel/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+        <Clock className="h-3 w-3" />
+        {t("overview.nextSync", {
+          duration: formatCountdown(target - now, lang),
+        })}
+      </span>
+    </InfoTip>
   );
 }
 
