@@ -1,10 +1,12 @@
 import type { ComponentType } from "react";
 
-import { FileSearch, type LucideIcon } from "lucide-react";
+import { Cloud, FileSearch, type LucideIcon, Wrench } from "lucide-react";
 
 import { type TeamId } from "@/lib/teams";
 
 import { CaseSearchGuidebook } from "./case-search";
+import { OneDriveSchulungGuidebook } from "./docs/onedrive-schulung";
+import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
 
 export interface Guidebook {
   /** URL slug: /guidebooks/<slug> */
@@ -30,6 +32,22 @@ export const GUIDEBOOKS: Guidebook[] = [
     icon: FileSearch,
     teams: ["customer-care"],
     Component: CaseSearchGuidebook,
+  },
+  {
+    slug: "problembehandlungen",
+    titleKey: "problembehandlungen.title",
+    descriptionKey: "problembehandlungen.description",
+    icon: Wrench,
+    teams: [],
+    Component: ProblembehandlungenGuidebook,
+  },
+  {
+    slug: "onedrive-schulung",
+    titleKey: "onedriveSchulung.title",
+    descriptionKey: "onedriveSchulung.description",
+    icon: Cloud,
+    teams: [],
+    Component: OneDriveSchulungGuidebook,
   },
 ];
 

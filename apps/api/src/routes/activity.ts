@@ -210,7 +210,8 @@ export const activityRoute = new Elysia()
             secret: signalSecret(),
             entryId: String(entryId),
             eventName: b.event_name,
-            usersId: payloadUsersId != null ? String(payloadUsersId) : undefined,
+            usersId:
+              payloadUsersId != null ? String(payloadUsersId) : undefined,
           }
         );
       }

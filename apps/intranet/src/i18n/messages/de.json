@@ -560,6 +560,18 @@
     "caseSearch": {
       "title": "Case Management — Stichwortsuche",
       "description": "Stichwort eingeben und sofort die passenden Case-Felder und Queue finden."
+    },
+    "problembehandlungen": {
+      "title": "Problembehandlung — IT & Arbeitsplatz",
+      "description": "Erste Hilfe bei Audio-, Browser-, Bildschirm- und Internet-Problemen — Schritt für Schritt mit Screenshots."
+    },
+    "onedriveSchulung": {
+      "title": "OneDrive — Schulung",
+      "description": "OneDrive öffnen, Lesezeichen richtig nutzen und Dateien hochladen."
+    },
+    "docViewer": {
+      "onThisPage": "Auf dieser Seite",
+      "zoomImage": "Bild vergrößern"
     }
   },
   "CaseSearch": {

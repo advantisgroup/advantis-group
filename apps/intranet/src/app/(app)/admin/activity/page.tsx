@@ -62,7 +62,8 @@ function statusOf(d: TeamRow): StatusInput {
     online: d.online,
     deviceIdle: d.deviceIdle,
     idleSeconds:
-      d.stateIdleSeconds ?? (d.idleMs != null ? Math.round(d.idleMs / 1000) : null),
+      d.stateIdleSeconds ??
+      (d.idleMs != null ? Math.round(d.idleMs / 1000) : null),
     genesysRoutingStatus: d.genesysRoutingStatus,
     genesysWrapUp: d.genesysWrapUp,
     clockodoWorking: d.clockodoWorking,

@@ -7,7 +7,7 @@ before merge.
 ## Original request (summary)
 
 1. **UI/UX overhaul** of `/admin/activity` (apps/intranet) so it fits the rest of
-   the intranet and reads like a dashboard. Managers must see *at a glance*: was an
+   the intranet and reads like a dashboard. Managers must see _at a glance_: was an
    employee active, since when are they inactive — in words/colour, not numbers.
    Numbers stay available for later validation/export (evaluation talks with
    employees).
