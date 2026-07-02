@@ -21,7 +21,9 @@ export interface ActionMenuAction {
   destructive?: boolean;
 }
 
-export type ActionMenuItem = ActionMenuAction | { key: string; separator: true };
+export type ActionMenuItem =
+  | ActionMenuAction
+  | { key: string; separator: true };
 
 /**
  * A "more options" menu that renders as a Radix dropdown on desktop and a
@@ -84,7 +86,9 @@ export function ActionMenu({
                       }}
                       className={cn(
                         "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium transition-colors active:bg-accent [&_svg]:size-4 [&_svg]:shrink-0",
-                        item.destructive ? "text-destructive" : "text-foreground"
+                        item.destructive
+                          ? "text-destructive"
+                          : "text-foreground"
                       )}
                     >
                       {item.icon}

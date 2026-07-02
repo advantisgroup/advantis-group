@@ -30,11 +30,7 @@ export function GroupAvatar({
   if (src) {
     return (
       <span className={base}>
-        <img
-          src={src}
-          alt={name}
-          className="h-full w-full object-cover"
-        />
+        <img src={src} alt={name} className="h-full w-full object-cover" />
       </span>
     );
   }
@@ -80,7 +76,11 @@ export function GroupAvatar({
             )}
           >
             {c.avatar ? (
-              <img src={c.avatar} alt="" className="h-full w-full object-cover" />
+              <img
+                src={c.avatar}
+                alt=""
+                className="h-full w-full object-cover"
+              />
             ) : (
               initials(c.name)
             )}

@@ -1184,9 +1184,7 @@ export const purgeExpiredDms = internalMutation({
     const now = Date.now();
     const expired = await ctx.db
       .query("conversations")
-      .withIndex("by_deleteAt", q =>
-        q.gt("deleteAt", 0).lte("deleteAt", now)
-      )
+      .withIndex("by_deleteAt", q => q.gt("deleteAt", 0).lte("deleteAt", now))
       .collect();
     let purged = 0;
     for (const conversation of expired) {

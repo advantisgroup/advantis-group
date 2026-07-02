@@ -868,8 +868,9 @@ export function ConversationView({
                                         key={a.storageId}
                                         onClick={() =>
                                           fromOneDrive
-                                            ? (window.location.href =
-                                                pathToUrl(a.oneDrivePath!))
+                                            ? (window.location.href = pathToUrl(
+                                                a.oneDrivePath!
+                                              ))
                                             : setLightbox(a.url)
                                         }
                                         className="relative mt-1 block"
@@ -899,8 +900,12 @@ export function ConversationView({
                                           ? pathToUrl(a.oneDrivePath!)
                                           : a.url
                                       }
-                                      target={fromOneDrive ? undefined : "_blank"}
-                                      rel={fromOneDrive ? undefined : "noreferrer"}
+                                      target={
+                                        fromOneDrive ? undefined : "_blank"
+                                      }
+                                      rel={
+                                        fromOneDrive ? undefined : "noreferrer"
+                                      }
                                       className="mt-1 flex items-center gap-1 underline"
                                     >
                                       {fromOneDrive ? (

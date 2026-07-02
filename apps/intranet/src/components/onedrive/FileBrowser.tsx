@@ -221,7 +221,8 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
           router.replace(url);
         }
       } catch (e) {
-        if (!cached) toast.error(e instanceof Error ? e.message : t("genericError"));
+        if (!cached)
+          toast.error(e instanceof Error ? e.message : t("genericError"));
       } finally {
         setLoading(false);
       }

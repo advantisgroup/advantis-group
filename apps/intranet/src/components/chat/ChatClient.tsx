@@ -62,8 +62,7 @@ export function ChatClient() {
 
   const { pinned, active, archived } = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const match = (c: Conversation) =>
-      !q || c.title.toLowerCase().includes(q);
+    const match = (c: Conversation) => !q || c.title.toLowerCase().includes(q);
     const visible = (conversations ?? []).filter(match);
     return {
       pinned: visible.filter(c => c.pinned && !c.archived),
@@ -170,9 +169,7 @@ export function ChatClient() {
           )}
 
           <div className="p-2">
-            {pinned.length > 0 && (
-              <SectionLabel>{t("pinned")}</SectionLabel>
-            )}
+            {pinned.length > 0 && <SectionLabel>{t("pinned")}</SectionLabel>}
             {pinned.map(c => (
               <ConversationRow
                 key={c._id}
@@ -333,9 +330,7 @@ function ConversationRow({
               <p
                 className={cn(
                   "truncate text-xs",
-                  c.unread > 0
-                    ? "text-foreground/80"
-                    : "text-muted-foreground"
+                  c.unread > 0 ? "text-foreground/80" : "text-muted-foreground"
                 )}
               >
                 {c.lastMessagePreview}

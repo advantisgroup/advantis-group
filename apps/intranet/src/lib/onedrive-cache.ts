@@ -54,7 +54,9 @@ export function getCachedQuota(): DriveQuota | undefined {
 }
 
 export function isQuotaFresh(): boolean {
-  return Boolean(quotaCache && Date.now() - quotaCache.timestamp < QUOTA_TTL_MS);
+  return Boolean(
+    quotaCache && Date.now() - quotaCache.timestamp < QUOTA_TTL_MS
+  );
 }
 
 export function setCachedQuota(data: DriveQuota): void {
