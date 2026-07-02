@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDuration } from "@/lib/activity/fmt";
+import { formatDuration, nowMs } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import {
   describeStatus,
@@ -33,10 +33,17 @@ const TONE_DOT: Record<StatusTone, string> = {
 
 export function StatusSummary({
   status,
+  since,
   size = "sm",
   className,
 }: {
   status: StatusInput;
+  /**
+   * When the current state began (epoch ms) — renders a "since 13:42 · 26m"
+   * sub-line so a manager sees not just *what* someone is doing but *since
+   * when*. Suppressed while an "idle for X" line already answers that.
+   */
+  since?: number | null;
   size?: "sm" | "lg";
   className?: string;
 }) {
@@ -50,6 +57,18 @@ export function StatusSummary({
           duration: formatDuration(status.idleSeconds, lang),
         })
       : null;
+
+  const sinceLine =
+    !idleFor && since != null && since <= nowMs()
+      ? t("state.sinceFor", {
+          time: new Date(since).toLocaleTimeString(lang, {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          duration: formatDuration((nowMs() - since) / 1000, lang),
+        })
+      : null;
+  const subLine = idleFor ?? sinceLine;
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
@@ -71,14 +90,14 @@ export function StatusSummary({
         >
           {t(headlineKey)}
         </p>
-        {idleFor && (
+        {subLine && (
           <p
             className={cn(
               "truncate text-muted-foreground",
               lg ? "text-sm" : "text-xs"
             )}
           >
-            {idleFor}
+            {subLine}
           </p>
         )}
       </div>

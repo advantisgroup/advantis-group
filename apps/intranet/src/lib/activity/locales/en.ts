@@ -47,6 +47,14 @@ export const en: Dict = {
   "overview.total": "Devices total",
   "overview.ofTotal": "of {total} devices",
   "overview.online": "online",
+  "overview.sub":
+    "Who's working right now, who's gone quiet, and since when — at a glance.",
+  "overview.filter.all": "All",
+  "overview.filter.attention": "Inactive",
+  "overview.filter.working": "Working",
+  "overview.filter.away": "Break / absent",
+  "overview.filter.offline": "Offline",
+  "overview.noMatches": "Nobody is in this group right now.",
 
   "devices.heading": "Devices",
   "devices.pending": "Pending approval",
@@ -160,6 +168,10 @@ export const en: Dict = {
   "timeline.now.heading": "Right now",
   "timeline.now.activeShare": "Active share",
   "timeline.now.dayTimeline": "State timeline",
+  "timeline.now.recent": "State changes",
+  "timeline.now.recentEmpty": "No state changes recorded.",
+  "timeline.now.numbers": "Day totals",
+  "timeline.now.numbersHint": "Exact figures for validation and export.",
   "timeline.trend.heading": "Last 14 days",
   "timeline.trend.sub": "Active vs idle hours per day.",
   "timeline.intraday.heading": "Across the day",
@@ -286,6 +298,7 @@ export const en: Dict = {
   "state.source.genesys": "Genesys",
   "state.source.clockodo": "Clockodo",
   "state.idleFor": "idle for {duration}",
+  "state.sinceFor": "since {time} · {duration}",
   "state.health.unavailable": "{source} unavailable: {reason}",
   "state.health.unconfigured": "{source} is not configured.",
   "state.health.degraded":

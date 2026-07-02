@@ -6,12 +6,13 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, MonitorSmartphone } from "lucide-react";
 
 import {
   StateStrip,
   StateStripLegend,
 } from "@/components/activity/charts/StateStrip";
+import { STATE_COLOR } from "@/components/activity/charts/theme";
 import { SourceSignals } from "@/components/activity/state/StateBits";
 import { StatusSummary } from "@/components/activity/state/StatusSummary";
 import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
@@ -19,6 +20,7 @@ import { DayDetailTab } from "@/components/activity/timeline/DayDetailTab";
 import { DayNav } from "@/components/activity/timeline/DayNav";
 import { ExportTab } from "@/components/activity/timeline/ExportTab";
 import { RawTab } from "@/components/activity/timeline/RawTab";
+import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,6 +45,15 @@ import { useDayParam } from "@/lib/activity/useDayParam";
 import { useTabParam } from "@/lib/activity/useTabParam";
 
 const TREND_DAYS = 14;
+/** How many of the day's most recent state changes the "right now" card lists. */
+const RECENT_CHANGES = 6;
+
+function hhmm(ms: number, lang: string): string {
+  return new Date(ms).toLocaleTimeString(lang, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function TimelinePage({
   params,
@@ -100,42 +111,54 @@ export default function TimelinePage({
   );
 
   // Aggregations (memoised; samples can be up to 1000 rows).
-  const { trend, heatmap, intraday, hourlyStates, daySegments, lastActive } =
-    useMemo(() => {
-      const tzOffset = new Date().getTimezoneOffset();
-      const s: Sample[] = samples ?? [];
-      const { heatmap, intraday } = timelineCharts(s, selectedDay, tzOffset);
-      // For *today* strip the prepended prior-day row (it would credit
-      // yesterday's state to hours 00-NN before work started). For a past day
-      // we keep it so the strip fills from that day's midnight.
-      const dayHistory = (stateHistory ?? []).filter(
-        x => !isToday || x.at >= dayStartMs
-      );
-      const windowEnd = isToday ? nowMs() : dayEndMs;
-      return {
-        trend: dailyTrend(daily ?? [], startDay, today),
-        heatmap,
-        intraday,
-        lastActive: lastActiveDay(s, tzOffset),
-        hourlyStates: hourlyStateBreakdown(
-          dayHistory,
-          dayStartMs,
-          windowEnd,
-          tzOffset
-        ),
-        daySegments: dayStateSegments(dayHistory, dayStartMs, windowEnd),
-      };
-    }, [
-      samples,
-      daily,
-      startDay,
-      today,
-      selectedDay,
-      isToday,
-      stateHistory,
-      dayStartMs,
-      dayEndMs,
-    ]);
+  const {
+    trend,
+    heatmap,
+    intraday,
+    hourlyStates,
+    daySegments,
+    recentChanges,
+    lastActive,
+  } = useMemo(() => {
+    const tzOffset = new Date().getTimezoneOffset();
+    const s: Sample[] = samples ?? [];
+    const { heatmap, intraday } = timelineCharts(s, selectedDay, tzOffset);
+    // For *today* strip the prepended prior-day row (it would credit
+    // yesterday's state to hours 00-NN before work started). For a past day
+    // we keep it so the strip fills from that day's midnight.
+    const dayHistory = (stateHistory ?? []).filter(
+      x => !isToday || x.at >= dayStartMs
+    );
+    const windowEnd = isToday ? nowMs() : dayEndMs;
+    return {
+      trend: dailyTrend(daily ?? [], startDay, today),
+      heatmap,
+      intraday,
+      lastActive: lastActiveDay(s, tzOffset),
+      hourlyStates: hourlyStateBreakdown(
+        dayHistory,
+        dayStartMs,
+        windowEnd,
+        tzOffset
+      ),
+      daySegments: dayStateSegments(dayHistory, dayStartMs, windowEnd),
+      // Newest first, capped — the "what changed, when" feed in plain words.
+      recentChanges: dayHistory
+        .filter(x => x.at >= dayStartMs)
+        .slice(-RECENT_CHANGES)
+        .reverse(),
+    };
+  }, [
+    samples,
+    daily,
+    startDay,
+    today,
+    selectedDay,
+    isToday,
+    stateHistory,
+    dayStartMs,
+    dayEndMs,
+  ]);
 
   // Localised state labels for the hourly chart legend/tooltip.
   const stateLabels = useMemo(
@@ -171,7 +194,8 @@ export default function TimelinePage({
   // Whether the selected day has anything to show (raw samples or a daily row).
   const hasDataToday = intraday.length > 0 || dayStats != null;
 
-  // Derived figures for the "right now" card's descriptive numbers + strip.
+  // Day totals — kept, but as supporting figures for validation/export rather
+  // than the lead of the card.
   const activeSeconds = dayStats?.activeSeconds ?? 0;
   const idleSeconds = dayStats?.idleSeconds ?? 0;
   const trackedSeconds = activeSeconds + idleSeconds;
@@ -186,6 +210,13 @@ export default function TimelinePage({
   // "Now" marker position on the strip (today only).
   const nowPct = isToday ? ((nowMs() - dayStartMs) / 86_400_000) * 100 : null;
   const stateLabel = (s: StateName) => t(`empstate.${s}`);
+  // "Since when" for the hero verdict: last heartbeat when offline, otherwise
+  // the moment the fused state last changed.
+  const since = device
+    ? !device.online
+      ? device.lastSeen
+      : device.finalStateSince
+    : null;
 
   return (
     <section className="space-y-6">
@@ -197,16 +228,20 @@ export default function TimelinePage({
         {t("timeline.back")}
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-fg">{title}</h1>
-        <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
-          {deviceId}
-        </p>
-      </div>
+      <PageHeader
+        title={title}
+        description={
+          device
+            ? `${device.hostname} · ${device.windowsUser} · ${deviceId}`
+            : deviceId
+        }
+        icon={<MonitorSmartphone />}
+      />
 
-      {/* "Right now" — a descriptive section, not bare number tiles: the verdict
-          in plain words, the day's active/idle described in a sentence,
-          connectivity, and (for linked devices) the per-source breakdown. */}
+      {/* "Right now" — the verdict in plain words with since-when, the day as a
+          colour strip, the latest state changes as a feed, and the per-source
+          breakdown. The exact numbers sit below the strip, small, for later
+          validation and export. */}
       {device && (
         <Card className="animate-fade-up">
           <CardHeader>
@@ -220,6 +255,7 @@ export default function TimelinePage({
               <div className="space-y-3">
                 <StatusSummary
                   size="lg"
+                  since={since}
                   status={{
                     online: device.online,
                     deviceIdle: device.deviceIdle,
@@ -288,32 +324,9 @@ export default function TimelinePage({
                 )}
               </div>
 
-              {/* RIGHT — descriptive numbers + the day's state timeline, filling
-                  the space the verdict alone used to leave empty. */}
+              {/* RIGHT — the day as colour, the latest changes as words, and
+                  the exact totals demoted to a small validation line. */}
               <div className="space-y-4 lg:border-l lg:border-border-soft lg:pl-5">
-                <div className="flex flex-wrap gap-x-6 gap-y-3">
-                  <div>
-                    <p className="kicker">{t("common.active")}</p>
-                    <p className="text-xl font-semibold tabular-nums text-ok">
-                      {formatDuration(activeSeconds, lang)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="kicker">{t("common.idle")}</p>
-                    <p className="text-xl font-semibold tabular-nums text-warn">
-                      {formatDuration(idleSeconds, lang)}
-                    </p>
-                  </div>
-                  {activeShare != null && (
-                    <div>
-                      <p className="kicker">{t("timeline.now.activeShare")}</p>
-                      <p className="text-xl font-semibold tabular-nums text-fg">
-                        {activeShare}%
-                      </p>
-                    </div>
-                  )}
-                </div>
-
                 <div>
                   <p className="kicker mb-2">
                     {t("timeline.now.dayTimeline")}
@@ -344,6 +357,72 @@ export default function TimelinePage({
                       />
                     </div>
                   )}
+                </div>
+
+                {/* The latest state changes, newest first — "what changed,
+                    when" in plain words instead of a chart. */}
+                {employeeId && stateHistory !== undefined && (
+                  <div>
+                    <p className="kicker mb-2">
+                      {t("timeline.now.recent")}
+                      {!isToday && ` · ${shortDate}`}
+                    </p>
+                    {recentChanges.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">
+                        {t("timeline.now.recentEmpty")}
+                      </p>
+                    ) : (
+                      <ul className="space-y-1.5">
+                        {recentChanges.map(r => (
+                          <li
+                            key={r.at}
+                            className="flex items-center gap-2.5 text-sm"
+                          >
+                            <span
+                              aria-hidden
+                              className="h-2 w-2 shrink-0 rounded-full"
+                              style={{ background: STATE_COLOR[r.state] }}
+                            />
+                            <span className="min-w-0 truncate font-medium text-fg">
+                              {stateLabel(r.state)}
+                            </span>
+                            <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                              {hhmm(r.at, lang)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {/* Exact figures — deliberately small: they're for validating
+                    and exporting, not for the first glance. */}
+                <div className="border-t border-border-soft pt-3">
+                  <p className="kicker mb-1">{t("timeline.now.numbers")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="font-semibold tabular-nums text-ok">
+                      {formatDuration(activeSeconds, lang)}
+                    </span>{" "}
+                    {t("common.active").toLowerCase()}
+                    {" · "}
+                    <span className="font-semibold tabular-nums text-warn">
+                      {formatDuration(idleSeconds, lang)}
+                    </span>{" "}
+                    {t("common.idle").toLowerCase()}
+                    {activeShare != null && (
+                      <>
+                        {" · "}
+                        <span className="font-semibold tabular-nums text-fg">
+                          {activeShare}%
+                        </span>{" "}
+                        {t("timeline.now.activeShare").toLowerCase()}
+                      </>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {t("timeline.now.numbersHint")}
+                  </p>
                 </div>
               </div>
             </div>
