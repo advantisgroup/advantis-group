@@ -207,6 +207,9 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         setListing(cached);
         setPath(cached.path);
         setLoading(false);
+        // A deep link to a file (e.g. a chat/announcement attachment) lists
+        // its parent folder and flags the file to preview.
+        if (cached.previewItem) setPreviewItem(cached.previewItem);
         if (isListingFresh(next)) return;
       } else {
         setLoading(true);
@@ -216,6 +219,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         setListing(data);
         setPath(data.path);
         setCachedListing(next, data);
+        if (data.previewItem) setPreviewItem(data.previewItem);
         const url = pathToUrl(data.path);
         if (url !== pathToUrl(next)) {
           router.replace(url);

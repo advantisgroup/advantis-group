@@ -139,6 +139,12 @@ export interface OneDriveListing {
   canWrite: boolean;
   /** Viewer may submit an upload request here (employee, default-on flag). */
   canRequest: boolean;
+  /**
+   * Set when the requested path pointed at a file rather than a folder —
+   * `items`/`path` describe the file's parent folder instead, and the
+   * client should open a preview for this file after loading the listing.
+   */
+  previewItem?: OneDriveItem;
 }
 
 /** Drive storage usage, for the 1 TB quota bar. */
