@@ -96,11 +96,66 @@ export const myAbsences = query({
   args: {},
   handler: async ctx => {
     const user = await requireUser(ctx);
-    return ctx.db
+    const rows = await ctx.db
       .query("absences")
       .withIndex("by_user", q => q.eq("userId", user._id))
       .order("desc")
       .take(100);
+    return Promise.all(
+      rows.map(async a => ({
+        ...a,
+        reviewerName: a.reviewedByUserId
+          ? displayName(await ctx.db.get(a.reviewedByUserId))
+          : null,
+      }))
+    );
+  },
+});
+
+/** Owner edits a still-pending intranet request (Clockodo mirrors are read-only). */
+export const updateRequest = mutation({
+  args: {
+    absenceId: v.id("absences"),
+    type: absenceType,
+    startDate: v.string(),
+    endDate: v.string(),
+    halfDay: v.optional(v.boolean()),
+    reason: v.optional(v.string()),
+  },
+  handler: async (ctx, { absenceId, ...args }) => {
+    const user = await requireUser(ctx);
+    const absence = await ctx.db.get(absenceId);
+    if (!absence || absence.userId !== user._id) {
+      throw new ConvexError({ code: "not_found", message: "Absence not found" });
+    }
+    if (absence.source === "clockodo") {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "This absence is managed in Clockodo and is read-only here",
+      });
+    }
+    if (absence.status !== "pending") {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "Only pending requests can be edited",
+      });
+    }
+    if (args.endDate < args.startDate) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "End date cannot be before start date",
+      });
+    }
+    await ctx.db.patch(absenceId, args);
+
+    await notifyUsers(ctx, await approverIds(ctx, user), {
+      type: "absence_request",
+      title: "Absence request updated",
+      body: `${displayName(user)} updated their ${args.type} request to ${args.startDate} – ${args.endDate}`,
+      link: "/absences",
+    });
+
+    return { ok: true };
   },
 });
 

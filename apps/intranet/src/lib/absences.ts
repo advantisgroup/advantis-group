@@ -1,0 +1,45 @@
+/**
+ * Working-day math for absence ranges. Dates are ISO `YYYY-MM-DD`, end
+ * inclusive. Weekends don't count; a half-day knocks 0.5 off (bounded below at
+ * 0.5 so a single half-day still shows up).
+ */
+export function workingDays(
+  startDate: string,
+  endDate: string,
+  halfDay?: boolean
+): number {
+  const start = new Date(`${startDate}T00:00:00Z`);
+  const end = new Date(`${endDate}T00:00:00Z`);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start)
+    return 0;
+  let days = 0;
+  for (
+    let d = new Date(start);
+    d <= end;
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
+    const dow = d.getUTCDay();
+    if (dow !== 0 && dow !== 6) days++;
+  }
+  if (halfDay && days > 0) days -= 0.5;
+  return days;
+}
+
+export function rangesOverlap(
+  aStart: string,
+  aEnd: string,
+  bStart: string,
+  bEnd: string
+): boolean {
+  return aStart <= bEnd && bStart <= aEnd;
+}
+
+export function isoToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export function addDaysIso(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}

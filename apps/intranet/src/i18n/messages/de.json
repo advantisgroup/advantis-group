@@ -118,7 +118,49 @@
     "managedInClockodo": "Wird in Clockodo verwaltet",
     "source": "Quelle",
     "noPending": "Keine offenen Anträge",
-    "noAbsences": "Noch keine Abwesenheiten"
+    "noAbsences": "Noch keine Abwesenheiten",
+    "subtitle": "Beantrage Abwesenheiten und verfolge Genehmigungen.",
+    "editRequest": "Antrag bearbeiten",
+    "requestUpdated": "Antrag aktualisiert",
+    "overlapWarning": "Dieser Zeitraum überschneidet sich mit einer bestehenden Abwesenheit.",
+    "workingDaysLabel": "{count, plural, one {# Arbeitstag} other {# Arbeitstage}}",
+    "statsVacation": "Urlaubstage {year}",
+    "statsSick": "Krankheitstage {year}",
+    "statsPending": "Offene Anträge",
+    "filterAll": "Alle",
+    "exportIcs": "Kalender exportieren (.ics)",
+    "exported": "Kalenderdatei heruntergeladen",
+    "clockodoReadOnly": "Wird in Clockodo verwaltet — hier schreibgeschützt. Änderungen bitte in Clockodo vornehmen.",
+    "lastSynced": "Clockodo vor {time} synchronisiert",
+    "syncedJustNow": "Clockodo gerade synchronisiert",
+    "whosOut": "Abwesend in den nächsten 14 Tagen",
+    "nobodyOut": "In den nächsten 14 Tagen ist niemand abwesend.",
+    "denyTitle": "Antrag ablehnen",
+    "denyHint": "Optional eine Notiz für {name} hinterlassen.",
+    "note": "Notiz",
+    "decisionNoteLabel": "Notiz der Freigabe",
+    "requested": "Beantragt",
+    "approvedBy": "Genehmigt von {name}",
+    "deniedBy": "Abgelehnt von {name}",
+    "clockodoType": "Clockodo-Art",
+    "halfDayShort": "½ Tag",
+    "clockodoTypes": {
+      "regularHoliday": "Regulärer Urlaub",
+      "specialLeave": "Sonderurlaub",
+      "overtimeReduction": "Überstundenabbau",
+      "sickDay": "Krankheitstag",
+      "sickChild": "Kind krank",
+      "education": "Schule / Weiterbildung",
+      "maternity": "Mutterschutz",
+      "homeOffice": "Homeoffice",
+      "outOfOffice": "Externer Arbeitseinsatz",
+      "specialLeaveUnpaid": "Sonderurlaub (unbezahlt)",
+      "sickUnpaid": "Krankheitstag (unbezahlt)",
+      "sickChildUnpaid": "Kind krank (unbezahlt)",
+      "quarantine": "Quarantäne",
+      "military": "Wehr-/Ersatzdienst",
+      "sicknessBenefit": "Krankheitstag (Krankengeld)"
+    }
   },
   "Announcements": {
     "title": "Ankündigungen",
@@ -262,7 +304,7 @@
     "back": "Zurück",
     "next": "Weiter",
     "replayCheckpoint": "Tour für diese Seite erneut abspielen",
-    "nudgeBody": "Neu hier? Machen Sie eine kurze Tour über diese Seite und entdecken Sie, was sie kann.",
+    "nudgeBody": "Neu hier? Mach eine kurze Tour über diese Seite und entdecke, was sie kann.",
     "nudgeStart": "Zeig mir",
     "nudgeDismiss": "Ausblenden",
     "nextSection": "Nächster Abschnitt",
@@ -343,9 +385,25 @@
           "title": "Abwesenheiten",
           "description": "Beantrage und verfolge Urlaub, Krankheitstage und persönliche Zeit."
         },
+        "request": {
+          "title": "Abwesenheit beantragen",
+          "description": "Erstelle einen neuen Antrag — wähle Art, Zeitraum und optional eine Notiz für die Freigabe. Du siehst die Anzahl der Arbeitstage und eine Warnung, wenn sich der Zeitraum mit einer bestehenden Abwesenheit überschneidet."
+        },
+        "stats": {
+          "title": "Dein Jahr im Überblick",
+          "description": "Genutzte Urlaubstage, Krankheitstage und offene Anträge des laufenden Jahres, berechnet aus deinen genehmigten Abwesenheiten."
+        },
+        "filters": {
+          "title": "Verlauf filtern",
+          "description": "Grenze die Liste nach Status oder Art ein. Darunter ist alles nach Jahr gruppiert — klicke auf einen Eintrag für die vollständige Historie."
+        },
         "list": {
           "title": "Deine Abwesenheitsanträge",
-          "description": "Reiche einen neuen Antrag ein und verfolge hier seinen Genehmigungsstatus."
+          "description": "Verfolge hier den Genehmigungsstatus. Offene Anträge kannst du weiterhin bearbeiten oder stornieren; aus Clockodo synchronisierte Abwesenheiten sind schreibgeschützt und mit einem Badge markiert."
+        },
+        "approvals": {
+          "title": "Team-Freigaben",
+          "description": "Anträge deiner Mitarbeitenden landen in diesem Tab. Genehmige oder lehne sie ab (optional mit Notiz) und sieh, wer im Team in den nächsten zwei Wochen abwesend ist."
         }
       },
       "chat": {
