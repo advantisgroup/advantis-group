@@ -237,9 +237,7 @@ export const pushSignal = mutation({
       // state change.
       const lastDiscarded = await ctx.db
         .query("discardedStateSamples")
-        .withIndex("by_employee_time", q =>
-          q.eq("employeeId", args.employeeId)
-        )
+        .withIndex("by_employee_time", q => q.eq("employeeId", args.employeeId))
         .order("desc")
         .first();
       const alreadyLogged =

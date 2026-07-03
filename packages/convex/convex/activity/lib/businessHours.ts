@@ -64,8 +64,7 @@ export function businessLocalParts(at: number): LocalParts {
       hour: "2-digit",
       minute: "2-digit",
     }).formatToParts(new Date(at));
-    const get = (type: string) =>
-      parts.find(p => p.type === type)?.value ?? "";
+    const get = (type: string) => parts.find(p => p.type === type)?.value ?? "";
     const date = `${get("year")}-${get("month")}-${get("day")}`;
     const hour = Number(get("hour"));
     const minute = Number(get("minute"));
@@ -113,9 +112,10 @@ export function startOfBusinessDayUtcMs(
   for (let i = 0; i < 2; i++) {
     const p = businessLocalParts(ts);
     const seen = Date.parse(
-      `${p.date}T${String(p.hour).padStart(2, "0")}:${String(
-        p.minute
-      ).padStart(2, "0")}:00Z`
+      `${p.date}T${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(
+        2,
+        "0"
+      )}:00Z`
     );
     ts -= seen - target;
   }

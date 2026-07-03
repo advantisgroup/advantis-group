@@ -125,8 +125,7 @@ export const en: Dict = {
   "settings.discarded.hint":
     "Signals the state engine rejected (e.g. outside business hours) are quarantined instead of written to timelines. Review what was discarded and why.",
   "settings.discarded.open": "Open discarded data",
-  "settings.discarded.sub":
-    "Rejected signals across all people, newest first.",
+  "settings.discarded.sub": "Rejected signals across all people, newest first.",
   "settings.discarded.empty": "Nothing has been discarded.",
   "settings.discarded.col.person": "Person",
   "settings.users.heading": "Users & roles",
@@ -227,8 +226,7 @@ export const en: Dict = {
   "timeline.discarded.col.state": "Rejected state",
   "timeline.discarded.col.source": "Source",
   "timeline.discarded.col.reason": "Reason",
-  "timeline.discarded.reason.outside_business_hours":
-    "Outside business hours",
+  "timeline.discarded.reason.outside_business_hours": "Outside business hours",
   "timeline.discarded.source.agent": "Workstation",
   "timeline.discarded.source.genesys": "Genesys",
   "timeline.discarded.source.clockodo": "Clockodo",
