@@ -89,14 +89,14 @@ export function DayDetailTab({
               {t("timeline.day.sub")}
             </p>
           </div>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <label className="flex w-full flex-col gap-1 text-xs text-muted-foreground sm:w-auto">
             {t("timeline.day.date")}
             <Input
               type="date"
               value={day}
               max={today}
               onChange={e => onSelectDay(e.target.value || today)}
-              className="w-40"
+              className="w-full sm:w-40"
             />
           </label>
         </div>

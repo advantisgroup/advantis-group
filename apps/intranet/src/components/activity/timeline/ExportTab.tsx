@@ -89,17 +89,17 @@ export function ExportTab({
       </CardHeader>
       <CardContent className="space-y-4 pt-0 sm:pt-0">
         <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <label className="flex w-full flex-col gap-1 text-xs text-muted-foreground sm:w-auto">
             {t("timeline.export.from")}
             <Input
               type="date"
               value={exportStart}
               max={exportEnd}
               onChange={e => setExportStart(e.target.value)}
-              className="w-40"
+              className="w-full sm:w-40"
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <label className="flex w-full flex-col gap-1 text-xs text-muted-foreground sm:w-auto">
             {t("timeline.export.to")}
             <Input
               type="date"
@@ -107,11 +107,11 @@ export function ExportTab({
               min={exportStart}
               max={today}
               onChange={e => setExportEnd(e.target.value)}
-              className="w-40"
+              className="w-full sm:w-40"
             />
           </label>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button onClick={() => void runExport("csv")} disabled={exporting}>
             <Download className="h-4 w-4" />
             {t("timeline.export.csv")}

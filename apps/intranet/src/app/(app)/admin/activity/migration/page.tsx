@@ -134,9 +134,11 @@ export default function ActivityMigrationPage() {
               return (
                 <Card key={step._id}>
                   <CardContent className="p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-sm">{step.table}</span>
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="break-all font-mono text-sm">
+                        {step.table}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
                         {(step.warnings ?? 0) > 0 && (
                           <Badge variant="warning">
                             {step.warnings} {t("migration.warnings")}

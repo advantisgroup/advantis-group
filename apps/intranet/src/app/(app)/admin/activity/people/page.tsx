@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
@@ -122,6 +122,16 @@ function EditableText({
   );
 }
 
+/** Labelled field wrapper for the mobile roster cards. */
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      {children}
+    </div>
+  );
+}
+
 export default function PeoplePage() {
   const { t } = useI18n();
   const me = useQuery(api.users.me);
@@ -182,6 +192,34 @@ export default function PeoplePage() {
     }
   }
 
+  // ── shared row pieces ──────────────────────────────────────────────────
+  // The roster renders twice — stacked cards on mobile, a table from md up —
+  // so the save path and the delete button live in one place.
+
+  const save = (
+    personId: GenericId<"people">,
+    patch: Partial<{
+      name: string;
+      email: string;
+      employeeId: string;
+      genesysUserId: string;
+      clockodoUserId: string;
+      active: boolean;
+    }>
+  ) => void update({ personId, ...patch }, { success: t("people.updated") });
+
+  const deleteButton = (id: GenericId<"people">) => (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() => setDeleteTarget(id)}
+      className="text-danger hover:bg-danger/10 hover:text-danger"
+      aria-label={t("people.delete")}
+    >
+      <Trash2 className="h-4 w-4" />
+    </Button>
+  );
+
   return (
     <section className="space-y-6">
       {header}
@@ -218,22 +256,106 @@ export default function PeoplePage() {
         </Card>
       )}
 
-      <Card>
-        {people.length > 0 && (
-          <div className="border-b border-border-soft p-3">
-            <div className="relative max-w-xs">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                ref={searchRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                placeholder={t("common.search")}
-                aria-label={t("common.search")}
-                className="pl-9"
-              />
-            </div>
-          </div>
+      {/* Roster search — outside the table card so the mobile card list and
+          the desktop table share one input. */}
+      {people.length > 0 && (
+        <div className="relative sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            ref={searchRef}
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder={t("common.search")}
+            aria-label={t("common.search")}
+            className="pl-9"
+          />
+        </div>
+      )}
+
+      {/* Mobile: one card per person — seven editable columns can't fit a
+          phone, and horizontal scrolling hides the fields being edited. */}
+      <div className="space-y-3 md:hidden">
+        {people.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              {t("people.empty")}
+            </CardContent>
+          </Card>
+        ) : filtered.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              {t("common.noResults")}
+            </CardContent>
+          </Card>
+        ) : (
+          filtered.map(p => (
+            <Card key={p._id}>
+              <CardContent className="space-y-3 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <EditableText
+                      initial={p.name}
+                      disabled={!canEdit}
+                      required
+                      placeholder={t("people.name")}
+                      className="font-medium text-fg"
+                      onSave={value => save(p._id, { name: value })}
+                    />
+                  </div>
+                  {canEdit && deleteButton(p._id)}
+                </div>
+                <Field label={t("people.email")}>
+                  <EditableText
+                    initial={p.email ?? ""}
+                    disabled={!canEdit}
+                    placeholder={t("people.email")}
+                    className="text-sm text-muted-foreground"
+                    onSave={value => save(p._id, { email: value })}
+                  />
+                </Field>
+                <Field label={t("people.employeeId")}>
+                  <EditableId
+                    initial={p.employeeId ?? ""}
+                    disabled={!canEdit}
+                    placeholder={t("people.employeeId")}
+                    onSave={value => save(p._id, { employeeId: value })}
+                  />
+                </Field>
+                <Field label={t("people.genesysId")}>
+                  <EditableId
+                    initial={p.genesysUserId ?? ""}
+                    disabled={!canEdit}
+                    placeholder={t("people.genesysId")}
+                    onSave={value => save(p._id, { genesysUserId: value })}
+                  />
+                </Field>
+                <Field label={t("people.clockodoId")}>
+                  <EditableId
+                    initial={p.clockodoUserId ?? ""}
+                    disabled={!canEdit}
+                    placeholder={t("people.clockodoId")}
+                    onSave={value => save(p._id, { clockodoUserId: value })}
+                  />
+                </Field>
+                <label className="flex w-fit items-center gap-2 pt-1 text-sm text-fg">
+                  <Checkbox
+                    checked={p.active}
+                    disabled={!canEdit}
+                    aria-label={t("people.active")}
+                    onCheckedChange={checked =>
+                      save(p._id, { active: checked === true })
+                    }
+                  />
+                  {t("people.active")}
+                </label>
+              </CardContent>
+            </Card>
+          ))
         )}
+      </div>
+
+      {/* md and up: the full table. */}
+      <Card className="hidden md:block">
         <Table aria-label={t("nav.people")}>
           <TableHeader>
             <TableRow>
@@ -276,12 +398,7 @@ export default function PeoplePage() {
                     required
                     placeholder={t("people.name")}
                     className="text-fg"
-                    onSave={value =>
-                      void update(
-                        { personId: p._id, name: value },
-                        { success: t("people.updated") }
-                      )
-                    }
+                    onSave={value => save(p._id, { name: value })}
                   />
                 </TableCell>
                 <TableCell className="text-muted-foreground">
@@ -290,12 +407,7 @@ export default function PeoplePage() {
                     disabled={!canEdit}
                     placeholder={t("people.email")}
                     className="text-muted-foreground"
-                    onSave={value =>
-                      void update(
-                        { personId: p._id, email: value },
-                        { success: t("people.updated") }
-                      )
-                    }
+                    onSave={value => save(p._id, { email: value })}
                   />
                 </TableCell>
                 <TableCell>
@@ -303,12 +415,7 @@ export default function PeoplePage() {
                     initial={p.employeeId ?? ""}
                     disabled={!canEdit}
                     placeholder={t("people.employeeId")}
-                    onSave={value =>
-                      void update(
-                        { personId: p._id, employeeId: value },
-                        { success: t("people.updated") }
-                      )
-                    }
+                    onSave={value => save(p._id, { employeeId: value })}
                   />
                 </TableCell>
                 <TableCell>
@@ -316,12 +423,7 @@ export default function PeoplePage() {
                     initial={p.genesysUserId ?? ""}
                     disabled={!canEdit}
                     placeholder={t("people.genesysId")}
-                    onSave={value =>
-                      void update(
-                        { personId: p._id, genesysUserId: value },
-                        { success: t("people.updated") }
-                      )
-                    }
+                    onSave={value => save(p._id, { genesysUserId: value })}
                   />
                 </TableCell>
                 <TableCell>
@@ -329,12 +431,7 @@ export default function PeoplePage() {
                     initial={p.clockodoUserId ?? ""}
                     disabled={!canEdit}
                     placeholder={t("people.clockodoId")}
-                    onSave={value =>
-                      void update(
-                        { personId: p._id, clockodoUserId: value },
-                        { success: t("people.updated") }
-                      )
-                    }
+                    onSave={value => save(p._id, { clockodoUserId: value })}
                   />
                 </TableCell>
                 <TableCell>
@@ -342,25 +439,14 @@ export default function PeoplePage() {
                     checked={p.active}
                     disabled={!canEdit}
                     aria-label={t("people.active")}
-                    onCheckedChange={checked => {
-                      void update(
-                        { personId: p._id, active: checked === true },
-                        { success: t("people.updated") }
-                      );
-                    }}
+                    onCheckedChange={checked =>
+                      save(p._id, { active: checked === true })
+                    }
                   />
                 </TableCell>
                 {canEdit && (
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setDeleteTarget(p._id)}
-                      className="text-danger hover:text-danger hover:bg-danger/10"
-                      aria-label={t("people.delete")}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {deleteButton(p._id)}
                   </TableCell>
                 )}
               </TableRow>
