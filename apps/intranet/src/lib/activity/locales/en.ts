@@ -128,6 +128,28 @@ export const en: Dict = {
   "settings.discarded.sub": "Rejected signals across all people, newest first.",
   "settings.discarded.empty": "Nothing has been discarded.",
   "settings.discarded.col.person": "Person",
+  "settings.trouble.heading": "Troubleshooting",
+  "settings.trouble.hint":
+    "One-click repairs for stuck or stale data — no CLI access needed, works from any device.",
+  "settings.trouble.syncNow": "Sync integrations now",
+  "settings.trouble.syncNowHint":
+    "Poll Genesys and Clockodo immediately instead of waiting for the next scheduled run.",
+  "settings.trouble.syncDone": "Sync finished.",
+  "settings.trouble.quarantine": "Fix historical overnight data",
+  "settings.trouble.quarantineHint":
+    "Apply the business-hours rule retroactively — moves already-recorded \"working\" states outside 07:00–20:00 into Discarded data. Safe to run repeatedly.",
+  "settings.trouble.quarantineDone": "Done — {count} entries moved to Discarded data.",
+  "settings.trouble.prune": "Run retention cleanup now",
+  "settings.trouble.pruneHint":
+    "Delete data older than the configured retention window immediately, instead of waiting for tonight's scheduled cleanup.",
+  "settings.trouble.pruneDone": "Done — {count} old rows deleted.",
+  "settings.trouble.failed": "Something went wrong. Please try again.",
+  "settings.trouble.sanitize": "Deep sanitize (Clockodo)",
+  "settings.trouble.sanitizeHint":
+    "Deep-fetches every Clockodo entry for the chosen day (not just the current instant) and rewrites that day's absence/clock-out/break history to match — corrects data from before the business-hours fix, or drift from entries edited or deleted in Clockodo afterwards. Never touches call/active/idle states from Genesys or the desktop agent. Safe to run repeatedly.",
+  "settings.trouble.sanitizeRun": "Sanitize this day",
+  "settings.trouble.sanitizeDone":
+    "Done — {people} people checked, {inserted} corrected, {deleted} replaced, {quarantined} moved to Discarded data.",
   "settings.users.heading": "Users & roles",
   "settings.users.body":
     "User accounts, roles, invitations and access requests are managed centrally in the intranet admin area — not separately for the activity dashboard.",

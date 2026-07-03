@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   Building2,
   CheckCircle2,
@@ -11,6 +11,7 @@ import {
   Loader2,
   ShieldAlert,
   SlidersHorizontal,
+  Wrench,
 } from "lucide-react";
 
 import { Reveal } from "@/components/activity/motion/Reveal";
@@ -133,6 +134,94 @@ export function ConfigPanel({
     return () => clearTimeout(id);
   }, [saved]);
 
+  // ── Troubleshooting (one-click repairs) ───────────────────────────────
+  // Batched server mutations driven from the browser in a loop, so repairs
+  // that used to need the Convex CLI work from any device (incl. phones).
+  type TroubleKey = "sync" | "quarantine" | "prune" | "sanitize";
+  const [troubleBusy, setTroubleBusy] = useState<TroubleKey | null>(null);
+  const [troubleResult, setTroubleResult] = useState<
+    Partial<Record<TroubleKey, string>>
+  >({});
+  const MAX_TROUBLE_BATCHES = 500;
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const [sanitizeDay, setSanitizeDay] = useState(todayIso);
+
+  const syncNow = useActionWithToast(
+    api.activity.integrations.troubleshootSyncNow
+  );
+  const quarantineStep = useMutation(
+    api.activity.maintenance.troubleshootQuarantineOutOfHours
+  );
+  const pruneStep = useMutation(api.activity.maintenance.troubleshootPruneNow);
+  const sanitizeDayAction = useActionWithToast(
+    api.activity.clockodo.troubleshootSanitizeDay
+  );
+
+  async function runSyncNow() {
+    setTroubleBusy("sync");
+    const res = await syncNow({}, { success: t("settings.trouble.syncDone") });
+    if (res !== undefined) {
+      setTroubleResult(r => ({ ...r, sync: t("settings.trouble.syncDone") }));
+    }
+    setTroubleBusy(null);
+  }
+
+  async function runQuarantine() {
+    setTroubleBusy("quarantine");
+    try {
+      let cursor: number | undefined = undefined;
+      let moved = 0;
+      for (let i = 0; i < MAX_TROUBLE_BATCHES; i++) {
+        const res = await quarantineStep({ cursor });
+        moved += res.quarantined;
+        if (res.done || res.cursorAt == null) break;
+        cursor = res.cursorAt;
+      }
+      const msg = t("settings.trouble.quarantineDone", { count: moved });
+      setTroubleResult(r => ({ ...r, quarantine: msg }));
+      toast(msg, "ok");
+    } catch (err) {
+      console.error("[troubleshoot quarantine failed]", err);
+      toast(t("settings.trouble.failed"), "danger");
+    }
+    setTroubleBusy(null);
+  }
+
+  async function runPrune() {
+    setTroubleBusy("prune");
+    try {
+      let deleted = 0;
+      for (let i = 0; i < MAX_TROUBLE_BATCHES; i++) {
+        const res = await pruneStep({ continuation: i > 0 || undefined });
+        deleted += res.deleted;
+        if (res.done) break;
+      }
+      const msg = t("settings.trouble.pruneDone", { count: deleted });
+      setTroubleResult(r => ({ ...r, prune: msg }));
+      toast(msg, "ok");
+    } catch (err) {
+      console.error("[troubleshoot prune failed]", err);
+      toast(t("settings.trouble.failed"), "danger");
+    }
+    setTroubleBusy(null);
+  }
+
+  async function runSanitizeDay() {
+    setTroubleBusy("sanitize");
+    const res = await sanitizeDayAction({ day: sanitizeDay });
+    if (res !== undefined) {
+      const msg = t("settings.trouble.sanitizeDone", {
+        people: res.peopleProcessed,
+        inserted: res.inserted,
+        deleted: res.deleted,
+        quarantined: res.quarantined,
+      });
+      setTroubleResult(r => ({ ...r, sanitize: msg }));
+      toast(msg, "ok");
+    }
+    setTroubleBusy(null);
+  }
+
   async function savePassword(e: FormEvent) {
     e.preventDefault();
     setSaved(false);
@@ -246,6 +335,134 @@ export function ConfigPanel({
               {t("settings.debugPw.saved")}
             </p>
           </Reveal>
+        </CardContent>
+      </Card>
+
+      {/* Troubleshooting — one-click repairs runnable from any device (incl.
+          phones), so fixing stuck/stale data never requires the Convex CLI. */}
+      <Card className="animate-fade-up lg:col-span-2">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
+              <Wrench className="h-4 w-4" />
+            </span>
+            <CardTitle className="text-base">
+              {t("settings.trouble.heading")}
+            </CardTitle>
+          </div>
+          <CardDescription>{t("settings.trouble.hint")}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5 pt-0 sm:pt-0">
+          <div className="flex flex-wrap items-start gap-3">
+            <div className="min-w-[220px] flex-1 space-y-1.5">
+              <Button
+                variant="outline"
+                disabled={troubleBusy !== null}
+                onClick={runSyncNow}
+                className="w-full sm:w-auto"
+              >
+                {troubleBusy === "sync" && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {t("settings.trouble.syncNow")}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                {t("settings.trouble.syncNowHint")}
+              </p>
+              {troubleResult.sync && (
+                <p className="text-xs font-medium text-ok">
+                  {troubleResult.sync}
+                </p>
+              )}
+            </div>
+
+            <div className="min-w-[220px] flex-1 space-y-1.5">
+              <Button
+                variant="outline"
+                disabled={troubleBusy !== null}
+                onClick={runQuarantine}
+                className="w-full sm:w-auto"
+              >
+                {troubleBusy === "quarantine" && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {t("settings.trouble.quarantine")}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                {t("settings.trouble.quarantineHint")}
+              </p>
+              {troubleResult.quarantine && (
+                <p className="text-xs font-medium text-ok">
+                  {troubleResult.quarantine}
+                </p>
+              )}
+            </div>
+
+            <div className="min-w-[220px] flex-1 space-y-1.5">
+              <Button
+                variant="outline"
+                disabled={troubleBusy !== null}
+                onClick={runPrune}
+                className="w-full sm:w-auto"
+              >
+                {troubleBusy === "prune" && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {t("settings.trouble.prune")}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                {t("settings.trouble.pruneHint")}
+              </p>
+              {troubleResult.prune && (
+                <p className="text-xs font-medium text-ok">
+                  {troubleResult.prune}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Deep sanitize — a deep per-day Clockodo entries fetch, not just
+              the live "now" poll, so it can also correct already-recorded
+              history (e.g. an entry edited/deleted in Clockodo after the
+              fact, or anything still wrong from before the business-hours
+              fix). Only touches Clockodo-owned states (ABSENT/CLOCKED_OUT/
+              BREAK); it never overwrites IN_CALL/WRAP_UP/ACTIVE/IDLE evidence
+              from Genesys or the desktop agent. */}
+          <div className="border-t border-border-soft pt-4">
+            <p className="text-sm font-medium text-fg">
+              {t("settings.trouble.sanitize")}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("settings.trouble.sanitizeHint")}
+            </p>
+            <div className="mt-2.5 flex flex-wrap items-end gap-2.5">
+              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                {t("timeline.day.date")}
+                <Input
+                  type="date"
+                  value={sanitizeDay}
+                  max={todayIso}
+                  onChange={e => setSanitizeDay(e.target.value || todayIso)}
+                  className="w-40"
+                />
+              </label>
+              <Button
+                variant="outline"
+                disabled={troubleBusy !== null}
+                onClick={runSanitizeDay}
+              >
+                {troubleBusy === "sanitize" && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                {t("settings.trouble.sanitizeRun")}
+              </Button>
+            </div>
+            {troubleResult.sanitize && (
+              <p className="mt-2 text-xs font-medium text-ok">
+                {troubleResult.sanitize}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

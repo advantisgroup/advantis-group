@@ -18,6 +18,8 @@ import {
   businessHourOf,
   startOfBusinessDayUtcMs,
 } from "./lib/businessHours";
+import { deriveClockodoDaySegments } from "./lib/clockodoDay";
+import { appError } from "./lib/errors";
 
 /**
  * Clockodo time-tracking client, running inside Convex's Node runtime. An open
@@ -91,7 +93,27 @@ function clockodoDate(date = new Date()) {
 interface ClockodoEntry {
   users_id?: number;
   clocked?: boolean;
+  time_since?: string | null;
   time_until?: string | null;
+}
+
+/** Deep-fetch every entry for one user in `[sinceMs, untilMs)` — used both by
+ * the live poller (today so far) and the "Deep sanitize" troubleshooting
+ * button (a whole day, past or present). */
+async function fetchEntriesForDay(
+  clockodoUserId: string,
+  sinceMs: number,
+  untilMs: number
+): Promise<ClockodoEntry[]> {
+  const qs = [
+    `time_since=${encodeURIComponent(clockodoDate(new Date(sinceMs)))}`,
+    `time_until=${encodeURIComponent(clockodoDate(new Date(untilMs)))}`,
+    `filter[users_id]=${encodeURIComponent(clockodoUserId)}`,
+  ].join("&");
+  const body = await clockodoGet<{ entries?: ClockodoEntry[] }>(
+    `/api/v2/entries?${qs}`
+  );
+  return body.entries ?? [];
 }
 
 async function fetchTodayEntries(
@@ -100,16 +122,11 @@ async function fetchTodayEntries(
   // "Today" starts at *business-timezone* midnight, expressed as the UTC
   // instant the API expects — not at `<date>T00:00:00Z`, which is 1-2h into
   // the local day and would miss entries around local midnight.
-  const since = clockodoDate(new Date(startOfBusinessDayUtcMs()));
-  const qs = [
-    `time_since=${encodeURIComponent(since)}`,
-    `time_until=${encodeURIComponent(clockodoDate())}`,
-    `filter[users_id]=${encodeURIComponent(clockodoUserId)}`,
-  ].join("&");
-  const body = await clockodoGet<{ entries?: ClockodoEntry[] }>(
-    `/api/v2/entries?${qs}`
+  return fetchEntriesForDay(
+    clockodoUserId,
+    startOfBusinessDayUtcMs(),
+    Date.now()
   );
-  return body.entries ?? [];
 }
 
 /**
@@ -434,5 +451,91 @@ export const refreshClockodoByEntry = action({
       await reportHealth(ctx, "clockodo", healthStatusOf(err), errMessage(err));
       return { ok: false, error: "clockodo_unavailable" as const };
     }
+  },
+});
+
+/**
+ * Settings → Troubleshooting: "Deep sanitize (Clockodo)". Unlike the live
+ * poll (which only asserts the current instant), this deep-fetches an entire
+ * day's entries straight from Clockodo and reconciles the recorded history
+ * against them — correcting stretches that were wrong under the old UTC-day
+ * bug, or that drifted because an entry was edited/deleted in Clockodo after
+ * the fact. Per-employee reconciliation (delete-and-rebuild the Clockodo-owned
+ * samples for that day) happens in
+ * `maintenance.reconcileClockodoDayForEmployee`; this action only owns the
+ * HTTP fetch, which mutations can't do.
+ */
+export const troubleshootSanitizeDay = action({
+  args: { day: v.optional(v.string()) },
+  handler: async (ctx, { day }) => {
+    const me = await ctx.runQuery(api.users.me, {});
+    if (!me || me.role !== "admin") {
+      throw appError("auth.forbidden", "Forbidden: requires admin role");
+    }
+
+    const secret = signalSecret();
+    const targetDay = day ?? today();
+    const dayStartMs = startOfBusinessDayUtcMs(targetDay);
+    const dayEndMs = dayStartMs + 24 * 60 * 60 * 1000;
+    const capMs = Math.min(dayEndMs, Date.now());
+    const isPastDayEnd =
+      capMs >= dayEndMs || businessHourOf(capMs) >= BUSINESS_DAY_END_HOUR;
+
+    const mappings = await ctx.runQuery(api.activity.state.mappings, {
+      secret,
+    });
+    const clockodoPeople = mappings.filter(p => p.clockodoUserId);
+    if (clockodoPeople.length === 0) {
+      return { peopleProcessed: 0, inserted: 0, deleted: 0, quarantined: 0 };
+    }
+
+    const absences = await fetchAbsences(
+      new Date(dayStartMs).getUTCFullYear()
+    );
+
+    let peopleProcessed = 0;
+    let inserted = 0;
+    let deleted = 0;
+    let quarantined = 0;
+
+    for (const p of clockodoPeople) {
+      const raw = await fetchEntriesForDay(
+        p.clockodoUserId!,
+        dayStartMs,
+        capMs
+      );
+      const entries = raw
+        .map(e => ({
+          start: e.time_since ? Date.parse(e.time_since) : NaN,
+          end: e.time_until ? Date.parse(e.time_until) : null,
+        }))
+        .filter((e): e is { start: number; end: number | null } =>
+          Number.isFinite(e.start)
+        )
+        .sort((a, b) => a.start - b.start);
+
+      const segments = deriveClockodoDaySegments({
+        entries,
+        absentWholeDay: isAbsentOn(absences, p.clockodoUserId!, targetDay),
+        dayStartMs,
+        capMs,
+        assumedClockedOutAfterMs: ASSUMED_CLOCKED_OUT_AFTER_MS,
+        isPastDayEnd,
+      });
+
+      const res = await ctx.runMutation(
+        internal.activity.maintenance.reconcileClockodoDayForEmployee,
+        { employeeId: p.employeeId, dayStartMs, capMs, segments }
+      );
+      inserted += res.inserted;
+      deleted += res.deleted;
+      quarantined += res.quarantined;
+      peopleProcessed++;
+    }
+
+    console.log(
+      `[clockodo:sanitize] day=${targetDay} people=${peopleProcessed} inserted=${inserted} deleted=${deleted} quarantined=${quarantined}`
+    );
+    return { peopleProcessed, inserted, deleted, quarantined };
   },
 });
