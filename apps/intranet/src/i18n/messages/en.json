@@ -261,6 +261,10 @@
   "Tour": {
     "back": "Back",
     "next": "Next",
+    "replayCheckpoint": "Replay the tour for this page",
+    "nudgeBody": "New here? Take a quick tour of this page to see what it can do.",
+    "nudgeStart": "Show me",
+    "nudgeDismiss": "Dismiss",
     "nextSection": "Next section",
     "finish": "Finish",
     "skipStep": "Skip this step",

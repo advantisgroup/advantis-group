@@ -261,6 +261,10 @@
   "Tour": {
     "back": "Zurück",
     "next": "Weiter",
+    "replayCheckpoint": "Tour für diese Seite erneut abspielen",
+    "nudgeBody": "Neu hier? Machen Sie eine kurze Tour über diese Seite und entdecken Sie, was sie kann.",
+    "nudgeStart": "Zeig mir",
+    "nudgeDismiss": "Ausblenden",
     "nextSection": "Nächster Abschnitt",
     "finish": "Fertig",
     "skipStep": "Diesen Schritt überspringen",

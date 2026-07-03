@@ -22,6 +22,7 @@ import { useMutation } from "convex/react";
 
 import {
   useCurrentUser,
+  useIsAdmin,
   useIsManager,
 } from "@/components/providers/current-user";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -63,6 +64,7 @@ function measureTarget(attr: string): TargetRect | null {
 export function TourProvider({ children }: { children: ReactNode }) {
   const user = useCurrentUser();
   const isManager = useIsManager();
+  const isAdmin = useIsAdmin();
   const router = useRouter();
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
@@ -75,10 +77,22 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef<TourLocalState | null>(null);
 
-  // Checkpoints visible to this user (filter manager-only for employees)
+  // Checkpoints visible to this user (filter manager-only checkpoints and
+  // role-gated steps for employees — their target UI doesn't render for them)
   const visibleCheckpoints: TourCheckpoint[] = useMemo(
-    () => TOUR_CHECKPOINTS.filter(cp => !cp.managerOnly || isManager),
-    [isManager]
+    () =>
+      TOUR_CHECKPOINTS.filter(cp => !cp.managerOnly || isManager)
+        .map(cp => ({
+          ...cp,
+          steps: cp.steps.filter(
+            s =>
+              !s.roles ||
+              (s.roles.includes("manager") && isManager) ||
+              (s.roles.includes("admin") && isAdmin)
+          ),
+        }))
+        .filter(cp => cp.steps.length > 0),
+    [isManager, isAdmin]
   );
 
   // Persist state to localStorage and schedule Convex sync

@@ -50,6 +50,11 @@ export interface TourStep {
   action?: "open-sidebar";
   /** Skip this step on mobile (e.g. sidebar nav items that live in a closed drawer). */
   skipOnMobile?: boolean;
+  /**
+   * Only shown to these roles — the step's target UI doesn't exist for others
+   * (manager implies admin too; admin means admin only).
+   */
+  roles?: ("manager" | "admin")[];
 }
 
 export interface TourCheckpoint {

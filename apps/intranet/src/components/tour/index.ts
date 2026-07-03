@@ -6,4 +6,5 @@ export { TourProgressChip } from "./TourProgressChip";
 export { TourCompletionScreen } from "./TourCompletionScreen";
 export { TourConfetti } from "./TourConfetti";
 export { useTourSkipCheckpoint, useTourEndTour } from "./TourSkipDialog";
+export { TourReplayButton, TourFirstVisitNudge } from "./TourReplayButton";
 export type * from "./tour-types";

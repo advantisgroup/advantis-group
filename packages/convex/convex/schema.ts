@@ -679,6 +679,30 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 
+  // --- Per-user app preferences ---------------------------------------------
+  // One row per user; every field optional so features can add preferences
+  // without migrations. Client-side cosmetics (e.g. "always preview") stay in
+  // localStorage — this table is for preferences that must follow the user
+  // across devices.
+  userPreferences: defineTable({
+    userId: v.id("users"),
+    hiddenDashboardCards: v.optional(v.array(v.string())),
+    defaultCalendarView: v.optional(
+      v.union(v.literal("month"), v.literal("week"), v.literal("list"))
+    ),
+    /** App route to land on after sign-in (e.g. "/calendar"). */
+    startPage: v.optional(v.string()),
+    weekStartsOn: v.optional(v.union(v.literal("monday"), v.literal("sunday"))),
+    /** AG-root-relative OneDrive folder paths pinned in the file browser. */
+    favoriteFolders: v.optional(v.array(v.string())),
+    favoriteGuidebooks: v.optional(v.array(v.string())),
+    lastGuidebookSlug: v.optional(v.string()),
+    /** Release key of the last dismissed "What's new" dialog. */
+    dismissedWhatsNew: v.optional(v.string()),
+    browserPushEnabled: v.optional(v.boolean()),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   // --- OneDrive integration ------------------------------------------------
   // The intranet is the front page for one OneDrive subscription. Graph holds
   // the bytes; Convex is the system-of-record for *who* uploaded/requested what,

@@ -55,6 +55,7 @@ import type * as onedrive from "../onedrive.js";
 import type * as outbound from "../outbound.js";
 import type * as presence from "../presence.js";
 import type * as tourProgress from "../tourProgress.js";
+import type * as userPreferences from "../userPreferences.js";
 import type * as users from "../users.js";
 import type * as wikiChats from "../wikiChats.js";
 
@@ -112,6 +113,7 @@ declare const fullApi: ApiFromModules<{
   outbound: typeof outbound;
   presence: typeof presence;
   tourProgress: typeof tourProgress;
+  userPreferences: typeof userPreferences;
   users: typeof users;
   wikiChats: typeof wikiChats;
 }>;
