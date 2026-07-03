@@ -13,6 +13,11 @@ import {
   today,
   type Mapping,
 } from "./lib/integrationsShared";
+import {
+  BUSINESS_DAY_END_HOUR,
+  businessHourOf,
+  startOfBusinessDayUtcMs,
+} from "./lib/businessHours";
 
 /**
  * Clockodo time-tracking client, running inside Convex's Node runtime. An open
@@ -92,9 +97,12 @@ interface ClockodoEntry {
 async function fetchTodayEntries(
   clockodoUserId: string
 ): Promise<ClockodoEntry[]> {
-  const day = today();
+  // "Today" starts at *business-timezone* midnight, expressed as the UTC
+  // instant the API expects — not at `<date>T00:00:00Z`, which is 1-2h into
+  // the local day and would miss entries around local midnight.
+  const since = clockodoDate(new Date(startOfBusinessDayUtcMs()));
   const qs = [
-    `time_since=${encodeURIComponent(`${day}T00:00:00Z`)}`,
+    `time_since=${encodeURIComponent(since)}`,
     `time_until=${encodeURIComponent(clockodoDate())}`,
     `filter[users_id]=${encodeURIComponent(clockodoUserId)}`,
   ].join("&");
@@ -113,25 +121,14 @@ async function fetchTodayEntries(
 const ASSUMED_CLOCKED_OUT_AFTER_MS = 60 * 60_000;
 
 /**
- * From this local hour the guessing stops: anyone who worked today and has
- * nothing running is *definitively* clocked out — no "(assumed)" in the UI,
- * and a later clock-in starts a new stint instead of re-labelling the evening
- * as a break.
+ * From the business day-end hour the guessing stops: anyone who worked today
+ * and has nothing running is *definitively* clocked out — no "(assumed)" in
+ * the UI, and a later clock-in starts a new stint instead of re-labelling the
+ * evening as a break. Hour + timezone live in `lib/businessHours.ts`, shared
+ * with the state engine's out-of-hours quarantine.
  */
-const CLOCKED_OUT_CERTAIN_FROM_HOUR = Number(
-  process.env.CLOCKODO_DAY_END_HOUR ?? "20"
-);
-const BUSINESS_TIME_ZONE = process.env.CLOCKODO_TIMEZONE ?? "Europe/Berlin";
-
 function isPastDayEnd(): boolean {
-  const hour = Number(
-    new Intl.DateTimeFormat("en-GB", {
-      hour: "numeric",
-      hourCycle: "h23",
-      timeZone: BUSINESS_TIME_ZONE,
-    }).format(new Date())
-  );
-  return hour >= CLOCKED_OUT_CERTAIN_FROM_HOUR;
+  return businessHourOf(Date.now()) >= BUSINESS_DAY_END_HOUR;
 }
 
 async function fetchClockodoWork(clockodoUserId: string): Promise<{
@@ -157,11 +154,19 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
   // they had clocked in a single time.
   const running = entries.some(e => e.time_until == null);
   if (entries.length === 0) {
+    // No entries *today* means the day hasn't started — the person is still
+    // clocked out from before. This must be asserted, not left blank: an
+    // all-false result here erases the overnight CLOCKED_OUT in the state
+    // cache and lets the engine fall through to ACTIVE (the "everyone active
+    // from 2 AM" corruption). Certain (not assumed), so the morning clock-in
+    // starts a new stint instead of re-labelling the night as a break; no
+    // `clockedOutSince` anchor is needed because the state was already
+    // CLOCKED_OUT — nothing changes, so no sample is written.
     return {
       working: false,
       onBreak: false,
-      clockedOut: false,
-      clockedOutCertain: false,
+      clockedOut: true,
+      clockedOutCertain: true,
       clockedOutSince: null,
     };
   }

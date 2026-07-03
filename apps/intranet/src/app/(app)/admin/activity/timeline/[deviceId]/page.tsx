@@ -19,11 +19,13 @@ import {
   StateStripLegend,
 } from "@/components/activity/charts/StateStrip";
 import { STATE_COLOR } from "@/components/activity/charts/theme";
+import { InfoTip } from "@/components/activity/InfoTip";
 import { SourceSignals } from "@/components/activity/state/StateBits";
 import { StatusSummary } from "@/components/activity/state/StatusSummary";
 import { ChartsTab } from "@/components/activity/timeline/ChartsTab";
 import { DayDetailTab } from "@/components/activity/timeline/DayDetailTab";
 import { DayNav } from "@/components/activity/timeline/DayNav";
+import { DiscardedTab } from "@/components/activity/timeline/DiscardedTab";
 import { ExportTab } from "@/components/activity/timeline/ExportTab";
 import { RawTab } from "@/components/activity/timeline/RawTab";
 import { PageHeader } from "@/components/PageHeader";
@@ -579,12 +581,37 @@ export default function TimelinePage({
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="charts">{t("timeline.tabs.charts")}</TabsTrigger>
-          <TabsTrigger value="day">{t("timeline.tabs.day")}</TabsTrigger>
-          <TabsTrigger value="raw">{t("timeline.tabs.raw")}</TabsTrigger>
-          <TabsTrigger value="export">{t("timeline.tabs.export")}</TabsTrigger>
-        </TabsList>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <TabsList>
+            <TabsTrigger value="charts">
+              {t("timeline.tabs.charts")}
+            </TabsTrigger>
+            <TabsTrigger value="day">{t("timeline.tabs.day")}</TabsTrigger>
+            <TabsTrigger value="raw">{t("timeline.tabs.raw")}</TabsTrigger>
+            <TabsTrigger value="export">
+              {t("timeline.tabs.export")}
+            </TabsTrigger>
+            {/* Deliberately not a permanent tab — quarantined data is an
+                audit surface reached via the "Missing data?" hint or
+                Settings → Discarded data. Shown only while open. */}
+            {tab === "discarded" && (
+              <TabsTrigger value="discarded">
+                {t("timeline.tabs.discarded")}
+              </TabsTrigger>
+            )}
+          </TabsList>
+          {tab !== "discarded" && (
+            <InfoTip text={t("timeline.discarded.hint")} side="left">
+              <button
+                type="button"
+                onClick={() => setTab("discarded")}
+                className="text-xs text-muted-foreground underline decoration-dotted underline-offset-4 transition-colors hover:text-fg"
+              >
+                {t("timeline.discarded.missing")}
+              </button>
+            </InfoTip>
+          )}
+        </div>
 
         <TabsContent value="charts">
           <ChartsTab
@@ -604,6 +631,14 @@ export default function TimelinePage({
             today={today}
             day={selectedDay}
             onSelectDay={setSelectedDay}
+          />
+        </TabsContent>
+
+        <TabsContent value="discarded">
+          <DiscardedTab
+            employeeId={employeeId}
+            day={selectedDay}
+            today={today}
           />
         </TabsContent>
 

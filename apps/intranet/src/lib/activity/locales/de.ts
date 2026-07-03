@@ -121,6 +121,15 @@ export const de: Dict = {
   "settings.tabs.system": "Systemstatus",
   "settings.tabs.users": "Benutzer",
   "settings.tabs.audit": "Protokoll",
+  "settings.tabs.discarded": "Verworfene Daten",
+  "settings.discarded.heading": "Verworfene Daten",
+  "settings.discarded.hint":
+    "Signale, die die Statuslogik abgelehnt hat (z. B. außerhalb der Geschäftszeiten), werden in Quarantäne gestellt statt in die Zeitleisten geschrieben. Hier lässt sich prüfen, was verworfen wurde und warum.",
+  "settings.discarded.open": "Verworfene Daten öffnen",
+  "settings.discarded.sub":
+    "Abgelehnte Signale aller Mitarbeiter, neueste zuerst.",
+  "settings.discarded.empty": "Es wurde nichts verworfen.",
+  "settings.discarded.col.person": "Mitarbeiter",
   "settings.users.heading": "Benutzer & Rollen",
   "settings.users.body":
     "Benutzerkonten, Rollen, Einladungen und Zugriffsanträge werden zentral im Intranet-Adminbereich verwaltet — nicht separat für das Aktivitäts-Dashboard.",
@@ -208,7 +217,26 @@ export const de: Dict = {
   "timeline.tabs.charts": "Übersicht",
   "timeline.tabs.raw": "Rohdaten",
   "timeline.tabs.day": "Tag im Detail",
+  "timeline.tabs.discarded": "Verworfen",
   "timeline.tabs.export": "Export",
+  "timeline.discarded.heading": "Verworfene Signale",
+  "timeline.discarded.sub":
+    "Statuswechsel, die abgelehnt wurden, statt in die Zeitleiste geschrieben zu werden.",
+  "timeline.discarded.explain":
+    "Signale, die jemanden außerhalb der Geschäftszeiten (07:00–20:00) als arbeitend markieren würden, werden nicht übernommen: nächtliche Integrations-Abfragen oder ein PC, der für Updates aufwacht, können wie echte Aktivität aussehen, obwohl niemand arbeitet. Statt die Zeitleiste zu verfälschen, werden solche Signale hier zur Kontrolle aufbewahrt. Die Zeitleiste behält den letzten vertrauenswürdigen Status.",
+  "timeline.discarded.empty": "An diesem Tag wurde nichts verworfen.",
+  "timeline.discarded.col.time": "Uhrzeit",
+  "timeline.discarded.col.state": "Abgelehnter Status",
+  "timeline.discarded.col.source": "Quelle",
+  "timeline.discarded.col.reason": "Grund",
+  "timeline.discarded.reason.outside_business_hours":
+    "Außerhalb der Geschäftszeiten",
+  "timeline.discarded.source.agent": "Arbeitsplatz",
+  "timeline.discarded.source.genesys": "Genesys",
+  "timeline.discarded.source.clockodo": "Clockodo",
+  "timeline.discarded.missing": "Fehlende Daten?",
+  "timeline.discarded.hint":
+    "Signale, die jemanden außerhalb der Geschäftszeiten (07:00–20:00) als arbeitend markieren würden, werden in Quarantäne gestellt statt in die Zeitleiste geschrieben. Klicken zeigt, was für diese Person verworfen wurde — die Gesamtliste steht unter Einstellungen → Verworfene Daten.",
   "timeline.day.heading": "Minute für Minute",
   "timeline.day.sub": "Was an jedem Punkt des gewählten Tages passiert ist.",
   "timeline.day.date": "Tag",

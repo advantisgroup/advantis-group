@@ -4,6 +4,7 @@ import { Settings } from "lucide-react";
 
 import { AuditPanel } from "@/components/activity/admin/AuditPanel";
 import { ConfigPanel } from "@/components/activity/admin/ConfigPanel";
+import { DiscardedPanel } from "@/components/activity/admin/DiscardedPanel";
 import { SystemPanel } from "@/components/activity/admin/SystemPanel";
 import { UsersPanel } from "@/components/activity/admin/UsersPanel";
 import { PageHeader } from "@/components/PageHeader";
@@ -35,10 +36,22 @@ export default function SettingsPage() {
           <TabsTrigger value="system">{t("settings.tabs.system")}</TabsTrigger>
           <TabsTrigger value="users">{t("settings.tabs.users")}</TabsTrigger>
           <TabsTrigger value="audit">{t("settings.tabs.audit")}</TabsTrigger>
+          {/* Audit surface, not a daily view: the trigger only appears while
+              the tab is open — it is reached via the "Discarded data" button
+              under Configuration (or a deep link), not browsed into. */}
+          {tab === "discarded" && (
+            <TabsTrigger value="discarded">
+              {t("settings.tabs.discarded")}
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="config">
-          <ConfigPanel />
+          <ConfigPanel onOpenDiscarded={() => setTab("discarded")} />
+        </TabsContent>
+
+        <TabsContent value="discarded">
+          <DiscardedPanel />
         </TabsContent>
         <TabsContent value="system">
           <SystemPanel />

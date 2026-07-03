@@ -5,6 +5,11 @@ import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
 import { requireUser } from "../lib/auth";
 import { computeEmployeeState, type StateSignals } from "./lib/state";
+import {
+  isWithinBusinessHours,
+  startOfBusinessDayUtcMs,
+  WORK_EVIDENCE_STATES,
+} from "./lib/businessHours";
 import { appError } from "./lib/errors";
 import { safeEqual } from "./lib/crypto";
 
@@ -87,15 +92,16 @@ async function collapseIntoClockedOut(
  * clocked in again (or a retro-added entry closed the gap), so every same-day
  * CLOCKED_OUT stretch was actually a break. Samples are patched in place — or
  * deleted when the preceding sample is already BREAK, so the break reads as
- * one uninterrupted stretch. Day boundary is UTC, matching the Clockodo
- * poller's "today's entries" window; yesterday's assumption is left alone
- * (ending the day and coming back tomorrow really was a clock-out).
+ * one uninterrupted stretch. Day boundary is business-timezone midnight,
+ * matching the Clockodo poller's "today's entries" window; yesterday's
+ * assumption is left alone (ending the day and coming back tomorrow really
+ * was a clock-out).
  */
 async function reclassifyClockedOutAsBreak(
   ctx: MutationCtx,
   employeeId: string
 ): Promise<void> {
-  const dayStart = new Date().setUTCHours(0, 0, 0, 0);
+  const dayStart = startOfBusinessDayUtcMs();
   const samples = await ctx.db
     .query("stateSamples")
     .withIndex("by_employee_time", q =>
@@ -210,13 +216,56 @@ export const pushSignal = mutation({
     }
 
     const merged = { ...(existing ?? {}), ...patch };
-    const finalState = computeEmployeeState(signalsOf(merged));
-    const stateChanged = !existing || existing.finalState !== finalState;
+    let finalState = computeEmployeeState(signalsOf(merged));
+    let stateChanged = !existing || existing.finalState !== finalState;
+
+    // Out-of-hours quarantine: a transition into a "working" state (ACTIVE,
+    // IDLE, IN_CALL, WRAP_UP, BREAK) outside business hours is not believed —
+    // nobody starts working at 3 AM here, but overnight integration polls and
+    // machines waking for updates do produce such signals (and the engine's
+    // fall-through default is ACTIVE). The rejected transition is preserved in
+    // `discardedStateSamples` for the audit UI, the raw source fields are
+    // still cached, and the previous fused state stays in force. CLOCKED_OUT /
+    // ABSENT transitions always land — they assert the opposite of working.
+    if (
+      stateChanged &&
+      WORK_EVIDENCE_STATES.has(finalState) &&
+      !isWithinBusinessHours(now)
+    ) {
+      // One quarantine row per suppressed candidate, not one per poll: skip
+      // when the same candidate state was already logged since the last real
+      // state change.
+      const lastDiscarded = await ctx.db
+        .query("discardedStateSamples")
+        .withIndex("by_employee_time", q => q.eq("employeeId", args.employeeId))
+        .order("desc")
+        .first();
+      const alreadyLogged =
+        lastDiscarded?.state === finalState &&
+        lastDiscarded.at >= (existing?.finalStateSince ?? 0);
+      if (!alreadyLogged) {
+        await ctx.db.insert("discardedStateSamples", {
+          employeeId: args.employeeId,
+          state: finalState,
+          at: now,
+          reason: "outside_business_hours",
+          source: args.source,
+        });
+        console.log(
+          `[activity:state] ${args.employeeId} ${existing?.finalState ?? "(new)"} -> ${finalState} DISCARDED (outside business hours, source=${args.source})`
+        );
+      }
+      // Fall back to CLOCKED_OUT for a brand-new row — out of hours, "not
+      // working" is the only defensible default.
+      finalState = existing?.finalState ?? "CLOCKED_OUT";
+      stateChanged = !existing;
+    }
+
     // Track when the fused state last *changed*, so the dashboard can say
     // "inactive since 13:42" instead of only "updated 2m ago".
     let finalStateSince = stateChanged
       ? now
-      : (existing.finalStateSince ?? existing.updatedAt);
+      : (existing?.finalStateSince ?? existing?.updatedAt ?? now);
 
     if (stateChanged) {
       console.log(
@@ -475,5 +524,72 @@ export const history = query({
       .first();
 
     return prior ? [prior, ...rows] : rows;
+  },
+});
+
+/**
+ * Quarantined (rejected) state transitions for one employee in
+ * `[since, until]` — what the "Discarded" tab shows. These rows never entered
+ * the timeline; they exist purely so out-of-hours signals stay auditable
+ * instead of silently vanishing (or, worse, corrupting the day).
+ */
+export const discardedHistory = query({
+  args: {
+    employeeId: v.string(),
+    since: v.number(),
+    until: v.optional(v.number()),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { employeeId, since, until, limit }) => {
+    await requireUser(ctx);
+    const rows = await ctx.db
+      .query("discardedStateSamples")
+      .withIndex("by_employee_time", q =>
+        until !== undefined
+          ? q.eq("employeeId", employeeId).gte("at", since).lte("at", until)
+          : q.eq("employeeId", employeeId).gte("at", since)
+      )
+      .order("asc")
+      .take(Math.min(limit ?? 1000, 5000));
+    return rows.map(r => ({
+      state: r.state,
+      at: r.at,
+      reason: r.reason,
+      source: r.source ?? null,
+    }));
+  },
+});
+
+/**
+ * Org-wide feed of recently quarantined signals, newest first, joined to
+ * person names — the Settings → "Discarded data" view. Seeing *everyone's*
+ * rejected signals in one list is what makes systemic patterns visible (e.g.
+ * "every PC 'woke up' at 02:00" = an integration bug, not people working).
+ */
+export const discardedRecent = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit }) => {
+    await requireUser(ctx);
+    const rows = await ctx.db
+      .query("discardedStateSamples")
+      .withIndex("by_at")
+      .order("desc")
+      .take(Math.min(limit ?? 200, 1000));
+
+    const people = await ctx.db.query("people").take(2000);
+    const nameByEmployeeId = new Map(
+      people.flatMap(p =>
+        p.employeeId ? [[p.employeeId, p.name] as const] : []
+      )
+    );
+
+    return rows.map(r => ({
+      employeeId: r.employeeId,
+      personName: nameByEmployeeId.get(r.employeeId) ?? null,
+      state: r.state,
+      at: r.at,
+      reason: r.reason,
+      source: r.source ?? null,
+    }));
   },
 });
