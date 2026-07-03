@@ -1,9 +1,12 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { AlertTriangle } from "lucide-react";
 
+import { BrandedText, ProviderBadge } from "@/components/branding/ProviderMark";
 import { Badge } from "@/components/ui/badge";
 import type { EmployeeState } from "@/lib/activity/format";
 import { useI18n } from "@/lib/activity/i18n";
@@ -58,7 +61,7 @@ export function Signal({
   value,
   tone = "neutral",
 }: {
-  label: string;
+  label: ReactNode;
   value: string | null;
   tone?: "ok" | "warn" | "neutral";
 }) {
@@ -131,12 +134,12 @@ export function SourceSignals({
         }
       />
       <Signal
-        label={t("state.source.genesys")}
+        label={<ProviderBadge provider="genesys" />}
         tone={genesysTone}
         value={genesys}
       />
       <Signal
-        label={t("state.source.clockodo")}
+        label={<ProviderBadge provider="clockodo" />}
         tone={
           clockodoAbsent || clockodoBreak
             ? "warn"
@@ -191,7 +194,9 @@ export function HealthBanner() {
           >
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warn" />
             <div className="min-w-0">
-              <p className="text-sm text-fg">{text}</p>
+              <p className="text-sm text-fg">
+                <BrandedText text={text} />
+              </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {t("state.health.degraded")}
               </p>

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { TrademarkNotice } from "@/components/branding/TrademarkNotice";
 import { useIsManager } from "@/components/providers/current-user";
 
 /**
@@ -19,5 +20,10 @@ export default function ActivityLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <TrademarkNotice className="mx-auto max-w-5xl px-4 pb-8 pt-2 sm:px-6" />
+    </>
+  );
 }

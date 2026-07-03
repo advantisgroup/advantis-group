@@ -10,6 +10,7 @@ import { Clock, Plane, Plus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { ProviderBadge } from "@/components/branding/ProviderMark";
 import { PageHeader } from "@/components/PageHeader";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
@@ -217,7 +218,7 @@ function MyAbsences() {
                 <span className="font-medium">{t(a.type)}</span>
                 {a.source === "clockodo" && (
                   <Badge variant="muted" className="gap-1">
-                    <Clock className="h-3 w-3" /> Clockodo
+                    <ProviderBadge provider="clockodo" />
                   </Badge>
                 )}
               </div>

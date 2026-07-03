@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { ChevronDown, HelpCircle, Search } from "lucide-react";
 
+import { BrandedText } from "@/components/branding/ProviderMark";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -70,7 +71,7 @@ export default function HelpPage() {
                   <details className="group">
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-medium text-fg transition-colors hover:bg-panel-2">
                       <span className="flex items-center gap-2.5">
-                        {t(`faq.q.${e.id}`)}
+                        <BrandedText text={t(`faq.q.${e.id}`)} />
                         <Badge variant="muted" className="shrink-0 font-normal">
                           {t(`faq.scope.${e.scope}`)}
                         </Badge>
@@ -81,7 +82,7 @@ export default function HelpPage() {
                       />
                     </summary>
                     <div className="whitespace-pre-line px-4 pb-4 text-sm leading-relaxed text-muted-foreground">
-                      {t(`faq.a.${e.id}`)}
+                      <BrandedText text={t(`faq.a.${e.id}`)} />
                     </div>
                   </details>
                 </Card>
