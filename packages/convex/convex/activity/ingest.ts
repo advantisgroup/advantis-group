@@ -5,6 +5,7 @@ import type { MutationCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
 import { readConfig } from "./settings";
 import { logEvent } from "./events";
+import { applyStateSignal } from "./state";
 
 /**
  * Server-side persistence for agent samples. The ONLY place samples become
@@ -135,6 +136,26 @@ export const recordSamples = internalMutation({
           agentVersion: newest.agentVersion,
           lastIngestAt: receivedAt,
         });
+      }
+
+      // Feed the fused employee-state cache from the same heartbeat. This is
+      // the *only* place the workstation's "agent" signal reaches
+      // `employeeStates` — the desktop agent authenticates with its device
+      // token and never learns its own `employeeId`, so the secret-guarded
+      // `pushSignal` mutation (which expects a client-supplied `employeeId`)
+      // is unreachable from the real agent. Resolve the link the same way a
+      // manager set it up (device -> personId -> employeeId) and apply it
+      // directly, or the "Workstation" row on the dashboard never leaves "—".
+      if (device?.personId) {
+        const person = await ctx.db.get(device.personId);
+        if (person?.employeeId) {
+          await applyStateSignal(ctx, {
+            employeeId: person.employeeId,
+            source: "agent",
+            deviceIdle: newest.idleMs >= inactivityMs,
+            idleSeconds: Math.round(newest.idleMs / 1000),
+          });
+        }
       }
     }
 
