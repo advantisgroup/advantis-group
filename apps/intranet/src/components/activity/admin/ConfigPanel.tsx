@@ -172,7 +172,12 @@ export function ConfigPanel({
       let cursor: number | undefined = undefined;
       let moved = 0;
       for (let i = 0; i < MAX_TROUBLE_BATCHES; i++) {
-        const res = await quarantineStep({ cursor });
+        const res = await quarantineStep({ cursor }) as {
+          scanned: number;
+          quarantined: number;
+          cursorAt: number | null;
+          done: boolean;
+        };
         moved += res.quarantined;
         if (res.done || res.cursorAt == null) break;
         cursor = res.cursorAt;
