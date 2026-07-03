@@ -25,9 +25,21 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         route: "/",
       },
       {
+        id: "dashboard.actions",
+        targetAttr: "tour-dashboard-actions",
+        popoutSide: "bottom",
+        route: "/",
+      },
+      {
         id: "dashboard.main",
         targetAttr: "tour-dashboard-main",
         popoutSide: "top",
+        route: "/",
+      },
+      {
+        id: "dashboard.customize",
+        targetAttr: "tour-dashboard-customize",
+        popoutSide: "bottom",
         route: "/",
       },
     ],

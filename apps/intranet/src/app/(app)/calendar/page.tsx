@@ -343,6 +343,16 @@ export default function CalendarPage() {
     }
   }, []);
 
+  // Deep link from the dashboard quick action: /calendar?new=1 opens the
+  // event dialog straight away (managers only — the mutation is gated anyway).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") !== null) {
+      setEventDraft(emptyDraft(isoDay(new Date())));
+      window.history.replaceState(null, "", "/calendar");
+    }
+  }, []);
+
   // The queried range depends on the active view: the month grid spans whole
   // weeks; the week view a single week; the agenda the whole month.
   let rangeStart: Date;

@@ -63,7 +63,25 @@
     "noEvents": "Keine anstehenden Termine",
     "noAnnouncements": "Keine Ankündigungen",
     "noApprovals": "Nichts zu genehmigen",
-    "noUnread": "Alles gelesen"
+    "noUnread": "Alles gelesen",
+    "greetingMorning": "Guten Morgen, {name}",
+    "greetingAfternoon": "Guten Tag, {name}",
+    "greetingEvening": "Guten Abend, {name}",
+    "nextAbsence": "Nächste Abwesenheit: {type}, {start} – {end}",
+    "whosOutToday": "Wer ist heute abwesend",
+    "nobodyOut": "Heute sind alle da",
+    "outUntil": "bis {date}",
+    "todaysSchedule": "Heutiger Plan",
+    "customize": "Karten anpassen",
+    "actionRequestAbsence": "Abwesenheit beantragen",
+    "actionNewEvent": "Neuer Termin",
+    "actionNewAnnouncement": "Neue Ankündigung",
+    "actionUpload": "Datei hochladen",
+    "paletteHint": "⌘K zum Suchen",
+    "openCalendar": "Kalender öffnen",
+    "openAnnouncements": "Ankündigungen öffnen",
+    "openChat": "Chat öffnen",
+    "openAbsences": "Abwesenheiten öffnen"
   },
   "Calendar": {
     "title": "Kalender",
@@ -366,9 +384,17 @@
           "title": "Schnellaktionen",
           "description": "Benachrichtigungen, Einstellungen und dein Konto sind hier oben immer erreichbar."
         },
+        "actions": {
+          "title": "Schnellaktionen",
+          "description": "Spring direkt zu den häufigsten Aufgaben — Abwesenheit beantragen, Datei hochladen oder (als Führungskraft) Termine und Ankündigungen erstellen. Am Desktop öffnet ⌘K überall die Suche."
+        },
         "main": {
           "title": "Dein Dashboard",
-          "description": "Ein Überblick über das Geschehen – anstehende Termine, aktuelle Neuigkeiten und offene Punkte."
+          "description": "Ein Überblick über das Geschehen – anstehende Termine, aktuelle Neuigkeiten, wer heute abwesend ist und offene Punkte. Jede Zeile verlinkt zu ihrem Bereich."
+        },
+        "customize": {
+          "title": "Mach es zu deinem",
+          "description": "Blende Karten aus, die du nicht brauchst — dein Layout wird in deinem Konto gespeichert und folgt dir auf alle Geräte."
         }
       },
       "announcements": {

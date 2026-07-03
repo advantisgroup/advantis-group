@@ -792,6 +792,17 @@ export default function AbsencesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AbsenceRow | null>(null);
 
+  // Deep link from the dashboard quick action: /absences?new=1 opens the
+  // request dialog straight away.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") !== null) {
+      setEditing(null);
+      setDialogOpen(true);
+      window.history.replaceState(null, "", "/absences");
+    }
+  }, []);
+
   const openNew = () => {
     setEditing(null);
     setDialogOpen(true);

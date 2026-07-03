@@ -63,7 +63,25 @@
     "noEvents": "No upcoming events",
     "noAnnouncements": "No announcements",
     "noApprovals": "Nothing waiting for approval",
-    "noUnread": "You're all caught up"
+    "noUnread": "You're all caught up",
+    "greetingMorning": "Good morning, {name}",
+    "greetingAfternoon": "Good afternoon, {name}",
+    "greetingEvening": "Good evening, {name}",
+    "nextAbsence": "Next absence: {type}, {start} – {end}",
+    "whosOutToday": "Who's out today",
+    "nobodyOut": "Everyone's in today",
+    "outUntil": "until {date}",
+    "todaysSchedule": "Today's schedule",
+    "customize": "Customize cards",
+    "actionRequestAbsence": "Request absence",
+    "actionNewEvent": "New event",
+    "actionNewAnnouncement": "New announcement",
+    "actionUpload": "Upload file",
+    "paletteHint": "Press ⌘K to search",
+    "openCalendar": "Open calendar",
+    "openAnnouncements": "Open announcements",
+    "openChat": "Open chat",
+    "openAbsences": "Open absences"
   },
   "Calendar": {
     "title": "Calendar",
@@ -366,9 +384,17 @@
           "title": "Quick actions",
           "description": "Notifications, settings, and your account are always available up here."
         },
+        "actions": {
+          "title": "Quick actions",
+          "description": "Jump straight into the things you do most — request an absence, upload a file, or (as a manager) create events and announcements. On desktop, ⌘K opens the search palette from anywhere."
+        },
         "main": {
           "title": "Your dashboard",
-          "description": "A snapshot of what's happening — upcoming events, latest news, and pending items."
+          "description": "A snapshot of what's happening — upcoming events, latest news, who's out today, and pending items. Every row links to the tab it came from."
+        },
+        "customize": {
+          "title": "Make it yours",
+          "description": "Hide the cards you don't need — your layout is saved to your account and follows you across devices."
         }
       },
       "announcements": {
