@@ -14,6 +14,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -123,6 +130,53 @@ function EditableText({
   );
 }
 
+/**
+ * Person → intranet account link. This is what lets ActivityTrack-only
+ * mappings (Clockodo/Genesys ids kept in the roster) carry over to the rest of
+ * the intranet — e.g. mirrored Clockodo absences resolve through this link for
+ * employees whose intranet account has no Clockodo id of its own.
+ */
+function UserLinkSelect({
+  value,
+  users,
+  disabled,
+  noneLabel,
+  onChange,
+}: {
+  value: string | undefined;
+  users: { _id: string; name: string }[];
+  disabled: boolean;
+  noneLabel: string;
+  onChange: (userId: string | null) => void;
+}) {
+  if (disabled) {
+    const linked = users.find(u => u._id === value);
+    return (
+      <span className="text-sm text-muted-foreground">
+        {linked?.name ?? "—"}
+      </span>
+    );
+  }
+  return (
+    <Select
+      value={value ?? "none"}
+      onValueChange={v => onChange(v === "none" ? null : v)}
+    >
+      <SelectTrigger className="h-8 w-full min-w-[10rem] text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">{noneLabel}</SelectItem>
+        {users.map(u => (
+          <SelectItem key={u._id} value={u._id}>
+            {u.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 /** Labelled field wrapper for the mobile roster cards. */
 function Field({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
@@ -137,6 +191,7 @@ export default function PeoplePage() {
   const { t } = useI18n();
   const me = useQuery(api.users.me);
   const people = useQuery(api.activity.people.list);
+  const intranetUsers = useQuery(api.users.list, {});
   const create = useMutationWithToast(api.activity.people.create);
   const update = useMutationWithToast(api.activity.people.update);
   const remove = useMutationWithToast(api.activity.people.remove);
@@ -202,12 +257,34 @@ export default function PeoplePage() {
     patch: Partial<{
       name: string;
       email: string;
+      userId: GenericId<"users"> | null;
       employeeId: string;
       genesysUserId: string;
       clockodoUserId: string;
       active: boolean;
     }>
   ) => void update({ personId, ...patch }, { success: t("people.updated") });
+
+  const linkableUsers = (intranetUsers ?? []).map(u => ({
+    _id: u._id as string,
+    name:
+      [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
+  }));
+
+  const userLinkCell = (p: {
+    _id: GenericId<"people">;
+    userId?: GenericId<"users">;
+  }) => (
+    <UserLinkSelect
+      value={p.userId as string | undefined}
+      users={linkableUsers}
+      disabled={!canEdit}
+      noneLabel={t("people.intranetUserNone")}
+      onChange={userId =>
+        save(p._id, { userId: (userId as GenericId<"users"> | null) ?? null })
+      }
+    />
+  );
 
   const deleteButton = (id: GenericId<"people">) => (
     <Button
@@ -338,6 +415,7 @@ export default function PeoplePage() {
                     onSave={value => save(p._id, { clockodoUserId: value })}
                   />
                 </Field>
+                <Field label={t("people.intranetUser")}>{userLinkCell(p)}</Field>
                 <label className="flex w-fit items-center gap-2 pt-1 text-sm text-fg">
                   <Checkbox
                     checked={p.active}
@@ -369,6 +447,7 @@ export default function PeoplePage() {
               <TableHead>
                 <BrandedText text={t("people.clockodoId")} />
               </TableHead>
+              <TableHead>{t("people.intranetUser")}</TableHead>
               <TableHead>{t("people.active")}</TableHead>
               {canEdit && <TableHead />}
             </TableRow>
@@ -377,7 +456,7 @@ export default function PeoplePage() {
             {people.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={canEdit ? 7 : 6}
+                  colSpan={canEdit ? 8 : 7}
                   className="py-10 text-center text-sm text-muted-foreground"
                 >
                   {t("people.empty")}
@@ -387,7 +466,7 @@ export default function PeoplePage() {
             {people.length > 0 && filtered.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={canEdit ? 7 : 6}
+                  colSpan={canEdit ? 8 : 7}
                   className="py-10 text-center text-sm text-muted-foreground"
                 >
                   {t("common.noResults")}
@@ -439,6 +518,7 @@ export default function PeoplePage() {
                     onSave={value => save(p._id, { clockodoUserId: value })}
                   />
                 </TableCell>
+                <TableCell>{userLinkCell(p)}</TableCell>
                 <TableCell>
                   <Checkbox
                     checked={p.active}

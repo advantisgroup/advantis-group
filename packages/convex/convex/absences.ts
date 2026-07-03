@@ -296,6 +296,19 @@ export const listForCalendar = query({
   },
 });
 
+/** When the hourly Clockodo mirror last reconciled, for the freshness hint. */
+export const clockodoSyncStatus = query({
+  args: {},
+  handler: async ctx => {
+    await requireUser(ctx);
+    const row = await ctx.db
+      .query("activitySettings")
+      .withIndex("by_key", q => q.eq("key", "absenceSync.lastRunAt"))
+      .unique();
+    return { lastRunAt: row ? Number(row.value) : null };
+  },
+});
+
 /** Schedule the absence-decision email to the requester via the Elysia API. */
 async function scheduleDecisionEmail(
   ctx: MutationCtx,

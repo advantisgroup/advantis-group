@@ -99,6 +99,8 @@ export const de: Dict = {
   "people.employeeId": "Mitarbeiter-ID",
   "people.genesysId": "Genesys-ID",
   "people.clockodoId": "Clockodo-ID",
+  "people.intranetUser": "Intranet-Konto",
+  "people.intranetUserNone": "Nicht verknüpft",
   "people.idsHint":
     "Verknüpft den Mitarbeiter mit Genesys und Clockodo für den zusammengeführten Live-Status.",
 

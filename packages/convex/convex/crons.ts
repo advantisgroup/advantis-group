@@ -10,26 +10,37 @@ import { internal } from "./_generated/api";
  */
 const crons = cronJobs();
 
-// Poll integrations around the clock, every day. This is the *only* thing that
-// keeps the fused state honest when the Clockodo webhook is slow, misconfigured,
-// or disabled server-side (which has happened) — a webhook-only gap used to
-// leave people frozen in whatever state they were last seen in (e.g. "clocked
-// in and working" hours after they actually clocked out) until the next
-// business-hours poll picked it up. Frequent during the day for responsiveness,
-// less frequent overnight/weekends where less changes but staleness still must
-// resolve eventually — this cadence is also what lets the 20:00 "assumed →
-// certain clocked-out" transition (see clockodo.ts) actually fire promptly in
-// the evening instead of depending on a webhook that may not be there.
+// Poll integrations around the clock, every day. The webhooks are the fast
+// path for state changes; this poll is the safety net that keeps the fused
+// state honest when a webhook is slow, misconfigured, or disabled server-side
+// (which has happened) — a webhook-only gap used to leave people frozen in
+// whatever state they were last seen in (e.g. "clocked in and working" hours
+// after they actually clocked out). Since webhooks carry most of the
+// freshness, a relaxed cadence suffices: every 15 min during the day, every
+// 2 h overnight where less changes but staleness still must resolve
+// eventually — the off-hours pass is also what lets the 20:00 "assumed →
+// certain clocked-out" transition (see clockodo.ts) fire in the evening
+// instead of depending on a webhook that may not be there.
 crons.cron(
   "activity: poll integrations (daytime)",
-  "*/2 5-18 * * *",
+  "*/15 5-18 * * *",
   internal.activity.integrations.pollAll,
   {}
 );
 crons.cron(
   "activity: poll integrations (off-hours fallback)",
-  "*/10 19-23,0-4 * * *",
+  "0 0-4/2,19-23/2 * * *",
   internal.activity.integrations.pollAll,
+  {}
+);
+
+// Reconcile Clockodo absences into the intranet mirror (absences tab +
+// calendar). The apps/api webhook is the fast path; this hourly pass catches
+// missed webhooks, deletions, and employees who got linked after the fact.
+crons.hourly(
+  "absences: sync Clockodo mirror",
+  { minuteUTC: 35 },
+  internal.absenceSync.syncClockodoAbsences,
   {}
 );
 

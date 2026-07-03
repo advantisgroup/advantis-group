@@ -98,6 +98,8 @@ export const en: Dict = {
   "people.employeeId": "Employee ID",
   "people.genesysId": "Genesys ID",
   "people.clockodoId": "Clockodo ID",
+  "people.intranetUser": "Intranet account",
+  "people.intranetUserNone": "Not linked",
   "people.idsHint":
     "Links the person to Genesys and Clockodo for the fused live state.",
 

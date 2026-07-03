@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as absenceSync from "../absenceSync.js";
 import type * as absences from "../absences.js";
 import type * as accessRequests from "../accessRequests.js";
 import type * as activity_access from "../activity/access.js";
@@ -66,6 +67,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  absenceSync: typeof absenceSync;
   absences: typeof absences;
   accessRequests: typeof accessRequests;
   "activity/access": typeof activity_access;
