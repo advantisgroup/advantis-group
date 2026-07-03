@@ -90,7 +90,18 @@
     "event": "Event",
     "upcoming": "Upcoming",
     "noUpcoming": "Nothing coming up",
-    "legend": "Legend"
+    "legend": "Legend",
+    "editEvent": "Edit event",
+    "duplicate": "Duplicate",
+    "updated": "Event updated",
+    "exportIcs": "Export view (.ics)",
+    "exported": "Calendar file downloaded",
+    "onlyMyAbsences": "Only my absences",
+    "allDepartments": "All departments",
+    "jumpToDate": "Jump to date",
+    "outCount": "{count} out",
+    "addEventOn": "Add event on this day",
+    "weekShort": "Wk"
   },
   "Absences": {
     "title": "Absences",
@@ -375,9 +386,21 @@
           "title": "Team calendar",
           "description": "View and create events visible to everyone or specific teams."
         },
+        "toolbar": {
+          "title": "Navigate the calendar",
+          "description": "Switch between month, week and agenda views, page through periods with the arrows (or your keyboard's ← → keys, T for today), jump straight to a date, and export the current view as an .ics file."
+        },
+        "filters": {
+          "title": "Focus the view",
+          "description": "The legend is interactive: click a type to hide or show it, narrow to one department, or keep only your own absences. Department-targeted events get their own color."
+        },
         "view": {
-          "title": "Events at a glance",
-          "description": "Browse upcoming events by day, week or month."
+          "title": "Events and absences together",
+          "description": "Events and approved absences (including those synced from Clockodo) share one calendar. Multi-day entries span every day they cover; click a day for its overview or any chip for details."
+        },
+        "add": {
+          "title": "Create events",
+          "description": "As a manager you can create events for everyone or a single department. From an event's details you can edit or duplicate it, and clicking a day offers a quick-create shortcut."
         }
       },
       "absences": {

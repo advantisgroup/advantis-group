@@ -341,6 +341,7 @@ export const listForCalendar = query({
           _id: a._id,
           userId: a.userId,
           userName: displayName(u),
+          userDepartment: u?.department ?? null,
           type: a.type,
           startDate: a.startDate,
           endDate: a.endDate,

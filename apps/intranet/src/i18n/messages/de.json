@@ -90,7 +90,18 @@
     "event": "Termin",
     "upcoming": "Anstehend",
     "noUpcoming": "Nichts in Sicht",
-    "legend": "Legende"
+    "legend": "Legende",
+    "editEvent": "Termin bearbeiten",
+    "duplicate": "Duplizieren",
+    "updated": "Termin aktualisiert",
+    "exportIcs": "Ansicht exportieren (.ics)",
+    "exported": "Kalenderdatei heruntergeladen",
+    "onlyMyAbsences": "Nur meine Abwesenheiten",
+    "allDepartments": "Alle Abteilungen",
+    "jumpToDate": "Zu Datum springen",
+    "outCount": "{count} abwesend",
+    "addEventOn": "Termin an diesem Tag anlegen",
+    "weekShort": "KW"
   },
   "Absences": {
     "title": "Abwesenheiten",
@@ -375,9 +386,21 @@
           "title": "Teamkalender",
           "description": "Sieh dir Termine an und erstelle Termine für alle oder bestimmte Teams."
         },
+        "toolbar": {
+          "title": "Im Kalender navigieren",
+          "description": "Wechsle zwischen Monats-, Wochen- und Agenda-Ansicht, blättere mit den Pfeilen (oder ← → auf der Tastatur, T für heute), springe direkt zu einem Datum und exportiere die aktuelle Ansicht als .ics-Datei."
+        },
+        "filters": {
+          "title": "Ansicht fokussieren",
+          "description": "Die Legende ist interaktiv: Klicke auf eine Art, um sie aus- oder einzublenden, grenze auf eine Abteilung ein oder zeige nur deine eigenen Abwesenheiten. Abteilungs-Termine bekommen ihre eigene Farbe."
+        },
         "view": {
-          "title": "Termine auf einen Blick",
-          "description": "Durchstöbere anstehende Termine nach Tag, Woche oder Monat."
+          "title": "Termine und Abwesenheiten zusammen",
+          "description": "Termine und genehmigte Abwesenheiten (auch die aus Clockodo synchronisierten) teilen sich einen Kalender. Mehrtägige Einträge erscheinen an jedem abgedeckten Tag; klicke auf einen Tag für die Übersicht oder auf einen Eintrag für Details."
+        },
+        "add": {
+          "title": "Termine erstellen",
+          "description": "Als Führungskraft kannst du Termine für alle oder eine einzelne Abteilung erstellen. In den Termin-Details kannst du bearbeiten oder duplizieren, und ein Klick auf einen Tag bietet eine Schnellanlage."
         }
       },
       "absences": {

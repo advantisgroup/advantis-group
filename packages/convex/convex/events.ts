@@ -111,6 +111,8 @@ export const listForRange = query({
         end: e.end,
         allDay: e.allDay,
         color: e.color ?? null,
+        audience: e.audience,
+        guestVisible: e.guestVisible ?? false,
         createdByUserId: e.createdByUserId,
         createdByName: displayName(await ctx.db.get(e.createdByUserId)),
       }))

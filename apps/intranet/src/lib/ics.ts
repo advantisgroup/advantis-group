@@ -1,20 +1,31 @@
 /**
- * Minimal iCalendar (.ics) builder for all-day events — enough for absence and
- * event exports; no external dependency. `endDate` is inclusive (like our
- * absence rows); DTEND is exclusive per RFC 5545, so one day is added.
+ * Minimal iCalendar (.ics) builder — enough for absence and event exports; no
+ * external dependency. All-day entries use `startDate`/`endDate` (inclusive;
+ * DTEND is exclusive per RFC 5545, so one day is added); timed entries use
+ * `startMs`/`endMs` epoch milliseconds instead.
  */
 export interface IcsAllDayEvent {
   uid: string;
   title: string;
   /** ISO YYYY-MM-DD */
-  startDate: string;
+  startDate?: string;
   /** ISO YYYY-MM-DD, inclusive */
-  endDate: string;
+  endDate?: string;
+  startMs?: number;
+  endMs?: number;
   description?: string;
+  location?: string;
 }
 
 function icsDate(iso: string): string {
   return iso.replaceAll("-", "");
+}
+
+function icsDateTime(ms: number): string {
+  return new Date(ms)
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
 }
 
 function addDays(iso: string, days: number): string {
@@ -40,14 +51,20 @@ export function buildIcs(calendarName: string, events: IcsAllDayEvent[]): string
     `X-WR-CALNAME:${escapeText(calendarName)}`,
   ];
   for (const e of events) {
+    const timed = e.startMs !== undefined && e.endMs !== undefined;
     lines.push(
       "BEGIN:VEVENT",
       `UID:${e.uid}@advantis-intranet`,
       `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${icsDate(e.startDate)}`,
-      `DTEND;VALUE=DATE:${icsDate(addDays(e.endDate, 1))}`,
+      ...(timed
+        ? [`DTSTART:${icsDateTime(e.startMs!)}`, `DTEND:${icsDateTime(e.endMs!)}`]
+        : [
+            `DTSTART;VALUE=DATE:${icsDate(e.startDate!)}`,
+            `DTEND;VALUE=DATE:${icsDate(addDays(e.endDate!, 1))}`,
+          ]),
       `SUMMARY:${escapeText(e.title)}`,
       ...(e.description ? [`DESCRIPTION:${escapeText(e.description)}`] : []),
+      ...(e.location ? [`LOCATION:${escapeText(e.location)}`] : []),
       "END:VEVENT"
     );
   }
