@@ -489,9 +489,7 @@ export const troubleshootSanitizeDay = action({
       return { peopleProcessed: 0, inserted: 0, deleted: 0, quarantined: 0 };
     }
 
-    const absences = await fetchAbsences(
-      new Date(dayStartMs).getUTCFullYear()
-    );
+    const absences = await fetchAbsences(new Date(dayStartMs).getUTCFullYear());
 
     let peopleProcessed = 0;
     let inserted = 0;
