@@ -139,14 +139,15 @@ export const de: Dict = {
   "settings.trouble.syncDone": "Synchronisierung abgeschlossen.",
   "settings.trouble.quarantine": "Historische Nachtdaten korrigieren",
   "settings.trouble.quarantineHint":
-    "Wendet die Geschäftszeiten-Regel rückwirkend an — verschiebt bereits erfasste \"arbeitende\" Zustände außerhalb von 07:00–20:00 in die verworfenen Daten. Kann gefahrlos mehrfach ausgeführt werden.",
+    'Wendet die Geschäftszeiten-Regel rückwirkend an — verschiebt bereits erfasste "arbeitende" Zustände außerhalb von 07:00–20:00 in die verworfenen Daten. Kann gefahrlos mehrfach ausgeführt werden.',
   "settings.trouble.quarantineDone":
     "Fertig — {count} Einträge in die verworfenen Daten verschoben.",
   "settings.trouble.prune": "Aufbewahrungsbereinigung jetzt ausführen",
   "settings.trouble.pruneHint":
     "Löscht Daten, die älter als das konfigurierte Aufbewahrungsfenster sind, sofort statt bei der nächtlichen Bereinigung.",
   "settings.trouble.pruneDone": "Fertig — {count} alte Zeilen gelöscht.",
-  "settings.trouble.failed": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+  "settings.trouble.failed":
+    "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
   "settings.trouble.sanitize": "Tiefenbereinigung (Clockodo)",
   "settings.trouble.sanitizeHint":
     "Fragt jeden Clockodo-Eintrag für den gewählten Tag tief ab (nicht nur den aktuellen Moment) und schreibt den Abwesenheits-/Ausstempel-/Pausen-Verlauf dieses Tages entsprechend neu — korrigiert Daten von vor der Geschäftszeiten-Korrektur oder Abweichungen durch nachträglich bearbeitete oder gelöschte Clockodo-Einträge. Rührt Gespräch/Aktiv/Inaktiv-Zustände von Genesys oder dem Arbeitsplatz-Agenten nie an. Kann gefahrlos mehrfach ausgeführt werden.",

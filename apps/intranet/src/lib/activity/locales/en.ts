@@ -137,8 +137,9 @@ export const en: Dict = {
   "settings.trouble.syncDone": "Sync finished.",
   "settings.trouble.quarantine": "Fix historical overnight data",
   "settings.trouble.quarantineHint":
-    "Apply the business-hours rule retroactively — moves already-recorded \"working\" states outside 07:00–20:00 into Discarded data. Safe to run repeatedly.",
-  "settings.trouble.quarantineDone": "Done — {count} entries moved to Discarded data.",
+    'Apply the business-hours rule retroactively — moves already-recorded "working" states outside 07:00–20:00 into Discarded data. Safe to run repeatedly.',
+  "settings.trouble.quarantineDone":
+    "Done — {count} entries moved to Discarded data.",
   "settings.trouble.prune": "Run retention cleanup now",
   "settings.trouble.pruneHint":
     "Delete data older than the configured retention window immediately, instead of waiting for tonight's scheduled cleanup.",

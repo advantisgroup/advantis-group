@@ -192,7 +192,12 @@ export const troubleshootPruneNow = mutation({
   handler: async (ctx, { continuation }) => {
     const me = await requireAdmin(ctx);
     if (!continuation) {
-      await writeAudit(ctx, me._id, "maintenance.pruneNow", "retention pruning");
+      await writeAudit(
+        ctx,
+        me._id,
+        "maintenance.pruneNow",
+        "retention pruning"
+      );
     }
     const cutoff =
       Date.now() - (await readConfig(ctx)).retentionDays * 24 * 60 * 60 * 1000;
@@ -284,7 +289,8 @@ export const reconcileClockodoDayForEmployee = internalMutation({
       )
       .order("desc")
       .first();
-    const priorIsNonClockodo = !!prior && !CLOCKODO_OWNED_STATES.has(prior.state);
+    const priorIsNonClockodo =
+      !!prior && !CLOCKODO_OWNED_STATES.has(prior.state);
 
     function hasNonClockodoEvidenceAt(t: number): boolean {
       return keptTimes.some(k => k <= t) || priorIsNonClockodo;
