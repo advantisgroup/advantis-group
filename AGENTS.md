@@ -80,7 +80,7 @@ today (`apps/intranet/public/` only has Advantis's own logos).
 
 ## House style
 
-- No comments explaining *what* code does — only *why*, for non-obvious
+- No comments explaining _what_ code does — only _why_, for non-obvious
   constraints (see existing files in `packages/convex/convex/activity/` for
   the norm: dense "why" comments on tricky invariants, nothing else).
 - Don't add speculative abstractions, fallbacks, or error handling for cases
