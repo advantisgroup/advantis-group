@@ -1,5 +1,6 @@
 import { api } from "../../_generated/api";
 import type { ActionCtx } from "../../_generated/server";
+import { businessDayOf } from "./businessHours";
 
 /**
  * Cross-integration helpers shared by the Genesys and Clockodo clients and the
@@ -23,8 +24,14 @@ export function healthStatusOf(err: unknown): "unavailable" | "unconfigured" {
 export const errMessage = (err: unknown) =>
   err instanceof Error ? err.message : String(err);
 
-/** Today as YYYY-MM-DD (UTC). */
-export const today = () => new Date().toISOString().slice(0, 10);
+/**
+ * Today as YYYY-MM-DD in the *business* timezone — NOT UTC. The Clockodo
+ * poller keys its whole "worked today / clocked out" derivation on this; when
+ * it was UTC, the day flipped at 00:00 UTC (02:00 Berlin in summer), the
+ * entries window emptied, and everyone's overnight CLOCKED_OUT was erased —
+ * the state engine then fell through to ACTIVE at exactly 02:00.
+ */
+export const today = () => businessDayOf(Date.now());
 
 /** The external-id map for every active person, as returned by `state.mappings`. */
 export interface Mapping {

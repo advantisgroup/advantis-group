@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   KeyRound,
   Loader2,
+  ShieldAlert,
   SlidersHorizontal,
 } from "lucide-react";
 
@@ -64,7 +65,12 @@ function NumberField({
 }
 
 /** Operational configuration + tracker debug password (IT admin). */
-export function ConfigPanel() {
+export function ConfigPanel({
+  onOpenDiscarded,
+}: {
+  /** Opens the tucked-away "Discarded data" audit view (settings tab). */
+  onOpenDiscarded?: () => void;
+}) {
   const { t } = useI18n();
   const toast = useToast();
 
@@ -242,6 +248,30 @@ export function ConfigPanel() {
           </Reveal>
         </CardContent>
       </Card>
+
+      {/* Discarded data — entry point to the quarantine audit view. Kept as a
+          button here instead of a prominent tab: rejected signals are for
+          occasional review, not daily browsing. */}
+      {onOpenDiscarded && (
+        <Card className="animate-fade-up lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
+                <ShieldAlert className="h-4 w-4" />
+              </span>
+              <CardTitle className="text-base">
+                {t("settings.discarded.heading")}
+              </CardTitle>
+            </div>
+            <CardDescription>{t("settings.discarded.hint")}</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0 sm:pt-0">
+            <Button variant="outline" onClick={onOpenDiscarded}>
+              {t("settings.discarded.open")}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Access control — informational. Sign-in is governed at the intranet
           level, so domains and admins are shown read-only here. */}

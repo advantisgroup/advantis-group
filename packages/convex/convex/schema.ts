@@ -519,6 +519,35 @@ export default defineSchema({
     .index("by_employee_time", ["employeeId", "at"])
     .index("by_at", ["at"]),
 
+  // Quarantine for state transitions the engine refused to write to
+  // `stateSamples` — e.g. "working" evidence arriving outside business hours
+  // (overnight integration polls, a PC waking at 3 AM for updates). Kept
+  // separately so the timeline stays clean while managers can still audit
+  // what was rejected and why (the "Discarded" tab).
+  discardedStateSamples: defineTable({
+    employeeId: v.string(),
+    state: v.union(
+      v.literal("ABSENT"),
+      v.literal("CLOCKED_OUT"),
+      v.literal("BREAK"),
+      v.literal("IN_CALL"),
+      v.literal("WRAP_UP"),
+      v.literal("ACTIVE"),
+      v.literal("IDLE")
+    ),
+    /** When the rejected transition would have taken effect (epoch ms). */
+    at: v.number(),
+    /** Machine-readable rejection reason (e.g. "outside_business_hours"). */
+    reason: v.string(),
+    /** Signal source that triggered the rejected transition; unset for rows
+     * quarantined retroactively by the backfill repair. */
+    source: v.optional(
+      v.union(v.literal("agent"), v.literal("genesys"), v.literal("clockodo"))
+    ),
+  })
+    .index("by_employee_time", ["employeeId", "at"])
+    .index("by_at", ["at"]),
+
   // Integration health, one row per external source.
   integrationHealth: defineTable({
     source: v.union(v.literal("genesys"), v.literal("clockodo")),
