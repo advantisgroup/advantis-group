@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { Reveal } from "@/components/activity/motion/Reveal";
+import { BrandedText } from "@/components/branding/ProviderMark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -372,7 +373,7 @@ export function ConfigPanel({
                 {t("settings.trouble.syncNow")}
               </Button>
               <p className="text-xs text-muted-foreground">
-                {t("settings.trouble.syncNowHint")}
+                <BrandedText text={t("settings.trouble.syncNowHint")} />
               </p>
               {troubleResult.sync && (
                 <p className="text-xs font-medium text-ok">
@@ -435,10 +436,10 @@ export function ConfigPanel({
               from Genesys or the desktop agent. */}
           <div className="border-t border-border-soft pt-4">
             <p className="text-sm font-medium text-fg">
-              {t("settings.trouble.sanitize")}
+              <BrandedText text={t("settings.trouble.sanitize")} />
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              {t("settings.trouble.sanitizeHint")}
+              <BrandedText text={t("settings.trouble.sanitizeHint")} />
             </p>
             <div className="mt-2.5 flex flex-wrap items-end gap-2.5">
               <label className="flex flex-col gap-1 text-xs text-muted-foreground">

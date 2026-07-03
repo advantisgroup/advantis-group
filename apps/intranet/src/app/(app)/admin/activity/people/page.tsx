@@ -8,6 +8,7 @@ import { Plus, Search, Trash2, Users } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
+import { BrandedText } from "@/components/branding/ProviderMark";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -123,7 +124,7 @@ function EditableText({
 }
 
 /** Labelled field wrapper for the mobile roster cards. */
-function Field({ label, children }: { label: string; children: ReactNode }) {
+function Field({ label, children }: { label: ReactNode; children: ReactNode }) {
   return (
     <div className="space-y-1">
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -321,7 +322,7 @@ export default function PeoplePage() {
                     onSave={value => save(p._id, { employeeId: value })}
                   />
                 </Field>
-                <Field label={t("people.genesysId")}>
+                <Field label={<BrandedText text={t("people.genesysId")} />}>
                   <EditableId
                     initial={p.genesysUserId ?? ""}
                     disabled={!canEdit}
@@ -329,7 +330,7 @@ export default function PeoplePage() {
                     onSave={value => save(p._id, { genesysUserId: value })}
                   />
                 </Field>
-                <Field label={t("people.clockodoId")}>
+                <Field label={<BrandedText text={t("people.clockodoId")} />}>
                   <EditableId
                     initial={p.clockodoUserId ?? ""}
                     disabled={!canEdit}
@@ -362,8 +363,12 @@ export default function PeoplePage() {
               <TableHead>{t("people.name")}</TableHead>
               <TableHead>{t("people.email")}</TableHead>
               <TableHead>{t("people.employeeId")}</TableHead>
-              <TableHead>{t("people.genesysId")}</TableHead>
-              <TableHead>{t("people.clockodoId")}</TableHead>
+              <TableHead>
+                <BrandedText text={t("people.genesysId")} />
+              </TableHead>
+              <TableHead>
+                <BrandedText text={t("people.clockodoId")} />
+              </TableHead>
               <TableHead>{t("people.active")}</TableHead>
               {canEdit && <TableHead />}
             </TableRow>

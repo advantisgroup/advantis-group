@@ -5,6 +5,10 @@ import { useQuery } from "convex/react";
 import { ShieldAlert } from "lucide-react";
 
 import { STATE_COLOR } from "@/components/activity/charts/theme";
+import {
+  ProviderBadge,
+  type Provider,
+} from "@/components/branding/ProviderMark";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StateName } from "@/lib/activity/activity";
@@ -37,7 +41,13 @@ export function DiscardedPanel() {
     return label === key ? reason : label;
   };
   const sourceLabel = (source: string | null) =>
-    source ? t(`timeline.discarded.source.${source}`) : "—";
+    source === "genesys" || source === "clockodo" ? (
+      <ProviderBadge provider={source as Provider} />
+    ) : source ? (
+      t(`timeline.discarded.source.${source}`)
+    ) : (
+      "—"
+    );
 
   return (
     <Card className="animate-fade-up">
