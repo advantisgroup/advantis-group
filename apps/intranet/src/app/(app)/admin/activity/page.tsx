@@ -174,11 +174,13 @@ function FleetSummary({
           </button>
         );
       })}
+      {/* Odd tile out on the 2-col mobile grid — span the full row instead of
+          leaving an empty cell next to it. */}
       <button
         type="button"
         aria-pressed={filter === "all"}
         onClick={() => onFilterChange("all")}
-        className="block w-full appearance-none rounded-2xl border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50"
+        className="col-span-2 block w-full appearance-none rounded-2xl border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal/50 lg:col-span-1"
       >
         <StatCard
           label={t("overview.total")}
@@ -455,11 +457,14 @@ export default function OverviewPage() {
         data={team}
         loading={
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
                 <div
                   key={i}
-                  className="h-[7.5rem] animate-pulse rounded-2xl border border-border bg-panel/60"
+                  className={cn(
+                    "h-[7.5rem] animate-pulse rounded-2xl border border-border bg-panel/60",
+                    i === 4 && "col-span-2 lg:col-span-1"
+                  )}
                 />
               ))}
             </div>
@@ -525,8 +530,8 @@ export default function OverviewPage() {
                   value={filter}
                   onChange={setFilter}
                 />
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="relative">
+                <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+                  <div className="relative w-full sm:w-auto">
                     <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       ref={searchRef}
@@ -534,7 +539,7 @@ export default function OverviewPage() {
                       onChange={e => setSearch(e.target.value)}
                       placeholder={t("common.search")}
                       aria-label={t("common.search")}
-                      className="h-9 w-44 pl-9"
+                      className="h-9 w-full pl-9 sm:w-44"
                     />
                   </div>
                   <StateStripLegend

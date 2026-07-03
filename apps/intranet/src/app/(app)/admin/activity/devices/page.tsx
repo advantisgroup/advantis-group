@@ -24,7 +24,7 @@ import { StatCard } from "@/components/activity/StatCard";
 import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -215,6 +215,118 @@ export default function DevicesPage() {
     );
   }
 
+  // ── shared row pieces ──────────────────────────────────────────────────
+  // The list renders twice — stacked cards on mobile, a table from md up —
+  // so the badge, the person-link select and the admin actions live in one
+  // place and the two layouts can't drift apart in behaviour.
+
+  const timelineHref = (deviceId: string) =>
+    `/admin/activity/timeline/${encodeURIComponent(deviceId)}`;
+
+  const emptyMessage =
+    devices.length === 0 ? (
+      <>
+        {t("devices.empty")}{" "}
+        <Link
+          href="/admin/activity/help"
+          className="whitespace-nowrap text-signal hover:underline"
+        >
+          {t("devices.emptyCta")}
+        </Link>
+      </>
+    ) : (
+      t("devices.noMatches")
+    );
+
+  const statusBadge = (d: (typeof visibleDevices)[number]) => (
+    <InfoTip text={t(`help.deviceStatus.${d.status}`)}>
+      <Badge variant={DEVICE_VARIANT[d.status] ?? "muted"}>
+        {statusLabel[d.status]}
+      </Badge>
+    </InfoTip>
+  );
+
+  const personCell = (d: (typeof visibleDevices)[number]) =>
+    isManager ? (
+      <Select
+        value={d.personId ?? "__none__"}
+        onValueChange={value =>
+          void link(
+            {
+              deviceId: d._id,
+              personId:
+                value === "__none__"
+                  ? null
+                  : (value as (typeof people)[number]["_id"]),
+            },
+            { success: t("devices.linked") }
+          )
+        }
+      >
+        <SelectTrigger className="min-w-[8rem]">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="__none__">{t("devices.none")}</SelectItem>
+          {people.map(p => (
+            <SelectItem key={p._id} value={p._id}>
+              {p.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    ) : (
+      <span className="text-muted-foreground">
+        {d.personName ?? t("devices.none")}
+      </span>
+    );
+
+  const adminActions = (d: (typeof visibleDevices)[number]) =>
+    isAdmin ? (
+      <div className="flex items-center gap-2">
+        {d.status !== "active" && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="text-ok"
+            disabled={busyId === d._id}
+            onClick={() =>
+              void runWithBusy(d._id, () =>
+                approve({ deviceId: d._id }, { success: t("devices.approved") })
+              )
+            }
+          >
+            {t("devices.approve")}
+          </Button>
+        )}
+        {d.status !== "disabled" && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="text-danger"
+            disabled={busyId === d._id}
+            onClick={() =>
+              void runWithBusy(d._id, () =>
+                disable({ deviceId: d._id }, { success: t("devices.disabled") })
+              )
+            }
+          >
+            {t("devices.disable")}
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={busyId === d._id}
+          onClick={() => setDeleteTarget(d._id)}
+          className="text-danger hover:bg-danger/10 hover:text-danger"
+          aria-label={t("devices.delete")}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+    ) : null;
+
   return (
     <section className="space-y-6">
       {header}
@@ -280,7 +392,58 @@ export default function DevicesPage() {
             </Select>
           </div>
         </div>
-        <Card>
+        {/* Mobile: one card per device — the table's columns don't fit a
+            phone, and horizontal scrolling hides the actions. */}
+        <div className="space-y-3 md:hidden">
+          {visibleDevices.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+              </CardContent>
+            </Card>
+          ) : (
+            visibleDevices.map(d => (
+              <Card key={d._id}>
+                <CardContent className="space-y-3 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <Link
+                        href={timelineHref(d.deviceId)}
+                        className="block truncate font-medium text-fg transition-colors hover:text-signal"
+                      >
+                        {d.hostname}
+                      </Link>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {d.lastWindowsUser}
+                      </p>
+                    </div>
+                    <span className="shrink-0">{statusBadge(d)}</span>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {t("devices.person")}
+                    </p>
+                    {personCell(d)}
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft pt-3">
+                    <span className="text-xs text-muted-foreground">
+                      {t("devices.lastSeen")}{" "}
+                      <span className="font-medium text-fg/80">
+                        {formatRelativeTime(d.lastSeen, lang)}
+                      </span>
+                    </span>
+                    {adminActions(d)}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* md and up: the full table. */}
+        <Card className="hidden md:block">
           <Table aria-label={t("devices.slots.heading.devices")}>
             <TableHeader>
               <TableRow>
@@ -346,19 +509,7 @@ export default function DevicesPage() {
                     colSpan={6}
                     className="py-8 text-center text-sm text-muted-foreground"
                   >
-                    {devices.length === 0 ? (
-                      <>
-                        {t("devices.empty")}{" "}
-                        <Link
-                          href="/admin/activity/help"
-                          className="whitespace-nowrap text-signal hover:underline"
-                        >
-                          {t("devices.emptyCta")}
-                        </Link>
-                      </>
-                    ) : (
-                      t("devices.noMatches")
-                    )}
+                    {emptyMessage}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -366,7 +517,7 @@ export default function DevicesPage() {
                   <TableRow key={d._id}>
                     <TableCell className="font-medium text-fg">
                       <Link
-                        href={`/admin/activity/timeline/${encodeURIComponent(d.deviceId)}`}
+                        href={timelineHref(d.deviceId)}
                         className="text-fg transition-colors hover:text-signal"
                       >
                         {d.hostname}
@@ -391,106 +542,13 @@ export default function DevicesPage() {
                         </span>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <InfoTip text={t(`help.deviceStatus.${d.status}`)}>
-                        <Badge variant={DEVICE_VARIANT[d.status] ?? "muted"}>
-                          {statusLabel[d.status]}
-                        </Badge>
-                      </InfoTip>
-                    </TableCell>
-                    <TableCell>
-                      {isManager ? (
-                        <Select
-                          value={d.personId ?? "__none__"}
-                          onValueChange={value =>
-                            void link(
-                              {
-                                deviceId: d._id,
-                                personId:
-                                  value === "__none__"
-                                    ? null
-                                    : (value as (typeof people)[number]["_id"]),
-                              },
-                              { success: t("devices.linked") }
-                            )
-                          }
-                        >
-                          <SelectTrigger className="min-w-[8rem]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__none__">
-                              {t("devices.none")}
-                            </SelectItem>
-                            {people.map(p => (
-                              <SelectItem key={p._id} value={p._id}>
-                                {p.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          {d.personName ?? t("devices.none")}
-                        </span>
-                      )}
-                    </TableCell>
+                    <TableCell>{statusBadge(d)}</TableCell>
+                    <TableCell>{personCell(d)}</TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {formatRelativeTime(d.lastSeen, lang)}
                     </TableCell>
                     {(isAdmin || isManager) && (
-                      <TableCell>
-                        {isAdmin && (
-                          <div className="flex items-center gap-2">
-                            {d.status !== "active" && (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className="text-ok"
-                                disabled={busyId === d._id}
-                                onClick={() =>
-                                  void runWithBusy(d._id, () =>
-                                    approve(
-                                      { deviceId: d._id },
-                                      { success: t("devices.approved") }
-                                    )
-                                  )
-                                }
-                              >
-                                {t("devices.approve")}
-                              </Button>
-                            )}
-                            {d.status !== "disabled" && (
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                className="text-danger"
-                                disabled={busyId === d._id}
-                                onClick={() =>
-                                  void runWithBusy(d._id, () =>
-                                    disable(
-                                      { deviceId: d._id },
-                                      { success: t("devices.disabled") }
-                                    )
-                                  )
-                                }
-                              >
-                                {t("devices.disable")}
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              disabled={busyId === d._id}
-                              onClick={() => setDeleteTarget(d._id)}
-                              className="text-danger hover:bg-danger/10 hover:text-danger"
-                              aria-label={t("devices.delete")}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
+                      <TableCell>{adminActions(d)}</TableCell>
                     )}
                   </TableRow>
                 ))

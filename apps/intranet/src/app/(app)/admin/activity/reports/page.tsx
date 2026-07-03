@@ -313,7 +313,8 @@ export default function ReportsPage() {
               <TableHead className="text-right">
                 {t("reports.col.total")}
               </TableHead>
-              <TableHead className="w-8" />
+              {/* Chevron column is redundant on mobile — the name is a link. */}
+              <TableHead className="hidden w-8 sm:table-cell" />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -359,7 +360,7 @@ export default function ReportsPage() {
                     <TableCell className="text-right tabular-nums text-fg">
                       {formatDuration(total, lang)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       <Link
                         href={`/admin/activity/timeline/${encodeURIComponent(d.deviceId)}`}
                         aria-label={d.personName ?? d.hostname}
