@@ -891,7 +891,12 @@
     "announcements": "Ankündigungen",
     "guidebooks": "Wiki",
     "noResults": "Keine Ergebnisse gefunden",
-    "hint": "Suchen"
+    "hint": "Suchen",
+    "actions": "Aktionen",
+    "actionNewAbsence": "Abwesenheit beantragen",
+    "actionNewEvent": "Neuer Termin",
+    "actionNewAnnouncement": "Neue Ankündigung",
+    "actionUpload": "Datei hochladen"
   },
   "Guest": {
     "loginTitle": "Gast-Tour",
@@ -1095,5 +1100,48 @@
     "bulkDeleteTitle": "{count} Elemente löschen?",
     "uploadQueue": "Uploads",
     "retry": "Erneut versuchen"
+  },
+  "WhatsNew": {
+    "title": "Neu im Intranet",
+    "intro": "Jeder Bereich hat ein großes Upgrade bekommen. Hier die Highlights — klicke, um es auszuprobieren.",
+    "dismiss": "Alles klar",
+    "items": {
+      "dashboard": {
+        "title": "Übersicht",
+        "body": "„Wer ist heute abwesend“-Karte, Schnellaktionen, Inline-Genehmigungen und ausblendbare Karten."
+      },
+      "absences": {
+        "title": "Abwesenheiten",
+        "body": "Clockodo-Abwesenheiten synchronisieren automatisch; offene Anträge bearbeiten, Filter, Statistiken und .ics-Export."
+      },
+      "calendar": {
+        "title": "Kalender",
+        "body": "Termine bearbeiten und duplizieren, interaktive Filter, Kalenderwochen, Tastatur-Navigation und Export."
+      },
+      "announcements": {
+        "title": "Ankündigungen",
+        "body": "Beiträge planen, nachträglich bearbeiten, Entwürfe, Suche und Lese-Statistiken."
+      },
+      "directory": {
+        "title": "Mitarbeiter",
+        "body": "Online-Status, wer abwesend ist, Führungskraft & Team sowie mehr Filter."
+      },
+      "files": {
+        "title": "Dateien",
+        "body": "Rasteransicht, Sortierung, angepinnte Ordner, Massen-Download/-Löschen und eine Upload-Warteschlange."
+      },
+      "guidebooks": {
+        "title": "Wiki",
+        "body": "Suche, Favoriten, Inhaltsverzeichnis, Lesefortschritt und Feedback."
+      },
+      "notifications": {
+        "title": "Benachrichtigungen",
+        "body": "Tagesgruppierung, Stummschalten pro Art, ungelesen/entfernen und Browser-Benachrichtigungen."
+      },
+      "settings": {
+        "title": "Einstellungen",
+        "body": "Profilbild-Zuschnitt, App-Einstellungen (Startseite, Kalenderansicht) und deine Verknüpfungen."
+      }
+    }
   }
 }

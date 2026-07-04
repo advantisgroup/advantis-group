@@ -32,6 +32,14 @@ export const metadata: Metadata = {
   title: "Advantis Intranet",
   description: "Internal portal for Advantis Group employees",
   robots: { index: false, follow: false },
+  appleWebApp: {
+    capable: true,
+    title: "Advantis",
+    statusBarStyle: "default",
+  },
+  icons: {
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

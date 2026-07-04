@@ -17,13 +17,17 @@ import { useMutation, useQuery } from "convex/react";
 import {
   BookOpen,
   Calendar,
+  CalendarPlus,
+  FolderOpen,
   LayoutDashboard,
   Megaphone,
   MessageSquare,
   Plane,
+  Plus,
   Search,
   Settings,
   ShieldCheck,
+  UploadCloud,
   Users,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -119,6 +123,7 @@ export function CommandPalette() {
         icon: Megaphone,
       },
       { href: "/chat", label: tNav("chat"), icon: MessageSquare },
+      { href: "/files", label: tNav("files"), icon: FolderOpen },
       {
         href: "/guidebooks",
         label: tNav("guidebooks"),
@@ -140,6 +145,46 @@ export function CommandPalette() {
   const items: Item[] = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list: Item[] = [];
+
+    const actions = [
+      {
+        id: "new-absence",
+        label: t("actionNewAbsence"),
+        icon: Plane,
+        href: "/absences?new=1",
+      },
+      {
+        id: "new-event",
+        label: t("actionNewEvent"),
+        icon: CalendarPlus,
+        href: "/calendar?new=1",
+        managerOnly: true,
+      },
+      {
+        id: "new-announcement",
+        label: t("actionNewAnnouncement"),
+        icon: Plus,
+        href: "/announcements?new=1",
+        managerOnly: true,
+      },
+      {
+        id: "upload-file",
+        label: t("actionUpload"),
+        icon: UploadCloud,
+        href: "/files",
+      },
+    ].filter(a => !a.managerOnly || isManager);
+    for (const a of actions) {
+      if (!q || a.label.toLowerCase().includes(q)) {
+        list.push({
+          id: `action:${a.id}`,
+          group: t("actions"),
+          label: a.label,
+          icon: a.icon,
+          run: () => go(a.href),
+        });
+      }
+    }
 
     for (const p of pages) {
       if (!q || p.label.toLowerCase().includes(q)) {

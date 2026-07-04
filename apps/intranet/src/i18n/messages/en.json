@@ -891,7 +891,12 @@
     "announcements": "Announcements",
     "guidebooks": "Guidebooks",
     "noResults": "No results found",
-    "hint": "Search"
+    "hint": "Search",
+    "actions": "Actions",
+    "actionNewAbsence": "Request absence",
+    "actionNewEvent": "New event",
+    "actionNewAnnouncement": "New announcement",
+    "actionUpload": "Upload file"
   },
   "Guest": {
     "loginTitle": "Guest tour",
@@ -1095,5 +1100,48 @@
     "bulkDeleteTitle": "Delete {count} items?",
     "uploadQueue": "Uploads",
     "retry": "Retry"
+  },
+  "WhatsNew": {
+    "title": "What's new in the intranet",
+    "intro": "Every tab got a big upgrade. Here are the highlights — click one to try it.",
+    "dismiss": "Got it",
+    "items": {
+      "dashboard": {
+        "title": "Dashboard",
+        "body": "Who's-out-today card, quick actions, inline approvals, and hideable cards."
+      },
+      "absences": {
+        "title": "Absences",
+        "body": "Clockodo absences sync in automatically; edit pending requests, filters, stats and .ics export."
+      },
+      "calendar": {
+        "title": "Calendar",
+        "body": "Edit and duplicate events, interactive filters, week numbers, keyboard navigation and export."
+      },
+      "announcements": {
+        "title": "Announcements",
+        "body": "Schedule posts, edit after publishing, drafts, search and read statistics."
+      },
+      "directory": {
+        "title": "Directory",
+        "body": "Online status, who's out, manager & direct reports, and richer filters."
+      },
+      "files": {
+        "title": "Files",
+        "body": "Grid view, sorting, pinned folders, bulk download/delete and an upload queue."
+      },
+      "guidebooks": {
+        "title": "Guidebooks",
+        "body": "Search, favorites, table of contents, reading progress and feedback."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "body": "Day grouping, per-type mutes, mark-unread/dismiss and browser notifications."
+      },
+      "settings": {
+        "title": "Settings",
+        "body": "Avatar cropping, app preferences (start page, calendar view), and your integration links."
+      }
+    }
   }
 }

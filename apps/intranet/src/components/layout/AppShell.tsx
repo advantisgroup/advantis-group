@@ -16,6 +16,7 @@ import { BrowserNotificationBridge } from "@/components/notifications/BrowserNot
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { WhatsNewDialog } from "@/components/WhatsNewDialog";
 import { TourCompletionScreen } from "@/components/tour/TourCompletionScreen";
 import { TourOverlay } from "@/components/tour/TourOverlay";
 import { TourPopout } from "@/components/tour/TourPopout";
@@ -129,6 +130,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
       <StartPageRedirect />
+      <WhatsNewDialog />
 
       {/* Tour UI layers (portal-based, fixed position) */}
       <TourOverlay targetRect={targetRect} visible={tourActive} />
