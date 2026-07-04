@@ -3,10 +3,10 @@
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 
 import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -28,6 +28,35 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+
+/**
+ * Honors the "start page" preference: the first time this session lands on
+ * the dashboard route, jump to the user's chosen page instead. Session-scoped
+ * so navigating back to "/" later works normally.
+ */
+function StartPageRedirect() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const prefs = useQuery(api.userPreferences.getMine);
+
+  useEffect(() => {
+    if (prefs === undefined) return;
+    try {
+      if (sessionStorage.getItem("startpage:done")) return;
+      sessionStorage.setItem("startpage:done", "1");
+    } catch {
+      return;
+    }
+    const target = prefs?.startPage;
+    if (target && target !== "/" && pathname === "/") {
+      router.replace(target);
+    }
+    // Only the first resolved prefs load matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefs === undefined]);
+
+  return null;
+}
 
 function AppShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -99,6 +128,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
+      <StartPageRedirect />
 
       {/* Tour UI layers (portal-based, fixed position) */}
       <TourOverlay targetRect={targetRect} visible={tourActive} />

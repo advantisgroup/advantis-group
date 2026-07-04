@@ -535,11 +535,11 @@
         },
         "feed": {
           "title": "Your notification feed",
-          "description": "Grouped by day, filterable by category, with unread/all tabs. Hover a row to mark it read or unread, or dismiss it; older read items fold away automatically."
+          "description": "Everything grouped by day. Hover a row to mark it read/unread or dismiss it; older read items tuck away behind a toggle."
         },
         "prefs": {
           "title": "Tune what reaches you",
-          "description": "Mute individual notification types and opt into native browser notifications for when the intranet sits in a background tab. The same controls also live in Settings."
+          "description": "Mute individual notification types and opt into native browser notifications for background tabs — the same controls also live in Settings."
         }
       },
       "settings": {
@@ -549,7 +549,15 @@
         },
         "profile": {
           "title": "Profile card",
-          "description": "Keep your name, job title, and contact details up to date so colleagues can find you."
+          "description": "Keep your name, job title and contact details current — the completeness bar shows what's missing. Photos are auto-cropped, and account security lives behind \"Manage account\"."
+        },
+        "prefs": {
+          "title": "Make the app yours",
+          "description": "Pick your default calendar view, the page you land on after signing in, and which day your week starts — saved to your account."
+        },
+        "connections": {
+          "title": "Your integrations",
+          "description": "See whether your Clockodo account is linked (so your absences sync into the intranet) and whether an ActivityTrack record points at you."
         }
       },
       "admin": {
@@ -805,7 +813,37 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
-    "saved": "Saved"
+    "saved": "Saved",
+    "manageAccount": "Manage account & security",
+    "completeness": "Profile completeness",
+    "completenessHint": "Add a photo, job title, department and phone number so colleagues can find and reach you.",
+    "appPrefs": "App preferences",
+    "appPrefsHint": "Saved to your account — they follow you across devices.",
+    "defaultCalendarView": "Default calendar view",
+    "viewMonth": "Month",
+    "viewWeek": "Week",
+    "viewList": "Agenda",
+    "startPage": "Start page",
+    "pageDashboard": "Dashboard",
+    "pageCalendar": "Calendar",
+    "pageAbsences": "Absences",
+    "pageAnnouncements": "Announcements",
+    "pageChat": "Chat",
+    "pageFiles": "Files",
+    "weekStart": "Week starts on",
+    "monday": "Monday",
+    "sunday": "Sunday",
+    "connections": "Connections",
+    "connectionsHint": "Whether your account is linked to the systems that feed your absences and activity.",
+    "clockodoDirect": "Linked directly — your absences sync automatically.",
+    "clockodoViaPerson": "Linked via your ActivityTrack record — your absences sync automatically.",
+    "clockodoUnlinkedHint": "Ask an admin to link your Clockodo account so absences sync.",
+    "activityTrack": "ActivityTrack",
+    "personUnlinkedHint": "No ActivityTrack person record is linked to you yet.",
+    "linked": "Linked",
+    "notLinked": "Not linked",
+    "avatarPreviewTitle": "New profile picture",
+    "avatarPreviewHint": "Your photo is cropped to a square and resized automatically."
   },
   "Roles": {
     "admin": "Administrator",
@@ -835,16 +873,16 @@
     "markUnread": "Mark as unread",
     "markReadAction": "Mark as read",
     "dismiss": "Dismiss",
-    "cat_uploads": "Uploads",
+    "cat_uploads": "Files",
     "type_absence_request": "Absence requests (to approve)",
     "type_absence_decision": "Decisions on your absences",
     "type_announcement": "Announcements",
     "type_upload_request": "Upload requests (to approve)",
     "type_upload_decision": "Decisions on your uploads",
     "browserTitle": "Browser notifications",
-    "browserHint": "System notifications while the intranet is open in a background tab.",
+    "browserHint": "System notifications while the tab is in the background.",
     "browserUnsupported": "Your browser doesn't support notifications.",
-    "browserDenied": "Notifications are blocked — allow them in your browser settings."
+    "browserDenied": "Notification permission was denied in the browser."
   },
   "Command": {
     "placeholder": "Search pages, people, announcements…",

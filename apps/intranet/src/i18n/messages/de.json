@@ -535,11 +535,11 @@
         },
         "feed": {
           "title": "Dein Benachrichtigungs-Feed",
-          "description": "Nach Tag gruppiert, nach Kategorie filterbar, mit Ungelesen/Alle-Tabs. Fahre über eine Zeile, um sie als gelesen/ungelesen zu markieren oder zu entfernen; ältere gelesene Einträge klappen automatisch weg."
+          "description": "Alles nach Tag gruppiert. Fahre über eine Zeile, um sie als (un)gelesen zu markieren oder zu entfernen; ältere gelesene Einträge verschwinden hinter einem Umschalter."
         },
         "prefs": {
           "title": "Steuere, was dich erreicht",
-          "description": "Schalte einzelne Benachrichtigungsarten stumm und aktiviere native Browser-Benachrichtigungen für Hintergrund-Tabs. Dieselben Einstellungen findest du auch unter Einstellungen."
+          "description": "Stumm-schalte einzelne Benachrichtigungsarten und aktiviere native Browser-Benachrichtigungen für Hintergrund-Tabs — dieselben Regler gibt es auch in den Einstellungen."
         }
       },
       "settings": {
@@ -549,7 +549,15 @@
         },
         "profile": {
           "title": "Profilkarte",
-          "description": "Halte Name, Position und Kontaktdaten aktuell, damit Kolleginnen und Kollegen dich finden."
+          "description": "Halte Name, Position und Kontaktdaten aktuell — der Vollständigkeits-Balken zeigt, was fehlt. Fotos werden automatisch zugeschnitten, und die Kontosicherheit liegt hinter „Konto verwalten“."
+        },
+        "prefs": {
+          "title": "Mach die App zu deiner",
+          "description": "Wähle deine Standard-Kalenderansicht, die Seite nach der Anmeldung und den Wochenstart — gespeichert in deinem Konto."
+        },
+        "connections": {
+          "title": "Deine Integrationen",
+          "description": "Sieh, ob dein Clockodo-Konto verknüpft ist (damit deine Abwesenheiten ins Intranet synchronisieren) und ob ein ActivityTrack-Eintrag auf dich zeigt."
         }
       },
       "admin": {
@@ -805,7 +813,37 @@
     "themeLight": "Hell",
     "themeDark": "Dunkel",
     "themeSystem": "System",
-    "saved": "Gespeichert"
+    "saved": "Gespeichert",
+    "manageAccount": "Konto & Sicherheit verwalten",
+    "completeness": "Profil-Vollständigkeit",
+    "completenessHint": "Füge Foto, Position, Abteilung und Telefonnummer hinzu, damit Kolleginnen und Kollegen dich finden und erreichen.",
+    "appPrefs": "App-Einstellungen",
+    "appPrefsHint": "In deinem Konto gespeichert — sie folgen dir auf alle Geräte.",
+    "defaultCalendarView": "Standard-Kalenderansicht",
+    "viewMonth": "Monat",
+    "viewWeek": "Woche",
+    "viewList": "Agenda",
+    "startPage": "Startseite",
+    "pageDashboard": "Übersicht",
+    "pageCalendar": "Kalender",
+    "pageAbsences": "Abwesenheiten",
+    "pageAnnouncements": "Ankündigungen",
+    "pageChat": "Chat",
+    "pageFiles": "Dateien",
+    "weekStart": "Woche beginnt am",
+    "monday": "Montag",
+    "sunday": "Sonntag",
+    "connections": "Verknüpfungen",
+    "connectionsHint": "Ob dein Konto mit den Systemen verknüpft ist, die deine Abwesenheiten und Aktivitäten speisen.",
+    "clockodoDirect": "Direkt verknüpft — deine Abwesenheiten synchronisieren automatisch.",
+    "clockodoViaPerson": "Über deinen ActivityTrack-Eintrag verknüpft — deine Abwesenheiten synchronisieren automatisch.",
+    "clockodoUnlinkedHint": "Bitte einen Admin, dein Clockodo-Konto zu verknüpfen, damit Abwesenheiten synchronisieren.",
+    "activityTrack": "ActivityTrack",
+    "personUnlinkedHint": "Es ist noch kein ActivityTrack-Eintrag mit dir verknüpft.",
+    "linked": "Verknüpft",
+    "notLinked": "Nicht verknüpft",
+    "avatarPreviewTitle": "Neues Profilbild",
+    "avatarPreviewHint": "Dein Foto wird automatisch quadratisch zugeschnitten und verkleinert."
   },
   "Roles": {
     "admin": "Administrator",
@@ -835,16 +873,16 @@
     "markUnread": "Als ungelesen markieren",
     "markReadAction": "Als gelesen markieren",
     "dismiss": "Entfernen",
-    "cat_uploads": "Uploads",
-    "type_absence_request": "Abwesenheitsanträge (zur Freigabe)",
+    "cat_uploads": "Dateien",
+    "type_absence_request": "Abwesenheitsanträge (zu genehmigen)",
     "type_absence_decision": "Entscheidungen zu deinen Abwesenheiten",
     "type_announcement": "Ankündigungen",
-    "type_upload_request": "Upload-Anfragen (zur Freigabe)",
+    "type_upload_request": "Upload-Anfragen (zu genehmigen)",
     "type_upload_decision": "Entscheidungen zu deinen Uploads",
     "browserTitle": "Browser-Benachrichtigungen",
-    "browserHint": "Systembenachrichtigungen, während das Intranet in einem Hintergrund-Tab offen ist.",
+    "browserHint": "System-Benachrichtigungen, während der Tab im Hintergrund ist.",
     "browserUnsupported": "Dein Browser unterstützt keine Benachrichtigungen.",
-    "browserDenied": "Benachrichtigungen sind blockiert — erlaube sie in den Browser-Einstellungen."
+    "browserDenied": "Die Benachrichtigungs-Berechtigung wurde im Browser verweigert."
   },
   "Command": {
     "placeholder": "Seiten, Personen, Ankündigungen suchen…",

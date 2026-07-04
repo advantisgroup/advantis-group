@@ -1,7 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -324,9 +331,20 @@ export default function CalendarPage() {
   const removeEvent = useMutation(api.events.remove);
   const handleError = useErrorHandler();
   const departments = useQuery(api.users.departments) ?? [];
+  const prefs = useQuery(api.userPreferences.getMine);
   const [cursor, setCursor] = useState(() => new Date());
   const [detail, setDetail] = useState<DetailState>(null);
   const [view, setView] = useState<CalendarView>("month");
+  const prefViewApplied = useRef(false);
+
+  const weekStartsOn = prefs?.weekStartsOn === "sunday" ? 0 : 1;
+
+  // A saved default view (settings) wins over the mobile agenda fallback.
+  useEffect(() => {
+    if (prefs === undefined || prefViewApplied.current) return;
+    prefViewApplied.current = true;
+    if (prefs?.defaultCalendarView) setView(prefs.defaultCalendarView);
+  }, [prefs]);
   const [eventDraft, setEventDraft] = useState<EventDraft | null>(null);
   const [hiddenKinds, setHiddenKinds] = useState<Set<FilterKind>>(new Set());
   const [deptFilter, setDeptFilter] = useState("all");
@@ -358,14 +376,14 @@ export default function CalendarPage() {
   let rangeStart: Date;
   let rangeEnd: Date;
   if (view === "week") {
-    rangeStart = startOfWeek(cursor, { weekStartsOn: 1 });
-    rangeEnd = endOfWeek(cursor, { weekStartsOn: 1 });
+    rangeStart = startOfWeek(cursor, { weekStartsOn });
+    rangeEnd = endOfWeek(cursor, { weekStartsOn });
   } else if (view === "list") {
     rangeStart = startOfMonth(cursor);
     rangeEnd = endOfMonth(cursor);
   } else {
-    rangeStart = startOfWeek(startOfMonth(cursor), { weekStartsOn: 1 });
-    rangeEnd = endOfWeek(endOfMonth(cursor), { weekStartsOn: 1 });
+    rangeStart = startOfWeek(startOfMonth(cursor), { weekStartsOn });
+    rangeEnd = endOfWeek(endOfMonth(cursor), { weekStartsOn });
   }
 
   const gridDays = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
@@ -402,7 +420,7 @@ export default function CalendarPage() {
   }, [detail, eventDraft, goPrev, goNext]);
 
   const weekdays = useMemo(() => {
-    const monday = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const monday = startOfWeek(new Date(), { weekStartsOn });
     return Array.from({ length: 7 }, (_, i) =>
       new Date(monday.getTime() + i * 86400000).toLocaleDateString(locale, {
         weekday: "short",

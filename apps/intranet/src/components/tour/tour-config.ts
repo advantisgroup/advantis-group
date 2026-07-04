@@ -293,6 +293,18 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         popoutSide: "bottom",
         route: "/settings",
       },
+      {
+        id: "settings.prefs",
+        targetAttr: "tour-settings-app-prefs",
+        popoutSide: "top",
+        route: "/settings",
+      },
+      {
+        id: "settings.connections",
+        targetAttr: "tour-settings-connections",
+        popoutSide: "top",
+        route: "/settings",
+      },
     ],
   },
   {

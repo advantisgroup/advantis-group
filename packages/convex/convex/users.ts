@@ -162,6 +162,28 @@ export const get = query({
   },
 });
 
+/**
+ * Integration link status for the settings "Connections" card: whether the
+ * viewer's Clockodo absences can be mirrored (directly via
+ * users.clockodoUserId, or through their ActivityTrack person record).
+ */
+export const myConnections = query({
+  args: {},
+  handler: async ctx => {
+    const user = await requireUser(ctx);
+    const person = await ctx.db
+      .query("people")
+      .withIndex("by_userId", q => q.eq("userId", user._id))
+      .first();
+    return {
+      clockodoDirect: user.clockodoUserId != null,
+      personLinked: person != null,
+      personName: person?.name ?? null,
+      personHasClockodo: person?.clockodoUserId != null,
+    };
+  },
+});
+
 /** Manager + direct reports for the profile card's organisation section. */
 export const orgContext = query({
   args: { userId: v.id("users") },
