@@ -574,16 +574,16 @@
           "description": "Browse the team's OneDrive right here in the intranet."
         },
         "toolbar": {
-          "title": "Search, upload & more",
-          "description": "Find files, switch folders, and check storage at a glance."
+          "title": "Your OneDrive toolbar",
+          "description": "Search the whole drive, switch between list and grid view, create folders, and jump back via the breadcrumbs. Pinned folders and your recent uploads sit right below for quick access."
         },
         "dropzone": {
-          "title": "Drag & drop to upload",
-          "description": "Drop files from your desktop, or use this button. Employee uploads go to a manager for approval first."
+          "title": "Upload files",
+          "description": "Click here or drop files anywhere on the page. Uploads run through a queue in the corner with per-file progress and a retry for anything that fails."
         },
         "browser": {
-          "title": "Open and preview",
-          "description": "Click a folder to open it, or a file to preview and download."
+          "title": "Work with files",
+          "description": "Sort by name, date or size via the column headers, select multiple files for bulk download or delete, and use ↑ ↓ + Enter to navigate by keyboard. The ⋯ menu offers preview, versions, copy-link and folder pinning."
         }
       }
     }
@@ -998,6 +998,18 @@
     "doneApproval": "Sent for approval!",
     "notConfiguredTitle": "OneDrive isn't set up yet",
     "notConfiguredBody": "Ask an admin to finish the OneDrive configuration.",
-    "pickerTitle": "Choose a file from OneDrive"
+    "pickerTitle": "Choose a file from OneDrive",
+    "viewList": "List view",
+    "viewGrid": "Grid view",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "addFavorite": "Pin folder",
+    "removeFavorite": "Unpin folder",
+    "selectedCount": "{count} selected",
+    "clearSelection": "Clear",
+    "selectAll": "Select all",
+    "bulkDeleteTitle": "Delete {count} items?",
+    "uploadQueue": "Uploads",
+    "retry": "Retry"
   }
 }

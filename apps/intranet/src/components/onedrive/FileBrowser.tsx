@@ -1,6 +1,13 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -9,8 +16,15 @@ import {
   type OneDriveItem,
   type OneDriveListing,
 } from "@advantis/types";
+import { api } from "@advantis/convex/api";
+import { useMutation, useQuery } from "convex/react";
 import {
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
   ChevronRight,
+  Clock,
+  Copy,
   Download,
   File as FileIcon,
   FileArchive,
@@ -20,19 +34,25 @@ import {
   Folder,
   FolderPlus,
   Frown,
+  LayoutGrid,
   Link2,
   Loader2,
   MoreVertical,
   Pencil,
   RotateCcw,
+  Rows3,
   Search,
+  Star,
   Trash2,
   UploadCloud,
+  X,
+  XCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -167,6 +187,17 @@ function QuotaBar({ quota }: { quota: DriveQuota }) {
   );
 }
 
+type SortKey = "name" | "modified" | "size";
+type ViewMode = "list" | "grid";
+const VIEW_KEY = "files:view";
+
+interface QueueEntry {
+  id: number;
+  file: File;
+  status: "pending" | "uploading" | "done" | "error";
+  progress: number;
+}
+
 export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   const t = useTranslations("Files");
   const od = useOneDriveApi();
@@ -188,6 +219,31 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   const [shareItem, setShareItem] = useState<OneDriveItem | null>(null);
   const [versionsItem, setVersionsItem] = useState<OneDriveItem | null>(null);
   const [previewItem, setPreviewItem] = useState<OneDriveItem | null>(null);
+
+  const [view, setView] = useState<ViewMode>("list");
+  const [sortKey, setSortKey] = useState<SortKey>("name");
+  const [sortDir, setSortDir] = useState<1 | -1>(1);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [focusIdx, setFocusIdx] = useState(-1);
+  const [queue, setQueue] = useState<QueueEntry[]>([]);
+  const queueIdRef = useRef(0);
+
+  const prefs = useQuery(api.userPreferences.getMine);
+  const setPrefs = useMutation(api.userPreferences.setMine);
+  const myUploads = useQuery(api.onedrive.myUploads);
+  const favoriteFolders = useMemo(
+    () => prefs?.favoriteFolders ?? [],
+    [prefs]
+  );
+
+  useEffect(() => {
+    const stored = localStorage.getItem(VIEW_KEY);
+    if (stored === "grid" || stored === "list") setView(stored);
+  }, []);
+  const changeView = (v: ViewMode) => {
+    setView(v);
+    localStorage.setItem(VIEW_KEY, v);
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -319,13 +375,44 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     [listing, od, path, refresh, t]
   );
 
+  /** One queue entry at a time; failures stay in the panel with a retry. */
+  const runQueueEntry = useCallback(
+    async (entry: QueueEntry, targetPath: string) => {
+      const patch = (p: Partial<QueueEntry>) =>
+        setQueue(q => q.map(e => (e.id === entry.id ? { ...e, ...p } : e)));
+      patch({ status: "uploading", progress: 0 });
+      try {
+        await od.upload(entry.file, targetPath, f => patch({ progress: f }));
+        patch({ status: "done", progress: 1 });
+        refresh();
+      } catch {
+        patch({ status: "error" });
+      }
+    },
+    [od, refresh]
+  );
+
+  const enqueueFiles = useCallback(
+    (files: File[]) => {
+      const entries: QueueEntry[] = files.map(file => ({
+        id: ++queueIdRef.current,
+        file,
+        status: "pending",
+        progress: 0,
+      }));
+      setQueue(q => [...q, ...entries]);
+      void (async () => {
+        for (const entry of entries) {
+          await runQueueEntry(entry, path);
+        }
+      })();
+    },
+    [path, runQueueEntry]
+  );
+
   const onPickFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    const arr = Array.from(files);
-    const toastId = toast.loading(t("uploading"));
-    void handleUpload(arr, () => {})
-      .then(() => toast.dismiss(toastId))
-      .catch(() => toast.dismiss(toastId));
+    enqueueFiles(Array.from(files));
   };
 
   const onDelete = async (item: OneDriveItem) => {
@@ -355,9 +442,144 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     }
   };
 
-  const items = results ?? listing?.items ?? [];
+  const rawItems = results ?? listing?.items ?? [];
+  const items = useMemo(() => {
+    const compare = (a: OneDriveItem, b: OneDriveItem) => {
+      if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
+      let cmp = 0;
+      if (sortKey === "modified")
+        cmp = (a.lastModified ?? "").localeCompare(b.lastModified ?? "");
+      else if (sortKey === "size") cmp = a.size - b.size;
+      else cmp = a.name.localeCompare(b.name, undefined, { numeric: true });
+      return cmp * sortDir;
+    };
+    return [...rawItems].sort(compare);
+  }, [rawItems, sortKey, sortDir]);
   const canWrite = listing?.canWrite ?? false;
   const canDrop = Boolean(listing && (listing.canWrite || listing.canRequest));
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir(d => (d === 1 ? -1 : 1));
+    else {
+      setSortKey(key);
+      setSortDir(1);
+    }
+  }
+
+  // Selection and keyboard focus reset whenever the visible set changes.
+  useEffect(() => {
+    setSelected(new Set());
+    setFocusIdx(-1);
+  }, [path, results]);
+
+  // Keyboard navigation (desktop): ↑/↓ move, Enter opens, Backspace goes up.
+  useEffect(() => {
+    if (isMobile) return;
+    function onKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable]")) return;
+      if (
+        previewItem ||
+        renameItem ||
+        shareItem ||
+        versionsItem ||
+        newFolderOpen
+      )
+        return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setFocusIdx(i => Math.min(items.length - 1, i + 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setFocusIdx(i => Math.max(0, i - 1));
+      } else if (e.key === "Enter" && focusIdx >= 0 && items[focusIdx]) {
+        e.preventDefault();
+        open(items[focusIdx]);
+      } else if (e.key === "Backspace" && path) {
+        e.preventDefault();
+        navigate(path.split("/").slice(0, -1).join("/"));
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isMobile,
+    items,
+    focusIdx,
+    path,
+    previewItem,
+    renameItem,
+    shareItem,
+    versionsItem,
+    newFolderOpen,
+    navigate,
+  ]);
+
+  const isFavorite = (p: string) => favoriteFolders.includes(p);
+  function toggleFavorite(item: OneDriveItem) {
+    const next = isFavorite(item.path)
+      ? favoriteFolders.filter(f => f !== item.path)
+      : [...favoriteFolders, item.path];
+    void setPrefs({ favoriteFolders: next });
+  }
+
+  function copyLink(item: OneDriveItem) {
+    void navigator.clipboard.writeText(
+      `${window.location.origin}${pathToUrl(item.path)}`
+    );
+    toast.success(t("linkCopied"));
+  }
+
+  function toggleSelected(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const selectedItems = items.filter(i => selected.has(i.id));
+
+  async function bulkDownload() {
+    for (const item of selectedItems.filter(i => i.type === "file")) {
+      await od.download(item.id, item.name);
+    }
+    setSelected(new Set());
+  }
+
+  async function bulkDelete() {
+    const deletable = selectedItems.filter(i => i.canWrite);
+    if (deletable.length === 0) return;
+    const ok = await confirm({
+      title: t("bulkDeleteTitle", { count: deletable.length }),
+      description: t("deleteDesc"),
+      confirmLabel: t("delete"),
+      cancelLabel: t("cancel"),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      for (const item of deletable) {
+        await od.remove(item.id);
+      }
+      toast.success(t("deleted"));
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("genericError"));
+    }
+    setSelected(new Set());
+    refresh();
+  }
+
+  // "Recent uploads" only makes sense at the drive root without an active
+  // search — deeper in it would just repeat the folder contents.
+  const recentUploads =
+    path === "" && results === null
+      ? (myUploads ?? [])
+          .filter(u => u.status === "approved" && u.driveItemId)
+          .slice(0, 5)
+      : [];
 
   // OneDrive credentials aren't set — dim the whole tab with a plain-text notice.
   if (configured === false) {
@@ -410,6 +632,28 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
               className="pl-8"
             />
           </div>
+          <div className="flex items-center rounded-lg border border-border bg-card p-0.5">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("viewList")}
+              aria-pressed={view === "list"}
+              className={cn(view === "list" && "bg-accent text-foreground")}
+              onClick={() => changeView("list")}
+            >
+              <Rows3 className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("viewGrid")}
+              aria-pressed={view === "grid"}
+              className={cn(view === "grid" && "bg-accent text-foreground")}
+              onClick={() => changeView("grid")}
+            >
+              <LayoutGrid className="size-4" />
+            </Button>
+          </div>
           {canWrite && (
             <Button
               variant="outline"
@@ -443,6 +687,80 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         </div>
       </div>
 
+      {/* Quick access: pinned folders + recent uploads (root only) */}
+      {results === null &&
+        (favoriteFolders.length > 0 || recentUploads.length > 0) && (
+          <div className="space-y-2">
+            {favoriteFolders.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Star className="size-3.5 text-amber-500" />
+                {favoriteFolders.map(f => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => navigate(f)}
+                    className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    <Folder className="size-3 text-blue-500" />
+                    {f.split("/").pop() || t("title")}
+                  </button>
+                ))}
+              </div>
+            )}
+            {recentUploads.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Clock className="size-3.5 text-muted-foreground" />
+                {recentUploads.map(u => (
+                  <button
+                    key={u._id}
+                    type="button"
+                    title={u.targetFolderPath || "/"}
+                    onClick={() => navigate(u.targetFolderPath)}
+                    className="max-w-52 truncate rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  >
+                    {u.fileName}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+      {/* Bulk selection bar */}
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm">
+          <span className="font-medium tabular-nums">
+            {t("selectedCount", { count: selected.size })}
+          </span>
+          {selectedItems.some(i => i.type === "file") && (
+            <Button variant="outline" size="sm" onClick={() => void bulkDownload()}>
+              <Download className="size-3.5" />
+              {t("download")}
+            </Button>
+          )}
+          {selectedItems.some(i => i.canWrite) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => void bulkDelete()}
+            >
+              <Trash2 className="size-3.5" />
+              {t("delete")}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-muted-foreground"
+            onClick={() => setSelected(new Set())}
+          >
+            <X className="size-3.5" />
+            {t("clearSelection")}
+          </Button>
+        </div>
+      )}
+
       {/* Listing */}
       <div
         data-tour="tour-files-browser"
@@ -468,27 +786,71 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
               />
             ))}
           </ul>
+        ) : view === "grid" ? (
+          <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 lg:grid-cols-5">
+            {items.map((item, idx) => (
+              <GridTile
+                key={item.id}
+                item={item}
+                focused={idx === focusIdx}
+                favorite={item.type === "folder" && isFavorite(item.path)}
+                onOpen={open}
+                onAction={action => onRowAction(action, item)}
+              />
+            ))}
+          </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-2.5 font-medium">{t("colName")}</th>
+                <th className="w-8 pl-3">
+                  <Checkbox
+                    aria-label={t("selectAll")}
+                    checked={
+                      selected.size > 0 && selected.size === items.length
+                    }
+                    onCheckedChange={checked =>
+                      setSelected(
+                        checked ? new Set(items.map(i => i.id)) : new Set()
+                      )
+                    }
+                  />
+                </th>
+                <SortHeader
+                  label={t("colName")}
+                  active={sortKey === "name"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("name")}
+                />
                 <th className="px-4 py-2.5 font-medium">
                   {t("colUploadedBy")}
                 </th>
-                <th className="px-4 py-2.5 font-medium">{t("colModified")}</th>
-                <th className="px-4 py-2.5 text-right font-medium">
-                  {t("colSize")}
-                </th>
+                <SortHeader
+                  label={t("colModified")}
+                  active={sortKey === "modified"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("modified")}
+                />
+                <SortHeader
+                  label={t("colSize")}
+                  active={sortKey === "size"}
+                  dir={sortDir}
+                  onClick={() => toggleSort("size")}
+                  align="right"
+                />
                 <th className="w-10" />
               </tr>
             </thead>
             <tbody>
-              {items.map(item => (
+              {items.map((item, idx) => (
                 <FileRow
                   key={item.id}
                   item={item}
                   highlightQuery={results !== null ? query.trim() : ""}
+                  focused={idx === focusIdx}
+                  selected={selected.has(item.id)}
+                  onSelect={() => toggleSelected(item.id)}
+                  favorite={item.type === "folder" && isFavorite(item.path)}
                   onOpen={open}
                   onAction={action => onRowAction(action, item)}
                 />
@@ -497,6 +859,58 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
           </table>
         )}
       </div>
+
+      {/* Upload queue panel */}
+      {queue.length > 0 && (
+        <div className="fixed bottom-20 right-4 z-40 w-72 rounded-xl border border-border bg-card p-3 shadow-lg md:bottom-4">
+          <div className="mb-2 flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("uploadQueue")}
+            </p>
+            {queue.every(e => e.status === "done" || e.status === "error") && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("cancel")}
+                onClick={() => setQueue([])}
+              >
+                <X className="size-3.5" />
+              </Button>
+            )}
+          </div>
+          <div className="max-h-48 space-y-2 overflow-y-auto">
+            {queue.map(entry => (
+              <div key={entry.id} className="flex items-center gap-2 text-xs">
+                {entry.status === "done" ? (
+                  <CheckCircle2 className="size-3.5 shrink-0 text-success" />
+                ) : entry.status === "error" ? (
+                  <XCircle className="size-3.5 shrink-0 text-destructive" />
+                ) : (
+                  <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
+                )}
+                <span className="min-w-0 flex-1 truncate">
+                  {entry.file.name}
+                </span>
+                {entry.status === "uploading" && (
+                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                    {Math.round(entry.progress * 100)}%
+                  </span>
+                )}
+                {entry.status === "error" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-6 px-2 text-[11px]"
+                    onClick={() => void runQueueEntry(entry, path)}
+                  >
+                    {t("retry")}
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <NewFolderDialog
         open={newFolderOpen}
@@ -523,15 +937,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     </div>
   );
 
-  type RowAction =
-    | "download"
-    | "share"
-    | "rename"
-    | "delete"
-    | "versions"
-    | "preview";
-
-  function onRowAction(action: RowAction, item: OneDriveItem) {
+  function onRowAction(action: RowActionType, item: OneDriveItem) {
     switch (action) {
       case "download":
         void od.download(item.id, item.name);
@@ -551,8 +957,54 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       case "delete":
         void onDelete(item);
         break;
+      case "copylink":
+        copyLink(item);
+        break;
+      case "favorite":
+        toggleFavorite(item);
+        break;
     }
   }
+}
+
+function SortHeader({
+  label,
+  active,
+  dir,
+  onClick,
+  align,
+}: {
+  label: string;
+  active: boolean;
+  dir: 1 | -1;
+  onClick: () => void;
+  align?: "right";
+}) {
+  return (
+    <th
+      className={cn(
+        "px-4 py-2.5 font-medium",
+        align === "right" && "text-right"
+      )}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "inline-flex items-center gap-1 uppercase tracking-wide hover:text-foreground",
+          active && "text-foreground"
+        )}
+      >
+        {label}
+        {active &&
+          (dir === 1 ? (
+            <ArrowUp className="size-3" />
+          ) : (
+            <ArrowDown className="size-3" />
+          ))}
+      </button>
+    </th>
+  );
 }
 
 // --- Sub-components ----------------------------------------------------------
@@ -598,13 +1050,17 @@ type RowActionType =
   | "rename"
   | "delete"
   | "versions"
-  | "preview";
+  | "preview"
+  | "copylink"
+  | "favorite";
 
 function RowMenu({
   item,
+  favorite,
   onAction,
 }: {
   item: OneDriveItem;
+  favorite?: boolean;
   onAction: (a: RowActionType) => void;
 }) {
   const t = useTranslations("Files");
@@ -635,6 +1091,21 @@ function RowMenu({
             {t("versions")}
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem onClick={() => onAction("copylink")}>
+          <Copy className="size-4" />
+          {t("copyLink")}
+        </DropdownMenuItem>
+        {item.type === "folder" && (
+          <DropdownMenuItem onClick={() => onAction("favorite")}>
+            <Star
+              className={cn(
+                "size-4",
+                favorite && "fill-amber-400 text-amber-500"
+              )}
+            />
+            {favorite ? t("removeFavorite") : t("addFavorite")}
+          </DropdownMenuItem>
+        )}
         {item.canWrite && (
           <>
             <DropdownMenuSeparator />
@@ -663,16 +1134,37 @@ function RowMenu({
 function FileRow({
   item,
   highlightQuery = "",
+  focused,
+  selected,
+  favorite,
+  onSelect,
   onOpen,
   onAction,
 }: {
   item: OneDriveItem;
   highlightQuery?: string;
+  focused?: boolean;
+  selected?: boolean;
+  favorite?: boolean;
+  onSelect?: () => void;
   onOpen: (item: OneDriveItem) => void;
   onAction: (a: RowActionType) => void;
 }) {
   return (
-    <tr className="group border-b border-border/40 last:border-0 hover:bg-accent/40">
+    <tr
+      className={cn(
+        "group border-b border-border/40 last:border-0 hover:bg-accent/40",
+        focused && "bg-accent/60",
+        selected && "bg-primary/5"
+      )}
+    >
+      <td className="pl-3">
+        <Checkbox
+          aria-label={item.name}
+          checked={!!selected}
+          onCheckedChange={() => onSelect?.()}
+        />
+      </td>
       <td className="px-4 py-2.5">
         <button
           type="button"
@@ -683,6 +1175,9 @@ function FileRow({
           <span className="truncate font-medium">
             <HighlightMatch text={item.name} query={highlightQuery} />
           </span>
+          {favorite && (
+            <Star className="size-3 shrink-0 fill-amber-400 text-amber-500" />
+          )}
         </button>
       </td>
       <td className="px-4 py-2.5 text-muted-foreground">
@@ -697,9 +1192,63 @@ function FileRow({
         {item.type === "file" ? formatFileSize(item.size) : "—"}
       </td>
       <td className="px-2">
-        <RowMenu item={item} onAction={onAction} />
+        <RowMenu item={item} favorite={favorite} onAction={onAction} />
       </td>
     </tr>
+  );
+}
+
+/** Grid tile: thumbnail (when Graph provides one) or a large type icon. */
+function GridTile({
+  item,
+  focused,
+  favorite,
+  onOpen,
+  onAction,
+}: {
+  item: OneDriveItem;
+  focused?: boolean;
+  favorite?: boolean;
+  onOpen: (item: OneDriveItem) => void;
+  onAction: (a: RowActionType) => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "group relative rounded-lg border border-border/60 transition-colors hover:border-border hover:bg-accent/40",
+        focused && "border-primary/50 bg-accent/60"
+      )}
+    >
+      <button
+        type="button"
+        onClick={() => onOpen(item)}
+        className="flex w-full flex-col items-stretch text-left"
+      >
+        <span className="flex h-24 items-center justify-center overflow-hidden rounded-t-lg bg-muted/40">
+          {item.thumbnailUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.thumbnailUrl}
+              alt={item.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <ItemIcon item={item} className="size-9" />
+          )}
+        </span>
+        <span className="flex items-center gap-1.5 px-2.5 py-2">
+          <span className="min-w-0 flex-1 truncate text-xs font-medium">
+            {item.name}
+          </span>
+          {favorite && (
+            <Star className="size-3 shrink-0 fill-amber-400 text-amber-500" />
+          )}
+        </span>
+      </button>
+      <div className="absolute right-1 top-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+        <RowMenu item={item} favorite={favorite} onAction={onAction} />
+      </div>
+    </div>
   );
 }
 

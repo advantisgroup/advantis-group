@@ -574,16 +574,16 @@
           "description": "Durchsuche das OneDrive des Teams direkt im Intranet."
         },
         "toolbar": {
-          "title": "Suchen, hochladen & mehr",
-          "description": "Dateien finden, Ordner wechseln und den Speicher im Blick behalten."
+          "title": "Deine OneDrive-Werkzeugleiste",
+          "description": "Durchsuche das gesamte Laufwerk, wechsle zwischen Listen- und Rasteransicht, lege Ordner an und springe über die Brotkrumen zurück. Angepinnte Ordner und deine letzten Uploads liegen direkt darunter."
         },
         "dropzone": {
-          "title": "Per Drag & Drop hochladen",
-          "description": "Ziehe Dateien vom Desktop hierher oder nutze diesen Button. Uploads von Mitarbeitenden gehen zuerst zur Freigabe an eine Führungskraft."
+          "title": "Dateien hochladen",
+          "description": "Klicke hier oder ziehe Dateien irgendwo auf die Seite. Uploads laufen über eine Warteschlange in der Ecke mit Fortschritt pro Datei und Wiederholen bei Fehlern."
         },
         "browser": {
-          "title": "Öffnen und Vorschau",
-          "description": "Klicke einen Ordner zum Öffnen oder eine Datei für Vorschau und Download."
+          "title": "Mit Dateien arbeiten",
+          "description": "Sortiere über die Spaltenköpfe nach Name, Datum oder Größe, wähle mehrere Dateien für Massen-Download oder -Löschen und navigiere mit ↑ ↓ + Enter per Tastatur. Das ⋯-Menü bietet Vorschau, Versionen, Link kopieren und Ordner anpinnen."
         }
       }
     }
@@ -998,6 +998,18 @@
     "doneApproval": "Zur Freigabe gesendet!",
     "notConfiguredTitle": "OneDrive ist noch nicht eingerichtet",
     "notConfiguredBody": "Bitte einen Admin, die OneDrive-Konfiguration abzuschließen.",
-    "pickerTitle": "Datei aus OneDrive auswählen"
+    "pickerTitle": "Datei aus OneDrive auswählen",
+    "viewList": "Listenansicht",
+    "viewGrid": "Rasteransicht",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link kopiert",
+    "addFavorite": "Ordner anpinnen",
+    "removeFavorite": "Ordner lösen",
+    "selectedCount": "{count} ausgewählt",
+    "clearSelection": "Aufheben",
+    "selectAll": "Alle auswählen",
+    "bulkDeleteTitle": "{count} Elemente löschen?",
+    "uploadQueue": "Uploads",
+    "retry": "Erneut versuchen"
   }
 }
