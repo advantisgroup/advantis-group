@@ -215,7 +215,27 @@
     "deleteConfirm": "Delete this announcement?",
     "empty": "No announcements yet",
     "viewedBy": "{count, plural, =0 {Not seen yet} one {# view} other {# views}}",
-    "noViews": "No one has seen this yet"
+    "noViews": "No one has seen this yet",
+    "edit": "Edit announcement",
+    "updated": "Announcement updated",
+    "edited": "edited",
+    "filter_all": "All",
+    "filter_unread": "Unread",
+    "filter_pinned": "Pinned",
+    "sortNewest": "Newest first",
+    "sortReactions": "Most reactions",
+    "markAllRead": "Mark all read",
+    "readMore": "Read more",
+    "showLess": "Show less",
+    "pinnedSection": "Pinned",
+    "latestSection": "Latest",
+    "willReach": "{count, plural, one {Will reach # person} other {Will reach # people}}",
+    "readStats": "{count} / {total} read",
+    "publishAtLabel": "Schedule (optional)",
+    "expiresAtLabel": "Expires (optional)",
+    "scheduledFor": "Scheduled for {date}",
+    "scheduledToast": "Announcement scheduled",
+    "expired": "Expired"
   },
   "Chat": {
     "title": "Chat",
@@ -402,9 +422,17 @@
           "title": "Company announcements",
           "description": "Stay up to date with news and updates from across the organisation."
         },
+        "toolbar": {
+          "title": "Find what matters",
+          "description": "Search the feed, filter to unread or pinned posts, sort by reactions, or clear everything with mark-all-read. Posts count as read once you've actually scrolled past them."
+        },
         "list": {
           "title": "The announcements feed",
-          "description": "Posts appear here in order. You can react with emoji and see attached files."
+          "description": "Pinned posts stay on top; long posts collapse behind \"read more\". React with emoji, open images full-size, and download attachments."
+        },
+        "new": {
+          "title": "Publish announcements",
+          "description": "Write rich-text posts for everyone or one department — you'll see how many people it will reach. Pin important ones, schedule for later, set an expiry, and edit after publishing. A draft is kept if you close the dialog."
         }
       },
       "calendar": {

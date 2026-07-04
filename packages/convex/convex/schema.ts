@@ -221,7 +221,10 @@ export default defineSchema({
     attachments: v.optional(v.array(attachmentValidator)),
     /** Visible to temporary guest logins on the curated tour. */
     guestVisible: v.optional(v.boolean()),
+    /** May be in the future (scheduled publish) — hidden from non-authors until then. */
     publishedAt: v.number(),
+    /** Auto-hides from the feed after this time (author/admin still see it). */
+    expiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })

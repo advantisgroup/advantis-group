@@ -56,10 +56,23 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         skipOnMobile: true,
       },
       {
+        id: "announcements.toolbar",
+        targetAttr: "tour-announcements-toolbar",
+        popoutSide: "bottom",
+        route: "/announcements",
+      },
+      {
         id: "announcements.list",
         targetAttr: "tour-announcements-list",
         popoutSide: "top",
         route: "/announcements",
+      },
+      {
+        id: "announcements.new",
+        targetAttr: "tour-announcements-new",
+        popoutSide: "bottom",
+        route: "/announcements",
+        roles: ["manager"],
       },
     ],
   },

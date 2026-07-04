@@ -215,7 +215,27 @@
     "deleteConfirm": "Diese Ankündigung löschen?",
     "empty": "Noch keine Ankündigungen",
     "viewedBy": "{count, plural, =0 {Noch nicht gesehen} one {# Aufruf} other {# Aufrufe}}",
-    "noViews": "Noch niemand hat das gesehen"
+    "noViews": "Noch niemand hat das gesehen",
+    "edit": "Ankündigung bearbeiten",
+    "updated": "Ankündigung aktualisiert",
+    "edited": "bearbeitet",
+    "filter_all": "Alle",
+    "filter_unread": "Ungelesen",
+    "filter_pinned": "Angepinnt",
+    "sortNewest": "Neueste zuerst",
+    "sortReactions": "Meiste Reaktionen",
+    "markAllRead": "Alle als gelesen markieren",
+    "readMore": "Mehr lesen",
+    "showLess": "Weniger anzeigen",
+    "pinnedSection": "Angepinnt",
+    "latestSection": "Aktuell",
+    "willReach": "{count, plural, one {Erreicht # Person} other {Erreicht # Personen}}",
+    "readStats": "{count} / {total} gelesen",
+    "publishAtLabel": "Planen (optional)",
+    "expiresAtLabel": "Läuft ab (optional)",
+    "scheduledFor": "Geplant für {date}",
+    "scheduledToast": "Ankündigung geplant",
+    "expired": "Abgelaufen"
   },
   "Chat": {
     "title": "Chat",
@@ -402,9 +422,17 @@
           "title": "Unternehmensankündigungen",
           "description": "Bleibe über Neuigkeiten und Updates aus dem ganzen Unternehmen auf dem Laufenden."
         },
+        "toolbar": {
+          "title": "Finde das Wichtige",
+          "description": "Durchsuche den Feed, filtere nach ungelesen oder angepinnt, sortiere nach Reaktionen oder räume mit „Alle als gelesen markieren“ auf. Beiträge gelten erst als gelesen, wenn du wirklich an ihnen vorbeigescrollt bist."
+        },
         "list": {
           "title": "Der Ankündigungs-Feed",
-          "description": "Beiträge erscheinen hier der Reihe nach. Du kannst mit Emojis reagieren und Anhänge sehen."
+          "description": "Angepinnte Beiträge bleiben oben; lange Beiträge klappen hinter „Mehr lesen“ zusammen. Reagiere mit Emojis, öffne Bilder in groß und lade Anhänge herunter."
+        },
+        "new": {
+          "title": "Ankündigungen veröffentlichen",
+          "description": "Verfasse Rich-Text-Beiträge für alle oder eine Abteilung — du siehst, wie viele Personen erreicht werden. Pinne Wichtiges an, plane für später, setze ein Ablaufdatum und bearbeite nach dem Veröffentlichen. Ein Entwurf bleibt erhalten, wenn du den Dialog schließt."
         }
       },
       "calendar": {

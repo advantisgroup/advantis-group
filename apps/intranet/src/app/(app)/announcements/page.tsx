@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -8,6 +8,10 @@ import { type OneDriveItem } from "@advantis/types";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { useMutation, useQuery } from "convex/react";
 import {
+  CalendarClock,
+  CheckCheck,
+  ChevronDown,
+  ChevronUp,
   Cloud,
   Download,
   ExternalLink,
@@ -15,8 +19,10 @@ import {
   FileText,
   Megaphone,
   Paperclip,
+  Pencil,
   Pin,
   Plus,
+  Search,
   Trash2,
   X,
 } from "lucide-react";
@@ -31,6 +37,7 @@ import {
   useIsManager,
 } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -39,10 +46,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   useConfirm,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { htmlToText, RichText } from "@/components/ui/rich-text";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -63,26 +71,62 @@ import {
 } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
+import type { FunctionReturnType } from "convex/server";
+
+type Announcement = FunctionReturnType<typeof api.announcements.list>[number];
+type Audience = { kind: "all" } | { kind: "department"; department: string };
+
 /** Combined attachment size ceiling for a single announcement. */
 const MAX_ATTACH_BYTES = 5 * 1024 * 1024;
 const ALWAYS_PREVIEW_KEY = "announcements:alwaysPreview";
+const DRAFT_KEY = "announcements:draft";
 
-function CreateDialog() {
+interface Draft {
+  title: string;
+  body: string;
+  pinned: boolean;
+  guestVisible: boolean;
+  audience: string;
+  publishAt: string;
+  expiresAt: string;
+}
+
+const EMPTY_DRAFT: Draft = {
+  title: "",
+  body: "",
+  pinned: false,
+  guestVisible: false,
+  audience: "all",
+  publishAt: "",
+  expiresAt: "",
+};
+
+function msToLocalInput(ms: number): string {
+  const d = new Date(ms);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function EditorDialog({
+  open,
+  onOpenChange,
+  editing,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  editing: Announcement | null;
+}) {
   const t = useTranslations("Announcements");
   const tc = useTranslations("Common");
   const locale = useLocale();
   const me = useCurrentUser();
   const create = useMutation(api.announcements.create);
+  const update = useMutation(api.announcements.update);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
   const departments = useQuery(api.users.departments) ?? [];
 
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
-  const [pinned, setPinned] = useState(false);
-  const [guestVisible, setGuestVisible] = useState(false);
-  const [audience, setAudience] = useState("all");
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [files, setFiles] = useState<File[]>([]);
   // Tracks which of `files` came from OneDrive (vs. a local upload), keyed by
   // the File object itself so the source can be attached without reshaping
@@ -100,13 +144,61 @@ function CreateDialog() {
     setAlwaysPreview(localStorage.getItem(ALWAYS_PREVIEW_KEY) === "1");
   }, []);
 
+  // Hydrate on open: edit mode from the announcement, create mode from the
+  // autosaved draft so a closed dialog doesn't lose work.
+  useEffect(() => {
+    if (!open) return;
+    setPreviewing(false);
+    if (editing) {
+      const audience = editing.audience as Audience;
+      setDraft({
+        title: editing.title,
+        body: editing.body,
+        pinned: editing.pinned,
+        guestVisible: false,
+        audience: audience.kind === "all" ? "all" : audience.department,
+        publishAt: "",
+        expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
+      });
+    } else {
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        setDraft(raw ? { ...EMPTY_DRAFT, ...JSON.parse(raw) } : EMPTY_DRAFT);
+      } catch {
+        setDraft(EMPTY_DRAFT);
+      }
+    }
+  }, [open, editing]);
+
+  // Autosave create-mode drafts.
+  useEffect(() => {
+    if (!open || editing) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      // Storage full/unavailable — the draft just isn't kept.
+    }
+  }, [draft, open, editing]);
+
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
+    setDraft(d => ({ ...d, [key]: value }));
+
+  const audienceValue: Audience =
+    draft.audience === "all"
+      ? { kind: "all" }
+      : { kind: "department", department: draft.audience };
+  const audienceCount = useQuery(
+    api.announcements.audienceSize,
+    open ? { audience: audienceValue } : "skip"
+  );
+
   function toggleAlwaysPreview(v: boolean) {
     setAlwaysPreview(v);
     localStorage.setItem(ALWAYS_PREVIEW_KEY, v ? "1" : "0");
   }
 
-  const hasBody = htmlToText(body).trim().length > 0;
-  const canSend = title.trim().length > 0 && hasBody;
+  const hasBody = htmlToText(draft.body).trim().length > 0;
+  const canSend = draft.title.trim().length > 0 && hasBody;
   const totalSize = files.reduce((s, f) => s + f.size, 0);
 
   // Object URLs for image previews; revoked when the file set changes.
@@ -169,43 +261,62 @@ function CreateDialog() {
     if (!canSend) return;
     setBusy(true);
     try {
-      const attachments: UploadedAttachment[] = [];
-      for (const file of files) {
-        const storageId = await uploadToConvex(
-          () => generateUploadUrl({}),
-          file
-        );
-        const source = oneDriveSources.get(file);
-        attachments.push({
-          storageId,
-          kind: isImage(file) ? "image" : "file",
-          name: file.name,
-          size: file.size,
-          contentType: file.type || undefined,
-          oneDriveItemId: source?.driveItemId,
-          oneDrivePath: source?.path,
+      if (editing) {
+        await update({
+          announcementId: editing._id,
+          title: draft.title.trim(),
+          body: draft.body.trim(),
+          pinned: draft.pinned,
+          audience: audienceValue,
+          expiresAt: draft.expiresAt
+            ? new Date(draft.expiresAt).getTime()
+            : null,
         });
+        toast.success(t("updated"));
+      } else {
+        const attachments: UploadedAttachment[] = [];
+        for (const file of files) {
+          const storageId = await uploadToConvex(
+            () => generateUploadUrl({}),
+            file
+          );
+          const source = oneDriveSources.get(file);
+          attachments.push({
+            storageId,
+            kind: isImage(file) ? "image" : "file",
+            name: file.name,
+            size: file.size,
+            contentType: file.type || undefined,
+            oneDriveItemId: source?.driveItemId,
+            oneDrivePath: source?.path,
+          });
+        }
+        await create({
+          title: draft.title.trim(),
+          body: draft.body.trim(),
+          pinned: draft.pinned,
+          audience: audienceValue,
+          attachments,
+          guestVisible: draft.guestVisible,
+          publishAt: draft.publishAt
+            ? new Date(draft.publishAt).getTime()
+            : undefined,
+          expiresAt: draft.expiresAt
+            ? new Date(draft.expiresAt).getTime()
+            : undefined,
+        });
+        toast.success(
+          draft.publishAt && new Date(draft.publishAt).getTime() > Date.now()
+            ? t("scheduledToast")
+            : t("new")
+        );
+        localStorage.removeItem(DRAFT_KEY);
       }
-      await create({
-        title: title.trim(),
-        body: body.trim(),
-        pinned,
-        audience:
-          audience === "all"
-            ? { kind: "all" }
-            : { kind: "department", department: audience },
-        attachments,
-        guestVisible,
-      });
-      toast.success(t("new"));
-      setOpen(false);
+      onOpenChange(false);
       setPreviewing(false);
-      setTitle("");
-      setBody("");
+      setDraft(EMPTY_DRAFT);
       setFiles([]);
       setOneDriveSources(new Map());
-      setPinned(false);
-      setGuestVisible(false);
     } catch (e) {
       handleError(e);
     } finally {
@@ -214,16 +325,12 @@ function CreateDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          {t("new")}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{previewing ? t("preview") : t("new")}</DialogTitle>
+          <DialogTitle>
+            {previewing ? t("preview") : editing ? t("edit") : t("new")}
+          </DialogTitle>
           <DialogDescription>{t("newHint")}</DialogDescription>
         </DialogHeader>
 
@@ -239,9 +346,9 @@ function CreateDialog() {
               </Avatar>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  {pinned && <Pin className="size-3.5 text-primary" />}
+                  {draft.pinned && <Pin className="size-3.5 text-primary" />}
                   <p className="truncate font-semibold">
-                    {title.trim() || t("titlePlaceholder")}
+                    {draft.title.trim() || t("titlePlaceholder")}
                   </p>
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -250,7 +357,7 @@ function CreateDialog() {
               </div>
             </header>
             <div className="px-5 py-4">
-              <RichText html={body} />
+              <RichText html={draft.body} />
               {previews.length > 0 && (
                 <div className="mt-4 space-y-3">
                   {previews.some(p => p.url) && (
@@ -300,13 +407,13 @@ function CreateDialog() {
             <div className="space-y-3">
               <Input
                 placeholder={t("titlePlaceholder")}
-                value={title}
-                onChange={e => setTitle(e.target.value)}
+                value={draft.title}
+                onChange={e => set("title", e.target.value)}
                 className="h-11 text-base font-medium"
               />
               <RichTextEditor
-                value={body}
-                onChange={setBody}
+                value={draft.body}
+                onChange={v => set("body", v)}
                 placeholder={t("bodyLabel")}
               />
             </div>
@@ -315,7 +422,10 @@ function CreateDialog() {
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("audience")}
               </p>
-              <Select value={audience} onValueChange={setAudience}>
+              <Select
+                value={draft.audience}
+                onValueChange={v => set("audience", v)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -328,49 +438,60 @@ function CreateDialog() {
                   ))}
                 </SelectContent>
               </Select>
+              {audienceCount !== undefined && (
+                <p className="text-xs text-muted-foreground">
+                  {t("willReach", { count: audienceCount })}
+                </p>
+              )}
               <div className="flex flex-wrap items-center gap-4 pt-1">
                 <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
                   <input
                     type="checkbox"
                     className="size-4 accent-[var(--primary)]"
-                    checked={pinned}
-                    onChange={e => setPinned(e.target.checked)}
+                    checked={draft.pinned}
+                    onChange={e => set("pinned", e.target.checked)}
                   />
                   {t("pin")}
                 </label>
-                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                  <input
-                    type="checkbox"
-                    className="size-4 accent-[var(--primary)]"
-                    checked={guestVisible}
-                    onChange={e => setGuestVisible(e.target.checked)}
-                  />
-                  {t("guestVisible")}
-                </label>
-                <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-                  <Paperclip className="h-4 w-4" />
-                  {t("attachments")}
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    onChange={e => {
-                      addFiles(Array.from(e.target.files ?? []));
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setOneDrivePickerOpen(true)}
-                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Cloud className="h-4 w-4" />
-                  {tc("fromOneDrive")}
-                </button>
+                {!editing && (
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                    <input
+                      type="checkbox"
+                      className="size-4 accent-[var(--primary)]"
+                      checked={draft.guestVisible}
+                      onChange={e => set("guestVisible", e.target.checked)}
+                    />
+                    {t("guestVisible")}
+                  </label>
+                )}
+                {!editing && (
+                  <>
+                    <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                      <Paperclip className="h-4 w-4" />
+                      {t("attachments")}
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={e => {
+                          addFiles(Array.from(e.target.files ?? []));
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setOneDrivePickerOpen(true)}
+                      className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Cloud className="h-4 w-4" />
+                      {tc("fromOneDrive")}
+                    </button>
+                  </>
+                )}
               </div>
 
-              {files.length > 0 && (
+              {!editing && files.length > 0 && (
                 <div className="space-y-1.5">
                   {files.map((f, i) => (
                     <div
@@ -403,6 +524,28 @@ function CreateDialog() {
                 </div>
               )}
 
+              {/* Scheduling: publish later and/or auto-expire. */}
+              <div className="grid grid-cols-1 gap-3 border-t border-border/60 pt-3 sm:grid-cols-2">
+                {!editing && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{t("publishAtLabel")}</Label>
+                    <Input
+                      type="datetime-local"
+                      value={draft.publishAt}
+                      onChange={e => set("publishAt", e.target.value)}
+                    />
+                  </div>
+                )}
+                <div className="space-y-1.5">
+                  <Label className="text-xs">{t("expiresAtLabel")}</Label>
+                  <Input
+                    type="datetime-local"
+                    value={draft.expiresAt}
+                    onChange={e => set("expiresAt", e.target.value)}
+                  />
+                </div>
+              </div>
+
               <label className="flex cursor-pointer items-center gap-2 border-t border-border/60 pt-3 text-sm font-medium">
                 <input
                   type="checkbox"
@@ -428,7 +571,7 @@ function CreateDialog() {
             </>
           ) : (
             <>
-              <Button variant="ghost" onClick={() => setOpen(false)}>
+              <Button variant="ghost" onClick={() => onOpenChange(false)}>
                 {tc("cancel")}
               </Button>
               <Button
@@ -440,7 +583,7 @@ function CreateDialog() {
                 {t("preview")}
               </Button>
               <Button onClick={handleSendClick} disabled={busy || !canSend}>
-                {tc("create")}
+                {editing ? tc("save") : tc("create")}
               </Button>
             </>
           )}
@@ -458,9 +601,12 @@ function CreateDialog() {
 function ViewersPopover({
   announcementId,
   count,
+  total,
 }: {
   announcementId: Id<"announcements">;
   count: number;
+  /** Audience size — shown as "x / y" to the author/admins only. */
+  total?: number;
 }) {
   const t = useTranslations("Announcements");
   const locale = useLocale();
@@ -478,7 +624,11 @@ function ViewersPopover({
           className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <Eye className="h-3.5 w-3.5" />
-          <span className="tabular-nums">{t("viewedBy", { count })}</span>
+          <span className="tabular-nums">
+            {total !== undefined
+              ? t("readStats", { count, total })
+              : t("viewedBy", { count })}
+          </span>
         </button>
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
@@ -521,18 +671,333 @@ function ViewersPopover({
   );
 }
 
-export default function AnnouncementsPage() {
+/** Collapses long bodies behind a "read more" toggle. */
+function CollapsibleBody({ html }: { html: string }) {
+  const t = useTranslations("Announcements");
+  const ref = useRef<HTMLDivElement>(null);
+  const [overflowing, setOverflowing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (el) setOverflowing(el.scrollHeight > 400);
+  }, [html]);
+
+  return (
+    <div>
+      <div
+        ref={ref}
+        className={cn(
+          "relative overflow-hidden",
+          overflowing && !expanded && "max-h-80"
+        )}
+      >
+        <RichText html={html} />
+        {overflowing && !expanded && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
+        )}
+      </div>
+      {overflowing && (
+        <button
+          type="button"
+          onClick={() => setExpanded(v => !v)}
+          className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
+          {expanded ? (
+            <>
+              <ChevronUp className="size-3.5" />
+              {t("showLess")}
+            </>
+          ) : (
+            <>
+              <ChevronDown className="size-3.5" />
+              {t("readMore")}
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function AnnouncementCard({
+  a,
+  onEdit,
+  onDelete,
+  onOpenImage,
+}: {
+  a: Announcement;
+  onEdit: () => void;
+  onDelete: () => void;
+  onOpenImage: (url: string, name: string) => void;
+}) {
   const t = useTranslations("Announcements");
   const tc = useTranslations("Common");
   const locale = useLocale();
   const me = useCurrentUser();
+  const markRead = useMutation(api.announcements.markRead);
+  const toggleReaction = useMutation(api.announcements.toggleReaction);
+  const canManage = a.authorId === me._id || me.role === "admin";
+  const articleRef = useRef<HTMLElement>(null);
+
+  // Mark as read only once the article has actually been scrolled into view —
+  // keeps the unread dot and filter meaningful on long feeds.
+  useEffect(() => {
+    if (a.read || a.scheduled) return;
+    const el = articleRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(e => e.isIntersecting)) {
+          void markRead({ announcementId: a._id });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.4 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [a._id, a.read, a.scheduled, markRead]);
+
+  return (
+    <article
+      ref={articleRef}
+      className={cn(
+        "group relative overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
+        a.pinned && "border-primary/30",
+        (a.scheduled || a.expired) && "opacity-80"
+      )}
+    >
+      {a.pinned && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
+      {/* Header: author + title (left), date/time + actions (right) */}
+      <header className="flex items-start gap-3 border-b border-border/60 px-5 py-3.5">
+        <Avatar className="size-9 shrink-0">
+          {a.authorAvatar && (
+            <AvatarImage src={a.authorAvatar} alt={a.authorName} />
+          )}
+          <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+            {initials(a.authorName, a.authorName)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            {a.pinned && (
+              <Pin
+                className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
+                aria-label={t("pinned")}
+              />
+            )}
+            <h2 className="truncate font-display text-base font-semibold leading-tight">
+              {a.title}
+            </h2>
+            {!a.read && !a.scheduled && (
+              <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+            )}
+            {a.scheduled && (
+              <Badge variant="warning" className="gap-1">
+                <CalendarClock className="size-3" />
+                {t("scheduledFor", {
+                  date: formatDateTime(a.publishedAt, locale),
+                })}
+              </Badge>
+            )}
+            {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
+          </div>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {a.authorName}
+            {a.updatedAt ? ` · ${t("edited")}` : ""}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-1">
+          <time className="whitespace-nowrap text-xs text-muted-foreground">
+            {formatDateTime(a.publishedAt, locale)}
+          </time>
+          {canManage && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("edit")}
+                className="size-8 text-muted-foreground opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                onClick={onEdit}
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={tc("delete")}
+                className="size-8 text-muted-foreground opacity-100 transition-opacity hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                onClick={onDelete}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </header>
+
+      {/* Styled message body */}
+      <div className="px-5 py-4">
+        <CollapsibleBody html={a.body} />
+        {a.attachments.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {/* Images embed inline */}
+            {a.attachments.some(att => att.kind === "image" && att.url) && (
+              <div className="flex flex-wrap gap-2">
+                {a.attachments
+                  .filter(att => att.kind === "image" && att.url)
+                  .map(att => {
+                    const fromOneDrive = Boolean(att.oneDrivePath);
+                    return fromOneDrive ? (
+                      <a
+                        key={att.storageId}
+                        href={pathToUrl(att.oneDrivePath!)}
+                        className="group/att relative block overflow-hidden rounded-lg border border-border"
+                      >
+                        <img
+                          src={att.url ?? ""}
+                          alt={att.name}
+                          className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
+                        />
+                        <span
+                          title={tc("fromOneDrive")}
+                          className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
+                        >
+                          <Cloud className="size-3.5 text-blue-500" />
+                        </span>
+                      </a>
+                    ) : (
+                      <button
+                        key={att.storageId}
+                        type="button"
+                        onClick={() => onOpenImage(att.url ?? "", att.name)}
+                        className="group/att relative block overflow-hidden rounded-lg border border-border"
+                      >
+                        <img
+                          src={att.url ?? ""}
+                          alt={att.name}
+                          className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
+                        />
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+
+            {/* Other files show as chips with name + type/size */}
+            {a.attachments.some(att => att.kind !== "image") && (
+              <div className="flex flex-wrap gap-2">
+                {a.attachments
+                  .filter(att => att.kind !== "image")
+                  .map(att => {
+                    const fromOneDrive = Boolean(att.oneDrivePath);
+                    return (
+                      <a
+                        key={att.storageId}
+                        href={
+                          fromOneDrive
+                            ? pathToUrl(att.oneDrivePath!)
+                            : (att.url ?? undefined)
+                        }
+                        target={fromOneDrive ? undefined : "_blank"}
+                        rel={fromOneDrive ? undefined : "noreferrer"}
+                        download={fromOneDrive ? undefined : att.name}
+                        className="group/att flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-accent"
+                      >
+                        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+                          {fromOneDrive ? (
+                            <Cloud className="size-4 text-blue-500" />
+                          ) : (
+                            <FileText className="size-4" />
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block max-w-[14rem] truncate text-sm font-medium">
+                            {att.name}
+                          </span>
+                          <span className="block text-xs text-muted-foreground">
+                            {fromOneDrive
+                              ? tc("fromOneDrive")
+                              : [
+                                  att.contentType?.split("/")[1]?.toUpperCase(),
+                                  att.size != null
+                                    ? formatFileSize(att.size)
+                                    : null,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ") || t("attachments")}
+                          </span>
+                        </span>
+                        {fromOneDrive ? (
+                          <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-0 transition-opacity group-hover/att:opacity-100" />
+                        ) : (
+                          <Download className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/att:opacity-100" />
+                        )}
+                      </a>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Reactions + viewed status */}
+      <div className="flex items-center gap-2 border-t border-border/60 px-5 py-2.5">
+        <ReactionPicker
+          side="top"
+          onPick={emoji => void toggleReaction({ announcementId: a._id, emoji })}
+        />
+        <ReactionChips
+          reactions={a.reactions}
+          onToggle={emoji =>
+            void toggleReaction({ announcementId: a._id, emoji })
+          }
+        />
+        <div className="ml-auto">
+          <ViewersPopover
+            announcementId={a._id}
+            count={a.viewCount}
+            total={canManage ? a.audienceCount : undefined}
+          />
+        </div>
+      </div>
+    </article>
+  );
+}
+
+type Filter = "all" | "unread" | "pinned";
+type Sort = "newest" | "reactions";
+
+export default function AnnouncementsPage() {
+  const t = useTranslations("Announcements");
+  const tc = useTranslations("Common");
   const isManager = useIsManager();
   const confirm = useConfirm();
   const announcements = useQuery(api.announcements.list, {});
-  const markRead = useMutation(api.announcements.markRead);
   const remove = useMutation(api.announcements.remove);
-  const toggleReaction = useMutation(api.announcements.toggleReaction);
+  const markAllRead = useMutation(api.announcements.markAllRead);
   const handleError = useErrorHandler();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<Announcement | null>(null);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [sort, setSort] = useState<Sort>("newest");
+  const [lightbox, setLightbox] = useState<{ url: string; name: string } | null>(
+    null
+  );
+
+  // Deep link from the dashboard quick action: /announcements?new=1.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") !== null) {
+      setEditing(null);
+      setDialogOpen(true);
+      window.history.replaceState(null, "", "/announcements");
+    }
+  }, []);
 
   async function onDelete(id: Id<"announcements">) {
     const ok = await confirm({
@@ -550,216 +1015,170 @@ export default function AnnouncementsPage() {
     }
   }
 
-  // Visiting the feed marks any unread announcements as read.
-  useEffect(() => {
-    if (!announcements) return;
-    for (const a of announcements) {
-      if (!a.read) void markRead({ announcementId: a._id });
+  const unreadCount = (announcements ?? []).filter(
+    a => !a.read && !a.scheduled
+  ).length;
+
+  const filtered = useMemo(() => {
+    let rows = announcements ?? [];
+    const q = search.trim().toLowerCase();
+    if (q) {
+      rows = rows.filter(a =>
+        [a.title, htmlToText(a.body), a.authorName].some(field =>
+          field.toLowerCase().includes(q)
+        )
+      );
     }
-  }, [announcements, markRead]);
+    if (filter === "unread") rows = rows.filter(a => !a.read && !a.scheduled);
+    if (filter === "pinned") rows = rows.filter(a => a.pinned);
+    if (sort === "reactions") {
+      const score = (a: Announcement) =>
+        a.reactions.reduce((sum, r) => sum + r.count, 0);
+      rows = [...rows].sort((a, b) => score(b) - score(a));
+    }
+    return rows;
+  }, [announcements, search, filter, sort]);
+
+  const pinnedRows = filtered.filter(a => a.pinned);
+  const otherRows = filtered.filter(a => !a.pinned);
+
+  const renderCard = (a: Announcement) => (
+    <AnnouncementCard
+      key={a._id}
+      a={a}
+      onEdit={() => {
+        setEditing(a);
+        setDialogOpen(true);
+      }}
+      onDelete={() => void onDelete(a._id)}
+      onOpenImage={(url, name) => setLightbox({ url, name })}
+    />
+  );
 
   return (
     <div className="mx-auto max-w-3xl" data-tour="tour-announcements-list">
       <PageHeader
         title={t("title")}
-        action={isManager ? <CreateDialog /> : undefined}
-      />
-      {announcements && announcements.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
-          <span className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
-            <Megaphone className="h-5 w-5" />
-          </span>
-          <p className="text-sm text-muted-foreground">{t("empty")}</p>
-        </div>
-      )}
-      <div className="space-y-4">
-        {announcements?.map(a => {
-          const canDelete = a.authorId === me._id || me.role === "admin";
-          return (
-            <article
-              key={a._id}
-              className={cn(
-                "group relative overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
-                a.pinned && "border-primary/30"
-              )}
+        tourCheckpoint="announcements"
+        action={
+          isManager ? (
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setDialogOpen(true);
+              }}
+              data-tour="tour-announcements-new"
             >
-              {a.pinned && (
-                <span className="absolute inset-y-0 left-0 w-1 bg-primary" />
-              )}
-              {/* Header: author + title (left), date/time + actions (right) */}
-              <header className="flex items-start gap-3 border-b border-border/60 px-5 py-3.5">
-                <Avatar className="size-9 shrink-0">
-                  {a.authorAvatar && (
-                    <AvatarImage src={a.authorAvatar} alt={a.authorName} />
-                  )}
-                  <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                    {initials(a.authorName, a.authorName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5">
-                    {a.pinned && (
-                      <Pin
-                        className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
-                        aria-label={t("pinned")}
-                      />
-                    )}
-                    <h2 className="truncate font-display text-base font-semibold leading-tight">
-                      {a.title}
-                    </h2>
-                    {!a.read && (
-                      <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-                    )}
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {a.authorName}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <time className="whitespace-nowrap text-xs text-muted-foreground">
-                    {formatDateTime(a.publishedAt, locale)}
-                  </time>
-                  {canDelete && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={tc("delete")}
-                      className="size-8 text-muted-foreground opacity-100 transition-opacity hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                      onClick={() => void onDelete(a._id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </header>
+              <Plus className="mr-2 h-4 w-4" />
+              {t("new")}
+            </Button>
+          ) : undefined
+        }
+      />
 
-              {/* Styled message body */}
-              <div className="px-5 py-4">
-                <RichText html={a.body} />
-                {a.attachments.length > 0 && (
-                  <div className="mt-4 space-y-3">
-                    {/* Images embed inline */}
-                    {a.attachments.some(
-                      att => att.kind === "image" && att.url
-                    ) && (
-                      <div className="flex flex-wrap gap-2">
-                        {a.attachments
-                          .filter(att => att.kind === "image" && att.url)
-                          .map(att => {
-                            const fromOneDrive = Boolean(att.oneDrivePath);
-                            return (
-                              <a
-                                key={att.storageId}
-                                href={
-                                  fromOneDrive
-                                    ? pathToUrl(att.oneDrivePath!)
-                                    : (att.url ?? undefined)
-                                }
-                                target={fromOneDrive ? undefined : "_blank"}
-                                rel={fromOneDrive ? undefined : "noreferrer"}
-                                className="group/att relative block overflow-hidden rounded-lg border border-border"
-                              >
-                                <img
-                                  src={att.url ?? ""}
-                                  alt={att.name}
-                                  className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
-                                />
-                                {fromOneDrive && (
-                                  <span
-                                    title={tc("fromOneDrive")}
-                                    className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
-                                  >
-                                    <Cloud className="size-3.5 text-blue-500" />
-                                  </span>
-                                )}
-                              </a>
-                            );
-                          })}
-                      </div>
-                    )}
-
-                    {/* Other files show as chips with name + type/size */}
-                    {a.attachments.some(att => att.kind !== "image") && (
-                      <div className="flex flex-wrap gap-2">
-                        {a.attachments
-                          .filter(att => att.kind !== "image")
-                          .map(att => {
-                            const fromOneDrive = Boolean(att.oneDrivePath);
-                            return (
-                              <a
-                                key={att.storageId}
-                                href={
-                                  fromOneDrive
-                                    ? pathToUrl(att.oneDrivePath!)
-                                    : (att.url ?? undefined)
-                                }
-                                target={fromOneDrive ? undefined : "_blank"}
-                                rel={fromOneDrive ? undefined : "noreferrer"}
-                                download={fromOneDrive ? undefined : att.name}
-                                className="group/att flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-accent"
-                              >
-                                <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
-                                  {fromOneDrive ? (
-                                    <Cloud className="size-4 text-blue-500" />
-                                  ) : (
-                                    <FileText className="size-4" />
-                                  )}
-                                </span>
-                                <span className="min-w-0">
-                                  <span className="block max-w-[14rem] truncate text-sm font-medium">
-                                    {att.name}
-                                  </span>
-                                  <span className="block text-xs text-muted-foreground">
-                                    {fromOneDrive
-                                      ? tc("fromOneDrive")
-                                      : [
-                                          att.contentType
-                                            ?.split("/")[1]
-                                            ?.toUpperCase(),
-                                          att.size != null
-                                            ? formatFileSize(att.size)
-                                            : null,
-                                        ]
-                                          .filter(Boolean)
-                                          .join(" · ") || t("attachments")}
-                                  </span>
-                                </span>
-                                {fromOneDrive ? (
-                                  <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-0 transition-opacity group-hover/att:opacity-100" />
-                                ) : (
-                                  <Download className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/att:opacity-100" />
-                                )}
-                              </a>
-                            );
-                          })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Reactions + viewed status */}
-              <div className="flex items-center gap-2 border-t border-border/60 px-5 py-2.5">
-                <ReactionPicker
-                  side="top"
-                  onPick={emoji =>
-                    void toggleReaction({ announcementId: a._id, emoji })
-                  }
-                />
-                <ReactionChips
-                  reactions={a.reactions}
-                  onToggle={emoji =>
-                    void toggleReaction({ announcementId: a._id, emoji })
-                  }
-                />
-                <div className="ml-auto">
-                  <ViewersPopover announcementId={a._id} count={a.viewCount} />
-                </div>
-              </div>
-            </article>
-          );
-        })}
+      {/* Search, filters, sort, mark-all-read */}
+      <div
+        className="mb-4 flex flex-wrap items-center gap-2"
+        data-tour="tour-announcements-toolbar"
+      >
+        <div className="relative min-w-0 flex-1 basis-48">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={tc("search")}
+            className="pl-9"
+          />
+        </div>
+        {(["all", "unread", "pinned"] as const).map(f => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => setFilter(f)}
+            className={cn(
+              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+              filter === f
+                ? "border-transparent bg-foreground text-background"
+                : "border-border text-muted-foreground hover:bg-accent"
+            )}
+          >
+            {t(`filter_${f}`)}
+            {f === "unread" && unreadCount > 0 ? ` (${unreadCount})` : ""}
+          </button>
+        ))}
+        <Select value={sort} onValueChange={v => setSort(v as Sort)}>
+          <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">{t("sortNewest")}</SelectItem>
+            <SelectItem value="reactions">{t("sortReactions")}</SelectItem>
+          </SelectContent>
+        </Select>
+        {unreadCount > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground"
+            onClick={() => void markAllRead({})}
+          >
+            <CheckCheck className="mr-1.5 size-3.5" />
+            {t("markAllRead")}
+          </Button>
+        )}
       </div>
+
+      {announcements && announcements.length === 0 && (
+        <EmptyState icon={<Megaphone />} title={t("empty")} />
+      )}
+      {announcements &&
+        announcements.length > 0 &&
+        filtered.length === 0 && (
+          <EmptyState icon={<Search />} title={tc("noResults")} />
+        )}
+
+      <div className="space-y-6">
+        {pinnedRows.length > 0 && otherRows.length > 0 ? (
+          <>
+            <section className="space-y-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("pinnedSection")}
+              </h2>
+              {pinnedRows.map(renderCard)}
+            </section>
+            <section className="space-y-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t("latestSection")}
+              </h2>
+              {otherRows.map(renderCard)}
+            </section>
+          </>
+        ) : (
+          <div className="space-y-4">{filtered.map(renderCard)}</div>
+        )}
+      </div>
+
+      {/* Image lightbox */}
+      <Dialog open={lightbox !== null} onOpenChange={o => !o && setLightbox(null)}>
+        <DialogContent className="max-w-4xl p-2">
+          {lightbox && (
+            <img
+              src={lightbox.url}
+              alt={lightbox.name}
+              className="max-h-[80vh] w-full rounded-lg object-contain"
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <EditorDialog
+        open={dialogOpen}
+        onOpenChange={open => {
+          setDialogOpen(open);
+          if (!open) setEditing(null);
+        }}
+        editing={editing}
+      />
     </div>
   );
 }

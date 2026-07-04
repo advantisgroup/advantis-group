@@ -1,8 +1,9 @@
 import { ConvexError, v } from "convex/values";
 
+import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
@@ -53,6 +54,9 @@ export const create = mutation({
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(v.array(attachmentValidator)),
     guestVisible: v.optional(v.boolean()),
+    /** Future timestamp schedules the announcement instead of publishing now. */
+    publishAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const author = await requireManager(ctx);
@@ -73,6 +77,8 @@ export const create = mutation({
       args.attachments?.map(a => a.storageId) ??
       args.attachmentStorageIds ??
       [];
+    const publishedAt =
+      args.publishAt && args.publishAt > now ? args.publishAt : now;
     const id = await ctx.db.insert("announcements", {
       title: args.title,
       body: args.body,
@@ -82,21 +88,51 @@ export const create = mutation({
       attachmentStorageIds: storageIds,
       attachments: args.attachments,
       guestVisible: args.guestVisible ?? false,
-      publishedAt: now,
+      publishedAt,
+      expiresAt: args.expiresAt,
       createdAt: now,
     });
 
+    if (publishedAt > now) {
+      // Scheduled: notify the audience when it actually goes live.
+      await ctx.scheduler.runAt(
+        publishedAt,
+        internal.announcements.notifyPublished,
+        { announcementId: id }
+      );
+    } else {
+      const recipients = (
+        await resolveAudienceUserIds(ctx, args.audience)
+      ).filter(uid => uid !== author._id);
+      await notifyUsers(ctx, recipients, {
+        type: "announcement",
+        title: "New announcement",
+        body: args.title,
+        link: "/announcements",
+      });
+    }
+
+    return { id };
+  },
+});
+
+/** Fired by the scheduler when a scheduled announcement's publish time lands. */
+export const notifyPublished = internalMutation({
+  args: { announcementId: v.id("announcements") },
+  handler: async (ctx, { announcementId }) => {
+    const announcement = await ctx.db.get(announcementId);
+    // Deleted, rescheduled further out, or already expired — nothing to send.
+    if (!announcement || announcement.publishedAt > Date.now()) return;
+    if (announcement.expiresAt && announcement.expiresAt <= Date.now()) return;
     const recipients = (
-      await resolveAudienceUserIds(ctx, args.audience)
-    ).filter(uid => uid !== author._id);
+      await resolveAudienceUserIds(ctx, announcement.audience)
+    ).filter(uid => uid !== announcement.authorUserId);
     await notifyUsers(ctx, recipients, {
       type: "announcement",
       title: "New announcement",
-      body: args.title,
+      body: announcement.title,
       link: "/announcements",
     });
-
-    return { id };
   },
 });
 
@@ -109,8 +145,9 @@ export const update = mutation({
     audience: v.optional(audienceValidator),
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
     guestVisible: v.optional(v.boolean()),
+    expiresAt: v.optional(v.union(v.number(), v.null())),
   },
-  handler: async (ctx, { announcementId, ...patch }) => {
+  handler: async (ctx, { announcementId, expiresAt, ...patch }) => {
     const user = await requireManager(ctx);
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) {
@@ -129,7 +166,12 @@ export const update = mutation({
         if (!next.has(old)) await ctx.storage.delete(old);
       }
     }
-    await ctx.db.patch(announcementId, { ...patch, updatedAt: Date.now() });
+    await ctx.db.patch(announcementId, {
+      ...patch,
+      // null clears the expiry (patching undefined would leave it untouched).
+      ...(expiresAt !== undefined ? { expiresAt: expiresAt ?? undefined } : {}),
+      updatedAt: Date.now(),
+    });
     return { ok: true };
   },
 });
@@ -172,15 +214,29 @@ export const list = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
     const user = await requireUser(ctx);
+    const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
       .withIndex("by_publishedAt")
       .order("desc")
       .take(limit ?? 100);
 
-    const visible = announcements.filter(a =>
-      userMatchesAudience(user, a.audience)
-    );
+    // Scheduled (future) and expired announcements stay visible to their
+    // author and admins (flagged below) but disappear for everyone else.
+    const visible = announcements.filter(a => {
+      if (!userMatchesAudience(user, a.audience)) return false;
+      const isAuthorOrAdmin =
+        a.authorUserId === user._id || user.role === "admin";
+      if (a.publishedAt > now && !isAuthorOrAdmin) return false;
+      if (a.expiresAt && a.expiresAt <= now && !isAuthorOrAdmin) return false;
+      return true;
+    });
+
+    // For the author-facing read percentage: active users per audience.
+    const activeUsers = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
 
     const myReads = await ctx.db
       .query("announcementReads")
@@ -242,10 +298,17 @@ export const list = query({
           body: a.body,
           pinned: a.pinned,
           publishedAt: a.publishedAt,
+          expiresAt: a.expiresAt ?? null,
+          scheduled: a.publishedAt > now,
+          expired: !!a.expiresAt && a.expiresAt <= now,
           updatedAt: a.updatedAt ?? null,
           authorName: authorName(author),
           authorAvatar,
           authorId: a.authorUserId,
+          audience: a.audience,
+          audienceCount: activeUsers.filter(u =>
+            userMatchesAudience(u, a.audience)
+          ).length,
           attachments,
           reactions: aggregateReactions(reactionRows, user._id),
           viewCount: reads.length,
@@ -288,13 +351,17 @@ export const unreadCount = query({
   args: {},
   handler: async ctx => {
     const user = await requireUser(ctx);
+    const now = Date.now();
     const announcements = await ctx.db
       .query("announcements")
       .withIndex("by_publishedAt")
       .order("desc")
       .take(100);
-    const visible = announcements.filter(a =>
-      userMatchesAudience(user, a.audience)
+    const visible = announcements.filter(
+      a =>
+        userMatchesAudience(user, a.audience) &&
+        a.publishedAt <= now &&
+        (!a.expiresAt || a.expiresAt > now)
     );
     const myReads = await ctx.db
       .query("announcementReads")
@@ -302,6 +369,53 @@ export const unreadCount = query({
       .collect();
     const readSet = new Set(myReads.map(r => r.announcementId));
     return visible.filter(a => !readSet.has(a._id)).length;
+  },
+});
+
+export const markAllRead = mutation({
+  args: {},
+  handler: async ctx => {
+    const user = await requireUser(ctx);
+    const now = Date.now();
+    const announcements = await ctx.db
+      .query("announcements")
+      .withIndex("by_publishedAt")
+      .order("desc")
+      .take(200);
+    const myReads = await ctx.db
+      .query("announcementReads")
+      .withIndex("by_user", q => q.eq("userId", user._id))
+      .collect();
+    const readSet = new Set(myReads.map(r => r.announcementId));
+    const unread = announcements.filter(
+      a =>
+        userMatchesAudience(user, a.audience) &&
+        a.publishedAt <= now &&
+        !readSet.has(a._id)
+    );
+    await Promise.all(
+      unread.map(a =>
+        ctx.db.insert("announcementReads", {
+          announcementId: a._id,
+          userId: user._id,
+          readAt: now,
+        })
+      )
+    );
+    return { marked: unread.length };
+  },
+});
+
+/** How many active users a draft's audience would reach (create-dialog preview). */
+export const audienceSize = query({
+  args: { audience: audienceValidator },
+  handler: async (ctx, { audience }) => {
+    await requireManager(ctx);
+    const activeUsers = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
+    return activeUsers.filter(u => userMatchesAudience(u, audience)).length;
   },
 });
 
