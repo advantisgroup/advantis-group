@@ -12,6 +12,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { BrowserNotificationBridge } from "@/components/notifications/BrowserNotificationBridge";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -95,6 +96,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
       {/* Mobile bottom navigation */}
       {!immersive && <BottomNav />}
+
+      {/* Native browser notifications for background tabs (opt-in). */}
+      <BrowserNotificationBridge />
 
       {/* Tour UI layers (portal-based, fixed position) */}
       <TourOverlay targetRect={targetRect} visible={tourActive} />

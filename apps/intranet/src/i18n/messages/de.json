@@ -534,8 +534,12 @@
           "description": "Die Glocke wird aktiv, wenn etwas deine Aufmerksamkeit braucht."
         },
         "feed": {
-          "title": "Alle Benachrichtigungen",
-          "description": "Abwesenheitsfreigaben, neue Ankündigungen und Systemhinweise sind hier gesammelt."
+          "title": "Dein Benachrichtigungs-Feed",
+          "description": "Nach Tag gruppiert, nach Kategorie filterbar, mit Ungelesen/Alle-Tabs. Fahre über eine Zeile, um sie als gelesen/ungelesen zu markieren oder zu entfernen; ältere gelesene Einträge klappen automatisch weg."
+        },
+        "prefs": {
+          "title": "Steuere, was dich erreicht",
+          "description": "Schalte einzelne Benachrichtigungsarten stumm und aktiviere native Browser-Benachrichtigungen für Hintergrund-Tabs. Dieselben Einstellungen findest du auch unter Einstellungen."
         }
       },
       "settings": {
@@ -824,7 +828,23 @@
     "preferencesHint": "Wähle, welche Benachrichtigungen du erhalten möchtest.",
     "cat_absence": "Abwesenheiten",
     "cat_announcement": "Ankündigungen",
-    "cat_system": "System"
+    "cat_system": "System",
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "showOlder": "{count, plural, one {# ältere Benachrichtigung anzeigen} other {# ältere Benachrichtigungen anzeigen}}",
+    "markUnread": "Als ungelesen markieren",
+    "markReadAction": "Als gelesen markieren",
+    "dismiss": "Entfernen",
+    "cat_uploads": "Uploads",
+    "type_absence_request": "Abwesenheitsanträge (zur Freigabe)",
+    "type_absence_decision": "Entscheidungen zu deinen Abwesenheiten",
+    "type_announcement": "Ankündigungen",
+    "type_upload_request": "Upload-Anfragen (zur Freigabe)",
+    "type_upload_decision": "Entscheidungen zu deinen Uploads",
+    "browserTitle": "Browser-Benachrichtigungen",
+    "browserHint": "Systembenachrichtigungen, während das Intranet in einem Hintergrund-Tab offen ist.",
+    "browserUnsupported": "Dein Browser unterstützt keine Benachrichtigungen.",
+    "browserDenied": "Benachrichtigungen sind blockiert — erlaube sie in den Browser-Einstellungen."
   },
   "Command": {
     "placeholder": "Seiten, Personen, Ankündigungen suchen…",

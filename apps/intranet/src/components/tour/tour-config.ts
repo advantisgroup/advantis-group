@@ -268,6 +268,12 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         popoutSide: "top",
         route: "/notifications",
       },
+      {
+        id: "notifications.prefs",
+        targetAttr: "tour-notifications-prefs",
+        popoutSide: "top",
+        route: "/notifications",
+      },
     ],
   },
   {

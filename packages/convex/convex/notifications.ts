@@ -60,6 +60,30 @@ export const markAllRead = mutation({
   },
 });
 
+export const markUnread = mutation({
+  args: { notificationId: v.id("notifications") },
+  handler: async (ctx, { notificationId }) => {
+    const user = await requireUser(ctx);
+    const notification = await ctx.db.get(notificationId);
+    if (!notification || notification.userId !== user._id) return { ok: false };
+    if (notification.readAt) {
+      await ctx.db.patch(notificationId, { readAt: undefined });
+    }
+    return { ok: true };
+  },
+});
+
+export const remove = mutation({
+  args: { notificationId: v.id("notifications") },
+  handler: async (ctx, { notificationId }) => {
+    const user = await requireUser(ctx);
+    const notification = await ctx.db.get(notificationId);
+    if (!notification || notification.userId !== user._id) return { ok: false };
+    await ctx.db.delete(notificationId);
+    return { ok: true };
+  },
+});
+
 export const getPreferences = query({
   args: {},
   handler: async ctx => {

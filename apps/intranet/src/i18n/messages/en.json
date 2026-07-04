@@ -534,8 +534,12 @@
           "description": "The bell turns active when something needs your attention."
         },
         "feed": {
-          "title": "All notifications",
-          "description": "Absence approvals, new announcements, and system alerts collected here."
+          "title": "Your notification feed",
+          "description": "Grouped by day, filterable by category, with unread/all tabs. Hover a row to mark it read or unread, or dismiss it; older read items fold away automatically."
+        },
+        "prefs": {
+          "title": "Tune what reaches you",
+          "description": "Mute individual notification types and opt into native browser notifications for when the intranet sits in a background tab. The same controls also live in Settings."
         }
       },
       "settings": {
@@ -824,7 +828,23 @@
     "preferencesHint": "Choose which notifications you want to receive.",
     "cat_absence": "Absences",
     "cat_announcement": "Announcements",
-    "cat_system": "System"
+    "cat_system": "System",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "showOlder": "{count, plural, one {Show # older notification} other {Show # older notifications}}",
+    "markUnread": "Mark as unread",
+    "markReadAction": "Mark as read",
+    "dismiss": "Dismiss",
+    "cat_uploads": "Uploads",
+    "type_absence_request": "Absence requests (to approve)",
+    "type_absence_decision": "Decisions on your absences",
+    "type_announcement": "Announcements",
+    "type_upload_request": "Upload requests (to approve)",
+    "type_upload_decision": "Decisions on your uploads",
+    "browserTitle": "Browser notifications",
+    "browserHint": "System notifications while the intranet is open in a background tab.",
+    "browserUnsupported": "Your browser doesn't support notifications.",
+    "browserDenied": "Notifications are blocked — allow them in your browser settings."
   },
   "Command": {
     "placeholder": "Search pages, people, announcements…",
