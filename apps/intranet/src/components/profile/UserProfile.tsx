@@ -170,20 +170,31 @@ function TeamsEditor({
   );
 }
 
-/** A single contact line: icon + value, with an optional copy affordance. */
+/** A single contact line: icon + value, optionally a mailto:/tel: link + copy. */
 function ContactRow({
   icon,
   value,
+  href,
   onCopy,
 }: {
   icon: ReactNode;
   value: string;
+  href?: string;
   onCopy?: () => void;
 }) {
   return (
     <div className="flex items-center gap-2.5 text-sm">
       <span className="text-muted-foreground">{icon}</span>
-      <span className="min-w-0 flex-1 truncate">{value}</span>
+      {href ? (
+        <a
+          href={href}
+          className="min-w-0 flex-1 truncate hover:text-primary hover:underline"
+        >
+          {value}
+        </a>
+      ) : (
+        <span className="min-w-0 flex-1 truncate">{value}</span>
+      )}
       {onCopy && (
         <Button
           size="icon-sm"
@@ -195,6 +206,63 @@ function ContactRow({
         </Button>
       )}
     </div>
+  );
+}
+
+/** How recent a presence heartbeat still counts as "online". */
+export const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+
+function Organisation({ userId }: { userId: Id<"users"> }) {
+  const t = useTranslations("Profile");
+  const org = useQuery(api.users.orgContext, { userId });
+  if (!org || (!org.manager && org.reports.length === 0)) return null;
+
+  const personRow = (p: {
+    _id: string;
+    name: string;
+    jobTitle: string | null;
+    avatar: string | null;
+  }) => (
+    <div
+      key={p._id}
+      className="flex items-center gap-2.5 rounded-lg border border-border/70 px-2.5 py-2"
+    >
+      <Avatar className="size-7 shrink-0">
+        {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+        <AvatarFallback className="text-[10px]">
+          {initials(p.name, "")}
+        </AvatarFallback>
+      </Avatar>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">
+        {p.name}
+      </span>
+      {p.jobTitle && (
+        <span className="shrink-0 text-xs text-muted-foreground">
+          {p.jobTitle}
+        </span>
+      )}
+    </div>
+  );
+
+  return (
+    <Section label={t("organisation")}>
+      <div className="space-y-2">
+        {org.manager && (
+          <div>
+            <p className="mb-1 text-xs text-muted-foreground">{t("manager")}</p>
+            {personRow(org.manager)}
+          </div>
+        )}
+        {org.reports.length > 0 && (
+          <div>
+            <p className="mb-1 text-xs text-muted-foreground">
+              {t("reports", { count: org.reports.length })}
+            </p>
+            <div className="space-y-1">{org.reports.map(personRow)}</div>
+          </div>
+        )}
+      </div>
+    </Section>
   );
 }
 
@@ -434,12 +502,21 @@ function ProfileContent({
     <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
       <div className="flex items-start gap-3 border-b border-border/70 p-5">
-        <Avatar className="size-16 shrink-0">
-          {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-          <AvatarFallback className="text-lg">
-            {initials(user.name, user.email)}
-          </AvatarFallback>
-        </Avatar>
+        <div className="relative shrink-0">
+          <Avatar className="size-16">
+            {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
+            <AvatarFallback className="text-lg">
+              {initials(user.name, user.email)}
+            </AvatarFallback>
+          </Avatar>
+          {user.lastActiveAt &&
+            Date.now() - user.lastActiveAt < ONLINE_WINDOW_MS && (
+              <span
+                title={t("online")}
+                className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-2 border-background bg-success"
+              />
+            )}
+        </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-semibold leading-tight">
             {user.name}
@@ -475,12 +552,14 @@ function ProfileContent({
               <ContactRow
                 icon={<Mail className="size-4" />}
                 value={user.email}
+                href={`mailto:${user.email}`}
                 onCopy={copyEmail}
               />
               {user.phone && (
                 <ContactRow
                   icon={<Phone className="size-4" />}
                   value={user.phone}
+                  href={`tel:${user.phone.replace(/\s+/g, "")}`}
                 />
               )}
               {user.department && (
@@ -507,6 +586,8 @@ function ProfileContent({
             </div>
           </Section>
         )}
+
+        <Organisation userId={user._id} />
 
         {!isSelf && (
           <MutualConversations userId={user._id} onNavigate={onClose} />

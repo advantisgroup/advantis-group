@@ -90,7 +90,14 @@ export const list = query({
     if (args.search) {
       const q = args.search.toLowerCase();
       users = users.filter(u =>
-        [u.firstName, u.lastName, u.email, u.jobTitle, u.department]
+        [
+          u.firstName,
+          u.lastName,
+          u.email,
+          u.jobTitle,
+          u.department,
+          ...(u.teams ?? []),
+        ]
           .filter(Boolean)
           .some(field => field!.toLowerCase().includes(q))
       );
@@ -99,7 +106,42 @@ export const list = query({
     users.sort((a, b) =>
       (a.firstName ?? a.email).localeCompare(b.firstName ?? b.email)
     );
-    return Promise.all(users.map(u => withAvatar(ctx, u)));
+
+    // Directory extras, resolved in bulk: live presence, whoever is out today
+    // (approved absences covering today), and the manager's display name.
+    const presenceRows = await ctx.db.query("presence").collect();
+    const lastActiveByUser = new Map(
+      presenceRows.map(p => [p.userId, p.lastActiveAt])
+    );
+    const today = new Date().toISOString().slice(0, 10);
+    const approved = await ctx.db
+      .query("absences")
+      .withIndex("by_status", q => q.eq("status", "approved"))
+      .collect();
+    const outByUser = new Map<string, string>();
+    for (const a of approved) {
+      if (a.startDate <= today && today <= a.endDate) {
+        const prev = outByUser.get(a.userId);
+        if (!prev || a.endDate > prev) outByUser.set(a.userId, a.endDate);
+      }
+    }
+    const nameById = new Map(
+      users.map(u => [
+        u._id as string,
+        [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
+      ])
+    );
+
+    return Promise.all(
+      users.map(async u => ({
+        ...(await withAvatar(ctx, u)),
+        lastActiveAt: lastActiveByUser.get(u._id) ?? null,
+        outUntil: outByUser.get(u._id) ?? null,
+        managerName: u.managerId
+          ? (nameById.get(u.managerId as string) ?? null)
+          : null,
+      }))
+    );
   },
 });
 
@@ -109,7 +151,42 @@ export const get = query({
     await requireUser(ctx);
     const user = await ctx.db.get(userId);
     if (!user) return null;
-    return withAvatar(ctx, user);
+    const presence = await ctx.db
+      .query("presence")
+      .withIndex("by_user", q => q.eq("userId", userId))
+      .unique();
+    return {
+      ...(await withAvatar(ctx, user)),
+      lastActiveAt: presence?.lastActiveAt ?? null,
+    };
+  },
+});
+
+/** Manager + direct reports for the profile card's organisation section. */
+export const orgContext = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }) => {
+    await requireUser(ctx);
+    const user = await ctx.db.get(userId);
+    if (!user) return { manager: null, reports: [] };
+    const manager = user.managerId ? await ctx.db.get(user.managerId) : null;
+    const reports = (await ctx.db.query("users").collect()).filter(
+      u => u.managerId === userId && u.status === "active"
+    );
+    const brief = async (u: Doc<"users">) => {
+      const full = await withAvatar(ctx, u);
+      return {
+        _id: full._id,
+        name: full.name,
+        jobTitle: full.jobTitle,
+        avatar: full.avatar,
+      };
+    };
+    return {
+      manager:
+        manager && manager.status === "active" ? await brief(manager) : null,
+      reports: await Promise.all(reports.map(brief)),
+    };
   },
 });
 

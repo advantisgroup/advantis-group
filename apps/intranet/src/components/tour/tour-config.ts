@@ -189,6 +189,12 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         skipOnMobile: true,
       },
       {
+        id: "directory.filters",
+        targetAttr: "tour-directory-filters",
+        popoutSide: "bottom",
+        route: "/directory",
+      },
+      {
         id: "directory.grid",
         targetAttr: "tour-directory-grid",
         popoutSide: "top",

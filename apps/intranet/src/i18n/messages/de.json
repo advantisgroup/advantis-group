@@ -338,7 +338,14 @@
     "role": "Rolle",
     "jobTitle": "Position",
     "startChat": "Nachricht",
-    "noResults": "Keine Personen gefunden"
+    "noResults": "Keine Personen gefunden",
+    "sortName": "Sortierung: Name",
+    "sortDepartment": "Sortierung: Abteilung",
+    "sortRole": "Sortierung: Rolle",
+    "groupByDept": "Nach Abteilung gruppieren",
+    "noDepartment": "Keine Abteilung",
+    "online": "Online",
+    "outUntil": "Abwesend bis {date}"
   },
   "Profile": {
     "title": "Profil",
@@ -347,7 +354,11 @@
     "mutual": "Gemeinsame Chats & Gruppen",
     "upcoming": "Bevorstehende Abwesenheiten",
     "memberCount": "{count} Mitglieder",
-    "notFound": "Dieses Mitglied wurde nicht gefunden."
+    "notFound": "Dieses Mitglied wurde nicht gefunden.",
+    "organisation": "Organisation",
+    "manager": "Führungskraft",
+    "reports": "{count, plural, one {Direkt unterstellte Person} other {Direkt unterstellte Personen}}",
+    "online": "Online"
   },
   "Tour": {
     "back": "Zurück",
@@ -498,9 +509,13 @@
           "title": "Mitarbeiterverzeichnis",
           "description": "Finde Kolleginnen und Kollegen, sieh Rolle und Abteilung und starte einen Chat."
         },
+        "filters": {
+          "title": "Finde jeden schnell",
+          "description": "Die Suche trifft Namen, E-Mails, Positionen und Teams. Kombiniere die Abteilungsauswahl mit Rollen- und Team-Chips, ändere die Sortierung, gruppiere nach Abteilung oder springe per Buchstabe."
+        },
         "grid": {
           "title": "Durchstöbere dein Team",
-          "description": "Suche nach Namen, filtere nach Abteilung und vernetze dich sofort."
+          "description": "Ein grüner Punkt heißt gerade online; ein Flugzeug markiert aktuell abwesende Kolleginnen und Kollegen. Klicke auf eine Karte für das vollständige Profil — Kontakt-Links, Führungskraft und unterstellte Personen sowie anstehende Abwesenheiten."
         }
       },
       "guidebooks": {

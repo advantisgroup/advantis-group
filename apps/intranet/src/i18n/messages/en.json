@@ -338,7 +338,14 @@
     "role": "Role",
     "jobTitle": "Job title",
     "startChat": "Message",
-    "noResults": "No people found"
+    "noResults": "No people found",
+    "sortName": "Sort: Name",
+    "sortDepartment": "Sort: Department",
+    "sortRole": "Sort: Role",
+    "groupByDept": "Group by department",
+    "noDepartment": "No department",
+    "online": "Online",
+    "outUntil": "Out until {date}"
   },
   "Profile": {
     "title": "Profile",
@@ -347,7 +354,11 @@
     "mutual": "Mutual chats & groups",
     "upcoming": "Upcoming time off",
     "memberCount": "{count} members",
-    "notFound": "This member could not be found."
+    "notFound": "This member could not be found.",
+    "organisation": "Organization",
+    "manager": "Manager",
+    "reports": "{count, plural, one {Direct report} other {Direct reports}}",
+    "online": "Online"
   },
   "Tour": {
     "back": "Back",
@@ -498,9 +509,13 @@
           "title": "People directory",
           "description": "Find colleagues, see their role, department, and start a chat."
         },
+        "filters": {
+          "title": "Find anyone fast",
+          "description": "Search matches names, emails, job titles and teams. Combine the department select with role and team chips, change the sorting, group by department, or jump by letter."
+        },
         "grid": {
           "title": "Browse your team",
-          "description": "Search by name, filter by department, and connect instantly."
+          "description": "A green dot means someone is online right now; a plane marks colleagues who are currently out. Click a card for the full profile — contact links, manager and direct reports, and upcoming absences."
         }
       },
       "guidebooks": {
