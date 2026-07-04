@@ -159,7 +159,7 @@ export function Sidebar({
       data-tour={dataTour}
       aria-label={ariaLabel}
       className={cn(
-        "group/sidebar z-30 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear md:flex",
+        "group/sidebar z-30 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear print:hidden md:flex",
         state === "collapsed"
           ? "w-[var(--sidebar-width-icon)]"
           : "w-[var(--sidebar-width)]",

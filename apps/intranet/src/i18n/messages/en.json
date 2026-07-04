@@ -525,7 +525,7 @@
         },
         "list": {
           "title": "Your knowledge base",
-          "description": "Open any guide to follow step-by-step procedures or search across topics."
+          "description": "Search across guidebooks, pin your favorites so they sort first, and jump back in via the \"continue where you left off\" banner. Inside a guide you get a table of contents, a reading-progress bar, print support, and a quick way to say whether it helped."
         }
       },
       "notifications": {
@@ -733,6 +733,32 @@
       "label": "Switch guidebook",
       "previous": "Previous",
       "next": "Next"
+    },
+    "searchPlaceholder": "Search guidebooks…",
+    "noResults": "No guidebooks match your search",
+    "continueReading": "Continue where you left off:",
+    "addFavorite": "Pin guidebook",
+    "removeFavorite": "Unpin guidebook",
+    "toc": "On this page",
+    "print": "Print",
+    "feedbackQuestion": "Was this guidebook helpful?",
+    "feedbackThanks": "Thanks for your feedback!",
+    "feedbackYes": "Yes, helpful",
+    "feedbackNo": "Not really",
+    "feedbackStats": "{helpful} of {total} found this helpful",
+    "related": "More guidebooks",
+    "wikiChat": {
+      "title": "Wiki chat",
+      "chats": "Chats",
+      "newChat": "New chat",
+      "newShort": "New",
+      "emptyChats": "No chats yet.",
+      "rename": "Rename",
+      "delete": "Delete",
+      "privacyAria": "Privacy note",
+      "privacyHint": "Your chats are encrypted and only visible to you.",
+      "emptyPrompt": "Ask me anything about UTA products,\ntariffs, toll boxes or procedures.",
+      "placeholder": "Type a question… (Enter to send)"
     }
   },
   "CaseSearch": {

@@ -46,6 +46,7 @@ import type * as files from "../files.js";
 import type * as guest from "../guest.js";
 import type * as http from "../http.js";
 import type * as invites from "../invites.js";
+import type * as guidebookFeedback from "../guidebookFeedback.js";
 import type * as lib_audience from "../lib/audience.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_clerk from "../lib/clerk.js";
@@ -105,6 +106,7 @@ declare const fullApi: ApiFromModules<{
   guest: typeof guest;
   http: typeof http;
   invites: typeof invites;
+  guidebookFeedback: typeof guidebookFeedback;
   "lib/audience": typeof lib_audience;
   "lib/auth": typeof lib_auth;
   "lib/clerk": typeof lib_clerk;

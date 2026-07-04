@@ -1,10 +1,20 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { useParams } from "next/navigation";
 
-import { ArrowLeft, BookOpen } from "lucide-react";
+import { api } from "@advantis/convex/api";
+import { useMutation } from "convex/react";
+import { ArrowLeft, BookOpen, Printer } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import {
+  FeedbackWidget,
+  GuidebookToc,
+  ReadingProgress,
+  RelatedGuidebooks,
+} from "@/components/guidebooks/extras";
 import {
   canAccessGuidebook,
   getGuidebook,
@@ -16,6 +26,7 @@ import {
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function GuidebookPage() {
@@ -24,10 +35,19 @@ export default function GuidebookPage() {
   const user = useCurrentUser();
   const guidebook = getGuidebook(params.slug);
   const allowed = guidebook ? canAccessGuidebook(user, guidebook) : false;
+  const setPrefs = useMutation(api.userPreferences.setMine);
+
+  // Remember the last opened guidebook for the list page's "continue" banner.
+  useEffect(() => {
+    if (guidebook && allowed) {
+      void setPrefs({ lastGuidebookSlug: guidebook.slug });
+    }
+  }, [guidebook, allowed, setPrefs]);
 
   return (
     <div className="mx-auto max-w-5xl">
-      <div className="mb-4 flex items-center justify-between gap-3">
+      {guidebook && allowed && <ReadingProgress />}
+      <div className="mb-4 flex items-center justify-between gap-3 print:hidden">
         <Link
           href="/guidebooks"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
@@ -36,7 +56,16 @@ export default function GuidebookPage() {
           {t("title")}
         </Link>
         {guidebook && allowed && (
-          <div className="hidden md:block">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={t("print")}
+              className="text-muted-foreground"
+              onClick={() => window.print()}
+            >
+              <Printer />
+            </Button>
             <GuidebookSwitcher current={guidebook} />
           </div>
         )}
@@ -63,8 +92,15 @@ export default function GuidebookPage() {
             title={t(guidebook.titleKey)}
             description={t(guidebook.descriptionKey)}
           />
-          <guidebook.Component />
-          <GuidebookPager current={guidebook} />
+          <div id="guidebook-content">
+            <guidebook.Component />
+          </div>
+          <GuidebookToc />
+          <FeedbackWidget slug={guidebook.slug} />
+          <RelatedGuidebooks current={guidebook} />
+          <div className="print:hidden">
+            <GuidebookPager current={guidebook} />
+          </div>
         </>
       )}
     </div>

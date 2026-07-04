@@ -682,6 +682,17 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 
+  // --- Guidebook feedback ---------------------------------------------------
+  // One "was this helpful?" vote per user per guidebook slug (revisable).
+  guidebookFeedback: defineTable({
+    userId: v.id("users"),
+    slug: v.string(),
+    helpful: v.boolean(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_slug", ["userId", "slug"])
+    .index("by_slug", ["slug"]),
+
   // --- Per-user app preferences ---------------------------------------------
   // One row per user; every field optional so features can add preferences
   // without migrations. Client-side cosmetics (e.g. "always preview") stay in

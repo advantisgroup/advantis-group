@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@clerk/nextjs";
 import { Pencil, Plus, Send, ShieldCheck, Trash2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 
 import { Button } from "@/components/ui/button";
@@ -34,8 +35,10 @@ interface Chat {
   updatedAt: number;
 }
 
-// Funny little German status quips — fuel & card themed, à la Claude Code.
-const LOADING_QUOTES = [
+// Funny little status quips — fuel & card themed, à la Claude Code. Kept in
+// code (not the catalogs) because they're arrays picked at random; both
+// languages live here and the locale chooses the set.
+const LOADING_QUOTES_DE = [
   "Wird betankt…",
   "Karte wird aufgeladen…",
   "Tank wird gefüllt…",
@@ -53,12 +56,37 @@ const LOADING_QUOTES = [
   "Quittung wird gedruckt…",
 ];
 
-// Short, slightly cheeky German error lines (rendered in red).
-const ERROR_QUOTES = [
+const LOADING_QUOTES_EN = [
+  "Refuelling…",
+  "Topping up the card…",
+  "Filling the tank…",
+  "Calibrating the toll box…",
+  "Refilling the AdBlue…",
+  "Connecting the pump…",
+  "Fuel is flowing…",
+  "Calculating the route…",
+  "Charging station hunting for power…",
+  "Estimating the range…",
+  "Pumping diesel…",
+  "Booking the receipt…",
+  "Scanning stations…",
+  "Filling her up…",
+  "Printing the receipt…",
+];
+
+// Short, slightly cheeky error lines (rendered in red).
+const ERROR_QUOTES_DE = [
   "Tank leergelaufen – bitte erneut versuchen.",
   "Verbindung abgerissen, die Leitung ist trocken. Nochmal?",
   "Da hat die Karte nicht durchgezogen. Bitte erneut senden.",
   "Zapfsäule streikt gerade. Versuch es gleich nochmal.",
+];
+
+const ERROR_QUOTES_EN = [
+  "Ran out of fuel – please try again.",
+  "Connection dropped, the line is dry. One more time?",
+  "The card didn't go through. Please send again.",
+  "The pump is on strike. Try again in a moment.",
 ];
 
 function uid(): string {
@@ -68,20 +96,20 @@ function uid(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-function deriveTitle(text: string): string {
+function deriveTitle(text: string, fallback: string): string {
   const clean = text.replace(/\s+/g, " ").trim();
-  return clean.length > 42 ? `${clean.slice(0, 42)}…` : clean || "Neuer Chat";
+  return clean.length > 42 ? `${clean.slice(0, 42)}…` : clean || fallback;
 }
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function makeChat(): Chat {
+function makeChat(title: string): Chat {
   const now = Date.now();
   return {
     id: uid(),
-    title: "Neuer Chat",
+    title,
     messages: [],
     createdAt: now,
     updatedAt: now,
@@ -89,12 +117,16 @@ function makeChat(): Chat {
 }
 
 export function WikiChat() {
+  const t = useTranslations("Guidebooks");
+  const locale = useLocale();
+  const loadingQuotes = locale === "de" ? LOADING_QUOTES_DE : LOADING_QUOTES_EN;
+  const errorQuotes = locale === "de" ? ERROR_QUOTES_DE : ERROR_QUOTES_EN;
   const { getToken } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [quote, setQuote] = useState(LOADING_QUOTES[0]);
+  const [quote, setQuote] = useState(loadingQuotes[0]);
   const [elapsed, setElapsed] = useState(0);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -152,9 +184,9 @@ export function WikiChat() {
       setElapsed(0);
       return;
     }
-    setQuote(pick(LOADING_QUOTES));
+    setQuote(pick(loadingQuotes));
     const start = Date.now();
-    const quoteTimer = setInterval(() => setQuote(pick(LOADING_QUOTES)), 1800);
+    const quoteTimer = setInterval(() => setQuote(pick(loadingQuotes)), 1800);
     const tick = setInterval(
       () => setElapsed(Math.floor((Date.now() - start) / 1000)),
       250
@@ -171,7 +203,7 @@ export function WikiChat() {
       setActiveId(empty.id);
       return;
     }
-    const chat = makeChat();
+    const chat = makeChat(t("wikiChat.newChat"));
     setChats(prev => [chat, ...prev]);
     setActiveId(chat.id);
   }
@@ -258,7 +290,7 @@ export function WikiChat() {
     let chatId = activeId;
     let base = chats;
     if (!chatId || !chats.some(c => c.id === chatId)) {
-      const chat = makeChat();
+      const chat = makeChat(t("wikiChat.newChat"));
       base = [chat, ...chats];
       chatId = chat.id;
       setActiveId(chatId);
@@ -270,7 +302,9 @@ export function WikiChat() {
       ...current.messages,
       { role: "user", content: text },
     ];
-    const title = isFirst ? deriveTitle(text) : current.title;
+    const title = isFirst
+      ? deriveTitle(text, t("wikiChat.newChat"))
+      : current.title;
 
     setChats(
       base.map(c =>
@@ -318,7 +352,7 @@ export function WikiChat() {
         writeAssistant(accumulated);
       }
       if (!accumulated.trim()) {
-        const q = pick(ERROR_QUOTES);
+        const q = pick(errorQuotes);
         writeAssistant(q, true);
         finalMessages = [
           ...withUser,
@@ -331,7 +365,7 @@ export function WikiChat() {
         ];
       }
     } catch {
-      const q = pick(ERROR_QUOTES);
+      const q = pick(errorQuotes);
       writeAssistant(q, true);
       finalMessages = [
         ...withUser,
@@ -353,14 +387,14 @@ export function WikiChat() {
         <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-muted/30 sm:flex">
           <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-1.5">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Chats
+              {t("wikiChat.chats")}
             </span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  aria-label="Datenschutz-Hinweis"
+                  aria-label={t("wikiChat.privacyAria")}
                 >
                   <ShieldCheck className="h-4 w-4" />
                 </button>
@@ -369,7 +403,7 @@ export function WikiChat() {
                 side="bottom"
                 className="max-w-[15rem] text-balance leading-relaxed"
               >
-                Deine Chats sind verschlüsselt und nur für dich sichtbar.
+                {t("wikiChat.privacyHint")}
               </TooltipContent>
             </Tooltip>
           </div>
@@ -379,13 +413,13 @@ export function WikiChat() {
               className="flex w-full items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
             >
               <Plus className="h-4 w-4" />
-              Neuer Chat
+              {t("wikiChat.newChat")}
             </button>
           </div>
           <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto px-2 pb-2">
             {chats.length === 0 && (
               <p className="px-2 py-4 text-center text-xs text-muted-foreground">
-                Noch keine Chats.
+                {t("wikiChat.emptyChats")}
               </p>
             )}
             {chats.map(chat => (
@@ -423,14 +457,14 @@ export function WikiChat() {
                       <button
                         onClick={() => startRename(chat)}
                         className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        aria-label="Umbenennen"
+                        aria-label={t("wikiChat.rename")}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => deleteChat(chat.id)}
                         className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                        aria-label="Löschen"
+                        aria-label={t("wikiChat.delete")}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -447,14 +481,14 @@ export function WikiChat() {
           {/* Mobile-only header with new-chat shortcut */}
           <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2 sm:hidden">
             <span className="min-w-0 flex-1 truncate text-sm font-medium">
-              {activeChat?.title ?? "Wiki-Chat"}
+              {activeChat?.title ?? t("wikiChat.title")}
             </span>
             <button
               onClick={newChat}
               className="flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
             >
               <Plus className="h-3.5 w-3.5" />
-              Neu
+              {t("wikiChat.newShort")}
             </button>
           </div>
 
@@ -462,10 +496,8 @@ export function WikiChat() {
             {messages.length === 0 && !loading && (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
                 <div className="text-4xl">💬</div>
-                <p className="text-sm font-medium">
-                  Stell mir eine Frage zu UTA-Produkten,
-                  <br />
-                  Tarifen, Mautboxen oder Abläufen.
+                <p className="whitespace-pre-line text-sm font-medium">
+                  {t("wikiChat.emptyPrompt")}
                 </p>
               </div>
             )}
@@ -557,7 +589,7 @@ export function WikiChat() {
                   void send();
                 }
               }}
-              placeholder="Frage eingeben… (Enter zum Senden)"
+              placeholder={t("wikiChat.placeholder")}
               className="flex-1 resize-none rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/30"
             />
             <Button

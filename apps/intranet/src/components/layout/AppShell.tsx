@@ -58,7 +58,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       <SidebarInset>
         <header
           data-tour="tour-header"
-          className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl md:h-16 md:px-4"
+          className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl print:hidden md:h-16 md:px-4"
         >
           <SidebarTrigger className="-ml-1" />
           {/* Search lives in the desktop header, but on mobile it moves to the
@@ -83,7 +83,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <main
           ref={mainRef}
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto px-4 pt-6 md:px-8 md:pt-8 md:pb-8",
+            "min-h-0 flex-1 overflow-y-auto px-4 pt-6 print:overflow-visible md:px-8 md:pt-8 md:pb-8",
             immersive ? "pb-6" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
           )}
         >

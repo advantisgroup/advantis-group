@@ -524,8 +524,8 @@
           "description": "SOPs, Fallsuche und Teamwissen – alles an einem Ort."
         },
         "list": {
-          "title": "Deine Wissensdatenbank",
-          "description": "Öffne einen Leitfaden, um Schritt-für-Schritt-Anleitungen zu folgen oder Themen zu durchsuchen."
+          "title": "Deine Wissensbasis",
+          "description": "Durchsuche die Einträge, pinne Favoriten (sie sortieren nach vorn) und spring über das „Mach weiter“-Banner zurück. In einem Eintrag bekommst du ein Inhaltsverzeichnis, einen Lesefortschritts-Balken, Druckansicht und eine schnelle Rückmeldung, ob er geholfen hat."
         }
       },
       "notifications": {
@@ -733,6 +733,32 @@
       "label": "Wiki-Eintrag wechseln",
       "previous": "Vorheriger Eintrag",
       "next": "Nächster Eintrag"
+    },
+    "searchPlaceholder": "Wiki durchsuchen…",
+    "noResults": "Keine Einträge passen zur Suche",
+    "continueReading": "Mach weiter, wo du aufgehört hast:",
+    "addFavorite": "Eintrag anpinnen",
+    "removeFavorite": "Eintrag lösen",
+    "toc": "Auf dieser Seite",
+    "print": "Drucken",
+    "feedbackQuestion": "War dieser Eintrag hilfreich?",
+    "feedbackThanks": "Danke für dein Feedback!",
+    "feedbackYes": "Ja, hilfreich",
+    "feedbackNo": "Eher nicht",
+    "feedbackStats": "{helpful} von {total} fanden das hilfreich",
+    "related": "Weitere Einträge",
+    "wikiChat": {
+      "title": "Wiki-Chat",
+      "chats": "Chats",
+      "newChat": "Neuer Chat",
+      "newShort": "Neu",
+      "emptyChats": "Noch keine Chats.",
+      "rename": "Umbenennen",
+      "delete": "Löschen",
+      "privacyAria": "Datenschutz-Hinweis",
+      "privacyHint": "Deine Chats sind verschlüsselt und nur für dich sichtbar.",
+      "emptyPrompt": "Stell mir eine Frage zu UTA-Produkten,\nTarifen, Mautboxen oder Abläufen.",
+      "placeholder": "Frage eingeben… (Enter zum Senden)"
     }
   },
   "CaseSearch": {
