@@ -1,23 +1,35 @@
 import type { ComponentType } from "react";
 
 import {
+  CalendarDays,
   Clock,
   Cloud,
   FileSearch,
   ListChecks,
   type LucideIcon,
   Mail,
+  MessageSquare,
+  UserCog,
   Wrench,
 } from "lucide-react";
 
 import { type TeamId } from "@/lib/teams";
 
 import { CaseSearchGuidebook } from "./case-search";
+import { ChatTippsGuidebook } from "./docs/chat-tipps";
 import { ClockodoZeiterfassungGuidebook } from "./docs/clockodo-zeiterfassung";
 import { EmailSignaturenGuidebook } from "./docs/email-signaturen";
+import { KalenderGuidebook } from "./docs/kalender";
 import { OnboardingGuidebook } from "./docs/onboarding";
 import { OneDriveSchulungGuidebook } from "./docs/onedrive-schulung";
 import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
+import { ProfilKontoGuidebook } from "./docs/profil-konto";
+
+/**
+ * "interactive" = a live tool (search, lookup, chat) rather than a fixed
+ * article. Drives grouping/filtering in the guidebooks list.
+ */
+export type GuidebookCategory = "interactive" | "guide";
 
 export interface Guidebook {
   /** URL slug: /guidebooks/<slug> */
@@ -26,6 +38,7 @@ export interface Guidebook {
   titleKey: string;
   descriptionKey: string;
   icon: LucideIcon;
+  category: GuidebookCategory;
   /** Teams allowed to open this guidebook. Empty = everyone signed in. */
   teams: TeamId[];
   Component: ComponentType;
@@ -41,6 +54,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     titleKey: "caseSearch.title",
     descriptionKey: "caseSearch.description",
     icon: FileSearch,
+    category: "interactive",
     teams: ["customer-care"],
     Component: CaseSearchGuidebook,
   },
@@ -49,6 +63,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     titleKey: "problembehandlungen.title",
     descriptionKey: "problembehandlungen.description",
     icon: Wrench,
+    category: "guide",
     teams: [],
     Component: ProblembehandlungenGuidebook,
   },
@@ -57,6 +72,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     titleKey: "onedriveSchulung.title",
     descriptionKey: "onedriveSchulung.description",
     icon: Cloud,
+    category: "guide",
     teams: [],
     Component: OneDriveSchulungGuidebook,
   },
@@ -65,6 +81,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     titleKey: "emailSignaturen.title",
     descriptionKey: "emailSignaturen.description",
     icon: Mail,
+    category: "guide",
     teams: [],
     Component: EmailSignaturenGuidebook,
   },
@@ -73,6 +90,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     titleKey: "clockodoZeiterfassung.title",
     descriptionKey: "clockodoZeiterfassung.description",
     icon: Clock,
+    category: "guide",
     teams: [],
     Component: ClockodoZeiterfassungGuidebook,
   },
@@ -81,8 +99,36 @@ export const GUIDEBOOKS: Guidebook[] = [
     titleKey: "onboarding.title",
     descriptionKey: "onboarding.description",
     icon: ListChecks,
+    category: "guide",
     teams: [],
     Component: OnboardingGuidebook,
+  },
+  {
+    slug: "chat-tipps",
+    titleKey: "chatTipps.title",
+    descriptionKey: "chatTipps.description",
+    icon: MessageSquare,
+    category: "guide",
+    teams: [],
+    Component: ChatTippsGuidebook,
+  },
+  {
+    slug: "kalender",
+    titleKey: "kalender.title",
+    descriptionKey: "kalender.description",
+    icon: CalendarDays,
+    category: "guide",
+    teams: [],
+    Component: KalenderGuidebook,
+  },
+  {
+    slug: "profil-konto",
+    titleKey: "profilKonto.title",
+    descriptionKey: "profilKonto.description",
+    icon: UserCog,
+    category: "guide",
+    teams: [],
+    Component: ProfilKontoGuidebook,
   },
 ];
 

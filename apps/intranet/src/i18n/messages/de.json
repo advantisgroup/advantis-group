@@ -747,6 +747,18 @@
       "title": "Onboarding-Checkliste",
       "description": "Alles Wichtige für die erste Woche — Zugänge, Signatur, Zeiterfassung und Kolleg:innen finden."
     },
+    "chatTipps": {
+      "title": "Chat — Gruppen & Nachrichten",
+      "description": "Unterhaltungen starten, Gruppen verwalten, reagieren und antworten."
+    },
+    "kalender": {
+      "title": "Kalender & Termine",
+      "description": "Ansichten, Termine anlegen, Abwesenheiten anzeigen und den Kalender exportieren."
+    },
+    "profilKonto": {
+      "title": "Profil, Benachrichtigungen & Konto",
+      "description": "Profil vervollständigen, Verknüpfungen prüfen und Benachrichtigungen einstellen."
+    },
     "docViewer": {
       "onThisPage": "Auf dieser Seite",
       "zoomImage": "Bild vergrößern",

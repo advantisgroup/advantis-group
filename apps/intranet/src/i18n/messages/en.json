@@ -747,6 +747,18 @@
       "title": "Onboarding Checklist",
       "description": "Everything for your first week — accounts, signature, time tracking and finding colleagues."
     },
+    "chatTipps": {
+      "title": "Chat — Groups & Messages",
+      "description": "Starting conversations, managing groups, reacting and replying."
+    },
+    "kalender": {
+      "title": "Calendar & Events",
+      "description": "Views, creating events, seeing absences and exporting the calendar."
+    },
+    "profilKonto": {
+      "title": "Profile, Notifications & Account",
+      "description": "Complete your profile, check connections and set notification preferences."
+    },
     "docViewer": {
       "onThisPage": "On this page",
       "zoomImage": "Enlarge image",
