@@ -735,6 +735,10 @@
       "title": "OneDrive — Training",
       "description": "Open OneDrive, use bookmarks properly and upload files."
     },
+    "emailSignaturen": {
+      "title": "Email Signature — Outlook & IONOS",
+      "description": "Set up a signature in Outlook (desktop & web) and in IONOS webmail."
+    },
     "docViewer": {
       "onThisPage": "On this page",
       "zoomImage": "Enlarge image",

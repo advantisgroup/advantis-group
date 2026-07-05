@@ -735,6 +735,10 @@
       "title": "OneDrive — Schulung",
       "description": "OneDrive öffnen, Lesezeichen richtig nutzen und Dateien hochladen."
     },
+    "emailSignaturen": {
+      "title": "E-Mail-Signatur — Outlook & IONOS",
+      "description": "Signatur in Outlook (Desktop & Web) und im IONOS-Webmail einrichten."
+    },
     "docViewer": {
       "onThisPage": "Auf dieser Seite",
       "zoomImage": "Bild vergrößern",

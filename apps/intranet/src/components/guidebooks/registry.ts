@@ -1,10 +1,11 @@
 import type { ComponentType } from "react";
 
-import { Cloud, FileSearch, type LucideIcon, Wrench } from "lucide-react";
+import { Cloud, FileSearch, type LucideIcon, Mail, Wrench } from "lucide-react";
 
 import { type TeamId } from "@/lib/teams";
 
 import { CaseSearchGuidebook } from "./case-search";
+import { EmailSignaturenGuidebook } from "./docs/email-signaturen";
 import { OneDriveSchulungGuidebook } from "./docs/onedrive-schulung";
 import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
 
@@ -48,6 +49,14 @@ export const GUIDEBOOKS: Guidebook[] = [
     icon: Cloud,
     teams: [],
     Component: OneDriveSchulungGuidebook,
+  },
+  {
+    slug: "email-signaturen",
+    titleKey: "emailSignaturen.title",
+    descriptionKey: "emailSignaturen.description",
+    icon: Mail,
+    teams: [],
+    Component: EmailSignaturenGuidebook,
   },
 ];
 
