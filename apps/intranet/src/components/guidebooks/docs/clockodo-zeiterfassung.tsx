@@ -52,6 +52,36 @@ const DOC: DocContent = {
       ],
     },
     {
+      id: "urlaub",
+      title: "Urlaub & Abwesenheiten beantragen",
+      blocks: [
+        {
+          kind: "text",
+          body: "Clockodo ist bei uns auch das **führende System für Abwesenheiten** — Urlaub, Krankheit und Co. werden direkt dort beantragt, nicht im Intranet.",
+        },
+        {
+          kind: "steps",
+          items: [
+            "In Clockodo auf **„Meine Anträge“** gehen.",
+            "Über den blauen Button **„+ Abwesenheit“** einen neuen Antrag anlegen.",
+            "Abwesenheitstyp auswählen (z. B. Urlaub, Sonderurlaub, Krankheit, Homeoffice) und den Zeitraum angeben.",
+            "Optional eine Notiz hinterlegen — privat für die Führungskraft oder öffentlich für alle Kolleg:innen im Abwesenheitsplaner sichtbar.",
+            "Antrag absenden — er geht zur Genehmigung an die Führungskraft bzw. Team-Verwaltung.",
+          ],
+        },
+        {
+          kind: "callout",
+          tone: "info",
+          body: "Genehmigte und offene Abwesenheiten aus Clockodo erscheinen automatisch — meist innerhalb einer Stunde — schreibgeschützt auf der Seite **„Abwesenheiten“** im Intranet. Änderungen müssen weiterhin in Clockodo vorgenommen werden.",
+        },
+        {
+          kind: "callout",
+          tone: "tip",
+          body: "Alternativ lässt sich auf der Intranet-Seite **„Abwesenheiten“** auch direkt ein Antrag stellen (z. B. wenn Clockodo mal nicht erreichbar ist) — der wird dann dort von eurer Führungskraft genehmigt.",
+        },
+      ],
+    },
+    {
       id: "korrektur",
       title: "Zeiteintrag nachträglich korrigieren",
       blocks: [
@@ -66,17 +96,6 @@ const DOC: DocContent = {
             "Den betroffenen Tag bzw. Eintrag anklicken.",
             "Start- und Endzeit korrigieren und speichern.",
           ],
-        },
-      ],
-    },
-    {
-      id: "abwesenheiten-hinweis",
-      title: "Urlaub & Abwesenheiten",
-      blocks: [
-        {
-          kind: "callout",
-          tone: "warning",
-          body: "Urlaub und andere Abwesenheiten werden bei uns **nicht** über Clockodo beantragt, sondern über die Seite **„Abwesenheiten“** im Intranet. Clockodo dient ausschließlich der täglichen Zeiterfassung.",
         },
       ],
     },
@@ -102,6 +121,10 @@ const DOC: DocContent = {
             {
               label: "Zeiterfassung im Browser — Funktionsübersicht",
               href: "https://www.clockodo.com/de/funktionen/zeiterfassung-im-browser/",
+            },
+            {
+              label: "Wie trage ich Urlaub in Clockodo ein?",
+              href: "https://support.clockodo.com/de/help-center/wie-kann-man-urlaub-eintragen",
             },
             {
               label: "Passwort vergessen (Clockodo)",
