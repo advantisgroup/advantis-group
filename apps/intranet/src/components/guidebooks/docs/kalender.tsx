@@ -33,21 +33,12 @@ const DOC: DocContent = {
     },
     {
       id: "termin-erstellen",
-      title: "Termin erstellen & bearbeiten",
+      title: "Termine anlegen",
       blocks: [
         {
-          kind: "steps",
-          items: [
-            "Auf **„Neuer Termin“** klicken oder direkt auf einen Tag im Kalender klicken.",
-            "Titel, Ort und Beschreibung sowie Beginn und Ende eintragen.",
-            "**„Ganztägig“** aktivieren, falls kein genauer Zeitraum nötig ist.",
-            "**„Für Gäste sichtbar“** aktivieren, wenn auch Gastnutzer den Termin sehen dürfen.",
-            "Speichern.",
-          ],
-        },
-        {
-          kind: "text",
-          body: "Bestehende Termine lassen sich per Klick öffnen, bearbeiten, duplizieren oder löschen.",
+          kind: "callout",
+          tone: "info",
+          body: "Termine im gemeinsamen Kalender anlegen können nur **Führungskräfte und Admins** — als normales Mitglied seht ihr sie nur. Details dazu stehen im Guidebook „Ankündigungen & Termine erstellen“.",
         },
       ],
     },

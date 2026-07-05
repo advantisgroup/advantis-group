@@ -22,6 +22,7 @@ import {
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -48,8 +49,13 @@ function GuidebookCardItem({
             <Icon className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="font-display font-semibold tracking-tight">
+            <p className="flex flex-wrap items-center gap-1.5 font-display font-semibold tracking-tight">
               {t(gb.titleKey)}
+              {gb.minRole && (
+                <Badge variant="muted" className="font-normal">
+                  {t("managerBadge")}
+                </Badge>
+              )}
             </p>
             <p className="mt-0.5 text-sm text-muted-foreground">
               {t(gb.descriptionKey)}

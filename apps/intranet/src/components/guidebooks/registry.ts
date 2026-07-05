@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 
 import {
+  CalendarCheck,
   CalendarDays,
   Clock,
   Cloud,
@@ -8,7 +9,10 @@ import {
   ListChecks,
   type LucideIcon,
   Mail,
+  Megaphone,
   MessageSquare,
+  ShieldCheck,
+  UploadCloud,
   UserCog,
   Wrench,
 } from "lucide-react";
@@ -16,6 +20,8 @@ import {
 import { type TeamId } from "@/lib/teams";
 
 import { CaseSearchGuidebook } from "./case-search";
+import { AbwesenheitenGenehmigenGuidebook } from "./docs/abwesenheiten-genehmigen";
+import { AnkuendigungenTermineGuidebook } from "./docs/ankuendigungen-termine";
 import { ChatTippsGuidebook } from "./docs/chat-tipps";
 import { ClockodoZeiterfassungGuidebook } from "./docs/clockodo-zeiterfassung";
 import { EmailSignaturenGuidebook } from "./docs/email-signaturen";
@@ -24,6 +30,8 @@ import { OnboardingGuidebook } from "./docs/onboarding";
 import { OneDriveSchulungGuidebook } from "./docs/onedrive-schulung";
 import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
 import { ProfilKontoGuidebook } from "./docs/profil-konto";
+import { UploadsGenehmigenGuidebook } from "./docs/uploads-genehmigen";
+import { VerwaltungMitgliederGuidebook } from "./docs/verwaltung-mitglieder";
 
 /**
  * "interactive" = a live tool (search, lookup, chat) rather than a fixed
@@ -39,6 +47,11 @@ export interface Guidebook {
   descriptionKey: string;
   icon: LucideIcon;
   category: GuidebookCategory;
+  /**
+   * Minimum role required, on top of the team gate below. Omit for anyone
+   * signed in. "manager" also admits admins (mirrors `useIsManager`).
+   */
+  minRole?: "manager" | "admin";
   /** Teams allowed to open this guidebook. Empty = everyone signed in. */
   teams: TeamId[];
   Component: ComponentType;
@@ -130,6 +143,46 @@ export const GUIDEBOOKS: Guidebook[] = [
     teams: [],
     Component: ProfilKontoGuidebook,
   },
+  {
+    slug: "abwesenheiten-genehmigen",
+    titleKey: "abwesenheitenGenehmigen.title",
+    descriptionKey: "abwesenheitenGenehmigen.description",
+    icon: CalendarCheck,
+    category: "guide",
+    minRole: "manager",
+    teams: [],
+    Component: AbwesenheitenGenehmigenGuidebook,
+  },
+  {
+    slug: "verwaltung-mitglieder",
+    titleKey: "verwaltungMitglieder.title",
+    descriptionKey: "verwaltungMitglieder.description",
+    icon: ShieldCheck,
+    category: "guide",
+    minRole: "manager",
+    teams: [],
+    Component: VerwaltungMitgliederGuidebook,
+  },
+  {
+    slug: "ankuendigungen-termine",
+    titleKey: "ankuendigungenTermine.title",
+    descriptionKey: "ankuendigungenTermine.description",
+    icon: Megaphone,
+    category: "guide",
+    minRole: "manager",
+    teams: [],
+    Component: AnkuendigungenTermineGuidebook,
+  },
+  {
+    slug: "uploads-genehmigen",
+    titleKey: "uploadsGenehmigen.title",
+    descriptionKey: "uploadsGenehmigen.description",
+    icon: UploadCloud,
+    category: "guide",
+    minRole: "manager",
+    teams: [],
+    Component: UploadsGenehmigenGuidebook,
+  },
 ];
 
 interface AccessUser {
@@ -140,6 +193,8 @@ interface AccessUser {
 export function canAccessGuidebook(user: AccessUser, gb: Guidebook): boolean {
   // Admins can always open guidebooks (for review/management).
   if (user.role === "admin") return true;
+  if (gb.minRole === "admin") return false; // admin already handled above
+  if (gb.minRole === "manager" && user.role !== "manager") return false;
   // No team restriction → available to everyone signed in.
   if (gb.teams.length === 0) return true;
   const mine = user.teams ?? [];

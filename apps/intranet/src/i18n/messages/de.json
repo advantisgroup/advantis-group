@@ -759,6 +759,22 @@
       "title": "Profil, Benachrichtigungen & Konto",
       "description": "Profil vervollständigen, Verknüpfungen prüfen und Benachrichtigungen einstellen."
     },
+    "abwesenheitenGenehmigen": {
+      "title": "Abwesenheiten genehmigen",
+      "description": "Anträge eures Teams prüfen, genehmigen oder ablehnen — inkl. Clockodo-Anträgen."
+    },
+    "verwaltungMitglieder": {
+      "title": "Verwaltung: Mitglieder & Zugang",
+      "description": "Zugangsanfragen prüfen, Mitarbeiter einladen und Mitglieder verwalten."
+    },
+    "ankuendigungenTermine": {
+      "title": "Ankündigungen & Termine erstellen",
+      "description": "Unternehmensweite Ankündigungen verfassen und Termine im gemeinsamen Kalender anlegen."
+    },
+    "uploadsGenehmigen": {
+      "title": "Datei-Uploads genehmigen",
+      "description": "Ausstehende OneDrive-Uploads prüfen, freigeben und Berechtigungen verwalten."
+    },
     "docViewer": {
       "onThisPage": "Auf dieser Seite",
       "zoomImage": "Bild vergrößern",
@@ -777,6 +793,7 @@
     "categoryGuide": "Anleitungen",
     "categoryInteractiveHint": "Direkt nutzbar, ohne zu blättern",
     "categoryGuideHint": "Schritt für Schritt zum Nachlesen",
+    "managerBadge": "Für Führungskräfte",
     "continueReading": "Mach weiter, wo du aufgehört hast:",
     "addFavorite": "Eintrag anpinnen",
     "removeFavorite": "Eintrag lösen",

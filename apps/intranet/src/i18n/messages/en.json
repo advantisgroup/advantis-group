@@ -759,6 +759,22 @@
       "title": "Profile, Notifications & Account",
       "description": "Complete your profile, check connections and set notification preferences."
     },
+    "abwesenheitenGenehmigen": {
+      "title": "Approving Absences",
+      "description": "Review, approve or deny your team's requests — including Clockodo-sourced ones."
+    },
+    "verwaltungMitglieder": {
+      "title": "Admin: Members & Access",
+      "description": "Review access requests, invite employees, and manage members."
+    },
+    "ankuendigungenTermine": {
+      "title": "Creating Announcements & Events",
+      "description": "Write company-wide announcements and add events to the shared calendar."
+    },
+    "uploadsGenehmigen": {
+      "title": "Approving File Uploads",
+      "description": "Review pending OneDrive uploads, approve them, and manage permissions."
+    },
     "docViewer": {
       "onThisPage": "On this page",
       "zoomImage": "Enlarge image",
@@ -777,6 +793,7 @@
     "categoryGuide": "Guides",
     "categoryInteractiveHint": "Ready to use, no reading required",
     "categoryGuideHint": "Step-by-step reference",
+    "managerBadge": "For managers",
     "continueReading": "Continue where you left off:",
     "addFavorite": "Pin guidebook",
     "removeFavorite": "Unpin guidebook",
