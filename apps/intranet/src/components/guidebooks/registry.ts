@@ -1,11 +1,21 @@
 import type { ComponentType } from "react";
 
-import { Cloud, FileSearch, type LucideIcon, Mail, Wrench } from "lucide-react";
+import {
+  Clock,
+  Cloud,
+  FileSearch,
+  ListChecks,
+  type LucideIcon,
+  Mail,
+  Wrench,
+} from "lucide-react";
 
 import { type TeamId } from "@/lib/teams";
 
 import { CaseSearchGuidebook } from "./case-search";
+import { ClockodoZeiterfassungGuidebook } from "./docs/clockodo-zeiterfassung";
 import { EmailSignaturenGuidebook } from "./docs/email-signaturen";
+import { OnboardingGuidebook } from "./docs/onboarding";
 import { OneDriveSchulungGuidebook } from "./docs/onedrive-schulung";
 import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
 
@@ -57,6 +67,22 @@ export const GUIDEBOOKS: Guidebook[] = [
     icon: Mail,
     teams: [],
     Component: EmailSignaturenGuidebook,
+  },
+  {
+    slug: "clockodo-zeiterfassung",
+    titleKey: "clockodoZeiterfassung.title",
+    descriptionKey: "clockodoZeiterfassung.description",
+    icon: Clock,
+    teams: [],
+    Component: ClockodoZeiterfassungGuidebook,
+  },
+  {
+    slug: "onboarding",
+    titleKey: "onboarding.title",
+    descriptionKey: "onboarding.description",
+    icon: ListChecks,
+    teams: [],
+    Component: OnboardingGuidebook,
   },
 ];
 

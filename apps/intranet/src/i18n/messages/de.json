@@ -739,6 +739,14 @@
       "title": "E-Mail-Signatur — Outlook & IONOS",
       "description": "Signatur in Outlook (Desktop & Web) und im IONOS-Webmail einrichten."
     },
+    "clockodoZeiterfassung": {
+      "title": "Zeiterfassung — Clockodo",
+      "description": "Ein-/Ausstempeln, Pausen erfassen und Zeiteinträge nachträglich korrigieren."
+    },
+    "onboarding": {
+      "title": "Onboarding-Checkliste",
+      "description": "Alles Wichtige für die erste Woche — Zugänge, Signatur, Zeiterfassung und Kolleg:innen finden."
+    },
     "docViewer": {
       "onThisPage": "Auf dieser Seite",
       "zoomImage": "Bild vergrößern",

@@ -739,6 +739,14 @@
       "title": "Email Signature — Outlook & IONOS",
       "description": "Set up a signature in Outlook (desktop & web) and in IONOS webmail."
     },
+    "clockodoZeiterfassung": {
+      "title": "Time Tracking — Clockodo",
+      "description": "Clock in/out, log breaks, and correct time entries after the fact."
+    },
+    "onboarding": {
+      "title": "Onboarding Checklist",
+      "description": "Everything for your first week — accounts, signature, time tracking and finding colleagues."
+    },
     "docViewer": {
       "onThisPage": "On this page",
       "zoomImage": "Enlarge image",
