@@ -68,7 +68,7 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${outfit.variable} ${manrope.variable}`}
     >
-      <body className="min-h-screen bg-background text-foreground antialiased">
+      <body className="bg-background text-foreground antialiased">
         <ClerkProvider
           publishableKey={
             process.env.NEXT_PUBLIC_INTERNAL_CLERK_PUBLISHABLE_KEY
