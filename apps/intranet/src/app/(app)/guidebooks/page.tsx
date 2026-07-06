@@ -10,6 +10,8 @@ import {
   ChevronRight,
   Clock,
   MessageSquare,
+  Pin,
+  PinOff,
   Search,
   ShieldCheck,
   Sparkles,
@@ -17,6 +19,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import {
   accessibleGuidebooks,
@@ -25,11 +28,15 @@ import {
 } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser } from "@/components/providers/current-user";
+import {
+  useCurrentUser,
+  useIsManager,
+} from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
 import type { LucideIcon } from "lucide-react";
@@ -98,16 +105,27 @@ function GuidebookCardItem({
   gb,
   favorite,
   onToggleFavorite,
+  highlighted,
+  canHighlight,
+  onToggleHighlight,
 }: {
   gb: Guidebook;
   favorite: boolean;
   onToggleFavorite: () => void;
+  highlighted: boolean;
+  canHighlight: boolean;
+  onToggleHighlight: () => void;
 }) {
   const t = useTranslations("Guidebooks");
   const Icon = gb.icon;
   const tint = GROUP_META[groupOf(gb)].badgeTint;
   return (
-    <Card className="group relative h-full transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]">
+    <Card
+      className={cn(
+        "group relative h-full transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
+        highlighted && "border-primary/30"
+      )}
+    >
       <Link href={`/guidebooks/${gb.slug}`} className="block h-full">
         <CardContent className="flex h-full items-start gap-3 p-4">
           <span
@@ -134,20 +152,42 @@ function GuidebookCardItem({
           <ChevronRight className="mt-6 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </CardContent>
       </Link>
-      <button
-        type="button"
-        aria-label={favorite ? t("removeFavorite") : t("addFavorite")}
-        aria-pressed={favorite}
-        onClick={onToggleFavorite}
-        className={cn(
-          "absolute right-1.5 top-1.5 rounded-md p-2 transition-colors hover:bg-accent sm:right-2.5 sm:top-2.5 sm:p-1",
-          favorite
-            ? "text-amber-500"
-            : "text-muted-foreground/50 hover:text-foreground"
+      <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 sm:right-2.5 sm:top-2.5">
+        {canHighlight && (
+          <button
+            type="button"
+            aria-label={highlighted ? t("unhighlight") : t("highlight")}
+            aria-pressed={highlighted}
+            onClick={onToggleHighlight}
+            className={cn(
+              "rounded-md p-2 transition-colors hover:bg-accent sm:p-1",
+              highlighted
+                ? "text-primary"
+                : "text-muted-foreground/50 hover:text-foreground"
+            )}
+          >
+            {highlighted ? (
+              <Pin className="size-4 fill-primary/20" />
+            ) : (
+              <PinOff className="size-4" />
+            )}
+          </button>
         )}
-      >
-        <Star className={cn("size-4", favorite && "fill-amber-400")} />
-      </button>
+        <button
+          type="button"
+          aria-label={favorite ? t("removeFavorite") : t("addFavorite")}
+          aria-pressed={favorite}
+          onClick={onToggleFavorite}
+          className={cn(
+            "rounded-md p-2 transition-colors hover:bg-accent sm:p-1",
+            favorite
+              ? "text-amber-500"
+              : "text-muted-foreground/50 hover:text-foreground"
+          )}
+        >
+          <Star className={cn("size-4", favorite && "fill-amber-400")} />
+        </button>
+      </div>
     </Card>
   );
 }
@@ -156,10 +196,16 @@ function GuidebookGrid({
   items,
   favorites,
   onToggleFavorite,
+  highlightedSlugs,
+  canHighlight,
+  onToggleHighlight,
 }: {
   items: Guidebook[];
   favorites: string[];
   onToggleFavorite: (slug: string) => void;
+  highlightedSlugs: string[];
+  canHighlight: boolean;
+  onToggleHighlight: (slug: string) => void;
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -169,6 +215,9 @@ function GuidebookGrid({
           gb={gb}
           favorite={favorites.includes(gb.slug)}
           onToggleFavorite={() => onToggleFavorite(gb.slug)}
+          highlighted={highlightedSlugs.includes(gb.slug)}
+          canHighlight={canHighlight}
+          onToggleHighlight={() => onToggleHighlight(gb.slug)}
         />
       ))}
     </div>
@@ -178,11 +227,15 @@ function GuidebookGrid({
 export default function GuidebooksPage() {
   const t = useTranslations("Guidebooks");
   const user = useCurrentUser();
+  const isManager = useIsManager();
+  const handleError = useErrorHandler();
   const guidebooks = accessibleGuidebooks(user);
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState<"all" | GroupKey>("all");
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
+  const highlightedSlugs = useQuery(api.guidebookHighlights.list) ?? [];
+  const toggleHighlightMutation = useMutation(api.guidebookHighlights.toggle);
 
   const favorites = useMemo(() => prefs?.favoriteGuidebooks ?? [], [prefs]);
 
@@ -206,6 +259,10 @@ export default function GuidebooksPage() {
       )
     : guidebooks;
 
+  const featured = highlightedSlugs
+    .map(slug => searched.find(gb => gb.slug === slug))
+    .filter((gb): gb is Guidebook => gb !== undefined);
+
   const groups = GROUP_ORDER.map(key => ({
     key,
     meta: GROUP_META[key],
@@ -222,6 +279,14 @@ export default function GuidebooksPage() {
       ? favorites.filter(f => f !== slug)
       : [...favorites, slug];
     void setPrefs({ favoriteGuidebooks: next });
+  }
+
+  function toggleHighlight(slug: string) {
+    toggleHighlightMutation({ slug })
+      .then(res =>
+        toast.success(res.highlighted ? t("highlighted") : t("unhighlighted"))
+      )
+      .catch(handleError);
   }
 
   return (
@@ -241,6 +306,26 @@ export default function GuidebooksPage() {
         />
       ) : (
         <div className="space-y-4">
+          {featured.length > 0 && (
+            <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4">
+              <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
+                <Pin className="size-3.5" />
+                {t("featured")}
+                <span className="tabular-nums text-primary/70">
+                  · {featured.length}
+                </span>
+              </div>
+              <GuidebookGrid
+                items={featured}
+                favorites={favorites}
+                onToggleFavorite={toggleFavorite}
+                highlightedSlugs={highlightedSlugs}
+                canHighlight={isManager}
+                onToggleHighlight={toggleHighlight}
+              />
+            </div>
+          )}
+
           {guidebooks.length > 1 && (
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -327,6 +412,9 @@ export default function GuidebooksPage() {
                     items={g.items}
                     favorites={favorites}
                     onToggleFavorite={toggleFavorite}
+                    highlightedSlugs={highlightedSlugs}
+                    canHighlight={isManager}
+                    onToggleHighlight={toggleHighlight}
                   />
                 </section>
               ))}
@@ -336,6 +424,9 @@ export default function GuidebooksPage() {
               items={filtered}
               favorites={favorites}
               onToggleFavorite={toggleFavorite}
+              highlightedSlugs={highlightedSlugs}
+              canHighlight={isManager}
+              onToggleHighlight={toggleHighlight}
             />
           )}
         </div>

@@ -699,6 +699,15 @@ export default defineSchema({
     .index("by_user_slug", ["userId", "slug"])
     .index("by_slug", ["slug"]),
 
+  // --- Guidebook highlights --------------------------------------------------
+  // Manager-curated "featured" guides shown in their own section at the top of
+  // the guidebooks list, for everyone. One row per currently-highlighted slug.
+  guidebookHighlights: defineTable({
+    slug: v.string(),
+    highlightedByUserId: v.id("users"),
+    highlightedAt: v.number(),
+  }).index("by_slug", ["slug"]),
+
   // --- Per-user app preferences ---------------------------------------------
   // One row per user; every field optional so features can add preferences
   // without migrations. Client-side cosmetics (e.g. "always preview") stay in

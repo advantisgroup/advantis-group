@@ -54,6 +54,7 @@ import type * as integrations_debug from "../integrations/debug.js";
 import type * as integrations_lib_auth from "../integrations/lib/auth.js";
 import type * as invites from "../invites.js";
 import type * as guidebookFeedback from "../guidebookFeedback.js";
+import type * as guidebookHighlights from "../guidebookHighlights.js";
 import type * as lib_audience from "../lib/audience.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_clerk from "../lib/clerk.js";
@@ -121,6 +122,7 @@ declare const fullApi: ApiFromModules<{
   "integrations/lib/auth": typeof integrations_lib_auth;
   invites: typeof invites;
   guidebookFeedback: typeof guidebookFeedback;
+  guidebookHighlights: typeof guidebookHighlights;
   "lib/audience": typeof lib_audience;
   "lib/auth": typeof lib_auth;
   "lib/clerk": typeof lib_clerk;
