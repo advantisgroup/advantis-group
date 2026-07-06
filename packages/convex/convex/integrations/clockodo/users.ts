@@ -7,14 +7,17 @@ import { requireManagerAction } from "../lib/auth";
 import { clockodoFetch } from "./client";
 
 /** Wire shape of `/api/v3/users` (snake_case, per Clockodo's REST API — v2
- * was retired in the May 2026 legacy-endpoint deprecation). */
+ * was retired in the May 2026 legacy-endpoint deprecation). Confirmed
+ * against docs.clockodo.com: list/get responses wrap the payload in
+ * `data`, not `users`/`user`, and `role` is a string (e.g. "worker"), not
+ * a numeric code. */
 interface ClockodoUserWire {
   id: number;
   name: string;
   number?: string;
   email: string;
   active?: boolean;
-  role?: number;
+  role?: string;
 }
 
 export interface ClockodoUser {
@@ -23,7 +26,7 @@ export interface ClockodoUser {
   number?: string;
   email: string;
   active?: boolean;
-  role?: number;
+  role?: string;
 }
 
 function toClockodoUser(u: ClockodoUserWire): ClockodoUser {
@@ -108,10 +111,10 @@ export const listClockodoUsers = action({
   args: {},
   handler: async (ctx): Promise<ClockodoUser[]> => {
     await requireManagerAction(ctx);
-    const body = await clockodoFetch<{ users?: ClockodoUserWire[] }>(
-      "/api/v3/users"
+    const body = await clockodoFetch<{ data?: ClockodoUserWire[] }>(
+      "/api/v3/users?items_per_page=1000"
     );
-    return (body.users ?? []).map(toClockodoUser);
+    return (body.data ?? []).map(toClockodoUser);
   },
 });
 
@@ -127,7 +130,7 @@ export const getClockodoUserDetail = action({
     holidaysQuota: ClockodoHolidaysQuota[];
   }> => {
     await requireManagerAction(ctx);
-    const userBody = await clockodoFetch<{ user: ClockodoUserWire }>(
+    const userBody = await clockodoFetch<{ data: ClockodoUserWire }>(
       `/api/v3/users/${clockodoUserId}`
     );
 
@@ -160,7 +163,7 @@ export const getClockodoUserDetail = action({
     ]);
 
     return {
-      user: toClockodoUser(userBody.user),
+      user: toClockodoUser(userBody.data),
       targetHours,
       holidaysQuota,
     };
@@ -186,11 +189,11 @@ export const createClockodoUser = action({
     { name, email, number, weeklyHours, vacationDaysPerYear }
   ): Promise<{ clockodoUserId: number }> => {
     await requireManagerAction(ctx);
-    const created = await clockodoFetch<{ user: ClockodoUserWire }>(
+    const created = await clockodoFetch<{ data: ClockodoUserWire }>(
       "/api/v3/users",
       { method: "POST", body: { name, email, number } }
     );
-    const clockodoUserId = created.user.id;
+    const clockodoUserId = created.data.id;
     const today = new Date().toISOString().slice(0, 10);
 
     if (weeklyHours !== undefined) {
