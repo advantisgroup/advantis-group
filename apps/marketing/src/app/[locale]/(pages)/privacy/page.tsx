@@ -66,7 +66,7 @@ export default function Datenschutz() {
             </p>
             <div className="bg-muted/20 p-6 rounded-lg space-y-1">
               <p className="font-semibold text-foreground">
-                Advantis GmbH
+                advantis GmbH
               </p>
               <p className="text-foreground/80">Andrea Reichl</p>
               <p>{process.env.NEXT_PUBLIC_ADRESS}</p>

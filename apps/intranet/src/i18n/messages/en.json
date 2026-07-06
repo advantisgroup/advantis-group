@@ -1281,7 +1281,7 @@
   "AccessDenied": {
     "title": "Access denied",
     "signedInAs": "Signed in as",
-    "description": "This intranet is only accessible to authorized Advantis GmbH employees. Your email address isn't part of an approved company domain, so no access can be granted here.",
+    "description": "This intranet is only accessible to authorized advantis GmbH employees. Your email address isn't part of an approved company domain, so no access can be granted here.",
     "removing": "Removing your account…",
     "autoRemoveNotice": "For security reasons, your account is being removed automatically."
   },
@@ -1290,12 +1290,13 @@
     "subtitle": "How we process personal data of authorized Advantis employees within the intranet – in line with the GDPR",
     "updated": "Last updated: July 2026",
     "tableOfContents": "Table of contents",
+    "viewTerms": "View Terms of Use",
     "sections": [
       {
         "id": "scope",
         "title": "Scope",
         "paragraphs": [
-          "This privacy policy applies exclusively to individuals who have been authorized for the Advantis GmbH intranet (“Intranet”) and hold an active, provisioned account (“users”). It supplements the general privacy policy at advantisgroup.de with the additional processing that takes place solely within the Intranet.",
+          "This privacy policy applies exclusively to individuals who have been authorized for the advantis GmbH intranet (“Intranet”) and hold an active, provisioned account (“users”). It supplements the general privacy policy at advantisgroup.de with the additional processing that takes place solely within the Intranet.",
           "Anyone who merely registers or attempts to sign in through our authentication provider without being provisioned for the Intranet does not thereby become a user under this policy. Such sign-up attempts are covered exclusively by the “Unauthorized access attempts” section below – the remaining provisions of this policy, as well as the Intranet's Terms of Use, never apply to them.",
           "Access to the Intranet is only granted after the email domain is checked or after explicit approval by a manager or administrator (see the Terms of Use, “Access and authorization”)."
         ]
@@ -1451,12 +1452,13 @@
     "subtitle": "Terms governing the use of the Advantis Group intranet by authorized employees",
     "updated": "Last updated: July 2026",
     "tableOfContents": "Table of contents",
+    "viewPrivacy": "View Privacy Policy",
     "sections": [
       {
         "id": "scope",
         "title": "Scope",
         "paragraphs": [
-          "These Terms of Use apply exclusively to individuals to whom Advantis GmbH has expressly granted access to the Intranet and whose account is actively provisioned (“users”).",
+          "These Terms of Use apply exclusively to individuals to whom advantis GmbH has expressly granted access to the Intranet and whose account is actively provisioned (“users”).",
           "Merely creating an account or attempting to sign in does not create any entitlement to access and does not make these Terms of Use applicable. Individuals without authorization instead receive a notice that access has been denied, and their account is deleted automatically (see the Privacy Policy, “Unauthorized access attempts”)."
         ]
       },
@@ -1464,7 +1466,7 @@
         "id": "access",
         "title": "Access and authorization",
         "paragraphs": [
-          "Access to the Intranet is granted exclusively to individuals with an active business relationship with Advantis GmbH whose business email address belongs to an approved company domain, or who have received an explicit invitation or approval from a manager or administrator.",
+          "Access to the Intranet is granted exclusively to individuals with an active business relationship with advantis GmbH whose business email address belongs to an approved company domain, or who have received an explicit invitation or approval from a manager or administrator.",
           "Access requests are reviewed by managers or administrators and may be declined. Sign-up attempts using email domains that are not approved are automatically denied, and the account created in the process is deleted without delay.",
           "Users must keep their access credentials confidential and must not share them with third parties."
         ]
@@ -1473,7 +1475,7 @@
         "id": "purpose",
         "title": "Intended use",
         "paragraphs": [
-          "The Intranet serves exclusively internal business purposes of Advantis GmbH, in particular communication, scheduling, absence management, storage of internal documents, and team collaboration.",
+          "The Intranet serves exclusively internal business purposes of advantis GmbH, in particular communication, scheduling, absence management, storage of internal documents, and team collaboration.",
           "Content, documents and information accessible through the Intranet are confidential and must not be shared with third parties outside the company without consent.",
           "Private or commercial use unrelated to the employment relationship is not permitted."
         ]
@@ -1495,7 +1497,7 @@
             "description": "keep their account and profile data up to date,"
           },
           {
-            "description": "comply with Advantis GmbH's applicable IT and security policies,"
+            "description": "comply with advantis GmbH's applicable IT and security policies,"
           },
           {
             "description": "maintain a respectful tone in internal chat and announcements,"
@@ -1509,7 +1511,7 @@
         "id": "availability",
         "title": "Availability",
         "paragraphs": [
-          "The Intranet is provided as an internal work tool “as is.” Advantis GmbH may modify, restrict or discontinue features at any time and does not guarantee uninterrupted availability."
+          "The Intranet is provided as an internal work tool “as is.” advantis GmbH may modify, restrict or discontinue features at any time and does not guarantee uninterrupted availability."
         ]
       },
       {
@@ -1524,14 +1526,14 @@
         "id": "ip",
         "title": "Intellectual property",
         "paragraphs": [
-          "All content, documents, templates and materials made available through the Intranet are the property of Advantis GmbH or its licensors and may be used solely for internal purposes."
+          "All content, documents, templates and materials made available through the Intranet are the property of advantis GmbH or its licensors and may be used solely for internal purposes."
         ]
       },
       {
         "id": "liability",
         "title": "Liability",
         "paragraphs": [
-          "Advantis GmbH is liable without limitation for intent and gross negligence, and in accordance with the Product Liability Act. Beyond that, it is liable only for breach of material contractual obligations and limited to foreseeable damage typical for this type of contract. Liability for damages arising from injury to life, body or health remains unaffected."
+          "advantis GmbH is liable without limitation for intent and gross negligence, and in accordance with the Product Liability Act. Beyond that, it is liable only for breach of material contractual obligations and limited to foreseeable damage typical for this type of contract. Liability for damages arising from injury to life, body or health remains unaffected."
         ]
       },
       {

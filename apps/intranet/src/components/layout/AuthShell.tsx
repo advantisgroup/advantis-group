@@ -66,7 +66,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
         </div>
 
         <div className="relative text-xs text-white/60">
-          © {new Date().getFullYear()} Advantis Group GmbH
+          © {new Date().getFullYear()} advantis GmbH
         </div>
       </div>
 

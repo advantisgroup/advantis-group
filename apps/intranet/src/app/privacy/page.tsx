@@ -15,6 +15,7 @@ export default function PrivacyPage() {
       updated={t("updated")}
       tocLabel={t("tableOfContents")}
       sections={sections}
+      crossPage={{ label: t("viewTerms"), href: "/terms" }}
     />
   );
 }

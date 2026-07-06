@@ -152,7 +152,7 @@ export function EmailTemplate({
           />
 
           <p style={copyright}>
-            &copy; {new Date().getFullYear()} Advantis Group GmbH.{" "}
+            &copy; {new Date().getFullYear()} advantis GmbH.{" "}
             {t.rightsReserved}
             <br />
             <a href="https://advantisgroup.de" style={link}>

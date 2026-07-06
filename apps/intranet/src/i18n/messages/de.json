@@ -1281,7 +1281,7 @@
   "AccessDenied": {
     "title": "Zugriff verweigert",
     "signedInAs": "Angemeldet als",
-    "description": "Dieses Intranet ist ausschließlich für autorisierte Mitarbeitende der Advantis GmbH zugänglich. Deine E-Mail-Adresse gehört nicht zu einer zugelassenen Firmendomain, daher kann dir hier kein Zugang gewährt werden.",
+    "description": "Dieses Intranet ist ausschließlich für autorisierte Mitarbeitende der advantis GmbH zugänglich. Deine E-Mail-Adresse gehört nicht zu einer zugelassenen Firmendomain, daher kann dir hier kein Zugang gewährt werden.",
     "removing": "Dein Konto wird entfernt …",
     "autoRemoveNotice": "Aus Sicherheitsgründen wird dein Konto automatisch entfernt."
   },
@@ -1290,12 +1290,13 @@
     "subtitle": "Wie wir personenbezogene Daten autorisierter Advantis-Mitarbeitender im Intranet verarbeiten – gemäß DSGVO",
     "updated": "Stand: Juli 2026",
     "tableOfContents": "Inhaltsverzeichnis",
+    "viewTerms": "Nutzungsbedingungen ansehen",
     "sections": [
       {
         "id": "scope",
         "title": "Geltungsbereich",
         "paragraphs": [
-          "Diese Datenschutzerklärung gilt ausschließlich für Personen, die für das Intranet der Advantis GmbH („Intranet“) autorisiert wurden und über ein aktives, freigeschaltetes Konto verfügen (nachfolgend „Nutzer:innen“). Sie ergänzt die allgemeine Datenschutzerklärung von advantisgroup.de um die zusätzlichen Verarbeitungen, die ausschließlich im Intranet stattfinden.",
+          "Diese Datenschutzerklärung gilt ausschließlich für Personen, die für das Intranet der advantis GmbH („Intranet“) autorisiert wurden und über ein aktives, freigeschaltetes Konto verfügen (nachfolgend „Nutzer:innen“). Sie ergänzt die allgemeine Datenschutzerklärung von advantisgroup.de um die zusätzlichen Verarbeitungen, die ausschließlich im Intranet stattfinden.",
           "Wer sich lediglich über unseren Anmeldedienst registriert oder anzumelden versucht, ohne für das Intranet freigeschaltet zu sein, wird dadurch nicht Nutzer:in im Sinne dieser Erklärung. Für solche Registrierungsversuche gilt ausschließlich der Abschnitt „Nicht autorisierte Zugriffsversuche“ weiter unten – die übrigen Regelungen dieser Erklärung sowie die Nutzungsbedingungen des Intranets finden auf sie keine Anwendung.",
           "Zugang zum Intranet wird erst nach Prüfung der E-Mail-Domain bzw. nach ausdrücklicher Freigabe durch eine Führungskraft oder Administrator:in gewährt (siehe Nutzungsbedingungen, Abschnitt „Zugang und Berechtigung“)."
         ]
@@ -1453,12 +1454,13 @@
     "subtitle": "Bedingungen für die Nutzung des Advantis-Group-Intranets durch autorisierte Mitarbeitende",
     "updated": "Stand: Juli 2026",
     "tableOfContents": "Inhaltsverzeichnis",
+    "viewPrivacy": "Datenschutzerklärung ansehen",
     "sections": [
       {
         "id": "scope",
         "title": "Geltungsbereich",
         "paragraphs": [
-          "Diese Nutzungsbedingungen gelten ausschließlich für Personen, denen die Advantis GmbH ausdrücklich Zugang zum Intranet gewährt hat und deren Konto aktiv freigeschaltet ist (nachfolgend „Nutzer:innen“).",
+          "Diese Nutzungsbedingungen gelten ausschließlich für Personen, denen die advantis GmbH ausdrücklich Zugang zum Intranet gewährt hat und deren Konto aktiv freigeschaltet ist (nachfolgend „Nutzer:innen“).",
           "Das bloße Anlegen eines Kontos oder ein Anmeldeversuch begründet keinen Anspruch auf Zugang und macht diese Nutzungsbedingungen nicht anwendbar. Personen ohne Berechtigung erhalten stattdessen einen Hinweis auf die fehlende Berechtigung; ihr Konto wird automatisiert gelöscht (siehe Datenschutzerklärung, Abschnitt „Nicht autorisierte Zugriffsversuche“)."
         ]
       },
@@ -1466,7 +1468,7 @@
         "id": "access",
         "title": "Zugang und Berechtigung",
         "paragraphs": [
-          "Zugang zum Intranet erhalten ausschließlich Personen mit einer aktiven Geschäftsbeziehung zur Advantis GmbH, deren geschäftliche E-Mail-Adresse zu einer zugelassenen Firmendomain gehört, oder die eine ausdrückliche Einladung bzw. Freigabe durch eine Führungskraft oder Administrator:in erhalten haben.",
+          "Zugang zum Intranet erhalten ausschließlich Personen mit einer aktiven Geschäftsbeziehung zur advantis GmbH, deren geschäftliche E-Mail-Adresse zu einer zugelassenen Firmendomain gehört, oder die eine ausdrückliche Einladung bzw. Freigabe durch eine Führungskraft oder Administrator:in erhalten haben.",
           "Zugangsanfragen werden von Führungskräften oder Administrator:innen geprüft und können abgelehnt werden. Registrierungsversuche mit nicht zugelassenen E-Mail-Domains werden automatisch abgelehnt; das dabei angelegte Konto wird unverzüglich gelöscht.",
           "Nutzer:innen sind verpflichtet, ihre Zugangsdaten vertraulich zu behandeln und nicht an Dritte weiterzugeben."
         ]
@@ -1475,7 +1477,7 @@
         "id": "purpose",
         "title": "Bestimmungsgemäße Nutzung",
         "paragraphs": [
-          "Das Intranet dient ausschließlich internen betrieblichen Zwecken der Advantis GmbH, insbesondere der Kommunikation, Terminplanung, Abwesenheitsverwaltung, Ablage interner Dokumente sowie dem teaminternen Austausch.",
+          "Das Intranet dient ausschließlich internen betrieblichen Zwecken der advantis GmbH, insbesondere der Kommunikation, Terminplanung, Abwesenheitsverwaltung, Ablage interner Dokumente sowie dem teaminternen Austausch.",
           "Über das Intranet zugängliche Inhalte, Dokumente und Informationen sind vertraulich und dürfen ohne Zustimmung nicht an unternehmensfremde Dritte weitergegeben werden.",
           "Eine private oder gewerbliche Nutzung außerhalb des Beschäftigungsverhältnisses ist nicht gestattet."
         ]
@@ -1497,7 +1499,7 @@
             "description": "ihre Konto- und Profildaten aktuell zu halten,"
           },
           {
-            "description": "geltende IT- und Sicherheitsrichtlinien der Advantis GmbH einzuhalten,"
+            "description": "geltende IT- und Sicherheitsrichtlinien der advantis GmbH einzuhalten,"
           },
           {
             "description": "im internen Chat und in Ankündigungen einen respektvollen Umgangston zu wahren,"
@@ -1511,7 +1513,7 @@
         "id": "availability",
         "title": "Verfügbarkeit",
         "paragraphs": [
-          "Das Intranet wird als internes Arbeitswerkzeug „wie besehen“ bereitgestellt. Die Advantis GmbH kann Funktionen jederzeit anpassen, einschränken oder einstellen und übernimmt keine Gewähr für eine unterbrechungsfreie Verfügbarkeit."
+          "Das Intranet wird als internes Arbeitswerkzeug „wie besehen“ bereitgestellt. Die advantis GmbH kann Funktionen jederzeit anpassen, einschränken oder einstellen und übernimmt keine Gewähr für eine unterbrechungsfreie Verfügbarkeit."
         ]
       },
       {
@@ -1526,14 +1528,14 @@
         "id": "ip",
         "title": "Geistiges Eigentum",
         "paragraphs": [
-          "Sämtliche über das Intranet bereitgestellten Inhalte, Dokumente, Vorlagen und Materialien sind Eigentum der Advantis GmbH oder ihrer Lizenzgeber und dürfen ausschließlich für interne Zwecke verwendet werden."
+          "Sämtliche über das Intranet bereitgestellten Inhalte, Dokumente, Vorlagen und Materialien sind Eigentum der advantis GmbH oder ihrer Lizenzgeber und dürfen ausschließlich für interne Zwecke verwendet werden."
         ]
       },
       {
         "id": "liability",
         "title": "Haftung",
         "paragraphs": [
-          "Die Advantis GmbH haftet unbeschränkt für Vorsatz und grobe Fahrlässigkeit sowie nach Maßgabe des Produkthaftungsgesetzes. Im Übrigen haftet sie nur bei Verletzung wesentlicher Vertragspflichten und beschränkt auf den vorhersehbaren, vertragstypischen Schaden. Die Haftung für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit bleibt unberührt."
+          "Die advantis GmbH haftet unbeschränkt für Vorsatz und grobe Fahrlässigkeit sowie nach Maßgabe des Produkthaftungsgesetzes. Im Übrigen haftet sie nur bei Verletzung wesentlicher Vertragspflichten und beschränkt auf den vorhersehbaren, vertragstypischen Schaden. Die Haftung für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit bleibt unberührt."
         ]
       },
       {

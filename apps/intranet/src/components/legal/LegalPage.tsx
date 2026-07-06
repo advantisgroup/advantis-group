@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { ArrowLeft, Menu, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { WordmarkLogo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +26,7 @@ export interface LegalSection {
   note?: string;
 }
 
-// These two section ids get the Advantis Group contact block appended —
+// These two section ids get the advantis GmbH contact block appended —
 // keeps the address/email in one place (env vars) instead of duplicated
 // across the DE/EN translation JSON.
 const CONTACT_SECTION_IDS = new Set(["controller", "contact"]);
@@ -33,7 +34,7 @@ const CONTACT_SECTION_IDS = new Set(["controller", "contact"]);
 function ContactBox() {
   return (
     <div className="space-y-1 rounded-lg bg-muted/30 p-4 text-sm">
-      <p className="font-semibold text-foreground">Advantis GmbH</p>
+      <p className="font-semibold text-foreground">advantis GmbH</p>
       <p className="text-foreground/80">Andrea Reichl</p>
       <p className="text-muted-foreground">{process.env.NEXT_PUBLIC_ADRESS}</p>
       <p className="text-muted-foreground">
@@ -49,12 +50,14 @@ export function LegalPage({
   updated,
   tocLabel,
   sections,
+  crossPage,
 }: {
   title: string;
   subtitle: string;
   updated?: string;
   tocLabel: string;
   sections: LegalSection[];
+  crossPage?: { label: string; href: string };
 }) {
   const isMobile = useIsMobile();
   const tCommon = useTranslations("Common");
@@ -130,35 +133,47 @@ export function LegalPage({
         <Link href="/" className="flex items-center gap-2">
           <WordmarkLogo className="text-base" />
         </Link>
-        <Link
-          href="/"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {tCommon("back")}
-        </Link>
+        <div className="flex items-center gap-4">
+          {crossPage && (
+            <Link
+              href={crossPage.href}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            >
+              {crossPage.label}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {tCommon("back")}
+          </Link>
+        </div>
       </header>
 
       {isMobile && (
         <Button
-          onClick={() => setSidebarOpen(v => !v)}
+          onClick={() => setSidebarOpen(true)}
           className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full shadow-lg"
           size="icon"
           aria-label={tocLabel}
         >
-          {sidebarOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
+          <Menu className="h-6 w-6" />
         </Button>
       )}
 
-      {isMobile && sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
-          onClick={() => setSidebarOpen(false)}
-        />
+      {isMobile && (
+        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+          <SheetContent
+            side="bottom"
+            className="max-h-[75vh] overflow-y-auto rounded-t-2xl"
+          >
+            <SheetTitle>{tocLabel}</SheetTitle>
+            <div className="mt-4">{nav}</div>
+          </SheetContent>
+        </Sheet>
       )}
 
       <main className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:pt-20">
@@ -178,20 +193,13 @@ export function LegalPage({
 
         <div className="relative flex gap-8">
           {!isMobile && (
-            <aside className="sticky top-8 w-64 shrink-0 self-start">
+            <aside className="sticky top-8 max-h-[calc(100vh-4rem)] w-64 shrink-0 self-start overflow-y-auto">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base">{tocLabel}</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">{nav}</CardContent>
               </Card>
-            </aside>
-          )}
-
-          {isMobile && sidebarOpen && (
-            <aside className="fixed right-0 top-0 z-50 h-full w-80 max-w-[85vw] overflow-y-auto border-l border-border bg-background p-4">
-              <p className="mb-3 px-1 text-sm font-semibold">{tocLabel}</p>
-              {nav}
             </aside>
           )}
 

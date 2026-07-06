@@ -128,7 +128,7 @@ export function MessageForm({
       <div className="space-y-3">
         <p className="text-xs text-muted-foreground">
           <strong>{t("privacyNoteLabel")}</strong> {t("privacyPrefix")}{" "}
-          <BrandText brand="advantis">Advantis GmbH</BrandText>{" "}
+          <BrandText brand="advantis">advantis GmbH</BrandText>{" "}
           {t("privacySuffix")}{" "}
           <Link href="/privacy" className="underline hover:text-foreground">
             {t("privacyLink")}

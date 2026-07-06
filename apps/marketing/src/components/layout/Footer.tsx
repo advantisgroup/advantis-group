@@ -212,7 +212,7 @@ export const Footer = () => {
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-xs text-muted-foreground">
                 © {new Date().getFullYear().toString()}{" "}
-                <BrandText brand="advantis">Advantis Group</BrandText> GmbH.{" "}
+                <BrandText brand="advantis">advantis</BrandText> GmbH.{" "}
                 {t("footer.copyright")}
               </p>
               <div className="flex items-center gap-6">
