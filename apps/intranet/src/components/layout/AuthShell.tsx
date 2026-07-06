@@ -4,6 +4,9 @@ import type { ReactNode } from "react";
 
 import Image from "next/image";
 
+import { useTranslations } from "next-intl";
+
+import { Link } from "@/components/Link";
 import { BrandLogo } from "@/components/Logo";
 
 const HIGHLIGHTS = [
@@ -13,6 +16,8 @@ const HIGHLIGHTS = [
 ];
 
 export function AuthShell({ children }: { children: ReactNode }) {
+  const t = useTranslations("Nav");
+
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       {/* Brand panel */}
@@ -71,6 +76,14 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <BrandLogo />
         </div>
         {children}
+        <div className="mt-8 flex items-center gap-4 text-xs text-muted-foreground">
+          <Link href="/privacy" className="hover:text-foreground">
+            {t("privacy")}
+          </Link>
+          <Link href="/terms" className="hover:text-foreground">
+            {t("terms")}
+          </Link>
+        </div>
       </div>
     </div>
   );

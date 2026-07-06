@@ -20,7 +20,9 @@
     "groupAdministration": "Verwaltung",
     "signOut": "Abmelden",
     "files": "Dateien",
-    "integrations": "Integrationen"
+    "integrations": "Integrationen",
+    "privacy": "Datenschutz",
+    "terms": "Nutzungsbedingungen"
   },
   "Common": {
     "save": "Speichern",
@@ -47,7 +49,6 @@
   "Access": {
     "title": "Zugang anfragen",
     "intro": "Du bist angemeldet, hast aber noch keinen Zugang zum Intranet.",
-    "domainBlocked": "Deine E-Mail-Domain ist nicht für das Intranet zugelassen. Bitte verwende deine Firmen-E-Mail.",
     "messageLabel": "Nachricht an die Administratoren (optional)",
     "requestButton": "Zugang anfragen",
     "pending": "Deine Zugangsanfrage wird geprüft. Du erhältst eine E-Mail, sobald entschieden wurde.",
@@ -1228,5 +1229,290 @@
         "body": "Profilbild-Zuschnitt, App-Einstellungen (Startseite, Kalenderansicht) und deine Verknüpfungen."
       }
     }
+  },
+  "AccessDenied": {
+    "title": "Zugriff verweigert",
+    "signedInAs": "Angemeldet als",
+    "description": "Dieses Intranet ist ausschließlich für autorisierte Mitarbeitende der Advantis Group GmbH zugänglich. Deine E-Mail-Adresse gehört nicht zu einer zugelassenen Firmendomain, daher kann dir hier kein Zugang gewährt werden.",
+    "removing": "Dein Konto wird entfernt …",
+    "autoRemoveNotice": "Aus Sicherheitsgründen wird dein Konto automatisch entfernt."
+  },
+  "privacy": {
+    "title": "Datenschutzerklärung – Intranet",
+    "subtitle": "Wie wir personenbezogene Daten autorisierter Advantis-Mitarbeitender im Intranet verarbeiten – gemäß DSGVO",
+    "updated": "Stand: Juli 2026",
+    "tableOfContents": "Inhaltsverzeichnis",
+    "sections": [
+      {
+        "id": "scope",
+        "title": "Geltungsbereich",
+        "paragraphs": [
+          "Diese Datenschutzerklärung gilt ausschließlich für Personen, die für das Intranet der Advantis Group GmbH („Intranet“) autorisiert wurden und über ein aktives, freigeschaltetes Konto verfügen (nachfolgend „Nutzer:innen“). Sie ergänzt die allgemeine Datenschutzerklärung von advantisgroup.de um die zusätzlichen Verarbeitungen, die ausschließlich im Intranet stattfinden.",
+          "Wer sich lediglich über unseren Anmeldedienst registriert oder anzumelden versucht, ohne für das Intranet freigeschaltet zu sein, wird dadurch nicht Nutzer:in im Sinne dieser Erklärung. Für solche Registrierungsversuche gilt ausschließlich der Abschnitt „Nicht autorisierte Zugriffsversuche“ weiter unten – die übrigen Regelungen dieser Erklärung sowie die Nutzungsbedingungen des Intranets finden auf sie keine Anwendung.",
+          "Zugang zum Intranet wird erst nach Prüfung der E-Mail-Domain bzw. nach ausdrücklicher Freigabe durch eine Führungskraft oder Administrator:in gewährt (siehe Nutzungsbedingungen, Abschnitt „Zugang und Berechtigung“)."
+        ]
+      },
+      {
+        "id": "controller",
+        "title": "Verantwortliche Stelle",
+        "paragraphs": [
+          "Verantwortlich für die Datenverarbeitung im Intranet ist:"
+        ]
+      },
+      {
+        "id": "categories",
+        "title": "Welche Daten wir verarbeiten und warum",
+        "paragraphs": [
+          "Im Rahmen der Nutzung des Intranets verarbeiten wir folgende Kategorien personenbezogener Daten autorisierter Nutzer:innen:"
+        ],
+        "list": [
+          {
+            "title": "Konto- und Profildaten",
+            "description": "Name, geschäftliche E-Mail-Adresse, Rolle, Abteilung, Position, Telefonnummer und Profilbild – zur Identifikation, internen Organisation und Rechteverwaltung (Art. 6 Abs. 1 lit. b DSGVO)."
+          },
+          {
+            "title": "Anmelde- und Sicherheitsdaten",
+            "description": "Über unseren Identitätsanbieter verarbeitete Anmeldeereignisse und Sitzungsdaten – zur Absicherung des Zugangs (Art. 6 Abs. 1 lit. f DSGVO)."
+          },
+          {
+            "title": "Nutzungs- und Aktivitätsdaten zu Auswertungszwecken",
+            "description": "Anwesenheits- und Verfügbarkeitsstatus aus dem Zusammenspiel von Desktop-Agent, Telefonie (Genesys) und Zeiterfassung (Clockodo) – zur Auswertung von Arbeitsleistung, Erreichbarkeit und Kapazitätsplanung im Rahmen des Beschäftigungsverhältnisses (Art. 6 Abs. 1 lit. b und f DSGVO sowie, soweit einschlägig, § 26 BDSG)."
+          },
+          {
+            "title": "Abwesenheits- und Kalenderdaten",
+            "description": "Urlaubs-, Krankheits- und Terminplanungsdaten – zur Personaleinsatzplanung (Art. 6 Abs. 1 lit. b DSGVO)."
+          },
+          {
+            "title": "Kommunikations- und Inhaltsdaten",
+            "description": "Chatnachrichten, Ankündigungen, Reaktionen und hochgeladene Dateien – zur internen Zusammenarbeit (Art. 6 Abs. 1 lit. b und f DSGVO)."
+          },
+          {
+            "title": "Protokoll- und Audit-Daten",
+            "description": "Administrative Aktionen, z. B. Rechtevergabe oder Statusänderungen – zur Nachvollziehbarkeit und IT-Sicherheit (Art. 6 Abs. 1 lit. f DSGVO)."
+          },
+          {
+            "title": "Technische Zugriffsdaten",
+            "description": "IP-Adresse, Browser- und Gerätetyp sowie Zeitstempel – zum sicheren Betrieb der Plattform (Art. 6 Abs. 1 lit. f DSGVO)."
+          }
+        ],
+        "note": "Eine Verarbeitung besonderer Kategorien personenbezogener Daten (Art. 9 DSGVO) findet im Intranet nicht statt, es sei denn, Nutzer:innen teilen solche Daten aktiv und freiwillig mit, etwa im Rahmen einer krankheitsbedingten Abwesenheit."
+      },
+      {
+        "id": "recipients",
+        "title": "Empfänger und Auftragsverarbeiter",
+        "paragraphs": [
+          "Zur Bereitstellung des Intranets setzen wir sorgfältig ausgewählte Dienstleister ein, die als Auftragsverarbeiter im Sinne von Art. 28 DSGVO für uns tätig werden oder denen gegenüber wir zur Erfüllung des Beschäftigungsverhältnisses Daten offenlegen:"
+        ],
+        "list": [
+          {
+            "title": "Identitätsanbieter",
+            "description": "Authentifizierung und Kontoverwaltung."
+          },
+          {
+            "title": "Datenbank- und Backend-Anbieter",
+            "description": "Datenbank- und Backend-Infrastruktur des Intranets."
+          },
+          {
+            "title": "Hosting-Anbieter",
+            "description": "Hosting der Anwendung."
+          },
+          {
+            "title": "E-Mail-Versanddienstleister",
+            "description": "Versand transaktionaler E-Mails, z. B. Einladungen und Statusbenachrichtigungen."
+          },
+          {
+            "title": "Microsoft OneDrive",
+            "description": "Ablage und Freigabe interner Dokumente."
+          },
+          {
+            "title": "Genesys Cloud",
+            "description": "Telefonie-Präsenzdaten für die Verfügbarkeitsauswertung."
+          },
+          {
+            "title": "Clockodo",
+            "description": "Zeiterfassungsdaten für die Verfügbarkeitsauswertung."
+          }
+        ],
+        "note": "Soweit einzelne Anbieter Daten außerhalb der EU/des EWR verarbeiten, stellen wir durch geeignete Garantien – insbesondere EU-Standardvertragsklauseln – ein angemessenes Datenschutzniveau sicher. Eine Weitergabe an sonstige Dritte erfolgt nicht, es sei denn, wir sind gesetzlich dazu verpflichtet."
+      },
+      {
+        "id": "retention",
+        "title": "Speicherdauer",
+        "paragraphs": [
+          "Wir speichern personenbezogene Daten nur so lange, wie es für die jeweiligen Zwecke erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen, etwa handels- und steuerrechtliche Fristen von bis zu zehn Jahren.",
+          "Konto- und Profildaten werden für die Dauer des freigeschalteten Zugangs gespeichert. Wird der Zugang entzogen, nicht gewährt oder eine Zugangsanfrage abgelehnt, löschen wir das zugehörige Konto einschließlich der Profildaten; bereits entstandene Geschäftsunterlagen, die einer gesetzlichen Aufbewahrungspflicht unterliegen, bleiben hiervon unberührt und werden entsprechend pseudonymisiert aufbewahrt.",
+          "Auswertungsdaten zu Anwesenheit und Verfügbarkeit werden nur so lange vorgehalten, wie dies für den jeweiligen Auswertungszeitraum erforderlich ist."
+        ]
+      },
+      {
+        "id": "unauthorized",
+        "title": "Nicht autorisierte Zugriffsversuche",
+        "paragraphs": [
+          "Die Registrierung ist technisch offen, die Berechtigung wird jedoch erst nach der Anmeldung anhand der E-Mail-Domain und einer etwaigen Einladung geprüft. Dadurch kann ein Konto entstehen, obwohl keine Berechtigung für das Intranet besteht.",
+          "In diesem Fall wird der betroffenen Person die fehlende Berechtigung angezeigt („Zugriff verweigert“) und das bei unserem Identitätsanbieter angelegte Konto wird automatisiert und unverzüglich gelöscht. Die im Rahmen dieses Registrierungsversuchs übermittelten Daten, etwa Name und E-Mail-Adresse, werden von uns nicht weiter verarbeitet. Diese Datenschutzerklärung sowie die Nutzungsbedingungen des Intranets werden für solche Personen zu keinem Zeitpunkt wirksam."
+        ]
+      },
+      {
+        "id": "rights",
+        "title": "Ihre Rechte",
+        "paragraphs": [
+          "Autorisierte Nutzer:innen haben jederzeit folgende Rechte hinsichtlich ihrer personenbezogenen Daten:"
+        ],
+        "list": [
+          {
+            "title": "Auskunft",
+            "description": "Auskunft über die von uns verarbeiteten Daten verlangen (Art. 15 DSGVO)."
+          },
+          {
+            "title": "Berichtigung",
+            "description": "Berichtigung unrichtiger Daten verlangen (Art. 16 DSGVO)."
+          },
+          {
+            "title": "Löschung",
+            "description": "Löschung Ihrer Daten verlangen, soweit keine Aufbewahrungspflicht entgegensteht (Art. 17 DSGVO)."
+          },
+          {
+            "title": "Einschränkung",
+            "description": "Einschränkung der Verarbeitung verlangen (Art. 18 DSGVO)."
+          },
+          {
+            "title": "Widerspruch",
+            "description": "Der Verarbeitung, die auf einem berechtigten Interesse beruht, widersprechen (Art. 21 DSGVO)."
+          },
+          {
+            "title": "Datenübertragbarkeit",
+            "description": "Ihre Daten in einem strukturierten, gängigen Format erhalten (Art. 20 DSGVO)."
+          }
+        ],
+        "note": "Zur Ausübung dieser Rechte genügt eine formlose Nachricht an die oben genannte E-Mail-Adresse. Außerdem steht Ihnen ein Beschwerderecht bei einer Datenschutzaufsichtsbehörde zu; für uns zuständig ist das Bayerische Landesamt für Datenschutzaufsicht (BayLDA)."
+      },
+      {
+        "id": "security",
+        "title": "Sicherheit",
+        "paragraphs": [
+          "Wir schützen die im Intranet verarbeiteten Daten durch technische und organisatorische Maßnahmen, u. a. verschlüsselte Übertragung (TLS), rollenbasierte Zugriffsrechte und Protokollierung sicherheitsrelevanter Administrationsvorgänge."
+        ]
+      },
+      {
+        "id": "changes",
+        "title": "Änderungen dieser Erklärung",
+        "paragraphs": [
+          "Wir passen diese Datenschutzerklärung an, wenn sich die Datenverarbeitung im Intranet ändert. Die jeweils aktuelle Fassung ist stets über diese Seite abrufbar."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Nutzungsbedingungen – Intranet",
+    "subtitle": "Bedingungen für die Nutzung des Advantis-Group-Intranets durch autorisierte Mitarbeitende",
+    "updated": "Stand: Juli 2026",
+    "tableOfContents": "Inhaltsverzeichnis",
+    "sections": [
+      {
+        "id": "scope",
+        "title": "Geltungsbereich",
+        "paragraphs": [
+          "Diese Nutzungsbedingungen gelten ausschließlich für Personen, denen die Advantis Group GmbH ausdrücklich Zugang zum Intranet gewährt hat und deren Konto aktiv freigeschaltet ist (nachfolgend „Nutzer:innen“).",
+          "Das bloße Anlegen eines Kontos oder ein Anmeldeversuch begründet keinen Anspruch auf Zugang und macht diese Nutzungsbedingungen nicht anwendbar. Personen ohne Berechtigung erhalten stattdessen einen Hinweis auf die fehlende Berechtigung; ihr Konto wird automatisiert gelöscht (siehe Datenschutzerklärung, Abschnitt „Nicht autorisierte Zugriffsversuche“)."
+        ]
+      },
+      {
+        "id": "access",
+        "title": "Zugang und Berechtigung",
+        "paragraphs": [
+          "Zugang zum Intranet erhalten ausschließlich Personen mit einer aktiven Geschäftsbeziehung zur Advantis Group GmbH, deren geschäftliche E-Mail-Adresse zu einer zugelassenen Firmendomain gehört, oder die eine ausdrückliche Einladung bzw. Freigabe durch eine Führungskraft oder Administrator:in erhalten haben.",
+          "Zugangsanfragen werden von Führungskräften oder Administrator:innen geprüft und können abgelehnt werden. Registrierungsversuche mit nicht zugelassenen E-Mail-Domains werden automatisch abgelehnt; das dabei angelegte Konto wird unverzüglich gelöscht.",
+          "Nutzer:innen sind verpflichtet, ihre Zugangsdaten vertraulich zu behandeln und nicht an Dritte weiterzugeben."
+        ]
+      },
+      {
+        "id": "purpose",
+        "title": "Bestimmungsgemäße Nutzung",
+        "paragraphs": [
+          "Das Intranet dient ausschließlich internen betrieblichen Zwecken der Advantis Group GmbH, insbesondere der Kommunikation, Terminplanung, Abwesenheitsverwaltung, Ablage interner Dokumente sowie dem teaminternen Austausch.",
+          "Über das Intranet zugängliche Inhalte, Dokumente und Informationen sind vertraulich und dürfen ohne Zustimmung nicht an unternehmensfremde Dritte weitergegeben werden.",
+          "Eine private oder gewerbliche Nutzung außerhalb des Beschäftigungsverhältnisses ist nicht gestattet."
+        ]
+      },
+      {
+        "id": "monitoring",
+        "title": "Hinweis zur Auswertung von Nutzungsdaten",
+        "paragraphs": [
+          "Im Zusammenhang mit der Nutzung des Intranets werden bestimmte Nutzungs-, Anwesenheits- und Verfügbarkeitsdaten zu Auswertungszwecken verarbeitet, wie in der Datenschutzerklärung im Einzelnen beschrieben.",
+          "Mit der Nutzung des Intranets nehmen Nutzer:innen zur Kenntnis, dass diese Verarbeitung im Rahmen des bestehenden Beschäftigungsverhältnisses erfolgt."
+        ]
+      },
+      {
+        "id": "obligations",
+        "title": "Pflichten der Nutzer:innen",
+        "paragraphs": [
+          "Nutzer:innen verpflichten sich,"
+        ],
+        "list": [
+          {
+            "description": "ihre Konto- und Profildaten aktuell zu halten,"
+          },
+          {
+            "description": "geltende IT- und Sicherheitsrichtlinien der Advantis Group GmbH einzuhalten,"
+          },
+          {
+            "description": "im internen Chat und in Ankündigungen einen respektvollen Umgangston zu wahren,"
+          },
+          {
+            "description": "sicherheitsrelevante Vorfälle, etwa den Verdacht auf unbefugten Zugriff, unverzüglich zu melden."
+          }
+        ]
+      },
+      {
+        "id": "availability",
+        "title": "Verfügbarkeit",
+        "paragraphs": [
+          "Das Intranet wird als internes Arbeitswerkzeug „wie besehen“ bereitgestellt. Die Advantis Group GmbH kann Funktionen jederzeit anpassen, einschränken oder einstellen und übernimmt keine Gewähr für eine unterbrechungsfreie Verfügbarkeit."
+        ]
+      },
+      {
+        "id": "suspension",
+        "title": "Sperrung und Beendigung des Zugangs",
+        "paragraphs": [
+          "Der Zugang kann jederzeit eingeschränkt, gesperrt oder beendet werden, insbesondere bei Beendigung des Beschäftigungsverhältnisses, einem Verstoß gegen diese Nutzungsbedingungen oder aus Sicherheitsgründen.",
+          "Mit Beendigung des Zugangs wird das Konto gemäß der Datenschutzerklärung gelöscht oder anonymisiert; gesetzliche Aufbewahrungspflichten bleiben unberührt."
+        ]
+      },
+      {
+        "id": "ip",
+        "title": "Geistiges Eigentum",
+        "paragraphs": [
+          "Sämtliche über das Intranet bereitgestellten Inhalte, Dokumente, Vorlagen und Materialien sind Eigentum der Advantis Group GmbH oder ihrer Lizenzgeber und dürfen ausschließlich für interne Zwecke verwendet werden."
+        ]
+      },
+      {
+        "id": "liability",
+        "title": "Haftung",
+        "paragraphs": [
+          "Die Advantis Group GmbH haftet unbeschränkt für Vorsatz und grobe Fahrlässigkeit sowie nach Maßgabe des Produkthaftungsgesetzes. Im Übrigen haftet sie nur bei Verletzung wesentlicher Vertragspflichten und beschränkt auf den vorhersehbaren, vertragstypischen Schaden. Die Haftung für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit bleibt unberührt."
+        ]
+      },
+      {
+        "id": "changes",
+        "title": "Änderungen dieser Nutzungsbedingungen",
+        "paragraphs": [
+          "Wir können diese Nutzungsbedingungen mit Wirkung für die Zukunft anpassen, etwa bei Änderungen der eingesetzten Systeme. Über wesentliche Änderungen informieren wir in angemessener Form."
+        ]
+      },
+      {
+        "id": "law",
+        "title": "Anwendbares Recht und Gerichtsstand",
+        "paragraphs": [
+          "Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts. Gerichtsstand ist, soweit gesetzlich zulässig, Nürnberg."
+        ]
+      },
+      {
+        "id": "contact",
+        "title": "Kontakt",
+        "paragraphs": [
+          "Fragen zu diesen Nutzungsbedingungen richten Sie bitte an:"
+        ]
+      }
+    ]
   }
 }

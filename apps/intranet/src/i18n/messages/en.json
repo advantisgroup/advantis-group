@@ -20,7 +20,9 @@
     "groupAdministration": "Administration",
     "signOut": "Sign out",
     "files": "Files",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "privacy": "Privacy",
+    "terms": "Terms"
   },
   "Common": {
     "save": "Save",
@@ -47,7 +49,6 @@
   "Access": {
     "title": "Request access",
     "intro": "You're signed in but don't have access to the intranet yet.",
-    "domainBlocked": "Your email domain isn't permitted to access the intranet. Please use your company email.",
     "messageLabel": "Message to the administrators (optional)",
     "requestButton": "Request access",
     "pending": "Your access request is pending review. You'll be notified by email once it's decided.",
@@ -1228,5 +1229,290 @@
         "body": "Avatar cropping, app preferences (start page, calendar view), and your integration links."
       }
     }
+  },
+  "AccessDenied": {
+    "title": "Access denied",
+    "signedInAs": "Signed in as",
+    "description": "This intranet is only accessible to authorized Advantis Group GmbH employees. Your email address isn't part of an approved company domain, so no access can be granted here.",
+    "removing": "Removing your account…",
+    "autoRemoveNotice": "For security reasons, your account is being removed automatically."
+  },
+  "privacy": {
+    "title": "Privacy Policy – Intranet",
+    "subtitle": "How we process personal data of authorized Advantis employees within the intranet – in line with the GDPR",
+    "updated": "Last updated: July 2026",
+    "tableOfContents": "Table of contents",
+    "sections": [
+      {
+        "id": "scope",
+        "title": "Scope",
+        "paragraphs": [
+          "This privacy policy applies exclusively to individuals who have been authorized for the Advantis Group GmbH intranet (“Intranet”) and hold an active, provisioned account (“users”). It supplements the general privacy policy at advantisgroup.de with the additional processing that takes place solely within the Intranet.",
+          "Anyone who merely registers or attempts to sign in through our authentication provider without being provisioned for the Intranet does not thereby become a user under this policy. Such sign-up attempts are covered exclusively by the “Unauthorized access attempts” section below – the remaining provisions of this policy, as well as the Intranet's Terms of Use, never apply to them.",
+          "Access to the Intranet is only granted after the email domain is checked or after explicit approval by a manager or administrator (see the Terms of Use, “Access and authorization”)."
+        ]
+      },
+      {
+        "id": "controller",
+        "title": "Controller",
+        "paragraphs": [
+          "The controller responsible for data processing within the Intranet is:"
+        ]
+      },
+      {
+        "id": "categories",
+        "title": "What data we process, and why",
+        "paragraphs": [
+          "In connection with using the Intranet, we process the following categories of personal data of authorized users:"
+        ],
+        "list": [
+          {
+            "title": "Account and profile data",
+            "description": "Name, business email address, role, department, job title, phone number and profile picture – for identification, internal organization and permission management (Art. 6(1)(b) GDPR)."
+          },
+          {
+            "title": "Sign-in and security data",
+            "description": "Sign-in events and session data processed by our identity provider – to secure access (Art. 6(1)(f) GDPR)."
+          },
+          {
+            "title": "Usage and activity data for evaluation purposes",
+            "description": "Presence and availability status derived from the interplay of the desktop agent, telephony (Genesys) and time tracking (Clockodo) – used to evaluate work performance, availability and capacity planning within the employment relationship (Art. 6(1)(b) and (f) GDPR and, where applicable, § 26 BDSG)."
+          },
+          {
+            "title": "Absence and calendar data",
+            "description": "Vacation, sick leave and scheduling data – for staff planning (Art. 6(1)(b) GDPR)."
+          },
+          {
+            "title": "Communication and content data",
+            "description": "Chat messages, announcements, reactions and uploaded files – for internal collaboration (Art. 6(1)(b) and (f) GDPR)."
+          },
+          {
+            "title": "Log and audit data",
+            "description": "Administrative actions such as permission grants or status changes – for accountability and IT security (Art. 6(1)(f) GDPR)."
+          },
+          {
+            "title": "Technical access data",
+            "description": "IP address, browser and device type, and timestamps – to operate the platform securely (Art. 6(1)(f) GDPR)."
+          }
+        ],
+        "note": "We do not process special categories of personal data (Art. 9 GDPR) within the Intranet unless users actively and voluntarily share such data themselves, for example as part of a sick-leave absence."
+      },
+      {
+        "id": "recipients",
+        "title": "Recipients and processors",
+        "paragraphs": [
+          "To provide the Intranet, we rely on carefully selected service providers who act as processors under Art. 28 GDPR on our behalf, or to whom we disclose data to fulfil the employment relationship:"
+        ],
+        "list": [
+          {
+            "title": "Identity provider",
+            "description": "Authentication and account management."
+          },
+          {
+            "title": "Database and backend provider",
+            "description": "Database and backend infrastructure for the Intranet."
+          },
+          {
+            "title": "Hosting provider",
+            "description": "Application hosting."
+          },
+          {
+            "title": "Email delivery provider",
+            "description": "Transactional email delivery, e.g. invitations and status notifications."
+          },
+          {
+            "title": "Microsoft OneDrive",
+            "description": "Storage and sharing of internal documents."
+          },
+          {
+            "title": "Genesys Cloud",
+            "description": "Telephony presence data for availability evaluation."
+          },
+          {
+            "title": "Clockodo",
+            "description": "Time-tracking data for availability evaluation."
+          }
+        ],
+        "note": "Where individual providers process data outside the EU/EEA, we ensure an adequate level of data protection through appropriate safeguards, in particular EU Standard Contractual Clauses. We do not disclose data to other third parties unless legally required to do so."
+      },
+      {
+        "id": "retention",
+        "title": "Retention period",
+        "paragraphs": [
+          "We store personal data only for as long as necessary for the respective purpose, or as required by statutory retention obligations, such as commercial and tax-law periods of up to ten years.",
+          "Account and profile data is stored for the duration of the provisioned access. If access is revoked, not granted, or an access request is denied, we delete the associated account, including profile data; business records that already exist and are subject to a statutory retention obligation are unaffected and are retained in pseudonymized form.",
+          "Attendance and availability evaluation data is retained only for as long as necessary for the respective evaluation period."
+        ]
+      },
+      {
+        "id": "unauthorized",
+        "title": "Unauthorized access attempts",
+        "paragraphs": [
+          "Registration is technically open, but authorization is only checked after sign-in, based on the email domain and any invitation on file. As a result, an account can be created even though there is no authorization for the Intranet.",
+          "In that case, the affected person is shown that access has been denied (“Access denied”) and the account created with our identity provider is deleted automatically and without delay. We do not further process the data submitted during that sign-up attempt, such as name and email address. This privacy policy and the Intranet's Terms of Use never take effect for such persons."
+        ]
+      },
+      {
+        "id": "rights",
+        "title": "Your rights",
+        "paragraphs": [
+          "Authorized users have the following rights regarding their personal data at any time:"
+        ],
+        "list": [
+          {
+            "title": "Access",
+            "description": "Request information about the data we process about you (Art. 15 GDPR)."
+          },
+          {
+            "title": "Rectification",
+            "description": "Request correction of inaccurate data (Art. 16 GDPR)."
+          },
+          {
+            "title": "Erasure",
+            "description": "Request deletion of your data, unless a retention obligation applies (Art. 17 GDPR)."
+          },
+          {
+            "title": "Restriction",
+            "description": "Request restriction of processing (Art. 18 GDPR)."
+          },
+          {
+            "title": "Objection",
+            "description": "Object to processing based on a legitimate interest (Art. 21 GDPR)."
+          },
+          {
+            "title": "Data portability",
+            "description": "Receive your data in a structured, commonly used format (Art. 20 GDPR)."
+          }
+        ],
+        "note": "To exercise these rights, an informal message to the email address given above is sufficient. You also have the right to lodge a complaint with a data protection supervisory authority; the authority responsible for us is the Bavarian State Office for Data Protection Supervision (BayLDA)."
+      },
+      {
+        "id": "security",
+        "title": "Security",
+        "paragraphs": [
+          "We protect the data processed within the Intranet through technical and organizational measures, including encrypted transmission (TLS), role-based access rights, and logging of security-relevant administrative actions."
+        ]
+      },
+      {
+        "id": "changes",
+        "title": "Changes to this policy",
+        "paragraphs": [
+          "We update this privacy policy whenever data processing within the Intranet changes. The current version is always available on this page."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Terms of Use – Intranet",
+    "subtitle": "Terms governing the use of the Advantis Group intranet by authorized employees",
+    "updated": "Last updated: July 2026",
+    "tableOfContents": "Table of contents",
+    "sections": [
+      {
+        "id": "scope",
+        "title": "Scope",
+        "paragraphs": [
+          "These Terms of Use apply exclusively to individuals to whom Advantis Group GmbH has expressly granted access to the Intranet and whose account is actively provisioned (“users”).",
+          "Merely creating an account or attempting to sign in does not create any entitlement to access and does not make these Terms of Use applicable. Individuals without authorization instead receive a notice that access has been denied, and their account is deleted automatically (see the Privacy Policy, “Unauthorized access attempts”)."
+        ]
+      },
+      {
+        "id": "access",
+        "title": "Access and authorization",
+        "paragraphs": [
+          "Access to the Intranet is granted exclusively to individuals with an active business relationship with Advantis Group GmbH whose business email address belongs to an approved company domain, or who have received an explicit invitation or approval from a manager or administrator.",
+          "Access requests are reviewed by managers or administrators and may be declined. Sign-up attempts using email domains that are not approved are automatically denied, and the account created in the process is deleted without delay.",
+          "Users must keep their access credentials confidential and must not share them with third parties."
+        ]
+      },
+      {
+        "id": "purpose",
+        "title": "Intended use",
+        "paragraphs": [
+          "The Intranet serves exclusively internal business purposes of Advantis Group GmbH, in particular communication, scheduling, absence management, storage of internal documents, and team collaboration.",
+          "Content, documents and information accessible through the Intranet are confidential and must not be shared with third parties outside the company without consent.",
+          "Private or commercial use unrelated to the employment relationship is not permitted."
+        ]
+      },
+      {
+        "id": "monitoring",
+        "title": "Notice regarding evaluation of usage data",
+        "paragraphs": [
+          "In connection with using the Intranet, certain usage, attendance and availability data is processed for evaluation purposes, as described in detail in the Privacy Policy.",
+          "By using the Intranet, users acknowledge that this processing takes place within the context of their existing employment relationship."
+        ]
+      },
+      {
+        "id": "obligations",
+        "title": "User obligations",
+        "paragraphs": [
+          "Users agree to"
+        ],
+        "list": [
+          {
+            "description": "keep their account and profile data up to date,"
+          },
+          {
+            "description": "comply with Advantis Group GmbH's applicable IT and security policies,"
+          },
+          {
+            "description": "maintain a respectful tone in internal chat and announcements,"
+          },
+          {
+            "description": "report security-relevant incidents, such as suspected unauthorized access, without delay."
+          }
+        ]
+      },
+      {
+        "id": "availability",
+        "title": "Availability",
+        "paragraphs": [
+          "The Intranet is provided as an internal work tool “as is.” Advantis Group GmbH may modify, restrict or discontinue features at any time and does not guarantee uninterrupted availability."
+        ]
+      },
+      {
+        "id": "suspension",
+        "title": "Suspension and termination of access",
+        "paragraphs": [
+          "Access may be restricted, suspended or terminated at any time, in particular upon termination of the employment relationship, a violation of these Terms of Use, or for security reasons.",
+          "Upon termination of access, the account is deleted or anonymized in accordance with the Privacy Policy; statutory retention obligations remain unaffected."
+        ]
+      },
+      {
+        "id": "ip",
+        "title": "Intellectual property",
+        "paragraphs": [
+          "All content, documents, templates and materials made available through the Intranet are the property of Advantis Group GmbH or its licensors and may be used solely for internal purposes."
+        ]
+      },
+      {
+        "id": "liability",
+        "title": "Liability",
+        "paragraphs": [
+          "Advantis Group GmbH is liable without limitation for intent and gross negligence, and in accordance with the Product Liability Act. Beyond that, it is liable only for breach of material contractual obligations and limited to foreseeable damage typical for this type of contract. Liability for damages arising from injury to life, body or health remains unaffected."
+        ]
+      },
+      {
+        "id": "changes",
+        "title": "Changes to these Terms of Use",
+        "paragraphs": [
+          "We may amend these Terms of Use with effect for the future, for example when the systems we use change. We will inform users of material changes in an appropriate manner."
+        ]
+      },
+      {
+        "id": "law",
+        "title": "Governing law and jurisdiction",
+        "paragraphs": [
+          "These Terms of Use are governed by the laws of the Federal Republic of Germany, excluding the UN Convention on Contracts for the International Sale of Goods. To the extent legally permissible, the place of jurisdiction is Nuremberg."
+        ]
+      },
+      {
+        "id": "contact",
+        "title": "Contact",
+        "paragraphs": [
+          "Questions about these Terms of Use can be directed to:"
+        ]
+      }
+    ]
   }
 }

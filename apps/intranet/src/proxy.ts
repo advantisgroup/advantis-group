@@ -6,12 +6,20 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   // Temporary guest tour — token-gated, no Clerk session.
   "/guest(.*)",
+  // Legal pages must be readable by anyone, including rejected sign-ups.
+  "/privacy(.*)",
+  "/terms(.*)",
 ]);
 
 export default clerkMiddleware(
   async (auth, req) => {
     if (!isPublicRoute(req)) {
-      await auth.protect();
+      // Land signed-out visitors on sign-up rather than Clerk's configured
+      // sign-in default — it's the better-designed entry point, and existing
+      // members can still reach sign-in from the link inside it.
+      await auth.protect({
+        unauthenticatedUrl: new URL("/sign-up", req.url).toString(),
+      });
     }
   },
   {

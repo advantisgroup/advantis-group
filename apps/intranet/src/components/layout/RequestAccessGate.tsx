@@ -9,6 +9,7 @@ import { Clock, ShieldX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AccessDeniedScreen } from "@/components/layout/AccessDeniedScreen";
 import { BrandLogo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
@@ -42,6 +43,11 @@ export function RequestAccessGate() {
   const domainAllowed =
     status && "domainAllowed" in status ? status.domainAllowed : true;
 
+  // A blocked domain can never gain access — no request form, no limbo.
+  if (status && state === "none" && !domainAllowed) {
+    return <AccessDeniedScreen />;
+  }
+
   return (
     <div className="app-atmosphere relative flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md overflow-hidden">
@@ -73,27 +79,15 @@ export function RequestAccessGate() {
           {state === "none" && (
             <>
               <p className="text-sm text-muted-foreground">{t("intro")}</p>
-              {domainAllowed ? (
-                <>
-                  <Textarea
-                    placeholder={t("messageLabel")}
-                    value={message}
-                    onChange={e => setMessage(e.target.value)}
-                    rows={3}
-                  />
-                  <Button
-                    className="w-full"
-                    onClick={submit}
-                    disabled={submitting}
-                  >
-                    {t("requestButton")}
-                  </Button>
-                </>
-              ) : (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-                  {t("domainBlocked")}
-                </div>
-              )}
+              <Textarea
+                placeholder={t("messageLabel")}
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                rows={3}
+              />
+              <Button className="w-full" onClick={submit} disabled={submitting}>
+                {t("requestButton")}
+              </Button>
             </>
           )}
 

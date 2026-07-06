@@ -3,12 +3,13 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { type Doc } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
-import { mutation, query } from "./_generated/server";
+import { action, internalMutation, mutation, query } from "./_generated/server";
 import {
   getUserByClerkId,
   isEmailDomainAllowed,
   requireManager,
 } from "./lib/auth";
+import { deleteClerkUser } from "./lib/clerk";
 import { notifyUsers } from "./lib/notify";
 
 const roleArg = v.union(
@@ -110,6 +111,56 @@ export const myStatus = query({
         ? isEmailDomainAllowed(identity.email)
         : false,
     };
+  },
+});
+
+/**
+ * Auth + validate that the caller is a signed-in identity with no intranet
+ * account whose email domain sits outside the allowlist — the only case
+ * where self-deletion is ever appropriate. Never trusts a client-supplied id.
+ */
+export const assertUnauthorized = internalMutation({
+  args: {},
+  handler: async ctx => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "unauthenticated",
+        message: "Not signed in",
+      });
+    }
+    if (await getUserByClerkId(ctx, identity.subject)) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "This account already has intranet access",
+      });
+    }
+    const email = (identity.email ?? "").toLowerCase();
+    if (!email || isEmailDomainAllowed(email)) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "This account's email domain is not blocked",
+      });
+    }
+    return identity.subject;
+  },
+});
+
+/**
+ * Sign-up is open in Clerk; authorization is only checked afterwards, by
+ * email domain. An identity from a domain that can never be granted access
+ * has no legitimate reason to keep an account around, so the "access denied"
+ * screen calls this to remove its own Clerk account immediately.
+ */
+export const selfDeleteUnauthorized = action({
+  args: {},
+  handler: async (ctx): Promise<{ ok: true }> => {
+    const clerkUserId: string = await ctx.runMutation(
+      internal.accessRequests.assertUnauthorized,
+      {}
+    );
+    await deleteClerkUser(clerkUserId);
+    return { ok: true };
   },
 });
 
