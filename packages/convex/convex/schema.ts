@@ -763,6 +763,16 @@ export default defineSchema({
     at: v.number(),
   }).index("by_at", ["at"]),
 
+  // Append-only audit of admin/integrations actions (Clockodo user
+  // provisioning today; `integration` grows as more providers are added).
+  integrationsAuditLog: defineTable({
+    actorUserId: v.id("users"),
+    integration: v.union(v.literal("clockodo")),
+    action: v.string(),
+    target: v.optional(v.string()),
+    at: v.number(),
+  }).index("by_at", ["at"]),
+
   // Singleton store for the delegated-auth (personal Microsoft account) refresh
   // token. Personal-account refresh tokens rotate on every use, so the API
   // persists the latest one here (AES-256-GCM ciphertext, encrypted in the API)

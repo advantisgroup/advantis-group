@@ -14,6 +14,7 @@ import {
   Megaphone,
   MessageSquare,
   Plane,
+  Plug,
   Settings,
   ShieldCheck,
   Users,
@@ -171,6 +172,12 @@ export function Sidebar() {
           external: true,
         },
         {
+          href: "/admin/integrations",
+          labelKey: "integrations",
+          icon: Plug,
+          managerOnly: true,
+        },
+        {
           href: "/settings",
           labelKey: "settings",
           icon: Settings,
@@ -234,7 +241,8 @@ export function Sidebar() {
                             : item.href === "/admin"
                               ? pathname === "/admin" ||
                                 (pathname.startsWith("/admin") &&
-                                  !pathname.startsWith("/admin/activity"))
+                                  !pathname.startsWith("/admin/activity") &&
+                                  !pathname.startsWith("/admin/integrations"))
                               : pathname.startsWith(item.href);
                         const Icon = item.icon;
                         return (
