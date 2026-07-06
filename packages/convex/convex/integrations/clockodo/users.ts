@@ -2,51 +2,34 @@
 
 import { v } from "convex/values";
 
-import { internal } from "../../_generated/api";
 import { action } from "../../_generated/server";
 import { requireManagerAction } from "../lib/auth";
 import { clockodoFetch } from "./client";
 
-import type { ActionCtx } from "../../_generated/server";
-
 /**
- * Temporary diagnostic aid (remove once Clockodo's Sollstunden/other "deep"
- * fields are fully modeled): persists the raw wire response so it can be
- * inspected in the Convex dashboard's Data tab instead of guessed at from
- * docs — Clockodo's actual field set (e.g. per-weekday target hours) is
- * broader than what this client currently parses.
+ * Wire shape of `/api/v3/users` (snake_case). Confirmed against a live
+ * account's raw responses — Clockodo's actual user object is considerably
+ * larger than the public docs suggest (employment dates, reporting line,
+ * absence/customer permissions, language, flextime exemption, plus
+ * reference ids for teams/access-groups/work-time-regulations this client
+ * doesn't yet expose since they'd need their own list endpoints to be
+ * meaningful as pickers rather than raw numbers).
  */
-async function logRaw(
-  ctx: ActionCtx,
-  endpoint: string,
-  payload: unknown
-): Promise<void> {
-  try {
-    await ctx.runMutation(internal.integrations.debug.logRaw, {
-      integration: "clockodo",
-      endpoint,
-      payload: JSON.stringify(payload),
-    });
-  } catch (err) {
-    console.error(
-      `[clockodo] failed to log raw response for ${endpoint}:`,
-      err
-    );
-  }
-}
-
-/** Wire shape of `/api/v3/users` (snake_case, per Clockodo's REST API — v2
- * was retired in the May 2026 legacy-endpoint deprecation). Confirmed
- * against docs.clockodo.com: list/get responses wrap the payload in
- * `data`, not `users`/`user`, and `role` is a string (e.g. "worker"), not
- * a numeric code. */
 interface ClockodoUserWire {
   id: number;
   name: string;
-  number?: string;
+  number?: string | null;
   email: string;
   active?: boolean;
   role?: string;
+  start_date?: string | null;
+  exit_date?: string | null;
+  boss?: number | null;
+  language?: string;
+  can_generally_see_absences?: boolean;
+  can_generally_manage_absences?: boolean;
+  can_add_customers?: boolean;
+  exempt_from_flextime?: boolean;
 }
 
 export interface ClockodoUser {
@@ -56,69 +39,102 @@ export interface ClockodoUser {
   email: string;
   active?: boolean;
   role?: string;
+  startDate: string | null;
+  exitDate: string | null;
+  boss: number | null;
+  language?: string;
+  canGenerallySeeAbsences?: boolean;
+  canGenerallyManageAbsences?: boolean;
+  canAddCustomers?: boolean;
+  exemptFromFlextime?: boolean;
 }
 
 function toClockodoUser(u: ClockodoUserWire): ClockodoUser {
   return {
     id: u.id,
     name: u.name,
-    number: u.number,
+    number: u.number ?? undefined,
     email: u.email,
     active: u.active,
     role: u.role,
+    startDate: u.start_date ?? null,
+    exitDate: u.exit_date ?? null,
+    boss: u.boss ?? null,
+    language: u.language,
+    canGenerallySeeAbsences: u.can_generally_see_absences,
+    canGenerallyManageAbsences: u.can_generally_manage_absences,
+    canAddCustomers: u.can_add_customers,
+    exemptFromFlextime: u.exempt_from_flextime,
   };
 }
 
+const WEEKDAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+type Weekday = (typeof WEEKDAYS)[number];
+type WeekHours = Record<Weekday, number>;
+
 /**
  * Target-hours history row (Sollstunden). Clockodo models this as a dated
- * history, not a flat field — creating/editing adds a new period rather than
- * overwriting a single number. `type` is the string enum `"weekly" |
- * "monthly"` per docs.clockodo.com, not a numeric code. The per-weekday
- * breakdown fields (beyond `hours_total`) are unverified against a live
- * account; this client only uses the weekly total.
+ * history of *per-weekday* hours — there is no flat weekly-total field on
+ * the wire; the total is derived by summing the seven day fields. Creating
+ * a new period doesn't edit in place — it adds a new dated row, and you
+ * choose whether it takes effect immediately (today) or from a future date,
+ * leaving earlier periods in the history untouched.
  */
-interface ClockodoTargetHourWire {
+type ClockodoTargetHourWire = {
   id: number;
   users_id: number;
   type: "weekly" | "monthly";
   date_since: string;
-  date_until?: string | null;
-  hours_total?: number;
-  compensation_monthly?: number;
-}
+  date_until: string | null;
+} & Partial<WeekHours>;
 
 export interface ClockodoTargetHour {
   id: number;
   clockodoUserId: number;
   dateSince: string;
   dateUntil: string | null;
-  weeklyHours: number | null;
+  days: WeekHours;
+  weeklyTotal: number;
 }
 
 function toTargetHour(row: ClockodoTargetHourWire): ClockodoTargetHour {
+  const days = Object.fromEntries(
+    WEEKDAYS.map(day => [day, row[day] ?? 0])
+  ) as WeekHours;
   return {
     id: row.id,
     clockodoUserId: row.users_id,
     dateSince: row.date_since,
     dateUntil: row.date_until ?? null,
-    weeklyHours: row.hours_total ?? null,
+    days,
+    weeklyTotal: WEEKDAYS.reduce((sum, day) => sum + days[day], 0),
   };
 }
 
 /** Holidays-quota row (Urlaubsanspruch) — also a dated history, one row per
- * entitlement year. */
+ * entitlement year. List/get responses wrap the payload in `data`. */
 interface ClockodoHolidaysQuotaWire {
   id: number;
   users_id: number;
   year_since: number;
+  year_until: number | null;
   count: number;
-  note?: string;
+  note?: string | null;
 }
 
 export interface ClockodoHolidaysQuota {
   id: number;
   clockodoUserId: number;
   yearSince: number;
+  yearUntil: number | null;
   daysPerYear: number;
   note?: string;
 }
@@ -130,8 +146,9 @@ function toHolidaysQuota(
     id: row.id,
     clockodoUserId: row.users_id,
     yearSince: row.year_since,
+    yearUntil: row.year_until ?? null,
     daysPerYear: row.count,
-    note: row.note,
+    note: row.note ?? undefined,
   };
 }
 
@@ -143,7 +160,6 @@ export const listClockodoUsers = action({
     const body = await clockodoFetch<{ data?: ClockodoUserWire[] }>(
       "/api/v3/users?items_per_page=1000"
     );
-    await logRaw(ctx, "/api/v3/users", body);
     return (body.data ?? []).map(toClockodoUser);
   },
 });
@@ -163,7 +179,6 @@ export const getClockodoUserDetail = action({
     const userBody = await clockodoFetch<{ data: ClockodoUserWire }>(
       `/api/v3/users/${clockodoUserId}`
     );
-    await logRaw(ctx, `/api/v3/users/${clockodoUserId}`, userBody);
 
     // Target-hours/holidays-quota are supplementary — a bad path here must
     // not take down the whole user list. Each degrades to an empty history
@@ -172,10 +187,7 @@ export const getClockodoUserDetail = action({
       clockodoFetch<{ targethours?: ClockodoTargetHourWire[] }>(
         `/api/targethours?users_id=${clockodoUserId}`
       )
-        .then(async body => {
-          await logRaw(ctx, "/api/targethours", body);
-          return (body.targethours ?? []).map(toTargetHour);
-        })
+        .then(body => (body.targethours ?? []).map(toTargetHour))
         .catch(err => {
           console.error(
             `[clockodo] target-hours fetch failed for user ${clockodoUserId}:`,
@@ -183,13 +195,10 @@ export const getClockodoUserDetail = action({
           );
           return [];
         }),
-      clockodoFetch<{ holidaysquota?: ClockodoHolidaysQuotaWire[] }>(
+      clockodoFetch<{ data?: ClockodoHolidaysQuotaWire[] }>(
         `/api/v2/holidaysQuota?users_id=${clockodoUserId}`
       )
-        .then(async body => {
-          await logRaw(ctx, "/api/v2/holidaysQuota", body);
-          return (body.holidaysquota ?? []).map(toHolidaysQuota);
-        })
+        .then(body => (body.data ?? []).map(toHolidaysQuota))
         .catch(err => {
           console.error(
             `[clockodo] holidays-quota fetch failed for user ${clockodoUserId}:`,
@@ -208,49 +217,57 @@ export const getClockodoUserDetail = action({
 });
 
 /**
- * Create a Clockodo user, optionally seeding their initial target hours and
- * vacation entitlement in the same flow (both are separate dated-history
- * writes in Clockodo, done right after creation so a manager gets the full
- * "create + configure" flow in one form submit).
+ * Create a Clockodo user, optionally seeding an initial target-hours period
+ * (per-weekday hours) and vacation entitlement in the same flow — both are
+ * separate dated-history writes in Clockodo, done right after creation so a
+ * manager gets the full "create + configure" flow in one form submit.
  */
 export const createClockodoUser = action({
   args: {
     name: v.string(),
     email: v.string(),
     number: v.optional(v.string()),
-    weeklyHours: v.optional(v.number()),
+    targetHoursDateSince: v.optional(v.string()),
+    monday: v.optional(v.number()),
+    tuesday: v.optional(v.number()),
+    wednesday: v.optional(v.number()),
+    thursday: v.optional(v.number()),
+    friday: v.optional(v.number()),
+    saturday: v.optional(v.number()),
+    sunday: v.optional(v.number()),
     vacationDaysPerYear: v.optional(v.number()),
   },
-  handler: async (
-    ctx,
-    { name, email, number, weeklyHours, vacationDaysPerYear }
-  ): Promise<{ clockodoUserId: number }> => {
+  handler: async (ctx, args): Promise<{ clockodoUserId: number }> => {
     await requireManagerAction(ctx);
     const created = await clockodoFetch<{ data: ClockodoUserWire }>(
       "/api/v3/users",
-      { method: "POST", body: { name, email, number } }
+      {
+        method: "POST",
+        body: { name: args.name, email: args.email, number: args.number },
+      }
     );
     const clockodoUserId = created.data.id;
-    const today = new Date().toISOString().slice(0, 10);
 
-    if (weeklyHours !== undefined) {
+    const hasTargetHours = WEEKDAYS.some(day => args[day] !== undefined);
+    if (hasTargetHours) {
       await clockodoFetch("/api/targethours", {
         method: "POST",
         body: {
           users_id: clockodoUserId,
           type: "weekly",
-          date_since: today,
-          hours_total: weeklyHours,
+          date_since:
+            args.targetHoursDateSince ?? new Date().toISOString().slice(0, 10),
+          ...Object.fromEntries(WEEKDAYS.map(day => [day, args[day] ?? 0])),
         },
       });
     }
-    if (vacationDaysPerYear !== undefined) {
+    if (args.vacationDaysPerYear !== undefined) {
       await clockodoFetch("/api/v2/holidaysQuota", {
         method: "POST",
         body: {
           users_id: clockodoUserId,
           year_since: new Date().getFullYear(),
-          count: vacationDaysPerYear,
+          count: args.vacationDaysPerYear,
         },
       });
     }
@@ -259,7 +276,11 @@ export const createClockodoUser = action({
   },
 });
 
-/** Edit a Clockodo user's core profile fields. Manager+. */
+/**
+ * Edit a Clockodo user's profile, employment, and permission fields.
+ * Manager+. Only the fields provided are sent (a PUT with a partial body),
+ * so this never clobbers fields the caller didn't mean to touch.
+ */
 export const updateClockodoUser = action({
   args: {
     clockodoUserId: v.number(),
@@ -267,26 +288,69 @@ export const updateClockodoUser = action({
     email: v.optional(v.string()),
     number: v.optional(v.string()),
     active: v.optional(v.boolean()),
+    role: v.optional(v.string()),
+    startDate: v.optional(v.string()),
+    exitDate: v.optional(v.string()),
+    boss: v.optional(v.number()),
+    language: v.optional(v.string()),
+    canGenerallySeeAbsences: v.optional(v.boolean()),
+    canGenerallyManageAbsences: v.optional(v.boolean()),
+    canAddCustomers: v.optional(v.boolean()),
+    exemptFromFlextime: v.optional(v.boolean()),
   },
-  handler: async (ctx, { clockodoUserId, ...patch }): Promise<void> => {
+  handler: async (ctx, args): Promise<void> => {
     await requireManagerAction(ctx);
+    const { clockodoUserId, ...patch } = args;
+    const body: Record<string, unknown> = {};
+    if (patch.name !== undefined) body.name = patch.name;
+    if (patch.email !== undefined) body.email = patch.email;
+    if (patch.number !== undefined) body.number = patch.number;
+    if (patch.active !== undefined) body.active = patch.active;
+    if (patch.role !== undefined) body.role = patch.role;
+    if (patch.startDate !== undefined) body.start_date = patch.startDate;
+    if (patch.exitDate !== undefined) body.exit_date = patch.exitDate;
+    if (patch.boss !== undefined) body.boss = patch.boss;
+    if (patch.language !== undefined) body.language = patch.language;
+    if (patch.canGenerallySeeAbsences !== undefined) {
+      body.can_generally_see_absences = patch.canGenerallySeeAbsences;
+    }
+    if (patch.canGenerallyManageAbsences !== undefined) {
+      body.can_generally_manage_absences = patch.canGenerallyManageAbsences;
+    }
+    if (patch.canAddCustomers !== undefined) {
+      body.can_add_customers = patch.canAddCustomers;
+    }
+    if (patch.exemptFromFlextime !== undefined) {
+      body.exempt_from_flextime = patch.exemptFromFlextime;
+    }
     await clockodoFetch(`/api/v3/users/${clockodoUserId}`, {
       method: "PUT",
-      body: patch,
+      body,
     });
   },
 });
 
-/** Start a new target-hours (Sollstunden) period for a user. Manager+. */
+/**
+ * Start a new target-hours (Sollstunden) period for a user — per-weekday
+ * hours, effective from `dateSince` (defaults to today; pass a future date
+ * to schedule a change rather than apply it immediately). Earlier periods
+ * stay in the history untouched.
+ */
 export const setTargetHours = action({
   args: {
     clockodoUserId: v.number(),
-    weeklyHours: v.number(),
     dateSince: v.optional(v.string()),
+    monday: v.number(),
+    tuesday: v.number(),
+    wednesday: v.number(),
+    thursday: v.number(),
+    friday: v.number(),
+    saturday: v.number(),
+    sunday: v.number(),
   },
   handler: async (
     ctx,
-    { clockodoUserId, weeklyHours, dateSince }
+    { clockodoUserId, dateSince, ...days }
   ): Promise<void> => {
     await requireManagerAction(ctx);
     await clockodoFetch("/api/targethours", {
@@ -295,7 +359,7 @@ export const setTargetHours = action({
         users_id: clockodoUserId,
         type: "weekly",
         date_since: dateSince ?? new Date().toISOString().slice(0, 10),
-        hours_total: weeklyHours,
+        ...days,
       },
     });
   },

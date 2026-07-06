@@ -23,6 +23,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -45,23 +46,55 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSlashFocus } from "@/lib/activity/useSlashFocus";
 
+const WEEKDAYS = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+type Weekday = (typeof WEEKDAYS)[number];
+type WeekHours = Record<Weekday, number>;
+const EMPTY_WEEK: WeekHours = {
+  monday: 0,
+  tuesday: 0,
+  wednesday: 0,
+  thursday: 0,
+  friday: 0,
+  saturday: 0,
+  sunday: 0,
+};
+
 interface ClockodoUser {
   id: number;
   name: string;
   email: string;
   active?: boolean;
+  role?: string;
+  startDate: string | null;
+  exitDate: string | null;
+  boss: number | null;
+  language?: string;
+  canGenerallySeeAbsences?: boolean;
+  canGenerallyManageAbsences?: boolean;
+  canAddCustomers?: boolean;
+  exemptFromFlextime?: boolean;
 }
 
 interface TargetHourEntry {
   id: number;
   dateSince: string;
   dateUntil: string | null;
-  weeklyHours: number | null;
+  days: WeekHours;
+  weeklyTotal: number;
 }
 
 interface HolidaysQuotaEntry {
   id: number;
   yearSince: number;
+  yearUntil: number | null;
   daysPerYear: number;
   note?: string;
 }
@@ -163,12 +196,32 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function HistoryList({
+/** Labelled form field for the compact 2-column employment grid. */
+function Field({
+  label,
+  children,
+  span2,
+}: {
+  label: string;
+  children: ReactNode;
+  span2?: boolean;
+}) {
+  return (
+    <div className={span2 ? "col-span-2" : undefined}>
+      <label className="mb-1 block text-xs text-muted-foreground">
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+function HistoryList<T extends { id: number }>({
   entries,
   render,
 }: {
-  entries: { id: number }[];
-  render: (entry: never) => ReactNode;
+  entries: T[];
+  render: (entry: T) => ReactNode;
 }) {
   const t = useTranslations("Integrations");
   if (entries.length === 0) {
@@ -179,26 +232,94 @@ function HistoryList({
       {entries.map(entry => (
         <li
           key={entry.id}
-          className="flex items-center justify-between gap-2 rounded-md bg-panel-2 px-2 py-1.5 text-xs"
+          className="rounded-md bg-panel-2 px-2 py-1.5 text-xs"
         >
-          {render(entry as never)}
+          {render(entry)}
         </li>
       ))}
     </ul>
   );
 }
 
+/**
+ * Day-by-day target-hours (Sollstunden) editor. Always creates a *new*
+ * dated period rather than editing in place — Clockodo has no flat
+ * "weekly hours" field, only per-weekday hours summed for the total, and a
+ * history of periods each starting on a chosen date (today, or scheduled
+ * for later). Keyed by clockodoUserId from the parent so switching rows
+ * resets this form's local state instead of carrying over stale values.
+ */
+function TargetHoursForm({
+  row,
+  onSave,
+}: {
+  row: ClockodoRow;
+  onSave: (input: { dateSince: string } & WeekHours) => void;
+}) {
+  const t = useTranslations("Integrations");
+  const latest = row.targetHoursHistory.at(-1);
+  const [dateSince, setDateSince] = useState(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [days, setDays] = useState<WeekHours>(latest?.days ?? EMPTY_WEEK);
+  const total = WEEKDAYS.reduce((sum, day) => sum + (days[day] || 0), 0);
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
+        {WEEKDAYS.map(day => (
+          <div key={day}>
+            <label className="block text-center text-[10px] text-muted-foreground">
+              {t(day)}
+            </label>
+            <Input
+              type="number"
+              value={days[day]}
+              onChange={e =>
+                setDays(d => ({ ...d, [day]: Number(e.target.value) || 0 }))
+              }
+              className="h-8 px-1 text-center text-xs"
+            />
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
+        <Input
+          type="date"
+          value={dateSince}
+          onChange={e => setDateSince(e.target.value)}
+          className="h-8 flex-1 text-xs"
+        />
+        <span className="shrink-0 text-xs text-muted-foreground">
+          {t("weeklyTotal")}: <strong className="text-fg">{total}h</strong>
+        </span>
+      </div>
+      <Button
+        size="sm"
+        className="w-full"
+        onClick={() => onSave({ dateSince, ...days })}
+      >
+        {t("saveNewPeriod")}
+      </Button>
+    </div>
+  );
+}
+
 function ClockodoUserDetailBody({
   row,
   users,
-  onSetWeeklyHours,
+  managers,
+  onUpdateUser,
+  onSetTargetHours,
   onSetVacation,
   onLink,
   onUnlink,
 }: {
   row: ClockodoRow;
   users: LinkableUser[];
-  onSetWeeklyHours: (hours: number) => void;
+  managers: { id: number; name: string }[];
+  onUpdateUser: (patch: Record<string, unknown>) => void;
+  onSetTargetHours: (input: { dateSince: string } & WeekHours) => void;
   onSetVacation: (days: number) => void;
   onLink: (userId: string) => void;
   onUnlink: () => void;
@@ -262,31 +383,140 @@ function ClockodoUserDetailBody({
           </div>
         </Section>
 
+        <Section label={t("employment")}>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label={t("role")} span2>
+              <Select
+                value={row.role ?? "worker"}
+                onValueChange={v => onUpdateUser({ role: v })}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="worker">{t("roleWorker")}</SelectItem>
+                  <SelectItem value="owner">{t("roleOwner")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label={t("startDate")}>
+              <Input
+                type="date"
+                value={row.startDate ?? ""}
+                onChange={e => onUpdateUser({ startDate: e.target.value })}
+                className="h-9 text-sm"
+              />
+            </Field>
+            <Field label={t("exitDate")}>
+              <Input
+                type="date"
+                value={row.exitDate ?? ""}
+                onChange={e =>
+                  onUpdateUser({ exitDate: e.target.value || null })
+                }
+                className="h-9 text-sm"
+              />
+            </Field>
+            <Field label={t("reportsTo")} span2>
+              <Select
+                value={row.boss !== null ? String(row.boss) : "none"}
+                onValueChange={v =>
+                  onUpdateUser({ boss: v === "none" ? null : Number(v) })
+                }
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("noManager")}</SelectItem>
+                  {managers
+                    .filter(m => m.id !== row.id)
+                    .map(m => (
+                      <SelectItem key={m.id} value={String(m.id)}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label={t("language")} span2>
+              <Select
+                value={row.language ?? "de"}
+                onValueChange={v => onUpdateUser({ language: v })}
+              >
+                <SelectTrigger className="h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="de">Deutsch</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+        </Section>
+
+        <Section label={t("permissions")}>
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={row.canGenerallySeeAbsences ?? false}
+                onCheckedChange={c =>
+                  onUpdateUser({ canGenerallySeeAbsences: c === true })
+                }
+              />
+              {t("canSeeAbsences")}
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={row.canGenerallyManageAbsences ?? false}
+                onCheckedChange={c =>
+                  onUpdateUser({ canGenerallyManageAbsences: c === true })
+                }
+              />
+              {t("canManageAbsences")}
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={row.canAddCustomers ?? false}
+                onCheckedChange={c =>
+                  onUpdateUser({ canAddCustomers: c === true })
+                }
+              />
+              {t("canAddCustomers")}
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={row.exemptFromFlextime ?? false}
+                onCheckedChange={c =>
+                  onUpdateUser({ exemptFromFlextime: c === true })
+                }
+              />
+              {t("exemptFromFlextime")}
+            </label>
+          </div>
+        </Section>
+
         <Section label={t("weeklyHours")}>
-          <EditableNumber
-            initial={row.weeklyHours}
-            placeholder={t("weeklyHours")}
-            onSave={onSetWeeklyHours}
-            className="w-full"
-          />
+          <TargetHoursForm key={row.id} row={row} onSave={onSetTargetHours} />
           <HistoryList
             entries={targetHoursDesc}
-            render={entry => {
-              const e = entry as unknown as TargetHourEntry;
-              return (
-                <>
+            render={e => (
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
                     {t("since")} {e.dateSince}
                     {e.dateUntil
                       ? ` · ${t("until")} ${e.dateUntil}`
                       : ` · ${t("ongoing")}`}
                   </span>
-                  <span className="font-medium text-fg">
-                    {e.weeklyHours ?? "—"}h
-                  </span>
-                </>
-              );
-            }}
+                  <span className="font-medium text-fg">{e.weeklyTotal}h</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground">
+                  {WEEKDAYS.map(day => `${t(day)} ${e.days[day]}`).join(" · ")}
+                </span>
+              </div>
+            )}
           />
         </Section>
 
@@ -299,19 +529,19 @@ function ClockodoUserDetailBody({
           />
           <HistoryList
             entries={vacationDesc}
-            render={entry => {
-              const e = entry as unknown as HolidaysQuotaEntry;
-              return (
-                <>
-                  <span className="text-muted-foreground">
-                    {t("year")} {e.yearSince}
-                  </span>
-                  <span className="font-medium text-fg">
-                    {e.daysPerYear} {t("days")}
-                  </span>
-                </>
-              );
-            }}
+            render={e => (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">
+                  {t("year")} {e.yearSince}
+                  {e.yearUntil && e.yearUntil !== e.yearSince
+                    ? `–${e.yearUntil}`
+                    : ""}
+                </span>
+                <span className="font-medium text-fg">
+                  {e.daysPerYear} {t("days")}
+                </span>
+              </div>
+            )}
           />
         </Section>
       </div>
@@ -323,23 +553,27 @@ function ClockodoUserDetailBody({
  * Per-person management panel — a dialog on desktop, a bottom sheet on
  * mobile (matching the shared member `UserProfile` pattern). Splitting this
  * out of the table is the whole point: a roster table needs to stay
- * scannable, editing target hours/vacation/linking needs room to breathe.
+ * scannable, editing everything below needs room to breathe.
  */
 function ClockodoUserDetail({
   row,
   users,
+  managers,
   open,
   onOpenChange,
-  onSetWeeklyHours,
+  onUpdateUser,
+  onSetTargetHours,
   onSetVacation,
   onLink,
   onUnlink,
 }: {
   row: ClockodoRow | null;
   users: LinkableUser[];
+  managers: { id: number; name: string }[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSetWeeklyHours: (hours: number) => void;
+  onUpdateUser: (patch: Record<string, unknown>) => void;
+  onSetTargetHours: (input: { dateSince: string } & WeekHours) => void;
   onSetVacation: (days: number) => void;
   onLink: (userId: string) => void;
   onUnlink: () => void;
@@ -351,7 +585,9 @@ function ClockodoUserDetail({
     <ClockodoUserDetailBody
       row={row}
       users={users}
-      onSetWeeklyHours={onSetWeeklyHours}
+      managers={managers}
+      onUpdateUser={onUpdateUser}
+      onSetTargetHours={onSetTargetHours}
       onSetVacation={onSetVacation}
       onLink={onLink}
       onUnlink={onUnlink}
@@ -403,6 +639,9 @@ export default function ClockodoIntegrationPage() {
   const createClockodoUser = useAction(
     api.integrations.clockodo.users.createClockodoUser
   );
+  const updateClockodoUser = useAction(
+    api.integrations.clockodo.users.updateClockodoUser
+  );
   const setTargetHours = useAction(
     api.integrations.clockodo.users.setTargetHours
   );
@@ -425,7 +664,6 @@ export default function ClockodoIntegrationPage() {
   const [showCreate, setShowCreate] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [weeklyHours, setWeeklyHours] = useState("");
   const [vacationDaysPerYear, setVacationDaysPerYear] = useState("");
 
   const [search, setSearch] = useState("");
@@ -463,7 +701,7 @@ export default function ClockodoIntegrationPage() {
           const latestHolidaysQuota = detail.holidaysQuota.at(-1) ?? null;
           return {
             ...u,
-            weeklyHours: latestTargetHours?.weeklyHours ?? null,
+            weeklyHours: latestTargetHours?.weeklyTotal ?? null,
             vacationDaysPerYear: latestHolidaysQuota?.daysPerYear ?? null,
             targetHoursHistory: detail.targetHours,
             holidaysQuotaHistory: detail.holidaysQuota,
@@ -538,6 +776,8 @@ export default function ClockodoIntegrationPage() {
     name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
   }));
 
+  const managers = merged.map(r => ({ id: r.id, name: r.name }));
+
   const selectedRow = selectedId
     ? (merged.find(r => r.id === selectedId) ?? null)
     : null;
@@ -555,7 +795,6 @@ export default function ClockodoIntegrationPage() {
       await createClockodoUser({
         name: name.trim(),
         email: email.trim(),
-        weeklyHours: weeklyHours.trim() ? Number(weeklyHours) : undefined,
         vacationDaysPerYear: vacationDaysPerYear.trim()
           ? Number(vacationDaysPerYear)
           : undefined,
@@ -563,7 +802,6 @@ export default function ClockodoIntegrationPage() {
       toast.success(t("created"));
       setName("");
       setEmail("");
-      setWeeklyHours("");
       setVacationDaysPerYear("");
       setShowCreate(false);
       await load();
@@ -574,9 +812,25 @@ export default function ClockodoIntegrationPage() {
     }
   }
 
-  async function onSetWeeklyHours(clockodoUserId: number, hours: number) {
+  async function onUpdateUser(
+    clockodoUserId: number,
+    patch: Record<string, unknown>
+  ) {
     try {
-      await setTargetHours({ clockodoUserId, weeklyHours: hours });
+      await updateClockodoUser({ clockodoUserId, ...patch });
+      toast.success(t("updated"));
+      await load();
+    } catch (err) {
+      handleError(err);
+    }
+  }
+
+  async function onSetTargetHours(
+    clockodoUserId: number,
+    input: { dateSince: string } & WeekHours
+  ) {
+    try {
+      await setTargetHours({ clockodoUserId, ...input });
       toast.success(t("updated"));
       await load();
     } catch (err) {
@@ -646,15 +900,10 @@ export default function ClockodoIntegrationPage() {
             />
             <Input
               type="number"
-              value={weeklyHours}
-              onChange={e => setWeeklyHours(e.target.value)}
-              placeholder={t("weeklyHours")}
-            />
-            <Input
-              type="number"
               value={vacationDaysPerYear}
               onChange={e => setVacationDaysPerYear(e.target.value)}
               placeholder={t("vacationDaysPerYear")}
+              className="sm:col-span-2"
             />
             <Button
               onClick={onCreate}
@@ -802,12 +1051,16 @@ export default function ClockodoIntegrationPage() {
       <ClockodoUserDetail
         row={selectedRow}
         users={linkableUsers}
+        managers={managers}
         open={selectedRow !== null}
         onOpenChange={open => {
           if (!open) setSelectedId(null);
         }}
-        onSetWeeklyHours={hours => {
-          if (selectedRow) void onSetWeeklyHours(selectedRow.id, hours);
+        onUpdateUser={patch => {
+          if (selectedRow) void onUpdateUser(selectedRow.id, patch);
+        }}
+        onSetTargetHours={input => {
+          if (selectedRow) void onSetTargetHours(selectedRow.id, input);
         }}
         onSetVacation={days => {
           if (selectedRow) void onSetVacation(selectedRow.id, days);
