@@ -672,6 +672,17 @@
     "pendingUploads": "Ausstehende Freigaben",
     "oneDriveActivity": "OneDrive-Aktivität",
     "noPendingUploads": "Keine Uploads zur Freigabe.",
+    "teamAccessTitle": "Team-Ordner-Zugriff",
+    "teamAccessDescription": "Direkter Lesezugriff auf den Team-Ordner in OneDrive, pro Mitarbeiter vergeben — unabhängig vom Upload-Freigabe-Ablauf des Intranets.",
+    "teamAccessSyncAll": "Für alle ohne Zugriff gewähren",
+    "teamAccessSynced": "{granted} gewährt, {skipped} hatten bereits Zugriff.",
+    "teamAccessGrant": "Zugriff gewähren",
+    "teamAccessRevoke": "Zugriff entziehen",
+    "teamAccessGranted": "Zugriff gewährt.",
+    "teamAccessRevoked": "Zugriff entzogen.",
+    "teamAccessHasAccess": "Hat Zugriff",
+    "teamAccessNoAccess": "Kein Zugriff",
+    "teamAccessLoadError": "Team-Ordner-Zugriff konnte nicht geladen werden.",
     "scan_clean": "Unbedenklich",
     "scan_suspicious": "Verdächtig",
     "scan_blocked": "Blockiert",
@@ -707,7 +718,9 @@
     "audit_grant_gf_access": "hat GF-Zugriff gewährt:",
     "audit_revoke_gf_access": "hat GF-Zugriff entzogen:",
     "audit_enable_uploads": "hat Uploads aktiviert für",
-    "audit_disable_uploads": "hat Uploads deaktiviert für"
+    "audit_disable_uploads": "hat Uploads deaktiviert für",
+    "audit_teamAccessGrant": "hat Team-Ordner-Zugriff gewährt an",
+    "audit_teamAccessRevoke": "hat Team-Ordner-Zugriff entzogen von"
   },
   "Teams": {
     "customerCare": "Customer Care",

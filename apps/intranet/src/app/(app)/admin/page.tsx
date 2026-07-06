@@ -26,6 +26,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { OneDriveAuditPanel } from "@/components/onedrive/OneDriveAuditPanel";
+import { TeamAccessPanel } from "@/components/onedrive/TeamAccessPanel";
 import { UploadApprovalQueue } from "@/components/onedrive/UploadApprovalQueue";
 import { PageHeader } from "@/components/PageHeader";
 import { UserProfile } from "@/components/profile/UserProfile";
@@ -981,6 +982,12 @@ export default function AdminPage() {
               {t("pendingUploads")}
             </h3>
             <UploadApprovalQueue />
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+              {t("teamAccessTitle")}
+            </h3>
+            <TeamAccessPanel />
           </div>
           <div>
             <h3 className="mb-3 text-sm font-medium text-muted-foreground">

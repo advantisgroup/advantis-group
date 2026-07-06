@@ -110,6 +110,12 @@ export default defineSchema({
      * can revoke by setting false.
      */
     uploadRequestsEnabled: v.optional(v.boolean()),
+    /**
+     * OneDrive: Graph permission id for this user's direct read-only share on
+     * the Team folder (granted via `/invite`, not tied to the intranet's own
+     * FileBrowser access control). Undefined means not directly shared yet.
+     */
+    oneDrivePermissionId: v.optional(v.string()),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })

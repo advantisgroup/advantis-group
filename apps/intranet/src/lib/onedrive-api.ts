@@ -58,6 +58,13 @@ export interface OneDriveVersion {
   modifiedBy?: string;
 }
 
+export interface TeamAccessRow {
+  userId: string;
+  name: string;
+  email: string;
+  permissionId: string | null;
+}
+
 export function useOneDriveApi() {
   const { getToken } = useAuth();
 
@@ -237,6 +244,28 @@ export function useOneDriveApi() {
           "POST",
           `/onedrive/items/${encodeURIComponent(id)}/share`,
           { expiresInDays }
+        ),
+
+      teamAccessRoster: () =>
+        get<{ users: TeamAccessRow[] }>("/onedrive/team-access"),
+
+      grantTeamAccess: (userId: string, email: string) =>
+        send<{ ok: true; permissionId: string }>(
+          "POST",
+          "/onedrive/team-access/grant",
+          { userId, email }
+        ),
+
+      revokeTeamAccess: (userId: string, permissionId: string) =>
+        send<{ ok: true }>("POST", "/onedrive/team-access/revoke", {
+          userId,
+          permissionId,
+        }),
+
+      syncTeamAccess: () =>
+        send<{ granted: number; skipped: number }>(
+          "POST",
+          "/onedrive/team-access/sync"
         ),
     };
   }, [authHeaders, getToken]);

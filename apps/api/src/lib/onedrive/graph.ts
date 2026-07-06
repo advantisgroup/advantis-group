@@ -511,6 +511,54 @@ export async function restoreVersion(
   );
 }
 
+interface InvitePermission {
+  id: string;
+}
+
+/**
+ * Directly share a drive item with a specific person (Graph's `/invite`,
+ * distinct from the anonymous `/createLink` share below) — grants native
+ * OneDrive access using their own identity rather than the intranet's
+ * FileBrowser gateway. `requireSignIn: true` + `sendInvitation: false` grants
+ * access silently without emailing an invite Graph itself; the intranet
+ * decides if/how to tell the person.
+ */
+export async function inviteToItem(
+  itemId: string,
+  email: string,
+  role: "read" | "write"
+): Promise<{ permissionId: string }> {
+  const res = await graphFetch<{ value: InvitePermission[] }>(
+    itemUrl(itemId, "/invite"),
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        recipients: [{ email }],
+        requireSignIn: true,
+        sendInvitation: false,
+        roles: [role],
+      }),
+    },
+    "invite"
+  );
+  const granted = res.value[0];
+  if (!granted) throw Errors.upstream("OneDrive did not return a permission");
+  return { permissionId: granted.id };
+}
+
+/** Revoke a previously granted direct share. */
+export async function removePermission(
+  itemId: string,
+  permissionId: string
+): Promise<void> {
+  await graphFetch<void>(
+    itemUrl(itemId, `/permissions/${encodeURIComponent(permissionId)}`),
+    { method: "DELETE" },
+    "removePermission"
+  );
+}
+
 export async function createShareLink(
   id: string,
   expirationDateTime?: string

@@ -672,6 +672,17 @@
     "pendingUploads": "Pending approvals",
     "oneDriveActivity": "OneDrive activity",
     "noPendingUploads": "No uploads awaiting approval.",
+    "teamAccessTitle": "Team folder access",
+    "teamAccessDescription": "Direct read-only OneDrive access to the Team folder, granted per employee — separate from the intranet's own upload-request flow.",
+    "teamAccessSyncAll": "Grant to everyone missing it",
+    "teamAccessSynced": "{granted} granted, {skipped} already had access.",
+    "teamAccessGrant": "Grant access",
+    "teamAccessRevoke": "Revoke access",
+    "teamAccessGranted": "Access granted.",
+    "teamAccessRevoked": "Access revoked.",
+    "teamAccessHasAccess": "Has access",
+    "teamAccessNoAccess": "No access",
+    "teamAccessLoadError": "Couldn't load Team folder access.",
     "scan_clean": "Clean",
     "scan_suspicious": "Suspicious",
     "scan_blocked": "Blocked",
@@ -707,7 +718,9 @@
     "audit_grant_gf_access": "granted GF access to",
     "audit_revoke_gf_access": "revoked GF access from",
     "audit_enable_uploads": "enabled uploads for",
-    "audit_disable_uploads": "disabled uploads for"
+    "audit_disable_uploads": "disabled uploads for",
+    "audit_teamAccessGrant": "granted Team folder access to",
+    "audit_teamAccessRevoke": "revoked Team folder access from"
   },
   "Teams": {
     "customerCare": "Customer Care",

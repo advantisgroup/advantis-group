@@ -14,6 +14,7 @@ import {
   assertCanRead,
   assertCanWrite,
   classifyAccess,
+  folderConfig,
   normalizePath,
 } from "../lib/onedrive/access.js";
 import {
@@ -37,10 +38,12 @@ import {
   getQuota,
   getThumbnailUrl,
   type GraphItem,
+  inviteToItem,
   isConfigured,
   listChildrenById,
   listVersions,
   relPathOf,
+  removePermission,
   renameOrMove,
   restoreVersion,
   search,
@@ -536,7 +539,88 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       params: t.Object({ id: t.String() }),
       body: t.Optional(t.Object({ expiresInDays: t.Optional(t.Number()) })),
     }
-  );
+  )
+
+  // List active employees + their direct Team-folder share status (manager+).
+  .get("/team-access", async ({ request }) => {
+    const user = await resolveOneDriveUser(request);
+    requireManagerUser(user);
+    const roster = await getConvex().query(api.onedrive.apiTeamAccessRoster, {
+      serverKey: serverKey(),
+    });
+    return { users: roster };
+  })
+
+  // Grant one employee direct read-only access to the Team folder (manager+).
+  .post(
+    "/team-access/grant",
+    async ({ request, body }) => {
+      const user = await resolveOneDriveUser(request);
+      requireManagerUser(user);
+      const team = await getItemByPath(folderConfig().team);
+      const { permissionId } = await inviteToItem(team.id, body.email, "read");
+      await getConvex().mutation(api.onedrive.apiSetTeamAccess, {
+        serverKey: serverKey(),
+        actorUserId: user.userId,
+        targetUserId: body.userId as Id<"users">,
+        permissionId,
+      });
+      return { ok: true as const, permissionId };
+    },
+    { body: t.Object({ userId: t.String(), email: t.String() }) }
+  )
+
+  // Revoke a direct Team-folder share (manager+).
+  .post(
+    "/team-access/revoke",
+    async ({ request, body }) => {
+      const user = await resolveOneDriveUser(request);
+      requireManagerUser(user);
+      const team = await getItemByPath(folderConfig().team);
+      await removePermission(team.id, body.permissionId);
+      await getConvex().mutation(api.onedrive.apiClearTeamAccess, {
+        serverKey: serverKey(),
+        actorUserId: user.userId,
+        targetUserId: body.userId as Id<"users">,
+      });
+      return { ok: true as const };
+    },
+    { body: t.Object({ userId: t.String(), permissionId: t.String() }) }
+  )
+
+  // Grant Team-folder access to every active employee missing it (manager+).
+  .post("/team-access/sync", async ({ request }) => {
+    const user = await resolveOneDriveUser(request);
+    requireManagerUser(user);
+    const roster = await getConvex().query(api.onedrive.apiTeamAccessRoster, {
+      serverKey: serverKey(),
+    });
+    const missing = roster.filter(r => !r.permissionId);
+    const team = await getItemByPath(folderConfig().team);
+    let granted = 0;
+    for (const person of missing) {
+      try {
+        const { permissionId } = await inviteToItem(
+          team.id,
+          person.email,
+          "read"
+        );
+        await getConvex().mutation(api.onedrive.apiSetTeamAccess, {
+          serverKey: serverKey(),
+          actorUserId: user.userId,
+          targetUserId: person.userId,
+          permissionId,
+        });
+        granted++;
+      } catch (error) {
+        console.error(
+          `[onedrive] team-access sync failed for ${person.email}:`,
+          error
+        );
+      }
+    }
+    return { granted, skipped: roster.length - missing.length };
+  });
 
 async function recordAction(
   user: OneDriveUser,

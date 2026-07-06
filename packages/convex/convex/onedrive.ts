@@ -351,6 +351,73 @@ export const apiUploadersByItemIds = query({
   },
 });
 
+/** Active employees plus their direct Team-folder share status, for the
+ * admin "Team folder access" panel. */
+export const apiTeamAccessRoster = query({
+  args: { serverKey: v.string() },
+  handler: async (ctx, { serverKey }) => {
+    assertServerKey(serverKey);
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
+    return users
+      .map(u => ({
+        userId: u._id,
+        name: userName(u),
+        email: u.email,
+        permissionId: u.oneDrivePermissionId ?? null,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+/** Record a granted direct share (after a successful Graph invite). */
+export const apiSetTeamAccess = mutation({
+  args: {
+    serverKey: v.string(),
+    actorUserId: v.id("users"),
+    targetUserId: v.id("users"),
+    permissionId: v.string(),
+  },
+  handler: async (
+    ctx,
+    { serverKey, actorUserId, targetUserId, permissionId }
+  ) => {
+    assertServerKey(serverKey);
+    const target = await ctx.db.get(targetUserId);
+    await ctx.db.patch(targetUserId, { oneDrivePermissionId: permissionId });
+    await writeAudit(
+      ctx,
+      actorUserId,
+      "teamAccessGrant",
+      target ? userName(target) : undefined
+    );
+    return { ok: true };
+  },
+});
+
+/** Clear a revoked direct share (after a successful Graph removal). */
+export const apiClearTeamAccess = mutation({
+  args: {
+    serverKey: v.string(),
+    actorUserId: v.id("users"),
+    targetUserId: v.id("users"),
+  },
+  handler: async (ctx, { serverKey, actorUserId, targetUserId }) => {
+    assertServerKey(serverKey);
+    const target = await ctx.db.get(targetUserId);
+    await ctx.db.patch(targetUserId, { oneDrivePermissionId: undefined });
+    await writeAudit(
+      ctx,
+      actorUserId,
+      "teamAccessRevoke",
+      target ? userName(target) : undefined
+    );
+    return { ok: true };
+  },
+});
+
 // ===========================================================================
 // Client-facing — Clerk authenticated
 // ===========================================================================
