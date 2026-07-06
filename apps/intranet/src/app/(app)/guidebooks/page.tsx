@@ -8,16 +8,20 @@ import {
   ArrowRight,
   BookOpen,
   ChevronRight,
+  Clock,
+  MessageSquare,
   Search,
+  ShieldCheck,
   Sparkles,
   Star,
+  Wrench,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import {
   accessibleGuidebooks,
   type Guidebook,
-  type GuidebookCategory,
+  type GuidebookTopic,
 } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
@@ -28,7 +32,67 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type CategoryFilter = "all" | GuidebookCategory;
+import type { LucideIcon } from "lucide-react";
+
+/** "interactive" reuses the registry category; everything else is a topic. */
+type GroupKey = "interactive" | GuidebookTopic;
+
+const GROUP_ORDER: GroupKey[] = [
+  "interactive",
+  "onboarding",
+  "collaboration",
+  "time-account",
+  "it-workplace",
+  "management",
+];
+
+const GROUP_META: Record<
+  GroupKey,
+  { labelKey: string; icon: LucideIcon; badgeTint: string; accent: string }
+> = {
+  interactive: {
+    labelKey: "categoryInteractive",
+    icon: Sparkles,
+    badgeTint: "bg-violet-500/10 text-violet-600 dark:text-violet-300",
+    accent: "text-violet-600 dark:text-violet-300",
+  },
+  onboarding: {
+    labelKey: "topicOnboarding",
+    icon: BookOpen,
+    badgeTint: "bg-primary/10 text-primary",
+    accent: "text-primary",
+  },
+  collaboration: {
+    labelKey: "topicCollaboration",
+    icon: MessageSquare,
+    badgeTint: "bg-sky-500/10 text-sky-600 dark:text-sky-300",
+    accent: "text-sky-600 dark:text-sky-300",
+  },
+  "time-account": {
+    labelKey: "topicTimeAccount",
+    icon: Clock,
+    badgeTint: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
+    accent: "text-amber-600 dark:text-amber-300",
+  },
+  "it-workplace": {
+    labelKey: "topicItWorkplace",
+    icon: Wrench,
+    badgeTint: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
+    accent: "text-emerald-600 dark:text-emerald-300",
+  },
+  management: {
+    labelKey: "topicManagement",
+    icon: ShieldCheck,
+    badgeTint: "bg-rose-500/10 text-rose-600 dark:text-rose-300",
+    accent: "text-rose-600 dark:text-rose-300",
+  },
+};
+
+function groupOf(gb: Guidebook): GroupKey {
+  return gb.category === "interactive"
+    ? "interactive"
+    : (gb.topic ?? "it-workplace");
+}
 
 function GuidebookCardItem({
   gb,
@@ -41,11 +105,17 @@ function GuidebookCardItem({
 }) {
   const t = useTranslations("Guidebooks");
   const Icon = gb.icon;
+  const tint = GROUP_META[groupOf(gb)].badgeTint;
   return (
     <Card className="group relative h-full transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]">
       <Link href={`/guidebooks/${gb.slug}`} className="block h-full">
         <CardContent className="flex h-full items-start gap-3 p-4">
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <span
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-xl",
+              tint
+            )}
+          >
             <Icon className="size-5" />
           </span>
           <div className="min-w-0 flex-1">
@@ -110,7 +180,7 @@ export default function GuidebooksPage() {
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<CategoryFilter>("all");
+  const [groupFilter, setGroupFilter] = useState<"all" | GroupKey>("all");
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
 
@@ -135,18 +205,17 @@ export default function GuidebooksPage() {
         )
       )
     : guidebooks;
-  const interactive = favoritesFirst(
-    searched.filter(gb => gb.category === "interactive")
-  );
-  const guides = favoritesFirst(searched.filter(gb => gb.category === "guide"));
-  const hasBothCategories = interactive.length > 0 && guides.length > 0;
+
+  const groups = GROUP_ORDER.map(key => ({
+    key,
+    meta: GROUP_META[key],
+    items: favoritesFirst(searched.filter(gb => groupOf(gb) === key)),
+  })).filter(g => g.items.length > 0);
 
   const filtered =
-    category === "interactive"
-      ? interactive
-      : category === "guide"
-        ? guides
-        : favoritesFirst(searched);
+    groupFilter === "all"
+      ? favoritesFirst(searched)
+      : (groups.find(g => g.key === groupFilter)?.items ?? []);
 
   function toggleFavorite(slug: string) {
     const next = favorites.includes(slug)
@@ -184,40 +253,35 @@ export default function GuidebooksPage() {
             </div>
           )}
 
-          {hasBothCategories && (
+          {groups.length > 1 && (
             <div className="flex flex-wrap gap-1.5">
-              {(
-                [
-                  {
-                    key: "all",
-                    label: t("categoryAll"),
-                    count: searched.length,
-                  },
-                  {
-                    key: "interactive",
-                    label: t("categoryInteractive"),
-                    count: interactive.length,
-                  },
-                  {
-                    key: "guide",
-                    label: t("categoryGuide"),
-                    count: guides.length,
-                  },
-                ] as const
-              ).map(c => (
+              <button
+                type="button"
+                onClick={() => setGroupFilter("all")}
+                aria-pressed={groupFilter === "all"}
+                className={cn(
+                  "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  groupFilter === "all"
+                    ? "border-primary/40 bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                )}
+              >
+                {t("categoryAll")} · {searched.length}
+              </button>
+              {groups.map(g => (
                 <button
-                  key={c.key}
+                  key={g.key}
                   type="button"
-                  onClick={() => setCategory(c.key)}
-                  aria-pressed={category === c.key}
+                  onClick={() => setGroupFilter(g.key)}
+                  aria-pressed={groupFilter === g.key}
                   className={cn(
                     "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                    category === c.key
+                    groupFilter === g.key
                       ? "border-primary/40 bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
                 >
-                  {c.label} · {c.count}
+                  {t(g.meta.labelKey)} · {g.items.length}
                 </button>
               ))}
             </div>
@@ -241,32 +305,31 @@ export default function GuidebooksPage() {
 
           {filtered.length === 0 ? (
             <EmptyState icon={<Search />} title={t("noResults")} />
-          ) : category === "all" && hasBothCategories ? (
+          ) : groupFilter === "all" && groups.length > 1 ? (
             <div className="space-y-6">
-              <section>
-                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <Sparkles className="size-3.5 text-primary" />
-                  {t("categoryInteractive")}
-                  <span className="tabular-nums">· {interactive.length}</span>
-                </div>
-                <GuidebookGrid
-                  items={interactive}
-                  favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
-                />
-              </section>
-              <section>
-                <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  <BookOpen className="size-3.5 text-primary" />
-                  {t("categoryGuide")}
-                  <span className="tabular-nums">· {guides.length}</span>
-                </div>
-                <GuidebookGrid
-                  items={guides}
-                  favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
-                />
-              </section>
+              {groups.map(g => (
+                <section key={g.key}>
+                  <div
+                    className={cn(
+                      "mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider",
+                      g.meta.accent
+                    )}
+                  >
+                    <g.meta.icon className="size-3.5" />
+                    <span className="text-muted-foreground">
+                      {t(g.meta.labelKey)}
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">
+                      · {g.items.length}
+                    </span>
+                  </div>
+                  <GuidebookGrid
+                    items={g.items}
+                    favorites={favorites}
+                    onToggleFavorite={toggleFavorite}
+                  />
+                </section>
+              ))}
             </div>
           ) : (
             <GuidebookGrid

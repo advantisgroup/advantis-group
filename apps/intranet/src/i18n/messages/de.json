@@ -791,6 +791,10 @@
       "title": "Datei-Uploads genehmigen",
       "description": "Ausstehende OneDrive-Uploads prüfen, freigeben und Berechtigungen verwalten."
     },
+    "passwoerterBrowser": {
+      "title": "Passwörter in Chrome & Edge verwalten",
+      "description": "Gespeicherte Passwörter anzeigen, ändern, sichere Passwörter generieren und auf Datenlecks prüfen."
+    },
     "docViewer": {
       "zoomImage": "Bild vergrößern",
       "download": "Herunterladen",
@@ -805,9 +809,11 @@
     "noResults": "Keine Einträge passen zur Suche",
     "categoryAll": "Alle",
     "categoryInteractive": "Interaktive Tools",
-    "categoryGuide": "Anleitungen",
-    "categoryInteractiveHint": "Direkt nutzbar, ohne zu blättern",
-    "categoryGuideHint": "Schritt für Schritt zum Nachlesen",
+    "topicOnboarding": "Erste Schritte",
+    "topicCollaboration": "Kommunikation",
+    "topicTimeAccount": "Zeit & Konto",
+    "topicItWorkplace": "IT & Arbeitsplatz",
+    "topicManagement": "Für Führungskräfte",
     "managerBadge": "Für Führungskräfte",
     "continueReading": "Mach weiter, wo du aufgehört hast:",
     "addFavorite": "Eintrag anpinnen",

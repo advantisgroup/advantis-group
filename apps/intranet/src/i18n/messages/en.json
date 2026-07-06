@@ -791,6 +791,10 @@
       "title": "Approving File Uploads",
       "description": "Review pending OneDrive uploads, approve them, and manage permissions."
     },
+    "passwoerterBrowser": {
+      "title": "Managing Passwords in Chrome & Edge",
+      "description": "View and change saved passwords, generate strong ones, and check for data breaches."
+    },
     "docViewer": {
       "zoomImage": "Enlarge image",
       "download": "Download",
@@ -805,9 +809,11 @@
     "noResults": "No guidebooks match your search",
     "categoryAll": "All",
     "categoryInteractive": "Interactive tools",
-    "categoryGuide": "Guides",
-    "categoryInteractiveHint": "Ready to use, no reading required",
-    "categoryGuideHint": "Step-by-step reference",
+    "topicOnboarding": "Getting Started",
+    "topicCollaboration": "Communication",
+    "topicTimeAccount": "Time & Account",
+    "topicItWorkplace": "IT & Workplace",
+    "topicManagement": "For Managers",
     "managerBadge": "For managers",
     "continueReading": "Continue where you left off:",
     "addFavorite": "Pin guidebook",

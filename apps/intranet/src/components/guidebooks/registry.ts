@@ -6,6 +6,7 @@ import {
   Clock,
   Cloud,
   FileSearch,
+  KeyRound,
   ListChecks,
   type LucideIcon,
   Mail,
@@ -28,6 +29,7 @@ import { EmailSignaturenGuidebook } from "./docs/email-signaturen";
 import { KalenderGuidebook } from "./docs/kalender";
 import { OnboardingGuidebook } from "./docs/onboarding";
 import { OneDriveSchulungGuidebook } from "./docs/onedrive-schulung";
+import { PasswoerterBrowserGuidebook } from "./docs/passwoerter-browser";
 import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
 import { ProfilKontoGuidebook } from "./docs/profil-konto";
 import { UploadsGenehmigenGuidebook } from "./docs/uploads-genehmigen";
@@ -39,6 +41,19 @@ import { VerwaltungMitgliederGuidebook } from "./docs/verwaltung-mitglieder";
  */
 export type GuidebookCategory = "interactive" | "guide";
 
+/**
+ * Subject grouping for "guide" category entries — the list page sections
+ * guides by topic so the list stays scannable as more get added. Not
+ * meaningful for "interactive" entries (they get their own section by
+ * category instead).
+ */
+export type GuidebookTopic =
+  | "onboarding"
+  | "collaboration"
+  | "time-account"
+  | "it-workplace"
+  | "management";
+
 export interface Guidebook {
   /** URL slug: /guidebooks/<slug> */
   slug: string;
@@ -47,6 +62,8 @@ export interface Guidebook {
   descriptionKey: string;
   icon: LucideIcon;
   category: GuidebookCategory;
+  /** Subject grouping, required for "guide" entries (see GuidebookTopic). */
+  topic?: GuidebookTopic;
   /**
    * Minimum role required, on top of the team gate below. Omit for anyone
    * signed in. "manager" also admits admins (mirrors `useIsManager`).
@@ -77,6 +94,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "problembehandlungen.description",
     icon: Wrench,
     category: "guide",
+    topic: "it-workplace",
     teams: [],
     Component: ProblembehandlungenGuidebook,
   },
@@ -86,8 +104,19 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "onedriveSchulung.description",
     icon: Cloud,
     category: "guide",
+    topic: "it-workplace",
     teams: [],
     Component: OneDriveSchulungGuidebook,
+  },
+  {
+    slug: "passwoerter-browser",
+    titleKey: "passwoerterBrowser.title",
+    descriptionKey: "passwoerterBrowser.description",
+    icon: KeyRound,
+    category: "guide",
+    topic: "it-workplace",
+    teams: [],
+    Component: PasswoerterBrowserGuidebook,
   },
   {
     slug: "email-signaturen",
@@ -95,26 +124,9 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "emailSignaturen.description",
     icon: Mail,
     category: "guide",
+    topic: "collaboration",
     teams: [],
     Component: EmailSignaturenGuidebook,
-  },
-  {
-    slug: "clockodo-zeiterfassung",
-    titleKey: "clockodoZeiterfassung.title",
-    descriptionKey: "clockodoZeiterfassung.description",
-    icon: Clock,
-    category: "guide",
-    teams: [],
-    Component: ClockodoZeiterfassungGuidebook,
-  },
-  {
-    slug: "onboarding",
-    titleKey: "onboarding.title",
-    descriptionKey: "onboarding.description",
-    icon: ListChecks,
-    category: "guide",
-    teams: [],
-    Component: OnboardingGuidebook,
   },
   {
     slug: "chat-tipps",
@@ -122,6 +134,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "chatTipps.description",
     icon: MessageSquare,
     category: "guide",
+    topic: "collaboration",
     teams: [],
     Component: ChatTippsGuidebook,
   },
@@ -131,8 +144,19 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "kalender.description",
     icon: CalendarDays,
     category: "guide",
+    topic: "collaboration",
     teams: [],
     Component: KalenderGuidebook,
+  },
+  {
+    slug: "clockodo-zeiterfassung",
+    titleKey: "clockodoZeiterfassung.title",
+    descriptionKey: "clockodoZeiterfassung.description",
+    icon: Clock,
+    category: "guide",
+    topic: "time-account",
+    teams: [],
+    Component: ClockodoZeiterfassungGuidebook,
   },
   {
     slug: "profil-konto",
@@ -140,8 +164,19 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "profilKonto.description",
     icon: UserCog,
     category: "guide",
+    topic: "time-account",
     teams: [],
     Component: ProfilKontoGuidebook,
+  },
+  {
+    slug: "onboarding",
+    titleKey: "onboarding.title",
+    descriptionKey: "onboarding.description",
+    icon: ListChecks,
+    category: "guide",
+    topic: "onboarding",
+    teams: [],
+    Component: OnboardingGuidebook,
   },
   {
     slug: "abwesenheiten-genehmigen",
@@ -149,6 +184,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "abwesenheitenGenehmigen.description",
     icon: CalendarCheck,
     category: "guide",
+    topic: "management",
     minRole: "manager",
     teams: [],
     Component: AbwesenheitenGenehmigenGuidebook,
@@ -159,6 +195,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "verwaltungMitglieder.description",
     icon: ShieldCheck,
     category: "guide",
+    topic: "management",
     minRole: "manager",
     teams: [],
     Component: VerwaltungMitgliederGuidebook,
@@ -169,6 +206,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "ankuendigungenTermine.description",
     icon: Megaphone,
     category: "guide",
+    topic: "management",
     minRole: "manager",
     teams: [],
     Component: AnkuendigungenTermineGuidebook,
@@ -179,6 +217,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     descriptionKey: "uploadsGenehmigen.description",
     icon: UploadCloud,
     category: "guide",
+    topic: "management",
     minRole: "manager",
     teams: [],
     Component: UploadsGenehmigenGuidebook,
