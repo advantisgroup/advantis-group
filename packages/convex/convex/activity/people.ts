@@ -76,6 +76,17 @@ export const update = mutation({
     const actor = await requireManager(ctx);
     const person = await ctx.db.get(personId);
     if (!person) throw appError("notFound.person", "Person not found");
+    // Once a person is linked to an intranet account, `users.clockodoUserId`
+    // is canonical (see `integrations/clockodoLink.ts`) — editing the roster
+    // copy directly here is exactly how the two fields drifted before (this
+    // one a string, `users`' a number). Route through Admin → Integrations
+    // instead so there's a single writer.
+    if (clockodoUserId !== undefined && person.userId) {
+      throw appError(
+        "clockodo.managedElsewhere",
+        "This person is linked to an intranet account — manage their Clockodo id from Admin → Integrations → Clockodo instead."
+      );
+    }
     await ctx.db.patch(personId, {
       ...(name !== undefined ? { name } : {}),
       // Empty string clears the address (patching to undefined drops the field).

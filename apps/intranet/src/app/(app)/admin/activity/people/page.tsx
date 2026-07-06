@@ -9,6 +9,7 @@ import { Plus, Search, Trash2, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
 import { BrandedText } from "@/components/branding/ProviderMark";
+import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -267,8 +268,7 @@ export default function PeoplePage() {
 
   const linkableUsers = (intranetUsers ?? []).map(u => ({
     _id: u._id as string,
-    name:
-      [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
+    name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
   }));
 
   const userLinkCell = (p: {
@@ -285,6 +285,36 @@ export default function PeoplePage() {
       }
     />
   );
+
+  // Once a person is linked to an intranet account, `users.clockodoUserId`
+  // (set via Admin → Integrations → Clockodo) is canonical — this cell goes
+  // read-only instead of offering a second place to edit the same id, which
+  // is exactly how the two fields drifted before.
+  const clockodoIdCell = (p: {
+    _id: GenericId<"people">;
+    userId?: GenericId<"users">;
+    clockodoUserId?: string;
+  }) =>
+    p.userId ? (
+      <div className="flex min-w-[8rem] items-center gap-2">
+        <span className="font-mono text-xs text-muted-foreground">
+          {p.clockodoUserId?.trim() || "—"}
+        </span>
+        <Link
+          href="/admin/integrations/clockodo"
+          className="text-xs text-muted-foreground underline underline-offset-2 hover:text-fg"
+        >
+          {t("people.manageInIntegrations")}
+        </Link>
+      </div>
+    ) : (
+      <EditableId
+        initial={p.clockodoUserId ?? ""}
+        disabled={!canEdit}
+        placeholder={t("people.clockodoId")}
+        onSave={value => save(p._id, { clockodoUserId: value })}
+      />
+    );
 
   const deleteButton = (id: GenericId<"people">) => (
     <Button
@@ -408,14 +438,11 @@ export default function PeoplePage() {
                   />
                 </Field>
                 <Field label={<BrandedText text={t("people.clockodoId")} />}>
-                  <EditableId
-                    initial={p.clockodoUserId ?? ""}
-                    disabled={!canEdit}
-                    placeholder={t("people.clockodoId")}
-                    onSave={value => save(p._id, { clockodoUserId: value })}
-                  />
+                  {clockodoIdCell(p)}
                 </Field>
-                <Field label={t("people.intranetUser")}>{userLinkCell(p)}</Field>
+                <Field label={t("people.intranetUser")}>
+                  {userLinkCell(p)}
+                </Field>
                 <label className="flex w-fit items-center gap-2 pt-1 text-sm text-fg">
                   <Checkbox
                     checked={p.active}
@@ -510,14 +537,7 @@ export default function PeoplePage() {
                     onSave={value => save(p._id, { genesysUserId: value })}
                   />
                 </TableCell>
-                <TableCell>
-                  <EditableId
-                    initial={p.clockodoUserId ?? ""}
-                    disabled={!canEdit}
-                    placeholder={t("people.clockodoId")}
-                    onSave={value => save(p._id, { clockodoUserId: value })}
-                  />
-                </TableCell>
+                <TableCell>{clockodoIdCell(p)}</TableCell>
                 <TableCell>{userLinkCell(p)}</TableCell>
                 <TableCell>
                   <Checkbox

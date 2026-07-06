@@ -17,7 +17,8 @@ function headers(): Record<string, string> {
     "X-ClockodoApiUser": process.env.CLOCKODO_API_USER!,
     "X-ClockodoApiKey": process.env.CLOCKODO_API_KEY!,
     "X-Clockodo-External-Application":
-      process.env.CLOCKODO_EXTERNAL_APP ?? "AdvantisIntranet;it@advantisgroup.de",
+      process.env.CLOCKODO_EXTERNAL_APP ??
+      "AdvantisIntranet;it@advantisgroup.de",
   };
 }
 

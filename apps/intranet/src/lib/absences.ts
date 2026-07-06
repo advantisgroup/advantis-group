@@ -10,14 +10,14 @@ export function workingDays(
 ): number {
   const start = new Date(`${startDate}T00:00:00Z`);
   const end = new Date(`${endDate}T00:00:00Z`);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start)
+  if (
+    Number.isNaN(start.getTime()) ||
+    Number.isNaN(end.getTime()) ||
+    end < start
+  )
     return 0;
   let days = 0;
-  for (
-    let d = new Date(start);
-    d <= end;
-    d.setUTCDate(d.getUTCDate() + 1)
-  ) {
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
     const dow = d.getUTCDay();
     if (dow !== 0 && dow !== 6) days++;
   }

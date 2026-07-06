@@ -99,6 +99,7 @@ export const de: Dict = {
   "people.employeeId": "Mitarbeiter-ID",
   "people.genesysId": "Genesys-ID",
   "people.clockodoId": "Clockodo-ID",
+  "people.manageInIntegrations": "In Integrationen verwalten →",
   "people.intranetUser": "Intranet-Konto",
   "people.intranetUserNone": "Nicht verknüpft",
   "people.idsHint":
@@ -418,6 +419,8 @@ export const de: Dict = {
   "error.notFound.user": "Der Benutzer wurde nicht gefunden.",
   "error.notFound.slot": "Der Code wurde nicht gefunden.",
   "error.notFound.event": "Der Eintrag wurde nicht gefunden.",
+  "error.clockodo.managedElsewhere":
+    "Diese Person ist mit einem Intranet-Konto verknüpft — bearbeiten Sie die Clockodo-ID stattdessen unter Admin → Integrationen → Clockodo.",
   "error.validation.password_short":
     "Das Passwort muss mindestens 6 Zeichen haben.",
   "error.validation.out_of_range":

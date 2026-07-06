@@ -11,7 +11,10 @@ import { MessageSquare, Plane, Search, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { PageHeader } from "@/components/PageHeader";
-import { ONLINE_WINDOW_MS, UserProfile } from "@/components/profile/UserProfile";
+import {
+  ONLINE_WINDOW_MS,
+  UserProfile,
+} from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

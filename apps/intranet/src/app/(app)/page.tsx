@@ -242,10 +242,7 @@ export default function DashboardPage() {
     [events, today]
   );
 
-  async function decide(
-    absenceId: Id<"absences">,
-    action: "approve" | "deny"
-  ) {
+  async function decide(absenceId: Id<"absences">, action: "approve" | "deny") {
     try {
       if (action === "approve") {
         await approve({ absenceId });
@@ -353,7 +350,9 @@ export default function DashboardPage() {
         </Button>
         <button
           type="button"
-          onClick={() => window.dispatchEvent(new Event("command-palette:open"))}
+          onClick={() =>
+            window.dispatchEvent(new Event("command-palette:open"))
+          }
           className="ml-auto hidden items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent md:flex"
         >
           <Command className="size-3" />

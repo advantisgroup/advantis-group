@@ -82,9 +82,7 @@ export default function NotificationsPage() {
     () =>
       (notifications ?? [])
         .filter(n => (tab === "unread" ? !n.readAt : true))
-        .filter(n =>
-          filter === "all" ? true : categoryOf(n.type) === filter
-        ),
+        .filter(n => (filter === "all" ? true : categoryOf(n.type) === filter)),
     [notifications, tab, filter]
   );
 
@@ -114,8 +112,7 @@ export default function NotificationsPage() {
     const today = new Date();
     const yesterday = new Date(today.getTime() - 86_400_000);
     if (date.toDateString() === today.toDateString()) return t("today");
-    if (date.toDateString() === yesterday.toDateString())
-      return t("yesterday");
+    if (date.toDateString() === yesterday.toDateString()) return t("yesterday");
     return date.toLocaleDateString(locale, {
       weekday: "long",
       day: "numeric",
@@ -269,7 +266,10 @@ function NotificationRow({ n }: { n: NotificationDoc }) {
         !n.readAt && "bg-primary/5"
       )}
     >
-      <button onClick={open} className="flex min-w-0 flex-1 items-start gap-3 text-left">
+      <button
+        onClick={open}
+        className="flex min-w-0 flex-1 items-start gap-3 text-left"
+      >
         <span
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-lg",

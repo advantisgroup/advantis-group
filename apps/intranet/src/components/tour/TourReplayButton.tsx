@@ -70,7 +70,9 @@ export function TourFirstVisitNudge({
 
   useEffect(() => {
     try {
-      setDismissed(localStorage.getItem(nudgeKey(user._id, checkpointId)) !== null);
+      setDismissed(
+        localStorage.getItem(nudgeKey(user._id, checkpointId)) !== null
+      );
     } catch {
       setDismissed(true);
     }
@@ -84,7 +86,10 @@ export function TourFirstVisitNudge({
 
   const dismiss = () => {
     try {
-      localStorage.setItem(nudgeKey(user._id, checkpointId), String(Date.now()));
+      localStorage.setItem(
+        nudgeKey(user._id, checkpointId),
+        String(Date.now())
+      );
     } catch {
       // Storage may be unavailable — the nudge just reappears next visit.
     }

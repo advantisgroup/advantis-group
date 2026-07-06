@@ -178,7 +178,9 @@ export function FeedbackWidget({ slug }: { slug: string }) {
           onClick={() => void set({ slug, helpful: true })}
         >
           <ThumbsUp
-            className={cn(mine?.helpful === true && "fill-success/30 text-success")}
+            className={cn(
+              mine?.helpful === true && "fill-success/30 text-success"
+            )}
           />
         </Button>
         <Button

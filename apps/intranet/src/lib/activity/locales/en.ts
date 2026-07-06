@@ -98,6 +98,7 @@ export const en: Dict = {
   "people.employeeId": "Employee ID",
   "people.genesysId": "Genesys ID",
   "people.clockodoId": "Clockodo ID",
+  "people.manageInIntegrations": "Manage in Integrations →",
   "people.intranetUser": "Intranet account",
   "people.intranetUserNone": "Not linked",
   "people.idsHint":
@@ -407,6 +408,8 @@ export const en: Dict = {
   "error.notFound.user": "That user was not found.",
   "error.notFound.slot": "That code was not found.",
   "error.notFound.event": "That entry was not found.",
+  "error.clockodo.managedElsewhere":
+    "This person is linked to an intranet account — manage their Clockodo ID from Admin → Integrations → Clockodo instead.",
   "error.validation.password_short":
     "The password must be at least 6 characters.",
   "error.validation.out_of_range": "That value is outside the allowed range.",

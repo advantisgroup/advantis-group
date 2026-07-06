@@ -19,7 +19,8 @@
     "groupResources": "Resources",
     "groupAdministration": "Administration",
     "signOut": "Sign out",
-    "files": "Files"
+    "files": "Files",
+    "integrations": "Integrations"
   },
   "Common": {
     "save": "Save",
@@ -895,6 +896,30 @@
     "admin": "Administrator",
     "manager": "Manager",
     "employee": "Employee"
+  },
+  "Integrations": {
+    "hubTitle": "Integrations",
+    "hubSubtitle": "Provision and manage third-party accounts for your team.",
+    "clockodoCard": "Clockodo",
+    "clockodoCardDescription": "Create and manage Clockodo users, target hours, and vacation entitlement.",
+    "clockodoTitle": "Clockodo users",
+    "clockodoSubtitle": "Create Clockodo accounts and manage target hours and vacation entitlement for your team.",
+    "createUser": "Create Clockodo user",
+    "name": "Name",
+    "email": "Email",
+    "number": "Personnel number",
+    "weeklyHours": "Weekly target hours",
+    "vacationDaysPerYear": "Vacation days / year",
+    "linkedEmployee": "Linked employee",
+    "notLinked": "Not linked",
+    "activityTrackLink": "Open ActivityTrack presence",
+    "notTrackedYet": "Not tracked in ActivityTrack yet",
+    "created": "Clockodo user created.",
+    "updated": "Saved.",
+    "linked": "Linked.",
+    "unlinked": "Unlinked.",
+    "empty": "No Clockodo users yet.",
+    "loadError": "Couldn't load Clockodo users."
   },
   "Notifications": {
     "title": "Notifications",

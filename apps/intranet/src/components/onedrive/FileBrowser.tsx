@@ -231,10 +231,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
   const myUploads = useQuery(api.onedrive.myUploads);
-  const favoriteFolders = useMemo(
-    () => prefs?.favoriteFolders ?? [],
-    [prefs]
-  );
+  const favoriteFolders = useMemo(() => prefs?.favoriteFolders ?? [], [prefs]);
 
   useEffect(() => {
     const stored = localStorage.getItem(VIEW_KEY);
@@ -733,7 +730,11 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
             {t("selectedCount", { count: selected.size })}
           </span>
           {selectedItems.some(i => i.type === "file") && (
-            <Button variant="outline" size="sm" onClick={() => void bulkDownload()}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void bulkDownload()}
+            >
               <Download className="size-3.5" />
               {t("download")}
             </Button>

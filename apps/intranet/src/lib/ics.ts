@@ -42,8 +42,14 @@ function escapeText(value: string): string {
     .replaceAll("\n", "\\n");
 }
 
-export function buildIcs(calendarName: string, events: IcsAllDayEvent[]): string {
-  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+export function buildIcs(
+  calendarName: string,
+  events: IcsAllDayEvent[]
+): string {
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -57,7 +63,10 @@ export function buildIcs(calendarName: string, events: IcsAllDayEvent[]): string
       `UID:${e.uid}@advantis-intranet`,
       `DTSTAMP:${stamp}`,
       ...(timed
-        ? [`DTSTART:${icsDateTime(e.startMs!)}`, `DTEND:${icsDateTime(e.endMs!)}`]
+        ? [
+            `DTSTART:${icsDateTime(e.startMs!)}`,
+            `DTEND:${icsDateTime(e.endMs!)}`,
+          ]
         : [
             `DTSTART;VALUE=DATE:${icsDate(e.startDate!)}`,
             `DTEND;VALUE=DATE:${icsDate(addDays(e.endDate!, 1))}`,

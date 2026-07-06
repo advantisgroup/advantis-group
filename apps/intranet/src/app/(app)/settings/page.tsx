@@ -545,7 +545,9 @@ export default function SettingsPage() {
               <img
                 src={avatarPreview.url}
                 alt={t("avatar")}
-                className={cn("size-40 rounded-full border border-border object-cover")}
+                className={cn(
+                  "size-40 rounded-full border border-border object-cover"
+                )}
               />
             </div>
           )}
