@@ -6,7 +6,8 @@ import { action } from "../../_generated/server";
 import { requireManagerAction } from "../lib/auth";
 import { clockodoFetch } from "./client";
 
-/** Wire shape of `/api/v2/users` (snake_case, per Clockodo's REST API). */
+/** Wire shape of `/api/v3/users` (snake_case, per Clockodo's REST API — v2
+ * was retired in the May 2026 legacy-endpoint deprecation). */
 interface ClockodoUserWire {
   id: number;
   name: string;
@@ -39,14 +40,15 @@ function toClockodoUser(u: ClockodoUserWire): ClockodoUser {
 /**
  * Target-hours history row (Sollstunden). Clockodo models this as a dated
  * history, not a flat field — creating/editing adds a new period rather than
- * overwriting a single number. The per-weekday breakdown fields (beyond
- * `hours_total`) are unverified against a live account; this client only
- * uses the weekly total, which the SDK docs confirm exists.
+ * overwriting a single number. `type` is the string enum `"weekly" |
+ * "monthly"` per docs.clockodo.com, not a numeric code. The per-weekday
+ * breakdown fields (beyond `hours_total`) are unverified against a live
+ * account; this client only uses the weekly total.
  */
 interface ClockodoTargetHourWire {
   id: number;
   users_id: number;
-  type: number;
+  type: "weekly" | "monthly";
   date_since: string;
   date_until?: string | null;
   hours_total?: number;
@@ -107,7 +109,7 @@ export const listClockodoUsers = action({
   handler: async (ctx): Promise<ClockodoUser[]> => {
     await requireManagerAction(ctx);
     const body = await clockodoFetch<{ users?: ClockodoUserWire[] }>(
-      "/api/v2/users"
+      "/api/v3/users"
     );
     return (body.users ?? []).map(toClockodoUser);
   },
@@ -126,14 +128,12 @@ export const getClockodoUserDetail = action({
   }> => {
     await requireManagerAction(ctx);
     const userBody = await clockodoFetch<{ user: ClockodoUserWire }>(
-      `/api/v2/users/${clockodoUserId}`
+      `/api/v3/users/${clockodoUserId}`
     );
 
-    // Target-hours/holidays-quota are supplementary — the account's actual
-    // endpoint shape for these two is unverified (see `client.ts`), so a
-    // wrong path here must not take down the whole user list. Each degrades
-    // to an empty history (rendered as "not set" in the UI) instead of
-    // failing the row.
+    // Target-hours/holidays-quota are supplementary — a bad path here must
+    // not take down the whole user list. Each degrades to an empty history
+    // (rendered as "not set" in the UI) instead of failing the row.
     const [targetHours, holidaysQuota] = await Promise.all([
       clockodoFetch<{ targethours?: ClockodoTargetHourWire[] }>(
         `/api/targethours?users_id=${clockodoUserId}`
@@ -147,7 +147,7 @@ export const getClockodoUserDetail = action({
           return [];
         }),
       clockodoFetch<{ holidaysquota?: ClockodoHolidaysQuotaWire[] }>(
-        `/api/holidaysquota?users_id=${clockodoUserId}`
+        `/api/v2/holidaysQuota?users_id=${clockodoUserId}`
       )
         .then(body => (body.holidaysquota ?? []).map(toHolidaysQuota))
         .catch(err => {
@@ -187,25 +187,25 @@ export const createClockodoUser = action({
   ): Promise<{ clockodoUserId: number }> => {
     await requireManagerAction(ctx);
     const created = await clockodoFetch<{ user: ClockodoUserWire }>(
-      "/api/v2/users",
+      "/api/v3/users",
       { method: "POST", body: { name, email, number } }
     );
     const clockodoUserId = created.user.id;
     const today = new Date().toISOString().slice(0, 10);
 
     if (weeklyHours !== undefined) {
-      await clockodoFetch("/api/targethour", {
+      await clockodoFetch("/api/targethours", {
         method: "POST",
         body: {
           users_id: clockodoUserId,
-          type: 1,
+          type: "weekly",
           date_since: today,
           hours_total: weeklyHours,
         },
       });
     }
     if (vacationDaysPerYear !== undefined) {
-      await clockodoFetch("/api/holidaysquota", {
+      await clockodoFetch("/api/v2/holidaysQuota", {
         method: "POST",
         body: {
           users_id: clockodoUserId,
@@ -230,7 +230,7 @@ export const updateClockodoUser = action({
   },
   handler: async (ctx, { clockodoUserId, ...patch }): Promise<void> => {
     await requireManagerAction(ctx);
-    await clockodoFetch(`/api/v2/users/${clockodoUserId}`, {
+    await clockodoFetch(`/api/v3/users/${clockodoUserId}`, {
       method: "PUT",
       body: patch,
     });
@@ -249,11 +249,11 @@ export const setTargetHours = action({
     { clockodoUserId, weeklyHours, dateSince }
   ): Promise<void> => {
     await requireManagerAction(ctx);
-    await clockodoFetch("/api/targethour", {
+    await clockodoFetch("/api/targethours", {
       method: "POST",
       body: {
         users_id: clockodoUserId,
-        type: 1,
+        type: "weekly",
         date_since: dateSince ?? new Date().toISOString().slice(0, 10),
         hours_total: weeklyHours,
       },
@@ -273,7 +273,7 @@ export const setVacationEntitlement = action({
     { clockodoUserId, daysPerYear, yearSince }
   ): Promise<void> => {
     await requireManagerAction(ctx);
-    await clockodoFetch("/api/holidaysquota", {
+    await clockodoFetch("/api/v2/holidaysQuota", {
       method: "POST",
       body: {
         users_id: clockodoUserId,

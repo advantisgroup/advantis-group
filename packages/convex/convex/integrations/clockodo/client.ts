@@ -1,3 +1,5 @@
+import { ConvexError } from "convex/values";
+
 /**
  * Low-level authenticated Clockodo HTTP client, shared by every
  * `integrations/clockodo/*` action. Kept independent from
@@ -28,14 +30,36 @@ function clockodoHeaders(): Record<string, string> {
 
 export type ClockodoMethod = "GET" | "POST" | "PUT" | "PATCH";
 
+/** Best-effort extraction of a human-readable message from Clockodo's error
+ * body, which isn't consistently shaped across endpoints/versions. */
+function extractErrorDetail(text: string): string {
+  try {
+    const body = JSON.parse(text) as {
+      message?: string;
+      error?: { message?: string } | string;
+    };
+    if (typeof body.message === "string") return body.message;
+    if (typeof body.error === "string") return body.error;
+    if (body.error && typeof body.error.message === "string") {
+      return body.error.message;
+    }
+  } catch {
+    // Not JSON — fall through to the raw text.
+  }
+  return text;
+}
+
 /**
  * Generic authenticated request. Clockodo's request/response bodies use
  * snake_case field names (confirmed via the existing absences client) —
  * callers build/read snake_case payloads and translate at the action
- * boundary. The exact verb for *editing* a resource varies (users: PUT;
- * target-hours/holidays-quota: PATCH per the official SDK) — a 404/405 on a
- * first real call is the signal to double check the verb picked in
- * `users.ts` against a live account.
+ * boundary.
+ *
+ * Failures throw `ConvexError({ code, message })` (not a plain `Error`) with
+ * Clockodo's own error text attached — Convex only forwards `ConvexError`
+ * data to the client, so a plain `Error` here would reach the manager as a
+ * generic "Server Error" with no indication of *why* (e.g. a seat/license
+ * limit, a permission issue, a bad field) even though Clockodo told us.
  */
 export async function clockodoFetch<T>(
   path: string,
@@ -48,9 +72,21 @@ export async function clockodoFetch<T>(
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(
-      `Clockodo ${init?.method ?? "GET"} ${path} failed: ${res.status} ${text}`
-    );
+    const detail = extractErrorDetail(text);
+    if (res.status === 429) {
+      throw new ConvexError({
+        code: "clockodo.rateLimited",
+        message: "Clockodo is rate-limiting requests — try again shortly.",
+      });
+    }
+    // Seat/license limits, permission errors, bad fields, etc. all land here
+    // with whatever Clockodo actually said, rather than a masked generic
+    // failure — that message is often the only actionable information (e.g.
+    // "user limit reached, upgrade your plan or free a seat").
+    throw new ConvexError({
+      code: "clockodo.upstream",
+      message: detail || `Clockodo request failed (${res.status})`,
+    });
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
