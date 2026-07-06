@@ -515,8 +515,9 @@ interface InvitePermission {
   id?: string;
 }
 
-interface GraphPermission {
+export interface GraphPermission {
   id: string;
+  roles?: string[];
   grantedToV2?: { user?: { email?: string } };
   grantedToIdentitiesV2?: { user?: { email?: string } }[];
 }
@@ -534,6 +535,22 @@ function permissionGrantedTo(perm: GraphPermission, email: string): boolean {
   );
 }
 
+/** Any existing permission this item already grants `email`, regardless of
+ * how it was granted (a prior invite, an inherited/parent share, a link
+ * they redeemed, …). Used so granting never silently overwrites or
+ * duplicates whatever access someone already has. */
+export async function findPermissionByEmail(
+  itemId: string,
+  email: string
+): Promise<GraphPermission | null> {
+  const list = await graphFetch<{ value: GraphPermission[] }>(
+    itemUrl(itemId, "/permissions"),
+    {},
+    "listPermissions"
+  );
+  return list.value.find(p => permissionGrantedTo(p, email)) ?? null;
+}
+
 /**
  * Directly share a drive item with a specific person (Graph's `/invite`,
  * distinct from the anonymous `/createLink` share below) — grants native
@@ -541,6 +558,9 @@ function permissionGrantedTo(perm: GraphPermission, email: string): boolean {
  * FileBrowser gateway. `requireSignIn: true` + `sendInvitation: false` grants
  * access silently without emailing an invite Graph itself; the intranet
  * decides if/how to tell the person.
+ *
+ * Callers must check `findPermissionByEmail` first — this always adds a new
+ * permission and never checks for (or reconciles with) an existing one.
  */
 export async function inviteToItem(
   itemId: string,
@@ -571,17 +591,11 @@ export async function inviteToItem(
   // Personal/consumer OneDrive accounts don't echo the created permission's
   // id in the invite response itself (just a share link) — look it up via
   // the permissions list instead, matched by the invited email.
-  const list = await graphFetch<{ value: GraphPermission[] }>(
-    itemUrl(itemId, "/permissions"),
-    {},
-    "listPermissionsAfterInvite"
-  );
-  const match = list.value.find(p => permissionGrantedTo(p, email));
+  const match = await findPermissionByEmail(itemId, email);
   if (!match?.id) {
     console.error(
       `[onedrive] invite to ${email} did not resolve to a permission id:`,
-      JSON.stringify(res),
-      JSON.stringify(list)
+      JSON.stringify(res)
     );
     throw Errors.upstream(
       "OneDrive did not grant a usable permission for that person"

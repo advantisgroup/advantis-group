@@ -675,10 +675,11 @@
     "teamAccessTitle": "Team folder access",
     "teamAccessDescription": "Direct read-only OneDrive access to the Team folder, granted per employee — separate from the intranet's own upload-request flow.",
     "teamAccessSyncAll": "Grant to everyone missing it",
-    "teamAccessSynced": "{granted} granted, {skipped} already had access.",
+    "teamAccessSynced": "{granted} newly granted, {alreadyHadAccess} already had OneDrive access, {skipped} were already tracked.",
     "teamAccessGrant": "Grant access",
     "teamAccessRevoke": "Revoke access",
     "teamAccessGranted": "Access granted.",
+    "teamAccessAlreadyHadAccess": "Already has OneDrive access (role: {roles}) — left unchanged.",
     "teamAccessRevoked": "Access revoked.",
     "teamAccessHasAccess": "Has access",
     "teamAccessNoAccess": "No access",
@@ -1268,9 +1269,7 @@
       {
         "id": "controller",
         "title": "Controller",
-        "paragraphs": [
-          "The controller responsible for data processing within the Intranet is:"
-        ]
+        "paragraphs": ["The controller responsible for data processing within the Intranet is:"]
       },
       {
         "id": "categories",
@@ -1368,9 +1367,7 @@
       {
         "id": "rights",
         "title": "Your rights",
-        "paragraphs": [
-          "Authorized users have the following rights regarding their personal data at any time:"
-        ],
+        "paragraphs": ["Authorized users have the following rights regarding their personal data at any time:"],
         "list": [
           {
             "title": "Access",
@@ -1458,9 +1455,7 @@
       {
         "id": "obligations",
         "title": "User obligations",
-        "paragraphs": [
-          "Users agree to"
-        ],
+        "paragraphs": ["Users agree to"],
         "list": [
           {
             "description": "keep their account and profile data up to date,"
@@ -1522,9 +1517,7 @@
       {
         "id": "contact",
         "title": "Contact",
-        "paragraphs": [
-          "Questions about these Terms of Use can be directed to:"
-        ]
+        "paragraphs": ["Questions about these Terms of Use can be directed to:"]
       }
     ]
   }

@@ -37,6 +37,7 @@ import {
   getPreviewUrl,
   getQuota,
   getThumbnailUrl,
+  findPermissionByEmail,
   type GraphItem,
   inviteToItem,
   isConfigured,
@@ -552,12 +553,32 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
   })
 
   // Grant one employee direct read-only access to the Team folder (manager+).
+  // Additive only: if they already have any permission on the folder (a
+  // higher role, an inherited share, …), leave it alone and report it
+  // rather than inviting again — this must never downgrade or duplicate
+  // existing access.
   .post(
     "/team-access/grant",
     async ({ request, body }) => {
       const user = await resolveOneDriveUser(request);
       requireManagerUser(user);
       const team = await getItemByPath(folderConfig().team);
+
+      const existing = await findPermissionByEmail(team.id, body.email);
+      if (existing) {
+        await getConvex().mutation(api.onedrive.apiSetTeamAccess, {
+          serverKey: serverKey(),
+          actorUserId: user.userId,
+          targetUserId: body.userId as Id<"users">,
+          permissionId: existing.id,
+        });
+        return {
+          ok: true as const,
+          alreadyHadAccess: true as const,
+          roles: existing.roles ?? [],
+        };
+      }
+
       const { permissionId } = await inviteToItem(team.id, body.email, "read");
       await getConvex().mutation(api.onedrive.apiSetTeamAccess, {
         serverKey: serverKey(),
@@ -565,7 +586,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         targetUserId: body.userId as Id<"users">,
         permissionId,
       });
-      return { ok: true as const, permissionId };
+      return { ok: true as const, alreadyHadAccess: false as const };
     },
     { body: t.Object({ userId: t.String(), email: t.String() }) }
   )
@@ -598,20 +619,21 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     const missing = roster.filter(r => !r.permissionId);
     const team = await getItemByPath(folderConfig().team);
     let granted = 0;
+    let alreadyHadAccess = 0;
     for (const person of missing) {
       try {
-        const { permissionId } = await inviteToItem(
-          team.id,
-          person.email,
-          "read"
-        );
+        const existing = await findPermissionByEmail(team.id, person.email);
+        const permissionId = existing
+          ? existing.id
+          : (await inviteToItem(team.id, person.email, "read")).permissionId;
         await getConvex().mutation(api.onedrive.apiSetTeamAccess, {
           serverKey: serverKey(),
           actorUserId: user.userId,
           targetUserId: person.userId,
           permissionId,
         });
-        granted++;
+        if (existing) alreadyHadAccess++;
+        else granted++;
       } catch (error) {
         console.error(
           `[onedrive] team-access sync failed for ${person.email}:`,
@@ -619,7 +641,11 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         );
       }
     }
-    return { granted, skipped: roster.length - missing.length };
+    return {
+      granted,
+      alreadyHadAccess,
+      skipped: roster.length - missing.length,
+    };
   });
 
 async function recordAction(

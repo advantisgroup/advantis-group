@@ -250,7 +250,7 @@ export function useOneDriveApi() {
         get<{ users: TeamAccessRow[] }>("/onedrive/team-access"),
 
       grantTeamAccess: (userId: string, email: string) =>
-        send<{ ok: true; permissionId: string }>(
+        send<{ ok: true; alreadyHadAccess: boolean; roles?: string[] }>(
           "POST",
           "/onedrive/team-access/grant",
           { userId, email }
@@ -263,7 +263,7 @@ export function useOneDriveApi() {
         }),
 
       syncTeamAccess: () =>
-        send<{ granted: number; skipped: number }>(
+        send<{ granted: number; alreadyHadAccess: number; skipped: number }>(
           "POST",
           "/onedrive/team-access/sync"
         ),

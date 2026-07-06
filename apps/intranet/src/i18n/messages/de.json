@@ -675,10 +675,11 @@
     "teamAccessTitle": "Team-Ordner-Zugriff",
     "teamAccessDescription": "Direkter Lesezugriff auf den Team-Ordner in OneDrive, pro Mitarbeiter vergeben — unabhängig vom Upload-Freigabe-Ablauf des Intranets.",
     "teamAccessSyncAll": "Für alle ohne Zugriff gewähren",
-    "teamAccessSynced": "{granted} gewährt, {skipped} hatten bereits Zugriff.",
+    "teamAccessSynced": "{granted} neu gewährt, {alreadyHadAccess} hatten bereits OneDrive-Zugriff, {skipped} waren bereits erfasst.",
     "teamAccessGrant": "Zugriff gewähren",
     "teamAccessRevoke": "Zugriff entziehen",
     "teamAccessGranted": "Zugriff gewährt.",
+    "teamAccessAlreadyHadAccess": "Hat bereits OneDrive-Zugriff (Rolle: {roles}) — unverändert gelassen.",
     "teamAccessRevoked": "Zugriff entzogen.",
     "teamAccessHasAccess": "Hat Zugriff",
     "teamAccessNoAccess": "Kein Zugriff",
@@ -1268,9 +1269,7 @@
       {
         "id": "controller",
         "title": "Verantwortliche Stelle",
-        "paragraphs": [
-          "Verantwortlich für die Datenverarbeitung im Intranet ist:"
-        ]
+        "paragraphs": ["Verantwortlich für die Datenverarbeitung im Intranet ist:"]
       },
       {
         "id": "categories",
@@ -1458,9 +1457,7 @@
       {
         "id": "obligations",
         "title": "Pflichten der Nutzer:innen",
-        "paragraphs": [
-          "Nutzer:innen verpflichten sich,"
-        ],
+        "paragraphs": ["Nutzer:innen verpflichten sich,"],
         "list": [
           {
             "description": "ihre Konto- und Profildaten aktuell zu halten,"
@@ -1522,9 +1519,7 @@
       {
         "id": "contact",
         "title": "Kontakt",
-        "paragraphs": [
-          "Fragen zu diesen Nutzungsbedingungen richten Sie bitte an:"
-        ]
+        "paragraphs": ["Fragen zu diesen Nutzungsbedingungen richten Sie bitte an:"]
       }
     ]
   }

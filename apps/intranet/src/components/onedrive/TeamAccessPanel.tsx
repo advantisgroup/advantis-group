@@ -46,8 +46,14 @@ export function TeamAccessPanel() {
   async function onGrant(row: TeamAccessRow) {
     setBusyId(row.userId);
     try {
-      await api.grantTeamAccess(row.userId, row.email);
-      toast.success(t("teamAccessGranted"));
+      const res = await api.grantTeamAccess(row.userId, row.email);
+      toast.success(
+        res.alreadyHadAccess
+          ? t("teamAccessAlreadyHadAccess", {
+              roles: res.roles?.join(", ") || "—",
+            })
+          : t("teamAccessGranted")
+      );
       await load();
     } catch (err) {
       handleError(err);
@@ -73,8 +79,14 @@ export function TeamAccessPanel() {
   async function onSyncAll() {
     setSyncing(true);
     try {
-      const { granted, skipped } = await api.syncTeamAccess();
-      toast.success(t("teamAccessSynced", { granted, skipped }));
+      const { granted, alreadyHadAccess, skipped } = await api.syncTeamAccess();
+      toast.success(
+        t("teamAccessSynced", {
+          granted,
+          alreadyHadAccess,
+          skipped,
+        })
+      );
       await load();
     } catch (err) {
       handleError(err);
