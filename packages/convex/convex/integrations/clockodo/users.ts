@@ -2,9 +2,38 @@
 
 import { v } from "convex/values";
 
+import { internal } from "../../_generated/api";
 import { action } from "../../_generated/server";
 import { requireManagerAction } from "../lib/auth";
 import { clockodoFetch } from "./client";
+
+import type { ActionCtx } from "../../_generated/server";
+
+/**
+ * Temporary diagnostic aid (remove once Clockodo's Sollstunden/other "deep"
+ * fields are fully modeled): persists the raw wire response so it can be
+ * inspected in the Convex dashboard's Data tab instead of guessed at from
+ * docs — Clockodo's actual field set (e.g. per-weekday target hours) is
+ * broader than what this client currently parses.
+ */
+async function logRaw(
+  ctx: ActionCtx,
+  endpoint: string,
+  payload: unknown
+): Promise<void> {
+  try {
+    await ctx.runMutation(internal.integrations.debug.logRaw, {
+      integration: "clockodo",
+      endpoint,
+      payload: JSON.stringify(payload),
+    });
+  } catch (err) {
+    console.error(
+      `[clockodo] failed to log raw response for ${endpoint}:`,
+      err
+    );
+  }
+}
 
 /** Wire shape of `/api/v3/users` (snake_case, per Clockodo's REST API — v2
  * was retired in the May 2026 legacy-endpoint deprecation). Confirmed
@@ -114,6 +143,7 @@ export const listClockodoUsers = action({
     const body = await clockodoFetch<{ data?: ClockodoUserWire[] }>(
       "/api/v3/users?items_per_page=1000"
     );
+    await logRaw(ctx, "/api/v3/users", body);
     return (body.data ?? []).map(toClockodoUser);
   },
 });
@@ -133,6 +163,7 @@ export const getClockodoUserDetail = action({
     const userBody = await clockodoFetch<{ data: ClockodoUserWire }>(
       `/api/v3/users/${clockodoUserId}`
     );
+    await logRaw(ctx, `/api/v3/users/${clockodoUserId}`, userBody);
 
     // Target-hours/holidays-quota are supplementary — a bad path here must
     // not take down the whole user list. Each degrades to an empty history
@@ -141,7 +172,10 @@ export const getClockodoUserDetail = action({
       clockodoFetch<{ targethours?: ClockodoTargetHourWire[] }>(
         `/api/targethours?users_id=${clockodoUserId}`
       )
-        .then(body => (body.targethours ?? []).map(toTargetHour))
+        .then(async body => {
+          await logRaw(ctx, "/api/targethours", body);
+          return (body.targethours ?? []).map(toTargetHour);
+        })
         .catch(err => {
           console.error(
             `[clockodo] target-hours fetch failed for user ${clockodoUserId}:`,
@@ -152,7 +186,10 @@ export const getClockodoUserDetail = action({
       clockodoFetch<{ holidaysquota?: ClockodoHolidaysQuotaWire[] }>(
         `/api/v2/holidaysQuota?users_id=${clockodoUserId}`
       )
-        .then(body => (body.holidaysquota ?? []).map(toHolidaysQuota))
+        .then(async body => {
+          await logRaw(ctx, "/api/v2/holidaysQuota", body);
+          return (body.holidaysquota ?? []).map(toHolidaysQuota);
+        })
         .catch(err => {
           console.error(
             `[clockodo] holidays-quota fetch failed for user ${clockodoUserId}:`,

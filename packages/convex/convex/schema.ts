@@ -779,6 +779,20 @@ export default defineSchema({
     at: v.number(),
   }).index("by_at", ["at"]),
 
+  /**
+   * Temporary diagnostic aid: raw wire responses from third-party APIs,
+   * captured so their actual (often under-documented) field shapes can be
+   * inspected directly in the Convex dashboard's Data tab rather than
+   * guessed at from docs. Not meant to be a permanent audit trail — safe to
+   * clear out once a given integration's shape is nailed down.
+   */
+  integrationsRawDebugLog: defineTable({
+    integration: v.union(v.literal("clockodo")),
+    endpoint: v.string(),
+    payload: v.string(),
+    at: v.number(),
+  }).index("by_at", ["at"]),
+
   // Singleton store for the delegated-auth (personal Microsoft account) refresh
   // token. Personal-account refresh tokens rotate on every use, so the API
   // persists the latest one here (AES-256-GCM ciphertext, encrypted in the API)

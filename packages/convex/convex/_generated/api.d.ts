@@ -50,6 +50,7 @@ import type * as integrations_clockodo_client from "../integrations/clockodo/cli
 import type * as integrations_clockodo_users from "../integrations/clockodo/users.js";
 import type * as integrations_clockodoLink from "../integrations/clockodoLink.js";
 import type * as integrations_clockodoView from "../integrations/clockodoView.js";
+import type * as integrations_debug from "../integrations/debug.js";
 import type * as integrations_lib_auth from "../integrations/lib/auth.js";
 import type * as invites from "../invites.js";
 import type * as guidebookFeedback from "../guidebookFeedback.js";
@@ -116,6 +117,7 @@ declare const fullApi: ApiFromModules<{
   "integrations/clockodo/users": typeof integrations_clockodo_users;
   "integrations/clockodoLink": typeof integrations_clockodoLink;
   "integrations/clockodoView": typeof integrations_clockodoView;
+  "integrations/debug": typeof integrations_debug;
   "integrations/lib/auth": typeof integrations_lib_auth;
   invites: typeof invites;
   guidebookFeedback: typeof guidebookFeedback;
