@@ -919,7 +919,22 @@
     "linked": "Linked.",
     "unlinked": "Unlinked.",
     "empty": "No Clockodo users yet.",
-    "loadError": "Couldn't load Clockodo users."
+    "loadError": "Couldn't load Clockodo users.",
+    "searchPlaceholder": "Search by name or email",
+    "filterUnlinked": "Unlinked only",
+    "filterMissingHours": "Missing target hours",
+    "filterMissingVacation": "Missing vacation entitlement",
+    "noResults": "No Clockodo users match your search or filters.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "targetHoursHistory": "Target hours history",
+    "vacationHistory": "Vacation entitlement history",
+    "noHistory": "No history yet.",
+    "since": "Since",
+    "until": "Until",
+    "ongoing": "Ongoing",
+    "year": "Year",
+    "days": "Days"
   },
   "Notifications": {
     "title": "Notifications",
