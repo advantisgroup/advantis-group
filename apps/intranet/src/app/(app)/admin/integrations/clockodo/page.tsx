@@ -1,21 +1,20 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
-import {
-  ArrowDown,
-  ArrowUp,
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
-  Plus,
-  Search,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ExternalLink, Plus, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Drawer } from "vaul";
 
 import { Mark } from "@/components/branding/ProviderMark";
 import { TrademarkNotice } from "@/components/branding/TrademarkNotice";
@@ -24,6 +23,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -42,6 +42,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useSlashFocus } from "@/lib/activity/useSlashFocus";
 
 interface ClockodoUser {
@@ -76,18 +77,22 @@ interface ClockodoRow extends ClockodoUser {
 }
 
 type SortKey = "name" | "weeklyHours" | "vacationDaysPerYear";
+type LinkableUser = { _id: string; name: string };
 
-/** Inline-editable number cell, saves on blur — same UX as the ActivityTrack
- * roster's `EditableId`, duplicated here rather than shared since this is
- * only the second use (extract once a third integration needs it). */
+/** Inline-editable number field, saves on blur — same UX as the
+ * ActivityTrack roster's `EditableId`, duplicated here rather than shared
+ * since this is only the second use (extract once a third integration
+ * needs it). */
 function EditableNumber({
   initial,
   placeholder,
   onSave,
+  className = "w-24",
 }: {
   initial: number | null;
   placeholder: string;
   onSave: (value: number) => void;
+  className?: string;
 }) {
   const [value, setValue] = useState(initial === null ? "" : String(initial));
 
@@ -108,59 +113,8 @@ function EditableNumber({
       onKeyDown={e => {
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
       }}
-      className="h-8 w-24 text-xs"
+      className={`h-8 text-xs ${className}`}
     />
-  );
-}
-
-function LinkedEmployeeCell({
-  row,
-  users,
-  onLink,
-  onUnlink,
-}: {
-  row: ClockodoRow;
-  users: { _id: string; name: string }[];
-  onLink: (userId: string) => void;
-  onUnlink: () => void;
-}) {
-  const t = useTranslations("Integrations");
-  return (
-    <div className="flex items-center gap-2">
-      <Select
-        value={row.linkedUserId ?? "none"}
-        onValueChange={v => (v === "none" ? onUnlink() : onLink(v))}
-      >
-        <SelectTrigger className="h-8 w-full min-w-[10rem] text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="none">{t("notLinked")}</SelectItem>
-          {users.map(u => (
-            <SelectItem key={u._id} value={u._id}>
-              {u.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {row.linkedUserId &&
-        (row.deviceId ? (
-          <Link
-            href={`/admin/activity/timeline/${encodeURIComponent(row.deviceId)}`}
-            className="shrink-0 text-muted-foreground hover:text-fg"
-            title={t("activityTrackLink")}
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-          </Link>
-        ) : (
-          <span
-            className="shrink-0 text-[10px] text-muted-foreground"
-            title={t("notTrackedYet")}
-          >
-            {t("notTrackedYet")}
-          </span>
-        ))}
-    </div>
   );
 }
 
@@ -196,64 +150,243 @@ function SortableHead({
   );
 }
 
-function HistoryPanel({ row }: { row: ClockodoRow }) {
-  const t = useTranslations("Integrations");
+/** A labelled section, so the detail panel reads like a tidy info card
+ * (mirrors `Section` in the shared member profile). */
+function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="grid gap-4 p-4 sm:grid-cols-2">
-      <div>
-        <p className="mb-2 text-xs font-medium text-muted-foreground">
-          {t("targetHoursHistory")}
-        </p>
-        {row.targetHoursHistory.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{t("noHistory")}</p>
-        ) : (
-          <ul className="space-y-1 text-xs">
-            {[...row.targetHoursHistory].reverse().map(entry => (
-              <li
-                key={entry.id}
-                className="flex items-center justify-between gap-2 rounded-md bg-panel-2 px-2 py-1"
-              >
-                <span className="text-muted-foreground">
-                  {t("since")} {entry.dateSince}
-                  {entry.dateUntil
-                    ? ` · ${t("until")} ${entry.dateUntil}`
-                    : ` · ${t("ongoing")}`}
-                </span>
-                <span className="font-medium text-fg">
-                  {entry.weeklyHours ?? "—"}h
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
+    <div className="space-y-2">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function HistoryList({
+  entries,
+  render,
+}: {
+  entries: { id: number }[];
+  render: (entry: never) => ReactNode;
+}) {
+  const t = useTranslations("Integrations");
+  if (entries.length === 0) {
+    return <p className="text-xs text-muted-foreground">{t("noHistory")}</p>;
+  }
+  return (
+    <ul className="space-y-1">
+      {entries.map(entry => (
+        <li
+          key={entry.id}
+          className="flex items-center justify-between gap-2 rounded-md bg-panel-2 px-2 py-1.5 text-xs"
+        >
+          {render(entry as never)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function ClockodoUserDetailBody({
+  row,
+  users,
+  onSetWeeklyHours,
+  onSetVacation,
+  onLink,
+  onUnlink,
+}: {
+  row: ClockodoRow;
+  users: LinkableUser[];
+  onSetWeeklyHours: (hours: number) => void;
+  onSetVacation: (days: number) => void;
+  onLink: (userId: string) => void;
+  onUnlink: () => void;
+}) {
+  const t = useTranslations("Integrations");
+  const targetHoursDesc = [...row.targetHoursHistory].reverse();
+  const vacationDesc = [...row.holidaysQuotaHistory].sort(
+    (a, b) => b.yearSince - a.yearSince
+  );
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex items-start justify-between gap-3 border-b border-border/70 p-5">
+        <div className="min-w-0">
+          <p className="truncate text-lg font-semibold leading-tight">
+            {row.name}
+          </p>
+          <p className="truncate text-sm text-muted-foreground">{row.email}</p>
+        </div>
+        <Badge
+          variant={row.active === false ? "muted" : "success"}
+          className="shrink-0"
+        >
+          {row.active === false ? t("inactive") : t("active")}
+        </Badge>
       </div>
-      <div>
-        <p className="mb-2 text-xs font-medium text-muted-foreground">
-          {t("vacationHistory")}
-        </p>
-        {row.holidaysQuotaHistory.length === 0 ? (
-          <p className="text-xs text-muted-foreground">{t("noHistory")}</p>
-        ) : (
-          <ul className="space-y-1 text-xs">
-            {[...row.holidaysQuotaHistory]
-              .sort((a, b) => b.yearSince - a.yearSince)
-              .map(entry => (
-                <li
-                  key={entry.id}
-                  className="flex items-center justify-between gap-2 rounded-md bg-panel-2 px-2 py-1"
+
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
+        <Section label={t("linkedEmployee")}>
+          <div className="flex items-center gap-2">
+            <Select
+              value={row.linkedUserId ?? "none"}
+              onValueChange={v => (v === "none" ? onUnlink() : onLink(v))}
+            >
+              <SelectTrigger className="h-9 flex-1 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{t("notLinked")}</SelectItem>
+                {users.map(u => (
+                  <SelectItem key={u._id} value={u._id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {row.linkedUserId &&
+              (row.deviceId ? (
+                <Link
+                  href={`/admin/activity/timeline/${encodeURIComponent(row.deviceId)}`}
+                  className="shrink-0 text-muted-foreground hover:text-fg"
+                  title={t("activityTrackLink")}
                 >
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              ) : (
+                <span className="shrink-0 text-[10px] text-muted-foreground">
+                  {t("notTrackedYet")}
+                </span>
+              ))}
+          </div>
+        </Section>
+
+        <Section label={t("weeklyHours")}>
+          <EditableNumber
+            initial={row.weeklyHours}
+            placeholder={t("weeklyHours")}
+            onSave={onSetWeeklyHours}
+            className="w-full"
+          />
+          <HistoryList
+            entries={targetHoursDesc}
+            render={entry => {
+              const e = entry as unknown as TargetHourEntry;
+              return (
+                <>
                   <span className="text-muted-foreground">
-                    {t("year")} {entry.yearSince}
+                    {t("since")} {e.dateSince}
+                    {e.dateUntil
+                      ? ` · ${t("until")} ${e.dateUntil}`
+                      : ` · ${t("ongoing")}`}
                   </span>
                   <span className="font-medium text-fg">
-                    {entry.daysPerYear} {t("days")}
+                    {e.weeklyHours ?? "—"}h
                   </span>
-                </li>
-              ))}
-          </ul>
-        )}
+                </>
+              );
+            }}
+          />
+        </Section>
+
+        <Section label={t("vacationDaysPerYear")}>
+          <EditableNumber
+            initial={row.vacationDaysPerYear}
+            placeholder={t("vacationDaysPerYear")}
+            onSave={onSetVacation}
+            className="w-full"
+          />
+          <HistoryList
+            entries={vacationDesc}
+            render={entry => {
+              const e = entry as unknown as HolidaysQuotaEntry;
+              return (
+                <>
+                  <span className="text-muted-foreground">
+                    {t("year")} {e.yearSince}
+                  </span>
+                  <span className="font-medium text-fg">
+                    {e.daysPerYear} {t("days")}
+                  </span>
+                </>
+              );
+            }}
+          />
+        </Section>
       </div>
     </div>
+  );
+}
+
+/**
+ * Per-person management panel — a dialog on desktop, a bottom sheet on
+ * mobile (matching the shared member `UserProfile` pattern). Splitting this
+ * out of the table is the whole point: a roster table needs to stay
+ * scannable, editing target hours/vacation/linking needs room to breathe.
+ */
+function ClockodoUserDetail({
+  row,
+  users,
+  open,
+  onOpenChange,
+  onSetWeeklyHours,
+  onSetVacation,
+  onLink,
+  onUnlink,
+}: {
+  row: ClockodoRow | null;
+  users: LinkableUser[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSetWeeklyHours: (hours: number) => void;
+  onSetVacation: (days: number) => void;
+  onLink: (userId: string) => void;
+  onUnlink: () => void;
+}) {
+  const isMobile = useIsMobile();
+  if (!row) return null;
+
+  const body = (
+    <ClockodoUserDetailBody
+      row={row}
+      users={users}
+      onSetWeeklyHours={onSetWeeklyHours}
+      onSetVacation={onSetVacation}
+      onLink={onLink}
+      onUnlink={onUnlink}
+    />
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+          <Drawer.Content
+            aria-describedby={undefined}
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-2xl shadow-black/40 outline-none"
+          >
+            <Drawer.Title className="sr-only">{row.name}</Drawer.Title>
+            <div className="flex shrink-0 cursor-grab items-center justify-center pb-1 pt-3 active:cursor-grabbing">
+              <span className="h-1.5 w-10 rounded-full bg-border" />
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {body}
+            </div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] max-w-lg gap-0 overflow-hidden p-0">
+        <DialogTitle className="sr-only">{row.name}</DialogTitle>
+        {body}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -304,7 +437,7 @@ export default function ClockodoIntegrationPage() {
     key: "name",
     dir: 1,
   });
-  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -405,19 +538,14 @@ export default function ClockodoIntegrationPage() {
     name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
   }));
 
+  const selectedRow = selectedId
+    ? (merged.find(r => r.id === selectedId) ?? null)
+    : null;
+
   function toggleSort(key: SortKey) {
     setSort(s =>
       s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }
     );
-  }
-
-  function toggleExpanded(id: number) {
-    setExpandedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
   }
 
   async function onCreate() {
@@ -600,7 +728,6 @@ export default function ClockodoIntegrationPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-8" />
                 <SortableHead
                   label={t("name")}
                   sortKey="name"
@@ -627,83 +754,71 @@ export default function ClockodoIntegrationPage() {
               {visible.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={5}
                     className="py-10 text-center text-sm text-muted-foreground"
                   >
                     {t("noResults")}
                   </TableCell>
                 </TableRow>
               )}
-              {visible.map(row => {
-                const expanded = expandedIds.has(row.id);
-                return (
-                  <Fragment key={row.id}>
-                    <TableRow>
-                      <TableCell>
-                        <button
-                          type="button"
-                          onClick={() => toggleExpanded(row.id)}
-                          className="flex size-6 items-center justify-center rounded-md text-muted-foreground hover:bg-panel-2 hover:text-fg"
-                          aria-label={t("targetHoursHistory")}
-                        >
-                          {expanded ? (
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          ) : (
-                            <ChevronRight className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      </TableCell>
-                      <TableCell className="text-fg">
-                        <div className="flex items-center gap-2">
-                          {row.name}
-                          <Badge
-                            variant={row.active === false ? "muted" : "success"}
-                            className="text-[10px]"
-                          >
-                            {row.active === false ? t("inactive") : t("active")}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {row.email}
-                      </TableCell>
-                      <TableCell>
-                        <EditableNumber
-                          initial={row.weeklyHours}
-                          placeholder={t("weeklyHours")}
-                          onSave={value => void onSetWeeklyHours(row.id, value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <EditableNumber
-                          initial={row.vacationDaysPerYear}
-                          placeholder={t("vacationDaysPerYear")}
-                          onSave={value => void onSetVacation(row.id, value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <LinkedEmployeeCell
-                          row={row}
-                          users={linkableUsers}
-                          onLink={userId => void onLink(row.id, userId)}
-                          onUnlink={() => void onUnlink(row.linkedUserId)}
-                        />
-                      </TableCell>
-                    </TableRow>
-                    {expanded && (
-                      <TableRow>
-                        <TableCell colSpan={6} className="p-0">
-                          <HistoryPanel row={row} />
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </Fragment>
-                );
-              })}
+              {visible.map(row => (
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer"
+                  onClick={() => setSelectedId(row.id)}
+                >
+                  <TableCell className="text-fg">
+                    <div className="flex items-center gap-2">
+                      {row.name}
+                      <Badge
+                        variant={row.active === false ? "muted" : "success"}
+                        className="text-[10px]"
+                      >
+                        {row.active === false ? t("inactive") : t("active")}
+                      </Badge>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {row.email}
+                  </TableCell>
+                  <TableCell>
+                    {row.weeklyHours !== null ? `${row.weeklyHours}h` : "—"}
+                  </TableCell>
+                  <TableCell>
+                    {row.vacationDaysPerYear !== null
+                      ? `${row.vacationDaysPerYear} ${t("days")}`
+                      : "—"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {row.linkedUserName ?? t("notLinked")}
+                  </TableCell>
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </Card>
       )}
+
+      <ClockodoUserDetail
+        row={selectedRow}
+        users={linkableUsers}
+        open={selectedRow !== null}
+        onOpenChange={open => {
+          if (!open) setSelectedId(null);
+        }}
+        onSetWeeklyHours={hours => {
+          if (selectedRow) void onSetWeeklyHours(selectedRow.id, hours);
+        }}
+        onSetVacation={days => {
+          if (selectedRow) void onSetVacation(selectedRow.id, days);
+        }}
+        onLink={userId => {
+          if (selectedRow) void onLink(selectedRow.id, userId);
+        }}
+        onUnlink={() => {
+          if (selectedRow) void onUnlink(selectedRow.linkedUserId);
+        }}
+      />
 
       <TrademarkNotice />
     </section>
