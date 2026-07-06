@@ -126,7 +126,10 @@ export const updateRequest = mutation({
     const user = await requireUser(ctx);
     const absence = await ctx.db.get(absenceId);
     if (!absence || absence.userId !== user._id) {
-      throw new ConvexError({ code: "not_found", message: "Absence not found" });
+      throw new ConvexError({
+        code: "not_found",
+        message: "Absence not found",
+      });
     }
     if (absence.source === "clockodo") {
       throw new ConvexError({

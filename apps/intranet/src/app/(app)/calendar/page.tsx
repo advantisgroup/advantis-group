@@ -279,10 +279,7 @@ function EventDialog({
             </div>
           </div>
 
-          <Select
-            value={form.audience}
-            onValueChange={v => set("audience", v)}
-          >
+          <Select value={form.audience} onValueChange={v => set("audience", v)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
@@ -437,7 +434,10 @@ export default function CalendarPage() {
       if (hiddenKinds.has("event")) return false;
       if (deptFilter !== "all") {
         const audience = e.audience as Audience;
-        if (audience.kind === "department" && audience.department !== deptFilter)
+        if (
+          audience.kind === "department" &&
+          audience.department !== deptFilter
+        )
           return false;
       }
       return true;
@@ -603,9 +603,7 @@ export default function CalendarPage() {
   }
 
   function EventChip({ e, day }: { e: CalEvent; day?: Date }) {
-    const continues = day
-      ? isoDay(new Date(e.start)) !== isoDay(day)
-      : false;
+    const continues = day ? isoDay(new Date(e.start)) !== isoDay(day) : false;
     return (
       <div
         role="button"
@@ -749,7 +747,8 @@ export default function CalendarPage() {
               aria-label={t("jumpToDate")}
               value={format(cursor, "yyyy-MM-dd")}
               onChange={e => {
-                if (e.target.value) setCursor(new Date(`${e.target.value}T12:00`));
+                if (e.target.value)
+                  setCursor(new Date(`${e.target.value}T12:00`));
               }}
               className="h-8 w-[8.75rem] text-xs"
             />

@@ -20,7 +20,10 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { ProviderBadge, ProviderInline } from "@/components/branding/ProviderMark";
+import {
+  ProviderBadge,
+  ProviderInline,
+} from "@/components/branding/ProviderMark";
 import { PageHeader } from "@/components/PageHeader";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
@@ -304,7 +307,10 @@ function StatsRow({ mine }: { mine: AbsenceRow[] | undefined }) {
     const sum = (type: AbsenceType) =>
       rows
         .filter(a => a.status === "approved" && a.type === type && inYear(a))
-        .reduce((acc, a) => acc + workingDays(a.startDate, a.endDate, a.halfDay), 0);
+        .reduce(
+          (acc, a) => acc + workingDays(a.startDate, a.endDate, a.halfDay),
+          0
+        );
     return {
       vacation: sum("vacation"),
       sick: sum("sick"),
@@ -571,7 +577,11 @@ function MyAbsences({
                           {formatIsoDate(a.startDate, locale)} –{" "}
                           {formatIsoDate(a.endDate, locale)} ·{" "}
                           {t("workingDaysLabel", {
-                            count: workingDays(a.startDate, a.endDate, a.halfDay),
+                            count: workingDays(
+                              a.startDate,
+                              a.endDate,
+                              a.halfDay
+                            ),
                           })}
                         </p>
                       </div>

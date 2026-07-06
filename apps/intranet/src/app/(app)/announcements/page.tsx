@@ -768,7 +768,9 @@ function AnnouncementCard({
         (a.scheduled || a.expired) && "opacity-80"
       )}
     >
-      {a.pinned && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
+      {a.pinned && (
+        <span className="absolute inset-y-0 left-0 w-1 bg-primary" />
+      )}
       {/* Header: author + title (left), date/time + actions (right) */}
       <header className="flex items-start gap-3 border-b border-border/60 px-5 py-3.5">
         <Avatar className="size-9 shrink-0">
@@ -947,7 +949,9 @@ function AnnouncementCard({
       <div className="flex items-center gap-2 border-t border-border/60 px-5 py-2.5">
         <ReactionPicker
           side="top"
-          onPick={emoji => void toggleReaction({ announcementId: a._id, emoji })}
+          onPick={emoji =>
+            void toggleReaction({ announcementId: a._id, emoji })
+          }
         />
         <ReactionChips
           reactions={a.reactions}
@@ -985,9 +989,10 @@ export default function AnnouncementsPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<Sort>("newest");
-  const [lightbox, setLightbox] = useState<{ url: string; name: string } | null>(
-    null
-  );
+  const [lightbox, setLightbox] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
 
   // Deep link from the dashboard quick action: /announcements?new=1.
   useEffect(() => {
@@ -1131,11 +1136,9 @@ export default function AnnouncementsPage() {
       {announcements && announcements.length === 0 && (
         <EmptyState icon={<Megaphone />} title={t("empty")} />
       )}
-      {announcements &&
-        announcements.length > 0 &&
-        filtered.length === 0 && (
-          <EmptyState icon={<Search />} title={tc("noResults")} />
-        )}
+      {announcements && announcements.length > 0 && filtered.length === 0 && (
+        <EmptyState icon={<Search />} title={tc("noResults")} />
+      )}
 
       <div className="space-y-6">
         {pinnedRows.length > 0 && otherRows.length > 0 ? (
@@ -1159,7 +1162,10 @@ export default function AnnouncementsPage() {
       </div>
 
       {/* Image lightbox */}
-      <Dialog open={lightbox !== null} onOpenChange={o => !o && setLightbox(null)}>
+      <Dialog
+        open={lightbox !== null}
+        onOpenChange={o => !o && setLightbox(null)}
+      >
         <DialogContent className="max-w-4xl p-2">
           {lightbox && (
             <img
