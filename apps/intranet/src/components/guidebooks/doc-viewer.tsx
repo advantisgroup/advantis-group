@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type ReactNode, useEffect, useState } from "react";
+import { Fragment, type ReactNode, useState } from "react";
 
 import Image from "next/image";
 
@@ -281,29 +281,9 @@ export function DocViewer({
   downloadable?: boolean;
 }) {
   const t = useTranslations("Guidebooks");
-  const [activeId, setActiveId] = useState<string | null>(
-    doc.sections[0]?.id ?? null
-  );
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        const visible = entries
-          .filter(e => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
-        if (visible[0]) setActiveId(visible[0].target.id);
-      },
-      { rootMargin: "-15% 0px -65% 0px" }
-    );
-    for (const section of doc.sections) {
-      const el = document.getElementById(section.id);
-      if (el) observer.observe(el);
-    }
-    return () => observer.disconnect();
-  }, [doc]);
 
   return (
-    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_13rem] lg:gap-10">
+    <div>
       {/* Mobile TOC: horizontal chip row */}
       <nav className="mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden">
         {doc.sections.map((section, i) => (
@@ -365,32 +345,6 @@ export function DocViewer({
           </section>
         ))}
       </article>
-
-      {/* Desktop TOC: sticky sidebar with scrollspy */}
-      <nav className="hidden lg:block">
-        <div className="sticky top-24">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            {t("docViewer.onThisPage")}
-          </p>
-          <ul className="mt-3 space-y-0.5 border-l border-border">
-            {doc.sections.map(section => (
-              <li key={section.id}>
-                <a
-                  href={`#${section.id}`}
-                  className={cn(
-                    "-ml-px block border-l-2 py-1 pl-3 text-sm leading-snug transition-colors",
-                    activeId === section.id
-                      ? "border-primary font-medium text-foreground"
-                      : "border-transparent text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {section.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
     </div>
   );
 }

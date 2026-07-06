@@ -777,7 +777,6 @@
       "description": "Review pending OneDrive uploads, approve them, and manage permissions."
     },
     "docViewer": {
-      "onThisPage": "On this page",
       "zoomImage": "Enlarge image",
       "download": "Download",
       "downloadHint": "Original document (Word)"
