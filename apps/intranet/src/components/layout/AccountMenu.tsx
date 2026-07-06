@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { useClerk } from "@clerk/nextjs";
-import { LogOut, Settings as SettingsIcon } from "lucide-react";
+import { FileText, LogOut, Settings as SettingsIcon, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -77,6 +77,26 @@ export function AccountMenu({
           <SettingsIcon className="mr-2 h-4 w-4" />
           {tNav("settings")}
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          onClick={() => {
+            onNavigate?.();
+            router.push("/privacy");
+          }}
+        >
+          <Shield className="mr-2 h-4 w-4" />
+          {tNav("privacy")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            onNavigate?.();
+            router.push("/terms");
+          }}
+        >
+          <FileText className="mr-2 h-4 w-4" />
+          {tNav("terms")}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => void signOut({ redirectUrl: "/sign-in" })}
         >

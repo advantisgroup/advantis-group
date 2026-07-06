@@ -16,7 +16,7 @@ export default function Impressum() {
       content: (
         <div className="space-y-2">
           <p className="font-semibold">
-            <BrandText brand="advantis">Advantis Group GmbH</BrandText>
+            <BrandText brand="advantis">Advantis GmbH</BrandText>
           </p>
           <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
           <p className="text-muted-foreground">
@@ -104,7 +104,7 @@ export default function Impressum() {
             <CardContent className="space-y-2 text-muted-foreground">
               <p>Andrea Reichl</p>
               <p>
-                <BrandText brand="advantis">Advantis Group GmbH</BrandText>
+                <BrandText brand="advantis">Advantis GmbH</BrandText>
               </p>
               <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
             </CardContent>

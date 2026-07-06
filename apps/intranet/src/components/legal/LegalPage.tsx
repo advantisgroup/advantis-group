@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { Menu, X } from "lucide-react";
+import { ArrowLeft, Menu, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
+import { WordmarkLogo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -30,7 +33,7 @@ const CONTACT_SECTION_IDS = new Set(["controller", "contact"]);
 function ContactBox() {
   return (
     <div className="space-y-1 rounded-lg bg-muted/30 p-4 text-sm">
-      <p className="font-semibold text-foreground">Advantis Group GmbH</p>
+      <p className="font-semibold text-foreground">Advantis GmbH</p>
       <p className="text-foreground/80">Andrea Reichl</p>
       <p className="text-muted-foreground">{process.env.NEXT_PUBLIC_ADRESS}</p>
       <p className="text-muted-foreground">
@@ -54,6 +57,7 @@ export function LegalPage({
   sections: LegalSection[];
 }) {
   const isMobile = useIsMobile();
+  const tCommon = useTranslations("Common");
   const [activeSection, setActiveSection] = useState(sections[0]?.id ?? "");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -122,6 +126,19 @@ export function LegalPage({
 
   return (
     <div className="min-h-screen">
+      <header className="flex items-center justify-between border-b border-border/70 px-4 py-3 sm:px-6">
+        <Link href="/" className="flex items-center gap-2">
+          <WordmarkLogo className="text-base" />
+        </Link>
+        <Link
+          href="/"
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {tCommon("back")}
+        </Link>
+      </header>
+
       {isMobile && (
         <Button
           onClick={() => setSidebarOpen(v => !v)}
