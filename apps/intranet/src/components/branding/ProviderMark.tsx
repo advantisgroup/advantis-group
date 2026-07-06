@@ -20,8 +20,13 @@ const PROVIDER_META: Record<Provider, { name: string; logo: string }> = {
   clockodo: { name: "Clockodo", logo: "/logos/clockodo.svg" },
 };
 
-/** The mark itself: the real logo if present, else the plain product name. */
-function Mark({
+/**
+ * The mark itself: the real logo if present, else the plain product name.
+ * Exported (unlike the other helpers here) so callers that need to size it
+ * outside the two preset layouts below — e.g. a `PageHeader` icon slot —
+ * can do so directly.
+ */
+export function Mark({
   provider,
   className,
 }: {

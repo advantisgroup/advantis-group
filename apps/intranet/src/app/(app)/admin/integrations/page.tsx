@@ -3,7 +3,7 @@
 import { Plug } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { BrandedText } from "@/components/branding/ProviderMark";
+import { Mark } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const INTEGRATIONS = [
   {
     id: "clockodo",
+    provider: "clockodo",
     nameKey: "clockodoCard",
     descriptionKey: "clockodoCardDescription",
     href: "/admin/integrations/clockodo",
@@ -36,8 +37,9 @@ export default function IntegrationsHubPage() {
           <Link key={integration.id} href={integration.href}>
             <Card className="h-full transition-colors hover:border-primary/40">
               <CardContent className="space-y-1.5 p-4">
-                <h2 className="font-medium text-fg">
-                  <BrandedText text={t(integration.nameKey)} />
+                <h2 className="flex items-center gap-2 font-medium text-fg">
+                  <Mark provider={integration.provider} className="h-5 w-5" />
+                  {t(integration.nameKey)}
                 </h2>
                 <p className="text-sm text-muted-foreground">
                   {t(integration.descriptionKey)}

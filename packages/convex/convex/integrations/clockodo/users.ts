@@ -125,23 +125,44 @@ export const getClockodoUserDetail = action({
     holidaysQuota: ClockodoHolidaysQuota[];
   }> => {
     await requireManagerAction(ctx);
-    const [userBody, targetHoursBody, holidaysQuotaBody] = await Promise.all([
-      clockodoFetch<{ user: ClockodoUserWire }>(
-        `/api/v2/users/${clockodoUserId}`
-      ),
+    const userBody = await clockodoFetch<{ user: ClockodoUserWire }>(
+      `/api/v2/users/${clockodoUserId}`
+    );
+
+    // Target-hours/holidays-quota are supplementary — the account's actual
+    // endpoint shape for these two is unverified (see `client.ts`), so a
+    // wrong path here must not take down the whole user list. Each degrades
+    // to an empty history (rendered as "not set" in the UI) instead of
+    // failing the row.
+    const [targetHours, holidaysQuota] = await Promise.all([
       clockodoFetch<{ targethours?: ClockodoTargetHourWire[] }>(
         `/api/targethours?users_id=${clockodoUserId}`
-      ),
+      )
+        .then(body => (body.targethours ?? []).map(toTargetHour))
+        .catch(err => {
+          console.error(
+            `[clockodo] target-hours fetch failed for user ${clockodoUserId}:`,
+            err
+          );
+          return [];
+        }),
       clockodoFetch<{ holidaysquota?: ClockodoHolidaysQuotaWire[] }>(
         `/api/holidaysquota?users_id=${clockodoUserId}`
-      ),
+      )
+        .then(body => (body.holidaysquota ?? []).map(toHolidaysQuota))
+        .catch(err => {
+          console.error(
+            `[clockodo] holidays-quota fetch failed for user ${clockodoUserId}:`,
+            err
+          );
+          return [];
+        }),
     ]);
+
     return {
       user: toClockodoUser(userBody.user),
-      targetHours: (targetHoursBody.targethours ?? []).map(toTargetHour),
-      holidaysQuota: (holidaysQuotaBody.holidaysquota ?? []).map(
-        toHolidaysQuota
-      ),
+      targetHours,
+      holidaysQuota,
     };
   },
 });

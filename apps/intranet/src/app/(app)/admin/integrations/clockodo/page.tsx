@@ -5,10 +5,11 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
-import { ExternalLink, Plug, Plus } from "lucide-react";
+import { ExternalLink, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Mark } from "@/components/branding/ProviderMark";
 import { TrademarkNotice } from "@/components/branding/TrademarkNotice";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
@@ -176,8 +177,19 @@ export default function ClockodoIntegrationPage() {
   const load = useCallback(async () => {
     try {
       const users = await listClockodoUsers({});
+      // One user's detail fetch failing (network hiccup, an id Clockodo
+      // rejects) shouldn't blank the whole table — fall back to "not set"
+      // for that row instead of aborting the load.
       const details = await Promise.all(
-        users.map(u => getClockodoUserDetail({ clockodoUserId: u.id }))
+        users.map(u =>
+          getClockodoUserDetail({ clockodoUserId: u.id }).catch(err => {
+            console.error(
+              `[clockodo] detail fetch failed for user ${u.id}:`,
+              err
+            );
+            return { user: u, targetHours: [], holidaysQuota: [] };
+          })
+        )
       );
       setRows(
         users.map((u, i) => {
@@ -295,7 +307,7 @@ export default function ClockodoIntegrationPage() {
       <PageHeader
         title={t("clockodoTitle")}
         description={t("clockodoSubtitle")}
-        icon={<Plug />}
+        icon={<Mark provider="clockodo" className="h-6 w-6" />}
         action={
           <Button onClick={() => setShowCreate(s => !s)}>
             <Plus className="h-4 w-4" />
