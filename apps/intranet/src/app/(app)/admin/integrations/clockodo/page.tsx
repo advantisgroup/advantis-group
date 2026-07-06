@@ -183,6 +183,39 @@ function SortableHead({
   );
 }
 
+const PERMISSION_ITEMS = [
+  {
+    field: "canGenerallySeeAbsences",
+    labelKey: "canSeeAbsences",
+    descKey: "canSeeAbsencesDesc",
+  },
+  {
+    field: "canGenerallyManageAbsences",
+    labelKey: "canManageAbsences",
+    descKey: "canManageAbsencesDesc",
+  },
+  {
+    field: "canAddCustomers",
+    labelKey: "canAddCustomers",
+    descKey: "canAddCustomersDesc",
+  },
+  {
+    field: "exemptFromFlextime",
+    labelKey: "exemptFromFlextime",
+    descKey: "exemptFromFlextimeDesc",
+  },
+] as const satisfies {
+  field: keyof Pick<
+    ClockodoUser,
+    | "canGenerallySeeAbsences"
+    | "canGenerallyManageAbsences"
+    | "canAddCustomers"
+    | "exemptFromFlextime"
+  >;
+  labelKey: string;
+  descKey: string;
+}[];
+
 /** A labelled section, so the detail panel reads like a tidy info card
  * (mirrors `Section` in the shared member profile). */
 function Section({ label, children }: { label: string; children: ReactNode }) {
@@ -458,42 +491,28 @@ function ClockodoUserDetailBody({
 
         <Section label={t("permissions")}>
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={row.canGenerallySeeAbsences ?? false}
-                onCheckedChange={c =>
-                  onUpdateUser({ canGenerallySeeAbsences: c === true })
-                }
-              />
-              {t("canSeeAbsences")}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={row.canGenerallyManageAbsences ?? false}
-                onCheckedChange={c =>
-                  onUpdateUser({ canGenerallyManageAbsences: c === true })
-                }
-              />
-              {t("canManageAbsences")}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={row.canAddCustomers ?? false}
-                onCheckedChange={c =>
-                  onUpdateUser({ canAddCustomers: c === true })
-                }
-              />
-              {t("canAddCustomers")}
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={row.exemptFromFlextime ?? false}
-                onCheckedChange={c =>
-                  onUpdateUser({ exemptFromFlextime: c === true })
-                }
-              />
-              {t("exemptFromFlextime")}
-            </label>
+            {PERMISSION_ITEMS.map(item => (
+              <label
+                key={item.field}
+                className="flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-border/70 bg-panel-2 px-3.5 py-3 text-sm transition-colors active:bg-panel-2/70"
+              >
+                <span className="min-w-0">
+                  <span className="block font-medium text-fg">
+                    {t(item.labelKey)}
+                  </span>
+                  <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
+                    {t(item.descKey)}
+                  </span>
+                </span>
+                <Checkbox
+                  checked={row[item.field] ?? false}
+                  onCheckedChange={c =>
+                    onUpdateUser({ [item.field]: c === true })
+                  }
+                  className="mt-0.5 h-5 w-5 shrink-0"
+                />
+              </label>
+            ))}
           </div>
         </Section>
 
@@ -618,7 +637,7 @@ function ClockodoUserDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-lg gap-0 overflow-hidden p-0">
+      <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
         <DialogTitle className="sr-only">{row.name}</DialogTitle>
         {body}
       </DialogContent>
