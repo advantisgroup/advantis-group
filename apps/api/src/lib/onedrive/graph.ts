@@ -542,8 +542,22 @@ export async function inviteToItem(
     },
     "invite"
   );
-  const granted = res.value[0];
-  if (!granted) throw Errors.upstream("OneDrive did not return a permission");
+  // Multiple recipients can partially fail with a 207 Multi-Status, which
+  // `fetch`'s `res.ok` still treats as success (200-299) — so a granted
+  // permission missing its `id` is a real, distinct failure mode, not just
+  // "no recipients", and needs its own clear error rather than silently
+  // handing an `undefined` id to the caller (which then fails somewhere
+  // downstream with no context, e.g. a Convex argument-validation error).
+  const granted = res.value?.[0];
+  if (!granted?.id) {
+    console.error(
+      `[onedrive] invite to ${email} did not return a usable permission:`,
+      JSON.stringify(res)
+    );
+    throw Errors.upstream(
+      "OneDrive did not grant a usable permission for that person"
+    );
+  }
   return { permissionId: granted.id };
 }
 
