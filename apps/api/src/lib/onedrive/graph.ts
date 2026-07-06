@@ -512,7 +512,26 @@ export async function restoreVersion(
 }
 
 interface InvitePermission {
+  id?: string;
+}
+
+interface GraphPermission {
   id: string;
+  grantedToV2?: { user?: { email?: string } };
+  grantedToIdentitiesV2?: { user?: { email?: string } }[];
+}
+
+/** Does this permission's granted identity match `email`? Personal OneDrive
+ * accounts only populate `grantedToIdentitiesV2`; work/school accounts use
+ * `grantedToV2` — check both. */
+function permissionGrantedTo(perm: GraphPermission, email: string): boolean {
+  const target = email.toLowerCase();
+  if (perm.grantedToV2?.user?.email?.toLowerCase() === target) return true;
+  return (
+    perm.grantedToIdentitiesV2?.some(
+      g => g.user?.email?.toLowerCase() === target
+    ) ?? false
+  );
 }
 
 /**
@@ -544,21 +563,31 @@ export async function inviteToItem(
   );
   // Multiple recipients can partially fail with a 207 Multi-Status, which
   // `fetch`'s `res.ok` still treats as success (200-299) — so a granted
-  // permission missing its `id` is a real, distinct failure mode, not just
-  // "no recipients", and needs its own clear error rather than silently
-  // handing an `undefined` id to the caller (which then fails somewhere
-  // downstream with no context, e.g. a Convex argument-validation error).
+  // permission missing its `id` is worth checking explicitly rather than
+  // handing an `undefined` id to the caller.
   const granted = res.value?.[0];
-  if (!granted?.id) {
+  if (granted?.id) return { permissionId: granted.id };
+
+  // Personal/consumer OneDrive accounts don't echo the created permission's
+  // id in the invite response itself (just a share link) — look it up via
+  // the permissions list instead, matched by the invited email.
+  const list = await graphFetch<{ value: GraphPermission[] }>(
+    itemUrl(itemId, "/permissions"),
+    {},
+    "listPermissionsAfterInvite"
+  );
+  const match = list.value.find(p => permissionGrantedTo(p, email));
+  if (!match?.id) {
     console.error(
-      `[onedrive] invite to ${email} did not return a usable permission:`,
-      JSON.stringify(res)
+      `[onedrive] invite to ${email} did not resolve to a permission id:`,
+      JSON.stringify(res),
+      JSON.stringify(list)
     );
     throw Errors.upstream(
       "OneDrive did not grant a usable permission for that person"
     );
   }
-  return { permissionId: granted.id };
+  return { permissionId: match.id };
 }
 
 /** Revoke a previously granted direct share. */
