@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 
 import { api } from "@advantis/convex/api";
 
+import { logClockodoWebhookDelivery } from "../lib/clockodoWebhookLog.js";
 import { getConvex } from "../lib/convex.js";
 
 /**
@@ -173,6 +174,12 @@ export const activityRoute = new Elysia()
         console.warn(
           `[activity/clockodo] webhook validation secret: ${b.secret}`
         );
+        logClockodoWebhookDelivery({
+          endpoint: "integrations/clockodo/webhook",
+          ok: true,
+          reason: "handshake",
+          token: b.secret,
+        });
         return ok();
       }
 
@@ -186,6 +193,13 @@ export const activityRoute = new Elysia()
           console.warn(
             `[activity/clockodo] 401 token mismatch — event: ${b.event_name}, received token present: ${!!token}`
           );
+          logClockodoWebhookDelivery({
+            endpoint: "integrations/clockodo/webhook",
+            eventName: b.event_name,
+            ok: false,
+            reason: "token_mismatch",
+            token,
+          });
           return fail(set, 401, "unauthorized");
         }
         const payload = (b.payload ?? {}) as {
@@ -196,11 +210,26 @@ export const activityRoute = new Elysia()
           console.log(
             `[activity/clockodo] 200 ignored event with no entry id — event: ${b.event_name}`
           );
+          logClockodoWebhookDelivery({
+            endpoint: "integrations/clockodo/webhook",
+            eventName: b.event_name,
+            ok: true,
+            reason: "ignored_no_entry_id",
+            token,
+          });
           return ok({ ignored: true });
         }
         console.log(
           `[activity/clockodo] 200 processing entry event — event: ${b.event_name}, entryId: ${entryId}`
         );
+        logClockodoWebhookDelivery({
+          endpoint: "integrations/clockodo/webhook",
+          eventName: b.event_name,
+          ok: true,
+          reason: "processed",
+          token,
+          resourceId: String(entryId),
+        });
         // users_id rides along so deleted entries (which can no longer be
         // fetched) still resolve to a user for the day recompute.
         const payloadUsersId = payload.entry?.users_id;
@@ -221,6 +250,12 @@ export const activityRoute = new Elysia()
         bearer(headers) ?? (query as Record<string, string>)?.secret ?? null;
       if (!keyMatches(secret, process.env.ACTIVITYTRACK_WEBHOOK_SECRET)) {
         console.warn("[activity/clockodo] 401 legacy secret mismatch");
+        logClockodoWebhookDelivery({
+          endpoint: "integrations/clockodo/webhook",
+          ok: false,
+          reason: "legacy_secret_mismatch",
+          token: secret,
+        });
         return fail(set, 401, "unauthorized");
       }
       const raw = b as { employeeId?: string; clockodoUserId?: string };

@@ -802,6 +802,28 @@ export default defineSchema({
     at: v.number(),
   }).index("by_at", ["at"]),
 
+  /**
+   * Every inbound Clockodo webhook delivery (both `/webhooks/clockodo` and
+   * `/integrations/clockodo/webhook`), success or failure. Vercel/Convex's own
+   * function logs don't retain far enough back to catch an intermittent 401
+   * that only shows up once a day — this table is the durable record so a
+   * failure can be inspected (event, token presence/length, reason) whenever
+   * it's noticed, not just in the moment it happens. Pruned after 30 days.
+   */
+  clockodoWebhookLog: defineTable({
+    endpoint: v.union(
+      v.literal("webhooks/clockodo"),
+      v.literal("integrations/clockodo/webhook")
+    ),
+    eventName: v.optional(v.string()),
+    ok: v.boolean(),
+    reason: v.string(),
+    tokenPresent: v.boolean(),
+    tokenLength: v.optional(v.number()),
+    resourceId: v.optional(v.string()),
+    at: v.number(),
+  }).index("by_at", ["at"]),
+
   // Singleton store for the delegated-auth (personal Microsoft account) refresh
   // token. Personal-account refresh tokens rotate on every use, so the API
   // persists the latest one here (AES-256-GCM ciphertext, encrypted in the API)

@@ -1,11 +1,10 @@
+import { api } from "@advantis/convex/api";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 import { Resend } from "resend";
 
 import { EmailTemplate } from "@/components/email/email-template";
-
-import { api } from "@advantis/convex/api";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

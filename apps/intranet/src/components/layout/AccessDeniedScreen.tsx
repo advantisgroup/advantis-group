@@ -51,9 +51,7 @@ export function AccessDeniedScreen() {
             <ShieldX className="size-7 text-destructive" />
           </div>
           <div>
-            <CardTitle className="font-display text-xl">
-              {t("title")}
-            </CardTitle>
+            <CardTitle className="font-display text-xl">{t("title")}</CardTitle>
             {email && (
               <p className="mt-1.5 text-sm text-muted-foreground">
                 {t("signedInAs")}{" "}

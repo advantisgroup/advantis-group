@@ -12,11 +12,10 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { BrowserNotificationBridge } from "@/components/notifications/BrowserNotificationBridge";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { WhatsNewDialog } from "@/components/WhatsNewDialog";
+import { BrowserNotificationBridge } from "@/components/notifications/BrowserNotificationBridge";
 import { TourCompletionScreen } from "@/components/tour/TourCompletionScreen";
 import { TourOverlay } from "@/components/tour/TourOverlay";
 import { TourPopout } from "@/components/tour/TourPopout";
@@ -28,6 +27,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { WhatsNewDialog } from "@/components/WhatsNewDialog";
 import { cn } from "@/lib/utils";
 
 /**

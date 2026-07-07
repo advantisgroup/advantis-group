@@ -195,7 +195,7 @@ export function WikiChat() {
       clearInterval(quoteTimer);
       clearInterval(tick);
     };
-  }, [loading]);
+  }, [loading, loadingQuotes]);
 
   function newChat() {
     const empty = chats.find(c => c.messages.length === 0);

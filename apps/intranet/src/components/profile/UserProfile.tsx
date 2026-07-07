@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials } from "@/lib/format";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
@@ -478,6 +479,7 @@ function ProfileContent({
   const isAdmin = useIsAdmin();
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
   const handleError = useErrorHandler();
+  const now = useNow();
 
   const isSelf = user._id === me._id;
 
@@ -509,13 +511,12 @@ function ProfileContent({
               {initials(user.name, user.email)}
             </AvatarFallback>
           </Avatar>
-          {user.lastActiveAt &&
-            Date.now() - user.lastActiveAt < ONLINE_WINDOW_MS && (
-              <span
-                title={t("online")}
-                className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-2 border-background bg-success"
-              />
-            )}
+          {user.lastActiveAt && now - user.lastActiveAt < ONLINE_WINDOW_MS && (
+            <span
+              title={t("online")}
+              className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-2 border-background bg-success"
+            />
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-lg font-semibold leading-tight">

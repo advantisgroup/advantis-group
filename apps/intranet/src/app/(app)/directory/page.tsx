@@ -29,8 +29,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials } from "@/lib/format";
-import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
+import { TEAMS, teamColor } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
@@ -46,6 +47,7 @@ export default function DirectoryPage() {
   const locale = useLocale();
   const router = useRouter();
   const me = useCurrentUser();
+  const now = useNow();
 
   const [search, setSearch] = useState("");
   const [department, setDepartment] = useState<string>("all");
@@ -116,7 +118,7 @@ export default function DirectoryPage() {
 
   const personCard = (p: Person) => {
     const online =
-      p.lastActiveAt != null && Date.now() - p.lastActiveAt < ONLINE_WINDOW_MS;
+      p.lastActiveAt != null && now - p.lastActiveAt < ONLINE_WINDOW_MS;
     return (
       <Card
         key={p._id}

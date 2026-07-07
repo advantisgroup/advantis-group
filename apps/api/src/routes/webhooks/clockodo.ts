@@ -3,6 +3,7 @@ import { Elysia, t } from "elysia";
 import { api } from "@advantis/convex/api";
 
 import { getAbsence, getUserEmail } from "../../lib/clockodo.js";
+import { logClockodoWebhookDelivery } from "../../lib/clockodoWebhookLog.js";
 import { getConvex, getConvexServerKey } from "../../lib/convex.js";
 
 interface ClockodoWebhookBody {
@@ -11,6 +12,16 @@ interface ClockodoWebhookBody {
   payload?: { absence?: { id?: number } };
   // validation handshake fields are arbitrary
   [key: string]: unknown;
+}
+
+function logDelivery(args: {
+  eventName?: string;
+  ok: boolean;
+  reason: string;
+  token?: string;
+  resourceId?: string;
+}): void {
+  logClockodoWebhookDelivery({ endpoint: "webhooks/clockodo", ...args });
 }
 
 /**
@@ -34,6 +45,7 @@ export const clockodoWebhookRoute = new Elysia().post(
         "[clockodo/webhook] handshake received:",
         JSON.stringify(payload)
       );
+      logDelivery({ ok: true, reason: "handshake", token: payload.token });
       return { ok: true, handshake: true };
     }
 
@@ -47,6 +59,12 @@ export const clockodoWebhookRoute = new Elysia().post(
       console.warn(
         `[clockodo/webhook] 401 token mismatch — event: ${payload.event_name}, received token present: ${!!payload.token}`
       );
+      logDelivery({
+        eventName: payload.event_name,
+        ok: false,
+        reason: "token_mismatch",
+        token: payload.token,
+      });
       set.status = 401;
       return { ok: false, error: "invalid token" };
     }
@@ -58,6 +76,12 @@ export const clockodoWebhookRoute = new Elysia().post(
       console.log(
         `[clockodo/webhook] 200 ignored non-absence event: ${payload.event_name}`
       );
+      logDelivery({
+        eventName: payload.event_name,
+        ok: true,
+        reason: "ignored_non_absence",
+        token: payload.token,
+      });
       return { ok: true, ignored: true };
     }
 
@@ -66,6 +90,12 @@ export const clockodoWebhookRoute = new Elysia().post(
       console.warn(
         `[clockodo/webhook] 400 missing absence id — event: ${payload.event_name}, payload: ${JSON.stringify(payload.payload)}`
       );
+      logDelivery({
+        eventName: payload.event_name,
+        ok: false,
+        reason: "missing_absence_id",
+        token: payload.token,
+      });
       set.status = 400;
       return { ok: false, error: "missing absence id" };
     }
@@ -77,6 +107,13 @@ export const clockodoWebhookRoute = new Elysia().post(
       console.log(
         `[clockodo/webhook] 200 deleting absence externalId=${absenceId}`
       );
+      logDelivery({
+        eventName: payload.event_name,
+        ok: true,
+        reason: "deleted",
+        token: payload.token,
+        resourceId: String(absenceId),
+      });
       await convex.mutation(api.clockodoSync.deleteAbsenceByExternalId, {
         serverKey,
         externalId: String(absenceId),
@@ -88,6 +125,13 @@ export const clockodoWebhookRoute = new Elysia().post(
     console.log(
       `[clockodo/webhook] 200 upserting absence externalId=${absenceId} event=${payload.event_name}`
     );
+    logDelivery({
+      eventName: payload.event_name,
+      ok: true,
+      reason: "upserted",
+      token: payload.token,
+      resourceId: String(absenceId),
+    });
     const absence = await getAbsence(absenceId);
     const email = await getUserEmail(absence.users_id);
     await convex.mutation(api.clockodoSync.upsertAbsenceFromClockodo, {

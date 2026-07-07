@@ -423,7 +423,7 @@ export default function CalendarPage() {
         weekday: "short",
       })
     );
-  }, [locale]);
+  }, [locale, weekStartsOn]);
 
   type CalEvent = NonNullable<typeof events>[number];
   type CalAbsence = NonNullable<typeof absences>[number];

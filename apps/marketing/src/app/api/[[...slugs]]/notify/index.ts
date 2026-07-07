@@ -1,7 +1,6 @@
+import { api } from "@advantis/convex/api";
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
-
-import { api } from "@advantis/convex/api";
 
 const convex = process.env.NEXT_PUBLIC_CONVEX_URL
   ? new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL)

@@ -60,6 +60,9 @@ export function WhatsNewDialog() {
     if (prefs === undefined || !tourState) return;
     if (tourState.active) return;
     if (prefs?.dismissedWhatsNew === RELEASE_KEY) return;
+    // Opens once when the async prefs/tour data resolves to "show it"; a
+    // later dismiss() must not be overridden by this effect re-running.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpen(true);
   }, [prefs, tourState]);
 

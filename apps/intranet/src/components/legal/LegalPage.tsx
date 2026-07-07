@@ -205,13 +205,19 @@ export function LegalPage({
 
           <div className="min-w-0 flex-1 space-y-6">
             {sections.map(section => (
-              <section key={section.id} id={section.id} className="scroll-mt-24">
+              <section
+                key={section.id}
+                id={section.id}
+                className="scroll-mt-24"
+              >
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-xl">{section.title}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-0 text-sm leading-relaxed text-foreground/80">
-                    {section.paragraphs?.map((p, i) => <p key={i}>{p}</p>)}
+                    {section.paragraphs?.map((p, i) => (
+                      <p key={i}>{p}</p>
+                    ))}
                     {CONTACT_SECTION_IDS.has(section.id) && <ContactBox />}
                     {section.list && (
                       <ul className="list-disc space-y-2 pl-5">

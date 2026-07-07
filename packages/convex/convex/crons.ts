@@ -65,6 +65,13 @@ crons.daily(
   {}
 );
 
+crons.daily(
+  "clockodo: prune old webhook delivery log",
+  { hourUTC: 3, minuteUTC: 45 },
+  internal.clockodoWebhookLog.pruneOldWebhookLogs,
+  {}
+);
+
 // Keep the OneDrive change-notification subscription fresh (renew well within
 // its expiry) so the file-listing cache invalidates promptly on changes.
 crons.daily(
