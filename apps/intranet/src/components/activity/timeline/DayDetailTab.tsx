@@ -72,8 +72,6 @@ export function DayDetailTab({
   }, [history, dayStart, effectiveDayEnd, day, today]);
 
   const stateLabel = (s: StateName) => t(`empstate.${s}`);
-  // Mark "now" on the strip when viewing today.
-  const nowPct = day === today ? ((nowMs() - dayStart) / DAY_MS) * 100 : null;
 
   return (
     <Card className="animate-fade-up">
@@ -115,13 +113,7 @@ export function DayDetailTab({
         ) : (
           <div className="space-y-5">
             {/* ── Horizontal day strip ── */}
-            <StateTimelineChart
-              segments={segments}
-              dayStart={dayStart}
-              label={stateLabel}
-              nowPct={nowPct}
-              nowLabel={t("timeline.day.now")}
-            />
+            <StateTimelineChart segments={segments} label={stateLabel} />
 
             {/* ── Per-minute grid (24 rows × 60 minutes) ── */}
             <div className="space-y-0.5">

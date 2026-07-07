@@ -267,8 +267,6 @@ export default function TimelinePage({
   const presentStates = STATE_NAMES.filter(s =>
     daySegments.some(seg => seg.state === s)
   );
-  // "Now" marker position on the strip (today only).
-  const nowPct = isToday ? ((now - dayStartMs) / 86_400_000) * 100 : null;
   const stateLabel = (s: StateName) => t(`empstate.${s}`);
   // "Since when" for the hero verdict: last heartbeat when offline, otherwise
   // the moment the fused state last changed.
@@ -450,10 +448,7 @@ export default function TimelinePage({
                     <div className="space-y-2.5">
                       <StateTimelineChart
                         segments={daySegments}
-                        dayStart={dayStartMs}
                         label={stateLabel}
-                        nowPct={nowPct}
-                        nowLabel={t("timeline.day.now")}
                         highlightAt={highlightedChangeAt}
                       />
                       <StateStripLegend

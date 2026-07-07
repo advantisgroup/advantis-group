@@ -8,7 +8,6 @@ import { formatDuration } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import { cn } from "@/lib/utils";
 
-const DAY_MS = 86_400_000;
 const BAR_HEIGHT = 26;
 // How far above/below the bar the active guide lines and their time labels
 // reach — enough room for a label plus a little breathing space.
@@ -31,13 +30,14 @@ function segmentAtClientX(
   clientX: number,
   rect: { left: number; width: number },
   segments: StateSegment[],
-  dayStart: number
+  domainStart: number,
+  domainSpan: number
 ): number | null {
-  if (rect.width === 0) return null;
+  if (rect.width === 0 || domainSpan <= 0) return null;
   const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
   // -1ms so a tap at the very right edge still lands inside the last segment
   // instead of exactly on its (exclusive) end boundary.
-  const t = dayStart + pct * DAY_MS - 1;
+  const t = domainStart + pct * domainSpan - 1;
   const idx = segments.findIndex(s => t >= s.start && t < s.end);
   return idx >= 0 ? idx : null;
 }
@@ -97,33 +97,29 @@ function TimeLabel({
 }
 
 /**
- * "Quick timeline" for the day: one horizontal bar spanning 24h, a segment
- * per contiguous state run. Hovering (or externally highlighting, via
- * `highlightAt`) a segment dims its neighbours, drops a pair of solid
- * guide lines through the bar at its exact start/end instants (labelled with
- * the time), and raises a floating badge with the state name, time range and
- * duration. CLOCKED_OUT segments keep their usual colour but are drawn with a
- * diagonal "no-go zone" hatch — the same convention maps use for a
+ * "Quick timeline" for the tracked part of the day: one horizontal bar
+ * spanning from the day's first known state to its last — not a fixed 24h
+ * strip — so a day that's only a few hours old (or one where tracking
+ * stopped early) fills the whole width instead of sitting as a sliver in a
+ * mostly-empty bar. As more of the day is tracked, the bar simply grows to
+ * match; a CLOCKED_OUT stretch at the end takes up exactly its share like
+ * any other segment. Hovering (or externally highlighting, via
+ * `highlightAt`) a segment dims its neighbours, drops a pair of solid guide
+ * lines through the bar at its exact start/end instants (labelled with the
+ * time), and raises a floating badge with the state name, time range and
+ * duration. CLOCKED_OUT segments keep their usual colour but are drawn with
+ * a diagonal "no-go zone" hatch — the same convention maps use for a
  * restricted area — since it's always an assumption, never a reported fact.
  */
 export function StateTimelineChart({
   segments,
-  dayStart,
   label,
-  nowPct = null,
-  nowLabel,
   highlightAt = null,
   className,
 }: {
   segments: StateSegment[];
-  /** Local midnight (epoch ms) the strip starts at; the strip spans 24h from here. */
-  dayStart: number;
   /** Localised label for a state, used in the hover badge. */
   label: (state: StateName) => string;
-  /** Percent (0–100) to draw the "now" line, or null to omit it. */
-  nowPct?: number | null;
-  /** Label for the now marker. */
-  nowLabel?: string;
   /**
    * Epoch ms of a moment to highlight even without a mouse hovering it — e.g.
    * a "state changes" list item the user clicked elsewhere on the page. A
@@ -137,6 +133,11 @@ export function StateTimelineChart({
 
   if (segments.length === 0) return null;
 
+  const domainStart = segments[0].start;
+  const domainEnd = segments[segments.length - 1].end;
+  const domainSpan = Math.max(1, domainEnd - domainStart);
+  const domainMid = domainStart + domainSpan / 2;
+
   const highlightedIndex =
     highlightAt != null
       ? segments.findIndex(s => highlightAt >= s.start && highlightAt < s.end)
@@ -148,9 +149,11 @@ export function StateTimelineChart({
     hovered ?? (highlightedIndex >= 0 ? highlightedIndex : null);
   const activeSeg = activeIndex != null ? segments[activeIndex] : null;
   const startPct = activeSeg
-    ? ((activeSeg.start - dayStart) / DAY_MS) * 100
+    ? ((activeSeg.start - domainStart) / domainSpan) * 100
     : null;
-  const endPct = activeSeg ? ((activeSeg.end - dayStart) / DAY_MS) * 100 : null;
+  const endPct = activeSeg
+    ? ((activeSeg.end - domainStart) / domainSpan) * 100
+    : null;
   const centerPct =
     startPct != null && endPct != null ? (startPct + endPct) / 2 : null;
   const badgeAnchor = centerPct != null ? edgeAnchor(centerPct) : null;
@@ -189,7 +192,8 @@ export function StateTimelineChart({
               e.clientX,
               e.currentTarget.getBoundingClientRect(),
               segments,
-              dayStart
+              domainStart,
+              domainSpan
             )
           )
         }
@@ -200,7 +204,8 @@ export function StateTimelineChart({
               e.clientX,
               e.currentTarget.getBoundingClientRect(),
               segments,
-              dayStart
+              domainStart,
+              domainSpan
             )
           )
         }
@@ -209,8 +214,8 @@ export function StateTimelineChart({
             to poke out above and below this rounded strip. */}
         <div className="absolute inset-0 overflow-hidden rounded-md border border-border">
           {segments.map((seg, i) => {
-            const left = ((seg.start - dayStart) / DAY_MS) * 100;
-            const width = ((seg.end - seg.start) / DAY_MS) * 100;
+            const left = ((seg.start - domainStart) / domainSpan) * 100;
+            const width = ((seg.end - seg.start) / domainSpan) * 100;
             const isClockedOut = seg.state === "CLOCKED_OUT";
             return (
               <div
@@ -231,20 +236,6 @@ export function StateTimelineChart({
           })}
         </div>
 
-        {nowPct != null && nowPct >= 0 && nowPct <= 100 && (
-          <>
-            <div
-              className="absolute w-px bg-[var(--chart-fg)]"
-              style={{ left: `${nowPct}%`, top: -GUIDE_REACH, bottom: 0 }}
-            />
-            {nowLabel && (
-              <TimeLabel pct={nowPct} place="top" color="var(--chart-fg)">
-                {nowLabel}
-              </TimeLabel>
-            )}
-          </>
-        )}
-
         {activeSeg && startPct != null && (
           <>
             <GuideLine pct={startPct} />
@@ -263,11 +254,12 @@ export function StateTimelineChart({
         )}
       </div>
 
-      {/* Hour ticks: 00, 06, 12, 18, 24 */}
+      {/* The tracked window's start, middle and end — not fixed day hours,
+          since the bar itself is rescaled to just this span. */}
       <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
-        {[0, 6, 12, 18, 24].map(h => (
-          <span key={h}>{String(h).padStart(2, "0")}</span>
-        ))}
+        <span>{hhmm(domainStart)}</span>
+        <span>{hhmm(domainMid)}</span>
+        <span>{hhmm(domainEnd)}</span>
       </div>
     </div>
   );
