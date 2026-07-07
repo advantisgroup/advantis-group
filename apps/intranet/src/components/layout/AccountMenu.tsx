@@ -3,7 +3,12 @@
 import { useRouter } from "next/navigation";
 
 import { useClerk } from "@clerk/nextjs";
-import { FileText, LogOut, Settings as SettingsIcon, Shield } from "lucide-react";
+import {
+  FileText,
+  LogOut,
+  Settings as SettingsIcon,
+  Shield,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCurrentUser } from "@/components/providers/current-user";
