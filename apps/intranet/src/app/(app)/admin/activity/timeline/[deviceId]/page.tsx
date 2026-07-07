@@ -74,6 +74,11 @@ export default function TimelinePage({
   const [tab, setTab] = useTabParam("charts");
   const deviceId = decodeURIComponent(rawDeviceId);
   const [showAllChanges, setShowAllChanges] = useState(false);
+  // Clicking a "state changes" list entry highlights the matching segment on
+  // the timeline above — clicking it again clears the highlight.
+  const [highlightedChangeAt, setHighlightedChangeAt] = useState<number | null>(
+    null
+  );
   // 30s tick so "last seen"/"since" labels and the now-marker stay fresh even
   // while Convex has no data change to push.
   const now = useNow();
@@ -449,6 +454,7 @@ export default function TimelinePage({
                         label={stateLabel}
                         nowPct={nowPct}
                         nowLabel={t("timeline.day.now")}
+                        highlightAt={highlightedChangeAt}
                       />
                       <StateStripLegend
                         states={presentStates}
@@ -482,21 +488,31 @@ export default function TimelinePage({
                             ? stateChanges
                             : stateChanges.slice(0, RECENT_CHANGES)
                           ).map(r => (
-                            <li
-                              key={r.at}
-                              className="flex items-center gap-2.5 text-sm"
-                            >
-                              <span
-                                aria-hidden
-                                className="h-2 w-2 shrink-0 rounded-full"
-                                style={{ background: STATE_COLOR[r.state] }}
-                              />
-                              <span className="min-w-0 truncate font-medium text-fg">
-                                {stateLabel(r.state)}
-                              </span>
-                              <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-                                {hhmm(r.at, lang)}
-                              </span>
+                            <li key={r.at}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setHighlightedChangeAt(at =>
+                                    at === r.at ? null : r.at
+                                  )
+                                }
+                                className={cn(
+                                  "flex w-full items-center gap-2.5 rounded-md px-1.5 py-0.5 text-sm transition-colors hover:bg-panel-2",
+                                  highlightedChangeAt === r.at && "bg-panel-2"
+                                )}
+                              >
+                                <span
+                                  aria-hidden
+                                  className="h-2 w-2 shrink-0 rounded-full"
+                                  style={{ background: STATE_COLOR[r.state] }}
+                                />
+                                <span className="min-w-0 truncate font-medium text-fg">
+                                  {stateLabel(r.state)}
+                                </span>
+                                <span className="ml-auto shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
+                                  {hhmm(r.at, lang)}
+                                </span>
+                              </button>
                             </li>
                           ))}
                         </ul>

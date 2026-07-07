@@ -1,15 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
-import {
-  Bar,
-  BarChart,
-  ReferenceLine,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { useState, type ReactNode } from "react";
 
 import { STATE_COLOR } from "@/components/activity/charts/theme";
 import type { StateName, StateSegment } from "@/lib/activity/activity";
@@ -19,7 +10,14 @@ import { cn } from "@/lib/utils";
 
 const DAY_MS = 86_400_000;
 const BAR_HEIGHT = 26;
-const CLOCKED_OUT_PATTERN_ID = "state-timeline-clocked-out-hatch";
+// How far above/below the bar the active guide lines and their time labels
+// reach — enough room for a label plus a little breathing space.
+const GUIDE_REACH = 20;
+// A hairline surface-colour gap between adjacent segments — the mark for "a
+// change happened here" the rest of the time. Cheaper to read than a line
+// drawn through every mark, and doesn't turn a cluster of one-minute state
+// changes into a smear of ink.
+const SEGMENT_GAP_PX = 1;
 
 function hhmm(ms: number): string {
   return new Date(ms).toLocaleTimeString(undefined, {
@@ -29,55 +27,90 @@ function hhmm(ms: number): string {
 }
 
 /**
- * Recharts clips text that falls outside the SVG's own viewport, so a plain
- * centred label on the midnight/midnight-next boundary lines gets half its
- * characters cut off. Anchor near the two edges instead of centring there.
+ * Which segment sits under a given pointer X, by position rather than by
+ * which of several overlapping DOM hit-targets happens to be on top — a
+ * one-minute blip a few pixels wide is exactly as tappable as an hour-long
+ * one, on touch or with a mouse, with no risk of a neighbour shadowing it.
  */
-function edgeAnchor(pct: number): "start" | "middle" | "end" {
-  if (pct <= 4) return "start";
-  if (pct >= 96) return "end";
-  return "middle";
+function segmentAtClientX(
+  clientX: number,
+  rect: { left: number; width: number },
+  segments: StateSegment[],
+  dayStart: number
+): number | null {
+  if (rect.width === 0) return null;
+  const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+  // -1ms so a tap at the very right edge still lands inside the last segment
+  // instead of exactly on its (exclusive) end boundary.
+  const t = dayStart + pct * DAY_MS - 1;
+  const idx = segments.findIndex(s => t >= s.start && t < s.end);
+  return idx >= 0 ? idx : null;
+}
+
+/**
+ * A centred (translateX(-50%)) label near either edge overflows a narrow
+ * (phone-width) container, since it grows equally in both directions off a
+ * clamped anchor point. Past the threshold, anchor to that side instead so it
+ * only grows inward.
+ */
+function edgeAnchor(pct: number): { left: string; transform: string } {
+  const left = `${Math.min(97, Math.max(3, pct))}%`;
+  if (pct <= 15) return { left, transform: "translateX(0)" };
+  if (pct >= 85) return { left, transform: "translateX(-100%)" };
+  return { left, transform: "translateX(-50%)" };
+}
+
+function GuideLine({ pct }: { pct: number }) {
+  return (
+    <div
+      className="absolute w-px"
+      style={{
+        left: `${pct}%`,
+        top: -GUIDE_REACH,
+        bottom: -GUIDE_REACH,
+        background: "var(--chart-axis)",
+      }}
+    />
+  );
 }
 
 function TimeLabel({
-  viewBox,
-  value,
-  place,
   pct,
-  fill,
+  place,
+  children,
+  color = "var(--chart-axis)",
 }: {
-  viewBox?: { x: number; y: number; width: number; height: number };
-  value: string;
-  place: "top" | "bottom";
   pct: number;
-  fill: string;
+  place: "top" | "bottom";
+  children: ReactNode;
+  color?: string;
 }) {
-  if (!viewBox) return null;
-  const anchor = edgeAnchor(pct);
-  const dx = anchor === "start" ? 4 : anchor === "end" ? -4 : 0;
-  const y = place === "top" ? viewBox.y - 6 : viewBox.y + viewBox.height + 14;
+  const { left, transform } = edgeAnchor(pct);
   return (
-    <text
-      x={viewBox.x + dx}
-      y={y}
-      textAnchor={anchor}
-      fontSize={10}
-      fill={fill}
+    <span
+      className="absolute whitespace-nowrap font-mono text-[10px]"
+      style={{
+        left,
+        transform,
+        [place === "top" ? "bottom" : "top"]: BAR_HEIGHT + 6,
+        color,
+      }}
     >
-      {value}
-    </text>
+      {children}
+    </span>
   );
 }
 
 /**
- * Recharts-driven replacement for the plain colour-filled div strip: one
- * stacked horizontal bar spanning the 24h day, a segment per contiguous state
- * run. Hovering a segment dims its neighbours, drops a pair of dashed guide
- * lines through the chart at its exact start/end instants, and raises a
- * floating badge with the state + time range. CLOCKED_OUT segments keep their
- * usual colour but are drawn with a diagonal "no-go zone" hatch (the same map
- * convention for a restricted area) since it's always an assumption, never a
- * reported fact.
+ * "Quick timeline" for the day: one horizontal bar spanning 24h, a segment
+ * per contiguous state run, each separated by a hairline surface gap instead
+ * of a line drawn through the marks. Hovering (or externally highlighting,
+ * via `highlightAt`) a segment dims its neighbours, drops a pair of solid
+ * guide lines through the bar at its exact start/end instants (labelled with
+ * the time), and raises a floating badge with the state name, time range and
+ * duration. CLOCKED_OUT segments keep their usual colour but are drawn with a
+ * diagonal "no-go zone" hatch — the same convention maps use for a
+ * restricted area — since it's always an assumption, never a reported fact.
  */
 export function StateTimelineChart({
   segments,
@@ -85,6 +118,7 @@ export function StateTimelineChart({
   label,
   nowPct = null,
   nowLabel,
+  highlightAt = null,
   className,
 }: {
   segments: StateSegment[];
@@ -96,6 +130,12 @@ export function StateTimelineChart({
   nowPct?: number | null;
   /** Label for the now marker. */
   nowLabel?: string;
+  /**
+   * Epoch ms of a moment to highlight even without a mouse hovering it — e.g.
+   * a "state changes" list item the user clicked elsewhere on the page. A
+   * live mouse hover always takes precedence over this.
+   */
+  highlightAt?: number | null;
   className?: string;
 }) {
   const { lang } = useI18n();
@@ -103,150 +143,139 @@ export function StateTimelineChart({
 
   if (segments.length === 0) return null;
 
-  const row: Record<string, number> = {};
-  segments.forEach((seg, i) => {
-    row[`seg${i}`] = Math.max(0, seg.end - seg.start);
-  });
-  const data = [{ lane: "day", ...row }];
-
+  const highlightedIndex =
+    highlightAt != null
+      ? segments.findIndex(s => highlightAt >= s.start && highlightAt < s.end)
+      : -1;
   // `segments` can change out from under a stale hovered index (e.g. a day
   // switch) — an out-of-range lookup just yields undefined, which already
   // disables the badge/guide-lines below, so no extra reset is needed.
-  const hoveredSeg = hovered != null ? segments[hovered] : null;
-  const startPct = hoveredSeg
-    ? ((hoveredSeg.start - dayStart) / DAY_MS) * 100
+  const activeIndex =
+    hovered ?? (highlightedIndex >= 0 ? highlightedIndex : null);
+  const activeSeg = activeIndex != null ? segments[activeIndex] : null;
+  const startPct = activeSeg
+    ? ((activeSeg.start - dayStart) / DAY_MS) * 100
     : null;
-  const endPct = hoveredSeg
-    ? ((hoveredSeg.end - dayStart) / DAY_MS) * 100
-    : null;
+  const endPct = activeSeg ? ((activeSeg.end - dayStart) / DAY_MS) * 100 : null;
   const centerPct =
     startPct != null && endPct != null ? (startPct + endPct) / 2 : null;
+  const badgeAnchor = centerPct != null ? edgeAnchor(centerPct) : null;
 
   return (
-    <div className={cn("state-timeline relative", className)}>
-      {hoveredSeg && centerPct != null && (
+    <div
+      className={cn("state-timeline relative", className)}
+      style={{ paddingTop: GUIDE_REACH + 4, paddingBottom: GUIDE_REACH + 4 }}
+    >
+      {activeSeg && badgeAnchor && (
         <div
-          className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-lg border px-2.5 py-1.5 text-xs"
+          className="pointer-events-none absolute top-0 z-10 whitespace-nowrap rounded-lg border px-2.5 py-1.5 text-xs"
           style={{
-            left: `${Math.min(97, Math.max(3, centerPct))}%`,
+            left: badgeAnchor.left,
+            transform: `${badgeAnchor.transform} translateY(-100%)`,
             background: "var(--chart-panel)",
             borderColor: "var(--chart-grid)",
             color: "var(--chart-fg)",
             boxShadow: "var(--chart-tooltip-shadow)",
           }}
         >
-          <p className="font-semibold">{label(hoveredSeg.state)}</p>
+          <p className="font-semibold">{label(activeSeg.state)}</p>
           <p className="tabular-nums text-[11px] text-muted-foreground">
-            {hhmm(hoveredSeg.start)}–{hhmm(hoveredSeg.end)} ·{" "}
-            {formatDuration((hoveredSeg.end - hoveredSeg.start) / 1000, lang)}
+            {hhmm(activeSeg.start)}–{hhmm(activeSeg.end)} ·{" "}
+            {formatDuration((activeSeg.end - activeSeg.start) / 1000, lang)}
           </p>
         </div>
       )}
 
-      <ResponsiveContainer width="100%" height={100}>
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={{ top: 30, right: 6, bottom: 26, left: 6 }}
+      <div
+        className="relative cursor-pointer"
+        style={{ height: BAR_HEIGHT }}
+        onMouseMove={e =>
+          setHovered(
+            segmentAtClientX(
+              e.clientX,
+              e.currentTarget.getBoundingClientRect(),
+              segments,
+              dayStart
+            )
+          )
+        }
+        onMouseLeave={() => setHovered(null)}
+        onClick={e =>
+          setHovered(
+            segmentAtClientX(
+              e.clientX,
+              e.currentTarget.getBoundingClientRect(),
+              segments,
+              dayStart
+            )
+          )
+        }
+      >
+        {/* Clipped separately from the guide lines/labels below, which need
+            to poke out above and below this rounded strip. The panel-colour
+            background shows through each segment's 1px inset as the gap that
+            marks a change — never a line drawn over the fill. */}
+        <div
+          className="absolute inset-0 overflow-hidden rounded-md border border-border"
+          style={{ background: "var(--chart-panel)" }}
         >
-          <defs>
-            {/* Diagonal "no-go zone" hatch — same map convention as a
-                restricted-area overlay — over the state's own colour. */}
-            <pattern
-              id={CLOCKED_OUT_PATTERN_ID}
-              width={6}
-              height={6}
-              patternUnits="userSpaceOnUse"
-              patternTransform="rotate(45)"
-            >
-              <rect width={6} height={6} fill={STATE_COLOR.CLOCKED_OUT} />
-              <line
-                x1={0}
-                y1={0}
-                x2={0}
-                y2={6}
-                stroke="var(--chart-panel)"
-                strokeWidth={2.5}
+          {segments.map((seg, i) => {
+            const left = ((seg.start - dayStart) / DAY_MS) * 100;
+            const width = ((seg.end - seg.start) / DAY_MS) * 100;
+            const isClockedOut = seg.state === "CLOCKED_OUT";
+            return (
+              <div
+                key={i}
+                className="absolute inset-y-0"
+                style={{
+                  left: `calc(${left}% + ${SEGMENT_GAP_PX}px)`,
+                  width: `calc(${width}% - ${2 * SEGMENT_GAP_PX}px)`,
+                  opacity: activeIndex == null || activeIndex === i ? 1 : 0.4,
+                  filter: activeIndex === i ? "brightness(1.1)" : undefined,
+                  transition: "opacity 150ms ease, filter 150ms ease",
+                  background: isClockedOut
+                    ? `repeating-linear-gradient(45deg, ${STATE_COLOR.CLOCKED_OUT} 0px 13px, color-mix(in oklch, var(--chart-panel) 55%, ${STATE_COLOR.CLOCKED_OUT}) 13px 14.5px)`
+                    : STATE_COLOR[seg.state],
+                }}
               />
-            </pattern>
-          </defs>
+            );
+          })}
+        </div>
 
-          <XAxis type="number" domain={[0, DAY_MS]} hide />
-          <YAxis type="category" dataKey="lane" hide />
+        {nowPct != null && nowPct >= 0 && nowPct <= 100 && (
+          <>
+            <div
+              className="absolute w-px bg-[var(--chart-fg)]"
+              style={{ left: `${nowPct}%`, top: -GUIDE_REACH, bottom: 0 }}
+            />
+            {nowLabel && (
+              <TimeLabel pct={nowPct} place="top" color="var(--chart-fg)">
+                {nowLabel}
+              </TimeLabel>
+            )}
+          </>
+        )}
 
-          {segments.map((seg, i) => (
-            <Bar
-              key={i}
-              dataKey={`seg${i}`}
-              stackId="day"
-              maxBarSize={BAR_HEIGHT}
-              isAnimationActive
-              animationDuration={420}
-              animationEasing="ease-out"
-              fill={
-                seg.state === "CLOCKED_OUT"
-                  ? `url(#${CLOCKED_OUT_PATTERN_ID})`
-                  : STATE_COLOR[seg.state]
-              }
-              fillOpacity={hovered == null || hovered === i ? 1 : 0.4}
-              onMouseEnter={() => setHovered(i)}
-              onMouseLeave={() => setHovered(null)}
-              onClick={() => setHovered(h => (h === i ? null : i))}
-            />
-          ))}
-
-          {hoveredSeg && startPct != null && (
-            <ReferenceLine
-              x={hoveredSeg.start - dayStart}
-              stroke="var(--chart-axis)"
-              strokeDasharray="2 3"
-              label={
-                <TimeLabel
-                  value={hhmm(hoveredSeg.start)}
-                  place="top"
-                  pct={startPct}
-                  fill="var(--chart-axis)"
-                />
-              }
-            />
-          )}
-          {hoveredSeg && endPct != null && (
-            <ReferenceLine
-              x={hoveredSeg.end - dayStart}
-              stroke="var(--chart-axis)"
-              strokeDasharray="2 3"
-              label={
-                <TimeLabel
-                  value={hhmm(hoveredSeg.end)}
-                  place="bottom"
-                  pct={endPct}
-                  fill="var(--chart-axis)"
-                />
-              }
-            />
-          )}
-
-          {nowPct != null && nowPct >= 0 && nowPct <= 100 && (
-            <ReferenceLine
-              x={(nowPct / 100) * DAY_MS}
-              stroke="var(--chart-fg)"
-              label={
-                nowLabel ? (
-                  <TimeLabel
-                    value={nowLabel}
-                    place="top"
-                    pct={nowPct}
-                    fill="var(--chart-fg)"
-                  />
-                ) : undefined
-              }
-            />
-          )}
-        </BarChart>
-      </ResponsiveContainer>
+        {activeSeg && startPct != null && (
+          <>
+            <GuideLine pct={startPct} />
+            <TimeLabel pct={startPct} place="top">
+              {hhmm(activeSeg.start)}
+            </TimeLabel>
+          </>
+        )}
+        {activeSeg && endPct != null && (
+          <>
+            <GuideLine pct={endPct} />
+            <TimeLabel pct={endPct} place="bottom">
+              {hhmm(activeSeg.end)}
+            </TimeLabel>
+          </>
+        )}
+      </div>
 
       {/* Hour ticks: 00, 06, 12, 18, 24 */}
-      <div className="-mt-4 flex justify-between font-mono text-[10px] text-muted-foreground">
+      <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
         {[0, 6, 12, 18, 24].map(h => (
           <span key={h}>{String(h).padStart(2, "0")}</span>
         ))}
