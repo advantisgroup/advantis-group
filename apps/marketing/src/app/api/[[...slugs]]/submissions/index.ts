@@ -1,8 +1,7 @@
+import { api } from "@advantis/convex/api";
 import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
-
-import { api } from "@advantis/convex/api";
 
 const submissionSchema = t.Object({
   _id: t.String(),

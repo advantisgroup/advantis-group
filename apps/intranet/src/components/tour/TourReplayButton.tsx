@@ -70,6 +70,9 @@ export function TourFirstVisitNudge({
 
   useEffect(() => {
     try {
+      // localStorage is only available post-mount; this is a one-time sync
+      // from browser state, not a case of deriving state from props.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDismissed(
         localStorage.getItem(nudgeKey(user._id, checkpointId)) !== null
       );

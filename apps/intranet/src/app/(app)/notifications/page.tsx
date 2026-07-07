@@ -26,6 +26,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useNow } from "@/lib/activity/useNow";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -86,7 +87,7 @@ export default function NotificationsPage() {
     [notifications, tab, filter]
   );
 
-  const now = Date.now();
+  const now = useNow();
   const oldCount = filtered.filter(
     n => n.readAt && now - n.createdAt > OLD_AFTER_MS
   ).length;

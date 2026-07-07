@@ -97,6 +97,9 @@ export function NotificationPreferences() {
   );
 
   useEffect(() => {
+    // The Notification global doesn't exist during SSR; this can only be
+    // read post-mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPermission(
       typeof Notification !== "undefined" ? Notification.permission : null
     );

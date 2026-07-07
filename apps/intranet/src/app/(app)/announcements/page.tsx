@@ -29,7 +29,6 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { pathToUrl } from "@/components/onedrive/FileBrowser";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -63,6 +62,7 @@ import {
 } from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, initials } from "@/lib/format";
+import { pathToUrl } from "@/lib/onedrive-path";
 import {
   formatFileSize,
   isImage,
@@ -163,7 +163,11 @@ function EditorDialog({
     } else {
       try {
         const raw = localStorage.getItem(DRAFT_KEY);
-        setDraft(raw ? { ...EMPTY_DRAFT, ...JSON.parse(raw) } : EMPTY_DRAFT);
+        setDraft(
+          raw
+            ? { ...EMPTY_DRAFT, ...(JSON.parse(raw) as Partial<Draft>) }
+            : EMPTY_DRAFT
+        );
       } catch {
         setDraft(EMPTY_DRAFT);
       }
@@ -998,6 +1002,9 @@ export default function AnnouncementsPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("new") !== null) {
+      // window.location is only available post-mount; this is a one-time
+      // sync from URL state, not a case of deriving state from props.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditing(null);
       setDialogOpen(true);
       window.history.replaceState(null, "", "/announcements");

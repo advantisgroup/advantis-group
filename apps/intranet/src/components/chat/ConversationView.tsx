@@ -47,7 +47,6 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
-import { pathToUrl } from "@/components/onedrive/FileBrowser";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -67,6 +66,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatTime, initials, relativeTime } from "@/lib/format";
+import { pathToUrl } from "@/lib/onedrive-path";
 import { isImage, uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 

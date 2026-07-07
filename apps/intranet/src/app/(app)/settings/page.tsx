@@ -3,8 +3,8 @@
 import type { ChangeEvent } from "react";
 import { useEffect, useState } from "react";
 
-import { useClerk } from "@clerk/nextjs";
 import { api } from "@advantis/convex/api";
+import { useClerk } from "@clerk/nextjs";
 import { useAction, useMutation, useQuery } from "convex/react";
 import {
   Camera,

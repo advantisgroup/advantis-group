@@ -11,12 +11,12 @@ import {
 
 import { useRouter } from "next/navigation";
 
+import { api } from "@advantis/convex/api";
 import {
   type DriveQuota,
   type OneDriveItem,
   type OneDriveListing,
 } from "@advantis/types";
-import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowDown,
@@ -80,6 +80,7 @@ import {
   setCachedListing,
   setCachedQuota,
 } from "@/lib/onedrive-cache";
+import { pathToUrl } from "@/lib/onedrive-path";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -91,12 +92,6 @@ import {
 } from "./FileDialogs";
 import { FilePreviewDialog } from "./FilePreviewDialog";
 import { UploadDropOverlay } from "./UploadDropOverlay";
-
-/** Builds the shareable /files URL for a given OneDrive-relative path. */
-export function pathToUrl(path: string): string {
-  const segments = path.split("/").filter(Boolean).map(encodeURIComponent);
-  return segments.length === 0 ? "/files" : `/files/${segments.join("/")}`;
-}
 
 /** Wraps every case-insensitive occurrence of `query` in `text` with a mark. */
 export function HighlightMatch({
@@ -439,8 +434,8 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     }
   };
 
-  const rawItems = results ?? listing?.items ?? [];
   const items = useMemo(() => {
+    const rawItems = results ?? listing?.items ?? [];
     const compare = (a: OneDriveItem, b: OneDriveItem) => {
       if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
       let cmp = 0;
@@ -451,7 +446,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       return cmp * sortDir;
     };
     return [...rawItems].sort(compare);
-  }, [rawItems, sortKey, sortDir]);
+  }, [results, listing, sortKey, sortDir]);
   const canWrite = listing?.canWrite ?? false;
   const canDrop = Boolean(listing && (listing.canWrite || listing.canRequest));
 
@@ -1227,7 +1222,6 @@ function GridTile({
       >
         <span className="flex h-24 items-center justify-center overflow-hidden rounded-t-lg bg-muted/40">
           {item.thumbnailUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={item.thumbnailUrl}
               alt={item.name}

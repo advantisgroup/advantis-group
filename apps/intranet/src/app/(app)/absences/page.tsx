@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -350,7 +350,7 @@ function Pill({
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -807,6 +807,9 @@ export default function AbsencesPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("new") !== null) {
+      // window.location is only available post-mount; this is a one-time
+      // sync from URL state, not a case of deriving state from props.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditing(null);
       setDialogOpen(true);
       window.history.replaceState(null, "", "/absences");
