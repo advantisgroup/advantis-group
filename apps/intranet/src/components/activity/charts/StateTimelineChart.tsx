@@ -12,6 +12,13 @@ const BAR_HEIGHT = 26;
 // How far above/below the bar the active guide lines and their time labels
 // reach — enough room for a label plus a little breathing space.
 const GUIDE_REACH = 20;
+// A leading/trailing CLOCKED_OUT run (the assumed "hasn't started yet" or
+// "done for the day" stretch) is real time, but it isn't interesting — cap
+// how much of the bar it can visually claim so the tracked activity in
+// between isn't squeezed down to a sliver.
+const EDGE_CLOCKED_OUT_CAP_PCT = 25;
+
+type Layout = { left: number; width: number };
 
 function hhmm(ms: number): string {
   return new Date(ms).toLocaleTimeString(undefined, {
@@ -21,24 +28,91 @@ function hhmm(ms: number): string {
 }
 
 /**
- * Which segment sits under a given pointer X, by position rather than by
- * which of several overlapping DOM hit-targets happens to be on top — a
+ * Each segment's on-screen [left, width) in percent. Proportional to real
+ * duration, except a leading and/or trailing CLOCKED_OUT run is capped at
+ * `EDGE_CLOCKED_OUT_CAP_PCT` and the reclaimed width redistributed
+ * proportionally over the rest — real elapsed time everywhere else, visual
+ * space rebalanced only at the two ends.
+ */
+function layoutSegments(
+  segments: StateSegment[],
+  domainSpan: number
+): Layout[] {
+  const n = segments.length;
+  const rawPct = segments.map(s => ((s.end - s.start) / domainSpan) * 100);
+
+  const capped = new Array(n).fill(false);
+  if (
+    n > 1 &&
+    segments[0].state === "CLOCKED_OUT" &&
+    rawPct[0] > EDGE_CLOCKED_OUT_CAP_PCT
+  ) {
+    capped[0] = true;
+  }
+  if (
+    n > 1 &&
+    segments[n - 1].state === "CLOCKED_OUT" &&
+    rawPct[n - 1] > EDGE_CLOCKED_OUT_CAP_PCT &&
+    !capped[n - 1]
+  ) {
+    capped[n - 1] = true;
+  }
+
+  let widthPct = rawPct;
+  if (capped.some(Boolean)) {
+    const reserved = capped.filter(Boolean).length * EDGE_CLOCKED_OUT_CAP_PCT;
+    const uncappedTotal = rawPct.reduce(
+      (sum, p, i) => (capped[i] ? sum : sum + p),
+      0
+    );
+    const remaining = 100 - reserved;
+    widthPct = rawPct.map((p, i) => {
+      if (capped[i]) return EDGE_CLOCKED_OUT_CAP_PCT;
+      return uncappedTotal === 0 ? 0 : (p / uncappedTotal) * remaining;
+    });
+  }
+
+  const layout: Layout[] = [];
+  let cursor = 0;
+  for (const width of widthPct) {
+    layout.push({ left: cursor, width });
+    cursor += width;
+  }
+  return layout;
+}
+
+/** The real timestamp a display percent (post-compression) corresponds to. */
+function timeAtDisplayPct(
+  pct: number,
+  segments: StateSegment[],
+  layout: Layout[]
+): number {
+  for (let i = 0; i < segments.length; i++) {
+    const l = layout[i];
+    if (pct >= l.left && pct <= l.left + l.width) {
+      const within = l.width > 0 ? (pct - l.left) / l.width : 0;
+      return segments[i].start + within * (segments[i].end - segments[i].start);
+    }
+  }
+  return segments[segments.length - 1]?.end ?? 0;
+}
+
+/**
+ * Which segment sits under a given pointer X, by on-screen position — a
  * one-minute blip a few pixels wide is exactly as tappable as an hour-long
  * one, on touch or with a mouse, with no risk of a neighbour shadowing it.
  */
 function segmentAtClientX(
   clientX: number,
   rect: { left: number; width: number },
-  segments: StateSegment[],
-  domainStart: number,
-  domainSpan: number
+  layout: Layout[]
 ): number | null {
-  if (rect.width === 0 || domainSpan <= 0) return null;
-  const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
-  // -1ms so a tap at the very right edge still lands inside the last segment
-  // instead of exactly on its (exclusive) end boundary.
-  const t = domainStart + pct * domainSpan - 1;
-  const idx = segments.findIndex(s => t >= s.start && t < s.end);
+  if (rect.width === 0) return null;
+  // -epsilon so a tap at the very right edge still lands inside the last
+  // segment instead of exactly on its (exclusive) end boundary.
+  const pct =
+    Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) * 100 - 0.001;
+  const idx = layout.findIndex(l => pct >= l.left && pct < l.left + l.width);
   return idx >= 0 ? idx : null;
 }
 
@@ -101,15 +175,17 @@ function TimeLabel({
  * spanning from the day's first known state to its last — not a fixed 24h
  * strip — so a day that's only a few hours old (or one where tracking
  * stopped early) fills the whole width instead of sitting as a sliver in a
- * mostly-empty bar. As more of the day is tracked, the bar simply grows to
- * match; a CLOCKED_OUT stretch at the end takes up exactly its share like
- * any other segment. Hovering (or externally highlighting, via
- * `highlightAt`) a segment dims its neighbours, drops a pair of solid guide
- * lines through the bar at its exact start/end instants (labelled with the
- * time), and raises a floating badge with the state name, time range and
- * duration. CLOCKED_OUT segments keep their usual colour but are drawn with
- * a diagonal "no-go zone" hatch — the same convention maps use for a
- * restricted area — since it's always an assumption, never a reported fact.
+ * mostly-empty bar. A leading or trailing CLOCKED_OUT run is real time but
+ * not interesting, so it's visually capped (see `EDGE_CLOCKED_OUT_CAP_PCT`)
+ * rather than allowed to crowd out everything else — every label and
+ * duration still reflects the real timestamps regardless of that visual
+ * compression. Hovering (or externally highlighting, via `highlightAt`) a
+ * segment dims its neighbours, drops a pair of solid guide lines through the
+ * bar at its exact start/end instants (labelled with the time), and raises a
+ * floating badge with the state name, time range and duration. CLOCKED_OUT
+ * segments keep their usual colour but are drawn with a diagonal "no-go
+ * zone" hatch — the same convention maps use for a restricted area — since
+ * it's always an assumption, never a reported fact.
  */
 export function StateTimelineChart({
   segments,
@@ -136,7 +212,8 @@ export function StateTimelineChart({
   const domainStart = segments[0].start;
   const domainEnd = segments[segments.length - 1].end;
   const domainSpan = Math.max(1, domainEnd - domainStart);
-  const domainMid = domainStart + domainSpan / 2;
+  const layout = layoutSegments(segments, domainSpan);
+  const domainMidLabel = hhmm(timeAtDisplayPct(50, segments, layout));
 
   const highlightedIndex =
     highlightAt != null
@@ -148,12 +225,9 @@ export function StateTimelineChart({
   const activeIndex =
     hovered ?? (highlightedIndex >= 0 ? highlightedIndex : null);
   const activeSeg = activeIndex != null ? segments[activeIndex] : null;
-  const startPct = activeSeg
-    ? ((activeSeg.start - domainStart) / domainSpan) * 100
-    : null;
-  const endPct = activeSeg
-    ? ((activeSeg.end - domainStart) / domainSpan) * 100
-    : null;
+  const activeLayout = activeIndex != null ? layout[activeIndex] : null;
+  const startPct = activeLayout ? activeLayout.left : null;
+  const endPct = activeLayout ? activeLayout.left + activeLayout.width : null;
   const centerPct =
     startPct != null && endPct != null ? (startPct + endPct) / 2 : null;
   const badgeAnchor = centerPct != null ? edgeAnchor(centerPct) : null;
@@ -191,9 +265,7 @@ export function StateTimelineChart({
             segmentAtClientX(
               e.clientX,
               e.currentTarget.getBoundingClientRect(),
-              segments,
-              domainStart,
-              domainSpan
+              layout
             )
           )
         }
@@ -203,9 +275,7 @@ export function StateTimelineChart({
             segmentAtClientX(
               e.clientX,
               e.currentTarget.getBoundingClientRect(),
-              segments,
-              domainStart,
-              domainSpan
+              layout
             )
           )
         }
@@ -214,8 +284,7 @@ export function StateTimelineChart({
             to poke out above and below this rounded strip. */}
         <div className="absolute inset-0 overflow-hidden rounded-md border border-border">
           {segments.map((seg, i) => {
-            const left = ((seg.start - domainStart) / domainSpan) * 100;
-            const width = ((seg.end - seg.start) / domainSpan) * 100;
+            const { left, width } = layout[i];
             const isClockedOut = seg.state === "CLOCKED_OUT";
             return (
               <div
@@ -255,10 +324,11 @@ export function StateTimelineChart({
       </div>
 
       {/* The tracked window's start, middle and end — not fixed day hours,
-          since the bar itself is rescaled to just this span. */}
+          since the bar itself is rescaled (and edge CLOCKED_OUT runs
+          compressed) to just this span. */}
       <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
         <span>{hhmm(domainStart)}</span>
-        <span>{hhmm(domainMid)}</span>
+        <span>{domainMidLabel}</span>
         <span>{hhmm(domainEnd)}</span>
       </div>
     </div>
