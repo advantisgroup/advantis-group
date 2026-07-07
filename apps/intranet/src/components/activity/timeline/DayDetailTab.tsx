@@ -5,10 +5,8 @@ import { useMemo } from "react";
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 
-import {
-  StateStrip,
-  StateStripLegend,
-} from "@/components/activity/charts/StateStrip";
+import { StateStripLegend } from "@/components/activity/charts/StateStrip";
+import { StateTimelineChart } from "@/components/activity/charts/StateTimelineChart";
 import { STATE_COLOR } from "@/components/activity/charts/theme";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -117,7 +115,7 @@ export function DayDetailTab({
         ) : (
           <div className="space-y-5">
             {/* ── Horizontal day strip ── */}
-            <StateStrip
+            <StateTimelineChart
               segments={segments}
               dayStart={dayStart}
               label={stateLabel}
