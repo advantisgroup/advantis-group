@@ -834,6 +834,15 @@ html.lenis body {
   border: 1px solid color-mix(in oklch, var(--border) 60%, transparent);
 }
 
+/* The state timeline's segments (StateTimelineChart) fade in/out their
+   dimmed-neighbour opacity on hover instead of snapping. */
+.state-timeline .recharts-rectangle {
+  cursor: pointer;
+  transition:
+    fill-opacity 150ms ease,
+    opacity 150ms ease;
+}
+
 @keyframes fade-up {
   0% {
     opacity: 0;

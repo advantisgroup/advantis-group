@@ -14,10 +14,8 @@ import {
   MonitorSmartphone,
 } from "lucide-react";
 
-import {
-  StateStrip,
-  StateStripLegend,
-} from "@/components/activity/charts/StateStrip";
+import { StateStripLegend } from "@/components/activity/charts/StateStrip";
+import { StateTimelineChart } from "@/components/activity/charts/StateTimelineChart";
 import { STATE_COLOR } from "@/components/activity/charts/theme";
 import { InfoTip } from "@/components/activity/InfoTip";
 import { SourceSignals } from "@/components/activity/state/StateBits";
@@ -445,7 +443,7 @@ export default function TimelinePage({
                     </p>
                   ) : (
                     <div className="space-y-2.5">
-                      <StateStrip
+                      <StateTimelineChart
                         segments={daySegments}
                         dayStart={dayStartMs}
                         label={stateLabel}
