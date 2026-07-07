@@ -59,7 +59,7 @@ export default function UberUns() {
     },
     {
       icon: Users,
-      value: 500,
+      value: 150,
       label: t("stats.projects"),
     },
     {

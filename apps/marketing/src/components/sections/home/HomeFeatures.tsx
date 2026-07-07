@@ -98,7 +98,9 @@ export const HomeFeatures = () => {
               </p>
               <h2 className="font-[family-name:var(--font-outfit)] text-4xl leading-[1.05] md:text-6xl lg:text-7xl">
                 {t("title")}{" "}
-                <BrandText brand="advantis">{t("titleBrand")}</BrandText>?
+                <span className="whitespace-nowrap">
+                  <BrandText brand="advantis">{t("titleBrand")}</BrandText>?
+                </span>
               </h2>
               <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">
                 {t("subtitle")}
@@ -115,7 +117,7 @@ export const HomeFeatures = () => {
                 </div>
                 <div>
                   <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
-                    <CountUp to={500} suffix="+" />
+                    <CountUp to={150} suffix="+" />
                   </p>
                   <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
                     {t("stats.projects")}

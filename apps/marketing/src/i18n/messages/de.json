@@ -27,23 +27,27 @@
     "ctaPrimary": "Jetzt Kontakt aufnehmen",
     "ctaSecondary": "Unsere Marken entdecken"
   },
+  "homeIntro": {
+    "eyebrow": "Revenue- und Customer-Engagement-Partner",
+    "text": "Die ADVANTIS GROUP unterstützt Unternehmen beim Aufbau moderner Customer-Care- und Inside-Sales-Organisationen. Unsere Experten übernehmen Customer Service, Leadgenerierung, Telesales, Neukundengewinnung und Vertriebsoutsourcing. Ergänzt wird unser Portfolio durch KI-gestützte Prozessautomatisierung, CRM-Beratung und Sales-Trainings."
+  },
   "features": {
     "badge": "Unsere Stärken",
     "eyebrow": "Beratungs-Engine",
     "title": "Warum",
     "titleBrand": "Advantis Group",
-    "subtitle": "Wir kombinieren über 15 Jahre Erfahrung mit innovativen Ansätzen, um Ihren Vertrieb auf das nächste Level zu bringen.",
+    "subtitle": "Wir kombinieren über 15 Jahre Vertriebserfahrung mit innovativen Sales-Ansätzen und KI-Tools, um Deinen Vertrieb auf das nächste Level zu bringen.",
     "feature1": {
-      "title": "Sales-Teams erfolgreich machen",
-      "description": "Durch gezielte Strategien und praxisnahe Unterstützung helfen wir Ihren Teams, ihre Ziele zu erreichen und nachhaltig zu wachsen."
+      "title": "Wir machen Dein Sales-Team erfolgreich",
+      "description": "Durch eine gezielte Leadgeneration-Strategie und eine praxisnahe Unterstützung helfen wir Deinem Team zu wachsen und Eure Ziele zu erreichen."
     },
     "feature2": {
-      "title": "Vertrieb smarter gestalten",
-      "description": "Mit modernen Tools und bewährten Methoden optimieren wir Ihre Vertriebsprozesse für maximale Effizienz."
+      "title": "Vertrieb smarter gestalten – intern oder extern",
+      "description": "Mit modernen Tools und AI optimieren wir Deine Vertriebsprozesse für maximale Effizienz. Wir helfen, Dein eigenes Team zu stärken, oder übernehmen den gesamten Vertriebsprozess als Outsourcing-Partner für Dich – Du entscheidest!"
     },
     "feature3": {
       "title": "Nachhaltige Ergebnisse liefern",
-      "description": "Über 15 Jahre Erfahrung gepaart mit innovativen Ansätzen für langfristigen Erfolg, der überzeugt."
+      "description": "Wir bringen unsere Erfahrung, Expertise und viel Herzblut in die Zusammenarbeit mit ein. Das Ergebnis soll eine langfristig erfolgreiche Partnerschaft sein – wir sind bereit, hart für diesen gemeinsamen Erfolg zu arbeiten!"
     },
     "stats": {
       "experience": "Jahre Erfahrung",
@@ -59,7 +63,7 @@
     "subtitle": "Vier starke Marken, ein gemeinsames Ziel: Ihr Vertriebserfolg",
     "salespirates": {
       "tagline": "Externe Vertriebsagentur",
-      "description": "Wir liefern Leads oder unterstützen Ihren Vertrieb mit messbaren Ergebnissen. Aktiv, zielgerichtet und effektiv."
+      "description": "Wir generieren Leads im Cold Calling, qualifizieren vor und übernehmen Deinen Inside Sales. Vom Lead bis zum Abschluss für einen maximalen Erfolg Deines Sales."
     },
     "rodeo": {
       "tagline": "Strategische Beratung",
@@ -78,10 +82,10 @@
   "cta": {
     "title": "Bereit für das nächste",
     "titleHighlight": "Level?",
-    "subtitle": "Lassen Sie uns gemeinsam herausfinden, wie wir Ihren Vertrieb transformieren können.",
+    "subtitle": "Lass uns gemeinsam herausfinden, wie wir Deinen Vertrieb transformieren und pushen können.",
     "primary": "Jetzt Kontakt aufnehmen",
     "secondary": "E-Mail schreiben",
-    "benefits": "Kostenlose Erstberatung • Keine Verpflichtungen • Individuelle Lösungen"
+    "benefits": "Kostenfreie Erstberatung • Individuelle Lösungen • Individuelle Angebote"
   },
   "footer": {
     "description": "Wir sind Ihr Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und vier starken Marken bringen wir Ihr Unternehmen voran.",
@@ -522,5 +526,478 @@
         "failed": "Benötigt Aufmerksamkeit"
       }
     }
+  },
+  "services": {
+    "eyebrow": "Unsere Leistungen",
+    "title": "Alles für Deinen Vertriebserfolg",
+    "subtitle": "Von Customer Care bis KI-Automatisierung – entdecke, wie wir Deinen Vertrieb ganzheitlich unterstützen.",
+    "common": {
+      "whyTitle": "Warum Advantis Group?",
+      "offeringsTitle": "Unsere Leistungen",
+      "ctaTitle": "Jetzt beraten lassen",
+      "ctaButton": "Kostenlos beraten lassen",
+      "relatedTitle": "Das könnte Sie auch interessieren",
+      "backLabel": "Zurück zur Übersicht",
+      "seoLabel": "Themen",
+      "vertriebstrainingTile": {
+        "title": "Vertriebstraining",
+        "description": "Von Einwandbehandlung über Gesprächsführung bis Closing – unsere Vertriebstrainings vermitteln direkt anwendbares Wissen für Innen- und Außendienst sowie Customer-Care-Teams."
+      }
+    },
+    "items": {
+      "customer-care": {
+        "tileTitle": "Customer Care",
+        "tileDescription": "Exzellenter Kundenservice entlang der gesamten Customer Journey – mit KI-Unterstützung für schnellere Reaktionszeiten.",
+        "metaTitle": "Customer Care mit KI-Unterstützung",
+        "metaDescription": "Professioneller Kundenservice mit KI-Unterstützung: Hotlines, Beschwerdemanagement und After-Sales-Service für höhere Servicequalität.",
+        "title": "Customer Care – Professioneller Kundenservice mit KI-Unterstützung",
+        "heroSubtitle": "Ein exzellenter Customer Care entscheidet heute maßgeblich darüber, wie Kunden ein Unternehmen wahrnehmen. Die Advantis Group verbindet persönliche Kundenbetreuung mit modernen AI-Lösungen. Künstliche Intelligenz unterstützt unsere Servicemitarbeiter durch intelligente Wissensdatenbanken, Antwortvorschläge in Echtzeit, automatische Gesprächszusammenfassungen, Ticketklassifizierung und Workflow-Automatisierung. So entstehen schnellere Reaktionszeiten, höhere Qualität und ein konsistentes Kundenerlebnis.",
+        "whatTitle": "Was bedeutet Customer Care?",
+        "whatText": "Customer Care umfasst alle Maßnahmen zur Betreuung Ihrer Kunden entlang der gesamten Customer Journey – von der ersten Anfrage bis zum After-Sales-Service. Moderne AI-Systeme analysieren Anfragen, priorisieren Tickets, erkennen Stimmungen (Sentiment Analysis) und unterstützen Mitarbeitende mit passenden Lösungsvorschlägen.",
+        "offeringsText": "Wir übernehmen Customer Service Hotlines, Beschwerde- und Reklamationsmanagement, After-Sales-Service sowie Kundenbetreuung per Telefon, E-Mail und Chat. Unsere AI-Lösungen automatisieren wiederkehrende Prozesse, erstellen Gesprächsnotizen, schlagen Antworten vor und helfen dabei, Service-Level einzuhalten.",
+        "aiTitle": "AI-Lösungen für Ihren Customer Care",
+        "aiItems": [
+          "KI-Chatbots für Standardanfragen",
+          "AI Voicebots zur Vorqualifizierung",
+          "Automatische Ticketklassifizierung",
+          "Intelligente Wissensdatenbanken",
+          "Echtzeit-Unterstützung während Kundengesprächen",
+          "Gesprächszusammenfassungen per KI",
+          "Qualitätsanalyse und Coaching durch AI",
+          "Sentiment-Analyse zur Erkennung unzufriedener Kunden",
+          "Automatische Übersetzungen für mehrsprachigen Support",
+          "CRM-Automatisierung und Workflow-Steuerung"
+        ],
+        "extraSections": [
+          {
+            "title": "Customer Care Outsourcing",
+            "text": "Unsere Teams arbeiten nahtlos mit Ihren Prozessen zusammen. Durch den Einsatz von AI können Bearbeitungszeiten reduziert, First-Contact-Resolution verbessert und Kosten gesenkt werden."
+          },
+          {
+            "title": "Technologie",
+            "text": "Wir integrieren uns u. a. in Salesforce, HubSpot, Microsoft Dynamics, Zendesk, Freshdesk, SAP und individuelle CRM-Systeme. AI-Agenten lassen sich in bestehende Systemlandschaften integrieren, ohne Ihre Prozesse zu ersetzen."
+          },
+          {
+            "title": "Datenschutz",
+            "text": "Alle AI-Lösungen werden unter Berücksichtigung der DSGVO eingesetzt. Datenschutz, Informationssicherheit und transparente Prozesse haben höchste Priorität."
+          }
+        ],
+        "whyText": "Wir kombinieren erfahrene Customer-Care-Teams mit intelligenter Automatisierung. Dadurch erhalten Sie einen modernen Kundenservice, der persönliche Betreuung mit Effizienz, Skalierbarkeit und messbaren Ergebnissen verbindet.",
+        "ctaText": "Sie möchten Ihren Kundenservice modernisieren oder AI sinnvoll integrieren? Wir entwickeln gemeinsam mit Ihnen eine individuelle Customer-Care-Strategie – von der Prozessanalyse bis zur operativen Umsetzung.",
+        "seoKeywords": "Customer Care, Kundenservice, Customer Service, Beschwerdemanagement, After-Sales-Service, KI Kundenservice, AI Customer Care, Chatbot, Voicebot, CRM, Salesforce, DSGVO."
+      },
+      "contact-center": {
+        "tileTitle": "Contact Center",
+        "tileDescription": "Inbound & Outbound über alle Kanäle – flexibel skalierbar und vollständig DSGVO-konform.",
+        "metaTitle": "Contact Center Outsourcing mit KI",
+        "metaDescription": "Modernes Contact Center für Inbound und Outbound: Kundenservice, Bestellannahme und Reklamationsmanagement – KI-gestützt und DSGVO-konform.",
+        "title": "Contact Center – Intelligente Kundenkommunikation mit Menschen & KI",
+        "heroSubtitle": "Ein modernes Contact Center ist heute die zentrale Kommunikationsplattform zwischen Unternehmen und Kunden. Die Advantis Group verbindet persönliche Beratung mit AI-gestützten Technologien. Unsere Mitarbeitenden werden durch intelligente Assistenzsysteme unterstützt, sodass Anfragen schneller bearbeitet, Antworten präziser formuliert und Prozesse effizient automatisiert werden.",
+        "whatTitle": "",
+        "whatText": "",
+        "offeringsText": "Wir übernehmen Inbound- und Outbound-Kommunikation per Telefon, E-Mail, Chat und digitalen Kanälen. Dazu gehören Kundenservice, Bestellannahme, Terminvereinbarung, Reklamationsmanagement, Helpdesk, After-Sales-Service, Leadqualifizierung und Kundenrückgewinnung.",
+        "aiTitle": "AI-gestützte Contact-Center-Lösungen",
+        "aiItems": [
+          "KI-Voicebots für die Annahme und Vorqualifizierung von Anrufen",
+          "Chatbots für Standardanfragen rund um die Uhr",
+          "Automatische Gesprächszusammenfassungen",
+          "Echtzeit-Antwortvorschläge für Mitarbeitende",
+          "Sentiment-Analyse zur Erkennung kritischer Gespräche",
+          "Automatische Ticketklassifizierung und Priorisierung",
+          "Intelligente Wissensdatenbanken",
+          "KI-gestützte Qualitätsanalyse und Coaching",
+          "Workflow- und CRM-Automatisierung",
+          "Mehrsprachige Übersetzungen in Echtzeit"
+        ],
+        "extraSections": [
+          {
+            "title": "Omnichannel Customer Experience",
+            "text": "Kunden erwarten heute eine nahtlose Kommunikation über alle Kanäle. Unser Contact Center verbindet Telefon, E-Mail, Chat, Webformulare und Social Messaging zu einem konsistenten Kundenerlebnis. Alle Kontakte werden zentral dokumentiert."
+          },
+          {
+            "title": "Vorteile eines ausgelagerten Contact Centers",
+            "text": "Unternehmen profitieren von flexibler Skalierung, kalkulierbaren Kosten, hoher Erreichbarkeit, kurzen Reaktionszeiten und erfahrenen Service-Teams. Durch AI-Unterstützung sinken Bearbeitungszeiten und die First-Contact-Resolution steigt."
+          },
+          {
+            "title": "Technologie & CRM",
+            "text": "Wir integrieren uns in Salesforce, HubSpot, Microsoft Dynamics, Zendesk, Freshdesk, SAP sowie individuelle CRM-Lösungen. AI-Agenten ergänzen bestehende Prozesse und liefern wertvolle Analysen sowie Automatisierungen."
+          },
+          {
+            "title": "Datenschutz",
+            "text": "Datenschutz und Informationssicherheit besitzen höchste Priorität. Unsere Prozesse orientieren sich konsequent an der DSGVO. KI wird verantwortungsvoll, transparent und unter Einhaltung geltender Datenschutzanforderungen eingesetzt."
+          }
+        ],
+        "whyText": "Wir kombinieren moderne Contact-Center-Technologie mit erfahrenen Service- und Vertriebsteams. Das Ergebnis sind schnellere Prozesse, zufriedene Kunden, messbare KPIs und eine skalierbare Kommunikationslösung für Unternehmen jeder Größe.",
+        "ctaText": "Sie möchten Ihr Call Center zu einem modernen Contact Center weiterentwickeln oder AI sinnvoll einsetzen? Gemeinsam entwickeln wir eine individuelle Lösung – von der Strategie bis zum operativen Betrieb.",
+        "seoKeywords": "Contact Center, Contact Center Outsourcing, Kundenservice, Customer Service, Inbound Service, Outbound Service, Helpdesk, Service Desk, Omnichannel, AI Contact Center, KI Kundenservice, Voicebot, Chatbot, Contact Center Deutschland, CRM, Salesforce, Customer Experience, BPO, DSGVO."
+      },
+      "telesales": {
+        "tileTitle": "Telesales",
+        "tileDescription": "Professioneller Telefonvertrieb für B2B – mehr qualifizierte Gespräche und höhere Abschlussquoten.",
+        "metaTitle": "Telesales für B2B-Vertrieb",
+        "metaDescription": "Telesales mit erfahrenen Sales Consultants und KI: Neukundengewinnung, Terminvereinbarung und Angebotsverfolgung für mehr Umsatzwachstum.",
+        "title": "Telesales – Erfolgreicher B2B-Vertrieb mit Menschen & KI",
+        "heroSubtitle": "Professioneller Telesales ist weit mehr als Telefonverkauf. Die Advantis Group verbindet erfahrene Sales Consultants mit modernen AI-Lösungen, datengetriebenen Vertriebsprozessen und bewährten Verkaufsstrategien. Das Ergebnis sind mehr qualifizierte Gespräche, höhere Abschlussquoten und nachhaltiges Umsatzwachstum.",
+        "whatTitle": "Warum Telesales?",
+        "whatText": "Der telefonische Vertrieb ermöglicht den direkten Dialog mit Entscheidern, verkürzt Vertriebszyklen und schafft persönliche Beziehungen. Besonders im B2B-Umfeld ist Telesales ein effizienter Kanal zur Leadgenerierung und Neukundengewinnung.",
+        "offeringsText": "Wir übernehmen die telefonische Neukundengewinnung, Leadqualifizierung, Terminvereinbarung, Angebotsverfolgung, Cross- und Upselling, Bestandskundenbetreuung sowie die vollständige Begleitung Ihrer Sales Pipeline – von der Erstansprache bis zum Vertragsabschluss.",
+        "aiTitle": "AI-gestützte Vertriebsunterstützung",
+        "aiItems": [
+          "KI-gestützte Lead-Priorisierung",
+          "Gesprächsvorbereitung mit Unternehmensanalysen",
+          "Echtzeit-Gesprächsunterstützung und Argumentationshilfen",
+          "Automatische Gesprächszusammenfassungen",
+          "CRM-Dokumentation per KI",
+          "Analyse von Einwänden und Erfolgsquoten",
+          "Next-Best-Action-Empfehlungen",
+          "Automatisierte Follow-ups per E-Mail",
+          "Vertriebs-Dashboards und KPI-Analysen"
+        ],
+        "extraSections": [
+          {
+            "title": "Unsere Vertriebsmethodik",
+            "text": "Wir arbeiten mit strukturierten Gesprächsleitfäden, offenen Fragetechniken, professioneller Einwandbehandlung und einem klar definierten Sales Funnel. Jeder Schritt wird messbar dokumentiert und kontinuierlich optimiert."
+          },
+          {
+            "title": "CRM & Digitalisierung",
+            "text": "Unsere Teams arbeiten direkt in Salesforce, HubSpot, Microsoft Dynamics oder Ihrem bestehenden CRM. Alle Aktivitäten werden transparent dokumentiert und durch KI-gestützte Auswertungen ergänzt."
+          },
+          {
+            "title": "Branchen",
+            "text": "Unsere Telesales-Teams unterstützen Unternehmen aus Industrie, Software, SaaS, Energie, Mobilität, Logistik, Handel, Finanzdienstleistungen und vielen weiteren B2B-Branchen."
+          }
+        ],
+        "whyText": "Wir kombinieren operative Vertriebserfahrung, moderne Technologien und AI-Automatisierung. Dadurch steigern wir die Produktivität Ihrer Vertriebsorganisation und schaffen messbare Ergebnisse – von mehr Leads bis zu höheren Abschlussquoten.",
+        "ctaText": "Sie möchten Ihren telefonischen Vertrieb professionalisieren oder einen skalierbaren Telesales-Prozess aufbauen? Gemeinsam entwickeln wir die passende Strategie und übernehmen auf Wunsch die komplette operative Umsetzung.",
+        "seoKeywords": "Telesales, Telefonvertrieb, B2B Vertrieb, Neukundengewinnung, Leadgenerierung, Inside Sales, Sales Outsourcing, Kaltakquise, Terminvereinbarung, Business Development, AI Sales, KI im Vertrieb, CRM, Salesforce, Vertrieb auslagern, Lead Management, Conversion Optimierung."
+      },
+      "new-customer-acquisition": {
+        "tileTitle": "Neukundengewinnung",
+        "tileDescription": "Mehr qualifizierte Leads und mehr Abschlüsse durch individuelle Strategien zur Neukundengewinnung.",
+        "metaTitle": "Neukundengewinnung mit KI",
+        "metaDescription": "Individuelle Strategien zur Neukundengewinnung: Leadgenerierung, Qualifizierung und Vertragsabschluss – datenbasiert und KI-gestützt.",
+        "title": "Neukundengewinnung – Nachhaltiges Wachstum durch moderne Vertriebsstrategien & KI",
+        "heroSubtitle": "Neue Kunden sind die Grundlage für nachhaltiges Unternehmenswachstum. Die Advantis Group entwickelt individuelle Strategien zur Neukundengewinnung und kombiniert erfahrene Vertriebsteams mit datenbasierten Prozessen und künstlicher Intelligenz. So erreichen Sie schneller die richtigen Entscheider und steigern Ihre Abschlussquote.",
+        "whatTitle": "",
+        "whatText": "",
+        "offeringsText": "Wir unterstützen Sie entlang des gesamten Vertriebsprozesses – von der Zielgruppenanalyse über Leadgenerierung, Leadqualifizierung und Terminvereinbarung bis hin zum Angebotsmanagement, Follow-up und erfolgreichen Vertragsabschluss. Auf Wunsch übernehmen wir den kompletten Vertriebsprozess als Outsourcing-Partner.",
+        "aiTitle": "KI-gestützte Neukundengewinnung",
+        "aiItems": [
+          "AI-gestützte Zielgruppenanalyse",
+          "Lead Scoring und Priorisierung",
+          "Automatische Unternehmensrecherche",
+          "Personalisierte E-Mail-Kampagnen",
+          "KI-unterstützte Gesprächsvorbereitung",
+          "Analyse von Kaufwahrscheinlichkeiten",
+          "Next-Best-Action-Empfehlungen",
+          "CRM-Automatisierung",
+          "Vertriebs-Dashboards und KPI-Auswertungen"
+        ],
+        "extraSections": [
+          {
+            "title": "Mehr qualifizierte Leads",
+            "text": "Erfolgreiche Neukundengewinnung beginnt mit der richtigen Zielgruppe. Gemeinsam definieren wir Ihr Ideal Customer Profile (ICP), identifizieren Potenziale und entwickeln einen skalierbaren Lead-Funnel für langfristiges Wachstum."
+          },
+          {
+            "title": "Omnichannel-Vertrieb",
+            "text": "Wir kombinieren Telefon, E-Mail, LinkedIn, digitale Kampagnen und Marketing-Automatisierung zu einer durchgängigen Vertriebsstrategie. Alle Kontakte werden zentral dokumentiert und systematisch weiterentwickelt."
+          },
+          {
+            "title": "CRM & Sales Automation",
+            "text": "Unsere Teams arbeiten mit Salesforce, HubSpot, Microsoft Dynamics und weiteren CRM-Systemen. KI automatisiert Routineaufgaben, dokumentiert Aktivitäten und liefert wertvolle Handlungsempfehlungen für den Vertrieb."
+          },
+          {
+            "title": "Für welche Unternehmen?",
+            "text": "Unsere Lösungen eignen sich für B2B-Unternehmen aus Industrie, Software, SaaS, Energie, Mobilität, Logistik, Handel, Finanzdienstleistungen und vielen weiteren Branchen."
+          }
+        ],
+        "whyText": "Wir verbinden Strategie, operative Umsetzung und moderne AI-Technologien. Das Ergebnis sind mehr qualifizierte Leads, kürzere Vertriebszyklen, höhere Conversion Rates und ein planbarer Vertriebserfolg.",
+        "ctaText": "Sie möchten Ihre Neukundengewinnung professionalisieren oder Ihren Vertrieb skalieren? Gemeinsam entwickeln wir eine individuelle Strategie und begleiten Sie von der ersten Idee bis zum messbaren Erfolg.",
+        "seoKeywords": "Neukundengewinnung, B2B Neukunden, Leadgenerierung, Lead Management, Lead Qualifizierung, Vertrieb, Telesales, Inside Sales, Sales Outsourcing, Business Development, Kaltakquise, Terminvereinbarung, CRM, Salesforce, KI im Vertrieb, AI Sales, Vertrieb automatisieren, Conversion Optimierung."
+      },
+      "customer-experience": {
+        "tileTitle": "Customer Experience",
+        "tileDescription": "Positive Kundenerlebnisse an jedem Kontaktpunkt – für mehr Kundenbindung und Weiterempfehlungen.",
+        "metaTitle": "Customer Experience Management",
+        "metaDescription": "Customer Experience nachhaltig verbessern: Journey-Analyse, Omnichannel-Kommunikation und KI für höhere Kundenzufriedenheit.",
+        "title": "Customer Experience – Begeisternde Kundenerlebnisse mit Menschen, Prozessen & KI",
+        "heroSubtitle": "Produkte und Preise lassen sich vergleichen – außergewöhnliche Kundenerlebnisse bleiben in Erinnerung. Eine durchdachte Customer Experience (CX) entscheidet heute maßgeblich über Kundenzufriedenheit, Kundenbindung und Weiterempfehlungen. Die Advantis Group unterstützt Unternehmen dabei, jeden Kundenkontakt zu einem positiven Erlebnis zu machen.",
+        "whatTitle": "Was bedeutet Customer Experience?",
+        "whatText": "Customer Experience beschreibt die Gesamtheit aller Erfahrungen, die Kunden mit einem Unternehmen machen – von der ersten Recherche über den Kauf bis hin zum Kundenservice und After Sales. Ziel ist es, eine konsistente, persönliche und positive Customer Journey über alle Kontaktpunkte hinweg zu schaffen.",
+        "offeringsText": "Wir analysieren bestehende Customer Journeys, identifizieren Optimierungspotenziale und entwickeln Maßnahmen zur Verbesserung der Kundenzufriedenheit. Dazu gehören Customer Care, Contact Center, Omnichannel-Kommunikation, Voice of Customer Programme, Beschwerdemanagement und Serviceoptimierung.",
+        "aiTitle": "KI für eine bessere Customer Experience",
+        "aiItems": [
+          "AI-gestützte Analyse der Customer Journey",
+          "Sentiment-Analyse zur Erkennung von Kundenstimmungen",
+          "Personalisierte Kommunikation",
+          "KI-Chatbots und Voicebots",
+          "Echtzeit-Unterstützung für Servicemitarbeiter",
+          "Automatische Zusammenfassungen und Dokumentation",
+          "Predictive Analytics zur Vorhersage von Kundenbedürfnissen",
+          "Next-Best-Action-Empfehlungen",
+          "CRM- und Workflow-Automatisierung"
+        ],
+        "extraSections": [
+          {
+            "title": "Omnichannel-Kommunikation",
+            "text": "Kunden erwarten heute eine nahtlose Kommunikation über Telefon, E-Mail, Chat, Social Media und Self-Service-Portale. Wir verbinden alle Kanäle zu einem einheitlichen Kundenerlebnis und sorgen für konsistente Informationen und schnelle Reaktionszeiten."
+          },
+          {
+            "title": "Messbare Ergebnisse",
+            "text": "Eine optimierte Customer Experience steigert Kundenzufriedenheit (CSAT), Weiterempfehlungsrate (NPS), Kundenbindung und Wiederkaufraten. Gleichzeitig sinken Bearbeitungszeiten, Eskalationen und Servicekosten."
+          },
+          {
+            "title": "CRM & Daten",
+            "text": "Wir integrieren bestehende CRM-Systeme wie Salesforce, HubSpot, Microsoft Dynamics oder SAP und schaffen eine 360°-Sicht auf Ihre Kunden. So stehen Ihrem Team alle relevanten Informationen in jedem Kontakt zur Verfügung."
+          }
+        ],
+        "whyText": "Wir verbinden Customer Care, Vertrieb, Digitalisierung und künstliche Intelligenz zu einer ganzheitlichen Customer-Experience-Strategie. Unser Ziel sind messbare Verbesserungen entlang der gesamten Customer Journey.",
+        "ctaText": "Sie möchten Ihre Customer Experience nachhaltig verbessern? Gemeinsam analysieren wir Ihre Kundenreise, entwickeln individuelle Maßnahmen und setzen moderne AI-Lösungen ein, um Ihre Kunden langfristig zu begeistern.",
+        "seoKeywords": "Customer Experience, Customer Journey, Kundenzufriedenheit, Customer Experience Management, Customer Care, Contact Center, Omnichannel, Customer Service, CX Strategie, KI Customer Experience, AI Customer Service, Voicebot, Chatbot, CRM, Salesforce, NPS, CSAT."
+      },
+      "ai-automation": {
+        "tileTitle": "KI-Automatisierung",
+        "tileDescription": "Intelligente Prozesse für Vertrieb, Service und Wachstum – von Chatbots bis Workflow-Automatisierung.",
+        "metaTitle": "KI-Automatisierung für Vertrieb & Service",
+        "metaDescription": "KI-Automatisierung für Vertrieb und Kundenservice: AI Agents, Chatbots, Voicebots und Prozessautomatisierung – DSGVO-konform.",
+        "title": "KI-Automatisierung – Intelligente Prozesse für Vertrieb, Service und Wachstum",
+        "heroSubtitle": "Künstliche Intelligenz verändert die Art, wie Unternehmen arbeiten. Die Advantis Group unterstützt Unternehmen dabei, wiederkehrende Aufgaben zu automatisieren, Mitarbeitende zu entlasten und Prozesse intelligenter zu gestalten. Dabei kombinieren wir moderne AI-Technologien mit praxisnaher Beratung und operativer Umsetzung.",
+        "whatTitle": "Was bedeutet KI-Automatisierung?",
+        "whatText": "KI-Automatisierung geht weit über klassische Workflows hinaus. Moderne AI-Systeme analysieren Daten, treffen Handlungsempfehlungen, erstellen Inhalte, beantworten Anfragen, dokumentieren Vorgänge und unterstützen Mitarbeitende in Echtzeit. Dadurch entstehen schnellere Prozesse, geringere Kosten und eine höhere Servicequalität.",
+        "offeringsText": "Wir implementieren AI Agents für Vertrieb, Customer Care und Backoffice, KI-Chatbots und Voicebots, automatische E-Mail-Bearbeitung, CRM-Automatisierung, Dokumenten- und Rechnungsverarbeitung sowie Wissensdatenbanken mit AI-Suche und Workflow-Automatisierung.",
+        "aiTitle": "Unsere AI-Lösungen",
+        "aiItems": [
+          "AI Agents für Vertrieb, Customer Care und Backoffice",
+          "KI-Chatbots für Website und Kundenservice",
+          "Voicebots für telefonische Anfragen",
+          "Automatische E-Mail-Bearbeitung",
+          "CRM-Automatisierung und Datenerfassung",
+          "KI-gestützte Leadqualifizierung und Lead Scoring",
+          "Dokumenten- und Rechnungsverarbeitung",
+          "Wissensdatenbanken mit AI-Suche",
+          "Meeting- und Gesprächszusammenfassungen",
+          "Übersetzungen und mehrsprachige Kommunikation",
+          "Workflow-Automatisierung und Prozesssteuerung"
+        ],
+        "extraSections": [
+          {
+            "title": "KI im Vertrieb",
+            "text": "Unsere AI-Lösungen unterstützen Vertriebsteams bei der Recherche, Gesprächsvorbereitung, Lead-Priorisierung, Angebotsverfolgung und der Analyse von Verkaufschancen. Next-Best-Action-Empfehlungen helfen dabei, Potenziale schneller zu erkennen und Abschlussquoten zu steigern."
+          },
+          {
+            "title": "KI im Customer Care",
+            "text": "Im Kundenservice übernimmt KI die Vorqualifizierung von Anfragen, schlägt passende Antworten vor, analysiert Stimmungen, erstellt Ticketzusammenfassungen und unterstützt Mitarbeitende während des gesamten Kundenkontakts. So verkürzen sich Reaktionszeiten und die Kundenzufriedenheit steigt."
+          },
+          {
+            "title": "Systemintegration",
+            "text": "Unsere Lösungen lassen sich in bestehende Systeme wie Salesforce, HubSpot, Microsoft Dynamics, SAP, Zendesk, Freshdesk sowie individuelle CRM- und ERP-Lösungen integrieren. Ziel ist es, bestehende Prozesse intelligent zu erweitern – nicht zu ersetzen."
+          },
+          {
+            "title": "Datenschutz & DSGVO",
+            "text": "Der verantwortungsvolle Umgang mit Daten hat höchste Priorität. Wir entwickeln KI-Lösungen unter Berücksichtigung der DSGVO und etablieren transparente Prozesse, Rollen- und Berechtigungskonzepte sowie nachvollziehbare Dokumentationen."
+          }
+        ],
+        "whyText": "Wir verbinden AI-Kompetenz mit langjähriger Erfahrung in Vertrieb, Customer Care und Prozessoptimierung. Gemeinsam identifizieren wir Automatisierungspotenziale, entwickeln individuelle Lösungen und begleiten die Einführung bis in den operativen Betrieb.",
+        "ctaText": "Sie möchten künstliche Intelligenz sinnvoll in Ihrem Unternehmen einsetzen? Wir analysieren Ihre Prozesse, identifizieren Quick Wins und entwickeln eine skalierbare KI-Strategie – von der ersten Idee bis zur erfolgreichen Implementierung.",
+        "seoKeywords": "KI-Automatisierung, Artificial Intelligence, AI Automation, AI Agents, KI-Agenten, Business Process Automation, Prozessautomatisierung, KI im Vertrieb, KI im Kundenservice, Chatbot, Voicebot, CRM Automatisierung, Salesforce KI, Workflow Automation, Generative AI, Digitale Transformation, Machine Learning, Automatisierung Unternehmen."
+      },
+      "crm": {
+        "tileTitle": "CRM",
+        "tileDescription": "Salesforce- und HubSpot-Beratung für mehr Transparenz und höhere Conversion Rates.",
+        "metaTitle": "CRM-Beratung: Salesforce & HubSpot",
+        "metaDescription": "CRM-Beratung mit Fokus auf Salesforce und HubSpot: Einführung, Optimierung und KI-gestützte Vertriebsprozesse.",
+        "title": "CRM – Erfolgreiches Kundenmanagement mit Salesforce, HubSpot & KI",
+        "heroSubtitle": "Ein modernes Customer Relationship Management (CRM) ist das Herzstück eines erfolgreichen Vertriebs- und Kundenserviceprozesses. Die Advantis Group unterstützt Unternehmen dabei, CRM-Systeme strategisch einzuführen, bestehende Prozesse zu optimieren und durch künstliche Intelligenz effizienter zu gestalten.",
+        "whatTitle": "Spezialisiert auf Salesforce & HubSpot",
+        "whatText": "Unsere Berater und Vertriebsexperten verfügen über umfangreiche Praxiserfahrung mit Salesforce und HubSpot. Wir unterstützen bei der Einführung, Migration, Konfiguration, Prozessoptimierung, Benutzerakzeptanz, Reporting sowie der kontinuierlichen Weiterentwicklung. Beide Plattformen bilden die Grundlage für skalierbare Vertriebs-, Marketing- und Customer-Care-Prozesse.",
+        "offeringsText": "Wir unterstützen bei Salesforce-Beratung und Prozessoptimierung, HubSpot-Implementierung und -Administration, CRM-Einführung und Rollout, Lead- und Opportunity-Management, Sales-Pipeline-Design, Marketing- und Sales-Automation, Customer-Care-Workflows, Dashboards und KPI-Reports, Datenqualität und CRM-Governance sowie Benutzertrainings und Change Management.",
+        "aiTitle": "KI im CRM",
+        "aiItems": [
+          "KI-gestütztes Lead Scoring",
+          "Automatische Gesprächs- und Meetingzusammenfassungen",
+          "Next-Best-Action-Empfehlungen",
+          "Prognosen für Abschlusswahrscheinlichkeiten",
+          "Automatische Datenerfassung und CRM-Dokumentation",
+          "E-Mail- und Aufgabenautomatisierung",
+          "AI Agents für Vertrieb und Customer Care",
+          "Intelligente Auswertungen und Forecasts"
+        ],
+        "extraSections": [
+          {
+            "title": "Mehr als Software – optimierte Prozesse",
+            "text": "Ein CRM entfaltet seinen Mehrwert erst durch klar definierte Prozesse. Gemeinsam analysieren wir Ihre Customer Journey, Sales Pipeline und Serviceabläufe und schaffen standardisierte, messbare und skalierbare Workflows."
+          },
+          {
+            "title": "Ihre Vorteile",
+            "text": "Mit einem optimal eingerichteten CRM steigern Sie Transparenz, Abschlussquoten und Kundenzufriedenheit. Gleichzeitig reduzieren Sie manuelle Tätigkeiten, verbessern die Zusammenarbeit zwischen Vertrieb und Service und erhalten belastbare Kennzahlen für fundierte Entscheidungen."
+          },
+          {
+            "title": "Datenschutz & Integration",
+            "text": "Unsere Lösungen berücksichtigen die Anforderungen der DSGVO und lassen sich nahtlos in bestehende ERP-, Telefonie-, Marketing- und Service-Systeme integrieren. So entsteht eine zentrale 360°-Kundensicht."
+          }
+        ],
+        "whyText": "Wir kombinieren langjährige operative Erfahrung in Vertrieb, Customer Care und Digitalisierung mit tiefem Know-how in Salesforce und HubSpot. Unser Fokus liegt auf messbaren Ergebnissen, hoher Benutzerakzeptanz und nachhaltiger Prozessverbesserung.",
+        "ctaText": "Sie möchten Salesforce oder HubSpot optimal nutzen oder ein CRM neu einführen? Wir begleiten Sie von der Analyse über die Implementierung bis zur kontinuierlichen Optimierung und unterstützen Ihr Team im täglichen Einsatz.",
+        "seoKeywords": "CRM Beratung, Salesforce Beratung, HubSpot Beratung, Salesforce Implementierung, HubSpot Implementierung, CRM Einführung, CRM Optimierung, Sales Automation, Marketing Automation, Lead Management, Opportunity Management, Customer Relationship Management, CRM Deutschland, KI im CRM, Salesforce Experten, HubSpot Experten."
+      },
+      "sales-academy": {
+        "tileTitle": "Sales Academy",
+        "tileDescription": "Praxisnahe Vertriebstrainings für Sales-Teams, Führungskräfte und Unternehmen jeder Größe.",
+        "metaTitle": "Sales Academy: Vertriebstraining",
+        "metaDescription": "Vertriebstrainings für Telesales, Kaltakquise, Einwandbehandlung und Führungskräfteentwicklung – praxisnah und KI-gestützt.",
+        "title": "Sales Academy – Vertriebstrainings für nachhaltigen Verkaufserfolg",
+        "heroSubtitle": "Erfolgreiche Vertriebsteams entstehen nicht zufällig. Die Advantis Sales Academy entwickelt Verkäufer, Führungskräfte und Customer-Care-Teams systematisch weiter. Unsere Trainings verbinden bewährte Vertriebsmethoden, moderne Kommunikationstechniken und KI-gestützte Lernansätze zu praxisnahen Programmen mit direktem Mehrwert.",
+        "whatTitle": "Für wen ist die Sales Academy geeignet?",
+        "whatText": "Unsere Schulungen richten sich an Unternehmen jeder Größe – vom Start-up bis zum internationalen Konzern. Wir qualifizieren Inside Sales, Außendienst, Customer Care, Contact Center, Business Development, Führungskräfte und neue Mitarbeitende im Rahmen strukturierter Onboarding-Programme.",
+        "offeringsText": "Unser Trainingsportfolio umfasst Telesales & Inside Sales, Neukundengewinnung, Kaltakquise, Einwandbehandlung, Fragetechniken und Bedarfsanalyse, Closing-Techniken, Customer Care & Beschwerdemanagement, Contact Center Excellence, CRM (Salesforce & HubSpot), KI im Vertrieb, Führungskräfteentwicklung, Sales Coaching und Teamcoaching sowie KPI-Steuerung und Performance Management.",
+        "aiTitle": "Sales Academy trifft KI",
+        "aiItems": [
+          "AI-gestützte Gesprächsanalyse",
+          "Rollenspiele mit KI",
+          "Echtzeit-Feedback zu Verkaufsgesprächen",
+          "Automatische Coaching-Empfehlungen",
+          "KI-gestützte Erstellung von Gesprächsleitfäden",
+          "Lernassistenten für Mitarbeitende",
+          "Wissensdatenbanken mit AI-Suche",
+          "Analyse von Erfolgsquoten und Gesprächsmustern"
+        ],
+        "extraSections": [
+          {
+            "title": "Praxis statt Theorie",
+            "text": "Alle Trainings basieren auf realen Vertriebssituationen. Die Teilnehmenden arbeiten mit konkreten Gesprächsleitfäden, Praxisfällen und Rollenspielen. Dadurch werden Inhalte direkt im Arbeitsalltag anwendbar und nachhaltig verankert."
+          },
+          {
+            "title": "Onboarding & Sales Enablement",
+            "text": "Wir entwickeln strukturierte Onboarding-Konzepte für neue Mitarbeitende, begleiten die Einarbeitung und etablieren kontinuierliche Lernprogramme. So verkürzen Unternehmen die Einarbeitungszeit und steigern schneller die Produktivität ihrer Teams."
+          },
+          {
+            "title": "Messbare Ergebnisse",
+            "text": "Unsere Trainings orientieren sich an klaren KPIs wie Conversion Rate, Terminquote, Abschlussquote, Gesprächsqualität, Kundenzufriedenheit und Produktivität. Fortschritte werden transparent dokumentiert und regelmäßig überprüft."
+          }
+        ],
+        "whyText": "Unsere Trainer verfügen über langjährige operative Erfahrung im B2B-Vertrieb, Customer Care und Contact Center. Wir vermitteln keine Theorie aus Lehrbüchern, sondern praxiserprobte Methoden, die täglich im Vertrieb erfolgreich eingesetzt werden.",
+        "ctaText": "Sie möchten Ihre Vertriebsmannschaft weiterentwickeln oder eine moderne Sales Academy in Ihrem Unternehmen etablieren? Gemeinsam entwickeln wir ein individuelles Trainingskonzept – als Präsenztraining, Online-Workshop oder Blended-Learning-Programm.",
+        "seoKeywords": "Sales Academy, Vertriebstraining, Sales Training, Verkaufstraining, Telesales Training, Inside Sales Training, Kaltakquise Training, Customer Care Training, Contact Center Training, Salesforce Training, HubSpot Training, Sales Coaching, Führungskräftetraining Vertrieb, Onboarding Vertrieb, KI im Vertrieb, Sales Enablement."
+      },
+      "lead-management": {
+        "tileTitle": "Lead Management",
+        "tileDescription": "Effiziente Lead-Prozesse für höhere Bearbeitungsgeschwindigkeit und mehr Abschlüsse.",
+        "metaTitle": "Lead Management & Lead Scoring",
+        "metaDescription": "Professionelles Lead Management: Lead Scoring, Nurturing und Routing mit Salesforce, HubSpot und KI.",
+        "title": "Lead Management – Mehr aus jedem Lead herausholen",
+        "heroSubtitle": "Ein Lead ist nur dann wertvoll, wenn er zur richtigen Zeit mit der richtigen Strategie bearbeitet wird. Die Advantis Group entwickelt professionelle Lead-Management-Prozesse, die Marketing, Vertrieb und Customer Care miteinander verbinden. Ziel ist es, mehr qualifizierte Leads in zahlende Kunden zu verwandeln und den gesamten Vertriebsprozess messbar zu optimieren.",
+        "whatTitle": "Was ist Lead Management?",
+        "whatText": "Lead Management umfasst den gesamten Prozess von der Lead-Erfassung über die Qualifizierung und Priorisierung bis hin zur Übergabe an den Vertrieb und dem erfolgreichen Abschluss. Mit klaren Prozessen, definierten KPIs und modernen CRM-Systemen schaffen wir Transparenz und steigern die Conversion Rate.",
+        "offeringsText": "Wir übernehmen Leadgenerierung und Lead-Erfassung, Leadqualifizierung, Lead Scoring, Lead Nurturing, Terminvereinbarung, Opportunity Management, CRM-Administration, Vertriebsprozesse und Sales Funnel sowie KPI-Dashboards, Reporting und Sales- und Marketing-Automatisierung.",
+        "aiTitle": "KI im Lead Management",
+        "aiItems": [
+          "KI-gestütztes Lead Scoring",
+          "Priorisierung nach Abschlusswahrscheinlichkeit",
+          "Automatische Lead-Routing-Prozesse",
+          "AI Agents zur Vorqualifizierung",
+          "Personalisierte E-Mail-Follow-ups",
+          "Gesprächszusammenfassungen und CRM-Dokumentation",
+          "Prognosen zu Conversion Rates",
+          "Next-Best-Action-Empfehlungen",
+          "Automatische Wiedervorlagen und Aufgabensteuerung"
+        ],
+        "extraSections": [
+          {
+            "title": "Salesforce & HubSpot",
+            "text": "Wir sind auf Salesforce und HubSpot spezialisiert und unterstützen Unternehmen bei der Einführung, Optimierung und täglichen Nutzung. Intelligente Lead-Management-Prozesse sorgen dafür, dass kein Potenzial verloren geht und alle Leads nachvollziehbar bearbeitet werden."
+          },
+          {
+            "title": "Schnelle Reaktionszeiten",
+            "text": "Erfolgreiches Lead Management beginnt mit Geschwindigkeit. Wir entwickeln SLA-basierte Prozesse, definieren Kontaktstrategien und sorgen dafür, dass neue Leads zeitnah bearbeitet werden. So steigen Erreichbarkeit, Terminquote und Abschlusswahrscheinlichkeit."
+          },
+          {
+            "title": "Messbare KPIs",
+            "text": "Wir analysieren unter anderem Lead-to-Opportunity-Rate, Conversion Rate, Reaktionszeit, Kontaktquote, Terminquote, Abschlussquote, Cost per Lead und Customer Acquisition Cost. Dadurch werden Optimierungspotenziale frühzeitig erkannt."
+          }
+        ],
+        "whyText": "Unsere Erfahrung aus Vertrieb, Customer Care, CRM und Digitalisierung ermöglicht es uns, Lead-Management-Prozesse ganzheitlich zu gestalten. Wir verbinden operative Umsetzung mit moderner KI und schaffen skalierbare Prozesse für nachhaltiges Wachstum.",
+        "ctaText": "Sie möchten Ihre Leadbearbeitung professionalisieren oder Ihre Conversion Rate steigern? Gemeinsam entwickeln wir einen effizienten Lead-Management-Prozess – von der ersten Kontaktaufnahme bis zum erfolgreichen Vertragsabschluss.",
+        "seoKeywords": "Lead Management, Lead Scoring, Lead Qualifizierung, Lead Nurturing, Lead Routing, Sales Funnel, Conversion Rate, Opportunity Management, CRM, Salesforce, HubSpot, Leadgenerierung, Vertriebsprozess, Marketing Automation, KI Lead Management, AI Sales."
+      },
+      "sales-outsourcing": {
+        "tileTitle": "Sales Outsourcing",
+        "tileDescription": "Vertrieb auslagern an erfahrene Sales-Experten – flexibel, skalierbar und messbar.",
+        "metaTitle": "Sales Outsourcing: Vertrieb auslagern",
+        "metaDescription": "Vertrieb auslagern an die Advantis Group: Leadgenerierung, Inside Sales und komplette Vertriebsprozesse als externer Partner.",
+        "title": "Sales Outsourcing – Vertrieb auslagern mit erfahrenen Sales-Experten",
+        "heroSubtitle": "Nicht jedes Unternehmen braucht einen eigenen Vertriebsapparat – aber jedes Unternehmen braucht Vertriebserfolg. Die Advantis Group übernimmt Teile oder den kompletten Vertriebsprozess Ihres Unternehmens: von der Leadgenerierung bis zum Vertragsabschluss. Flexibel, skalierbar und ohne die Fixkosten eines eigenen Sales-Teams.",
+        "whatTitle": "Was bedeutet Sales Outsourcing?",
+        "whatText": "Sales Outsourcing bedeutet, dass ein externer Partner Vertriebsaufgaben übernimmt – von einzelnen Prozessschritten wie der Terminvereinbarung bis zum kompletten Sales Funnel. Unternehmen gewinnen dadurch Flexibilität, sparen Aufbauzeit und profitieren von eingespielten, erfahrenen Vertriebsteams.",
+        "offeringsText": "Wir übernehmen Leadgenerierung, Terminierung, Inside Sales, Angebotsverfolgung und komplette Vertriebsprozesse als externer Partner. Auf Wunsch agieren wir als verlängerter Arm Ihres Vertriebsteams oder als eigenständige Vertriebseinheit für neue Märkte und Produkte.",
+        "aiTitle": "KI-gestütztes Sales Outsourcing",
+        "aiItems": [
+          "KI-gestützte Lead-Priorisierung und Zielgruppenanalyse",
+          "Automatisierte Gesprächsvorbereitung und CRM-Dokumentation",
+          "Next-Best-Action-Empfehlungen für jede Vertriebsphase",
+          "Echtzeit-Reporting und Vertriebs-Dashboards",
+          "Automatisierte Follow-up-Prozesse per E-Mail",
+          "Forecasts und Abschlusswahrscheinlichkeiten per KI"
+        ],
+        "extraSections": [
+          {
+            "title": "Flexibel skalieren",
+            "text": "Ob Projektgeschäft, Markteintritt oder Kapazitätsspitzen – wir skalieren Ihr Vertriebsteam bedarfsgerecht, ohne dass Sie eigene Mitarbeitende einstellen, einarbeiten oder auslasten müssen."
+          },
+          {
+            "title": "Transparente Zusammenarbeit",
+            "text": "Alle Aktivitäten werden in Ihrem CRM dokumentiert und sind jederzeit nachvollziehbar. Regelmäßige Reportings und klare KPIs sorgen für volle Transparenz über den Erfolg der Zusammenarbeit."
+          },
+          {
+            "title": "Für welche Unternehmen?",
+            "text": "Unsere Sales-Outsourcing-Lösungen eignen sich für B2B-Unternehmen aus Industrie, Software, SaaS, Energie, Logistik, Handel und Finanzdienstleistungen, die Vertriebskapazität aufbauen wollen, ohne das volle Risiko eines eigenen Teams zu tragen."
+          }
+        ],
+        "whyText": "Wir bringen über 15 Jahre operative Vertriebserfahrung und moderne KI-Technologie in jede Zusammenarbeit ein. Sie erhalten ein eingespieltes Sales-Team, das von Tag eins an liefert – messbar, skalierbar und ohne langwierigen Aufbauprozess.",
+        "ctaText": "Sie möchten Vertriebskapazität aufbauen, ohne ein eigenes Team aufzubauen? Gemeinsam finden wir das passende Modell – von einzelnen Vertriebsaufgaben bis zum kompletten Outsourcing Ihres Sales-Prozesses.",
+        "seoKeywords": "Sales Outsourcing, Vertrieb auslagern, Vertriebsoutsourcing, Außendienst outsourcen, Inside Sales Outsourcing, Vertriebspartner, B2B Vertrieb, Leadgenerierung, Telesales, Neukundengewinnung, Sales as a Service, KI im Vertrieb, Vertriebsprozess, CRM, Salesforce."
+      },
+      "business-development": {
+        "tileTitle": "Business Development",
+        "tileDescription": "Neue Märkte erschließen und Vertriebsstrukturen aufbauen – von der Strategie bis zur Umsetzung.",
+        "metaTitle": "Business Development & Marktentwicklung",
+        "metaDescription": "Business Development mit Advantis Group: Markteintritt, Vertriebsstrukturen und Wachstumsstrategien – datenbasiert und KI-gestützt.",
+        "title": "Business Development – Neue Märkte erschließen mit Strategie & KI",
+        "heroSubtitle": "Nachhaltiges Wachstum entsteht nicht zufällig, sondern durch eine klare Strategie. Die Advantis Group unterstützt Unternehmen dabei, neue Märkte zu erschließen, Vertriebsstrukturen aufzubauen und Wachstumspotenziale systematisch zu identifizieren und umzusetzen.",
+        "whatTitle": "Was bedeutet Business Development?",
+        "whatText": "Business Development umfasst alle strategischen und operativen Maßnahmen zur Erschließung neuer Geschäftsfelder, Märkte und Kundengruppen. Es verbindet Marktanalyse, Vertriebsstrategie und operative Umsetzung zu einem ganzheitlichen Wachstumsansatz.",
+        "offeringsText": "Wir entwickeln Markteintrittsstrategien, identifizieren neue Zielgruppen und Vertriebskanäle, bauen Vertriebsstrukturen auf und begleiten Unternehmen von der Strategie bis zur operativen Umsetzung – inklusive Leadgenerierung und Partnerschaftsaufbau.",
+        "aiTitle": "KI-gestützte Marktentwicklung",
+        "aiItems": [
+          "KI-gestützte Markt- und Wettbewerbsanalyse",
+          "Automatische Identifikation neuer Zielgruppen und Potenziale",
+          "Datenbasierte Priorisierung von Märkten und Kanälen",
+          "Predictive Analytics für Wachstumsprognosen",
+          "CRM-Automatisierung für neue Vertriebsstrukturen",
+          "Dashboards zur Steuerung von Wachstumsinitiativen"
+        ],
+        "extraSections": [
+          {
+            "title": "Markteintritt & Expansion",
+            "text": "Wir begleiten die Erschließung neuer Regionen, Branchen und Kundensegmente – von der ersten Marktanalyse über den Aufbau lokaler Vertriebsstrukturen bis zur Skalierung."
+          },
+          {
+            "title": "Vertriebsstrukturen aufbauen",
+            "text": "Wir entwickeln Vertriebsorganisationen, Prozesse und KPI-Systeme, die auf nachhaltiges Wachstum ausgelegt sind – inklusive Recruiting-Unterstützung und Enablement für neue Teams."
+          },
+          {
+            "title": "Partnerschaften & Kooperationen",
+            "text": "Wir identifizieren strategische Partner und Vertriebskanäle und unterstützen beim Aufbau langfristiger Kooperationen, die Ihr Wachstum zusätzlich beschleunigen."
+          }
+        ],
+        "whyText": "Wir verbinden strategische Beratung mit operativer Vertriebserfahrung und moderner KI-Technologie. So werden aus Wachstumsideen konkrete, messbare Ergebnisse – von der ersten Marktanalyse bis zur erfolgreichen Umsetzung.",
+        "ctaText": "Sie möchten neue Märkte erschließen oder Ihre Wachstumsstrategie schärfen? Gemeinsam entwickeln wir einen klaren Fahrplan – von der Analyse bis zur operativen Umsetzung.",
+        "seoKeywords": "Business Development, Marktentwicklung, Markteintritt, Wachstumsstrategie, Vertriebsstrategie, Neue Märkte erschließen, Vertriebsstrukturen aufbauen, B2B Vertrieb, Sales Outsourcing, KI im Vertrieb, Strategieberatung, Expansion, Partnerschaften."
+      }
+    }
+  },
+  "trustBadges": {
+    "title": "Ausgezeichnet & zertifiziert",
+    "salesClub": "Sales-Presidents Club {year}",
+    "dsgvo": "DSGVO-konform"
   }
 }
