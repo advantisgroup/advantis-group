@@ -39,6 +39,7 @@ import type * as announcements from "../announcements.js";
 import type * as chat from "../chat.js";
 import type * as clerkSync from "../clerkSync.js";
 import type * as clockodoSync from "../clockodoSync.js";
+import type * as clockodoWebhookLog from "../clockodoWebhookLog.js";
 import type * as crons from "../crons.js";
 import type * as emails from "../emails.js";
 import type * as events from "../events.js";
@@ -107,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   chat: typeof chat;
   clerkSync: typeof clerkSync;
   clockodoSync: typeof clockodoSync;
+  clockodoWebhookLog: typeof clockodoWebhookLog;
   crons: typeof crons;
   emails: typeof emails;
   events: typeof events;
