@@ -13,11 +13,6 @@ const BAR_HEIGHT = 26;
 // How far above/below the bar the active guide lines and their time labels
 // reach — enough room for a label plus a little breathing space.
 const GUIDE_REACH = 20;
-// A hairline surface-colour gap between adjacent segments — the mark for "a
-// change happened here" the rest of the time. Cheaper to read than a line
-// drawn through every mark, and doesn't turn a cluster of one-minute state
-// changes into a smear of ink.
-const SEGMENT_GAP_PX = 1;
 
 function hhmm(ms: number): string {
   return new Date(ms).toLocaleTimeString(undefined, {
@@ -103,9 +98,8 @@ function TimeLabel({
 
 /**
  * "Quick timeline" for the day: one horizontal bar spanning 24h, a segment
- * per contiguous state run, each separated by a hairline surface gap instead
- * of a line drawn through the marks. Hovering (or externally highlighting,
- * via `highlightAt`) a segment dims its neighbours, drops a pair of solid
+ * per contiguous state run. Hovering (or externally highlighting, via
+ * `highlightAt`) a segment dims its neighbours, drops a pair of solid
  * guide lines through the bar at its exact start/end instants (labelled with
  * the time), and raises a floating badge with the state name, time range and
  * duration. CLOCKED_OUT segments keep their usual colour but are drawn with a
@@ -212,13 +206,8 @@ export function StateTimelineChart({
         }
       >
         {/* Clipped separately from the guide lines/labels below, which need
-            to poke out above and below this rounded strip. The panel-colour
-            background shows through each segment's 1px inset as the gap that
-            marks a change — never a line drawn over the fill. */}
-        <div
-          className="absolute inset-0 overflow-hidden rounded-md border border-border"
-          style={{ background: "var(--chart-panel)" }}
-        >
+            to poke out above and below this rounded strip. */}
+        <div className="absolute inset-0 overflow-hidden rounded-md border border-border">
           {segments.map((seg, i) => {
             const left = ((seg.start - dayStart) / DAY_MS) * 100;
             const width = ((seg.end - seg.start) / DAY_MS) * 100;
@@ -228,8 +217,8 @@ export function StateTimelineChart({
                 key={i}
                 className="absolute inset-y-0"
                 style={{
-                  left: `calc(${left}% + ${SEGMENT_GAP_PX}px)`,
-                  width: `calc(${width}% - ${2 * SEGMENT_GAP_PX}px)`,
+                  left: `${left}%`,
+                  width: `${width}%`,
                   opacity: activeIndex == null || activeIndex === i ? 1 : 0.4,
                   filter: activeIndex === i ? "brightness(1.1)" : undefined,
                   transition: "opacity 150ms ease, filter 150ms ease",
