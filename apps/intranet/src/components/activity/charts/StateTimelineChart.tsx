@@ -57,7 +57,13 @@ function TimeLabel({
   const dx = anchor === "start" ? 4 : anchor === "end" ? -4 : 0;
   const y = place === "top" ? viewBox.y - 6 : viewBox.y + viewBox.height + 14;
   return (
-    <text x={viewBox.x + dx} y={y} textAnchor={anchor} fontSize={10} fill={fill}>
+    <text
+      x={viewBox.x + dx}
+      y={y}
+      textAnchor={anchor}
+      fontSize={10}
+      fill={fill}
+    >
       {value}
     </text>
   );
