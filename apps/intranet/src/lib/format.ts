@@ -1,3 +1,15 @@
+/**
+ * Display name for a user's role badge: their `roleLabel` override if set
+ * (e.g. "Geschäftsführerin" for an admin), otherwise the translated role
+ * name. Cosmetic only — permission checks always use `role`, never this.
+ */
+export function roleLabel(
+  user: { role: string; roleLabel?: string | null },
+  tRoles: (role: string) => string
+): string {
+  return user.roleLabel?.trim() || tRoles(user.role);
+}
+
 /** Two-letter initials for an avatar fallback. */
 export function initials(
   name: string | null | undefined,

@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNow } from "@/lib/activity/useNow";
-import { formatIsoDate, initials } from "@/lib/format";
+import { formatIsoDate, initials, roleLabel } from "@/lib/format";
 import { TEAMS, teamColor } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -147,7 +147,7 @@ export default function DirectoryPage() {
               <div className="flex items-center gap-2">
                 <span className="truncate font-medium">{p.name}</span>
                 <Badge variant="muted" className="shrink-0">
-                  {tRoles(p.role)}
+                  {roleLabel(p, tRoles)}
                 </Badge>
               </div>
               <p className="truncate text-xs text-muted-foreground">

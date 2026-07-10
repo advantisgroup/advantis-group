@@ -22,7 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { initials } from "@/lib/format";
+import { initials, roleLabel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
@@ -69,7 +69,7 @@ export function AccountMenu({
             {user.email}
           </span>
           <span className="mt-1 text-xs font-normal text-primary">
-            {tRoles(user.role)}
+            {roleLabel(user, tRoles)}
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

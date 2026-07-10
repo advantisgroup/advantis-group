@@ -56,7 +56,7 @@ import {
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNow } from "@/lib/activity/useNow";
-import { formatIsoDate, initials } from "@/lib/format";
+import { formatIsoDate, initials, roleLabel } from "@/lib/format";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -528,7 +528,7 @@ function ProfileContent({
             </p>
           )}
           <div className="mt-1.5 flex flex-wrap gap-1">
-            <Badge variant="muted">{tRoles(user.role)}</Badge>
+            <Badge variant="muted">{roleLabel(user, tRoles)}</Badge>
             {user.status === "suspended" && (
               <Badge variant="destructive">{tAdmin("suspended")}</Badge>
             )}

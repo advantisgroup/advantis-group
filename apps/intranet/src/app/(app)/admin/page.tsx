@@ -50,6 +50,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -59,7 +60,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatDateTime, initials } from "@/lib/format";
+import { formatDateTime, initials, roleLabel } from "@/lib/format";
 import { TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -445,6 +446,86 @@ function AdminOverview({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
+/**
+ * The role badge, admin-editable: clicking it opens a small popover to set a
+ * cosmetic display-name override (e.g. "Geschäftsführerin" for an admin whose
+ * permissions stay exactly admin — this never touches `role` itself).
+ */
+function RoleBadge({
+  member,
+  isAdmin,
+  tRoles,
+  onSave,
+}: {
+  member: { role: Role; roleLabel?: string | null };
+  isAdmin: boolean;
+  tRoles: (role: string) => string;
+  onSave: (value: string) => void;
+}) {
+  const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(member.roleLabel ?? "");
+
+  if (!isAdmin) {
+    return (
+      <Badge variant="muted" className="hidden sm:inline-flex">
+        {roleLabel(member, tRoles)}
+      </Badge>
+    );
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={o => {
+        setOpen(o);
+        if (o) setValue(member.roleLabel ?? "");
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button type="button" className="hidden sm:inline-flex">
+          <Badge variant="muted" className="cursor-pointer">
+            {roleLabel(member, tRoles)}
+          </Badge>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-2" align="end">
+        <p className="text-xs font-medium text-muted-foreground">
+          {t("roleLabelHint")}
+        </p>
+        <Input
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder={tRoles(member.role)}
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setValue("");
+              onSave("");
+              setOpen(false);
+            }}
+          >
+            {t("roleLabelReset")}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              onSave(value);
+              setOpen(false);
+            }}
+          >
+            {tc("save")}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function Members({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
@@ -459,6 +540,8 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const reinvite = useAction(api.members.reinvite);
   const setUploadPermission = useAction(api.users.setUploadPermission);
   const setGfAccess = useAction(api.users.setGfAccess);
+  const setApplicantDelegate = useMutation(api.users.setApplicantDelegate);
+  const setRoleLabelMutation = useMutation(api.users.setRoleLabel);
   const assignCustomRole = useMutation(api.users.assignCustomRole);
   const handleError = useErrorHandler();
 
@@ -547,6 +630,30 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
       .catch(handleError);
   }
 
+  function toggleApplicantDelegate(m: Member) {
+    setApplicantDelegate({
+      userId: m._id as Id<"users">,
+      delegate: !m.applicantAccessDelegate,
+    })
+      .then(() =>
+        toast.success(
+          m.applicantAccessDelegate
+            ? t("applicantDelegateRevoked")
+            : t("applicantDelegateGranted")
+        )
+      )
+      .catch(handleError);
+  }
+
+  function saveRoleLabel(m: Member, value: string) {
+    setRoleLabelMutation({
+      userId: m._id as Id<"users">,
+      roleLabel: value.trim() || undefined,
+    })
+      .then(() => toast.success(t("roleLabelSaved")))
+      .catch(handleError);
+  }
+
   function onCustomRoleChange(m: Member, customRoleId: string) {
     assignCustomRole({
       userId: m._id as Id<"users">,
@@ -583,6 +690,14 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             <DropdownMenuItem onClick={() => toggleGf(m)}>
               <Lock className="size-4" />{" "}
               {m.gfAccess ? t("revokeGf") : t("grantGf")}
+            </DropdownMenuItem>
+          )}
+          {isAdmin && (
+            <DropdownMenuItem onClick={() => toggleApplicantDelegate(m)}>
+              <Users2 className="size-4" />{" "}
+              {m.applicantAccessDelegate
+                ? t("revokeApplicantDelegate")
+                : t("grantApplicantDelegate")}
             </DropdownMenuItem>
           )}
           {isAdmin && (
@@ -668,9 +783,21 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                 GF
               </Badge>
             )}
-            <Badge variant="muted" className="hidden sm:inline-flex">
-              {tRoles(m.role)}
-            </Badge>
+            {m.applicantAccessDelegate && (
+              <Badge
+                variant="muted"
+                className="hidden text-[10px] sm:inline-flex"
+                title={t("applicantDelegateBadgeTitle")}
+              >
+                BM
+              </Badge>
+            )}
+            <RoleBadge
+              member={m}
+              isAdmin={isAdmin}
+              tRoles={tRoles}
+              onSave={value => saveRoleLabel(m, value)}
+            />
             {customRoles && customRoles.length > 0 && (
               <Select
                 value={m.customRoleId ?? "none"}
