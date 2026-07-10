@@ -5,14 +5,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import {
-  Copy,
-  Download,
-  FileQuestion,
-  Info,
-  Loader2,
-  X,
-} from "lucide-react";
+import { Copy, Download, FileQuestion, Info, Loader2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
