@@ -93,6 +93,7 @@ export const de: Dict = {
   "people.active": "Aktiv",
   "people.save": "Speichern",
   "people.delete": "Löschen",
+  "people.edit": "Mitarbeiter bearbeiten",
   "people.cancel": "Abbrechen",
   "people.confirmDelete": "Diesen Mitarbeiter wirklich löschen?",
   "people.empty": "Noch keine Mitarbeiter angelegt.",

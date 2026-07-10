@@ -35,6 +35,18 @@ Run from repo root unless noted; Turborepo filters by workspace name.
 Always type-check and lint/format touched packages before calling a change
 done.
 
+## Multi-item sessions and commits
+
+When a single session is asked to ship several distinct features, improvements,
+or fixes together, group them by how they relate (e.g. all touching the same
+subsystem, or one plan) but still commit each piece of work separately on the
+same branch, rather than squashing everything into one commit. This keeps the
+branch bisectable — if something breaks (a Vercel preview build, CI, a runtime
+regression), the offending commit narrows down fast instead of forcing a search
+through one giant diff. If grouping vs. separating conflicts with another
+instruction in a given task (e.g. the user explicitly asks for a single
+commit), ask the user how they want it handled rather than guessing.
+
 ## ActivityTrack (`/admin/activity`)
 
 The highest-complexity area of the codebase. A fused "is this person working

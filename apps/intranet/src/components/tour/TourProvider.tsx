@@ -28,6 +28,7 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 
 import { TOUR_CHECKPOINTS } from "./tour-config";
+import { scrollTargetIntoView } from "./tour-scroll";
 import { getOrInitTourState, writeTourState } from "./tour-storage";
 
 import type {
@@ -73,6 +74,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<TourLocalState | null>(null);
   const [phase, setPhase] = useState<TourPhase>("idle");
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
+  const [isReplayingCheckpoint, setIsReplayingCheckpoint] = useState(false);
 
   const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef<TourLocalState | null>(null);
@@ -208,8 +210,20 @@ export function TourProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       const rect = measureTarget(currentStep!.targetAttr);
       if (rect) {
-        setTargetRect(rect);
-        setPhase("active");
+        const el = document.querySelector(
+          `[data-tour="${currentStep!.targetAttr}"]`
+        );
+        void (async () => {
+          if (el) await scrollTargetIntoView(el);
+          if (cancelled) return;
+          // Re-measure after scrolling, since the target's position may have
+          // changed (or the initial rect was already off-screen).
+          const settledRect = el
+            ? measureTarget(currentStep!.targetAttr)
+            : rect;
+          setTargetRect(settledRect ?? rect);
+          setPhase("active");
+        })();
       } else if (Date.now() - start < MAX_WAIT_MS) {
         timer = setTimeout(() => {
           rafId = requestAnimationFrame(tryMeasure);
@@ -296,20 +310,24 @@ export function TourProvider({ children }: { children: ReactNode }) {
       };
 
       const nextCp = findNextCheckpoint(currentCheckpoint.id);
+      const wasExplicitReplay = isReplayingCheckpoint;
+      if (wasExplicitReplay) setIsReplayingCheckpoint(false);
 
-      if (!nextCp) {
-        // Tour complete
+      if (!nextCp || wasExplicitReplay) {
+        // Tour complete, or an explicit single-section replay finished —
+        // either way, don't auto-chain into the next checkpoint. Only mark
+        // the whole tour "completedAt" when this really was the last one.
         const next: TourLocalState = {
           ...state,
           active: false,
           currentCheckpointId: null,
           currentStepIndex: 0,
           checkpoints: completedCheckpoints,
-          completedAt: Date.now(),
+          completedAt: nextCp ? state.completedAt : Date.now(),
         };
         persist(next);
         setState(next);
-        setPhase("complete");
+        setPhase(nextCp ? "idle" : "complete");
       } else {
         const next: TourLocalState = {
           ...state,
@@ -329,7 +347,14 @@ export function TourProvider({ children }: { children: ReactNode }) {
         setPhase("navigating");
       }
     }
-  }, [state, currentCheckpoint, currentStep, persist, findNextCheckpoint]);
+  }, [
+    state,
+    currentCheckpoint,
+    currentStep,
+    persist,
+    findNextCheckpoint,
+    isReplayingCheckpoint,
+  ]);
   // Update during render (not in an effect) so the measuring effect, which can
   // call advanceRef.current() to auto-skip sidebar steps on mobile, always sees
   // the current `advance` in the same commit rather than a stale closure.
@@ -378,6 +403,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         },
       },
     };
+    setIsReplayingCheckpoint(false);
     if (!nextCp) {
       persist({ ...skipped, active: false, completedAt: Date.now() });
       setState({ ...skipped, active: false, completedAt: Date.now() });
@@ -405,6 +431,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const endTour = useCallback(() => {
     if (!state) return;
     const next: TourLocalState = { ...state, active: false };
+    setIsReplayingCheckpoint(false);
     persist(next);
     setState(next);
     setPhase("idle");
@@ -418,6 +445,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       active: false,
       snoozedUntil: Date.now() + 86_400_000,
     };
+    setIsReplayingCheckpoint(false);
     persist(next);
     setState(next);
     setPhase("idle");
@@ -440,6 +468,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
           [id]: { status: "active", currentStepIndex: 0 },
         },
       };
+      setIsReplayingCheckpoint(true);
       persist(next);
       setState(next);
       setPhase("navigating");
@@ -467,6 +496,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         [firstCp.id]: { status: "active", currentStepIndex: 0 },
       },
     };
+    setIsReplayingCheckpoint(false);
     persist(next);
     setState(next);
     setPhase("navigating");
@@ -481,6 +511,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       active: true,
       snoozedUntil: null,
     };
+    setIsReplayingCheckpoint(false);
     persist(next);
     setState(next);
     setPhase("navigating");
@@ -497,6 +528,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     visibleCheckpoints,
     currentCheckpoint,
     currentStep,
+    isReplayingCheckpoint,
     advance,
     back,
     skipStep,

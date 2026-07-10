@@ -41,6 +41,7 @@ import type * as clerkSync from "../clerkSync.js";
 import type * as clockodoSync from "../clockodoSync.js";
 import type * as clockodoWebhookLog from "../clockodoWebhookLog.js";
 import type * as crons from "../crons.js";
+import type * as customRoles from "../customRoles.js";
 import type * as emails from "../emails.js";
 import type * as events from "../events.js";
 import type * as files from "../files.js";
@@ -110,6 +111,7 @@ declare const fullApi: ApiFromModules<{
   clockodoSync: typeof clockodoSync;
   clockodoWebhookLog: typeof clockodoWebhookLog;
   crons: typeof crons;
+  customRoles: typeof customRoles;
   emails: typeof emails;
   events: typeof events;
   files: typeof files;

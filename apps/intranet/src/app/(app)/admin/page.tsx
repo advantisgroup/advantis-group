@@ -25,6 +25,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { CustomRolesPanel } from "@/app/(app)/admin/CustomRolesPanel";
 import { OneDriveAuditPanel } from "@/components/onedrive/OneDriveAuditPanel";
 import { TeamAccessPanel } from "@/components/onedrive/TeamAccessPanel";
 import { UploadApprovalQueue } from "@/components/onedrive/UploadApprovalQueue";
@@ -452,11 +453,13 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const me = useCurrentUser();
   const confirm = useConfirm();
   const members = useQuery(api.users.list, { includeSuspended: true });
+  const customRoles = useQuery(api.customRoles.list);
   const setStatus = useAction(api.users.setStatus);
   const removeMember = useAction(api.members.remove);
   const reinvite = useAction(api.members.reinvite);
   const setUploadPermission = useAction(api.users.setUploadPermission);
   const setGfAccess = useAction(api.users.setGfAccess);
+  const assignCustomRole = useMutation(api.users.assignCustomRole);
   const handleError = useErrorHandler();
 
   type Member = NonNullable<typeof members>[number];
@@ -542,6 +545,16 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     setGfAccess({ userId: m._id as Id<"users">, gfAccess: !m.gfAccess })
       .then(() => toast.success(m.gfAccess ? t("gfRevoked") : t("gfGranted")))
       .catch(handleError);
+  }
+
+  function onCustomRoleChange(m: Member, customRoleId: string) {
+    assignCustomRole({
+      userId: m._id as Id<"users">,
+      customRoleId:
+        customRoleId === "none"
+          ? undefined
+          : (customRoleId as Id<"customRoles">),
+    }).catch(handleError);
   }
 
   function MemberMenu({ m }: { m: Member }) {
@@ -658,6 +671,27 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             <Badge variant="muted" className="hidden sm:inline-flex">
               {tRoles(m.role)}
             </Badge>
+            {customRoles && customRoles.length > 0 && (
+              <Select
+                value={m.customRoleId ?? "none"}
+                onValueChange={v => onCustomRoleChange(m, v)}
+              >
+                <SelectTrigger
+                  className="hidden h-7 w-auto min-w-28 text-xs sm:inline-flex"
+                  aria-label={t("customRole")}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("customRoleNone")}</SelectItem>
+                  {customRoles.map(role => (
+                    <SelectItem key={role._id} value={role._id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <TourProgressChip userId={m._id as Id<"users">} />
             <MemberMenu m={m} />
           </div>
@@ -961,6 +995,9 @@ export default function AdminPage() {
           >
             {t("uploads")}
           </TabsTrigger>
+          <TabsTrigger value="roles" className="py-2 sm:py-1.5">
+            {t("customRolesTab")}
+          </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="guests" className="py-2 sm:py-1.5">
               {t("guests")}
@@ -975,6 +1012,9 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="members">
           <Members isAdmin={isAdmin} />
+        </TabsContent>
+        <TabsContent value="roles">
+          <CustomRolesPanel />
         </TabsContent>
         <TabsContent value="uploads" className="space-y-8">
           <div>

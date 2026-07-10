@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { query, mutation } from "../_generated/server";
-import { requireUser, requireManager } from "../lib/auth";
+import { requireUser, requireCapability } from "../lib/auth";
 import { writeAudit } from "./audit";
 import { appError } from "./lib/errors";
 
@@ -21,7 +21,7 @@ function normalizeId(value: string | undefined): string | undefined {
   return trimmed === "" ? undefined : trimmed;
 }
 
-/** Add a coworker. Manager+. */
+/** Add a coworker. Manager+, or a `manage_members` custom role. */
 export const create = mutation({
   args: {
     name: v.string(),
@@ -35,7 +35,7 @@ export const create = mutation({
     ctx,
     { name, email, userId, employeeId, genesysUserId, clockodoUserId }
   ) => {
-    const actor = await requireManager(ctx);
+    const actor = await requireCapability(ctx, "manage_members");
     const id = await ctx.db.insert("people", {
       name,
       email,
@@ -50,7 +50,7 @@ export const create = mutation({
   },
 });
 
-/** Edit a coworker's details / active flag / integration mappings. Manager+. */
+/** Edit a coworker's details / active flag / integration mappings. Manager+, or a `manage_members` custom role. */
 export const update = mutation({
   args: {
     personId: v.id("people"),
@@ -73,7 +73,7 @@ export const update = mutation({
       genesysUserId,
       clockodoUserId,
     } = args;
-    const actor = await requireManager(ctx);
+    const actor = await requireCapability(ctx, "manage_members");
     const person = await ctx.db.get(personId);
     if (!person) throw appError("notFound.person", "Person not found");
     // Once a person is linked to an intranet account, `users.clockodoUserId`
@@ -107,11 +107,11 @@ export const update = mutation({
   },
 });
 
-/** Remove a coworker and unlink any devices pointing at them. Manager+. */
+/** Remove a coworker and unlink any devices pointing at them. Manager+, or a `manage_members` custom role. */
 export const remove = mutation({
   args: { personId: v.id("people") },
   handler: async (ctx, { personId }) => {
-    const actor = await requireManager(ctx);
+    const actor = await requireCapability(ctx, "manage_members");
     const person = await ctx.db.get(personId);
     if (!person) throw appError("notFound.person", "Person not found");
 

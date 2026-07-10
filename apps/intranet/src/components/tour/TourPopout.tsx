@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { HEADER_HEIGHT } from "./tour-scroll";
 import { useTour } from "./TourProvider";
 import { useTourEndTour, useTourSkipCheckpoint } from "./TourSkipDialog";
 
@@ -22,7 +23,6 @@ import type { TargetRect } from "./tour-types";
 
 const POPOUT_WIDTH = 320;
 const POPOUT_HEIGHT = 160; // fallback estimate until the real height is measured
-const HEADER_HEIGHT = 68; // sticky header (~h-16) the popout must clear
 const MOBILE_BREAKPOINT = 768;
 
 type Side = "top" | "bottom" | "left" | "right";
@@ -116,6 +116,7 @@ export function TourPopout() {
     currentCheckpoint,
     currentStep,
     visibleCheckpoints,
+    isReplayingCheckpoint,
     advance,
     back,
     skipStep,
@@ -264,7 +265,7 @@ export function TourPopout() {
             )}
             <div className="flex-1" />
             <Button size="sm" onClick={advance} className="shrink-0">
-              {isLastStep && isLastCheckpoint
+              {isLastStep && (isLastCheckpoint || isReplayingCheckpoint)
                 ? tt("finish")
                 : isLastStep
                   ? tt("nextSection")

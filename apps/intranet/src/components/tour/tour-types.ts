@@ -80,6 +80,12 @@ export interface TourContextValue {
   visibleCheckpoints: TourCheckpoint[];
   currentCheckpoint: TourCheckpoint | null;
   currentStep: TourStep | null;
+  /**
+   * True while the current checkpoint was entered via an explicit single-section
+   * replay (the "?" button), rather than sequential tour progression. Completing
+   * the checkpoint in this state should not auto-advance into the next one.
+   */
+  isReplayingCheckpoint: boolean;
   advance: () => void;
   back: () => void;
   skipStep: () => void;

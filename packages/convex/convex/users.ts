@@ -30,6 +30,9 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
   const avatar = user.avatarStorageId
     ? await ctx.storage.getUrl(user.avatarStorageId)
     : (user.avatarUrl ?? null);
+  const customRole = user.customRoleId
+    ? await ctx.db.get(user.customRoleId)
+    : null;
   return {
     _id: user._id,
     clerkUserId: user.clerkUserId,
@@ -48,6 +51,8 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     external: user.external ?? false,
     gfAccess: user.gfAccess ?? false,
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
+    customRoleId: user.customRoleId ?? null,
+    capabilities: customRole?.capabilities ?? [],
     avatar,
     lastSeenAt: user.lastSeenAt ?? null,
     createdAt: user.createdAt,
@@ -286,6 +291,29 @@ export const setRole = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { role });
+    return { ok: true };
+  },
+});
+
+/** Assign or clear a member's custom role. Manager+. */
+export const assignCustomRole = mutation({
+  args: {
+    userId: v.id("users"),
+    customRoleId: v.optional(v.id("customRoles")),
+  },
+  handler: async (ctx, { userId, customRoleId }) => {
+    await requireManager(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    if (customRoleId) {
+      const role = await ctx.db.get(customRoleId);
+      if (!role) {
+        throw new ConvexError({ code: "not_found", message: "Role not found" });
+      }
+    }
+    await ctx.db.patch(userId, { customRoleId });
     return { ok: true };
   },
 });

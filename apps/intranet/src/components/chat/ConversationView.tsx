@@ -47,6 +47,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
+import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -54,7 +55,7 @@ import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GroupAvatar } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, useConfirm } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import {
   Popover,
@@ -118,6 +119,7 @@ export function ConversationView({
   const confirm = useConfirm();
   const { getToken } = useAuth();
   const isMobile = useIsMobile();
+  const { openFileViewer } = useFileViewer();
 
   // Reactive: this re-runs the moment access changes (left, removed, deleted,
   // or a stale `?c=` link), so it never throws — it reports a status instead.
@@ -167,7 +169,6 @@ export function ConversationView({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [editing, setEditing] = useState<{ id: Id<"messages"> } | null>(null);
-  const [lightbox, setLightbox] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
   const [showJump, setShowJump] = useState(false);
   const [mention, setMention] = useState<{ query: string } | null>(null);
@@ -871,7 +872,15 @@ export function ConversationView({
                                             ? (window.location.href = pathToUrl(
                                                 a.oneDrivePath!
                                               ))
-                                            : setLightbox(a.url)
+                                            : openFileViewer({
+                                                storageId: a.storageId,
+                                                name: a.name,
+                                                contentType: a.contentType,
+                                                size: a.size,
+                                                width: a.width,
+                                                height: a.height,
+                                                url: a.url ?? undefined,
+                                              })
                                         }
                                         className="relative mt-1 block"
                                       >
@@ -892,32 +901,39 @@ export function ConversationView({
                                     );
                                   }
                                   if (!a.url) return null;
-                                  return (
-                                    <a
-                                      key={a.storageId}
-                                      href={
-                                        fromOneDrive
-                                          ? pathToUrl(a.oneDrivePath!)
-                                          : a.url
-                                      }
-                                      target={
-                                        fromOneDrive ? undefined : "_blank"
-                                      }
-                                      rel={
-                                        fromOneDrive ? undefined : "noreferrer"
-                                      }
-                                      className="mt-1 flex items-center gap-1 underline"
-                                    >
-                                      {fromOneDrive ? (
+                                  if (fromOneDrive) {
+                                    return (
+                                      <a
+                                        key={a.storageId}
+                                        href={pathToUrl(a.oneDrivePath!)}
+                                        className="mt-1 flex items-center gap-1 underline"
+                                      >
                                         <Cloud className="h-3 w-3 text-blue-500" />
-                                      ) : (
-                                        <Paperclip className="h-3 w-3" />
-                                      )}
-                                      {a.name}
-                                      {fromOneDrive && (
+                                        {a.name}
                                         <ExternalLink className="h-3 w-3 text-blue-500" />
-                                      )}
-                                    </a>
+                                      </a>
+                                    );
+                                  }
+                                  return (
+                                    <button
+                                      type="button"
+                                      key={a.storageId}
+                                      onClick={() =>
+                                        openFileViewer({
+                                          storageId: a.storageId,
+                                          name: a.name,
+                                          contentType: a.contentType,
+                                          size: a.size,
+                                          width: a.width,
+                                          height: a.height,
+                                          url: a.url ?? undefined,
+                                        })
+                                      }
+                                      className="mt-1 flex items-center gap-1 text-left underline"
+                                    >
+                                      <Paperclip className="h-3 w-3" />
+                                      {a.name}
+                                    </button>
                                   );
                                 })}
                                 {m.linkPreviews.map(lp => (
@@ -1260,19 +1276,6 @@ export function ConversationView({
           if (!o) setProfileId(null);
         }}
       />
-
-      {/* Image lightbox */}
-      <Dialog open={!!lightbox} onOpenChange={o => !o && setLightbox(null)}>
-        <DialogContent className="max-w-3xl border-0 bg-transparent p-0 shadow-none">
-          {lightbox && (
-            <img
-              src={lightbox}
-              alt=""
-              className="max-h-[85vh] w-full rounded-lg object-contain"
-            />
-          )}
-        </DialogContent>
-      </Dialog>
 
       <OneDrivePickerDialog
         open={oneDrivePickerOpen}

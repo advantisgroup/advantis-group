@@ -9,6 +9,18 @@ export const roleValidator = v.union(
   v.literal("employee")
 );
 
+/**
+ * Scoped permissions a custom role (see `customRoles` table) can grant on top
+ * of a user's base `role` tier. Additive only — a capability never revokes
+ * anything the base tier already allows.
+ */
+export const capabilityValidator = v.union(
+  v.literal("manage_members"),
+  v.literal("access_integrations"),
+  v.literal("manage_uploads"),
+  v.literal("view_activity_admin")
+);
+
 /** Who an event/announcement targets. */
 export const audienceValidator = v.union(
   v.object({ kind: v.literal("all") }),
@@ -116,6 +128,12 @@ export default defineSchema({
      * FileBrowser access control). Undefined means not directly shared yet.
      */
     oneDrivePermissionId: v.optional(v.string()),
+    /**
+     * Optional manager-defined role (e.g. "Team Lead") granting extra
+     * capabilities on top of `role` — see `customRoles`. Additive, not a
+     * replacement for the admin/manager/employee tier.
+     */
+    customRoleId: v.optional(v.id("customRoles")),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })
@@ -124,6 +142,14 @@ export default defineSchema({
     .index("by_role", ["role"])
     .index("by_status", ["status"])
     .index("by_clockodoUserId", ["clockodoUserId"]),
+
+  /** Manager-defined roles (e.g. "Team Lead") granting a set of capabilities. */
+  customRoles: defineTable({
+    name: v.string(),
+    capabilities: v.array(capabilityValidator),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_name", ["name"]),
 
   invites: defineTable({
     email: v.string(),
