@@ -6,15 +6,16 @@
 #
 # A brand-new preview deployment starts with zero configured env vars, which
 # fails the deploy as soon as convex/auth.config.ts needs e.g.
-# CLERK_JWT_ISSUER_DOMAIN. If the first attempt fails, seed defaults from the
-# CONVEX_PREVIEW_ENV_DEFAULTS Vercel env var (Preview-scoped, set once in the
-# dashboard to a copy of the production values) and retry once.
+# CLERK_JWT_ISSUER_DOMAIN.
 #
-# The marketplace-integration CONVEX_DEPLOY_KEY is a service token that can
-# run `convex deploy` but is rejected by `convex env set`
-# (ServiceTokenNotAllowed: requires a member-authenticated key). Seeding
-# needs a separately-generated project-level Preview Deploy Key
-# (CONVEX_ADMIN_DEPLOY_KEY, Preview-scoped in Vercel) instead.
+# There is currently no way to auto-seed this from CI: `convex env set` is
+# rejected for any project-scoped deploy key (ServiceTokenNotAllowed -
+# confirmed for both the marketplace integration's CONVEX_DEPLOY_KEY and a
+# manually-generated project-level Preview Deploy Key). Only a
+# deployment-specific key (generated from that one deployment's own
+# dashboard settings page, which only exists *after* the deployment is first
+# created) or a personal Convex login can call `env set`. So the first build
+# on a new branch needs one manual step - see the message below.
 set -uo pipefail
 
 APP_DIR="$1"   # e.g. apps/intranet, relative to repo root
@@ -39,32 +40,20 @@ if deploy; then
   exit 0
 fi
 
-if [ -z "${CONVEX_PREVIEW_ENV_DEFAULTS:-}" ]; then
-  echo "Convex deploy failed and CONVEX_PREVIEW_ENV_DEFAULTS is not set - cannot auto-seed env vars." >&2
-  echo "Set it in Vercel (advantis-group-intranet, Preview scope) to fix this permanently." >&2
-  exit 1
-fi
+cat >&2 <<'EOF'
+Convex deploy failed - this is expected on a brand-new preview deployment,
+which starts with zero configured env vars (e.g. CLERK_JWT_ISSUER_DOMAIN).
 
-if [ -z "${CONVEX_ADMIN_DEPLOY_KEY:-}" ]; then
-  echo "Convex deploy failed and CONVEX_ADMIN_DEPLOY_KEY is not set - cannot auto-seed env vars." >&2
-  echo "The integration's own CONVEX_DEPLOY_KEY is a service token and can't call 'env set'." >&2
-  echo "Generate a project-level Preview Deploy Key in the Convex dashboard and set it as" >&2
-  echo "CONVEX_ADMIN_DEPLOY_KEY (Preview scope) in Vercel to fix this permanently." >&2
-  exit 1
-fi
+No project-scoped deploy key is allowed to seed env vars on it
+(ServiceTokenNotAllowed), so this needs one manual step:
 
-echo "Convex deploy failed - seeding preview env vars from CONVEX_PREVIEW_ENV_DEFAULTS and retrying once..."
-SEED_FILE="$(mktemp)"
-trap 'rm -f "$SEED_FILE"' EXIT
-printf '%s\n' "$CONVEX_PREVIEW_ENV_DEFAULTS" > "$SEED_FILE"
+  1. Convex Dashboard -> convex-cinnabar-pillar -> Previews -> find this
+     branch's deployment -> Settings -> generate a deploy key for it.
+  2. $env:CONVEX_DEPLOY_KEY = "<that key>"
+     npx convex env set --from-file <a copy of the production env vars>
+  3. Redeploy this branch in Vercel.
 
-# No --deployment/--preview-name: this resolves to "this branch's preview
-# deployment" the same way `convex deploy` above just did, via the ambient
-# git context - just with an admin-capable key swapped in so `env set` is
-# allowed.
-if ! CONVEX_DEPLOY_KEY="$CONVEX_ADMIN_DEPLOY_KEY" npx convex env set --from-file "$SEED_FILE"; then
-  echo "Seeding preview env vars failed - not retrying the deploy." >&2
-  exit 1
-fi
-
-deploy
+Every subsequent build on this branch will succeed without repeating this,
+since the deployment keeps its env vars once seeded.
+EOF
+exit 1
