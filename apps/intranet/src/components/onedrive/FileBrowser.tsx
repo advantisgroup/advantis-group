@@ -70,13 +70,16 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { shouldEagerPrefetch } from "@/lib/network-heuristics";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import {
+  getCachedConfigured,
   getCachedListing,
   getCachedQuota,
   invalidateListingCache,
   isListingFresh,
   isQuotaFresh,
+  setCachedConfigured,
   setCachedListing,
   setCachedQuota,
 } from "@/lib/onedrive-cache";
@@ -291,12 +294,24 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     [router]
   );
 
-  // Resolve whether OneDrive is configured before firing any Graph-backed calls.
+  // Resolve whether OneDrive is configured before firing any Graph-backed
+  // calls. `configured` essentially never flips mid-session, so apply any
+  // cached value optimistically first — that unblocks the listing/quota
+  // effects below on this same tick instead of waiting on a fresh status()
+  // round trip on every mount. The real status() call still runs in the
+  // background to correct the cache if the tenant config actually changed.
   useEffect(() => {
+    const cached = getCachedConfigured();
+    if (cached !== undefined) setConfigured(cached);
     void od
       .status()
-      .then(s => setConfigured(s.configured))
-      .catch(() => setConfigured(false));
+      .then(s => {
+        setConfigured(s.configured);
+        setCachedConfigured(s.configured);
+      })
+      .catch(() => {
+        if (cached === undefined) setConfigured(false);
+      });
   }, [od]);
 
   // Single source of truth for fetching: fires on mount and whenever the
@@ -328,6 +343,33 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     invalidateListingCache();
     void load(path);
   }, [load, path]);
+
+  // Speculative fetch on hover/focus intent — warms the cache for a folder
+  // before the user actually clicks it, without touching any visible state
+  // (unlike load(), which drives what's on screen). On capable connections/
+  // devices it also warms one level of nested subfolders, since a hover
+  // usually precedes drilling further in.
+  const prefetch = useCallback(
+    (target: string) => {
+      if (isListingFresh(target)) return;
+      void od
+        .list(target)
+        .then(data => {
+          setCachedListing(target, data);
+          if (!shouldEagerPrefetch()) return;
+          for (const item of data.items) {
+            if (item.type === "folder" && !isListingFresh(item.path)) {
+              void od
+                .list(item.path)
+                .then(nested => setCachedListing(item.path, nested))
+                .catch(() => {});
+            }
+          }
+        })
+        .catch(() => {});
+    },
+    [od]
+  );
 
   // Debounced search.
   useEffect(() => {
@@ -691,6 +733,8 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                     key={f}
                     type="button"
                     onClick={() => navigate(f)}
+                    onMouseEnter={() => prefetch(f)}
+                    onFocus={() => prefetch(f)}
                     className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     <Folder className="size-3 text-blue-500" />
@@ -708,6 +752,8 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                     type="button"
                     title={u.targetFolderPath || "/"}
                     onClick={() => navigate(u.targetFolderPath)}
+                    onMouseEnter={() => prefetch(u.targetFolderPath)}
+                    onFocus={() => prefetch(u.targetFolderPath)}
                     className="max-w-52 truncate rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                   >
                     {u.fileName}
@@ -792,6 +838,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                 favorite={item.type === "folder" && isFavorite(item.path)}
                 onOpen={open}
                 onAction={action => onRowAction(action, item)}
+                onHoverIntent={i => i.type === "folder" && prefetch(i.path)}
               />
             ))}
           </div>
@@ -849,6 +896,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                   favorite={item.type === "folder" && isFavorite(item.path)}
                   onOpen={open}
                   onAction={action => onRowAction(action, item)}
+                  onHoverIntent={i => i.type === "folder" && prefetch(i.path)}
                 />
               ))}
             </tbody>
@@ -1136,6 +1184,7 @@ function FileRow({
   onSelect,
   onOpen,
   onAction,
+  onHoverIntent,
 }: {
   item: OneDriveItem;
   highlightQuery?: string;
@@ -1145,6 +1194,7 @@ function FileRow({
   onSelect?: () => void;
   onOpen: (item: OneDriveItem) => void;
   onAction: (a: RowActionType) => void;
+  onHoverIntent?: (item: OneDriveItem) => void;
 }) {
   return (
     <tr
@@ -1165,6 +1215,8 @@ function FileRow({
         <button
           type="button"
           onClick={() => onOpen(item)}
+          onMouseEnter={() => onHoverIntent?.(item)}
+          onFocus={() => onHoverIntent?.(item)}
           className="flex items-center gap-2.5 text-left"
         >
           <ItemIcon item={item} className="size-4 shrink-0" />
@@ -1201,12 +1253,14 @@ function GridTile({
   favorite,
   onOpen,
   onAction,
+  onHoverIntent,
 }: {
   item: OneDriveItem;
   focused?: boolean;
   favorite?: boolean;
   onOpen: (item: OneDriveItem) => void;
   onAction: (a: RowActionType) => void;
+  onHoverIntent?: (item: OneDriveItem) => void;
 }) {
   return (
     <div
@@ -1218,6 +1272,8 @@ function GridTile({
       <button
         type="button"
         onClick={() => onOpen(item)}
+        onMouseEnter={() => onHoverIntent?.(item)}
+        onFocus={() => onHoverIntent?.(item)}
         className="flex w-full flex-col items-stretch text-left"
       >
         <span className="flex h-24 items-center justify-center overflow-hidden rounded-t-lg bg-muted/40">

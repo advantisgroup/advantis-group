@@ -4,6 +4,7 @@ import { type Doc } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 
 export type Role = Doc<"users">["role"];
+export type Capability = Doc<"customRoles">["capabilities"][number];
 
 // --- Env helpers -------------------------------------------------------------
 
@@ -109,6 +110,31 @@ export async function requireAdmin(
   ctx: QueryCtx | MutationCtx
 ): Promise<Doc<"users">> {
   return requireRole(ctx, ["admin"]);
+}
+
+/**
+ * Require the current user to hold `capability` — satisfied automatically by
+ * the manager/admin tiers, or by an employee whose assigned `customRoleId`
+ * grants it. Capabilities are additive: they never take away what the base
+ * role tier already allows.
+ */
+export async function requireCapability(
+  ctx: QueryCtx | MutationCtx,
+  capability: Capability
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (MANAGER_ROLES.includes(user.role)) return user;
+
+  const customRole = user.customRoleId
+    ? await ctx.db.get(user.customRoleId)
+    : null;
+  if (!customRole?.capabilities.includes(capability)) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You do not have permission to do that",
+    });
+  }
+  return user;
 }
 
 // --- Provisioning ------------------------------------------------------------

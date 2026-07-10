@@ -18,14 +18,14 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 
 export function RequestAccessGate() {
   const t = useTranslations("Access");
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const status = useQuery(api.accessRequests.myStatus);
   const requestAccess = useMutation(api.accessRequests.create);
   const handleError = useErrorHandler();
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const email = user?.primaryEmailAddress?.emailAddress ?? "";
+  const email = isLoaded ? (user?.primaryEmailAddress?.emailAddress ?? "") : "";
 
   async function submit() {
     setSubmitting(true);

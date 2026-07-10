@@ -721,13 +721,39 @@
     "audit_enable_uploads": "enabled uploads for",
     "audit_disable_uploads": "disabled uploads for",
     "audit_teamAccessGrant": "granted Team folder access to",
-    "audit_teamAccessRevoke": "revoked Team folder access from"
+    "audit_teamAccessRevoke": "revoked Team folder access from",
+    "customRolesTab": "Roles",
+    "customRole": "Custom role",
+    "customRoleNone": "None"
   },
   "Teams": {
     "customerCare": "Customer Care",
     "inbound": "Inbound",
     "outbound": "Outbound",
     "dashboard": "Dashboard"
+  },
+  "CustomRoles": {
+    "heading": "Custom roles",
+    "description": "Grant scoped permissions — like managing members without integration access — without promoting someone to Manager.",
+    "newRole": "New role",
+    "name": "Name",
+    "namePlaceholder": "e.g. Team Lead",
+    "capabilities": "Capabilities",
+    "capability_manage_members": "Manage members",
+    "capability_access_integrations": "Access integrations",
+    "capability_manage_uploads": "Manage OneDrive uploads",
+    "capability_view_activity_admin": "View ActivityTrack admin",
+    "create": "Create role",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit role",
+    "delete": "Delete role",
+    "deleteConfirm": "Delete \"{name}\"? Anyone assigned this role loses its capabilities immediately.",
+    "deleted": "Role deleted",
+    "created": "Role created",
+    "updated": "Role updated",
+    "empty": "No custom roles yet.",
+    "noCapabilities": "No capabilities selected"
   },
   "Guidebooks": {
     "eyebrow": "Knowledge base",
@@ -1239,6 +1265,21 @@
     "bulkDeleteTitle": "Delete {count} items?",
     "uploadQueue": "Uploads",
     "retry": "Retry"
+  },
+  "FileViewer": {
+    "download": "Download",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "metadata": "File info",
+    "dimensions": "Dimensions",
+    "size": "Size",
+    "type": "Type",
+    "close": "Close",
+    "noPreview": "No preview available for this file.",
+    "archiveTitle": "Download \"{name}\"?",
+    "archiveDesc": "Archives don't have an in-app preview — this downloads the file directly.",
+    "cancel": "Cancel",
+    "loading": "Loading…"
   },
   "WhatsNew": {
     "title": "What's new in the intranet",

@@ -721,13 +721,39 @@
     "audit_enable_uploads": "hat Uploads aktiviert für",
     "audit_disable_uploads": "hat Uploads deaktiviert für",
     "audit_teamAccessGrant": "hat Team-Ordner-Zugriff gewährt an",
-    "audit_teamAccessRevoke": "hat Team-Ordner-Zugriff entzogen von"
+    "audit_teamAccessRevoke": "hat Team-Ordner-Zugriff entzogen von",
+    "customRolesTab": "Rollen",
+    "customRole": "Benutzerdefinierte Rolle",
+    "customRoleNone": "Keine"
   },
   "Teams": {
     "customerCare": "Customer Care",
     "inbound": "Inbound",
     "outbound": "Outbound",
     "dashboard": "Dashboard"
+  },
+  "CustomRoles": {
+    "heading": "Benutzerdefinierte Rollen",
+    "description": "Vergeben Sie begrenzte Berechtigungen – z. B. Mitglieder verwalten ohne Integrationszugriff –, ohne jemanden zum Manager zu befördern.",
+    "newRole": "Neue Rolle",
+    "name": "Name",
+    "namePlaceholder": "z. B. Teamleiter",
+    "capabilities": "Berechtigungen",
+    "capability_manage_members": "Mitglieder verwalten",
+    "capability_access_integrations": "Zugriff auf Integrationen",
+    "capability_manage_uploads": "OneDrive-Uploads verwalten",
+    "capability_view_activity_admin": "ActivityTrack-Admin einsehen",
+    "create": "Rolle erstellen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "edit": "Rolle bearbeiten",
+    "delete": "Rolle löschen",
+    "deleteConfirm": "\"{name}\" löschen? Wer diese Rolle zugewiesen hat, verliert die Berechtigungen sofort.",
+    "deleted": "Rolle gelöscht",
+    "created": "Rolle erstellt",
+    "updated": "Rolle aktualisiert",
+    "empty": "Noch keine benutzerdefinierten Rollen.",
+    "noCapabilities": "Keine Berechtigungen ausgewählt"
   },
   "Guidebooks": {
     "eyebrow": "Wissensdatenbank",
@@ -1239,6 +1265,21 @@
     "bulkDeleteTitle": "{count} Elemente löschen?",
     "uploadQueue": "Uploads",
     "retry": "Erneut versuchen"
+  },
+  "FileViewer": {
+    "download": "Herunterladen",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link kopiert",
+    "metadata": "Dateiinfo",
+    "dimensions": "Abmessungen",
+    "size": "Größe",
+    "type": "Typ",
+    "close": "Schließen",
+    "noPreview": "Für diese Datei ist keine Vorschau verfügbar.",
+    "archiveTitle": "\"{name}\" herunterladen?",
+    "archiveDesc": "Archive haben keine Vorschau in der App — dies lädt die Datei direkt herunter.",
+    "cancel": "Abbrechen",
+    "loading": "Wird geladen…"
   },
   "WhatsNew": {
     "title": "Neu im Intranet",

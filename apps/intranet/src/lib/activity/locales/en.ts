@@ -92,6 +92,7 @@ export const en: Dict = {
   "people.active": "Active",
   "people.save": "Save",
   "people.delete": "Delete",
+  "people.edit": "Edit person",
   "people.cancel": "Cancel",
   "people.confirmDelete": "Really delete this person?",
   "people.empty": "No people added yet.",

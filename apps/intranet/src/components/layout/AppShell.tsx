@@ -10,6 +10,7 @@ import { useMutation, useQuery } from "convex/react";
 
 import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
@@ -145,7 +146,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
       <TourProvider>
-        <AppShellInner>{children}</AppShellInner>
+        <FileViewerProvider>
+          <AppShellInner>{children}</AppShellInner>
+        </FileViewerProvider>
       </TourProvider>
     </SidebarProvider>
   );

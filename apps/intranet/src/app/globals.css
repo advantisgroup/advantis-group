@@ -902,3 +902,19 @@ html.lenis body {
     opacity: 0;
   }
 }
+
+/* Shiki dual-theme output (see GlobalFileViewer) — codeToHtml is called with
+   `themes: { light, dark }` and `defaultColor: false`, which emits both
+   `--shiki-light`/`--shiki-dark` CSS variables per token instead of baking in
+   one theme. These rules pick the right one off the same `.dark` class the
+   rest of the app's Tailwind dark variant already keys off of. */
+.shiki,
+.shiki span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg) !important;
+}
+.dark .shiki,
+.dark .shiki span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+}
