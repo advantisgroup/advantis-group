@@ -276,7 +276,10 @@ export default function PeoplePage() {
                   </p>
                 </Field>
                 <Field label={t("people.employeeId")}>
-                  <IdValue value={p.employeeId} label={t("people.employeeId")} />
+                  <IdValue
+                    value={p.employeeId}
+                    label={t("people.employeeId")}
+                  />
                 </Field>
                 <Field label={<BrandedText text={t("people.genesysId")} />}>
                   <IdValue
@@ -344,7 +347,10 @@ export default function PeoplePage() {
                   {p.email?.trim() || "—"}
                 </TableCell>
                 <TableCell>
-                  <IdValue value={p.employeeId} label={t("people.employeeId")} />
+                  <IdValue
+                    value={p.employeeId}
+                    label={t("people.employeeId")}
+                  />
                 </TableCell>
                 <TableCell>
                   <IdValue

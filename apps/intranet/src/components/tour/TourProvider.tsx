@@ -218,7 +218,9 @@ export function TourProvider({ children }: { children: ReactNode }) {
           if (cancelled) return;
           // Re-measure after scrolling, since the target's position may have
           // changed (or the initial rect was already off-screen).
-          const settledRect = el ? measureTarget(currentStep!.targetAttr) : rect;
+          const settledRect = el
+            ? measureTarget(currentStep!.targetAttr)
+            : rect;
           setTargetRect(settledRect ?? rect);
           setPhase("active");
         })();

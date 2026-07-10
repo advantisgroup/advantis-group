@@ -261,12 +261,20 @@ function FileViewerContent({
             className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
           />
         ) : kind.kind === "code" || kind.kind === "text" ? (
-          <CodeOrTextPreview url={url} kind={kind} noPreviewLabel={t("noPreview")} />
+          <CodeOrTextPreview
+            url={url}
+            kind={kind}
+            noPreviewLabel={t("noPreview")}
+          />
         ) : (
           <div className="flex flex-col items-center gap-3 text-white/80">
             <FileQuestion className="size-10" />
             <p className="text-sm">{t("noPreview")}</p>
-            <Button variant="secondary" size="sm" onClick={() => downloadUrl(url, file.name)}>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => downloadUrl(url, file.name)}
+            >
               <Download className="size-4" />
               {t("download")}
             </Button>
