@@ -10,9 +10,10 @@ import {
   useState,
 } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { Lightbulb, X } from "lucide-react";
+import { CheckCircle2, CircleAlert, Lightbulb, X, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 /**
@@ -190,6 +191,58 @@ const DialogTip = React.forwardRef<
 ));
 DialogTip.displayName = "DialogTip";
 
+/**
+ * A single row in a `DialogChecklist` — a consequence of the action the
+ * dialog is confirming, tagged positive/negative/neutral so the icon and
+ * color communicate at a glance (see the grant/revoke Applicant Management
+ * dialogs for the canonical usage).
+ */
+export interface ChecklistItem {
+  tone: "positive" | "negative" | "neutral";
+  text: ReactNode;
+}
+
+const checklistIcon: Record<ChecklistItem["tone"], typeof CheckCircle2> = {
+  positive: CheckCircle2,
+  negative: XCircle,
+  neutral: CircleAlert,
+};
+
+const checklistColor: Record<ChecklistItem["tone"], string> = {
+  positive: "text-success",
+  negative: "text-destructive",
+  neutral: "text-muted-foreground",
+};
+
+/**
+ * Itemized list of consequences for a dialog — the ✅/❌ checklist pattern.
+ * Exported standalone (not just for `useConfirm`) so any dialog can compose
+ * it directly inside `DialogContent`.
+ */
+export function DialogChecklist({
+  items,
+  className,
+}: {
+  items: ChecklistItem[];
+  className?: string;
+}) {
+  return (
+    <ul className={cn("flex flex-col gap-2", className)}>
+      {items.map((item, i) => {
+        const Icon = checklistIcon[item.tone];
+        return (
+          <li key={i} className="flex items-start gap-2 text-sm">
+            <Icon
+              className={cn("mt-0.5 size-4 shrink-0", checklistColor[item.tone])}
+            />
+            <span className="min-w-0 text-foreground/90">{item.text}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    Imperative confirmation, built on the same dialog. Lives here so the app has
    a single dialog module rather than a separate confirm-dialog file.
@@ -200,6 +253,14 @@ interface ConfirmOptions {
   description?: string;
   /** Optional highlighted tip rendered under the description. */
   tip?: ReactNode;
+  /** Itemized consequences of the action, rendered as a checklist. */
+  items?: ChecklistItem[];
+  /**
+   * When set, the confirm button stays disabled until the user types
+   * `target` exactly — for maximum-destructive actions (e.g. deleting an
+   * applicant's full record).
+   */
+  confirmText?: { placeholder?: string; target: string };
   confirmLabel?: string;
   cancelLabel?: string;
   destructive?: boolean;
@@ -212,10 +273,12 @@ const ConfirmContext = createContext<ConfirmFn | null>(null);
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [opts, setOpts] = useState<ConfirmOptions | null>(null);
+  const [typedConfirm, setTypedConfirm] = useState("");
   const resolver = useRef<((value: boolean) => void) | null>(null);
 
   const confirm = useCallback<ConfirmFn>(options => {
     setOpts(options);
+    setTypedConfirm("");
     setOpen(true);
     return new Promise<boolean>(resolve => {
       resolver.current = resolve;
@@ -226,7 +289,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     resolver.current?.(result);
     resolver.current = null;
     setOpen(false);
+    setTypedConfirm("");
   }
+
+  const confirmBlocked =
+    !!opts?.confirmText && typedConfirm !== opts.confirmText.target;
 
   return (
     <ConfirmContext.Provider value={confirm}>
@@ -238,14 +305,29 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         }}
       >
         <DialogContent className="max-w-md gap-0 p-0">
-          <div className="px-6 pb-5 pt-6 pr-12">
+          <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
             <DialogTitle className="leading-snug">{opts?.title}</DialogTitle>
+          </div>
+          <div className="flex flex-col gap-4 px-6 pb-5 pt-4">
             {opts?.description && (
-              <DialogDescription className="mt-2 leading-relaxed">
+              <DialogDescription className="leading-relaxed">
                 {opts.description}
               </DialogDescription>
             )}
-            {opts?.tip && <DialogTip className="mt-4">{opts.tip}</DialogTip>}
+            {opts?.items && opts.items.length > 0 && (
+              <DialogChecklist items={opts.items} />
+            )}
+            {opts?.tip && <DialogTip>{opts.tip}</DialogTip>}
+            {opts?.confirmText && (
+              <Input
+                autoFocus
+                value={typedConfirm}
+                onChange={e => setTypedConfirm(e.target.value)}
+                placeholder={
+                  opts.confirmText.placeholder ?? opts.confirmText.target
+                }
+              />
+            )}
           </div>
           <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
             <Button variant="ghost" onClick={() => settle(false)}>
@@ -254,7 +336,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             <Button
               variant={opts?.destructive === false ? "default" : "destructive"}
               onClick={() => settle(true)}
-              autoFocus
+              disabled={confirmBlocked}
+              autoFocus={!opts?.confirmText}
             >
               {opts?.confirmLabel ?? "Confirm"}
             </Button>
