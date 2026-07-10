@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -11,14 +11,12 @@ import {
   FileQuestion,
   Info,
   Loader2,
-  MoreVertical,
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
-import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,7 +25,14 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatFileSize } from "@/lib/upload";
+import { cn } from "@/lib/utils";
 
 import { detectFileKind, type FileKind } from "./file-kind";
 
@@ -171,7 +176,13 @@ function FileViewerContent({
   const t = useTranslations("FileViewer");
   const [showMetadata, setShowMetadata] = useState(false);
 
-  const actions: ActionMenuItem[] = [
+  const actions: {
+    key: string;
+    label: string;
+    icon: ReactNode;
+    onSelect: () => void;
+    active?: boolean;
+  }[] = [
     {
       key: "download",
       label: t("download"),
@@ -198,6 +209,7 @@ function FileViewerContent({
             label: t("metadata"),
             icon: <Info className="size-4" />,
             onSelect: () => setShowMetadata(v => !v),
+            active: showMetadata,
           },
         ]
       : []),
@@ -208,33 +220,47 @@ function FileViewerContent({
       className="flex h-full w-full flex-col"
       onClick={e => e.stopPropagation()}
     >
-      <div className="flex shrink-0 items-center gap-2 px-4 py-3 text-white sm:px-6">
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">
-          {file.name}
-        </span>
-        <ActionMenu
-          ariaLabel={file.name}
-          items={actions}
-          trigger={
-            <Button
-              variant="ghost"
-              size="icon"
-              className="shrink-0 text-white hover:bg-white/10 hover:text-white"
-            >
-              <MoreVertical className="size-4" />
-            </Button>
-          }
-        />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0 text-white hover:bg-white/10 hover:text-white"
-          aria-label={t("close")}
-          onClick={onClose}
-        >
-          <X className="size-4" />
-        </Button>
-      </div>
+      <TooltipProvider delayDuration={300}>
+        <div className="flex shrink-0 items-center gap-1 px-4 py-3 text-white sm:px-6">
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">
+            {file.name}
+          </span>
+          {actions.map(action => (
+            <Tooltip key={action.key}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={action.label}
+                  aria-pressed={action.active}
+                  onClick={action.onSelect}
+                  className={cn(
+                    "shrink-0 text-white hover:bg-white/10 hover:text-white",
+                    action.active && "bg-white/10"
+                  )}
+                >
+                  {action.icon}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{action.label}</TooltipContent>
+            </Tooltip>
+          ))}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="shrink-0 text-white hover:bg-white/10 hover:text-white"
+                aria-label={t("close")}
+                onClick={onClose}
+              >
+                <X className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("close")}</TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
 
       {showMetadata && kind.kind === "image" && (
         <div className="mx-4 mb-2 shrink-0 rounded-lg bg-white/10 px-3 py-2 text-xs text-white/90 sm:mx-6">
