@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import { isAllowedOrigin, PORT } from "./lib/env.js";
 import { ApiError } from "./lib/errors.js";
 import { activityRoute } from "./routes/activity.js";
+import { applicantsRoute } from "./routes/applicants.js";
 import { onedriveRoute } from "./routes/onedrive.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { internalClockodoImportRoute } from "./routes/internal/clockodo.js";
@@ -59,7 +60,8 @@ export const app = new Elysia()
   .use(internalOnedriveRoute)
   .use(activityRoute)
   .use(onedriveRoute)
-  .use(wikiChatRoute);
+  .use(wikiChatRoute)
+  .use(applicantsRoute);
 
 export type App = typeof app;
 
