@@ -137,6 +137,50 @@ export async function requireCapability(
   return user;
 }
 
+/**
+ * True when `user` qualifies to be granted Applicant Management access: at
+ * least Manager (admins qualify too), or an employee whose custom role
+ * carries `manage_members`. This is a data-sensitivity gate on the *target*
+ * of a grant, independent of who's doing the granting — it applies even when
+ * an admin is the one granting.
+ */
+export function isApplicantEligible(
+  user: Doc<"users">,
+  customRole: Doc<"customRoles"> | null
+): boolean {
+  return (
+    MANAGER_ROLES.includes(user.role) ||
+    (customRole?.capabilities.includes("manage_members") ?? false)
+  );
+}
+
+/** Require the current user to have Applicant Management access (admin bypasses). */
+export async function requireApplicantAccess(
+  ctx: QueryCtx | MutationCtx
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (user.role === "admin" || user.applicantAccess) return user;
+  throw new ConvexError({
+    code: "forbidden",
+    message: "You do not have permission to do that",
+  });
+}
+
+/**
+ * Require the current user to be able to grant/revoke Applicant Management
+ * access for others: an admin, or a user designated as a delegate.
+ */
+export async function requireApplicantDelegateOrAdmin(
+  ctx: QueryCtx | MutationCtx
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (user.role === "admin" || user.applicantAccessDelegate) return user;
+  throw new ConvexError({
+    code: "forbidden",
+    message: "You do not have permission to do that",
+  });
+}
+
 // --- Provisioning ------------------------------------------------------------
 
 export type EnsureUserResult =

@@ -21,6 +21,42 @@ export const capabilityValidator = v.union(
   v.literal("view_activity_admin")
 );
 
+// --- Applicant Management (Bewerbermanagement) validators -------------------
+
+export const ampelValidator = v.union(
+  v.literal("rot"),
+  v.literal("blau"),
+  v.literal("gruen")
+);
+
+export const kontaktArtValidator = v.union(
+  v.literal("telefon"),
+  v.literal("email"),
+  v.literal("persoenlich"),
+  v.literal("video"),
+  v.literal("sonstiges")
+);
+
+export const emailKategorieValidator = v.union(
+  v.literal("telefonisch_nicht_erreicht"),
+  v.literal("einladung"),
+  v.literal("absage"),
+  v.literal("sonstiges")
+);
+
+export const terminArtValidator = v.union(
+  v.literal("telefon"),
+  v.literal("teams"),
+  v.literal("vor_ort")
+);
+
+export const terminTypValidator = v.union(
+  v.literal("interview"),
+  v.literal("gespraech"),
+  v.literal("probetag"),
+  v.literal("sonstiges")
+);
+
 /** Who an event/announcement targets. */
 export const audienceValidator = v.union(
   v.object({ kind: v.literal("all") }),
@@ -134,6 +170,21 @@ export default defineSchema({
      * replacement for the admin/manager/employee tier.
      */
     customRoleId: v.optional(v.id("customRoles")),
+    /**
+     * Applicant Management: admin-only allowlist flag letting this user grant
+     * or revoke `applicantAccess` for others (on top of the admin tier, which
+     * always can). Mirrors the `gfAccess` allowlist pattern — a dedicated
+     * grant, not tied to manager rank.
+     */
+    applicantAccessDelegate: v.optional(v.boolean()),
+    /** Applicant Management: whether this user can see/edit applicant records. */
+    applicantAccess: v.optional(v.boolean()),
+    /**
+     * Cosmetic per-user display override for the role name (e.g. rendering
+     * "Geschäftsführerin" instead of "Admin"). Purely a label — never read for
+     * permission checks, which always use `role`.
+     */
+    roleLabel: v.optional(v.string()),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })
@@ -859,6 +910,99 @@ export default defineSchema({
     refreshToken: v.string(),
     updatedAt: v.number(),
   }),
+
+  // --- Applicant Management (Bewerbermanagement) ---------------------------
+
+  /** One skill profile per position (e.g. "Buchhalter"), for skill matching. */
+  applicantSkillProfiles: defineTable({
+    name: v.string(),
+    skills: v.array(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_name", ["name"]),
+
+  applicants: defineTable({
+    name: v.string(),
+    email: v.optional(v.string()),
+    telefon: v.optional(v.string()),
+    adresse: v.optional(v.string()),
+    geburtsdatum: v.optional(v.string()),
+    position: v.optional(v.string()),
+    skills: v.array(v.string()),
+    ausbildung: v.optional(v.string()),
+    berufserfahrung: v.optional(v.string()),
+    zusammenfassung: v.optional(v.string()),
+    rating: v.optional(ampelValidator),
+    profilId: v.optional(v.id("applicantSkillProfiles")),
+    notizen: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_profil", ["profilId"]),
+
+  /** Uploaded CV PDFs, stored in Convex file storage. */
+  applicantDocuments: defineTable({
+    applicantId: v.id("applicants"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    createdAt: v.number(),
+  }).index("by_applicant", ["applicantId"]),
+
+  /**
+   * Kontakte (contact log). An applicant with zero rows here is "Neue
+   * Bewerber"; the first row moves them into the "Bewerberpool".
+   */
+  applicantContacts: defineTable({
+    applicantId: v.id("applicants"),
+    datum: v.string(),
+    art: kontaktArtValidator,
+    notiz: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_applicant", ["applicantId"]),
+
+  /** Tracked sent emails — does NOT count as first contact. */
+  applicantEmails: defineTable({
+    applicantId: v.id("applicants"),
+    datum: v.string(),
+    kategorie: emailKategorieValidator,
+    notiz: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_applicant", ["applicantId"]),
+
+  applicantInterviews: defineTable({
+    applicantId: v.id("applicants"),
+    datum: v.string(),
+    interviewer: v.string(),
+    notiz: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_applicant", ["applicantId"]),
+
+  /**
+   * Termine (appointments). `uebernommen` flips to true once "converted" into
+   * an `applicantContacts` row (and an `applicantInterviews` row when
+   * `typ === "interview"`).
+   */
+  applicantAppointments: defineTable({
+    applicantId: v.id("applicants"),
+    datum: v.string(),
+    uhrzeit: v.string(),
+    art: terminArtValidator,
+    typ: terminTypValidator,
+    notiz: v.optional(v.string()),
+    uebernommen: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_applicant", ["applicantId"])
+    .index("by_datum", ["datum"]),
+
+  // Append-only audit of Applicant Management access grants/revocations.
+  applicantAuditLog: defineTable({
+    actorUserId: v.id("users"),
+    action: v.string(),
+    target: v.optional(v.string()),
+    at: v.number(),
+  }).index("by_at", ["at"]),
 
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs
