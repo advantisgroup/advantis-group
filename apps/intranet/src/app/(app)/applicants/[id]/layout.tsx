@@ -271,12 +271,13 @@ export default function ApplicantDetailLayout({
           <Button
             variant="outline"
             size="sm"
+            aria-label={t("switchApplicant")}
             onClick={() =>
               window.dispatchEvent(new Event("command-palette:open"))
             }
           >
             <Search className="size-4" />
-            {t("switchApplicant")}
+            <span className="hidden md:inline">{t("switchApplicant")}</span>
           </Button>
           <RecentlyViewedApplicants excludeId={applicantId} />
         </div>
@@ -285,23 +286,25 @@ export default function ApplicantDetailLayout({
             <Button
               variant="outline"
               size="sm"
+              aria-label={t("prevApplicant")}
               disabled={!adjacent.prev}
               onClick={() =>
                 adjacent.prev && router.push(adjacentHref(adjacent.prev._id))
               }
             >
               <ChevronLeft className="size-4" />
-              {t("prevApplicant")}
+              <span className="hidden md:inline">{t("prevApplicant")}</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
+              aria-label={t("nextApplicant")}
               disabled={!adjacent.next}
               onClick={() =>
                 adjacent.next && router.push(adjacentHref(adjacent.next._id))
               }
             >
-              {t("nextApplicant")}
+              <span className="hidden md:inline">{t("nextApplicant")}</span>
               <ChevronRight className="size-4" />
             </Button>
           </div>
@@ -349,11 +352,12 @@ export default function ApplicantDetailLayout({
             </div>
             <Button
               variant="ghost"
+              aria-label={t("deleteApplicant")}
               className="text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={() => void handleDelete()}
             >
               <Trash2 className="size-4" />
-              {t("deleteApplicant")}
+              <span className="hidden md:inline">{t("deleteApplicant")}</span>
             </Button>
           </div>
         </CardContent>

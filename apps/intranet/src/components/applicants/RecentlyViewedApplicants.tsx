@@ -40,9 +40,9 @@ export function RecentlyViewedApplicants({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" aria-label={t("recentlyViewed")}>
           <History className="size-4" />
-          {t("recentlyViewed")}
+          <span className="hidden md:inline">{t("recentlyViewed")}</span>
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start">

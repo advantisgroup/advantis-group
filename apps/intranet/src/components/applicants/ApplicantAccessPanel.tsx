@@ -99,13 +99,16 @@ export function ApplicantAccessPanel() {
               </Select>
               <Button
                 disabled={!pickerId}
+                aria-label={t("grantAccessConfirm")}
                 onClick={() => {
                   const user = grantable.find(u => u._id === pickerId);
                   if (user) void grant(user._id, user.name);
                 }}
               >
                 <ShieldCheck className="size-4" />
-                {t("grantAccessConfirm")}
+                <span className="hidden md:inline">
+                  {t("grantAccessConfirm")}
+                </span>
               </Button>
             </div>
           )}
@@ -136,11 +139,14 @@ export function ApplicantAccessPanel() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    aria-label={t("revokeAccessConfirm")}
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => void revoke(u._id, u.name)}
                   >
                     <UserMinus className="size-4" />
-                    {t("revokeAccessConfirm")}
+                    <span className="hidden md:inline">
+                      {t("revokeAccessConfirm")}
+                    </span>
                   </Button>
                 </div>
               </CardContent>

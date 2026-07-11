@@ -30,11 +30,12 @@ export function CopyLinkButton({
     <Button
       variant="ghost"
       size="sm"
+      aria-label={t("copyLink")}
       className={className}
       onClick={() => void copy()}
     >
       <Link2 className="size-4" />
-      {t("copyLink")}
+      <span className="hidden md:inline">{t("copyLink")}</span>
     </Button>
   );
 }

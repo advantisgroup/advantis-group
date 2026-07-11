@@ -230,10 +230,11 @@ export function SkillProfilePanel() {
         <Button
           variant="outline"
           size="sm"
+          aria-label={t("newProfile")}
           onClick={() => setEditing({ name: "", skills: [] })}
         >
           <Plus className="size-4" />
-          {t("newProfile")}
+          <span className="hidden md:inline">{t("newProfile")}</span>
         </Button>
       </div>
 
@@ -268,6 +269,7 @@ export function SkillProfilePanel() {
                   <Button
                     variant="outline"
                     size="sm"
+                    aria-label={t("findMatches")}
                     disabled={profile.skills.length === 0}
                     onClick={() =>
                       setMatchesFor(
@@ -276,7 +278,7 @@ export function SkillProfilePanel() {
                     }
                   >
                     <Search className="size-4" />
-                    {t("findMatches")}
+                    <span className="hidden md:inline">{t("findMatches")}</span>
                   </Button>
                   <Button
                     variant="ghost"
