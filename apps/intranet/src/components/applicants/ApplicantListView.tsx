@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { matchSkills } from "@advantis/types";
 import { useQuery } from "convex/react";
-import { UserRoundSearch } from "lucide-react";
+import { Briefcase, CalendarDays, Mail, UserRoundSearch } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import {
@@ -71,10 +71,20 @@ function ApplicantCard({
       <AmpelDot rating={applicant.rating} className="size-3" />
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium">{applicant.name}</p>
-        <p className="truncate text-xs text-muted-foreground">
-          {applicant.position || t("positionUnknown")}
-          {applicant.email ? ` · ${applicant.email}` : ""}
-        </p>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+          <span className="inline-flex min-w-0 items-center gap-1">
+            <Briefcase className="size-3 shrink-0" />
+            <span className="truncate">
+              {applicant.position || t("positionUnknown")}
+            </span>
+          </span>
+          {applicant.email && (
+            <span className="inline-flex min-w-0 items-center gap-1">
+              <Mail className="size-3 shrink-0" />
+              <span className="truncate">{applicant.email}</span>
+            </span>
+          )}
+        </div>
       </div>
       {profile && (
         <span
@@ -88,7 +98,8 @@ function ApplicantCard({
           {profile.name}: {matched.length}/{profile.skills.length}
         </span>
       )}
-      <span className="shrink-0 text-xs text-muted-foreground">
+      <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+        <CalendarDays className="size-3" />
         {t("receivedOn", {
           date: formatIsoDate(
             new Date(applicant.createdAt).toISOString().slice(0, 10),

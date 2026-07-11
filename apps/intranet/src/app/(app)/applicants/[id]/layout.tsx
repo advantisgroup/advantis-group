@@ -12,7 +12,14 @@ import {
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
+import {
+  Briefcase,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Trash2,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -300,15 +307,21 @@ export default function ApplicantDetailLayout({
                 {applicant.status === "neu" ? t("statusNeu") : t("statusPool")}
               </Badge>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {applicant.position || t("positionUnknown")} ·{" "}
-              {t("receivedOn", {
-                date: formatIsoDate(
-                  new Date(applicant.createdAt).toISOString().slice(0, 10),
-                  locale
-                ),
-              })}
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Briefcase className="size-3.5" />
+                {applicant.position || t("positionUnknown")}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <CalendarDays className="size-3.5" />
+                {t("receivedOn", {
+                  date: formatIsoDate(
+                    new Date(applicant.createdAt).toISOString().slice(0, 10),
+                    locale
+                  ),
+                })}
+              </span>
+            </div>
           </div>
           <div className="flex items-start gap-4">
             <div className="space-y-1.5 text-right">
