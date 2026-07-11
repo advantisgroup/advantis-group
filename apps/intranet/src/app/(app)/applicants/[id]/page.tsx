@@ -1,18 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { matchSkills } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Download, Trash2, UploadCloud } from "lucide-react";
+import {
+  ArrowLeft,
+  Download,
+  RefreshCw,
+  Trash2,
+  UploadCloud,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AmpelPicker } from "@/components/applicants/AmpelBadge";
+import {
+  CvFallbackModal,
+  type CvFallbackFormState,
+} from "@/components/applicants/CvFallbackModal";
 import { TerminForm, TerminRow } from "@/components/applicants/TerminCalendar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +39,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useApplicantsApi } from "@/lib/applicants-api";
 import { formatIsoDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
 
@@ -79,12 +92,20 @@ function Field({
   );
 }
 
-function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
+function TabUebersicht({
+  applicant,
+  highlight,
+}: {
+  applicant: ApplicantDetail;
+  highlight: string[];
+}) {
   const t = useTranslations("Applicants");
   const profiles = useQuery(api.applicants.listProfiles);
   const update = useMutation(api.applicants.update);
   const handleError = useErrorHandler();
   const [notiz, setNotiz] = useState(applicant.notizen ?? "");
+  const isHighlighted = (skill: string) =>
+    highlight.some(h => h.toLowerCase() === skill.toLowerCase());
 
   const profile = profiles?.find(p => p._id === applicant.profilId) ?? null;
   const matched = profile ? matchSkills(profile.skills, applicant) : [];
@@ -172,7 +193,13 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
               {profile && profile.skills.length > 0 && (
                 <div className="space-y-1 text-sm">
                   {matched.map(s => (
-                    <div key={s} className="flex items-center gap-2">
+                    <div
+                      key={s}
+                      className={cn(
+                        "flex items-center gap-2 rounded px-1 -mx-1",
+                        isHighlighted(s) && "skill-hl"
+                      )}
+                    >
                       <span className="font-bold text-success">✓</span> {s}
                     </div>
                   ))}
@@ -195,7 +222,11 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
               </p>
               <div className="flex flex-wrap gap-1.5">
                 {applicant.skills.map(s => (
-                  <Badge key={s} variant="muted">
+                  <Badge
+                    key={s}
+                    variant="muted"
+                    className={cn(isHighlighted(s) && "skill-hl")}
+                  >
                     {s}
                   </Badge>
                 ))}
@@ -299,14 +330,86 @@ function TabTermine({ applicant }: { applicant: ApplicantDetail }) {
   );
 }
 
+function applicantToFormState(applicant: ApplicantDetail): CvFallbackFormState {
+  return {
+    name: applicant.name,
+    email: applicant.email ?? "",
+    telefon: applicant.telefon ?? "",
+    adresse: applicant.adresse ?? "",
+    geburtsdatum: applicant.geburtsdatum ?? "",
+    position: applicant.position ?? "",
+    ausbildung: applicant.ausbildung ?? "",
+    berufserfahrung: applicant.berufserfahrung ?? "",
+    zusammenfassung: applicant.zusammenfassung ?? "",
+    skills: applicant.skills,
+  };
+}
+
 function TabDokumente({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
+  const applicantsApi = useApplicantsApi();
   const generateUploadUrl = useMutation(api.applicants.generateUploadUrl);
   const addDocument = useMutation(api.applicants.addDocument);
   const removeDocument = useMutation(api.applicants.removeDocument);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
+  const isMobile = useIsMobile();
   const tc = useTranslations("Common");
+  const rescanInputRef = useRef<HTMLInputElement>(null);
+
+  const [rescanFile, setRescanFile] = useState<File | null>(null);
+  const [rescanInitialValues, setRescanInitialValues] =
+    useState<CvFallbackFormState | null>(null);
+  const [rescanFromPdfFields, setRescanFromPdfFields] = useState<
+    (keyof CvFallbackFormState)[]
+  >([]);
+  const [rescanStorageId, setRescanStorageId] = useState<
+    Id<"_storage"> | undefined
+  >(undefined);
+
+  async function handleRescan(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      toast.error(t("uploadPdfOnly"));
+      return;
+    }
+    const current = applicantToFormState(applicant);
+    try {
+      const result = await applicantsApi.rescan(file);
+      const merged = { ...current };
+      const fromPdf: (keyof CvFallbackFormState)[] = [];
+      for (const key of Object.keys(current) as (keyof CvFallbackFormState)[]) {
+        if (key === "skills") continue;
+        const value = result.extractedFields[key];
+        if (typeof value === "string" && value.trim()) {
+          merged[key] = value;
+          fromPdf.push(key);
+        }
+      }
+      if (result.extractedFields.skills.length > 0) {
+        merged.skills = result.extractedFields.skills;
+        fromPdf.push("skills");
+      }
+      setRescanInitialValues(merged);
+      setRescanFromPdfFields(fromPdf);
+      setRescanStorageId(result.storageId);
+    } catch (e) {
+      handleError(e);
+      setRescanInitialValues(current);
+      setRescanFromPdfFields([]);
+      setRescanStorageId(undefined);
+    }
+    setRescanFile(file);
+  }
+
+  function openRescan(input: HTMLInputElement | null) {
+    if (isMobile) {
+      toast.info(t("fallbackDesktopOnly"));
+      return;
+    }
+    input?.click();
+  }
 
   async function handleUpload(files: FileList | null) {
     const file = files?.[0];
@@ -389,25 +492,69 @@ function TabDokumente({ applicant }: { applicant: ApplicantDetail }) {
             ))}
           </div>
         )}
-        <label>
-          <Button asChild variant="outline">
-            <span>
-              <UploadCloud className="size-4" />
-              {t("addDocument")}
-            </span>
+        <div className="flex flex-wrap gap-2">
+          <label>
+            <Button asChild variant="outline">
+              <span>
+                <UploadCloud className="size-4" />
+                {t("addDocument")}
+              </span>
+            </Button>
+            <input
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={e => {
+                void handleUpload(e.target.files);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          <Button
+            variant="outline"
+            onClick={() => openRescan(rescanInputRef.current)}
+          >
+            <RefreshCw className="size-4" />
+            {t("rescanCv")}
           </Button>
           <input
+            ref={rescanInputRef}
             type="file"
             accept="application/pdf"
             className="hidden"
             onChange={e => {
-              void handleUpload(e.target.files);
+              void handleRescan(e.target.files);
               e.target.value = "";
             }}
           />
-        </label>
+        </div>
         <p className="text-xs text-muted-foreground">{t("maxFileSizeHint")}</p>
       </CardContent>
+      {rescanFile && rescanInitialValues && (
+        <CvFallbackModal
+          open
+          onOpenChange={open => {
+            if (!open) {
+              setRescanFile(null);
+              setRescanInitialValues(null);
+              setRescanFromPdfFields([]);
+              setRescanStorageId(undefined);
+            }
+          }}
+          mode="update"
+          applicantId={applicant._id}
+          file={rescanFile}
+          initialValues={rescanInitialValues}
+          initialFromPdfFields={rescanFromPdfFields}
+          pendingStorageId={rescanStorageId}
+          onSaved={() => {
+            setRescanFile(null);
+            setRescanInitialValues(null);
+            setRescanFromPdfFields([]);
+            setRescanStorageId(undefined);
+          }}
+        />
+      )}
     </Card>
   );
 }
@@ -700,6 +847,7 @@ export default function ApplicantDetailPage() {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const locale = useLocale();
   const applicantId = params.id as Id<"applicants">;
@@ -708,6 +856,19 @@ export default function ApplicantDetailPage() {
   const remove = useMutation(api.applicants.remove);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
+
+  const highlightParam = searchParams.get("highlight");
+  const [highlight] = useState(() =>
+    highlightParam
+      ? highlightParam
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean)
+      : []
+  );
+  useEffect(() => {
+    if (highlightParam) router.replace(`/applicants/${applicantId}`);
+  }, [highlightParam, applicantId, router]);
 
   async function handleDelete() {
     if (!applicant) return;
@@ -810,7 +971,7 @@ export default function ApplicantDetailPage() {
         </div>
 
         <TabsContent value="uebersicht">
-          <TabUebersicht applicant={applicant} />
+          <TabUebersicht applicant={applicant} highlight={highlight} />
         </TabsContent>
         <TabsContent value="termine">
           <TabTermine applicant={applicant} />
