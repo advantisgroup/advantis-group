@@ -1,32 +1,27 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { SearchX } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { StatusScreen } from "@/components/layout/StatusScreen";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 
-/**
- * Shown in place of a route's content when the signed-in user lacks the
- * capability/role that route requires (e.g. non-managers hitting `/admin`).
- * Distinct from `AccessDeniedScreen`, which handles signed-in identities
- * outside the intranet's allowlist entirely and has no path forward.
- */
-export function ForbiddenScreen({
+/** Shown for any route (real or within the app shell) that doesn't resolve. */
+export function NotFoundScreen({
   fullScreen,
   className,
 }: {
   fullScreen?: boolean;
   className?: string;
 }) {
-  const t = useTranslations("Forbidden");
+  const t = useTranslations("NotFound");
 
   return (
     <StatusScreen
       fullScreen={fullScreen}
       className={className}
-      icon={Lock}
+      icon={SearchX}
       code={t("code")}
       title={t("title")}
       description={t("description")}
