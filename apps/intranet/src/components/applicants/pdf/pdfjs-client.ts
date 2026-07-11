@@ -65,7 +65,20 @@ export async function loadPdf(file: File): Promise<PdfJs.PDFDocumentProxy> {
   return doc;
 }
 
-export async function getUtil(): Promise<typeof PdfJs.Util> {
+/**
+ * Returns a plain object wrapping `Util.transform` rather than the `Util`
+ * class itself. `Util` is a class, so `typeof Util === "function"` — handing
+ * the class straight to a `useState` setter makes React treat it as a lazy
+ * updater callback and try to invoke it, throwing "Class constructor Util
+ * cannot be invoked without 'new'". `Util.transform` doesn't use `this`, so
+ * this is a safe, equivalent extraction.
+ */
+export async function getUtil(): Promise<{
+  transform(m1: number[], m2: number[]): number[];
+}> {
   const pdfjsLib = await loadPdfjsLib();
-  return pdfjsLib.Util;
+  const { Util } = pdfjsLib;
+  return {
+    transform: (m1, m2) => Util.transform(m1, m2) as number[],
+  };
 }
