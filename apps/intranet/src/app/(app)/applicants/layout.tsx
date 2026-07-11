@@ -15,6 +15,11 @@ import {
   useHasApplicantAccess,
 } from "@/components/providers/current-user";
 
+// The list-page tabs — anything else in the second path segment is an
+// applicant id, i.e. a detail route that owns its own chrome entirely
+// (see `[id]/layout.tsx`) and must not also get this layout's header/tabs.
+const LIST_TABS = ["termine", "neu", "pool", "profile", "access"];
+
 /**
  * Access scope for Bewerbermanagement. Gated behind `useHasApplicantAccess()`
  * (admins, granted users, and delegates) — a narrower, per-user allowlist on
@@ -23,9 +28,11 @@ import {
  * avoids flashing the UI at someone who'll immediately get 403s from every
  * query.
  *
- * Also owns the page-level chrome (header + tab nav) shared by every
- * `/applicants/*` route, since each tab is now its own real route rather
- * than client-only Tabs state.
+ * Also owns the page-level chrome (header + tab nav) shared by the list-page
+ * routes, since each tab is now its own real route rather than client-only
+ * Tabs state. This layout wraps every `/applicants/*` route including
+ * `/applicants/{id}/...`, so it renders that chrome only for the list tabs
+ * and otherwise steps aside for the detail layout's own breadcrumb/header.
  */
 export default function ApplicantsLayout({
   children,
@@ -43,7 +50,15 @@ export default function ApplicantsLayout({
     );
   }
 
-  const activeValue = pathname.split("/")[2] ?? "termine";
+  const segment = pathname.split("/")[2];
+  const isListRoute = segment === undefined || LIST_TABS.includes(segment);
+
+  // The detail layout (`[id]/layout.tsx`) applies its own centered
+  // max-w-6xl wrapper, so this just steps out of the way.
+  if (!isListRoute) {
+    return <>{children}</>;
+  }
+
   const tabs = [
     { value: "termine", href: "/applicants/termine", label: t("tabTermine") },
     { value: "neu", href: "/applicants/neu", label: t("tabNeu") },
@@ -66,7 +81,7 @@ export default function ApplicantsLayout({
         icon={<UserSearch />}
         action={<UploadCvButton />}
       />
-      <RouteTabs tabs={tabs} activeValue={activeValue} />
+      <RouteTabs tabs={tabs} activeValue={segment} />
       <div className="mt-4">{children}</div>
     </div>
   );
