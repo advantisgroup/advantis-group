@@ -501,6 +501,40 @@ export const apiCheckAccess = query({
   },
 });
 
+/**
+ * Finds an existing applicant matching by normalized email or phone, for the
+ * API's duplicate-detection step on CV upload. Requires at least one usable
+ * signal (a non-empty email, or a phone number with enough digits to avoid
+ * false positives on short numbers).
+ */
+export const apiFindDuplicateByContact = query({
+  args: {
+    serverKey: v.string(),
+    email: v.optional(v.string()),
+    telefon: v.optional(v.string()),
+  },
+  handler: async (ctx, { serverKey, email, telefon }) => {
+    assertServerKey(serverKey);
+    const mailNeu = (email ?? "").trim().toLowerCase();
+    const telNeu = (telefon ?? "").replace(/\D/g, "");
+    if (!mailNeu && telNeu.length < 6) return null;
+    const applicants = await ctx.db.query("applicants").collect();
+    const match = applicants.find(a => {
+      const mailMatch =
+        mailNeu && (a.email ?? "").trim().toLowerCase() === mailNeu;
+      const telMatch =
+        telNeu.length >= 6 && (a.telefon ?? "").replace(/\D/g, "") === telNeu;
+      return mailMatch || telMatch;
+    });
+    if (!match) return null;
+    const matchedOn =
+      mailNeu && (match.email ?? "").trim().toLowerCase() === mailNeu
+        ? ("email" as const)
+        : ("telefon" as const);
+    return { applicantId: match._id, name: match.name, matchedOn };
+  },
+});
+
 /** Skill profiles for the API's auto-profile-matching step. */
 export const apiListProfiles = query({
   args: { serverKey: v.string() },
