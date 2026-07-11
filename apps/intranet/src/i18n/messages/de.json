@@ -1817,6 +1817,16 @@
     "interviewNotePlaceholder": "Eindruck, Antworten, fachliche Einschätzung, Gehaltsvorstellung…",
     "interviewHistory": "Interview-Verlauf",
     "noInterviewsYet": "Noch kein Interview erfasst.",
-    "interviewOn": "Interview am {date}"
+    "interviewOn": "Interview am {date}",
+    "view": "Ansehen",
+    "openTermin": "Termin öffnen",
+    "copyLink": "Link kopieren",
+    "linkCopied": "Link in die Zwischenablage kopiert",
+    "linkCopyFailed": "Link konnte nicht kopiert werden",
+    "prevApplicant": "Vorherige(r)",
+    "nextApplicant": "Nächste(r)",
+    "switchApplicant": "Bewerber wechseln",
+    "recentlyViewed": "Zuletzt angesehen",
+    "recentlyViewedEmpty": "Noch keine Bewerber angesehen."
   }
 }

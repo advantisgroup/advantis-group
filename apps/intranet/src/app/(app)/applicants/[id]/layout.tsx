@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 
 import {
   useParams,
@@ -17,6 +17,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AmpelPicker, type Ampel } from "@/components/applicants/AmpelBadge";
+import { RecentlyViewedApplicants } from "@/components/applicants/RecentlyViewedApplicants";
 import { RouteTabs } from "@/components/applicants/RouteTabs";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,6 +33,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { buildApplicantSequence } from "@/lib/applicant-list-order";
+import { recordRecentlyViewed } from "@/lib/applicant-recent";
 import { formatIsoDate } from "@/lib/format";
 
 const TAB_LABEL_KEYS: Record<string, string> = {
@@ -130,6 +132,10 @@ export default function ApplicantDetailLayout({
     if (!applicant || !itemId) return null;
     return resolveItemLabel(activeTab, itemId, applicant);
   }, [applicant, activeTab, itemId]);
+
+  useEffect(() => {
+    if (applicant) recordRecentlyViewed(applicantId, applicant.name);
+  }, [applicant, applicantId]);
 
   async function handleDelete() {
     if (!applicant) return;
@@ -242,16 +248,19 @@ export default function ApplicantDetailLayout({
       </Breadcrumb>
 
       <div className="flex items-center justify-between gap-1">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() =>
-            window.dispatchEvent(new Event("command-palette:open"))
-          }
-        >
-          <Search className="size-4" />
-          {t("switchApplicant")}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              window.dispatchEvent(new Event("command-palette:open"))
+            }
+          >
+            <Search className="size-4" />
+            {t("switchApplicant")}
+          </Button>
+          <RecentlyViewedApplicants excludeId={applicantId} />
+        </div>
         {adjacent && (adjacent.prev || adjacent.next) && (
           <div className="flex items-center gap-1">
             <Button

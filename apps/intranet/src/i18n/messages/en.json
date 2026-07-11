@@ -1815,6 +1815,16 @@
     "interviewNotePlaceholder": "Impression, answers, professional assessment, salary expectations…",
     "interviewHistory": "Interview history",
     "noInterviewsYet": "No interview logged yet.",
-    "interviewOn": "Interview on {date}"
+    "interviewOn": "Interview on {date}",
+    "view": "View",
+    "openTermin": "Open appointment",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied to clipboard",
+    "linkCopyFailed": "Could not copy link",
+    "prevApplicant": "Previous",
+    "nextApplicant": "Next",
+    "switchApplicant": "Switch applicant",
+    "recentlyViewed": "Recently viewed",
+    "recentlyViewedEmpty": "No applicants viewed yet."
   }
 }
