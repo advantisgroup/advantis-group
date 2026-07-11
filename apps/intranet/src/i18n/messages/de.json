@@ -1331,6 +1331,12 @@
     "removing": "Dein Konto wird entfernt …",
     "autoRemoveNotice": "Aus Sicherheitsgründen wird dein Konto automatisch entfernt."
   },
+  "Forbidden": {
+    "code": "Fehler 403",
+    "title": "Zugriff eingeschränkt",
+    "description": "Du hast keine Berechtigung, diese Seite anzuzeigen. Falls du glaubst, dass dies ein Fehler ist, wende dich an deine Führungskraft oder die IT.",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
   "privacy": {
     "title": "Datenschutzerklärung – Intranet",
     "subtitle": "Wie wir personenbezogene Daten autorisierter Advantis-Mitarbeitender im Intranet verarbeiten – gemäß DSGVO",

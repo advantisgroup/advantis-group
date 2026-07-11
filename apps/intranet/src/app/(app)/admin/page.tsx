@@ -26,6 +26,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { CustomRolesPanel } from "@/app/(app)/admin/CustomRolesPanel";
+import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { OneDriveAuditPanel } from "@/components/onedrive/OneDriveAuditPanel";
 import { TeamAccessPanel } from "@/components/onedrive/TeamAccessPanel";
 import { UploadApprovalQueue } from "@/components/onedrive/UploadApprovalQueue";
@@ -956,9 +957,7 @@ export default function AdminPage() {
   }, [currentStep?.id]);
 
   if (!isManager) {
-    return (
-      <p className="py-20 text-center text-sm text-muted-foreground">403</p>
-    );
+    return <ForbiddenScreen />;
   }
 
   return (
