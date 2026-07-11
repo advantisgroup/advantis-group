@@ -1331,6 +1331,12 @@
     "removing": "Removing your account…",
     "autoRemoveNotice": "For security reasons, your account is being removed automatically."
   },
+  "Forbidden": {
+    "code": "Error 403",
+    "title": "Access restricted",
+    "description": "You don't have permission to view this page. If you think this is a mistake, contact your manager or IT.",
+    "backToDashboard": "Back to Dashboard"
+  },
   "privacy": {
     "title": "Privacy Policy – Intranet",
     "subtitle": "How we process personal data of authorized Advantis employees within the intranet – in line with the GDPR",
