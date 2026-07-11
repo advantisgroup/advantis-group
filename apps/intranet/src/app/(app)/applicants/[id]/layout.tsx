@@ -12,7 +12,7 @@ import {
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -241,32 +241,44 @@ export default function ApplicantDetailLayout({
         </BreadcrumbList>
       </Breadcrumb>
 
-      {adjacent && (adjacent.prev || adjacent.next) && (
-        <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!adjacent.prev}
-            onClick={() =>
-              adjacent.prev && router.push(adjacentHref(adjacent.prev._id))
-            }
-          >
-            <ChevronLeft className="size-4" />
-            {t("prevApplicant")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!adjacent.next}
-            onClick={() =>
-              adjacent.next && router.push(adjacentHref(adjacent.next._id))
-            }
-          >
-            {t("nextApplicant")}
-            <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      )}
+      <div className="flex items-center justify-between gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            window.dispatchEvent(new Event("command-palette:open"))
+          }
+        >
+          <Search className="size-4" />
+          {t("switchApplicant")}
+        </Button>
+        {adjacent && (adjacent.prev || adjacent.next) && (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!adjacent.prev}
+              onClick={() =>
+                adjacent.prev && router.push(adjacentHref(adjacent.prev._id))
+              }
+            >
+              <ChevronLeft className="size-4" />
+              {t("prevApplicant")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!adjacent.next}
+              onClick={() =>
+                adjacent.next && router.push(adjacentHref(adjacent.next._id))
+              }
+            >
+              {t("nextApplicant")}
+              <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       <Card>
         <CardContent className="flex flex-wrap items-start justify-between gap-4 p-5">
