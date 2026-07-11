@@ -160,6 +160,11 @@ export function CvFallbackModal({
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const isMobile = useIsMobile();
+  console.warn("[CvFallbackModal] mounting", {
+    mode,
+    fileName: file.name,
+    isMobile,
+  });
   const applicantsApi = useApplicantsApi();
   const handleError = useErrorHandler();
   const createApplicant = useMutation(api.applicants.create);

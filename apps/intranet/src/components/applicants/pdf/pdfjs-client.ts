@@ -40,7 +40,15 @@ export interface PdfTextContent {
 let workerConfigured = false;
 
 export async function loadPdf(file: File): Promise<PdfJs.PDFDocumentProxy> {
+  console.warn(
+    "[pdfjs-client] loadPdf: importing pdfjs-dist/legacy/build/pdf.mjs ..."
+  );
   const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  console.warn("[pdfjs-client] loadPdf: import resolved", {
+    hasGetDocument: typeof pdfjsLib.getDocument,
+    hasGlobalWorkerOptions: typeof pdfjsLib.GlobalWorkerOptions,
+    hasUtil: typeof pdfjsLib.Util,
+  });
 
   if (!workerConfigured) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -48,10 +56,23 @@ export async function loadPdf(file: File): Promise<PdfJs.PDFDocumentProxy> {
       import.meta.url
     ).toString();
     workerConfigured = true;
+    console.warn(
+      "[pdfjs-client] workerSrc set to",
+      pdfjsLib.GlobalWorkerOptions.workerSrc
+    );
   }
 
   const data = await file.arrayBuffer();
-  return pdfjsLib.getDocument({ data }).promise;
+  console.warn(
+    "[pdfjs-client] calling getDocument(), byteLength =",
+    data.byteLength
+  );
+  const doc = await pdfjsLib.getDocument({ data }).promise;
+  console.warn(
+    "[pdfjs-client] getDocument() resolved, numPages =",
+    doc.numPages
+  );
+  return doc;
 }
 
 export async function getUtil(): Promise<typeof PdfJs.Util> {

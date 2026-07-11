@@ -81,6 +81,7 @@ export function UploadCvButton() {
           }
         }
       } catch (e) {
+        console.error("[applicants] extract() failed, opening fallback:", e);
         if (isMobile) {
           handleError(e, t("uploadFailed", { name: file.name }));
           continue;

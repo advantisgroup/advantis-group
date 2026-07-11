@@ -52,8 +52,12 @@ export function PdfViewer({
 
   useEffect(() => {
     let cancelled = false;
+    console.warn("[PdfViewer] effect start, loading pdf for", file.name);
     void Promise.all([loadPdf(file), getUtil()])
       .then(([doc, u]) => {
+        console.warn("[PdfViewer] loadPdf+getUtil resolved", {
+          numPages: doc.numPages,
+        });
         if (cancelled) return;
         setPdfDoc(doc);
         setNumPages(doc.numPages);
@@ -61,6 +65,7 @@ export function PdfViewer({
         setUtil(u);
       })
       .catch(e => {
+        console.error("[PdfViewer] loadPdf/getUtil rejected:", e);
         if (cancelled) return;
         setLoadError(true);
         handleError(e, t("pdfLoadFailed"));
