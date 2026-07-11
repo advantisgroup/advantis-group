@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
@@ -31,6 +32,7 @@ const TERMIN_TYPEN = [
   "interview",
   "gespraech",
   "probetag",
+  "wiedervorlage",
   "sonstiges",
 ] as const;
 
@@ -47,6 +49,18 @@ function toISO(d: Date): string {
 
 function today(): string {
   return toISO(new Date());
+}
+
+/** ISO date `n` workdays (Mon–Fri) from today. */
+function addWorkdays(n: number): string {
+  const d = new Date();
+  let added = 0;
+  while (added < n) {
+    d.setDate(d.getDate() + 1);
+    const weekday = d.getDay();
+    if (weekday !== 0 && weekday !== 6) added++;
+  }
+  return toISO(d);
 }
 
 function calendarDays(count: number) {
@@ -79,6 +93,7 @@ export function TerminForm({
   fixedApplicantId?: Id<"applicants">;
 }) {
   const t = useTranslations("Applicants");
+  const locale = useLocale();
   const createTermin = useMutation(api.applicants.createTermin);
   const handleError = useErrorHandler();
 
@@ -88,8 +103,13 @@ export function TerminForm({
   const [datum, setDatum] = useState(today());
   const [uhrzeit, setUhrzeit] = useState("10:00");
   const [art, setArt] = useState<(typeof TERMIN_ARTEN)[number]>("telefon");
-  const [typ, setTyp] = useState<(typeof TERMIN_TYPEN)[number]>("interview");
+  const [typ, setTypRaw] = useState<(typeof TERMIN_TYPEN)[number]>("interview");
   const [notiz, setNotiz] = useState("");
+
+  function setTyp(next: (typeof TERMIN_TYPEN)[number]) {
+    setTypRaw(next);
+    if (next === "wiedervorlage") setDatum(addWorkdays(3));
+  }
 
   function save() {
     if (!applicantId) {
@@ -174,6 +194,11 @@ export function TerminForm({
           />
           <Button onClick={save}>{t("saveTermin")}</Button>
         </div>
+        {typ === "wiedervorlage" && (
+          <p className="text-xs font-medium text-primary">
+            {t("wiedervorlageHint", { date: formatIsoDate(datum, locale) })}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
