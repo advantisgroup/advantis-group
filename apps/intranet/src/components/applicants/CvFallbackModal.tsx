@@ -16,7 +16,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -320,14 +319,16 @@ export function CvFallbackModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[88vh] w-[92vw] max-w-[1400px] flex-col gap-0 p-0">
-        <DialogHeader>
+        <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
           <DialogTitle>
             {mode === "create"
               ? t("fallbackModalTitle")
               : t("fallbackModalTitleUpdate")}
           </DialogTitle>
-          <DialogDescription>{t("fallbackModalDescription")}</DialogDescription>
-        </DialogHeader>
+          <DialogDescription className="mt-1">
+            {t("fallbackModalDescription")}
+          </DialogDescription>
+        </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(320px,420px)_1fr]">
           <div className="min-h-0 overflow-y-auto border-b border-border/70 p-5 lg:border-b-0 lg:border-r">

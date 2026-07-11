@@ -79,7 +79,9 @@ export function PdfViewer({
     if (!pdfDoc) return;
     let cancelled = false;
 
-    void pdfDoc.getPage(currentPage).then(async (page: PDFPageProxy) => {
+    async function renderPage() {
+      console.warn("[PdfViewer] render effect: getPage", currentPage);
+      const page: PDFPageProxy = await pdfDoc!.getPage(currentPage);
       if (cancelled) return;
       const vp = page.getViewport({ scale });
       const canvas = canvasRef.current;
@@ -99,8 +101,13 @@ export function PdfViewer({
       renderTaskRef.current = task;
       try {
         await task.promise;
-      } catch {
-        // superseded by a newer render — ignore
+        console.warn("[PdfViewer] page.render() resolved");
+      } catch (e) {
+        if (e instanceof Error && e.name === "RenderingCancelledException") {
+          return; // superseded by a newer render — expected, ignore
+        }
+        console.error("[PdfViewer] page.render() failed:", e);
+        if (!cancelled) setLoadError(true);
         return;
       }
       if (cancelled) return;
@@ -132,8 +139,18 @@ export function PdfViewer({
       );
       onPageHasNoText(joinedLength < MIN_TEXT_LENGTH);
 
+      console.warn("[PdfViewer] setting viewport + textContent", {
+        width: vp.width,
+        height: vp.height,
+        items: items.length,
+      });
       setViewport(vp);
       setTextContent({ items });
+    }
+
+    renderPage().catch(e => {
+      console.error("[PdfViewer] render effect failed:", e);
+      if (!cancelled) setLoadError(true);
     });
 
     return () => {
