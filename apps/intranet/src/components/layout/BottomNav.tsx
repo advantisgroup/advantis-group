@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
+import { motion } from "framer-motion";
 import { Menu, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -42,19 +43,31 @@ export function BottomNav() {
           <>
             {tabs?.map(tab => {
               const Icon = tab.icon;
+              const active = tab.value === activeValue;
               return (
                 <Link
                   key={tab.value}
                   href={tab.href}
                   aria-label={tab.label}
                   className={cn(
-                    "flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
-                    tab.value === activeValue
-                      ? "bg-accent text-foreground"
+                    "relative flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
+                    active
+                      ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <Icon className="size-4" />
+                  {active && (
+                    <motion.span
+                      layoutId="bottom-nav-active-tab"
+                      className="absolute inset-0 rounded-full bg-accent"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 32,
+                      }}
+                    />
+                  )}
+                  <Icon className="relative z-10 size-4" />
                 </Link>
               );
             })}
