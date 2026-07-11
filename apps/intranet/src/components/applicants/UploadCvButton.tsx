@@ -16,8 +16,6 @@ import {
 } from "@/components/applicants/CvFallbackModal";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
-import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useApplicantsApi } from "@/lib/applicants-api";
 
 /** PDF upload → Claude extraction → new "Neue Bewerber" record, then navigate there. */
@@ -26,9 +24,7 @@ export function UploadCvButton() {
   const router = useRouter();
   const applicantsApi = useApplicantsApi();
   const addDocument = useMutation(api.applicants.addDocument);
-  const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const isMobile = useIsMobile();
   const inputRef = useRef<HTMLInputElement>(null);
   const manualInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -82,10 +78,6 @@ export function UploadCvButton() {
         }
       } catch (e) {
         console.error("[applicants] extract() failed, opening fallback:", e);
-        if (isMobile) {
-          handleError(e, t("uploadFailed", { name: file.name }));
-          continue;
-        }
         const remaining = pdfs.length - i - 1;
         if (remaining > 0) {
           toast.info(t("uploadBatchInterrupted", { remaining }));
@@ -99,10 +91,6 @@ export function UploadCvButton() {
   }
 
   function openManualEntry() {
-    if (isMobile) {
-      toast.info(t("fallbackDesktopOnly"));
-      return;
-    }
     manualInputRef.current?.click();
   }
 
@@ -112,13 +100,20 @@ export function UploadCvButton() {
         <Button
           onClick={() => inputRef.current?.click()}
           disabled={!!uploading}
+          aria-label={uploading ? t("uploading") : t("uploadCv")}
         >
           <UploadCloud className="size-4" />
-          {uploading ? t("uploading") : t("uploadCv")}
+          <span className="hidden md:inline">
+            {uploading ? t("uploading") : t("uploadCv")}
+          </span>
         </Button>
-        <Button variant="outline" onClick={openManualEntry}>
+        <Button
+          variant="outline"
+          onClick={openManualEntry}
+          aria-label={t("fillManually")}
+        >
           <PenLine className="size-4" />
-          {t("fillManually")}
+          <span className="hidden md:inline">{t("fillManually")}</span>
         </Button>
       </div>
       <input

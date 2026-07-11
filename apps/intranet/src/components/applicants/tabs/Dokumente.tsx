@@ -7,7 +7,7 @@ import Link from "next/link";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
-import { Download, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import { Download, Eye, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -20,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useApplicantsApi } from "@/lib/applicants-api";
 
 export function applicantToFormState(
@@ -48,7 +47,6 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
   const removeDocument = useMutation(api.applicants.removeDocument);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const isMobile = useIsMobile();
   const tc = useTranslations("Common");
   const rescanInputRef = useRef<HTMLInputElement>(null);
 
@@ -99,10 +97,6 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
   }
 
   function openRescan(input: HTMLInputElement | null) {
-    if (isMobile) {
-      toast.info(t("fallbackDesktopOnly"));
-      return;
-    }
     input?.click();
   }
 
@@ -167,22 +161,36 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
                     })}
                   </p>
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/applicants/${applicant._id}/dokumente/${d._id}`}>
-                    {t("view")}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  aria-label={t("view")}
+                >
+                  <Link
+                    href={`/applicants/${applicant._id}/dokumente/${d._id}`}
+                  >
+                    <Eye className="size-4" />
+                    <span className="hidden md:inline">{t("view")}</span>
                   </Link>
                 </Button>
                 {d.url && (
-                  <Button variant="outline" size="sm" asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    aria-label={t("download")}
+                  >
                     <a href={d.url} download={d.fileName}>
                       <Download className="size-4" />
-                      {t("download")}
+                      <span className="hidden md:inline">{t("download")}</span>
                     </a>
                   </Button>
                 )}
                 <Button
                   variant="ghost"
                   size="sm"
+                  aria-label={tc("delete")}
                   className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => void handleRemove(d._id, d.fileName)}
                 >
@@ -194,10 +202,10 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
         )}
         <div className="flex flex-wrap gap-2">
           <label>
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" aria-label={t("addDocument")}>
               <span>
                 <UploadCloud className="size-4" />
-                {t("addDocument")}
+                <span className="hidden md:inline">{t("addDocument")}</span>
               </span>
             </Button>
             <input
@@ -213,9 +221,10 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
           <Button
             variant="outline"
             onClick={() => openRescan(rescanInputRef.current)}
+            aria-label={t("rescanCv")}
           >
             <RefreshCw className="size-4" />
-            {t("rescanCv")}
+            <span className="hidden md:inline">{t("rescanCv")}</span>
           </Button>
           <input
             ref={rescanInputRef}

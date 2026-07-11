@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { type UIEvent, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
-import { Sparkles } from "lucide-react";
+import { FileText, Pencil, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -159,11 +159,6 @@ export function CvFallbackModal({
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const isMobile = useIsMobile();
-  console.warn("[CvFallbackModal] mounting", {
-    mode,
-    fileName: file.name,
-    isMobile,
-  });
   const applicantsApi = useApplicantsApi();
   const handleError = useErrorHandler();
   const createApplicant = useMutation(api.applicants.create);
@@ -190,6 +185,22 @@ export function CvFallbackModal({
   const [saving, setSaving] = useState(false);
   const [pageHasNoText, setPageHasNoText] = useState(false);
   const [selectionHintShown, setSelectionHintShown] = useState(false);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [mobilePage, setMobilePage] = useState<0 | 1>(0);
+
+  function scrollToPage(page: 0 | 1) {
+    const el = carouselRef.current;
+    if (!el) return;
+    el.scrollTo({ left: page * el.clientWidth, behavior: "smooth" });
+    setMobilePage(page);
+  }
+
+  function handleCarouselScroll(e: UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    if (!el.clientWidth) return;
+    const page = Math.round(el.scrollLeft / el.clientWidth) as 0 | 1;
+    if (page !== mobilePage) setMobilePage(page);
+  }
 
   function setField(key: FieldKey, value: string, origin: Origin) {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -301,15 +312,198 @@ export function CvFallbackModal({
     }
   }
 
+  function renderFormFields() {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleRetry()}
+          disabled={retrying}
+        >
+          {retrying ? t("retrying") : t("retryExtraction")}
+        </Button>
+
+        {pageHasNoText && (
+          <p className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
+            {t("noSelectableText")}
+          </p>
+        )}
+        {selectionHintShown && !focusedField && (
+          <p className="text-xs text-muted-foreground">
+            {t("selectFieldFirstHint")}
+          </p>
+        )}
+
+        {TEXT_FIELDS.map(key => (
+          <FillableField
+            key={key}
+            label={t(FIELD_LABEL_KEY[key])}
+            value={form[key]}
+            origin={origins[key]}
+            focused={focusedField === key}
+            onChange={v => setField(key, v, "manual")}
+            onFocus={() => setFocusedField(key)}
+          />
+        ))}
+
+        <div className="space-y-1.5">
+          <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {t("skills")}
+            {origins.skills === "pdf" && (
+              <span
+                title={t("filledFromPdf")}
+                className="inline-flex items-center gap-0.5 rounded-full bg-info/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-info"
+              >
+                <Sparkles className="size-2.5" />
+                {t("filledFromPdf")}
+              </span>
+            )}
+          </span>
+          <div
+            className={cn(
+              "flex gap-2 rounded-md",
+              focusedField === "skills" && "ring-2 ring-primary"
+            )}
+          >
+            <Input
+              value={skillInput}
+              onFocus={() => setFocusedField("skills")}
+              onChange={e => setSkillInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                const items = skillInput
+                  .split(/[,;\n]/)
+                  .map(s => s.trim())
+                  .filter(Boolean);
+                if (!items.length) return;
+                setForm(prev => ({
+                  ...prev,
+                  skills: [...new Set([...prev.skills, ...items])],
+                }));
+                setOrigins(prev => ({ ...prev, skills: "manual" }));
+                setSkillInput("");
+              }}
+              placeholder={t("skillsPlaceholder")}
+            />
+          </div>
+          {form.skills.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {form.skills.map(s => (
+                <Badge key={s} variant="muted" className="gap-1.5 pr-1.5">
+                  {s}
+                  <button
+                    type="button"
+                    aria-label={t("removeSkill", { skill: s })}
+                    onClick={() =>
+                      setForm(prev => ({
+                        ...prev,
+                        skills: prev.skills.filter(x => x !== s),
+                      }))
+                    }
+                    className="rounded-full px-1 text-muted-foreground hover:bg-background"
+                  >
+                    ✕
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {TEXTAREA_FIELDS.map(key => (
+          <FillableField
+            key={key}
+            label={t(FIELD_LABEL_KEY[key])}
+            value={form[key]}
+            origin={origins[key]}
+            focused={focusedField === key}
+            multiline
+            onChange={v => setField(key, v, "manual")}
+            onFocus={() => setFocusedField(key)}
+          />
+        ))}
+      </div>
+    );
+  }
+
   if (isMobile) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md gap-0 p-0">
-          <div className="border-b border-border/70 px-6 pb-4 pt-6">
-            <DialogTitle>{t("fallbackModalTitle")}</DialogTitle>
+        <DialogContent className="flex h-[92vh] w-[95vw] max-w-md flex-col gap-0 p-0">
+          <div className="border-b border-border/70 px-4 pb-3 pt-5 pr-12">
+            <DialogTitle className="text-base leading-snug">
+              {mode === "create"
+                ? t("fallbackModalTitle")
+                : t("fallbackModalTitleUpdate")}
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-xs">
+              {t("fallbackModalDescriptionMobile")}
+            </DialogDescription>
           </div>
-          <div className="px-6 py-5">
-            <DialogDescription>{t("fallbackDesktopOnly")}</DialogDescription>
+
+          <div className="flex items-center justify-center gap-1 border-b border-border/70 p-2">
+            <button
+              type="button"
+              onClick={() => scrollToPage(0)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                mobilePage === 0
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground"
+              )}
+            >
+              <Pencil className="size-3.5" />
+              {t("fallbackPageForm")}
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToPage(1)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                mobilePage === 1
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground"
+              )}
+            >
+              <FileText className="size-3.5" />
+              {t("fallbackPagePdf")}
+            </button>
+          </div>
+
+          <div
+            ref={carouselRef}
+            onScroll={handleCarouselScroll}
+            className="flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            <div className="h-full w-full shrink-0 snap-center overflow-y-auto p-4">
+              {renderFormFields()}
+            </div>
+            <div className="h-full w-full shrink-0 snap-center">
+              <PdfViewer
+                file={file}
+                onTextSelected={handleTextSelected}
+                onPageHasNoText={setPageHasNoText}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 border-t border-border/70 px-4 py-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onOpenChange(false)}
+            >
+              {tc("cancel")}
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => void handleSave()}
+              disabled={saving || !form.name.trim()}
+            >
+              {saving ? t("uploading") : t("saveManualEntry")}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -332,117 +526,7 @@ export function CvFallbackModal({
 
         <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(320px,420px)_1fr]">
           <div className="min-h-0 overflow-y-auto border-b border-border/70 p-5 lg:border-b-0 lg:border-r">
-            <div className="space-y-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void handleRetry()}
-                disabled={retrying}
-              >
-                {retrying ? t("retrying") : t("retryExtraction")}
-              </Button>
-
-              {pageHasNoText && (
-                <p className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-warning">
-                  {t("noSelectableText")}
-                </p>
-              )}
-              {selectionHintShown && !focusedField && (
-                <p className="text-xs text-muted-foreground">
-                  {t("selectFieldFirstHint")}
-                </p>
-              )}
-
-              {TEXT_FIELDS.map(key => (
-                <FillableField
-                  key={key}
-                  label={t(FIELD_LABEL_KEY[key])}
-                  value={form[key]}
-                  origin={origins[key]}
-                  focused={focusedField === key}
-                  onChange={v => setField(key, v, "manual")}
-                  onFocus={() => setFocusedField(key)}
-                />
-              ))}
-
-              <div className="space-y-1.5">
-                <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t("skills")}
-                  {origins.skills === "pdf" && (
-                    <span
-                      title={t("filledFromPdf")}
-                      className="inline-flex items-center gap-0.5 rounded-full bg-info/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-info"
-                    >
-                      <Sparkles className="size-2.5" />
-                      {t("filledFromPdf")}
-                    </span>
-                  )}
-                </span>
-                <div
-                  className={cn(
-                    "flex gap-2 rounded-md",
-                    focusedField === "skills" && "ring-2 ring-primary"
-                  )}
-                >
-                  <Input
-                    value={skillInput}
-                    onFocus={() => setFocusedField("skills")}
-                    onChange={e => setSkillInput(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key !== "Enter") return;
-                      e.preventDefault();
-                      const items = skillInput
-                        .split(/[,;\n]/)
-                        .map(s => s.trim())
-                        .filter(Boolean);
-                      if (!items.length) return;
-                      setForm(prev => ({
-                        ...prev,
-                        skills: [...new Set([...prev.skills, ...items])],
-                      }));
-                      setOrigins(prev => ({ ...prev, skills: "manual" }));
-                      setSkillInput("");
-                    }}
-                    placeholder={t("skillsPlaceholder")}
-                  />
-                </div>
-                {form.skills.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {form.skills.map(s => (
-                      <Badge key={s} variant="muted" className="gap-1.5 pr-1.5">
-                        {s}
-                        <button
-                          type="button"
-                          aria-label={t("removeSkill", { skill: s })}
-                          onClick={() =>
-                            setForm(prev => ({
-                              ...prev,
-                              skills: prev.skills.filter(x => x !== s),
-                            }))
-                          }
-                          className="rounded-full px-1 text-muted-foreground hover:bg-background"
-                        >
-                          ✕
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {TEXTAREA_FIELDS.map(key => (
-                <FillableField
-                  key={key}
-                  label={t(FIELD_LABEL_KEY[key])}
-                  value={form[key]}
-                  origin={origins[key]}
-                  focused={focusedField === key}
-                  multiline
-                  onChange={v => setField(key, v, "manual")}
-                  onFocus={() => setFocusedField(key)}
-                />
-              ))}
-            </div>
+            {renderFormFields()}
           </div>
 
           <div className="min-h-0">
