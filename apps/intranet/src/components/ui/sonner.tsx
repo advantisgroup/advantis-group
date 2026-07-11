@@ -34,15 +34,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          // Tinted, not solid-filled — a colored left border + soft wash reads
-          // as "on brand" rather than a flat traffic-light block.
+          // Tinted, not solid-filled — a soft wash reads as "on brand" rather
+          // than a flat traffic-light block.
           success:
-            "!bg-success/10 !text-foreground !border-border/70 !border-l-2 !border-l-success [&_[data-icon]]:text-success",
+            "!bg-success/10 !text-foreground !border-border/70 [&_[data-icon]]:text-success",
           error:
-            "!bg-destructive/10 !text-foreground !border-border/70 !border-l-2 !border-l-destructive [&_[data-icon]]:text-destructive",
+            "!bg-destructive/10 !text-foreground !border-border/70 [&_[data-icon]]:text-destructive",
           warning:
-            "!bg-warning/10 !text-foreground !border-border/70 !border-l-2 !border-l-warning [&_[data-icon]]:text-warning",
-          info: "!bg-accent !text-foreground !border-border/70 !border-l-2 !border-l-ring",
+            "!bg-warning/10 !text-foreground !border-border/70 [&_[data-icon]]:text-warning",
+          info: "!bg-accent !text-foreground !border-border/70",
         },
       }}
       {...props}
