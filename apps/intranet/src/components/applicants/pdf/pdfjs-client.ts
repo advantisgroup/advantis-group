@@ -12,6 +12,15 @@ import type * as PdfJs from "pdfjs-dist";
 export type { PDFDocumentProxy, PDFPageProxy, PageViewport } from "pdfjs-dist";
 
 /**
+ * Mozilla publishes a "legacy" build specifically for bundlers/older
+ * environments that can't safely handle the default build's modern-syntax
+ * ESM — importing it here (together with `transpilePackages` in
+ * next.config.ts) avoids a "Class constructor cannot be invoked without
+ * 'new'" crash under webpack's production minifier. Its types are
+ * identical to the default build's (it re-exports from "pdfjs-dist").
+ */
+
+/**
  * `TextContent`/`TextItem` aren't re-exported from pdf.js's public root
  * module (only reachable via its internal `display/api` path), so these
  * mirror the shape of `PDFPageProxy.getTextContent()`'s result directly
@@ -31,11 +40,11 @@ export interface PdfTextContent {
 let workerConfigured = false;
 
 export async function loadPdf(file: File): Promise<PdfJs.PDFDocumentProxy> {
-  const pdfjsLib = await import("pdfjs-dist");
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
 
   if (!workerConfigured) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
+      "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
       import.meta.url
     ).toString();
     workerConfigured = true;
@@ -46,6 +55,6 @@ export async function loadPdf(file: File): Promise<PdfJs.PDFDocumentProxy> {
 }
 
 export async function getUtil(): Promise<typeof PdfJs.Util> {
-  const pdfjsLib = await import("pdfjs-dist");
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
   return pdfjsLib.Util;
 }

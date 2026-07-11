@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 
 import {
   getUtil,
@@ -34,9 +35,11 @@ export function PdfViewer({
   onPageHasNoText: (hasNoText: boolean) => void;
 }) {
   const t = useTranslations("Applicants");
+  const handleError = useErrorHandler();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderTaskRef = useRef<{ cancel: () => void } | null>(null);
 
+  const [loadError, setLoadError] = useState(false);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -49,17 +52,23 @@ export function PdfViewer({
 
   useEffect(() => {
     let cancelled = false;
-    void Promise.all([loadPdf(file), getUtil()]).then(([doc, u]) => {
-      if (cancelled) return;
-      setPdfDoc(doc);
-      setNumPages(doc.numPages);
-      setCurrentPage(1);
-      setUtil(u);
-    });
+    void Promise.all([loadPdf(file), getUtil()])
+      .then(([doc, u]) => {
+        if (cancelled) return;
+        setPdfDoc(doc);
+        setNumPages(doc.numPages);
+        setCurrentPage(1);
+        setUtil(u);
+      })
+      .catch(e => {
+        if (cancelled) return;
+        setLoadError(true);
+        handleError(e, t("pdfLoadFailed"));
+      });
     return () => {
       cancelled = true;
     };
-  }, [file]);
+  }, [file, handleError, t]);
 
   useEffect(() => {
     if (!pdfDoc) return;
@@ -179,20 +188,26 @@ export function PdfViewer({
         </div>
       </div>
       <div className="flex flex-1 items-start justify-center overflow-auto bg-muted/30 p-4">
-        <div
-          className="relative shadow-md"
-          style={{ width: viewport?.width, height: viewport?.height }}
-        >
-          <canvas ref={canvasRef} />
-          {viewport && textContent && util && (
-            <PdfTextLayer
-              textContent={textContent}
-              viewport={viewport}
-              util={util}
-              onTextSelected={onTextSelected}
-            />
-          )}
-        </div>
+        {loadError ? (
+          <p className="max-w-sm py-8 text-center text-sm text-muted-foreground">
+            {t("pdfLoadFailed")}
+          </p>
+        ) : (
+          <div
+            className="relative shadow-md"
+            style={{ width: viewport?.width, height: viewport?.height }}
+          >
+            <canvas ref={canvasRef} />
+            {viewport && textContent && util && (
+              <PdfTextLayer
+                textContent={textContent}
+                viewport={viewport}
+                util={util}
+                onTextSelected={onTextSelected}
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

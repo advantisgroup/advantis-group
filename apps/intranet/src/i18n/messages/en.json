@@ -1630,6 +1630,7 @@
     "retrying": "Reading…",
     "selectFieldFirstHint": "Click a field on the left first, then select text in the PDF.",
     "noSelectableText": "This page has no selectable text (likely a scan) – the details must be entered manually.",
+    "pdfLoadFailed": "The PDF preview couldn't be loaded. You can still enter the details manually.",
     "filledFromPdf": "Filled from PDF",
     "saveManualEntry": "Save",
     "applicantCreatedManually": "Applicant created",

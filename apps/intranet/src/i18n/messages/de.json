@@ -1632,6 +1632,7 @@
     "retrying": "Wird ausgelesen…",
     "selectFieldFirstHint": "Bitte zuerst links in ein Feld klicken, dann den Text im PDF auswählen.",
     "noSelectableText": "Diese Seite enthält keinen auswählbaren Text (vermutlich ein Scan) – die Angaben müssen manuell eingetragen werden.",
+    "pdfLoadFailed": "Die PDF-Vorschau konnte nicht geladen werden. Die Angaben können weiterhin manuell eingetragen werden.",
     "filledFromPdf": "Aus PDF übernommen",
     "saveManualEntry": "Speichern",
     "applicantCreatedManually": "Bewerber wurde angelegt",
