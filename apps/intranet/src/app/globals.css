@@ -97,6 +97,53 @@
   animation: tour-pulse-ring 1.8s ease-in-out infinite;
 }
 
+/* One-shot flash for a skill chip landed on from a Skill-Profile match
+   search — fades from a warm highlight back to the resting style. */
+@keyframes skill-flash {
+  0% {
+    background: color-mix(in oklch, var(--warning) 35%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--warning) 45%, transparent);
+  }
+
+  60% {
+    background: color-mix(in oklch, var(--warning) 35%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--warning) 20%, transparent);
+  }
+
+  100% {
+    background: color-mix(in oklch, var(--warning) 12%, transparent);
+    box-shadow: none;
+  }
+}
+
+.skill-hl {
+  animation: skill-flash 2.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skill-hl {
+    animation: none;
+    background: color-mix(in oklch, var(--warning) 12%, transparent);
+  }
+}
+
+/*
+ * The CV fallback modal's PDF pane gets a simplified custom cursor (a
+ * short blue pointer, no long tail) anywhere over it, instead of the
+ * blanket `cursor: default` the base layer sets on generic block elements.
+ * This rule is intentionally left un-layered (not inside `@layer base`) —
+ * per CSS cascade layers, un-layered rules always win over `@layer` rules
+ * regardless of source order, so this overrides the base-layer default
+ * without needing `!important` or extra specificity.
+ */
+.pdf-text-pane,
+.pdf-text-pane * {
+  cursor:
+    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22"><path d="M3 2 L3 15 L7 11.5 L9.5 17.5 L12.5 16.3 L10 10.5 L16 10.3 Z" fill="rgb(59,130,246)" stroke="white" stroke-width="1.2" stroke-linejoin="round"/></svg>')
+      3 2,
+    pointer;
+}
+
 .animate-gradient-x {
   background-size: 200% 200%;
   animation: gradient-x 15s ease infinite;
