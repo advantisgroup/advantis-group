@@ -6,11 +6,10 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   reactCompiler: true,
   typedRoutes: false,
-  // pdfjs-dist ships modern-syntax ESM meant for native <script type=module>
-  // use; left un-transpiled, webpack's production minifier mishandles its
-  // class syntax and throws "Class constructor X cannot be invoked without
-  // 'new'" at runtime. Routing it through Next's SWC pipeline avoids that.
-  transpilePackages: ["pdfjs-dist"],
+  // react-pdf/pdfjs-dist ship modern-syntax ESM meant for native
+  // <script type=module> use; Next's official Next.js integration guide for
+  // react-pdf recommends transpiling both rather than leaving them raw.
+  transpilePackages: ["pdfjs-dist", "react-pdf"],
   images: {
     remotePatterns: [
       // Convex file storage (avatars, chat images, announcement attachments)

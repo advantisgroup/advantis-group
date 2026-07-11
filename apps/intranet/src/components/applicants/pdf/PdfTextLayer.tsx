@@ -3,7 +3,22 @@
 import * as React from "react";
 import { useMemo, useRef, useState } from "react";
 
-import { type PdfTextContent, type PdfTextItem } from "./pdfjs-client";
+/**
+ * `TextContent`/`TextItem` aren't re-exported from pdf.js's public root
+ * module (only reachable via its internal `display/api` path), so these
+ * mirror the shape of `PDFPageProxy.getTextContent()`'s result directly
+ * rather than depending on an internal import path that could move.
+ */
+export interface PdfTextItem {
+  str: string;
+  transform: number[];
+  width: number;
+  height: number;
+}
+
+export interface PdfTextContent {
+  items: PdfTextItem[];
+}
 
 interface Rect {
   left: number;
