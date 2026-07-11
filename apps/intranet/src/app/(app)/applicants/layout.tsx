@@ -4,7 +4,14 @@ import type { ReactNode } from "react";
 
 import { usePathname } from "next/navigation";
 
-import { UserSearch } from "lucide-react";
+import {
+  CalendarClock,
+  ShieldCheck,
+  Sparkles,
+  UserPlus,
+  UserSearch,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/applicants/RouteTabs";
@@ -60,16 +67,39 @@ export default function ApplicantsLayout({
   }
 
   const tabs = [
-    { value: "termine", href: "/applicants/termine", label: t("tabTermine") },
-    { value: "neu", href: "/applicants/neu", label: t("tabNeu") },
-    { value: "pool", href: "/applicants/pool", label: t("tabPool") },
+    {
+      value: "termine",
+      href: "/applicants/termine",
+      label: t("tabTermine"),
+      icon: CalendarClock,
+    },
+    {
+      value: "neu",
+      href: "/applicants/neu",
+      label: t("tabNeu"),
+      icon: UserPlus,
+    },
+    {
+      value: "pool",
+      href: "/applicants/pool",
+      label: t("tabPool"),
+      icon: Users,
+    },
     {
       value: "profile",
       href: "/applicants/profile",
       label: t("tabProfile"),
+      icon: Sparkles,
     },
     ...(canManageAccess
-      ? [{ value: "access", href: "/applicants/access", label: t("tabAccess") }]
+      ? [
+          {
+            value: "access",
+            href: "/applicants/access",
+            label: t("tabAccess"),
+            icon: ShieldCheck,
+          },
+        ]
       : []),
   ];
 

@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import Link from "next/link";
+
+import { type LucideIcon } from "lucide-react";
+
+import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -17,13 +14,17 @@ export interface RouteTab {
   value: string;
   href: string;
   label: string;
+  icon: LucideIcon;
 }
 
 /**
  * URL-driven equivalent of `Tabs`/`TabsList`/`TabsTrigger` — each "tab" is a
  * real link to its own route rather than client-only state, so the active
- * tab is bookmarkable/shareable. Collapses into a `Select` below the mobile
- * breakpoint, where a horizontal tab bar gets cramped alongside a breadcrumb.
+ * tab is bookmarkable/shareable. Below the mobile breakpoint it renders
+ * nothing itself and instead hands its tabs to the global `BottomNav`
+ * (`useBottomNavTabs`), which shows them as icon-only entries in its
+ * floating pill — the bottom nav becomes the tab switcher rather than a
+ * separate dropdown.
  */
 export function RouteTabs({
   tabs,
@@ -33,29 +34,17 @@ export function RouteTabs({
   activeValue: string;
 }) {
   const isMobile = useIsMobile();
-  const router = useRouter();
+  const { setTabs } = useBottomNavTabs();
+
+  useEffect(() => {
+    if (!isMobile) return;
+    setTabs(tabs, activeValue);
+    return () => setTabs(null, null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, tabs, activeValue]);
 
   if (isMobile) {
-    return (
-      <Select
-        value={activeValue}
-        onValueChange={value => {
-          const tab = tabs.find(t => t.value === value);
-          if (tab) router.push(tab.href);
-        }}
-      >
-        <SelectTrigger className="w-full">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {tabs.map(tab => (
-            <SelectItem key={tab.value} value={tab.value}>
-              {tab.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
+    return null;
   }
 
   return (

@@ -14,11 +14,17 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
   Briefcase,
+  CalendarClock,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  FileText,
+  LayoutDashboard,
+  Mail,
+  PhoneCall,
   Search,
   Trash2,
+  Users,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -176,31 +182,37 @@ export default function ApplicantDetailLayout({
       value: "uebersicht",
       href: `/applicants/${applicantId}/uebersicht`,
       label: t("tabOverview"),
+      icon: LayoutDashboard,
     },
     {
       value: "termine",
       href: `/applicants/${applicantId}/termine`,
       label: `${t("tabTermine")} (${applicant.termine.filter(tm => !tm.uebernommen).length})`,
+      icon: CalendarClock,
     },
     {
       value: "dokumente",
       href: `/applicants/${applicantId}/dokumente`,
       label: `${t("tabDocuments")} (${applicant.documents.length})`,
+      icon: FileText,
     },
     {
       value: "kontakte",
       href: `/applicants/${applicantId}/kontakte`,
       label: `${t("tabKontakte")} (${applicant.kontakte.length})`,
+      icon: PhoneCall,
     },
     {
       value: "emails",
       href: `/applicants/${applicantId}/emails`,
       label: `${t("tabEmails")} (${applicant.emails.length})`,
+      icon: Mail,
     },
     {
       value: "interviews",
       href: `/applicants/${applicantId}/interviews`,
       label: `${t("tabInterviews")} (${applicant.interviews.length})`,
+      icon: Users,
     },
   ];
 

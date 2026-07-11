@@ -12,6 +12,7 @@ import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
@@ -145,11 +146,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
-      <TourProvider>
-        <FileViewerProvider>
-          <AppShellInner>{children}</AppShellInner>
-        </FileViewerProvider>
-      </TourProvider>
+      <BottomNavTabsProvider>
+        <TourProvider>
+          <FileViewerProvider>
+            <AppShellInner>{children}</AppShellInner>
+          </FileViewerProvider>
+        </TourProvider>
+      </BottomNavTabsProvider>
     </SidebarProvider>
   );
 }
