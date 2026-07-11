@@ -12,12 +12,14 @@ import type * as PdfJs from "pdfjs-dist";
 export type { PDFDocumentProxy, PDFPageProxy, PageViewport } from "pdfjs-dist";
 
 /**
- * Mozilla publishes a "legacy" build specifically for bundlers/older
- * environments that can't safely handle the default build's modern-syntax
- * ESM — importing it here (together with `transpilePackages` in
- * next.config.ts) avoids a "Class constructor cannot be invoked without
- * 'new'" crash under webpack's production minifier. Its types are
- * identical to the default build's (it re-exports from "pdfjs-dist").
+ * `pdfjs-dist/webpack.mjs` is pdf.js's own bundler-integration entry point:
+ * importing it (instead of the plain `pdfjs-dist` root, or manually setting
+ * `GlobalWorkerOptions.workerSrc` to a URL string) constructs a real
+ * `new Worker(new URL(...), { type: "module" })` at a static call site the
+ * bundler can recognize, as its side effect. Manually assigning a URL
+ * *string* to `workerSrc` instead left pdf.js to construct the worker
+ * itself, which is the documented cause of "Class constructor cannot be
+ * invoked without 'new'" crashes under Next.js's production bundler.
  */
 
 /**
@@ -37,31 +39,19 @@ export interface PdfTextContent {
   items: PdfTextItem[];
 }
 
-let workerConfigured = false;
-
-export async function loadPdf(file: File): Promise<PdfJs.PDFDocumentProxy> {
-  console.warn(
-    "[pdfjs-client] loadPdf: importing pdfjs-dist/legacy/build/pdf.mjs ..."
-  );
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  console.warn("[pdfjs-client] loadPdf: import resolved", {
+async function loadPdfjsLib() {
+  console.warn("[pdfjs-client] importing pdfjs-dist/webpack.mjs ...");
+  const pdfjsLib = (await import("pdfjs-dist/webpack.mjs")) as typeof PdfJs;
+  console.warn("[pdfjs-client] import resolved", {
     hasGetDocument: typeof pdfjsLib.getDocument,
-    hasGlobalWorkerOptions: typeof pdfjsLib.GlobalWorkerOptions,
+    hasWorkerPort: typeof pdfjsLib.GlobalWorkerOptions.workerPort,
     hasUtil: typeof pdfjsLib.Util,
   });
+  return pdfjsLib;
+}
 
-  if (!workerConfigured) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
-      import.meta.url
-    ).toString();
-    workerConfigured = true;
-    console.warn(
-      "[pdfjs-client] workerSrc set to",
-      pdfjsLib.GlobalWorkerOptions.workerSrc
-    );
-  }
-
+export async function loadPdf(file: File): Promise<PdfJs.PDFDocumentProxy> {
+  const pdfjsLib = await loadPdfjsLib();
   const data = await file.arrayBuffer();
   console.warn(
     "[pdfjs-client] calling getDocument(), byteLength =",
@@ -76,6 +66,6 @@ export async function loadPdf(file: File): Promise<PdfJs.PDFDocumentProxy> {
 }
 
 export async function getUtil(): Promise<typeof PdfJs.Util> {
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const pdfjsLib = await loadPdfjsLib();
   return pdfjsLib.Util;
 }
