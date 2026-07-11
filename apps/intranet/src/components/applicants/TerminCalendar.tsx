@@ -10,6 +10,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { InfoTip } from "@/components/activity/InfoTip";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
@@ -134,7 +135,10 @@ export function TerminForm({
   return (
     <Card>
       <CardContent className="space-y-3 p-4">
-        <p className="text-sm font-semibold">{t("planTermin")}</p>
+        <div className="flex items-center gap-1.5">
+          <p className="text-sm font-semibold">{t("planTermin")}</p>
+          <InfoTip text={t("calendarDescription")} />
+        </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {!fixedApplicantId && (
             <Select value={applicantId} onValueChange={setApplicantId}>
@@ -322,9 +326,6 @@ export function TerminCalendar() {
 
   return (
     <div className="space-y-6">
-      <p className="max-w-2xl text-sm text-muted-foreground">
-        {t("calendarDescription")}
-      </p>
       {applicants.length === 0 ? (
         <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
           {t("noApplicantsYet")}

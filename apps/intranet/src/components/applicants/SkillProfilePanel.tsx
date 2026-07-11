@@ -12,6 +12,7 @@ import { Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { InfoTip } from "@/components/activity/InfoTip";
 import { AmpelDot } from "@/components/applicants/AmpelBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -224,11 +225,13 @@ export function SkillProfilePanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-md text-sm text-muted-foreground">
-          {t("profilesDescription")}
-        </p>
-        <Button size="sm" onClick={() => setEditing({ name: "", skills: [] })}>
+      <div className="flex items-center justify-end gap-1.5">
+        <InfoTip text={t("profilesDescription")} />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setEditing({ name: "", skills: [] })}
+        >
           <Plus className="size-4" />
           {t("newProfile")}
         </Button>

@@ -9,6 +9,7 @@ import { ShieldCheck, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { InfoTip } from "@/components/activity/InfoTip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,13 +73,12 @@ export function ApplicantAccessPanel() {
 
   return (
     <div className="space-y-4">
-      <p className="max-w-2xl text-sm text-muted-foreground">
-        {t("accessDescription")}
-      </p>
-
       <Card>
         <CardContent className="space-y-3 p-4">
-          <p className="text-sm font-semibold">{t("grantAccess")}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold">{t("grantAccess")}</p>
+            <InfoTip text={t("accessDescription")} />
+          </div>
           {grantable.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {t("noEligibleUsers")}
