@@ -54,6 +54,7 @@ export const terminTypValidator = v.union(
   v.literal("interview"),
   v.literal("gespraech"),
   v.literal("probetag"),
+  v.literal("wiedervorlage"),
   v.literal("sonstiges")
 );
 
