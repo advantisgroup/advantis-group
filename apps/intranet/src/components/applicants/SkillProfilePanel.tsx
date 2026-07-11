@@ -158,7 +158,11 @@ function ProfileMatches({ profile }: { profile: Profile }) {
         <button
           key={applicant._id}
           type="button"
-          onClick={() => router.push(`/applicants/${applicant._id}`)}
+          onClick={() =>
+            router.push(
+              `/applicants/${applicant._id}?highlight=${encodeURIComponent(matched.join(","))}`
+            )
+          }
           className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left text-sm hover:bg-accent/40"
         >
           <AmpelDot rating={applicant.rating} />
