@@ -2,16 +2,21 @@
 
 import { type ReactNode, useMemo } from "react";
 
-import { useParams, usePathname, useRouter } from "next/navigation";
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { AmpelPicker } from "@/components/applicants/AmpelBadge";
+import { AmpelPicker, type Ampel } from "@/components/applicants/AmpelBadge";
 import { RouteTabs } from "@/components/applicants/RouteTabs";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -26,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { buildApplicantSequence } from "@/lib/applicant-list-order";
 import { formatIsoDate } from "@/lib/format";
 
 const TAB_LABEL_KEYS: Record<string, string> = {
@@ -74,6 +80,7 @@ export default function ApplicantDetailLayout({
   const tc = useTranslations("Common");
   const params = useParams<{ id: string }>();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const locale = useLocale();
   const applicantId = params.id as Id<"applicants">;
@@ -86,6 +93,38 @@ export default function ApplicantDetailLayout({
   const segments = pathname.split("/").filter(Boolean); // ["applicants", id, tab?, itemId?]
   const activeTab = segments[2] ?? "uebersicht";
   const itemId = segments[3];
+
+  // Next/previous applicant: only meaningful if we know which list (and
+  // filter/sort) the user came from — carried as query params from
+  // ApplicantListView. No `from` param ⇒ no buttons, rather than guessing.
+  const fromModeRaw = searchParams.get("from");
+  const fromMode: "neu" | "pool" | null =
+    fromModeRaw === "neu" || fromModeRaw === "pool" ? fromModeRaw : null;
+  const fromSearch = searchParams.get("search") ?? "";
+  const fromPoolFilter = searchParams.get("poolFilter") as Ampel | null;
+  const allApplicants = useQuery(api.applicants.list, fromMode ? {} : "skip");
+  const adjacent = useMemo(() => {
+    if (!allApplicants || !fromMode) return null;
+    const sequence = buildApplicantSequence(
+      allApplicants,
+      fromMode,
+      fromSearch,
+      fromPoolFilter
+    );
+    const index = sequence.findIndex(a => a._id === applicantId);
+    if (index === -1) return null;
+    return {
+      prev: sequence[index - 1] ?? null,
+      next: sequence[index + 1] ?? null,
+    };
+  }, [allApplicants, fromMode, fromSearch, fromPoolFilter, applicantId]);
+
+  function adjacentHref(targetId: Id<"applicants">) {
+    const p = new URLSearchParams({ from: fromMode ?? "" });
+    if (fromSearch) p.set("search", fromSearch);
+    if (fromPoolFilter) p.set("poolFilter", fromPoolFilter);
+    return `/applicants/${targetId}/${activeTab}?${p.toString()}`;
+  }
 
   const itemLabel = useMemo(() => {
     if (!applicant || !itemId) return null;
@@ -201,6 +240,33 @@ export default function ApplicantDetailLayout({
           )}
         </BreadcrumbList>
       </Breadcrumb>
+
+      {adjacent && (adjacent.prev || adjacent.next) && (
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!adjacent.prev}
+            onClick={() =>
+              adjacent.prev && router.push(adjacentHref(adjacent.prev._id))
+            }
+          >
+            <ChevronLeft className="size-4" />
+            {t("prevApplicant")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!adjacent.next}
+            onClick={() =>
+              adjacent.next && router.push(adjacentHref(adjacent.next._id))
+            }
+          >
+            {t("nextApplicant")}
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
+      )}
 
       <Card>
         <CardContent className="flex flex-wrap items-start justify-between gap-4 p-5">

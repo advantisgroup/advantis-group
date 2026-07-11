@@ -30,19 +30,32 @@ type SkillProfile = FunctionReturnType<
 function ApplicantCard({
   applicant,
   profile,
+  mode,
+  search,
+  poolFilter,
 }: {
   applicant: Applicant;
   profile: SkillProfile | null;
+  mode: "neu" | "pool";
+  search: string;
+  poolFilter: Ampel | null;
 }) {
   const router = useRouter();
   const t = useTranslations("Applicants");
   const locale = useLocale();
   const matched = profile ? matchSkills(profile.skills, applicant) : [];
 
+  function navigate() {
+    const params = new URLSearchParams({ from: mode });
+    if (search.trim()) params.set("search", search.trim());
+    if (poolFilter) params.set("poolFilter", poolFilter);
+    router.push(`/applicants/${applicant._id}/uebersicht?${params.toString()}`);
+  }
+
   return (
     <button
       type="button"
-      onClick={() => router.push(`/applicants/${applicant._id}`)}
+      onClick={navigate}
       className="flex w-full flex-wrap items-center gap-3 rounded-lg border border-border/70 border-l-4 bg-card p-3.5 text-left transition-colors hover:bg-accent/40"
       style={{
         borderLeftColor:
@@ -179,6 +192,9 @@ export function ApplicantListView({ mode }: { mode: "neu" | "pool" }) {
                           ? (profileById.get(a.profilId) ?? null)
                           : null
                       }
+                      mode={mode}
+                      search={search}
+                      poolFilter={poolFilter}
                     />
                   ))}
                 </div>
@@ -199,6 +215,9 @@ export function ApplicantListView({ mode }: { mode: "neu" | "pool" }) {
                           ? (profileById.get(a.profilId) ?? null)
                           : null
                       }
+                      mode={mode}
+                      search={search}
+                      poolFilter={poolFilter}
                     />
                   ))}
                 </div>
@@ -232,6 +251,9 @@ export function ApplicantListView({ mode }: { mode: "neu" | "pool" }) {
               profile={
                 a.profilId ? (profileById.get(a.profilId) ?? null) : null
               }
+              mode={mode}
+              search={search}
+              poolFilter={null}
             />
           ))}
         </div>
