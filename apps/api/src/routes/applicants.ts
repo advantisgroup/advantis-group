@@ -65,7 +65,9 @@ function parseExtraction(text: string): ExtractedApplicant {
     adresse: str(data.adresse),
     geburtsdatum: str(data.geburtsdatum),
     position: str(data.position),
-    skills: Array.isArray(data.skills) ? data.skills.filter(s => typeof s === "string") : [],
+    skills: Array.isArray(data.skills)
+      ? data.skills.filter(s => typeof s === "string")
+      : [],
     ausbildung: str(data.ausbildung),
     berufserfahrung: str(data.berufserfahrung),
     zusammenfassung: str(data.zusammenfassung),
@@ -104,14 +106,20 @@ export const applicantsRoute = new Elysia().post(
           content: [
             {
               type: "document",
-              source: { type: "base64", media_type: "application/pdf", data: base64 },
+              source: {
+                type: "base64",
+                media_type: "application/pdf",
+                data: base64,
+              },
             },
             { type: "text", text: EXTRACTION_PROMPT },
           ],
         },
       ],
     });
-    const text = response.content.map(block => ("text" in block ? block.text : "")).join("\n");
+    const text = response.content
+      .map(block => ("text" in block ? block.text : ""))
+      .join("\n");
     const extracted = parseExtraction(text);
     if (!extracted.name) {
       throw Errors.upstream("Im PDF konnte kein Name gefunden werden");
@@ -125,9 +133,12 @@ export const applicantsRoute = new Elysia().post(
       extracted.position
     );
 
-    const uploadUrl = await getConvex().mutation(api.applicants.apiGenerateStagingUrl, {
-      serverKey: getConvexServerKey(),
-    });
+    const uploadUrl = await getConvex().mutation(
+      api.applicants.apiGenerateStagingUrl,
+      {
+        serverKey: getConvexServerKey(),
+      }
+    );
     const staged = await fetch(uploadUrl, {
       method: "POST",
       headers: { "content-type": "application/pdf" },
@@ -137,25 +148,32 @@ export const applicantsRoute = new Elysia().post(
       console.error("[applicants] staging upload failed:", staged.status);
       throw Errors.internal("Die Datei konnte nicht gespeichert werden");
     }
-    const { storageId } = (await staged.json()) as { storageId: Id<"_storage"> };
+    const { storageId } = (await staged.json()) as {
+      storageId: Id<"_storage">;
+    };
 
-    const { applicantId } = await getConvex().mutation(api.applicants.apiCreateFromExtraction, {
-      serverKey: getConvexServerKey(),
-      createdByUserId: access.userId,
-      name: extracted.name,
-      email: extracted.email || undefined,
-      telefon: extracted.telefon || undefined,
-      adresse: extracted.adresse || undefined,
-      geburtsdatum: extracted.geburtsdatum || undefined,
-      position: extracted.position || undefined,
-      skills: extracted.skills,
-      ausbildung: extracted.ausbildung || undefined,
-      berufserfahrung: extracted.berufserfahrung || undefined,
-      zusammenfassung: extracted.zusammenfassung || undefined,
-      profilId: profilId ? (profilId as Id<"applicantSkillProfiles">) : undefined,
-      storageId,
-      fileName: file.name,
-    });
+    const { applicantId } = await getConvex().mutation(
+      api.applicants.apiCreateFromExtraction,
+      {
+        serverKey: getConvexServerKey(),
+        createdByUserId: access.userId,
+        name: extracted.name,
+        email: extracted.email || undefined,
+        telefon: extracted.telefon || undefined,
+        adresse: extracted.adresse || undefined,
+        geburtsdatum: extracted.geburtsdatum || undefined,
+        position: extracted.position || undefined,
+        skills: extracted.skills,
+        ausbildung: extracted.ausbildung || undefined,
+        berufserfahrung: extracted.berufserfahrung || undefined,
+        zusammenfassung: extracted.zusammenfassung || undefined,
+        profilId: profilId
+          ? (profilId as Id<"applicantSkillProfiles">)
+          : undefined,
+        storageId,
+        fileName: file.name,
+      }
+    );
 
     return { applicantId };
   },

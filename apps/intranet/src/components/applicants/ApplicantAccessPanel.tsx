@@ -80,7 +80,9 @@ export function ApplicantAccessPanel() {
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-semibold">{t("grantAccess")}</p>
           {grantable.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noEligibleUsers")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("noEligibleUsers")}
+            </p>
           ) : (
             <div className="flex flex-wrap gap-2">
               <Select value={pickerId} onValueChange={setPickerId}>
@@ -107,7 +109,9 @@ export function ApplicantAccessPanel() {
               </Button>
             </div>
           )}
-          <p className="text-xs text-muted-foreground">{t("eligibilityHint")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("eligibilityHint")}
+          </p>
         </CardContent>
       </Card>
 
@@ -123,7 +127,9 @@ export function ApplicantAccessPanel() {
               <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{u.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {u.email}
+                  </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Badge variant="muted">{tRoles(u.role)}</Badge>

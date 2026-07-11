@@ -27,7 +27,12 @@ import { cn } from "@/lib/utils";
 import type { FunctionReturnType } from "convex/server";
 
 const TERMIN_ARTEN = ["telefon", "teams", "vor_ort"] as const;
-const TERMIN_TYPEN = ["interview", "gespraech", "probetag", "sonstiges"] as const;
+const TERMIN_TYPEN = [
+  "interview",
+  "gespraech",
+  "probetag",
+  "sonstiges",
+] as const;
 
 const ART_COLOR: Record<(typeof TERMIN_ARTEN)[number], string> = {
   telefon: "border-l-info text-info",
@@ -52,12 +57,18 @@ function calendarDays(count: number) {
       iso: toISO(d),
       isToday: i === 0,
       weekday: d.toLocaleDateString(undefined, { weekday: "short" }),
-      shortDate: d.toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" }),
+      shortDate: d.toLocaleDateString(undefined, {
+        day: "2-digit",
+        month: "2-digit",
+      }),
     };
   });
 }
 
-type Termin = Omit<FunctionReturnType<typeof api.applicants.listTermine>[number], "applicantName">;
+type Termin = Omit<
+  FunctionReturnType<typeof api.applicants.listTermine>[number],
+  "applicantName"
+>;
 type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
 
 export function TerminForm({
@@ -71,7 +82,9 @@ export function TerminForm({
   const createTermin = useMutation(api.applicants.createTermin);
   const handleError = useErrorHandler();
 
-  const [applicantId, setApplicantId] = useState<string>(fixedApplicantId ?? "");
+  const [applicantId, setApplicantId] = useState<string>(
+    fixedApplicantId ?? ""
+  );
   const [datum, setDatum] = useState(today());
   const [uhrzeit, setUhrzeit] = useState("10:00");
   const [art, setArt] = useState<(typeof TERMIN_ARTEN)[number]>("telefon");
@@ -118,8 +131,16 @@ export function TerminForm({
               </SelectContent>
             </Select>
           )}
-          <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} />
-          <Input type="time" value={uhrzeit} onChange={e => setUhrzeit(e.target.value)} />
+          <Input
+            type="date"
+            value={datum}
+            onChange={e => setDatum(e.target.value)}
+          />
+          <Input
+            type="time"
+            value={uhrzeit}
+            onChange={e => setUhrzeit(e.target.value)}
+          />
           <Select value={art} onValueChange={v => setArt(v as typeof art)}>
             <SelectTrigger>
               <SelectValue />
@@ -259,7 +280,12 @@ export function TerminCalendar() {
   const termine = useQuery(api.applicants.listTermine, { from, to });
   const applicants = useQuery(api.applicants.list);
 
-  const weeks = [days.slice(0, 7), days.slice(7, 14), days.slice(14, 21), days.slice(21, 28)];
+  const weeks = [
+    days.slice(0, 7),
+    days.slice(7, 14),
+    days.slice(14, 21),
+    days.slice(21, 28),
+  ];
   const rangeStart = days[0].iso;
   const rangeEnd = days[days.length - 1].iso;
   const vergangen = (termine ?? []).filter(
@@ -299,7 +325,9 @@ export function TerminCalendar() {
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
               {week.map(day => {
-                const items = (termine ?? []).filter(tm => tm.datum === day.iso);
+                const items = (termine ?? []).filter(
+                  tm => tm.datum === day.iso
+                );
                 return (
                   <div
                     key={day.iso}
@@ -311,14 +339,21 @@ export function TerminCalendar() {
                     <div
                       className={cn(
                         "px-2 py-1 text-xs font-semibold",
-                        day.isToday ? "bg-primary text-primary-foreground" : "bg-muted/50"
+                        day.isToday
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted/50"
                       )}
                     >
-                      {day.weekday} <span className="font-normal opacity-80">{day.shortDate}</span>
+                      {day.weekday}{" "}
+                      <span className="font-normal opacity-80">
+                        {day.shortDate}
+                      </span>
                     </div>
                     <div className="flex flex-1 flex-col gap-1.5 p-1.5">
                       {items.length === 0 ? (
-                        <span className="text-[11px] text-muted-foreground">–</span>
+                        <span className="text-[11px] text-muted-foreground">
+                          –
+                        </span>
                       ) : (
                         items.map(tm => (
                           <TerminRow
@@ -345,7 +380,11 @@ export function TerminCalendar() {
               {t("pastTermineWithoutContact", { count: vergangen.length })}
             </p>
             {vergangen.map(tm => (
-              <TerminRow key={tm._id} termin={tm} applicantName={tm.applicantName} />
+              <TerminRow
+                key={tm._id}
+                termin={tm}
+                applicantName={tm.applicantName}
+              />
             ))}
           </CardContent>
         </Card>
@@ -358,7 +397,11 @@ export function TerminCalendar() {
               {t("futureTermine", { count: spaeter.length })}
             </p>
             {spaeter.map(tm => (
-              <TerminRow key={tm._id} termin={tm} applicantName={tm.applicantName} />
+              <TerminRow
+                key={tm._id}
+                termin={tm}
+                applicantName={tm.applicantName}
+              />
             ))}
           </CardContent>
         </Card>

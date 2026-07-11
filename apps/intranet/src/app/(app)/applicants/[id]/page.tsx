@@ -37,7 +37,13 @@ type ApplicantDetail = NonNullable<
   FunctionReturnType<typeof api.applicants.get>
 >;
 
-const KONTAKT_ARTEN = ["telefon", "email", "persoenlich", "video", "sonstiges"] as const;
+const KONTAKT_ARTEN = [
+  "telefon",
+  "email",
+  "persoenlich",
+  "video",
+  "sonstiges",
+] as const;
 const EMAIL_KATEGORIEN = [
   "telefonisch_nicht_erreicht",
   "einladung",
@@ -82,7 +88,9 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
 
   const profile = profiles?.find(p => p._id === applicant.profilId) ?? null;
   const matched = profile ? matchSkills(profile.skills, applicant) : [];
-  const missing = profile ? profile.skills.filter(s => !matched.includes(s)) : [];
+  const missing = profile
+    ? profile.skills.filter(s => !matched.includes(s))
+    : [];
 
   function patch(fields: Parameters<typeof update>[0]) {
     update(fields).catch(handleError);
@@ -93,12 +101,36 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
       <Card>
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-semibold">{t("masterData")}</p>
-          <Field label={t("name")} value={applicant.name} onSave={v => patch({ applicantId: applicant._id, name: v })} />
-          <Field label={t("email")} value={applicant.email ?? ""} onSave={v => patch({ applicantId: applicant._id, email: v })} />
-          <Field label={t("phone")} value={applicant.telefon ?? ""} onSave={v => patch({ applicantId: applicant._id, telefon: v })} />
-          <Field label={t("address")} value={applicant.adresse ?? ""} onSave={v => patch({ applicantId: applicant._id, adresse: v })} />
-          <Field label={t("birthDate")} value={applicant.geburtsdatum ?? ""} onSave={v => patch({ applicantId: applicant._id, geburtsdatum: v })} />
-          <Field label={t("position")} value={applicant.position ?? ""} onSave={v => patch({ applicantId: applicant._id, position: v })} />
+          <Field
+            label={t("name")}
+            value={applicant.name}
+            onSave={v => patch({ applicantId: applicant._id, name: v })}
+          />
+          <Field
+            label={t("email")}
+            value={applicant.email ?? ""}
+            onSave={v => patch({ applicantId: applicant._id, email: v })}
+          />
+          <Field
+            label={t("phone")}
+            value={applicant.telefon ?? ""}
+            onSave={v => patch({ applicantId: applicant._id, telefon: v })}
+          />
+          <Field
+            label={t("address")}
+            value={applicant.adresse ?? ""}
+            onSave={v => patch({ applicantId: applicant._id, adresse: v })}
+          />
+          <Field
+            label={t("birthDate")}
+            value={applicant.geburtsdatum ?? ""}
+            onSave={v => patch({ applicantId: applicant._id, geburtsdatum: v })}
+          />
+          <Field
+            label={t("position")}
+            value={applicant.position ?? ""}
+            onSave={v => patch({ applicantId: applicant._id, position: v })}
+          />
         </CardContent>
       </Card>
 
@@ -106,10 +138,13 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-semibold">
             {t("skillMatch")}
-            {profile && ` – ${profile.name} (${matched.length}/${profile.skills.length})`}
+            {profile &&
+              ` – ${profile.name} (${matched.length}/${profile.skills.length})`}
           </p>
           {!profiles || profiles.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noProfilesYet")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("noProfilesYet")}
+            </p>
           ) : (
             <>
               <Select
@@ -117,7 +152,8 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
                 onValueChange={v =>
                   patch({
                     applicantId: applicant._id,
-                    profilId: v === "none" ? null : (v as Id<"applicantSkillProfiles">),
+                    profilId:
+                      v === "none" ? null : (v as Id<"applicantSkillProfiles">),
                   })
                 }
               >
@@ -141,7 +177,10 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
                     </div>
                   ))}
                   {missing.map(s => (
-                    <div key={s} className="flex items-center gap-2 text-muted-foreground">
+                    <div
+                      key={s}
+                      className="flex items-center gap-2 text-muted-foreground"
+                    >
                       <span className="font-bold text-destructive">✕</span> {s}
                     </div>
                   ))}
@@ -174,7 +213,9 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("summary")}
               </p>
-              <p className="text-sm leading-relaxed">{applicant.zusammenfassung}</p>
+              <p className="text-sm leading-relaxed">
+                {applicant.zusammenfassung}
+              </p>
             </div>
           )}
           {applicant.berufserfahrung && (
@@ -182,7 +223,9 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
               <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("experience")}
               </p>
-              <p className="text-sm leading-relaxed">{applicant.berufserfahrung}</p>
+              <p className="text-sm leading-relaxed">
+                {applicant.berufserfahrung}
+              </p>
             </div>
           )}
           {applicant.ausbildung && (
@@ -203,7 +246,10 @@ function TabUebersicht({ applicant }: { applicant: ApplicantDetail }) {
             className="min-h-32"
             value={notiz}
             onChange={e => setNotiz(e.target.value)}
-            onBlur={() => notiz !== (applicant.notizen ?? "") && patch({ applicantId: applicant._id, notizen: notiz })}
+            onBlur={() =>
+              notiz !== (applicant.notizen ?? "") &&
+              patch({ applicantId: applicant._id, notizen: notiz })
+            }
             placeholder={t("internalNotesPlaceholder")}
           />
         </CardContent>
@@ -229,7 +275,9 @@ function TabTermine({ applicant }: { applicant: ApplicantDetail }) {
             {t("upcomingTermine")} ({kommend.length})
           </p>
           {kommend.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noUpcomingTermine")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("noUpcomingTermine")}
+            </p>
           ) : (
             kommend.map(tm => <TerminRow key={tm._id} termin={tm} />)
           )}
@@ -275,14 +323,21 @@ function TabDokumente({ applicant }: { applicant: ApplicantDetail }) {
         body: file,
       });
       const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
-      await addDocument({ applicantId: applicant._id, storageId, fileName: file.name });
+      await addDocument({
+        applicantId: applicant._id,
+        storageId,
+        fileName: file.name,
+      });
       toast.success(t("documentAdded"));
     } catch (e) {
       handleError(e);
     }
   }
 
-  async function handleRemove(documentId: Id<"applicantDocuments">, name: string) {
+  async function handleRemove(
+    documentId: Id<"applicantDocuments">,
+    name: string
+  ) {
     const ok = await confirm({
       title: t("deleteDocument"),
       description: t("deleteDocumentConfirm", { name }),
@@ -309,7 +364,9 @@ function TabDokumente({ applicant }: { applicant: ApplicantDetail }) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{d.fileName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {t("uploadedOn", { date: new Date(d.createdAt).toLocaleDateString() })}
+                    {t("uploadedOn", {
+                      date: new Date(d.createdAt).toLocaleDateString(),
+                    })}
                   </p>
                 </div>
                 {d.url && (
@@ -365,7 +422,12 @@ function TabKontakte({ applicant }: { applicant: ApplicantDetail }) {
   const [notiz, setNotiz] = useState("");
 
   function save() {
-    addKontakt({ applicantId: applicant._id, datum, art, notiz: notiz.trim() || undefined })
+    addKontakt({
+      applicantId: applicant._id,
+      datum,
+      art,
+      notiz: notiz.trim() || undefined,
+    })
       .then(() => setNotiz(""))
       .catch(handleError);
   }
@@ -381,7 +443,11 @@ function TabKontakte({ applicant }: { applicant: ApplicantDetail }) {
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-semibold">{t("logContact")}</p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} />
+            <Input
+              type="date"
+              value={datum}
+              onChange={e => setDatum(e.target.value)}
+            />
             <Select value={art} onValueChange={v => setArt(v as typeof art)}>
               <SelectTrigger>
                 <SelectValue />
@@ -407,7 +473,9 @@ function TabKontakte({ applicant }: { applicant: ApplicantDetail }) {
         <CardContent className="space-y-2 p-4">
           <p className="text-sm font-semibold">{t("contactHistory")}</p>
           {applicant.kontakte.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noContactsYet")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("noContactsYet")}
+            </p>
           ) : (
             applicant.kontakte.map(k => (
               <div
@@ -416,13 +484,18 @@ function TabKontakte({ applicant }: { applicant: ApplicantDetail }) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">
-                    {t(`kontaktArt.${k.art}`)} · {formatIsoDate(k.datum, "de-DE")}
+                    {t(`kontaktArt.${k.art}`)} ·{" "}
+                    {formatIsoDate(k.datum, "de-DE")}
                   </p>
-                  {k.notiz && <p className="mt-1 text-muted-foreground">{k.notiz}</p>}
+                  {k.notiz && (
+                    <p className="mt-1 text-muted-foreground">{k.notiz}</p>
+                  )}
                 </div>
                 <button
                   aria-label={t("deleteEntry")}
-                  onClick={() => removeKontakt({ kontaktId: k._id }).catch(handleError)}
+                  onClick={() =>
+                    removeKontakt({ kontaktId: k._id }).catch(handleError)
+                  }
                   className="text-muted-foreground hover:text-destructive"
                 >
                   ✕
@@ -442,11 +515,17 @@ function TabEmails({ applicant }: { applicant: ApplicantDetail }) {
   const removeEmail = useMutation(api.applicants.removeEmail);
   const handleError = useErrorHandler();
   const [datum, setDatum] = useState(today());
-  const [kategorie, setKategorie] = useState<(typeof EMAIL_KATEGORIEN)[number]>("sonstiges");
+  const [kategorie, setKategorie] =
+    useState<(typeof EMAIL_KATEGORIEN)[number]>("sonstiges");
   const [notiz, setNotiz] = useState("");
 
   function save() {
-    addEmail({ applicantId: applicant._id, datum, kategorie, notiz: notiz.trim() || undefined })
+    addEmail({
+      applicantId: applicant._id,
+      datum,
+      kategorie,
+      notiz: notiz.trim() || undefined,
+    })
       .then(() => setNotiz(""))
       .catch(handleError);
   }
@@ -457,8 +536,15 @@ function TabEmails({ applicant }: { applicant: ApplicantDetail }) {
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-semibold">{t("logEmail")}</p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} />
-            <Select value={kategorie} onValueChange={v => setKategorie(v as typeof kategorie)}>
+            <Input
+              type="date"
+              value={datum}
+              onChange={e => setDatum(e.target.value)}
+            />
+            <Select
+              value={kategorie}
+              onValueChange={v => setKategorie(v as typeof kategorie)}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -477,7 +563,9 @@ function TabEmails({ applicant }: { applicant: ApplicantDetail }) {
             onChange={e => setNotiz(e.target.value)}
             placeholder={t("emailNotePlaceholder")}
           />
-          <p className="text-xs text-muted-foreground">{t("emailDoesNotCountHint")}</p>
+          <p className="text-xs text-muted-foreground">
+            {t("emailDoesNotCountHint")}
+          </p>
         </CardContent>
       </Card>
       <Card>
@@ -493,13 +581,18 @@ function TabEmails({ applicant }: { applicant: ApplicantDetail }) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">
-                    {formatIsoDate(m.datum, "de-DE")} · {t(`emailKategorie.${m.kategorie}`)}
+                    {formatIsoDate(m.datum, "de-DE")} ·{" "}
+                    {t(`emailKategorie.${m.kategorie}`)}
                   </p>
-                  {m.notiz && <p className="mt-1 text-muted-foreground">{m.notiz}</p>}
+                  {m.notiz && (
+                    <p className="mt-1 text-muted-foreground">{m.notiz}</p>
+                  )}
                 </div>
                 <button
                   aria-label={t("deleteEntry")}
-                  onClick={() => removeEmail({ emailId: m._id }).catch(handleError)}
+                  onClick={() =>
+                    removeEmail({ emailId: m._id }).catch(handleError)
+                  }
                   className="text-muted-foreground hover:text-destructive"
                 >
                   ✕
@@ -523,7 +616,12 @@ function TabInterviews({ applicant }: { applicant: ApplicantDetail }) {
   const [notiz, setNotiz] = useState("");
 
   function save() {
-    addInterview({ applicantId: applicant._id, datum, interviewer, notiz: notiz.trim() || undefined })
+    addInterview({
+      applicantId: applicant._id,
+      datum,
+      interviewer,
+      notiz: notiz.trim() || undefined,
+    })
       .then(() => {
         setInterviewer("");
         setNotiz("");
@@ -537,7 +635,11 @@ function TabInterviews({ applicant }: { applicant: ApplicantDetail }) {
         <CardContent className="space-y-3 p-4">
           <p className="text-sm font-semibold">{t("logInterview")}</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Input type="date" value={datum} onChange={e => setDatum(e.target.value)} />
+            <Input
+              type="date"
+              value={datum}
+              onChange={e => setDatum(e.target.value)}
+            />
             <Input
               placeholder={t("interviewerPlaceholder")}
               value={interviewer}
@@ -556,7 +658,9 @@ function TabInterviews({ applicant }: { applicant: ApplicantDetail }) {
         <CardContent className="space-y-2 p-4">
           <p className="text-sm font-semibold">{t("interviewHistory")}</p>
           {applicant.interviews.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noInterviewsYet")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("noInterviewsYet")}
+            </p>
           ) : (
             applicant.interviews.map(iv => (
               <div
@@ -565,14 +669,20 @@ function TabInterviews({ applicant }: { applicant: ApplicantDetail }) {
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">
-                    {t("interviewOn", { date: formatIsoDate(iv.datum, "de-DE") })}
+                    {t("interviewOn", {
+                      date: formatIsoDate(iv.datum, "de-DE"),
+                    })}
                     {iv.interviewer ? ` · ${iv.interviewer}` : ""}
                   </p>
-                  {iv.notiz && <p className="mt-1 text-muted-foreground">{iv.notiz}</p>}
+                  {iv.notiz && (
+                    <p className="mt-1 text-muted-foreground">{iv.notiz}</p>
+                  )}
                 </div>
                 <button
                   aria-label={t("deleteEntry")}
-                  onClick={() => removeInterview({ interviewId: iv._id }).catch(handleError)}
+                  onClick={() =>
+                    removeInterview({ interviewId: iv._id }).catch(handleError)
+                  }
                   className="text-muted-foreground hover:text-destructive"
                 >
                   ✕
@@ -647,7 +757,10 @@ export default function ApplicantDetailPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               {applicant.position || t("positionUnknown")} ·{" "}
               {t("receivedOn", {
-                date: formatIsoDate(new Date(applicant.createdAt).toISOString().slice(0, 10), locale),
+                date: formatIsoDate(
+                  new Date(applicant.createdAt).toISOString().slice(0, 10),
+                  locale
+                ),
               })}
             </p>
           </div>
@@ -657,7 +770,9 @@ export default function ApplicantDetailPage() {
             </p>
             <AmpelPicker
               value={applicant.rating}
-              onChange={rating => update({ applicantId, rating }).catch(handleError)}
+              onChange={rating =>
+                update({ applicantId, rating }).catch(handleError)
+              }
             />
           </div>
         </CardContent>
@@ -668,7 +783,8 @@ export default function ApplicantDetailPage() {
           <TabsList className="grid grid-cols-3 sm:inline-flex">
             <TabsTrigger value="uebersicht">{t("tabOverview")}</TabsTrigger>
             <TabsTrigger value="termine">
-              {t("tabTermine")} ({applicant.termine.filter(tm => !tm.uebernommen).length})
+              {t("tabTermine")} (
+              {applicant.termine.filter(tm => !tm.uebernommen).length})
             </TabsTrigger>
             <TabsTrigger value="dokumente">
               {t("tabDocuments")} ({applicant.documents.length})

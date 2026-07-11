@@ -32,7 +32,10 @@ async function requireApplicant(
 ): Promise<Doc<"applicants">> {
   const applicant = await ctx.db.get(applicantId);
   if (!applicant) {
-    throw new ConvexError({ code: "not_found", message: "Applicant not found" });
+    throw new ConvexError({
+      code: "not_found",
+      message: "Applicant not found",
+    });
   }
   return applicant;
 }
@@ -131,7 +134,10 @@ export const list = query({
           .query("applicantContacts")
           .withIndex("by_applicant", q => q.eq("applicantId", a._id))
           .first();
-        return { ...a, status: firstContact ? ("pool" as const) : ("neu" as const) };
+        return {
+          ...a,
+          status: firstContact ? ("pool" as const) : ("neu" as const),
+        };
       })
     );
   },
@@ -142,28 +148,29 @@ export const get = query({
   handler: async (ctx, { applicantId }) => {
     await requireApplicantAccess(ctx);
     const applicant = await requireApplicant(ctx, applicantId);
-    const [kontakte, emails, interviews, termine, documents] = await Promise.all([
-      ctx.db
-        .query("applicantContacts")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantEmails")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantInterviews")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantAppointments")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantDocuments")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-    ]);
+    const [kontakte, emails, interviews, termine, documents] =
+      await Promise.all([
+        ctx.db
+          .query("applicantContacts")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+        ctx.db
+          .query("applicantEmails")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+        ctx.db
+          .query("applicantInterviews")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+        ctx.db
+          .query("applicantAppointments")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+        ctx.db
+          .query("applicantDocuments")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+      ]);
     const documentsWithUrl = await Promise.all(
       documents.map(async d => ({
         ...d,
@@ -244,28 +251,29 @@ export const remove = mutation({
     await requireApplicantAccess(ctx);
     await requireApplicant(ctx, applicantId);
 
-    const [kontakte, emails, interviews, termine, documents] = await Promise.all([
-      ctx.db
-        .query("applicantContacts")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantEmails")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantInterviews")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantAppointments")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-      ctx.db
-        .query("applicantDocuments")
-        .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-        .collect(),
-    ]);
+    const [kontakte, emails, interviews, termine, documents] =
+      await Promise.all([
+        ctx.db
+          .query("applicantContacts")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+        ctx.db
+          .query("applicantEmails")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+        ctx.db
+          .query("applicantInterviews")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+        ctx.db
+          .query("applicantAppointments")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+        ctx.db
+          .query("applicantDocuments")
+          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
+          .collect(),
+      ]);
 
     for (const doc of documents) await ctx.storage.delete(doc.storageId);
     for (const rows of [kontakte, emails, interviews, termine, documents]) {
@@ -288,7 +296,10 @@ export const addKontakt = mutation({
   handler: async (ctx, args) => {
     await requireApplicantAccess(ctx);
     await requireApplicant(ctx, args.applicantId);
-    return ctx.db.insert("applicantContacts", { ...args, createdAt: Date.now() });
+    return ctx.db.insert("applicantContacts", {
+      ...args,
+      createdAt: Date.now(),
+    });
   },
 });
 
@@ -334,7 +345,10 @@ export const addInterview = mutation({
   handler: async (ctx, args) => {
     await requireApplicantAccess(ctx);
     await requireApplicant(ctx, args.applicantId);
-    return ctx.db.insert("applicantInterviews", { ...args, createdAt: Date.now() });
+    return ctx.db.insert("applicantInterviews", {
+      ...args,
+      createdAt: Date.now(),
+    });
   },
 });
 
@@ -366,7 +380,10 @@ export const addDocument = mutation({
   handler: async (ctx, args) => {
     await requireApplicantAccess(ctx);
     await requireApplicant(ctx, args.applicantId);
-    return ctx.db.insert("applicantDocuments", { ...args, createdAt: Date.now() });
+    return ctx.db.insert("applicantDocuments", {
+      ...args,
+      createdAt: Date.now(),
+    });
   },
 });
 

@@ -23,7 +23,9 @@ import { formatIsoDate } from "@/lib/format";
 import type { FunctionReturnType } from "convex/server";
 
 type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
-type SkillProfile = FunctionReturnType<typeof api.applicants.listProfiles>[number];
+type SkillProfile = FunctionReturnType<
+  typeof api.applicants.listProfiles
+>[number];
 
 function ApplicantCard({
   applicant,
@@ -75,7 +77,10 @@ function ApplicantCard({
       )}
       <span className="shrink-0 text-xs text-muted-foreground">
         {t("receivedOn", {
-          date: formatIsoDate(new Date(applicant.createdAt).toISOString().slice(0, 10), locale),
+          date: formatIsoDate(
+            new Date(applicant.createdAt).toISOString().slice(0, 10),
+            locale
+          ),
         })}
       </span>
     </button>
@@ -100,7 +105,14 @@ export function ApplicantListView({ mode }: { mode: "neu" | "pool" }) {
       .filter(a => a.status === mode)
       .filter(a => {
         if (!q) return true;
-        return [a.name, a.email, a.position, a.telefon, a.adresse, ...(a.skills ?? [])]
+        return [
+          a.name,
+          a.email,
+          a.position,
+          a.telefon,
+          a.adresse,
+          ...(a.skills ?? []),
+        ]
           .join(" ")
           .toLowerCase()
           .includes(q);
@@ -147,7 +159,9 @@ export function ApplicantListView({ mode }: { mode: "neu" | "pool" }) {
               <section key={g.rating} className="space-y-2">
                 <button
                   type="button"
-                  onClick={() => setPoolFilter(poolFilter === g.rating ? null : g.rating)}
+                  onClick={() =>
+                    setPoolFilter(poolFilter === g.rating ? null : g.rating)
+                  }
                   className="flex items-center gap-2 text-sm"
                 >
                   <AmpelLabel rating={g.rating} />
@@ -160,7 +174,11 @@ export function ApplicantListView({ mode }: { mode: "neu" | "pool" }) {
                     <ApplicantCard
                       key={a._id}
                       applicant={a}
-                      profile={a.profilId ? (profileById.get(a.profilId) ?? null) : null}
+                      profile={
+                        a.profilId
+                          ? (profileById.get(a.profilId) ?? null)
+                          : null
+                      }
                     />
                   ))}
                 </div>
@@ -176,7 +194,11 @@ export function ApplicantListView({ mode }: { mode: "neu" | "pool" }) {
                     <ApplicantCard
                       key={a._id}
                       applicant={a}
-                      profile={a.profilId ? (profileById.get(a.profilId) ?? null) : null}
+                      profile={
+                        a.profilId
+                          ? (profileById.get(a.profilId) ?? null)
+                          : null
+                      }
                     />
                   ))}
                 </div>
@@ -207,7 +229,9 @@ export function ApplicantListView({ mode }: { mode: "neu" | "pool" }) {
             <ApplicantCard
               key={a._id}
               applicant={a}
-              profile={a.profilId ? (profileById.get(a.profilId) ?? null) : null}
+              profile={
+                a.profilId ? (profileById.get(a.profilId) ?? null) : null
+              }
             />
           ))}
         </div>

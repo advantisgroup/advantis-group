@@ -95,7 +95,9 @@ export function useHasCapability(capability: Capability): boolean {
 export function useHasApplicantAccess(): boolean {
   const user = useCurrentUser();
   return (
-    user.role === "admin" || user.applicantAccess || user.applicantAccessDelegate
+    user.role === "admin" ||
+    user.applicantAccess ||
+    user.applicantAccessDelegate
   );
 }
 

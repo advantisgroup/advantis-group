@@ -233,7 +233,10 @@ export function DialogChecklist({
         return (
           <li key={i} className="flex items-start gap-2 text-sm">
             <Icon
-              className={cn("mt-0.5 size-4 shrink-0", checklistColor[item.tone])}
+              className={cn(
+                "mt-0.5 size-4 shrink-0",
+                checklistColor[item.tone]
+              )}
             />
             <span className="min-w-0 text-foreground/90">{item.text}</span>
           </li>

@@ -59,7 +59,8 @@ function ProfileForm({
     if (!items.length) return;
     const next = [...skills];
     for (const item of items) {
-      if (!next.some(s => s.toLowerCase() === item.toLowerCase())) next.push(item);
+      if (!next.some(s => s.toLowerCase() === item.toLowerCase()))
+        next.push(item);
     }
     setSkills(next);
     setSkillInput("");
@@ -161,7 +162,9 @@ function ProfileMatches({ profile }: { profile: Profile }) {
           className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left text-sm hover:bg-accent/40"
         >
           <AmpelDot rating={applicant.rating} />
-          <span className="min-w-0 flex-1 truncate font-medium">{applicant.name}</span>
+          <span className="min-w-0 flex-1 truncate font-medium">
+            {applicant.name}
+          </span>
           <span className="shrink-0 text-xs font-semibold text-success">
             {matched.length}/{profile.skills.length}
           </span>
@@ -182,7 +185,8 @@ export function SkillProfilePanel() {
   const confirm = useConfirm();
 
   const [editing, setEditing] = useState<ProfileFormState | null>(null);
-  const [matchesFor, setMatchesFor] = useState<Id<"applicantSkillProfiles"> | null>(null);
+  const [matchesFor, setMatchesFor] =
+    useState<Id<"applicantSkillProfiles"> | null>(null);
 
   async function handleDelete(profile: Profile) {
     const ok = await confirm({
@@ -199,7 +203,11 @@ export function SkillProfilePanel() {
 
   function handleSave(state: ProfileFormState) {
     if (state._id) {
-      updateProfile({ profilId: state._id, name: state.name, skills: state.skills })
+      updateProfile({
+        profilId: state._id,
+        name: state.name,
+        skills: state.skills,
+      })
         .then(() => toast.success(t("profileUpdated")))
         .catch(handleError);
     } else {
@@ -255,7 +263,9 @@ export function SkillProfilePanel() {
                     size="sm"
                     disabled={profile.skills.length === 0}
                     onClick={() =>
-                      setMatchesFor(matchesFor === profile._id ? null : profile._id)
+                      setMatchesFor(
+                        matchesFor === profile._id ? null : profile._id
+                      )
                     }
                   >
                     <Search className="size-4" />
@@ -284,13 +294,18 @@ export function SkillProfilePanel() {
                   </Button>
                 </div>
               </div>
-              {matchesFor === profile._id && <ProfileMatches profile={profile} />}
+              {matchesFor === profile._id && (
+                <ProfileMatches profile={profile} />
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Dialog open={editing !== null} onOpenChange={open => !open && setEditing(null)}>
+      <Dialog
+        open={editing !== null}
+        onOpenChange={open => !open && setEditing(null)}
+      >
         <DialogContent className="max-w-md gap-0 p-0">
           {editing && (
             <ProfileForm

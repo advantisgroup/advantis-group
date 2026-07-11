@@ -38,7 +38,9 @@ export function AmpelDot({
     <span
       className={cn(
         "inline-block size-2.5 shrink-0 rounded-full",
-        rating ? AMPEL_DOT[rating] : "border-2 border-dashed border-muted-foreground/40",
+        rating
+          ? AMPEL_DOT[rating]
+          : "border-2 border-dashed border-muted-foreground/40",
         className
       )}
     />
@@ -49,7 +51,12 @@ export function AmpelDot({
 export function AmpelLabel({ rating }: { rating: Ampel }) {
   const t = useTranslations("Applicants");
   return (
-    <span className={cn("inline-flex items-center gap-1.5 font-medium", AMPEL_TEXT[rating])}>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 font-medium",
+        AMPEL_TEXT[rating]
+      )}
+    >
       <AmpelDot rating={rating} />
       {t(`ampel.${rating}`)}
       <span className="font-normal text-muted-foreground">

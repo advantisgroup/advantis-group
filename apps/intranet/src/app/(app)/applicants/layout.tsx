@@ -12,7 +12,11 @@ import { useHasApplicantAccess } from "@/components/providers/current-user";
  * avoids flashing the UI at someone who'll immediately get 403s from every
  * query.
  */
-export default function ApplicantsLayout({ children }: { children: ReactNode }) {
+export default function ApplicantsLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const hasAccess = useHasApplicantAccess();
 
   if (!hasAccess) {

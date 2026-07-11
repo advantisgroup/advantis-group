@@ -22,7 +22,9 @@ export function UploadCvButton() {
   const [uploading, setUploading] = useState<string | null>(null);
 
   async function handleFiles(files: FileList | null) {
-    const pdfs = Array.from(files ?? []).filter(f => f.type === "application/pdf");
+    const pdfs = Array.from(files ?? []).filter(
+      f => f.type === "application/pdf"
+    );
     if (!pdfs.length) {
       toast.error(t("uploadPdfOnly"));
       return;
