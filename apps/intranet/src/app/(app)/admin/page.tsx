@@ -533,11 +533,6 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const tTeams = useTranslations("Teams");
   const members = useQuery(api.users.list, { includeSuspended: true });
   const customRoles = useQuery(api.customRoles.list);
-  const setStatus = useAction(api.users.setStatus);
-  const removeMember = useAction(api.members.remove);
-  const reinvite = useAction(api.members.reinvite);
-  const setUploadPermission = useAction(api.users.setUploadPermission);
-  const setGfAccess = useAction(api.users.setGfAccess);
   const setApplicantDelegate = useMutation(api.users.setApplicantDelegate);
   const setRoleLabelMutation = useMutation(api.users.setRoleLabel);
   const assignCustomRole = useMutation(api.users.assignCustomRole);
@@ -572,25 +567,6 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   function copyEmail(email: string) {
     void navigator.clipboard.writeText(email);
     toast.success(t("emailCopied"));
-  }
-
-  function toggleUploads(m: Member) {
-    setUploadPermission({
-      userId: m._id as Id<"users">,
-      enabled: !m.uploadRequestsEnabled,
-    })
-      .then(() =>
-        toast.success(
-          m.uploadRequestsEnabled ? t("uploadsDisabled") : t("uploadsEnabled")
-        )
-      )
-      .catch(handleError);
-  }
-
-  function toggleGf(m: Member) {
-    setGfAccess({ userId: m._id as Id<"users">, gfAccess: !m.gfAccess })
-      .then(() => toast.success(m.gfAccess ? t("gfRevoked") : t("gfGranted")))
-      .catch(handleError);
   }
 
   function toggleApplicantDelegate(m: Member) {
@@ -646,18 +622,6 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
           <DropdownMenuItem onClick={() => copyEmail(m.email)}>
             <Copy className="size-4" /> {t("copyEmail")}
           </DropdownMenuItem>
-          {/* OneDrive: upload-request permission is manager-grantable. */}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => toggleUploads(m)}>
-            <UploadCloud className="size-4" />{" "}
-            {m.uploadRequestsEnabled ? t("disableUploads") : t("enableUploads")}
-          </DropdownMenuItem>
-          {isAdmin && (
-            <DropdownMenuItem onClick={() => toggleGf(m)}>
-              <Lock className="size-4" />{" "}
-              {m.gfAccess ? t("revokeGf") : t("grantGf")}
-            </DropdownMenuItem>
-          )}
           {isAdmin && (
             <DropdownMenuItem onClick={() => toggleApplicantDelegate(m)}>
               <Users2 className="size-4" />{" "}
@@ -665,37 +629,6 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                 ? t("revokeApplicantDelegate")
                 : t("grantApplicantDelegate")}
             </DropdownMenuItem>
-          )}
-          {isAdmin && (
-            <>
-              <DropdownMenuItem onClick={() => onReinvite(m)}>
-                <Send className="size-4" /> {t("reinvite")}
-              </DropdownMenuItem>
-              {!isSelf && (
-                <DropdownMenuItem
-                  onClick={() =>
-                    void toggleStatus(
-                      m._id as Id<"users">,
-                      m.status === "active"
-                    )
-                  }
-                >
-                  <ShieldCheck className="size-4" />{" "}
-                  {m.status === "active" ? t("suspend") : t("activate")}
-                </DropdownMenuItem>
-              )}
-              {!isSelf && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => void onRemove(m)}
-                  >
-                    <UserMinus className="size-4" /> {t("removeMember")}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -1102,7 +1035,7 @@ export default function AdminPage() {
           <Invites isAdmin={isAdmin} />
         </TabsContent>
         <TabsContent value="members">
-          <Members />
+          <Members isAdmin={isAdmin} />
         </TabsContent>
         <TabsContent value="roles">
           <CustomRolesPanel />
