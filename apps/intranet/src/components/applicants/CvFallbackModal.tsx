@@ -9,6 +9,10 @@ import { FileText, Pencil, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import {
+  RICH_CV_FIELDS,
+  textToHtml,
+} from "@/components/applicants/applicant-types";
 import { PdfViewer } from "@/components/applicants/pdf/PdfViewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -44,15 +49,15 @@ const TEXT_FIELDS: FieldKey[] = [
   "name",
   "email",
   "telefon",
-  "adresse",
   "geburtsdatum",
   "position",
 ];
-const TEXTAREA_FIELDS: FieldKey[] = [
-  "ausbildung",
-  "berufserfahrung",
-  "zusammenfassung",
-];
+/** Short, single-purpose field that still benefits from a couple of lines of room. */
+const TEXTAREA_FIELDS: FieldKey[] = ["adresse"];
+/** Long-form fields where the applicant's actual history/detail lives — these get
+ * the same rich-text editor used for announcements, so multi-job, multi-line
+ * content keeps its structure instead of collapsing into one flat line. */
+const RICH_FIELDS: FieldKey[] = [...RICH_CV_FIELDS];
 
 const FIELD_LABEL_KEY: Record<FieldKey, string> = {
   name: "name",
@@ -99,6 +104,30 @@ export interface CvFallbackModalProps {
   onSaved: (applicantId: Id<"applicants">) => void;
 }
 
+function FillableFieldLabel({
+  label,
+  origin,
+}: {
+  label: string;
+  origin: Origin | undefined;
+}) {
+  const t = useTranslations("Applicants");
+  return (
+    <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+      {label}
+      {origin === "pdf" && (
+        <span
+          title={t("filledFromPdf")}
+          className="inline-flex items-center gap-0.5 rounded-full bg-info/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-info"
+        >
+          <Sparkles className="size-2.5" />
+          {t("filledFromPdf")}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function FillableField({
   label,
   value,
@@ -116,32 +145,55 @@ function FillableField({
   onChange: (value: string) => void;
   onFocus: () => void;
 }) {
-  const t = useTranslations("Applicants");
   const Field = multiline ? Textarea : Input;
   return (
     <label className="block space-y-1.5">
-      <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-        {origin === "pdf" && (
-          <span
-            title={t("filledFromPdf")}
-            className="inline-flex items-center gap-0.5 rounded-full bg-info/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-info"
-          >
-            <Sparkles className="size-2.5" />
-            {t("filledFromPdf")}
-          </span>
-        )}
-      </span>
+      <FillableFieldLabel label={label} origin={origin} />
       <Field
         value={value}
         onChange={e => onChange(e.target.value)}
         onFocus={onFocus}
         className={cn(
-          multiline && "min-h-24",
+          multiline && "min-h-20",
           focused && "ring-2 ring-primary"
         )}
       />
     </label>
+  );
+}
+
+/** Rich-text variant of `FillableField` — for the long-form CV fields
+ * (education, experience, summary) where applicants need actual formatting
+ * (paragraphs, lists) to record real detail rather than one flat line. */
+function FillableRichField({
+  label,
+  value,
+  origin,
+  focused,
+  placeholder,
+  onChange,
+  onFocus,
+}: {
+  label: string;
+  value: string;
+  origin: Origin | undefined;
+  focused: boolean;
+  placeholder?: string;
+  onChange: (html: string) => void;
+  onFocus: () => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <FillableFieldLabel label={label} origin={origin} />
+      <RichTextEditor
+        value={value}
+        onChange={onChange}
+        onFocus={onFocus}
+        placeholder={placeholder}
+        minHeight="min-h-28"
+        className={cn(focused && "ring-2 ring-primary")}
+      />
+    </div>
   );
 }
 
@@ -223,17 +275,18 @@ export function CvFallbackModal({
       }
       return;
     }
-    setField(focusedField, text, "pdf");
+    const value = RICH_FIELDS.includes(focusedField) ? textToHtml(text) : text;
+    setField(focusedField, value, "pdf");
   }
 
   function applyExtracted(extracted: ExtractedApplicantFields) {
     setForm(prev => {
       const next = { ...prev };
       const newOrigins: Partial<Record<FieldKey | "skills", Origin>> = {};
-      for (const key of TEXT_FIELDS.concat(TEXTAREA_FIELDS)) {
+      for (const key of TEXT_FIELDS.concat(TEXTAREA_FIELDS, RICH_FIELDS)) {
         const value = extracted[key as keyof ExtractedApplicantFields];
         if (typeof value === "string" && value.trim()) {
-          next[key] = value;
+          next[key] = RICH_FIELDS.includes(key) ? textToHtml(value) : value;
           newOrigins[key] = "pdf";
         }
       }
@@ -420,6 +473,19 @@ export function CvFallbackModal({
             origin={origins[key]}
             focused={focusedField === key}
             multiline
+            onChange={v => setField(key, v, "manual")}
+            onFocus={() => setFocusedField(key)}
+          />
+        ))}
+
+        {RICH_FIELDS.map(key => (
+          <FillableRichField
+            key={key}
+            label={t(FIELD_LABEL_KEY[key])}
+            value={form[key]}
+            origin={origins[key]}
+            focused={focusedField === key}
+            placeholder={t("richFieldPlaceholder")}
             onChange={v => setField(key, v, "manual")}
             onFocus={() => setFocusedField(key)}
           />

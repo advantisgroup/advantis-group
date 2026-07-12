@@ -11,10 +11,14 @@ import { useMutation, useQuery } from "convex/react";
 import { Briefcase, CalendarClock, Mail, PhoneCall, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { type ApplicantDetail } from "@/components/applicants/applicant-types";
+import {
+  type ApplicantDetail,
+  ensureRichHtml,
+} from "@/components/applicants/applicant-types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Select,
   SelectContent,
@@ -32,24 +36,59 @@ import type { LucideIcon } from "lucide-react";
 function Field({
   label,
   value,
+  multiline,
   onSave,
 }: {
   label: string;
   value: string;
+  multiline?: boolean;
   onSave: (value: string) => void;
 }) {
   const [v, setV] = useState(value);
+  const InputField = multiline ? Textarea : Input;
   return (
     <label className="block space-y-1.5">
       <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </span>
-      <Input
+      <InputField
         value={v}
         onChange={e => setV(e.target.value)}
         onBlur={() => v !== value && onSave(v)}
+        className={multiline ? "min-h-16" : undefined}
       />
     </label>
+  );
+}
+
+/** Rich-text counterpart to `Field` — for the long-form fields (summary,
+ * experience, education, internal notes) where a single flat line can't hold
+ * real detail. Saves on blur, same as every other field on this tab. */
+function RichField({
+  label,
+  html,
+  placeholder,
+  onSave,
+}: {
+  label: string;
+  html: string;
+  placeholder?: string;
+  onSave: (html: string) => void;
+}) {
+  const [value, setValue] = useState(() => ensureRichHtml(html));
+  return (
+    <div className="space-y-1.5">
+      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
+      <RichTextEditor
+        value={value}
+        onChange={setValue}
+        onBlur={() => value !== ensureRichHtml(html) && onSave(value)}
+        placeholder={placeholder}
+        minHeight="min-h-24"
+      />
+    </div>
   );
 }
 
@@ -129,7 +168,9 @@ export function Uebersicht({
   const profiles = useQuery(api.applicants.listProfiles);
   const update = useMutation(api.applicants.update);
   const handleError = useErrorHandler();
-  const [notiz, setNotiz] = useState(applicant.notizen ?? "");
+  const [notiz, setNotiz] = useState(() =>
+    ensureRichHtml(applicant.notizen ?? "")
+  );
   const isHighlighted = (skill: string) =>
     highlight.some(h => h.toLowerCase() === skill.toLowerCase());
 
@@ -258,45 +299,35 @@ export function Uebersicht({
               )}
             </div>
 
-            {(applicant.zusammenfassung ||
-              applicant.berufserfahrung ||
-              applicant.ausbildung) && (
-              <div className="space-y-3 border-t border-border/60 pt-4">
-                <p className="text-sm font-semibold">
-                  {t("profileFromDocuments")}
-                </p>
-                {applicant.zusammenfassung && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("summary")}
-                    </p>
-                    <p className="text-sm leading-relaxed">
-                      {applicant.zusammenfassung}
-                    </p>
-                  </div>
-                )}
-                {applicant.berufserfahrung && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("experience")}
-                    </p>
-                    <p className="text-sm leading-relaxed">
-                      {applicant.berufserfahrung}
-                    </p>
-                  </div>
-                )}
-                {applicant.ausbildung && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      {t("education")}
-                    </p>
-                    <p className="text-sm leading-relaxed">
-                      {applicant.ausbildung}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
+            <div className="space-y-3 border-t border-border/60 pt-4">
+              <p className="text-sm font-semibold">
+                {t("profileFromDocuments")}
+              </p>
+              <RichField
+                label={t("summary")}
+                html={applicant.zusammenfassung ?? ""}
+                placeholder={t("richFieldPlaceholder")}
+                onSave={v =>
+                  patch({ applicantId: applicant._id, zusammenfassung: v })
+                }
+              />
+              <RichField
+                label={t("experience")}
+                html={applicant.berufserfahrung ?? ""}
+                placeholder={t("richFieldPlaceholder")}
+                onSave={v =>
+                  patch({ applicantId: applicant._id, berufserfahrung: v })
+                }
+              />
+              <RichField
+                label={t("education")}
+                html={applicant.ausbildung ?? ""}
+                placeholder={t("richFieldPlaceholder")}
+                onSave={v =>
+                  patch({ applicantId: applicant._id, ausbildung: v })
+                }
+              />
+            </div>
           </CardContent>
         </Card>
 
@@ -322,6 +353,7 @@ export function Uebersicht({
               <Field
                 label={t("address")}
                 value={applicant.adresse ?? ""}
+                multiline
                 onSave={v => patch({ applicantId: applicant._id, adresse: v })}
               />
               <Field
@@ -337,15 +369,15 @@ export function Uebersicht({
           <Card>
             <CardContent className="space-y-3 p-4">
               <p className="text-sm font-semibold">{t("internalNotes")}</p>
-              <Textarea
-                className="min-h-32"
+              <RichTextEditor
                 value={notiz}
-                onChange={e => setNotiz(e.target.value)}
+                onChange={setNotiz}
                 onBlur={() =>
-                  notiz !== (applicant.notizen ?? "") &&
+                  notiz !== ensureRichHtml(applicant.notizen ?? "") &&
                   patch({ applicantId: applicant._id, notizen: notiz })
                 }
                 placeholder={t("internalNotesPlaceholder")}
+                minHeight="min-h-32"
               />
             </CardContent>
           </Card>

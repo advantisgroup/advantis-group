@@ -11,7 +11,12 @@ import { Download, Eye, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { type ApplicantDetail } from "@/components/applicants/applicant-types";
+import {
+  type ApplicantDetail,
+  ensureRichHtml,
+  RICH_CV_FIELDS,
+  textToHtml,
+} from "@/components/applicants/applicant-types";
 import {
   CvFallbackModal,
   type CvFallbackFormState,
@@ -32,9 +37,9 @@ export function applicantToFormState(
     adresse: applicant.adresse ?? "",
     geburtsdatum: applicant.geburtsdatum ?? "",
     position: applicant.position ?? "",
-    ausbildung: applicant.ausbildung ?? "",
-    berufserfahrung: applicant.berufserfahrung ?? "",
-    zusammenfassung: applicant.zusammenfassung ?? "",
+    ausbildung: ensureRichHtml(applicant.ausbildung ?? ""),
+    berufserfahrung: ensureRichHtml(applicant.berufserfahrung ?? ""),
+    zusammenfassung: ensureRichHtml(applicant.zusammenfassung ?? ""),
     skills: applicant.skills,
   };
 }
@@ -76,7 +81,9 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
         if (key === "skills") continue;
         const value = result.extractedFields[key];
         if (typeof value === "string" && value.trim()) {
-          merged[key] = value;
+          merged[key] = (RICH_CV_FIELDS as readonly string[]).includes(key)
+            ? textToHtml(value)
+            : value;
           fromPdf.push(key);
         }
       }
