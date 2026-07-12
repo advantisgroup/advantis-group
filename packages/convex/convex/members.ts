@@ -31,6 +31,12 @@ export const prepareRemove = internalMutation({
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
+    if (target.role === "admin") {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "Admins cannot be removed — change their role first",
+      });
+    }
     await ctx.db.delete(userId);
     return { clerkUserId: target.clerkUserId };
   },

@@ -1341,6 +1341,27 @@
     "removing": "Removing your account…",
     "autoRemoveNotice": "For security reasons, your account is being removed automatically."
   },
+  "Forbidden": {
+    "code": "Error 403",
+    "title": "Access restricted",
+    "description": "You don't have permission to view this page. If you think this is a mistake, contact your manager or IT.",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "NotFound": {
+    "code": "Error 404",
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or may have moved.",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "ErrorsCatalog": {
+    "eyebrow": "Debug",
+    "title": "Error pages",
+    "subtitle": "Live previews of this app's full-page error states, so you don't have to reproduce them for real.",
+    "forbidden": "Forbidden",
+    "notFound": "Not found",
+    "boundary": "Unexpected error boundary",
+    "excludedNote": "Access denied (blocked email domain) isn't listed here — mounting it immediately deletes the current account and signs out, so there's no safe way to preview it live."
+  },
   "privacy": {
     "title": "Privacy Policy – Intranet",
     "subtitle": "How we process personal data of authorized Advantis employees within the intranet – in line with the GDPR",

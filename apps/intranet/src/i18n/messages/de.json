@@ -368,7 +368,7 @@
     "next": "Weiter",
     "replayCheckpoint": "Tour für diese Seite erneut abspielen",
     "nudgeBody": "Neu hier? Mach eine kurze Tour über diese Seite und entdecke, was sie kann.",
-    "nudgeStart": "Zeig mir",
+    "nudgeStart": "Zeigs mir",
     "nudgeDismiss": "Ausblenden",
     "nextSection": "Nächster Abschnitt",
     "finish": "Fertig",
@@ -1340,6 +1340,27 @@
     "description": "Dieses Intranet ist ausschließlich für autorisierte Mitarbeitende der advantis GmbH zugänglich. Deine E-Mail-Adresse gehört nicht zu einer zugelassenen Firmendomain, daher kann dir hier kein Zugang gewährt werden.",
     "removing": "Dein Konto wird entfernt …",
     "autoRemoveNotice": "Aus Sicherheitsgründen wird dein Konto automatisch entfernt."
+  },
+  "Forbidden": {
+    "code": "Fehler 403",
+    "title": "Zugriff eingeschränkt",
+    "description": "Du hast keine Berechtigung, diese Seite anzuzeigen. Falls du glaubst, dass dies ein Fehler ist, wende dich an deine Führungskraft oder die IT.",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
+  "NotFound": {
+    "code": "Fehler 404",
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
+  "ErrorsCatalog": {
+    "eyebrow": "Debug",
+    "title": "Fehlerseiten",
+    "subtitle": "Live-Vorschau der ganzseitigen Fehlerzustände dieser App, damit du sie nicht real nachstellen musst.",
+    "forbidden": "Zugriff verweigert",
+    "notFound": "Nicht gefunden",
+    "boundary": "Unerwarteter Fehler",
+    "excludedNote": "„Zugriff verweigert“ wegen gesperrter E-Mail-Domain ist hier nicht aufgeführt — das Einbinden würde das aktuelle Konto sofort löschen und abmelden, daher gibt es keine sichere Live-Vorschau dafür."
   },
   "privacy": {
     "title": "Datenschutzerklärung – Intranet",

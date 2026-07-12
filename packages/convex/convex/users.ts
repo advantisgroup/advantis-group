@@ -367,6 +367,12 @@ export const applyStatus = internalMutation({
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
+    if (status === "suspended" && target.role === "admin") {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "Admins cannot be suspended — change their role first",
+      });
+    }
     await ctx.db.patch(userId, { status });
     return { clerkUserId: target.clerkUserId };
   },
