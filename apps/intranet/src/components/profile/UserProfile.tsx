@@ -13,11 +13,13 @@ import {
   CalendarClock,
   Copy,
   Hash,
+  Lock,
   Mail,
   MessageSquare,
   Phone,
   Send,
   ShieldCheck,
+  UploadCloud,
   UserMinus,
   Users2,
 } from "lucide-react";
@@ -28,6 +30,7 @@ import { Drawer } from "vaul";
 import {
   useCurrentUser,
   useIsAdmin,
+  useIsManager,
 } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -359,9 +362,11 @@ function UpcomingAbsences({ userId }: { userId: Id<"users"> }) {
 
 function AdminControls({
   user,
+  isAdmin,
   onClose,
 }: {
   user: ProfileUser;
+  isAdmin: boolean;
   onClose: () => void;
 }) {
   const t = useTranslations("Admin");
@@ -373,10 +378,17 @@ function AdminControls({
   const setStatus = useAction(api.users.setStatus);
   const removeMember = useAction(api.members.remove);
   const reinvite = useAction(api.members.reinvite);
+  const setUploadPermission = useAction(api.users.setUploadPermission);
+  const setGfAccess = useAction(api.users.setGfAccess);
   const handleError = useErrorHandler();
 
   const isSelf = user._id === me._id;
   const isActive = user.status === "active";
+  // Admins can be demoted via the role picker, but not suspended or removed
+  // outright — that would let one admin lock another out of their own
+  // account. Backend rejects these too; this just keeps the UI from
+  // offering an action that's guaranteed to fail.
+  const isTargetAdmin = user.role === "admin";
 
   function changeRole(role: Role) {
     setRole({ userId: user._id, role })
@@ -414,53 +426,97 @@ function AdminControls({
       .catch(handleError);
   }
 
-  return (
-    <Section label={t("title")}>
-      <div className="space-y-3 rounded-lg border border-border/70 p-3">
-        {!isSelf && (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-muted-foreground">{t("role")}</span>
-            <RoleSelect value={user.role} onChange={changeRole} />
-          </div>
-        )}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-muted-foreground">{t("teams")}</span>
-          <TeamsEditor userId={user._id} teams={user.teams} />
-        </div>
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={() => onReinvite()}>
-            <Send /> {t("reinvite")}
-          </Button>
-          {!isSelf && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void toggleStatus()}
-            >
-              <ShieldCheck />
-              {isActive ? t("suspend") : t("activate")}
-            </Button>
-          )}
-          {!isSelf && (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="col-span-2"
-              onClick={() => void onRemove()}
-            >
-              <UserMinus /> {t("removeMember")}
-            </Button>
-          )}
-        </div>
-      </div>
-    </Section>
-  );
-
   function onReinvite() {
     reinvite({ userId: user._id })
       .then(() => toast.success(t("reinviteSent")))
       .catch(handleError);
   }
+
+  function toggleUploads() {
+    setUploadPermission({
+      userId: user._id,
+      enabled: !user.uploadRequestsEnabled,
+    })
+      .then(() =>
+        toast.success(
+          user.uploadRequestsEnabled
+            ? t("uploadsDisabled")
+            : t("uploadsEnabled")
+        )
+      )
+      .catch(handleError);
+  }
+
+  function toggleGf() {
+    setGfAccess({ userId: user._id, gfAccess: !user.gfAccess })
+      .then(() =>
+        toast.success(user.gfAccess ? t("gfRevoked") : t("gfGranted"))
+      )
+      .catch(handleError);
+  }
+
+  return (
+    <Section label={t("title")}>
+      <div className="space-y-3 rounded-lg border border-border/70 p-3">
+        {isAdmin && !isSelf && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground">{t("role")}</span>
+            <RoleSelect value={user.role} onChange={changeRole} />
+          </div>
+        )}
+        {isAdmin && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground">{t("teams")}</span>
+            <TeamsEditor userId={user._id} teams={user.teams} />
+          </div>
+        )}
+        {/* Permission grants and lifecycle actions only make sense on
+            someone else's account — a member can't grant themselves access
+            or reinvite/suspend/remove themselves. */}
+        {!isSelf && (
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={toggleUploads}>
+              <UploadCloud />
+              {user.uploadRequestsEnabled
+                ? t("disableUploads")
+                : t("enableUploads")}
+            </Button>
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={toggleGf}>
+                <Lock />
+                {user.gfAccess ? t("revokeGf") : t("grantGf")}
+              </Button>
+            )}
+            {isAdmin && (
+              <Button variant="outline" size="sm" onClick={() => onReinvite()}>
+                <Send /> {t("reinvite")}
+              </Button>
+            )}
+            {isAdmin && !isTargetAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void toggleStatus()}
+              >
+                <ShieldCheck />
+                {isActive ? t("suspend") : t("activate")}
+              </Button>
+            )}
+            {isAdmin && !isTargetAdmin && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="col-span-2"
+                onClick={() => void onRemove()}
+              >
+                <UserMinus /> {t("removeMember")}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </Section>
+  );
 }
 
 function ProfileContent({
@@ -477,6 +533,7 @@ function ProfileContent({
   const router = useRouter();
   const me = useCurrentUser();
   const isAdmin = useIsAdmin();
+  const isManager = useIsManager();
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
   const handleError = useErrorHandler();
   const now = useNow();
@@ -596,7 +653,12 @@ function ProfileContent({
 
         <UpcomingAbsences userId={user._id} />
 
-        {isAdmin && <AdminControls user={user} onClose={onClose} />}
+        {/* Managers only need this panel to act on someone else; on their
+            own profile there's nothing manager-level left to show once
+            self-targeting actions are hidden. */}
+        {(isAdmin || (isManager && !isSelf)) && (
+          <AdminControls user={user} isAdmin={isAdmin} onClose={onClose} />
+        )}
       </div>
     </div>
   );

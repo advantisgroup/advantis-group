@@ -10,15 +10,11 @@ import {
   Clock,
   Copy,
   KeyRound,
-  Lock,
   Mail,
   MoreHorizontal,
   RotateCw,
   Search,
-  Send,
   ShieldCheck,
-  UploadCloud,
-  UserMinus,
   Users,
   Users2,
 } from "lucide-react";
@@ -47,7 +43,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -446,20 +441,13 @@ function AdminOverview({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-function Members({ isAdmin }: { isAdmin: boolean }) {
+function Members() {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
-  const me = useCurrentUser();
-  const confirm = useConfirm();
   const members = useQuery(api.users.list, { includeSuspended: true });
   const customRoles = useQuery(api.customRoles.list);
-  const setStatus = useAction(api.users.setStatus);
-  const removeMember = useAction(api.members.remove);
-  const reinvite = useAction(api.members.reinvite);
-  const setUploadPermission = useAction(api.users.setUploadPermission);
-  const setGfAccess = useAction(api.users.setGfAccess);
   const assignCustomRole = useMutation(api.users.assignCustomRole);
   const handleError = useErrorHandler();
 
@@ -489,63 +477,9 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     return list;
   }, [members, search, roleFilter, statusFilter, teamFilter]);
 
-  async function toggleStatus(userId: Id<"users">, active: boolean) {
-    if (active) {
-      const ok = await confirm({
-        title: t("suspend"),
-        description: tc("deleteWarning"),
-        confirmLabel: t("suspend"),
-        cancelLabel: tc("cancel"),
-      });
-      if (!ok) return;
-    }
-    setStatus({ userId, status: active ? "suspended" : "active" }).catch(
-      handleError
-    );
-  }
-
-  async function onRemove(m: Member) {
-    const ok = await confirm({
-      title: t("removeTitle", { name: m.name }),
-      description: t("removeBody"),
-      confirmLabel: t("removeMember"),
-      cancelLabel: tc("cancel"),
-    });
-    if (!ok) return;
-    setSelectedId(null);
-    removeMember({ userId: m._id as Id<"users"> })
-      .then(() => toast.success(t("removed")))
-      .catch(handleError);
-  }
-
-  function onReinvite(m: Member) {
-    reinvite({ userId: m._id as Id<"users"> })
-      .then(() => toast.success(t("reinviteSent")))
-      .catch(handleError);
-  }
-
   function copyEmail(email: string) {
     void navigator.clipboard.writeText(email);
     toast.success(t("emailCopied"));
-  }
-
-  function toggleUploads(m: Member) {
-    setUploadPermission({
-      userId: m._id as Id<"users">,
-      enabled: !m.uploadRequestsEnabled,
-    })
-      .then(() =>
-        toast.success(
-          m.uploadRequestsEnabled ? t("uploadsDisabled") : t("uploadsEnabled")
-        )
-      )
-      .catch(handleError);
-  }
-
-  function toggleGf(m: Member) {
-    setGfAccess({ userId: m._id as Id<"users">, gfAccess: !m.gfAccess })
-      .then(() => toast.success(m.gfAccess ? t("gfRevoked") : t("gfGranted")))
-      .catch(handleError);
   }
 
   function onCustomRoleChange(m: Member, customRoleId: string) {
@@ -558,8 +492,11 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     }).catch(handleError);
   }
 
+  // Quick actions only — everything that manages the account (roles,
+  // permissions, suspend, remove) lives in the UserProfile drawer/dialog,
+  // which already scales to more actions and adapts to mobile vs desktop
+  // without this menu growing forever.
   function MemberMenu({ m }: { m: Member }) {
-    const isSelf = m._id === me._id;
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -567,56 +504,13 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onClick={() => setSelectedId(m._id as Id<"users">)}>
             <Users2 className="size-4" /> {t("viewProfile")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => copyEmail(m.email)}>
             <Copy className="size-4" /> {t("copyEmail")}
           </DropdownMenuItem>
-          {/* OneDrive: upload-request permission is manager-grantable. */}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => toggleUploads(m)}>
-            <UploadCloud className="size-4" />{" "}
-            {m.uploadRequestsEnabled ? t("disableUploads") : t("enableUploads")}
-          </DropdownMenuItem>
-          {isAdmin && (
-            <DropdownMenuItem onClick={() => toggleGf(m)}>
-              <Lock className="size-4" />{" "}
-              {m.gfAccess ? t("revokeGf") : t("grantGf")}
-            </DropdownMenuItem>
-          )}
-          {isAdmin && (
-            <>
-              <DropdownMenuItem onClick={() => onReinvite(m)}>
-                <Send className="size-4" /> {t("reinvite")}
-              </DropdownMenuItem>
-              {!isSelf && (
-                <DropdownMenuItem
-                  onClick={() =>
-                    void toggleStatus(
-                      m._id as Id<"users">,
-                      m.status === "active"
-                    )
-                  }
-                >
-                  <ShieldCheck className="size-4" />{" "}
-                  {m.status === "active" ? t("suspend") : t("activate")}
-                </DropdownMenuItem>
-              )}
-              {!isSelf && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => void onRemove(m)}
-                  >
-                    <UserMinus className="size-4" /> {t("removeMember")}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </>
-          )}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -1010,7 +904,7 @@ export default function AdminPage() {
           <Invites isAdmin={isAdmin} />
         </TabsContent>
         <TabsContent value="members">
-          <Members isAdmin={isAdmin} />
+          <Members />
         </TabsContent>
         <TabsContent value="roles">
           <CustomRolesPanel />
