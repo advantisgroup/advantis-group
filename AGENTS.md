@@ -95,6 +95,13 @@ today (`apps/intranet/public/` only has Advantis's own logos).
 - No comments explaining _what_ code does — only _why_, for non-obvious
   constraints (see existing files in `packages/convex/convex/activity/` for
   the norm: dense "why" comments on tricky invariants, nothing else).
+- **Primary actions never live inline in a view.** Create/add/log flows
+  (new applicant, log a contact, schedule an appointment, …) open a dialog
+  — a bottom sheet on mobile — or navigate to a dedicated page; they are
+  never rendered as an always-visible form card sitting on top of the
+  content. Views stay read-focused overviews with explicit action buttons.
+  See `apps/intranet/src/components/applicants/EntryDialogs.tsx` for the
+  canonical pattern.
 - Don't add speculative abstractions, fallbacks, or error handling for cases
   that can't occur. Match the existing minimal, direct style.
 - i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
