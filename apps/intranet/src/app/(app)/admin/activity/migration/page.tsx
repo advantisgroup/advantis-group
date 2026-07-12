@@ -9,6 +9,7 @@ import { DatabaseZap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
@@ -54,9 +55,7 @@ export default function ActivityMigrationPage() {
   const [busy, setBusy] = useState(false);
 
   if (!isAdmin) {
-    return (
-      <p className="py-20 text-center text-sm text-muted-foreground">403</p>
-    );
+    return <ForbiddenScreen />;
   }
 
   async function onStart() {

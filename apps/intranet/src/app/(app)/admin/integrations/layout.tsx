@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 
+import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { useHasCapability } from "@/components/providers/current-user";
 
 /**
@@ -19,9 +20,7 @@ export default function IntegrationsLayout({
   const hasIntegrationsAccess = useHasCapability("access_integrations");
 
   if (!hasIntegrationsAccess) {
-    return (
-      <p className="py-20 text-center text-sm text-muted-foreground">403</p>
-    );
+    return <ForbiddenScreen />;
   }
 
   return <>{children}</>;

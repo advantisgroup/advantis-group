@@ -10,15 +10,11 @@ import {
   Clock,
   Copy,
   KeyRound,
-  Lock,
   Mail,
   MoreHorizontal,
   RotateCw,
   Search,
-  Send,
   ShieldCheck,
-  UploadCloud,
-  UserMinus,
   Users,
   Users2,
 } from "lucide-react";
@@ -26,6 +22,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { CustomRolesPanel } from "@/app/(app)/admin/CustomRolesPanel";
+import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { OneDriveAuditPanel } from "@/components/onedrive/OneDriveAuditPanel";
 import { TeamAccessPanel } from "@/components/onedrive/TeamAccessPanel";
 import { UploadApprovalQueue } from "@/components/onedrive/UploadApprovalQueue";
@@ -46,7 +43,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -535,8 +531,6 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
-  const me = useCurrentUser();
-  const confirm = useConfirm();
   const members = useQuery(api.users.list, { includeSuspended: true });
   const customRoles = useQuery(api.customRoles.list);
   const setStatus = useAction(api.users.setStatus);
@@ -574,41 +568,6 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
       list = list.filter(m => m.teams.includes(teamFilter));
     return list;
   }, [members, search, roleFilter, statusFilter, teamFilter]);
-
-  async function toggleStatus(userId: Id<"users">, active: boolean) {
-    if (active) {
-      const ok = await confirm({
-        title: t("suspend"),
-        description: tc("deleteWarning"),
-        confirmLabel: t("suspend"),
-        cancelLabel: tc("cancel"),
-      });
-      if (!ok) return;
-    }
-    setStatus({ userId, status: active ? "suspended" : "active" }).catch(
-      handleError
-    );
-  }
-
-  async function onRemove(m: Member) {
-    const ok = await confirm({
-      title: t("removeTitle", { name: m.name }),
-      description: t("removeBody"),
-      confirmLabel: t("removeMember"),
-      cancelLabel: tc("cancel"),
-    });
-    if (!ok) return;
-    setSelectedId(null);
-    removeMember({ userId: m._id as Id<"users"> })
-      .then(() => toast.success(t("removed")))
-      .catch(handleError);
-  }
-
-  function onReinvite(m: Member) {
-    reinvite({ userId: m._id as Id<"users"> })
-      .then(() => toast.success(t("reinviteSent")))
-      .catch(handleError);
-  }
 
   function copyEmail(email: string) {
     void navigator.clipboard.writeText(email);
@@ -668,8 +627,11 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     }).catch(handleError);
   }
 
+  // Quick actions only — everything that manages the account (roles,
+  // permissions, suspend, remove) lives in the UserProfile drawer/dialog,
+  // which already scales to more actions and adapts to mobile vs desktop
+  // without this menu growing forever.
   function MemberMenu({ m }: { m: Member }) {
-    const isSelf = m._id === me._id;
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -677,7 +639,7 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onClick={() => setSelectedId(m._id as Id<"users">)}>
             <Users2 className="size-4" /> {t("viewProfile")}
           </DropdownMenuItem>
@@ -1087,9 +1049,7 @@ export default function AdminPage() {
   }, [currentStep?.id]);
 
   if (!isManager) {
-    return (
-      <p className="py-20 text-center text-sm text-muted-foreground">403</p>
-    );
+    return <ForbiddenScreen />;
   }
 
   return (
@@ -1142,7 +1102,7 @@ export default function AdminPage() {
           <Invites isAdmin={isAdmin} />
         </TabsContent>
         <TabsContent value="members">
-          <Members isAdmin={isAdmin} />
+          <Members />
         </TabsContent>
         <TabsContent value="roles">
           <CustomRolesPanel />

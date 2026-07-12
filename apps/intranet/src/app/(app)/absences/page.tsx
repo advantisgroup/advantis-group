@@ -859,7 +859,7 @@ export default function AbsencesPage() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-4xl">
       <PageHeader
         title={t("title")}
         description={t("subtitle")}

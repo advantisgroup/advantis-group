@@ -290,7 +290,7 @@ export default function GuidebooksPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl" data-tour="tour-guidebooks-list">
+    <div className="mx-auto max-w-5xl" data-tour="tour-guidebooks-list">
       <PageHeader
         eyebrow={t("eyebrow")}
         title={t("title")}
