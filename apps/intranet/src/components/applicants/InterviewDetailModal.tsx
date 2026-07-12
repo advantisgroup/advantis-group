@@ -56,7 +56,9 @@ export function InterviewDetailModal({
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
           <DialogTitle>
-            {t("interviewOn", { date: formatIsoDate(interview.datum, "de-DE") })}
+            {t("interviewOn", {
+              date: formatIsoDate(interview.datum, "de-DE"),
+            })}
           </DialogTitle>
           {interview.interviewer && (
             <DialogDescription className="mt-1">
