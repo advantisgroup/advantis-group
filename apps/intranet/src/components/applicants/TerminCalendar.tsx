@@ -17,6 +17,7 @@ import { TerminDialog } from "@/components/applicants/EntryDialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { cn } from "@/lib/utils";
 
@@ -196,70 +197,107 @@ export function TerminCalendar() {
         </div>
       )}
 
-      {weeks.map((week, wi) => {
-        const weekTermine = (termine ?? []).filter(
-          tm => tm.datum >= week[0].iso && tm.datum <= week[6].iso
-        );
-        return (
-          <div key={wi} className="space-y-2">
-            <div className="flex items-baseline gap-2">
-              <h3 className="font-display text-sm font-bold">
-                {wi === 0 ? t("thisWeek") : t("weekPlus", { n: wi })}
-              </h3>
-              <span className="text-xs text-muted-foreground">
-                {week[0].shortDate} – {week[6].shortDate}
-                {weekTermine.length > 0 && ` · ${weekTermine.length}`}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-              {week.map(day => {
-                const items = (termine ?? []).filter(
-                  tm => tm.datum === day.iso
-                );
-                return (
-                  <div
-                    key={day.iso}
-                    className={cn(
-                      "flex min-h-[70px] flex-col overflow-hidden rounded-lg border",
-                      day.isToday ? "border-primary" : "border-border/70"
-                    )}
-                  >
+      {/* Desktop: the 4-week grid. */}
+      <div className="hidden space-y-6 md:block">
+        {weeks.map((week, wi) => {
+          const weekTermine = (termine ?? []).filter(
+            tm => tm.datum >= week[0].iso && tm.datum <= week[6].iso
+          );
+          return (
+            <div key={wi} className="space-y-2">
+              <div className="flex items-baseline gap-2">
+                <h3 className="font-display text-sm font-bold">
+                  {wi === 0 ? t("thisWeek") : t("weekPlus", { n: wi })}
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  {week[0].shortDate} – {week[6].shortDate}
+                  {weekTermine.length > 0 && ` · ${weekTermine.length}`}
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-2 lg:grid-cols-7">
+                {week.map(day => {
+                  const items = (termine ?? []).filter(
+                    tm => tm.datum === day.iso
+                  );
+                  return (
                     <div
+                      key={day.iso}
                       className={cn(
-                        "px-2 py-1 text-xs font-semibold",
-                        day.isToday
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted/50"
+                        "flex min-h-[70px] flex-col overflow-hidden rounded-lg border",
+                        day.isToday ? "border-primary" : "border-border/70"
                       )}
                     >
-                      {day.weekday}{" "}
-                      <span className="font-normal opacity-80">
-                        {day.shortDate}
-                      </span>
-                    </div>
-                    <div className="flex flex-1 flex-col gap-1.5 p-1.5">
-                      {items.length === 0 ? (
-                        <span className="text-[11px] text-muted-foreground">
-                          –
+                      <div
+                        className={cn(
+                          "px-2 py-1 text-xs font-semibold",
+                          day.isToday
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted/50"
+                        )}
+                      >
+                        {day.weekday}{" "}
+                        <span className="font-normal opacity-80">
+                          {day.shortDate}
                         </span>
-                      ) : (
-                        items.map(tm => (
-                          <TerminRow
-                            key={tm._id}
-                            termin={tm}
-                            applicantName={tm.applicantName}
-                            compact
-                          />
-                        ))
-                      )}
+                      </div>
+                      <div className="flex flex-1 flex-col gap-1.5 p-1.5">
+                        {items.length === 0 ? (
+                          <span className="text-[11px] text-muted-foreground">
+                            –
+                          </span>
+                        ) : (
+                          items.map(tm => (
+                            <TerminRow
+                              key={tm._id}
+                              termin={tm}
+                              applicantName={tm.applicantName}
+                              compact
+                            />
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+
+      {/* Mobile: an agenda of only the days that actually have Termine —
+          a phone screen full of empty grid boxes helps no one. */}
+      <div className="space-y-4 md:hidden">
+        {days.filter(day => (termine ?? []).some(tm => tm.datum === day.iso))
+          .length === 0 ? (
+          <EmptyState icon={<CalendarPlus />} title={t("noTermineInWindow")} />
+        ) : (
+          days.map(day => {
+            const items = (termine ?? []).filter(tm => tm.datum === day.iso);
+            if (items.length === 0) return null;
+            return (
+              <div key={day.iso} className="space-y-1.5">
+                <p
+                  className={cn(
+                    "text-xs font-semibold uppercase tracking-wide",
+                    day.isToday ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  {day.weekday} {day.shortDate}
+                  {day.isToday && ` · ${t("today")}`}
+                </p>
+                {items.map(tm => (
+                  <TerminRow
+                    key={tm._id}
+                    termin={tm}
+                    applicantName={tm.applicantName}
+                  />
+                ))}
+              </div>
+            );
+          })
+        )}
+      </div>
 
       {vergangen.length > 0 && (
         <Card>

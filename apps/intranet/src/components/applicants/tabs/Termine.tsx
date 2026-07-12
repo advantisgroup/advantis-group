@@ -38,7 +38,10 @@ export function Termine({ applicant }: { applicant: ApplicantDetail }) {
             </Button>
           </div>
           {kommend.length === 0 ? (
-            <EmptyState icon={<CalendarPlus />} title={t("noUpcomingTermine")} />
+            <EmptyState
+              icon={<CalendarPlus />}
+              title={t("noUpcomingTermine")}
+            />
           ) : (
             kommend.map(tm => <TerminRow key={tm._id} termin={tm} />)
           )}
