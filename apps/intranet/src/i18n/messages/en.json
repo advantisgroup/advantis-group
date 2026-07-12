@@ -1832,6 +1832,18 @@
     "nextApplicant": "Next",
     "switchApplicant": "Switch applicant",
     "recentlyViewed": "Recently viewed",
-    "recentlyViewedEmpty": "No applicants viewed yet."
+    "recentlyViewedEmpty": "No applicants viewed yet.",
+    "addEntry": "Add entry",
+    "applicant": "Applicant",
+    "date": "Date",
+    "time": "Time",
+    "note": "Note",
+    "entryKind": "Kind",
+    "interviewer": "Interviewer",
+    "terminArtLabel": "Channel",
+    "terminTypLabel": "Type",
+    "kontaktSaved": "Contact saved to the file.",
+    "emailSaved": "Email logged in the file.",
+    "interviewSaved": "Interview saved to the file."
   }
 }

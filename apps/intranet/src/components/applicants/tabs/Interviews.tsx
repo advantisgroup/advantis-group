@@ -6,74 +6,36 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
+import { Plus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import {
-  type ApplicantDetail,
-  today,
-} from "@/components/applicants/applicant-types";
+import { type ApplicantDetail } from "@/components/applicants/applicant-types";
+import { InterviewDialog } from "@/components/applicants/EntryDialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 
 export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
-  const addInterview = useMutation(api.applicants.addInterview);
   const removeInterview = useMutation(api.applicants.removeInterview);
   const handleError = useErrorHandler();
-  const [datum, setDatum] = useState(today());
-  const [interviewer, setInterviewer] = useState("");
-  const [notiz, setNotiz] = useState("");
-
-  function save() {
-    addInterview({
-      applicantId: applicant._id,
-      datum,
-      interviewer,
-      notiz: notiz.trim() || undefined,
-    })
-      .then(() => {
-        setInterviewer("");
-        setNotiz("");
-      })
-      .catch(handleError);
-  }
+  const [logOpen, setLogOpen] = useState(false);
 
   return (
     <div className="space-y-5">
       <Card>
-        <CardContent className="space-y-3 p-4">
-          <p className="text-sm font-semibold">{t("logInterview")}</p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Input
-              type="date"
-              value={datum}
-              onChange={e => setDatum(e.target.value)}
-            />
-            <Input
-              placeholder={t("interviewerPlaceholder")}
-              value={interviewer}
-              onChange={e => setInterviewer(e.target.value)}
-            />
-            <Button onClick={save}>{t("saveInterview")}</Button>
-          </div>
-          <Textarea
-            value={notiz}
-            onChange={e => setNotiz(e.target.value)}
-            placeholder={t("interviewNotePlaceholder")}
-          />
-        </CardContent>
-      </Card>
-      <Card>
         <CardContent className="space-y-2 p-4">
-          <p className="text-sm font-semibold">{t("interviewHistory")}</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold">{t("interviewHistory")}</p>
+            <Button size="sm" onClick={() => setLogOpen(true)}>
+              <Plus className="size-4" />
+              {t("logInterview")}
+            </Button>
+          </div>
           {applicant.interviews.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("noInterviewsYet")}
-            </p>
+            <EmptyState icon={<Users />} title={t("noInterviewsYet")} />
           ) : (
             applicant.interviews.map(iv => (
               <Link
@@ -109,6 +71,11 @@ export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
           )}
         </CardContent>
       </Card>
+      <InterviewDialog
+        open={logOpen}
+        onOpenChange={setLogOpen}
+        applicantId={applicant._id}
+      />
     </div>
   );
 }

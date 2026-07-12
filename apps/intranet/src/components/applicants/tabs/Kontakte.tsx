@@ -6,46 +6,22 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
+import { PhoneCall, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import {
-  type ApplicantDetail,
-  KONTAKT_ARTEN,
-  today,
-} from "@/components/applicants/applicant-types";
+import { type ApplicantDetail } from "@/components/applicants/applicant-types";
+import { KontaktDialog } from "@/components/applicants/EntryDialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 
 export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
-  const addKontakt = useMutation(api.applicants.addKontakt);
   const removeKontakt = useMutation(api.applicants.removeKontakt);
   const handleError = useErrorHandler();
-  const [datum, setDatum] = useState(today());
-  const [art, setArt] = useState<(typeof KONTAKT_ARTEN)[number]>("telefon");
-  const [notiz, setNotiz] = useState("");
-
-  function save() {
-    addKontakt({
-      applicantId: applicant._id,
-      datum,
-      art,
-      notiz: notiz.trim() || undefined,
-    })
-      .then(() => setNotiz(""))
-      .catch(handleError);
-  }
+  const [logOpen, setLogOpen] = useState(false);
 
   return (
     <div className="space-y-5">
@@ -55,42 +31,16 @@ export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
         </div>
       )}
       <Card>
-        <CardContent className="space-y-3 p-4">
-          <p className="text-sm font-semibold">{t("logContact")}</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Input
-              type="date"
-              value={datum}
-              onChange={e => setDatum(e.target.value)}
-            />
-            <Select value={art} onValueChange={v => setArt(v as typeof art)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {KONTAKT_ARTEN.map(a => (
-                  <SelectItem key={a} value={a}>
-                    {t(`kontaktArt.${a}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button onClick={save}>{t("saveContact")}</Button>
-          </div>
-          <Textarea
-            value={notiz}
-            onChange={e => setNotiz(e.target.value)}
-            placeholder={t("contactNotePlaceholder")}
-          />
-        </CardContent>
-      </Card>
-      <Card>
         <CardContent className="space-y-2 p-4">
-          <p className="text-sm font-semibold">{t("contactHistory")}</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold">{t("contactHistory")}</p>
+            <Button size="sm" onClick={() => setLogOpen(true)}>
+              <Plus className="size-4" />
+              {t("logContact")}
+            </Button>
+          </div>
           {applicant.kontakte.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("noContactsYet")}
-            </p>
+            <EmptyState icon={<PhoneCall />} title={t("noContactsYet")} />
           ) : (
             applicant.kontakte.map(k => (
               <Link
@@ -124,6 +74,12 @@ export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
           )}
         </CardContent>
       </Card>
+      <KontaktDialog
+        open={logOpen}
+        onOpenChange={setLogOpen}
+        applicantId={applicant._id}
+        showFirstContactHint={applicant.status === "neu"}
+      />
     </div>
   );
 }

@@ -20,6 +20,16 @@ export const EMAIL_KATEGORIEN = [
   "sonstiges",
 ] as const;
 
+export const TERMIN_ARTEN = ["telefon", "teams", "vor_ort"] as const;
+
+export const TERMIN_TYPEN = [
+  "interview",
+  "gespraech",
+  "probetag",
+  "wiedervorlage",
+  "sonstiges",
+] as const;
+
 export function today(): string {
   return new Date().toISOString().slice(0, 10);
 }

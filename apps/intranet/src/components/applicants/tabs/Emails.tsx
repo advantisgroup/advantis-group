@@ -6,90 +6,36 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
+import { Mail, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import {
-  type ApplicantDetail,
-  EMAIL_KATEGORIEN,
-  today,
-} from "@/components/applicants/applicant-types";
+import { type ApplicantDetail } from "@/components/applicants/applicant-types";
+import { EmailDialog } from "@/components/applicants/EntryDialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 
 export function Emails({ applicant }: { applicant: ApplicantDetail }) {
   const t = useTranslations("Applicants");
-  const addEmail = useMutation(api.applicants.addEmail);
   const removeEmail = useMutation(api.applicants.removeEmail);
   const handleError = useErrorHandler();
-  const [datum, setDatum] = useState(today());
-  const [kategorie, setKategorie] =
-    useState<(typeof EMAIL_KATEGORIEN)[number]>("sonstiges");
-  const [notiz, setNotiz] = useState("");
-
-  function save() {
-    addEmail({
-      applicantId: applicant._id,
-      datum,
-      kategorie,
-      notiz: notiz.trim() || undefined,
-    })
-      .then(() => setNotiz(""))
-      .catch(handleError);
-  }
+  const [logOpen, setLogOpen] = useState(false);
 
   return (
     <div className="space-y-5">
       <Card>
-        <CardContent className="space-y-3 p-4">
-          <p className="text-sm font-semibold">{t("logEmail")}</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Input
-              type="date"
-              value={datum}
-              onChange={e => setDatum(e.target.value)}
-            />
-            <Select
-              value={kategorie}
-              onValueChange={v => setKategorie(v as typeof kategorie)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {EMAIL_KATEGORIEN.map(k => (
-                  <SelectItem key={k} value={k}>
-                    {t(`emailKategorie.${k}`)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button onClick={save}>{t("saveEmail")}</Button>
-          </div>
-          <Input
-            value={notiz}
-            onChange={e => setNotiz(e.target.value)}
-            placeholder={t("emailNotePlaceholder")}
-          />
-          <p className="text-xs text-muted-foreground">
-            {t("emailDoesNotCountHint")}
-          </p>
-        </CardContent>
-      </Card>
-      <Card>
         <CardContent className="space-y-2 p-4">
-          <p className="text-sm font-semibold">{t("emailHistory")}</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold">{t("emailHistory")}</p>
+            <Button size="sm" onClick={() => setLogOpen(true)}>
+              <Plus className="size-4" />
+              {t("logEmail")}
+            </Button>
+          </div>
           {applicant.emails.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noEmailsYet")}</p>
+            <EmptyState icon={<Mail />} title={t("noEmailsYet")} />
           ) : (
             applicant.emails.map(m => (
               <Link
@@ -123,6 +69,11 @@ export function Emails({ applicant }: { applicant: ApplicantDetail }) {
           )}
         </CardContent>
       </Card>
+      <EmailDialog
+        open={logOpen}
+        onOpenChange={setLogOpen}
+        applicantId={applicant._id}
+      />
     </div>
   );
 }

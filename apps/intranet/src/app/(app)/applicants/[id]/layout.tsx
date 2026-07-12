@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import {
   useParams,
@@ -22,6 +22,7 @@ import {
   LayoutDashboard,
   Mail,
   PhoneCall,
+  Plus,
   Search,
   Trash2,
   Users,
@@ -30,8 +31,15 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { AmpelPicker, type Ampel } from "@/components/applicants/AmpelBadge";
+import {
+  EmailDialog,
+  InterviewDialog,
+  KontaktDialog,
+  TerminDialog,
+} from "@/components/applicants/EntryDialogs";
 import { RecentlyViewedApplicants } from "@/components/applicants/RecentlyViewedApplicants";
 import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
@@ -104,6 +112,9 @@ export default function ApplicantDetailLayout({
   const remove = useMutation(api.applicants.remove);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
+  const [quickAdd, setQuickAdd] = useState<
+    "termin" | "kontakt" | "email" | "interview" | null
+  >(null);
 
   const segments = pathname.split("/").filter(Boolean); // ["applicants", id, tab?, itemId?]
   const activeTab = segments[2] ?? "uebersicht";
@@ -350,15 +361,51 @@ export default function ApplicantDetailLayout({
                 }
               />
             </div>
-            <Button
-              variant="ghost"
-              aria-label={t("deleteApplicant")}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              onClick={() => void handleDelete()}
-            >
-              <Trash2 className="size-4" />
-              <span className="hidden md:inline">{t("deleteApplicant")}</span>
-            </Button>
+            <div className="flex items-center gap-1">
+              <ActionMenu
+                ariaLabel={t("addEntry")}
+                trigger={
+                  <Button aria-label={t("addEntry")}>
+                    <Plus className="size-4" />
+                    <span className="hidden md:inline">{t("addEntry")}</span>
+                  </Button>
+                }
+                items={[
+                  {
+                    key: "termin",
+                    label: t("planTermin"),
+                    icon: <CalendarClock className="size-4" />,
+                    onSelect: () => setQuickAdd("termin"),
+                  },
+                  {
+                    key: "kontakt",
+                    label: t("logContact"),
+                    icon: <PhoneCall className="size-4" />,
+                    onSelect: () => setQuickAdd("kontakt"),
+                  },
+                  {
+                    key: "email",
+                    label: t("logEmail"),
+                    icon: <Mail className="size-4" />,
+                    onSelect: () => setQuickAdd("email"),
+                  },
+                  {
+                    key: "interview",
+                    label: t("logInterview"),
+                    icon: <Users className="size-4" />,
+                    onSelect: () => setQuickAdd("interview"),
+                  },
+                ]}
+              />
+              <Button
+                variant="ghost"
+                aria-label={t("deleteApplicant")}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={() => void handleDelete()}
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -366,6 +413,28 @@ export default function ApplicantDetailLayout({
       <RouteTabs tabs={tabs} activeValue={activeTab} />
 
       <div className="mt-4">{children}</div>
+
+      <TerminDialog
+        open={quickAdd === "termin"}
+        onOpenChange={open => !open && setQuickAdd(null)}
+        fixedApplicantId={applicantId}
+      />
+      <KontaktDialog
+        open={quickAdd === "kontakt"}
+        onOpenChange={open => !open && setQuickAdd(null)}
+        applicantId={applicantId}
+        showFirstContactHint={applicant.status === "neu"}
+      />
+      <EmailDialog
+        open={quickAdd === "email"}
+        onOpenChange={open => !open && setQuickAdd(null)}
+        applicantId={applicantId}
+      />
+      <InterviewDialog
+        open={quickAdd === "interview"}
+        onOpenChange={open => !open && setQuickAdd(null)}
+        applicantId={applicantId}
+      />
     </div>
   );
 }

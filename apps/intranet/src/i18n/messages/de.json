@@ -1834,6 +1834,18 @@
     "nextApplicant": "Nächste(r)",
     "switchApplicant": "Bewerber wechseln",
     "recentlyViewed": "Zuletzt angesehen",
-    "recentlyViewedEmpty": "Noch keine Bewerber angesehen."
+    "recentlyViewedEmpty": "Noch keine Bewerber angesehen.",
+    "addEntry": "Eintrag hinzufügen",
+    "applicant": "Bewerber",
+    "date": "Datum",
+    "time": "Uhrzeit",
+    "note": "Notiz",
+    "entryKind": "Art",
+    "interviewer": "Interviewer",
+    "terminArtLabel": "Kanal",
+    "terminTypLabel": "Typ",
+    "kontaktSaved": "Kontakt in der Akte gespeichert.",
+    "emailSaved": "E-Mail in der Akte erfasst.",
+    "interviewSaved": "Interview in der Akte gespeichert."
   }
 }
