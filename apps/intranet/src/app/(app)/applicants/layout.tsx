@@ -8,7 +8,6 @@ import {
   CalendarClock,
   ShieldCheck,
   Sparkles,
-  UserPlus,
   UserSearch,
   Users,
 } from "lucide-react";
@@ -25,7 +24,8 @@ import {
 // The list-page tabs — anything else in the second path segment is an
 // applicant id, i.e. a detail route that owns its own chrome entirely
 // (see `[id]/layout.tsx`) and must not also get this layout's header/tabs.
-const LIST_TABS = ["termine", "neu", "pool", "profile", "access"];
+// `neu` and `pool` are legacy routes that redirect into `list` filters.
+const LIST_TABS = ["list", "termine", "neu", "pool", "profile", "access"];
 
 /**
  * Access scope for Bewerbermanagement. Gated behind `useHasApplicantAccess()`
@@ -68,22 +68,16 @@ export default function ApplicantsLayout({
 
   const tabs = [
     {
+      value: "list",
+      href: "/applicants/list",
+      label: t("tabList"),
+      icon: Users,
+    },
+    {
       value: "termine",
       href: "/applicants/termine",
       label: t("tabTermine"),
       icon: CalendarClock,
-    },
-    {
-      value: "neu",
-      href: "/applicants/neu",
-      label: t("tabNeu"),
-      icon: UserPlus,
-    },
-    {
-      value: "pool",
-      href: "/applicants/pool",
-      label: t("tabPool"),
-      icon: Users,
     },
     {
       value: "profile",

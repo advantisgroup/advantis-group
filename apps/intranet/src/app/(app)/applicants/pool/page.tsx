@@ -1,7 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { ApplicantListView } from "@/components/applicants/ApplicantListView";
-
+// The former "Bewerberpool" tab — now a filter on the merged workbench.
 export default function ApplicantsPoolPage() {
-  return <ApplicantListView mode="pool" />;
+  redirect("/applicants/list?status=pool");
 }

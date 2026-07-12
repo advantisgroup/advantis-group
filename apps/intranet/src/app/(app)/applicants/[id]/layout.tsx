@@ -30,7 +30,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { AmpelPicker, type Ampel } from "@/components/applicants/AmpelBadge";
+import { AmpelPicker } from "@/components/applicants/AmpelBadge";
 import {
   EmailDialog,
   InterviewDialog,
@@ -53,7 +53,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { buildApplicantSequence } from "@/lib/applicant-list-order";
+import {
+  filterApplicants,
+  parseRatingFilter,
+  parseStatusFilter,
+} from "@/lib/applicant-list-order";
 import { recordRecentlyViewed } from "@/lib/applicant-recent";
 import { formatIsoDate } from "@/lib/format";
 
@@ -120,35 +124,44 @@ export default function ApplicantDetailLayout({
   const activeTab = segments[2] ?? "uebersicht";
   const itemId = segments[3];
 
-  // Next/previous applicant: only meaningful if we know which list (and
-  // filter/sort) the user came from — carried as query params from
-  // ApplicantListView. No `from` param ⇒ no buttons, rather than guessing.
-  const fromModeRaw = searchParams.get("from");
-  const fromMode: "neu" | "pool" | null =
-    fromModeRaw === "neu" || fromModeRaw === "pool" ? fromModeRaw : null;
+  // Next/previous applicant: only meaningful if we know which filtered list
+  // the user came from — carried as query params from the workbench
+  // (ApplicantListView). No `from` param ⇒ no buttons, rather than guessing.
+  const cameFromList = searchParams.get("from") === "list";
+  const fromStatus = parseStatusFilter(searchParams.get("status"));
+  const fromRating = parseRatingFilter(searchParams.get("rating"));
   const fromSearch = searchParams.get("search") ?? "";
-  const fromPoolFilter = searchParams.get("poolFilter") as Ampel | null;
-  const allApplicants = useQuery(api.applicants.list, fromMode ? {} : "skip");
+  const allApplicants = useQuery(
+    api.applicants.list,
+    cameFromList ? {} : "skip"
+  );
   const adjacent = useMemo(() => {
-    if (!allApplicants || !fromMode) return null;
-    const sequence = buildApplicantSequence(
-      allApplicants,
-      fromMode,
-      fromSearch,
-      fromPoolFilter
-    );
+    if (!allApplicants || !cameFromList) return null;
+    const sequence = filterApplicants(allApplicants, {
+      status: fromStatus,
+      rating: fromRating,
+      search: fromSearch,
+    });
     const index = sequence.findIndex(a => a._id === applicantId);
     if (index === -1) return null;
     return {
       prev: sequence[index - 1] ?? null,
       next: sequence[index + 1] ?? null,
     };
-  }, [allApplicants, fromMode, fromSearch, fromPoolFilter, applicantId]);
+  }, [
+    allApplicants,
+    cameFromList,
+    fromStatus,
+    fromRating,
+    fromSearch,
+    applicantId,
+  ]);
 
   function adjacentHref(targetId: Id<"applicants">) {
-    const p = new URLSearchParams({ from: fromMode ?? "" });
+    const p = new URLSearchParams({ from: "list" });
+    if (fromStatus !== "alle") p.set("status", fromStatus);
+    if (fromRating !== "alle") p.set("rating", fromRating);
     if (fromSearch) p.set("search", fromSearch);
-    if (fromPoolFilter) p.set("poolFilter", fromPoolFilter);
     return `/applicants/${targetId}/${activeTab}?${p.toString()}`;
   }
 
@@ -174,7 +187,7 @@ export default function ApplicantDetailLayout({
     remove({ applicantId })
       .then(() => {
         toast.success(t("applicantDeleted"));
-        router.push("/applicants/termine");
+        router.push("/applicants/list");
       })
       .catch(handleError);
   }
@@ -232,7 +245,7 @@ export default function ApplicantDetailLayout({
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/applicants/termine">
+            <BreadcrumbLink href="/applicants/list">
               {t("pageTitle")}
             </BreadcrumbLink>
           </BreadcrumbItem>

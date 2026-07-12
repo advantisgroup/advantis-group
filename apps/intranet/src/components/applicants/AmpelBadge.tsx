@@ -47,25 +47,6 @@ export function AmpelDot({
   );
 }
 
-/** Dot + localized label, e.g. for group headers. */
-export function AmpelLabel({ rating }: { rating: Ampel }) {
-  const t = useTranslations("Applicants");
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 font-medium",
-        AMPEL_TEXT[rating]
-      )}
-    >
-      <AmpelDot rating={rating} />
-      {t(`ampel.${rating}`)}
-      <span className="font-normal text-muted-foreground">
-        – {t(`ampelDesc.${rating}`)}
-      </span>
-    </span>
-  );
-}
-
 /** The three-way Ampel picker used on the applicant detail page. */
 export function AmpelPicker({
   value,

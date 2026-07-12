@@ -1,7 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { ApplicantListView } from "@/components/applicants/ApplicantListView";
-
+// The former "Neue Bewerber" tab — now a filter on the merged workbench.
 export default function ApplicantsNeuPage() {
-  return <ApplicantListView mode="neu" />;
+  redirect("/applicants/list?status=neu");
 }
