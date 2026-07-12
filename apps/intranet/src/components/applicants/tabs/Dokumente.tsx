@@ -7,7 +7,14 @@ import Link from "next/link";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
-import { Download, Eye, RefreshCw, Trash2, UploadCloud } from "lucide-react";
+import {
+  Download,
+  Eye,
+  FileText,
+  RefreshCw,
+  Trash2,
+  UploadCloud,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -148,18 +155,45 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
   }
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b border-border/70 p-4">
+        <p className="text-sm font-semibold">
+          {t("documentsInFile")}
+          <span className="ml-1.5 text-muted-foreground">
+            ({applicant.documents.length})
+          </span>
+        </p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => openRescan(rescanInputRef.current)}
+          aria-label={t("rescanCv")}
+        >
+          <RefreshCw className="size-4" />
+          <span className="hidden md:inline">{t("rescanCv")}</span>
+        </Button>
+        <input
+          ref={rescanInputRef}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={e => {
+            void handleRescan(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
       <CardContent className="space-y-3 p-4">
-        <p className="text-sm font-semibold">{t("documentsInFile")}</p>
-        {applicant.documents.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t("noDocumentsYet")}</p>
-        ) : (
-          <div className="space-y-2">
-            {applicant.documents.map(d => (
-              <div
-                key={d._id}
-                className="flex flex-wrap items-center gap-3 rounded-lg border border-border/70 p-3"
-              >
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          {applicant.documents.map(d => (
+            <div
+              key={d._id}
+              className="flex flex-col gap-3 rounded-lg border border-border/70 p-3.5"
+            >
+              <div className="flex items-start gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <FileText className="size-4" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{d.fileName}</p>
                   <p className="text-xs text-muted-foreground">
@@ -168,6 +202,8 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
                     })}
                   </p>
                 </div>
+              </div>
+              <div className="flex items-center gap-1.5">
                 <Button
                   variant="outline"
                   size="sm"
@@ -198,23 +234,18 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
                   variant="ghost"
                   size="sm"
                   aria-label={tc("delete")}
-                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                  className="ml-auto text-destructive hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => void handleRemove(d._id, d.fileName)}
                 >
                   <Trash2 className="size-4" />
                 </Button>
               </div>
-            ))}
-          </div>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <label>
-            <Button asChild variant="outline" aria-label={t("addDocument")}>
-              <span>
-                <UploadCloud className="size-4" />
-                <span className="hidden md:inline">{t("addDocument")}</span>
-              </span>
-            </Button>
+            </div>
+          ))}
+
+          <label className="flex min-h-[7.5rem] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/70 p-3.5 text-center text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-accent/30 hover:text-foreground">
+            <UploadCloud className="size-5" />
+            <span className="font-medium">{t("addDocument")}</span>
             <input
               type="file"
               accept="application/pdf"
@@ -225,24 +256,6 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
               }}
             />
           </label>
-          <Button
-            variant="outline"
-            onClick={() => openRescan(rescanInputRef.current)}
-            aria-label={t("rescanCv")}
-          >
-            <RefreshCw className="size-4" />
-            <span className="hidden md:inline">{t("rescanCv")}</span>
-          </Button>
-          <input
-            ref={rescanInputRef}
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={e => {
-              void handleRescan(e.target.files);
-              e.target.value = "";
-            }}
-          />
         </div>
         <p className="text-xs text-muted-foreground">{t("maxFileSizeHint")}</p>
       </CardContent>

@@ -26,21 +26,25 @@ export function Termine({ applicant }: { applicant: ApplicantDetail }) {
 
   return (
     <div className="space-y-5">
-      <Card>
+      <Card className="overflow-hidden border-primary/30">
+        <div className="flex items-center justify-between gap-3 border-b border-border/70 bg-primary/[0.03] p-4">
+          <p className="text-sm font-semibold">
+            {t("upcomingTermine")}
+            <span className="ml-1.5 text-muted-foreground">
+              ({kommend.length})
+            </span>
+          </p>
+          <Button size="sm" onClick={() => setPlanOpen(true)}>
+            <CalendarPlus className="size-4" />
+            {t("planTermin")}
+          </Button>
+        </div>
         <CardContent className="space-y-2 p-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold">
-              {t("upcomingTermine")} ({kommend.length})
-            </p>
-            <Button size="sm" onClick={() => setPlanOpen(true)}>
-              <CalendarPlus className="size-4" />
-              {t("planTermin")}
-            </Button>
-          </div>
           {kommend.length === 0 ? (
             <EmptyState
               icon={<CalendarPlus />}
               title={t("noUpcomingTermine")}
+              className="border-none py-6"
             />
           ) : (
             kommend.map(tm => <TerminRow key={tm._id} termin={tm} />)
@@ -48,11 +52,16 @@ export function Termine({ applicant }: { applicant: ApplicantDetail }) {
         </CardContent>
       </Card>
       {vergangen.length > 0 && (
-        <Card>
-          <CardContent className="space-y-2 p-4">
+        <Card className="overflow-hidden">
+          <div className="border-b border-border/70 p-4">
             <p className="text-sm font-semibold">
-              {t("pastTermine")} ({vergangen.length})
+              {t("pastTermine")}
+              <span className="ml-1.5 text-muted-foreground">
+                ({vergangen.length})
+              </span>
             </p>
+          </div>
+          <CardContent className="space-y-2 p-4">
             {vergangen.map(tm => (
               <TerminRow key={tm._id} termin={tm} />
             ))}

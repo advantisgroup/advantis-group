@@ -8,7 +8,16 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { matchSkills } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
-import { Briefcase, CalendarClock, Mail, PhoneCall, Users } from "lucide-react";
+import {
+  Briefcase,
+  Calendar,
+  CalendarClock,
+  Check,
+  Mail,
+  PhoneCall,
+  Users,
+  X,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import {
@@ -26,44 +35,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import type { LucideIcon } from "lucide-react";
 
-function Field({
-  label,
-  value,
-  multiline,
-  onSave,
-}: {
-  label: string;
-  value: string;
-  multiline?: boolean;
-  onSave: (value: string) => void;
-}) {
-  const [v, setV] = useState(value);
-  const InputField = multiline ? Textarea : Input;
-  return (
-    <label className="block space-y-1.5">
-      <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      <InputField
-        value={v}
-        onChange={e => setV(e.target.value)}
-        onBlur={() => v !== value && onSave(v)}
-        className={multiline ? "min-h-16" : undefined}
-      />
-    </label>
-  );
-}
-
-/** Rich-text counterpart to `Field` — for the long-form fields (summary,
- * experience, education, internal notes) where a single flat line can't hold
- * real detail. Saves on blur, same as every other field on this tab. */
+/** Rich-text field for the long-form fields (summary, experience,
+ * education) where a single flat line can't hold real detail. Saves on
+ * blur, same as every editable field on this page. */
 function RichField({
   label,
   html,
@@ -168,9 +148,6 @@ export function Uebersicht({
   const profiles = useQuery(api.applicants.listProfiles);
   const update = useMutation(api.applicants.update);
   const handleError = useErrorHandler();
-  const [notiz, setNotiz] = useState(() =>
-    ensureRichHtml(applicant.notizen ?? "")
-  );
   const isHighlighted = (skill: string) =>
     highlight.some(h => h.toLowerCase() === skill.toLowerCase());
 
@@ -179,6 +156,10 @@ export function Uebersicht({
   const missing = profile
     ? profile.skills.filter(s => !matched.includes(s))
     : [];
+  const matchPct =
+    profile && profile.skills.length > 0
+      ? Math.round((matched.length / profile.skills.length) * 100)
+      : 0;
 
   const timeline = useMemo(
     () => buildTimeline(applicant, t),
@@ -192,68 +173,78 @@ export function Uebersicht({
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-5 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardContent className="space-y-4 p-4">
-            <div>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <Briefcase className="size-3.5" />
-                {t("appliedFor")}
-              </span>
-              <Input
-                className="mt-1.5 text-base font-medium"
-                defaultValue={applicant.position ?? ""}
-                placeholder={t("positionUnknown")}
-                onBlur={e => {
-                  if (e.target.value !== (applicant.position ?? "")) {
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <div>
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Briefcase className="size-3.5" />
+              {t("appliedFor")}
+            </span>
+            <Input
+              className="mt-1.5 text-base font-medium"
+              defaultValue={applicant.position ?? ""}
+              placeholder={t("positionUnknown")}
+              onBlur={e => {
+                if (e.target.value !== (applicant.position ?? "")) {
+                  patch({
+                    applicantId: applicant._id,
+                    position: e.target.value,
+                  });
+                }
+              }}
+            />
+          </div>
+
+          <div className="space-y-2 border-t border-border/60 pt-4">
+            <p className="text-sm font-semibold">{t("skillMatch")}</p>
+            {!profiles || profiles.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {t("noProfilesYet")}
+              </p>
+            ) : (
+              <>
+                <Select
+                  value={applicant.profilId ?? "none"}
+                  onValueChange={v =>
                     patch({
                       applicantId: applicant._id,
-                      position: e.target.value,
-                    });
+                      profilId:
+                        v === "none"
+                          ? null
+                          : (v as Id<"applicantSkillProfiles">),
+                    })
                   }
-                }}
-              />
-            </div>
-
-            <div className="space-y-2 border-t border-border/60 pt-4">
-              <p className="text-sm font-semibold">
-                {t("skillMatch")}
-                {profile &&
-                  ` – ${profile.name} (${matched.length}/${profile.skills.length})`}
-              </p>
-              {!profiles || profiles.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {t("noProfilesYet")}
-                </p>
-              ) : (
-                <>
-                  <Select
-                    value={applicant.profilId ?? "none"}
-                    onValueChange={v =>
-                      patch({
-                        applicantId: applicant._id,
-                        profilId:
-                          v === "none"
-                            ? null
-                            : (v as Id<"applicantSkillProfiles">),
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        {t("noProfileAssigned")}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">
+                      {t("noProfileAssigned")}
+                    </SelectItem>
+                    {profiles.map(p => (
+                      <SelectItem key={p._id} value={p._id}>
+                        {p.name} ({p.skills.length})
                       </SelectItem>
-                      {profiles.map(p => (
-                        <SelectItem key={p._id} value={p._id}>
-                          {p.name} ({p.skills.length})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {profile && profile.skills.length > 0 && (
+                    ))}
+                  </SelectContent>
+                </Select>
+                {profile && profile.skills.length > 0 && (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-[width]",
+                            matchPct === 100 ? "bg-success" : "bg-primary"
+                          )}
+                          style={{ width: `${matchPct}%` }}
+                        />
+                      </div>
+                      <span className="shrink-0 text-xs font-semibold tabular-nums text-muted-foreground">
+                        {matched.length}/{profile.skills.length}
+                      </span>
+                    </div>
                     <div className="space-y-1 text-sm">
                       {matched.map(s => (
                         <div
@@ -263,7 +254,8 @@ export function Uebersicht({
                             isHighlighted(s) && "skill-hl"
                           )}
                         >
-                          <span className="font-bold text-success">✓</span> {s}
+                          <Check className="size-3.5 shrink-0 text-success" />
+                          {s}
                         </div>
                       ))}
                       {missing.map(s => (
@@ -271,164 +263,110 @@ export function Uebersicht({
                           key={s}
                           className="flex items-center gap-2 text-muted-foreground"
                         >
-                          <span className="font-bold text-destructive">✕</span>{" "}
+                          <X className="size-3.5 shrink-0 text-destructive" />
                           {s}
                         </div>
                       ))}
                     </div>
-                  )}
-                </>
-              )}
-              {applicant.skills.length > 0 && (
-                <>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    {t("skillsFromDocuments")}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {applicant.skills.map(s => (
-                      <Badge
-                        key={s}
-                        variant="muted"
-                        className={cn(isHighlighted(s) && "skill-hl")}
-                      >
-                        {s}
-                      </Badge>
-                    ))}
                   </div>
-                </>
-              )}
-            </div>
+                )}
+              </>
+            )}
+            {applicant.skills.length > 0 && (
+              <>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("skillsFromDocuments")}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {applicant.skills.map(s => (
+                    <Badge
+                      key={s}
+                      variant="muted"
+                      className={cn(isHighlighted(s) && "skill-hl")}
+                    >
+                      {s}
+                    </Badge>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
 
-            <div className="space-y-3 border-t border-border/60 pt-4">
-              <p className="text-sm font-semibold">
-                {t("profileFromDocuments")}
-              </p>
-              <RichField
-                label={t("summary")}
-                html={applicant.zusammenfassung ?? ""}
-                placeholder={t("richFieldPlaceholder")}
-                onSave={v =>
-                  patch({ applicantId: applicant._id, zusammenfassung: v })
-                }
-              />
-              <RichField
-                label={t("experience")}
-                html={applicant.berufserfahrung ?? ""}
-                placeholder={t("richFieldPlaceholder")}
-                onSave={v =>
-                  patch({ applicantId: applicant._id, berufserfahrung: v })
-                }
-              />
-              <RichField
-                label={t("education")}
-                html={applicant.ausbildung ?? ""}
-                placeholder={t("richFieldPlaceholder")}
-                onSave={v =>
-                  patch({ applicantId: applicant._id, ausbildung: v })
-                }
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-5">
-          <Card>
-            <CardContent className="space-y-3 p-4">
-              <p className="text-sm font-semibold">{t("contactData")}</p>
-              <Field
-                label={t("name")}
-                value={applicant.name}
-                onSave={v => patch({ applicantId: applicant._id, name: v })}
-              />
-              <Field
-                label={t("email")}
-                value={applicant.email ?? ""}
-                onSave={v => patch({ applicantId: applicant._id, email: v })}
-              />
-              <Field
-                label={t("phone")}
-                value={applicant.telefon ?? ""}
-                onSave={v => patch({ applicantId: applicant._id, telefon: v })}
-              />
-              <Field
-                label={t("address")}
-                value={applicant.adresse ?? ""}
-                multiline
-                onSave={v => patch({ applicantId: applicant._id, adresse: v })}
-              />
-              <Field
-                label={t("birthDate")}
-                value={applicant.geburtsdatum ?? ""}
-                onSave={v =>
-                  patch({ applicantId: applicant._id, geburtsdatum: v })
-                }
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="space-y-3 p-4">
-              <p className="text-sm font-semibold">{t("internalNotes")}</p>
-              <RichTextEditor
-                value={notiz}
-                onChange={setNotiz}
-                onBlur={() =>
-                  notiz !== ensureRichHtml(applicant.notizen ?? "") &&
-                  patch({ applicantId: applicant._id, notizen: notiz })
-                }
-                placeholder={t("internalNotesPlaceholder")}
-                minHeight="min-h-32"
-              />
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          <div className="space-y-3 border-t border-border/60 pt-4">
+            <p className="text-sm font-semibold">{t("profileFromDocuments")}</p>
+            <RichField
+              label={t("summary")}
+              html={applicant.zusammenfassung ?? ""}
+              placeholder={t("richFieldPlaceholder")}
+              onSave={v =>
+                patch({ applicantId: applicant._id, zusammenfassung: v })
+              }
+            />
+            <RichField
+              label={t("experience")}
+              html={applicant.berufserfahrung ?? ""}
+              placeholder={t("richFieldPlaceholder")}
+              onSave={v =>
+                patch({ applicantId: applicant._id, berufserfahrung: v })
+              }
+            />
+            <RichField
+              label={t("education")}
+              html={applicant.ausbildung ?? ""}
+              placeholder={t("richFieldPlaceholder")}
+              onSave={v => patch({ applicantId: applicant._id, ausbildung: v })}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
-        <CardContent className="space-y-1 p-4">
-          <p className="mb-2 text-sm font-semibold">{t("timeline")}</p>
+        <CardContent className="p-4">
+          <p className="mb-3 text-sm font-semibold">{t("timeline")}</p>
           {timeline.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {t("timelineEmpty")}
             </p>
           ) : (
-            timeline.map(entry => (
-              <Link
-                key={entry.id}
-                href={entry.href}
-                className="-mx-2 flex items-start gap-3 rounded-lg px-2 py-2 text-sm transition-colors hover:bg-accent/40"
-              >
-                <span
-                  className={cn(
-                    "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full",
-                    entry.upcoming
-                      ? "bg-primary/15 text-primary"
-                      : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  <entry.icon className="size-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="flex flex-wrap items-center gap-1.5 font-medium">
-                    {entry.label}
-                    {entry.upcoming && (
-                      <Badge variant="outline" className="text-[10px]">
-                        {t("upcoming")}
-                      </Badge>
+            <ol className="relative space-y-4 border-l border-border/70 pl-6">
+              {timeline.map(entry => (
+                <li key={entry.id} className="relative">
+                  <span
+                    className={cn(
+                      "absolute -left-[calc(1.5rem+5px)] top-0.5 flex size-6 items-center justify-center rounded-full ring-4 ring-background",
+                      entry.upcoming
+                        ? "bg-primary/15 text-primary"
+                        : "bg-muted text-muted-foreground"
                     )}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatIsoDate(entry.date, locale)}
-                    {entry.time ? ` · ${entry.time}` : ""}
-                  </p>
-                  {entry.notiz && (
-                    <p className="mt-0.5 line-clamp-2 text-muted-foreground">
-                      {entry.notiz}
+                  >
+                    <entry.icon className="size-3.5" />
+                  </span>
+                  <Link
+                    href={entry.href}
+                    className="-mx-2 -my-1 block rounded-lg px-2 py-1 text-sm transition-colors hover:bg-accent/40"
+                  >
+                    <p className="flex flex-wrap items-center gap-1.5 font-medium">
+                      {entry.label}
+                      {entry.upcoming && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {t("upcoming")}
+                        </Badge>
+                      )}
                     </p>
-                  )}
-                </div>
-              </Link>
-            ))
+                    <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Calendar className="size-3" />
+                      {formatIsoDate(entry.date, locale)}
+                      {entry.time ? ` · ${entry.time}` : ""}
+                    </p>
+                    {entry.notiz && (
+                      <p className="mt-0.5 line-clamp-2 text-muted-foreground">
+                        {entry.notiz}
+                      </p>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ol>
           )}
         </CardContent>
       </Card>
