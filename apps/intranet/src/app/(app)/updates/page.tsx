@@ -209,7 +209,10 @@ export default function UpdatesPage() {
                             duration: formatDuration(item.durationMs),
                           })}
                       {" · "}
-                      {formatDateTime(item.startedAt, locale)}
+                      {formatDateTime(
+                        item.startedAt ?? item.publishedAt,
+                        locale
+                      )}
                     </p>
                   )}
                 </div>

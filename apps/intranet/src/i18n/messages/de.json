@@ -1376,6 +1376,8 @@
     "ongoingFor": "Läuft seit {duration}",
     "resolvedAfter": "Behoben nach {duration}",
     "backToList": "Zurück zu Updates",
+    "notFoundTitle": "Update nicht gefunden",
+    "notFoundDescription": "Dieses Update existiert nicht oder du hast keinen Zugriff darauf.",
     "byline": "Veröffentlicht von {author} · {date}",
     "deleteConfirm": "Dieses Update löschen?",
     "deleted": "Update gelöscht",

@@ -60,18 +60,20 @@ const TYPE_BADGE_VARIANT = {
 } as const;
 
 type UpdateDetail = FunctionReturnType<typeof api.updates.get>;
+type UpdateData = Exclude<UpdateDetail, { code: string }>;
 
 function StatusCard({
   data,
   t,
   locale,
 }: {
-  data: UpdateDetail;
+  data: UpdateData;
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
   const now = Date.now();
-  const durationMs = (data.resolvedAt ?? now) - data.startedAt;
+  const startedAt = data.startedAt ?? data.publishedAt;
+  const durationMs = (data.resolvedAt ?? now) - startedAt;
   return (
     <Card className="mb-6">
       <CardContent className="grid gap-4 pt-5 sm:grid-cols-2">
@@ -98,9 +100,7 @@ function StatusCard({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("startedLabel")}
           </p>
-          <p className="mt-1 text-sm">
-            {formatDateTime(data.startedAt, locale)}
-          </p>
+          <p className="mt-1 text-sm">{formatDateTime(startedAt, locale)}</p>
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -154,11 +154,24 @@ export default function UpdateDetailPage() {
   const [posting, setPosting] = useState(false);
   const [showRecipients, setShowRecipients] = useState(false);
 
-  if (data === undefined || !data) {
+  if (data === undefined) {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="h-8 w-2/3 animate-pulse rounded bg-muted/50" />
         <div className="h-40 animate-pulse rounded-xl bg-muted/50" />
+      </div>
+    );
+  }
+
+  if ("code" in data) {
+    return (
+      <div className="mx-auto max-w-3xl space-y-2 text-center">
+        <h1 className="font-display text-2xl font-bold tracking-tight">
+          {t("notFoundTitle")}
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          {t("notFoundDescription")}
+        </p>
       </div>
     );
   }

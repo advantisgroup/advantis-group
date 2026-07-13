@@ -1376,6 +1376,8 @@
     "ongoingFor": "Ongoing for {duration}",
     "resolvedAfter": "Resolved after {duration}",
     "backToList": "Back to updates",
+    "notFoundTitle": "Update not found",
+    "notFoundDescription": "This update doesn't exist or you don't have access to it.",
     "byline": "Posted by {author} · {date}",
     "deleteConfirm": "Delete this update?",
     "deleted": "Update deleted",
