@@ -323,7 +323,7 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         id: "admin.members",
         targetAttr: "tour-admin-members",
         popoutSide: "top",
-        route: "/admin",
+        route: "/admin/members",
       },
     ],
   },
