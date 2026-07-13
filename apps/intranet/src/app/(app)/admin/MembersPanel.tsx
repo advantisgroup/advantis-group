@@ -230,7 +230,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
               role={m.role}
               department={m.department}
               teams={m.teams}
-              className="hidden flex-wrap items-center gap-1 sm:flex"
+              className="hidden items-center gap-1 overflow-hidden sm:flex"
             />
             {customRoles && customRoles.length > 0 && (
               <Select

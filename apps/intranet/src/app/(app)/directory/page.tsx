@@ -152,7 +152,7 @@ export default function DirectoryPage() {
                 role={p.role}
                 department={p.department}
                 teams={p.teams}
-                className="mt-1 flex flex-wrap items-center gap-1"
+                className="mt-1 flex items-center gap-1 overflow-hidden"
               />
               {p.outUntil && (
                 <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-sky-600 dark:text-sky-400">
