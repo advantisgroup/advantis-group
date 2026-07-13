@@ -65,6 +65,16 @@ import { cn } from "@/lib/utils";
 
 type ProfileUser = NonNullable<ReturnType<typeof useUser>>;
 
+/**
+ * Full-width, left-aligned, wrapping button style for the admin action list.
+ * The default Button is `whitespace-nowrap` at a fixed height, which is fine
+ * for short English labels but overflows German ones (e.g.
+ * "Geschäftsführungs-Zugriff gewähren") — this lets them wrap onto a second
+ * line instead of spilling into whatever sits next to the button.
+ */
+const actionButtonClass =
+  "h-auto min-h-8 w-full items-start justify-start whitespace-normal py-1.5 text-left [&_svg]:mt-0.5";
+
 function useUser(userId: Id<"users"> | null) {
   return useQuery(api.users.get, userId ? { userId } : "skip");
 }
@@ -472,44 +482,66 @@ function AdminControls({
         )}
         {/* Permission grants and lifecycle actions only make sense on
             someone else's account — a member can't grant themselves access
-            or reinvite/suspend/remove themselves. */}
+            or reinvite/suspend/remove themselves.
+            Stacked full-width rows rather than a 2-up grid: German labels
+            ("Geschäftsführungs-Zugriff gewähren") run 2-3x longer than the
+            English ones and need room to wrap instead of overflowing a
+            fixed-width, `whitespace-nowrap` button. */}
         {!isSelf && (
-          <div className="grid grid-cols-2 gap-2 pt-1">
-            <Button variant="outline" size="sm" onClick={toggleUploads}>
+          <div className="flex flex-col gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className={actionButtonClass}
+              onClick={toggleUploads}
+            >
               <UploadCloud />
-              {user.uploadRequestsEnabled
-                ? t("disableUploads")
-                : t("enableUploads")}
+              <span>
+                {user.uploadRequestsEnabled
+                  ? t("disableUploads")
+                  : t("enableUploads")}
+              </span>
             </Button>
             {isAdmin && (
-              <Button variant="outline" size="sm" onClick={toggleGf}>
+              <Button
+                variant="outline"
+                size="sm"
+                className={actionButtonClass}
+                onClick={toggleGf}
+              >
                 <Lock />
-                {user.gfAccess ? t("revokeGf") : t("grantGf")}
+                <span>{user.gfAccess ? t("revokeGf") : t("grantGf")}</span>
               </Button>
             )}
             {isAdmin && (
-              <Button variant="outline" size="sm" onClick={() => onReinvite()}>
-                <Send /> {t("reinvite")}
+              <Button
+                variant="outline"
+                size="sm"
+                className={actionButtonClass}
+                onClick={() => onReinvite()}
+              >
+                <Send /> <span>{t("reinvite")}</span>
               </Button>
             )}
             {isAdmin && !isTargetAdmin && (
               <Button
                 variant="outline"
                 size="sm"
+                className={actionButtonClass}
                 onClick={() => void toggleStatus()}
               >
                 <ShieldCheck />
-                {isActive ? t("suspend") : t("activate")}
+                <span>{isActive ? t("suspend") : t("activate")}</span>
               </Button>
             )}
             {isAdmin && !isTargetAdmin && (
               <Button
                 variant="destructive"
                 size="sm"
-                className="col-span-2"
+                className={actionButtonClass}
                 onClick={() => void onRemove()}
               >
-                <UserMinus /> {t("removeMember")}
+                <UserMinus /> <span>{t("removeMember")}</span>
               </Button>
             )}
           </div>
