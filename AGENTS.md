@@ -114,3 +114,11 @@ PRs there.
 - i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
   (ActivityTrack) and `apps/intranet/src/i18n/messages/{en,de}.json` (rest of
   the intranet) — always update both languages together.
+- Prefer short, single-line labels over long inline descriptions, especially
+  in compact UI (badges, dropdown items, table cells, permission/capability
+  lists) — a wrapping paragraph reflows the layout around it and is worse on
+  mobile. When more explanation is genuinely needed, put it behind a tooltip
+  (`@/components/ui/tooltip`'s `Tooltip`/`TooltipTrigger`/`TooltipContent`,
+  triggered by a small `Info` icon) rather than inlining it. Only write the
+  long form inline when the surface already has dedicated space for it (e.g.
+  a settings page section, not a card in a grid).
