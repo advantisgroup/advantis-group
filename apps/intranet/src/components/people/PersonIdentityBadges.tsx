@@ -20,15 +20,18 @@ export type PersonRole = "admin" | "manager" | "employee";
  * are shared.
  *
  * Department and team tags are capped at `maxTags` and collapsed into a
- * "+N" badge beyond that, so the row stays a single line regardless of how
- * many teams a person has — keeping card/row heights consistent.
+ * "+N" badge beyond that, so the row stays short and wraps at most once
+ * regardless of how many teams a person has — keeping card/row heights
+ * roughly consistent. Callers must let the row wrap (no `overflow-hidden` /
+ * `flex-nowrap`): badges are `shrink-0`, so clipping the container instead
+ * of wrapping slices a badge in half rather than hiding it.
  */
 export function PersonIdentityBadges({
   role,
   department,
   teams,
   className,
-  maxTags = 2,
+  maxTags = 1,
 }: {
   role?: PersonRole;
   department?: string | null;
