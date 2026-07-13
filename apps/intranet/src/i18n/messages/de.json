@@ -738,7 +738,8 @@
       "departments": "Abteilungen",
       "teams": "Teams",
       "guests": "Gäste",
-      "dataCleanup": "Stammdaten-Bereinigung"
+      "dataCleanup": "Stammdaten-Bereinigung",
+      "audit": "Audit-Log"
     },
     "dataCleanup": {
       "title": "Stammdaten-Bereinigung",
@@ -776,6 +777,14 @@
       "archived": "Archiviert",
       "empty": "Noch keine vorhanden — oben eines hinzufügen.",
       "memberCount": "{count} Mitglied(er)"
+    },
+    "auditLog": {
+      "title": "Audit-Log",
+      "description": "Alle privilegierten Aktionen aus ActivityTrack, OneDrive-Uploads und Integrationen an einem Ort.",
+      "allSources": "Alle Quellen",
+      "source_activity": "ActivityTrack",
+      "source_onedrive": "OneDrive",
+      "source_integrations": "Integrationen"
     }
   },
   "Teams": {

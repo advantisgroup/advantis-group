@@ -738,7 +738,8 @@
       "departments": "Departments",
       "teams": "Teams",
       "guests": "Guests",
-      "dataCleanup": "Data cleanup"
+      "dataCleanup": "Data cleanup",
+      "audit": "Audit log"
     },
     "dataCleanup": {
       "title": "Org data cleanup",
@@ -776,6 +777,14 @@
       "archived": "Archived",
       "empty": "None yet — add one above.",
       "memberCount": "{count} member(s)"
+    },
+    "auditLog": {
+      "title": "Audit log",
+      "description": "Every privileged action across ActivityTrack, OneDrive uploads, and integrations, in one place.",
+      "allSources": "All sources",
+      "source_activity": "ActivityTrack",
+      "source_onedrive": "OneDrive",
+      "source_integrations": "Integrations"
     }
   },
   "Teams": {

@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   type LucideIcon,
   Mail,
+  ScrollText,
   ShieldCheck,
   Upload,
   Users,
@@ -93,6 +94,12 @@ const ADMIN_NAV: AdminNavItem[] = [
     href: "/admin/data-cleanup",
     labelKey: "nav.dataCleanup",
     icon: Building2,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/audit",
+    labelKey: "nav.audit",
+    icon: ScrollText,
     adminOnly: true,
   },
 ];

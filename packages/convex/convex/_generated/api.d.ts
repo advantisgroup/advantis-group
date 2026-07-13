@@ -38,6 +38,7 @@ import type * as activity_settings from "../activity/settings.js";
 import type * as activity_state from "../activity/state.js";
 import type * as activity_stats from "../activity/stats.js";
 import type * as announcements from "../announcements.js";
+import type * as auditLog from "../auditLog.js";
 import type * as chat from "../chat.js";
 import type * as clerkSync from "../clerkSync.js";
 import type * as clockodoSync from "../clockodoSync.js";
@@ -114,6 +115,7 @@ declare const fullApi: ApiFromModules<{
   "activity/state": typeof activity_state;
   "activity/stats": typeof activity_stats;
   announcements: typeof announcements;
+  auditLog: typeof auditLog;
   chat: typeof chat;
   clerkSync: typeof clerkSync;
   clockodoSync: typeof clockodoSync;
