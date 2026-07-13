@@ -56,7 +56,9 @@ function requireField(name: string): string {
 
 const type = requireField("type");
 if (!["incident", "maintenance", "changelog"].includes(type)) {
-  console.error(`Invalid type "${type}" — must be incident, maintenance, or changelog`);
+  console.error(
+    `Invalid type "${type}" — must be incident, maintenance, or changelog`
+  );
   process.exit(1);
 }
 const slug = requireField("slug");
@@ -74,18 +76,26 @@ if (!authorEmail) {
 }
 
 function parseAudience(value: unknown) {
-  if (typeof value !== "string" || value === "all") return { kind: "all" as const };
+  if (typeof value !== "string" || value === "all")
+    return { kind: "all" as const };
   if (value.startsWith("department:")) {
-    return { kind: "department" as const, department: value.slice("department:".length) };
+    return {
+      kind: "department" as const,
+      department: value.slice("department:".length),
+    };
   }
-  console.error(`Unrecognized audience "${value}" — use "all" or "department:Name"`);
+  console.error(
+    `Unrecognized audience "${value}" — use "all" or "department:Name"`
+  );
   process.exit(1);
 }
 
 const convexUrl = process.env.CONVEX_URL ?? process.env.NEXT_PUBLIC_CONVEX_URL;
 const serverKey = process.env.CONVEX_SERVER_KEY;
 if (!convexUrl || !serverKey) {
-  console.error("CONVEX_URL (or NEXT_PUBLIC_CONVEX_URL) and CONVEX_SERVER_KEY must be set.");
+  console.error(
+    "CONVEX_URL (or NEXT_PUBLIC_CONVEX_URL) and CONVEX_SERVER_KEY must be set."
+  );
   process.exit(1);
 }
 
@@ -100,10 +110,14 @@ const result = await client.mutation(api.updates.publishFromMarkdown, {
   summary,
   body: content.trim(),
   audience: parseAudience(fm.audience),
-  affectedSystems: Array.isArray(fm.affectedSystems) ? fm.affectedSystems : undefined,
+  affectedSystems: Array.isArray(fm.affectedSystems)
+    ? fm.affectedSystems
+    : undefined,
   status: typeof fm.status === "string" ? (fm.status as never) : undefined,
-  startedAt: typeof fm.startedAt === "string" ? Date.parse(fm.startedAt) : undefined,
-  publishAt: typeof fm.publishAt === "string" ? Date.parse(fm.publishAt) : undefined,
+  startedAt:
+    typeof fm.startedAt === "string" ? Date.parse(fm.startedAt) : undefined,
+  publishAt:
+    typeof fm.publishAt === "string" ? Date.parse(fm.publishAt) : undefined,
   emailRequested: fm.sendEmail !== false,
 });
 

@@ -33,7 +33,7 @@ Specific, not clever. Say what's affected and what's happening.
 
 ## Summary (the banner text)
 
-One sentence, ~140 characters, no jargon. This is the *only* text most
+One sentence, ~140 characters, no jargon. This is the _only_ text most
 people will ever read — they'll see it in the banner and decide whether to
 click. Front-load the actual impact.
 

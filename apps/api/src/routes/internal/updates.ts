@@ -19,7 +19,12 @@ export const internalUpdatesRoute = new Elysia().post(
     );
     try {
       const results = await sendUpdateBroadcast(
-        { type: body.type, title: body.title, summary: body.summary, url: body.url },
+        {
+          type: body.type,
+          title: body.title,
+          summary: body.summary,
+          url: body.url,
+        },
         body.updateId,
         body.recipients
       );
@@ -43,9 +48,7 @@ export const internalUpdatesRoute = new Elysia().post(
       title: t.String(),
       summary: t.String(),
       url: t.String(),
-      recipients: t.Array(
-        t.Object({ userId: t.String(), email: t.String() })
-      ),
+      recipients: t.Array(t.Object({ userId: t.String(), email: t.String() })),
     }),
     response: {
       200: t.Object({

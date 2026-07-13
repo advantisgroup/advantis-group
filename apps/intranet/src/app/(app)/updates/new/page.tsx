@@ -6,13 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-  AlertTriangle,
-  ChevronDown,
-  Sparkles,
-  Wrench,
-  X,
-} from "lucide-react";
+import { AlertTriangle, ChevronDown, Sparkles, Wrench, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -313,9 +307,7 @@ export default function NewUpdatePage() {
           {emailRequested && (
             <div className="mt-2 rounded-lg border border-border/70 p-3">
               {emailPreview === undefined ? (
-                <p className="text-sm text-muted-foreground">
-                  {tc("loading")}
-                </p>
+                <p className="text-sm text-muted-foreground">{tc("loading")}</p>
               ) : (
                 <>
                   <button
