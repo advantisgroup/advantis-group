@@ -950,8 +950,11 @@
   },
   "Roles": {
     "admin": "Administrator",
+    "admin_desc": "Voller Zugriff auf alle Admin-Bereiche",
     "manager": "Manager",
-    "employee": "Mitarbeiter"
+    "manager_desc": "Verwaltet Mitglieder, Uploads, Integrationen",
+    "employee": "Mitarbeiter",
+    "employee_desc": "Standardzugriff, keine Admin-Bereiche"
   },
   "Integrations": {
     "hubTitle": "Integrationen",

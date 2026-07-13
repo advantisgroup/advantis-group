@@ -55,6 +55,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, initials } from "@/lib/format";
 import { TEAMS } from "@/lib/teams";
@@ -447,12 +452,31 @@ function Members() {
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
+  const tCap = useTranslations("CustomRoles");
   const members = useQuery(api.users.list, { includeSuspended: true });
   const customRoles = useQuery(api.customRoles.list);
   const assignCustomRole = useMutation(api.users.assignCustomRole);
   const handleError = useErrorHandler();
 
   type Member = NonNullable<typeof members>[number];
+
+  /** Short "what does this grant" summary for a custom role, for tooltips. */
+  function capabilitiesSummary(
+    role: NonNullable<typeof customRoles>[number]
+  ): string {
+    if (role.capabilities.length === 0) return tCap("noCapabilities");
+    return role.capabilities.map(c => tCap(`capability_${c}`)).join(", ");
+  }
+
+  /** Same summary, looked up by the id stored on a member — for tooltips. */
+  function memberCustomRoleSummary(m: {
+    customRoleId?: Id<"customRoles"> | null;
+  }): string {
+    const assigned = m.customRoleId
+      ? customRoles?.find(r => r._id === m.customRoleId)
+      : null;
+    return assigned ? capabilitiesSummary(assigned) : t("customRoleNone");
+  }
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
@@ -564,24 +588,45 @@ function Members() {
                 GF
               </Badge>
             )}
-            <Badge variant="muted" className="hidden sm:inline-flex">
-              {tRoles(m.role)}
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge
+                  variant="muted"
+                  className="hidden cursor-help sm:inline-flex"
+                >
+                  {tRoles(m.role)}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {tRoles(`${m.role}_desc`)}
+              </TooltipContent>
+            </Tooltip>
             {customRoles && customRoles.length > 0 && (
               <Select
                 value={m.customRoleId ?? "none"}
                 onValueChange={v => onCustomRoleChange(m, v)}
               >
-                <SelectTrigger
-                  className="hidden h-7 w-auto min-w-28 text-xs sm:inline-flex"
-                  aria-label={t("customRole")}
-                >
-                  <SelectValue />
-                </SelectTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SelectTrigger
+                      className="hidden h-7 w-auto min-w-28 text-xs sm:inline-flex"
+                      aria-label={t("customRole")}
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    {memberCustomRoleSummary(m)}
+                  </TooltipContent>
+                </Tooltip>
                 <SelectContent>
                   <SelectItem value="none">{t("customRoleNone")}</SelectItem>
                   {customRoles.map(role => (
-                    <SelectItem key={role._id} value={role._id}>
+                    <SelectItem
+                      key={role._id}
+                      value={role._id}
+                      title={capabilitiesSummary(role)}
+                    >
                       {role.name}
                     </SelectItem>
                   ))}
