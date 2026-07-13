@@ -15,6 +15,7 @@ import {
   MessageSquare,
   Plane,
   Plug,
+  Rss,
   Settings,
   ShieldCheck,
   Users,
@@ -92,6 +93,7 @@ export function Sidebar() {
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
+  const activeUpdate = useQuery(api.updates.bannerActive);
   const chatUnread =
     chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const hasGuidebooks = accessibleGuidebooks(user).length > 0;
@@ -326,6 +328,21 @@ export function Sidebar() {
           />
           <SettingsMenu className="shrink-0 hover:bg-sidebar-accent" />
         </div>
+        {/* Deliberately not a NavGroup item — Updates lives here, tucked next
+            to the footer branding, rather than competing for space in the
+            main tabs. Covers mobile too: this footer is shared by the
+            desktop rail and the mobile drawer opened from BottomNav. */}
+        <Link
+          href="/updates"
+          onClick={close}
+          className="relative flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        >
+          <Rss className="size-3.5 shrink-0" />
+          <SidebarLabel>{t("updates")}</SidebarLabel>
+          {activeUpdate?.top ? (
+            <span className="size-1.5 shrink-0 rounded-full bg-primary" />
+          ) : null}
+        </Link>
         <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
           Advantis Group
         </p>

@@ -22,7 +22,8 @@
     "files": "Dateien",
     "integrations": "Integrationen",
     "privacy": "Datenschutz",
-    "terms": "Nutzungsbedingungen"
+    "terms": "Nutzungsbedingungen",
+    "updates": "Updates"
   },
   "Common": {
     "save": "Speichern",
@@ -1355,47 +1356,89 @@
     "cancel": "Abbrechen",
     "loading": "Wird geladen…"
   },
-  "WhatsNew": {
-    "title": "Neu im Intranet",
-    "intro": "Jeder Bereich hat ein großes Upgrade bekommen. Hier die Highlights — klicke, um es auszuprobieren.",
-    "dismiss": "Alles klar",
-    "items": {
-      "dashboard": {
-        "title": "Übersicht",
-        "body": "„Wer ist heute abwesend“-Karte, Schnellaktionen, Inline-Genehmigungen und ausblendbare Karten."
-      },
-      "absences": {
-        "title": "Abwesenheiten",
-        "body": "Clockodo-Abwesenheiten synchronisieren automatisch; offene Anträge bearbeiten, Filter, Statistiken und .ics-Export."
-      },
-      "calendar": {
-        "title": "Kalender",
-        "body": "Termine bearbeiten und duplizieren, interaktive Filter, Kalenderwochen, Tastatur-Navigation und Export."
-      },
-      "announcements": {
-        "title": "Ankündigungen",
-        "body": "Beiträge planen, nachträglich bearbeiten, Entwürfe, Suche und Lese-Statistiken."
-      },
-      "directory": {
-        "title": "Mitarbeiter",
-        "body": "Online-Status, wer abwesend ist, Führungskraft & Team sowie mehr Filter."
-      },
-      "files": {
-        "title": "Dateien",
-        "body": "Rasteransicht, Sortierung, angepinnte Ordner, Massen-Download/-Löschen und eine Upload-Warteschlange."
-      },
-      "guidebooks": {
-        "title": "Wiki",
-        "body": "Suche, Favoriten, Inhaltsverzeichnis, Lesefortschritt und Feedback."
-      },
-      "notifications": {
-        "title": "Benachrichtigungen",
-        "body": "Tagesgruppierung, Stummschalten pro Art, ungelesen/entfernen und Browser-Benachrichtigungen."
-      },
-      "settings": {
-        "title": "Einstellungen",
-        "body": "Profilbild-Zuschnitt, App-Einstellungen (Startseite, Kalenderansicht) und deine Verknüpfungen."
-      }
+  "Updates": {
+    "title": "Updates",
+    "description": "Störungen, geplante Wartungen und Neuigkeiten — alles an einem Ort.",
+    "more": "weitere",
+    "dismiss": "Schließen",
+    "newUpdate": "Neues Update",
+    "newUpdateDescription": "Veröffentliche eine Störung, ein Wartungsfenster oder einen Changelog-Eintrag.",
+    "tabAll": "Alle",
+    "tabIncident": "Störungen",
+    "tabMaintenance": "Wartung",
+    "tabChangelog": "Changelog",
+    "searchPlaceholder": "Updates durchsuchen…",
+    "allStatuses": "Alle Status",
+    "allSystems": "Alle Systeme",
+    "emptyTitle": "Noch keine Updates",
+    "emptyDescription": "Störungen, Wartungsfenster und Changelog-Einträge erscheinen hier.",
+    "scheduled": "Geplant",
+    "ongoingFor": "Läuft seit {duration}",
+    "resolvedAfter": "Behoben nach {duration}",
+    "backToList": "Zurück zu Updates",
+    "byline": "Veröffentlicht von {author} · {date}",
+    "deleteConfirm": "Dieses Update löschen?",
+    "deleted": "Update gelöscht",
+    "statusLabel": "Status",
+    "durationLabel": "Dauer",
+    "startedLabel": "Beginn",
+    "resolvedLabel": "Behoben",
+    "ongoing": "Läuft noch",
+    "affectedSystemsLabel": "Betroffene Systeme",
+    "timelineLabel": "Verlauf",
+    "noTimelineYet": "Noch keine Einträge.",
+    "postUpdatePlaceholder": "Status-Update veröffentlichen…",
+    "postUpdate": "Update posten",
+    "timelinePosted": "Update veröffentlicht",
+    "noStatusChange": "Keine Statusänderung",
+    "emailDeliveryLabel": "E-Mail-Zustellung",
+    "emailNotSent": "nicht per E-Mail versendet",
+    "emailRequested": "E-Mail angefordert",
+    "noEmailsSentYet": "Noch keine E-Mails versendet.",
+    "typeLabel": "Typ",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Kurzer, konkreter Titel",
+    "summaryLabel": "Zusammenfassung",
+    "summaryPlaceholder": "Ein bis zwei Sätze — das erscheint im Banner.",
+    "bodyLabel": "Details",
+    "switchToMarkdown": "Zu Markdown wechseln",
+    "switchToRichText": "Zu Rich Text wechseln",
+    "markdownPlaceholder": "Das vollständige Update in Markdown schreiben…",
+    "addSystem": "Hinzufügen",
+    "customSystemPlaceholder": "Weiteres System hinzufügen…",
+    "audienceLabel": "Zielgruppe",
+    "everyone": "Alle",
+    "startedAtLabel": "Wartungsfenster beginnt",
+    "publishAtLabel": "Veröffentlichen am (leer lassen für sofort)",
+    "emailEveryoneLabel": "Bei Veröffentlichung alle per E-Mail benachrichtigen",
+    "publish": "Veröffentlichen",
+    "schedule": "Planen",
+    "published": "Veröffentlicht",
+    "fillRequiredFields": "Bitte Titel, Zusammenfassung und Details ausfüllen.",
+    "type": {
+      "incident": "Störung",
+      "maintenance": "Wartung",
+      "changelog": "Changelog"
+    },
+    "status": {
+      "investigating": "Wird untersucht",
+      "identified": "Ursache identifiziert",
+      "monitoring": "Wird beobachtet",
+      "resolved": "Behoben",
+      "scheduled": "Geplant",
+      "in_progress": "Läuft",
+      "completed": "Abgeschlossen",
+      "cancelled": "Abgesagt"
+    },
+    "emailStatus": {
+      "queued": "wartet",
+      "sent": "gesendet",
+      "delivered": "zugestellt",
+      "opened": "geöffnet",
+      "clicked": "geklickt",
+      "bounced": "unzustellbar",
+      "complained": "als Spam markiert",
+      "failed": "fehlgeschlagen"
     }
   },
   "AccessDenied": {

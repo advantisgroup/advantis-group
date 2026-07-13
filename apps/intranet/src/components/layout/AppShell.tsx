@@ -23,12 +23,12 @@ import { TourPopout } from "@/components/tour/TourPopout";
 import { TourProgressChip } from "@/components/tour/TourProgressChip";
 import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
+import { UpdateBanner } from "@/components/updates/UpdateBanner";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { WhatsNewDialog } from "@/components/WhatsNewDialog";
 import { cn } from "@/lib/utils";
 
 /**
@@ -88,6 +88,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
     <>
       <Sidebar />
       <SidebarInset>
+        {/* Above the scrollable <main> (and the sticky header), so it's
+            always on top of the page rather than scrolling away. */}
+        {!immersive && <UpdateBanner />}
         <header
           data-tour="tour-header"
           className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl print:hidden md:h-16 md:px-4"
@@ -131,7 +134,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
       <StartPageRedirect />
-      <WhatsNewDialog />
 
       {/* Tour UI layers (portal-based, fixed position) */}
       <TourOverlay targetRect={targetRect} visible={tourActive} />
