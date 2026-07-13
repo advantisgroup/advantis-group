@@ -15,6 +15,11 @@ import {
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 const TYPE_STYLE = {
@@ -37,18 +42,6 @@ const TYPE_STYLE = {
     chipClassName: "bg-white/15 hover:bg-white/20",
   },
 } as const;
-
-// tailwindcss-animate delay utilities — indexed per dropdown row for the cascade.
-const CASCADE_DELAYS = [
-  "delay-0",
-  "delay-75",
-  "delay-100",
-  "delay-150",
-  "delay-200",
-  "delay-300",
-  "delay-500",
-  "delay-700",
-];
 
 /**
  * Slim top-of-page banner for the current highest-priority Update (incident
@@ -90,30 +83,28 @@ export function UpdateBanner() {
       </Link>
 
       {moreCount > 0 ? (
-        <div className="group/more relative shrink-0">
-          <span
-            className={cn(
-              "flex cursor-default items-center gap-1 px-2 py-0.5 text-xs font-semibold transition-colors",
-              chipClassName
-            )}
-          >
-            +{moreCount} {t("more")}
-            <ChevronDown className="size-3 -rotate-90 transition-transform duration-200 group-hover/more:rotate-0" />
-          </span>
-
-          <div className="invisible absolute left-1/2 top-full z-40 w-64 -translate-x-1/2 pt-2 opacity-0 transition-opacity duration-150 group-hover/more:visible group-hover/more:opacity-100">
-            <div className="space-y-0.5 rounded-lg border border-border/70 bg-card p-1 shadow-overlay">
-              {others.map((u, i) => {
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "flex shrink-0 items-center gap-1 px-2 py-0.5 text-xs font-semibold transition-colors",
+                chipClassName
+              )}
+            >
+              +{moreCount} {t("more")}
+              <ChevronDown className="size-3 transition-transform data-[state=open]:rotate-180" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="center" sideOffset={8} className="w-64 p-1">
+            <div className="space-y-0.5">
+              {others.map(u => {
                 const OtherIcon = TYPE_STYLE[u.type].icon;
                 return (
                   <Link
                     key={u._id}
                     href={`/updates/${u._id}`}
-                    className={cn(
-                      "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground opacity-0 hover:bg-accent",
-                      "group-hover/more:animate-in group-hover/more:fade-in-0 group-hover/more:slide-in-from-top-1 group-hover/more:fill-mode-forwards",
-                      CASCADE_DELAYS[Math.min(i, CASCADE_DELAYS.length - 1)]
-                    )}
+                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-accent"
                   >
                     <OtherIcon className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate">{u.title}</span>
@@ -121,8 +112,8 @@ export function UpdateBanner() {
                 );
               })}
             </div>
-          </div>
-        </div>
+          </PopoverContent>
+        </Popover>
       ) : null}
 
       <button

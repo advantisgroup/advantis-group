@@ -47,6 +47,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     managerId: user.managerId ?? null,
     status: user.status,
     external: user.external ?? false,
+    updatesEmailConsent: user.updatesEmailConsent ?? false,
     gfAccess: user.gfAccess ?? false,
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
     /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
@@ -273,6 +274,26 @@ export const updateProfile = action({
         await updateClerkUserAvatar(clerkUserId, avatarUrl);
       }
     }
+    return { ok: true };
+  },
+});
+
+/**
+ * Self-service opt-in/out for "Updates" broadcast emails. Only externals can
+ * toggle this — internal employees are always eligible and have no consent
+ * to withdraw (see `updatesEmailConsent` on the `users` table).
+ */
+export const setUpdatesEmailConsent = mutation({
+  args: { consent: v.boolean() },
+  handler: async (ctx, { consent }) => {
+    const user = await requireUser(ctx);
+    if (!user.external) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "Only external users manage updates-email consent",
+      });
+    }
+    await ctx.db.patch(user._id, { updatesEmailConsent: consent });
     return { ok: true };
   },
 });

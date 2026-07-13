@@ -50,7 +50,7 @@ const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] = [
   },
 ];
 
-function Switch({
+export function Switch({
   checked,
   onToggle,
   label,

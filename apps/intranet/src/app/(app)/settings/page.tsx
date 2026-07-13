@@ -49,6 +49,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UpdatesEmailConsent } from "@/components/updates/UpdatesEmailConsent";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { cropToSquare } from "@/lib/image";
@@ -475,6 +476,16 @@ export default function SettingsPage() {
           <NotificationPreferences />
         </CardContent>
       </Card>
+
+      {/* Updates email consent — externals only; internal employees are
+          always eligible and get no toggle (see UpdatesEmailConsent). */}
+      {user.external && (
+        <Card>
+          <CardContent className="p-5">
+            <UpdatesEmailConsent />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Onboarding Tour */}
       {tourState && (

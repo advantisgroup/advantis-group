@@ -1413,6 +1413,8 @@
     "startedAtLabel": "Wartungsfenster beginnt",
     "publishAtLabel": "Veröffentlichen am (leer lassen für sofort)",
     "emailEveryoneLabel": "Bei Veröffentlichung alle per E-Mail benachrichtigen",
+    "emailConsentTitle": "Update-E-Mails",
+    "emailConsentHint": "Erhalte eine E-Mail, wenn ein neuer Vorfall, ein Wartungsfenster oder ein Changelog-Eintrag veröffentlicht wird. Für externe Konten standardmäßig deaktiviert.",
     "publish": "Veröffentlichen",
     "schedule": "Planen",
     "published": "Veröffentlicht",

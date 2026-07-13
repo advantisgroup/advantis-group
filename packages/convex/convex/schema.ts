@@ -152,6 +152,14 @@ export default defineSchema({
      * replacement for the admin/manager/employee tier.
      */
     customRoleId: v.optional(v.id("customRoles")),
+    /**
+     * Explicit opt-in to receive "Updates" broadcast emails. Only meaningful
+     * for `external` users — internal employees are always eligible and this
+     * flag is ignored for them. Externals default to *not* eligible
+     * (undefined/false) until they opt in from Settings; see
+     * `users.setUpdatesEmailConsent` and the filter in `updatesEmail.sendBulk`.
+     */
+    updatesEmailConsent: v.optional(v.boolean()),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })

@@ -29,6 +29,9 @@ export const sendBulk = internalAction({
     const users = await ctx.runQuery(internal.updatesInternal.listActiveUsers, {});
     const recipients = users
       .filter(u => userMatchesAudience(u, update.audience as Audience))
+      // Externals must explicitly opt in to Updates emails (default off);
+      // internal employees are always eligible.
+      .filter(u => !u.external || u.updatesEmailConsent === true)
       .map(u => ({ userId: u._id, email: u.email }));
     if (recipients.length === 0) return { sent: false, reason: "recicpient length is 0" };
 
@@ -49,14 +52,15 @@ export const sendBulk = internalAction({
           recipients,
         }),
       });
-      console.log(res)
       if (!res.ok) {
         console.error(
           `[updatesEmail] broadcast failed: ${res.status} ${await res.text()}`
         );
         return { sent: false, reason: `Not ok` };
       }
-      const { results } = (await res.json()) as {
+      const body = await res.text();
+      console.log(`[updatesEmail] broadcast response: ${res.status} ${body}`);
+      const { results } = JSON.parse(body) as {
         results: { userId: string; email: string; resendEmailId?: string; failed?: boolean }[];
       };
       await ctx.runMutation(internal.updates.recordEmailSendResults, {

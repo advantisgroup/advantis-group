@@ -1413,6 +1413,8 @@
     "startedAtLabel": "Maintenance window starts",
     "publishAtLabel": "Publish at (leave blank to publish now)",
     "emailEveryoneLabel": "Email everyone when this is published",
+    "emailConsentTitle": "Updates emails",
+    "emailConsentHint": "Receive an email when a new incident, maintenance window or changelog entry is published. Off by default for external accounts.",
     "publish": "Publish",
     "schedule": "Schedule",
     "published": "Published",

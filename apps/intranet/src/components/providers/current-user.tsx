@@ -29,6 +29,7 @@ export interface CurrentUser {
   managerId: string | null;
   status: "active" | "suspended";
   external: boolean;
+  updatesEmailConsent: boolean;
   gfAccess: boolean;
   uploadRequestsEnabled: boolean;
   customRoleId: string | null;
