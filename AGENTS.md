@@ -90,6 +90,20 @@ or embedding official logo assets — trademark usage has its own legal
 constraints beyond a copyright line, and no logo files exist in this repo
 today (`apps/intranet/public/` only has Advantis's own logos).
 
+## Convex preview deployments
+
+`scripts/vercel-preview-convex-build.sh` claims a Convex preview deployment
+keyed by git branch name on every non-production Vercel build, logging
+`[convex-preview] ...` lines (branch, resolved backend URL) so a backend
+change on a branch that didn't get a `--preview-create` is visible in the
+build log. Convex has no CLI/API command to delete a preview deployment
+(open feature request: get-convex/convex-backend#455) and every deployment
+— prod, dev, and every preview ever claimed — counts against the team's
+total Convex deployment limit. If a branch's backend (and its data) resets
+without cause, check the Convex dashboard's deployment count against the
+team's plan limit and manually delete preview deployments for merged/closed
+PRs there.
+
 ## House style
 
 - No comments explaining _what_ code does — only _why_, for non-obvious
