@@ -612,12 +612,14 @@ export const bannerActive = query({
         title: top.title,
         summary: top.summary,
         status: top.status ?? null,
+        publishedAt: top.publishedAt,
       },
       moreCount: rest.length,
       others: rest.slice(0, OTHERS_LIMIT).map(u => ({
         _id: u._id,
         type: u.type,
         title: u.title,
+        publishedAt: u.publishedAt,
       })),
     };
   },
