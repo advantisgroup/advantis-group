@@ -25,6 +25,10 @@ export const capabilityValidator = v.union(
 export const audienceValidator = v.union(
   v.object({ kind: v.literal("all") }),
   v.object({ kind: v.literal("department"), department: v.string() }),
+  v.object({
+    kind: v.literal("departmentId"),
+    departmentId: v.id("departments"),
+  }),
   v.object({ kind: v.literal("users"), userIds: v.array(v.id("users")) })
 );
 
@@ -93,10 +97,24 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     role: roleValidator,
+    /**
+     * Legacy free-text department (unvalidated). Superseded by `departmentId`
+     * — see `departments` table. Kept only so already-written rows keep
+     * resolving until the org-data migration backfills every user's
+     * `departmentId` and the read paths cut over; do not write this field in
+     * new code.
+     */
     department: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
+    /** Canonical department link — see `departments` table. */
+    departmentId: v.optional(v.id("departments")),
     phone: v.optional(v.string()),
-    /** Team tags (e.g. "customer-care") controlling guidebook access. */
+    /**
+     * Legacy free-text team tags (e.g. "customer-care") controlling guidebook
+     * access. Superseded by the `userTeams` join table — see `teams`. Kept
+     * only until the org-data migration backfills `userTeams`; do not write
+     * this field in new code.
+     */
     teams: v.optional(v.array(v.string())),
     avatarStorageId: v.optional(v.id("_storage")),
     avatarUrl: v.optional(v.string()),
@@ -141,7 +159,55 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_role", ["role"])
     .index("by_status", ["status"])
-    .index("by_clockodoUserId", ["clockodoUserId"]),
+    .index("by_clockodoUserId", ["clockodoUserId"])
+    .index("by_departmentId", ["departmentId"]),
+
+  /**
+   * Canonical org departments. Replaces the free-text `users.department` —
+   * see the org-data migration (`orgDataMigration.ts`) that backfills
+   * `users.departmentId` from the legacy string values.
+   */
+  departments: defineTable({
+    name: v.string(),
+    /** Reserved for a future org-chart phase; unused by today's logic. */
+    parentId: v.optional(v.id("departments")),
+    /** Soft delete — archived departments stay resolvable for old records. */
+    archivedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_name", ["name"])
+    .index("by_archivedAt", ["archivedAt"]),
+
+  /**
+   * Canonical teams (access-control tags, e.g. "customer-care"). Replaces
+   * the free-text `users.teams` array — membership lives in `userTeams`.
+   * `slug` is kept stable across renames so existing guidebook access rules
+   * that reference a team by slug don't break.
+   */
+  teams: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    colorKey: v.optional(v.string()),
+    archivedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_archivedAt", ["archivedAt"]),
+
+  /**
+   * users <-> teams membership. A join table rather than an id array on
+   * `users` because Convex has no array-contains index — this lets "who is
+   * on team X" resolve via `by_team` instead of scanning every user.
+   */
+  userTeams: defineTable({
+    userId: v.id("users"),
+    teamId: v.id("teams"),
+  })
+    .index("by_user", ["userId"])
+    .index("by_team", ["teamId"])
+    .index("by_user_team", ["userId", "teamId"]),
 
   /** Manager-defined roles (e.g. "Team Lead") granting a set of capabilities. */
   customRoles: defineTable({
@@ -441,6 +507,20 @@ export default defineSchema({
   // Coworkers being tracked (managed in the dashboard). `userId` links a person
   // to their intranet identity, resolved during migration via `clockodoUserId`
   // or `email`. The external-id fields map a person to the integrated systems.
+  //
+  // Relationship to `users`: a `users` row has zero or one linked `people`
+  // row (via `people.userId`); a `people` row can be unlinked, meaning
+  // "tracked by ActivityTrack, not yet an intranet account." These ids
+  // (`employeeId`, `genesysUserId`, `clockodoUserId`) are ActivityTrack-only
+  // identifiers and are never a substitute for `users.role`/`departmentId`/
+  // `customRoleId` — don't derive org/permission decisions from `people`.
+  //
+  // `clockodoUserId` is stored here as a `string` and on `users` as a
+  // `number` for the same real-world Clockodo id — a pre-existing mismatch.
+  // `users.clockodoUserId` is canonical once a person is linked (see
+  // `activity/people.ts`, which blocks editing this field directly after
+  // linking); use `lib/clockodoId.ts`'s `toClockodoIdString` at any boundary
+  // that compares the two rather than unifying the storage type here.
   people: defineTable({
     name: v.string(),
     email: v.optional(v.string()),
