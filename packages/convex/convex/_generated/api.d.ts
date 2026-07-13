@@ -68,6 +68,7 @@ import type * as lib_permissions from "../lib/permissions.js";
 import type * as members from "../members.js";
 import type * as notifications from "../notifications.js";
 import type * as onedrive from "../onedrive.js";
+import type * as orgData from "../orgData.js";
 import type * as orgDataMigration from "../orgDataMigration.js";
 import type * as outbound from "../outbound.js";
 import type * as presence from "../presence.js";
@@ -143,6 +144,7 @@ declare const fullApi: ApiFromModules<{
   members: typeof members;
   notifications: typeof notifications;
   onedrive: typeof onedrive;
+  orgData: typeof orgData;
   orgDataMigration: typeof orgDataMigration;
   outbound: typeof outbound;
   presence: typeof presence;

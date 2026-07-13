@@ -735,6 +735,8 @@
       "members": "Members",
       "uploads": "Uploads",
       "roles": "Roles",
+      "departments": "Departments",
+      "teams": "Teams",
       "guests": "Guests",
       "dataCleanup": "Data cleanup"
     },
@@ -760,6 +762,20 @@
       "merged": "Merged",
       "mergedInto": "Merged into \"{name}\"",
       "mergeIntoPlaceholder": "Merge into…"
+    },
+    "orgEntity": {
+      "departmentsTitle": "Departments",
+      "departmentsDescription": "Create, rename, or archive departments. Archiving keeps the department resolvable for members already assigned to it, but hides it from new assignments.",
+      "departmentNamePlaceholder": "New department name…",
+      "teamsTitle": "Teams",
+      "teamsDescription": "Create, rename, or archive teams. Archiving keeps the team resolvable for existing members, but hides it from new assignments.",
+      "teamNamePlaceholder": "New team name…",
+      "create": "Add",
+      "archive": "Archive",
+      "restore": "Restore",
+      "archived": "Archived",
+      "empty": "None yet — add one above.",
+      "memberCount": "{count} member(s)"
     }
   },
   "Teams": {

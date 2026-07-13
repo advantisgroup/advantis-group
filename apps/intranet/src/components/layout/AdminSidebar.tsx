@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   Upload,
   Users,
+  Users2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -69,6 +70,18 @@ const ADMIN_NAV: AdminNavItem[] = [
     labelKey: "nav.roles",
     icon: ShieldCheck,
     managerOnly: true,
+  },
+  {
+    href: "/admin/departments",
+    labelKey: "nav.departments",
+    icon: Building2,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/teams",
+    labelKey: "nav.teams",
+    icon: Users2,
+    adminOnly: true,
   },
   {
     href: "/admin/guests",
