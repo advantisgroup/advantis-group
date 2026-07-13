@@ -62,10 +62,8 @@
     "upcomingEvents": "Anstehende Termine",
     "latestAnnouncements": "Neueste Ankündigungen",
     "unreadChats": "Ungelesene Nachrichten",
-    "pendingApprovals": "Offene Genehmigungen",
     "noEvents": "Keine anstehenden Termine",
     "noAnnouncements": "Keine Ankündigungen",
-    "noApprovals": "Nichts zu genehmigen",
     "noUnread": "Alles gelesen",
     "greetingMorning": "Guten Morgen, {name}",
     "greetingAfternoon": "Guten Tag, {name}",
@@ -76,15 +74,13 @@
     "outUntil": "bis {date}",
     "todaysSchedule": "Heutiger Plan",
     "customize": "Karten anpassen",
-    "actionRequestAbsence": "Abwesenheit beantragen",
     "actionNewEvent": "Neuer Termin",
     "actionNewAnnouncement": "Neue Ankündigung",
     "actionUpload": "Datei hochladen",
     "paletteHint": "⌘K zum Suchen",
     "openCalendar": "Kalender öffnen",
     "openAnnouncements": "Ankündigungen öffnen",
-    "openChat": "Chat öffnen",
-    "openAbsences": "Abwesenheiten öffnen"
+    "openChat": "Chat öffnen"
   },
   "Calendar": {
     "title": "Kalender",
@@ -126,35 +122,20 @@
   },
   "Absences": {
     "title": "Abwesenheiten",
-    "myRequests": "Meine Abwesenheiten",
-    "newRequest": "Abwesenheit beantragen",
-    "newRequestHint": "Beantrage Abwesenheit zur Genehmigung. Deine Führungskraft wird benachrichtigt.",
-    "approvals": "Genehmigungen",
-    "type": "Art",
     "vacation": "Urlaub",
     "sick": "Krank",
     "personal": "Persönlich",
     "other": "Sonstiges",
-    "start": "Startdatum",
-    "end": "Enddatum",
-    "halfDay": "Halber Tag",
     "reason": "Grund",
     "status": "Status",
     "pending": "Ausstehend",
     "approved": "Genehmigt",
     "denied": "Abgelehnt",
     "cancelled": "Storniert",
-    "approve": "Genehmigen",
-    "deny": "Ablehnen",
-    "cancelRequest": "Stornieren",
     "managedInClockodo": "Wird in Clockodo verwaltet",
     "source": "Quelle",
-    "noPending": "Keine offenen Anträge",
     "noAbsences": "Noch keine Abwesenheiten",
-    "subtitle": "Beantrage Abwesenheiten und verfolge Genehmigungen.",
-    "editRequest": "Antrag bearbeiten",
-    "requestUpdated": "Antrag aktualisiert",
-    "overlapWarning": "Dieser Zeitraum überschneidet sich mit einer bestehenden Abwesenheit.",
+    "subtitle": "Synchronisiert aus Clockodo — hier schreibgeschützt.",
     "workingDaysLabel": "{count, plural, one {# Arbeitstag} other {# Arbeitstage}}",
     "statsVacation": "Urlaubstage {year}",
     "statsSick": "Krankheitstage {year}",
@@ -167,9 +148,6 @@
     "syncedJustNow": "Clockodo gerade synchronisiert",
     "whosOut": "Abwesend in den nächsten 14 Tagen",
     "nobodyOut": "In den nächsten 14 Tagen ist niemand abwesend.",
-    "denyTitle": "Antrag ablehnen",
-    "denyHint": "Optional eine Notiz für {name} hinterlassen.",
-    "note": "Notiz",
     "decisionNoteLabel": "Notiz der Freigabe",
     "requested": "Beantragt",
     "approvedBy": "Genehmigt von {name}",
@@ -420,11 +398,11 @@
         },
         "actions": {
           "title": "Schnellaktionen",
-          "description": "Spring direkt zu den häufigsten Aufgaben — Abwesenheit beantragen, Datei hochladen oder (als Führungskraft) Termine und Ankündigungen erstellen. Am Desktop öffnet ⌘K überall die Suche."
+          "description": "Spring direkt zu den häufigsten Aufgaben — Datei hochladen oder (als Führungskraft) Termine und Ankündigungen erstellen. Am Desktop öffnet ⌘K überall die Suche."
         },
         "main": {
           "title": "Dein Dashboard",
-          "description": "Ein Überblick über das Geschehen – anstehende Termine, aktuelle Neuigkeiten, wer heute abwesend ist und offene Punkte. Jede Zeile verlinkt zu ihrem Bereich."
+          "description": "Ein Überblick über das Geschehen – anstehende Termine, aktuelle Neuigkeiten und wer heute abwesend ist. Jede Zeile verlinkt zu ihrem Bereich."
         },
         "customize": {
           "title": "Mach es zu deinem",
@@ -476,10 +454,6 @@
           "title": "Abwesenheiten",
           "description": "Beantrage und verfolge Urlaub, Krankheitstage und persönliche Zeit."
         },
-        "request": {
-          "title": "Abwesenheit beantragen",
-          "description": "Erstelle einen neuen Antrag — wähle Art, Zeitraum und optional eine Notiz für die Freigabe. Du siehst die Anzahl der Arbeitstage und eine Warnung, wenn sich der Zeitraum mit einer bestehenden Abwesenheit überschneidet."
-        },
         "stats": {
           "title": "Dein Jahr im Überblick",
           "description": "Genutzte Urlaubstage, Krankheitstage und offene Anträge des laufenden Jahres, berechnet aus deinen genehmigten Abwesenheiten."
@@ -489,12 +463,8 @@
           "description": "Grenze die Liste nach Status oder Art ein. Darunter ist alles nach Jahr gruppiert — klicke auf einen Eintrag für die vollständige Historie."
         },
         "list": {
-          "title": "Deine Abwesenheitsanträge",
-          "description": "Verfolge hier den Genehmigungsstatus. Offene Anträge kannst du weiterhin bearbeiten oder stornieren; aus Clockodo synchronisierte Abwesenheiten sind schreibgeschützt und mit einem Badge markiert."
-        },
-        "approvals": {
-          "title": "Team-Freigaben",
-          "description": "Anträge deiner Mitarbeitenden landen in diesem Tab. Genehmige oder lehne sie ab (optional mit Notiz) und sieh, wer im Team in den nächsten zwei Wochen abwesend ist."
+          "title": "Deine Abwesenheiten",
+          "description": "Alles hier wird aus Clockodo synchronisiert und ist schreibgeschützt — genehmige, lehne ab oder bearbeite Abwesenheiten dort. Führungskräfte sehen zusätzlich, wer im Team in den nächsten zwei Wochen abwesend ist."
         }
       },
       "chat": {
@@ -1131,7 +1101,6 @@
     "noResults": "Keine Ergebnisse gefunden",
     "hint": "Suchen",
     "actions": "Aktionen",
-    "actionNewAbsence": "Abwesenheit beantragen",
     "actionNewEvent": "Neuer Termin",
     "actionNewAnnouncement": "Neue Ankündigung",
     "actionUpload": "Datei hochladen"

@@ -148,12 +148,6 @@ export function CommandPalette() {
 
     const actions = [
       {
-        id: "new-absence",
-        label: t("actionNewAbsence"),
-        icon: Plane,
-        href: "/absences?new=1",
-      },
-      {
         id: "new-event",
         label: t("actionNewEvent"),
         icon: CalendarPlus,

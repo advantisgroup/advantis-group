@@ -126,12 +126,6 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         skipOnMobile: true,
       },
       {
-        id: "absences.request",
-        targetAttr: "tour-absences-request",
-        popoutSide: "bottom",
-        route: "/absences",
-      },
-      {
         id: "absences.stats",
         targetAttr: "tour-absences-stats",
         popoutSide: "bottom",
@@ -148,13 +142,6 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
         targetAttr: "tour-absences-list",
         popoutSide: "top",
         route: "/absences",
-      },
-      {
-        id: "absences.approvals",
-        targetAttr: "tour-absences-approvals",
-        popoutSide: "bottom",
-        route: "/absences",
-        roles: ["manager"],
       },
     ],
   },

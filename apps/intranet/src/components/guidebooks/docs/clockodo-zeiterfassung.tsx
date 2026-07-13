@@ -72,12 +72,7 @@ const DOC: DocContent = {
         {
           kind: "callout",
           tone: "info",
-          body: "Genehmigte und offene Abwesenheiten aus Clockodo erscheinen automatisch — meist innerhalb einer Stunde — schreibgeschützt auf der Seite **„Abwesenheiten“** im Intranet. Änderungen müssen weiterhin in Clockodo vorgenommen werden.",
-        },
-        {
-          kind: "callout",
-          tone: "tip",
-          body: "Alternativ lässt sich auf der Intranet-Seite **„Abwesenheiten“** auch direkt ein Antrag stellen (z. B. wenn Clockodo mal nicht erreichbar ist) — der wird dann dort von eurer Führungskraft genehmigt.",
+          body: "Genehmigte und offene Abwesenheiten aus Clockodo erscheinen automatisch — meist innerhalb einer Stunde — schreibgeschützt auf der Seite **„Abwesenheiten“** im Intranet. Anträge stellen, genehmigen und ändern läuft ausschließlich über Clockodo.",
         },
       ],
     },

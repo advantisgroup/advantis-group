@@ -4,24 +4,19 @@ import type { ReactNode } from "react";
 import { useMemo } from "react";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
   CalendarDays,
   CalendarPlus,
-  Check,
   Command,
   MapPin,
   Megaphone,
   MessageSquare,
   Plane,
-  Plus,
   Settings2,
   Upload,
-  X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
 
 import { Link } from "@/components/Link";
 import {
@@ -40,7 +35,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { htmlToText } from "@/components/ui/rich-text";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useErrorHandler } from "@/hooks/use-error-handler";
 import { isoToday } from "@/lib/absences";
 import {
   formatDateTime,
@@ -54,13 +48,7 @@ import { cn } from "@/lib/utils";
 const now = Date.now();
 const startOfToday = new Date(now).setHours(0, 0, 0, 0);
 
-const CARD_IDS = [
-  "events",
-  "announcements",
-  "chats",
-  "whosout",
-  "approvals",
-] as const;
+const CARD_IDS = ["events", "announcements", "chats", "whosout"] as const;
 type CardId = (typeof CARD_IDS)[number];
 
 function DashCard({
@@ -175,17 +163,12 @@ export default function DashboardPage() {
   const locale = useLocale();
   const user = useCurrentUser();
   const isManager = useIsManager();
-  const handleError = useErrorHandler();
   const events = useQuery(api.events.listForRange, {
     start: startOfToday,
     end: now + 30 * 24 * 60 * 60 * 1000,
   });
   const announcements = useQuery(api.announcements.list, { limit: 5 });
   const conversations = useQuery(api.chat.listConversations);
-  const pending = useQuery(
-    api.absences.pendingForApproval,
-    isManager ? {} : "skip"
-  );
   const myAbsences = useQuery(api.absences.myAbsences);
   const today = isoToday();
   const outToday = useQuery(api.absences.listForCalendar, {
@@ -194,8 +177,6 @@ export default function DashboardPage() {
   });
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
-  const approve = useMutation(api.absences.approve);
-  const deny = useMutation(api.absences.deny);
 
   const hiddenCards = useMemo(
     () => new Set((prefs?.hiddenDashboardCards ?? []) as CardId[]),
@@ -242,26 +223,11 @@ export default function DashboardPage() {
     [events, today]
   );
 
-  async function decide(absenceId: Id<"absences">, action: "approve" | "deny") {
-    try {
-      if (action === "approve") {
-        await approve({ absenceId });
-        toast.success(tAbs("approved"));
-      } else {
-        await deny({ absenceId });
-        toast.success(tAbs("denied"));
-      }
-    } catch (e) {
-      handleError(e);
-    }
-  }
-
   const cardLabels: Record<CardId, string> = {
     events: t("upcomingEvents"),
     announcements: t("latestAnnouncements"),
     chats: t("unreadChats"),
     whosout: t("whosOutToday"),
-    approvals: t("pendingApprovals"),
   };
 
   return (
@@ -302,7 +268,7 @@ export default function DashboardPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{t("customize")}</DropdownMenuLabel>
-            {CARD_IDS.filter(id => id !== "approvals" || isManager).map(id => (
+            {CARD_IDS.map(id => (
               <DropdownMenuCheckboxItem
                 key={id}
                 checked={showCard(id)}
@@ -320,12 +286,6 @@ export default function DashboardPage() {
         className="mb-6 flex flex-wrap items-center gap-2"
         data-tour="tour-dashboard-actions"
       >
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/absences?new=1">
-            <Plus className="mr-1.5 size-3.5" />
-            {t("actionRequestAbsence")}
-          </Link>
-        </Button>
         {isManager && (
           <>
             <Button variant="outline" size="sm" asChild>
@@ -559,68 +519,6 @@ export default function DashboardPage() {
                         {t("outUntil", {
                           date: formatIsoDate(a.endDate, locale),
                         })}
-                      </span>
-                    }
-                  />
-                ))
-              )}
-            </DashCard>
-          </div>
-        )}
-
-        {isManager && showCard("approvals") && (
-          <div style={{ animationDelay: "0.25s" }}>
-            <DashCard
-              icon={<Plane />}
-              title={t("pendingApprovals")}
-              count={pending?.length || undefined}
-            >
-              {pending === undefined ? (
-                <RowSkeletons />
-              ) : pending.length === 0 ? (
-                <Empty href="/absences" linkLabel={t("openAbsences")}>
-                  {t("noApprovals")}
-                </Empty>
-              ) : (
-                pending.slice(0, 5).map(a => (
-                  <Row
-                    key={a._id}
-                    href="/absences"
-                    title={a.userName}
-                    subtitle={`${tAbs(a.type)} · ${formatIsoDate(a.startDate, locale)}`}
-                    leading={
-                      <Avatar className="size-8 shrink-0">
-                        <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-                          {initials(a.userName)}
-                        </AvatarFallback>
-                      </Avatar>
-                    }
-                    trailing={
-                      <span
-                        className="flex items-center gap-1"
-                        onClick={e => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={tAbs("deny")}
-                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => void decide(a._id, "deny")}
-                        >
-                          <X />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={tAbs("approve")}
-                          className="text-success hover:bg-success/10 hover:text-success"
-                          onClick={() => void decide(a._id, "approve")}
-                        >
-                          <Check />
-                        </Button>
                       </span>
                     }
                   />
