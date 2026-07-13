@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
 import { internalMutation, mutation } from "./_generated/server";
+import { toClockodoIdString } from "./lib/clockodoId";
 
 /**
  * Clockodo → absences mirroring. Clockodo is the primary system of record for
@@ -93,7 +94,7 @@ async function resolveUser(
   const person = await ctx.db
     .query("people")
     .withIndex("by_clockodoUserId", q =>
-      q.eq("clockodoUserId", String(clockodoUserId))
+      q.eq("clockodoUserId", toClockodoIdString(clockodoUserId))
     )
     .first();
   if (person?.userId) {
