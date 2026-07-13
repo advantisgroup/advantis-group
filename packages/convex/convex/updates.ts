@@ -59,7 +59,12 @@ async function resolveAudienceUserIds(
     .query("users")
     .withIndex("by_status", q => q.eq("status", "active"))
     .collect();
-  return all.filter(u => userMatchesAudience(u, audience)).map(u => u._id);
+
+  console.log("all:", all.map(a => a._id))
+
+  const filtered = all.filter(u => userMatchesAudience(u, audience)).map(u => u._id);
+  console.log("filtered:", filtered)
+  return filtered
 }
 
 /** Shared publish side effects: in-app notify now, or schedule for later. */
@@ -69,14 +74,15 @@ async function schedulePublishSideEffects(
 ): Promise<void> {
   const now = Date.now();
   if (update.publishedAt > now) {
+    console.log("scheduling publish")
     await ctx.scheduler.runAt(update.publishedAt, internal.updates.publishScheduled, {
       updateId: update._id,
     });
     return;
   }
-  const recipients = (await resolveAudienceUserIds(ctx, update.audience)).filter(
-    uid => uid !== update.authorUserId
-  );
+  console.log("sending publish")
+  const recipients = (await resolveAudienceUserIds(ctx, update.audience))
+  console.log("sending publish to", recipients)
   await notifyUsers(ctx, recipients, {
     type: `update:${update.type}`,
     title: NOTIFY_TITLES[update.type],
@@ -84,9 +90,10 @@ async function schedulePublishSideEffects(
     link: `/updates/${update._id}`,
   });
   if (update.emailRequested) {
-    await ctx.scheduler.runAfter(0, internal.updatesEmail.sendBulk, {
+    const res = await ctx.scheduler.runAfter(10000, internal.updatesEmail.sendBulk, {
       updateId: update._id,
     });
+    console.log("schedulePublishSideEffects", res)
   }
 }
 
@@ -251,7 +258,8 @@ export const publishScheduled = internalMutation({
       link: `/updates/${updateId}`,
     });
     if (update.emailRequested) {
-      await ctx.scheduler.runAfter(0, internal.updatesEmail.sendBulk, { updateId });
+      const res = await ctx.scheduler.runAfter(0, internal.updatesEmail.sendBulk, { updateId });
+      console.log("publishScheduled", res)
     }
   },
 });
@@ -352,15 +360,15 @@ export const list = query({
     const now = Date.now();
     const rows = args.type
       ? await ctx.db
-          .query("updates")
-          .withIndex("by_type_publishedAt", q => q.eq("type", args.type!))
-          .order("desc")
-          .take(args.limit ?? 200)
+        .query("updates")
+        .withIndex("by_type_publishedAt", q => q.eq("type", args.type!))
+        .order("desc")
+        .take(args.limit ?? 200)
       : await ctx.db
-          .query("updates")
-          .withIndex("by_publishedAt")
-          .order("desc")
-          .take(args.limit ?? 200);
+        .query("updates")
+        .withIndex("by_publishedAt")
+        .order("desc")
+        .take(args.limit ?? 200);
 
     const search = args.search?.trim().toLowerCase();
     const isAdmin = user.role === "admin";
@@ -425,7 +433,7 @@ export const get = query({
     const user = await requireUser(ctx);
     const update = await ctx.db.get(updateId);
     if (!update || !userMatchesAudience(user, update.audience)) {
-      throw new ConvexError({ code: "not_found", message: "Not found" });
+      return { code: "not_found", message: "Not found" };
     }
     const author = await ctx.db.get(update.authorUserId);
     const timeline = await Promise.all(
@@ -639,9 +647,9 @@ export const recordEmailEvent = mutation({
 
     let row = args.resendEmailId
       ? await ctx.db
-          .query("updateEmailRecipients")
-          .withIndex("by_resendEmailId", q => q.eq("resendEmailId", args.resendEmailId))
-          .unique()
+        .query("updateEmailRecipients")
+        .withIndex("by_resendEmailId", q => q.eq("resendEmailId", args.resendEmailId))
+        .unique()
       : null;
     if (!row && args.updateId && args.userId) {
       row = await ctx.db

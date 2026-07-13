@@ -4,7 +4,14 @@ import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { AlertTriangle, Plus, Rss, Search, Sparkles, Wrench } from "lucide-react";
+import {
+  AlertTriangle,
+  Plus,
+  Rss,
+  Search,
+  Sparkles,
+  Wrench,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -138,7 +145,10 @@ export default function UpdatesPage() {
       {items === undefined ? (
         <div className="space-y-3">
           {[0, 1, 2].map(i => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-muted/50" />
+            <div
+              key={i}
+              className="h-20 animate-pulse rounded-xl bg-muted/50"
+            />
           ))}
         </div>
       ) : items.length === 0 ? (
@@ -192,8 +202,12 @@ export default function UpdatesPage() {
                   {item.durationMs !== null && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       {item.ongoing
-                        ? t("ongoingFor", { duration: formatDuration(item.durationMs) })
-                        : t("resolvedAfter", { duration: formatDuration(item.durationMs) })}
+                        ? t("ongoingFor", {
+                            duration: formatDuration(item.durationMs),
+                          })
+                        : t("resolvedAfter", {
+                            duration: formatDuration(item.durationMs),
+                          })}
                       {" · "}
                       {formatDateTime(item.startedAt, locale)}
                     </p>

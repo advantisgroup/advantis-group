@@ -17,20 +17,20 @@ export const sendBulk = internalAction({
     const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
     const serverKey = process.env.CONVEX_SERVER_KEY;
     if (!baseUrl || !serverKey) {
-      console.warn(
+      console.log(
         `[updatesEmail] skipping bulk send for ${updateId} — API_URL/CONVEX_SERVER_KEY not set`
       );
-      return { sent: false };
+      return { sent: false, reason: "skipping cause unset keys" };
     }
 
     const update = await ctx.runQuery(internal.updatesInternal.getForEmail, { updateId });
-    if (!update) return { sent: false };
+    if (!update) return { sent: false, reason: "no update found" };
 
     const users = await ctx.runQuery(internal.updatesInternal.listActiveUsers, {});
     const recipients = users
-      .filter(u => userMatchesAudience(u, update.audience as Audience) && u._id !== update.authorUserId)
+      .filter(u => userMatchesAudience(u, update.audience as Audience))
       .map(u => ({ userId: u._id, email: u.email }));
-    if (recipients.length === 0) return { sent: false };
+    if (recipients.length === 0) return { sent: false, reason: "recicpient length is 0" };
 
     const internalUrl = process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
     try {
@@ -49,11 +49,12 @@ export const sendBulk = internalAction({
           recipients,
         }),
       });
+      console.log(res)
       if (!res.ok) {
         console.error(
           `[updatesEmail] broadcast failed: ${res.status} ${await res.text()}`
         );
-        return { sent: false };
+        return { sent: false, reason: `Not ok` };
       }
       const { results } = (await res.json()) as {
         results: { userId: string; email: string; resendEmailId?: string; failed?: boolean }[];
@@ -70,7 +71,7 @@ export const sendBulk = internalAction({
       return { sent: true };
     } catch (error) {
       console.error(`[updatesEmail] broadcast error:`, error);
-      return { sent: false };
+      return { sent: false, reason: "broadcast error" };
     }
   },
 });

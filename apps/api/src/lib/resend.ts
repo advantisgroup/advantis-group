@@ -7,7 +7,10 @@ import { Errors } from "./errors.js";
 let resend: Resend | null = null;
 function getResend(): Resend {
   const key = process.env.RESEND_API_KEY;
-  if (!key) throw Errors.internal("RESEND_API_KEY not configured");
+  if (!key) {
+    console.error("[resend] RESEND_API_KEY not configured");
+    throw Errors.internal("RESEND_API_KEY not configured");
+  }
   if (!resend) resend = new Resend(key);
   return resend;
 }
@@ -206,25 +209,39 @@ export async function sendUpdateBroadcast(
   updateId: string,
   recipients: BroadcastRecipient[]
 ): Promise<BroadcastResult[]> {
+  console.log(recipients)
   const { subject, html } = renderUpdateEmail(update);
   const results: BroadcastResult[] = [];
   const CHUNK = 100;
   for (let i = 0; i < recipients.length; i += CHUNK) {
     const chunk = recipients.slice(i, i + CHUNK);
-    const { data, error } = await getResend().batch.send(
-      chunk.map(r => ({
-        from: FROM,
-        to: r.email,
-        subject,
-        html,
-        tags: [
-          { name: "update_id", value: updateId },
-          { name: "user_id", value: r.userId },
-        ],
-      }))
+    console.log(
+      `[resend] sending batch ${i}-${i + chunk.length} of ${recipients.length} for update ${updateId}`
     );
+    let data, error;
+    try {
+      ({ data, error } = await getResend().batch.send(
+        chunk.map(r => ({
+          from: FROM,
+          to: r.email,
+          subject,
+          html,
+          tags: [
+            { name: "update_id", value: updateId },
+            { name: "user_id", value: r.userId },
+          ],
+        }))
+      ));
+    } catch (thrown) {
+      console.error(`[resend] batch send threw for update ${updateId}:`, thrown);
+      results.push(...chunk.map(r => ({ ...r, failed: true })));
+      continue;
+    }
     if (error || !data) {
-      console.error(`[resend] batch send failed:`, error);
+      console.error(
+        `[resend] batch send failed for update ${updateId}:`,
+        JSON.stringify(error)
+      );
       results.push(...chunk.map(r => ({ ...r, failed: true })));
       continue;
     }

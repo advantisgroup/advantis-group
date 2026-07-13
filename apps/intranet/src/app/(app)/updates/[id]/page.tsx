@@ -41,7 +41,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, initials } from "@/lib/format";
-import { formatDuration, statusesForType, type UpdateType } from "@/lib/updates";
+import {
+  formatDuration,
+  statusesForType,
+  type UpdateType,
+} from "@/lib/updates";
 
 const TYPE_ICON = {
   incident: AlertTriangle,
@@ -75,7 +79,10 @@ function StatusCard({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("statusLabel")}
           </p>
-          <Badge variant={data.resolvedAt ? "muted" : "warning"} className="mt-1">
+          <Badge
+            variant={data.resolvedAt ? "muted" : "warning"}
+            className="mt-1"
+          >
             {data.status ? t(`status.${data.status}`) : "—"}
           </Badge>
         </div>
@@ -83,20 +90,26 @@ function StatusCard({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("durationLabel")}
           </p>
-          <p className="mt-1 text-sm font-medium">{formatDuration(durationMs)}</p>
+          <p className="mt-1 text-sm font-medium">
+            {formatDuration(durationMs)}
+          </p>
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("startedLabel")}
           </p>
-          <p className="mt-1 text-sm">{formatDateTime(data.startedAt, locale)}</p>
+          <p className="mt-1 text-sm">
+            {formatDateTime(data.startedAt, locale)}
+          </p>
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("resolvedLabel")}
           </p>
           <p className="mt-1 text-sm">
-            {data.resolvedAt ? formatDateTime(data.resolvedAt, locale) : t("ongoing")}
+            {data.resolvedAt
+              ? formatDateTime(data.resolvedAt, locale)
+              : t("ongoing")}
           </p>
         </div>
         {data.affectedSystems.length > 0 && (
@@ -106,7 +119,11 @@ function StatusCard({
             </p>
             <div className="flex flex-wrap gap-1.5">
               {data.affectedSystems.map(s => (
-                <Badge key={s} variant="outline" className="min-w-0 max-w-full break-words">
+                <Badge
+                  key={s}
+                  variant="outline"
+                  className="min-w-0 max-w-full break-words"
+                >
                   {s}
                 </Badge>
               ))}
@@ -137,7 +154,7 @@ export default function UpdateDetailPage() {
   const [posting, setPosting] = useState(false);
   const [showRecipients, setShowRecipients] = useState(false);
 
-  if (data === undefined) {
+  if (data === undefined || !data) {
     return (
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="h-8 w-2/3 animate-pulse rounded bg-muted/50" />
@@ -242,7 +259,9 @@ export default function UpdateDetailPage() {
           </h2>
           <ol className="space-y-4 border-l border-border pl-4">
             {data.timeline.length === 0 && (
-              <li className="text-sm text-muted-foreground">{t("noTimelineYet")}</li>
+              <li className="text-sm text-muted-foreground">
+                {t("noTimelineYet")}
+              </li>
             )}
             {data.timeline.map((entry, i) => (
               <li key={i} className="relative">
@@ -330,7 +349,9 @@ export default function UpdateDetailPage() {
                   </div>
                 ))}
                 {data.recipients.length === 0 && (
-                  <p className="text-sm text-muted-foreground">{t("noEmailsSentYet")}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t("noEmailsSentYet")}
+                  </p>
                 )}
               </div>
               {data.recipients.length > 0 && (
@@ -346,7 +367,9 @@ export default function UpdateDetailPage() {
                         </AvatarFallback>
                       </Avatar>
                       <span className="min-w-0 flex-1 truncate">{r.name}</span>
-                      <Badge variant="muted">{t(`emailStatus.${r.status}`)}</Badge>
+                      <Badge variant="muted">
+                        {t(`emailStatus.${r.status}`)}
+                      </Badge>
                     </div>
                   ))}
                 </div>

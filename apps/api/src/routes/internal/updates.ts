@@ -14,12 +14,23 @@ export const internalUpdatesRoute = new Elysia().post(
   "/internal/updates/broadcast",
   async ({ request, body }) => {
     requireServerKey(request);
-    const results = await sendUpdateBroadcast(
-      { type: body.type, title: body.title, summary: body.summary, url: body.url },
-      body.updateId,
-      body.recipients
+    console.log(
+      `[internal/updates/broadcast] updateId=${body.updateId} type=${body.type} recipients=${body.recipients.length}`
     );
-    return { results };
+    try {
+      const results = await sendUpdateBroadcast(
+        { type: body.type, title: body.title, summary: body.summary, url: body.url },
+        body.updateId,
+        body.recipients
+      );
+      return { results };
+    } catch (error) {
+      console.error(
+        `[internal/updates/broadcast] failed for updateId=${body.updateId}:`,
+        error
+      );
+      throw error;
+    }
   },
   {
     body: t.Object({

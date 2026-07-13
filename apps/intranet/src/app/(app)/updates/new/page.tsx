@@ -31,7 +31,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { KNOWN_SYSTEMS, type UpdateType } from "@/lib/updates";
 
-const TYPE_ICON = { incident: AlertTriangle, maintenance: Wrench, changelog: Sparkles } as const;
+const TYPE_ICON = {
+  incident: AlertTriangle,
+  maintenance: Wrench,
+  changelog: Sparkles,
+} as const;
 
 export default function NewUpdatePage() {
   const t = useTranslations("Updates");
@@ -46,7 +50,9 @@ export default function NewUpdatePage() {
   const [type, setType] = useState<UpdateType>("incident");
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
-  const [bodyFormat, setBodyFormat] = useState<"richtext" | "markdown">("richtext");
+  const [bodyFormat, setBodyFormat] = useState<"richtext" | "markdown">(
+    "richtext"
+  );
   const [body, setBody] = useState("");
   const [systems, setSystems] = useState<string[]>([]);
   const [customSystem, setCustomSystem] = useState("");
@@ -104,7 +110,10 @@ export default function NewUpdatePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title={t("newUpdate")} description={t("newUpdateDescription")} />
+      <PageHeader
+        title={t("newUpdate")}
+        description={t("newUpdateDescription")}
+      />
 
       <div className="space-y-6">
         <div>
@@ -162,7 +171,9 @@ export default function NewUpdatePage() {
               }
               className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
             >
-              {bodyFormat === "richtext" ? t("switchToMarkdown") : t("switchToRichText")}
+              {bodyFormat === "richtext"
+                ? t("switchToMarkdown")
+                : t("switchToRichText")}
             </button>
           </div>
           {bodyFormat === "richtext" ? (
@@ -180,7 +191,9 @@ export default function NewUpdatePage() {
 
         {type !== "changelog" && (
           <div>
-            <Label className="mb-2 block text-sm">{t("affectedSystemsLabel")}</Label>
+            <Label className="mb-2 block text-sm">
+              {t("affectedSystemsLabel")}
+            </Label>
             <div className="flex flex-wrap gap-2">
               {KNOWN_SYSTEMS.map(system => (
                 <button
@@ -188,7 +201,9 @@ export default function NewUpdatePage() {
                   type="button"
                   onClick={() => toggleSystem(system)}
                 >
-                  <Badge variant={systems.includes(system) ? "default" : "outline"}>
+                  <Badge
+                    variant={systems.includes(system) ? "default" : "outline"}
+                  >
                     {system}
                   </Badge>
                 </button>
@@ -217,7 +232,12 @@ export default function NewUpdatePage() {
                 placeholder={t("customSystemPlaceholder")}
                 className="h-8 max-w-56 text-sm"
               />
-              <Button type="button" variant="outline" size="sm" onClick={addCustomSystem}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addCustomSystem}
+              >
                 {t("addSystem")}
               </Button>
             </div>
@@ -244,7 +264,9 @@ export default function NewUpdatePage() {
         <div className="grid gap-4 sm:grid-cols-2">
           {type === "maintenance" && (
             <div>
-              <Label className="mb-1.5 block text-sm">{t("startedAtLabel")}</Label>
+              <Label className="mb-1.5 block text-sm">
+                {t("startedAtLabel")}
+              </Label>
               <Input
                 type="datetime-local"
                 value={startedAt}
@@ -253,7 +275,9 @@ export default function NewUpdatePage() {
             </div>
           )}
           <div>
-            <Label className="mb-1.5 block text-sm">{t("publishAtLabel")}</Label>
+            <Label className="mb-1.5 block text-sm">
+              {t("publishAtLabel")}
+            </Label>
             <Input
               type="datetime-local"
               value={publishAt}

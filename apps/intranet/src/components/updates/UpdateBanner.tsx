@@ -101,9 +101,7 @@ export function UpdateBanner() {
             <ChevronDown className="size-3 -rotate-90 transition-transform duration-200 group-hover/more:rotate-0" />
           </span>
 
-          <div
-            className="invisible absolute left-1/2 top-full z-40 w-64 -translate-x-1/2 pt-2 opacity-0 transition-opacity duration-150 group-hover/more:visible group-hover/more:opacity-100"
-          >
+          <div className="invisible absolute left-1/2 top-full z-40 w-64 -translate-x-1/2 pt-2 opacity-0 transition-opacity duration-150 group-hover/more:visible group-hover/more:opacity-100">
             <div className="space-y-0.5 rounded-lg border border-border/70 bg-card p-1 shadow-overlay">
               {others.map((u, i) => {
                 const OtherIcon = TYPE_STYLE[u.type].icon;
