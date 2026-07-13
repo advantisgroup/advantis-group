@@ -2,7 +2,7 @@
    Next.js requires `metadata` and `viewport` to be exported from this layout. */
 import type { ReactNode } from "react";
 
-import { Manrope, Outfit } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { NextIntlClientProvider } from "next-intl";
@@ -16,15 +16,19 @@ import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
 
-const outfit = Outfit({
+// Geist Sans/Mono (Vercel, OFL-1.1 licensed) stand in for Anthropic's
+// commissioned Anthropic Sans/Mono type family — same geometric-grotesk
+// feel, but under a license that's actually clear to ship. See
+// globals.css's font-family declarations for how these apply.
+const geistSans = Geist({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  variable: "--font-geist-sans",
   display: "swap",
 });
 
-const manrope = Manrope({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -67,7 +71,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       suppressHydrationWarning
-      className={`${outfit.variable} ${manrope.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="bg-background text-foreground antialiased">
         <ClerkProvider
