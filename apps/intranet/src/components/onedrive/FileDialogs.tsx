@@ -68,6 +68,7 @@ export function NewFolderDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("newFolder")}</DialogTitle>
+          <DialogDescription>{t("newFolderDesc")}</DialogDescription>
         </DialogHeader>
         <Input
           autoFocus
@@ -135,6 +136,7 @@ export function RenameDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("rename")}</DialogTitle>
+          <DialogDescription>{t("renameDesc")}</DialogDescription>
         </DialogHeader>
         <Input
           autoFocus

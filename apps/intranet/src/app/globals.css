@@ -482,6 +482,18 @@
   h3 {
     @apply text-xl md:text-2xl;
   }
+
+  h4 {
+    @apply text-lg md:text-xl;
+  }
+
+  h5 {
+    @apply text-base md:text-lg;
+  }
+
+  h6 {
+    @apply text-sm md:text-base;
+  }
 }
 
 html.lenis,
