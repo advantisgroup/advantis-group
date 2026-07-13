@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import Link from "next/link";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type Role } from "@advantis/types";
@@ -934,6 +936,13 @@ export default function AdminPage() {
         title={t("title")}
         description={t("subtitle")}
         icon={<ShieldCheck />}
+        action={
+          isAdmin ? (
+            <Button variant="outline" asChild>
+              <Link href="/admin/data-cleanup">{t("dataCleanup.title")}</Link>
+            </Button>
+          ) : undefined
+        }
       />
       <AdminOverview isAdmin={isAdmin} />
       <Tabs value={tab} onValueChange={setTab}>

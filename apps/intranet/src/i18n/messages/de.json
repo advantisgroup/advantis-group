@@ -724,7 +724,30 @@
     "audit_teamAccessRevoke": "hat Team-Ordner-Zugriff entzogen von",
     "customRolesTab": "Rollen",
     "customRole": "Benutzerdefinierte Rolle",
-    "customRoleNone": "Keine"
+    "customRoleNone": "Keine",
+    "dataCleanup": {
+      "title": "Stammdaten-Bereinigung",
+      "description": "Prüfen Sie die als Freitext erfassten Abteilungs- und Team-Werte der Mitglieder und überführen Sie sie in eine einheitliche Liste. Zwei Schreibweisen derselben Abteilung werden nie automatisch zusammengeführt — bitte jede einzeln prüfen.",
+      "populate": "Mitglieder scannen",
+      "runBackfill": "Auf Mitglieder anwenden",
+      "populated": "{created} neue Gruppe(n) gefunden, {updated} aktualisiert.",
+      "backfilled": "{departments} Abteilung(en) und {teams} Team(s) erstellt; {users} Mitglied-Verknüpfung(en) aktualisiert.",
+      "departments": "Abteilungen",
+      "teams": "Teams",
+      "loading": "Lädt…",
+      "empty": "Noch nichts zu prüfen — zuerst \"Mitglieder scannen\" klicken.",
+      "pendingCount": "{count} ausstehend",
+      "rawValues": "Gesehen als",
+      "status_pending": "Prüfung ausstehend",
+      "status_approved": "Genehmigt",
+      "status_rejected": "Abgelehnt",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "merge": "Zusammenführen",
+      "merged": "Zusammengeführt",
+      "mergedInto": "Zusammengeführt mit \"{name}\"",
+      "mergeIntoPlaceholder": "Zusammenführen mit…"
+    }
   },
   "Teams": {
     "customerCare": "Customer Care",

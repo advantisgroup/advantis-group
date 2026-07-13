@@ -724,7 +724,30 @@
     "audit_teamAccessRevoke": "revoked Team folder access from",
     "customRolesTab": "Roles",
     "customRole": "Custom role",
-    "customRoleNone": "None"
+    "customRoleNone": "None",
+    "dataCleanup": {
+      "title": "Org data cleanup",
+      "description": "Review the free-text department and team values collected from members and turn them into a canonical list. Two spellings of the same department are never merged automatically — review each one.",
+      "populate": "Scan members",
+      "runBackfill": "Apply to members",
+      "populated": "Found {created} new group(s), updated {updated}.",
+      "backfilled": "Created {departments} department(s) and {teams} team(s); updated {users} member link(s).",
+      "departments": "Departments",
+      "teams": "Teams",
+      "loading": "Loading…",
+      "empty": "Nothing to review yet — click \"Scan members\" first.",
+      "pendingCount": "{count} pending",
+      "rawValues": "Seen as",
+      "status_pending": "Pending review",
+      "status_approved": "Approved",
+      "status_rejected": "Rejected",
+      "approve": "Approve",
+      "reject": "Reject",
+      "merge": "Merge",
+      "merged": "Merged",
+      "mergedInto": "Merged into \"{name}\"",
+      "mergeIntoPlaceholder": "Merge into…"
+    }
   },
   "Teams": {
     "customerCare": "Customer Care",
