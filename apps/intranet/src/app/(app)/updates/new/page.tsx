@@ -1,12 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { AlertTriangle, Sparkles, Wrench, X } from "lucide-react";
+import {
+  AlertTriangle,
+  ChevronDown,
+  Sparkles,
+  Wrench,
+  X,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -61,6 +67,19 @@ export default function NewUpdatePage() {
   const [startedAt, setStartedAt] = useState("");
   const [emailRequested, setEmailRequested] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showRecipients, setShowRecipients] = useState(false);
+
+  const audienceValue = useMemo(
+    () =>
+      audience === "all"
+        ? ({ kind: "all" } as const)
+        : ({ kind: "department", department: audience } as const),
+    [audience]
+  );
+  const emailPreview = useQuery(
+    api.updates.previewEmailRecipients,
+    emailRequested ? { audience: audienceValue } : "skip"
+  );
 
   if (!isAdmin) return <ForbiddenScreen />;
 
@@ -83,10 +102,6 @@ export default function NewUpdatePage() {
     }
     setSubmitting(true);
     try {
-      const audienceValue =
-        audience === "all"
-          ? ({ kind: "all" } as const)
-          : ({ kind: "department", department: audience } as const);
       const { id } = await create({
         type,
         title: title.trim(),
@@ -286,13 +301,70 @@ export default function NewUpdatePage() {
           </div>
         </div>
 
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox
-            checked={emailRequested}
-            onCheckedChange={c => setEmailRequested(c === true)}
-          />
-          {t("emailEveryoneLabel")}
-        </label>
+        <div>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={emailRequested}
+              onCheckedChange={c => setEmailRequested(c === true)}
+            />
+            {t("emailEveryoneLabel")}
+          </label>
+
+          {emailRequested && (
+            <div className="mt-2 rounded-lg border border-border/70 p-3">
+              {emailPreview === undefined ? (
+                <p className="text-sm text-muted-foreground">
+                  {tc("loading")}
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowRecipients(s => !s)}
+                    className="flex w-full items-center justify-between gap-2 text-left text-sm"
+                  >
+                    <span>
+                      {emailPreview.recipients.length === 0
+                        ? t("emailPreviewNone")
+                        : t("emailPreviewCount", {
+                            count: emailPreview.recipients.length,
+                          })}
+                    </span>
+                    {emailPreview.recipients.length > 0 && (
+                      <ChevronDown
+                        className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                          showRecipients ? "rotate-180" : ""
+                        }`}
+                      />
+                    )}
+                  </button>
+                  {emailPreview.excludedNoConsent > 0 && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t("emailPreviewExcluded", {
+                        count: emailPreview.excludedNoConsent,
+                      })}
+                    </p>
+                  )}
+                  {showRecipients && emailPreview.recipients.length > 0 && (
+                    <ul className="mt-2 max-h-52 space-y-1 overflow-y-auto border-t border-border/60 pt-2">
+                      {emailPreview.recipients.map(r => (
+                        <li
+                          key={r.userId}
+                          className="flex items-center justify-between gap-2 text-sm"
+                        >
+                          <span className="truncate">{r.name}</span>
+                          <span className="shrink-0 truncate text-xs text-muted-foreground">
+                            {r.email}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="flex justify-end gap-2 border-t border-border/70 pt-5">
           <Button variant="outline" onClick={() => router.push("/updates")}>

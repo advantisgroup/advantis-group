@@ -67,6 +67,36 @@ async function resolveAudienceUserIds(
   return filtered
 }
 
+/**
+ * Resolves the given audience to the exact recipients an email blast would
+ * go to right now — same matching + consent rules as `updatesEmail.sendBulk`
+ * — so the compose UI can show "who gets emailed" before publishing.
+ */
+export const previewEmailRecipients = query({
+  args: { audience: audienceValidator },
+  handler: async (ctx, { audience }) => {
+    await requireAdmin(ctx);
+    const activeUsers = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
+    const matched = activeUsers.filter(u => userMatchesAudience(u, audience));
+    const recipients = matched
+      .filter(u => !u.external || u.updatesEmailConsent === true)
+      .map(u => ({
+        userId: u._id,
+        name: authorName(u),
+        email: u.email,
+        external: u.external ?? false,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    return {
+      recipients,
+      excludedNoConsent: matched.length - recipients.length,
+    };
+  },
+});
+
 /** Shared publish side effects: in-app notify now, or schedule for later. */
 async function schedulePublishSideEffects(
   ctx: MutationCtx,
