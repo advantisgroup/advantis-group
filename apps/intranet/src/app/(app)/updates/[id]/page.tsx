@@ -10,8 +10,6 @@ import { useMutation, useQuery } from "convex/react";
 import {
   AlertTriangle,
   ArrowLeft,
-  ChevronDown,
-  ChevronUp,
   Mail,
   Sparkles,
   Trash2,
@@ -22,14 +20,17 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 
-import type { FunctionReturnType } from "convex/server";
-
 import { Link } from "@/components/Link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RichText } from "@/components/ui/rich-text";
 import {
   Select,
@@ -39,6 +40,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { UpdateArtBanner } from "@/components/updates/UpdateArtBanner";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useNow } from "@/lib/activity/useNow";
 import { formatDateTime, initials } from "@/lib/format";
@@ -47,6 +54,8 @@ import {
   statusesForType,
   type UpdateType,
 } from "@/lib/updates";
+
+import type { FunctionReturnType } from "convex/server";
 
 const TYPE_ICON = {
   incident: AlertTriangle,
@@ -153,7 +162,6 @@ export default function UpdateDetailPage() {
   const [message, setMessage] = useState("");
   const [nextStatus, setNextStatus] = useState<string>("none");
   const [posting, setPosting] = useState(false);
-  const [showRecipients, setShowRecipients] = useState(false);
 
   if (data === undefined) {
     return (
@@ -216,182 +224,212 @@ export default function UpdateDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl break-words">
-      <Link
-        href="/updates"
-        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-3.5" />
-        {t("backToList")}
-      </Link>
-
-      <div className="mb-3 flex items-center gap-2">
-        <Badge variant={TYPE_BADGE_VARIANT[data.type]}>
-          <Icon className="size-3" />
-          {t(`type.${data.type}`)}
-        </Badge>
-        {data.scheduled && <Badge variant="outline">{t("scheduled")}</Badge>}
-      </div>
-
-      <h1 className="break-words font-display text-3xl font-bold tracking-tight">
-        {data.title}
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        {t("byline", {
-          author: data.authorName,
-          date: formatDateTime(data.publishedAt, locale),
-        })}
-      </p>
-
-      {data.isAdmin && (
-        <div className="mt-4 flex gap-2">
-          <Button variant="outline" size="sm" onClick={onDelete}>
-            <Trash2 className="size-3.5" />
-            {tc("delete")}
-          </Button>
-        </div>
-      )}
-
-      {data.type !== "changelog" && (
-        <div className="mt-6">
-          <StatusCard data={data} t={t} locale={locale} />
-        </div>
-      )}
-
-      <div className="mt-6 prose prose-sm max-w-none dark:prose-invert">
-        {data.bodyFormat === "richtext" ? (
-          <RichText html={data.body} />
-        ) : (
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.body}</ReactMarkdown>
-        )}
-      </div>
-
-      {data.type !== "changelog" && (
-        <section className="mt-8">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            {t("timelineLabel")}
-          </h2>
-          <ol className="space-y-4 border-l border-border pl-4">
-            {data.timeline.length === 0 && (
-              <li className="text-sm text-muted-foreground">
-                {t("noTimelineYet")}
-              </li>
-            )}
-            {data.timeline.map((entry, i) => (
-              <li key={i} className="relative">
-                <span className="absolute -left-[1.1875rem] top-1 size-2 rounded-full bg-primary" />
-                <div className="flex flex-wrap items-center gap-2">
-                  {entry.status && (
-                    <Badge variant="muted">{t(`status.${entry.status}`)}</Badge>
-                  )}
-                  <span className="text-xs text-muted-foreground">
-                    {formatDateTime(entry.at, locale)} · {entry.authorName}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm">{entry.message}</p>
-              </li>
-            ))}
-          </ol>
+    <>
+      <UpdateArtBanner
+        seed={data._id}
+        type={data.type}
+        title={data.title}
+        className="-mx-4 -mt-6 mb-8 md:-mx-8 md:-mt-8"
+      />
+      <div className="mx-auto max-w-3xl break-words">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <Link
+            href="/updates"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="size-3.5" />
+            {t("backToList")}
+          </Link>
 
           {data.isAdmin && (
-            <div className="mt-5 space-y-2 rounded-xl border border-border/70 bg-card p-4">
-              <Textarea
-                value={message}
-                onChange={e => setMessage(e.target.value)}
-                placeholder={t("postUpdatePlaceholder")}
-                rows={2}
-              />
-              <div className="flex items-center gap-2">
-                <Select value={nextStatus} onValueChange={setNextStatus}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">{t("noStatusChange")}</SelectItem>
-                    {statusesForType(data.type as UpdateType).map(s => (
-                      <SelectItem key={s} value={s}>
-                        {t(`status.${s}`)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={postTimelineEntry}
-                  disabled={posting || !message.trim()}
-                  className="ml-auto"
-                >
-                  {t("postUpdate")}
-                </Button>
-              </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={t("emailDeliveryLabel")}
+                    className="relative text-muted-foreground hover:text-foreground"
+                  >
+                    <Mail className="size-4" />
+                    {!data.emailRequested && (
+                      <span className="absolute right-1 top-1 size-1.5 rounded-full bg-muted-foreground" />
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-80">
+                  <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
+                    <Mail className="size-3.5 text-muted-foreground" />
+                    {t("emailDeliveryLabel")}
+                  </p>
+                  {data.emailStats && data.recipients ? (
+                    <>
+                      <div className="mb-3 flex flex-wrap gap-3">
+                        {Object.entries(data.emailStats).map(
+                          ([status, count]) => (
+                            <div key={status} className="text-sm">
+                              <span className="font-semibold">{count}</span>{" "}
+                              <span className="text-muted-foreground">
+                                {t(`emailStatus.${status}`)}
+                              </span>
+                            </div>
+                          )
+                        )}
+                        {data.recipients.length === 0 && (
+                          <p className="text-sm text-muted-foreground">
+                            {t("noEmailsSentYet")}
+                          </p>
+                        )}
+                      </div>
+                      {data.recipients.length > 0 && (
+                        <div className="max-h-72 space-y-1 overflow-y-auto">
+                          {data.recipients.map(r => (
+                            <div
+                              key={r.userId}
+                              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-accent"
+                            >
+                              <Avatar className="size-6">
+                                <AvatarFallback className="text-[10px]">
+                                  {initials(r.name)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="min-w-0 flex-1 truncate">
+                                {r.name}
+                              </span>
+                              <Badge variant="muted">
+                                {t(`emailStatus.${r.status}`)}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {t("emailNotSent")}
+                    </p>
+                  )}
+                </PopoverContent>
+              </Popover>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={onDelete}
+                    aria-label={tc("delete")}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{tc("delete")}</TooltipContent>
+              </Tooltip>
             </div>
           )}
-        </section>
-      )}
+        </div>
 
-      {data.isAdmin && (
-        <section className="mt-8">
-          <button
-            type="button"
-            onClick={() => setShowRecipients(v => !v)}
-            className="flex w-full items-center justify-between rounded-xl border border-border/70 bg-card px-4 py-3 text-left"
-          >
-            <span className="flex items-center gap-2 text-sm font-medium">
-              <Mail className="size-4 text-muted-foreground" />
-              {t("emailDeliveryLabel")}
-              {!data.emailRequested && (
-                <span className="text-xs text-muted-foreground">
-                  ({t("emailNotSent")})
-                </span>
+        <div className="mb-3 flex items-center gap-2">
+          <Badge variant={TYPE_BADGE_VARIANT[data.type]}>
+            <Icon className="size-3" />
+            {t(`type.${data.type}`)}
+          </Badge>
+          {data.scheduled && <Badge variant="outline">{t("scheduled")}</Badge>}
+        </div>
+
+        <h1 className="break-words font-display text-4xl font-extrabold tracking-tight md:text-5xl">
+          {data.title}
+        </h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {t("byline", {
+            author: data.authorName,
+            date: formatDateTime(data.publishedAt, locale),
+          })}
+        </p>
+
+        {data.type !== "changelog" && (
+          <div className="mt-6">
+            <StatusCard data={data} t={t} locale={locale} />
+          </div>
+        )}
+
+        <div className="mt-8 prose prose-sm max-w-none dark:prose-invert">
+          {data.bodyFormat === "richtext" ? (
+            <RichText html={data.body} />
+          ) : (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {data.body}
+            </ReactMarkdown>
+          )}
+        </div>
+
+        {data.type !== "changelog" && (
+          <section className="mt-8">
+            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("timelineLabel")}
+            </h2>
+            <ol className="space-y-4 border-l border-border pl-4">
+              {data.timeline.length === 0 && (
+                <li className="text-sm text-muted-foreground">
+                  {t("noTimelineYet")}
+                </li>
               )}
-            </span>
-            {showRecipients ? (
-              <ChevronUp className="size-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="size-4 text-muted-foreground" />
-            )}
-          </button>
-
-          {showRecipients && data.emailStats && data.recipients && (
-            <div className="mt-2 rounded-xl border border-border/70 bg-card p-4">
-              <div className="mb-4 flex flex-wrap gap-4">
-                {Object.entries(data.emailStats).map(([status, count]) => (
-                  <div key={status} className="text-sm">
-                    <span className="font-semibold">{count}</span>{" "}
-                    <span className="text-muted-foreground">
-                      {t(`emailStatus.${status}`)}
+              {data.timeline.map((entry, i) => (
+                <li key={i} className="relative">
+                  <span className="absolute -left-[1.1875rem] top-1 size-2 rounded-full bg-primary" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    {entry.status && (
+                      <Badge variant="muted">
+                        {t(`status.${entry.status}`)}
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {formatDateTime(entry.at, locale)} · {entry.authorName}
                     </span>
                   </div>
-                ))}
-                {data.recipients.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {t("noEmailsSentYet")}
-                  </p>
-                )}
-              </div>
-              {data.recipients.length > 0 && (
-                <div className="max-h-80 space-y-1 overflow-y-auto">
-                  {data.recipients.map(r => (
-                    <div
-                      key={r.userId}
-                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-accent"
-                    >
-                      <Avatar className="size-6">
-                        <AvatarFallback className="text-[10px]">
-                          {initials(r.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="min-w-0 flex-1 truncate">{r.name}</span>
-                      <Badge variant="muted">
-                        {t(`emailStatus.${r.status}`)}
-                      </Badge>
-                    </div>
-                  ))}
+                  <p className="mt-1 text-sm">{entry.message}</p>
+                </li>
+              ))}
+            </ol>
+
+            {data.isAdmin && (
+              <div className="mt-5 space-y-2 rounded-xl border border-border/70 bg-card p-4">
+                <Textarea
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  placeholder={t("postUpdatePlaceholder")}
+                  rows={2}
+                />
+                <div className="flex items-center gap-2">
+                  <Select value={nextStatus} onValueChange={setNextStatus}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        {t("noStatusChange")}
+                      </SelectItem>
+                      {statusesForType(data.type as UpdateType).map(s => (
+                        <SelectItem key={s} value={s}>
+                          {t(`status.${s}`)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    onClick={postTimelineEntry}
+                    disabled={posting || !message.trim()}
+                    className="ml-auto"
+                  >
+                    {t("postUpdate")}
+                  </Button>
                 </div>
-              )}
-            </div>
-          )}
-        </section>
-      )}
-    </div>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
+    </>
   );
 }
