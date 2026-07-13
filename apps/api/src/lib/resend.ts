@@ -17,7 +17,7 @@ function getResend(): Resend {
 
 const FROM =
   process.env.INTERNAL_EMAIL_FROM ??
-  "Advantis Intranet <noreply@intern.advantisgroup.de>";
+  "Advantis Intranet <noreply@advantisgroup.de>";
 const INTERNAL_URL =
   process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
 
@@ -26,9 +26,9 @@ function layout(title: string, bodyHtml: string): string {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:32px 0">
     <tr><td align="center">
       <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e4e4e7">
-        <tr><td style="padding:24px 32px;border-bottom:1px solid #e4e4e7;font-weight:700;font-size:18px">Advantis Group · Intranet</td></tr>
+        <tr><td style="padding:24px 32px;border-bottom:1px solid #e4e4e7;font-weight:700;font-size:18px">advantis GmbH · Intranet</td></tr>
         <tr><td style="padding:32px"><h1 style="margin:0 0 16px;font-size:20px">${title}</h1>${bodyHtml}</td></tr>
-        <tr><td style="padding:20px 32px;border-top:1px solid #e4e4e7;color:#71717a;font-size:12px">intranet.advantisgroup.de</td></tr>
+        <tr><td style="padding:20px 32px;border-top:1px solid #e4e4e7;color:#71717a;font-size:12px">intern.advantisgroup.de</td></tr>
       </table>
     </td></tr>
   </table></body></html>`;
@@ -59,7 +59,7 @@ function render(
         subject: "You've been invited to the Advantis intranet",
         html: layout(
           "You've been invited",
-          `<p style="margin:0 0 16px;line-height:1.6">${by ? `${by} invited you` : "You've been invited"} to join the Advantis Group intranet as <strong>${role}</strong>.</p>
+          `<p style="margin:0 0 16px;line-height:1.6">${by ? `${by} invited you` : "You've been invited"} to join the advantis GmbH intranet as <strong>${role}</strong>.</p>
            <p style="margin:0 0 24px;line-height:1.6">Sign up with this email address to get instant access.</p>
            ${button(url, "Accept invitation")}`
         ),
@@ -124,7 +124,7 @@ function render(
         subject: "Your Advantis intranet guest tour",
         html: layout(
           "You've been given a guest tour",
-          `<p style="margin:0 0 16px;line-height:1.6">Hi ${label}, you've been granted a temporary guest view of the Advantis Group intranet. This link gives a read-only tour and expires in about ${hours} hours.</p>
+          `<p style="margin:0 0 16px;line-height:1.6">Hi ${label}, you've been granted a temporary guest view of the advantis GmbH intranet. This link gives a read-only tour and expires in about ${hours} hours.</p>
            ${button(url, "Open guest tour")}`
         ),
       };
@@ -139,7 +139,7 @@ function render(
         subject: `${inviter} wants to reconnect on the intranet chat`,
         html: layout(
           "You've been re-invited to a chat",
-          `<p style="margin:0 0 16px;line-height:1.6"><strong>${inviter}</strong> would like to keep chatting with you on the Advantis Group intranet.</p>
+          `<p style="margin:0 0 16px;line-height:1.6"><strong>${inviter}</strong> would like to keep chatting with you on the advantis GmbH intranet.</p>
            <p style="margin:0 0 24px;line-height:1.6">Re-join to keep the conversation — otherwise it will be deleted within 48 hours.</p>
            ${button(url, "Re-join the chat")}`
         ),
