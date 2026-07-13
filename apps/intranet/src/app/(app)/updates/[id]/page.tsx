@@ -106,7 +106,7 @@ function StatusCard({
             </p>
             <div className="flex flex-wrap gap-1.5">
               {data.affectedSystems.map(s => (
-                <Badge key={s} variant="outline">
+                <Badge key={s} variant="outline" className="min-w-0 max-w-full break-words">
                   {s}
                 </Badge>
               ))}
@@ -185,7 +185,7 @@ export default function UpdateDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl break-words">
       <Link
         href="/updates"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -202,7 +202,7 @@ export default function UpdateDetailPage() {
         {data.scheduled && <Badge variant="outline">{t("scheduled")}</Badge>}
       </div>
 
-      <h1 className="font-display text-3xl font-bold tracking-tight">
+      <h1 className="break-words font-display text-3xl font-bold tracking-tight">
         {data.title}
       </h1>
       <p className="mt-2 text-sm text-muted-foreground">
