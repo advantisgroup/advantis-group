@@ -41,7 +41,16 @@ const PALETTES: Record<
   },
 };
 
-const STYLES = ["constellation", "contours", "halftone", "orbits"] as const;
+const STYLES = [
+  "constellation",
+  "contours",
+  "halftone",
+  "orbits",
+  "branches",
+  "ridgeline",
+  "flock",
+  "ripples",
+] as const;
 type ArtStyle = (typeof STYLES)[number];
 
 interface BaseArt {
@@ -76,7 +85,42 @@ interface OrbitsArt extends BaseArt {
   rings: { d: string; opacity: number; width: number }[];
 }
 
-type Art = ConstellationArt | ContoursArt | HalftoneArt | OrbitsArt;
+interface BranchesArt extends BaseArt {
+  style: "branches";
+  segments: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+    width: number;
+    opacity: number;
+  }[];
+}
+
+interface RidgelineArt extends BaseArt {
+  style: "ridgeline";
+  layers: { d: string; opacity: number }[];
+}
+
+interface FlockArt extends BaseArt {
+  style: "flock";
+  birds: { d: string; opacity: number }[];
+}
+
+interface RipplesArt extends BaseArt {
+  style: "ripples";
+  circles: { r: number; opacity: number; width: number }[];
+}
+
+type Art =
+  | ConstellationArt
+  | ContoursArt
+  | HalftoneArt
+  | OrbitsArt
+  | BranchesArt
+  | RidgelineArt
+  | FlockArt
+  | RipplesArt;
 
 /** FNV-1a — cheap, deterministic, good enough spread for a seeded PRNG. */
 function hashSeed(seed: string): number {
@@ -216,6 +260,123 @@ function buildOrbits(
   return { rings };
 }
 
+/** Organic branching growth (coral/roots/lightning) radiating from the focal point. */
+function buildBranches(
+  rand: () => number,
+  focalX: number,
+  focalY: number
+): Pick<BranchesArt, "segments"> {
+  const segments: BranchesArt["segments"] = [];
+  function grow(
+    x: number,
+    y: number,
+    angle: number,
+    length: number,
+    width: number,
+    depth: number
+  ) {
+    if (depth <= 0 || length < 5) return;
+    const wobble = (rand() - 0.5) * 0.5;
+    const x2 = x + Math.cos(angle + wobble) * length;
+    const y2 = y + Math.sin(angle + wobble) * length * 0.6;
+    segments.push({
+      x1: x,
+      y1: y,
+      x2,
+      y2,
+      width,
+      opacity: 0.16 + (5 - depth) * 0.09,
+    });
+    const branchCount = depth > 2 && rand() < 0.75 ? 2 : 1;
+    for (let b = 0; b < branchCount; b++) {
+      const spread = (rand() - 0.5) * 1.0 + (b === 1 ? 0.45 : -0.1);
+      grow(
+        x2,
+        y2,
+        angle + spread,
+        length * (0.66 + rand() * 0.18),
+        width * 0.72,
+        depth - 1
+      );
+    }
+  }
+  const mainBranches = 3 + Math.floor(rand() * 3);
+  for (let i = 0; i < mainBranches; i++) {
+    const angle = (Math.PI * 2 * i) / mainBranches + (rand() - 0.5) * 0.8;
+    grow(focalX, focalY, angle, 60 + rand() * 50, 3 + rand() * 1.5, 5);
+  }
+  return { segments };
+}
+
+/** Layered mountain/horizon silhouettes, like a distant range at dusk. */
+function buildRidgeline(rand: () => number): Pick<RidgelineArt, "layers"> {
+  const layerCount = 3;
+  const layers = Array.from({ length: layerCount }, (_, layer) => {
+    const baseY = VIEW_H * (0.58 + layer * 0.13);
+    const amp = 34 + rand() * 40 - layer * 5;
+    const segs = 8;
+    const freq = 1.0 + rand() * 0.5;
+    const phase = rand() * Math.PI * 2;
+    const points: [number, number][] = Array.from(
+      { length: segs + 1 },
+      (_, s) => {
+        const x = (VIEW_W / segs) * s;
+        const y =
+          baseY -
+          Math.abs(Math.sin(phase + s * freq)) * amp * (0.5 + rand() * 0.7);
+        return [x, y];
+      }
+    );
+    const ridge = points.map(([x, y]) => `${x} ${y}`).join(" L ");
+    return {
+      d: `M 0 ${VIEW_H} L ${ridge} L ${VIEW_W} ${VIEW_H} Z`,
+      opacity: 0.14 + layer * 0.12,
+    };
+  });
+  return { layers };
+}
+
+/** A scattered flock of birds (chevrons) swirling around the focal point. */
+function buildFlock(
+  rand: () => number,
+  focalX: number,
+  focalY: number
+): Pick<FlockArt, "birds"> {
+  const count = 16 + Math.floor(rand() * 14);
+  const birds = Array.from({ length: count }, () => {
+    const angle = rand() * Math.PI * 2;
+    const dist = 20 + Math.pow(rand(), 0.6) * 260;
+    const x = focalX + Math.cos(angle) * dist;
+    const y = focalY + Math.sin(angle) * dist * 0.5;
+    const heading = rand() * Math.PI * 2;
+    const size = 4 + rand() * 5;
+    const back1 = heading + Math.PI - 0.55;
+    const back2 = heading + Math.PI + 0.55;
+    const x1 = x + Math.cos(back1) * size;
+    const y1 = y + Math.sin(back1) * size;
+    const x2 = x + Math.cos(back2) * size;
+    const y2 = y + Math.sin(back2) * size;
+    return {
+      d: `M ${x1} ${y1} L ${x} ${y} L ${x2} ${y2}`,
+      opacity: 0.3 + rand() * 0.45,
+    };
+  });
+  return { birds };
+}
+
+/** Even concentric rings emanating from the focal point, like water ripples. */
+function buildRipples(rand: () => number): Pick<RipplesArt, "circles"> {
+  const count = 5 + Math.floor(rand() * 4);
+  const baseR = 20 + rand() * 20;
+  const spacing = 22 + rand() * 18;
+  const circles = Array.from({ length: count }, (_, i) => ({
+    r: baseR + i * spacing + (rand() - 0.5) * 6,
+    opacity: Math.max(0.05, 0.4 - i * 0.045),
+    width: 1 + rand() * 1.2,
+  }));
+  return { circles };
+}
+
 /**
  * Deterministic per-update artwork — same update always renders the same
  * piece (effectively generated once, on publish) without needing to store
@@ -252,6 +413,14 @@ function buildArt(seed: string, type: UpdateType): Art {
       return { ...base, style, ...buildHalftone(rand, focalX, focalY) };
     case "orbits":
       return { ...base, style, ...buildOrbits(rand, focalX, focalY) };
+    case "branches":
+      return { ...base, style, ...buildBranches(rand, focalX, focalY) };
+    case "ridgeline":
+      return { ...base, style, ...buildRidgeline(rand) };
+    case "flock":
+      return { ...base, style, ...buildFlock(rand, focalX, focalY) };
+    case "ripples":
+      return { ...base, style, ...buildRipples(rand) };
   }
 }
 
@@ -327,6 +496,71 @@ function ArtMarks({ art }: { art: Art }) {
               strokeWidth={ring.width}
               strokeOpacity={ring.opacity}
               strokeLinecap="round"
+            />
+          ))}
+        </>
+      );
+    case "branches":
+      return (
+        <>
+          {art.segments.map((seg, i) => (
+            <line
+              key={i}
+              x1={seg.x1}
+              y1={seg.y1}
+              x2={seg.x2}
+              y2={seg.y2}
+              stroke={art.accent}
+              strokeWidth={seg.width}
+              strokeOpacity={seg.opacity}
+              strokeLinecap="round"
+            />
+          ))}
+        </>
+      );
+    case "ridgeline":
+      return (
+        <>
+          {art.layers.map((layer, i) => (
+            <path
+              key={i}
+              d={layer.d}
+              fill={art.accent}
+              fillOpacity={layer.opacity}
+            />
+          ))}
+        </>
+      );
+    case "flock":
+      return (
+        <>
+          {art.birds.map((bird, i) => (
+            <path
+              key={i}
+              d={bird.d}
+              fill="none"
+              stroke={art.accent}
+              strokeWidth={1.4}
+              strokeOpacity={bird.opacity}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          ))}
+        </>
+      );
+    case "ripples":
+      return (
+        <>
+          {art.circles.map((circle, i) => (
+            <circle
+              key={i}
+              cx={art.glowCx}
+              cy={art.glowCy}
+              r={circle.r}
+              fill="none"
+              stroke={art.accent}
+              strokeWidth={circle.width}
+              strokeOpacity={circle.opacity}
             />
           ))}
         </>

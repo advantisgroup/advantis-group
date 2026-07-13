@@ -20,6 +20,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const TYPE_STYLE = {
@@ -27,11 +28,16 @@ const TYPE_STYLE = {
     icon: AlertTriangle,
     className: "bg-yellow-400 text-black",
     chipClassName: "bg-black/10 hover:bg-black/15",
+    // Left-edge gradient wash for the "+N more" list rows below — the top
+    // bar itself is already solidly colored, but those plain rows need
+    // their own per-type cue to scan at a glance.
+    rowClassName: "bg-gradient-to-r from-destructive/15 to-transparent",
   },
   maintenance: {
     icon: Wrench,
     className: "bg-yellow-400 text-black",
     chipClassName: "bg-black/10 hover:bg-black/15",
+    rowClassName: "bg-gradient-to-r from-amber-500/15 to-transparent",
   },
   changelog: {
     icon: Sparkles,
@@ -40,6 +46,7 @@ const TYPE_STYLE = {
     // the same in light and dark mode, unlike a dark-gray bar.
     className: "bg-blue-500 text-white",
     chipClassName: "bg-white/15 hover:bg-white/20",
+    rowClassName: "bg-gradient-to-r from-blue-500/15 to-transparent",
   },
 } as const;
 
@@ -99,15 +106,21 @@ export function UpdateBanner() {
           <PopoverContent align="center" sideOffset={8} className="w-64 p-1">
             <div className="space-y-0.5">
               {others.map(u => {
-                const OtherIcon = TYPE_STYLE[u.type].icon;
+                const { icon: OtherIcon, rowClassName } = TYPE_STYLE[u.type];
                 return (
                   <Link
                     key={u._id}
                     href={`/updates/${u._id}`}
-                    className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-accent"
+                    className={cn(
+                      "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent",
+                      rowClassName
+                    )}
                   >
                     <OtherIcon className="size-3.5 shrink-0 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate">{u.title}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {relativeTime(u.publishedAt)}
+                    </span>
                   </Link>
                 );
               })}
