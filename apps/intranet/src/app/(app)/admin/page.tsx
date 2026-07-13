@@ -30,6 +30,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { UserProfile } from "@/components/profile/UserProfile";
 import {
   useCurrentUser,
+  useHasCapability,
   useIsManager,
 } from "@/components/providers/current-user";
 import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
@@ -830,6 +831,7 @@ function GuestLogins() {
 export default function AdminPage() {
   const t = useTranslations("Admin");
   const isManager = useIsManager();
+  const hasUploadsView = useHasCapability("manage_uploads");
   const me = useCurrentUser();
   const isAdmin = me.role === "admin";
   const { currentStep } = useTour();
@@ -851,6 +853,33 @@ export default function AdminPage() {
   }, [currentStep?.id]);
 
   if (!isManager) {
+    // An employee with the `manage_uploads` custom-role capability gets a
+    // read-only slice of this page (queue + audit log) instead of the full
+    // member-management admin panel. Approving/denying still requires a real
+    // manager — that write goes through OneDrive's locked-in access rules.
+    if (hasUploadsView) {
+      return (
+        <div className="mx-auto max-w-6xl space-y-8">
+          <PageHeader
+            title={t("uploads")}
+            description={t("pendingUploads")}
+            icon={<ShieldCheck />}
+          />
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+              {t("pendingUploads")}
+            </h3>
+            <UploadApprovalQueue readOnly />
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">
+              {t("oneDriveActivity")}
+            </h3>
+            <OneDriveAuditPanel />
+          </div>
+        </div>
+      );
+    }
     return <ForbiddenScreen />;
   }
 
