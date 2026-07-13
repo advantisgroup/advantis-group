@@ -30,7 +30,10 @@ const TYPE_STYLE = {
   },
   changelog: {
     icon: Sparkles,
-    className: "bg-zinc-900 text-white",
+    // Same blue accent used for info/highlight treatments elsewhere in the
+    // app (chat mentions, tour highlights, file folders) — solid so it reads
+    // the same in light and dark mode, unlike a dark-gray bar.
+    className: "bg-blue-500 text-white",
     chipClassName: "bg-white/15 hover:bg-white/20",
   },
 } as const;
