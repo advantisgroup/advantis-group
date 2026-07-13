@@ -12,6 +12,7 @@ import { EditPersonDialog } from "@/components/activity/EditPersonDialog";
 import { BrandedText } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
+import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -127,6 +128,9 @@ export default function PeoplePage() {
   const linkableUsers = (intranetUsers ?? []).map(u => ({
     _id: u._id as string,
     name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
+    role: u.role,
+    department: u.department,
+    teams: u.teams,
   }));
 
   const editingPerson = editTarget
@@ -158,10 +162,23 @@ export default function PeoplePage() {
 
   const userLinkCell = (p: { userId?: GenericId<"users"> }) => {
     const linked = linkableUsers.find(u => u._id === (p.userId as string));
+    if (!linked) {
+      return (
+        <span className="text-sm text-muted-foreground">
+          {t("people.intranetUserNone")}
+        </span>
+      );
+    }
     return (
-      <span className="text-sm text-muted-foreground">
-        {linked?.name ?? t("people.intranetUserNone")}
-      </span>
+      <div className="space-y-1">
+        <span className="text-sm text-muted-foreground">{linked.name}</span>
+        <PersonIdentityBadges
+          role={linked.role}
+          department={linked.department}
+          teams={linked.teams}
+          className="flex flex-wrap items-center gap-1"
+        />
+      </div>
     );
   };
 

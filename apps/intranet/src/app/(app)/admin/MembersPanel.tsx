@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
+import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
 import { UserProfile } from "@/components/profile/UserProfile";
 import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -225,19 +226,12 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
                 </TooltipContent>
               </Tooltip>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Badge
-                  variant="muted"
-                  className="hidden cursor-help sm:inline-flex"
-                >
-                  {tRoles(m.role)}
-                </Badge>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                {tRoles(`${m.role}_desc`)}
-              </TooltipContent>
-            </Tooltip>
+            <PersonIdentityBadges
+              role={m.role}
+              department={m.department}
+              teams={m.teams}
+              className="hidden flex-wrap items-center gap-1 sm:flex"
+            />
             {customRoles && customRoles.length > 0 && (
               <Select
                 value={m.customRoleId ?? "none"}
