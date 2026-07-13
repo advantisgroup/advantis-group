@@ -64,6 +64,7 @@ import type * as lib_auth from "../lib/auth.js";
 import type * as lib_clerk from "../lib/clerk.js";
 import type * as lib_clockodoId from "../lib/clockodoId.js";
 import type * as lib_notify from "../lib/notify.js";
+import type * as lib_permissions from "../lib/permissions.js";
 import type * as members from "../members.js";
 import type * as notifications from "../notifications.js";
 import type * as onedrive from "../onedrive.js";
@@ -138,6 +139,7 @@ declare const fullApi: ApiFromModules<{
   "lib/clerk": typeof lib_clerk;
   "lib/clockodoId": typeof lib_clockodoId;
   "lib/notify": typeof lib_notify;
+  "lib/permissions": typeof lib_permissions;
   members: typeof members;
   notifications: typeof notifications;
   onedrive: typeof onedrive;

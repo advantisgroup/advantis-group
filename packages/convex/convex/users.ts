@@ -12,6 +12,7 @@ import {
   requireManager,
   requireUser,
 } from "./lib/auth";
+import { listUserPermissions } from "./lib/permissions";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -48,6 +49,8 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     external: user.external ?? false,
     gfAccess: user.gfAccess ?? false,
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
+    /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
+    permissions: listUserPermissions(user),
     customRoleId: user.customRoleId ?? null,
     capabilities: customRole?.capabilities ?? [],
     avatar,

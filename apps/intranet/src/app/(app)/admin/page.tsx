@@ -583,12 +583,19 @@ function Members() {
           </button>
           <div className="flex shrink-0 items-center gap-2">
             {m.gfAccess && (
-              <Badge
-                variant="muted"
-                className="hidden text-[10px] sm:inline-flex"
-              >
-                GF
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="muted"
+                    className="hidden cursor-help text-[10px] sm:inline-flex"
+                  >
+                    GF
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {t("gfAccessTooltip")}
+                </TooltipContent>
+              </Tooltip>
             )}
             <Tooltip>
               <TooltipTrigger asChild>
