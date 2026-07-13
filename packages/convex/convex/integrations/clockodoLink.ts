@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { mutation } from "../_generated/server";
 import { requireCapability } from "../lib/auth";
+import { toClockodoIdString } from "../lib/clockodoId";
 import { appError } from "../activity/lib/errors";
 import { writeIntegrationsAudit } from "./audit";
 
@@ -33,7 +34,7 @@ export const linkClockodoUser = mutation({
       .first();
     if (person) {
       await ctx.db.patch(person._id, {
-        clockodoUserId: String(clockodoUserId),
+        clockodoUserId: toClockodoIdString(clockodoUserId),
       });
     }
 

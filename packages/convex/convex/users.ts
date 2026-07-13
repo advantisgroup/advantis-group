@@ -4,6 +4,7 @@ import { type Doc } from "./_generated/dataModel";
 import { type QueryCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { roleValidator } from "./schema";
 import {
   ensureUser,
   getCurrentUser,
@@ -11,6 +12,7 @@ import {
   requireManager,
   requireUser,
 } from "./lib/auth";
+import { listUserPermissions } from "./lib/permissions";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -19,11 +21,7 @@ import {
   updateClerkUserName,
 } from "./lib/clerk";
 
-const roleArg = v.union(
-  v.literal("admin"),
-  v.literal("manager"),
-  v.literal("employee")
-);
+const roleArg = roleValidator;
 
 /** Attach a resolved avatar URL to a user document. */
 async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
@@ -51,6 +49,8 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     external: user.external ?? false,
     gfAccess: user.gfAccess ?? false,
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
+    /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
+    permissions: listUserPermissions(user),
     customRoleId: user.customRoleId ?? null,
     capabilities: customRole?.capabilities ?? [],
     avatar,

@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import Link from "next/link";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type Role } from "@advantis/types";
@@ -581,12 +583,19 @@ function Members() {
           </button>
           <div className="flex shrink-0 items-center gap-2">
             {m.gfAccess && (
-              <Badge
-                variant="muted"
-                className="hidden text-[10px] sm:inline-flex"
-              >
-                GF
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="muted"
+                    className="hidden cursor-help text-[10px] sm:inline-flex"
+                  >
+                    GF
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {t("gfAccessTooltip")}
+                </TooltipContent>
+              </Tooltip>
             )}
             <Tooltip>
               <TooltipTrigger asChild>
@@ -934,6 +943,13 @@ export default function AdminPage() {
         title={t("title")}
         description={t("subtitle")}
         icon={<ShieldCheck />}
+        action={
+          isAdmin ? (
+            <Button variant="outline" asChild>
+              <Link href="/admin/data-cleanup">{t("dataCleanup.title")}</Link>
+            </Button>
+          ) : undefined
+        }
       />
       <AdminOverview isAdmin={isAdmin} />
       <Tabs value={tab} onValueChange={setTab}>

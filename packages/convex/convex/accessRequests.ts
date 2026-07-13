@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { type Doc } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
+import { roleValidator } from "./schema";
 import {
   getUserByClerkId,
   isEmailDomainAllowed,
@@ -12,11 +13,7 @@ import {
 import { deleteClerkUser } from "./lib/clerk";
 import { notifyUsers } from "./lib/notify";
 
-const roleArg = v.union(
-  v.literal("admin"),
-  v.literal("manager"),
-  v.literal("employee")
-);
+const roleArg = roleValidator;
 
 async function managerIds(ctx: MutationCtx): Promise<Doc<"users">["_id"][]> {
   const admins = await ctx.db

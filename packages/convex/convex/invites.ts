@@ -2,6 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { action, internalMutation, mutation, query } from "./_generated/server";
+import { roleValidator } from "./schema";
 import {
   getAllowedDomains,
   isEmailDomainAllowed,
@@ -9,11 +10,7 @@ import {
 } from "./lib/auth";
 import { createClerkInvitation, revokeClerkInvitations } from "./lib/clerk";
 
-const roleArg = v.union(
-  v.literal("admin"),
-  v.literal("manager"),
-  v.literal("employee")
-);
+const roleArg = roleValidator;
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
