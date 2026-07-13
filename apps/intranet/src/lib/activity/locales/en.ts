@@ -100,8 +100,11 @@ export const en: Dict = {
   "people.genesysId": "Genesys ID",
   "people.clockodoId": "Clockodo ID",
   "people.manageInIntegrations": "Manage in Integrations →",
+  "people.integrationIds": "Integration IDs",
   "people.intranetUser": "Intranet account",
   "people.intranetUserNone": "Not linked",
+  "people.intranetUserHint":
+    "Links this tracked person to their intranet login, so their role and department show up alongside their live status.",
   "people.idsHint":
     "Links the person to Genesys and Clockodo for the fused live state.",
 

@@ -702,6 +702,8 @@
     "revokeGf": "Revoke Geschäftsführung access",
     "grantGf": "Grant Geschäftsführung access",
     "gfAccessTooltip": "Has the Geschäftsführung allowlist flag — an independent OneDrive permission, not part of their role.",
+    "permissions": "Permissions:",
+    "gfBadge": "GF access",
     "uploadsDisabled": "Upload requests blocked",
     "uploadsEnabled": "Upload requests allowed",
     "gfRevoked": "Geschäftsführung access revoked",
@@ -726,6 +728,22 @@
     "customRolesTab": "Roles",
     "customRole": "Custom role",
     "customRoleNone": "None",
+    "backToDashboard": "Back to Dashboard",
+    "nav": {
+      "group": "Administration",
+      "overview": "Overview",
+      "requests": "Requests",
+      "invites": "Invites",
+      "members": "Members",
+      "uploads": "Uploads",
+      "integrations": "Integrations",
+      "roles": "Roles",
+      "departments": "Departments",
+      "teams": "Teams",
+      "guests": "Guests",
+      "dataCleanup": "Data cleanup",
+      "audit": "Audit log"
+    },
     "dataCleanup": {
       "title": "Org data cleanup",
       "description": "Review the free-text department and team values collected from members and turn them into a canonical list. Two spellings of the same department are never merged automatically — review each one.",
@@ -748,6 +766,28 @@
       "merged": "Merged",
       "mergedInto": "Merged into \"{name}\"",
       "mergeIntoPlaceholder": "Merge into…"
+    },
+    "orgEntity": {
+      "departmentsTitle": "Departments",
+      "departmentsDescription": "Create, rename, or archive departments. Archiving keeps the department resolvable for members already assigned to it, but hides it from new assignments.",
+      "departmentNamePlaceholder": "New department name…",
+      "teamsTitle": "Teams",
+      "teamsDescription": "Create, rename, or archive teams. Archiving keeps the team resolvable for existing members, but hides it from new assignments.",
+      "teamNamePlaceholder": "New team name…",
+      "create": "Add",
+      "archive": "Archive",
+      "restore": "Restore",
+      "archived": "Archived",
+      "empty": "None yet — add one above.",
+      "memberCount": "{count} member(s)"
+    },
+    "auditLog": {
+      "title": "Audit log",
+      "description": "Every privileged action across ActivityTrack, OneDrive uploads, and integrations, in one place.",
+      "allSources": "All sources",
+      "source_activity": "ActivityTrack",
+      "source_onedrive": "OneDrive",
+      "source_integrations": "Integrations"
     }
   },
   "Teams": {
@@ -1239,6 +1279,7 @@
     "quota": "{used} of {total} used",
     "searchPlaceholder": "Search files…",
     "newFolder": "New folder",
+    "newFolderDesc": "Creates a folder inside the current directory, visible to everyone with access to this location.",
     "folderName": "Folder name",
     "create": "Create",
     "cancel": "Cancel",
@@ -1259,6 +1300,7 @@
     "nDays": "{count, plural, one {# day} other {# days}}",
     "createLink": "Create link",
     "rename": "Rename",
+    "renameDesc": "Renaming moves nothing — links and version history stay intact.",
     "delete": "Delete",
     "restore": "Restore",
     "restored": "Version restored",

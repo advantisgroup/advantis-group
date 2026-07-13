@@ -11,13 +11,13 @@ import { MessageSquare, Plane, Search, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { PageHeader } from "@/components/PageHeader";
+import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
 import {
   ONLINE_WINDOW_MS,
   UserProfile,
 } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -144,20 +144,16 @@ export default function DirectoryPage() {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="truncate font-medium">{p.name}</span>
-                <Badge variant="muted" className="shrink-0">
-                  {tRoles(p.role)}
-                </Badge>
-              </div>
+              <span className="truncate font-medium">{p.name}</span>
               <p className="truncate text-xs text-muted-foreground">
                 {p.jobTitle || p.email}
               </p>
-              {p.department && (
-                <p className="truncate text-xs text-muted-foreground">
-                  {p.department}
-                </p>
-              )}
+              <PersonIdentityBadges
+                role={p.role}
+                department={p.department}
+                teams={p.teams}
+                className="mt-1 flex flex-wrap items-center gap-1"
+              />
               {p.outUntil && (
                 <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-sky-600 dark:text-sky-400">
                   <Plane className="size-3 shrink-0" />

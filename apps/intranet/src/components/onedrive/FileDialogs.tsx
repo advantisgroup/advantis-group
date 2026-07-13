@@ -17,6 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { type OneDriveVersion, useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 
@@ -68,6 +70,7 @@ export function NewFolderDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("newFolder")}</DialogTitle>
+          <DialogDescription>{t("newFolderDesc")}</DialogDescription>
         </DialogHeader>
         <Input
           autoFocus
@@ -135,6 +138,7 @@ export function RenameDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t("rename")}</DialogTitle>
+          <DialogDescription>{t("renameDesc")}</DialogDescription>
         </DialogHeader>
         <Input
           autoFocus
@@ -211,22 +215,27 @@ export function ShareDialog({
         </DialogHeader>
         {!url ? (
           <>
-            <div className="flex items-center gap-2">
+            <div className="space-y-2">
               <span className="text-sm text-muted-foreground">
                 {t("expiresIn")}
               </span>
-              <div className="flex gap-1">
+              <RadioGroup
+                value={String(days)}
+                onValueChange={v => setDays(Number(v))}
+                className="flex gap-4"
+              >
                 {DAY_OPTIONS.map(d => (
-                  <Button
-                    key={d}
-                    size="sm"
-                    variant={days === d ? "default" : "outline"}
-                    onClick={() => setDays(d)}
-                  >
-                    {t("nDays", { count: d })}
-                  </Button>
+                  <div key={d} className="flex items-center gap-1.5">
+                    <RadioGroupItem value={String(d)} id={`days-${d}`} />
+                    <Label
+                      htmlFor={`days-${d}`}
+                      className="cursor-pointer text-sm font-normal"
+                    >
+                      {t("nDays", { count: d })}
+                    </Label>
+                  </div>
                 ))}
-              </div>
+              </RadioGroup>
             </div>
             <DialogFooter>
               <Button onClick={() => void createLink()} disabled={busy}>

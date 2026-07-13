@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogTitle,
   useConfirm,
@@ -68,9 +69,12 @@ function RoleForm({
   return (
     <>
       <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-        <DialogTitle className="leading-snug">
-          {role._id ? t("edit") : t("newRole")}
-        </DialogTitle>
+        <div className="space-y-1">
+          <DialogTitle className="leading-snug">
+            {role._id ? t("edit") : t("newRole")}
+          </DialogTitle>
+          <DialogDescription>{t("descriptionDetail")}</DialogDescription>
+        </div>
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">
             {t("name")}
@@ -115,9 +119,19 @@ function RoleForm({
                     <p className="text-sm font-medium leading-snug">
                       {t(`capability_${cap}`)}
                     </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {t(`capability_${cap}_desc`)}
-                    </p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {t(`capability_${cap}_desc`)}
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        className="max-w-xs leading-relaxed"
+                      >
+                        {t(`capability_${cap}_desc`)}
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                 </button>
               );

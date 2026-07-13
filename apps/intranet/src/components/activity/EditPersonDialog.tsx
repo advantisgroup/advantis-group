@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { InfoTip } from "@/components/activity/InfoTip";
 import { BrandedText } from "@/components/branding/ProviderMark";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -110,6 +111,12 @@ function PersonForm({ person, linkableUsers, onSave, onCancel }: FormProps) {
           <Input value={email} onChange={e => setEmail(e.target.value)} />
         </div>
 
+        <div className="flex items-center gap-1.5">
+          <p className="text-xs font-medium text-muted-foreground">
+            {t("people.integrationIds")}
+          </p>
+          <InfoTip text={t("people.idsHint")} />
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
@@ -152,9 +159,12 @@ function PersonForm({ person, linkableUsers, onSave, onCancel }: FormProps) {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("people.intranetUser")}
-          </label>
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("people.intranetUser")}
+            </label>
+            <InfoTip text={t("people.intranetUserHint")} />
+          </div>
           <Select
             value={userId ?? "none"}
             onValueChange={v => setUserId(v === "none" ? undefined : v)}

@@ -24,6 +24,7 @@ import { useTranslations } from "next-intl";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
+import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
@@ -74,9 +75,20 @@ export function Sidebar() {
   const user = useCurrentUser();
   const { setOpenMobile, state } = useSidebar();
 
-  // Context-aware nav: inside the ActivityTrack area the main nav slides out and
-  // the activity nav slides in (see the sliding container below).
+  // Context-aware nav: inside the ActivityTrack or Admin areas the main nav
+  // slides out and the matching scoped nav slides in (see the sliding
+  // container below). Integrations stays a flat link — it's one provider
+  // today, not enough surface yet to warrant its own sidebar section.
   const isActivity = pathname.startsWith("/admin/activity");
+  const isAdminArea =
+    !isActivity &&
+    pathname.startsWith("/admin") &&
+    !pathname.startsWith("/admin/integrations");
+  const panel: "main" | "admin" | "activity" = isActivity
+    ? "activity"
+    : isAdminArea
+      ? "admin"
+      : "main";
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
@@ -207,21 +219,24 @@ export function Sidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Two nav panels laid out side-by-side; translate-X swaps between them
-            when entering/leaving the activity area. Respects reduced motion. */}
+        {/* Three nav panels laid out side-by-side; translate-X swaps between
+            them when entering/leaving the Admin or ActivityTrack areas.
+            Respects reduced motion. */}
         <div className="relative overflow-x-hidden">
           <div
             className={cn(
-              "flex w-[200%] transition-transform duration-200 ease-out motion-reduce:transition-none",
-              isActivity ? "-translate-x-1/2" : "translate-x-0"
+              "flex w-[300%] transition-transform duration-200 ease-out motion-reduce:transition-none",
+              panel === "admin" && "-translate-x-1/3",
+              panel === "activity" && "-translate-x-2/3",
+              panel === "main" && "translate-x-0"
             )}
           >
             <div
               className={cn(
-                "w-1/2 shrink-0",
-                isActivity && "pointer-events-none"
+                "w-1/3 shrink-0",
+                panel !== "main" && "pointer-events-none"
               )}
-              aria-hidden={isActivity}
+              aria-hidden={panel !== "main"}
             >
               {groups.map(group => {
                 const items = group.items.filter(
@@ -280,10 +295,19 @@ export function Sidebar() {
             </div>
             <div
               className={cn(
-                "w-1/2 shrink-0",
-                !isActivity && "pointer-events-none"
+                "w-1/3 shrink-0",
+                panel !== "admin" && "pointer-events-none"
               )}
-              aria-hidden={!isActivity}
+              aria-hidden={panel !== "admin"}
+            >
+              <AdminSidebar />
+            </div>
+            <div
+              className={cn(
+                "w-1/3 shrink-0",
+                panel !== "activity" && "pointer-events-none"
+              )}
+              aria-hidden={panel !== "activity"}
             >
               <ActivitySidebar />
             </div>

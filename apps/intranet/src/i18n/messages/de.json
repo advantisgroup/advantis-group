@@ -702,6 +702,8 @@
     "revokeGf": "Geschäftsführungs-Zugriff entziehen",
     "grantGf": "Geschäftsführungs-Zugriff gewähren",
     "gfAccessTooltip": "Hat die Geschäftsführung-Freigabe — eine eigenständige OneDrive-Berechtigung, unabhängig von der Rolle.",
+    "permissions": "Berechtigungen:",
+    "gfBadge": "GF-Zugriff",
     "uploadsDisabled": "Upload-Anfragen gesperrt",
     "uploadsEnabled": "Upload-Anfragen erlaubt",
     "gfRevoked": "Geschäftsführungs-Zugriff entzogen",
@@ -726,6 +728,22 @@
     "customRolesTab": "Rollen",
     "customRole": "Benutzerdefinierte Rolle",
     "customRoleNone": "Keine",
+    "backToDashboard": "Zurück zum Dashboard",
+    "nav": {
+      "group": "Verwaltung",
+      "overview": "Übersicht",
+      "requests": "Anfragen",
+      "invites": "Einladungen",
+      "members": "Mitglieder",
+      "uploads": "Uploads",
+      "integrations": "Integrationen",
+      "roles": "Rollen",
+      "departments": "Abteilungen",
+      "teams": "Teams",
+      "guests": "Gäste",
+      "dataCleanup": "Stammdaten-Bereinigung",
+      "audit": "Audit-Log"
+    },
     "dataCleanup": {
       "title": "Stammdaten-Bereinigung",
       "description": "Prüfen Sie die als Freitext erfassten Abteilungs- und Team-Werte der Mitglieder und überführen Sie sie in eine einheitliche Liste. Zwei Schreibweisen derselben Abteilung werden nie automatisch zusammengeführt — bitte jede einzeln prüfen.",
@@ -748,6 +766,28 @@
       "merged": "Zusammengeführt",
       "mergedInto": "Zusammengeführt mit \"{name}\"",
       "mergeIntoPlaceholder": "Zusammenführen mit…"
+    },
+    "orgEntity": {
+      "departmentsTitle": "Abteilungen",
+      "departmentsDescription": "Abteilungen anlegen, umbenennen oder archivieren. Archivierte Abteilungen bleiben für bereits zugewiesene Mitglieder gültig, stehen aber bei neuen Zuweisungen nicht mehr zur Auswahl.",
+      "departmentNamePlaceholder": "Neue Abteilung…",
+      "teamsTitle": "Teams",
+      "teamsDescription": "Teams anlegen, umbenennen oder archivieren. Archivierte Teams bleiben für bestehende Mitglieder gültig, stehen aber bei neuen Zuweisungen nicht mehr zur Auswahl.",
+      "teamNamePlaceholder": "Neues Team…",
+      "create": "Hinzufügen",
+      "archive": "Archivieren",
+      "restore": "Wiederherstellen",
+      "archived": "Archiviert",
+      "empty": "Noch keine vorhanden — oben eines hinzufügen.",
+      "memberCount": "{count} Mitglied(er)"
+    },
+    "auditLog": {
+      "title": "Audit-Log",
+      "description": "Alle privilegierten Aktionen aus ActivityTrack, OneDrive-Uploads und Integrationen an einem Ort.",
+      "allSources": "Alle Quellen",
+      "source_activity": "ActivityTrack",
+      "source_onedrive": "OneDrive",
+      "source_integrations": "Integrationen"
     }
   },
   "Teams": {
@@ -1239,6 +1279,7 @@
     "quota": "{used} von {total} belegt",
     "searchPlaceholder": "Dateien suchen…",
     "newFolder": "Neuer Ordner",
+    "newFolderDesc": "Erstellt einen Ordner im aktuellen Verzeichnis, sichtbar für alle mit Zugriff auf diesen Ort.",
     "folderName": "Ordnername",
     "create": "Erstellen",
     "cancel": "Abbrechen",
@@ -1259,6 +1300,7 @@
     "nDays": "{count, plural, one {# Tag} other {# Tage}}",
     "createLink": "Link erstellen",
     "rename": "Umbenennen",
+    "renameDesc": "Beim Umbenennen bleibt alles an Ort und Stelle — Links und Versionsverlauf bleiben erhalten.",
     "delete": "Löschen",
     "restore": "Wiederherstellen",
     "restored": "Version wiederhergestellt",

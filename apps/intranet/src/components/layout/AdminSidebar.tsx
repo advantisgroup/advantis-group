@@ -1,0 +1,197 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+
+import { api } from "@advantis/convex/api";
+import { useQuery } from "convex/react";
+import {
+  ArrowLeft,
+  Building2,
+  Clock,
+  KeyRound,
+  LayoutDashboard,
+  type LucideIcon,
+  Mail,
+  Plug,
+  ScrollText,
+  ShieldCheck,
+  Upload,
+  Users,
+  Users2,
+} from "lucide-react";
+import { useTranslations } from "next-intl";
+
+import { Link } from "@/components/Link";
+import {
+  useHasCapability,
+  useIsAdmin,
+  useIsManager,
+} from "@/components/providers/current-user";
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarLabel,
+  SidebarMenu,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  useSidebar,
+} from "@/components/ui/sidebar";
+
+interface AdminNavItem {
+  href: string;
+  labelKey: string;
+  icon: LucideIcon;
+  managerOnly?: boolean;
+  adminOnly?: boolean;
+}
+
+const ADMIN_NAV: AdminNavItem[] = [
+  { href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard },
+  {
+    href: "/admin/requests",
+    labelKey: "nav.requests",
+    icon: Clock,
+    managerOnly: true,
+  },
+  {
+    href: "/admin/invites",
+    labelKey: "nav.invites",
+    icon: Mail,
+    managerOnly: true,
+  },
+  {
+    href: "/admin/members",
+    labelKey: "nav.members",
+    icon: Users,
+    managerOnly: true,
+  },
+  { href: "/admin/uploads", labelKey: "nav.uploads", icon: Upload },
+  {
+    href: "/admin/integrations",
+    labelKey: "nav.integrations",
+    icon: Plug,
+  },
+  {
+    href: "/admin/roles",
+    labelKey: "nav.roles",
+    icon: ShieldCheck,
+    managerOnly: true,
+  },
+  {
+    href: "/admin/departments",
+    labelKey: "nav.departments",
+    icon: Building2,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/teams",
+    labelKey: "nav.teams",
+    icon: Users2,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/guests",
+    labelKey: "nav.guests",
+    icon: KeyRound,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/data-cleanup",
+    labelKey: "nav.dataCleanup",
+    icon: Building2,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/audit",
+    labelKey: "nav.audit",
+    icon: ScrollText,
+    adminOnly: true,
+  },
+];
+
+/**
+ * The admin-scoped navigation that slides in while the user is inside
+ * `/admin/*` (but not `/admin/activity/*` or `/admin/integrations/*`, which
+ * have their own dedicated sidebars/gates). Config-driven exactly like
+ * `ActivitySidebar`, reusing the same sidebar primitives. The first item
+ * returns to the normal intranet nav.
+ */
+export function AdminSidebar() {
+  const t = useTranslations("Admin");
+  const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+  const close = () => setOpenMobile(false);
+  const isManager = useIsManager();
+  const isAdmin = useIsAdmin();
+  const hasUploadsView = useHasCapability("manage_uploads");
+
+  // Pending upload requests badge the Uploads entry the same way Devices is
+  // badged in ActivitySidebar — a manager approving requests shouldn't have
+  // to open the section just to see there's something waiting.
+  const pendingUploads = useQuery(
+    api.onedrive.listPending,
+    isManager || hasUploadsView ? {} : "skip"
+  );
+  const pendingCount = pendingUploads?.length ?? 0;
+
+  const items = ADMIN_NAV.filter(
+    item => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
+  );
+
+  return (
+    <>
+      <SidebarGroup>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild tooltip={t("backToDashboard")}>
+              <Link href="/" onClick={close}>
+                <ArrowLeft />
+                <SidebarLabel>{t("backToDashboard")}</SidebarLabel>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarGroup>
+
+      <SidebarGroup>
+        <SidebarGroupLabel>{t("nav.group")}</SidebarGroupLabel>
+        <SidebarMenu>
+          {items.map(item => {
+            const active =
+              item.href === "/admin"
+                ? pathname === "/admin"
+                : pathname.startsWith(item.href);
+            const Icon = item.icon;
+            return (
+              <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                  asChild
+                  active={active}
+                  tooltip={t(item.labelKey)}
+                >
+                  <Link
+                    href={item.href}
+                    onClick={close}
+                    aria-current={active ? "page" : undefined}
+                    data-tour={
+                      item.href === "/admin" ? "tour-nav-admin" : undefined
+                    }
+                  >
+                    <Icon />
+                    <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
+                    {item.href === "/admin/uploads" && pendingCount > 0 && (
+                      <SidebarMenuBadge>
+                        {pendingCount > 99 ? "99+" : pendingCount}
+                      </SidebarMenuBadge>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            );
+          })}
+        </SidebarMenu>
+      </SidebarGroup>
+    </>
+  );
+}

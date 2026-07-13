@@ -52,6 +52,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
     permissions: listUserPermissions(user),
     customRoleId: user.customRoleId ?? null,
+    customRoleName: customRole?.name ?? null,
     capabilities: customRole?.capabilities ?? [],
     avatar,
     lastSeenAt: user.lastSeenAt ?? null,
