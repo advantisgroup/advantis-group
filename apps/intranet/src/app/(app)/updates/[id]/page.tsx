@@ -165,22 +165,26 @@ export default function UpdateDetailPage() {
 
   if (data === undefined) {
     return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <div className="h-8 w-2/3 animate-pulse rounded bg-muted/50" />
-        <div className="h-40 animate-pulse rounded-xl bg-muted/50" />
+      <div className="px-4 pt-6 md:px-8 md:pt-8">
+        <div className="mx-auto max-w-3xl space-y-4">
+          <div className="h-8 w-2/3 animate-pulse rounded bg-muted/50" />
+          <div className="h-40 animate-pulse rounded-xl bg-muted/50" />
+        </div>
       </div>
     );
   }
 
   if (data === null) {
     return (
-      <div className="mx-auto max-w-3xl space-y-2 text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight">
-          {t("notFoundTitle")}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          {t("notFoundDescription")}
-        </p>
+      <div className="px-4 pt-6 md:px-8 md:pt-8">
+        <div className="mx-auto max-w-3xl space-y-2 text-center">
+          <h1 className="font-display text-2xl font-bold tracking-tight">
+            {t("notFoundTitle")}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {t("notFoundDescription")}
+          </p>
+        </div>
       </div>
     );
   }
@@ -229,206 +233,210 @@ export default function UpdateDetailPage() {
         seed={data._id}
         type={data.type}
         title={data.title}
-        className="-mx-4 -mt-6 mb-8 md:-mx-8 md:-mt-8"
+        className="mb-8"
       />
-      <div className="mx-auto max-w-3xl break-words">
-        <div className="mb-6 flex items-start justify-between gap-4">
-          <Link
-            href="/updates"
-            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            {t("backToList")}
-          </Link>
-
-          {data.isAdmin && (
-            <div className="flex shrink-0 items-center gap-1">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    aria-label={t("emailDeliveryLabel")}
-                    className="relative text-muted-foreground hover:text-foreground"
-                  >
-                    <Mail className="size-4" />
-                    {!data.emailRequested && (
-                      <span className="absolute right-1 top-1 size-1.5 rounded-full bg-muted-foreground" />
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-80">
-                  <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-                    <Mail className="size-3.5 text-muted-foreground" />
-                    {t("emailDeliveryLabel")}
-                  </p>
-                  {data.emailStats && data.recipients ? (
-                    <>
-                      <div className="mb-3 flex flex-wrap gap-3">
-                        {Object.entries(data.emailStats).map(
-                          ([status, count]) => (
-                            <div key={status} className="text-sm">
-                              <span className="font-semibold">{count}</span>{" "}
-                              <span className="text-muted-foreground">
-                                {t(`emailStatus.${status}`)}
-                              </span>
-                            </div>
-                          )
-                        )}
-                        {data.recipients.length === 0 && (
-                          <p className="text-sm text-muted-foreground">
-                            {t("noEmailsSentYet")}
-                          </p>
-                        )}
-                      </div>
-                      {data.recipients.length > 0 && (
-                        <div className="max-h-72 space-y-1 overflow-y-auto">
-                          {data.recipients.map(r => (
-                            <div
-                              key={r.userId}
-                              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-accent"
-                            >
-                              <Avatar className="size-6">
-                                <AvatarFallback className="text-[10px]">
-                                  {initials(r.name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="min-w-0 flex-1 truncate">
-                                {r.name}
-                              </span>
-                              <Badge variant="muted">
-                                {t(`emailStatus.${r.status}`)}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      {t("emailNotSent")}
-                    </p>
-                  )}
-                </PopoverContent>
-              </Popover>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={onDelete}
-                    aria-label={tc("delete")}
-                    className="text-muted-foreground hover:text-destructive"
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{tc("delete")}</TooltipContent>
-              </Tooltip>
-            </div>
-          )}
-        </div>
-
-        <div className="mb-3 flex items-center gap-2">
-          <Badge variant={TYPE_BADGE_VARIANT[data.type]}>
-            <Icon className="size-3" />
-            {t(`type.${data.type}`)}
-          </Badge>
-          {data.scheduled && <Badge variant="outline">{t("scheduled")}</Badge>}
-        </div>
-
-        <h1 className="break-words font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          {data.title}
-        </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          {t("byline", {
-            author: data.authorName,
-            date: formatDateTime(data.publishedAt, locale),
-          })}
-        </p>
-
-        {data.type !== "changelog" && (
-          <div className="mt-6">
-            <StatusCard data={data} t={t} locale={locale} />
-          </div>
-        )}
-
-        <div className="mt-8 prose prose-sm max-w-none dark:prose-invert">
-          {data.bodyFormat === "richtext" ? (
-            <RichText html={data.body} />
-          ) : (
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {data.body}
-            </ReactMarkdown>
-          )}
-        </div>
-
-        {data.type !== "changelog" && (
-          <section className="mt-8">
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("timelineLabel")}
-            </h2>
-            <ol className="space-y-4 border-l border-border pl-4">
-              {data.timeline.length === 0 && (
-                <li className="text-sm text-muted-foreground">
-                  {t("noTimelineYet")}
-                </li>
-              )}
-              {data.timeline.map((entry, i) => (
-                <li key={i} className="relative">
-                  <span className="absolute -left-[1.1875rem] top-1 size-2 rounded-full bg-primary" />
-                  <div className="flex flex-wrap items-center gap-2">
-                    {entry.status && (
-                      <Badge variant="muted">
-                        {t(`status.${entry.status}`)}
-                      </Badge>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      {formatDateTime(entry.at, locale)} · {entry.authorName}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm">{entry.message}</p>
-                </li>
-              ))}
-            </ol>
+      <div className="px-4 md:px-8">
+        <div className="mx-auto max-w-3xl break-words">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <Link
+              href="/updates"
+              className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ArrowLeft className="size-3.5" />
+              {t("backToList")}
+            </Link>
 
             {data.isAdmin && (
-              <div className="mt-5 space-y-2 rounded-xl border border-border/70 bg-card p-4">
-                <Textarea
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  placeholder={t("postUpdatePlaceholder")}
-                  rows={2}
-                />
-                <div className="flex items-center gap-2">
-                  <Select value={nextStatus} onValueChange={setNextStatus}>
-                    <SelectTrigger className="w-48">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">
-                        {t("noStatusChange")}
-                      </SelectItem>
-                      {statusesForType(data.type as UpdateType).map(s => (
-                        <SelectItem key={s} value={s}>
-                          {t(`status.${s}`)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    onClick={postTimelineEntry}
-                    disabled={posting || !message.trim()}
-                    className="ml-auto"
-                  >
-                    {t("postUpdate")}
-                  </Button>
-                </div>
+              <div className="flex shrink-0 items-center gap-1">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={t("emailDeliveryLabel")}
+                      className="relative text-muted-foreground hover:text-foreground"
+                    >
+                      <Mail className="size-4" />
+                      {!data.emailRequested && (
+                        <span className="absolute right-1 top-1 size-1.5 rounded-full bg-muted-foreground" />
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-80">
+                    <p className="mb-2 flex items-center gap-1.5 text-sm font-medium">
+                      <Mail className="size-3.5 text-muted-foreground" />
+                      {t("emailDeliveryLabel")}
+                    </p>
+                    {data.emailStats && data.recipients ? (
+                      <>
+                        <div className="mb-3 flex flex-wrap gap-3">
+                          {Object.entries(data.emailStats).map(
+                            ([status, count]) => (
+                              <div key={status} className="text-sm">
+                                <span className="font-semibold">{count}</span>{" "}
+                                <span className="text-muted-foreground">
+                                  {t(`emailStatus.${status}`)}
+                                </span>
+                              </div>
+                            )
+                          )}
+                          {data.recipients.length === 0 && (
+                            <p className="text-sm text-muted-foreground">
+                              {t("noEmailsSentYet")}
+                            </p>
+                          )}
+                        </div>
+                        {data.recipients.length > 0 && (
+                          <div className="max-h-72 space-y-1 overflow-y-auto">
+                            {data.recipients.map(r => (
+                              <div
+                                key={r.userId}
+                                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-accent"
+                              >
+                                <Avatar className="size-6">
+                                  <AvatarFallback className="text-[10px]">
+                                    {initials(r.name)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="min-w-0 flex-1 truncate">
+                                  {r.name}
+                                </span>
+                                <Badge variant="muted">
+                                  {t(`emailStatus.${r.status}`)}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        {t("emailNotSent")}
+                      </p>
+                    )}
+                  </PopoverContent>
+                </Popover>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={onDelete}
+                      aria-label={tc("delete")}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{tc("delete")}</TooltipContent>
+                </Tooltip>
               </div>
             )}
-          </section>
-        )}
+          </div>
+
+          <div className="mb-3 flex items-center gap-2">
+            <Badge variant={TYPE_BADGE_VARIANT[data.type]}>
+              <Icon className="size-3" />
+              {t(`type.${data.type}`)}
+            </Badge>
+            {data.scheduled && (
+              <Badge variant="outline">{t("scheduled")}</Badge>
+            )}
+          </div>
+
+          <h1 className="break-words font-display text-4xl font-extrabold tracking-tight md:text-5xl">
+            {data.title}
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {t("byline", {
+              author: data.authorName,
+              date: formatDateTime(data.publishedAt, locale),
+            })}
+          </p>
+
+          {data.type !== "changelog" && (
+            <div className="mt-6">
+              <StatusCard data={data} t={t} locale={locale} />
+            </div>
+          )}
+
+          <div className="mt-8 prose prose-sm max-w-none dark:prose-invert">
+            {data.bodyFormat === "richtext" ? (
+              <RichText html={data.body} />
+            ) : (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {data.body}
+              </ReactMarkdown>
+            )}
+          </div>
+
+          {data.type !== "changelog" && (
+            <section className="mt-8">
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("timelineLabel")}
+              </h2>
+              <ol className="space-y-4 border-l border-border pl-4">
+                {data.timeline.length === 0 && (
+                  <li className="text-sm text-muted-foreground">
+                    {t("noTimelineYet")}
+                  </li>
+                )}
+                {data.timeline.map((entry, i) => (
+                  <li key={i} className="relative">
+                    <span className="absolute -left-[1.1875rem] top-1 size-2 rounded-full bg-primary" />
+                    <div className="flex flex-wrap items-center gap-2">
+                      {entry.status && (
+                        <Badge variant="muted">
+                          {t(`status.${entry.status}`)}
+                        </Badge>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {formatDateTime(entry.at, locale)} · {entry.authorName}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm">{entry.message}</p>
+                  </li>
+                ))}
+              </ol>
+
+              {data.isAdmin && (
+                <div className="mt-5 space-y-2 rounded-xl border border-border/70 bg-card p-4">
+                  <Textarea
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    placeholder={t("postUpdatePlaceholder")}
+                    rows={2}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Select value={nextStatus} onValueChange={setNextStatus}>
+                      <SelectTrigger className="w-48">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">
+                          {t("noStatusChange")}
+                        </SelectItem>
+                        {statusesForType(data.type as UpdateType).map(s => (
+                          <SelectItem key={s} value={s}>
+                            {t(`status.${s}`)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      onClick={postTimelineEntry}
+                      disabled={posting || !message.trim()}
+                      className="ml-auto"
+                    >
+                      {t("postUpdate")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+        </div>
       </div>
     </>
   );
