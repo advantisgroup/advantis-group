@@ -171,7 +171,10 @@ export async function sendNotificationEmail(
   if (error) throw Errors.upstream(`Resend error: ${error.message}`);
 }
 
-const UPDATE_SUBJECT_PREFIX: Record<"incident" | "maintenance" | "changelog", string> = {
+const UPDATE_SUBJECT_PREFIX: Record<
+  "incident" | "maintenance" | "changelog",
+  string
+> = {
   incident: "Incident",
   maintenance: "Scheduled maintenance",
   changelog: "What's new",
@@ -205,11 +208,16 @@ export interface BroadcastResult extends BroadcastRecipient {
 
 /** Batch-sends the same update email to many recipients, chunked to Resend's 100-per-call cap. */
 export async function sendUpdateBroadcast(
-  update: { type: "incident" | "maintenance" | "changelog"; title: string; summary: string; url: string },
+  update: {
+    type: "incident" | "maintenance" | "changelog";
+    title: string;
+    summary: string;
+    url: string;
+  },
   updateId: string,
   recipients: BroadcastRecipient[]
 ): Promise<BroadcastResult[]> {
-  console.log(recipients)
+  console.log(recipients);
   const { subject, html } = renderUpdateEmail(update);
   const results: BroadcastResult[] = [];
   const CHUNK = 100;
@@ -233,7 +241,10 @@ export async function sendUpdateBroadcast(
         }))
       ));
     } catch (thrown) {
-      console.error(`[resend] batch send threw for update ${updateId}:`, thrown);
+      console.error(
+        `[resend] batch send threw for update ${updateId}:`,
+        thrown
+      );
       results.push(...chunk.map(r => ({ ...r, failed: true })));
       continue;
     }

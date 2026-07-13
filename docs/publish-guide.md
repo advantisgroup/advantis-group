@@ -50,19 +50,19 @@ without touching the UI.
 
 ### Frontmatter reference
 
-| Field             | Required | Notes                                                                 |
-| ------------------ | -------- | ---------------------------------------------------------------------- |
-| `type`             | yes      | `incident` \| `maintenance` \| `changelog`                             |
-| `slug`             | yes      | Stable id — re-running with the same slug patches, not duplicates.     |
-| `title`            | yes      | Short, specific.                                                       |
-| `summary`          | yes      | ~140 chars — this is the banner text.                                  |
-| `author`           | no       | Publishing user's email. Defaults to the first `ADMIN_EMAILS` entry.   |
-| `audience`         | no       | `all` (default) or `department:<Name>`.                                |
-| `affectedSystems`  | no       | YAML list, e.g. `[Files/OneDrive, Chat]`. Incident/maintenance only.   |
-| `status`           | no       | e.g. `investigating`, `scheduled`. Defaults per type.                  |
-| `startedAt`        | no       | ISO timestamp — maintenance window start. Defaults to publish time.    |
-| `publishAt`        | no       | ISO timestamp — schedules instead of publishing immediately.           |
-| `sendEmail`        | no       | `true` (default) or `false`.                                           |
+| Field             | Required | Notes                                                                |
+| ----------------- | -------- | -------------------------------------------------------------------- |
+| `type`            | yes      | `incident` \| `maintenance` \| `changelog`                           |
+| `slug`            | yes      | Stable id — re-running with the same slug patches, not duplicates.   |
+| `title`           | yes      | Short, specific.                                                     |
+| `summary`         | yes      | ~140 chars — this is the banner text.                                |
+| `author`          | no       | Publishing user's email. Defaults to the first `ADMIN_EMAILS` entry. |
+| `audience`        | no       | `all` (default) or `department:<Name>`.                              |
+| `affectedSystems` | no       | YAML list, e.g. `[Files/OneDrive, Chat]`. Incident/maintenance only. |
+| `status`          | no       | e.g. `investigating`, `scheduled`. Defaults per type.                |
+| `startedAt`       | no       | ISO timestamp — maintenance window start. Defaults to publish time.  |
+| `publishAt`       | no       | ISO timestamp — schedules instead of publishing immediately.         |
+| `sendEmail`       | no       | `true` (default) or `false`.                                         |
 
 Everything after the frontmatter is the body, rendered as GitHub-flavored
 markdown on the detail page.

@@ -31,7 +31,10 @@ const TRACKED_EVENT_TYPES = new Set([
   "email.delivery_delayed",
 ]);
 
-function tagValue(tags: ResendTag[] | undefined, name: string): string | undefined {
+function tagValue(
+  tags: ResendTag[] | undefined,
+  name: string
+): string | undefined {
   return tags?.find(t => t.name === name)?.value;
 }
 

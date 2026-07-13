@@ -60,11 +60,16 @@ async function resolveAudienceUserIds(
     .withIndex("by_status", q => q.eq("status", "active"))
     .collect();
 
-  console.log("all:", all.map(a => a._id))
+  console.log(
+    "all:",
+    all.map(a => a._id)
+  );
 
-  const filtered = all.filter(u => userMatchesAudience(u, audience)).map(u => u._id);
-  console.log("filtered:", filtered)
-  return filtered
+  const filtered = all
+    .filter(u => userMatchesAudience(u, audience))
+    .map(u => u._id);
+  console.log("filtered:", filtered);
+  return filtered;
 }
 
 /**
@@ -104,15 +109,19 @@ async function schedulePublishSideEffects(
 ): Promise<void> {
   const now = Date.now();
   if (update.publishedAt > now) {
-    console.log("scheduling publish")
-    await ctx.scheduler.runAt(update.publishedAt, internal.updates.publishScheduled, {
-      updateId: update._id,
-    });
+    console.log("scheduling publish");
+    await ctx.scheduler.runAt(
+      update.publishedAt,
+      internal.updates.publishScheduled,
+      {
+        updateId: update._id,
+      }
+    );
     return;
   }
-  console.log("sending publish")
-  const recipients = (await resolveAudienceUserIds(ctx, update.audience))
-  console.log("sending publish to", recipients)
+  console.log("sending publish");
+  const recipients = await resolveAudienceUserIds(ctx, update.audience);
+  console.log("sending publish to", recipients);
   await notifyUsers(ctx, recipients, {
     type: `update:${update.type}`,
     title: NOTIFY_TITLES[update.type],
@@ -120,16 +129,18 @@ async function schedulePublishSideEffects(
     link: `/updates/${update._id}`,
   });
   if (update.emailRequested) {
-    const res = await ctx.scheduler.runAfter(10000, internal.updatesEmail.sendBulk, {
-      updateId: update._id,
-    });
-    console.log("schedulePublishSideEffects", res)
+    const res = await ctx.scheduler.runAfter(
+      10000,
+      internal.updatesEmail.sendBulk,
+      {
+        updateId: update._id,
+      }
+    );
+    console.log("schedulePublishSideEffects", res);
   }
 }
 
-function defaultStatus(
-  type: Doc<"updates">["type"]
-): Doc<"updates">["status"] {
+function defaultStatus(type: Doc<"updates">["type"]): Doc<"updates">["status"] {
   if (type === "incident") return "investigating";
   if (type === "maintenance") return "scheduled";
   return undefined;
@@ -158,7 +169,8 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const author = await requireAdmin(ctx);
     const now = Date.now();
-    const publishedAt = args.publishAt && args.publishAt > now ? args.publishAt : now;
+    const publishedAt =
+      args.publishAt && args.publishAt > now ? args.publishAt : now;
     const id = await ctx.db.insert("updates", {
       type: args.type,
       title: args.title,
@@ -245,7 +257,8 @@ export const publishFromMarkdown = mutation({
       return { id: existing._id, updated: true };
     }
 
-    const publishedAt = args.publishAt && args.publishAt > now ? args.publishAt : now;
+    const publishedAt =
+      args.publishAt && args.publishAt > now ? args.publishAt : now;
     const id = await ctx.db.insert("updates", {
       type: args.type,
       slug: args.slug,
@@ -288,8 +301,12 @@ export const publishScheduled = internalMutation({
       link: `/updates/${updateId}`,
     });
     if (update.emailRequested) {
-      const res = await ctx.scheduler.runAfter(0, internal.updatesEmail.sendBulk, { updateId });
-      console.log("publishScheduled", res)
+      const res = await ctx.scheduler.runAfter(
+        0,
+        internal.updatesEmail.sendBulk,
+        { updateId }
+      );
+      console.log("publishScheduled", res);
     }
   },
 });
@@ -310,7 +327,12 @@ export const addTimelineEntry = mutation({
     const now = Date.now();
     const timeline = [
       ...(update.timeline ?? []),
-      { at: now, status: args.status, message: args.message, authorUserId: user._id },
+      {
+        at: now,
+        status: args.status,
+        message: args.message,
+        authorUserId: user._id,
+      },
     ];
     const patch: Record<string, unknown> = { timeline, updatedAt: now };
     if (args.status) {
@@ -378,7 +400,11 @@ export const remove = mutation({
 export const list = query({
   args: {
     type: v.optional(
-      v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog"))
+      v.union(
+        v.literal("incident"),
+        v.literal("maintenance"),
+        v.literal("changelog")
+      )
     ),
     status: v.optional(statusValidator),
     affectedSystem: v.optional(v.string()),
@@ -390,23 +416,27 @@ export const list = query({
     const now = Date.now();
     const rows = args.type
       ? await ctx.db
-        .query("updates")
-        .withIndex("by_type_publishedAt", q => q.eq("type", args.type!))
-        .order("desc")
-        .take(args.limit ?? 200)
+          .query("updates")
+          .withIndex("by_type_publishedAt", q => q.eq("type", args.type!))
+          .order("desc")
+          .take(args.limit ?? 200)
       : await ctx.db
-        .query("updates")
-        .withIndex("by_publishedAt")
-        .order("desc")
-        .take(args.limit ?? 200);
+          .query("updates")
+          .withIndex("by_publishedAt")
+          .order("desc")
+          .take(args.limit ?? 200);
 
     const search = args.search?.trim().toLowerCase();
     const isAdmin = user.role === "admin";
     const visible = rows.filter(u => {
       if (!userMatchesAudience(user, u.audience)) return false;
-      if (u.publishedAt > now && u.authorUserId !== user._id && !isAdmin) return false;
+      if (u.publishedAt > now && u.authorUserId !== user._id && !isAdmin)
+        return false;
       if (args.status && u.status !== args.status) return false;
-      if (args.affectedSystem && !(u.affectedSystems ?? []).includes(args.affectedSystem)) {
+      if (
+        args.affectedSystem &&
+        !(u.affectedSystems ?? []).includes(args.affectedSystem)
+      ) {
         return false;
       }
       if (
@@ -552,7 +582,8 @@ export const bannerActive = query({
       if (u.publishedAt > now) return false;
       if (!userMatchesAudience(user, u.audience)) return false;
       const dismissedRev = dismissedRevisionByUpdate.get(u._id);
-      if (dismissedRev !== undefined && u.revision <= dismissedRev) return false;
+      if (dismissedRev !== undefined && u.revision <= dismissedRev)
+        return false;
       if (u.type === "changelog") {
         return now - u.publishedAt <= CHANGELOG_BANNER_WINDOW_MS;
       }
@@ -606,7 +637,10 @@ export const dismissBanner = mutation({
       .first();
     const now = Date.now();
     if (existing) {
-      await ctx.db.patch(existing._id, { dismissedRevision: update.revision, dismissedAt: now });
+      await ctx.db.patch(existing._id, {
+        dismissedRevision: update.revision,
+        dismissedAt: now,
+      });
     } else {
       await ctx.db.insert("updateDismissals", {
         updateId,
@@ -677,9 +711,11 @@ export const recordEmailEvent = mutation({
 
     let row = args.resendEmailId
       ? await ctx.db
-        .query("updateEmailRecipients")
-        .withIndex("by_resendEmailId", q => q.eq("resendEmailId", args.resendEmailId))
-        .unique()
+          .query("updateEmailRecipients")
+          .withIndex("by_resendEmailId", q =>
+            q.eq("resendEmailId", args.resendEmailId)
+          )
+          .unique()
       : null;
     if (!row && args.updateId && args.userId) {
       row = await ctx.db
@@ -700,7 +736,10 @@ export const recordEmailEvent = mutation({
     };
     const nextStatus = statusByEvent[args.eventType];
     const patch: Record<string, unknown> = { lastEventAt: args.occurredAt };
-    if (nextStatus && EVENT_STATUS_RANK[nextStatus] >= EVENT_STATUS_RANK[row.status]) {
+    if (
+      nextStatus &&
+      EVENT_STATUS_RANK[nextStatus] >= EVENT_STATUS_RANK[row.status]
+    ) {
       patch.status = nextStatus;
       if (nextStatus === "delivered") patch.deliveredAt = args.occurredAt;
       if (nextStatus === "opened") patch.openedAt = args.occurredAt;

@@ -18,27 +18,45 @@ export type PersonRole = "admin" | "manager" | "employee";
  * they stop each showing a different subset of the same fields. Each caller
  * still owns its own layout/actions around this — only the identity badges
  * are shared.
+ *
+ * Department and team tags are capped at `maxTags` and collapsed into a
+ * "+N" badge beyond that, so the row stays a single line regardless of how
+ * many teams a person has — keeping card/row heights consistent.
  */
 export function PersonIdentityBadges({
   role,
   department,
   teams,
   className,
+  maxTags = 2,
 }: {
   role?: PersonRole;
   department?: string | null;
   teams?: readonly string[];
   className?: string;
+  maxTags?: number;
 }) {
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
+
+  const tags: { key: string; label: string; dotClassName?: string }[] = [];
+  if (department) tags.push({ key: `dept:${department}`, label: department });
+  for (const id of teams ?? []) {
+    tags.push({
+      key: id,
+      label: tTeams(teamLabelKey(id)),
+      dotClassName: teamColor(id),
+    });
+  }
+  const visibleTags = tags.slice(0, maxTags);
+  const hiddenCount = tags.length - visibleTags.length;
 
   return (
     <div className={className}>
       {role && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant="muted" className="cursor-help text-[10px]">
+            <Badge variant="muted" className="shrink-0 cursor-help text-[10px]">
               {tRoles(role)}
             </Badge>
           </TooltipTrigger>
@@ -47,17 +65,26 @@ export function PersonIdentityBadges({
           </TooltipContent>
         </Tooltip>
       )}
-      {department && (
-        <Badge variant="outline" className="text-[10px]">
-          {department}
-        </Badge>
-      )}
-      {teams?.map(id => (
-        <Badge key={id} variant="outline" className="gap-1 text-[10px]">
-          <span className={`size-1.5 rounded-full ${teamColor(id)}`} />
-          {tTeams(teamLabelKey(id))}
+      {visibleTags.map(tag => (
+        <Badge
+          key={tag.key}
+          variant="outline"
+          className="shrink-0 gap-1 text-[10px]"
+        >
+          {tag.dotClassName && (
+            <span className={`size-1.5 rounded-full ${tag.dotClassName}`} />
+          )}
+          {tag.label}
         </Badge>
       ))}
+      {hiddenCount > 0 && (
+        <Badge
+          variant="outline"
+          className="shrink-0 text-[10px] text-muted-foreground"
+        >
+          +{hiddenCount}
+        </Badge>
+      )}
     </div>
   );
 }
