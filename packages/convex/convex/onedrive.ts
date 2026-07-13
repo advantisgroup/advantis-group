@@ -4,11 +4,7 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalAction, mutation, query } from "./_generated/server";
-import {
-  getUserByClerkId,
-  requireCapability,
-  requireUser,
-} from "./lib/auth";
+import { getUserByClerkId, requireCapability, requireUser } from "./lib/auth";
 import { createNotification, notifyUsers } from "./lib/notify";
 
 /**
