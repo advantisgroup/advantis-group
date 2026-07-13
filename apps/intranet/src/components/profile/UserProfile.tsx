@@ -56,6 +56,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNow } from "@/lib/activity/useNow";
@@ -382,6 +387,7 @@ function AdminControls({
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
+  const tCustomRoles = useTranslations("CustomRoles");
   const me = useCurrentUser();
   const confirm = useConfirm();
   const setRole = useMutation(api.users.setRole);
@@ -465,8 +471,49 @@ function AdminControls({
       .catch(handleError);
   }
 
+  const hasCustomRole = Boolean(user.customRoleName);
+  const hasNamedPermissions = user.gfAccess || !user.uploadRequestsEnabled;
+
   return (
     <Section label={t("title")}>
+      {(hasCustomRole || hasNamedPermissions) && (
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          <span className="text-sm text-muted-foreground">
+            {t("permissions")}
+          </span>
+          {hasCustomRole && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="muted" className="cursor-help">
+                  {user.customRoleName}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {user.capabilities.length > 0
+                  ? user.capabilities
+                      .map(cap => tCustomRoles(`capability_${cap}`))
+                      .join(", ")
+                  : tCustomRoles("noCapabilities")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {user.gfAccess && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="muted" className="cursor-help">
+                  {t("gfBadge")}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {t("gfAccessTooltip")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {!user.uploadRequestsEnabled && (
+            <Badge variant="warning">{t("uploadsDisabled")}</Badge>
+          )}
+        </div>
+      )}
       <div className="space-y-3 rounded-lg border border-border/70 p-3">
         {isAdmin && !isSelf && (
           <div className="flex items-center justify-between gap-2">

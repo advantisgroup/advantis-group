@@ -702,6 +702,8 @@
     "revokeGf": "Geschäftsführungs-Zugriff entziehen",
     "grantGf": "Geschäftsführungs-Zugriff gewähren",
     "gfAccessTooltip": "Hat die Geschäftsführung-Freigabe — eine eigenständige OneDrive-Berechtigung, unabhängig von der Rolle.",
+    "permissions": "Berechtigungen:",
+    "gfBadge": "GF-Zugriff",
     "uploadsDisabled": "Upload-Anfragen gesperrt",
     "uploadsEnabled": "Upload-Anfragen erlaubt",
     "gfRevoked": "Geschäftsführungs-Zugriff entzogen",

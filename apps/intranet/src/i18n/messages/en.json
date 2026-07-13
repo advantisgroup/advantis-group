@@ -702,6 +702,8 @@
     "revokeGf": "Revoke Geschäftsführung access",
     "grantGf": "Grant Geschäftsführung access",
     "gfAccessTooltip": "Has the Geschäftsführung allowlist flag — an independent OneDrive permission, not part of their role.",
+    "permissions": "Permissions:",
+    "gfBadge": "GF access",
     "uploadsDisabled": "Upload requests blocked",
     "uploadsEnabled": "Upload requests allowed",
     "gfRevoked": "Geschäftsführung access revoked",
