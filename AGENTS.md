@@ -90,6 +90,17 @@ or embedding official logo assets — trademark usage has its own legal
 constraints beyond a copyright line, and no logo files exist in this repo
 today (`apps/intranet/public/` only has Advantis's own logos).
 
+## Publishing Updates (incidents / maintenance / changelog)
+
+The intranet's global banner + `/updates` feed can be published from a
+markdown file — useful for an agent shipping a change worth announcing. See
+[`docs/publish-guide.md`](./docs/publish-guide.md) for the full how-to
+(frontmatter reference, required env, the `bun run updates:publish` script)
+and [`docs/writing-good-updates.md`](./docs/writing-good-updates.md) for
+what makes a good title/summary/body. `docs/` is where agent- and
+human-facing docs for this repo live going forward — add new ones there
+rather than growing this file further.
+
 ## Convex preview deployments
 
 `scripts/vercel-preview-convex-build.sh` claims a Convex preview deployment

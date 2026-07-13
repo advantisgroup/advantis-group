@@ -381,6 +381,110 @@ export default defineSchema({
     .index("by_announcement", ["announcementId"])
     .index("by_announcement_user", ["announcementId", "userId"]),
 
+  // --- Updates (incidents / maintenance / changelog) ------------------------
+  updates: defineTable({
+    type: v.union(
+      v.literal("incident"),
+      v.literal("maintenance"),
+      v.literal("changelog")
+    ),
+    /** Set by the markdown publish pipeline for idempotent upsert-by-slug. */
+    slug: v.optional(v.string()),
+    title: v.string(),
+    /** Banner text + list excerpt, ~140 chars. */
+    summary: v.string(),
+    bodyFormat: v.union(v.literal("richtext"), v.literal("markdown")),
+    /** Sanitized HTML (richtext) or raw markdown, depending on bodyFormat. */
+    body: v.string(),
+    authorUserId: v.id("users"),
+    audience: audienceValidator,
+    /** Visible to temporary guest logins on the curated tour. */
+    guestVisible: v.optional(v.boolean()),
+    /** Free-text tags, optionally drawn from a predefined list in the UI. */
+    affectedSystems: v.optional(v.array(v.string())),
+    status: v.optional(
+      v.union(
+        // incident
+        v.literal("investigating"),
+        v.literal("identified"),
+        v.literal("monitoring"),
+        v.literal("resolved"),
+        // maintenance
+        v.literal("scheduled"),
+        v.literal("in_progress"),
+        v.literal("completed"),
+        v.literal("cancelled")
+      )
+    ),
+    timeline: v.optional(
+      v.array(
+        v.object({
+          at: v.number(),
+          status: v.optional(v.string()),
+          message: v.string(),
+          authorUserId: v.id("users"),
+        })
+      )
+    ),
+    /** Incident/maintenance start, or the changelog's release date. */
+    startedAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+    /** Bumped on every status-changing timeline post; drives dismissal re-surfacing. */
+    revision: v.number(),
+    /** May be in the future (scheduled publish) — hidden from non-authors until then. */
+    publishedAt: v.number(),
+    /** Author's "email everyone" choice at publish time. */
+    emailRequested: v.boolean(),
+    emailSentAt: v.optional(v.number()),
+    source: v.union(v.literal("ui"), v.literal("markdown")),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_publishedAt", ["publishedAt"])
+    .index("by_type_publishedAt", ["type", "publishedAt"])
+    .index("by_slug", ["slug"]),
+
+  /**
+   * Per-user banner dismissals. `dismissedRevision` lets a status-changing
+   * timeline post (which bumps `updates.revision`) re-surface the banner for
+   * someone who already dismissed an earlier state, without a plain edit
+   * (e.g. a typo fix) doing the same.
+   */
+  updateDismissals: defineTable({
+    updateId: v.id("updates"),
+    userId: v.id("users"),
+    dismissedRevision: v.number(),
+    dismissedAt: v.number(),
+  })
+    .index("by_update_user", ["updateId", "userId"])
+    .index("by_user", ["userId"]),
+
+  /** Per-recipient Resend delivery/open/click tracking for an update's email blast. */
+  updateEmailRecipients: defineTable({
+    updateId: v.id("updates"),
+    userId: v.id("users"),
+    email: v.string(),
+    resendEmailId: v.optional(v.string()),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("sent"),
+      v.literal("delivered"),
+      v.literal("opened"),
+      v.literal("clicked"),
+      v.literal("bounced"),
+      v.literal("complained"),
+      v.literal("failed")
+    ),
+    sentAt: v.optional(v.number()),
+    deliveredAt: v.optional(v.number()),
+    openedAt: v.optional(v.number()),
+    clickedAt: v.optional(v.number()),
+    lastEventAt: v.optional(v.number()),
+  })
+    .index("by_update", ["updateId"])
+    .index("by_resendEmailId", ["resendEmailId"])
+    .index("by_update_user", ["updateId", "userId"]),
+
   // --- Chat ----------------------------------------------------------------
   conversations: defineTable({
     type: v.union(v.literal("dm"), v.literal("group")),

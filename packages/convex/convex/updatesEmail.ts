@@ -1,0 +1,76 @@
+import { v } from "convex/values";
+
+import { internal } from "./_generated/api";
+import { type Id } from "./_generated/dataModel";
+import { internalAction } from "./_generated/server";
+import { type Audience, userMatchesAudience } from "./lib/audience";
+
+/**
+ * Hands the company-wide email blast for a published update off to the
+ * Elysia API (api.advantisgroup.de), which owns Resend — same
+ * Convex-never-calls-Resend-directly convention as outbound.ts. Safe no-op
+ * when the API isn't configured (e.g. local dev without the API running).
+ */
+export const sendBulk = internalAction({
+  args: { updateId: v.id("updates") },
+  handler: async (ctx, { updateId }) => {
+    const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
+    const serverKey = process.env.CONVEX_SERVER_KEY;
+    if (!baseUrl || !serverKey) {
+      console.warn(
+        `[updatesEmail] skipping bulk send for ${updateId} — API_URL/CONVEX_SERVER_KEY not set`
+      );
+      return { sent: false };
+    }
+
+    const update = await ctx.runQuery(internal.updatesInternal.getForEmail, { updateId });
+    if (!update) return { sent: false };
+
+    const users = await ctx.runQuery(internal.updatesInternal.listActiveUsers, {});
+    const recipients = users
+      .filter(u => userMatchesAudience(u, update.audience as Audience) && u._id !== update.authorUserId)
+      .map(u => ({ userId: u._id, email: u.email }));
+    if (recipients.length === 0) return { sent: false };
+
+    const internalUrl = process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
+    try {
+      const res = await fetch(`${baseUrl}/internal/updates/broadcast`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-convex-server-key": serverKey,
+        },
+        body: JSON.stringify({
+          updateId,
+          type: update.type,
+          title: update.title,
+          summary: update.summary,
+          url: `${internalUrl}/updates/${updateId}`,
+          recipients,
+        }),
+      });
+      if (!res.ok) {
+        console.error(
+          `[updatesEmail] broadcast failed: ${res.status} ${await res.text()}`
+        );
+        return { sent: false };
+      }
+      const { results } = (await res.json()) as {
+        results: { userId: string; email: string; resendEmailId?: string; failed?: boolean }[];
+      };
+      await ctx.runMutation(internal.updates.recordEmailSendResults, {
+        updateId,
+        results: results.map(r => ({
+          userId: r.userId as Id<"users">,
+          email: r.email,
+          resendEmailId: r.resendEmailId,
+          failed: r.failed,
+        })),
+      });
+      return { sent: true };
+    } catch (error) {
+      console.error(`[updatesEmail] broadcast error:`, error);
+      return { sent: false };
+    }
+  },
+});

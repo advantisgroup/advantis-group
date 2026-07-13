@@ -22,7 +22,8 @@
     "files": "Files",
     "integrations": "Integrations",
     "privacy": "Privacy",
-    "terms": "Terms"
+    "terms": "Terms",
+    "updates": "Updates"
   },
   "Common": {
     "save": "Save",
@@ -1313,47 +1314,89 @@
     "cancel": "Cancel",
     "loading": "Loading…"
   },
-  "WhatsNew": {
-    "title": "What's new in the intranet",
-    "intro": "Every tab got a big upgrade. Here are the highlights — click one to try it.",
-    "dismiss": "Got it",
-    "items": {
-      "dashboard": {
-        "title": "Dashboard",
-        "body": "Who's-out-today card, quick actions, inline approvals, and hideable cards."
-      },
-      "absences": {
-        "title": "Absences",
-        "body": "Clockodo absences sync in automatically; edit pending requests, filters, stats and .ics export."
-      },
-      "calendar": {
-        "title": "Calendar",
-        "body": "Edit and duplicate events, interactive filters, week numbers, keyboard navigation and export."
-      },
-      "announcements": {
-        "title": "Announcements",
-        "body": "Schedule posts, edit after publishing, drafts, search and read statistics."
-      },
-      "directory": {
-        "title": "Directory",
-        "body": "Online status, who's out, manager & direct reports, and richer filters."
-      },
-      "files": {
-        "title": "Files",
-        "body": "Grid view, sorting, pinned folders, bulk download/delete and an upload queue."
-      },
-      "guidebooks": {
-        "title": "Guidebooks",
-        "body": "Search, favorites, table of contents, reading progress and feedback."
-      },
-      "notifications": {
-        "title": "Notifications",
-        "body": "Day grouping, per-type mutes, mark-unread/dismiss and browser notifications."
-      },
-      "settings": {
-        "title": "Settings",
-        "body": "Avatar cropping, app preferences (start page, calendar view), and your integration links."
-      }
+  "Updates": {
+    "title": "Updates",
+    "description": "Incidents, scheduled maintenance and what's new — all in one place.",
+    "more": "more",
+    "dismiss": "Dismiss",
+    "newUpdate": "New update",
+    "newUpdateDescription": "Publish an incident, scheduled maintenance window, or changelog entry.",
+    "tabAll": "All",
+    "tabIncident": "Incidents",
+    "tabMaintenance": "Maintenance",
+    "tabChangelog": "Changelog",
+    "searchPlaceholder": "Search updates…",
+    "allStatuses": "All statuses",
+    "allSystems": "All systems",
+    "emptyTitle": "No updates yet",
+    "emptyDescription": "Incidents, maintenance windows and changelog entries will show up here.",
+    "scheduled": "Scheduled",
+    "ongoingFor": "Ongoing for {duration}",
+    "resolvedAfter": "Resolved after {duration}",
+    "backToList": "Back to updates",
+    "byline": "Posted by {author} · {date}",
+    "deleteConfirm": "Delete this update?",
+    "deleted": "Update deleted",
+    "statusLabel": "Status",
+    "durationLabel": "Duration",
+    "startedLabel": "Started",
+    "resolvedLabel": "Resolved",
+    "ongoing": "Ongoing",
+    "affectedSystemsLabel": "Affected systems",
+    "timelineLabel": "Timeline",
+    "noTimelineYet": "No updates posted yet.",
+    "postUpdatePlaceholder": "Post a status update…",
+    "postUpdate": "Post update",
+    "timelinePosted": "Update posted",
+    "noStatusChange": "No status change",
+    "emailDeliveryLabel": "Email delivery",
+    "emailNotSent": "not emailed",
+    "emailRequested": "Email requested",
+    "noEmailsSentYet": "No emails sent yet.",
+    "typeLabel": "Type",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Short, specific title",
+    "summaryLabel": "Summary",
+    "summaryPlaceholder": "One or two sentences — this is what shows in the banner.",
+    "bodyLabel": "Details",
+    "switchToMarkdown": "Switch to markdown",
+    "switchToRichText": "Switch to rich text",
+    "markdownPlaceholder": "Write the full update in markdown…",
+    "addSystem": "Add",
+    "customSystemPlaceholder": "Add another system…",
+    "audienceLabel": "Audience",
+    "everyone": "Everyone",
+    "startedAtLabel": "Maintenance window starts",
+    "publishAtLabel": "Publish at (leave blank to publish now)",
+    "emailEveryoneLabel": "Email everyone when this is published",
+    "publish": "Publish",
+    "schedule": "Schedule",
+    "published": "Published",
+    "fillRequiredFields": "Please fill in the title, summary and body.",
+    "type": {
+      "incident": "Incident",
+      "maintenance": "Maintenance",
+      "changelog": "Changelog"
+    },
+    "status": {
+      "investigating": "Investigating",
+      "identified": "Identified",
+      "monitoring": "Monitoring",
+      "resolved": "Resolved",
+      "scheduled": "Scheduled",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "emailStatus": {
+      "queued": "queued",
+      "sent": "sent",
+      "delivered": "delivered",
+      "opened": "opened",
+      "clicked": "clicked",
+      "bounced": "bounced",
+      "complained": "complained",
+      "failed": "failed"
     }
   },
   "AccessDenied": {

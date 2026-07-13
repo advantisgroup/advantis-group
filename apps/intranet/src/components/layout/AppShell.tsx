@@ -23,12 +23,12 @@ import { TourPopout } from "@/components/tour/TourPopout";
 import { TourProgressChip } from "@/components/tour/TourProgressChip";
 import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
+import { UpdateBanner } from "@/components/updates/UpdateBanner";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { WhatsNewDialog } from "@/components/WhatsNewDialog";
 import { cn } from "@/lib/utils";
 
 /**
@@ -119,6 +119,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
             immersive ? "pb-6" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
           )}
         >
+          {/* Non-sticky — scrolls away with the rest of the page content. */}
+          {!immersive && <UpdateBanner />}
           {/* Isolate page crashes so the surrounding shell stays usable.
               Keyed by route so navigating away clears a previous error. */}
           <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
@@ -131,7 +133,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
       <StartPageRedirect />
-      <WhatsNewDialog />
 
       {/* Tour UI layers (portal-based, fixed position) */}
       <TourOverlay targetRect={targetRect} visible={tourActive} />

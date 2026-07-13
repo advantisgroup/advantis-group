@@ -167,3 +167,70 @@ export async function sendNotificationEmail(
   });
   if (error) throw Errors.upstream(`Resend error: ${error.message}`);
 }
+
+const UPDATE_SUBJECT_PREFIX: Record<"incident" | "maintenance" | "changelog", string> = {
+  incident: "🔴 Incident",
+  maintenance: "🛠 Scheduled maintenance",
+  changelog: "📣 What's new",
+};
+
+export function renderUpdateEmail(update: {
+  type: "incident" | "maintenance" | "changelog";
+  title: string;
+  summary: string;
+  url: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `${UPDATE_SUBJECT_PREFIX[update.type]}: ${update.title}`,
+    html: layout(
+      update.title,
+      `<p style="margin:0 0 24px;line-height:1.6">${update.summary}</p>
+       ${button(update.url, "Read the full update")}`
+    ),
+  };
+}
+
+export interface BroadcastRecipient {
+  userId: string;
+  email: string;
+}
+
+export interface BroadcastResult extends BroadcastRecipient {
+  resendEmailId?: string;
+  failed?: boolean;
+}
+
+/** Batch-sends the same update email to many recipients, chunked to Resend's 100-per-call cap. */
+export async function sendUpdateBroadcast(
+  update: { type: "incident" | "maintenance" | "changelog"; title: string; summary: string; url: string },
+  updateId: string,
+  recipients: BroadcastRecipient[]
+): Promise<BroadcastResult[]> {
+  const { subject, html } = renderUpdateEmail(update);
+  const results: BroadcastResult[] = [];
+  const CHUNK = 100;
+  for (let i = 0; i < recipients.length; i += CHUNK) {
+    const chunk = recipients.slice(i, i + CHUNK);
+    const { data, error } = await getResend().batch.send(
+      chunk.map(r => ({
+        from: FROM,
+        to: r.email,
+        subject,
+        html,
+        tags: [
+          { name: "update_id", value: updateId },
+          { name: "user_id", value: r.userId },
+        ],
+      }))
+    );
+    if (error || !data) {
+      console.error(`[resend] batch send failed:`, error);
+      results.push(...chunk.map(r => ({ ...r, failed: true })));
+      continue;
+    }
+    data.data.forEach((sent, idx) => {
+      results.push({ ...chunk[idx], resendEmailId: sent.id });
+    });
+  }
+  return results;
+}
