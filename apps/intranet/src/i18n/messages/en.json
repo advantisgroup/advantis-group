@@ -1366,6 +1366,8 @@
     "emailNotSent": "not emailed",
     "emailRequested": "Email requested",
     "noEmailsSentYet": "No emails sent yet.",
+    "downloadArt": "Download artwork",
+    "downloadArtError": "Could not generate the image",
     "typeLabel": "Type",
     "titleLabel": "Title",
     "titlePlaceholder": "Short, specific title",

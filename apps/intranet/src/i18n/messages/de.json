@@ -1366,6 +1366,8 @@
     "emailNotSent": "nicht per E-Mail versendet",
     "emailRequested": "E-Mail angefordert",
     "noEmailsSentYet": "Noch keine E-Mails versendet.",
+    "downloadArt": "Grafik herunterladen",
+    "downloadArtError": "Bild konnte nicht erstellt werden",
     "typeLabel": "Typ",
     "titleLabel": "Titel",
     "titlePlaceholder": "Kurzer, konkreter Titel",
