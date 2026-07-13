@@ -62,10 +62,8 @@
     "upcomingEvents": "Upcoming events",
     "latestAnnouncements": "Latest announcements",
     "unreadChats": "Unread messages",
-    "pendingApprovals": "Pending approvals",
     "noEvents": "No upcoming events",
     "noAnnouncements": "No announcements",
-    "noApprovals": "Nothing waiting for approval",
     "noUnread": "You're all caught up",
     "greetingMorning": "Good morning, {name}",
     "greetingAfternoon": "Good afternoon, {name}",
@@ -76,15 +74,13 @@
     "outUntil": "until {date}",
     "todaysSchedule": "Today's schedule",
     "customize": "Customize cards",
-    "actionRequestAbsence": "Request absence",
     "actionNewEvent": "New event",
     "actionNewAnnouncement": "New announcement",
     "actionUpload": "Upload file",
     "paletteHint": "Press ⌘K to search",
     "openCalendar": "Open calendar",
     "openAnnouncements": "Open announcements",
-    "openChat": "Open chat",
-    "openAbsences": "Open absences"
+    "openChat": "Open chat"
   },
   "Calendar": {
     "title": "Calendar",
@@ -126,35 +122,20 @@
   },
   "Absences": {
     "title": "Absences",
-    "myRequests": "My absences",
-    "newRequest": "Request absence",
-    "newRequestHint": "Submit time off for approval. Your manager will be notified.",
-    "approvals": "Approvals",
-    "type": "Type",
     "vacation": "Vacation",
     "sick": "Sick",
     "personal": "Personal",
     "other": "Other",
-    "start": "Start date",
-    "end": "End date",
-    "halfDay": "Half day",
     "reason": "Reason",
     "status": "Status",
     "pending": "Pending",
     "approved": "Approved",
     "denied": "Denied",
     "cancelled": "Cancelled",
-    "approve": "Approve",
-    "deny": "Deny",
-    "cancelRequest": "Cancel",
     "managedInClockodo": "Managed in Clockodo",
     "source": "Source",
-    "noPending": "No pending requests",
     "noAbsences": "No absences yet",
-    "subtitle": "Request time off and track approvals.",
-    "editRequest": "Edit request",
-    "requestUpdated": "Request updated",
-    "overlapWarning": "This range overlaps one of your existing absences.",
+    "subtitle": "Synced from Clockodo — read-only here.",
     "workingDaysLabel": "{count, plural, one {# working day} other {# working days}}",
     "statsVacation": "Vacation days {year}",
     "statsSick": "Sick days {year}",
@@ -167,9 +148,6 @@
     "syncedJustNow": "Clockodo synced just now",
     "whosOut": "Out in the next 14 days",
     "nobodyOut": "Nobody is scheduled out in the next 14 days.",
-    "denyTitle": "Deny request",
-    "denyHint": "Optionally add a note for {name}.",
-    "note": "Note",
     "decisionNoteLabel": "Reviewer note",
     "requested": "Requested",
     "approvedBy": "Approved by {name}",
@@ -420,11 +398,11 @@
         },
         "actions": {
           "title": "Quick actions",
-          "description": "Jump straight into the things you do most — request an absence, upload a file, or (as a manager) create events and announcements. On desktop, ⌘K opens the search palette from anywhere."
+          "description": "Jump straight into the things you do most — upload a file, or (as a manager) create events and announcements. On desktop, ⌘K opens the search palette from anywhere."
         },
         "main": {
           "title": "Your dashboard",
-          "description": "A snapshot of what's happening — upcoming events, latest news, who's out today, and pending items. Every row links to the tab it came from."
+          "description": "A snapshot of what's happening — upcoming events, latest news, and who's out today. Every row links to the tab it came from."
         },
         "customize": {
           "title": "Make it yours",
@@ -476,10 +454,6 @@
           "title": "Absences",
           "description": "Request and track vacation, sick days, and personal time."
         },
-        "request": {
-          "title": "Request time off",
-          "description": "Create a new absence request — pick the type, the dates, and an optional note for your approver. You'll see the working-day count and a warning if the range overlaps an existing absence."
-        },
         "stats": {
           "title": "Your year at a glance",
           "description": "Vacation days used, sick days, and open requests for the current year, calculated from your approved absences."
@@ -489,12 +463,8 @@
           "description": "Narrow the list by status or type. Below, everything is grouped by year — click any entry for its full timeline."
         },
         "list": {
-          "title": "Your absence requests",
-          "description": "Track approval status here. Pending requests can still be edited or cancelled; absences synced from Clockodo are read-only and marked with a badge."
-        },
-        "approvals": {
-          "title": "Team approvals",
-          "description": "Requests from your reports land in this tab. Approve or deny them (optionally with a note), and see who on the team is out over the next two weeks."
+          "title": "Your absences",
+          "description": "Everything here is synced from Clockodo and read-only — approve, deny, or edit time off there. Managers also see who on the team is out over the next two weeks."
         }
       },
       "chat": {
@@ -1131,7 +1101,6 @@
     "noResults": "No results found",
     "hint": "Search",
     "actions": "Actions",
-    "actionNewAbsence": "Request absence",
     "actionNewEvent": "New event",
     "actionNewAnnouncement": "New announcement",
     "actionUpload": "Upload file"
