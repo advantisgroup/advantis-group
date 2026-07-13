@@ -5,14 +5,13 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +20,13 @@ import {
   useConfirm,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { cn } from "@/lib/utils";
 
 const CAPABILITIES = [
   "manage_members",
@@ -78,15 +83,44 @@ function RoleForm({
           <p className="text-xs font-medium text-muted-foreground">
             {t("capabilities")}
           </p>
-          {CAPABILITIES.map(cap => (
-            <label key={cap} className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={capabilities.includes(cap)}
-                onCheckedChange={() => toggle(cap)}
-              />
-              {t(`capability_${cap}`)}
-            </label>
-          ))}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {CAPABILITIES.map(cap => {
+              const checked = capabilities.includes(cap);
+              return (
+                <button
+                  key={cap}
+                  type="button"
+                  aria-pressed={checked}
+                  onClick={() => toggle(cap)}
+                  className={cn(
+                    "flex items-start gap-2 rounded-lg border p-3 text-left transition-colors",
+                    checked
+                      ? "border-primary bg-primary/5"
+                      : "border-border/70 hover:border-border"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border",
+                      checked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/40"
+                    )}
+                  >
+                    {checked && <Check className="size-3" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium leading-snug">
+                      {t(`capability_${cap}`)}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {t(`capability_${cap}_desc`)}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
       <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
@@ -148,8 +182,22 @@ export function CustomRolesPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-md text-sm text-muted-foreground">
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
           {t("description")}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("descriptionDetail")}
+                className="inline-flex text-muted-foreground transition-colors hover:text-fg focus-visible:text-fg focus:outline-none"
+              >
+                <Info className="size-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs leading-relaxed">
+              {t("descriptionDetail")}
+            </TooltipContent>
+          </Tooltip>
         </p>
         <Button
           size="sm"
@@ -218,7 +266,7 @@ export function CustomRolesPanel() {
         open={editing !== null}
         onOpenChange={open => !open && setEditing(null)}
       >
-        <DialogContent className="max-w-md gap-0 p-0">
+        <DialogContent className="max-w-lg gap-0 p-0">
           {editing && (
             <RoleForm
               key={editing._id ?? "new"}

@@ -4,7 +4,7 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalAction, mutation, query } from "./_generated/server";
-import { getUserByClerkId, requireManager, requireUser } from "./lib/auth";
+import { getUserByClerkId, requireCapability, requireUser } from "./lib/auth";
 import { createNotification, notifyUsers } from "./lib/notify";
 
 /**
@@ -422,11 +422,14 @@ export const apiClearTeamAccess = mutation({
 // Client-facing — Clerk authenticated
 // ===========================================================================
 
-/** Pending approval queue for the admin panel (newest first). Manager+. */
+/**
+ * Pending approval queue for the admin panel (newest first). Manager+, or an
+ * employee whose custom role grants `manage_uploads`.
+ */
 export const listPending = query({
   args: {},
   handler: async ctx => {
-    await requireManager(ctx);
+    await requireCapability(ctx, "manage_uploads");
     const rows = await ctx.db
       .query("onedriveUploads")
       .withIndex("by_status", q => q.eq("status", "pending"))
@@ -461,11 +464,14 @@ export const myUploads = query({
   },
 });
 
-/** OneDrive audit feed (who did what), newest first. Manager+. */
+/**
+ * OneDrive audit feed (who did what), newest first. Manager+, or an employee
+ * whose custom role grants `manage_uploads`.
+ */
 export const auditFeed = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    await requireManager(ctx);
+    await requireCapability(ctx, "manage_uploads");
     const rows = await ctx.db
       .query("onedriveAudit")
       .withIndex("by_at")
