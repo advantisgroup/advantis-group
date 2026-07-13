@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useNow } from "@/lib/activity/useNow";
 import { formatDateTime, initials } from "@/lib/format";
 import {
   formatDuration,
@@ -71,7 +72,7 @@ function StatusCard({
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
-  const now = Date.now();
+  const now = useNow();
   const startedAt = data.startedAt ?? data.publishedAt;
   const durationMs = (data.resolvedAt ?? now) - startedAt;
   return (
