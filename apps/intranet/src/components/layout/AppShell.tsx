@@ -88,6 +88,15 @@ function AppShellInner({ children }: { children: ReactNode }) {
     pathname === "/updates" ||
     (pathname.startsWith("/updates/") && pathname !== "/updates/new");
 
+  // The detail page renders its own full-bleed art banner flush against
+  // <main>'s edges, so <main> drops its own padding here and the page
+  // supplies padding itself around everything below the banner. (A
+  // negative-margin "breakout" doesn't work: overflow-y-auto forces
+  // overflow-x to compute to auto too, per the CSS overflow spec, so any
+  // content pushed past <main>'s padding box gets clipped right back to it.)
+  const isUpdateDetail =
+    pathname.startsWith("/updates/") && pathname !== "/updates/new";
+
   // Keep presence fresh while the app is open so chat can show online state.
   useEffect(() => {
     void heartbeat({});
@@ -139,7 +148,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <main
           ref={mainRef}
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto px-4 pt-6 print:overflow-visible md:px-8 md:pt-8 md:pb-8",
+            "min-h-0 flex-1 overflow-y-auto print:overflow-visible md:pb-8",
+            isUpdateDetail ? "" : "px-4 pt-6 md:px-8 md:pt-8",
             immersive ? "pb-6" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
           )}
         >

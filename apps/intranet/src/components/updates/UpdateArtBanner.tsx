@@ -41,13 +41,11 @@ const PALETTES: Record<
   },
 };
 
-interface ArtNode {
-  x: number;
-  y: number;
-  r: number;
-}
+const STYLES = ["constellation", "contours", "halftone", "orbits"] as const;
+type ArtStyle = (typeof STYLES)[number];
 
-interface Art {
+interface BaseArt {
+  style: ArtStyle;
   bgFrom: string;
   bgTo: string;
   glow: string;
@@ -55,9 +53,30 @@ interface Art {
   glowCx: number;
   glowCy: number;
   glowR: number;
-  nodes: ArtNode[];
+}
+
+interface ConstellationArt extends BaseArt {
+  style: "constellation";
+  nodes: { x: number; y: number; r: number }[];
   edges: [number, number][];
 }
+
+interface ContoursArt extends BaseArt {
+  style: "contours";
+  lines: { d: string; opacity: number; width: number }[];
+}
+
+interface HalftoneArt extends BaseArt {
+  style: "halftone";
+  dots: { x: number; y: number; r: number; opacity: number }[];
+}
+
+interface OrbitsArt extends BaseArt {
+  style: "orbits";
+  rings: { d: string; opacity: number; width: number }[];
+}
+
+type Art = ConstellationArt | ContoursArt | HalftoneArt | OrbitsArt;
 
 /** FNV-1a — cheap, deterministic, good enough spread for a seeded PRNG. */
 function hashSeed(seed: string): number {
@@ -80,25 +99,35 @@ function mulberry32(seed: number) {
   };
 }
 
-/** Deterministic per-update "constellation" — same update always renders the same art. */
-function buildArt(seed: string, type: UpdateType): Art {
-  const rand = mulberry32(hashSeed(`${type}:${seed}`));
-  const palette = PALETTES[type];
+/** Smooth open path through a point list (quadratic-through-midpoints). */
+function smoothPath(points: [number, number][]): string {
+  if (points.length < 2) return "";
+  let d = `M ${points[0][0]} ${points[0][1]}`;
+  for (let i = 1; i < points.length; i++) {
+    const [x0, y0] = points[i - 1];
+    const [x1, y1] = points[i];
+    d += ` Q ${x0} ${y0} ${(x0 + x1) / 2} ${(y0 + y1) / 2}`;
+  }
+  const [lx, ly] = points[points.length - 1];
+  d += ` L ${lx} ${ly}`;
+  return d;
+}
 
-  const focalX = VIEW_W * (0.42 + rand() * 0.4);
-  const focalY = VIEW_H * (0.28 + rand() * 0.32);
-
+function buildConstellation(
+  rand: () => number,
+  focalX: number,
+  focalY: number
+): Pick<ConstellationArt, "nodes" | "edges"> {
   const nodeCount = 6 + Math.floor(rand() * 4);
-  const nodes: ArtNode[] = Array.from({ length: nodeCount }, () => {
+  const nodes = Array.from({ length: nodeCount }, () => {
     const angle = rand() * Math.PI * 2;
-    const dist = 36 + rand() * 230;
+    const dist = 36 + rand() * 200;
     return {
       x: focalX + Math.cos(angle) * dist,
       y: focalY + Math.sin(angle) * dist * 0.55,
       r: 2.5 + rand() * 4.5,
     };
   });
-
   const edges: [number, number][] = [];
   for (let i = 1; i < nodes.length; i++) {
     edges.push([i, Math.floor(rand() * i)]);
@@ -109,18 +138,200 @@ function buildArt(seed: string, type: UpdateType): Art {
     const b = Math.floor(rand() * nodes.length);
     if (a !== b) edges.push([a, b]);
   }
+  return { nodes, edges };
+}
 
-  return {
+function buildContours(rand: () => number): Pick<ContoursArt, "lines"> {
+  const lineCount = 5 + Math.floor(rand() * 4);
+  const lines = Array.from({ length: lineCount }, (_, i) => {
+    const baseY = 20 + ((VIEW_H - 40) * i) / (lineCount - 1);
+    const amp = 16 + rand() * 46;
+    const phase = rand() * Math.PI * 2;
+    const freq = 1 + rand() * 1.4;
+    const segs = 7;
+    const points: [number, number][] = Array.from(
+      { length: segs + 1 },
+      (_, s) => {
+        const x = (VIEW_W / segs) * s;
+        const y = baseY + Math.sin(phase + s * freq) * amp;
+        return [x, y];
+      }
+    );
+    return {
+      d: smoothPath(points),
+      opacity: 0.14 + rand() * 0.3,
+      width: 1 + rand() * 1.6,
+    };
+  });
+  return { lines };
+}
+
+function buildHalftone(
+  rand: () => number,
+  focalX: number,
+  focalY: number
+): Pick<HalftoneArt, "dots"> {
+  const spacing = 38 + rand() * 14;
+  const maxDist = 560;
+  const dots: HalftoneArt["dots"] = [];
+  for (let gy = spacing / 2; gy < VIEW_H; gy += spacing) {
+    for (let gx = spacing / 2; gx < VIEW_W; gx += spacing) {
+      const dist = Math.hypot(gx - focalX, gy - focalY);
+      const falloff = Math.max(0, 1 - dist / maxDist);
+      if (falloff < 0.05) continue;
+      const jitter = spacing * 0.18;
+      dots.push({
+        x: gx + (rand() - 0.5) * jitter,
+        y: gy + (rand() - 0.5) * jitter,
+        r: 0.8 + falloff * falloff * 6.5 * (0.6 + rand() * 0.7),
+        opacity: 0.2 + falloff * 0.55,
+      });
+    }
+  }
+  return { dots };
+}
+
+function buildOrbits(
+  rand: () => number,
+  focalX: number,
+  focalY: number
+): Pick<OrbitsArt, "rings"> {
+  const count = 4 + Math.floor(rand() * 4);
+  const rings = Array.from({ length: count }, (_, i) => {
+    const r = 46 + i * (26 + rand() * 22);
+    const start = rand() * Math.PI * 2;
+    const sweep = Math.PI * (0.45 + rand() * 1.15);
+    const end = start + sweep;
+    const x1 = focalX + Math.cos(start) * r;
+    const y1 = focalY + Math.sin(start) * r * 0.62;
+    const x2 = focalX + Math.cos(end) * r;
+    const y2 = focalY + Math.sin(end) * r * 0.62;
+    const largeArc = sweep > Math.PI ? 1 : 0;
+    return {
+      d: `M ${x1} ${y1} A ${r} ${r * 0.62} 0 ${largeArc} 1 ${x2} ${y2}`,
+      opacity: 0.16 + rand() * 0.32,
+      width: 1 + rand() * 1.8,
+    };
+  });
+  return { rings };
+}
+
+/**
+ * Deterministic per-update artwork — same update always renders the same
+ * piece (effectively generated once, on publish) without needing to store
+ * an image anywhere. The generative style itself (not just the color and
+ * layout) is picked from the seed, so different updates read as distinct
+ * pieces rather than palette-swapped copies of one pattern.
+ */
+function buildArt(seed: string, type: UpdateType): Art {
+  const rand = mulberry32(hashSeed(`${type}:${seed}`));
+  const palette = PALETTES[type];
+  const style = STYLES[Math.floor(rand() * STYLES.length)];
+
+  const focalX = VIEW_W * (0.42 + rand() * 0.4);
+  const focalY = VIEW_H * (0.4 + rand() * 0.25);
+  const glowR = 240 + rand() * 90;
+
+  const base: BaseArt = {
+    style,
     bgFrom: palette.bgFrom,
     bgTo: palette.bgTo,
     glow: palette.glow,
     accent: palette.accent,
     glowCx: focalX,
     glowCy: focalY,
-    glowR: 250 + rand() * 90,
-    nodes,
-    edges,
+    glowR,
   };
+
+  switch (style) {
+    case "constellation":
+      return { ...base, style, ...buildConstellation(rand, focalX, focalY) };
+    case "contours":
+      return { ...base, style, ...buildContours(rand) };
+    case "halftone":
+      return { ...base, style, ...buildHalftone(rand, focalX, focalY) };
+    case "orbits":
+      return { ...base, style, ...buildOrbits(rand, focalX, focalY) };
+  }
+}
+
+function ArtMarks({ art }: { art: Art }) {
+  switch (art.style) {
+    case "constellation":
+      return (
+        <>
+          {art.edges.map(([a, b], i) => (
+            <line
+              key={i}
+              x1={art.nodes[a].x}
+              y1={art.nodes[a].y}
+              x2={art.nodes[b].x}
+              y2={art.nodes[b].y}
+              stroke={art.accent}
+              strokeWidth={1.25}
+              strokeOpacity={0.35}
+            />
+          ))}
+          {art.nodes.map((n, i) => (
+            <circle
+              key={i}
+              cx={n.x}
+              cy={n.y}
+              r={n.r}
+              fill={art.accent}
+              fillOpacity={0.9}
+            />
+          ))}
+        </>
+      );
+    case "contours":
+      return (
+        <>
+          {art.lines.map((line, i) => (
+            <path
+              key={i}
+              d={line.d}
+              fill="none"
+              stroke={art.accent}
+              strokeWidth={line.width}
+              strokeOpacity={line.opacity}
+              strokeLinecap="round"
+            />
+          ))}
+        </>
+      );
+    case "halftone":
+      return (
+        <>
+          {art.dots.map((dot, i) => (
+            <circle
+              key={i}
+              cx={dot.x}
+              cy={dot.y}
+              r={dot.r}
+              fill={art.accent}
+              fillOpacity={dot.opacity}
+            />
+          ))}
+        </>
+      );
+    case "orbits":
+      return (
+        <>
+          {art.rings.map((ring, i) => (
+            <path
+              key={i}
+              d={ring.d}
+              fill="none"
+              stroke={art.accent}
+              strokeWidth={ring.width}
+              strokeOpacity={ring.opacity}
+              strokeLinecap="round"
+            />
+          ))}
+        </>
+      );
+  }
 }
 
 function slugify(value: string): string {
@@ -133,12 +344,12 @@ function slugify(value: string): string {
 }
 
 /**
- * Full-bleed, procedurally generated banner for an update's detail page —
- * a deterministic "constellation" seeded by the update id, so the same
- * update always renders the same artwork (effectively generated once, on
- * publish) without needing to store an image anywhere. Fades to transparent
- * at the bottom (inside the SVG itself, via a mask) so it blends into the
- * page in both themes, GitHub-changelog-style.
+ * Full-bleed, procedurally generated banner for an update's detail page.
+ * Fades to transparent at the bottom via a CSS mask on the *container* (not
+ * baked into the SVG) — the banner is wider than it is tall, so an
+ * SVG-internal fade tied to the viewBox gets cropped away by
+ * `preserveAspectRatio="slice"` at very wide aspect ratios; a CSS mask
+ * always anchors to the actual rendered pixels instead.
  */
 export function UpdateArtBanner({
   seed,
@@ -206,6 +417,12 @@ export function UpdateArtBanner({
         "group relative h-48 w-full overflow-hidden md:h-64 lg:h-72",
         className
       )}
+      style={{
+        maskImage:
+          "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+      }}
     >
       <svg
         ref={svgRef}
@@ -245,54 +462,23 @@ export function UpdateArtBanner({
               values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"
             />
           </filter>
-          <linearGradient id={`${uid}-fade`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#fff" stopOpacity="1" />
-            <stop offset="70%" stopColor="#fff" stopOpacity="1" />
-            <stop offset="100%" stopColor="#fff" stopOpacity="0" />
-          </linearGradient>
-          <mask id={`${uid}-mask`}>
-            <rect width={VIEW_W} height={VIEW_H} fill={`url(#${uid}-fade)`} />
-          </mask>
         </defs>
 
-        <g mask={`url(#${uid}-mask)`}>
-          <rect width={VIEW_W} height={VIEW_H} fill={`url(#${uid}-bg)`} />
-          <circle
-            cx={art.glowCx}
-            cy={art.glowCy}
-            r={art.glowR}
-            fill={`url(#${uid}-glow)`}
-            filter={`url(#${uid}-blur)`}
-          />
-          {art.edges.map(([a, b], i) => (
-            <line
-              key={i}
-              x1={art.nodes[a].x}
-              y1={art.nodes[a].y}
-              x2={art.nodes[b].x}
-              y2={art.nodes[b].y}
-              stroke={art.accent}
-              strokeWidth={1.25}
-              strokeOpacity={0.35}
-            />
-          ))}
-          {art.nodes.map((n, i) => (
-            <circle
-              key={i}
-              cx={n.x}
-              cy={n.y}
-              r={n.r}
-              fill={art.accent}
-              fillOpacity={0.9}
-            />
-          ))}
-          <rect
-            width={VIEW_W}
-            height={VIEW_H}
-            filter={`url(#${uid}-grain)`}
-            opacity={0.4}
-          />
-        </g>
+        <rect width={VIEW_W} height={VIEW_H} fill={`url(#${uid}-bg)`} />
+        <circle
+          cx={art.glowCx}
+          cy={art.glowCy}
+          r={art.glowR}
+          fill={`url(#${uid}-glow)`}
+          filter={`url(#${uid}-blur)`}
+        />
+        <ArtMarks art={art} />
+        <rect
+          width={VIEW_W}
+          height={VIEW_H}
+          filter={`url(#${uid}-grain)`}
+          opacity={0.4}
+        />
       </svg>
 
       <Tooltip>
