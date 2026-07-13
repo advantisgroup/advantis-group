@@ -9,6 +9,8 @@ import { Check, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { UserProfile } from "@/components/profile/UserProfile";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -141,6 +143,7 @@ function RoleForm({
 export function CustomRolesPanel() {
   const t = useTranslations("CustomRoles");
   const roles = useQuery(api.customRoles.list);
+  const members = useQuery(api.users.list, { includeSuspended: true });
   const createRole = useMutation(api.customRoles.create);
   const updateRole = useMutation(api.customRoles.update);
   const removeRole = useMutation(api.customRoles.remove);
@@ -148,6 +151,17 @@ export function CustomRolesPanel() {
   const confirm = useConfirm();
 
   const [editing, setEditing] = useState<CustomRoleFormState | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(
+    null
+  );
+
+  const membersByRole = new Map<string, NonNullable<typeof members>>();
+  for (const m of members ?? []) {
+    if (!m.customRoleId) continue;
+    const list = membersByRole.get(m.customRoleId) ?? [];
+    list.push(m);
+    membersByRole.set(m.customRoleId, list);
+  }
 
   async function handleDelete(role: { _id: Id<"customRoles">; name: string }) {
     const ok = await confirm({
@@ -233,6 +247,17 @@ export function CustomRolesPanel() {
                     ))
                   )}
                 </div>
+                <AvatarStack
+                  className="mt-2"
+                  max={6}
+                  people={(membersByRole.get(role._id) ?? []).map(m => ({
+                    id: m._id,
+                    name: m.name,
+                    avatar: m.avatar,
+                    detail: m.clerkUserId,
+                  }))}
+                  onSelect={id => setSelectedUserId(id as Id<"users">)}
+                />
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <Button
@@ -261,6 +286,14 @@ export function CustomRolesPanel() {
           </Card>
         ))}
       </div>
+
+      <UserProfile
+        userId={selectedUserId}
+        open={!!selectedUserId}
+        onOpenChange={o => {
+          if (!o) setSelectedUserId(null);
+        }}
+      />
 
       <Dialog
         open={editing !== null}
