@@ -4,6 +4,7 @@ import { type Doc } from "./_generated/dataModel";
 import { type QueryCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { roleValidator } from "./schema";
 import {
   ensureUser,
   getCurrentUser,
@@ -19,11 +20,7 @@ import {
   updateClerkUserName,
 } from "./lib/clerk";
 
-const roleArg = v.union(
-  v.literal("admin"),
-  v.literal("manager"),
-  v.literal("employee")
-);
+const roleArg = roleValidator;
 
 /** Attach a resolved avatar URL to a user document. */
 async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
