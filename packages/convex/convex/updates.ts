@@ -433,7 +433,7 @@ export const get = query({
     const user = await requireUser(ctx);
     const update = await ctx.db.get(updateId);
     if (!update || !userMatchesAudience(user, update.audience)) {
-      return { code: "not_found", message: "Not found" };
+      return null;
     }
     const author = await ctx.db.get(update.authorUserId);
     const timeline = await Promise.all(

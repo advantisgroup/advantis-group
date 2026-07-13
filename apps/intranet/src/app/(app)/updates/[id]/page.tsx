@@ -60,7 +60,7 @@ const TYPE_BADGE_VARIANT = {
 } as const;
 
 type UpdateDetail = FunctionReturnType<typeof api.updates.get>;
-type UpdateData = Exclude<UpdateDetail, { code: string }>;
+type UpdateData = NonNullable<UpdateDetail>;
 
 function StatusCard({
   data,
@@ -163,7 +163,7 @@ export default function UpdateDetailPage() {
     );
   }
 
-  if ("code" in data) {
+  if (data === null) {
     return (
       <div className="mx-auto max-w-3xl space-y-2 text-center">
         <h1 className="font-display text-2xl font-bold tracking-tight">
