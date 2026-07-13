@@ -209,6 +209,40 @@ export default defineSchema({
     .index("by_team", ["teamId"])
     .index("by_user_team", ["userId", "teamId"]),
 
+  /**
+   * Review queue for the one-time org-data migration that replaces the
+   * free-text `users.department`/`users.teams` with `departments`/`teams`
+   * rows. One row per normalized (trim + lowercase) raw value bucket found
+   * across `users` — an admin renames/merges/rejects buckets here before
+   * `orgDataMigration.runBackfill` is allowed to create real rows from them,
+   * so two spellings of the same department never get silently merged (or
+   * kept separate) without a human deciding.
+   */
+  orgDataMigrationReview: defineTable({
+    kind: v.union(v.literal("department"), v.literal("team")),
+    /** `raw.trim().toLowerCase()` — the grouping key. */
+    normalized: v.string(),
+    /** Every distinct raw string seen for this bucket, for the reviewer. */
+    rawValues: v.array(v.string()),
+    /** Editable canonical label; defaults to the first raw value seen. */
+    canonicalName: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected")
+    ),
+    /** Set when this bucket was merged into another; excluded from backfill
+     *  on its own — the target bucket's row covers its users too. */
+    mergedIntoId: v.optional(v.id("orgDataMigrationReview")),
+    /** Set once `runBackfill` has created the real row for this bucket. */
+    materializedDepartmentId: v.optional(v.id("departments")),
+    materializedTeamId: v.optional(v.id("teams")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_kind_normalized", ["kind", "normalized"])
+    .index("by_status", ["status"]),
+
   /** Manager-defined roles (e.g. "Team Lead") granting a set of capabilities. */
   customRoles: defineTable({
     name: v.string(),
