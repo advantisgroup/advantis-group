@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   type LucideIcon,
   Mail,
+  Plug,
   ScrollText,
   ShieldCheck,
   Upload,
@@ -66,6 +67,11 @@ const ADMIN_NAV: AdminNavItem[] = [
     managerOnly: true,
   },
   { href: "/admin/uploads", labelKey: "nav.uploads", icon: Upload },
+  {
+    href: "/admin/integrations",
+    labelKey: "nav.integrations",
+    icon: Plug,
+  },
   {
     href: "/admin/roles",
     labelKey: "nav.roles",
