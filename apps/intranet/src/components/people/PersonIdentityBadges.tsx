@@ -56,10 +56,7 @@ export function PersonIdentityBadges({
       {role && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge
-              variant="muted"
-              className="shrink-0 cursor-help text-[10px]"
-            >
+            <Badge variant="muted" className="shrink-0 cursor-help text-[10px]">
               {tRoles(role)}
             </Badge>
           </TooltipTrigger>
