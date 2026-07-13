@@ -172,9 +172,9 @@ export async function sendNotificationEmail(
 }
 
 const UPDATE_SUBJECT_PREFIX: Record<"incident" | "maintenance" | "changelog", string> = {
-  incident: "🔴 Incident",
-  maintenance: "🛠 Scheduled maintenance",
-  changelog: "📣 What's new",
+  incident: "Incident",
+  maintenance: "Scheduled maintenance",
+  changelog: "What's new",
 };
 
 export function renderUpdateEmail(update: {
