@@ -88,6 +88,9 @@ function AppShellInner({ children }: { children: ReactNode }) {
     <>
       <Sidebar />
       <SidebarInset>
+        {/* Above the scrollable <main> (and the sticky header), so it's
+            always on top of the page rather than scrolling away. */}
+        {!immersive && <UpdateBanner />}
         <header
           data-tour="tour-header"
           className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl print:hidden md:h-16 md:px-4"
@@ -119,8 +122,6 @@ function AppShellInner({ children }: { children: ReactNode }) {
             immersive ? "pb-6" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
           )}
         >
-          {/* Non-sticky — scrolls away with the rest of the page content. */}
-          {!immersive && <UpdateBanner />}
           {/* Isolate page crashes so the surrounding shell stays usable.
               Keyed by route so navigating away clears a previous error. */}
           <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
