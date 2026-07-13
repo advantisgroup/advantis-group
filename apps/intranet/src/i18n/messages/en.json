@@ -726,6 +726,18 @@
     "customRolesTab": "Roles",
     "customRole": "Custom role",
     "customRoleNone": "None",
+    "backToDashboard": "Back to Dashboard",
+    "nav": {
+      "group": "Administration",
+      "overview": "Overview",
+      "requests": "Requests",
+      "invites": "Invites",
+      "members": "Members",
+      "uploads": "Uploads",
+      "roles": "Roles",
+      "guests": "Guests",
+      "dataCleanup": "Data cleanup"
+    },
     "dataCleanup": {
       "title": "Org data cleanup",
       "description": "Review the free-text department and team values collected from members and turn them into a canonical list. Two spellings of the same department are never merged automatically — review each one.",

@@ -726,6 +726,18 @@
     "customRolesTab": "Rollen",
     "customRole": "Benutzerdefinierte Rolle",
     "customRoleNone": "Keine",
+    "backToDashboard": "Zurück zum Dashboard",
+    "nav": {
+      "group": "Verwaltung",
+      "overview": "Übersicht",
+      "requests": "Anfragen",
+      "invites": "Einladungen",
+      "members": "Mitglieder",
+      "uploads": "Uploads",
+      "roles": "Rollen",
+      "guests": "Gäste",
+      "dataCleanup": "Stammdaten-Bereinigung"
+    },
     "dataCleanup": {
       "title": "Stammdaten-Bereinigung",
       "description": "Prüfen Sie die als Freitext erfassten Abteilungs- und Team-Werte der Mitglieder und überführen Sie sie in eine einheitliche Liste. Zwei Schreibweisen derselben Abteilung werden nie automatisch zusammengeführt — bitte jede einzeln prüfen.",
