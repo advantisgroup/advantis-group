@@ -533,8 +533,9 @@ export const bannerActive = query({
       (a, b) => priority(a) - priority(b) || b.publishedAt - a.publishedAt
     );
 
-    if (candidates.length === 0) return { top: null, moreCount: 0 };
-    const top = candidates[0];
+    if (candidates.length === 0) return { top: null, moreCount: 0, others: [] };
+    const [top, ...rest] = candidates;
+    const OTHERS_LIMIT = 8;
     return {
       top: {
         _id: top._id,
@@ -543,7 +544,12 @@ export const bannerActive = query({
         summary: top.summary,
         status: top.status ?? null,
       },
-      moreCount: candidates.length - 1,
+      moreCount: rest.length,
+      others: rest.slice(0, OTHERS_LIMIT).map(u => ({
+        _id: u._id,
+        type: u.type,
+        title: u.title,
+      })),
     };
   },
 });
