@@ -385,7 +385,10 @@ function FileViewerContent({
                 <Info className="size-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-80 text-foreground">
+            <PopoverContent
+              align="end"
+              className="z-[110] w-80 text-foreground"
+            >
               <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
                 <MetadataRow label={t("name")} value={file.name} />
                 {file.contentType && (
