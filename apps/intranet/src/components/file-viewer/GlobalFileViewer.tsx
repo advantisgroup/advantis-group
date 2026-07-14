@@ -110,15 +110,108 @@ function CodeOrTextPreview({
 }
 
 /** A single label/value line in the metadata popout, truncating long values with a title tooltip. */
-function MetadataRow({ label, value }: { label: string; value: string }) {
+function MetadataRow({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}) {
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
       <dd className="min-w-0 truncate text-right font-medium" title={value}>
-        {value}
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-dotted underline-offset-2 hover:text-primary"
+          >
+            {value}
+          </a>
+        ) : (
+          value
+        )}
       </dd>
     </>
   );
+}
+
+interface ExifSummary {
+  camera?: string;
+  lens?: string;
+  aperture?: string;
+  shutterSpeed?: string;
+  iso?: string;
+  focalLength?: string;
+  dateTaken?: Date;
+  latitude?: number;
+  longitude?: number;
+}
+
+function formatShutterSpeed(seconds: number): string {
+  if (seconds >= 1) return `${seconds}s`;
+  return `1/${Math.round(1 / seconds)}s`;
+}
+
+interface RawExifTags {
+  Make?: string;
+  Model?: string;
+  LensModel?: string;
+  FNumber?: number;
+  ExposureTime?: number;
+  ISO?: number;
+  FocalLength?: number;
+  DateTimeOriginal?: Date;
+  latitude?: number;
+  longitude?: number;
+}
+
+/** Reads camera/lens/exposure/GPS out of the file's own EXIF data (JPEG, HEIC, TIFF, …) rather than trusting anything passed in. */
+async function readExif(url: string): Promise<ExifSummary | null> {
+  const { parse } = await import("exifr");
+  const rawTags: unknown = await parse(url, {
+    tiff: true,
+    exif: true,
+    gps: true,
+    translateValues: true,
+    reviveValues: true,
+    mergeOutput: true,
+  }).catch(() => null);
+  if (!rawTags) return null;
+  const tags = rawTags as RawExifTags;
+
+  const camera = [tags.Make, tags.Model]
+    .filter((v): v is string => typeof v === "string")
+    .filter((v, i, arr) => i === 0 || !v.includes(arr[0]))
+    .join(" ")
+    .trim();
+
+  const summary: ExifSummary = {
+    camera: camera || undefined,
+    lens: typeof tags.LensModel === "string" ? tags.LensModel : undefined,
+    aperture:
+      typeof tags.FNumber === "number" ? `f/${tags.FNumber}` : undefined,
+    shutterSpeed:
+      typeof tags.ExposureTime === "number"
+        ? formatShutterSpeed(tags.ExposureTime)
+        : undefined,
+    iso: typeof tags.ISO === "number" ? `ISO ${tags.ISO}` : undefined,
+    focalLength:
+      typeof tags.FocalLength === "number"
+        ? `${Math.round(tags.FocalLength)}mm`
+        : undefined,
+    dateTaken:
+      tags.DateTimeOriginal instanceof Date ? tags.DateTimeOriginal : undefined,
+    latitude: typeof tags.latitude === "number" ? tags.latitude : undefined,
+    longitude: typeof tags.longitude === "number" ? tags.longitude : undefined,
+  };
+
+  const hasAnyField = Object.values(summary).some(v => v !== undefined);
+  return hasAnyField ? summary : null;
 }
 
 /** Archives don't get the full viewer — just a quick "download this?" prompt. */
@@ -191,6 +284,33 @@ function FileViewerContent({
     (file.width && file.height
       ? { width: file.width, height: file.height }
       : null);
+
+  const [exif, setExif] = useState<ExifSummary | null>(null);
+  const [exifStatus, setExifStatus] = useState<"idle" | "loading" | "done">(
+    "idle"
+  );
+
+  useEffect(() => {
+    if (
+      !metadataOpen ||
+      kind.kind !== "image" ||
+      !url ||
+      exifStatus !== "idle"
+    ) {
+      return;
+    }
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setExifStatus("loading");
+    void readExif(url).then(summary => {
+      if (cancelled) return;
+      setExif(summary);
+      setExifStatus("done");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [metadataOpen, kind, url, exifStatus]);
 
   const actions: {
     key: string;
@@ -290,6 +410,64 @@ function FileViewerContent({
                   />
                 )}
               </dl>
+
+              {exifStatus === "loading" && (
+                <div className="mt-3 flex items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
+                  <Loader2 className="size-3 animate-spin" />
+                  {t("loadingExif")}
+                </div>
+              )}
+
+              {exif && (
+                <>
+                  <p className="mt-3 border-t pt-3 text-xs font-semibold text-muted-foreground">
+                    {t("camera")}
+                  </p>
+                  <dl className="mt-1.5 grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
+                    {exif.camera && (
+                      <MetadataRow label={t("camera")} value={exif.camera} />
+                    )}
+                    {exif.lens && (
+                      <MetadataRow label={t("lens")} value={exif.lens} />
+                    )}
+                    {exif.dateTaken && (
+                      <MetadataRow
+                        label={t("dateTaken")}
+                        value={formatDateTime(exif.dateTaken.getTime(), locale)}
+                      />
+                    )}
+                    {exif.aperture && (
+                      <MetadataRow
+                        label={t("aperture")}
+                        value={exif.aperture}
+                      />
+                    )}
+                    {exif.shutterSpeed && (
+                      <MetadataRow
+                        label={t("shutterSpeed")}
+                        value={exif.shutterSpeed}
+                      />
+                    )}
+                    {exif.iso && (
+                      <MetadataRow label={t("iso")} value={exif.iso} />
+                    )}
+                    {exif.focalLength && (
+                      <MetadataRow
+                        label={t("focalLength")}
+                        value={exif.focalLength}
+                      />
+                    )}
+                    {typeof exif.latitude === "number" &&
+                      typeof exif.longitude === "number" && (
+                        <MetadataRow
+                          label={t("location")}
+                          value={`${exif.latitude.toFixed(5)}, ${exif.longitude.toFixed(5)}`}
+                          href={`https://www.google.com/maps?q=${exif.latitude},${exif.longitude}`}
+                        />
+                      )}
+                  </dl>
+                </>
+              )}
             </PopoverContent>
           </Popover>
           <Tooltip>

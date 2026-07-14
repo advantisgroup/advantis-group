@@ -35,6 +35,7 @@
     "convex": "^1.34.0",
     "date-fns": "^4.1.0",
     "elysia": "^1.4.22",
+    "exifr": "^7.1.3",
     "framer-motion": "^11",
     "lucide-react": "^0.563.0",
     "next": "^16.1.6",
