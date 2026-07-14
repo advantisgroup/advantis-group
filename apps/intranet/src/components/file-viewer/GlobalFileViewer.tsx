@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import { Copy, Download, FileQuestion, Info, Loader2, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
@@ -19,12 +19,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { downloadWithProgress } from "@/lib/download";
+import { formatDateTime } from "@/lib/format";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -103,6 +109,18 @@ function CodeOrTextPreview({
   );
 }
 
+/** A single label/value line in the metadata popout, truncating long values with a title tooltip. */
+function MetadataRow({ label, value }: { label: string; value: string }) {
+  return (
+    <>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-medium" title={value}>
+        {value}
+      </dd>
+    </>
+  );
+}
+
 /** Archives don't get the full viewer — just a quick "download this?" prompt. */
 function ArchiveDownloadConfirm({
   file,
@@ -159,7 +177,20 @@ function FileViewerContent({
   onClose: () => void;
 }) {
   const t = useTranslations("FileViewer");
-  const [showMetadata, setShowMetadata] = useState(false);
+  const locale = useLocale();
+  const [metadataOpen, setMetadataOpen] = useState(false);
+  // Dimensions the browser actually decoded from the image, rather than
+  // whatever (possibly stale/unset) width/height was passed in with the file.
+  const [naturalSize, setNaturalSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  const dimensions =
+    naturalSize ??
+    (file.width && file.height
+      ? { width: file.width, height: file.height }
+      : null);
 
   const actions: {
     key: string;
@@ -187,17 +218,6 @@ function FileViewerContent({
           .then(() => toast.success(t("linkCopied")));
       },
     },
-    ...(kind.kind === "image"
-      ? [
-          {
-            key: "metadata",
-            label: t("metadata"),
-            icon: <Info className="size-4" />,
-            onSelect: () => setShowMetadata(v => !v),
-            active: showMetadata,
-          },
-        ]
-      : []),
   ];
 
   return (
@@ -230,6 +250,48 @@ function FileViewerContent({
               <TooltipContent>{action.label}</TooltipContent>
             </Tooltip>
           ))}
+          <Popover open={metadataOpen} onOpenChange={setMetadataOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("metadata")}
+                aria-pressed={metadataOpen}
+                className={cn(
+                  "shrink-0 text-white hover:bg-white/10 hover:text-white",
+                  metadataOpen && "bg-white/10"
+                )}
+              >
+                <Info className="size-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-80 text-foreground">
+              <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
+                <MetadataRow label={t("name")} value={file.name} />
+                {file.contentType && (
+                  <MetadataRow label={t("type")} value={file.contentType} />
+                )}
+                {typeof file.size === "number" && (
+                  <MetadataRow
+                    label={t("size")}
+                    value={formatFileSize(file.size)}
+                  />
+                )}
+                {dimensions && (
+                  <MetadataRow
+                    label={t("dimensions")}
+                    value={`${dimensions.width} × ${dimensions.height}`}
+                  />
+                )}
+                {typeof file.modifiedAt === "number" && (
+                  <MetadataRow
+                    label={t("modified")}
+                    value={formatDateTime(file.modifiedAt, locale)}
+                  />
+                )}
+              </dl>
+            </PopoverContent>
+          </Popover>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -247,21 +309,6 @@ function FileViewerContent({
         </div>
       </TooltipProvider>
 
-      {showMetadata && kind.kind === "image" && (
-        <div className="mx-4 mb-2 shrink-0 rounded-lg bg-white/10 px-3 py-2 text-xs text-white/90 sm:mx-6">
-          {file.width && file.height && (
-            <p>
-              {t("dimensions")}: {file.width} × {file.height}
-            </p>
-          )}
-          {typeof file.size === "number" && (
-            <p>
-              {t("size")}: {formatFileSize(file.size)}
-            </p>
-          )}
-        </div>
-      )}
-
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 pb-6 sm:px-6">
         {!url ? (
           <Loader2 className="size-6 animate-spin text-white/70" />
@@ -269,6 +316,12 @@ function FileViewerContent({
           <img
             src={url}
             alt={file.name}
+            onLoad={e =>
+              setNaturalSize({
+                width: e.currentTarget.naturalWidth,
+                height: e.currentTarget.naturalHeight,
+              })
+            }
             className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
           />
         ) : kind.kind === "code" || kind.kind === "text" ? (

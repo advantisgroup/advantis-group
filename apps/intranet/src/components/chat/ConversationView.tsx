@@ -1009,6 +1009,7 @@ export function ConversationView({
                                                 size: a.size,
                                                 width: a.width,
                                                 height: a.height,
+                                                modifiedAt: m.createdAt,
                                                 url: a.url ?? undefined,
                                               })
                                         }
@@ -1056,6 +1057,7 @@ export function ConversationView({
                                           size: a.size,
                                           width: a.width,
                                           height: a.height,
+                                          modifiedAt: m.createdAt,
                                           url: a.url ?? undefined,
                                         })
                                       }
