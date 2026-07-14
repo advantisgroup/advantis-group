@@ -32,6 +32,7 @@ import type * as activity_maintenance from "../activity/maintenance.js";
 import type * as activity_migration from "../activity/migration.js";
 import type * as activity_migrationExport from "../activity/migrationExport.js";
 import type * as activity_migrationRun from "../activity/migrationRun.js";
+import type * as activity_patternReports from "../activity/patternReports.js";
 import type * as activity_people from "../activity/people.js";
 import type * as activity_reports from "../activity/reports.js";
 import type * as activity_settings from "../activity/settings.js";
@@ -112,6 +113,7 @@ declare const fullApi: ApiFromModules<{
   "activity/migration": typeof activity_migration;
   "activity/migrationExport": typeof activity_migrationExport;
   "activity/migrationRun": typeof activity_migrationRun;
+  "activity/patternReports": typeof activity_patternReports;
   "activity/people": typeof activity_people;
   "activity/reports": typeof activity_reports;
   "activity/settings": typeof activity_settings;

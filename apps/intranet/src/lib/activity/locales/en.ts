@@ -246,6 +246,7 @@ export const en: Dict = {
   "timeline.tabs.day": "Day detail",
   "timeline.tabs.discarded": "Discarded",
   "timeline.tabs.export": "Export",
+  "timeline.tabs.pattern": "Pattern report",
   "timeline.discarded.heading": "Discarded signals",
   "timeline.discarded.sub":
     "State changes that were rejected instead of being written to the timeline.",
@@ -293,6 +294,45 @@ export const en: Dict = {
     "No data for this period. Try a wider time frame or a different device.",
   "reports.trend.heading": "Weekly trend",
   "reports.trend.sub": "Active and idle hours per week.",
+
+  // Weekly pattern report — a generated-on-request, plain-language read of one
+  // employee's week (see `activity/lib/patterns.ts` for the detection rules).
+  // Finding sentences are templates; `{placeholders}` are filled and
+  // colour-highlighted client-side by `HighlightedSentence`.
+  "pattern.heading": "Weekly pattern report",
+  "pattern.subtitle":
+    "A plain-language read of this person's week, generated on request.",
+  "pattern.week.thisWeek": "This week",
+  "pattern.week.lastWeek": "Last week",
+  "pattern.generate": "Generate report",
+  "pattern.regenerate": "Regenerate",
+  "pattern.generating": "Reading the week's activity…",
+  "pattern.lastGenerated": "Generated {time}",
+  "pattern.empty":
+    "No report yet for this week — generate one to see what stood out.",
+  "pattern.chart.daily.heading": "Active vs. idle, by day",
+  "pattern.chart.switches.heading": "Quick active/idle flips, by day",
+  "pattern.chart.switches.sub":
+    "Short flickers between active and idle (under 10 minutes) — a lot of these in one day usually means a lot of task-switching or an unreliable idle read, not necessarily a problem.",
+  "pattern.overview":
+    "{name} was active for {activeShare} of tracked time this week — {active} active, {idle} inactive.",
+  "pattern.quickFlips":
+    "There's been a lot of switching between active and idle — {count} quick flips under {threshold} this week.",
+  "pattern.longIdleStreak":
+    "The longest single inactive stretch was {duration} — worth checking in.",
+  "pattern.inactivityIncrease":
+    "Inactivity increased {deltaPct} compared to last week — from {prevIdle} to {idle}.",
+  "pattern.inactivityDecrease":
+    "Inactivity dropped {deltaPct} compared to last week — from {prevIdle} to {idle}.",
+  "pattern.activeIncrease":
+    "Active time is up {deltaPct} versus last week ({active} vs. {prevActive}).",
+  "pattern.activeDecrease":
+    "Active time is down {deltaPct} versus last week ({active} vs. {prevActive}).",
+  "pattern.steady":
+    "No unusual patterns this week — activity has stayed consistent with last week.",
+  "pattern.noBaseline":
+    "This is the first week of tracked data for {name}, so there's nothing to compare yet.",
+
   "timeline.export.heading": "Export data",
   "timeline.export.sub":
     "This person's activity for a date range, as CSV or JSON.",
