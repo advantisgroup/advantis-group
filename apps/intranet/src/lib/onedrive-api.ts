@@ -4,6 +4,7 @@ import { useCallback, useMemo } from "react";
 
 import {
   type DriveQuota,
+  type MessageAttachment,
   type OneDriveItem,
   type OneDriveListing,
   type ScanReport,
@@ -147,6 +148,17 @@ export function useOneDriveApi() {
           type: item.mimeType || blob.type || "application/octet-stream",
         });
       },
+
+      /**
+       * Import a drive file straight into Convex storage server-side (Graph
+       * -> API -> Convex), skipping the browser download-then-reupload round
+       * trip `downloadAsFile` needs. Returns a ready-to-use attachment.
+       */
+      importAttachment: (item: { id: string }) =>
+        send<MessageAttachment>(
+          "POST",
+          `/onedrive/import/${encodeURIComponent(item.id)}`
+        ),
 
       /** Upload via XHR so the rocket animation can track real progress. */
       upload: (
