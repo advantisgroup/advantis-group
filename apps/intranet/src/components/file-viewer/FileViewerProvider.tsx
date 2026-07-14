@@ -20,6 +20,8 @@ export interface ViewableFile {
   size?: number;
   width?: number;
   height?: number;
+  /** Epoch ms the file was uploaded/last changed, if known (e.g. the chat message's createdAt). */
+  modifiedAt?: number;
   /** Pre-resolved URL, when the caller already has one (e.g. chat attachments). */
   url?: string;
 }
