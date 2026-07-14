@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type DragEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 
@@ -14,12 +15,13 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import {
   type LinkPreview,
-  type OneDriveItem,
+  type MessageAttachment,
   type UnfurlResult,
 } from "@advantis/types";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
+import { motion, type PanInfo } from "framer-motion";
 import {
   ArrowDown,
   ArrowLeft,
@@ -69,6 +71,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatTime, initials, relativeTime } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
+import { formatFileSize, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 const URL_RE = /https?:\/\/[^\s]+/i;
@@ -76,6 +79,10 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
   "http://localhost:3002";
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
+/** Touch-and-hold duration before the mobile message action sheet opens. */
+const LONG_PRESS_MS = 450;
+/** Horizontal drag distance that counts as a swipe-to-reply on mobile. */
+const SWIPE_REPLY_THRESHOLD = 56;
 const COMPOSER_EMOJIS = [
   "😀",
   "😂",
@@ -102,6 +109,8 @@ const COMPOSER_EMOJIS = [
   "💯",
   "👀",
 ];
+/** Composer textarea grows with the message up to roughly 6 lines, then scrolls. */
+const COMPOSER_MAX_HEIGHT = 160;
 
 type Message = FunctionReturnType<typeof api.chat.getMessages>["page"][number];
 
@@ -156,6 +165,18 @@ export function ConversationView({
   const attachmentUpload = useAttachmentUpload();
 
   const [body, setBody] = useState("");
+  // OneDrive picks are imported server-side (Graph -> Convex, see
+  // useOneDriveApi().importAttachment) and arrive already uploaded, so they
+  // ride separately from `attachmentUpload`'s local-file entries instead of
+  // round-tripping through the browser as a File to re-upload.
+  const [importedAttachments, setImportedAttachments] = useState<
+    MessageAttachment[]
+  >([]);
+  // Attachments already on the message being edited; edited alongside any
+  // newly-picked local files / `importedAttachments` and merged back on save.
+  const [editingAttachments, setEditingAttachments] = useState<
+    Message["attachments"]
+  >([]);
   const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
@@ -166,12 +187,17 @@ export function ConversationView({
   const [dragging, setDragging] = useState(false);
   const [showJump, setShowJump] = useState(false);
   const [mention, setMention] = useState<{ query: string } | null>(null);
+  // Mobile: message the long-press action sheet is currently open for.
+  const [actionSheetMessage, setActionSheetMessage] = useState<Message | null>(
+    null
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const atBottomRef = useRef(true);
   const lastTyping = useRef(0);
+  const longPressTimer = useRef<number | null>(null);
   const mentionedRef = useRef<Map<string, Id<"users">>>(new Map());
   // Freeze the read cursor on first open so the "new messages" divider is stable.
   const initialReadRef = useRef<{ id: string; at: number } | null>(null);
@@ -232,6 +258,15 @@ export function ConversationView({
   useEffect(() => {
     void markRead({ conversationId });
   }, [conversationId, markRead, results.length]);
+
+  // Grow the composer with multi-line messages instead of staying a fixed
+  // single-line box, capping out at COMPOSER_MAX_HEIGHT and scrolling.
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT)}px`;
+  }, [body]);
 
   // Auto-scroll to newest when the reader is already near the bottom.
   useEffect(() => {
@@ -330,6 +365,7 @@ export function ConversationView({
     setEditing({ id: m._id });
     setReplyTo(null);
     setBody(m.body);
+    setEditingAttachments(m.attachments);
     requestAnimationFrame(() => textareaRef.current?.focus());
   }
 
@@ -338,18 +374,37 @@ export function ConversationView({
     setReplyTo(null);
     setBody("");
     attachmentUpload.reset();
-  }
-
-  function addOneDriveFile(file: File, item: OneDriveItem) {
-    if (!attachmentUpload.addOneDriveFile(file, item)) {
-      toast.error(t("attachTooLarge"));
-    }
+    setImportedAttachments([]);
+    setEditingAttachments([]);
   }
 
   function addLocalFiles(files: File[]) {
     if (files.length > 0 && !attachmentUpload.add(files)) {
       toast.error(t("attachTooLarge"));
     }
+  }
+
+  function removeEditingAttachment(storageId: string) {
+    setEditingAttachments(prev => prev.filter(a => a.storageId !== storageId));
+  }
+
+  function removeImportedAttachment(storageId: string) {
+    setImportedAttachments(prev => prev.filter(a => a.storageId !== storageId));
+  }
+
+  // OneDrive picks import straight into Convex server-side (see
+  // useOneDriveApi().importAttachment), so they arrive pre-uploaded rather
+  // than going through attachmentUpload's local-file pipeline.
+  function addImportedAttachment(attachment: MessageAttachment) {
+    const total =
+      attachmentUpload.totalSize +
+      importedAttachments.reduce((sum, a) => sum + (a.size ?? 0), 0) +
+      (attachment.size ?? 0);
+    if (total > MAX_ATTACHMENT_BYTES) {
+      toast.error(t("attachTooLarge"));
+      return;
+    }
+    setImportedAttachments(prev => [...prev, attachment]);
   }
 
   async function copyMessage(text: string) {
@@ -361,25 +416,67 @@ export function ConversationView({
     }
   }
 
+  function stripAttachmentUrl(
+    a: Message["attachments"][number]
+  ): MessageAttachment {
+    const { url: _url, ...rest } = a;
+    return rest;
+  }
+
   async function send() {
     const text = body.trim();
 
     if (editing) {
+      const remaining = editingAttachments.map(stripAttachmentUrl);
+      if (
+        !text &&
+        remaining.length === 0 &&
+        attachmentUpload.entries.length === 0 &&
+        importedAttachments.length === 0
+      ) {
+        return;
+      }
+      setSending(true);
       try {
-        await editMessage({ messageId: editing.id, body: text });
+        // Uploads run in parallel with live per-file progress; a failure
+        // here already rolls back whatever succeeded (see useAttachmentUpload).
+        const uploaded = await attachmentUpload.uploadAll();
+        const attachments = [...remaining, ...uploaded, ...importedAttachments];
+        try {
+          await editMessage({
+            messageId: editing.id,
+            body: text,
+            attachments: attachments as never,
+          });
+        } catch (e) {
+          await attachmentUpload.rollback([
+            ...uploaded,
+            ...importedAttachments,
+          ] as never);
+          throw e;
+        }
         cancelCompose();
       } catch (e) {
         handleError(e);
+      } finally {
+        setSending(false);
       }
       return;
     }
 
-    if (!text && attachmentUpload.entries.length === 0) return;
+    if (
+      !text &&
+      attachmentUpload.entries.length === 0 &&
+      importedAttachments.length === 0
+    ) {
+      return;
+    }
     setSending(true);
     try {
       // Uploads run in parallel with live per-file progress; a failure here
       // already rolls back whatever succeeded (see useAttachmentUpload).
-      const attachments = await attachmentUpload.uploadAll();
+      const uploaded = await attachmentUpload.uploadAll();
+      const attachments = [...uploaded, ...importedAttachments];
       try {
         const linkPreviews = await unfurlFirstLink(text);
         const mentions = [...mentionedRef.current.entries()]
@@ -396,11 +493,12 @@ export function ConversationView({
       } catch (e) {
         // The upload succeeded but the send itself failed — clean up so the
         // attachments don't sit orphaned in storage.
-        await attachmentUpload.rollback(attachments);
+        await attachmentUpload.rollback(attachments as never);
         throw e;
       }
       setBody("");
       attachmentUpload.reset();
+      setImportedAttachments([]);
       setReplyTo(null);
       mentionedRef.current.clear();
       atBottomRef.current = true;
@@ -441,6 +539,40 @@ export function ConversationView({
     e.preventDefault();
     setDragging(false);
     addLocalFiles(Array.from(e.dataTransfer.files ?? []));
+  }
+
+  function clearLongPress() {
+    if (longPressTimer.current !== null) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }
+
+  /** Touch-and-hold on a bubble opens the mobile action sheet (WhatsApp/
+   *  Discord-style), instead of relying on the small hover-only icons. */
+  function longPressHandlers(m: Message) {
+    return {
+      onPointerDown: (e: ReactPointerEvent) => {
+        if (e.pointerType !== "touch") return;
+        clearLongPress();
+        longPressTimer.current = window.setTimeout(() => {
+          longPressTimer.current = null;
+          navigator.vibrate?.(10);
+          setActionSheetMessage(m);
+        }, LONG_PRESS_MS);
+      },
+      onPointerUp: clearLongPress,
+      onPointerLeave: clearLongPress,
+      onPointerCancel: clearLongPress,
+      onPointerMove: clearLongPress,
+    };
+  }
+
+  function swipeToReply(m: Message) {
+    setEditing(null);
+    setReplyTo(m);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+    navigator.vibrate?.(10);
   }
 
   function highlightBody(text: string, mentionIds: string[]): ReactNode {
@@ -789,19 +921,33 @@ export function ConversationView({
                           mine ? "items-end" : "items-start"
                         )}
                       >
-                        <div
+                        <motion.div
                           className={cn(
                             "flex items-center gap-1",
                             mine && "flex-row-reverse"
                           )}
+                          drag={isMobile && !m.deleted ? "x" : false}
+                          dragConstraints={{ left: 0, right: 0 }}
+                          dragElastic={0.5}
+                          dragMomentum={false}
+                          onDragEnd={(_e, info: PanInfo) => {
+                            if (
+                              Math.abs(info.offset.x) > SWIPE_REPLY_THRESHOLD
+                            ) {
+                              swipeToReply(m);
+                            }
+                          }}
                         >
                           <div
                             className={cn(
                               "min-w-0 rounded-2xl px-3 py-2 text-sm",
                               mine
-                                ? "rounded-br-md bg-primary text-primary-foreground"
+                                ? "rounded-br-md bg-blue-500/15 text-foreground"
                                 : "rounded-bl-md bg-muted"
                             )}
+                            {...(isMobile && !m.deleted
+                              ? longPressHandlers(m)
+                              : {})}
                           >
                             {!mine &&
                               conversation?.type === "group" &&
@@ -821,12 +967,7 @@ export function ConversationView({
                                       block: "center",
                                     })
                                 }
-                                className={cn(
-                                  "mb-1 flex w-full flex-col rounded-md border-l-2 px-2 py-1 text-left text-xs",
-                                  mine
-                                    ? "border-primary-foreground/50 bg-primary-foreground/10"
-                                    : "border-blue-500/60 bg-background/60"
-                                )}
+                                className="mb-1 flex w-full flex-col rounded-md border-l-2 border-blue-500/60 bg-background/60 px-2 py-1 text-left text-xs"
                               >
                                 <span className="font-semibold opacity-80">
                                   {m.replyTo.senderName}
@@ -991,27 +1132,35 @@ export function ConversationView({
                                 side="top"
                                 align={mine ? "end" : "start"}
                               />
-                              <MessageMenu
-                                canEdit={mine && !!m.body}
-                                canDelete={mine}
-                                onReply={() => {
-                                  setEditing(null);
-                                  setReplyTo(m);
-                                  textareaRef.current?.focus();
-                                }}
-                                onCopy={() => void copyMessage(m.body)}
-                                onEdit={() => startEdit(m)}
-                                onDelete={() => void onDeleteMessage(m._id)}
-                                labels={{
-                                  reply: t("reply"),
-                                  copy: tc("copy"),
-                                  edit: tc("edit"),
-                                  delete: tc("delete"),
-                                }}
-                              />
+                              {/* On mobile the long-press action sheet covers
+                                  reply/copy/edit/delete instead — this small
+                                  icon is easy to mis-tap on a touch screen. */}
+                              {!isMobile && (
+                                <MessageMenu
+                                  canEdit={
+                                    mine &&
+                                    (!!m.body || m.attachments.length > 0)
+                                  }
+                                  canDelete={mine}
+                                  onReply={() => {
+                                    setEditing(null);
+                                    setReplyTo(m);
+                                    textareaRef.current?.focus();
+                                  }}
+                                  onCopy={() => void copyMessage(m.body)}
+                                  onEdit={() => startEdit(m)}
+                                  onDelete={() => void onDeleteMessage(m._id)}
+                                  labels={{
+                                    reply: t("reply"),
+                                    copy: tc("copy"),
+                                    edit: tc("edit"),
+                                    delete: tc("delete"),
+                                  }}
+                                />
+                              )}
                             </div>
                           )}
-                        </div>
+                        </motion.div>
 
                         {/* Group seen-by avatars on the reader side. */}
                         {mine &&
@@ -1111,7 +1260,35 @@ export function ConversationView({
           </div>
         )}
 
-        {!editing && attachmentUpload.entries.length > 0 && (
+        {(editingAttachments.length > 0 || importedAttachments.length > 0) && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {editingAttachments.map(a => (
+              <AttachmentChip
+                key={a.storageId}
+                name={a.name}
+                size={a.size}
+                isImage={a.kind === "image"}
+                thumbnailUrl={a.url}
+                fromOneDrive={!!a.oneDrivePath}
+                onRemove={() => removeEditingAttachment(a.storageId)}
+                removeLabel={tc("delete")}
+              />
+            ))}
+            {importedAttachments.map(a => (
+              <AttachmentChip
+                key={a.storageId}
+                name={a.name}
+                size={a.size}
+                isImage={a.kind === "image"}
+                fromOneDrive
+                onRemove={() => removeImportedAttachment(a.storageId)}
+                removeLabel={tc("delete")}
+              />
+            ))}
+          </div>
+        )}
+
+        {attachmentUpload.entries.length > 0 && (
           <div className="mb-2">
             <AttachmentList
               entries={attachmentUpload.entries}
@@ -1145,39 +1322,35 @@ export function ConversationView({
             </div>
           )}
 
-          {!editing && (
-            <label className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
-              <Paperclip className="h-5 w-5" />
-              <input
-                type="file"
-                multiple
-                className="hidden"
-                onChange={e => {
-                  addLocalFiles(Array.from(e.target.files ?? []));
-                  e.target.value = "";
-                }}
-              />
-            </label>
-          )}
+          <label className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9">
+            <Paperclip className="h-5 w-5" />
+            <input
+              type="file"
+              multiple
+              className="hidden"
+              onChange={e => {
+                addLocalFiles(Array.from(e.target.files ?? []));
+                e.target.value = "";
+              }}
+            />
+          </label>
 
-          {!editing && (
-            <button
-              type="button"
-              aria-label={tc("fromOneDrive")}
-              title={tc("fromOneDrive")}
-              onClick={() => setOneDrivePickerOpen(true)}
-              className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <Cloud className="h-5 w-5" />
-            </button>
-          )}
+          <button
+            type="button"
+            aria-label={tc("fromOneDrive")}
+            title={tc("fromOneDrive")}
+            onClick={() => setOneDrivePickerOpen(true)}
+            className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
+          >
+            <Cloud className="h-5 w-5" />
+          </button>
 
           <Popover>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 aria-label={t("emoji")}
-                className="flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
               >
                 <Smile className="h-5 w-5" />
               </button>
@@ -1198,14 +1371,15 @@ export function ConversationView({
             </PopoverContent>
           </Popover>
 
-          <div className="flex-1 self-center">
+          <div className="min-w-0 flex-1 self-center">
             <Textarea
               ref={textareaRef}
               value={body}
               onChange={e => onType(e.target.value)}
               placeholder={t("messagePlaceholder")}
               rows={1}
-              className="min-h-9 resize-none border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
+              className="min-h-9 resize-none overflow-y-auto border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
+              style={{ maxHeight: COMPOSER_MAX_HEIGHT }}
               onKeyDown={e => {
                 if (e.key === "Enter" && !e.shiftKey && !mention) {
                   e.preventDefault();
@@ -1217,7 +1391,7 @@ export function ConversationView({
           </div>
           <Button
             size="icon"
-            className="size-9 shrink-0 rounded-lg"
+            className="size-10 shrink-0 rounded-lg md:size-9"
             onClick={send}
             disabled={sending}
             aria-label={t("send")}
@@ -1258,6 +1432,63 @@ export function ConversationView({
         </MobileDrawer>
       )}
 
+      {isMobile && (
+        <MobileDrawer
+          open={!!actionSheetMessage}
+          onOpenChange={o => {
+            if (!o) setActionSheetMessage(null);
+          }}
+          ariaLabel={t("reply")}
+        >
+          {actionSheetMessage && (
+            <div className="space-y-0.5 px-2 pb-2 pt-1">
+              <ActionSheetItem
+                icon={<Reply className="size-4" />}
+                label={t("reply")}
+                onClick={() => {
+                  const m = actionSheetMessage;
+                  setActionSheetMessage(null);
+                  swipeToReply(m);
+                }}
+              />
+              <ActionSheetItem
+                icon={<Copy className="size-4" />}
+                label={tc("copy")}
+                onClick={() => {
+                  void copyMessage(actionSheetMessage.body);
+                  setActionSheetMessage(null);
+                }}
+              />
+              {actionSheetMessage.senderId === me._id &&
+                (!!actionSheetMessage.body ||
+                  actionSheetMessage.attachments.length > 0) && (
+                  <ActionSheetItem
+                    icon={<Pencil className="size-4" />}
+                    label={tc("edit")}
+                    onClick={() => {
+                      const m = actionSheetMessage;
+                      setActionSheetMessage(null);
+                      startEdit(m);
+                    }}
+                  />
+                )}
+              {actionSheetMessage.senderId === me._id && (
+                <ActionSheetItem
+                  icon={<Trash2 className="size-4" />}
+                  label={tc("delete")}
+                  destructive
+                  onClick={() => {
+                    const id = actionSheetMessage._id;
+                    setActionSheetMessage(null);
+                    void onDeleteMessage(id);
+                  }}
+                />
+              )}
+            </div>
+          )}
+        </MobileDrawer>
+      )}
+
       {conversation?.type === "group" && (
         <GroupSettingsDialog
           conversationId={conversationId}
@@ -1278,7 +1509,7 @@ export function ConversationView({
       <OneDrivePickerDialog
         open={oneDrivePickerOpen}
         onOpenChange={setOneDrivePickerOpen}
-        onSelect={addOneDriveFile}
+        onImport={addImportedAttachment}
       />
     </div>
   );
@@ -1389,5 +1620,101 @@ function MessageMenu({
         </button>
       }
     />
+  );
+}
+
+/** One row in the mobile long-press message action sheet. */
+function ActionSheetItem({
+  icon,
+  label,
+  onClick,
+  destructive,
+}: {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+  destructive?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent",
+        destructive && "text-destructive"
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+/** A pending or already-uploaded attachment shown in the composer, with an
+ *  image thumbnail when available so you can see what you're about to send
+ *  instead of just a filename. */
+function AttachmentChip({
+  name,
+  size,
+  isImage: isImageKind,
+  thumbnailUrl,
+  file,
+  fromOneDrive,
+  onRemove,
+  removeLabel,
+}: {
+  name: string;
+  size?: number;
+  isImage: boolean;
+  thumbnailUrl?: string | null;
+  file?: File;
+  fromOneDrive?: boolean;
+  onRemove: () => void;
+  removeLabel: string;
+}) {
+  const objectUrl = useMemo(
+    () => (file && isImageKind ? URL.createObjectURL(file) : null),
+    [file, isImageKind]
+  );
+  useEffect(() => {
+    return () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [objectUrl]);
+
+  const src = thumbnailUrl ?? objectUrl;
+
+  return (
+    <div className="flex max-w-56 items-center gap-2 rounded-lg border border-border/60 bg-background py-1 pl-1 pr-2 text-xs">
+      {isImageKind && src ? (
+        <img
+          src={src}
+          alt=""
+          className="size-8 shrink-0 rounded object-cover"
+        />
+      ) : (
+        <span className="flex size-8 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
+          {fromOneDrive ? (
+            <Cloud className="size-3.5" />
+          ) : (
+            <Paperclip className="size-3.5" />
+          )}
+        </span>
+      )}
+      <span className="min-w-0 flex-1 truncate">{name}</span>
+      {size != null && (
+        <span className="shrink-0 tabular-nums text-muted-foreground">
+          {formatFileSize(size)}
+        </span>
+      )}
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={removeLabel}
+        className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
+      >
+        <X className="size-3.5" />
+      </button>
+    </div>
   );
 }

@@ -204,7 +204,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       const user = await resolveOneDriveUser(request);
       await rateLimit("od.search", user.clerkUserId, 30, "1 m");
       const q = query.q.trim();
-      if (q.length < 2) return { items: [] };
+      if (q.length < 1) return { items: [] };
       const hits = await search(q);
       const items = hits
         .map(hit => toItem(hit, user))
@@ -246,6 +246,48 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
           "content-disposition": `attachment; filename="${encodeURIComponent(item.name)}"`,
         },
       });
+    },
+    { params: t.Object({ id: t.String() }) }
+  )
+
+  // Import a file straight into Convex storage (Graph -> API -> Convex),
+  // skipping the browser download-then-reupload round trip a client-side
+  // picker would otherwise need. Returns a ready-to-use attachment payload
+  // for chat/announcements.
+  .post(
+    "/import/:id",
+    async ({ request, params }) => {
+      const user = await resolveOneDriveUser(request);
+      await rateLimit("od.import", user.clerkUserId, 30, "1 m");
+      const { item, rel } = await readableItem(user, params.id);
+
+      const res = await downloadById(params.id);
+      const bytes = await res.arrayBuffer();
+      const contentType = item.file?.mimeType || "application/octet-stream";
+
+      const uploadUrl = await getConvex().mutation(
+        api.files.apiGenerateUploadUrl,
+        { serverKey: serverKey() }
+      );
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "content-type": contentType },
+        body: bytes,
+      });
+      if (!uploadRes.ok) throw Errors.internal("Failed to import file");
+      const { storageId } = (await uploadRes.json()) as { storageId: string };
+
+      return {
+        storageId,
+        kind: contentType.startsWith("image/")
+          ? ("image" as const)
+          : ("file" as const),
+        name: item.name,
+        size: item.size ?? bytes.byteLength,
+        contentType,
+        oneDriveItemId: item.id,
+        oneDrivePath: rel,
+      };
     },
     { params: t.Object({ id: t.String() }) }
   )

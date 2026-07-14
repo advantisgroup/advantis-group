@@ -345,7 +345,23 @@ export const getOrCreateDm = mutation({
       .query("conversations")
       .withIndex("by_dmKey", q => q.eq("dmKey", key))
       .first();
-    if (existing) return { conversationId: existing._id };
+    if (existing) {
+      const now = Date.now();
+      const membership = await getMembership(ctx, existing._id, user._id);
+      if (!membership) {
+        // The caller previously left this DM (soft-deleted, pending purge)
+        // — revive it instead of returning a conversation they can't access.
+        await ctx.db.insert("conversationMembers", {
+          conversationId: existing._id,
+          userId: user._id,
+          role: "member",
+          lastReadAt: now,
+          joinedAt: now,
+        });
+        await ctx.db.patch(existing._id, { deleteAt: undefined });
+      }
+      return { conversationId: existing._id };
+    }
 
     const now = Date.now();
     const conversationId = await ctx.db.insert("conversations", {
@@ -734,8 +750,12 @@ export const sendMessage = mutation({
 });
 
 export const editMessage = mutation({
-  args: { messageId: v.id("messages"), body: v.string() },
-  handler: async (ctx, { messageId, body }) => {
+  args: {
+    messageId: v.id("messages"),
+    body: v.string(),
+    attachments: v.optional(v.array(attachmentValidator)),
+  },
+  handler: async (ctx, { messageId, body, attachments }) => {
     const user = await requireUser(ctx);
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) {
@@ -750,7 +770,19 @@ export const editMessage = mutation({
         message: "You can only edit your own messages",
       });
     }
-    await ctx.db.patch(messageId, { body: body.trim(), editedAt: Date.now() });
+    const trimmedBody = body.trim();
+    const nextAttachments = attachments ?? message.attachments;
+    if (!trimmedBody && nextAttachments.length === 0) {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "Message cannot be empty",
+      });
+    }
+    await ctx.db.patch(messageId, {
+      body: trimmedBody,
+      ...(attachments ? { attachments } : {}),
+      editedAt: Date.now(),
+    });
     return { ok: true };
   },
 });

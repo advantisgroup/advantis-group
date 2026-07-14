@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { type OneDriveItem, type OneDriveListing } from "@advantis/types";
+import {
+  type MessageAttachment,
+  type OneDriveItem,
+  type OneDriveListing,
+} from "@advantis/types";
 import { ChevronRight, Frown, Loader2, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -31,11 +35,19 @@ export function OneDrivePickerDialog({
   open,
   onOpenChange,
   onSelect,
+  onImport,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** `item` is the OneDrive source — keep it to record where the file came from. */
-  onSelect: (file: File, item: OneDriveItem) => void;
+  onSelect?: (file: File, item: OneDriveItem) => void;
+  /**
+   * Alternative to `onSelect`: import the file directly into Convex storage
+   * server-side (Graph -> API -> Convex) instead of downloading it into the
+   * browser first, for callers that just need a ready-to-attach payload
+   * (e.g. chat). Takes precedence over `onSelect` when both are given.
+   */
+  onImport?: (attachment: MessageAttachment, item: OneDriveItem) => void;
 }) {
   const t = useTranslations("Files");
   const od = useOneDriveApi();
@@ -72,7 +84,7 @@ export function OneDrivePickerDialog({
   // Debounced search, scoped to this dialog instance only.
   useEffect(() => {
     const q = query.trim();
-    if (q.length < 2) {
+    if (q.length < 1) {
       setResults(null);
       return;
     }
@@ -99,8 +111,13 @@ export function OneDrivePickerDialog({
     }
     setImportingId(item.id);
     try {
-      const file = await od.downloadAsFile(item);
-      onSelect(file, item);
+      if (onImport) {
+        const attachment = await od.importAttachment(item);
+        onImport(attachment, item);
+      } else {
+        const file = await od.downloadAsFile(item);
+        onSelect?.(file, item);
+      }
       onOpenChange(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t("genericError"));

@@ -17,6 +17,27 @@ export const generateUploadUrl = mutation({
   },
 });
 
+function assertServerKey(serverKey: string): void {
+  const expected = process.env.CONVEX_SERVER_KEY;
+  if (!expected || serverKey !== expected) {
+    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
+  }
+}
+
+/**
+ * Same as `generateUploadUrl`, but for the API server rather than a
+ * signed-in browser — lets it push bytes (e.g. a OneDrive file being
+ * imported into a chat attachment) straight to Convex storage without
+ * round-tripping them through the browser first.
+ */
+export const apiGenerateUploadUrl = mutation({
+  args: { serverKey: v.string() },
+  handler: async (ctx, { serverKey }) => {
+    assertServerKey(serverKey);
+    return ctx.storage.generateUploadUrl();
+  },
+});
+
 /** Resolve a single storage id to a served URL (null if missing). */
 export const getUrl = query({
   args: { storageId: v.id("_storage") },
