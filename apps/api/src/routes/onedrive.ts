@@ -265,22 +265,27 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       }
 
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const report = await scanFile({
+      const scanPromise = scanFile({
         bytes,
         fileName: file.name,
         declaredMime: file.type,
       });
-      if (report.verdict === "blocked") {
-        const reason = report.flags.find(f => f.severity === "danger");
-        throw Errors.badRequest(
-          reason?.detail ?? "This file type is not allowed"
-        );
-      }
-      const scanJson = JSON.stringify(report);
 
-      // Manager / admin: write directly, record the reference.
+      // Manager / admin: write directly, record the reference. The scan and
+      // the destination-folder lookup are independent Graph/CPU work, so run
+      // them concurrently instead of paying for both round trips serially —
+      // the rare "scan blocked" case just wastes one harmless GET.
       if (access.canWrite) {
-        const folder = await getItemByPath(targetRel);
+        const [report, folder] = await Promise.all([
+          scanPromise,
+          getItemByPath(targetRel),
+        ]);
+        if (report.verdict === "blocked") {
+          const reason = report.flags.find(f => f.severity === "danger");
+          throw Errors.badRequest(
+            reason?.detail ?? "This file type is not allowed"
+          );
+        }
         const created = await uploadFile(
           folder.id,
           file.name,
@@ -295,13 +300,21 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
           contentType: file.type || "application/octet-stream",
           targetFolderPath: targetRel,
           driveItemId: created.id,
-          scanReport: scanJson,
+          scanReport: JSON.stringify(report),
         });
         await invalidateAll();
         return { status: "uploaded" as const, scan: report };
       }
 
       // Employee: stage the bytes in Convex and open an approval request.
+      const report = await scanPromise;
+      if (report.verdict === "blocked") {
+        const reason = report.flags.find(f => f.severity === "danger");
+        throw Errors.badRequest(
+          reason?.detail ?? "This file type is not allowed"
+        );
+      }
+      const scanJson = JSON.stringify(report);
       const uploadUrl = await getConvex().mutation(
         api.onedrive.apiGenerateStagingUrl,
         { serverKey: serverKey() }
