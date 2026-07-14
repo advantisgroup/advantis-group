@@ -12,23 +12,69 @@ export interface UploadedAttachment {
   oneDrivePath?: string;
 }
 
+/** Combined attachment size ceiling shared by chat messages and announcements
+ *  — mirrors `MAX_ATTACHMENT_BYTES` in `packages/convex/convex/lib/attachments.ts`,
+ *  which is the actual server-side enforcement (this is just the client-side
+ *  check so the composer can reject before spending an upload round trip). */
+export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+
 /**
  * Upload a file to Convex storage via a short-lived upload URL and return its
  * storageId. `generateUploadUrl` is the `api.files.generateUploadUrl` mutation.
+ * Uses XHR (rather than `fetch`) so `onProgress` can track real upload
+ * progress, matching the pattern already proven in `onedrive-api.ts`'s
+ * `upload()`.
  */
-export async function uploadToConvex(
+export function uploadToConvex(
   generateUploadUrl: () => Promise<string>,
-  file: File
+  file: File,
+  onProgress?: (fraction: number) => void
 ): Promise<Id<"_storage">> {
-  const url = await generateUploadUrl();
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": file.type || "application/octet-stream" },
-    body: file,
+  return new Promise<Id<"_storage">>((resolve, reject) => {
+    void (async () => {
+      try {
+        const url = await generateUploadUrl();
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", url);
+        xhr.setRequestHeader(
+          "Content-Type",
+          file.type || "application/octet-stream"
+        );
+        xhr.upload.onprogress = e => {
+          if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            const { storageId } = JSON.parse(xhr.responseText) as {
+              storageId: Id<"_storage">;
+            };
+            resolve(storageId);
+          } else {
+            reject(new Error("Upload failed"));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+        xhr.send(file);
+      } catch (error) {
+        reject(error instanceof Error ? error : new Error("Upload failed"));
+      }
+    })();
   });
-  if (!res.ok) throw new Error("Upload failed");
-  const { storageId } = (await res.json()) as { storageId: Id<"_storage"> };
-  return storageId;
+}
+
+/**
+ * Best-effort cleanup for attachments that made it into Convex storage before
+ * a send ultimately failed (e.g. the follow-up `sendMessage`/`create` call
+ * rejected) — otherwise those blobs are orphaned forever. Failures here are
+ * swallowed; the user already saw the real error from the failed send.
+ */
+export async function deleteUploadedAttachments(
+  deleteFile: (args: { storageId: Id<"_storage"> }) => Promise<unknown>,
+  attachments: { storageId: Id<"_storage"> }[]
+): Promise<void> {
+  await Promise.allSettled(
+    attachments.map(a => deleteFile({ storageId: a.storageId }))
+  );
 }
 
 export function isImage(file: File): boolean {

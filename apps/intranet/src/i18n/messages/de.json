@@ -289,6 +289,7 @@
     "noMessagesGroupHint": "Sei die erste Person, die in {name} schreibt.",
     "newMessages": "Neue Nachrichten",
     "attachment": "Anhang",
+    "attachTooLarge": "Anhänge überschreiten das 5-MB-Limit",
     "reply": "Antworten",
     "replyingTo": "Antwort an {name}",
     "editingMessage": "Nachricht bearbeiten",
@@ -1264,6 +1265,7 @@
     "actions": "Aktionen",
     "preview": "Vorschau",
     "download": "Herunterladen",
+    "downloading": "Wird heruntergeladen…",
     "versions": "Versionsverlauf",
     "share": "Freigabelink",
     "shareDesc": "Jeder mit dem Link kann die Datei bis zum Ablauf ansehen.",
@@ -1309,10 +1311,12 @@
     "selectAll": "Alle auswählen",
     "bulkDeleteTitle": "{count} Elemente löschen?",
     "uploadQueue": "Uploads",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "finalizing": "Wird abgeschlossen…"
   },
   "FileViewer": {
     "download": "Herunterladen",
+    "downloading": "Wird heruntergeladen…",
     "copyLink": "Link kopieren",
     "linkCopied": "Link kopiert",
     "metadata": "Dateiinfo",
