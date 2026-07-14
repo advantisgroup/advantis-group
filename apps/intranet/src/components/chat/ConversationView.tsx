@@ -14,7 +14,6 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import {
   type LinkPreview,
-  type MessageAttachment,
   type OneDriveItem,
   type UnfurlResult,
 } from "@advantis/types";
@@ -46,6 +45,8 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AttachmentList } from "@/components/attachments/AttachmentList";
+import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
@@ -68,7 +69,6 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatTime, initials, relativeTime } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
-import { isImage, uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 const URL_RE = /https?:\/\/[^\s]+/i;
@@ -152,16 +152,10 @@ export function ConversationView({
   const reinviteDm = useMutation(api.chat.reinviteDm);
   const leaveConversation = useMutation(api.chat.leaveConversation);
   const toggleMute = useMutation(api.chat.toggleMute);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
+  const attachmentUpload = useAttachmentUpload();
 
   const [body, setBody] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  // Tracks which of `files` came from OneDrive, keyed by the File object
-  // itself so the source can ride along without reshaping the File[] state.
-  const [oneDriveSources, setOneDriveSources] = useState<
-    Map<File, { driveItemId: string; path: string }>
-  >(new Map());
   const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
@@ -343,15 +337,19 @@ export function ConversationView({
     setEditing(null);
     setReplyTo(null);
     setBody("");
-    setFiles([]);
-    setOneDriveSources(new Map());
+    attachmentUpload.reset();
   }
 
   function addOneDriveFile(file: File, item: OneDriveItem) {
-    setFiles(prev => [...prev, file]);
-    setOneDriveSources(prev =>
-      new Map(prev).set(file, { driveItemId: item.id, path: item.path })
-    );
+    if (!attachmentUpload.addOneDriveFile(file, item)) {
+      toast.error(t("attachTooLarge"));
+    }
+  }
+
+  function addLocalFiles(files: File[]) {
+    if (files.length > 0 && !attachmentUpload.add(files)) {
+      toast.error(t("attachTooLarge"));
+    }
   }
 
   async function copyMessage(text: string) {
@@ -376,41 +374,33 @@ export function ConversationView({
       return;
     }
 
-    if (!text && files.length === 0) return;
+    if (!text && attachmentUpload.entries.length === 0) return;
     setSending(true);
     try {
-      const attachments: MessageAttachment[] = [];
-      for (const file of files) {
-        const storageId = await uploadToConvex(
-          () => generateUploadUrl({}),
-          file
-        );
-        const source = oneDriveSources.get(file);
-        attachments.push({
-          storageId,
-          kind: isImage(file) ? "image" : "file",
-          name: file.name,
-          size: file.size,
-          contentType: file.type,
-          oneDriveItemId: source?.driveItemId,
-          oneDrivePath: source?.path,
+      // Uploads run in parallel with live per-file progress; a failure here
+      // already rolls back whatever succeeded (see useAttachmentUpload).
+      const attachments = await attachmentUpload.uploadAll();
+      try {
+        const linkPreviews = await unfurlFirstLink(text);
+        const mentions = [...mentionedRef.current.entries()]
+          .filter(([name]) => text.includes(`@${name}`))
+          .map(([, id]) => id);
+        await sendMessage({
+          conversationId,
+          body: text,
+          attachments: attachments as never,
+          linkPreviews,
+          replyToId: replyTo?._id,
+          mentions: mentions.length ? mentions : undefined,
         });
+      } catch (e) {
+        // The upload succeeded but the send itself failed — clean up so the
+        // attachments don't sit orphaned in storage.
+        await attachmentUpload.rollback(attachments);
+        throw e;
       }
-      const linkPreviews = await unfurlFirstLink(text);
-      const mentions = [...mentionedRef.current.entries()]
-        .filter(([name]) => text.includes(`@${name}`))
-        .map(([, id]) => id);
-      await sendMessage({
-        conversationId,
-        body: text,
-        attachments: attachments as never,
-        linkPreviews,
-        replyToId: replyTo?._id,
-        mentions: mentions.length ? mentions : undefined,
-      });
       setBody("");
-      setFiles([]);
-      setOneDriveSources(new Map());
+      attachmentUpload.reset();
       setReplyTo(null);
       mentionedRef.current.clear();
       atBottomRef.current = true;
@@ -450,8 +440,7 @@ export function ConversationView({
   function onDrop(e: DragEvent) {
     e.preventDefault();
     setDragging(false);
-    const dropped = Array.from(e.dataTransfer.files ?? []);
-    if (dropped.length) setFiles(prev => [...prev, ...dropped]);
+    addLocalFiles(Array.from(e.dataTransfer.files ?? []));
   }
 
   function highlightBody(text: string, mentionIds: string[]): ReactNode {
@@ -1122,6 +1111,17 @@ export function ConversationView({
           </div>
         )}
 
+        {!editing && attachmentUpload.entries.length > 0 && (
+          <div className="mb-2">
+            <AttachmentList
+              entries={attachmentUpload.entries}
+              uploading={attachmentUpload.uploading}
+              onRemove={attachmentUpload.remove}
+              removeLabel={tc("delete")}
+            />
+          </div>
+        )}
+
         <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
           {/* @mention autocomplete */}
           {mention && mentionableMembers.length > 0 && (
@@ -1152,7 +1152,10 @@ export function ConversationView({
                 type="file"
                 multiple
                 className="hidden"
-                onChange={e => setFiles(Array.from(e.target.files ?? []))}
+                onChange={e => {
+                  addLocalFiles(Array.from(e.target.files ?? []));
+                  e.target.value = "";
+                }}
               />
             </label>
           )}
@@ -1196,11 +1199,6 @@ export function ConversationView({
           </Popover>
 
           <div className="flex-1 self-center">
-            {files.length > 0 && (
-              <p className="mb-1 truncate px-1 text-xs text-muted-foreground">
-                {files.map(f => f.name).join(", ")}
-              </p>
-            )}
             <Textarea
               ref={textareaRef}
               value={body}

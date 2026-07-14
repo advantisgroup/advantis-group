@@ -192,7 +192,7 @@ const VIEW_KEY = "files:view";
 interface QueueEntry {
   id: number;
   file: File;
-  status: "pending" | "uploading" | "done" | "error";
+  status: "pending" | "uploading" | "finalizing" | "done" | "error";
   progress: number;
 }
 
@@ -416,7 +416,12 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         setQueue(q => q.map(e => (e.id === entry.id ? { ...e, ...p } : e)));
       patch({ status: "uploading", progress: 0 });
       try {
-        await od.upload(entry.file, targetPath, f => patch({ progress: f }));
+        // The client→server transfer can hit 100% well before the server's
+        // scan + Graph upload + Convex record finish — show "Finalizing…"
+        // for that gap instead of leaving the bar looking stuck at 100%.
+        await od.upload(entry.file, targetPath, f =>
+          patch({ progress: f, status: f >= 1 ? "finalizing" : "uploading" })
+        );
         patch({ status: "done", progress: 1 });
         refresh();
       } catch {
@@ -938,6 +943,11 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                 {entry.status === "uploading" && (
                   <span className="shrink-0 tabular-nums text-muted-foreground">
                     {Math.round(entry.progress * 100)}%
+                  </span>
+                )}
+                {entry.status === "finalizing" && (
+                  <span className="shrink-0 text-muted-foreground">
+                    {t("finalizing")}
                   </span>
                 )}
                 {entry.status === "error" && (

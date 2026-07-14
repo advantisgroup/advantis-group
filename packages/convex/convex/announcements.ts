@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { assertAttachmentSizeOk } from "./lib/attachments";
 import { requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
@@ -60,17 +61,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const author = await requireManager(ctx);
-    // Enforce the combined attachment size ceiling (5 MB) server-side too.
-    const totalBytes = (args.attachments ?? []).reduce(
-      (sum, a) => sum + (a.size ?? 0),
-      0
-    );
-    if (totalBytes > 5 * 1024 * 1024) {
-      throw new ConvexError({
-        code: "bad_request",
-        message: "Attachments exceed the 5 MB limit",
-      });
-    }
+    assertAttachmentSizeOk(args.attachments ?? []);
     const now = Date.now();
     // Keep the flat storage-id list in sync (used for cleanup on edit/delete).
     const storageIds =
