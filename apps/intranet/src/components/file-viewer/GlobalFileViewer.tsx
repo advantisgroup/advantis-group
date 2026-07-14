@@ -170,17 +170,20 @@ interface RawExifTags {
   longitude?: number;
 }
 
-/** Reads camera/lens/exposure/GPS out of the file's own EXIF data (JPEG, HEIC, TIFF, …) rather than trusting anything passed in. */
+/** Reads camera/lens/exposure/GPS out of the file's own EXIF data (JPEG, HEIC, TIFF, …) rather than trusting anything passed in. Resolves to null — never rejects — for files with no/unreadable EXIF (e.g. re-encoded by Snapchat/Instagram). */
 async function readExif(url: string): Promise<ExifSummary | null> {
-  const { parse } = await import("exifr");
-  const rawTags: unknown = await parse(url, {
-    tiff: true,
-    exif: true,
-    gps: true,
-    translateValues: true,
-    reviveValues: true,
-    mergeOutput: true,
-  }).catch(() => null);
+  const rawTags: unknown = await import("exifr")
+    .then(({ parse }) =>
+      parse(url, {
+        tiff: true,
+        exif: true,
+        gps: true,
+        translateValues: true,
+        reviveValues: true,
+        mergeOutput: true,
+      })
+    )
+    .catch(() => null);
   if (!rawTags) return null;
   const tags = rawTags as RawExifTags;
 
@@ -302,11 +305,17 @@ function FileViewerContent({
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setExifStatus("loading");
-    void readExif(url).then(summary => {
-      if (cancelled) return;
-      setExif(summary);
-      setExifStatus("done");
-    });
+    void readExif(url)
+      .then(summary => {
+        if (cancelled) return;
+        setExif(summary);
+      })
+      .catch(() => {
+        if (!cancelled) setExif(null);
+      })
+      .finally(() => {
+        if (!cancelled) setExifStatus("done");
+      });
     return () => {
       cancelled = true;
     };
