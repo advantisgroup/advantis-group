@@ -5,6 +5,7 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { assertAttachmentSizeOk } from "./lib/attachments";
 import { requireUser } from "./lib/auth";
 import { createNotification } from "./lib/notify";
 import { attachmentValidator } from "./schema";
@@ -670,6 +671,7 @@ export const sendMessage = mutation({
         message: "Message cannot be empty",
       });
     }
+    assertAttachmentSizeOk(attachments);
 
     // Only accept a reply target that belongs to this conversation.
     let replyToId: Id<"messages"> | undefined;
