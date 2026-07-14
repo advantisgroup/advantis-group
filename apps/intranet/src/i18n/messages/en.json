@@ -1099,6 +1099,7 @@
     "announcements": "Announcements",
     "guidebooks": "Guidebooks",
     "noResults": "No results found",
+    "emptyState": "Start typing to search pages, people, and announcements",
     "hint": "Search",
     "actions": "Actions",
     "actionNewEvent": "New event",
