@@ -25,6 +25,7 @@ import { DayDetailTab } from "@/components/activity/timeline/DayDetailTab";
 import { DayNav } from "@/components/activity/timeline/DayNav";
 import { DiscardedTab } from "@/components/activity/timeline/DiscardedTab";
 import { ExportTab } from "@/components/activity/timeline/ExportTab";
+import { PatternReportTab } from "@/components/activity/timeline/PatternReportTab";
 import { RawTab } from "@/components/activity/timeline/RawTab";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -596,6 +597,9 @@ export default function TimelinePage({
               {t("timeline.tabs.charts")}
             </TabsTrigger>
             <TabsTrigger value="day">{t("timeline.tabs.day")}</TabsTrigger>
+            <TabsTrigger value="pattern">
+              {t("timeline.tabs.pattern")}
+            </TabsTrigger>
             <TabsTrigger value="raw">{t("timeline.tabs.raw")}</TabsTrigger>
             <TabsTrigger value="export">
               {t("timeline.tabs.export")}
@@ -641,6 +645,10 @@ export default function TimelinePage({
             day={selectedDay}
             onSelectDay={setSelectedDay}
           />
+        </TabsContent>
+
+        <TabsContent value="pattern">
+          <PatternReportTab employeeId={employeeId} />
         </TabsContent>
 
         <TabsContent value="discarded">
