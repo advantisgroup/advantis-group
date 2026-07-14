@@ -835,6 +835,77 @@ export default defineSchema({
     .index("by_device_day", ["deviceId", "day"])
     .index("by_day", ["day"]),
 
+  // Generated-on-request weekly pattern reports (one per employee per ISO
+  // week, regenerating overwrites the same week's row). Findings are stored
+  // as data — a locale key plus named, tone-tagged values — rather than
+  // pre-rendered text, so the report renders in either language and the UI
+  // decides formatting/highlighting. See `activity/lib/patterns.ts` for the
+  // detection rules that produce them.
+  activityPatternReports: defineTable({
+    employeeId: v.string(),
+    weekStart: v.string(), // YYYY-MM-DD, Monday
+    generatedAt: v.number(),
+    generatedByUserId: v.id("users"),
+    metrics: v.object({
+      activeSeconds: v.number(),
+      idleSeconds: v.number(),
+      quickFlipCount: v.number(),
+      longestIdleStreakSeconds: v.number(),
+      previous: v.optional(
+        v.object({
+          activeSeconds: v.number(),
+          idleSeconds: v.number(),
+          quickFlipCount: v.number(),
+        })
+      ),
+    }),
+    // One row per day of the week, for the charts below the narrative.
+    daily: v.array(
+      v.object({
+        day: v.string(),
+        activeSeconds: v.number(),
+        idleSeconds: v.number(),
+        quickFlips: v.number(),
+      })
+    ),
+    findings: v.array(
+      v.object({
+        id: v.string(),
+        severity: v.union(
+          v.literal("good"),
+          v.literal("bad"),
+          v.literal("neutral")
+        ),
+        // Locale key for the sentence template, e.g. "pattern.quickFlips" —
+        // resolved client-side so the report renders in the viewer's language.
+        key: v.string(),
+        values: v.array(
+          v.object({
+            // Matches a `{name}` placeholder in the template.
+            name: v.string(),
+            value: v.union(v.string(), v.number()),
+            format: v.optional(
+              v.union(
+                v.literal("duration"),
+                v.literal("percent"),
+                v.literal("count")
+              )
+            ),
+            tone: v.optional(
+              v.union(
+                v.literal("ok"),
+                v.literal("warn"),
+                v.literal("info"),
+                v.literal("muted"),
+                v.literal("fg")
+              )
+            ),
+          })
+        ),
+      })
+    ),
+  }).index("by_employee_week", ["employeeId", "weekStart"]),
+
   // Append-only audit of privileged dashboard actions.
   activityAuditLog: defineTable({
     actorUserId: v.id("users"),
