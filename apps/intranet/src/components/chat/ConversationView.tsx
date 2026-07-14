@@ -187,8 +187,9 @@ export function ConversationView({
   const [showJump, setShowJump] = useState(false);
   const [mention, setMention] = useState<{ query: string } | null>(null);
   // Mobile: message the long-press action sheet is currently open for.
-  const [actionSheetMessage, setActionSheetMessage] =
-    useState<Message | null>(null);
+  const [actionSheetMessage, setActionSheetMessage] = useState<Message | null>(
+    null
+  );
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -408,10 +409,7 @@ export function ConversationView({
   async function uploadPendingFiles(): Promise<MessageAttachment[]> {
     const uploaded: MessageAttachment[] = [];
     for (const file of files) {
-      const storageId = await uploadToConvex(
-        () => generateUploadUrl({}),
-        file
-      );
+      const storageId = await uploadToConvex(() => generateUploadUrl({}), file);
       uploaded.push({
         storageId,
         kind: isImage(file) ? "image" : "file",
@@ -446,11 +444,7 @@ export function ConversationView({
       setSending(true);
       try {
         const uploaded = await uploadPendingFiles();
-        const attachments = [
-          ...remaining,
-          ...uploaded,
-          ...importedAttachments,
-        ];
+        const attachments = [...remaining, ...uploaded, ...importedAttachments];
         await editMessage({
           messageId: editing.id,
           body: text,
@@ -470,7 +464,10 @@ export function ConversationView({
     }
     setSending(true);
     try {
-      const attachments = [...(await uploadPendingFiles()), ...importedAttachments];
+      const attachments = [
+        ...(await uploadPendingFiles()),
+        ...importedAttachments,
+      ];
       const linkPreviews = await unfurlFirstLink(text);
       const mentions = [...mentionedRef.current.entries()]
         .filter(([name]) => text.includes(`@${name}`))
@@ -919,7 +916,9 @@ export function ConversationView({
                           dragElastic={0.5}
                           dragMomentum={false}
                           onDragEnd={(_e, info: PanInfo) => {
-                            if (Math.abs(info.offset.x) > SWIPE_REPLY_THRESHOLD) {
+                            if (
+                              Math.abs(info.offset.x) > SWIPE_REPLY_THRESHOLD
+                            ) {
                               swipeToReply(m);
                             }
                           }}
