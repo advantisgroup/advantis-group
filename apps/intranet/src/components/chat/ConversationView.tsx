@@ -47,6 +47,8 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AttachmentList } from "@/components/attachments/AttachmentList";
+import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
@@ -69,7 +71,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatTime, initials, relativeTime } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
-import { formatFileSize, isImage, uploadToConvex } from "@/lib/upload";
+import { formatFileSize, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 const URL_RE = /https?:\/\/[^\s]+/i;
@@ -159,20 +161,19 @@ export function ConversationView({
   const reinviteDm = useMutation(api.chat.reinviteDm);
   const leaveConversation = useMutation(api.chat.leaveConversation);
   const toggleMute = useMutation(api.chat.toggleMute);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
+  const attachmentUpload = useAttachmentUpload();
 
   const [body, setBody] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
   // OneDrive picks are imported server-side (Graph -> Convex, see
   // useOneDriveApi().importAttachment) and arrive already uploaded, so they
-  // ride separately from `files` instead of round-tripping through the
-  // browser as a File to re-upload.
+  // ride separately from `attachmentUpload`'s local-file entries instead of
+  // round-tripping through the browser as a File to re-upload.
   const [importedAttachments, setImportedAttachments] = useState<
     MessageAttachment[]
   >([]);
   // Attachments already on the message being edited; edited alongside any
-  // newly-picked `files`/`importedAttachments` and merged back on save.
+  // newly-picked local files / `importedAttachments` and merged back on save.
   const [editingAttachments, setEditingAttachments] = useState<
     Message["attachments"]
   >([]);
@@ -372,17 +373,15 @@ export function ConversationView({
     setEditing(null);
     setReplyTo(null);
     setBody("");
-    setFiles([]);
+    attachmentUpload.reset();
     setImportedAttachments([]);
     setEditingAttachments([]);
   }
 
-  function addFiles(picked: File[]) {
-    setFiles(prev => [...prev, ...picked]);
-  }
-
-  function removeFile(index: number) {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+  function addLocalFiles(files: File[]) {
+    if (files.length > 0 && !attachmentUpload.add(files)) {
+      toast.error(t("attachTooLarge"));
+    }
   }
 
   function removeEditingAttachment(storageId: string) {
@@ -393,7 +392,18 @@ export function ConversationView({
     setImportedAttachments(prev => prev.filter(a => a.storageId !== storageId));
   }
 
+  // OneDrive picks import straight into Convex server-side (see
+  // useOneDriveApi().importAttachment), so they arrive pre-uploaded rather
+  // than going through attachmentUpload's local-file pipeline.
   function addImportedAttachment(attachment: MessageAttachment) {
+    const total =
+      attachmentUpload.totalSize +
+      importedAttachments.reduce((sum, a) => sum + (a.size ?? 0), 0) +
+      (attachment.size ?? 0);
+    if (total > MAX_ATTACHMENT_BYTES) {
+      toast.error(t("attachTooLarge"));
+      return;
+    }
     setImportedAttachments(prev => [...prev, attachment]);
   }
 
@@ -404,21 +414,6 @@ export function ConversationView({
     } catch {
       /* clipboard unavailable — ignore */
     }
-  }
-
-  async function uploadPendingFiles(): Promise<MessageAttachment[]> {
-    const uploaded: MessageAttachment[] = [];
-    for (const file of files) {
-      const storageId = await uploadToConvex(() => generateUploadUrl({}), file);
-      uploaded.push({
-        storageId,
-        kind: isImage(file) ? "image" : "file",
-        name: file.name,
-        size: file.size,
-        contentType: file.type,
-      });
-    }
-    return uploaded;
   }
 
   function stripAttachmentUrl(
@@ -436,20 +431,30 @@ export function ConversationView({
       if (
         !text &&
         remaining.length === 0 &&
-        files.length === 0 &&
+        attachmentUpload.entries.length === 0 &&
         importedAttachments.length === 0
       ) {
         return;
       }
       setSending(true);
       try {
-        const uploaded = await uploadPendingFiles();
+        // Uploads run in parallel with live per-file progress; a failure
+        // here already rolls back whatever succeeded (see useAttachmentUpload).
+        const uploaded = await attachmentUpload.uploadAll();
         const attachments = [...remaining, ...uploaded, ...importedAttachments];
-        await editMessage({
-          messageId: editing.id,
-          body: text,
-          attachments: attachments as never,
-        });
+        try {
+          await editMessage({
+            messageId: editing.id,
+            body: text,
+            attachments: attachments as never,
+          });
+        } catch (e) {
+          await attachmentUpload.rollback([
+            ...uploaded,
+            ...importedAttachments,
+          ] as never);
+          throw e;
+        }
         cancelCompose();
       } catch (e) {
         handleError(e);
@@ -459,29 +464,40 @@ export function ConversationView({
       return;
     }
 
-    if (!text && files.length === 0 && importedAttachments.length === 0) {
+    if (
+      !text &&
+      attachmentUpload.entries.length === 0 &&
+      importedAttachments.length === 0
+    ) {
       return;
     }
     setSending(true);
     try {
-      const attachments = [
-        ...(await uploadPendingFiles()),
-        ...importedAttachments,
-      ];
-      const linkPreviews = await unfurlFirstLink(text);
-      const mentions = [...mentionedRef.current.entries()]
-        .filter(([name]) => text.includes(`@${name}`))
-        .map(([, id]) => id);
-      await sendMessage({
-        conversationId,
-        body: text,
-        attachments: attachments as never,
-        linkPreviews,
-        replyToId: replyTo?._id,
-        mentions: mentions.length ? mentions : undefined,
-      });
+      // Uploads run in parallel with live per-file progress; a failure here
+      // already rolls back whatever succeeded (see useAttachmentUpload).
+      const uploaded = await attachmentUpload.uploadAll();
+      const attachments = [...uploaded, ...importedAttachments];
+      try {
+        const linkPreviews = await unfurlFirstLink(text);
+        const mentions = [...mentionedRef.current.entries()]
+          .filter(([name]) => text.includes(`@${name}`))
+          .map(([, id]) => id);
+        await sendMessage({
+          conversationId,
+          body: text,
+          attachments: attachments as never,
+          linkPreviews,
+          replyToId: replyTo?._id,
+          mentions: mentions.length ? mentions : undefined,
+        });
+      } catch (e) {
+        // The upload succeeded but the send itself failed — clean up so the
+        // attachments don't sit orphaned in storage.
+        await attachmentUpload.rollback(attachments as never);
+        throw e;
+      }
       setBody("");
-      setFiles([]);
+      attachmentUpload.reset();
       setImportedAttachments([]);
       setReplyTo(null);
       mentionedRef.current.clear();
@@ -522,8 +538,7 @@ export function ConversationView({
   function onDrop(e: DragEvent) {
     e.preventDefault();
     setDragging(false);
-    const dropped = Array.from(e.dataTransfer.files ?? []);
-    if (dropped.length) setFiles(prev => [...prev, ...dropped]);
+    addLocalFiles(Array.from(e.dataTransfer.files ?? []));
   }
 
   function clearLongPress() {
@@ -1245,6 +1260,45 @@ export function ConversationView({
           </div>
         )}
 
+        {(editingAttachments.length > 0 || importedAttachments.length > 0) && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {editingAttachments.map(a => (
+              <AttachmentChip
+                key={a.storageId}
+                name={a.name}
+                size={a.size}
+                isImage={a.kind === "image"}
+                thumbnailUrl={a.url}
+                fromOneDrive={!!a.oneDrivePath}
+                onRemove={() => removeEditingAttachment(a.storageId)}
+                removeLabel={tc("delete")}
+              />
+            ))}
+            {importedAttachments.map(a => (
+              <AttachmentChip
+                key={a.storageId}
+                name={a.name}
+                size={a.size}
+                isImage={a.kind === "image"}
+                fromOneDrive
+                onRemove={() => removeImportedAttachment(a.storageId)}
+                removeLabel={tc("delete")}
+              />
+            ))}
+          </div>
+        )}
+
+        {attachmentUpload.entries.length > 0 && (
+          <div className="mb-2">
+            <AttachmentList
+              entries={attachmentUpload.entries}
+              uploading={attachmentUpload.uploading}
+              onRemove={attachmentUpload.remove}
+              removeLabel={tc("delete")}
+            />
+          </div>
+        )}
+
         <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
           {/* @mention autocomplete */}
           {mention && mentionableMembers.length > 0 && (
@@ -1275,7 +1329,7 @@ export function ConversationView({
               multiple
               className="hidden"
               onChange={e => {
-                addFiles(Array.from(e.target.files ?? []));
+                addLocalFiles(Array.from(e.target.files ?? []));
                 e.target.value = "";
               }}
             />
@@ -1318,46 +1372,6 @@ export function ConversationView({
           </Popover>
 
           <div className="min-w-0 flex-1 self-center">
-            {(editingAttachments.length > 0 ||
-              files.length > 0 ||
-              importedAttachments.length > 0) && (
-              <div className="mb-1.5 flex flex-wrap gap-1.5 px-1">
-                {editingAttachments.map(a => (
-                  <AttachmentChip
-                    key={a.storageId}
-                    name={a.name}
-                    size={a.size}
-                    isImage={a.kind === "image"}
-                    thumbnailUrl={a.url}
-                    fromOneDrive={!!a.oneDrivePath}
-                    onRemove={() => removeEditingAttachment(a.storageId)}
-                    removeLabel={tc("delete")}
-                  />
-                ))}
-                {files.map((f, i) => (
-                  <AttachmentChip
-                    key={`${f.name}-${i}`}
-                    name={f.name}
-                    size={f.size}
-                    isImage={isImage(f)}
-                    file={f}
-                    onRemove={() => removeFile(i)}
-                    removeLabel={tc("delete")}
-                  />
-                ))}
-                {importedAttachments.map(a => (
-                  <AttachmentChip
-                    key={a.storageId}
-                    name={a.name}
-                    size={a.size}
-                    isImage={a.kind === "image"}
-                    fromOneDrive
-                    onRemove={() => removeImportedAttachment(a.storageId)}
-                    removeLabel={tc("delete")}
-                  />
-                ))}
-              </div>
-            )}
             <Textarea
               ref={textareaRef}
               value={body}

@@ -24,6 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { downloadWithProgress } from "@/lib/download";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -31,18 +32,9 @@ import { detectFileKind, type FileKind } from "./file-kind";
 
 import type { ViewableFile } from "./FileViewerProvider";
 
-async function downloadUrl(url: string, name: string) {
+async function downloadUrl(url: string, name: string, label: string) {
   try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = objectUrl;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(objectUrl);
+    await downloadWithProgress(url, name, label);
   } catch {
     // Fetch/blob can fail (CORS, network) — opening the raw URL is still a
     // usable fallback, even if it doesn't force a download.
@@ -140,7 +132,7 @@ function ArchiveDownloadConfirm({
           <Button
             disabled={!url}
             onClick={() => {
-              if (url) void downloadUrl(url, file.name);
+              if (url) void downloadUrl(url, file.name, t("downloading"));
               onOpenChange(false);
             }}
             autoFocus
@@ -181,7 +173,7 @@ function FileViewerContent({
       label: t("download"),
       icon: <Download className="size-4" />,
       onSelect: () => {
-        if (url) void downloadUrl(url, file.name);
+        if (url) void downloadUrl(url, file.name, t("downloading"));
       },
     },
     {
@@ -292,7 +284,7 @@ function FileViewerContent({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => downloadUrl(url, file.name)}
+              onClick={() => downloadUrl(url, file.name, t("downloading"))}
             >
               <Download className="size-4" />
               {t("download")}

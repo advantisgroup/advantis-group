@@ -289,6 +289,7 @@
     "noMessagesGroupHint": "Be the first to post in {name}.",
     "newMessages": "New messages",
     "attachment": "Attachment",
+    "attachTooLarge": "Attachments exceed the 5 MB limit",
     "reply": "Reply",
     "replyingTo": "Replying to {name}",
     "editingMessage": "Editing message",
@@ -1264,6 +1265,7 @@
     "actions": "Actions",
     "preview": "Preview",
     "download": "Download",
+    "downloading": "Downloading…",
     "versions": "Version history",
     "share": "Share link",
     "shareDesc": "Anyone with the link can view this file until it expires.",
@@ -1309,10 +1311,12 @@
     "selectAll": "Select all",
     "bulkDeleteTitle": "Delete {count} items?",
     "uploadQueue": "Uploads",
-    "retry": "Retry"
+    "retry": "Retry",
+    "finalizing": "Finalizing…"
   },
   "FileViewer": {
     "download": "Download",
+    "downloading": "Downloading…",
     "copyLink": "Copy link",
     "linkCopied": "Link copied",
     "metadata": "File info",
