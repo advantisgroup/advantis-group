@@ -15,7 +15,8 @@ export default clerkMiddleware((_auth, req) => {
   if (
     pathname.startsWith("/api") ||
     pathname.startsWith("/trpc") ||
-    pathname.startsWith("/ingest")
+    pathname.startsWith("/ingest") ||
+    pathname.startsWith("/content")
   ) {
     return;
   }
