@@ -67,6 +67,24 @@ export const recordSamples = internalMutation({
         continue;
       }
 
+      // One ranged read replaces a per-sample point read: every existing
+      // capturedAt in the batch's window, deduped in memory. `seen` also
+      // absorbs intra-batch duplicates (the old per-sample read caught those
+      // because `ctx.db` sees the mutation's own writes).
+      const oldest = deviceSamples[0]!;
+      const newest = deviceSamples[deviceSamples.length - 1]!;
+      const existing = await ctx.db
+        .query("activitySamples")
+        .withIndex("by_device_time", q =>
+          q
+            .eq("deviceId", deviceId)
+            .gte("capturedAt", oldest.capturedAt)
+            .lte("capturedAt", newest.capturedAt)
+        )
+        .collect();
+      const seen = new Set(existing.map(doc => doc.capturedAt));
+
+      const dayTotals = new Map<string, DayTotals>();
       let prevCapturedAt = device?.lastSeen;
 
       for (const s of deviceSamples) {
@@ -82,15 +100,21 @@ export const recordSamples = internalMutation({
           s.tzOffsetMinutes = 0;
         }
 
-        const duplicate = await ctx.db
-          .query("activitySamples")
-          .withIndex("by_device_time", q =>
-            q.eq("deviceId", deviceId).eq("capturedAt", s.capturedAt)
-          )
-          .first();
+        const duplicate = seen.has(s.capturedAt);
 
         if (!duplicate) {
-          await ctx.db.insert("activitySamples", { ...s, receivedAt });
+          // Slim row: the near-constant per-device fields the agent sends
+          // (windowsUser/hostname/agentVersion/platform) are kept on the
+          // devices row instead of being repeated on every sample.
+          await ctx.db.insert("activitySamples", {
+            deviceId: s.deviceId,
+            idleMs: s.idleMs,
+            active: s.active,
+            capturedAt: s.capturedAt,
+            tzOffsetMinutes: s.tzOffsetMinutes,
+            receivedAt,
+          });
+          seen.add(s.capturedAt);
           inserted++;
         }
 
@@ -102,11 +126,22 @@ export const recordSamples = internalMutation({
         prevCapturedAt = s.capturedAt;
 
         if (!duplicate) {
-          await accrueDaily(ctx, deviceId, s, gapMs, inactivityMs);
+          accrueDaily(dayTotals, s, gapMs, inactivityMs);
         }
       }
 
-      const newest = deviceSamples[deviceSamples.length - 1]!;
+      // Flush the accumulated per-day deltas: one dailyStats read + one
+      // write per (device, local day) instead of one pair per sample.
+      for (const [day, totals] of dayTotals) {
+        await flushDay(ctx, deviceId, day, totals);
+      }
+
+      const lastSample = {
+        capturedAt: newest.capturedAt,
+        idleMs: newest.idleMs,
+        active: newest.active,
+        tzOffsetMinutes: newest.tzOffsetMinutes,
+      };
       if (device) {
         const userChanged =
           !!device.lastWindowsUser &&
@@ -125,6 +160,7 @@ export const recordSamples = internalMutation({
           agentVersion: newest.agentVersion,
           status: device.status,
           lastIngestAt: receivedAt,
+          lastSample,
         });
       } else {
         await ctx.db.insert("devices", {
@@ -135,6 +171,7 @@ export const recordSamples = internalMutation({
           lastSeen: newest.capturedAt,
           agentVersion: newest.agentVersion,
           lastIngestAt: receivedAt,
+          lastSample,
         });
       }
 
@@ -173,13 +210,23 @@ async function getDevice(
     .unique();
 }
 
-async function accrueDaily(
-  ctx: MutationCtx,
-  deviceId: string,
+interface DayTotals {
+  activeDelta: number;
+  idleDelta: number;
+  firstSeen: number;
+  lastSeen: number;
+}
+
+// Accumulates a sample's attributed gap into per-day in-memory totals
+// (splitting across local-day boundaries); `flushDay` persists each day once
+// per batch. Sums are associative and first/lastSeen are min/max, so this is
+// arithmetically identical to the previous per-sample read-modify-write.
+function accrueDaily(
+  dayTotals: Map<string, DayTotals>,
   sample: { idleMs: number; capturedAt: number; tzOffsetMinutes: number },
   gapMs: number,
   inactivityMs: number
-): Promise<void> {
+): void {
   const isActive = sample.idleMs < inactivityMs;
   const tz = sample.tzOffsetMinutes;
   const end = sample.capturedAt;
@@ -193,28 +240,30 @@ async function accrueDaily(
     const segEnd = Math.min(end, nextDayEpoch);
     const seconds = (segEnd - segStart) / 1000;
     if (seconds > 0) {
-      await accrueDay(
-        ctx,
-        deviceId,
-        day,
-        isActive ? seconds : 0,
-        isActive ? 0 : seconds,
-        segStart,
-        segEnd
-      );
+      const totals = dayTotals.get(day);
+      if (totals) {
+        totals.activeDelta += isActive ? seconds : 0;
+        totals.idleDelta += isActive ? 0 : seconds;
+        totals.firstSeen = Math.min(totals.firstSeen, segStart);
+        totals.lastSeen = Math.max(totals.lastSeen, segEnd);
+      } else {
+        dayTotals.set(day, {
+          activeDelta: isActive ? seconds : 0,
+          idleDelta: isActive ? 0 : seconds,
+          firstSeen: segStart,
+          lastSeen: segEnd,
+        });
+      }
     }
     segStart = segEnd;
   }
 }
 
-async function accrueDay(
+async function flushDay(
   ctx: MutationCtx,
   deviceId: string,
   day: string,
-  activeDelta: number,
-  idleDelta: number,
-  firstSeen: number,
-  lastSeen: number
+  { activeDelta, idleDelta, firstSeen, lastSeen }: DayTotals
 ): Promise<void> {
   const existing = await ctx.db
     .query("dailyStats")

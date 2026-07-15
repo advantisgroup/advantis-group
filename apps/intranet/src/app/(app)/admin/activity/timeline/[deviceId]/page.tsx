@@ -36,7 +36,6 @@ import {
   dailyTrend,
   dayStateSegments,
   hourlyStateBreakdown,
-  lastActiveDay,
   timelineCharts,
   STATE_NAMES,
   type Sample,
@@ -45,6 +44,7 @@ import {
 import {
   formatDuration,
   formatRelativeTime,
+  localDay,
   todayLocalDay,
 } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
@@ -84,15 +84,32 @@ export default function TimelinePage({
   // while Convex has no data change to push.
   const now = useNow();
 
-  const samples = useQuery(api.activity.stats.recentSamples, {
-    deviceId,
-    limit: 1000,
-  });
   const today = todayLocalDay();
   // The day the charts are scoped to (URL `?day=`; defaults to today). Drives
   // every per-day view so a stale device never shows old data as "today".
   const [selectedDay, setSelectedDay] = useDayParam(today);
   const isToday = selectedDay === today;
+
+  // Raw samples for the selected day only. The window uses the same
+  // fixed-offset day arithmetic as `timelineCharts`' filter, so the fetch is
+  // exactly the rows the charts keep. Past days are closed ranges the backend
+  // serves from its query cache without re-reading the table.
+  const { sampleStartMs, sampleEndMs } = useMemo(() => {
+    const tz = new Date().getTimezoneOffset();
+    const start = Date.parse(`${selectedDay}T00:00:00Z`) + tz * 60_000;
+    return { sampleStartMs: start, sampleEndMs: start + 86_400_000 };
+  }, [selectedDay]);
+  const samples = useQuery(api.activity.stats.samplesForDay, {
+    deviceId,
+    startMs: sampleStartMs,
+    endMs: sampleEndMs,
+  });
+  // The raw-samples table is the only consumer of `recentSamples` now, and it
+  // only subscribes while its tab is actually open.
+  const rawSamples = useQuery(
+    api.activity.stats.recentSamples,
+    tab === "raw" ? { deviceId, limit: 200 } : "skip"
+  );
 
   const startDay = useMemo(() => {
     const d = new Date(`${today}T00:00:00Z`);
@@ -172,7 +189,13 @@ export default function TimelinePage({
       : "skip"
   );
 
-  // Aggregations (memoised; samples can be up to 1000 rows).
+  // Newest local day with any sample, from the device row's last-seen
+  // heartbeat — no raw-sample read needed. Powers the "rewind" affordance.
+  const lastActive = device
+    ? localDay(device.lastSeen, new Date().getTimezoneOffset())
+    : null;
+
+  // Aggregations (memoised; samples hold one day, up to ~6k rows).
   const {
     trend,
     heatmap,
@@ -180,7 +203,6 @@ export default function TimelinePage({
     hourlyStates,
     daySegments,
     stateChanges,
-    lastActive,
   } = useMemo(() => {
     const tzOffset = new Date().getTimezoneOffset();
     const s: Sample[] = samples ?? [];
@@ -196,7 +218,6 @@ export default function TimelinePage({
       trend: dailyTrend(daily ?? [], startDay, today),
       heatmap,
       intraday,
-      lastActive: lastActiveDay(s, tzOffset),
       hourlyStates: hourlyStateBreakdown(
         dayHistory,
         dayStartMs,
@@ -660,7 +681,11 @@ export default function TimelinePage({
         </TabsContent>
 
         <TabsContent value="raw">
-          <RawTab samples={samples} />
+          {rawSamples === undefined ? (
+            <Skeleton className="h-64" />
+          ) : (
+            <RawTab samples={rawSamples} />
+          )}
         </TabsContent>
 
         <TabsContent value="export">

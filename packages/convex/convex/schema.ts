@@ -696,6 +696,16 @@ export default defineSchema({
     tokenHash: v.optional(v.string()),
     // Wall-clock time of the last ACCEPTED ingest batch (rate-limit throttle).
     lastIngestAt: v.optional(v.number()),
+    // Summary of the newest sample, maintained by the ingest device patch so
+    // dashboard reads (teamOverview) never have to touch `activitySamples`.
+    lastSample: v.optional(
+      v.object({
+        capturedAt: v.number(),
+        idleMs: v.number(),
+        active: v.boolean(),
+        tzOffsetMinutes: v.number(),
+      })
+    ),
   })
     .index("by_deviceId", ["deviceId"])
     .index("by_status", ["status"])
@@ -735,17 +745,21 @@ export default defineSchema({
     .index("by_email", ["email"]),
 
   // Raw samples (append-only). Indexed for time-range + per-device queries.
+  // The per-device near-constant fields (`windowsUser`, `hostname`,
+  // `agentVersion`, `platform`) are no longer stored per row — they live on
+  // the `devices` row — and are optional only so rows written before the
+  // change stay valid.
   activitySamples: defineTable({
     deviceId: v.string(),
-    windowsUser: v.string(),
-    hostname: v.string(),
+    windowsUser: v.optional(v.string()),
+    hostname: v.optional(v.string()),
     idleMs: v.number(),
     active: v.boolean(),
     capturedAt: v.number(),
     receivedAt: v.number(), // server clock, for skew detection
     tzOffsetMinutes: v.number(),
-    agentVersion: v.string(),
-    platform: v.string(),
+    agentVersion: v.optional(v.string()),
+    platform: v.optional(v.string()),
   })
     .index("by_device_time", ["deviceId", "capturedAt"])
     .index("by_receivedAt", ["receivedAt"]),
