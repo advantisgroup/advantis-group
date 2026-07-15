@@ -77,7 +77,12 @@ export const teamOverview = query({
         const person = device.personId
           ? (peopleById.get(device.personId) ?? null)
           : null;
-        const latest = await latestSample(ctx, device.deviceId);
+        // The ingest patch keeps a `lastSample` summary on the device row, so
+        // this query normally never reads `activitySamples`. The fallback
+        // covers devices that haven't ingested since the field was
+        // introduced; it self-heals on their next heartbeat.
+        const latest =
+          device.lastSample ?? (await latestSample(ctx, device.deviceId));
         const tzOffset = latest?.tzOffsetMinutes ?? 0;
         const day = localDay(now, tzOffset);
 
