@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/select";
 import { UpdatesEmailConsent } from "@/components/updates/UpdatesEmailConsent";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { initials } from "@/lib/format";
+import { initials, roleLabel } from "@/lib/format";
 import { cropToSquare } from "@/lib/image";
 import { uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
@@ -359,7 +359,7 @@ export default function SettingsPage() {
               {user.email}
             </p>
             <Badge variant="muted" className="mt-1.5">
-              {tRoles(user.role)}
+              {roleLabel(user, tRoles)}
             </Badge>
           </div>
         </div>

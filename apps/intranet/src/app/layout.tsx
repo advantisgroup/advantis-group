@@ -88,7 +88,7 @@ export default async function RootLayout({
                 disableTransitionOnChange
               >
                 {children}
-                <Toaster richColors position="top-right" />
+                <Toaster position="bottom-right" />
               </ThemeProvider>
             </ConvexClientProvider>
           </NextIntlClientProvider>

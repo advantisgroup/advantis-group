@@ -8,9 +8,12 @@ import { roleValidator } from "./schema";
 import {
   ensureUser,
   getCurrentUser,
+  isApplicantEligible,
   requireAdmin,
+  requireApplicantDelegateOrAdmin,
   requireManager,
   requireUser,
+  requireVaultUnlocked,
 } from "./lib/auth";
 import { listUserPermissions } from "./lib/permissions";
 import {
@@ -55,6 +58,9 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     customRoleId: user.customRoleId ?? null,
     customRoleName: customRole?.name ?? null,
     capabilities: customRole?.capabilities ?? [],
+    applicantAccessDelegate: user.applicantAccessDelegate ?? false,
+    applicantAccess: user.applicantAccess ?? false,
+    roleLabel: user.roleLabel ?? null,
     avatar,
     lastSeenAt: user.lastSeenAt ?? null,
     createdAt: user.createdAt,
@@ -498,5 +504,107 @@ export const departments = query({
     const set = new Set<string>();
     for (const u of users) if (u.department) set.add(u.department);
     return [...set].sort((a, b) => a.localeCompare(b));
+  },
+});
+
+// --- Applicant Management (Bewerbermanagement) access -----------------------
+
+/** Admin-only: designate/undesignate a user as an Applicant Access delegate. */
+export const setApplicantDelegate = mutation({
+  args: { userId: v.id("users"), delegate: v.boolean() },
+  handler: async (ctx, { userId, delegate }) => {
+    const admin = await requireAdmin(ctx);
+    await requireVaultUnlocked(ctx, admin._id);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    await ctx.db.patch(userId, { applicantAccessDelegate: delegate });
+    await ctx.db.insert("applicantAuditLog", {
+      actorUserId: admin._id,
+      action: delegate ? "grant_delegate" : "revoke_delegate",
+      target: target.email,
+      at: Date.now(),
+    });
+    return { ok: true };
+  },
+});
+
+/**
+ * Grant/revoke Applicant Management access. Callable by admins or designated
+ * delegates. Granting requires the target to already qualify (Manager+, or a
+ * custom role with `manage_members`) — enforced here even for admins, since
+ * it's a data-sensitivity rule, not an authority one.
+ */
+export const setApplicantAccess = mutation({
+  args: { userId: v.id("users"), access: v.boolean() },
+  handler: async (ctx, { userId, access }) => {
+    const actor = await requireApplicantDelegateOrAdmin(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    if (access) {
+      const customRole = target.customRoleId
+        ? await ctx.db.get(target.customRoleId)
+        : null;
+      if (!isApplicantEligible(target, customRole)) {
+        throw new ConvexError({
+          code: "forbidden",
+          message:
+            "This user must be at least Manager or hold a custom role with Manage Members before they can be granted Applicant Management access.",
+        });
+      }
+    }
+    await ctx.db.patch(userId, { applicantAccess: access });
+    await ctx.db.insert("applicantAuditLog", {
+      actorUserId: actor._id,
+      action: access ? "grant_access" : "revoke_access",
+      target: target.email,
+      at: Date.now(),
+    });
+    return { ok: true };
+  },
+});
+
+/** Users eligible to be granted Applicant Management access, for the picker. */
+export const eligibleForApplicantAccess = query({
+  args: {},
+  handler: async ctx => {
+    await requireApplicantDelegateOrAdmin(ctx);
+    const users = await ctx.db.query("users").collect();
+    const customRoles = await ctx.db.query("customRoles").collect();
+    const customRoleById = new Map(customRoles.map(r => [r._id, r]));
+    return users
+      .filter(
+        u =>
+          u.status === "active" &&
+          isApplicantEligible(
+            u,
+            u.customRoleId ? (customRoleById.get(u.customRoleId) ?? null) : null
+          )
+      )
+      .map(u => ({
+        _id: u._id,
+        name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
+        email: u.email,
+        role: u.role,
+        applicantAccess: u.applicantAccess ?? false,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+/** Admin-only: set a cosmetic display-name override for a user's role badge. */
+export const setRoleLabel = mutation({
+  args: { userId: v.id("users"), roleLabel: v.optional(v.string()) },
+  handler: async (ctx, { userId, roleLabel }) => {
+    await requireAdmin(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    await ctx.db.patch(userId, { roleLabel: roleLabel?.trim() || undefined });
+    return { ok: true };
   },
 });

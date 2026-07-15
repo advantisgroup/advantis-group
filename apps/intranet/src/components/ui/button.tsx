@@ -13,14 +13,15 @@ const buttonVariants = cva(
         // mode, black-on-light in light mode. Decoupled from the brand `primary`
         // token so accents/links stay on-brand.
         default:
-          "bg-foreground text-background shadow-sm hover:bg-foreground/90",
+          "bg-foreground text-background shadow-sm hover:bg-foreground/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--foreground)_35%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--foreground)_45%,transparent)]",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90 hover:shadow-[0_0_0_1px_color-mix(in_oklch,var(--destructive)_45%,transparent),0_4px_16px_-4px_color-mix(in_oklch,var(--destructive)_55%,transparent)]",
         outline:
-          "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground",
+          "border border-border bg-transparent hover:bg-accent hover:text-accent-foreground hover:border-ring/60 hover:shadow-[0_0_12px_-4px_color-mix(in_oklch,var(--ring)_45%,transparent)]",
         secondary:
-          "border border-border bg-secondary text-secondary-foreground hover:bg-accent",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+          "border border-border bg-secondary text-secondary-foreground hover:bg-accent hover:shadow-[0_0_12px_-4px_color-mix(in_oklch,var(--ring)_35%,transparent)]",
+        ghost:
+          "hover:bg-accent hover:text-accent-foreground hover:shadow-[0_0_10px_-5px_color-mix(in_oklch,var(--ring)_35%,transparent)]",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

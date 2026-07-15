@@ -226,6 +226,21 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
                 </TooltipContent>
               </Tooltip>
             )}
+            {m.applicantAccessDelegate && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="muted"
+                    className="hidden cursor-help text-[10px] sm:inline-flex"
+                  >
+                    BM
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {t("applicantDelegateBadgeTitle")}
+                </TooltipContent>
+              </Tooltip>
+            )}
             <PersonIdentityBadges
               role={m.role}
               department={m.department}

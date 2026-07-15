@@ -28,6 +28,7 @@ import {
   Settings,
   ShieldCheck,
   UploadCloud,
+  UserRoundSearch,
   Users,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -35,6 +36,7 @@ import { useTranslations } from "next-intl";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import {
   useCurrentUser,
+  useHasApplicantAccess,
   useIsManager,
 } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -57,6 +59,7 @@ export function CommandPalette() {
   const tGuide = useTranslations("Guidebooks");
   const router = useRouter();
   const isManager = useIsManager();
+  const hasApplicantAccess = useHasApplicantAccess();
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
   const [open, setOpen] = useState(false);
@@ -73,6 +76,10 @@ export function CommandPalette() {
   const announcements = useQuery(
     api.announcements.list,
     open && query.trim() ? {} : "skip"
+  );
+  const applicants = useQuery(
+    api.applicants.list,
+    open && hasApplicantAccess && query.trim() ? {} : "skip"
   );
 
   // ⌘K / Ctrl-K toggles the palette from anywhere.
@@ -235,10 +242,38 @@ export function CommandPalette() {
         });
       }
     }
+    if (hasApplicantAccess) {
+      for (const ap of applicants ?? []) {
+        const haystack = [ap.name, ap.email, ap.position]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (haystack.includes(q)) {
+          list.push({
+            id: `applicant:${ap._id}`,
+            group: t("applicants"),
+            label: ap.name,
+            sublabel: ap.position || ap.email,
+            icon: UserRoundSearch,
+            run: () => go(`/applicants/${ap._id}/uebersicht`),
+          });
+        }
+      }
+    }
 
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, people, announcements, pages, guidebooks, t, tGuide]);
+  }, [
+    query,
+    people,
+    announcements,
+    applicants,
+    hasApplicantAccess,
+    pages,
+    guidebooks,
+    t,
+    tGuide,
+  ]);
 
   useEffect(() => {
     setActive(0);

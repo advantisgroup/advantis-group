@@ -32,6 +32,19 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--border-radius": "var(--radius)",
         } as React.CSSProperties
       }
+      toastOptions={{
+        classNames: {
+          // Tinted, not solid-filled — a soft wash reads as "on brand" rather
+          // than a flat traffic-light block.
+          success:
+            "!bg-success/10 !text-foreground !border-border/70 [&_[data-icon]]:text-success",
+          error:
+            "!bg-destructive/10 !text-foreground !border-border/70 [&_[data-icon]]:text-destructive",
+          warning:
+            "!bg-warning/10 !text-foreground !border-border/70 [&_[data-icon]]:text-warning",
+          info: "!bg-accent !text-foreground !border-border/70",
+        },
+      }}
       {...props}
     />
   );

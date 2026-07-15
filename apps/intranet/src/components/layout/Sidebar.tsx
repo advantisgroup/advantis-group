@@ -18,6 +18,7 @@ import {
   Rss,
   Settings,
   ShieldCheck,
+  UserSearch,
   Users,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -31,6 +32,7 @@ import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
 import {
   useCurrentUser,
+  useHasApplicantAccess,
   useIsAdmin,
   useIsManager,
 } from "@/components/providers/current-user";
@@ -74,6 +76,7 @@ export function Sidebar() {
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const user = useCurrentUser();
+  const hasApplicantAccess = useHasApplicantAccess();
   const { setOpenMobile, state } = useSidebar();
 
   // Context-aware nav: inside the ActivityTrack or Admin areas the main nav
@@ -166,6 +169,16 @@ export function Sidebar() {
           icon: Users,
           tourAttr: "tour-nav-directory",
         },
+        ...(hasApplicantAccess
+          ? [
+              {
+                href: "/applicants",
+                labelKey: "applicants",
+                icon: UserSearch,
+                tourAttr: "tour-nav-applicants",
+              },
+            ]
+          : []),
       ],
     },
     {

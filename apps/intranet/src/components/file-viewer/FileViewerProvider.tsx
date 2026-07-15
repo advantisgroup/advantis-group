@@ -7,6 +7,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -26,8 +27,18 @@ export interface ViewableFile {
   url?: string;
 }
 
+export interface OpenFileViewerOptions {
+  /**
+   * Called instead of the default close behavior when the viewer's close
+   * button/Escape/backdrop-click fires — e.g. a URL-driven opener that wants
+   * closing to navigate back (`router.back()`) rather than just clearing
+   * state, letting its own unmount effect clear the viewer afterward.
+   */
+  onClose?: () => void;
+}
+
 interface FileViewerContextValue {
-  openFileViewer: (file: ViewableFile) => void;
+  openFileViewer: (file: ViewableFile, options?: OpenFileViewerOptions) => void;
   closeFileViewer: () => void;
 }
 
@@ -41,9 +52,27 @@ const FileViewerContext = createContext<FileViewerContextValue | null>(null);
  */
 export function FileViewerProvider({ children }: { children: ReactNode }) {
   const [file, setFile] = useState<ViewableFile | null>(null);
+  const onCloseOverrideRef = useRef<(() => void) | null>(null);
 
-  const openFileViewer = useCallback((f: ViewableFile) => setFile(f), []);
-  const closeFileViewer = useCallback(() => setFile(null), []);
+  const openFileViewer = useCallback(
+    (f: ViewableFile, options?: OpenFileViewerOptions) => {
+      onCloseOverrideRef.current = options?.onClose ?? null;
+      setFile(f);
+    },
+    []
+  );
+  const closeFileViewer = useCallback(() => {
+    onCloseOverrideRef.current = null;
+    setFile(null);
+  }, []);
+  const handleClose = useCallback(() => {
+    const override = onCloseOverrideRef.current;
+    if (override) {
+      override();
+    } else {
+      closeFileViewer();
+    }
+  }, [closeFileViewer]);
 
   const value = useMemo(
     () => ({ openFileViewer, closeFileViewer }),
@@ -53,7 +82,7 @@ export function FileViewerProvider({ children }: { children: ReactNode }) {
   return (
     <FileViewerContext.Provider value={value}>
       {children}
-      <GlobalFileViewer file={file} onClose={closeFileViewer} />
+      <GlobalFileViewer file={file} onClose={handleClose} />
     </FileViewerContext.Provider>
   );
 }

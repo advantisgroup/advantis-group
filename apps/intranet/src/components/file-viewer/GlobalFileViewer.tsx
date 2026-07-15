@@ -35,6 +35,7 @@ import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import { detectFileKind, type FileKind } from "./file-kind";
+import { PdfPreview } from "./PdfPreview";
 
 import type { ViewableFile } from "./FileViewerProvider";
 
@@ -512,6 +513,8 @@ function FileViewerContent({
             }
             className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
           />
+        ) : kind.kind === "pdf" ? (
+          <PdfPreview url={url} />
         ) : kind.kind === "code" || kind.kind === "text" ? (
           <CodeOrTextPreview
             url={url}

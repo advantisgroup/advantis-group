@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -27,6 +27,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 
+import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
 import {
   useCurrentUser,
   useIsAdmin,
@@ -49,6 +50,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -64,7 +71,7 @@ import {
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNow } from "@/lib/activity/useNow";
-import { formatIsoDate, initials } from "@/lib/format";
+import { formatIsoDate, initials, roleLabel } from "@/lib/format";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -388,14 +395,17 @@ function AdminControls({
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tCustomRoles = useTranslations("CustomRoles");
+  const tApplicants = useTranslations("Applicants");
   const me = useCurrentUser();
   const confirm = useConfirm();
+  const [stepUpOpen, setStepUpOpen] = useState(false);
   const setRole = useMutation(api.users.setRole);
   const setStatus = useAction(api.users.setStatus);
   const removeMember = useAction(api.members.remove);
   const reinvite = useAction(api.members.reinvite);
   const setUploadPermission = useAction(api.users.setUploadPermission);
   const setGfAccess = useAction(api.users.setGfAccess);
+  const setApplicantDelegate = useMutation(api.users.setApplicantDelegate);
   const handleError = useErrorHandler();
 
   const isSelf = user._id === me._id;
@@ -471,8 +481,42 @@ function AdminControls({
       .catch(handleError);
   }
 
+  function doToggleApplicantDelegate() {
+    setApplicantDelegate({
+      userId: user._id,
+      delegate: !user.applicantAccessDelegate,
+    })
+      .then(() =>
+        toast.success(
+          user.applicantAccessDelegate
+            ? t("applicantDelegateRevoked")
+            : t("applicantDelegateGranted")
+        )
+      )
+      .catch(handleError);
+  }
+
+  async function toggleApplicantDelegate() {
+    const ok = await confirm({
+      title: user.applicantAccessDelegate
+        ? t("revokeApplicantDelegate")
+        : t("grantApplicantDelegate"),
+      description: tApplicants("delegateConfirmDescription", {
+        name: user.name,
+      }),
+      confirmText: { target: user.name },
+      confirmLabel: tc("confirm"),
+      destructive: !!user.applicantAccessDelegate,
+    });
+    if (!ok) return;
+    setStepUpOpen(true);
+  }
+
   const hasCustomRole = Boolean(user.customRoleName);
-  const hasNamedPermissions = user.gfAccess || !user.uploadRequestsEnabled;
+  const hasNamedPermissions =
+    user.gfAccess ||
+    user.applicantAccessDelegate ||
+    !user.uploadRequestsEnabled;
 
   return (
     <Section label={t("title")}>
@@ -506,6 +550,18 @@ function AdminControls({
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
                 {t("gfAccessTooltip")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {user.applicantAccessDelegate && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="muted" className="cursor-help">
+                  {t("applicantDelegateBadge")}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {t("applicantDelegateBadgeTitle")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -565,6 +621,21 @@ function AdminControls({
                 variant="outline"
                 size="sm"
                 className={actionButtonClass}
+                onClick={() => void toggleApplicantDelegate()}
+              >
+                <Users2 />
+                <span>
+                  {user.applicantAccessDelegate
+                    ? t("revokeApplicantDelegate")
+                    : t("grantApplicantDelegate")}
+                </span>
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={actionButtonClass}
                 onClick={() => onReinvite()}
               >
                 <Send /> <span>{t("reinvite")}</span>
@@ -594,7 +665,88 @@ function AdminControls({
           </div>
         )}
       </div>
+      <VaultStepUpDialog
+        open={stepUpOpen}
+        onOpenChange={setStepUpOpen}
+        onVerified={doToggleApplicantDelegate}
+      />
     </Section>
+  );
+}
+
+/**
+ * The role badge doubles as an admin-only editor for the cosmetic per-user
+ * `roleLabel` override (e.g. rendering "Geschäftsführerin" for an admin whose
+ * permissions stay exactly admin — this never touches `role` itself).
+ */
+function RoleBadge({
+  member,
+  isAdmin,
+  tRoles,
+  onSave,
+}: {
+  member: { role: Role; roleLabel?: string | null };
+  isAdmin: boolean;
+  tRoles: (role: string) => string;
+  onSave: (value: string) => void;
+}) {
+  const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(member.roleLabel ?? "");
+
+  if (!isAdmin) {
+    return <Badge variant="muted">{roleLabel(member, tRoles)}</Badge>;
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={o => {
+        setOpen(o);
+        if (o) setValue(member.roleLabel ?? "");
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button type="button">
+          <Badge variant="muted" className="cursor-pointer">
+            {roleLabel(member, tRoles)}
+          </Badge>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-2" align="start">
+        <p className="text-xs font-medium text-muted-foreground">
+          {t("roleLabelHint")}
+        </p>
+        <Input
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder={tRoles(member.role)}
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setValue("");
+              onSave("");
+              setOpen(false);
+            }}
+          >
+            {t("roleLabelReset")}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              onSave(value);
+              setOpen(false);
+            }}
+          >
+            {tc("save")}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -614,6 +766,7 @@ function ProfileContent({
   const isAdmin = useIsAdmin();
   const isManager = useIsManager();
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
+  const setRoleLabelMutation = useMutation(api.users.setRoleLabel);
   const handleError = useErrorHandler();
   const now = useNow();
 
@@ -632,6 +785,15 @@ function ProfileContent({
   function copyEmail() {
     void navigator.clipboard.writeText(user.email);
     toast.success(tAdmin("emailCopied"));
+  }
+
+  function saveRoleLabel(value: string) {
+    setRoleLabelMutation({
+      userId: user._id,
+      roleLabel: value.trim() || undefined,
+    })
+      .then(() => toast.success(tAdmin("roleLabelSaved")))
+      .catch(handleError);
   }
 
   const hasContact = Boolean(user.email || user.phone || user.department);
@@ -664,7 +826,12 @@ function ProfileContent({
             </p>
           )}
           <div className="mt-1.5 flex flex-wrap gap-1">
-            <Badge variant="muted">{tRoles(user.role)}</Badge>
+            <RoleBadge
+              member={user}
+              isAdmin={isAdmin}
+              tRoles={tRoles}
+              onSave={saveRoleLabel}
+            />
             {user.status === "suspended" && (
               <Badge variant="destructive">{tAdmin("suspended")}</Badge>
             )}

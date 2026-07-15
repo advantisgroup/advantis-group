@@ -30,6 +30,8 @@
       "Bash(cp /root/.claude/uploads/22b85b40-65f6-56fc-8f0b-2ccff18cd8eb/d8c7575c-Problembehandlungen.docx apps/intranet/public/guidebooks/problembehandlungen/Problembehandlungen.docx)",
       "Bash(cp /root/.claude/uploads/22b85b40-65f6-56fc-8f0b-2ccff18cd8eb/9ebd421c-Onedrive_Schulung.docx apps/intranet/public/guidebooks/onedrive-schulung/Onedrive_Schulung.docx)",
       "Bash(git check-ignore *)",
+      "Bash(cp \"/root/.claude/uploads/2845d823-24c3-51a0-9ae4-a08bdb2a4ca9/b5da1444-resume_newkalebdaniel.pdf\" /home/user/advantis-group/apps/intranet/public/test-resume.pdf)",
+      "Bash(mkdir -p /home/user/advantis-group/apps/intranet/src/app/pdf-test)",
       "mcp__Claude_Code_Remote__send_later"
     ]
   }

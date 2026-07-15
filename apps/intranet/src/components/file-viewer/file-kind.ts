@@ -68,6 +68,7 @@ const CODE_LANG_BY_EXTENSION: Record<string, BundledLanguage> = {
 
 export type FileKind =
   | { kind: "image" }
+  | { kind: "pdf" }
   | { kind: "code"; lang: BundledLanguage }
   | { kind: "text" }
   | { kind: "archive" }
@@ -83,6 +84,9 @@ export function detectFileKind(name: string, contentType?: string): FileKind {
   if (ARCHIVE_EXTENSIONS.has(ext)) return { kind: "archive" };
   if (contentType?.startsWith("image/") || IMAGE_EXTENSIONS.has(ext)) {
     return { kind: "image" };
+  }
+  if (contentType === "application/pdf" || ext === "pdf") {
+    return { kind: "pdf" };
   }
   const lang = CODE_LANG_BY_EXTENSION[ext];
   if (lang) return { kind: "code", lang };

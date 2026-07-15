@@ -34,6 +34,9 @@ export interface CurrentUser {
   uploadRequestsEnabled: boolean;
   customRoleId: string | null;
   capabilities: Capability[];
+  applicantAccessDelegate: boolean;
+  applicantAccess: boolean;
+  roleLabel: string | null;
   avatar: string | null;
   lastSeenAt: number | null;
   createdAt: number;
@@ -85,4 +88,22 @@ export function useHasCapability(capability: Capability): boolean {
     user.role === "manager" ||
     user.capabilities.includes(capability)
   );
+}
+
+/** True when the user can see the Applicant Management nav item at all —
+ * either they have feature access, or they're a delegate who can grant it to
+ * others (see `useCanManageApplicantAccess` for the delegate-only case). */
+export function useHasApplicantAccess(): boolean {
+  const user = useCurrentUser();
+  return (
+    user.role === "admin" ||
+    user.applicantAccess ||
+    user.applicantAccessDelegate
+  );
+}
+
+/** True when the user can grant/revoke Applicant Management access for others. */
+export function useCanManageApplicantAccess(): boolean {
+  const user = useCurrentUser();
+  return user.role === "admin" || user.applicantAccessDelegate;
 }
