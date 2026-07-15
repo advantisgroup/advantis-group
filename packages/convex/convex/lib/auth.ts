@@ -57,13 +57,29 @@ export async function getUserByClerkId(
  * The current intranet user, or null when the request is unauthenticated or the
  * authenticated Clerk identity has not (yet) been provisioned an intranet
  * account. Never throws — callers decide how to handle the null case.
+ *
+ * Two separate Clerk instances issue identities against this deployment (the
+ * marketing site and the intranet — see auth.config.ts), each with its own
+ * `subject` for the same person. The `users` row is keyed by the intranet
+ * instance's clerkUserId, so a marketing-issued identity for that same
+ * person never matches on `subject` — email is the only field the two
+ * instances share, so fall back to it when the id lookup misses.
  */
 export async function getCurrentUser(
   ctx: QueryCtx | MutationCtx
 ): Promise<Doc<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;
-  return getUserByClerkId(ctx, identity.subject);
+
+  const byClerkId = await getUserByClerkId(ctx, identity.subject);
+  if (byClerkId) return byClerkId;
+
+  const email = (identity.email ?? "").toLowerCase();
+  if (!email) return null;
+  return ctx.db
+    .query("users")
+    .withIndex("by_email", q => q.eq("email", email))
+    .unique();
 }
 
 /** Like getCurrentUser but throws when there is no active intranet account. */
