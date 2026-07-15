@@ -696,6 +696,16 @@ export default defineSchema({
     tokenHash: v.optional(v.string()),
     // Wall-clock time of the last ACCEPTED ingest batch (rate-limit throttle).
     lastIngestAt: v.optional(v.number()),
+    // Summary of the newest sample, maintained by the ingest device patch so
+    // dashboard reads (teamOverview) never have to touch `activitySamples`.
+    lastSample: v.optional(
+      v.object({
+        capturedAt: v.number(),
+        idleMs: v.number(),
+        active: v.boolean(),
+        tzOffsetMinutes: v.number(),
+      })
+    ),
   })
     .index("by_deviceId", ["deviceId"])
     .index("by_status", ["status"])
