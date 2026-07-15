@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { Link } from "@/i18n/navigation";
 
@@ -18,6 +19,7 @@ export const Footer = () => {
   const footerRef = useRef<HTMLElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const logo = useSingleLetterLogo();
+  const intranetUrl = useCompanyIntranetUrl();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,6 +68,14 @@ export const Footer = () => {
       label: t("nav.contact"),
       path: "/contact",
     },
+    ...(intranetUrl
+      ? [
+          {
+            label: t("nav.intranet"),
+            path: intranetUrl,
+          },
+        ]
+      : []),
   ];
 
   const brandLinks = [
