@@ -338,8 +338,10 @@ function FileViewerContent({
       icon: <Copy className="size-4" />,
       onSelect: () => {
         if (!url) return;
+        const contentType = kind.kind === "image" ? "image" : "file";
+        const publicUrl = `${process.env.NEXT_PUBLIC_MARKETING_URL}/content/${contentType}/${file.storageId}`;
         void navigator.clipboard
-          .writeText(url)
+          .writeText(publicUrl)
           .then(() => toast.success(t("linkCopied")));
       },
     },
