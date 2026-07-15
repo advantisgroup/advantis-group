@@ -1302,6 +1302,27 @@ export default defineSchema({
     at: v.number(),
   }).index("by_at", ["at"]),
 
+  /**
+   * Applicant Management "vault": a shared secondary password gating the
+   * whole feature on top of the normal applicantAccess/delegate checks —
+   * defense-in-depth against a leaked or unattended session, not a
+   * replacement for those checks. Admin-set/rotated; at most one row.
+   */
+  applicantVaultPassword: defineTable({
+    hash: v.string(),
+    updatedByUserId: v.id("users"),
+    updatedAt: v.number(),
+  }),
+
+  /** Per-user vault unlock, expiring so the password must be re-entered
+   * periodically rather than once ever. Rotating the password (above)
+   * deletes every row here. */
+  applicantVaultUnlocks: defineTable({
+    userId: v.id("users"),
+    unlockedAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs
   // are stored as AES-256-GCM ciphertext (encrypted in the Elysia API with a

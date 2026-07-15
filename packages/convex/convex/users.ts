@@ -13,6 +13,7 @@ import {
   requireApplicantDelegateOrAdmin,
   requireManager,
   requireUser,
+  requireVaultUnlocked,
 } from "./lib/auth";
 import { listUserPermissions } from "./lib/permissions";
 import {
@@ -513,6 +514,7 @@ export const setApplicantDelegate = mutation({
   args: { userId: v.id("users"), delegate: v.boolean() },
   handler: async (ctx, { userId, delegate }) => {
     const admin = await requireAdmin(ctx);
+    await requireVaultUnlocked(ctx, admin._id);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });

@@ -154,16 +154,45 @@ export function isApplicantEligible(
   );
 }
 
-/** Require the current user to have Applicant Management access (admin bypasses). */
+/**
+ * Applicant Management "vault": a shared secondary password gating the whole
+ * feature on top of the checks below — defense-in-depth against a leaked or
+ * unattended session. Deliberately no admin bypass: an admin's session is
+ * just as exposed as anyone else's, and the point of this layer is to
+ * survive exactly that case. Throws a distinct `vault_locked` code (rather
+ * than `forbidden`) so the client can show an unlock prompt instead of a
+ * generic access-denied screen.
+ */
+export async function requireVaultUnlocked(
+  ctx: QueryCtx | MutationCtx,
+  userId: Doc<"users">["_id"]
+): Promise<void> {
+  const unlock = await ctx.db
+    .query("applicantVaultUnlocks")
+    .withIndex("by_user", q => q.eq("userId", userId))
+    .unique();
+  if (!unlock || unlock.expiresAt <= Date.now()) {
+    throw new ConvexError({
+      code: "vault_locked",
+      message: "Applicant Management is locked — please re-enter the password.",
+    });
+  }
+}
+
+/** Require the current user to have Applicant Management access (admin bypasses
+ * the role/delegate check, but not the vault). */
 export async function requireApplicantAccess(
   ctx: QueryCtx | MutationCtx
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (user.role === "admin" || user.applicantAccess) return user;
-  throw new ConvexError({
-    code: "forbidden",
-    message: "You do not have permission to do that",
-  });
+  if (user.role !== "admin" && !user.applicantAccess) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You do not have permission to do that",
+    });
+  }
+  await requireVaultUnlocked(ctx, user._id);
+  return user;
 }
 
 /**
@@ -174,7 +203,30 @@ export async function requireApplicantDelegateOrAdmin(
   ctx: QueryCtx | MutationCtx
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (user.role === "admin" || user.applicantAccessDelegate) return user;
+  if (user.role !== "admin" && !user.applicantAccessDelegate) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You do not have permission to do that",
+    });
+  }
+  await requireVaultUnlocked(ctx, user._id);
+  return user;
+}
+
+/** Require Applicant Management access OR delegate rights, without the vault
+ * check — used only by the vault's own bootstrap functions (checking status,
+ * unlocking), which must work precisely when the vault is still locked. */
+export async function requireApplicantAreaMember(
+  ctx: QueryCtx | MutationCtx
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (
+    user.role === "admin" ||
+    user.applicantAccess ||
+    user.applicantAccessDelegate
+  ) {
+    return user;
+  }
   throw new ConvexError({
     code: "forbidden",
     message: "You do not have permission to do that",
