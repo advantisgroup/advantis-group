@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
-import { mutation, internalMutation } from "../_generated/server";
-import type { MutationCtx } from "../_generated/server";
+import { query, internalQuery } from "../_generated/server";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { safeEqual, sha256hex, randomToken } from "./lib/crypto";
 import { appError } from "./lib/errors";
 
@@ -44,10 +44,11 @@ export async function invalidateDeviceToken(
 /**
  * Validate a raw device token and confirm the owning device is still active.
  * Returns `{ deviceId }` on success, or `null` when the token is unknown or the
- * device is disabled. Also refreshes `lastSeen`.
+ * device is disabled. Read-only, so the entry points below are queries —
+ * Convex caches query results, which mutations never get.
  */
 export async function validateDeviceToken(
-  ctx: MutationCtx,
+  ctx: QueryCtx,
   token: string
 ): Promise<{ deviceId: string } | null> {
   if (!token) return null;
@@ -62,9 +63,9 @@ export async function validateDeviceToken(
 
 /**
  * Internal entry point for the device-keyed httpActions (/ingest, /agent/*):
- * they can't touch the db directly, so they hop through this mutation.
+ * they can't touch the db directly, so they hop through this query.
  */
-export const validateInternal = internalMutation({
+export const validateInternal = internalQuery({
   args: { token: v.string() },
   handler: (ctx, { token }) => validateDeviceToken(ctx, token),
 });
@@ -82,7 +83,7 @@ export function assertSignalSecret(secret: string): void {
 }
 
 /** Public, secret-guarded validator for the Elysia API layer (heartbeat). */
-export const validate = mutation({
+export const validate = query({
   args: { secret: v.string(), token: v.string() },
   handler: (ctx, { secret, token }) => {
     assertSignalSecret(secret);

@@ -79,7 +79,7 @@ async function authenticateDevice(
 ): Promise<{ deviceId: string } | null> {
   const token = bearerToken(request);
   if (!token) return null;
-  return await ctx.runMutation(internal.activity.deviceAuth.validateInternal, {
+  return await ctx.runQuery(internal.activity.deviceAuth.validateInternal, {
     token,
   });
 }
