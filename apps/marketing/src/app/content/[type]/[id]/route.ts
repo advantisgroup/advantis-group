@@ -1,4 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+
+import { api } from "@advantis/convex/api";
+import { auth } from "@clerk/nextjs/server";
+import { ConvexHttpClient } from "convex/browser";
 
 type Disposition = "inline" | "attachment";
 
@@ -18,32 +22,97 @@ function sanitizeFilename(name: string): string {
   return cleaned.length > 0 ? cleaned.slice(0, 200) : "download";
 }
 
+function debug(storageId: string, message: string, data?: unknown) {
+  const timestamp = new Date().toISOString();
+  console.warn(`[content-proxy] [${timestamp}] ${storageId} - ${message}`, data ?? "");
+}
+
+function logError(storageId: string, message: string, error?: unknown) {
+  const timestamp = new Date().toISOString();
+  console.error(`[content-proxy] [${timestamp}] ${storageId} - ERROR: ${message}`, error ?? "");
+}
+
 async function handle(
   req: NextRequest,
   { params }: { params: Promise<{ type: string; id: string }> },
   includeBody: boolean
 ) {
   const { type, id: rawId } = await params;
+  const requestId = `${type}/${rawId}`;
+
+  debug(requestId, "Request started", { method: req.method, url: req.url });
 
   const config = CONTENT_TYPES[type];
-  if (!config) return new NextResponse(null, { status: 404 });
+  if (!config) {
+    debug(requestId, "Unknown content type", { type });
+    return new NextResponse(null, { status: 404 });
+  }
 
   const dot = rawId.lastIndexOf(".");
   const storageId = dot === -1 ? rawId : rawId.slice(0, dot);
+
   if (!STORAGE_ID_RE.test(storageId)) {
+    debug(requestId, "Invalid storage ID format", { storageId });
     return new NextResponse(null, { status: 400 });
   }
 
+  // Get Clerk auth context
+  const { getToken } = await auth();
+  const token = await getToken();
+  debug(storageId, "Auth check", { isAuthenticated: !!token });
+
+  // Check access control via Convex query
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-  if (!convexUrl) return new NextResponse(null, { status: 500 });
+  if (!convexUrl) {
+    logError(storageId, "NEXT_PUBLIC_CONVEX_URL not configured");
+    return new NextResponse(null, { status: 500 });
+  }
 
-  const upstream = await fetch(
-    `${convexUrl}/api/storage/${storageId}`,
-    includeBody ? undefined : { method: "HEAD" }
-  );
+  try {
+    const convex = new ConvexHttpClient(convexUrl);
+    debug(storageId, "Checking file access with Convex", {
+      hasToken: !!token,
+    });
 
-  if (upstream.status === 404) return new NextResponse(null, { status: 404 });
-  if (!upstream.ok) return new NextResponse(null, { status: 502 });
+    const accessResult = await convex.query(api.files.canAccessFile, {
+      storageId,
+    });
+    debug(storageId, "Access check result", accessResult);
+
+    if (!accessResult.hasAccess) {
+      debug(storageId, "Access denied", { isAuthenticated: !!token });
+      return new NextResponse(null, { status: 403 });
+    }
+  } catch (err) {
+    logError(storageId, "Failed to check access", err);
+    return new NextResponse(null, { status: 502 });
+  }
+
+  // Fetch from Convex storage
+  debug(storageId, "Fetching from Convex storage", {
+    url: `${convexUrl}/api/storage/${storageId}`,
+    method: includeBody ? "GET" : "HEAD",
+  });
+
+  let upstream: Response;
+  try {
+    upstream = await fetch(`${convexUrl}/api/storage/${storageId}`, {
+      ...(includeBody ? {} : { method: "HEAD" }),
+    });
+  } catch (err) {
+    logError(storageId, "Fetch from Convex failed", err);
+    return new NextResponse(null, { status: 502 });
+  }
+
+  if (upstream.status === 404) {
+    debug(storageId, "File not found in Convex storage");
+    return new NextResponse(null, { status: 404 });
+  }
+
+  if (!upstream.ok) {
+    logError(storageId, "Convex returned error", { status: upstream.status });
+    return new NextResponse(null, { status: 502 });
+  }
 
   const headers = new Headers();
   const upstreamType = upstream.headers.get("content-type");
@@ -55,9 +124,16 @@ async function handle(
   if (config.disposition === "attachment") {
     const filename = sanitizeFilename(req.nextUrl.searchParams.get("name") ?? rawId);
     headers.set("Content-Disposition", `attachment; filename="${filename}"`);
+    debug(storageId, "Streaming as attachment", { filename });
   } else {
     headers.set("Content-Disposition", "inline");
+    debug(storageId, "Streaming inline");
   }
+
+  debug(storageId, "Response ready", {
+    contentType: upstreamType,
+    contentLength: upstreamLength,
+  });
 
   return new NextResponse(includeBody ? upstream.body : null, {
     status: 200,
