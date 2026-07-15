@@ -2,7 +2,10 @@
 
 import { useTranslations } from "next-intl";
 
-import { type ApplicantDetail, today } from "@/components/applicants/applicant-types";
+import {
+  type ApplicantDetail,
+  today,
+} from "@/components/applicants/applicant-types";
 import { TerminForm, TerminRow } from "@/components/applicants/TerminCalendar";
 import { Card, CardContent } from "@/components/ui/card";
 

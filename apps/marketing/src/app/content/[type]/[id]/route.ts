@@ -53,7 +53,9 @@ async function handle(
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
   if (config.disposition === "attachment") {
-    const filename = sanitizeFilename(req.nextUrl.searchParams.get("name") ?? rawId);
+    const filename = sanitizeFilename(
+      req.nextUrl.searchParams.get("name") ?? rawId
+    );
     headers.set("Content-Disposition", `attachment; filename="${filename}"`);
   } else {
     headers.set("Content-Disposition", "inline");
