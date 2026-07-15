@@ -28,6 +28,13 @@ const sampleValidator = v.object({
   tzOffsetMinutes: v.number(),
   agentVersion: v.string(),
   platform: v.string(),
+  // Absent on every sample from agents older than the change-only sampling
+  // rollout, and on every durable "state changed" sample from newer agents
+  // too — both cases mean "sample" (persist a row). "keepalive" is a cheap
+  // ~60s ping newer agents send while state is unchanged, only to prove the
+  // device is still online and to close the attribution gap for dailyStats;
+  // it must never become an activitySamples row.
+  kind: v.optional(v.union(v.literal("sample"), v.literal("keepalive"))),
 });
 
 function localDay(capturedAt: number, tzOffsetMinutes: number): string {
@@ -100,9 +107,12 @@ export const recordSamples = internalMutation({
           s.tzOffsetMinutes = 0;
         }
 
-        const duplicate = seen.has(s.capturedAt);
+        // A keepalive is never a stored row, so it can never be an
+        // already-stored duplicate — dedup only applies to real samples.
+        const isKeepalive = s.kind === "keepalive";
+        const duplicate = !isKeepalive && seen.has(s.capturedAt);
 
-        if (!duplicate) {
+        if (!isKeepalive && !duplicate) {
           // Slim row: the near-constant per-device fields the agent sends
           // (windowsUser/hostname/agentVersion/platform) are kept on the
           // devices row instead of being repeated on every sample.
