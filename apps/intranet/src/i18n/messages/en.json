@@ -23,7 +23,8 @@
     "files": "Files",
     "integrations": "Integrations",
     "privacy": "Privacy",
-    "terms": "Terms"
+    "terms": "Terms",
+    "updates": "Updates"
   },
   "Common": {
     "save": "Save",
@@ -62,10 +63,8 @@
     "upcomingEvents": "Upcoming events",
     "latestAnnouncements": "Latest announcements",
     "unreadChats": "Unread messages",
-    "pendingApprovals": "Pending approvals",
     "noEvents": "No upcoming events",
     "noAnnouncements": "No announcements",
-    "noApprovals": "Nothing waiting for approval",
     "noUnread": "You're all caught up",
     "greetingMorning": "Good morning, {name}",
     "greetingAfternoon": "Good afternoon, {name}",
@@ -76,15 +75,13 @@
     "outUntil": "until {date}",
     "todaysSchedule": "Today's schedule",
     "customize": "Customize cards",
-    "actionRequestAbsence": "Request absence",
     "actionNewEvent": "New event",
     "actionNewAnnouncement": "New announcement",
     "actionUpload": "Upload file",
     "paletteHint": "Press ⌘K to search",
     "openCalendar": "Open calendar",
     "openAnnouncements": "Open announcements",
-    "openChat": "Open chat",
-    "openAbsences": "Open absences"
+    "openChat": "Open chat"
   },
   "Calendar": {
     "title": "Calendar",
@@ -126,35 +123,20 @@
   },
   "Absences": {
     "title": "Absences",
-    "myRequests": "My absences",
-    "newRequest": "Request absence",
-    "newRequestHint": "Submit time off for approval. Your manager will be notified.",
-    "approvals": "Approvals",
-    "type": "Type",
     "vacation": "Vacation",
     "sick": "Sick",
     "personal": "Personal",
     "other": "Other",
-    "start": "Start date",
-    "end": "End date",
-    "halfDay": "Half day",
     "reason": "Reason",
     "status": "Status",
     "pending": "Pending",
     "approved": "Approved",
     "denied": "Denied",
     "cancelled": "Cancelled",
-    "approve": "Approve",
-    "deny": "Deny",
-    "cancelRequest": "Cancel",
     "managedInClockodo": "Managed in Clockodo",
     "source": "Source",
-    "noPending": "No pending requests",
     "noAbsences": "No absences yet",
-    "subtitle": "Request time off and track approvals.",
-    "editRequest": "Edit request",
-    "requestUpdated": "Request updated",
-    "overlapWarning": "This range overlaps one of your existing absences.",
+    "subtitle": "Synced from Clockodo — read-only here.",
     "workingDaysLabel": "{count, plural, one {# working day} other {# working days}}",
     "statsVacation": "Vacation days {year}",
     "statsSick": "Sick days {year}",
@@ -167,9 +149,6 @@
     "syncedJustNow": "Clockodo synced just now",
     "whosOut": "Out in the next 14 days",
     "nobodyOut": "Nobody is scheduled out in the next 14 days.",
-    "denyTitle": "Deny request",
-    "denyHint": "Optionally add a note for {name}.",
-    "note": "Note",
     "decisionNoteLabel": "Reviewer note",
     "requested": "Requested",
     "approvedBy": "Approved by {name}",
@@ -311,6 +290,7 @@
     "noMessagesGroupHint": "Be the first to post in {name}.",
     "newMessages": "New messages",
     "attachment": "Attachment",
+    "attachTooLarge": "Attachments exceed the 5 MB limit",
     "reply": "Reply",
     "replyingTo": "Replying to {name}",
     "editingMessage": "Editing message",
@@ -420,11 +400,11 @@
         },
         "actions": {
           "title": "Quick actions",
-          "description": "Jump straight into the things you do most — request an absence, upload a file, or (as a manager) create events and announcements. On desktop, ⌘K opens the search palette from anywhere."
+          "description": "Jump straight into the things you do most — upload a file, or (as a manager) create events and announcements. On desktop, ⌘K opens the search palette from anywhere."
         },
         "main": {
           "title": "Your dashboard",
-          "description": "A snapshot of what's happening — upcoming events, latest news, who's out today, and pending items. Every row links to the tab it came from."
+          "description": "A snapshot of what's happening — upcoming events, latest news, and who's out today. Every row links to the tab it came from."
         },
         "customize": {
           "title": "Make it yours",
@@ -476,10 +456,6 @@
           "title": "Absences",
           "description": "Request and track vacation, sick days, and personal time."
         },
-        "request": {
-          "title": "Request time off",
-          "description": "Create a new absence request — pick the type, the dates, and an optional note for your approver. You'll see the working-day count and a warning if the range overlaps an existing absence."
-        },
         "stats": {
           "title": "Your year at a glance",
           "description": "Vacation days used, sick days, and open requests for the current year, calculated from your approved absences."
@@ -489,12 +465,8 @@
           "description": "Narrow the list by status or type. Below, everything is grouped by year — click any entry for its full timeline."
         },
         "list": {
-          "title": "Your absence requests",
-          "description": "Track approval status here. Pending requests can still be edited or cancelled; absences synced from Clockodo are read-only and marked with a badge."
-        },
-        "approvals": {
-          "title": "Team approvals",
-          "description": "Requests from your reports land in this tab. Approve or deny them (optionally with a note), and see who on the team is out over the next two weeks."
+          "title": "Your absences",
+          "description": "Everything here is synced from Clockodo and read-only — approve, deny, or edit time off there. Managers also see who on the team is out over the next two weeks."
         }
       },
       "chat": {
@@ -702,6 +674,9 @@
     "enableUploads": "Allow upload requests",
     "revokeGf": "Revoke Geschäftsführung access",
     "grantGf": "Grant Geschäftsführung access",
+    "gfAccessTooltip": "Has the Geschäftsführung allowlist flag — an independent OneDrive permission, not part of their role.",
+    "permissions": "Permissions:",
+    "gfBadge": "GF access",
     "uploadsDisabled": "Upload requests blocked",
     "uploadsEnabled": "Upload requests allowed",
     "gfRevoked": "Geschäftsführung access revoked",
@@ -710,6 +685,7 @@
     "grantApplicantDelegate": "Make Applicant Management delegate",
     "applicantDelegateRevoked": "Applicant Management delegate revoked",
     "applicantDelegateGranted": "Applicant Management delegate granted",
+    "applicantDelegateBadge": "Applicant Mgmt. delegate",
     "applicantDelegateBadgeTitle": "Can grant Applicant Management access to others",
     "roleLabelHint": "Custom display name for this role badge (e.g. \"Managing Director\"). Permissions stay unchanged.",
     "roleLabelReset": "Reset",
@@ -733,7 +709,68 @@
     "audit_teamAccessRevoke": "revoked Team folder access from",
     "customRolesTab": "Roles",
     "customRole": "Custom role",
-    "customRoleNone": "None"
+    "customRoleNone": "None",
+    "backToDashboard": "Back to Dashboard",
+    "nav": {
+      "group": "Administration",
+      "overview": "Overview",
+      "requests": "Requests",
+      "invites": "Invites",
+      "members": "Members",
+      "uploads": "Uploads",
+      "integrations": "Integrations",
+      "roles": "Roles",
+      "departments": "Departments",
+      "teams": "Teams",
+      "guests": "Guests",
+      "dataCleanup": "Data cleanup",
+      "audit": "Audit log"
+    },
+    "dataCleanup": {
+      "title": "Org data cleanup",
+      "description": "Review the free-text department and team values collected from members and turn them into a canonical list. Two spellings of the same department are never merged automatically — review each one.",
+      "populate": "Scan members",
+      "runBackfill": "Apply to members",
+      "populated": "Found {created} new group(s), updated {updated}.",
+      "backfilled": "Created {departments} department(s) and {teams} team(s); updated {users} member link(s).",
+      "departments": "Departments",
+      "teams": "Teams",
+      "loading": "Loading…",
+      "empty": "Nothing to review yet — click \"Scan members\" first.",
+      "pendingCount": "{count} pending",
+      "rawValues": "Seen as",
+      "status_pending": "Pending review",
+      "status_approved": "Approved",
+      "status_rejected": "Rejected",
+      "approve": "Approve",
+      "reject": "Reject",
+      "merge": "Merge",
+      "merged": "Merged",
+      "mergedInto": "Merged into \"{name}\"",
+      "mergeIntoPlaceholder": "Merge into…"
+    },
+    "orgEntity": {
+      "departmentsTitle": "Departments",
+      "departmentsDescription": "Create, rename, or archive departments. Archiving keeps the department resolvable for members already assigned to it, but hides it from new assignments.",
+      "departmentNamePlaceholder": "New department name…",
+      "teamsTitle": "Teams",
+      "teamsDescription": "Create, rename, or archive teams. Archiving keeps the team resolvable for existing members, but hides it from new assignments.",
+      "teamNamePlaceholder": "New team name…",
+      "create": "Add",
+      "archive": "Archive",
+      "restore": "Restore",
+      "archived": "Archived",
+      "empty": "None yet — add one above.",
+      "memberCount": "{count} member(s)"
+    },
+    "auditLog": {
+      "title": "Audit log",
+      "description": "Every privileged action across ActivityTrack, OneDrive uploads, and integrations, in one place.",
+      "allSources": "All sources",
+      "source_activity": "ActivityTrack",
+      "source_onedrive": "OneDrive",
+      "source_integrations": "Integrations"
+    }
   },
   "Teams": {
     "customerCare": "Customer Care",
@@ -743,15 +780,20 @@
   },
   "CustomRoles": {
     "heading": "Custom roles",
-    "description": "Grant scoped permissions — like managing members without integration access — without promoting someone to Manager.",
+    "description": "Grant scoped permissions without promoting someone to Manager.",
+    "descriptionDetail": "Example: managing members without integration access. Capabilities are additive — a custom role never takes away what someone's base role already allows.",
     "newRole": "New role",
     "name": "Name",
     "namePlaceholder": "e.g. Team Lead",
     "capabilities": "Capabilities",
     "capability_manage_members": "Manage members",
+    "capability_manage_members_desc": "Invite, suspend, edit roles",
     "capability_access_integrations": "Access integrations",
+    "capability_access_integrations_desc": "Genesys and Clockodo",
     "capability_manage_uploads": "Manage OneDrive uploads",
+    "capability_manage_uploads_desc": "View pending uploads and audit log",
     "capability_view_activity_admin": "View ActivityTrack admin",
+    "capability_view_activity_admin_desc": "Live status, all employees",
     "create": "Create role",
     "save": "Save",
     "cancel": "Cancel",
@@ -954,8 +996,11 @@
   },
   "Roles": {
     "admin": "Administrator",
+    "admin_desc": "Full access to every admin area",
     "manager": "Manager",
-    "employee": "Employee"
+    "manager_desc": "Manages members, uploads, integrations",
+    "employee": "Employee",
+    "employee_desc": "Standard access, no admin areas"
   },
   "Integrations": {
     "hubTitle": "Integrations",
@@ -1066,9 +1111,9 @@
     "guidebooks": "Guidebooks",
     "applicants": "Applicants",
     "noResults": "No results found",
+    "emptyState": "Start typing to search pages, people, and announcements",
     "hint": "Search",
     "actions": "Actions",
-    "actionNewAbsence": "Request absence",
     "actionNewEvent": "New event",
     "actionNewAnnouncement": "New announcement",
     "actionUpload": "Upload file"
@@ -1217,6 +1262,7 @@
     "quota": "{used} of {total} used",
     "searchPlaceholder": "Search files…",
     "newFolder": "New folder",
+    "newFolderDesc": "Creates a folder inside the current directory, visible to everyone with access to this location.",
     "folderName": "Folder name",
     "create": "Create",
     "cancel": "Cancel",
@@ -1230,6 +1276,7 @@
     "actions": "Actions",
     "preview": "Preview",
     "download": "Download",
+    "downloading": "Downloading…",
     "versions": "Version history",
     "share": "Share link",
     "shareDesc": "Anyone with the link can view this file until it expires.",
@@ -1237,6 +1284,7 @@
     "nDays": "{count, plural, one {# day} other {# days}}",
     "createLink": "Create link",
     "rename": "Rename",
+    "renameDesc": "Renaming moves nothing — links and version history stay intact.",
     "delete": "Delete",
     "restore": "Restore",
     "restored": "Version restored",
@@ -1274,16 +1322,29 @@
     "selectAll": "Select all",
     "bulkDeleteTitle": "Delete {count} items?",
     "uploadQueue": "Uploads",
-    "retry": "Retry"
+    "retry": "Retry",
+    "finalizing": "Finalizing…"
   },
   "FileViewer": {
     "download": "Download",
+    "downloading": "Downloading…",
     "copyLink": "Copy link",
     "linkCopied": "Link copied",
     "metadata": "File info",
+    "name": "Name",
     "dimensions": "Dimensions",
     "size": "Size",
     "type": "Type",
+    "modified": "Modified",
+    "loadingExif": "Reading camera data…",
+    "camera": "Camera",
+    "lens": "Lens",
+    "dateTaken": "Date taken",
+    "aperture": "Aperture",
+    "shutterSpeed": "Shutter speed",
+    "iso": "ISO",
+    "focalLength": "Focal length",
+    "location": "Location",
     "close": "Close",
     "noPreview": "No preview available for this file.",
     "archiveTitle": "Download \"{name}\"?",
@@ -1291,47 +1352,98 @@
     "cancel": "Cancel",
     "loading": "Loading…"
   },
-  "WhatsNew": {
-    "title": "What's new in the intranet",
-    "intro": "Every tab got a big upgrade. Here are the highlights — click one to try it.",
-    "dismiss": "Got it",
-    "items": {
-      "dashboard": {
-        "title": "Dashboard",
-        "body": "Who's-out-today card, quick actions, inline approvals, and hideable cards."
-      },
-      "absences": {
-        "title": "Absences",
-        "body": "Clockodo absences sync in automatically; edit pending requests, filters, stats and .ics export."
-      },
-      "calendar": {
-        "title": "Calendar",
-        "body": "Edit and duplicate events, interactive filters, week numbers, keyboard navigation and export."
-      },
-      "announcements": {
-        "title": "Announcements",
-        "body": "Schedule posts, edit after publishing, drafts, search and read statistics."
-      },
-      "directory": {
-        "title": "Directory",
-        "body": "Online status, who's out, manager & direct reports, and richer filters."
-      },
-      "files": {
-        "title": "Files",
-        "body": "Grid view, sorting, pinned folders, bulk download/delete and an upload queue."
-      },
-      "guidebooks": {
-        "title": "Guidebooks",
-        "body": "Search, favorites, table of contents, reading progress and feedback."
-      },
-      "notifications": {
-        "title": "Notifications",
-        "body": "Day grouping, per-type mutes, mark-unread/dismiss and browser notifications."
-      },
-      "settings": {
-        "title": "Settings",
-        "body": "Avatar cropping, app preferences (start page, calendar view), and your integration links."
-      }
+  "Updates": {
+    "title": "Updates",
+    "description": "Incidents, scheduled maintenance and what's new — all in one place.",
+    "more": "more",
+    "dismiss": "Dismiss",
+    "newUpdate": "New update",
+    "newUpdateDescription": "Publish an incident, scheduled maintenance window, or changelog entry.",
+    "tabAll": "All",
+    "tabIncident": "Incidents",
+    "tabMaintenance": "Maintenance",
+    "tabChangelog": "Changelog",
+    "searchPlaceholder": "Search updates…",
+    "allStatuses": "All statuses",
+    "allSystems": "All systems",
+    "emptyTitle": "No updates yet",
+    "emptyDescription": "Incidents, maintenance windows and changelog entries will show up here.",
+    "scheduled": "Scheduled",
+    "ongoingFor": "Ongoing for {duration}",
+    "resolvedAfter": "Resolved after {duration}",
+    "backToList": "Back to updates",
+    "notFoundTitle": "Update not found",
+    "notFoundDescription": "This update doesn't exist or you don't have access to it.",
+    "byline": "Posted by {author} · {date}",
+    "deleteConfirm": "Delete this update?",
+    "deleted": "Update deleted",
+    "statusLabel": "Status",
+    "durationLabel": "Duration",
+    "startedLabel": "Started",
+    "resolvedLabel": "Resolved",
+    "ongoing": "Ongoing",
+    "affectedSystemsLabel": "Affected systems",
+    "timelineLabel": "Timeline",
+    "noTimelineYet": "No updates posted yet.",
+    "postUpdatePlaceholder": "Post a status update…",
+    "postUpdate": "Post update",
+    "timelinePosted": "Update posted",
+    "noStatusChange": "No status change",
+    "emailDeliveryLabel": "Email delivery",
+    "emailNotSent": "not emailed",
+    "emailRequested": "Email requested",
+    "noEmailsSentYet": "No emails sent yet.",
+    "downloadArt": "Download artwork",
+    "downloadArtError": "Could not generate the image",
+    "typeLabel": "Type",
+    "titleLabel": "Title",
+    "titlePlaceholder": "Short, specific title",
+    "summaryLabel": "Summary",
+    "summaryPlaceholder": "One or two sentences — this is what shows in the banner.",
+    "bodyLabel": "Details",
+    "switchToMarkdown": "Switch to markdown",
+    "switchToRichText": "Switch to rich text",
+    "markdownPlaceholder": "Write the full update in markdown…",
+    "addSystem": "Add",
+    "customSystemPlaceholder": "Add another system…",
+    "audienceLabel": "Audience",
+    "everyone": "Everyone",
+    "startedAtLabel": "Maintenance window starts",
+    "publishAtLabel": "Publish at (leave blank to publish now)",
+    "emailEveryoneLabel": "Email everyone when this is published",
+    "emailPreviewNone": "No one will be emailed — no active users match this audience.",
+    "emailPreviewCount": "This will email {count, plural, one {# person} other {# people}}",
+    "emailPreviewExcluded": "{count, plural, one {# external user is} other {# external users are}} excluded — no email consent",
+    "emailConsentTitle": "Updates emails",
+    "emailConsentHint": "Receive an email when a new incident, maintenance window or changelog entry is published. Off by default for external accounts.",
+    "publish": "Publish",
+    "schedule": "Schedule",
+    "published": "Published",
+    "fillRequiredFields": "Please fill in the title, summary and body.",
+    "type": {
+      "incident": "Incident",
+      "maintenance": "Maintenance",
+      "changelog": "Changelog"
+    },
+    "status": {
+      "investigating": "Investigating",
+      "identified": "Identified",
+      "monitoring": "Monitoring",
+      "resolved": "Resolved",
+      "scheduled": "Scheduled",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "emailStatus": {
+      "queued": "queued",
+      "sent": "sent",
+      "delivered": "delivered",
+      "opened": "opened",
+      "clicked": "clicked",
+      "bounced": "bounced",
+      "complained": "complained",
+      "failed": "failed"
     }
   },
   "AccessDenied": {
@@ -1340,6 +1452,27 @@
     "description": "This intranet is only accessible to authorized advantis GmbH employees. Your email address isn't part of an approved company domain, so no access can be granted here.",
     "removing": "Removing your account…",
     "autoRemoveNotice": "For security reasons, your account is being removed automatically."
+  },
+  "Forbidden": {
+    "code": "Error 403",
+    "title": "Access restricted",
+    "description": "You don't have permission to view this page. If you think this is a mistake, contact your manager or IT.",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "NotFound": {
+    "code": "Error 404",
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or may have moved.",
+    "backToDashboard": "Back to Dashboard"
+  },
+  "ErrorsCatalog": {
+    "eyebrow": "Debug",
+    "title": "Error pages",
+    "subtitle": "Live previews of this app's full-page error states, so you don't have to reproduce them for real.",
+    "forbidden": "Forbidden",
+    "notFound": "Not found",
+    "boundary": "Unexpected error boundary",
+    "excludedNote": "Access denied (blocked email domain) isn't listed here — mounting it immediately deletes the current account and signs out, so there's no safe way to preview it live."
   },
   "privacy": {
     "title": "Privacy Policy – Intranet",

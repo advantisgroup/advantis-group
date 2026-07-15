@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -13,11 +13,13 @@ import {
   CalendarClock,
   Copy,
   Hash,
+  Lock,
   Mail,
   MessageSquare,
   Phone,
   Send,
   ShieldCheck,
+  UploadCloud,
   UserMinus,
   Users2,
 } from "lucide-react";
@@ -28,6 +30,7 @@ import { Drawer } from "vaul";
 import {
   useCurrentUser,
   useIsAdmin,
+  useIsManager,
 } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +49,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -53,6 +62,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNow } from "@/lib/activity/useNow";
@@ -61,6 +75,16 @@ import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
 type ProfileUser = NonNullable<ReturnType<typeof useUser>>;
+
+/**
+ * Full-width, left-aligned, wrapping button style for the admin action list.
+ * The default Button is `whitespace-nowrap` at a fixed height, which is fine
+ * for short English labels but overflows German ones (e.g.
+ * "Geschäftsführungs-Zugriff gewähren") — this lets them wrap onto a second
+ * line instead of spilling into whatever sits next to the button.
+ */
+const actionButtonClass =
+  "h-auto min-h-8 w-full items-start justify-start whitespace-normal py-1.5 text-left [&_svg]:mt-0.5";
 
 function useUser(userId: Id<"users"> | null) {
   return useQuery(api.users.get, userId ? { userId } : "skip");
@@ -359,24 +383,35 @@ function UpcomingAbsences({ userId }: { userId: Id<"users"> }) {
 
 function AdminControls({
   user,
+  isAdmin,
   onClose,
 }: {
   user: ProfileUser;
+  isAdmin: boolean;
   onClose: () => void;
 }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
+  const tCustomRoles = useTranslations("CustomRoles");
   const me = useCurrentUser();
   const confirm = useConfirm();
   const setRole = useMutation(api.users.setRole);
   const setStatus = useAction(api.users.setStatus);
   const removeMember = useAction(api.members.remove);
   const reinvite = useAction(api.members.reinvite);
+  const setUploadPermission = useAction(api.users.setUploadPermission);
+  const setGfAccess = useAction(api.users.setGfAccess);
+  const setApplicantDelegate = useMutation(api.users.setApplicantDelegate);
   const handleError = useErrorHandler();
 
   const isSelf = user._id === me._id;
   const isActive = user.status === "active";
+  // Admins can be demoted via the role picker, but not suspended or removed
+  // outright — that would let one admin lock another out of their own
+  // account. Backend rejects these too; this just keeps the UI from
+  // offering an action that's guaranteed to fail.
+  const isTargetAdmin = user.role === "admin";
 
   function changeRole(role: Role) {
     setRole({ userId: user._id, role })
@@ -414,53 +449,281 @@ function AdminControls({
       .catch(handleError);
   }
 
-  return (
-    <Section label={t("title")}>
-      <div className="space-y-3 rounded-lg border border-border/70 p-3">
-        {!isSelf && (
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-muted-foreground">{t("role")}</span>
-            <RoleSelect value={user.role} onChange={changeRole} />
-          </div>
-        )}
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-muted-foreground">{t("teams")}</span>
-          <TeamsEditor userId={user._id} teams={user.teams} />
-        </div>
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <Button variant="outline" size="sm" onClick={() => onReinvite()}>
-            <Send /> {t("reinvite")}
-          </Button>
-          {!isSelf && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void toggleStatus()}
-            >
-              <ShieldCheck />
-              {isActive ? t("suspend") : t("activate")}
-            </Button>
-          )}
-          {!isSelf && (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="col-span-2"
-              onClick={() => void onRemove()}
-            >
-              <UserMinus /> {t("removeMember")}
-            </Button>
-          )}
-        </div>
-      </div>
-    </Section>
-  );
-
   function onReinvite() {
     reinvite({ userId: user._id })
       .then(() => toast.success(t("reinviteSent")))
       .catch(handleError);
   }
+
+  function toggleUploads() {
+    setUploadPermission({
+      userId: user._id,
+      enabled: !user.uploadRequestsEnabled,
+    })
+      .then(() =>
+        toast.success(
+          user.uploadRequestsEnabled
+            ? t("uploadsDisabled")
+            : t("uploadsEnabled")
+        )
+      )
+      .catch(handleError);
+  }
+
+  function toggleGf() {
+    setGfAccess({ userId: user._id, gfAccess: !user.gfAccess })
+      .then(() =>
+        toast.success(user.gfAccess ? t("gfRevoked") : t("gfGranted"))
+      )
+      .catch(handleError);
+  }
+
+  function toggleApplicantDelegate() {
+    setApplicantDelegate({
+      userId: user._id,
+      delegate: !user.applicantAccessDelegate,
+    })
+      .then(() =>
+        toast.success(
+          user.applicantAccessDelegate
+            ? t("applicantDelegateRevoked")
+            : t("applicantDelegateGranted")
+        )
+      )
+      .catch(handleError);
+  }
+
+  const hasCustomRole = Boolean(user.customRoleName);
+  const hasNamedPermissions =
+    user.gfAccess ||
+    user.applicantAccessDelegate ||
+    !user.uploadRequestsEnabled;
+
+  return (
+    <Section label={t("title")}>
+      {(hasCustomRole || hasNamedPermissions) && (
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
+          <span className="text-sm text-muted-foreground">
+            {t("permissions")}
+          </span>
+          {hasCustomRole && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="muted" className="cursor-help">
+                  {user.customRoleName}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {user.capabilities.length > 0
+                  ? user.capabilities
+                      .map(cap => tCustomRoles(`capability_${cap}`))
+                      .join(", ")
+                  : tCustomRoles("noCapabilities")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {user.gfAccess && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="muted" className="cursor-help">
+                  {t("gfBadge")}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {t("gfAccessTooltip")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {user.applicantAccessDelegate && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge variant="muted" className="cursor-help">
+                  {t("applicantDelegateBadge")}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                {t("applicantDelegateBadgeTitle")}
+              </TooltipContent>
+            </Tooltip>
+          )}
+          {!user.uploadRequestsEnabled && (
+            <Badge variant="warning">{t("uploadsDisabled")}</Badge>
+          )}
+        </div>
+      )}
+      <div className="space-y-3 rounded-lg border border-border/70 p-3">
+        {isAdmin && !isSelf && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground">{t("role")}</span>
+            <RoleSelect value={user.role} onChange={changeRole} />
+          </div>
+        )}
+        {isAdmin && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground">{t("teams")}</span>
+            <TeamsEditor userId={user._id} teams={user.teams} />
+          </div>
+        )}
+        {/* Permission grants and lifecycle actions only make sense on
+            someone else's account — a member can't grant themselves access
+            or reinvite/suspend/remove themselves.
+            Stacked full-width rows rather than a 2-up grid: German labels
+            ("Geschäftsführungs-Zugriff gewähren") run 2-3x longer than the
+            English ones and need room to wrap instead of overflowing a
+            fixed-width, `whitespace-nowrap` button. */}
+        {!isSelf && (
+          <div className="flex flex-col gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className={actionButtonClass}
+              onClick={toggleUploads}
+            >
+              <UploadCloud />
+              <span>
+                {user.uploadRequestsEnabled
+                  ? t("disableUploads")
+                  : t("enableUploads")}
+              </span>
+            </Button>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={actionButtonClass}
+                onClick={toggleGf}
+              >
+                <Lock />
+                <span>{user.gfAccess ? t("revokeGf") : t("grantGf")}</span>
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={actionButtonClass}
+                onClick={toggleApplicantDelegate}
+              >
+                <Users2 />
+                <span>
+                  {user.applicantAccessDelegate
+                    ? t("revokeApplicantDelegate")
+                    : t("grantApplicantDelegate")}
+                </span>
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={actionButtonClass}
+                onClick={() => onReinvite()}
+              >
+                <Send /> <span>{t("reinvite")}</span>
+              </Button>
+            )}
+            {isAdmin && !isTargetAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                className={actionButtonClass}
+                onClick={() => void toggleStatus()}
+              >
+                <ShieldCheck />
+                <span>{isActive ? t("suspend") : t("activate")}</span>
+              </Button>
+            )}
+            {isAdmin && !isTargetAdmin && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className={actionButtonClass}
+                onClick={() => void onRemove()}
+              >
+                <UserMinus /> <span>{t("removeMember")}</span>
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </Section>
+  );
+}
+
+/**
+ * The role badge doubles as an admin-only editor for the cosmetic per-user
+ * `roleLabel` override (e.g. rendering "Geschäftsführerin" for an admin whose
+ * permissions stay exactly admin — this never touches `role` itself).
+ */
+function RoleBadge({
+  member,
+  isAdmin,
+  tRoles,
+  onSave,
+}: {
+  member: { role: Role; roleLabel?: string | null };
+  isAdmin: boolean;
+  tRoles: (role: string) => string;
+  onSave: (value: string) => void;
+}) {
+  const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(member.roleLabel ?? "");
+
+  if (!isAdmin) {
+    return <Badge variant="muted">{roleLabel(member, tRoles)}</Badge>;
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={o => {
+        setOpen(o);
+        if (o) setValue(member.roleLabel ?? "");
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button type="button">
+          <Badge variant="muted" className="cursor-pointer">
+            {roleLabel(member, tRoles)}
+          </Badge>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-2" align="start">
+        <p className="text-xs font-medium text-muted-foreground">
+          {t("roleLabelHint")}
+        </p>
+        <Input
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder={tRoles(member.role)}
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setValue("");
+              onSave("");
+              setOpen(false);
+            }}
+          >
+            {t("roleLabelReset")}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              onSave(value);
+              setOpen(false);
+            }}
+          >
+            {tc("save")}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 function ProfileContent({
@@ -477,7 +740,9 @@ function ProfileContent({
   const router = useRouter();
   const me = useCurrentUser();
   const isAdmin = useIsAdmin();
+  const isManager = useIsManager();
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
+  const setRoleLabelMutation = useMutation(api.users.setRoleLabel);
   const handleError = useErrorHandler();
   const now = useNow();
 
@@ -496,6 +761,15 @@ function ProfileContent({
   function copyEmail() {
     void navigator.clipboard.writeText(user.email);
     toast.success(tAdmin("emailCopied"));
+  }
+
+  function saveRoleLabel(value: string) {
+    setRoleLabelMutation({
+      userId: user._id,
+      roleLabel: value.trim() || undefined,
+    })
+      .then(() => toast.success(tAdmin("roleLabelSaved")))
+      .catch(handleError);
   }
 
   const hasContact = Boolean(user.email || user.phone || user.department);
@@ -528,7 +802,12 @@ function ProfileContent({
             </p>
           )}
           <div className="mt-1.5 flex flex-wrap gap-1">
-            <Badge variant="muted">{roleLabel(user, tRoles)}</Badge>
+            <RoleBadge
+              member={user}
+              isAdmin={isAdmin}
+              tRoles={tRoles}
+              onSave={saveRoleLabel}
+            />
             {user.status === "suspended" && (
               <Badge variant="destructive">{tAdmin("suspended")}</Badge>
             )}
@@ -596,7 +875,12 @@ function ProfileContent({
 
         <UpcomingAbsences userId={user._id} />
 
-        {isAdmin && <AdminControls user={user} onClose={onClose} />}
+        {/* Managers only need this panel to act on someone else; on their
+            own profile there's nothing manager-level left to show once
+            self-targeting actions are hidden. */}
+        {(isAdmin || (isManager && !isSelf)) && (
+          <AdminControls user={user} isAdmin={isAdmin} onClose={onClose} />
+        )}
       </div>
     </div>
   );

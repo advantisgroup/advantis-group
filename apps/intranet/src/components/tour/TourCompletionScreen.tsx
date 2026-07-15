@@ -52,7 +52,9 @@ export function TourCompletionScreen() {
             <div>
               <h1
                 className="font-display text-4xl font-bold tracking-tight text-white"
-                style={{ fontFamily: "var(--font-outfit, Outfit, sans-serif)" }}
+                style={{
+                  fontFamily: "var(--font-geist-sans, Geist, sans-serif)",
+                }}
               >
                 {tt("doneTitle")}
               </h1>

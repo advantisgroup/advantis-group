@@ -73,7 +73,10 @@ export function CommandPalette() {
     api.users.list,
     open && query.trim() ? { search: query.trim() } : "skip"
   );
-  const announcements = useQuery(api.announcements.list, open ? {} : "skip");
+  const announcements = useQuery(
+    api.announcements.list,
+    open && query.trim() ? {} : "skip"
+  );
   const applicants = useQuery(
     api.applicants.list,
     open && hasApplicantAccess && query.trim() ? {} : "skip"
@@ -155,12 +158,6 @@ export function CommandPalette() {
 
     const actions = [
       {
-        id: "new-absence",
-        label: t("actionNewAbsence"),
-        icon: Plane,
-        href: "/absences?new=1",
-      },
-      {
         id: "new-event",
         label: t("actionNewEvent"),
         icon: CalendarPlus,
@@ -181,8 +178,13 @@ export function CommandPalette() {
         href: "/files",
       },
     ].filter(a => !a.managerOnly || isManager);
+
+    if (!q) {
+      return list;
+    }
+
     for (const a of actions) {
-      if (!q || a.label.toLowerCase().includes(q)) {
+      if (a.label.toLowerCase().includes(q)) {
         list.push({
           id: `action:${a.id}`,
           group: t("actions"),
@@ -194,7 +196,7 @@ export function CommandPalette() {
     }
 
     for (const p of pages) {
-      if (!q || p.label.toLowerCase().includes(q)) {
+      if (p.label.toLowerCase().includes(q)) {
         list.push({
           id: `page:${p.href}`,
           group: t("pages"),
@@ -207,7 +209,7 @@ export function CommandPalette() {
 
     for (const gb of guidebooks) {
       const title = tGuide(gb.titleKey);
-      if (!q || title.toLowerCase().includes(q)) {
+      if (title.toLowerCase().includes(q)) {
         list.push({
           id: `gb:${gb.slug}`,
           group: t("guidebooks"),
@@ -218,45 +220,43 @@ export function CommandPalette() {
       }
     }
 
-    if (q) {
-      for (const u of people ?? []) {
+    for (const u of people ?? []) {
+      list.push({
+        id: `user:${u._id}`,
+        group: t("people"),
+        label: u.name,
+        sublabel: u.jobTitle || u.department || u.email,
+        avatar: { src: u.avatar, name: u.name, email: u.email },
+        run: () => void openDm(u._id),
+      });
+    }
+    for (const a of announcements ?? []) {
+      if (a.title.toLowerCase().includes(q)) {
         list.push({
-          id: `user:${u._id}`,
-          group: t("people"),
-          label: u.name,
-          sublabel: u.jobTitle || u.department || u.email,
-          avatar: { src: u.avatar, name: u.name, email: u.email },
-          run: () => void openDm(u._id),
+          id: `ann:${a._id}`,
+          group: t("announcements"),
+          label: a.title,
+          sublabel: a.authorName,
+          icon: Megaphone,
+          run: () => go("/announcements"),
         });
       }
-      for (const a of announcements ?? []) {
-        if (a.title.toLowerCase().includes(q)) {
+    }
+    if (hasApplicantAccess) {
+      for (const ap of applicants ?? []) {
+        const haystack = [ap.name, ap.email, ap.position]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        if (haystack.includes(q)) {
           list.push({
-            id: `ann:${a._id}`,
-            group: t("announcements"),
-            label: a.title,
-            sublabel: a.authorName,
-            icon: Megaphone,
-            run: () => go("/announcements"),
+            id: `applicant:${ap._id}`,
+            group: t("applicants"),
+            label: ap.name,
+            sublabel: ap.position || ap.email,
+            icon: UserRoundSearch,
+            run: () => go(`/applicants/${ap._id}/uebersicht`),
           });
-        }
-      }
-      if (hasApplicantAccess) {
-        for (const ap of applicants ?? []) {
-          const haystack = [ap.name, ap.email, ap.position]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
-          if (haystack.includes(q)) {
-            list.push({
-              id: `applicant:${ap._id}`,
-              group: t("applicants"),
-              label: ap.name,
-              sublabel: ap.position || ap.email,
-              icon: UserRoundSearch,
-              run: () => go(`/applicants/${ap._id}/uebersicht`),
-            });
-          }
         }
       }
     }
@@ -337,7 +337,11 @@ export function CommandPalette() {
               />
             </div>
             <div className="max-h-[60vh] overflow-y-auto p-2">
-              {items.length === 0 ? (
+              {!query.trim() ? (
+                <p className="px-2 py-8 text-center text-sm text-muted-foreground">
+                  {t("emptyState")}
+                </p>
+              ) : items.length === 0 ? (
                 <p className="px-2 py-8 text-center text-sm text-muted-foreground">
                   {t("noResults")}
                 </p>

@@ -84,7 +84,7 @@ export function ChatClient() {
   }
 
   return (
-    <div className="-mx-4 -my-6 flex h-full overflow-hidden bg-background md:-mx-8 md:-my-8">
+    <div className="flex h-full overflow-hidden bg-background">
       {/* Conversation list */}
       <div
         data-tour="tour-chat-list"

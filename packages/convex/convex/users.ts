@@ -4,6 +4,7 @@ import { type Doc } from "./_generated/dataModel";
 import { type QueryCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { roleValidator } from "./schema";
 import {
   ensureUser,
   getCurrentUser,
@@ -13,6 +14,7 @@ import {
   requireManager,
   requireUser,
 } from "./lib/auth";
+import { listUserPermissions } from "./lib/permissions";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -21,11 +23,7 @@ import {
   updateClerkUserName,
 } from "./lib/clerk";
 
-const roleArg = v.union(
-  v.literal("admin"),
-  v.literal("manager"),
-  v.literal("employee")
-);
+const roleArg = roleValidator;
 
 /** Attach a resolved avatar URL to a user document. */
 async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
@@ -51,9 +49,13 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     managerId: user.managerId ?? null,
     status: user.status,
     external: user.external ?? false,
+    updatesEmailConsent: user.updatesEmailConsent ?? false,
     gfAccess: user.gfAccess ?? false,
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
+    /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
+    permissions: listUserPermissions(user),
     customRoleId: user.customRoleId ?? null,
+    customRoleName: customRole?.name ?? null,
     capabilities: customRole?.capabilities ?? [],
     applicantAccessDelegate: user.applicantAccessDelegate ?? false,
     applicantAccess: user.applicantAccess ?? false,
@@ -281,6 +283,26 @@ export const updateProfile = action({
   },
 });
 
+/**
+ * Self-service opt-in/out for "Updates" broadcast emails. Only externals can
+ * toggle this — internal employees are always eligible and have no consent
+ * to withdraw (see `updatesEmailConsent` on the `users` table).
+ */
+export const setUpdatesEmailConsent = mutation({
+  args: { consent: v.boolean() },
+  handler: async (ctx, { consent }) => {
+    const user = await requireUser(ctx);
+    if (!user.external) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "Only external users manage updates-email consent",
+      });
+    }
+    await ctx.db.patch(user._id, { updatesEmailConsent: consent });
+    return { ok: true };
+  },
+});
+
 export const setRole = mutation({
   args: { userId: v.id("users"), role: roleArg },
   handler: async (ctx, { userId, role }) => {
@@ -366,6 +388,12 @@ export const applyStatus = internalMutation({
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    if (status === "suspended" && target.role === "admin") {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "Admins cannot be suspended — change their role first",
+      });
     }
     await ctx.db.patch(userId, { status });
     return { clerkUserId: target.clerkUserId };

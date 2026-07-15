@@ -204,7 +204,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       const user = await resolveOneDriveUser(request);
       await rateLimit("od.search", user.clerkUserId, 30, "1 m");
       const q = query.q.trim();
-      if (q.length < 2) return { items: [] };
+      if (q.length < 1) return { items: [] };
       const hits = await search(q);
       const items = hits
         .map(hit => toItem(hit, user))
@@ -250,6 +250,48 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     { params: t.Object({ id: t.String() }) }
   )
 
+  // Import a file straight into Convex storage (Graph -> API -> Convex),
+  // skipping the browser download-then-reupload round trip a client-side
+  // picker would otherwise need. Returns a ready-to-use attachment payload
+  // for chat/announcements.
+  .post(
+    "/import/:id",
+    async ({ request, params }) => {
+      const user = await resolveOneDriveUser(request);
+      await rateLimit("od.import", user.clerkUserId, 30, "1 m");
+      const { item, rel } = await readableItem(user, params.id);
+
+      const res = await downloadById(params.id);
+      const bytes = await res.arrayBuffer();
+      const contentType = item.file?.mimeType || "application/octet-stream";
+
+      const uploadUrl = await getConvex().mutation(
+        api.files.apiGenerateUploadUrl,
+        { serverKey: serverKey() }
+      );
+      const uploadRes = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "content-type": contentType },
+        body: bytes,
+      });
+      if (!uploadRes.ok) throw Errors.internal("Failed to import file");
+      const { storageId } = (await uploadRes.json()) as { storageId: string };
+
+      return {
+        storageId,
+        kind: contentType.startsWith("image/")
+          ? ("image" as const)
+          : ("file" as const),
+        name: item.name,
+        size: item.size ?? bytes.byteLength,
+        contentType,
+        oneDriveItemId: item.id,
+        oneDrivePath: rel,
+      };
+    },
+    { params: t.Object({ id: t.String() }) }
+  )
+
   // Upload. Manager+ → straight to OneDrive; employee → staged pending request.
   .post(
     "/uploads",
@@ -265,22 +307,27 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       }
 
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const report = await scanFile({
+      const scanPromise = scanFile({
         bytes,
         fileName: file.name,
         declaredMime: file.type,
       });
-      if (report.verdict === "blocked") {
-        const reason = report.flags.find(f => f.severity === "danger");
-        throw Errors.badRequest(
-          reason?.detail ?? "This file type is not allowed"
-        );
-      }
-      const scanJson = JSON.stringify(report);
 
-      // Manager / admin: write directly, record the reference.
+      // Manager / admin: write directly, record the reference. The scan and
+      // the destination-folder lookup are independent Graph/CPU work, so run
+      // them concurrently instead of paying for both round trips serially —
+      // the rare "scan blocked" case just wastes one harmless GET.
       if (access.canWrite) {
-        const folder = await getItemByPath(targetRel);
+        const [report, folder] = await Promise.all([
+          scanPromise,
+          getItemByPath(targetRel),
+        ]);
+        if (report.verdict === "blocked") {
+          const reason = report.flags.find(f => f.severity === "danger");
+          throw Errors.badRequest(
+            reason?.detail ?? "This file type is not allowed"
+          );
+        }
         const created = await uploadFile(
           folder.id,
           file.name,
@@ -295,13 +342,21 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
           contentType: file.type || "application/octet-stream",
           targetFolderPath: targetRel,
           driveItemId: created.id,
-          scanReport: scanJson,
+          scanReport: JSON.stringify(report),
         });
         await invalidateAll();
         return { status: "uploaded" as const, scan: report };
       }
 
       // Employee: stage the bytes in Convex and open an approval request.
+      const report = await scanPromise;
+      if (report.verdict === "blocked") {
+        const reason = report.flags.find(f => f.severity === "danger");
+        throw Errors.badRequest(
+          reason?.detail ?? "This file type is not allowed"
+        );
+      }
+      const scanJson = JSON.stringify(report);
       const uploadUrl = await getConvex().mutation(
         api.onedrive.apiGenerateStagingUrl,
         { serverKey: serverKey() }

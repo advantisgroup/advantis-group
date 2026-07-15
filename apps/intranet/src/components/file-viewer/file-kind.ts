@@ -20,6 +20,8 @@ const IMAGE_EXTENSIONS = new Set([
   "svg",
   "bmp",
   "avif",
+  "heic",
+  "heif",
 ]);
 
 const TEXT_EXTENSIONS = new Set(["txt", "log", "env", "csv", "cfg"]);

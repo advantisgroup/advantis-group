@@ -101,8 +101,11 @@ export const de: Dict = {
   "people.genesysId": "Genesys-ID",
   "people.clockodoId": "Clockodo-ID",
   "people.manageInIntegrations": "In Integrationen verwalten →",
+  "people.integrationIds": "Integrations-IDs",
   "people.intranetUser": "Intranet-Konto",
   "people.intranetUserNone": "Nicht verknüpft",
+  "people.intranetUserHint":
+    "Verknüpft diese erfasste Person mit ihrem Intranet-Login, sodass Rolle und Abteilung neben dem Live-Status erscheinen.",
   "people.idsHint":
     "Verknüpft den Mitarbeiter mit Genesys und Clockodo für den zusammengeführten Live-Status.",
 
@@ -247,6 +250,7 @@ export const de: Dict = {
   "timeline.tabs.day": "Tag im Detail",
   "timeline.tabs.discarded": "Verworfen",
   "timeline.tabs.export": "Export",
+  "timeline.tabs.pattern": "Musterbericht",
   "timeline.discarded.heading": "Verworfene Signale",
   "timeline.discarded.sub":
     "Statuswechsel, die abgelehnt wurden, statt in die Zeitleiste geschrieben zu werden.",
@@ -295,6 +299,46 @@ export const de: Dict = {
     "Keine Daten für diesen Zeitraum. Wählen Sie einen größeren Zeitraum oder ein anderes Gerät.",
   "reports.trend.heading": "Wöchentlicher Verlauf",
   "reports.trend.sub": "Aktiv- und Inaktivstunden je Woche.",
+
+  // Wöchentlicher Musterbericht — ein auf Anfrage generierter, in Klartext
+  // verfasster Rückblick auf die Woche einer Person (siehe
+  // `activity/lib/patterns.ts` für die Erkennungsregeln). Die Sätze sind
+  // Vorlagen; `{platzhalter}` werden clientseitig eingesetzt und von
+  // `HighlightedSentence` farblich hervorgehoben.
+  "pattern.heading": "Wöchentlicher Musterbericht",
+  "pattern.subtitle":
+    "Ein Rückblick auf die Woche dieser Person in Klartext, auf Anfrage generiert.",
+  "pattern.week.thisWeek": "Diese Woche",
+  "pattern.week.lastWeek": "Letzte Woche",
+  "pattern.generate": "Bericht erstellen",
+  "pattern.regenerate": "Neu erstellen",
+  "pattern.generating": "Aktivität der Woche wird ausgewertet…",
+  "pattern.lastGenerated": "Erstellt {time}",
+  "pattern.empty":
+    "Noch kein Bericht für diese Woche — erstellen Sie einen, um zu sehen, was auffällig war.",
+  "pattern.chart.daily.heading": "Aktiv vs. inaktiv, nach Tag",
+  "pattern.chart.switches.heading": "Kurze Aktiv-/Inaktiv-Wechsel, nach Tag",
+  "pattern.chart.switches.sub":
+    "Kurzes Hin- und Herwechseln zwischen aktiv und inaktiv (unter 10 Minuten) — viele davon an einem Tag bedeuten meist häufigen Aufgabenwechsel oder eine unzuverlässige Inaktiv-Erkennung, nicht zwingend ein Problem.",
+  "pattern.overview":
+    "{name} war {activeShare} der erfassten Zeit aktiv — {active} aktiv, {idle} inaktiv.",
+  "pattern.quickFlips":
+    "Es gab viel Wechsel zwischen aktiv und inaktiv — {count} kurze Wechsel unter {threshold} diese Woche.",
+  "pattern.longIdleStreak":
+    "Die längste durchgehende Inaktivphase betrug {duration} — ein kurzer Check-in könnte sich lohnen.",
+  "pattern.inactivityIncrease":
+    "Die Inaktivität ist im Vergleich zur letzten Woche um {deltaPct} gestiegen — von {prevIdle} auf {idle}.",
+  "pattern.inactivityDecrease":
+    "Die Inaktivität ist im Vergleich zur letzten Woche um {deltaPct} gesunken — von {prevIdle} auf {idle}.",
+  "pattern.activeIncrease":
+    "Die Aktivzeit ist im Vergleich zur letzten Woche um {deltaPct} gestiegen ({active} vs. {prevActive}).",
+  "pattern.activeDecrease":
+    "Die Aktivzeit ist im Vergleich zur letzten Woche um {deltaPct} gesunken ({active} vs. {prevActive}).",
+  "pattern.steady":
+    "Keine auffälligen Muster diese Woche — die Aktivität blieb im Vergleich zur letzten Woche konstant.",
+  "pattern.noBaseline":
+    "Dies ist die erste Woche mit erfassten Daten für {name} — noch kein Vergleich möglich.",
+
   "timeline.export.heading": "Daten exportieren",
   "timeline.export.sub":
     "Aktivitätsdaten dieses Mitarbeiters für einen Zeitraum als CSV oder JSON.",

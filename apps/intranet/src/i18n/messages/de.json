@@ -23,7 +23,8 @@
     "files": "Dateien",
     "integrations": "Integrationen",
     "privacy": "Datenschutz",
-    "terms": "Nutzungsbedingungen"
+    "terms": "Nutzungsbedingungen",
+    "updates": "Updates"
   },
   "Common": {
     "save": "Speichern",
@@ -62,10 +63,8 @@
     "upcomingEvents": "Anstehende Termine",
     "latestAnnouncements": "Neueste Ankündigungen",
     "unreadChats": "Ungelesene Nachrichten",
-    "pendingApprovals": "Offene Genehmigungen",
     "noEvents": "Keine anstehenden Termine",
     "noAnnouncements": "Keine Ankündigungen",
-    "noApprovals": "Nichts zu genehmigen",
     "noUnread": "Alles gelesen",
     "greetingMorning": "Guten Morgen, {name}",
     "greetingAfternoon": "Guten Tag, {name}",
@@ -76,15 +75,13 @@
     "outUntil": "bis {date}",
     "todaysSchedule": "Heutiger Plan",
     "customize": "Karten anpassen",
-    "actionRequestAbsence": "Abwesenheit beantragen",
     "actionNewEvent": "Neuer Termin",
     "actionNewAnnouncement": "Neue Ankündigung",
     "actionUpload": "Datei hochladen",
     "paletteHint": "⌘K zum Suchen",
     "openCalendar": "Kalender öffnen",
     "openAnnouncements": "Ankündigungen öffnen",
-    "openChat": "Chat öffnen",
-    "openAbsences": "Abwesenheiten öffnen"
+    "openChat": "Chat öffnen"
   },
   "Calendar": {
     "title": "Kalender",
@@ -126,35 +123,20 @@
   },
   "Absences": {
     "title": "Abwesenheiten",
-    "myRequests": "Meine Abwesenheiten",
-    "newRequest": "Abwesenheit beantragen",
-    "newRequestHint": "Beantrage Abwesenheit zur Genehmigung. Deine Führungskraft wird benachrichtigt.",
-    "approvals": "Genehmigungen",
-    "type": "Art",
     "vacation": "Urlaub",
     "sick": "Krank",
     "personal": "Persönlich",
     "other": "Sonstiges",
-    "start": "Startdatum",
-    "end": "Enddatum",
-    "halfDay": "Halber Tag",
     "reason": "Grund",
     "status": "Status",
     "pending": "Ausstehend",
     "approved": "Genehmigt",
     "denied": "Abgelehnt",
     "cancelled": "Storniert",
-    "approve": "Genehmigen",
-    "deny": "Ablehnen",
-    "cancelRequest": "Stornieren",
     "managedInClockodo": "Wird in Clockodo verwaltet",
     "source": "Quelle",
-    "noPending": "Keine offenen Anträge",
     "noAbsences": "Noch keine Abwesenheiten",
-    "subtitle": "Beantrage Abwesenheiten und verfolge Genehmigungen.",
-    "editRequest": "Antrag bearbeiten",
-    "requestUpdated": "Antrag aktualisiert",
-    "overlapWarning": "Dieser Zeitraum überschneidet sich mit einer bestehenden Abwesenheit.",
+    "subtitle": "Synchronisiert aus Clockodo — hier schreibgeschützt.",
     "workingDaysLabel": "{count, plural, one {# Arbeitstag} other {# Arbeitstage}}",
     "statsVacation": "Urlaubstage {year}",
     "statsSick": "Krankheitstage {year}",
@@ -167,9 +149,6 @@
     "syncedJustNow": "Clockodo gerade synchronisiert",
     "whosOut": "Abwesend in den nächsten 14 Tagen",
     "nobodyOut": "In den nächsten 14 Tagen ist niemand abwesend.",
-    "denyTitle": "Antrag ablehnen",
-    "denyHint": "Optional eine Notiz für {name} hinterlassen.",
-    "note": "Notiz",
     "decisionNoteLabel": "Notiz der Freigabe",
     "requested": "Beantragt",
     "approvedBy": "Genehmigt von {name}",
@@ -311,6 +290,7 @@
     "noMessagesGroupHint": "Sei die erste Person, die in {name} schreibt.",
     "newMessages": "Neue Nachrichten",
     "attachment": "Anhang",
+    "attachTooLarge": "Anhänge überschreiten das 5-MB-Limit",
     "reply": "Antworten",
     "replyingTo": "Antwort an {name}",
     "editingMessage": "Nachricht bearbeiten",
@@ -368,7 +348,7 @@
     "next": "Weiter",
     "replayCheckpoint": "Tour für diese Seite erneut abspielen",
     "nudgeBody": "Neu hier? Mach eine kurze Tour über diese Seite und entdecke, was sie kann.",
-    "nudgeStart": "Zeig mir",
+    "nudgeStart": "Zeigs mir",
     "nudgeDismiss": "Ausblenden",
     "nextSection": "Nächster Abschnitt",
     "finish": "Fertig",
@@ -420,11 +400,11 @@
         },
         "actions": {
           "title": "Schnellaktionen",
-          "description": "Spring direkt zu den häufigsten Aufgaben — Abwesenheit beantragen, Datei hochladen oder (als Führungskraft) Termine und Ankündigungen erstellen. Am Desktop öffnet ⌘K überall die Suche."
+          "description": "Spring direkt zu den häufigsten Aufgaben — Datei hochladen oder (als Führungskraft) Termine und Ankündigungen erstellen. Am Desktop öffnet ⌘K überall die Suche."
         },
         "main": {
           "title": "Dein Dashboard",
-          "description": "Ein Überblick über das Geschehen – anstehende Termine, aktuelle Neuigkeiten, wer heute abwesend ist und offene Punkte. Jede Zeile verlinkt zu ihrem Bereich."
+          "description": "Ein Überblick über das Geschehen – anstehende Termine, aktuelle Neuigkeiten und wer heute abwesend ist. Jede Zeile verlinkt zu ihrem Bereich."
         },
         "customize": {
           "title": "Mach es zu deinem",
@@ -476,10 +456,6 @@
           "title": "Abwesenheiten",
           "description": "Beantrage und verfolge Urlaub, Krankheitstage und persönliche Zeit."
         },
-        "request": {
-          "title": "Abwesenheit beantragen",
-          "description": "Erstelle einen neuen Antrag — wähle Art, Zeitraum und optional eine Notiz für die Freigabe. Du siehst die Anzahl der Arbeitstage und eine Warnung, wenn sich der Zeitraum mit einer bestehenden Abwesenheit überschneidet."
-        },
         "stats": {
           "title": "Dein Jahr im Überblick",
           "description": "Genutzte Urlaubstage, Krankheitstage und offene Anträge des laufenden Jahres, berechnet aus deinen genehmigten Abwesenheiten."
@@ -489,12 +465,8 @@
           "description": "Grenze die Liste nach Status oder Art ein. Darunter ist alles nach Jahr gruppiert — klicke auf einen Eintrag für die vollständige Historie."
         },
         "list": {
-          "title": "Deine Abwesenheitsanträge",
-          "description": "Verfolge hier den Genehmigungsstatus. Offene Anträge kannst du weiterhin bearbeiten oder stornieren; aus Clockodo synchronisierte Abwesenheiten sind schreibgeschützt und mit einem Badge markiert."
-        },
-        "approvals": {
-          "title": "Team-Freigaben",
-          "description": "Anträge deiner Mitarbeitenden landen in diesem Tab. Genehmige oder lehne sie ab (optional mit Notiz) und sieh, wer im Team in den nächsten zwei Wochen abwesend ist."
+          "title": "Deine Abwesenheiten",
+          "description": "Alles hier wird aus Clockodo synchronisiert und ist schreibgeschützt — genehmige, lehne ab oder bearbeite Abwesenheiten dort. Führungskräfte sehen zusätzlich, wer im Team in den nächsten zwei Wochen abwesend ist."
         }
       },
       "chat": {
@@ -702,6 +674,9 @@
     "enableUploads": "Upload-Anfragen erlauben",
     "revokeGf": "Geschäftsführungs-Zugriff entziehen",
     "grantGf": "Geschäftsführungs-Zugriff gewähren",
+    "gfAccessTooltip": "Hat die Geschäftsführung-Freigabe — eine eigenständige OneDrive-Berechtigung, unabhängig von der Rolle.",
+    "permissions": "Berechtigungen:",
+    "gfBadge": "GF-Zugriff",
     "uploadsDisabled": "Upload-Anfragen gesperrt",
     "uploadsEnabled": "Upload-Anfragen erlaubt",
     "gfRevoked": "Geschäftsführungs-Zugriff entzogen",
@@ -710,6 +685,7 @@
     "grantApplicantDelegate": "Als Bewerbermanagement-Delegierte(n) einsetzen",
     "applicantDelegateRevoked": "Delegierten-Recht entzogen",
     "applicantDelegateGranted": "Als Delegierte(r) eingesetzt",
+    "applicantDelegateBadge": "Bewerbermanagement-Delegierte(r)",
     "applicantDelegateBadgeTitle": "Kann anderen Zugriff auf das Bewerbermanagement gewähren",
     "roleLabelHint": "Eigene Anzeigebezeichnung für dieses Rollen-Badge (z. B. „Geschäftsführerin“). Die Berechtigungen bleiben unverändert.",
     "roleLabelReset": "Zurücksetzen",
@@ -733,7 +709,68 @@
     "audit_teamAccessRevoke": "hat Team-Ordner-Zugriff entzogen von",
     "customRolesTab": "Rollen",
     "customRole": "Benutzerdefinierte Rolle",
-    "customRoleNone": "Keine"
+    "customRoleNone": "Keine",
+    "backToDashboard": "Zurück zum Dashboard",
+    "nav": {
+      "group": "Verwaltung",
+      "overview": "Übersicht",
+      "requests": "Anfragen",
+      "invites": "Einladungen",
+      "members": "Mitglieder",
+      "uploads": "Uploads",
+      "integrations": "Integrationen",
+      "roles": "Rollen",
+      "departments": "Abteilungen",
+      "teams": "Teams",
+      "guests": "Gäste",
+      "dataCleanup": "Stammdaten-Bereinigung",
+      "audit": "Audit-Log"
+    },
+    "dataCleanup": {
+      "title": "Stammdaten-Bereinigung",
+      "description": "Prüfen Sie die als Freitext erfassten Abteilungs- und Team-Werte der Mitglieder und überführen Sie sie in eine einheitliche Liste. Zwei Schreibweisen derselben Abteilung werden nie automatisch zusammengeführt — bitte jede einzeln prüfen.",
+      "populate": "Mitglieder scannen",
+      "runBackfill": "Auf Mitglieder anwenden",
+      "populated": "{created} neue Gruppe(n) gefunden, {updated} aktualisiert.",
+      "backfilled": "{departments} Abteilung(en) und {teams} Team(s) erstellt; {users} Mitglied-Verknüpfung(en) aktualisiert.",
+      "departments": "Abteilungen",
+      "teams": "Teams",
+      "loading": "Lädt…",
+      "empty": "Noch nichts zu prüfen — zuerst \"Mitglieder scannen\" klicken.",
+      "pendingCount": "{count} ausstehend",
+      "rawValues": "Gesehen als",
+      "status_pending": "Prüfung ausstehend",
+      "status_approved": "Genehmigt",
+      "status_rejected": "Abgelehnt",
+      "approve": "Genehmigen",
+      "reject": "Ablehnen",
+      "merge": "Zusammenführen",
+      "merged": "Zusammengeführt",
+      "mergedInto": "Zusammengeführt mit \"{name}\"",
+      "mergeIntoPlaceholder": "Zusammenführen mit…"
+    },
+    "orgEntity": {
+      "departmentsTitle": "Abteilungen",
+      "departmentsDescription": "Abteilungen anlegen, umbenennen oder archivieren. Archivierte Abteilungen bleiben für bereits zugewiesene Mitglieder gültig, stehen aber bei neuen Zuweisungen nicht mehr zur Auswahl.",
+      "departmentNamePlaceholder": "Neue Abteilung…",
+      "teamsTitle": "Teams",
+      "teamsDescription": "Teams anlegen, umbenennen oder archivieren. Archivierte Teams bleiben für bestehende Mitglieder gültig, stehen aber bei neuen Zuweisungen nicht mehr zur Auswahl.",
+      "teamNamePlaceholder": "Neues Team…",
+      "create": "Hinzufügen",
+      "archive": "Archivieren",
+      "restore": "Wiederherstellen",
+      "archived": "Archiviert",
+      "empty": "Noch keine vorhanden — oben eines hinzufügen.",
+      "memberCount": "{count} Mitglied(er)"
+    },
+    "auditLog": {
+      "title": "Audit-Log",
+      "description": "Alle privilegierten Aktionen aus ActivityTrack, OneDrive-Uploads und Integrationen an einem Ort.",
+      "allSources": "Alle Quellen",
+      "source_activity": "ActivityTrack",
+      "source_onedrive": "OneDrive",
+      "source_integrations": "Integrationen"
+    }
   },
   "Teams": {
     "customerCare": "Customer Care",
@@ -743,15 +780,20 @@
   },
   "CustomRoles": {
     "heading": "Benutzerdefinierte Rollen",
-    "description": "Vergeben Sie begrenzte Berechtigungen – z. B. Mitglieder verwalten ohne Integrationszugriff –, ohne jemanden zum Manager zu befördern.",
+    "description": "Vergeben Sie begrenzte Berechtigungen, ohne jemanden zum Manager zu befördern.",
+    "descriptionDetail": "Beispiel: Mitglieder verwalten ohne Integrationszugriff. Berechtigungen sind additiv – eine benutzerdefinierte Rolle nimmt nie weg, was die Basisrolle bereits erlaubt.",
     "newRole": "Neue Rolle",
     "name": "Name",
     "namePlaceholder": "z. B. Teamleiter",
     "capabilities": "Berechtigungen",
     "capability_manage_members": "Mitglieder verwalten",
+    "capability_manage_members_desc": "Einladen, sperren, Rollen ändern",
     "capability_access_integrations": "Zugriff auf Integrationen",
+    "capability_access_integrations_desc": "Genesys und Clockodo",
     "capability_manage_uploads": "OneDrive-Uploads verwalten",
+    "capability_manage_uploads_desc": "Ausstehende Uploads und Audit-Log einsehen",
     "capability_view_activity_admin": "ActivityTrack-Admin einsehen",
+    "capability_view_activity_admin_desc": "Live-Status, alle Mitarbeitenden",
     "create": "Rolle erstellen",
     "save": "Speichern",
     "cancel": "Abbrechen",
@@ -954,8 +996,11 @@
   },
   "Roles": {
     "admin": "Administrator",
+    "admin_desc": "Voller Zugriff auf alle Admin-Bereiche",
     "manager": "Manager",
-    "employee": "Mitarbeiter"
+    "manager_desc": "Verwaltet Mitglieder, Uploads, Integrationen",
+    "employee": "Mitarbeiter",
+    "employee_desc": "Standardzugriff, keine Admin-Bereiche"
   },
   "Integrations": {
     "hubTitle": "Integrationen",
@@ -1066,9 +1111,9 @@
     "guidebooks": "Wiki",
     "applicants": "Bewerber",
     "noResults": "Keine Ergebnisse gefunden",
+    "emptyState": "Beginne zu tippen, um Seiten, Personen und Ankündigungen zu durchsuchen",
     "hint": "Suchen",
     "actions": "Aktionen",
-    "actionNewAbsence": "Abwesenheit beantragen",
     "actionNewEvent": "Neuer Termin",
     "actionNewAnnouncement": "Neue Ankündigung",
     "actionUpload": "Datei hochladen"
@@ -1217,6 +1262,7 @@
     "quota": "{used} von {total} belegt",
     "searchPlaceholder": "Dateien suchen…",
     "newFolder": "Neuer Ordner",
+    "newFolderDesc": "Erstellt einen Ordner im aktuellen Verzeichnis, sichtbar für alle mit Zugriff auf diesen Ort.",
     "folderName": "Ordnername",
     "create": "Erstellen",
     "cancel": "Abbrechen",
@@ -1230,6 +1276,7 @@
     "actions": "Aktionen",
     "preview": "Vorschau",
     "download": "Herunterladen",
+    "downloading": "Wird heruntergeladen…",
     "versions": "Versionsverlauf",
     "share": "Freigabelink",
     "shareDesc": "Jeder mit dem Link kann die Datei bis zum Ablauf ansehen.",
@@ -1237,6 +1284,7 @@
     "nDays": "{count, plural, one {# Tag} other {# Tage}}",
     "createLink": "Link erstellen",
     "rename": "Umbenennen",
+    "renameDesc": "Beim Umbenennen bleibt alles an Ort und Stelle — Links und Versionsverlauf bleiben erhalten.",
     "delete": "Löschen",
     "restore": "Wiederherstellen",
     "restored": "Version wiederhergestellt",
@@ -1274,16 +1322,29 @@
     "selectAll": "Alle auswählen",
     "bulkDeleteTitle": "{count} Elemente löschen?",
     "uploadQueue": "Uploads",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "finalizing": "Wird abgeschlossen…"
   },
   "FileViewer": {
     "download": "Herunterladen",
+    "downloading": "Wird heruntergeladen…",
     "copyLink": "Link kopieren",
     "linkCopied": "Link kopiert",
     "metadata": "Dateiinfo",
+    "name": "Name",
     "dimensions": "Abmessungen",
     "size": "Größe",
     "type": "Typ",
+    "modified": "Geändert",
+    "loadingExif": "Kameradaten werden gelesen…",
+    "camera": "Kamera",
+    "lens": "Objektiv",
+    "dateTaken": "Aufnahmedatum",
+    "aperture": "Blende",
+    "shutterSpeed": "Belichtungszeit",
+    "iso": "ISO",
+    "focalLength": "Brennweite",
+    "location": "Standort",
     "close": "Schließen",
     "noPreview": "Für diese Datei ist keine Vorschau verfügbar.",
     "archiveTitle": "\"{name}\" herunterladen?",
@@ -1291,47 +1352,98 @@
     "cancel": "Abbrechen",
     "loading": "Wird geladen…"
   },
-  "WhatsNew": {
-    "title": "Neu im Intranet",
-    "intro": "Jeder Bereich hat ein großes Upgrade bekommen. Hier die Highlights — klicke, um es auszuprobieren.",
-    "dismiss": "Alles klar",
-    "items": {
-      "dashboard": {
-        "title": "Übersicht",
-        "body": "„Wer ist heute abwesend“-Karte, Schnellaktionen, Inline-Genehmigungen und ausblendbare Karten."
-      },
-      "absences": {
-        "title": "Abwesenheiten",
-        "body": "Clockodo-Abwesenheiten synchronisieren automatisch; offene Anträge bearbeiten, Filter, Statistiken und .ics-Export."
-      },
-      "calendar": {
-        "title": "Kalender",
-        "body": "Termine bearbeiten und duplizieren, interaktive Filter, Kalenderwochen, Tastatur-Navigation und Export."
-      },
-      "announcements": {
-        "title": "Ankündigungen",
-        "body": "Beiträge planen, nachträglich bearbeiten, Entwürfe, Suche und Lese-Statistiken."
-      },
-      "directory": {
-        "title": "Mitarbeiter",
-        "body": "Online-Status, wer abwesend ist, Führungskraft & Team sowie mehr Filter."
-      },
-      "files": {
-        "title": "Dateien",
-        "body": "Rasteransicht, Sortierung, angepinnte Ordner, Massen-Download/-Löschen und eine Upload-Warteschlange."
-      },
-      "guidebooks": {
-        "title": "Wiki",
-        "body": "Suche, Favoriten, Inhaltsverzeichnis, Lesefortschritt und Feedback."
-      },
-      "notifications": {
-        "title": "Benachrichtigungen",
-        "body": "Tagesgruppierung, Stummschalten pro Art, ungelesen/entfernen und Browser-Benachrichtigungen."
-      },
-      "settings": {
-        "title": "Einstellungen",
-        "body": "Profilbild-Zuschnitt, App-Einstellungen (Startseite, Kalenderansicht) und deine Verknüpfungen."
-      }
+  "Updates": {
+    "title": "Updates",
+    "description": "Störungen, geplante Wartungen und Neuigkeiten — alles an einem Ort.",
+    "more": "weitere",
+    "dismiss": "Schließen",
+    "newUpdate": "Neues Update",
+    "newUpdateDescription": "Veröffentliche eine Störung, ein Wartungsfenster oder einen Changelog-Eintrag.",
+    "tabAll": "Alle",
+    "tabIncident": "Störungen",
+    "tabMaintenance": "Wartung",
+    "tabChangelog": "Changelog",
+    "searchPlaceholder": "Updates durchsuchen…",
+    "allStatuses": "Alle Status",
+    "allSystems": "Alle Systeme",
+    "emptyTitle": "Noch keine Updates",
+    "emptyDescription": "Störungen, Wartungsfenster und Changelog-Einträge erscheinen hier.",
+    "scheduled": "Geplant",
+    "ongoingFor": "Läuft seit {duration}",
+    "resolvedAfter": "Behoben nach {duration}",
+    "backToList": "Zurück zu Updates",
+    "notFoundTitle": "Update nicht gefunden",
+    "notFoundDescription": "Dieses Update existiert nicht oder du hast keinen Zugriff darauf.",
+    "byline": "Veröffentlicht von {author} · {date}",
+    "deleteConfirm": "Dieses Update löschen?",
+    "deleted": "Update gelöscht",
+    "statusLabel": "Status",
+    "durationLabel": "Dauer",
+    "startedLabel": "Beginn",
+    "resolvedLabel": "Behoben",
+    "ongoing": "Läuft noch",
+    "affectedSystemsLabel": "Betroffene Systeme",
+    "timelineLabel": "Verlauf",
+    "noTimelineYet": "Noch keine Einträge.",
+    "postUpdatePlaceholder": "Status-Update veröffentlichen…",
+    "postUpdate": "Update posten",
+    "timelinePosted": "Update veröffentlicht",
+    "noStatusChange": "Keine Statusänderung",
+    "emailDeliveryLabel": "E-Mail-Zustellung",
+    "emailNotSent": "nicht per E-Mail versendet",
+    "emailRequested": "E-Mail angefordert",
+    "noEmailsSentYet": "Noch keine E-Mails versendet.",
+    "downloadArt": "Grafik herunterladen",
+    "downloadArtError": "Bild konnte nicht erstellt werden",
+    "typeLabel": "Typ",
+    "titleLabel": "Titel",
+    "titlePlaceholder": "Kurzer, konkreter Titel",
+    "summaryLabel": "Zusammenfassung",
+    "summaryPlaceholder": "Ein bis zwei Sätze — das erscheint im Banner.",
+    "bodyLabel": "Details",
+    "switchToMarkdown": "Zu Markdown wechseln",
+    "switchToRichText": "Zu Rich Text wechseln",
+    "markdownPlaceholder": "Das vollständige Update in Markdown schreiben…",
+    "addSystem": "Hinzufügen",
+    "customSystemPlaceholder": "Weiteres System hinzufügen…",
+    "audienceLabel": "Zielgruppe",
+    "everyone": "Alle",
+    "startedAtLabel": "Wartungsfenster beginnt",
+    "publishAtLabel": "Veröffentlichen am (leer lassen für sofort)",
+    "emailEveryoneLabel": "Bei Veröffentlichung alle per E-Mail benachrichtigen",
+    "emailPreviewNone": "Niemand wird benachrichtigt — keine aktiven Nutzer entsprechen dieser Zielgruppe.",
+    "emailPreviewCount": "Dies benachrichtigt {count, plural, one {# Person} other {# Personen}} per E-Mail",
+    "emailPreviewExcluded": "{count, plural, one {# externer Nutzer ist} other {# externe Nutzer sind}} ausgeschlossen — keine E-Mail-Einwilligung",
+    "emailConsentTitle": "Update-E-Mails",
+    "emailConsentHint": "Erhalte eine E-Mail, wenn ein neuer Vorfall, ein Wartungsfenster oder ein Changelog-Eintrag veröffentlicht wird. Für externe Konten standardmäßig deaktiviert.",
+    "publish": "Veröffentlichen",
+    "schedule": "Planen",
+    "published": "Veröffentlicht",
+    "fillRequiredFields": "Bitte Titel, Zusammenfassung und Details ausfüllen.",
+    "type": {
+      "incident": "Störung",
+      "maintenance": "Wartung",
+      "changelog": "Changelog"
+    },
+    "status": {
+      "investigating": "Wird untersucht",
+      "identified": "Ursache identifiziert",
+      "monitoring": "Wird beobachtet",
+      "resolved": "Behoben",
+      "scheduled": "Geplant",
+      "in_progress": "Läuft",
+      "completed": "Abgeschlossen",
+      "cancelled": "Abgesagt"
+    },
+    "emailStatus": {
+      "queued": "wartet",
+      "sent": "gesendet",
+      "delivered": "zugestellt",
+      "opened": "geöffnet",
+      "clicked": "geklickt",
+      "bounced": "unzustellbar",
+      "complained": "als Spam markiert",
+      "failed": "fehlgeschlagen"
     }
   },
   "AccessDenied": {
@@ -1340,6 +1452,27 @@
     "description": "Dieses Intranet ist ausschließlich für autorisierte Mitarbeitende der advantis GmbH zugänglich. Deine E-Mail-Adresse gehört nicht zu einer zugelassenen Firmendomain, daher kann dir hier kein Zugang gewährt werden.",
     "removing": "Dein Konto wird entfernt …",
     "autoRemoveNotice": "Aus Sicherheitsgründen wird dein Konto automatisch entfernt."
+  },
+  "Forbidden": {
+    "code": "Fehler 403",
+    "title": "Zugriff eingeschränkt",
+    "description": "Du hast keine Berechtigung, diese Seite anzuzeigen. Falls du glaubst, dass dies ein Fehler ist, wende dich an deine Führungskraft oder die IT.",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
+  "NotFound": {
+    "code": "Fehler 404",
+    "title": "Seite nicht gefunden",
+    "description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "backToDashboard": "Zurück zum Dashboard"
+  },
+  "ErrorsCatalog": {
+    "eyebrow": "Debug",
+    "title": "Fehlerseiten",
+    "subtitle": "Live-Vorschau der ganzseitigen Fehlerzustände dieser App, damit du sie nicht real nachstellen musst.",
+    "forbidden": "Zugriff verweigert",
+    "notFound": "Nicht gefunden",
+    "boundary": "Unerwarteter Fehler",
+    "excludedNote": "„Zugriff verweigert“ wegen gesperrter E-Mail-Domain ist hier nicht aufgeführt — das Einbinden würde das aktuelle Konto sofort löschen und abmelden, daher gibt es keine sichere Live-Vorschau dafür."
   },
   "privacy": {
     "title": "Datenschutzerklärung – Intranet",

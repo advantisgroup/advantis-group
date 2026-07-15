@@ -19,9 +19,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "links",
-          items: [
-            { label: "Zugangsanfragen öffnen", href: "/admin?tab=requests" },
-          ],
+          items: [{ label: "Zugangsanfragen öffnen", href: "/admin/requests" }],
         },
         {
           kind: "text",
@@ -35,7 +33,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "links",
-          items: [{ label: "Einladungen öffnen", href: "/admin?tab=invites" }],
+          items: [{ label: "Einladungen öffnen", href: "/admin/invites" }],
         },
         {
           kind: "text",
@@ -58,7 +56,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "links",
-          items: [{ label: "Mitglieder öffnen", href: "/admin?tab=members" }],
+          items: [{ label: "Mitglieder öffnen", href: "/admin/members" }],
         },
         {
           kind: "text",

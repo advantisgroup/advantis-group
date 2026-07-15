@@ -49,6 +49,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UpdatesEmailConsent } from "@/components/updates/UpdatesEmailConsent";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials, roleLabel } from "@/lib/format";
 import { cropToSquare } from "@/lib/image";
@@ -324,7 +325,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <PageHeader title={t("title")} tourCheckpoint="settings" />
       {/* Personal identity hero */}
       <Card className="overflow-hidden" data-tour="tour-settings-profile">
@@ -475,6 +476,16 @@ export default function SettingsPage() {
           <NotificationPreferences />
         </CardContent>
       </Card>
+
+      {/* Updates email consent — externals only; internal employees are
+          always eligible and get no toggle (see UpdatesEmailConsent). */}
+      {user.external && (
+        <Card>
+          <CardContent className="p-5">
+            <UpdatesEmailConsent />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Onboarding Tour */}
       {tourState && (

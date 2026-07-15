@@ -45,7 +45,7 @@ export default function GuidebookPage() {
   }, [guidebook, allowed, setPrefs]);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-4xl">
       {guidebook && allowed && <ReadingProgress />}
       <div className="mb-4 flex items-center justify-between gap-3 print:hidden">
         <Link

@@ -5,23 +5,31 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { UserProfile } from "@/components/profile/UserProfile";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogTitle,
   useConfirm,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { cn } from "@/lib/utils";
 
 const CAPABILITIES = [
   "manage_members",
@@ -61,9 +69,12 @@ function RoleForm({
   return (
     <>
       <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-        <DialogTitle className="leading-snug">
-          {role._id ? t("edit") : t("newRole")}
-        </DialogTitle>
+        <div className="space-y-1">
+          <DialogTitle className="leading-snug">
+            {role._id ? t("edit") : t("newRole")}
+          </DialogTitle>
+          <DialogDescription>{t("descriptionDetail")}</DialogDescription>
+        </div>
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">
             {t("name")}
@@ -78,15 +89,54 @@ function RoleForm({
           <p className="text-xs font-medium text-muted-foreground">
             {t("capabilities")}
           </p>
-          {CAPABILITIES.map(cap => (
-            <label key={cap} className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={capabilities.includes(cap)}
-                onCheckedChange={() => toggle(cap)}
-              />
-              {t(`capability_${cap}`)}
-            </label>
-          ))}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {CAPABILITIES.map(cap => {
+              const checked = capabilities.includes(cap);
+              return (
+                <button
+                  key={cap}
+                  type="button"
+                  aria-pressed={checked}
+                  onClick={() => toggle(cap)}
+                  className={cn(
+                    "flex items-start gap-2 rounded-lg border p-3 text-left transition-colors",
+                    checked
+                      ? "border-primary bg-primary/5"
+                      : "border-border/70 hover:border-border"
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-sm border",
+                      checked
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/40"
+                    )}
+                  >
+                    {checked && <Check className="size-3" />}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium leading-snug">
+                      {t(`capability_${cap}`)}
+                    </p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {t(`capability_${cap}_desc`)}
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        className="max-w-xs leading-relaxed"
+                      >
+                        {t(`capability_${cap}_desc`)}
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
       <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
@@ -107,6 +157,7 @@ function RoleForm({
 export function CustomRolesPanel() {
   const t = useTranslations("CustomRoles");
   const roles = useQuery(api.customRoles.list);
+  const members = useQuery(api.users.list, { includeSuspended: true });
   const createRole = useMutation(api.customRoles.create);
   const updateRole = useMutation(api.customRoles.update);
   const removeRole = useMutation(api.customRoles.remove);
@@ -114,6 +165,17 @@ export function CustomRolesPanel() {
   const confirm = useConfirm();
 
   const [editing, setEditing] = useState<CustomRoleFormState | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(
+    null
+  );
+
+  const membersByRole = new Map<string, NonNullable<typeof members>>();
+  for (const m of members ?? []) {
+    if (!m.customRoleId) continue;
+    const list = membersByRole.get(m.customRoleId) ?? [];
+    list.push(m);
+    membersByRole.set(m.customRoleId, list);
+  }
 
   async function handleDelete(role: { _id: Id<"customRoles">; name: string }) {
     const ok = await confirm({
@@ -148,8 +210,22 @@ export function CustomRolesPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-md text-sm text-muted-foreground">
+        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
           {t("description")}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("descriptionDetail")}
+                className="inline-flex text-muted-foreground transition-colors hover:text-fg focus-visible:text-fg focus:outline-none"
+              >
+                <Info className="size-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs leading-relaxed">
+              {t("descriptionDetail")}
+            </TooltipContent>
+          </Tooltip>
         </p>
         <Button
           size="sm"
@@ -185,6 +261,17 @@ export function CustomRolesPanel() {
                     ))
                   )}
                 </div>
+                <AvatarStack
+                  className="mt-2"
+                  max={6}
+                  people={(membersByRole.get(role._id) ?? []).map(m => ({
+                    id: m._id,
+                    name: m.name,
+                    avatar: m.avatar,
+                    detail: m.clerkUserId,
+                  }))}
+                  onSelect={id => setSelectedUserId(id as Id<"users">)}
+                />
               </div>
               <div className="flex shrink-0 items-center gap-1">
                 <Button
@@ -214,11 +301,19 @@ export function CustomRolesPanel() {
         ))}
       </div>
 
+      <UserProfile
+        userId={selectedUserId}
+        open={!!selectedUserId}
+        onOpenChange={o => {
+          if (!o) setSelectedUserId(null);
+        }}
+      />
+
       <Dialog
         open={editing !== null}
         onOpenChange={open => !open && setEditing(null)}
       >
-        <DialogContent className="max-w-md gap-0 p-0">
+        <DialogContent className="max-w-lg gap-0 p-0">
           {editing && (
             <RoleForm
               key={editing._id ?? "new"}

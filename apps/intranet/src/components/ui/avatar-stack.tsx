@@ -1,6 +1,9 @@
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
+
 /**
  * Group conversation avatar. Renders, in priority order:
  *   1. a custom group photo (`src`), else
@@ -88,5 +91,101 @@ export function GroupAvatar({
         ))}
       </span>
     </span>
+  );
+}
+
+export interface AvatarStackPerson {
+  id: string;
+  name: string;
+  avatar?: string | null;
+  /** Extra line shown in the hover tooltip, e.g. a Clerk user id. */
+  detail?: string;
+}
+
+/**
+ * GitHub-style overlapping avatar row: shows up to `max` avatars, each with
+ * its own hover tooltip (name + `detail`), and collapses the rest into a
+ * "+N" chip whose tooltip lists everyone who didn't fit.
+ */
+export function AvatarStack({
+  people,
+  max = 5,
+  size = "size-7",
+  onSelect,
+  className,
+}: {
+  people: AvatarStackPerson[];
+  max?: number;
+  size?: string;
+  onSelect?: (id: string) => void;
+  className?: string;
+}) {
+  if (people.length === 0) return null;
+  const visible = people.slice(0, max);
+  const overflow = people.slice(max);
+
+  return (
+    <div className={cn("flex items-center -space-x-2", className)}>
+      {visible.map(p => (
+        <Tooltip key={p.id}>
+          <TooltipTrigger asChild>
+            {onSelect ? (
+              <button
+                type="button"
+                onClick={() => onSelect(p.id)}
+                className="relative rounded-full ring-2 ring-card transition-transform hover:z-10 hover:-translate-y-0.5 focus-visible:z-10 focus-visible:outline-none"
+              >
+                <Avatar className={size}>
+                  {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+                  <AvatarFallback className="text-[10px]">
+                    {initials(p.name)}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            ) : (
+              <Avatar className={cn(size, "relative ring-2 ring-card")}>
+                {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+                <AvatarFallback className="text-[10px]">
+                  {initials(p.name)}
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            <p className="font-medium">{p.name}</p>
+            {p.detail && <p className="text-muted-foreground">{p.detail}</p>}
+          </TooltipContent>
+        </Tooltip>
+      ))}
+      {overflow.length > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span
+              className={cn(
+                size,
+                "relative z-0 flex shrink-0 cursor-default items-center justify-center rounded-full border border-border bg-muted text-[10px] font-medium text-muted-foreground ring-2 ring-card"
+              )}
+            >
+              +{overflow.length}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[220px] p-2">
+            <ul className="max-h-48 space-y-1.5 overflow-y-auto">
+              {overflow.map(p => (
+                <li key={p.id} className="flex items-center gap-2">
+                  <Avatar className="size-5 shrink-0">
+                    {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+                    <AvatarFallback className="text-[8px]">
+                      {initials(p.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="truncate">{p.name}</span>
+                </li>
+              ))}
+            </ul>
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
   );
 }

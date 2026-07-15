@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import { Copy, Download, FileQuestion, Info, Loader2, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
@@ -19,11 +19,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { downloadWithProgress } from "@/lib/download";
+import { formatDateTime } from "@/lib/format";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -32,18 +39,9 @@ import { PdfPreview } from "./PdfPreview";
 
 import type { ViewableFile } from "./FileViewerProvider";
 
-async function downloadUrl(url: string, name: string) {
+async function downloadUrl(url: string, name: string, label: string) {
   try {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = objectUrl;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(objectUrl);
+    await downloadWithProgress(url, name, label);
   } catch {
     // Fetch/blob can fail (CORS, network) — opening the raw URL is still a
     // usable fallback, even if it doesn't force a download.
@@ -112,6 +110,114 @@ function CodeOrTextPreview({
   );
 }
 
+/** A single label/value line in the metadata popout, truncating long values with a title tooltip. */
+function MetadataRow({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  return (
+    <>
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-medium" title={value}>
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            className="underline decoration-dotted underline-offset-2 hover:text-primary"
+          >
+            {value}
+          </a>
+        ) : (
+          value
+        )}
+      </dd>
+    </>
+  );
+}
+
+interface ExifSummary {
+  camera?: string;
+  lens?: string;
+  aperture?: string;
+  shutterSpeed?: string;
+  iso?: string;
+  focalLength?: string;
+  dateTaken?: Date;
+  latitude?: number;
+  longitude?: number;
+}
+
+function formatShutterSpeed(seconds: number): string {
+  if (seconds >= 1) return `${seconds}s`;
+  return `1/${Math.round(1 / seconds)}s`;
+}
+
+interface RawExifTags {
+  Make?: string;
+  Model?: string;
+  LensModel?: string;
+  FNumber?: number;
+  ExposureTime?: number;
+  ISO?: number;
+  FocalLength?: number;
+  DateTimeOriginal?: Date;
+  latitude?: number;
+  longitude?: number;
+}
+
+/** Reads camera/lens/exposure/GPS out of the file's own EXIF data (JPEG, HEIC, TIFF, …) rather than trusting anything passed in. Resolves to null — never rejects — for files with no/unreadable EXIF (e.g. re-encoded by Snapchat/Instagram). */
+async function readExif(url: string): Promise<ExifSummary | null> {
+  const rawTags: unknown = await import("exifr")
+    .then(({ parse }) =>
+      parse(url, {
+        tiff: true,
+        exif: true,
+        gps: true,
+        translateValues: true,
+        reviveValues: true,
+        mergeOutput: true,
+      })
+    )
+    .catch(() => null);
+  if (!rawTags) return null;
+  const tags = rawTags as RawExifTags;
+
+  const camera = [tags.Make, tags.Model]
+    .filter((v): v is string => typeof v === "string")
+    .filter((v, i, arr) => i === 0 || !v.includes(arr[0]))
+    .join(" ")
+    .trim();
+
+  const summary: ExifSummary = {
+    camera: camera || undefined,
+    lens: typeof tags.LensModel === "string" ? tags.LensModel : undefined,
+    aperture:
+      typeof tags.FNumber === "number" ? `f/${tags.FNumber}` : undefined,
+    shutterSpeed:
+      typeof tags.ExposureTime === "number"
+        ? formatShutterSpeed(tags.ExposureTime)
+        : undefined,
+    iso: typeof tags.ISO === "number" ? `ISO ${tags.ISO}` : undefined,
+    focalLength:
+      typeof tags.FocalLength === "number"
+        ? `${Math.round(tags.FocalLength)}mm`
+        : undefined,
+    dateTaken:
+      tags.DateTimeOriginal instanceof Date ? tags.DateTimeOriginal : undefined,
+    latitude: typeof tags.latitude === "number" ? tags.latitude : undefined,
+    longitude: typeof tags.longitude === "number" ? tags.longitude : undefined,
+  };
+
+  const hasAnyField = Object.values(summary).some(v => v !== undefined);
+  return hasAnyField ? summary : null;
+}
+
 /** Archives don't get the full viewer — just a quick "download this?" prompt. */
 function ArchiveDownloadConfirm({
   file,
@@ -141,7 +247,7 @@ function ArchiveDownloadConfirm({
           <Button
             disabled={!url}
             onClick={() => {
-              if (url) void downloadUrl(url, file.name);
+              if (url) void downloadUrl(url, file.name, t("downloading"));
               onOpenChange(false);
             }}
             autoFocus
@@ -168,7 +274,49 @@ function FileViewerContent({
   onClose: () => void;
 }) {
   const t = useTranslations("FileViewer");
-  const [showMetadata, setShowMetadata] = useState(false);
+  const locale = useLocale();
+  const [metadataOpen, setMetadataOpen] = useState(false);
+  // Dimensions the browser actually decoded from the image, rather than
+  // whatever (possibly stale/unset) width/height was passed in with the file.
+  const [naturalSize, setNaturalSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+
+  const dimensions =
+    naturalSize ??
+    (file.width && file.height
+      ? { width: file.width, height: file.height }
+      : null);
+
+  const [exif, setExif] = useState<ExifSummary | null>(null);
+  const [exifStatus, setExifStatus] = useState<"idle" | "loading" | "done">(
+    "idle"
+  );
+
+  // Deliberately excludes exifStatus from the deps below: this effect sets
+  // it, so depending on it would re-trigger the effect (and cancel its own
+  // in-flight request) the moment "loading" commits, before it can resolve.
+  useEffect(() => {
+    if (!metadataOpen || kind.kind !== "image" || !url) return;
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setExifStatus("loading");
+    void readExif(url)
+      .then(summary => {
+        if (cancelled) return;
+        setExif(summary);
+      })
+      .catch(() => {
+        if (!cancelled) setExif(null);
+      })
+      .finally(() => {
+        if (!cancelled) setExifStatus("done");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [metadataOpen, kind, url]);
 
   const actions: {
     key: string;
@@ -182,7 +330,7 @@ function FileViewerContent({
       label: t("download"),
       icon: <Download className="size-4" />,
       onSelect: () => {
-        if (url) void downloadUrl(url, file.name);
+        if (url) void downloadUrl(url, file.name, t("downloading"));
       },
     },
     {
@@ -191,22 +339,13 @@ function FileViewerContent({
       icon: <Copy className="size-4" />,
       onSelect: () => {
         if (!url) return;
+        const contentType = kind.kind === "image" ? "image" : "file";
+        const publicUrl = `${process.env.NEXT_PUBLIC_MARKETING_URL}/content/${contentType}/${file.storageId}`;
         void navigator.clipboard
-          .writeText(url)
+          .writeText(publicUrl)
           .then(() => toast.success(t("linkCopied")));
       },
     },
-    ...(kind.kind === "image"
-      ? [
-          {
-            key: "metadata",
-            label: t("metadata"),
-            icon: <Info className="size-4" />,
-            onSelect: () => setShowMetadata(v => !v),
-            active: showMetadata,
-          },
-        ]
-      : []),
   ];
 
   return (
@@ -239,6 +378,109 @@ function FileViewerContent({
               <TooltipContent>{action.label}</TooltipContent>
             </Tooltip>
           ))}
+          <Popover open={metadataOpen} onOpenChange={setMetadataOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t("metadata")}
+                aria-pressed={metadataOpen}
+                className={cn(
+                  "shrink-0 text-white hover:bg-white/10 hover:text-white",
+                  metadataOpen && "bg-white/10"
+                )}
+              >
+                <Info className="size-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="z-[110] w-80 text-foreground"
+            >
+              <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
+                <MetadataRow label={t("name")} value={file.name} />
+                {file.contentType && (
+                  <MetadataRow label={t("type")} value={file.contentType} />
+                )}
+                {typeof file.size === "number" && (
+                  <MetadataRow
+                    label={t("size")}
+                    value={formatFileSize(file.size)}
+                  />
+                )}
+                {dimensions && (
+                  <MetadataRow
+                    label={t("dimensions")}
+                    value={`${dimensions.width} × ${dimensions.height}`}
+                  />
+                )}
+                {typeof file.modifiedAt === "number" && (
+                  <MetadataRow
+                    label={t("modified")}
+                    value={formatDateTime(file.modifiedAt, locale)}
+                  />
+                )}
+              </dl>
+
+              {exifStatus === "loading" && (
+                <div className="mt-3 flex items-center gap-2 border-t pt-3 text-xs text-muted-foreground">
+                  <Loader2 className="size-3 animate-spin" />
+                  {t("loadingExif")}
+                </div>
+              )}
+
+              {exif && (
+                <>
+                  <p className="mt-3 border-t pt-3 text-xs font-semibold text-muted-foreground">
+                    {t("camera")}
+                  </p>
+                  <dl className="mt-1.5 grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
+                    {exif.camera && (
+                      <MetadataRow label={t("camera")} value={exif.camera} />
+                    )}
+                    {exif.lens && (
+                      <MetadataRow label={t("lens")} value={exif.lens} />
+                    )}
+                    {exif.dateTaken && (
+                      <MetadataRow
+                        label={t("dateTaken")}
+                        value={formatDateTime(exif.dateTaken.getTime(), locale)}
+                      />
+                    )}
+                    {exif.aperture && (
+                      <MetadataRow
+                        label={t("aperture")}
+                        value={exif.aperture}
+                      />
+                    )}
+                    {exif.shutterSpeed && (
+                      <MetadataRow
+                        label={t("shutterSpeed")}
+                        value={exif.shutterSpeed}
+                      />
+                    )}
+                    {exif.iso && (
+                      <MetadataRow label={t("iso")} value={exif.iso} />
+                    )}
+                    {exif.focalLength && (
+                      <MetadataRow
+                        label={t("focalLength")}
+                        value={exif.focalLength}
+                      />
+                    )}
+                    {typeof exif.latitude === "number" &&
+                      typeof exif.longitude === "number" && (
+                        <MetadataRow
+                          label={t("location")}
+                          value={`${exif.latitude.toFixed(5)}, ${exif.longitude.toFixed(5)}`}
+                          href={`https://www.google.com/maps?q=${exif.latitude},${exif.longitude}`}
+                        />
+                      )}
+                  </dl>
+                </>
+              )}
+            </PopoverContent>
+          </Popover>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -256,21 +498,6 @@ function FileViewerContent({
         </div>
       </TooltipProvider>
 
-      {showMetadata && kind.kind === "image" && (
-        <div className="mx-4 mb-2 shrink-0 rounded-lg bg-white/10 px-3 py-2 text-xs text-white/90 sm:mx-6">
-          {file.width && file.height && (
-            <p>
-              {t("dimensions")}: {file.width} × {file.height}
-            </p>
-          )}
-          {typeof file.size === "number" && (
-            <p>
-              {t("size")}: {formatFileSize(file.size)}
-            </p>
-          )}
-        </div>
-      )}
-
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 pb-6 sm:px-6">
         {!url ? (
           <Loader2 className="size-6 animate-spin text-white/70" />
@@ -278,6 +505,12 @@ function FileViewerContent({
           <img
             src={url}
             alt={file.name}
+            onLoad={e =>
+              setNaturalSize({
+                width: e.currentTarget.naturalWidth,
+                height: e.currentTarget.naturalHeight,
+              })
+            }
             className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
           />
         ) : kind.kind === "pdf" ? (
@@ -295,7 +528,7 @@ function FileViewerContent({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => downloadUrl(url, file.name)}
+              onClick={() => downloadUrl(url, file.name, t("downloading"))}
             >
               <Download className="size-4" />
               {t("download")}

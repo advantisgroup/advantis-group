@@ -1,20 +1,16 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { type AbsenceType } from "@advantis/types";
-import { useMutation, useQuery } from "convex/react";
+import { useQuery } from "convex/react";
 import {
   CalendarArrowDown,
   CircleDashed,
   Clock,
-  Pencil,
   Plane,
-  Plus,
   Thermometer,
-  TriangleAlert,
   UserRound,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -29,41 +25,21 @@ import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
-  useConfirm,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useErrorHandler } from "@/hooks/use-error-handler";
-import {
-  addDaysIso,
-  isoToday,
-  rangesOverlap,
-  workingDays,
-} from "@/lib/absences";
+import { addDaysIso, isoToday, workingDays } from "@/lib/absences";
 import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { cn } from "@/lib/utils";
@@ -125,176 +101,6 @@ function ClockodoBadge() {
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
-  );
-}
-
-function RequestDialog({
-  open,
-  onOpenChange,
-  editing,
-  mine,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  editing: AbsenceRow | null;
-  mine: AbsenceRow[];
-}) {
-  const t = useTranslations("Absences");
-  const tc = useTranslations("Common");
-  const create = useMutation(api.absences.createRequest);
-  const update = useMutation(api.absences.updateRequest);
-  const handleError = useErrorHandler();
-  const [type, setType] = useState<AbsenceType>("vacation");
-  const [startDate, setStart] = useState("");
-  const [endDate, setEnd] = useState("");
-  const [halfDay, setHalfDay] = useState(false);
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    setType(editing?.type ?? "vacation");
-    setStart(editing?.startDate ?? "");
-    setEnd(editing?.endDate ?? "");
-    setHalfDay(editing?.halfDay ?? false);
-    setReason(editing?.reason ?? "");
-  }, [open, editing]);
-
-  const days =
-    startDate && endDate && endDate >= startDate
-      ? workingDays(startDate, endDate, halfDay)
-      : null;
-
-  const overlaps =
-    !!startDate &&
-    !!endDate &&
-    mine.some(
-      a =>
-        a._id !== editing?._id &&
-        (a.status === "pending" || a.status === "approved") &&
-        rangesOverlap(a.startDate, a.endDate, startDate, endDate)
-    );
-
-  async function submit() {
-    if (!startDate || !endDate) return;
-    setBusy(true);
-    try {
-      if (editing) {
-        await update({
-          absenceId: editing._id,
-          type,
-          startDate,
-          endDate,
-          halfDay,
-          reason: reason || undefined,
-        });
-        toast.success(t("requestUpdated"));
-      } else {
-        await create({
-          type,
-          startDate,
-          endDate,
-          halfDay,
-          reason: reason || undefined,
-        });
-        toast.success(t("newRequest"));
-      }
-      onOpenChange(false);
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {editing ? t("editRequest") : t("newRequest")}
-          </DialogTitle>
-          <DialogDescription>{t("newRequestHint")}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-5">
-          <div className="space-y-1.5">
-            <Label>{t("type")}</Label>
-            <Select value={type} onValueChange={v => setType(v as AbsenceType)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="vacation">{t("vacation")}</SelectItem>
-                <SelectItem value="sick">{t("sick")}</SelectItem>
-                <SelectItem value="personal">{t("personal")}</SelectItem>
-                <SelectItem value="other">{t("other")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>{t("start")}</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={e => setStart(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t("end")}</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  min={startDate || undefined}
-                  onChange={e => setEnd(e.target.value)}
-                />
-              </div>
-            </div>
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-              <Checkbox
-                checked={halfDay}
-                onCheckedChange={v => setHalfDay(!!v)}
-              />
-              {t("halfDay")}
-            </label>
-            {days !== null && days > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {t("workingDaysLabel", { count: days })}
-              </p>
-            )}
-            {overlaps && (
-              <p className="flex items-center gap-1.5 text-xs font-medium text-warning">
-                <TriangleAlert className="size-3.5 shrink-0" />
-                {t("overlapWarning")}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label>
-              {t("reason")}{" "}
-              <span className="font-normal text-muted-foreground">
-                ({tc("optional")})
-              </span>
-            </Label>
-            <Textarea
-              value={reason}
-              onChange={e => setReason(e.target.value)}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tc("cancel")}
-          </Button>
-          <Button onClick={submit} disabled={busy || !startDate || !endDate}>
-            {tc("send")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -470,38 +276,12 @@ function DetailDialog({
   );
 }
 
-function MyAbsences({
-  mine,
-  onEdit,
-}: {
-  mine: AbsenceRow[] | undefined;
-  onEdit: (absence: AbsenceRow) => void;
-}) {
+function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
   const t = useTranslations("Absences");
-  const tc = useTranslations("Common");
   const locale = useLocale();
-  const confirm = useConfirm();
-  const cancel = useMutation(api.absences.cancel);
-  const handleError = useErrorHandler();
   const [statusFilter, setStatusFilter] = useState<"all" | Status>("all");
   const [typeFilter, setTypeFilter] = useState<"all" | AbsenceType>("all");
   const [detail, setDetail] = useState<AbsenceRow | null>(null);
-
-  async function onCancel(id: Id<"absences">) {
-    const ok = await confirm({
-      title: t("cancelRequest"),
-      description: tc("deleteWarning"),
-      confirmLabel: t("cancelRequest"),
-      cancelLabel: tc("close"),
-    });
-    if (ok) {
-      try {
-        await cancel({ absenceId: id });
-      } catch (e) {
-        handleError(e);
-      }
-    }
-  }
 
   const byYear = useMemo(() => {
     const rows = (mine ?? []).filter(
@@ -591,26 +371,6 @@ function MyAbsences({
                       onClick={e => e.stopPropagation()}
                     >
                       <StatusBadge status={a.status} />
-                      {a.source === "intranet" && a.status === "pending" && (
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={t("editRequest")}
-                          onClick={() => onEdit(a)}
-                        >
-                          <Pencil />
-                        </Button>
-                      )}
-                      {a.source === "intranet" &&
-                        (a.status === "pending" || a.status === "approved") && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => void onCancel(a._id)}
-                          >
-                            {t("cancelRequest")}
-                          </Button>
-                        )}
                     </div>
                   </CardContent>
                 </Card>
@@ -659,171 +419,11 @@ function WhosOut() {
   );
 }
 
-function DenyDialog({
-  target,
-  onClose,
-}: {
-  target: { absenceId: Id<"absences">; userName: string } | null;
-  onClose: () => void;
-}) {
-  const t = useTranslations("Absences");
-  const tc = useTranslations("Common");
-  const deny = useMutation(api.absences.deny);
-  const handleError = useErrorHandler();
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (target) setNote("");
-  }, [target]);
-
-  async function submit() {
-    if (!target) return;
-    setBusy(true);
-    try {
-      await deny({ absenceId: target.absenceId, note: note || undefined });
-      toast.success(t("denied"));
-      onClose();
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog open={target !== null} onOpenChange={open => !open && onClose()}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("denyTitle")}</DialogTitle>
-          <DialogDescription>
-            {target ? t("denyHint", { name: target.userName }) : null}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-1.5">
-          <Label>
-            {t("note")}{" "}
-            <span className="font-normal text-muted-foreground">
-              ({tc("optional")})
-            </span>
-          </Label>
-          <Textarea value={note} onChange={e => setNote(e.target.value)} />
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={onClose}>
-            {tc("cancel")}
-          </Button>
-          <Button variant="destructive" onClick={submit} disabled={busy}>
-            {t("deny")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function Approvals() {
-  const t = useTranslations("Absences");
-  const locale = useLocale();
-  const pending = useQuery(api.absences.pendingForApproval);
-  const approve = useMutation(api.absences.approve);
-  const handleError = useErrorHandler();
-  const [denyTarget, setDenyTarget] = useState<{
-    absenceId: Id<"absences">;
-    userName: string;
-  } | null>(null);
-
-  async function onApprove(absenceId: Id<"absences">) {
-    try {
-      await approve({ absenceId });
-      toast.success(t("approved"));
-    } catch (e) {
-      handleError(e);
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <WhosOut />
-      {pending && pending.length === 0 ? (
-        <EmptyState icon={<Clock />} title={t("noPending")} />
-      ) : (
-        <div className="space-y-2.5">
-          {pending?.map(a => (
-            <Card key={a._id} className="transition-colors hover:border-border">
-              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <span className="font-medium">{a.userName}</span>
-                  {a.userDepartment && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {a.userDepartment}
-                    </span>
-                  )}
-                  <p className="text-sm text-muted-foreground">
-                    {t(a.type)} · {formatIsoDate(a.startDate, locale)} –{" "}
-                    {formatIsoDate(a.endDate, locale)} ·{" "}
-                    {t("workingDaysLabel", {
-                      count: workingDays(a.startDate, a.endDate, a.halfDay),
-                    })}
-                  </p>
-                  {a.reason && (
-                    <p className="text-xs text-muted-foreground">{a.reason}</p>
-                  )}
-                </div>
-                <div className="flex shrink-0 gap-2 self-end sm:self-auto">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setDenyTarget({ absenceId: a._id, userName: a.userName })
-                    }
-                  >
-                    {t("deny")}
-                  </Button>
-                  <Button size="sm" onClick={() => void onApprove(a._id)}>
-                    {t("approve")}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-      <DenyDialog target={denyTarget} onClose={() => setDenyTarget(null)} />
-    </div>
-  );
-}
-
 export default function AbsencesPage() {
   const t = useTranslations("Absences");
   const isManager = useIsManager();
   const mine = useQuery(api.absences.myAbsences);
   const syncStatus = useQuery(api.absences.clockodoSyncStatus);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<AbsenceRow | null>(null);
-
-  // Deep link from the dashboard quick action: /absences?new=1 opens the
-  // request dialog straight away.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("new") !== null) {
-      // window.location is only available post-mount; this is a one-time
-      // sync from URL state, not a case of deriving state from props.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setEditing(null);
-      setDialogOpen(true);
-      window.history.replaceState(null, "", "/absences");
-    }
-  }, []);
-
-  const openNew = () => {
-    setEditing(null);
-    setDialogOpen(true);
-  };
-  const openEdit = (absence: AbsenceRow) => {
-    setEditing(absence);
-    setDialogOpen(true);
-  };
 
   function exportIcs() {
     const approved = (mine ?? []).filter(a => a.status === "approved");
@@ -850,76 +450,37 @@ export default function AbsencesPage() {
     </p>
   ) : null;
 
-  const mineSection = (
-    <div className="space-y-4">
-      <StatsRow mine={mine} />
-      <MyAbsences mine={mine} onEdit={openEdit} />
-      {syncLine}
-    </div>
-  );
-
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-4xl">
       <PageHeader
         title={t("title")}
         description={t("subtitle")}
         tourCheckpoint="absences"
         action={
-          <div className="flex items-center gap-2">
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    aria-label={t("exportIcs")}
-                    onClick={exportIcs}
-                    disabled={!mine?.some(a => a.status === "approved")}
-                  >
-                    <CalendarArrowDown />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t("exportIcs")}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            <Button onClick={openNew} data-tour="tour-absences-request">
-              <Plus className="mr-2 h-4 w-4" />
-              {t("newRequest")}
-            </Button>
-          </div>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label={t("exportIcs")}
+                  onClick={exportIcs}
+                  disabled={!mine?.some(a => a.status === "approved")}
+                >
+                  <CalendarArrowDown />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t("exportIcs")}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         }
       />
-      {isManager ? (
-        <Tabs defaultValue="mine">
-          <TabsList>
-            <TabsTrigger value="mine">{t("myRequests")}</TabsTrigger>
-            <TabsTrigger value="approvals" data-tour="tour-absences-approvals">
-              {t("approvals")}
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="mine">{mineSection}</TabsContent>
-          <TabsContent value="approvals">
-            <Approvals />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        mineSection
-      )}
-
-      <Button
-        className="fixed bottom-24 right-4 z-40 size-12 rounded-full shadow-lg md:hidden"
-        aria-label={t("newRequest")}
-        onClick={openNew}
-      >
-        <Plus className="size-5" />
-      </Button>
-
-      <RequestDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        editing={editing}
-        mine={mine ?? []}
-      />
+      <div className="space-y-4">
+        {isManager && <WhosOut />}
+        <StatsRow mine={mine} />
+        <MyAbsences mine={mine} />
+        {syncLine}
+      </div>
     </div>
   );
 }
