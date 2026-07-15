@@ -6,38 +6,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Link2 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { CalendarPlus, Link2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { InfoTip } from "@/components/activity/InfoTip";
+import { type TERMIN_ARTEN } from "@/components/applicants/applicant-types";
+import { TerminDialog } from "@/components/applicants/EntryDialogs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
-
-const TERMIN_ARTEN = ["telefon", "teams", "vor_ort"] as const;
-const TERMIN_TYPEN = [
-  "interview",
-  "gespraech",
-  "probetag",
-  "wiedervorlage",
-  "sonstiges",
-] as const;
 
 const ART_COLOR: Record<(typeof TERMIN_ARTEN)[number], string> = {
   telefon: "border-l-info text-info",
@@ -48,22 +32,6 @@ const ART_COLOR: Record<(typeof TERMIN_ARTEN)[number], string> = {
 function toISO(d: Date): string {
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
-function today(): string {
-  return toISO(new Date());
-}
-
-/** ISO date `n` workdays (Mon–Fri) from today. */
-function addWorkdays(n: number): string {
-  const d = new Date();
-  let added = 0;
-  while (added < n) {
-    d.setDate(d.getDate() + 1);
-    const weekday = d.getDay();
-    if (weekday !== 0 && weekday !== 6) added++;
-  }
-  return toISO(d);
 }
 
 function calendarDays(count: number) {
@@ -86,129 +54,6 @@ type Termin = Omit<
   FunctionReturnType<typeof api.applicants.listTermine>[number],
   "applicantName"
 >;
-type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
-
-export function TerminForm({
-  applicants,
-  fixedApplicantId,
-}: {
-  applicants: Applicant[];
-  fixedApplicantId?: Id<"applicants">;
-}) {
-  const t = useTranslations("Applicants");
-  const locale = useLocale();
-  const createTermin = useMutation(api.applicants.createTermin);
-  const handleError = useErrorHandler();
-
-  const [applicantId, setApplicantId] = useState<string>(
-    fixedApplicantId ?? ""
-  );
-  const [datum, setDatum] = useState(today());
-  const [uhrzeit, setUhrzeit] = useState("10:00");
-  const [art, setArt] = useState<(typeof TERMIN_ARTEN)[number]>("telefon");
-  const [typ, setTypRaw] = useState<(typeof TERMIN_TYPEN)[number]>("interview");
-  const [notiz, setNotiz] = useState("");
-
-  function setTyp(next: (typeof TERMIN_TYPEN)[number]) {
-    setTypRaw(next);
-    if (next === "wiedervorlage") setDatum(addWorkdays(3));
-  }
-
-  function save() {
-    if (!applicantId) {
-      toast.error(t("selectApplicantFirst"));
-      return;
-    }
-    createTermin({
-      applicantId: applicantId as Id<"applicants">,
-      datum,
-      uhrzeit,
-      art,
-      typ,
-      notiz: notiz.trim() || undefined,
-    })
-      .then(() => {
-        toast.success(t("terminSaved"));
-        setNotiz("");
-      })
-      .catch(handleError);
-  }
-
-  return (
-    <Card>
-      <CardContent className="space-y-3 p-4">
-        <div className="flex items-center gap-1.5">
-          <p className="text-sm font-semibold">{t("planTermin")}</p>
-          <InfoTip text={t("calendarDescription")} />
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {!fixedApplicantId && (
-            <Select value={applicantId} onValueChange={setApplicantId}>
-              <SelectTrigger className="col-span-2 sm:col-span-3 lg:col-span-1">
-                <SelectValue placeholder={t("chooseApplicant")} />
-              </SelectTrigger>
-              <SelectContent>
-                {applicants.map(a => (
-                  <SelectItem key={a._id} value={a._id}>
-                    {a.name}
-                    {a.position ? ` (${a.position})` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Input
-            type="date"
-            value={datum}
-            onChange={e => setDatum(e.target.value)}
-          />
-          <Input
-            type="time"
-            value={uhrzeit}
-            onChange={e => setUhrzeit(e.target.value)}
-          />
-          <Select value={art} onValueChange={v => setArt(v as typeof art)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TERMIN_ARTEN.map(a => (
-                <SelectItem key={a} value={a}>
-                  {t(`terminArt.${a}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={typ} onValueChange={v => setTyp(v as typeof typ)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TERMIN_TYPEN.map(ty => (
-                <SelectItem key={ty} value={ty}>
-                  {t(`terminTyp.${ty}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex gap-2">
-          <Input
-            placeholder={t("terminNotePlaceholder")}
-            value={notiz}
-            onChange={e => setNotiz(e.target.value)}
-          />
-          <Button onClick={save}>{t("saveTermin")}</Button>
-        </div>
-        {typ === "wiedervorlage" && (
-          <p className="text-xs font-medium text-primary">
-            {t("wiedervorlageHint", { date: formatIsoDate(datum, locale) })}
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
 
 export function TerminRow({
   termin,
@@ -319,6 +164,7 @@ export function TerminCalendar() {
   }, []);
   const termine = useQuery(api.applicants.listTermine, { from, to });
   const applicants = useQuery(api.applicants.list);
+  const [planOpen, setPlanOpen] = useState(false);
 
   const weeks = [
     days.slice(0, 7),
@@ -342,73 +188,116 @@ export function TerminCalendar() {
           {t("noApplicantsYet")}
         </p>
       ) : (
-        <TerminForm applicants={applicants} />
+        <div className="flex items-center justify-end gap-1.5">
+          <InfoTip text={t("calendarDescription")} />
+          <Button size="sm" onClick={() => setPlanOpen(true)}>
+            <CalendarPlus className="size-4" />
+            {t("planTermin")}
+          </Button>
+        </div>
       )}
 
-      {weeks.map((week, wi) => {
-        const weekTermine = (termine ?? []).filter(
-          tm => tm.datum >= week[0].iso && tm.datum <= week[6].iso
-        );
-        return (
-          <div key={wi} className="space-y-2">
-            <div className="flex items-baseline gap-2">
-              <h3 className="font-display text-sm font-bold">
-                {wi === 0 ? t("thisWeek") : t("weekPlus", { n: wi })}
-              </h3>
-              <span className="text-xs text-muted-foreground">
-                {week[0].shortDate} – {week[6].shortDate}
-                {weekTermine.length > 0 && ` · ${weekTermine.length}`}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-              {week.map(day => {
-                const items = (termine ?? []).filter(
-                  tm => tm.datum === day.iso
-                );
-                return (
-                  <div
-                    key={day.iso}
-                    className={cn(
-                      "flex min-h-[70px] flex-col overflow-hidden rounded-lg border",
-                      day.isToday ? "border-primary" : "border-border/70"
-                    )}
-                  >
+      {/* Desktop: the 4-week grid. */}
+      <div className="hidden space-y-6 md:block">
+        {weeks.map((week, wi) => {
+          const weekTermine = (termine ?? []).filter(
+            tm => tm.datum >= week[0].iso && tm.datum <= week[6].iso
+          );
+          return (
+            <div key={wi} className="space-y-2">
+              <div className="flex items-baseline gap-2">
+                <h3 className="font-display text-sm font-bold">
+                  {wi === 0 ? t("thisWeek") : t("weekPlus", { n: wi })}
+                </h3>
+                <span className="text-xs text-muted-foreground">
+                  {week[0].shortDate} – {week[6].shortDate}
+                  {weekTermine.length > 0 && ` · ${weekTermine.length}`}
+                </span>
+              </div>
+              <div className="grid grid-cols-4 gap-2 lg:grid-cols-7">
+                {week.map(day => {
+                  const items = (termine ?? []).filter(
+                    tm => tm.datum === day.iso
+                  );
+                  return (
                     <div
+                      key={day.iso}
                       className={cn(
-                        "px-2 py-1 text-xs font-semibold",
-                        day.isToday
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted/50"
+                        "flex min-h-[70px] flex-col overflow-hidden rounded-lg border",
+                        day.isToday ? "border-primary" : "border-border/70"
                       )}
                     >
-                      {day.weekday}{" "}
-                      <span className="font-normal opacity-80">
-                        {day.shortDate}
-                      </span>
-                    </div>
-                    <div className="flex flex-1 flex-col gap-1.5 p-1.5">
-                      {items.length === 0 ? (
-                        <span className="text-[11px] text-muted-foreground">
-                          –
+                      <div
+                        className={cn(
+                          "px-2 py-1 text-xs font-semibold",
+                          day.isToday
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted/50"
+                        )}
+                      >
+                        {day.weekday}{" "}
+                        <span className="font-normal opacity-80">
+                          {day.shortDate}
                         </span>
-                      ) : (
-                        items.map(tm => (
-                          <TerminRow
-                            key={tm._id}
-                            termin={tm}
-                            applicantName={tm.applicantName}
-                            compact
-                          />
-                        ))
-                      )}
+                      </div>
+                      <div className="flex flex-1 flex-col gap-1.5 p-1.5">
+                        {items.length === 0 ? (
+                          <span className="text-[11px] text-muted-foreground">
+                            –
+                          </span>
+                        ) : (
+                          items.map(tm => (
+                            <TerminRow
+                              key={tm._id}
+                              termin={tm}
+                              applicantName={tm.applicantName}
+                              compact
+                            />
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
+
+      {/* Mobile: an agenda of only the days that actually have Termine —
+          a phone screen full of empty grid boxes helps no one. */}
+      <div className="space-y-4 md:hidden">
+        {days.filter(day => (termine ?? []).some(tm => tm.datum === day.iso))
+          .length === 0 ? (
+          <EmptyState icon={<CalendarPlus />} title={t("noTermineInWindow")} />
+        ) : (
+          days.map(day => {
+            const items = (termine ?? []).filter(tm => tm.datum === day.iso);
+            if (items.length === 0) return null;
+            return (
+              <div key={day.iso} className="space-y-1.5">
+                <p
+                  className={cn(
+                    "text-xs font-semibold uppercase tracking-wide",
+                    day.isToday ? "text-primary" : "text-muted-foreground"
+                  )}
+                >
+                  {day.weekday} {day.shortDate}
+                  {day.isToday && ` · ${t("today")}`}
+                </p>
+                {items.map(tm => (
+                  <TerminRow
+                    key={tm._id}
+                    termin={tm}
+                    applicantName={tm.applicantName}
+                  />
+                ))}
+              </div>
+            );
+          })
+        )}
+      </div>
 
       {vergangen.length > 0 && (
         <Card>
@@ -443,6 +332,12 @@ export function TerminCalendar() {
           </CardContent>
         </Card>
       )}
+
+      <TerminDialog
+        open={planOpen}
+        onOpenChange={setPlanOpen}
+        applicants={applicants}
+      />
     </div>
   );
 }

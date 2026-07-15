@@ -130,13 +130,59 @@ export const list = query({
       .collect();
     return Promise.all(
       applicants.map(async a => {
-        const firstContact = await ctx.db
-          .query("applicantContacts")
-          .withIndex("by_applicant", q => q.eq("applicantId", a._id))
-          .first();
+        const [kontakte, emails, interviews, termine, documents] =
+          await Promise.all([
+            ctx.db
+              .query("applicantContacts")
+              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
+              .collect(),
+            ctx.db
+              .query("applicantEmails")
+              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
+              .collect(),
+            ctx.db
+              .query("applicantInterviews")
+              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
+              .collect(),
+            ctx.db
+              .query("applicantAppointments")
+              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
+              .collect(),
+            ctx.db
+              .query("applicantDocuments")
+              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
+              .collect(),
+          ]);
+
+        // Earliest appointment that hasn't been converted to a contact yet —
+        // the applicant's "next thing to happen" (may be in the past, in
+        // which case the UI shows it as overdue).
+        const nextOpenTermin =
+          termine
+            .filter(tm => !tm.uebernommen)
+            .sort((x, y) =>
+              (x.datum + x.uhrzeit).localeCompare(y.datum + y.uhrzeit)
+            )[0] ?? null;
+
+        // Latest logged touchpoint of any kind (ISO date string compare).
+        const lastActivity =
+          [...kontakte, ...emails, ...interviews]
+            .map(e => e.datum)
+            .sort()
+            .at(-1) ?? null;
+
         return {
           ...a,
-          status: firstContact ? ("pool" as const) : ("neu" as const),
+          status: kontakte.length > 0 ? ("pool" as const) : ("neu" as const),
+          documentsCount: documents.length,
+          lastActivity,
+          nextOpenTermin: nextOpenTermin
+            ? {
+                datum: nextOpenTermin.datum,
+                uhrzeit: nextOpenTermin.uhrzeit,
+                typ: nextOpenTermin.typ,
+              }
+            : null,
         };
       })
     );

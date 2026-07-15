@@ -1,48 +1,57 @@
 import { type api } from "@advantis/convex/api";
 
-import { AMPEL_ORDER, type Ampel } from "@/components/applicants/AmpelBadge";
+import { type Ampel } from "@/components/applicants/AmpelBadge";
 
 import type { FunctionReturnType } from "convex/server";
 
 type Applicant = FunctionReturnType<typeof api.applicants.list>[number];
 
+export type StatusFilter = "alle" | "neu" | "pool";
+export type RatingFilter = "alle" | Ampel | "offen";
+
+export interface ApplicantFilter {
+  status: StatusFilter;
+  rating: RatingFilter;
+  search: string;
+}
+
+export function parseStatusFilter(raw: string | null): StatusFilter {
+  return raw === "neu" || raw === "pool" ? raw : "alle";
+}
+
+export function parseRatingFilter(raw: string | null): RatingFilter {
+  return raw === "rot" || raw === "blau" || raw === "gruen" || raw === "offen"
+    ? raw
+    : "alle";
+}
+
 /**
- * Recomputes the exact filtered/sorted sequence a user was looking at in
- * `ApplicantListView` (mode + search +, for the pool, an optional rating
- * group filter) — shared so "next/previous applicant" on the detail page
- * steps through the same order the list showed, without duplicating the
- * filter/group logic in two places.
+ * Applies the workbench's status/rating/search filters while keeping the
+ * input order (the server's createdAt-desc). Shared between the list view
+ * and the detail page's next/previous stepper so both walk the exact same
+ * sequence the user was looking at.
  */
-export function buildApplicantSequence(
+export function filterApplicants(
   applicants: Applicant[],
-  mode: "neu" | "pool",
-  search: string,
-  poolFilter: Ampel | null
+  { status, rating, search }: ApplicantFilter
 ): Applicant[] {
   const q = search.trim().toLowerCase();
-  const filtered = applicants
-    .filter(a => a.status === mode)
-    .filter(a => {
-      if (!q) return true;
-      return [
-        a.name,
-        a.email,
-        a.position,
-        a.telefon,
-        a.adresse,
-        ...(a.skills ?? []),
-      ]
-        .join(" ")
-        .toLowerCase()
-        .includes(q);
-    });
-
-  if (mode !== "pool") return filtered;
-
-  const ratings: (Ampel | null)[] = poolFilter
-    ? [poolFilter]
-    : [...AMPEL_ORDER, null];
-  return ratings.flatMap(rating =>
-    filtered.filter(a => (rating === null ? !a.rating : a.rating === rating))
-  );
+  return applicants.filter(a => {
+    if (status !== "alle" && a.status !== status) return false;
+    if (rating === "offen" && a.rating) return false;
+    if (rating !== "alle" && rating !== "offen" && a.rating !== rating)
+      return false;
+    if (!q) return true;
+    return [
+      a.name,
+      a.email,
+      a.position,
+      a.telefon,
+      a.adresse,
+      ...(a.skills ?? []),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
 }

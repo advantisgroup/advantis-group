@@ -15,6 +15,8 @@ export interface RouteTab {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Optional count badge next to the label (e.g. open appointments). */
+  count?: number;
 }
 
 /**
@@ -38,7 +40,15 @@ export function RouteTabs({
 
   useEffect(() => {
     if (!isMobile) return;
-    setTabs(tabs, activeValue);
+    // BottomNav only ever reads `label` as an aria-label (it renders icons
+    // only), so folding the count into it here keeps that contract exactly
+    // as it was before tabs could carry a separate `count` field.
+    const mobileTabs = tabs.map(tab => ({
+      ...tab,
+      label:
+        tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label,
+    }));
+    setTabs(mobileTabs, activeValue);
     return () => setTabs(null, null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, tabs, activeValue]);
@@ -48,19 +58,43 @@ export function RouteTabs({
   }
 
   return (
-    <div className="inline-flex h-10 max-w-full items-center justify-center overflow-x-auto overscroll-x-contain rounded-lg border border-border/70 bg-muted/50 p-1 text-muted-foreground [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden">
-      {tabs.map(tab => (
-        <Link
-          key={tab.value}
-          href={tab.href}
-          className={cn(
-            "inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap rounded-md px-3.5 py-1.5 text-sm font-medium ring-offset-background transition-all hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            tab.value === activeValue && "bg-card text-foreground shadow-sm"
-          )}
-        >
-          {tab.label}
-        </Link>
-      ))}
+    <div className="flex items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border/70 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden">
+      {tabs.map(tab => {
+        const active = tab.value === activeValue;
+        return (
+          <Link
+            key={tab.value}
+            href={tab.href}
+            className={cn(
+              "relative flex shrink-0 select-none items-center gap-2 whitespace-nowrap px-3.5 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none",
+              active
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <tab.icon className="size-4" />
+            {tab.label}
+            {tab.count !== undefined && (
+              <span
+                className={cn(
+                  "rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none tabular-nums",
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                {tab.count}
+              </span>
+            )}
+            <span
+              className={cn(
+                "absolute inset-x-3 -bottom-px h-0.5 rounded-full transition-colors",
+                active ? "bg-primary" : "bg-transparent"
+              )}
+            />
+          </Link>
+        );
+      })}
     </div>
   );
 }

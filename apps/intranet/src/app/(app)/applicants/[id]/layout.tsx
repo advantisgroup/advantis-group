@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import {
   useParams,
@@ -22,6 +22,7 @@ import {
   LayoutDashboard,
   Mail,
   PhoneCall,
+  Plus,
   Search,
   Trash2,
   Users,
@@ -29,9 +30,17 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { AmpelPicker, type Ampel } from "@/components/applicants/AmpelBadge";
+import { ApplicantSidebar } from "@/components/applicants/ApplicantSidebar";
+import {
+  EmailDialog,
+  InterviewDialog,
+  KontaktDialog,
+  TerminDialog,
+} from "@/components/applicants/EntryDialogs";
 import { RecentlyViewedApplicants } from "@/components/applicants/RecentlyViewedApplicants";
 import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { ActionMenu } from "@/components/ui/action-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
@@ -45,9 +54,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { buildApplicantSequence } from "@/lib/applicant-list-order";
+import {
+  filterApplicants,
+  parseRatingFilter,
+  parseStatusFilter,
+} from "@/lib/applicant-list-order";
 import { recordRecentlyViewed } from "@/lib/applicant-recent";
-import { formatIsoDate } from "@/lib/format";
+import { formatIsoDate, initials } from "@/lib/format";
 
 const TAB_LABEL_KEYS: Record<string, string> = {
   uebersicht: "tabOverview",
@@ -100,44 +113,55 @@ export default function ApplicantDetailLayout({
   const locale = useLocale();
   const applicantId = params.id as Id<"applicants">;
   const applicant = useApplicantQuery(applicantId);
-  const update = useMutation(api.applicants.update);
   const remove = useMutation(api.applicants.remove);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
+  const [quickAdd, setQuickAdd] = useState<
+    "termin" | "kontakt" | "email" | "interview" | null
+  >(null);
 
   const segments = pathname.split("/").filter(Boolean); // ["applicants", id, tab?, itemId?]
   const activeTab = segments[2] ?? "uebersicht";
   const itemId = segments[3];
 
-  // Next/previous applicant: only meaningful if we know which list (and
-  // filter/sort) the user came from — carried as query params from
-  // ApplicantListView. No `from` param ⇒ no buttons, rather than guessing.
-  const fromModeRaw = searchParams.get("from");
-  const fromMode: "neu" | "pool" | null =
-    fromModeRaw === "neu" || fromModeRaw === "pool" ? fromModeRaw : null;
+  // Next/previous applicant: only meaningful if we know which filtered list
+  // the user came from — carried as query params from the workbench
+  // (ApplicantListView). No `from` param ⇒ no buttons, rather than guessing.
+  const cameFromList = searchParams.get("from") === "list";
+  const fromStatus = parseStatusFilter(searchParams.get("status"));
+  const fromRating = parseRatingFilter(searchParams.get("rating"));
   const fromSearch = searchParams.get("search") ?? "";
-  const fromPoolFilter = searchParams.get("poolFilter") as Ampel | null;
-  const allApplicants = useQuery(api.applicants.list, fromMode ? {} : "skip");
+  const allApplicants = useQuery(
+    api.applicants.list,
+    cameFromList ? {} : "skip"
+  );
   const adjacent = useMemo(() => {
-    if (!allApplicants || !fromMode) return null;
-    const sequence = buildApplicantSequence(
-      allApplicants,
-      fromMode,
-      fromSearch,
-      fromPoolFilter
-    );
+    if (!allApplicants || !cameFromList) return null;
+    const sequence = filterApplicants(allApplicants, {
+      status: fromStatus,
+      rating: fromRating,
+      search: fromSearch,
+    });
     const index = sequence.findIndex(a => a._id === applicantId);
     if (index === -1) return null;
     return {
       prev: sequence[index - 1] ?? null,
       next: sequence[index + 1] ?? null,
     };
-  }, [allApplicants, fromMode, fromSearch, fromPoolFilter, applicantId]);
+  }, [
+    allApplicants,
+    cameFromList,
+    fromStatus,
+    fromRating,
+    fromSearch,
+    applicantId,
+  ]);
 
   function adjacentHref(targetId: Id<"applicants">) {
-    const p = new URLSearchParams({ from: fromMode ?? "" });
+    const p = new URLSearchParams({ from: "list" });
+    if (fromStatus !== "alle") p.set("status", fromStatus);
+    if (fromRating !== "alle") p.set("rating", fromRating);
     if (fromSearch) p.set("search", fromSearch);
-    if (fromPoolFilter) p.set("poolFilter", fromPoolFilter);
     return `/applicants/${targetId}/${activeTab}?${p.toString()}`;
   }
 
@@ -163,7 +187,7 @@ export default function ApplicantDetailLayout({
     remove({ applicantId })
       .then(() => {
         toast.success(t("applicantDeleted"));
-        router.push("/applicants/termine");
+        router.push("/applicants/list");
       })
       .catch(handleError);
   }
@@ -187,41 +211,46 @@ export default function ApplicantDetailLayout({
     {
       value: "termine",
       href: `/applicants/${applicantId}/termine`,
-      label: `${t("tabTermine")} (${applicant.termine.filter(tm => !tm.uebernommen).length})`,
+      label: t("tabTermine"),
       icon: CalendarClock,
+      count: applicant.termine.filter(tm => !tm.uebernommen).length,
     },
     {
       value: "dokumente",
       href: `/applicants/${applicantId}/dokumente`,
-      label: `${t("tabDocuments")} (${applicant.documents.length})`,
+      label: t("tabDocuments"),
       icon: FileText,
+      count: applicant.documents.length,
     },
     {
       value: "kontakte",
       href: `/applicants/${applicantId}/kontakte`,
-      label: `${t("tabKontakte")} (${applicant.kontakte.length})`,
+      label: t("tabKontakte"),
       icon: PhoneCall,
+      count: applicant.kontakte.length,
     },
     {
       value: "emails",
       href: `/applicants/${applicantId}/emails`,
-      label: `${t("tabEmails")} (${applicant.emails.length})`,
+      label: t("tabEmails"),
       icon: Mail,
+      count: applicant.emails.length,
     },
     {
       value: "interviews",
       href: `/applicants/${applicantId}/interviews`,
-      label: `${t("tabInterviews")} (${applicant.interviews.length})`,
+      label: t("tabInterviews"),
       icon: Users,
+      count: applicant.interviews.length,
     },
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <div className="mx-auto max-w-7xl space-y-5">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/applicants/termine">
+            <BreadcrumbLink href="/applicants/list">
               {t("pageTitle")}
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -311,45 +340,80 @@ export default function ApplicantDetailLayout({
         )}
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
         <CardContent className="flex flex-wrap items-start justify-between gap-4 p-5">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="font-display text-2xl font-bold tracking-tight">
-                {applicant.name}
-              </h1>
-              <Badge variant={applicant.status === "neu" ? "default" : "muted"}>
-                {applicant.status === "neu" ? t("statusNeu") : t("statusPool")}
-              </Badge>
-            </div>
-            <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <Briefcase className="size-3.5" />
-                {applicant.position || t("positionUnknown")}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <CalendarDays className="size-3.5" />
-                {t("receivedOn", {
-                  date: formatIsoDate(
-                    new Date(applicant.createdAt).toISOString().slice(0, 10),
-                    locale
-                  ),
-                })}
-              </span>
+          <div className="flex items-start gap-3.5">
+            <Avatar className="size-12 border-border/70">
+              <AvatarFallback className="font-display text-base font-semibold">
+                {initials(applicant.name)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="font-display text-2xl font-bold tracking-tight">
+                  {applicant.name}
+                </h1>
+                <Badge
+                  variant={applicant.status === "neu" ? "default" : "muted"}
+                >
+                  {applicant.status === "neu"
+                    ? t("statusNeu")
+                    : t("statusPool")}
+                </Badge>
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <Briefcase className="size-3.5" />
+                  {applicant.position || t("positionUnknown")}
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarDays className="size-3.5" />
+                  {t("receivedOn", {
+                    date: formatIsoDate(
+                      new Date(applicant.createdAt).toISOString().slice(0, 10),
+                      locale
+                    ),
+                  })}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex items-start gap-4">
-            <div className="space-y-1.5 text-right">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("ourRating")}
-              </p>
-              <AmpelPicker
-                value={applicant.rating}
-                onChange={rating =>
-                  update({ applicantId, rating }).catch(handleError)
-                }
-              />
-            </div>
+          <div className="flex items-center gap-1">
+            <ActionMenu
+              ariaLabel={t("addEntry")}
+              trigger={
+                <Button aria-label={t("addEntry")}>
+                  <Plus className="size-4" />
+                  <span className="hidden md:inline">{t("addEntry")}</span>
+                </Button>
+              }
+              items={[
+                {
+                  key: "termin",
+                  label: t("planTermin"),
+                  icon: <CalendarClock className="size-4" />,
+                  onSelect: () => setQuickAdd("termin"),
+                },
+                {
+                  key: "kontakt",
+                  label: t("logContact"),
+                  icon: <PhoneCall className="size-4" />,
+                  onSelect: () => setQuickAdd("kontakt"),
+                },
+                {
+                  key: "email",
+                  label: t("logEmail"),
+                  icon: <Mail className="size-4" />,
+                  onSelect: () => setQuickAdd("email"),
+                },
+                {
+                  key: "interview",
+                  label: t("logInterview"),
+                  icon: <Users className="size-4" />,
+                  onSelect: () => setQuickAdd("interview"),
+                },
+              ]}
+            />
             <Button
               variant="ghost"
               aria-label={t("deleteApplicant")}
@@ -357,15 +421,43 @@ export default function ApplicantDetailLayout({
               onClick={() => void handleDelete()}
             >
               <Trash2 className="size-4" />
-              <span className="hidden md:inline">{t("deleteApplicant")}</span>
             </Button>
           </div>
         </CardContent>
+        <div className="border-t border-border/70 px-2">
+          <RouteTabs tabs={tabs} activeValue={activeTab} />
+        </div>
       </Card>
 
-      <RouteTabs tabs={tabs} activeValue={activeTab} />
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">{children}</div>
+        <ApplicantSidebar
+          applicant={applicant}
+          className="lg:sticky lg:top-20 lg:self-start"
+        />
+      </div>
 
-      <div className="mt-4">{children}</div>
+      <TerminDialog
+        open={quickAdd === "termin"}
+        onOpenChange={open => !open && setQuickAdd(null)}
+        fixedApplicantId={applicantId}
+      />
+      <KontaktDialog
+        open={quickAdd === "kontakt"}
+        onOpenChange={open => !open && setQuickAdd(null)}
+        applicantId={applicantId}
+        showFirstContactHint={applicant.status === "neu"}
+      />
+      <EmailDialog
+        open={quickAdd === "email"}
+        onOpenChange={open => !open && setQuickAdd(null)}
+        applicantId={applicantId}
+      />
+      <InterviewDialog
+        open={quickAdd === "interview"}
+        onOpenChange={open => !open && setQuickAdd(null)}
+        applicantId={applicantId}
+      />
     </div>
   );
 }
