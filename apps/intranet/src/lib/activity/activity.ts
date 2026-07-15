@@ -316,20 +316,6 @@ export function timelineCharts(
   };
 }
 
-/**
- * Newest local day that actually has a sample, or `null` when there are none.
- * `samples` are descending by `capturedAt` (as `recentSamples` returns), so the
- * first row is the newest. Powers the "rewind to last active day" affordance.
- */
-export function lastActiveDay(
-  samples: Sample[],
-  tzOffsetMinutes = 0
-): string | null {
-  return samples.length > 0
-    ? localDay(samples[0].capturedAt, tzOffsetMinutes)
-    : null;
-}
-
 // ── Day-in-detail (minute-level) ───────────────────────────────────────────
 
 export interface StateSegment {

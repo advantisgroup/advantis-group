@@ -167,6 +167,33 @@ export const recentSamples = query({
   },
 });
 
+/**
+ * Raw samples for one device inside a [startMs, endMs) window — the timeline's
+ * selected local day. Unlike `recentSamples`, a past day is a closed range:
+ * new inserts never invalidate it, so Convex serves repeat visits from the
+ * query cache without re-reading the table. "Today" reads only today's rows.
+ */
+export const samplesForDay = query({
+  args: {
+    deviceId: v.string(),
+    startMs: v.number(),
+    endMs: v.number(),
+  },
+  handler: async (ctx, { deviceId, startMs, endMs }) => {
+    await requireUser(ctx);
+    return await ctx.db
+      .query("activitySamples")
+      .withIndex("by_device_time", q =>
+        q
+          .eq("deviceId", deviceId)
+          .gte("capturedAt", startMs)
+          .lt("capturedAt", endMs)
+      )
+      // 24h at the nominal 15s cadence is 5760 rows; cap with headroom.
+      .take(6000);
+  },
+});
+
 /** Per-employee export bundle for a [startDay, endDay] range. Capped. */
 export const exportDevice = query({
   args: {
