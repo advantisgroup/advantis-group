@@ -78,3 +78,116 @@ export const deleteFile = mutation({
     return { deleted: true };
   },
 });
+
+/**
+ * Check if a user has access to a file based on where it's used.
+ * Returns { hasAccess: true } if:
+ * - File is used as a public user avatar (anyone can access)
+ * - File is in an announcement the current user can view (requires auth)
+ * - File is in a message in a conversation the current user is a member of (requires auth)
+ * Otherwise returns { hasAccess: false }
+ *
+ * Note: This query works both authenticated and unauthenticated.
+ * Unauthenticated users can only see public avatars.
+ */
+export const canAccessFile = query({
+  args: { storageId: v.string() },
+  handler: async (ctx, { storageId }) => {
+    const storageCId = storageId as unknown as Id<"_storage">;
+    // Check if used as a user avatar (public to everyone)
+    const userAvatar = await ctx.db
+      .query("users")
+      .filter(q => q.eq(q.field("avatarStorageId"), storageCId))
+      .first();
+    if (userAvatar) {
+      return { hasAccess: true, reason: "public_user_avatar" };
+    }
+
+    const user = await getCurrentUser(ctx);
+    if (!user) {
+      return { hasAccess: false, reason: "not_authenticated" };
+    }
+
+    // Check if used as a conversation/group avatar
+    const conversationAvatar = await ctx.db
+      .query("conversations")
+      .filter(q => q.eq(q.field("avatarStorageId"), storageCId))
+      .first();
+    if (conversationAvatar) {
+      const userInConversation = await ctx.db
+        .query("conversationMembers")
+        .filter(
+          q =>
+            q.and(
+              q.eq(q.field("conversationId"), conversationAvatar._id),
+              q.eq(q.field("userId"), user._id)
+            )
+        )
+        .first();
+      if (userInConversation) {
+        return { hasAccess: true, reason: "conversation_member" };
+      }
+    }
+
+    // Check if used in an announcement the user can view
+    const announcements = await ctx.db.query("announcements").collect();
+
+    for (const ann of announcements) {
+      if (!ann.attachmentStorageIds.length && !ann.attachments?.length) continue;
+      const ids = [
+        ...ann.attachmentStorageIds,
+        ...(ann.attachments?.map(a => a.storageId) ?? []),
+      ];
+      if (!ids.some(id => id === storageCId)) continue;
+
+      const audience = ann.audience;
+      let hasAccess = false;
+
+      if (audience.kind === "all") {
+        hasAccess = true;
+      } else if (audience.kind === "departmentId") {
+        hasAccess = user.departmentId === audience.departmentId;
+      } else if (audience.kind === "department") {
+        const userDept = user.departmentId
+          ? await ctx.db.get(user.departmentId)
+          : null;
+        hasAccess = userDept ? userDept.name === audience.department : false;
+      } else if (audience.kind === "users") {
+        hasAccess = audience.userIds.includes(user._id);
+      }
+
+      if (hasAccess) {
+        return { hasAccess: true, reason: "announcement_audience" };
+      }
+    }
+
+    // Check if used in a message in a conversation the user is a member of
+    const messages = await ctx.db.query("messages").collect();
+
+    for (const msg of messages) {
+      if (!msg.attachments.length) continue;
+      const ids = msg.attachments.map(a => a.storageId);
+      if (!ids.some(id => id === storageCId)) continue;
+
+      const conversation = await ctx.db.get(msg.conversationId);
+      if (!conversation) continue;
+
+      const userInConversation = await ctx.db
+        .query("conversationMembers")
+        .filter(
+          q =>
+            q.and(
+              q.eq(q.field("conversationId"), conversation._id),
+              q.eq(q.field("userId"), user._id)
+            )
+        )
+        .first();
+
+      if (userInConversation) {
+        return { hasAccess: true, reason: "message_conversation_member" };
+      }
+    }
+
+    return { hasAccess: false, reason: "not_found_or_no_access" };
+  },
+});
