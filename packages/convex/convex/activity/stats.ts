@@ -214,7 +214,7 @@ export const exportDevice = query({
 
     const startMs = new Date(`${startDay}T00:00:00Z`).getTime();
     const endMs = new Date(`${endDay}T23:59:59.999Z`).getTime();
-    const samples = await ctx.db
+    const rows = await ctx.db
       .query("activitySamples")
       .withIndex("by_device_time", q =>
         q
@@ -224,6 +224,19 @@ export const exportDevice = query({
       )
       .order("desc")
       .take(Math.min(sampleLimit ?? 10000, 20000));
+
+    // Samples no longer store the per-device fields; backfill the export
+    // shape from the device row so CSV/JSON columns stay populated. Rows
+    // written before the slimming keep their own (exact) values.
+    const device = await ctx.db
+      .query("devices")
+      .withIndex("by_deviceId", q => q.eq("deviceId", deviceId))
+      .unique();
+    const samples = rows.map(s => ({
+      ...s,
+      windowsUser: s.windowsUser ?? device?.lastWindowsUser ?? "",
+      hostname: s.hostname ?? device?.hostname ?? "",
+    }));
 
     return { deviceId, startDay, endDay, daily, samples };
   },

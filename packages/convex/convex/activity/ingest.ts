@@ -103,7 +103,17 @@ export const recordSamples = internalMutation({
         const duplicate = seen.has(s.capturedAt);
 
         if (!duplicate) {
-          await ctx.db.insert("activitySamples", { ...s, receivedAt });
+          // Slim row: the near-constant per-device fields the agent sends
+          // (windowsUser/hostname/agentVersion/platform) are kept on the
+          // devices row instead of being repeated on every sample.
+          await ctx.db.insert("activitySamples", {
+            deviceId: s.deviceId,
+            idleMs: s.idleMs,
+            active: s.active,
+            capturedAt: s.capturedAt,
+            tzOffsetMinutes: s.tzOffsetMinutes,
+            receivedAt,
+          });
           seen.add(s.capturedAt);
           inserted++;
         }
