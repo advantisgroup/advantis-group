@@ -1983,6 +1983,20 @@
     "terminTypLabel": "Type",
     "kontaktSaved": "Contact saved to the file.",
     "emailSaved": "Email logged in the file.",
-    "interviewSaved": "Interview saved to the file."
+    "interviewSaved": "Interview saved to the file.",
+    "vaultLockedTitle": "Applicant Management locked",
+    "vaultLockedDescription": "Please re-enter the password to continue.",
+    "vaultPasswordPlaceholder": "Password",
+    "vaultConfirmPasswordPlaceholder": "Confirm password",
+    "vaultUnlock": "Unlock",
+    "vaultIncorrectPassword": "Incorrect password",
+    "vaultNotConfiguredUser": "No password has been set up for Applicant Management yet. Please ask an admin to set one up.",
+    "vaultSetupTitle": "Secure Applicant Management",
+    "vaultSetupDescription": "Set an additional password that everyone will need to access Applicant Management.",
+    "vaultSetPassword": "Set password",
+    "vaultPasswordTooShort": "Password must be at least 8 characters.",
+    "vaultPasswordMismatch": "Passwords don't match.",
+    "vaultPasswordSetSuccess": "Password saved.",
+    "vaultLockNow": "Lock now"
   }
 }

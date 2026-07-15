@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import {
+  ApplicantVaultGate,
+  LockVaultButton,
+} from "@/components/applicants/ApplicantVaultGate";
 import { RouteTabs } from "@/components/applicants/RouteTabs";
 import { UploadCvButton } from "@/components/applicants/UploadCvButton";
 import { PageHeader } from "@/components/PageHeader";
@@ -63,7 +67,7 @@ export default function ApplicantsLayout({
   // The detail layout (`[id]/layout.tsx`) applies its own centered
   // max-w-6xl wrapper, so this just steps out of the way.
   if (!isListRoute) {
-    return <>{children}</>;
+    return <ApplicantVaultGate>{children}</ApplicantVaultGate>;
   }
 
   const tabs = [
@@ -98,15 +102,22 @@ export default function ApplicantsLayout({
   ];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader
-        title={t("pageTitle")}
-        description={t("pageDescription")}
-        icon={<UserSearch />}
-        action={<UploadCvButton />}
-      />
-      <RouteTabs tabs={tabs} activeValue={segment} />
-      <div className="mt-4">{children}</div>
-    </div>
+    <ApplicantVaultGate>
+      <div className="mx-auto max-w-6xl space-y-6">
+        <PageHeader
+          title={t("pageTitle")}
+          description={t("pageDescription")}
+          icon={<UserSearch />}
+          action={
+            <div className="flex items-center gap-2">
+              <LockVaultButton />
+              <UploadCvButton />
+            </div>
+          }
+        />
+        <RouteTabs tabs={tabs} activeValue={segment} />
+        <div className="mt-4">{children}</div>
+      </div>
+    </ApplicantVaultGate>
   );
 }
