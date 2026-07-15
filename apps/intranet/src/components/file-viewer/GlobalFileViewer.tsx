@@ -172,18 +172,24 @@ interface RawExifTags {
 
 /** Reads camera/lens/exposure/GPS out of the file's own EXIF data (JPEG, HEIC, TIFF, …) rather than trusting anything passed in. Resolves to null — never rejects — for files with no/unreadable EXIF (e.g. re-encoded by Snapchat/Instagram). */
 async function readExif(url: string): Promise<ExifSummary | null> {
+  console.warn("[FileViewer EXIF] readExif: importing exifr", { url });
   const rawTags: unknown = await import("exifr")
-    .then(({ parse }) =>
-      parse(url, {
+    .then(({ parse }) => {
+      console.warn("[FileViewer EXIF] readExif: exifr loaded, calling parse()");
+      return parse(url, {
         tiff: true,
         exif: true,
         gps: true,
         translateValues: true,
         reviveValues: true,
         mergeOutput: true,
-      })
-    )
-    .catch(() => null);
+      });
+    })
+    .catch(err => {
+      console.error("[FileViewer EXIF] readExif: parse() threw/rejected", err);
+      return null;
+    });
+  console.warn("[FileViewer EXIF] readExif: parse() settled", rawTags);
   if (!rawTags) return null;
   const tags = rawTags as RawExifTags;
 
@@ -214,6 +220,7 @@ async function readExif(url: string): Promise<ExifSummary | null> {
   };
 
   const hasAnyField = Object.values(summary).some(v => v !== undefined);
+  console.warn("[FileViewer EXIF] readExif: summary", { summary, hasAnyField });
   return hasAnyField ? summary : null;
 }
 
@@ -294,6 +301,12 @@ function FileViewerContent({
   );
 
   useEffect(() => {
+    console.warn("[FileViewer EXIF] effect check", {
+      metadataOpen,
+      kindKind: kind.kind,
+      url,
+      exifStatus,
+    });
     if (
       !metadataOpen ||
       kind.kind !== "image" ||
@@ -303,20 +316,28 @@ function FileViewerContent({
       return;
     }
     let cancelled = false;
+    console.warn("[FileViewer EXIF] starting readExif", { url });
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setExifStatus("loading");
     void readExif(url)
       .then(summary => {
+        console.warn("[FileViewer EXIF] then: resolved", {
+          summary,
+          cancelled,
+        });
         if (cancelled) return;
         setExif(summary);
       })
-      .catch(() => {
+      .catch(err => {
+        console.error("[FileViewer EXIF] catch: rejected", err, { cancelled });
         if (!cancelled) setExif(null);
       })
       .finally(() => {
+        console.warn("[FileViewer EXIF] finally: settled", { cancelled });
         if (!cancelled) setExifStatus("done");
       });
     return () => {
+      console.warn("[FileViewer EXIF] cleanup: cancelling", { url });
       cancelled = true;
     };
   }, [metadataOpen, kind, url, exifStatus]);
