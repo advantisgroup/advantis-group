@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { InfoTip } from "@/components/activity/InfoTip";
+import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,9 +32,25 @@ export function ApplicantAccessPanel() {
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const [pickerId, setPickerId] = useState("");
+  const [stepUpAction, setStepUpAction] = useState<(() => void) | null>(null);
 
   const granted = (eligible ?? []).filter(u => u.applicantAccess);
   const grantable = (eligible ?? []).filter(u => !u.applicantAccess);
+
+  function doGrant(userId: Id<"users">, name: string) {
+    setAccess({ userId, access: true })
+      .then(() => {
+        toast.success(t("accessGranted", { name }));
+        setPickerId("");
+      })
+      .catch(handleError);
+  }
+
+  function doRevoke(userId: Id<"users">, name: string) {
+    setAccess({ userId, access: false })
+      .then(() => toast.success(t("accessRevoked", { name })))
+      .catch(handleError);
+  }
 
   async function grant(userId: Id<"users">, name: string) {
     const ok = await confirm({
@@ -43,16 +60,12 @@ export function ApplicantAccessPanel() {
         { tone: "positive", text: t("grantAccessItem1") },
         { tone: "positive", text: t("grantAccessItem2") },
       ],
+      confirmText: { target: name },
       confirmLabel: t("grantAccessConfirm"),
       destructive: false,
     });
     if (!ok) return;
-    setAccess({ userId, access: true })
-      .then(() => {
-        toast.success(t("accessGranted", { name }));
-        setPickerId("");
-      })
-      .catch(handleError);
+    setStepUpAction(() => () => doGrant(userId, name));
   }
 
   async function revoke(userId: Id<"users">, name: string) {
@@ -63,12 +76,11 @@ export function ApplicantAccessPanel() {
         { tone: "negative", text: t("revokeAccessItem1") },
         { tone: "neutral", text: t("revokeAccessItem2") },
       ],
+      confirmText: { target: name },
       confirmLabel: t("revokeAccessConfirm"),
     });
     if (!ok) return;
-    setAccess({ userId, access: false })
-      .then(() => toast.success(t("accessRevoked", { name })))
-      .catch(handleError);
+    setStepUpAction(() => () => doRevoke(userId, name));
   }
 
   return (
@@ -154,6 +166,15 @@ export function ApplicantAccessPanel() {
           ))
         )}
       </div>
+
+      <VaultStepUpDialog
+        open={!!stepUpAction}
+        onOpenChange={o => !o && setStepUpAction(null)}
+        onVerified={() => {
+          stepUpAction?.();
+          setStepUpAction(null);
+        }}
+      />
     </div>
   );
 }

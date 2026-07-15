@@ -27,6 +27,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 
+import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
 import {
   useCurrentUser,
   useIsAdmin,
@@ -394,8 +395,10 @@ function AdminControls({
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tCustomRoles = useTranslations("CustomRoles");
+  const tApplicants = useTranslations("Applicants");
   const me = useCurrentUser();
   const confirm = useConfirm();
+  const [stepUpOpen, setStepUpOpen] = useState(false);
   const setRole = useMutation(api.users.setRole);
   const setStatus = useAction(api.users.setStatus);
   const removeMember = useAction(api.members.remove);
@@ -478,7 +481,7 @@ function AdminControls({
       .catch(handleError);
   }
 
-  function toggleApplicantDelegate() {
+  function doToggleApplicantDelegate() {
     setApplicantDelegate({
       userId: user._id,
       delegate: !user.applicantAccessDelegate,
@@ -491,6 +494,22 @@ function AdminControls({
         )
       )
       .catch(handleError);
+  }
+
+  async function toggleApplicantDelegate() {
+    const ok = await confirm({
+      title: user.applicantAccessDelegate
+        ? t("revokeApplicantDelegate")
+        : t("grantApplicantDelegate"),
+      description: tApplicants("delegateConfirmDescription", {
+        name: user.name,
+      }),
+      confirmText: { target: user.name },
+      confirmLabel: tc("confirm"),
+      destructive: !!user.applicantAccessDelegate,
+    });
+    if (!ok) return;
+    setStepUpOpen(true);
   }
 
   const hasCustomRole = Boolean(user.customRoleName);
@@ -602,7 +621,7 @@ function AdminControls({
                 variant="outline"
                 size="sm"
                 className={actionButtonClass}
-                onClick={toggleApplicantDelegate}
+                onClick={() => void toggleApplicantDelegate()}
               >
                 <Users2 />
                 <span>
@@ -646,6 +665,11 @@ function AdminControls({
           </div>
         )}
       </div>
+      <VaultStepUpDialog
+        open={stepUpOpen}
+        onOpenChange={setStepUpOpen}
+        onVerified={doToggleApplicantDelegate}
+      />
     </Section>
   );
 }

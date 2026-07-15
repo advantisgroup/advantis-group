@@ -1997,6 +1997,9 @@
     "vaultPasswordTooShort": "Password must be at least 8 characters.",
     "vaultPasswordMismatch": "Passwords don't match.",
     "vaultPasswordSetSuccess": "Password saved.",
-    "vaultLockNow": "Lock now"
+    "vaultLockNow": "Lock now",
+    "vaultStepUpTitle": "Confirm it's you",
+    "vaultStepUpDescription": "Please re-enter the Applicant Management password to confirm this change.",
+    "delegateConfirmDescription": "Make \"{name}\" an Applicant Management delegate, or remove that role?"
   }
 }
