@@ -23,6 +23,11 @@ export const getLatestAgentVersion = query({
       .query("activitySettings")
       .withIndex("by_key", q => q.eq("key", LATEST_VERSION_KEY))
       .unique();
+    console.debug(
+      "[activity/agentVersion] getLatestAgentVersion ->",
+      row?.value ?? null,
+      row ? `(updated ${new Date(row.updatedAt).toISOString()})` : "(no row yet)"
+    );
     return row?.value ?? null;
   },
 });
@@ -59,17 +64,29 @@ export const refreshLatestAgentVersion = internalAction({
         `https://api.github.com/repos/${REPO}/releases/latest`,
         { headers: { Accept: "application/vnd.github+json" } }
       );
-      if (!res.ok) return;
+      if (!res.ok) {
+        console.error(
+          `[activity/agentVersion] GitHub responded ${res.status} ${res.statusText}`
+        );
+        return;
+      }
       const data = (await res.json()) as { tag_name?: string };
       tagName = data.tag_name;
     } catch (err) {
       console.error("[activity/agentVersion] GitHub fetch failed:", err);
       return;
     }
-    if (!tagName) return;
+    if (!tagName) {
+      console.error(
+        "[activity/agentVersion] GitHub release response had no tag_name"
+      );
+      return;
+    }
+    const version = tagName.replace(/^v/, "");
+    console.log(`[activity/agentVersion] latest version is now ${version}`);
     await ctx.runMutation(
       internal.activity.agentVersion.storeLatestAgentVersion,
-      { version: tagName.replace(/^v/, "") }
+      { version }
     );
   },
 });

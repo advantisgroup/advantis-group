@@ -63,6 +63,9 @@ export const en: Dict = {
   "overview.outdated": "Update available",
   "overview.outdatedHint":
     "Running v{current} — the latest ActivityTrack version is v{latest}.",
+  "overview.latestVersion": "ActivityTrack v{version}",
+  "overview.latestVersionHint":
+    "Latest published ActivityTrack desktop-agent version, mirrored hourly from GitHub releases.",
 
   "devices.heading": "Devices",
   "devices.sub":
