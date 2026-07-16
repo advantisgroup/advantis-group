@@ -1276,6 +1276,8 @@
     "passwordMismatch": "Die Passwörter stimmen nicht überein.",
     "passwordChanged": "Passwort geändert.",
     "passwordSubmit": "Passwort ändern",
+    "exportButton": "Export",
+    "templateDownload": "Upload-Vorlage herunterladen",
     "list": {
       "analysis30": {
         "title": "Analysis > 30 Tage",

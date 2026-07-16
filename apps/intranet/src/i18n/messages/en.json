@@ -1276,6 +1276,8 @@
     "passwordMismatch": "Passwords don't match.",
     "passwordChanged": "Password changed.",
     "passwordSubmit": "Change password",
+    "exportButton": "Export",
+    "templateDownload": "Download upload template",
     "list": {
       "analysis30": {
         "title": "Analysis > 30 days",

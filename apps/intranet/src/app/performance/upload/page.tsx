@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { LogOut, Upload } from "lucide-react";
+import { Download, LogOut, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -25,6 +25,7 @@ import {
 import { formatDateTime } from "@/lib/format";
 import {
   clearPerformanceToken,
+  downloadPerformanceFile,
   getPerformanceToken,
 } from "@/lib/performanceAuth";
 
@@ -159,6 +160,21 @@ export default function PerformanceUploadPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">{t("uploadIntro")}</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                token &&
+                void downloadPerformanceFile(
+                  "/performance/template",
+                  token,
+                  "performance-vorlage.xlsx"
+                )
+              }
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {t("templateDownload")}
+            </Button>
             <Input
               type="file"
               multiple

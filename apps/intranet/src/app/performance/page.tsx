@@ -8,6 +8,7 @@ import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
   Award,
+  Download,
   LogOut,
   type LucideIcon,
   Phone,
@@ -58,6 +59,7 @@ import {
 } from "@/components/ui/table";
 import {
   clearPerformanceToken,
+  downloadPerformanceFile,
   getPerformanceToken,
 } from "@/lib/performanceAuth";
 
@@ -245,6 +247,22 @@ export default function PerformancePage() {
                 ? t("dashboardMonthClosed")
                 : t("dashboardMonthOpen")}
             </Badge>
+          )}
+          {data && data.snaps.length > 0 && token && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                void downloadPerformanceFile(
+                  `/performance/export?ym=${data.ym}`,
+                  token,
+                  `performance-${data.ym}.xlsx`
+                )
+              }
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {t("exportButton")}
+            </Button>
           )}
         </div>
 

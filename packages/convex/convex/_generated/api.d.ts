@@ -81,6 +81,7 @@ import type * as performance_lib_salesforceImport from "../performance/lib/sales
 import type * as performance_lib_types from "../performance/lib/types.js";
 import type * as performance_lib_workdays from "../performance/lib/workdays.js";
 import type * as performanceAuth from "../performanceAuth.js";
+import type * as performanceExport from "../performanceExport.js";
 import type * as performanceImport from "../performanceImport.js";
 import type * as performanceQueries from "../performanceQueries.js";
 import type * as performanceTopics from "../performanceTopics.js";
@@ -173,6 +174,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/types": typeof performance_lib_types;
   "performance/lib/workdays": typeof performance_lib_workdays;
   performanceAuth: typeof performanceAuth;
+  performanceExport: typeof performanceExport;
   performanceImport: typeof performanceImport;
   performanceQueries: typeof performanceQueries;
   performanceTopics: typeof performanceTopics;

@@ -302,7 +302,10 @@ interface TeamTotals {
  * metrics folded in (the "latest snapshot" only carries that one day's
  * daily values — the display values are the month-summed ones) and the
  * FC1 forecast added. */
-async function teamTotals(ctx: QueryCtx, ym: string): Promise<TeamTotals> {
+export async function teamTotals(
+  ctx: QueryCtx,
+  ym: string
+): Promise<TeamTotals> {
   const rawSnaps = await latestSnapshots(ctx, ym);
   const calls = await monthCallsMap(ctx, ym);
   const withCalls = rawSnaps.map(s => {

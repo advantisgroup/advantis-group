@@ -22,3 +22,27 @@ export function clearPerformanceToken(): void {
   if (typeof document === "undefined") return;
   document.cookie = `${COOKIE}=; path=/; max-age=0`;
 }
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
+  "http://localhost:3002";
+
+/** Downloads an authenticated apps/api file response via a blob + object
+ * URL — a plain `<a href>` can't carry the bearer token. */
+export async function downloadPerformanceFile(
+  path: string,
+  token: string,
+  filename: string
+): Promise<void> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return;
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
