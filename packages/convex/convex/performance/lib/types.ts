@@ -36,6 +36,40 @@ export interface MetricFields {
   loginSec: number;
 }
 
+/** Canonical field order, matching the reference script's `METRICS` list
+ * (`sales_team_monitor.py`, "METRICS ="). Also the daily-value subset
+ * (`DAILY_KEYS`) that gets summed over a date range rather than read as a
+ * latest-snapshot, per call-report metrics. */
+export const METRIC_KEYS: (keyof MetricFields)[] = [
+  "leadsCreated",
+  "workableCreated",
+  "leadsAnalysis",
+  "leadsDetailsIdent",
+  "oppsOpen",
+  "oppsClose7d",
+  "oppsPending",
+  "wonMonth",
+  "callsToday",
+  "overduesAnalysis",
+  "overduesOpps",
+  "oppsOver30",
+  "leadsNoAction14",
+  "oppsNoAction14",
+  "callsAnswered",
+  "callsOutbound",
+  "talkTotalSec",
+  "talkAvgSec",
+  "loginSec",
+];
+
+export const DAILY_KEYS: (keyof MetricFields)[] = [
+  "callsToday",
+  "callsAnswered",
+  "callsOutbound",
+  "talkTotalSec",
+  "loginSec",
+];
+
 /** A snapshot's fields are always partial — a snapshot only ever carries
  * the metrics its source report actually measured (see
  * `performanceReports` in `schema.ts`: null means "not measured", not

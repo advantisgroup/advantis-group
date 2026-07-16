@@ -38,6 +38,7 @@ import {
   readSalesforceExport,
 } from "./performance/lib/salesforceImport";
 import {
+  METRIC_KEYS,
   type CellValue,
   type EmployeeSnapshot,
   type MetricFields,
@@ -186,28 +187,6 @@ for (const [field, aliases] of Object.entries(HEADER_ALIASES)) {
   for (const alias of aliases) TEMPLATE_ALIAS_LOOKUP.set(alias, field);
 }
 
-const TEMPLATE_METRIC_KEYS: (keyof MetricFields)[] = [
-  "leadsCreated",
-  "workableCreated",
-  "leadsAnalysis",
-  "leadsDetailsIdent",
-  "oppsOpen",
-  "oppsClose7d",
-  "oppsPending",
-  "wonMonth",
-  "callsToday",
-  "overduesAnalysis",
-  "overduesOpps",
-  "oppsOver30",
-  "leadsNoAction14",
-  "oppsNoAction14",
-  "callsAnswered",
-  "callsOutbound",
-  "talkTotalSec",
-  "talkAvgSec",
-  "loginSec",
-];
-
 function normHeaderSimple(v: CellValue): string {
   return v === null || v === undefined
     ? ""
@@ -297,7 +276,7 @@ export function parseAggregatedTemplate(
     );
 
     const fields: SnapshotFields = {};
-    for (const key of TEMPLATE_METRIC_KEYS) {
+    for (const key of METRIC_KEYS) {
       const idx = colmap[key];
       fields[key] = idx !== undefined ? toIntLoose(r[idx]) : 0;
     }

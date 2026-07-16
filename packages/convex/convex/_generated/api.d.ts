@@ -82,6 +82,7 @@ import type * as performance_lib_types from "../performance/lib/types.js";
 import type * as performance_lib_workdays from "../performance/lib/workdays.js";
 import type * as performanceAuth from "../performanceAuth.js";
 import type * as performanceImport from "../performanceImport.js";
+import type * as performanceQueries from "../performanceQueries.js";
 import type * as presence from "../presence.js";
 import type * as tourProgress from "../tourProgress.js";
 import type * as updates from "../updates.js";
@@ -172,6 +173,7 @@ declare const fullApi: ApiFromModules<{
   "performance/lib/workdays": typeof performance_lib_workdays;
   performanceAuth: typeof performanceAuth;
   performanceImport: typeof performanceImport;
+  performanceQueries: typeof performanceQueries;
   presence: typeof presence;
   tourProgress: typeof tourProgress;
   updates: typeof updates;

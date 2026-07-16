@@ -748,6 +748,25 @@ export default defineSchema({
     customerNumber: v.optional(v.string()),
   }).index("by_owner", ["owner"]),
 
+  // Admin-set monthly goals/todos for an employee. Status can be updated by
+  // the employee themself; only an admin can create/edit/delete the topic
+  // itself.
+  performanceTopics: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    ym: v.string(),
+    topic: v.string(),
+    todo: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    status: v.union(
+      v.literal("offen"),
+      v.literal("erreicht"),
+      v.literal("nicht_erreicht")
+    ),
+    createdBy: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_employee_ym", ["employeeId", "ym"]),
+
   performanceUploadLog: defineTable({
     filename: v.string(),
     storageId: v.id("_storage"),
