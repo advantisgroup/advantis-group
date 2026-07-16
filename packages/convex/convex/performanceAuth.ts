@@ -287,5 +287,264 @@ export const logout = mutation({
   },
 });
 
+// ------------------------------------------------------------- admin tools
+
+/** Throws unless `token` belongs to an active admin; actions have no
+ * `ctx.db` so they reach this via `ctx.runQuery` instead of calling
+ * `requireAdminLogin` directly. */
+export const assertAdminSession = internalQuery({
+  args: { token: v.string() },
+  handler: async (ctx, { token }): Promise<Doc<"performanceLogins">> =>
+    await requireAdminLogin(ctx, token),
+});
+
+/** Resolves a session token to its login doc, or null — the action-side
+ * equivalent of `resolveActiveSession` for handlers with no `ctx.db`. */
+export const sessionLoginDoc = internalQuery({
+  args: { token: v.string() },
+  handler: async (ctx, { token }): Promise<Doc<"performanceLogins"> | null> => {
+    const resolved = await resolveActiveSession(ctx, token);
+    return resolved ? resolved.login : null;
+  },
+});
+
+export const insertLogin = internalMutation({
+  args: {
+    email: v.string(),
+    name: v.string(),
+    passwordHash: v.string(),
+    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    employeeId: v.optional(v.id("performanceEmployees")),
+  },
+  handler: async (ctx, args): Promise<Id<"performanceLogins">> =>
+    await ctx.db.insert("performanceLogins", {
+      ...args,
+      active: true,
+      createdAt: Date.now(),
+    }),
+});
+
+export const setPasswordHash = internalMutation({
+  args: { loginId: v.id("performanceLogins"), passwordHash: v.string() },
+  handler: async (ctx, { loginId, passwordHash }): Promise<{ ok: true }> => {
+    await ctx.db.patch(loginId, { passwordHash });
+    return { ok: true };
+  },
+});
+
+/** All Performance logins, for the admin user-management page. */
+export const listLogins = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    await requireAdminLogin(ctx, token);
+    const [logins, employees] = await Promise.all([
+      ctx.db.query("performanceLogins").collect(),
+      ctx.db.query("performanceEmployees").collect(),
+    ]);
+    const employeeName = new Map(employees.map(e => [e._id, e.name]));
+    return logins
+      .map(l => ({
+        id: l._id,
+        email: l.email,
+        name: l.name,
+        role: l.role,
+        active: l.active,
+        employeeId: l.employeeId ?? null,
+        employeeName: l.employeeId
+          ? (employeeName.get(l.employeeId) ?? null)
+          : null,
+        createdAt: l.createdAt,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+/** Employees available to link a login to, for the same page's dropdown —
+ * unfiltered (includes owners excluded from team KPI aggregation, since
+ * that exclusion is about reporting, not about who can have an account). */
+export const listEmployeesForLink = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    await requireAdminLogin(ctx, token);
+    const employees = await ctx.db.query("performanceEmployees").collect();
+    return employees
+      .map(e => ({ id: e._id, name: e.name, active: e.active }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+function emailTaken(): ConvexError<{ code: string; message: string }> {
+  return new ConvexError({
+    code: "email_taken",
+    message: "This email is already in use.",
+  });
+}
+
+function passwordTooShort(): ConvexError<{ code: string; message: string }> {
+  return new ConvexError({
+    code: "validation",
+    message: "Password must be at least 8 characters.",
+  });
+}
+
+/** Admin creates a new Performance login directly — unlike `setupAccount`,
+ * this isn't gated by the `PERFORMANCE_ADMIN_EMAILS` allowlist, since that
+ * allowlist only exists to bootstrap the very first admin. */
+export const createLogin = action({
+  args: {
+    token: v.string(),
+    email: v.string(),
+    name: v.string(),
+    password: v.string(),
+    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    employeeId: v.optional(v.id("performanceEmployees")),
+  },
+  handler: async (
+    ctx,
+    { token, email, name, password, role, employeeId }
+  ): Promise<{ id: Id<"performanceLogins"> }> => {
+    await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
+      token,
+    });
+    if (password.length < 8) throw passwordTooShort();
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing: Doc<"performanceLogins"> | null = await ctx.runQuery(
+      internal.performanceAuth.getLoginByEmail,
+      { email: normalizedEmail }
+    );
+    if (existing) throw emailTaken();
+
+    const passwordHash = await hashPassword(password);
+    const id: Id<"performanceLogins"> = await ctx.runMutation(
+      internal.performanceAuth.insertLogin,
+      {
+        email: normalizedEmail,
+        name: name.trim(),
+        passwordHash,
+        role,
+        employeeId,
+      }
+    );
+    return { id };
+  },
+});
+
+/** Patch a login's name/role/active/employee link. Password changes go
+ * through `resetLoginPassword`/`changeOwnPassword` instead, since hashing
+ * needs Web Crypto (only available to actions). Guards the same "can't
+ * remove the last active admin" rule as the reference script's
+ * `user_update`. */
+export const updateLogin = mutation({
+  args: {
+    token: v.string(),
+    loginId: v.id("performanceLogins"),
+    name: v.optional(v.string()),
+    role: v.optional(v.union(v.literal("admin"), v.literal("mitarbeiter"))),
+    active: v.optional(v.boolean()),
+    employeeId: v.optional(v.union(v.id("performanceEmployees"), v.null())),
+  },
+  handler: async (
+    ctx,
+    { token, loginId, name, role, active, employeeId }
+  ): Promise<{ ok: true }> => {
+    await requireAdminLogin(ctx, token);
+    const target = await ctx.db.get(loginId);
+    if (!target) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Login not found.",
+      });
+    }
+
+    const losesAdmin =
+      target.role === "admin" &&
+      target.active &&
+      ((role !== undefined && role !== "admin") || active === false);
+    if (losesAdmin) {
+      const admins = await ctx.db
+        .query("performanceLogins")
+        .filter(q =>
+          q.and(q.eq(q.field("role"), "admin"), q.eq(q.field("active"), true))
+        )
+        .collect();
+      if (admins.length <= 1) {
+        throw new ConvexError({
+          code: "last_admin",
+          message: "Can't remove the last active admin.",
+        });
+      }
+    }
+
+    await ctx.db.patch(loginId, {
+      ...(name !== undefined ? { name: name.trim() } : {}),
+      ...(role !== undefined ? { role } : {}),
+      ...(active !== undefined ? { active } : {}),
+      ...(employeeId !== undefined
+        ? { employeeId: employeeId ?? undefined }
+        : {}),
+    });
+    return { ok: true };
+  },
+});
+
+/** Admin sets a new password for another login. */
+export const resetLoginPassword = action({
+  args: {
+    token: v.string(),
+    loginId: v.id("performanceLogins"),
+    password: v.string(),
+  },
+  handler: async (ctx, { token, loginId, password }): Promise<{ ok: true }> => {
+    await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
+      token,
+    });
+    if (password.length < 8) throw passwordTooShort();
+    const passwordHash = await hashPassword(password);
+    await ctx.runMutation(internal.performanceAuth.setPasswordHash, {
+      loginId,
+      passwordHash,
+    });
+    return { ok: true };
+  },
+});
+
+/** Any logged-in user changes their own password, given the current one. */
+export const changeOwnPassword = action({
+  args: {
+    token: v.string(),
+    currentPassword: v.string(),
+    newPassword: v.string(),
+  },
+  handler: async (
+    ctx,
+    { token, currentPassword, newPassword }
+  ): Promise<{ ok: true }> => {
+    const login: Doc<"performanceLogins"> | null = await ctx.runQuery(
+      internal.performanceAuth.sessionLoginDoc,
+      { token }
+    );
+    if (!login) {
+      throw new ConvexError({
+        code: "unauthenticated",
+        message: "Please sign in.",
+      });
+    }
+    const ok = await verifyPassword(currentPassword, login.passwordHash);
+    if (!ok) {
+      throw new ConvexError({
+        code: "invalid_credentials",
+        message: "Current password is incorrect.",
+      });
+    }
+    if (newPassword.length < 8) throw passwordTooShort();
+    const passwordHash = await hashPassword(newPassword);
+    await ctx.runMutation(internal.performanceAuth.setPasswordHash, {
+      loginId: login._id,
+      passwordHash,
+    });
+    return { ok: true };
+  },
+});
+
 export type PerformanceRole = Doc<"performanceLogins">["role"];
 export type PerformanceLoginId = Id<"performanceLogins">;
