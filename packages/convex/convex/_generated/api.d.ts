@@ -77,6 +77,7 @@ import type * as orgData from "../orgData.js";
 import type * as orgDataMigration from "../orgDataMigration.js";
 import type * as outbound from "../outbound.js";
 import type * as performance_lib_callImport from "../performance/lib/callImport.js";
+import type * as performance_lib_kpi from "../performance/lib/kpi.js";
 import type * as performance_lib_salesforceImport from "../performance/lib/salesforceImport.js";
 import type * as performance_lib_types from "../performance/lib/types.js";
 import type * as performance_lib_workdays from "../performance/lib/workdays.js";
@@ -170,6 +171,7 @@ declare const fullApi: ApiFromModules<{
   orgDataMigration: typeof orgDataMigration;
   outbound: typeof outbound;
   "performance/lib/callImport": typeof performance_lib_callImport;
+  "performance/lib/kpi": typeof performance_lib_kpi;
   "performance/lib/salesforceImport": typeof performance_lib_salesforceImport;
   "performance/lib/types": typeof performance_lib_types;
   "performance/lib/workdays": typeof performance_lib_workdays;
