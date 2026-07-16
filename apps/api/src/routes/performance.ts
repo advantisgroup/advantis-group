@@ -99,13 +99,96 @@ function decodeUtf8(bytes: Uint8Array): string {
   return text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;
 }
 
+// Little-endian ZIP structure accessors, shared by the local-header normalizer
+// (the fix) and the temporary upload diagnostics below.
+const u16 = (b: Uint8Array, o: number): number => b[o] | (b[o + 1] << 8);
+const u32 = (b: Uint8Array, o: number): number =>
+  (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0;
+const writeU16 = (b: Uint8Array, o: number, v: number): void => {
+  b[o] = v & 0xff;
+  b[o + 1] = (v >>> 8) & 0xff;
+};
+const writeU32 = (b: Uint8Array, o: number, v: number): void => {
+  b[o] = v & 0xff;
+  b[o + 1] = (v >>> 8) & 0xff;
+  b[o + 2] = (v >>> 16) & 0xff;
+  b[o + 3] = (v >>> 24) & 0xff;
+};
+
+const EOCD_SIG = 0x06054b50;
+const CD_SIG = 0x02014b50;
+const LFH_SIG = 0x04034b50;
+const ZIP64_SENTINEL = 0xffffffff;
+
+/** Locate the ZIP end-of-central-directory record by scanning back from EOF
+ * (bounded by the 64 KiB maximum trailing comment). Returns -1 if not found. */
+function findEocd(bytes: Uint8Array): number {
+  const floor = Math.max(0, bytes.length - 22 - 65536);
+  for (let i = bytes.length - 22; i >= floor; i--) {
+    if (u32(bytes, i) === EOCD_SIG) return i;
+  }
+  return -1;
+}
+
+/** SheetJS 0.18.5 throws "Bad uncompressed size" on .xlsx files whose ZIP
+ * entries record their real sizes only in the central directory while the
+ * local file headers were written with zeroed size fields (streaming writers,
+ * e.g. some Salesforce/Genesys exporters). It reads each entry via the central
+ * directory but then rejects the local-vs-central size mismatch. Rewriting each
+ * local header's compressed/uncompressed size to the central-directory value
+ * and clearing the data-descriptor flag makes that check pass; decompression is
+ * unaffected (zlib inflates the whole stream regardless of the size hint) and
+ * entries are still located via the central directory. Mutates `bytes` in
+ * place; returns how many headers were patched. */
+function normalizeZipLocalHeaders(bytes: Uint8Array): number {
+  const eocd = findEocd(bytes);
+  if (eocd < 0) return 0;
+
+  const count = u16(bytes, eocd + 10);
+  let cd = u32(bytes, eocd + 16);
+  let patched = 0;
+
+  for (let i = 0; i < count && cd + 46 <= bytes.length; i++) {
+    if (u32(bytes, cd) !== CD_SIG) break;
+    const cdCsz = u32(bytes, cd + 20);
+    const cdUsz = u32(bytes, cd + 24);
+    const nameLen = u16(bytes, cd + 28);
+    const extraLen = u16(bytes, cd + 30);
+    const commentLen = u16(bytes, cd + 32);
+    const lho = u32(bytes, cd + 42);
+    cd += 46 + nameLen + extraLen + commentLen;
+
+    // ZIP64 keeps the real sizes/offset in extra fields, not these 32-bit
+    // slots; leave those entries alone (xlsx is effectively never ZIP64).
+    if (
+      cdCsz === ZIP64_SENTINEL ||
+      cdUsz === ZIP64_SENTINEL ||
+      lho === ZIP64_SENTINEL ||
+      lho + 30 > bytes.length ||
+      u32(bytes, lho) !== LFH_SIG
+    ) {
+      continue;
+    }
+
+    const localFlags = u16(bytes, lho + 6);
+    if (
+      u32(bytes, lho + 18) !== cdCsz ||
+      u32(bytes, lho + 22) !== cdUsz ||
+      (localFlags & 0x8) !== 0
+    ) {
+      writeU16(bytes, lho + 6, localFlags & ~0x8);
+      writeU32(bytes, lho + 18, cdCsz);
+      writeU32(bytes, lho + 22, cdUsz);
+      patched++;
+    }
+  }
+  return patched;
+}
+
 // --- Temporary upload diagnostics -----------------------------------------
-// Instrumentation for the "Bad uncompressed size" failures SheetJS 0.18.5
-// throws on some real-world .xlsx exports: it compares each ZIP entry's
-// central-directory size against the local-file-header size, and throws when a
-// streaming writer left the local header's size fields at 0. These logs dump
-// the file type and the per-entry compression table so we can see exactly
-// which entries trip it. Remove once the upload pipeline is confirmed fixed.
+// Logs the file type and the per-entry ZIP compression table so we can see
+// which entries the normalizer above had to touch. Remove once the upload
+// pipeline is confirmed healthy in production.
 const DEBUG = "[performance][debug]";
 
 function hexBytes(bytes: Uint8Array, count: number): string {
@@ -114,27 +197,8 @@ function hexBytes(bytes: Uint8Array, count: number): string {
   ).join(" ");
 }
 
-const u16 = (b: Uint8Array, o: number): number => b[o] | (b[o + 1] << 8);
-const u32 = (b: Uint8Array, o: number): number =>
-  (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16) | (b[o + 3] << 24)) >>> 0;
-
-/** Walks the ZIP central directory and, for each entry, compares its recorded
- * size/method against the local file header at the entry's offset — the exact
- * comparison SheetJS makes. A local `usz` of 0 against a non-zero central-dir
- * size (and/or the data-descriptor flag bit 3) is what makes it throw. */
 function inspectZip(bytes: Uint8Array): void {
-  const EOCD_SIG = 0x06054b50;
-  const CD_SIG = 0x02014b50;
-  const LFH_SIG = 0x04034b50;
-
-  let eocd = -1;
-  const scanFloor = Math.max(0, bytes.length - 22 - 65536);
-  for (let i = bytes.length - 22; i >= scanFloor; i--) {
-    if (u32(bytes, i) === EOCD_SIG) {
-      eocd = i;
-      break;
-    }
-  }
+  const eocd = findEocd(bytes);
   if (eocd < 0) {
     console.warn(`${DEBUG} no ZIP end-of-central-directory record found`);
     return;
@@ -161,7 +225,7 @@ function inspectZip(bytes: Uint8Array): void {
     );
 
     let local = "local header not found";
-    if (u32(bytes, lho) === LFH_SIG) {
+    if (lho + 30 <= bytes.length && u32(bytes, lho) === LFH_SIG) {
       const localFlags = u16(bytes, lho + 6);
       const localCsz = u32(bytes, lho + 18);
       const localUsz = u32(bytes, lho + 22);
@@ -199,6 +263,10 @@ async function logUpload(bytes: Uint8Array, file: File): Promise<void> {
  * UTC-midnight `Date` objects for date cells, matching the UTC contract
  * documented on `CellValue` in `performance/lib/types.ts`. */
 function readSheetRows(bytes: Uint8Array): unknown[][] {
+  const patched = normalizeZipLocalHeaders(bytes);
+  if (patched > 0) {
+    console.warn(`${DEBUG} normalized ${patched} zip local header(s)`);
+  }
   let workbook: XLSX.WorkBook;
   try {
     workbook = XLSX.read(bytes, { type: "buffer", cellDates: true });
