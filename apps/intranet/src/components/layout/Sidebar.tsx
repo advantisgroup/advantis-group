@@ -11,6 +11,7 @@ import {
   Cloud,
   ExternalLink,
   LayoutDashboard,
+  LineChart,
   Megaphone,
   MessageSquare,
   Plane,
@@ -179,6 +180,14 @@ export function Sidebar() {
               },
             ]
           : []),
+        {
+          href: "/performance",
+          labelKey: "performance",
+          icon: LineChart,
+          // Its own login (not yet Clerk-coupled), so flag it as a separate
+          // area like ActivityTrack rather than a normal in-app link.
+          external: true,
+        },
       ],
     },
     {

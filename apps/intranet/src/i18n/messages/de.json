@@ -11,6 +11,7 @@
     "guidebooks": "Wiki",
     "directory": "Mitarbeiter",
     "applicants": "Bewerbermanagement",
+    "performance": "Performance",
     "admin": "Verwaltung",
     "activity": "Aktivitäten",
     "settings": "Einstellungen",
@@ -1155,6 +1156,19 @@
     "actionNewEvent": "Neuer Termin",
     "actionNewAnnouncement": "Neue Ankündigung",
     "actionUpload": "Datei hochladen"
+  },
+  "Performance": {
+    "loginTitle": "Performance",
+    "loginIntro": "Melde dich mit deinem Performance-Konto an, um die Vertriebs-KPIs zu sehen.",
+    "emailLabel": "E-Mail",
+    "passwordLabel": "Passwort",
+    "loginSubmit": "Anmelden",
+    "loginInvalid": "E-Mail oder Passwort stimmt nicht.",
+    "badge": "Performance",
+    "exit": "Abmelden",
+    "comingSoonTitle": "Du bist angemeldet",
+    "comingSoonAdmin": "Das Team-Dashboard wird gerade gebaut — schau bald wieder vorbei.",
+    "comingSoonEmployee": "Dein persönliches Dashboard wird gerade gebaut — schau bald wieder vorbei."
   },
   "Guest": {
     "loginTitle": "Gast-Tour",

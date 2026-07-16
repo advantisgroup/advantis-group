@@ -11,6 +11,7 @@
     "guidebooks": "Guidebooks",
     "directory": "Directory",
     "applicants": "Applicants",
+    "performance": "Performance",
     "admin": "Admin",
     "activity": "Activity",
     "settings": "Settings",
@@ -1155,6 +1156,19 @@
     "actionNewEvent": "New event",
     "actionNewAnnouncement": "New announcement",
     "actionUpload": "Upload file"
+  },
+  "Performance": {
+    "loginTitle": "Performance",
+    "loginIntro": "Sign in with your Performance account to view sales team KPIs.",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "loginSubmit": "Sign in",
+    "loginInvalid": "Email or password is incorrect.",
+    "badge": "Performance",
+    "exit": "Sign out",
+    "comingSoonTitle": "You're signed in",
+    "comingSoonAdmin": "The team dashboard is being built — check back soon.",
+    "comingSoonEmployee": "Your personal dashboard is being built — check back soon."
   },
   "Guest": {
     "loginTitle": "Guest tour",
