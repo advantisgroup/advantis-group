@@ -1118,6 +1118,16 @@ export default defineSchema({
     /** Release key of the last dismissed "What's new" dialog. */
     dismissedWhatsNew: v.optional(v.string()),
     browserPushEnabled: v.optional(v.boolean()),
+    onboardingStartedAt: v.optional(v.number()),
+    onboardingCompletedAt: v.optional(v.number()),
+    /** Set when the user skips onboarding from the welcome step. Distinct from
+     * `onboardingCompletedAt` for future analytics, but both hide the header
+     * trigger and resume affordance the same way. */
+    onboardingDismissedAt: v.optional(v.number()),
+    /** Resume index into the onboarding wizard's step list. */
+    onboardingStep: v.optional(v.number()),
+    /** JSON-encoded Record<OnboardingStepId, "pending"|"completed"|"skipped">. */
+    onboardingStepStatuses: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 
