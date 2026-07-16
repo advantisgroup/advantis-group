@@ -96,7 +96,11 @@ export const canAccessFile = query({
     const storageCId = storageId as unknown as Id<"_storage">;
 
     async function granted(reason: string) {
-      return { hasAccess: true as const, reason, url: await ctx.storage.getUrl(storageCId) };
+      return {
+        hasAccess: true as const,
+        reason,
+        url: await ctx.storage.getUrl(storageCId),
+      };
     }
 
     // Check if used as a user avatar (public to everyone)
@@ -121,12 +125,11 @@ export const canAccessFile = query({
     if (conversationAvatar) {
       const userInConversation = await ctx.db
         .query("conversationMembers")
-        .filter(
-          q =>
-            q.and(
-              q.eq(q.field("conversationId"), conversationAvatar._id),
-              q.eq(q.field("userId"), user._id)
-            )
+        .filter(q =>
+          q.and(
+            q.eq(q.field("conversationId"), conversationAvatar._id),
+            q.eq(q.field("userId"), user._id)
+          )
         )
         .first();
       if (userInConversation) {
@@ -138,7 +141,8 @@ export const canAccessFile = query({
     const announcements = await ctx.db.query("announcements").collect();
 
     for (const ann of announcements) {
-      if (!ann.attachmentStorageIds.length && !ann.attachments?.length) continue;
+      if (!ann.attachmentStorageIds.length && !ann.attachments?.length)
+        continue;
       const ids = [
         ...ann.attachmentStorageIds,
         ...(ann.attachments?.map(a => a.storageId) ?? []),
@@ -179,12 +183,11 @@ export const canAccessFile = query({
 
       const userInConversation = await ctx.db
         .query("conversationMembers")
-        .filter(
-          q =>
-            q.and(
-              q.eq(q.field("conversationId"), conversation._id),
-              q.eq(q.field("userId"), user._id)
-            )
+        .filter(q =>
+          q.and(
+            q.eq(q.field("conversationId"), conversation._id),
+            q.eq(q.field("userId"), user._id)
+          )
         )
         .first();
 

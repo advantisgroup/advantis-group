@@ -24,12 +24,18 @@ function sanitizeFilename(name: string): string {
 
 function debug(storageId: string, message: string, data?: unknown) {
   const timestamp = new Date().toISOString();
-  console.warn(`[content-proxy] [${timestamp}] ${storageId} - ${message}`, data ?? "");
+  console.warn(
+    `[content-proxy] [${timestamp}] ${storageId} - ${message}`,
+    data ?? ""
+  );
 }
 
 function logError(storageId: string, message: string, error?: unknown) {
   const timestamp = new Date().toISOString();
-  console.error(`[content-proxy] [${timestamp}] ${storageId} - ERROR: ${message}`, error ?? "");
+  console.error(
+    `[content-proxy] [${timestamp}] ${storageId} - ERROR: ${message}`,
+    error ?? ""
+  );
 }
 
 async function handle(
@@ -93,7 +99,10 @@ async function handle(
   }
 
   if (!accessResult.url) {
-    logError(storageId, "Convex returned no storage URL for an accessible file");
+    logError(
+      storageId,
+      "Convex returned no storage URL for an accessible file"
+    );
     return new NextResponse(null, { status: 404 });
   }
 

@@ -654,6 +654,126 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_status", ["status"]),
 
+  // --- Performance (sales KPI dashboard) -----------------------------------
+  // Password-protected area, fully separate from Clerk employee accounts —
+  // an interim step before it's coupled to Clerk auth. See
+  // `performanceAuth.ts`. `linkedUserId` is a forward-compat hook only
+  // (nothing reads it yet); it's what will make the eventual Clerk cutover a
+  // join instead of a rewrite, mirroring how `people.userId` already works.
+  performanceLogins: defineTable({
+    email: v.string(),
+    name: v.string(),
+    passwordHash: v.string(),
+    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    employeeId: v.optional(v.id("performanceEmployees")),
+    linkedUserId: v.optional(v.id("users")),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_email", ["email"]),
+
+  performanceSessions: defineTable({
+    token: v.string(),
+    loginId: v.id("performanceLogins"),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    lastUsedAt: v.number(),
+  }).index("by_token", ["token"]),
+
+  // Sales-team roster for the Performance feature; rows are created on first
+  // report import (added in a later phase — this table exists now so
+  // `performanceLogins.employeeId` can reference it).
+  performanceEmployees: defineTable({
+    name: v.string(),
+    active: v.boolean(),
+  }).index("by_name", ["name"]),
+
+  // One row per employee per report day. Metric columns are nullable —
+  // null means "not measured in this snapshot", not zero — so a report
+  // that only covers some metrics (e.g. a call report on a day with no
+  // Salesforce export) never overwrites the others with a false zero.
+  // `reportDate` is an ISO "YYYY-MM-DD" string so lexicographic and
+  // chronological order coincide for range queries.
+  performanceReports: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    reportDate: v.string(),
+    leadsCreated: v.optional(v.number()),
+    workableCreated: v.optional(v.number()),
+    leadsAnalysis: v.optional(v.number()),
+    leadsDetailsIdent: v.optional(v.number()),
+    oppsOpen: v.optional(v.number()),
+    oppsClose7d: v.optional(v.number()),
+    oppsPending: v.optional(v.number()),
+    wonMonth: v.optional(v.number()),
+    callsToday: v.optional(v.number()),
+    overduesAnalysis: v.optional(v.number()),
+    overduesOpps: v.optional(v.number()),
+    oppsOver30: v.optional(v.number()),
+    leadsNoAction14: v.optional(v.number()),
+    oppsNoAction14: v.optional(v.number()),
+    callsAnswered: v.optional(v.number()),
+    callsOutbound: v.optional(v.number()),
+    talkTotalSec: v.optional(v.number()),
+    talkAvgSec: v.optional(v.number()),
+    loginSec: v.optional(v.number()),
+    unqualifiedReasons: v.optional(v.string()),
+    sourceFile: v.string(),
+    uploadedAt: v.number(),
+  })
+    .index("by_employee_date", ["employeeId", "reportDate"])
+    .index("by_reportDate", ["reportDate"]),
+
+  // Drill-down rows for the currently-open Salesforce leads/opportunities.
+  // Replaced wholesale on every Salesforce import (the source report is
+  // itself a full point-in-time snapshot, not a delta) rather than
+  // accumulated — old rows would otherwise describe leads/opps that may no
+  // longer be open.
+  performanceRawLeads: defineTable({
+    reportDate: v.string(),
+    owner: v.string(),
+    status: v.optional(v.string()),
+    statusDetails: v.optional(v.string()),
+    createDate: v.optional(v.string()),
+    lastActivity: v.optional(v.string()),
+  }).index("by_owner", ["owner"]),
+
+  performanceRawOpps: defineTable({
+    reportDate: v.string(),
+    owner: v.string(),
+    stage: v.optional(v.string()),
+    stageDetails: v.optional(v.string()),
+    createdDate: v.optional(v.string()),
+    closeDate: v.optional(v.string()),
+    age: v.optional(v.number()),
+    lastActivity: v.optional(v.string()),
+    customerNumber: v.optional(v.string()),
+  }).index("by_owner", ["owner"]),
+
+  // Admin-set monthly goals/todos for an employee. Status can be updated by
+  // the employee themself; only an admin can create/edit/delete the topic
+  // itself.
+  performanceTopics: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    ym: v.string(),
+    topic: v.string(),
+    todo: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    status: v.union(
+      v.literal("offen"),
+      v.literal("erreicht"),
+      v.literal("nicht_erreicht")
+    ),
+    createdBy: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_employee_ym", ["employeeId", "ym"]),
+
+  performanceUploadLog: defineTable({
+    filename: v.string(),
+    storageId: v.id("_storage"),
+    rowsImported: v.number(),
+    uploadedAt: v.number(),
+  }).index("by_uploadedAt", ["uploadedAt"]),
+
   // ========================================================================
   // ActivityTrack — workforce-activity dashboard, ported into the intranet.
   //
