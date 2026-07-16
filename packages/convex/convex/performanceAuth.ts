@@ -211,7 +211,7 @@ export const login = action({
   },
 });
 
-async function resolveActiveSession(
+export async function resolveActiveSession(
   ctx: QueryCtx | MutationCtx,
   token: string
 ): Promise<{
@@ -227,6 +227,26 @@ async function resolveActiveSession(
   const login = await ctx.db.get(session.loginId);
   if (!login || !login.active) return null;
   return { session, login };
+}
+
+/** Require a valid session belonging to an active admin login; throws
+ * otherwise. Shared by any Performance query/mutation that needs to gate
+ * on "caller is a Performance admin" (e.g. the upload log, later the KPI
+ * dashboards' admin-only views) — Performance auth is its own session
+ * system, not Clerk, so this is the equivalent of `lib/auth.ts`'s
+ * `requireAdmin` for this feature. */
+export async function requireAdminLogin(
+  ctx: QueryCtx | MutationCtx,
+  token: string
+): Promise<Doc<"performanceLogins">> {
+  const resolved = await resolveActiveSession(ctx, token);
+  if (!resolved || resolved.login.role !== "admin") {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "Admin session required.",
+    });
+  }
+  return resolved.login;
 }
 
 export const validateSession = query({
