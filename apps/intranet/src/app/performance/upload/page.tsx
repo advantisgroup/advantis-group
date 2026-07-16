@@ -10,8 +10,7 @@ import { LogOut, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
-import { Badge } from "@/components/ui/badge";
+import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -130,8 +129,7 @@ export default function PerformanceUploadPage() {
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
-        <PerformanceBrandMark />
-        <Badge variant="secondary">{t("badge")}</Badge>
+        <PerformanceWordmark />
         <div className="flex-1" />
         <Link href="/performance">
           <Button variant="ghost" size="sm">
