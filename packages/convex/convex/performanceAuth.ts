@@ -20,24 +20,18 @@ import {
 
 const SESSION_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
-/**
- * Accounts seeded by `seedAdmins` below. Email/name are not secrets and are
- * fine to commit; the password for each comes from a Convex deployment env
- * var (`npx convex env set <var> '...'`), never from source or a CLI arg —
- * both would otherwise land in shell history or git.
- */
-const SEED_ADMINS: { email: string; name: string; passwordEnvVar: string }[] = [
-  {
-    email: "123endres@gmail.com",
-    name: "Jörg Endres",
-    passwordEnvVar: "PERFORMANCE_ADMIN_1_PASSWORD",
-  },
-  {
-    email: "reichl@salespirates.de",
-    name: "Andrea Reichl",
-    passwordEnvVar: "PERFORMANCE_ADMIN_2_PASSWORD",
-  },
-];
+/** Emails allowed to be bootstrapped as a Performance admin, from the
+ * `PERFORMANCE_ADMIN_EMAILS` Convex env var (comma/semicolon/whitespace
+ * list) — mirrors `getAdminEmails`/`parseList` in `lib/auth.ts`. Not a
+ * secret; unlike the password, it's fine to configure this way. */
+function getSeedAdminEmails(): string[] {
+  const value = process.env.PERFORMANCE_ADMIN_EMAILS;
+  if (!value) return [];
+  return value
+    .split(/[,;\s]+/)
+    .map(entry => entry.trim().toLowerCase())
+    .filter(entry => entry.length > 0);
+}
 
 export const getLoginByEmail = internalQuery({
   args: { email: v.string() },
@@ -55,7 +49,10 @@ export const createLoginIfMissing = internalMutation({
     passwordHash: v.string(),
     role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
   },
-  handler: async (ctx, { email, name, passwordHash, role }) => {
+  handler: async (
+    ctx,
+    { email, name, passwordHash, role }
+  ): Promise<{ created: boolean }> => {
     const existing = await ctx.db
       .query("performanceLogins")
       .withIndex("by_email", q => q.eq("email", email))
@@ -74,36 +71,37 @@ export const createLoginIfMissing = internalMutation({
 });
 
 /**
- * One-time bootstrap for the two admin accounts requested for the
- * Performance feature. Idempotent (skips any email that already has a
- * login), same as the reference script's admin seeding. Run via:
- *   npx convex run performanceAuth:seedAdmins
- * after setting each `passwordEnvVar` with `npx convex env set`.
+ * One-time bootstrap for an admin account. Deliberately not exposed as a
+ * public mutation/action — call it once per admin from the Convex
+ * Dashboard's "Run Function" UI (Functions → performanceAuth:bootstrapAdmin),
+ * typing the plaintext password directly into that form. It never touches a
+ * CLI arg or an env var, so it never lands in shell history or git. Only
+ * accepts emails present in `PERFORMANCE_ADMIN_EMAILS`; idempotent per email
+ * (a second run for the same address is a no-op), same as the reference
+ * script's admin seeding.
  */
-export const seedAdmins = internalAction({
-  args: {},
-  handler: async ctx => {
-    const results: { email: string; status: string }[] = [];
-    for (const admin of SEED_ADMINS) {
-      const password = process.env[admin.passwordEnvVar];
-      if (!password) {
-        results.push({
-          email: admin.email,
-          status: "skipped: env var not set",
-        });
-        continue;
-      }
-      const passwordHash = await hashPassword(password);
-      const { created } = await ctx.runMutation(
-        internal.performanceAuth.createLoginIfMissing,
-        { email: admin.email, name: admin.name, passwordHash, role: "admin" }
-      );
-      results.push({
-        email: admin.email,
-        status: created ? "created" : "already exists",
+export const bootstrapAdmin = internalAction({
+  args: { email: v.string(), name: v.string(), password: v.string() },
+  handler: async (
+    ctx,
+    { email, name, password }
+  ): Promise<{ email: string; status: string }> => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!getSeedAdminEmails().includes(normalizedEmail)) {
+      throw new ConvexError({
+        code: "not_allowed",
+        message: `${normalizedEmail} is not in PERFORMANCE_ADMIN_EMAILS.`,
       });
     }
-    return results;
+    const passwordHash = await hashPassword(password);
+    const { created } = await ctx.runMutation(
+      internal.performanceAuth.createLoginIfMissing,
+      { email: normalizedEmail, name, passwordHash, role: "admin" }
+    );
+    return {
+      email: normalizedEmail,
+      status: created ? "created" : "already exists",
+    };
   },
 });
 
