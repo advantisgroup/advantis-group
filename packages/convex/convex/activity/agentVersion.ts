@@ -62,7 +62,14 @@ export const refreshLatestAgentVersion = internalAction({
     try {
       const res = await fetch(
         `https://api.github.com/repos/${REPO}/releases/latest`,
-        { headers: { Accept: "application/vnd.github+json" } }
+        {
+          headers: {
+            Accept: "application/vnd.github+json",
+            // GitHub's API 403s any request with no User-Agent, public repo
+            // or not — it doesn't default one for us the way a browser would.
+            "User-Agent": "advantis-group-activitytrack-version-check",
+          },
+        }
       );
       if (!res.ok) {
         console.error(
