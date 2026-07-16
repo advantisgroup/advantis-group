@@ -26,7 +26,9 @@ export const getLatestAgentVersion = query({
     console.debug(
       "[activity/agentVersion] getLatestAgentVersion ->",
       row?.value ?? null,
-      row ? `(updated ${new Date(row.updatedAt).toISOString()})` : "(no row yet)"
+      row
+        ? `(updated ${new Date(row.updatedAt).toISOString()})`
+        : "(no row yet)"
     );
     return row?.value ?? null;
   },

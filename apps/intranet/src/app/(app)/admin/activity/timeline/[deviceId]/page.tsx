@@ -196,51 +196,45 @@ export default function TimelinePage({
     : null;
 
   // Aggregations (memoised; samples hold one day, up to ~6k rows).
-  const {
-    trend,
-    heatmap,
-    intraday,
-    hourlyStates,
-    daySegments,
-    stateChanges,
-  } = useMemo(() => {
-    const tzOffset = new Date().getTimezoneOffset();
-    const s: Sample[] = samples ?? [];
-    const { heatmap, intraday } = timelineCharts(s, selectedDay, tzOffset);
-    // For *today* strip the prepended prior-day row (it would credit
-    // yesterday's state to hours 00-NN before work started). For a past day
-    // we keep it so the strip fills from that day's midnight.
-    const dayHistory = (stateHistory ?? []).filter(
-      x => !isToday || x.at >= dayStartMs
-    );
-    const windowEnd = isToday ? now : dayEndMs;
-    return {
-      trend: dailyTrend(daily ?? [], startDay, today),
-      heatmap,
-      intraday,
-      hourlyStates: hourlyStateBreakdown(
-        dayHistory,
-        dayStartMs,
-        windowEnd,
-        tzOffset
-      ),
-      daySegments: dayStateSegments(dayHistory, dayStartMs, windowEnd),
-      // Newest first — the "what changed, when" feed in plain words. The
-      // render caps it at RECENT_CHANGES until the user expands it.
-      stateChanges: dayHistory.filter(x => x.at >= dayStartMs).reverse(),
-    };
-  }, [
-    samples,
-    daily,
-    startDay,
-    today,
-    selectedDay,
-    isToday,
-    stateHistory,
-    dayStartMs,
-    dayEndMs,
-    now,
-  ]);
+  const { trend, heatmap, intraday, hourlyStates, daySegments, stateChanges } =
+    useMemo(() => {
+      const tzOffset = new Date().getTimezoneOffset();
+      const s: Sample[] = samples ?? [];
+      const { heatmap, intraday } = timelineCharts(s, selectedDay, tzOffset);
+      // For *today* strip the prepended prior-day row (it would credit
+      // yesterday's state to hours 00-NN before work started). For a past day
+      // we keep it so the strip fills from that day's midnight.
+      const dayHistory = (stateHistory ?? []).filter(
+        x => !isToday || x.at >= dayStartMs
+      );
+      const windowEnd = isToday ? now : dayEndMs;
+      return {
+        trend: dailyTrend(daily ?? [], startDay, today),
+        heatmap,
+        intraday,
+        hourlyStates: hourlyStateBreakdown(
+          dayHistory,
+          dayStartMs,
+          windowEnd,
+          tzOffset
+        ),
+        daySegments: dayStateSegments(dayHistory, dayStartMs, windowEnd),
+        // Newest first — the "what changed, when" feed in plain words. The
+        // render caps it at RECENT_CHANGES until the user expands it.
+        stateChanges: dayHistory.filter(x => x.at >= dayStartMs).reverse(),
+      };
+    }, [
+      samples,
+      daily,
+      startDay,
+      today,
+      selectedDay,
+      isToday,
+      stateHistory,
+      dayStartMs,
+      dayEndMs,
+      now,
+    ]);
 
   // Localised state labels for the hourly chart legend/tooltip.
   const stateLabels = useMemo(
