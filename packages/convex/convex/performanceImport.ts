@@ -1,44 +1,30 @@
 /**
- * Import pipeline for the Performance feature's report uploads. Ported
- * from the reference script's application-level import functions
- * (`upsert_snapshot`, `import_salesforce`, `import_calls`, `import_rows`,
- * `import_file`, `purge_excluded`).
+ * Database-side half of the Performance feature's report-upload pipeline.
+ * Ported from the reference script's application-level import functions
+ * (`upsert_snapshot`, `import_rows`, `purge_excluded`).
  *
- * `apps/api`'s upload route does the "dumb" work — receive bytes, run the
- * security scan, store the original file, decode it into raw sheet
- * rows/CSV text — then calls `importReport` with that raw data. Detection,
- * aggregation, and all database writes happen here, so the report-parsing
- * business logic (`performance/lib/*`) stays entirely inside Convex
- * instead of being duplicated across the process boundary.
+ * Report detection, parsing, and aggregation (Salesforce/call-report
+ * dispatch, `parseAggregatedTemplate`'s fallback) live in
+ * `performanceUploadParse.ts`'s `apiImportReport` action instead of here —
+ * that file needs the Node-only `xlsx` package and reads the uploaded file
+ * directly from Convex storage (a real Salesforce export can have tens of
+ * thousands of rows, which blows past Convex's 8192-element
+ * array-argument limit if shipped here as an action argument). This file
+ * stays focused on the actual database writes (`applyImport`, the raw-table
+ * chunk mutations, `upsertSnapshot`, `purgeExcluded`), which
+ * `apiImportReport` calls into via `ctx.runMutation`.
  */
 import { ConvexError, v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
 import {
-  action,
   internalMutation,
   internalQuery,
   mutation,
   query,
-  type ActionCtx,
   type MutationCtx,
 } from "./_generated/server";
-import {
-  cleanAgentName,
-  matchEmployee,
-  readCallCsv,
-  readCallExport,
-  type CallRow,
-} from "./performance/lib/callImport";
-import {
-  aggregateLeadReport,
-  aggregateOppReport,
-  EXCLUDED_OWNERS,
-  readSalesforceExport,
-  type RawLead,
-  type RawOpp,
-} from "./performance/lib/salesforceImport";
+import { EXCLUDED_OWNERS } from "./performance/lib/salesforceImport";
 import {
   METRIC_KEYS,
   type CellValue,
@@ -53,8 +39,10 @@ import { toISODate } from "./performance/lib/workdays";
 /** Same convention as `onedrive.ts`: functions prefixed `api*` are
  * server-key gated and only called by `apps/api`, which has already
  * authenticated the caller (here: a valid, admin-role Performance
- * session) before reaching Convex. */
-function assertServerKey(serverKey: string): void {
+ * session) before reaching Convex. Exported so `performanceUploadParse.ts`
+ * (a separate "use node" action file — see its header comment) can reuse
+ * the same check. */
+export function assertServerKey(serverKey: string): void {
   const expected = process.env.CONVEX_SERVER_KEY;
   if (!expected || serverKey !== expected) {
     throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
@@ -454,8 +442,6 @@ const rawOppValidator = v.object({
 export const applyImport = internalMutation({
   args: {
     snapshots: v.array(snapshotValidator),
-    rawLeads: v.optional(v.array(rawLeadValidator)),
-    rawOpps: v.optional(v.array(rawOppValidator)),
     sourceFile: v.string(),
     uploadLogLabel: v.string(),
     storageId: v.id("_storage"),
@@ -472,22 +458,6 @@ export const applyImport = internalMutation({
         now
       );
     }
-    // Raw drill-down rows are a full point-in-time snapshot of the source
-    // report, not a delta — replaced wholesale rather than accumulated.
-    if (args.rawLeads) {
-      const existing = await ctx.db.query("performanceRawLeads").collect();
-      await Promise.all(existing.map(row => ctx.db.delete(row._id)));
-      await Promise.all(
-        args.rawLeads.map(row => ctx.db.insert("performanceRawLeads", row))
-      );
-    }
-    if (args.rawOpps) {
-      const existing = await ctx.db.query("performanceRawOpps").collect();
-      await Promise.all(existing.map(row => ctx.db.delete(row._id)));
-      await Promise.all(
-        args.rawOpps.map(row => ctx.db.insert("performanceRawOpps", row))
-      );
-    }
     await ctx.db.insert("performanceUploadLog", {
       filename: args.uploadLogLabel,
       storageId: args.storageId,
@@ -496,6 +466,47 @@ export const applyImport = internalMutation({
     });
     await purgeExcluded(ctx);
     return { rowsImported: args.snapshots.length };
+  },
+});
+
+// Raw drill-down rows are a full point-in-time snapshot of the source
+// report, not a delta — replaced wholesale rather than accumulated. Split
+// into a clear + chunked-insert pair (rather than one `applyImport` call
+// carrying the whole array) because a real Salesforce export's raw rows can
+// number in the thousands, which risks Convex's 8192-element array-argument
+// limit if shipped as a single call — see performanceUploadParse.ts, the
+// only caller.
+export const clearRawLeads = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const existing = await ctx.db.query("performanceRawLeads").collect();
+    await Promise.all(existing.map(row => ctx.db.delete(row._id)));
+  },
+});
+
+export const insertRawLeadsChunk = internalMutation({
+  args: { rows: v.array(rawLeadValidator) },
+  handler: async (ctx, { rows }): Promise<void> => {
+    await Promise.all(
+      rows.map(row => ctx.db.insert("performanceRawLeads", row))
+    );
+  },
+});
+
+export const clearRawOpps = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const existing = await ctx.db.query("performanceRawOpps").collect();
+    await Promise.all(existing.map(row => ctx.db.delete(row._id)));
+  },
+});
+
+export const insertRawOppsChunk = internalMutation({
+  args: { rows: v.array(rawOppValidator) },
+  handler: async (ctx, { rows }): Promise<void> => {
+    await Promise.all(
+      rows.map(row => ctx.db.insert("performanceRawOpps", row))
+    );
   },
 });
 
@@ -514,194 +525,5 @@ export const listUploadLog = query({
       rowsImported: r.rowsImported,
       uploadedAt: r.uploadedAt,
     }));
-  },
-});
-
-// ------------------------------------------------------------------- entry
-
-export type ImportResult =
-  | { status: "ok"; rowsImported: number; skipped?: string[] }
-  | { status: "empty"; reportDate: string };
-
-const CALL_FIELDS: (keyof CallRow & keyof MetricFields)[] = [
-  "callsToday",
-  "callsAnswered",
-  "callsOutbound",
-  "talkAvgSec",
-  "talkTotalSec",
-  "loginSec",
-];
-
-/** One row per employee/day, matched against the known team; agents with
- * no unambiguous team match are skipped (reported in `skipped`), same as
- * `import_calls`. Requires at least one Lead/Opportunity report to have
- * been imported already, so there's a team to match against. */
-async function buildCallSnapshots(
-  ctx: ActionCtx,
-  rows: CallRow[]
-): Promise<{ snapshots: EmployeeSnapshot[]; skipped: string[] }> {
-  const known: string[] = await ctx.runQuery(
-    internal.performanceImport.getTeamEmployeeNames,
-    {}
-  );
-  if (known.length === 0) {
-    throw new ConvexError({
-      code: "no_employees",
-      message:
-        "Es sind noch keine Mitarbeiter vorhanden. Bitte zuerst den Lead- oder Opportunity-Report hochladen.",
-    });
-  }
-  const snapshots: EmployeeSnapshot[] = [];
-  const skipped: string[] = [];
-  for (const rec of rows) {
-    const emp = matchEmployee(rec.employee, known);
-    if (!emp) {
-      skipped.push(cleanAgentName(rec.employee));
-      continue;
-    }
-    const fields: SnapshotFields = {};
-    for (const f of CALL_FIELDS) {
-      const value = rec[f];
-      if (value !== null && value !== undefined) fields[f] = value;
-    }
-    if (Object.keys(fields).length === 0) continue;
-    snapshots.push({
-      employeeName: emp,
-      reportDate: toISODate(rec.date),
-      fields,
-    });
-  }
-  return { snapshots, skipped };
-}
-
-/** Runs the applyImport mutation and surfaces any failure's real message.
- * Convex redacts a plain thrown Error down to an opaque "Server Error" for
- * the caller unless it's a ConvexError — so without this, apps/api (and the
- * admin uploading the file) would see no detail at all about what actually
- * went wrong inside the transaction. */
-async function runApplyImport(
-  ctx: ActionCtx,
-  args: {
-    snapshots: EmployeeSnapshot[];
-    rawLeads?: RawLead[];
-    rawOpps?: RawOpp[];
-    sourceFile: string;
-    uploadLogLabel: string;
-    storageId: Id<"_storage">;
-  }
-): Promise<{ rowsImported: number }> {
-  try {
-    return await ctx.runMutation(internal.performanceImport.applyImport, args);
-  } catch (err) {
-    if (err instanceof ConvexError) throw err;
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("[performanceImport] applyImport failed:", err);
-    throw new ConvexError({ code: "import_mutation_failed", message });
-  }
-}
-
-/**
- * Detects the report type (Salesforce Lead/Opp, call report as CSV or
- * Excel, or an aggregated template) and imports it — ported from
- * `import_file`. Exactly one of `csvText`/`sheetRows` should be provided,
- * matching the source file's extension.
- *
- * Server-key gated: only `apps/api`'s upload route calls this, after it has
- * already verified the caller holds a valid, admin-role Performance
- * session — same trust boundary as the `api*`-prefixed OneDrive functions
- * in `onedrive.ts`.
- */
-export const apiImportReport = action({
-  args: {
-    serverKey: v.string(),
-    filename: v.string(),
-    storageId: v.id("_storage"),
-    csvText: v.optional(v.string()),
-    sheetRows: v.optional(v.any()),
-  },
-  handler: async (
-    ctx,
-    { serverKey, filename, storageId, csvText, sheetRows }
-  ): Promise<ImportResult> => {
-    assertServerKey(serverKey);
-    if (csvText !== undefined) {
-      const detected = readCallCsv(csvText);
-      if (!detected) {
-        throw new ConvexError({
-          code: "unrecognized_report",
-          message:
-            "CSV nicht erkannt. Erwartet wird ein Call-Report mit Agentenname und Call-Spalten.",
-        });
-      }
-      if (detected.rows.length === 0) {
-        // A report with zero activity (e.g. a weekend): ignored entirely,
-        // no data, no upload-log entry.
-        return { status: "empty", reportDate: toISODate(detected.reportDate) };
-      }
-      const { snapshots, skipped } = await buildCallSnapshots(
-        ctx,
-        detected.rows
-      );
-      const result = await runApplyImport(ctx, {
-        snapshots,
-        sourceFile: filename,
-        uploadLogLabel: `${filename} (Call-Report ${toISODate(detected.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
-        storageId,
-      });
-      return { status: "ok", rowsImported: result.rowsImported, skipped };
-    }
-
-    const rows = sheetRows as SheetRow[] | undefined;
-    if (!rows) {
-      throw new ConvexError({
-        code: "validation",
-        message: "No data provided.",
-      });
-    }
-
-    const sf = readSalesforceExport(rows);
-    if (sf) {
-      if (sf.kind === "lead") {
-        const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
-        const result = await runApplyImport(ctx, {
-          snapshots,
-          rawLeads: raw,
-          sourceFile: filename,
-          uploadLogLabel: `${filename} (Lead-Report, ${sf.rows.length} Zeilen)`,
-          storageId,
-        });
-        return { status: "ok", rowsImported: result.rowsImported };
-      }
-      const { snapshots, raw } = aggregateOppReport(sf.rows, sf.reportDate);
-      const result = await runApplyImport(ctx, {
-        snapshots,
-        rawOpps: raw,
-        sourceFile: filename,
-        uploadLogLabel: `${filename} (Opportunity-Report, ${sf.rows.length} Zeilen)`,
-        storageId,
-      });
-      return { status: "ok", rowsImported: result.rowsImported };
-    }
-
-    const calls = readCallExport(rows);
-    if (calls) {
-      const { snapshots, skipped } = await buildCallSnapshots(ctx, calls.rows);
-      const result = await runApplyImport(ctx, {
-        snapshots,
-        sourceFile: filename,
-        uploadLogLabel: `${filename} (Call-Report ${toISODate(calls.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
-        storageId,
-      });
-      return { status: "ok", rowsImported: result.rowsImported, skipped };
-    }
-
-    const template = parseAggregatedTemplate(rows);
-    const result = await runApplyImport(ctx, {
-      snapshots: template,
-      sourceFile: filename,
-      uploadLogLabel: filename,
-      storageId,
-    });
-    return { status: "ok", rowsImported: result.rowsImported };
   },
 });
