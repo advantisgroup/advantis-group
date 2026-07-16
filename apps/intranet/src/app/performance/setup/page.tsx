@@ -10,7 +10,7 @@ import { LineChart } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import { BrandLogo } from "@/components/Logo";
+import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,7 +46,7 @@ export default function PerformanceSetupPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
-          <BrandLogo className="mb-4" />
+          <PerformanceBrandMark className="mb-4" />
           <CardTitle className="flex items-center gap-2">
             <LineChart className="h-5 w-5 text-primary" />
             {t("setupTitle")}

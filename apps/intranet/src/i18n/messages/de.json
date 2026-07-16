@@ -1158,7 +1158,7 @@
     "actionUpload": "Datei hochladen"
   },
   "Performance": {
-    "loginTitle": "Performance",
+    "loginTitle": "Anmelden",
     "loginIntro": "Melde dich mit deinem Performance-Konto an, um die Vertriebs-KPIs zu sehen.",
     "emailLabel": "E-Mail",
     "passwordLabel": "Passwort",
@@ -1175,7 +1175,21 @@
     "exit": "Abmelden",
     "comingSoonTitle": "Du bist angemeldet",
     "comingSoonAdmin": "Das Team-Dashboard wird gerade gebaut — schau bald wieder vorbei.",
-    "comingSoonEmployee": "Dein persönliches Dashboard wird gerade gebaut — schau bald wieder vorbei."
+    "comingSoonEmployee": "Dein persönliches Dashboard wird gerade gebaut — schau bald wieder vorbei.",
+    "uploadLink": "Reports hochladen",
+    "backToDashboard": "Zurück zum Dashboard",
+    "uploadTitle": "Reports hochladen",
+    "uploadIntro": "Lade einen Salesforce Lead-/Opportunity-Export oder einen Genesys Call-Report hoch (.xlsx, .xlsm oder .csv). Du kannst mehrere Dateien auf einmal auswählen.",
+    "uploading": "Wird hochgeladen …",
+    "uploadFailed": "Upload fehlgeschlagen.",
+    "uploadOk": "{count} Datenzeile(n) importiert",
+    "uploadEmpty": "Keine Aktivität in diesem Report — ignoriert.",
+    "uploadSkipped": "Keinem Teammitglied zugeordnet: {names}",
+    "uploadLogTitle": "Letzte Uploads",
+    "uploadLogEmpty": "Noch keine Uploads.",
+    "uploadLogFile": "Datei",
+    "uploadLogRows": "Zeilen",
+    "uploadLogWhen": "Hochgeladen"
   },
   "Guest": {
     "loginTitle": "Gast-Tour",

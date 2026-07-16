@@ -1158,7 +1158,7 @@
     "actionUpload": "Upload file"
   },
   "Performance": {
-    "loginTitle": "Performance",
+    "loginTitle": "Sign in",
     "loginIntro": "Sign in with your Performance account to view sales team KPIs.",
     "emailLabel": "Email",
     "passwordLabel": "Password",
@@ -1175,7 +1175,21 @@
     "exit": "Sign out",
     "comingSoonTitle": "You're signed in",
     "comingSoonAdmin": "The team dashboard is being built — check back soon.",
-    "comingSoonEmployee": "Your personal dashboard is being built — check back soon."
+    "comingSoonEmployee": "Your personal dashboard is being built — check back soon.",
+    "uploadLink": "Upload reports",
+    "backToDashboard": "Back to dashboard",
+    "uploadTitle": "Upload reports",
+    "uploadIntro": "Upload a Salesforce Lead/Opportunity export or a Genesys call report (.xlsx, .xlsm, or .csv). You can select multiple files at once.",
+    "uploading": "Uploading…",
+    "uploadFailed": "Upload failed.",
+    "uploadOk": "{count} rows imported",
+    "uploadEmpty": "No activity in this report — ignored.",
+    "uploadSkipped": "Not matched to a team member: {names}",
+    "uploadLogTitle": "Recent uploads",
+    "uploadLogEmpty": "No uploads yet.",
+    "uploadLogFile": "File",
+    "uploadLogRows": "Rows",
+    "uploadLogWhen": "Uploaded"
   },
   "Guest": {
     "loginTitle": "Guest tour",

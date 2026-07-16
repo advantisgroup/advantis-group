@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { LineChart, LogOut } from "lucide-react";
+import { LineChart, LogOut, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { BrandLogo } from "@/components/Logo";
+import { Link } from "@/components/Link";
+import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,10 +58,18 @@ export default function PerformancePage() {
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
-        <BrandLogo />
+        <PerformanceBrandMark />
         <Badge variant="secondary">{t("badge")}</Badge>
         <div className="flex-1" />
         <span className="text-sm text-muted-foreground">{session.name}</span>
+        {session.role === "admin" && (
+          <Link href="/performance/upload">
+            <Button variant="ghost" size="sm">
+              <Upload className="mr-2 h-4 w-4" />
+              {t("uploadLink")}
+            </Button>
+          </Link>
+        )}
         <Button variant="ghost" size="sm" onClick={exit}>
           <LogOut className="mr-2 h-4 w-4" />
           {t("exit")}
