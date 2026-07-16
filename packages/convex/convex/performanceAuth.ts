@@ -4,7 +4,6 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import {
   action,
-  internalAction,
   internalMutation,
   internalQuery,
   mutation,
@@ -70,37 +69,80 @@ export const createLoginIfMissing = internalMutation({
   },
 });
 
+/** Whether `email` is still eligible for self-service admin setup: present
+ * in the `PERFORMANCE_ADMIN_EMAILS` allowlist and not already claimed. The
+ * setup page uses this to decide whether to show the "first time setup"
+ * form at all — it does not gate `setupAccount` itself, which re-checks
+ * both conditions server-side regardless. */
+export const canSetUpAccount = query({
+  args: { email: v.string() },
+  handler: async (ctx, { email }): Promise<boolean> => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!getSeedAdminEmails().includes(normalizedEmail)) return false;
+    const existing = await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_email", q => q.eq("email", normalizedEmail))
+      .unique();
+    return !existing;
+  },
+});
+
 /**
- * One-time bootstrap for an admin account. Deliberately not exposed as a
- * public mutation/action — call it once per admin from the Convex
- * Dashboard's "Run Function" UI (Functions → performanceAuth:bootstrapAdmin),
- * typing the plaintext password directly into that form. It never touches a
- * CLI arg or an env var, so it never lands in shell history or git. Only
- * accepts emails present in `PERFORMANCE_ADMIN_EMAILS`; idempotent per email
- * (a second run for the same address is a no-op), same as the reference
- * script's admin seeding.
+ * Self-service first-time setup: an email in the `PERFORMANCE_ADMIN_EMAILS`
+ * allowlist claims its account by choosing its own password, right in the
+ * app UI — no CLI, no Convex Dashboard, no env var ever holds a password.
+ * Only works once per email (first claim wins); a second attempt for an
+ * already-claimed address fails the same generic way as an email that was
+ * never on the allowlist, so this can't be used to probe which emails are
+ * eligible.
  */
-export const bootstrapAdmin = internalAction({
+export const setupAccount = action({
   args: { email: v.string(), name: v.string(), password: v.string() },
   handler: async (
     ctx,
     { email, name, password }
-  ): Promise<{ email: string; status: string }> => {
+  ): Promise<{
+    token: string;
+    expiresAt: number;
+    role: PerformanceRole;
+    name: string;
+  }> => {
     const normalizedEmail = email.trim().toLowerCase();
-    if (!getSeedAdminEmails().includes(normalizedEmail)) {
-      throw new ConvexError({
+    const notAllowed = () =>
+      new ConvexError({
         code: "not_allowed",
-        message: `${normalizedEmail} is not in PERFORMANCE_ADMIN_EMAILS.`,
+        message: "This email can't be set up right now.",
+      });
+    if (!getSeedAdminEmails().includes(normalizedEmail)) throw notAllowed();
+    if (password.length < 8) {
+      throw new ConvexError({
+        code: "validation",
+        message: "Password must be at least 8 characters.",
       });
     }
+
     const passwordHash = await hashPassword(password);
     const { created } = await ctx.runMutation(
       internal.performanceAuth.createLoginIfMissing,
-      { email: normalizedEmail, name, passwordHash, role: "admin" }
+      { email: normalizedEmail, name: name.trim(), passwordHash, role: "admin" }
+    );
+    if (!created) throw notAllowed(); // already claimed
+
+    const loginRow: Doc<"performanceLogins"> | null = await ctx.runQuery(
+      internal.performanceAuth.getLoginByEmail,
+      { email: normalizedEmail }
+    );
+    if (!loginRow) throw notAllowed(); // shouldn't happen; defensive
+
+    const session = await ctx.runMutation(
+      internal.performanceAuth.createSession,
+      { loginId: loginRow._id }
     );
     return {
-      email: normalizedEmail,
-      status: created ? "created" : "already exists",
+      token: session.token,
+      expiresAt: session.expiresAt,
+      role: loginRow.role,
+      name: loginRow.name,
     };
   },
 });

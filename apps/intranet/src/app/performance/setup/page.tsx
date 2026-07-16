@@ -17,25 +17,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { setPerformanceToken } from "@/lib/performanceAuth";
 
-export default function PerformanceLoginPage() {
+export default function PerformanceSetupPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
-  const login = useAction(api.performanceAuth.login);
+  const setupAccount = useAction(api.performanceAuth.setupAccount);
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function submit() {
-    if (!email.trim() || !password) return;
+    if (!email.trim() || !name.trim() || !password) return;
     setSubmitting(true);
     setError(null);
     try {
-      const result = await login({ email, password });
+      const result = await setupAccount({ email, name, password });
       setPerformanceToken(result.token, result.expiresAt);
       router.replace("/performance");
     } catch {
-      setError(t("loginInvalid"));
+      setError(t("setupFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -48,30 +49,38 @@ export default function PerformanceLoginPage() {
           <BrandLogo className="mb-4" />
           <CardTitle className="flex items-center gap-2">
             <LineChart className="h-5 w-5 text-primary" />
-            {t("loginTitle")}
+            {t("setupTitle")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{t("loginIntro")}</p>
+          <p className="text-sm text-muted-foreground">{t("setupIntro")}</p>
           <div className="space-y-2">
-            <Label htmlFor="performance-email">{t("emailLabel")}</Label>
+            <Label htmlFor="performance-setup-email">{t("emailLabel")}</Label>
             <Input
-              id="performance-email"
+              id="performance-setup-email"
               type="email"
               autoComplete="username"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === "Enter") void submit();
-              }}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="performance-password">{t("passwordLabel")}</Label>
+            <Label htmlFor="performance-setup-name">{t("nameLabel")}</Label>
             <Input
-              id="performance-password"
+              id="performance-setup-name"
+              autoComplete="name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="performance-setup-password">
+              {t("passwordLabel")}
+            </Label>
+            <Input
+              id="performance-setup-password"
               type="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               value={password}
               onChange={e => setPassword(e.target.value)}
               onKeyDown={e => {
@@ -82,17 +91,17 @@ export default function PerformanceLoginPage() {
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button
             className="w-full"
-            disabled={submitting || !email.trim() || !password}
+            disabled={submitting || !email.trim() || !name.trim() || !password}
             onClick={() => void submit()}
           >
-            {t("loginSubmit")}
+            {t("setupSubmit")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             <Link
-              href="/performance/setup"
+              href="/performance/login"
               className="underline underline-offset-4"
             >
-              {t("setupLink")}
+              {t("backToLogin")}
             </Link>
           </p>
         </CardContent>
