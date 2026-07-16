@@ -1990,16 +1990,22 @@
     "vaultConfirmPasswordPlaceholder": "Confirm password",
     "vaultUnlock": "Unlock",
     "vaultIncorrectPassword": "Incorrect password",
-    "vaultNotConfiguredUser": "No password has been set up for Applicant Management yet. Please ask an admin to set one up.",
-    "vaultSetupTitle": "Secure Applicant Management",
-    "vaultSetupDescription": "Set an additional password that everyone will need to access Applicant Management.",
+    "vaultSetupTitle": "Secure your access",
+    "vaultSetupDescription": "Set a password only you know — it adds an extra layer on top of your Applicant Management access.",
     "vaultSetPassword": "Set password",
     "vaultPasswordTooShort": "Password must be at least 8 characters.",
     "vaultPasswordMismatch": "Passwords don't match.",
     "vaultPasswordSetSuccess": "Password saved.",
     "vaultLockNow": "Lock now",
     "vaultStepUpTitle": "Confirm it's you",
-    "vaultStepUpDescription": "Please re-enter the Applicant Management password to confirm this change.",
-    "delegateConfirmDescription": "Make \"{name}\" an Applicant Management delegate, or remove that role?"
+    "vaultStepUpDescription": "Please re-enter your Applicant Management password to confirm this change.",
+    "delegateConfirmDescription": "Make \"{name}\" an Applicant Management delegate, or remove that role?",
+    "resetPassword": "Reset password",
+    "resetPasswordSet": "Password set",
+    "resetPasswordNotSet": "No password set",
+    "resetPasswordTitle": "Reset {name}'s vault password?",
+    "resetPasswordDescription": "{name} will be signed out of Applicant Management and asked to set a new password the next time they open it. Use this if they've forgotten their password — you can't see or choose it for them.",
+    "resetPasswordConfirm": "Reset password",
+    "resetPasswordSuccess": "Password reset for {name}."
   }
 }

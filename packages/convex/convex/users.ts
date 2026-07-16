@@ -5,6 +5,7 @@ import { type QueryCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { roleValidator } from "./schema";
+import { clearVaultPasswordForUser } from "./applicantVault";
 import {
   ensureUser,
   getCurrentUser,
@@ -520,6 +521,13 @@ export const setApplicantDelegate = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { applicantAccessDelegate: delegate });
+    // Losing delegate rights only strips vault access if the user has no
+    // other way into the area — their own granted `applicantAccess` (or
+    // admin role) still lets them in, and their password should keep
+    // working for that.
+    if (!delegate && target.role !== "admin" && !target.applicantAccess) {
+      await clearVaultPasswordForUser(ctx, userId);
+    }
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: admin._id,
       action: delegate ? "grant_delegate" : "revoke_delegate",
@@ -557,6 +565,13 @@ export const setApplicantAccess = mutation({
       }
     }
     await ctx.db.patch(userId, { applicantAccess: access });
+    // Revoking access deletes the user's own vault password/unlock — for
+    // security, a former member's password must not outlive their access.
+    // If they're still a delegate (or admin) they keep their password,
+    // since they can still reach the area.
+    if (!access && target.role !== "admin" && !target.applicantAccessDelegate) {
+      await clearVaultPasswordForUser(ctx, userId);
+    }
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: actor._id,
       action: access ? "grant_access" : "revoke_access",
