@@ -15,6 +15,11 @@ const preferenceFields = {
   lastGuidebookSlug: v.optional(v.string()),
   dismissedWhatsNew: v.optional(v.string()),
   browserPushEnabled: v.optional(v.boolean()),
+  onboardingStartedAt: v.optional(v.number()),
+  onboardingCompletedAt: v.optional(v.number()),
+  onboardingDismissedAt: v.optional(v.number()),
+  onboardingStep: v.optional(v.number()),
+  onboardingStepStatuses: v.optional(v.string()),
 };
 
 export const getMine = query({
@@ -44,6 +49,42 @@ export const setMine = mutation({
       await ctx.db.insert("userPreferences", {
         userId: user._id,
         ...patch,
+        updatedAt: now,
+      });
+    }
+    return { ok: true };
+  },
+});
+
+/**
+ * Clears onboarding completion/dismissal so the wizard restarts from step 0
+ * (Settings' "Restart onboarding" card). A dedicated mutation because `setMine`
+ * only ever patches fields the caller explicitly sends — undefined values
+ * passed from the client are dropped before reaching here, so there's no way
+ * to *unset* `onboardingCompletedAt`/`onboardingDismissedAt` through it.
+ */
+export const resetOnboarding = mutation({
+  args: {},
+  handler: async ctx => {
+    const user = await requireUser(ctx);
+    const existing = await ctx.db
+      .query("userPreferences")
+      .withIndex("by_user", q => q.eq("userId", user._id))
+      .unique();
+    const now = Date.now();
+    const reset = {
+      onboardingStartedAt: now,
+      onboardingCompletedAt: undefined,
+      onboardingDismissedAt: undefined,
+      onboardingStep: 0,
+      onboardingStepStatuses: undefined,
+    };
+    if (existing) {
+      await ctx.db.patch(existing._id, { ...reset, updatedAt: now });
+    } else {
+      await ctx.db.insert("userPreferences", {
+        userId: user._id,
+        ...reset,
         updatedAt: now,
       });
     }
