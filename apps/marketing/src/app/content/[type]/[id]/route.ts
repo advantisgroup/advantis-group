@@ -56,9 +56,11 @@ async function handle(
     return new NextResponse(null, { status: 400 });
   }
 
-  // Get Clerk auth context
+  // Get Clerk auth context. Convex identifies the caller from this JWT, so it
+  // must be the "convex" template (see convex/auth.config.ts) — the default
+  // session token carries no `email` claim and leaves Convex unauthenticated.
   const { getToken } = await auth();
-  const token = await getToken();
+  const token = await getToken({ template: "convex" });
   debug(storageId, "Auth check", { isAuthenticated: !!token });
 
   // Check access control via Convex query
@@ -70,6 +72,7 @@ async function handle(
 
   try {
     const convex = new ConvexHttpClient(convexUrl);
+    if (token) convex.setAuth(token);
     debug(storageId, "Checking file access with Convex", {
       hasToken: !!token,
     });
