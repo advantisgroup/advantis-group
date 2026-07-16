@@ -259,6 +259,11 @@ export default function EmployeeDetailPage() {
             </Link>
           </>
         )}
+        <Link href="/performance/passwort">
+          <Button variant="ghost" size="sm">
+            {t("passwordLink")}
+          </Button>
+        </Link>
         <Button variant="ghost" size="sm" onClick={exit}>
           <LogOut className="mr-2 h-4 w-4" />
           {t("exit")}

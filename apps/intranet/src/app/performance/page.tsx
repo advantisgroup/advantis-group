@@ -198,10 +198,21 @@ export default function PerformancePage() {
         <PerformanceWordmark />
         <div className="flex-1" />
         <span className="text-sm text-muted-foreground">{session.name}</span>
+        <Link href="/performance/benutzer">
+          <Button variant="ghost" size="sm">
+            <Users className="mr-2 h-4 w-4" />
+            {t("usersLink")}
+          </Button>
+        </Link>
         <Link href="/performance/upload">
           <Button variant="ghost" size="sm">
             <Upload className="mr-2 h-4 w-4" />
             {t("uploadLink")}
+          </Button>
+        </Link>
+        <Link href="/performance/passwort">
+          <Button variant="ghost" size="sm">
+            {t("passwordLink")}
           </Button>
         </Link>
         <Button variant="ghost" size="sm" onClick={exit}>
