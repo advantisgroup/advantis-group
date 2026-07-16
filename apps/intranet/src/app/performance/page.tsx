@@ -9,6 +9,7 @@ import { useMutation, useQuery } from "convex/react";
 import {
   Award,
   LogOut,
+  type LucideIcon,
   Phone,
   Target,
   TrendingDown,
@@ -81,7 +82,7 @@ function MetricTile({
   delta,
   invert,
 }: {
-  icon: React.ElementType;
+  icon: LucideIcon;
   label: string;
   value: string;
   delta?: number;
