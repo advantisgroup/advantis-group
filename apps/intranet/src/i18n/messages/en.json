@@ -1173,9 +1173,6 @@
     "backToLogin": "Back to sign in",
     "badge": "Performance",
     "exit": "Sign out",
-    "comingSoonTitle": "You're signed in",
-    "comingSoonAdmin": "The team dashboard is being built — check back soon.",
-    "comingSoonEmployee": "Your personal dashboard is being built — check back soon.",
     "uploadLink": "Upload reports",
     "backToDashboard": "Back to dashboard",
     "uploadTitle": "Upload reports",
@@ -1189,7 +1186,56 @@
     "uploadLogEmpty": "No uploads yet.",
     "uploadLogFile": "File",
     "uploadLogRows": "Rows",
-    "uploadLogWhen": "Uploaded"
+    "uploadLogWhen": "Uploaded",
+    "notLinkedTitle": "No employee linked",
+    "notLinkedBody": "Your account isn't linked to an employee record yet. Ask an admin to link it.",
+    "dashboardMonthLabel": "Month",
+    "dashboardMonthClosed": "Month closed",
+    "dashboardMonthOpen": "In progress",
+    "dashboardEmptyTitle": "No reports yet",
+    "dashboardEmptyBody": "Upload a Salesforce or call report to see team KPIs here.",
+    "dashboardMetricLeads": "Leads",
+    "dashboardMetricWorkable": "Workable",
+    "dashboardMetricHitrate": "Hitrate",
+    "dashboardMetricWon": "Closed Won",
+    "dashboardMetricForecast": "FC1 forecast",
+    "dashboardMetricCalls": "Calls",
+    "dashboardCallActivity": "Call activity",
+    "dashboardEmployees": "Team",
+    "dashboardUnqualified": "Unqualified reasons",
+    "dashboardWatchlists": "Watchlists",
+    "colName": "Name",
+    "colLeads": "Leads",
+    "colWorkable": "Workable",
+    "colHitrate": "Hitrate",
+    "colWon": "Won",
+    "colForecast": "FC1",
+    "colBadges": "Badges",
+    "colMark": "Mark",
+    "markHigh": "Top performer",
+    "markLow": "Needs attention",
+    "list": {
+      "analysis30": {
+        "title": "Analysis > 30 days",
+        "desc": "Leads with status Analysis older than 30 days."
+      },
+      "leads14": {
+        "title": "Leads: no activity > 2 weeks",
+        "desc": "Active leads (Open/Analysis) with no activity in over 14 days."
+      },
+      "opp_overdue": {
+        "title": "Overdue opportunities",
+        "desc": "Open opportunities whose close date is in the past."
+      },
+      "opp30": {
+        "title": "Opportunities > 30 days",
+        "desc": "Open opportunities older than 30 days."
+      },
+      "opps14": {
+        "title": "Opportunities: no activity > 2 weeks",
+        "desc": "Open opportunities with no activity in over 14 days."
+      }
+    }
   },
   "Guest": {
     "loginTitle": "Guest tour",

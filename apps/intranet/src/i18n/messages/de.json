@@ -1173,9 +1173,6 @@
     "backToLogin": "Zurück zur Anmeldung",
     "badge": "Performance",
     "exit": "Abmelden",
-    "comingSoonTitle": "Du bist angemeldet",
-    "comingSoonAdmin": "Das Team-Dashboard wird gerade gebaut — schau bald wieder vorbei.",
-    "comingSoonEmployee": "Dein persönliches Dashboard wird gerade gebaut — schau bald wieder vorbei.",
     "uploadLink": "Reports hochladen",
     "backToDashboard": "Zurück zum Dashboard",
     "uploadTitle": "Reports hochladen",
@@ -1189,7 +1186,56 @@
     "uploadLogEmpty": "Noch keine Uploads.",
     "uploadLogFile": "Datei",
     "uploadLogRows": "Zeilen",
-    "uploadLogWhen": "Hochgeladen"
+    "uploadLogWhen": "Hochgeladen",
+    "notLinkedTitle": "Kein Mitarbeiter verknüpft",
+    "notLinkedBody": "Dein Konto ist noch keinem Mitarbeiter zugeordnet. Bitte einen Admin, dies einzurichten.",
+    "dashboardMonthLabel": "Monat",
+    "dashboardMonthClosed": "Monat abgeschlossen",
+    "dashboardMonthOpen": "Läuft",
+    "dashboardEmptyTitle": "Noch keine Reports",
+    "dashboardEmptyBody": "Lade einen Salesforce- oder Call-Report hoch, um hier Team-KPIs zu sehen.",
+    "dashboardMetricLeads": "Leads",
+    "dashboardMetricWorkable": "Workable",
+    "dashboardMetricHitrate": "Hitrate",
+    "dashboardMetricWon": "Closed Won",
+    "dashboardMetricForecast": "FC1-Prognose",
+    "dashboardMetricCalls": "Calls",
+    "dashboardCallActivity": "Call-Aktivität",
+    "dashboardEmployees": "Team",
+    "dashboardUnqualified": "Gründe für Unqualified",
+    "dashboardWatchlists": "Watchlists",
+    "colName": "Name",
+    "colLeads": "Leads",
+    "colWorkable": "Workable",
+    "colHitrate": "Hitrate",
+    "colWon": "Won",
+    "colForecast": "FC1",
+    "colBadges": "Badges",
+    "colMark": "Bewertung",
+    "markHigh": "Top-Performer",
+    "markLow": "Braucht Aufmerksamkeit",
+    "list": {
+      "analysis30": {
+        "title": "Analysis > 30 Tage",
+        "desc": "Leads mit Status Analysis, die älter als 30 Tage sind."
+      },
+      "leads14": {
+        "title": "Leads: Last Activity > 2 Wochen",
+        "desc": "Aktive Leads (Open/Analysis) ohne Aktivität seit mehr als 14 Tagen."
+      },
+      "opp_overdue": {
+        "title": "Overdue Opportunities",
+        "desc": "Offene Opportunities, deren Close Date in der Vergangenheit liegt."
+      },
+      "opp30": {
+        "title": "Opportunities > 30 Tage",
+        "desc": "Offene Opportunities, die älter als 30 Tage sind."
+      },
+      "opps14": {
+        "title": "Opportunities: Last Activity > 2 Wochen",
+        "desc": "Offene Opportunities ohne Aktivität seit mehr als 14 Tagen."
+      }
+    }
   },
   "Guest": {
     "loginTitle": "Gast-Tour",
