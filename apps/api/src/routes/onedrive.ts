@@ -4,7 +4,7 @@ import {
   type OneDriveBreadcrumb,
   type OneDriveItem,
   type OneDriveListing,
-} from "@advantis/types";
+} from "../lib/types.js";
 import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";

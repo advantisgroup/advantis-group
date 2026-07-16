@@ -1,6 +1,6 @@
 import { Elysia, t } from "elysia";
 
-import { type UnfurlResult } from "@advantis/types";
+import { type UnfurlResult } from "../lib/types.js";
 
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";

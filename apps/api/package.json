@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@advantis/convex": "workspace:*",
-    "@advantis/types": "workspace:*",
     "@anthropic-ai/sdk": "^0.106.0",
     "@clerk/backend": "^2.18.0",
     "@elysiajs/cors": "^1.4.2",

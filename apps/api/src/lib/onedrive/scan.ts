@@ -5,7 +5,7 @@ import {
   type ScanReport,
   type ScanSeverity,
   type ScanVerdict,
-} from "@advantis/types";
+} from "../types.js";
 
 /**
  * In-house "is this file suspicious?" scanner. Deliberately heuristic and

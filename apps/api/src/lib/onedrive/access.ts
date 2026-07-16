@@ -1,4 +1,4 @@
-import { type Role } from "@advantis/types";
+import { type Role } from "../types.js";
 
 import { Errors } from "../errors.js";
 

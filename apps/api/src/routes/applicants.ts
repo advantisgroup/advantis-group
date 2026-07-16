@@ -1,7 +1,7 @@
 import { Anthropic } from "@anthropic-ai/sdk";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { autoProfil } from "@advantis/types";
+import { autoProfil } from "../lib/types.js";
 import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
