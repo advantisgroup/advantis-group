@@ -654,6 +654,39 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_status", ["status"]),
 
+  // --- Performance (sales KPI dashboard) -----------------------------------
+  // Password-protected area, fully separate from Clerk employee accounts —
+  // an interim step before it's coupled to Clerk auth. See
+  // `performanceAuth.ts`. `linkedUserId` is a forward-compat hook only
+  // (nothing reads it yet); it's what will make the eventual Clerk cutover a
+  // join instead of a rewrite, mirroring how `people.userId` already works.
+  performanceLogins: defineTable({
+    email: v.string(),
+    name: v.string(),
+    passwordHash: v.string(),
+    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    employeeId: v.optional(v.id("performanceEmployees")),
+    linkedUserId: v.optional(v.id("users")),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_email", ["email"]),
+
+  performanceSessions: defineTable({
+    token: v.string(),
+    loginId: v.id("performanceLogins"),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    lastUsedAt: v.number(),
+  }).index("by_token", ["token"]),
+
+  // Sales-team roster for the Performance feature; rows are created on first
+  // report import (added in a later phase — this table exists now so
+  // `performanceLogins.employeeId` can reference it).
+  performanceEmployees: defineTable({
+    name: v.string(),
+    active: v.boolean(),
+  }).index("by_name", ["name"]),
+
   // ========================================================================
   // ActivityTrack — workforce-activity dashboard, ported into the intranet.
   //

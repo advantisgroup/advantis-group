@@ -76,6 +76,7 @@ import type * as onedrive from "../onedrive.js";
 import type * as orgData from "../orgData.js";
 import type * as orgDataMigration from "../orgDataMigration.js";
 import type * as outbound from "../outbound.js";
+import type * as performanceAuth from "../performanceAuth.js";
 import type * as presence from "../presence.js";
 import type * as tourProgress from "../tourProgress.js";
 import type * as updates from "../updates.js";
@@ -160,6 +161,7 @@ declare const fullApi: ApiFromModules<{
   orgData: typeof orgData;
   orgDataMigration: typeof orgDataMigration;
   outbound: typeof outbound;
+  performanceAuth: typeof performanceAuth;
   presence: typeof presence;
   tourProgress: typeof tourProgress;
   updates: typeof updates;
