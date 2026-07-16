@@ -1270,6 +1270,12 @@
     "userInactiveLabel": "Inactive",
     "userResetPasswordTitle": "Reset password",
     "userNewPasswordLabel": "New password",
+    "passwordTitle": "Change password",
+    "currentPasswordLabel": "Current password",
+    "confirmPasswordLabel": "Confirm new password",
+    "passwordMismatch": "Passwords don't match.",
+    "passwordChanged": "Password changed.",
+    "passwordSubmit": "Change password",
     "list": {
       "analysis30": {
         "title": "Analysis > 30 days",
