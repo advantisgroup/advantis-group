@@ -104,6 +104,7 @@ export const teamOverview = query({
           deviceDocId: device._id,
           deviceId: device.deviceId,
           hostname: device.hostname,
+          agentVersion: device.agentVersion ?? null,
           personId: device.personId ?? null,
           personName: person?.name ?? null,
           personEmployeeId: employeeId,

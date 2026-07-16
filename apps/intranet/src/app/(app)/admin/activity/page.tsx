@@ -8,6 +8,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   Activity,
+  ArrowUpCircle,
   ChevronRight,
   Clock,
   Coffee,
@@ -48,6 +49,7 @@ import { describeStatus, type StatusInput } from "@/lib/activity/status";
 import { useNow } from "@/lib/activity/useNow";
 import { useQueryParam } from "@/lib/activity/useQueryParam";
 import { useSlashFocus } from "@/lib/activity/useSlashFocus";
+import { isOlderVersion } from "@/lib/activity/version";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
@@ -256,16 +258,22 @@ function DeviceCard({
   segments,
   dayStart,
   nowPct,
+  latestAgentVersion,
 }: {
   d: TeamRow;
   segments: StateSegment[] | null;
   dayStart: number;
   nowPct: number;
+  latestAgentVersion: string | null | undefined;
 }) {
   const { t, lang } = useI18n();
   // "Since when": for an offline device the honest answer is its last
   // heartbeat; otherwise the moment the fused state last changed.
   const since = !d.online ? d.lastSeen : d.finalStateSince;
+  const outdated =
+    !!d.agentVersion &&
+    !!latestAgentVersion &&
+    isOlderVersion(d.agentVersion, latestAgentVersion);
 
   return (
     <Link
@@ -286,6 +294,20 @@ function DeviceCard({
                 {d.windowsUser}
               </p>
             </div>
+            {outdated && (
+              <InfoTip
+                text={t("overview.outdatedHint", {
+                  current: d.agentVersion!,
+                  latest: latestAgentVersion,
+                })}
+                className="shrink-0"
+              >
+                <span className="flex items-center gap-1 rounded-full border border-warn/30 bg-warn/10 px-2 py-0.5 text-[10px] font-medium whitespace-nowrap text-warn">
+                  <ArrowUpCircle className="h-3 w-3" />
+                  {t("overview.outdated")}
+                </span>
+              </InfoTip>
+            )}
             <ChevronRight
               className={cn(
                 "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-150",
@@ -357,6 +379,9 @@ function NextSyncBadge() {
 export default function OverviewPage() {
   const { t } = useI18n();
   const team = useQuery(api.activity.stats.teamOverview);
+  const latestAgentVersion = useQuery(
+    api.activity.agentVersion.getLatestAgentVersion
+  );
   // The active chip lives in `?filter=` so a reload or shared link keeps it.
   const [filter, setFilter] = useQueryParam<FilterValue>(
     "filter",
@@ -577,6 +602,7 @@ export default function OverviewPage() {
                             }
                             dayStart={dayStart}
                             nowPct={nowPct}
+                            latestAgentVersion={latestAgentVersion}
                           />
                         </StaggerItem>
                       ))}

@@ -12,6 +12,7 @@ import type * as absenceSync from "../absenceSync.js";
 import type * as absences from "../absences.js";
 import type * as accessRequests from "../accessRequests.js";
 import type * as activity_access from "../activity/access.js";
+import type * as activity_agentVersion from "../activity/agentVersion.js";
 import type * as activity_audit from "../activity/audit.js";
 import type * as activity_clockodo from "../activity/clockodo.js";
 import type * as activity_deviceAuth from "../activity/deviceAuth.js";
@@ -95,6 +96,7 @@ declare const fullApi: ApiFromModules<{
   absences: typeof absences;
   accessRequests: typeof accessRequests;
   "activity/access": typeof activity_access;
+  "activity/agentVersion": typeof activity_agentVersion;
   "activity/audit": typeof activity_audit;
   "activity/clockodo": typeof activity_clockodo;
   "activity/deviceAuth": typeof activity_deviceAuth;

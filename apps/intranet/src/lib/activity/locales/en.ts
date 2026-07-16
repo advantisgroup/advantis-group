@@ -60,6 +60,9 @@ export const en: Dict = {
   "overview.nextSyncHint":
     "Genesys and Clockodo are polled every 2 minutes during the day and every 10 minutes overnight — this counts down to that. Clockodo can also push updates sooner via webhook.",
   "overview.liveHint": "Updates in real time — no refresh needed.",
+  "overview.outdated": "Update available",
+  "overview.outdatedHint":
+    "Running v{current} — the latest ActivityTrack version is v{latest}.",
 
   "devices.heading": "Devices",
   "devices.sub":
