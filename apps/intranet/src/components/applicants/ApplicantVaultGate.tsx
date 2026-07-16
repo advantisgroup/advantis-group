@@ -64,7 +64,8 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
 
   if (status === undefined) return null;
 
-  const expired = status.unlocked && status.expiresAt !== null && status.expiresAt <= now;
+  const expired =
+    status.unlocked && status.expiresAt !== null && status.expiresAt <= now;
   if (status.unlocked && !expired) return <>{children}</>;
 
   async function handleUnlock() {
@@ -103,16 +104,6 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
   }
 
   if (!status.passwordIsSet) {
-    if (!status.isAdmin) {
-      return (
-        <div className="mx-auto max-w-md py-20 text-center">
-          <ShieldCheck className="mx-auto size-8 text-muted-foreground" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            {t("vaultNotConfiguredUser")}
-          </p>
-        </div>
-      );
-    }
     return (
       <div className="mx-auto max-w-sm py-16">
         <Card>

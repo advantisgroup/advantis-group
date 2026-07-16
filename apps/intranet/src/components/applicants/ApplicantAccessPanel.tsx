@@ -5,7 +5,7 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ShieldCheck, UserMinus } from "lucide-react";
+import { KeyRound, ShieldCheck, UserMinus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -28,7 +28,9 @@ export function ApplicantAccessPanel() {
   const t = useTranslations("Applicants");
   const tRoles = useTranslations("Roles");
   const eligible = useQuery(api.users.eligibleForApplicantAccess);
+  const passwordStatuses = useQuery(api.applicantVault.memberPasswordStatuses);
   const setAccess = useMutation(api.users.setApplicantAccess);
+  const resetPassword = useMutation(api.applicantVault.resetPassword);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const [pickerId, setPickerId] = useState("");
@@ -36,6 +38,9 @@ export function ApplicantAccessPanel() {
 
   const granted = (eligible ?? []).filter(u => u.applicantAccess);
   const grantable = (eligible ?? []).filter(u => !u.applicantAccess);
+  const passwordIsSetByUser = new Map(
+    (passwordStatuses ?? []).map(s => [s.userId, s.passwordIsSet])
+  );
 
   function doGrant(userId: Id<"users">, name: string) {
     setAccess({ userId, access: true })
@@ -49,6 +54,12 @@ export function ApplicantAccessPanel() {
   function doRevoke(userId: Id<"users">, name: string) {
     setAccess({ userId, access: false })
       .then(() => toast.success(t("accessRevoked", { name })))
+      .catch(handleError);
+  }
+
+  function doResetPassword(userId: Id<"users">, name: string) {
+    resetPassword({ userId })
+      .then(() => toast.success(t("resetPasswordSuccess", { name })))
       .catch(handleError);
   }
 
@@ -81,6 +92,16 @@ export function ApplicantAccessPanel() {
     });
     if (!ok) return;
     setStepUpAction(() => () => doRevoke(userId, name));
+  }
+
+  async function resetPasswordFor(userId: Id<"users">, name: string) {
+    const ok = await confirm({
+      title: t("resetPasswordTitle", { name }),
+      description: t("resetPasswordDescription", { name }),
+      confirmLabel: t("resetPasswordConfirm"),
+    });
+    if (!ok) return;
+    setStepUpAction(() => () => doResetPassword(userId, name));
   }
 
   return (
@@ -148,6 +169,28 @@ export function ApplicantAccessPanel() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Badge variant="muted">{tRoles(u.role)}</Badge>
+                  <Badge
+                    variant={
+                      passwordIsSetByUser.get(u._id) ? "muted" : "outline"
+                    }
+                  >
+                    {passwordIsSetByUser.get(u._id)
+                      ? t("resetPasswordSet")
+                      : t("resetPasswordNotSet")}
+                  </Badge>
+                  {passwordIsSetByUser.get(u._id) && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label={t("resetPasswordConfirm")}
+                      onClick={() => void resetPasswordFor(u._id, u.name)}
+                    >
+                      <KeyRound className="size-4" />
+                      <span className="hidden md:inline">
+                        {t("resetPassword")}
+                      </span>
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"

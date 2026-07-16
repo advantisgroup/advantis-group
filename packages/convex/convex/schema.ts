@@ -1317,20 +1317,23 @@ export default defineSchema({
   }).index("by_at", ["at"]),
 
   /**
-   * Applicant Management "vault": a shared secondary password gating the
-   * whole feature on top of the normal applicantAccess/delegate checks —
+   * Applicant Management "vault": a secondary password gating the whole
+   * feature on top of the normal applicantAccess/delegate checks —
    * defense-in-depth against a leaked or unattended session, not a
-   * replacement for those checks. Admin-set/rotated; at most one row.
+   * replacement for those checks. Each member sets their own password (no
+   * shared secret); the row is deleted when their applicant access/delegate
+   * status is revoked, or when an admin resets it, forcing a fresh setup
+   * next visit.
    */
-  applicantVaultPassword: defineTable({
+  applicantVaultPasswords: defineTable({
+    userId: v.id("users"),
     hash: v.string(),
-    updatedByUserId: v.id("users"),
     updatedAt: v.number(),
-  }),
+  }).index("by_user", ["userId"]),
 
   /** Per-user vault unlock, expiring so the password must be re-entered
-   * periodically rather than once ever. Rotating the password (above)
-   * deletes every row here. */
+   * periodically rather than once ever. Rotating or resetting the password
+   * (above) deletes the corresponding row here. */
   applicantVaultUnlocks: defineTable({
     userId: v.id("users"),
     unlockedAt: v.number(),
