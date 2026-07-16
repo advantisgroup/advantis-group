@@ -54,12 +54,21 @@ export const storeLatestAgentVersion = internalMutation({
   },
 });
 
-/** Public GitHub releases API — the repo is public, no auth needed. */
+/**
+ * Public GitHub releases API — the repo is public, but unauthenticated
+ * requests share GitHub's 60/hour-per-source-IP limit with every other
+ * tenant on Convex's outbound IPs, so this can 403 as "rate limited" even
+ * though this action alone only calls it once an hour. Setting
+ * `ACTIVITYTRACK_GITHUB_TOKEN` (any valid PAT, no scopes needed for public
+ * read access) switches to the authenticated 5000/hour limit, which is
+ * tied to the token instead of the shared IP.
+ */
 export const refreshLatestAgentVersion = internalAction({
   args: {},
   handler: async ctx => {
     let tagName: string | undefined;
     try {
+      const token = process.env.ACTIVITYTRACK_GITHUB_TOKEN;
       const res = await fetch(
         `https://api.github.com/repos/${REPO}/releases/latest`,
         {
@@ -68,12 +77,20 @@ export const refreshLatestAgentVersion = internalAction({
             // GitHub's API 403s any request with no User-Agent, public repo
             // or not — it doesn't default one for us the way a browser would.
             "User-Agent": "advantis-group-activitytrack-version-check",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         }
       );
       if (!res.ok) {
+        const body = await res.text().catch(() => "");
         console.error(
-          `[activity/agentVersion] GitHub responded ${res.status} ${res.statusText}`
+          `[activity/agentVersion] GitHub responded ${res.status} ${res.statusText}`,
+          {
+            authenticated: !!token,
+            rateLimitRemaining: res.headers.get("x-ratelimit-remaining"),
+            rateLimitReset: res.headers.get("x-ratelimit-reset"),
+            body: body.slice(0, 500),
+          }
         );
         return;
       }
