@@ -70,6 +70,7 @@ async function handle(
     return new NextResponse(null, { status: 500 });
   }
 
+  let accessResult: { hasAccess: boolean; reason: string; url?: string | null };
   try {
     const convex = new ConvexHttpClient(convexUrl);
     if (token) convex.setAuth(token);
@@ -77,7 +78,7 @@ async function handle(
       hasToken: !!token,
     });
 
-    const accessResult = await convex.query(api.files.canAccessFile, {
+    accessResult = await convex.query(api.files.canAccessFile, {
       storageId,
     });
     debug(storageId, "Access check result", accessResult);
@@ -91,15 +92,21 @@ async function handle(
     return new NextResponse(null, { status: 502 });
   }
 
-  // Fetch from Convex storage
+  if (!accessResult.url) {
+    logError(storageId, "Convex returned no storage URL for an accessible file");
+    return new NextResponse(null, { status: 404 });
+  }
+
+  // Fetch from Convex storage via the signed URL Convex just handed us —
+  // Convex has no stable public "/api/storage/{id}" endpoint to guess at.
   debug(storageId, "Fetching from Convex storage", {
-    url: `${convexUrl}/api/storage/${storageId}`,
+    url: accessResult.url,
     method: includeBody ? "GET" : "HEAD",
   });
 
   let upstream: Response;
   try {
-    upstream = await fetch(`${convexUrl}/api/storage/${storageId}`, {
+    upstream = await fetch(accessResult.url, {
       ...(includeBody ? {} : { method: "HEAD" }),
     });
   } catch (err) {

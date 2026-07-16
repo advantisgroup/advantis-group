@@ -94,18 +94,23 @@ export const canAccessFile = query({
   args: { storageId: v.string() },
   handler: async (ctx, { storageId }) => {
     const storageCId = storageId as unknown as Id<"_storage">;
+
+    async function granted(reason: string) {
+      return { hasAccess: true as const, reason, url: await ctx.storage.getUrl(storageCId) };
+    }
+
     // Check if used as a user avatar (public to everyone)
     const userAvatar = await ctx.db
       .query("users")
       .filter(q => q.eq(q.field("avatarStorageId"), storageCId))
       .first();
     if (userAvatar) {
-      return { hasAccess: true, reason: "public_user_avatar" };
+      return granted("public_user_avatar");
     }
 
     const user = await getCurrentUser(ctx);
     if (!user) {
-      return { hasAccess: false, reason: "not_authenticated" };
+      return { hasAccess: false as const, reason: "not_authenticated" };
     }
 
     // Check if used as a conversation/group avatar
@@ -125,7 +130,7 @@ export const canAccessFile = query({
         )
         .first();
       if (userInConversation) {
-        return { hasAccess: true, reason: "conversation_member" };
+        return granted("conversation_member");
       }
     }
 
@@ -157,7 +162,7 @@ export const canAccessFile = query({
       }
 
       if (hasAccess) {
-        return { hasAccess: true, reason: "announcement_audience" };
+        return granted("announcement_audience");
       }
     }
 
@@ -184,10 +189,10 @@ export const canAccessFile = query({
         .first();
 
       if (userInConversation) {
-        return { hasAccess: true, reason: "message_conversation_member" };
+        return granted("message_conversation_member");
       }
     }
 
-    return { hasAccess: false, reason: "not_found_or_no_access" };
+    return { hasAccess: false as const, reason: "not_found_or_no_access" };
   },
 });
