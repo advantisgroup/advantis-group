@@ -353,6 +353,23 @@ function DeviceCard({
 }
 
 /**
+ * Small, informational "latest ActivityTrack version" pill — not a warning,
+ * just the reference point the per-card "Update available" badges are
+ * measured against. Hidden until the hourly GitHub-mirroring cron has
+ * populated a value (see convex/activity/agentVersion.ts).
+ */
+function LatestVersionBadge({ version }: { version: string }) {
+  const { t } = useI18n();
+  return (
+    <InfoTip text={t("overview.latestVersionHint")} side="bottom">
+      <span className="flex items-center gap-1.5 rounded-full border border-border bg-panel/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+        {t("overview.latestVersion", { version })}
+      </span>
+    </InfoTip>
+  );
+}
+
+/**
  * "Next sync in …" — a live countdown to the next scheduled Genesys/Clockodo
  * poll, computed client-side from the same cadence as `crons.ts` (no
  * round-trip needed). Ticks every second in its own isolated subtree — the
@@ -401,6 +418,31 @@ export default function OverviewPage() {
     [today]
   );
   const nowPct = ((now - dayStart) / DAY_MS) * 100;
+
+  // Debug visibility into the version check from the browser console — the
+  // cron that populates `latestAgentVersion` runs hourly server-side, so
+  // "why isn't the badge showing" is otherwise invisible from the client.
+  useEffect(() => {
+    if (!team) return;
+    console.warn("[ActivityTrack] latestAgentVersion:", latestAgentVersion);
+    console.warn(
+      "[ActivityTrack] device agentVersions:",
+      team.map(d => ({ hostname: d.hostname, agentVersion: d.agentVersion }))
+    );
+    if (latestAgentVersion) {
+      const outdated = team.filter(
+        d =>
+          d.agentVersion && isOlderVersion(d.agentVersion, latestAgentVersion)
+      );
+      console.warn(
+        "[ActivityTrack] outdated devices:",
+        outdated.map(d => ({
+          hostname: d.hostname,
+          agentVersion: d.agentVersion,
+        }))
+      );
+    }
+  }, [team, latestAgentVersion]);
 
   // Surface the attention count in the browser tab ("(2) …") so a manager with
   // the dashboard pinned sees trouble without switching tabs.
@@ -462,6 +504,9 @@ export default function OverviewPage() {
         action={
           team !== undefined ? (
             <div className="flex items-center gap-2">
+              {latestAgentVersion && (
+                <LatestVersionBadge version={latestAgentVersion} />
+              )}
               <NextSyncBadge />
               <span
                 title={t("overview.liveHint")}
