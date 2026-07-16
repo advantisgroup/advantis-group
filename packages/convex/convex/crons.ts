@@ -20,6 +20,15 @@ crons.hourly(
   {}
 );
 
+// Mirrors the latest published desktop-agent version so the overview can
+// flag devices that haven't updated yet.
+crons.hourly(
+  "activity: refresh latest agent version",
+  { minuteUTC: 50 },
+  internal.activity.agentVersion.refreshLatestAgentVersion,
+  {}
+);
+
 crons.daily(
   "activity: prune old raw samples",
   { hourUTC: 3, minuteUTC: 0 },
