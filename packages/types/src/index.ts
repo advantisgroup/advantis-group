@@ -191,4 +191,52 @@ export const UPLOAD_AUDIT_ACTIONS = [
   "share",
   "restore",
 ] as const;
+
+// ---------------------------------------------------------------------------
+// Applicant Management (Bewerbermanagement) — skill matching
+// ---------------------------------------------------------------------------
+
+export interface ApplicantSkillProfile {
+  id: string;
+  name: string;
+  skills: string[];
+}
+
+export interface ApplicantSkillMatchable {
+  skills?: string[];
+  zusammenfassung?: string | null;
+  berufserfahrung?: string | null;
+  ausbildung?: string | null;
+  position?: string | null;
+}
+
+/** Skills from `profile` that show up (case-insensitively) in the applicant's data. */
+export function matchSkills(
+  profileSkills: string[],
+  applicant: ApplicantSkillMatchable
+): string[] {
+  const haystack = [
+    ...(applicant.skills ?? []),
+    applicant.zusammenfassung ?? "",
+    applicant.berufserfahrung ?? "",
+    applicant.position ?? "",
+  ]
+    .join(" • ")
+    .toLowerCase();
+  return profileSkills.filter(skill => haystack.includes(skill.toLowerCase()));
+}
+
+/** Suggests a skill profile whose name matches the applicant's stated position. */
+export function autoProfil(
+  profiles: ApplicantSkillProfile[],
+  positionText: string | null | undefined
+): string | null {
+  if (!positionText) return null;
+  const text = positionText.toLowerCase();
+  const hit = profiles.find(
+    p =>
+      text.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(text)
+  );
+  return hit ? hit.id : null;
+}
 export type UploadAuditAction = (typeof UPLOAD_AUDIT_ACTIONS)[number];

@@ -57,7 +57,12 @@ const severityColor: Record<ScanSeverity, string> = {
   danger: "text-destructive",
 };
 
-export function UploadApprovalQueue() {
+export function UploadApprovalQueue({
+  readOnly = false,
+}: {
+  /** Hide the approve/deny actions — for viewers without write access. */
+  readOnly?: boolean;
+}) {
   const t = useTranslations("Admin");
   const pending = useQuery(api.onedrive.listPending);
   const [selected, setSelected] = useState<PendingUpload | null>(null);
@@ -107,7 +112,11 @@ export function UploadApprovalQueue() {
         );
       })}
 
-      <InspectorDialog upload={selected} onClose={() => setSelected(null)} />
+      <InspectorDialog
+        upload={selected}
+        onClose={() => setSelected(null)}
+        readOnly={readOnly}
+      />
     </div>
   );
 }
@@ -115,9 +124,11 @@ export function UploadApprovalQueue() {
 function InspectorDialog({
   upload,
   onClose,
+  readOnly,
 }: {
   upload: PendingUpload | null;
   onClose: () => void;
+  readOnly: boolean;
 }) {
   const t = useTranslations("Admin");
   const od = useOneDriveApi();
@@ -224,38 +235,42 @@ function InspectorDialog({
               </div>
             )}
 
-            {/* Decision */}
-            <Textarea
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              placeholder={t("decisionNotePlaceholder")}
-              rows={2}
-            />
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => void decide("deny")}
-                disabled={busy !== null}
-              >
-                {busy === "deny" ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <X className="size-4" />
-                )}
-                {t("deny")}
-              </Button>
-              <Button
-                onClick={() => void decide("approve")}
-                disabled={busy !== null}
-              >
-                {busy === "approve" ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <Check className="size-4" />
-                )}
-                {t("approve")}
-              </Button>
-            </div>
+            {!readOnly && (
+              <>
+                {/* Decision */}
+                <Textarea
+                  value={note}
+                  onChange={e => setNote(e.target.value)}
+                  placeholder={t("decisionNotePlaceholder")}
+                  rows={2}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => void decide("deny")}
+                    disabled={busy !== null}
+                  >
+                    {busy === "deny" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <X className="size-4" />
+                    )}
+                    {t("deny")}
+                  </Button>
+                  <Button
+                    onClick={() => void decide("approve")}
+                    disabled={busy !== null}
+                  >
+                    {busy === "approve" ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Check className="size-4" />
+                    )}
+                    {t("approve")}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </DialogContent>

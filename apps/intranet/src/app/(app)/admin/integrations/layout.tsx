@@ -2,24 +2,25 @@
 
 import type { ReactNode } from "react";
 
-import { useIsManager } from "@/components/providers/current-user";
+import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
+import { useHasCapability } from "@/components/providers/current-user";
 
 /**
  * Access scope for the third-party integrations hub. Manager+ (not
  * admin-only like `/admin/activity`) — provisioning a Clockodo account is a
- * manager-level task, not an IT-admin one.
+ * manager-level task, not an IT-admin one. `useHasCapability` also lets in an
+ * employee holding a custom role with `access_integrations`, without them
+ * being promoted to manager.
  */
 export default function IntegrationsLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const isManager = useIsManager();
+  const hasIntegrationsAccess = useHasCapability("access_integrations");
 
-  if (!isManager) {
-    return (
-      <p className="py-20 text-center text-sm text-muted-foreground">403</p>
-    );
+  if (!hasIntegrationsAccess) {
+    return <ForbiddenScreen />;
   }
 
   return <>{children}</>;

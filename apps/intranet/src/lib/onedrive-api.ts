@@ -4,11 +4,15 @@ import { useCallback, useMemo } from "react";
 
 import {
   type DriveQuota,
+  type MessageAttachment,
   type OneDriveItem,
   type OneDriveListing,
   type ScanReport,
 } from "@advantis/types";
 import { useAuth } from "@clerk/nextjs";
+import { useTranslations } from "next-intl";
+
+import { downloadWithProgress, fetchAsFile } from "@/lib/download";
 
 /**
  * Typed client for the OneDrive endpoints on the Advantis API. Cross-origin
@@ -34,17 +38,6 @@ async function parse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-function saveBlob(blob: Blob, name: string): void {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}
-
 export interface UploadResult {
   status: "uploaded" | "pending";
   uploadId?: string;
@@ -67,6 +60,7 @@ export interface TeamAccessRow {
 
 export function useOneDriveApi() {
   const { getToken } = useAuth();
+  const t = useTranslations("Files");
 
   const authHeaders = useCallback(
     async (extra?: Record<string, string>): Promise<Record<string, string>> => {
@@ -119,12 +113,12 @@ export function useOneDriveApi() {
         ),
 
       download: async (id: string, name: string): Promise<void> => {
-        const res = await fetch(
+        await downloadWithProgress(
           `${API}/onedrive/download/${encodeURIComponent(id)}`,
+          name,
+          t("downloading"),
           { headers: await authHeaders() }
         );
-        if (!res.ok) throw new Error("Download failed");
-        saveBlob(await res.blob(), name);
       },
 
       /**
@@ -136,17 +130,24 @@ export function useOneDriveApi() {
         id: string;
         name: string;
         mimeType?: string;
-      }): Promise<File> => {
-        const res = await fetch(
+      }): Promise<File> =>
+        fetchAsFile(
           `${API}/onedrive/download/${encodeURIComponent(item.id)}`,
+          item.name,
+          item.mimeType,
           { headers: await authHeaders() }
-        );
-        if (!res.ok) throw new Error("Download failed");
-        const blob = await res.blob();
-        return new File([blob], item.name, {
-          type: item.mimeType || blob.type || "application/octet-stream",
-        });
-      },
+        ),
+
+      /**
+       * Import a drive file straight into Convex storage server-side (Graph
+       * -> API -> Convex), skipping the browser download-then-reupload round
+       * trip `downloadAsFile` needs. Returns a ready-to-use attachment.
+       */
+      importAttachment: (item: { id: string }) =>
+        send<MessageAttachment>(
+          "POST",
+          `/onedrive/import/${encodeURIComponent(item.id)}`
+        ),
 
       /** Upload via XHR so the rocket animation can track real progress. */
       upload: (
@@ -268,7 +269,7 @@ export function useOneDriveApi() {
           "/onedrive/team-access/sync"
         ),
     };
-  }, [authHeaders, getToken]);
+  }, [authHeaders, getToken, t]);
 }
 
 export type OneDriveApi = ReturnType<typeof useOneDriveApi>;

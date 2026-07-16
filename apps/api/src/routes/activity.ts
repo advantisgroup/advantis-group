@@ -101,7 +101,7 @@ export const activityRoute = new Elysia()
   .post("/activity/update", async ({ body, headers, set }) => {
     const token = bearer(headers);
     if (!token) return fail(set, 401, "unauthorized");
-    const valid = await getConvex().mutation(api.activity.deviceAuth.validate, {
+    const valid = await getConvex().query(api.activity.deviceAuth.validate, {
       secret: signalSecret(),
       token,
     });

@@ -10,11 +10,15 @@ import { useMutation, useQuery } from "convex/react";
 
 import { CommandPalette } from "@/components/CommandPalette";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { Link } from "@/components/Link";
+import { MarkLogo } from "@/components/Logo";
 import { BrowserNotificationBridge } from "@/components/notifications/BrowserNotificationBridge";
 import { TourCompletionScreen } from "@/components/tour/TourCompletionScreen";
 import { TourOverlay } from "@/components/tour/TourOverlay";
@@ -27,7 +31,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { WhatsNewDialog } from "@/components/WhatsNewDialog";
+import { UpdateBanner } from "@/components/updates/UpdateBanner";
 import { cn } from "@/lib/utils";
 
 /**
@@ -76,6 +80,24 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // sticky composer), so it opts out of the bottom nav and its clearance.
   const immersive = pathname.startsWith("/chat");
 
+  // The Updates section reads like a blog (Anthropic/GitHub-changelog style)
+  // rather than an app surface — the nav sidebar, bottom nav and the sitewide
+  // "active update" banner all compete with the post itself, so they're
+  // dropped in favor of a slim logo-only header. The composer at
+  // /updates/new keeps full chrome since it's an editing tool, not reading.
+  const isUpdatesReading =
+    pathname === "/updates" ||
+    (pathname.startsWith("/updates/") && pathname !== "/updates/new");
+
+  // The detail page renders its own full-bleed art banner flush against
+  // <main>'s edges, so <main> drops its own padding here and the page
+  // supplies padding itself around everything below the banner. (A
+  // negative-margin "breakout" doesn't work: overflow-y-auto forces
+  // overflow-x to compute to auto too, per the CSS overflow spec, so any
+  // content pushed past <main>'s padding box gets clipped right back to it.)
+  const isUpdateDetail =
+    pathname.startsWith("/updates/") && pathname !== "/updates/new";
+
   // Keep presence fresh while the app is open so chat can show online state.
   useEffect(() => {
     void heartbeat({});
@@ -85,13 +107,26 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   return (
     <>
-      <Sidebar />
+      {!isUpdatesReading && <Sidebar />}
       <SidebarInset>
+        {/* Above the scrollable <main> (and the sticky header), so it's
+            always on top of the page rather than scrolling away. */}
+        {!immersive && !isUpdatesReading && <UpdateBanner />}
         <header
           data-tour="tour-header"
           className="sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border/70 bg-background/70 px-2.5 backdrop-blur-xl print:hidden md:h-16 md:px-4"
         >
-          <SidebarTrigger className="-ml-1" />
+          {isUpdatesReading ? (
+            <Link
+              href="/"
+              aria-label="Advantis Intranet"
+              className="-ml-1 flex items-center rounded-md p-1.5 transition-colors hover:bg-accent"
+            >
+              <MarkLogo size={22} className="size-[22px]" />
+            </Link>
+          ) : (
+            <SidebarTrigger className="-ml-1" />
+          )}
           {/* Search lives in the desktop header, but on mobile it moves to the
               reachable bottom bar — so here it's just a flex spacer. The
               component stays mounted so ⌘K and the bottom-bar trigger work. */}
@@ -101,7 +136,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
             </div>
           </div>
           {/* Tour progress — compact checkmark chip; self-hides when finished. */}
-          <TourProgressChip />
+          {!isUpdatesReading && <TourProgressChip />}
           <div data-tour="tour-notifications-btn" className="flex items-center">
             <NotificationsMenu />
           </div>
@@ -114,8 +149,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <main
           ref={mainRef}
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto px-4 pt-6 print:overflow-visible md:px-8 md:pt-8 md:pb-8",
-            immersive ? "pb-6" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
+            "min-h-0 flex-1 overflow-y-auto print:overflow-visible",
+            !immersive && "md:pb-8",
+            isUpdateDetail || immersive ? "" : "px-4 pt-6 md:px-8 md:pt-8",
+            immersive ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
           )}
         >
           {/* Isolate page crashes so the surrounding shell stays usable.
@@ -124,13 +161,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
         </main>
       </SidebarInset>
 
-      {/* Mobile bottom navigation */}
-      {!immersive && <BottomNav />}
+      {/* Mobile bottom navigation — has nothing to open once the sidebar
+          (its drawer) is unmounted, so it goes with it. */}
+      {!immersive && !isUpdatesReading && <BottomNav />}
 
       {/* Native browser notifications for background tabs (opt-in). */}
       <BrowserNotificationBridge />
       <StartPageRedirect />
-      <WhatsNewDialog />
 
       {/* Tour UI layers (portal-based, fixed position) */}
       <TourOverlay targetRect={targetRect} visible={tourActive} />
@@ -144,9 +181,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
-      <TourProvider>
-        <AppShellInner>{children}</AppShellInner>
-      </TourProvider>
+      <BottomNavTabsProvider>
+        <TourProvider>
+          <FileViewerProvider>
+            <AppShellInner>{children}</AppShellInner>
+          </FileViewerProvider>
+        </TourProvider>
+      </BottomNavTabsProvider>
     </SidebarProvider>
   );
 }

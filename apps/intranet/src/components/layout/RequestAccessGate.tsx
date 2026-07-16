@@ -11,6 +11,7 @@ import { toast } from "sonner";
 
 import { AccessDeniedScreen } from "@/components/layout/AccessDeniedScreen";
 import { BrandLogo } from "@/components/Logo";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,14 +19,14 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 
 export function RequestAccessGate() {
   const t = useTranslations("Access");
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const status = useQuery(api.accessRequests.myStatus);
   const requestAccess = useMutation(api.accessRequests.create);
   const handleError = useErrorHandler();
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const email = user?.primaryEmailAddress?.emailAddress ?? "";
+  const email = isLoaded ? (user?.primaryEmailAddress?.emailAddress ?? "") : "";
 
   async function submit() {
     setSubmitting(true);
@@ -63,17 +64,17 @@ export function RequestAccessGate() {
         </div>
         <CardContent className="space-y-4 pt-5">
           {state === "pending" && (
-            <div className="flex items-start gap-3 rounded-lg border border-warning/40 bg-warning/10 p-4 text-sm">
-              <Clock className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
-              <span>{t("pending")}</span>
-            </div>
+            <Alert variant="warning">
+              <Clock />
+              <AlertDescription>{t("pending")}</AlertDescription>
+            </Alert>
           )}
 
           {state === "denied" && (
-            <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
-              <ShieldX className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-              <span>{t("denied")}</span>
-            </div>
+            <Alert variant="destructive">
+              <ShieldX />
+              <AlertDescription>{t("denied")}</AlertDescription>
+            </Alert>
           )}
 
           {state === "none" && (

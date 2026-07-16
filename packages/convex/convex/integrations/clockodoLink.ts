@@ -1,7 +1,8 @@
 import { v } from "convex/values";
 
 import { mutation } from "../_generated/server";
-import { requireManager } from "../lib/auth";
+import { requireCapability } from "../lib/auth";
+import { toClockodoIdString } from "../lib/clockodoId";
 import { appError } from "../activity/lib/errors";
 import { writeIntegrationsAudit } from "./audit";
 
@@ -21,7 +22,7 @@ export const linkClockodoUser = mutation({
     clockodoUserId: v.number(),
   },
   handler: async (ctx, { userId, clockodoUserId }) => {
-    const actor = await requireManager(ctx);
+    const actor = await requireCapability(ctx, "access_integrations");
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 
@@ -33,7 +34,7 @@ export const linkClockodoUser = mutation({
       .first();
     if (person) {
       await ctx.db.patch(person._id, {
-        clockodoUserId: String(clockodoUserId),
+        clockodoUserId: toClockodoIdString(clockodoUserId),
       });
     }
 
@@ -50,7 +51,7 @@ export const linkClockodoUser = mutation({
 export const unlinkClockodoUser = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const actor = await requireManager(ctx);
+    const actor = await requireCapability(ctx, "access_integrations");
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 

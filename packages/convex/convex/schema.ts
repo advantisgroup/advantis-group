@@ -9,10 +9,63 @@ export const roleValidator = v.union(
   v.literal("employee")
 );
 
+/**
+ * Scoped permissions a custom role (see `customRoles` table) can grant on top
+ * of a user's base `role` tier. Additive only — a capability never revokes
+ * anything the base tier already allows.
+ */
+export const capabilityValidator = v.union(
+  v.literal("manage_members"),
+  v.literal("access_integrations"),
+  v.literal("manage_uploads"),
+  v.literal("view_activity_admin")
+);
+
+// --- Applicant Management (Bewerbermanagement) validators -------------------
+
+export const ampelValidator = v.union(
+  v.literal("rot"),
+  v.literal("blau"),
+  v.literal("gruen")
+);
+
+export const kontaktArtValidator = v.union(
+  v.literal("telefon"),
+  v.literal("email"),
+  v.literal("persoenlich"),
+  v.literal("video"),
+  v.literal("sonstiges")
+);
+
+export const emailKategorieValidator = v.union(
+  v.literal("telefonisch_nicht_erreicht"),
+  v.literal("einladung"),
+  v.literal("absage"),
+  v.literal("sonstiges")
+);
+
+export const terminArtValidator = v.union(
+  v.literal("telefon"),
+  v.literal("teams"),
+  v.literal("vor_ort")
+);
+
+export const terminTypValidator = v.union(
+  v.literal("interview"),
+  v.literal("gespraech"),
+  v.literal("probetag"),
+  v.literal("wiedervorlage"),
+  v.literal("sonstiges")
+);
+
 /** Who an event/announcement targets. */
 export const audienceValidator = v.union(
   v.object({ kind: v.literal("all") }),
   v.object({ kind: v.literal("department"), department: v.string() }),
+  v.object({
+    kind: v.literal("departmentId"),
+    departmentId: v.id("departments"),
+  }),
   v.object({ kind: v.literal("users"), userIds: v.array(v.id("users")) })
 );
 
@@ -81,10 +134,24 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     role: roleValidator,
+    /**
+     * Legacy free-text department (unvalidated). Superseded by `departmentId`
+     * — see `departments` table. Kept only so already-written rows keep
+     * resolving until the org-data migration backfills every user's
+     * `departmentId` and the read paths cut over; do not write this field in
+     * new code.
+     */
     department: v.optional(v.string()),
     jobTitle: v.optional(v.string()),
+    /** Canonical department link — see `departments` table. */
+    departmentId: v.optional(v.id("departments")),
     phone: v.optional(v.string()),
-    /** Team tags (e.g. "customer-care") controlling guidebook access. */
+    /**
+     * Legacy free-text team tags (e.g. "customer-care") controlling guidebook
+     * access. Superseded by the `userTeams` join table — see `teams`. Kept
+     * only until the org-data migration backfills `userTeams`; do not write
+     * this field in new code.
+     */
     teams: v.optional(v.array(v.string())),
     avatarStorageId: v.optional(v.id("_storage")),
     avatarUrl: v.optional(v.string()),
@@ -116,6 +183,35 @@ export default defineSchema({
      * FileBrowser access control). Undefined means not directly shared yet.
      */
     oneDrivePermissionId: v.optional(v.string()),
+    /**
+     * Optional manager-defined role (e.g. "Team Lead") granting extra
+     * capabilities on top of `role` — see `customRoles`. Additive, not a
+     * replacement for the admin/manager/employee tier.
+     */
+    customRoleId: v.optional(v.id("customRoles")),
+    /**
+     * Applicant Management: admin-only allowlist flag letting this user grant
+     * or revoke `applicantAccess` for others (on top of the admin tier, which
+     * always can). Mirrors the `gfAccess` allowlist pattern — a dedicated
+     * grant, not tied to manager rank.
+     */
+    applicantAccessDelegate: v.optional(v.boolean()),
+    /** Applicant Management: whether this user can see/edit applicant records. */
+    applicantAccess: v.optional(v.boolean()),
+    /**
+     * Cosmetic per-user display override for the role name (e.g. rendering
+     * "Geschäftsführerin" instead of "Admin"). Purely a label — never read for
+     * permission checks, which always use `role`.
+     */
+    roleLabel: v.optional(v.string()),
+    /**
+     * Explicit opt-in to receive "Updates" broadcast emails. Only meaningful
+     * for `external` users — internal employees are always eligible and this
+     * flag is ignored for them. Externals default to *not* eligible
+     * (undefined/false) until they opt in from Settings; see
+     * `users.setUpdatesEmailConsent` and the filter in `updatesEmail.sendBulk`.
+     */
+    updatesEmailConsent: v.optional(v.boolean()),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })
@@ -123,7 +219,97 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_role", ["role"])
     .index("by_status", ["status"])
-    .index("by_clockodoUserId", ["clockodoUserId"]),
+    .index("by_clockodoUserId", ["clockodoUserId"])
+    .index("by_departmentId", ["departmentId"]),
+
+  /**
+   * Canonical org departments. Replaces the free-text `users.department` —
+   * see the org-data migration (`orgDataMigration.ts`) that backfills
+   * `users.departmentId` from the legacy string values.
+   */
+  departments: defineTable({
+    name: v.string(),
+    /** Reserved for a future org-chart phase; unused by today's logic. */
+    parentId: v.optional(v.id("departments")),
+    /** Soft delete — archived departments stay resolvable for old records. */
+    archivedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_name", ["name"])
+    .index("by_archivedAt", ["archivedAt"]),
+
+  /**
+   * Canonical teams (access-control tags, e.g. "customer-care"). Replaces
+   * the free-text `users.teams` array — membership lives in `userTeams`.
+   * `slug` is kept stable across renames so existing guidebook access rules
+   * that reference a team by slug don't break.
+   */
+  teams: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    colorKey: v.optional(v.string()),
+    archivedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    createdBy: v.id("users"),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_archivedAt", ["archivedAt"]),
+
+  /**
+   * users <-> teams membership. A join table rather than an id array on
+   * `users` because Convex has no array-contains index — this lets "who is
+   * on team X" resolve via `by_team` instead of scanning every user.
+   */
+  userTeams: defineTable({
+    userId: v.id("users"),
+    teamId: v.id("teams"),
+  })
+    .index("by_user", ["userId"])
+    .index("by_team", ["teamId"])
+    .index("by_user_team", ["userId", "teamId"]),
+
+  /**
+   * Review queue for the one-time org-data migration that replaces the
+   * free-text `users.department`/`users.teams` with `departments`/`teams`
+   * rows. One row per normalized (trim + lowercase) raw value bucket found
+   * across `users` — an admin renames/merges/rejects buckets here before
+   * `orgDataMigration.runBackfill` is allowed to create real rows from them,
+   * so two spellings of the same department never get silently merged (or
+   * kept separate) without a human deciding.
+   */
+  orgDataMigrationReview: defineTable({
+    kind: v.union(v.literal("department"), v.literal("team")),
+    /** `raw.trim().toLowerCase()` — the grouping key. */
+    normalized: v.string(),
+    /** Every distinct raw string seen for this bucket, for the reviewer. */
+    rawValues: v.array(v.string()),
+    /** Editable canonical label; defaults to the first raw value seen. */
+    canonicalName: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("rejected")
+    ),
+    /** Set when this bucket was merged into another; excluded from backfill
+     *  on its own — the target bucket's row covers its users too. */
+    mergedIntoId: v.optional(v.id("orgDataMigrationReview")),
+    /** Set once `runBackfill` has created the real row for this bucket. */
+    materializedDepartmentId: v.optional(v.id("departments")),
+    materializedTeamId: v.optional(v.id("teams")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_kind_normalized", ["kind", "normalized"])
+    .index("by_status", ["status"]),
+
+  /** Manager-defined roles (e.g. "Team Lead") granting a set of capabilities. */
+  customRoles: defineTable({
+    name: v.string(),
+    capabilities: v.array(capabilityValidator),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_name", ["name"]),
 
   invites: defineTable({
     email: v.string(),
@@ -254,6 +440,110 @@ export default defineSchema({
   })
     .index("by_announcement", ["announcementId"])
     .index("by_announcement_user", ["announcementId", "userId"]),
+
+  // --- Updates (incidents / maintenance / changelog) ------------------------
+  updates: defineTable({
+    type: v.union(
+      v.literal("incident"),
+      v.literal("maintenance"),
+      v.literal("changelog")
+    ),
+    /** Set by the markdown publish pipeline for idempotent upsert-by-slug. */
+    slug: v.optional(v.string()),
+    title: v.string(),
+    /** Banner text + list excerpt, ~140 chars. */
+    summary: v.string(),
+    bodyFormat: v.union(v.literal("richtext"), v.literal("markdown")),
+    /** Sanitized HTML (richtext) or raw markdown, depending on bodyFormat. */
+    body: v.string(),
+    authorUserId: v.id("users"),
+    audience: audienceValidator,
+    /** Visible to temporary guest logins on the curated tour. */
+    guestVisible: v.optional(v.boolean()),
+    /** Free-text tags, optionally drawn from a predefined list in the UI. */
+    affectedSystems: v.optional(v.array(v.string())),
+    status: v.optional(
+      v.union(
+        // incident
+        v.literal("investigating"),
+        v.literal("identified"),
+        v.literal("monitoring"),
+        v.literal("resolved"),
+        // maintenance
+        v.literal("scheduled"),
+        v.literal("in_progress"),
+        v.literal("completed"),
+        v.literal("cancelled")
+      )
+    ),
+    timeline: v.optional(
+      v.array(
+        v.object({
+          at: v.number(),
+          status: v.optional(v.string()),
+          message: v.string(),
+          authorUserId: v.id("users"),
+        })
+      )
+    ),
+    /** Incident/maintenance start, or the changelog's release date. */
+    startedAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+    /** Bumped on every status-changing timeline post; drives dismissal re-surfacing. */
+    revision: v.number(),
+    /** May be in the future (scheduled publish) — hidden from non-authors until then. */
+    publishedAt: v.number(),
+    /** Author's "email everyone" choice at publish time. */
+    emailRequested: v.boolean(),
+    emailSentAt: v.optional(v.number()),
+    source: v.union(v.literal("ui"), v.literal("markdown")),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_publishedAt", ["publishedAt"])
+    .index("by_type_publishedAt", ["type", "publishedAt"])
+    .index("by_slug", ["slug"]),
+
+  /**
+   * Per-user banner dismissals. `dismissedRevision` lets a status-changing
+   * timeline post (which bumps `updates.revision`) re-surface the banner for
+   * someone who already dismissed an earlier state, without a plain edit
+   * (e.g. a typo fix) doing the same.
+   */
+  updateDismissals: defineTable({
+    updateId: v.id("updates"),
+    userId: v.id("users"),
+    dismissedRevision: v.number(),
+    dismissedAt: v.number(),
+  })
+    .index("by_update_user", ["updateId", "userId"])
+    .index("by_user", ["userId"]),
+
+  /** Per-recipient Resend delivery/open/click tracking for an update's email blast. */
+  updateEmailRecipients: defineTable({
+    updateId: v.id("updates"),
+    userId: v.id("users"),
+    email: v.string(),
+    resendEmailId: v.optional(v.string()),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("sent"),
+      v.literal("delivered"),
+      v.literal("opened"),
+      v.literal("clicked"),
+      v.literal("bounced"),
+      v.literal("complained"),
+      v.literal("failed")
+    ),
+    sentAt: v.optional(v.number()),
+    deliveredAt: v.optional(v.number()),
+    openedAt: v.optional(v.number()),
+    clickedAt: v.optional(v.number()),
+    lastEventAt: v.optional(v.number()),
+  })
+    .index("by_update", ["updateId"])
+    .index("by_resendEmailId", ["resendEmailId"])
+    .index("by_update_user", ["updateId", "userId"]),
 
   // --- Chat ----------------------------------------------------------------
   conversations: defineTable({
@@ -406,6 +696,16 @@ export default defineSchema({
     tokenHash: v.optional(v.string()),
     // Wall-clock time of the last ACCEPTED ingest batch (rate-limit throttle).
     lastIngestAt: v.optional(v.number()),
+    // Summary of the newest sample, maintained by the ingest device patch so
+    // dashboard reads (teamOverview) never have to touch `activitySamples`.
+    lastSample: v.optional(
+      v.object({
+        capturedAt: v.number(),
+        idleMs: v.number(),
+        active: v.boolean(),
+        tzOffsetMinutes: v.number(),
+      })
+    ),
   })
     .index("by_deviceId", ["deviceId"])
     .index("by_status", ["status"])
@@ -415,6 +715,20 @@ export default defineSchema({
   // Coworkers being tracked (managed in the dashboard). `userId` links a person
   // to their intranet identity, resolved during migration via `clockodoUserId`
   // or `email`. The external-id fields map a person to the integrated systems.
+  //
+  // Relationship to `users`: a `users` row has zero or one linked `people`
+  // row (via `people.userId`); a `people` row can be unlinked, meaning
+  // "tracked by ActivityTrack, not yet an intranet account." These ids
+  // (`employeeId`, `genesysUserId`, `clockodoUserId`) are ActivityTrack-only
+  // identifiers and are never a substitute for `users.role`/`departmentId`/
+  // `customRoleId` — don't derive org/permission decisions from `people`.
+  //
+  // `clockodoUserId` is stored here as a `string` and on `users` as a
+  // `number` for the same real-world Clockodo id — a pre-existing mismatch.
+  // `users.clockodoUserId` is canonical once a person is linked (see
+  // `activity/people.ts`, which blocks editing this field directly after
+  // linking); use `lib/clockodoId.ts`'s `toClockodoIdString` at any boundary
+  // that compares the two rather than unifying the storage type here.
   people: defineTable({
     name: v.string(),
     email: v.optional(v.string()),
@@ -431,17 +745,21 @@ export default defineSchema({
     .index("by_email", ["email"]),
 
   // Raw samples (append-only). Indexed for time-range + per-device queries.
+  // The per-device near-constant fields (`windowsUser`, `hostname`,
+  // `agentVersion`, `platform`) are no longer stored per row — they live on
+  // the `devices` row — and are optional only so rows written before the
+  // change stay valid.
   activitySamples: defineTable({
     deviceId: v.string(),
-    windowsUser: v.string(),
-    hostname: v.string(),
+    windowsUser: v.optional(v.string()),
+    hostname: v.optional(v.string()),
     idleMs: v.number(),
     active: v.boolean(),
     capturedAt: v.number(),
     receivedAt: v.number(), // server clock, for skew detection
     tzOffsetMinutes: v.number(),
-    agentVersion: v.string(),
-    platform: v.string(),
+    agentVersion: v.optional(v.string()),
+    platform: v.optional(v.string()),
   })
     .index("by_device_time", ["deviceId", "capturedAt"])
     .index("by_receivedAt", ["receivedAt"]),
@@ -582,6 +900,77 @@ export default defineSchema({
   })
     .index("by_device_day", ["deviceId", "day"])
     .index("by_day", ["day"]),
+
+  // Generated-on-request weekly pattern reports (one per employee per ISO
+  // week, regenerating overwrites the same week's row). Findings are stored
+  // as data — a locale key plus named, tone-tagged values — rather than
+  // pre-rendered text, so the report renders in either language and the UI
+  // decides formatting/highlighting. See `activity/lib/patterns.ts` for the
+  // detection rules that produce them.
+  activityPatternReports: defineTable({
+    employeeId: v.string(),
+    weekStart: v.string(), // YYYY-MM-DD, Monday
+    generatedAt: v.number(),
+    generatedByUserId: v.id("users"),
+    metrics: v.object({
+      activeSeconds: v.number(),
+      idleSeconds: v.number(),
+      quickFlipCount: v.number(),
+      longestIdleStreakSeconds: v.number(),
+      previous: v.optional(
+        v.object({
+          activeSeconds: v.number(),
+          idleSeconds: v.number(),
+          quickFlipCount: v.number(),
+        })
+      ),
+    }),
+    // One row per day of the week, for the charts below the narrative.
+    daily: v.array(
+      v.object({
+        day: v.string(),
+        activeSeconds: v.number(),
+        idleSeconds: v.number(),
+        quickFlips: v.number(),
+      })
+    ),
+    findings: v.array(
+      v.object({
+        id: v.string(),
+        severity: v.union(
+          v.literal("good"),
+          v.literal("bad"),
+          v.literal("neutral")
+        ),
+        // Locale key for the sentence template, e.g. "pattern.quickFlips" —
+        // resolved client-side so the report renders in the viewer's language.
+        key: v.string(),
+        values: v.array(
+          v.object({
+            // Matches a `{name}` placeholder in the template.
+            name: v.string(),
+            value: v.union(v.string(), v.number()),
+            format: v.optional(
+              v.union(
+                v.literal("duration"),
+                v.literal("percent"),
+                v.literal("count")
+              )
+            ),
+            tone: v.optional(
+              v.union(
+                v.literal("ok"),
+                v.literal("warn"),
+                v.literal("info"),
+                v.literal("muted"),
+                v.literal("fg")
+              )
+            ),
+          })
+        ),
+      })
+    ),
+  }).index("by_employee_week", ["employeeId", "weekStart"]),
 
   // Append-only audit of privileged dashboard actions.
   activityAuditLog: defineTable({
@@ -833,6 +1222,123 @@ export default defineSchema({
     refreshToken: v.string(),
     updatedAt: v.number(),
   }),
+
+  // --- Applicant Management (Bewerbermanagement) ---------------------------
+
+  /** One skill profile per position (e.g. "Buchhalter"), for skill matching. */
+  applicantSkillProfiles: defineTable({
+    name: v.string(),
+    skills: v.array(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_name", ["name"]),
+
+  applicants: defineTable({
+    name: v.string(),
+    email: v.optional(v.string()),
+    telefon: v.optional(v.string()),
+    adresse: v.optional(v.string()),
+    geburtsdatum: v.optional(v.string()),
+    position: v.optional(v.string()),
+    skills: v.array(v.string()),
+    ausbildung: v.optional(v.string()),
+    berufserfahrung: v.optional(v.string()),
+    zusammenfassung: v.optional(v.string()),
+    rating: v.optional(ampelValidator),
+    profilId: v.optional(v.id("applicantSkillProfiles")),
+    notizen: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_profil", ["profilId"]),
+
+  /** Uploaded CV PDFs, stored in Convex file storage. */
+  applicantDocuments: defineTable({
+    applicantId: v.id("applicants"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    createdAt: v.number(),
+  }).index("by_applicant", ["applicantId"]),
+
+  /**
+   * Kontakte (contact log). An applicant with zero rows here is "Neue
+   * Bewerber"; the first row moves them into the "Bewerberpool".
+   */
+  applicantContacts: defineTable({
+    applicantId: v.id("applicants"),
+    datum: v.string(),
+    art: kontaktArtValidator,
+    notiz: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_applicant", ["applicantId"]),
+
+  /** Tracked sent emails — does NOT count as first contact. */
+  applicantEmails: defineTable({
+    applicantId: v.id("applicants"),
+    datum: v.string(),
+    kategorie: emailKategorieValidator,
+    notiz: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_applicant", ["applicantId"]),
+
+  applicantInterviews: defineTable({
+    applicantId: v.id("applicants"),
+    datum: v.string(),
+    interviewer: v.string(),
+    notiz: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_applicant", ["applicantId"]),
+
+  /**
+   * Termine (appointments). `uebernommen` flips to true once "converted" into
+   * an `applicantContacts` row (and an `applicantInterviews` row when
+   * `typ === "interview"`).
+   */
+  applicantAppointments: defineTable({
+    applicantId: v.id("applicants"),
+    datum: v.string(),
+    uhrzeit: v.string(),
+    art: terminArtValidator,
+    typ: terminTypValidator,
+    notiz: v.optional(v.string()),
+    uebernommen: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_applicant", ["applicantId"])
+    .index("by_datum", ["datum"]),
+
+  // Append-only audit of Applicant Management access grants/revocations.
+  applicantAuditLog: defineTable({
+    actorUserId: v.id("users"),
+    action: v.string(),
+    target: v.optional(v.string()),
+    at: v.number(),
+  }).index("by_at", ["at"]),
+
+  /**
+   * Applicant Management "vault": a secondary password gating the whole
+   * feature on top of the normal applicantAccess/delegate checks —
+   * defense-in-depth against a leaked or unattended session, not a
+   * replacement for those checks. Each member sets their own password (no
+   * shared secret); the row is deleted when their applicant access/delegate
+   * status is revoked, or when an admin resets it, forcing a fresh setup
+   * next visit.
+   */
+  applicantVaultPasswords: defineTable({
+    userId: v.id("users"),
+    hash: v.string(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  /** Per-user vault unlock, expiring so the password must be re-entered
+   * periodically rather than once ever. Rotating or resetting the password
+   * (above) deletes the corresponding row here. */
+  applicantVaultUnlocks: defineTable({
+    userId: v.id("users"),
+    unlockedAt: v.number(),
+    expiresAt: v.number(),
+  }).index("by_user", ["userId"]),
 
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs

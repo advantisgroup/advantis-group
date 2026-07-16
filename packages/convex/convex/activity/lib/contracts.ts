@@ -24,6 +24,10 @@ export const activitySampleSchema = z.object({
   tzOffsetMinutes: z.number().int().min(-840).max(840),
   agentVersion: z.string().min(1).max(32),
   platform: z.string().min(1).max(128),
+  /** Absent, or "sample", persists a row. "keepalive" (change-only sampling
+   *  agents, ~every 60s while state is unchanged) only updates online status
+   *  and closes the dailyStats attribution gap — never stored. */
+  kind: z.enum(["sample", "keepalive"]).optional(),
 });
 
 export type ActivitySample = z.infer<typeof activitySampleSchema>;

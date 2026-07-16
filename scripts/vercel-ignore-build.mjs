@@ -7,7 +7,7 @@ if (!appDir) {
   process.exit(1);
 }
 
-const ignoredDirs = ["scripts/", "docs/", ".github/"];
+const ignoredDirs = ["scripts/", "docs/", ".github/", "packages/convex"];
 
 const alwaysBuildDirs = ["packages/"];
 

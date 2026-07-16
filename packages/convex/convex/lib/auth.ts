@@ -4,6 +4,7 @@ import { type Doc } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 
 export type Role = Doc<"users">["role"];
+export type Capability = Doc<"customRoles">["capabilities"][number];
 
 // --- Env helpers -------------------------------------------------------------
 
@@ -56,13 +57,29 @@ export async function getUserByClerkId(
  * The current intranet user, or null when the request is unauthenticated or the
  * authenticated Clerk identity has not (yet) been provisioned an intranet
  * account. Never throws — callers decide how to handle the null case.
+ *
+ * Two separate Clerk instances issue identities against this deployment (the
+ * marketing site and the intranet — see auth.config.ts), each with its own
+ * `subject` for the same person. The `users` row is keyed by the intranet
+ * instance's clerkUserId, so a marketing-issued identity for that same
+ * person never matches on `subject` — email is the only field the two
+ * instances share, so fall back to it when the id lookup misses.
  */
 export async function getCurrentUser(
   ctx: QueryCtx | MutationCtx
 ): Promise<Doc<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;
-  return getUserByClerkId(ctx, identity.subject);
+
+  const byClerkId = await getUserByClerkId(ctx, identity.subject);
+  if (byClerkId) return byClerkId;
+
+  const email = (identity.email ?? "").toLowerCase();
+  if (!email) return null;
+  return ctx.db
+    .query("users")
+    .withIndex("by_email", q => q.eq("email", email))
+    .unique();
 }
 
 /** Like getCurrentUser but throws when there is no active intranet account. */
@@ -109,6 +126,127 @@ export async function requireAdmin(
   ctx: QueryCtx | MutationCtx
 ): Promise<Doc<"users">> {
   return requireRole(ctx, ["admin"]);
+}
+
+/**
+ * Require the current user to hold `capability` — satisfied automatically by
+ * the manager/admin tiers, or by an employee whose assigned `customRoleId`
+ * grants it. Capabilities are additive: they never take away what the base
+ * role tier already allows.
+ */
+export async function requireCapability(
+  ctx: QueryCtx | MutationCtx,
+  capability: Capability
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (MANAGER_ROLES.includes(user.role)) return user;
+
+  const customRole = user.customRoleId
+    ? await ctx.db.get(user.customRoleId)
+    : null;
+  if (!customRole?.capabilities.includes(capability)) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You do not have permission to do that",
+    });
+  }
+  return user;
+}
+
+/**
+ * True when `user` qualifies to be granted Applicant Management access: at
+ * least Manager (admins qualify too), or an employee whose custom role
+ * carries `manage_members`. This is a data-sensitivity gate on the *target*
+ * of a grant, independent of who's doing the granting — it applies even when
+ * an admin is the one granting.
+ */
+export function isApplicantEligible(
+  user: Doc<"users">,
+  customRole: Doc<"customRoles"> | null
+): boolean {
+  return (
+    MANAGER_ROLES.includes(user.role) ||
+    (customRole?.capabilities.includes("manage_members") ?? false)
+  );
+}
+
+/**
+ * Applicant Management "vault": a shared secondary password gating the whole
+ * feature on top of the checks below — defense-in-depth against a leaked or
+ * unattended session. Deliberately no admin bypass: an admin's session is
+ * just as exposed as anyone else's, and the point of this layer is to
+ * survive exactly that case. Throws a distinct `vault_locked` code (rather
+ * than `forbidden`) so the client can show an unlock prompt instead of a
+ * generic access-denied screen.
+ */
+export async function requireVaultUnlocked(
+  ctx: QueryCtx | MutationCtx,
+  userId: Doc<"users">["_id"]
+): Promise<void> {
+  const unlock = await ctx.db
+    .query("applicantVaultUnlocks")
+    .withIndex("by_user", q => q.eq("userId", userId))
+    .unique();
+  if (!unlock || unlock.expiresAt <= Date.now()) {
+    throw new ConvexError({
+      code: "vault_locked",
+      message: "Applicant Management is locked — please re-enter the password.",
+    });
+  }
+}
+
+/** Require the current user to have Applicant Management access (admin bypasses
+ * the role/delegate check, but not the vault). */
+export async function requireApplicantAccess(
+  ctx: QueryCtx | MutationCtx
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (user.role !== "admin" && !user.applicantAccess) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You do not have permission to do that",
+    });
+  }
+  await requireVaultUnlocked(ctx, user._id);
+  return user;
+}
+
+/**
+ * Require the current user to be able to grant/revoke Applicant Management
+ * access for others: an admin, or a user designated as a delegate.
+ */
+export async function requireApplicantDelegateOrAdmin(
+  ctx: QueryCtx | MutationCtx
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (user.role !== "admin" && !user.applicantAccessDelegate) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You do not have permission to do that",
+    });
+  }
+  await requireVaultUnlocked(ctx, user._id);
+  return user;
+}
+
+/** Require Applicant Management access OR delegate rights, without the vault
+ * check — used only by the vault's own bootstrap functions (checking status,
+ * unlocking), which must work precisely when the vault is still locked. */
+export async function requireApplicantAreaMember(
+  ctx: QueryCtx | MutationCtx
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (
+    user.role === "admin" ||
+    user.applicantAccess ||
+    user.applicantAccessDelegate
+  ) {
+    return user;
+  }
+  throw new ConvexError({
+    code: "forbidden",
+    message: "You do not have permission to do that",
+  });
 }
 
 // --- Provisioning ------------------------------------------------------------

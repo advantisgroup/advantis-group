@@ -4,24 +4,19 @@ import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Plus, Search, Trash2, Users } from "lucide-react";
+import { Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { CopyButton } from "@/components/activity/CopyButton";
+import { EditPersonDialog } from "@/components/activity/EditPersonDialog";
 import { BrandedText } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
+import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -37,144 +32,18 @@ import { useSlashFocus } from "@/lib/activity/useSlashFocus";
 
 import type { GenericId } from "convex/values";
 
-/**
- * Inline-editable id cell. Saves on blur (and Enter) only when the value
- * actually changed, so the integration mappings can be maintained right in the
- * roster without a modal.
- */
-function EditableId({
-  initial,
-  disabled,
-  placeholder,
-  onSave,
-}: {
-  initial: string;
-  disabled: boolean;
-  placeholder: string;
-  onSave: (value: string) => void;
-}) {
+/** Read-only value with an optional copy-to-clipboard action, for integration ids. */
+function IdValue({ value, label }: { value?: string; label: string }) {
   const { t } = useI18n();
-  const [value, setValue] = useState(initial);
-
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) {
+    return <span className="font-mono text-xs text-muted-foreground">—</span>;
+  }
   return (
-    // gap + shrink-0 copy button keep the field and the action from colliding,
-    // even in the narrow integration-id columns on mobile.
-    <div className="flex w-full min-w-[8rem] items-center gap-1.5">
-      <Input
-        value={value}
-        disabled={disabled}
-        placeholder={placeholder}
-        onChange={e => setValue(e.target.value)}
-        onBlur={() => {
-          if (value !== initial) onSave(value);
-        }}
-        onKeyDown={e => {
-          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-        }}
-        className="h-8 flex-1 font-mono text-xs"
-      />
-      {value.trim() !== "" && (
-        <CopyButton
-          value={value}
-          label={`${t("common.copy")} · ${placeholder}`}
-        />
-      )}
+    <div className="flex items-center gap-1.5">
+      <span className="font-mono text-xs">{trimmed}</span>
+      <CopyButton value={trimmed} label={`${t("common.copy")} · ${label}`} />
     </div>
-  );
-}
-
-/**
- * Inline-editable text cell for free-form fields (name, email). Saves on blur
- * (and Enter) only when the trimmed value changed. A `required` field reverts
- * to its previous value rather than saving an empty string; otherwise an empty
- * value clears the field. When the viewer can't edit, it renders as plain text.
- */
-function EditableText({
-  initial,
-  disabled,
-  placeholder,
-  className,
-  required,
-  onSave,
-}: {
-  initial: string;
-  disabled: boolean;
-  placeholder: string;
-  className?: string;
-  required?: boolean;
-  onSave: (value: string) => void;
-}) {
-  const [value, setValue] = useState(initial);
-
-  if (disabled) {
-    return <span className={className}>{initial.trim() || "—"}</span>;
-  }
-
-  return (
-    <Input
-      value={value}
-      placeholder={placeholder}
-      onChange={e => setValue(e.target.value)}
-      onBlur={() => {
-        const next = value.trim();
-        if (required && next === "") {
-          setValue(initial);
-          return;
-        }
-        if (next !== initial) onSave(next);
-      }}
-      onKeyDown={e => {
-        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-      }}
-      className="h-8 w-full min-w-[8rem]"
-    />
-  );
-}
-
-/**
- * Person → intranet account link. This is what lets ActivityTrack-only
- * mappings (Clockodo/Genesys ids kept in the roster) carry over to the rest of
- * the intranet — e.g. mirrored Clockodo absences resolve through this link for
- * employees whose intranet account has no Clockodo id of its own.
- */
-function UserLinkSelect({
-  value,
-  users,
-  disabled,
-  noneLabel,
-  onChange,
-}: {
-  value: string | undefined;
-  users: { _id: string; name: string }[];
-  disabled: boolean;
-  noneLabel: string;
-  onChange: (userId: string | null) => void;
-}) {
-  if (disabled) {
-    const linked = users.find(u => u._id === value);
-    return (
-      <span className="text-sm text-muted-foreground">
-        {linked?.name ?? "—"}
-      </span>
-    );
-  }
-  return (
-    <Select
-      value={value ?? "none"}
-      onValueChange={v => onChange(v === "none" ? null : v)}
-    >
-      <SelectTrigger className="h-8 w-full min-w-[10rem] text-xs">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="none">{noneLabel}</SelectItem>
-        {users.map(u => (
-          <SelectItem key={u._id} value={u._id}>
-            {u.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 
@@ -202,6 +71,9 @@ export default function PeoplePage() {
   const [query, setQuery] = useState("");
   const searchRef = useSlashFocus<HTMLInputElement>();
   const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(
+    null
+  );
+  const [editTarget, setEditTarget] = useState<GenericId<"people"> | null>(
     null
   );
 
@@ -251,47 +123,24 @@ export default function PeoplePage() {
 
   // ── shared row pieces ──────────────────────────────────────────────────
   // The roster renders twice — stacked cards on mobile, a table from md up —
-  // so the save path and the delete button live in one place.
-
-  const save = (
-    personId: GenericId<"people">,
-    patch: Partial<{
-      name: string;
-      email: string;
-      userId: GenericId<"users"> | null;
-      employeeId: string;
-      genesysUserId: string;
-      clockodoUserId: string;
-      active: boolean;
-    }>
-  ) => void update({ personId, ...patch }, { success: t("people.updated") });
+  // so the delete/edit buttons and read-only cells live in one place.
 
   const linkableUsers = (intranetUsers ?? []).map(u => ({
     _id: u._id as string,
     name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
+    role: u.role,
+    department: u.department,
+    teams: u.teams,
   }));
 
-  const userLinkCell = (p: {
-    _id: GenericId<"people">;
-    userId?: GenericId<"users">;
-  }) => (
-    <UserLinkSelect
-      value={p.userId as string | undefined}
-      users={linkableUsers}
-      disabled={!canEdit}
-      noneLabel={t("people.intranetUserNone")}
-      onChange={userId =>
-        save(p._id, { userId: (userId as GenericId<"users"> | null) ?? null })
-      }
-    />
-  );
+  const editingPerson = editTarget
+    ? (people.find(p => p._id === editTarget) ?? null)
+    : null;
 
   // Once a person is linked to an intranet account, `users.clockodoUserId`
-  // (set via Admin → Integrations → Clockodo) is canonical — this cell goes
-  // read-only instead of offering a second place to edit the same id, which
-  // is exactly how the two fields drifted before.
+  // (set via Admin → Integrations → Clockodo) is canonical — this cell links
+  // out instead of showing a value that could drift from the real source.
   const clockodoIdCell = (p: {
-    _id: GenericId<"people">;
     userId?: GenericId<"users">;
     clockodoUserId?: string;
   }) =>
@@ -308,24 +157,57 @@ export default function PeoplePage() {
         </Link>
       </div>
     ) : (
-      <EditableId
-        initial={p.clockodoUserId ?? ""}
-        disabled={!canEdit}
-        placeholder={t("people.clockodoId")}
-        onSave={value => save(p._id, { clockodoUserId: value })}
-      />
+      <IdValue value={p.clockodoUserId} label={t("people.clockodoId")} />
     );
 
-  const deleteButton = (id: GenericId<"people">) => (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={() => setDeleteTarget(id)}
-      className="text-danger hover:bg-danger/10 hover:text-danger"
-      aria-label={t("people.delete")}
-    >
-      <Trash2 className="h-4 w-4" />
-    </Button>
+  const userLinkCell = (p: { userId?: GenericId<"users"> }) => {
+    const linked = linkableUsers.find(u => u._id === (p.userId as string));
+    if (!linked) {
+      return (
+        <span className="text-sm text-muted-foreground">
+          {t("people.intranetUserNone")}
+        </span>
+      );
+    }
+    return (
+      <div className="space-y-1">
+        <span className="text-sm text-muted-foreground">{linked.name}</span>
+        <PersonIdentityBadges
+          role={linked.role}
+          department={linked.department}
+          teams={linked.teams}
+          className="flex flex-wrap items-center gap-1"
+        />
+      </div>
+    );
+  };
+
+  const activeBadge = (active: boolean) => (
+    <Badge variant={active ? "success" : "muted"}>
+      {active ? t("people.active") : t("status.disabled")}
+    </Badge>
+  );
+
+  const rowActions = (id: GenericId<"people">) => (
+    <div className="flex items-center justify-end gap-1">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setEditTarget(id)}
+        aria-label={t("people.edit")}
+      >
+        <Pencil className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => setDeleteTarget(id)}
+        className="text-danger hover:bg-danger/10 hover:text-danger"
+        aria-label={t("people.delete")}
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
   );
 
   return (
@@ -380,8 +262,8 @@ export default function PeoplePage() {
         </div>
       )}
 
-      {/* Mobile: one card per person — seven editable columns can't fit a
-          phone, and horizontal scrolling hides the fields being edited. */}
+      {/* Mobile: one card per person. Read-only display — edits open the
+          dialog instead of live inline inputs. */}
       <div className="space-y-3 md:hidden">
         {people.length === 0 ? (
           <Card>
@@ -400,41 +282,26 @@ export default function PeoplePage() {
             <Card key={p._id}>
               <CardContent className="space-y-3 p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <EditableText
-                      initial={p.name}
-                      disabled={!canEdit}
-                      required
-                      placeholder={t("people.name")}
-                      className="font-medium text-fg"
-                      onSave={value => save(p._id, { name: value })}
-                    />
-                  </div>
-                  {canEdit && deleteButton(p._id)}
+                  <p className="min-w-0 flex-1 truncate font-medium text-fg">
+                    {p.name}
+                  </p>
+                  {canEdit && rowActions(p._id)}
                 </div>
                 <Field label={t("people.email")}>
-                  <EditableText
-                    initial={p.email ?? ""}
-                    disabled={!canEdit}
-                    placeholder={t("people.email")}
-                    className="text-sm text-muted-foreground"
-                    onSave={value => save(p._id, { email: value })}
-                  />
+                  <p className="text-sm text-muted-foreground">
+                    {p.email?.trim() || "—"}
+                  </p>
                 </Field>
                 <Field label={t("people.employeeId")}>
-                  <EditableId
-                    initial={p.employeeId ?? ""}
-                    disabled={!canEdit}
-                    placeholder={t("people.employeeId")}
-                    onSave={value => save(p._id, { employeeId: value })}
+                  <IdValue
+                    value={p.employeeId}
+                    label={t("people.employeeId")}
                   />
                 </Field>
                 <Field label={<BrandedText text={t("people.genesysId")} />}>
-                  <EditableId
-                    initial={p.genesysUserId ?? ""}
-                    disabled={!canEdit}
-                    placeholder={t("people.genesysId")}
-                    onSave={value => save(p._id, { genesysUserId: value })}
+                  <IdValue
+                    value={p.genesysUserId}
+                    label={t("people.genesysId")}
                   />
                 </Field>
                 <Field label={<BrandedText text={t("people.clockodoId")} />}>
@@ -443,17 +310,7 @@ export default function PeoplePage() {
                 <Field label={t("people.intranetUser")}>
                   {userLinkCell(p)}
                 </Field>
-                <label className="flex w-fit items-center gap-2 pt-1 text-sm text-fg">
-                  <Checkbox
-                    checked={p.active}
-                    disabled={!canEdit}
-                    aria-label={t("people.active")}
-                    onCheckedChange={checked =>
-                      save(p._id, { active: checked === true })
-                    }
-                  />
-                  {t("people.active")}
-                </label>
+                <div className="pt-1">{activeBadge(p.active)}</div>
               </CardContent>
             </Card>
           ))
@@ -502,56 +359,28 @@ export default function PeoplePage() {
             )}
             {filtered.map(p => (
               <TableRow key={p._id}>
-                <TableCell className="text-fg">
-                  <EditableText
-                    initial={p.name}
-                    disabled={!canEdit}
-                    required
-                    placeholder={t("people.name")}
-                    className="text-fg"
-                    onSave={value => save(p._id, { name: value })}
-                  />
-                </TableCell>
+                <TableCell className="text-fg">{p.name}</TableCell>
                 <TableCell className="text-muted-foreground">
-                  <EditableText
-                    initial={p.email ?? ""}
-                    disabled={!canEdit}
-                    placeholder={t("people.email")}
-                    className="text-muted-foreground"
-                    onSave={value => save(p._id, { email: value })}
+                  {p.email?.trim() || "—"}
+                </TableCell>
+                <TableCell>
+                  <IdValue
+                    value={p.employeeId}
+                    label={t("people.employeeId")}
                   />
                 </TableCell>
                 <TableCell>
-                  <EditableId
-                    initial={p.employeeId ?? ""}
-                    disabled={!canEdit}
-                    placeholder={t("people.employeeId")}
-                    onSave={value => save(p._id, { employeeId: value })}
-                  />
-                </TableCell>
-                <TableCell>
-                  <EditableId
-                    initial={p.genesysUserId ?? ""}
-                    disabled={!canEdit}
-                    placeholder={t("people.genesysId")}
-                    onSave={value => save(p._id, { genesysUserId: value })}
+                  <IdValue
+                    value={p.genesysUserId}
+                    label={t("people.genesysId")}
                   />
                 </TableCell>
                 <TableCell>{clockodoIdCell(p)}</TableCell>
                 <TableCell>{userLinkCell(p)}</TableCell>
-                <TableCell>
-                  <Checkbox
-                    checked={p.active}
-                    disabled={!canEdit}
-                    aria-label={t("people.active")}
-                    onCheckedChange={checked =>
-                      save(p._id, { active: checked === true })
-                    }
-                  />
-                </TableCell>
+                <TableCell>{activeBadge(p.active)}</TableCell>
                 {canEdit && (
                   <TableCell className="text-right">
-                    {deleteButton(p._id)}
+                    {rowActions(p._id)}
                   </TableCell>
                 )}
               </TableRow>
@@ -559,6 +388,17 @@ export default function PeoplePage() {
           </TableBody>
         </Table>
       </Card>
+
+      <EditPersonDialog
+        person={editingPerson}
+        linkableUsers={linkableUsers}
+        onOpenChange={open => {
+          if (!open) setEditTarget(null);
+        }}
+        onSave={(personId, patch) => {
+          void update({ personId, ...patch }, { success: t("people.updated") });
+        }}
+      />
 
       <ConfirmDialog
         open={deleteTarget !== null}

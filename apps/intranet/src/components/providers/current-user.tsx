@@ -8,6 +8,12 @@ import { createContext, useContext } from "react";
 
 import { type Role } from "@advantis/types";
 
+export type Capability =
+  | "manage_members"
+  | "access_integrations"
+  | "manage_uploads"
+  | "view_activity_admin";
+
 export interface CurrentUser {
   _id: string;
   clerkUserId: string;
@@ -23,8 +29,14 @@ export interface CurrentUser {
   managerId: string | null;
   status: "active" | "suspended";
   external: boolean;
+  updatesEmailConsent: boolean;
   gfAccess: boolean;
   uploadRequestsEnabled: boolean;
+  customRoleId: string | null;
+  capabilities: Capability[];
+  applicantAccessDelegate: boolean;
+  applicantAccess: boolean;
+  roleLabel: string | null;
   avatar: string | null;
   lastSeenAt: number | null;
   createdAt: number;
@@ -61,4 +73,37 @@ export function useIsManager(): boolean {
 
 export function useIsAdmin(): boolean {
   return useCurrentUser().role === "admin";
+}
+
+/**
+ * True when the current user has `capability` — either directly (manager+
+ * already implies every capability) or via their assigned custom role.
+ * Mirrors the server-side `requireCapability` check; this is UI-only gating,
+ * not the enforcement itself.
+ */
+export function useHasCapability(capability: Capability): boolean {
+  const user = useCurrentUser();
+  return (
+    user.role === "admin" ||
+    user.role === "manager" ||
+    user.capabilities.includes(capability)
+  );
+}
+
+/** True when the user can see the Applicant Management nav item at all —
+ * either they have feature access, or they're a delegate who can grant it to
+ * others (see `useCanManageApplicantAccess` for the delegate-only case). */
+export function useHasApplicantAccess(): boolean {
+  const user = useCurrentUser();
+  return (
+    user.role === "admin" ||
+    user.applicantAccess ||
+    user.applicantAccessDelegate
+  );
+}
+
+/** True when the user can grant/revoke Applicant Management access for others. */
+export function useCanManageApplicantAccess(): boolean {
+  const user = useCurrentUser();
+  return user.role === "admin" || user.applicantAccessDelegate;
 }

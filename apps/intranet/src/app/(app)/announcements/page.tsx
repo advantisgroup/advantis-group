@@ -24,11 +24,12 @@ import {
   Plus,
   Search,
   Trash2,
-  X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { AttachmentList } from "@/components/attachments/AttachmentList";
+import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -63,12 +64,7 @@ import {
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, initials } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
-import {
-  formatFileSize,
-  isImage,
-  type UploadedAttachment,
-  uploadToConvex,
-} from "@/lib/upload";
+import { formatFileSize, isImage, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
@@ -76,8 +72,6 @@ import type { FunctionReturnType } from "convex/server";
 type Announcement = FunctionReturnType<typeof api.announcements.list>[number];
 type Audience = { kind: "all" } | { kind: "department"; department: string };
 
-/** Combined attachment size ceiling for a single announcement. */
-const MAX_ATTACH_BYTES = 5 * 1024 * 1024;
 const ALWAYS_PREVIEW_KEY = "announcements:alwaysPreview";
 const DRAFT_KEY = "announcements:draft";
 
@@ -122,18 +116,11 @@ function EditorDialog({
   const me = useCurrentUser();
   const create = useMutation(api.announcements.create);
   const update = useMutation(api.announcements.update);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
   const departments = useQuery(api.users.departments) ?? [];
+  const attachmentUpload = useAttachmentUpload();
 
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [files, setFiles] = useState<File[]>([]);
-  // Tracks which of `files` came from OneDrive (vs. a local upload), keyed by
-  // the File object itself so the source can be attached without reshaping
-  // the existing File[]-based attachment plumbing.
-  const [oneDriveSources, setOneDriveSources] = useState<
-    Map<File, { driveItemId: string; path: string }>
-  >(new Map());
   const [busy, setBusy] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [alwaysPreview, setAlwaysPreview] = useState(false);
@@ -203,7 +190,10 @@ function EditorDialog({
 
   const hasBody = htmlToText(draft.body).trim().length > 0;
   const canSend = draft.title.trim().length > 0 && hasBody;
-  const totalSize = files.reduce((s, f) => s + f.size, 0);
+  const files = useMemo(
+    () => attachmentUpload.entries.map(e => e.file),
+    [attachmentUpload.entries]
+  );
 
   // Object URLs for image previews; revoked when the file set changes.
   const previews = useMemo(
@@ -220,35 +210,15 @@ function EditorDialog({
   );
 
   function addFiles(selected: File[]): boolean {
-    const next = [...files];
-    for (const f of selected) {
-      if (!next.some(x => x.name === f.name && x.size === f.size)) next.push(f);
-    }
-    if (next.reduce((s, f) => s + f.size, 0) > MAX_ATTACH_BYTES) {
-      toast.error(t("attachTooLarge"));
-      return false;
-    }
-    setFiles(next);
-    return true;
+    const added = attachmentUpload.add(selected);
+    if (!added) toast.error(t("attachTooLarge"));
+    return added;
   }
 
   function addOneDriveFile(file: File, item: OneDriveItem) {
-    if (addFiles([file])) {
-      setOneDriveSources(prev =>
-        new Map(prev).set(file, { driveItemId: item.id, path: item.path })
-      );
+    if (!attachmentUpload.addOneDriveFile(file, item)) {
+      toast.error(t("attachTooLarge"));
     }
-  }
-
-  function removeFile(idx: number) {
-    const removed = files[idx];
-    setFiles(files.filter((_, i) => i !== idx));
-    setOneDriveSources(prev => {
-      if (!removed || !prev.has(removed)) return prev;
-      const next = new Map(prev);
-      next.delete(removed);
-      return next;
-    });
   }
 
   /** Send button: divert to preview first when the user opted into it. */
@@ -278,37 +248,30 @@ function EditorDialog({
         });
         toast.success(t("updated"));
       } else {
-        const attachments: UploadedAttachment[] = [];
-        for (const file of files) {
-          const storageId = await uploadToConvex(
-            () => generateUploadUrl({}),
-            file
-          );
-          const source = oneDriveSources.get(file);
-          attachments.push({
-            storageId,
-            kind: isImage(file) ? "image" : "file",
-            name: file.name,
-            size: file.size,
-            contentType: file.type || undefined,
-            oneDriveItemId: source?.driveItemId,
-            oneDrivePath: source?.path,
+        // Uploads run in parallel with live per-file progress; a failure
+        // here already rolls back whatever succeeded (see useAttachmentUpload).
+        const attachments = await attachmentUpload.uploadAll();
+        try {
+          await create({
+            title: draft.title.trim(),
+            body: draft.body.trim(),
+            pinned: draft.pinned,
+            audience: audienceValue,
+            attachments,
+            guestVisible: draft.guestVisible,
+            publishAt: draft.publishAt
+              ? new Date(draft.publishAt).getTime()
+              : undefined,
+            expiresAt: draft.expiresAt
+              ? new Date(draft.expiresAt).getTime()
+              : undefined,
           });
+        } catch (e) {
+          // The upload succeeded but `create` itself failed — clean up so
+          // the attachments don't sit orphaned in storage.
+          await attachmentUpload.rollback(attachments);
+          throw e;
         }
-        await create({
-          title: draft.title.trim(),
-          body: draft.body.trim(),
-          pinned: draft.pinned,
-          audience: audienceValue,
-          attachments,
-          guestVisible: draft.guestVisible,
-          publishAt: draft.publishAt
-            ? new Date(draft.publishAt).getTime()
-            : undefined,
-          expiresAt: draft.expiresAt
-            ? new Date(draft.expiresAt).getTime()
-            : undefined,
-        });
         toast.success(
           draft.publishAt && new Date(draft.publishAt).getTime() > Date.now()
             ? t("scheduledToast")
@@ -319,8 +282,7 @@ function EditorDialog({
       onOpenChange(false);
       setPreviewing(false);
       setDraft(EMPTY_DRAFT);
-      setFiles([]);
-      setOneDriveSources(new Map());
+      attachmentUpload.reset();
     } catch (e) {
       handleError(e);
     } finally {
@@ -495,35 +457,17 @@ function EditorDialog({
                 )}
               </div>
 
-              {!editing && files.length > 0 && (
+              {!editing && attachmentUpload.entries.length > 0 && (
                 <div className="space-y-1.5">
-                  {files.map((f, i) => (
-                    <div
-                      key={`${f.name}-${i}`}
-                      className="flex items-center gap-2 rounded-md border border-border/60 bg-background px-2.5 py-1.5 text-xs"
-                    >
-                      {oneDriveSources.has(f) ? (
-                        <Cloud className="size-3.5 shrink-0 text-blue-500" />
-                      ) : (
-                        <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
-                      )}
-                      <span className="min-w-0 flex-1 truncate">{f.name}</span>
-                      <span className="shrink-0 tabular-nums text-muted-foreground">
-                        {formatFileSize(f.size)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeFile(i)}
-                        aria-label={tc("delete")}
-                        className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </div>
-                  ))}
+                  <AttachmentList
+                    entries={attachmentUpload.entries}
+                    uploading={attachmentUpload.uploading}
+                    onRemove={attachmentUpload.remove}
+                    removeLabel={tc("delete")}
+                  />
                   <p className="text-[11px] text-muted-foreground">
-                    {formatFileSize(totalSize)} /{" "}
-                    {formatFileSize(MAX_ATTACH_BYTES)}
+                    {formatFileSize(attachmentUpload.totalSize)} /{" "}
+                    {formatFileSize(MAX_ATTACHMENT_BYTES)}
                   </p>
                 </div>
               )}

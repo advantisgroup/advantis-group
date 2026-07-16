@@ -11,8 +11,10 @@ import {
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
+import { Building2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "@/i18n/navigation";
@@ -29,6 +31,7 @@ export const Header = () => {
   const isMobile = useIsMobile();
   const t = useTranslations("nav");
   const { scrollY } = useScroll();
+  const intranetUrl = useCompanyIntranetUrl();
 
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
@@ -241,6 +244,17 @@ export const Header = () => {
             transition={{ duration: 0.3, ease: EASE }}
           />
 
+          {intranetUrl && (
+            <Link
+              href={intranetUrl}
+              className="group/intranet relative inline-flex shrink-0 items-center gap-1.5 overflow-hidden rounded-full border border-advantis/30 bg-advantis/10 px-3 py-1.5 text-xs font-medium text-advantis transition-colors hover:bg-advantis/20"
+            >
+              <Building2 className="h-3.5 w-3.5" />
+              <span>{t("intranet")}</span>
+              <span className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover/intranet:translate-x-full" />
+            </Link>
+          )}
+
           <AccountMenu />
           <SettingsMenu />
         </div>
@@ -315,6 +329,16 @@ export const Header = () => {
                 className="pt-4 border-t border-border animate-in slide-in-from-left-2 duration-300 space-y-3"
                 style={{ animationDelay: `${navLinks.length * 50}ms` }}
               >
+                {intranetUrl && (
+                  <Link
+                    href={intranetUrl}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-1.5 rounded-full border border-advantis/30 bg-advantis/10 px-3 py-2 text-sm font-medium text-advantis transition-colors hover:bg-advantis/20"
+                  >
+                    <Building2 className="h-4 w-4" />
+                    <span>{t("intranet")}</span>
+                  </Link>
+                )}
                 <AccountMenu
                   isMobile
                   onMobileNavigate={() => setMobileMenuOpen(false)}

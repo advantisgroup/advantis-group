@@ -1,5 +1,5 @@
 import { query } from "../_generated/server";
-import { requireManager } from "../lib/auth";
+import { requireCapability } from "../lib/auth";
 
 /**
  * Every intranet user linked to a Clockodo account, joined to their
@@ -11,7 +11,7 @@ import { requireManager } from "../lib/auth";
 export const listWithLinks = query({
   args: {},
   handler: async ctx => {
-    await requireManager(ctx);
+    await requireCapability(ctx, "access_integrations");
     const users = await ctx.db.query("users").collect();
     const linked = users.filter(u => u.clockodoUserId !== undefined);
 

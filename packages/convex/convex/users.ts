@@ -4,13 +4,19 @@ import { type Doc } from "./_generated/dataModel";
 import { type QueryCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { roleValidator } from "./schema";
+import { clearVaultPasswordForUser } from "./applicantVault";
 import {
   ensureUser,
   getCurrentUser,
+  isApplicantEligible,
   requireAdmin,
+  requireApplicantDelegateOrAdmin,
   requireManager,
   requireUser,
+  requireVaultUnlocked,
 } from "./lib/auth";
+import { listUserPermissions } from "./lib/permissions";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -19,17 +25,16 @@ import {
   updateClerkUserName,
 } from "./lib/clerk";
 
-const roleArg = v.union(
-  v.literal("admin"),
-  v.literal("manager"),
-  v.literal("employee")
-);
+const roleArg = roleValidator;
 
 /** Attach a resolved avatar URL to a user document. */
 async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
   const avatar = user.avatarStorageId
     ? await ctx.storage.getUrl(user.avatarStorageId)
     : (user.avatarUrl ?? null);
+  const customRole = user.customRoleId
+    ? await ctx.db.get(user.customRoleId)
+    : null;
   return {
     _id: user._id,
     clerkUserId: user.clerkUserId,
@@ -46,8 +51,17 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     managerId: user.managerId ?? null,
     status: user.status,
     external: user.external ?? false,
+    updatesEmailConsent: user.updatesEmailConsent ?? false,
     gfAccess: user.gfAccess ?? false,
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
+    /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
+    permissions: listUserPermissions(user),
+    customRoleId: user.customRoleId ?? null,
+    customRoleName: customRole?.name ?? null,
+    capabilities: customRole?.capabilities ?? [],
+    applicantAccessDelegate: user.applicantAccessDelegate ?? false,
+    applicantAccess: user.applicantAccess ?? false,
+    roleLabel: user.roleLabel ?? null,
     avatar,
     lastSeenAt: user.lastSeenAt ?? null,
     createdAt: user.createdAt,
@@ -271,6 +285,26 @@ export const updateProfile = action({
   },
 });
 
+/**
+ * Self-service opt-in/out for "Updates" broadcast emails. Only externals can
+ * toggle this — internal employees are always eligible and have no consent
+ * to withdraw (see `updatesEmailConsent` on the `users` table).
+ */
+export const setUpdatesEmailConsent = mutation({
+  args: { consent: v.boolean() },
+  handler: async (ctx, { consent }) => {
+    const user = await requireUser(ctx);
+    if (!user.external) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "Only external users manage updates-email consent",
+      });
+    }
+    await ctx.db.patch(user._id, { updatesEmailConsent: consent });
+    return { ok: true };
+  },
+});
+
 export const setRole = mutation({
   args: { userId: v.id("users"), role: roleArg },
   handler: async (ctx, { userId, role }) => {
@@ -286,6 +320,29 @@ export const setRole = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { role });
+    return { ok: true };
+  },
+});
+
+/** Assign or clear a member's custom role. Manager+. */
+export const assignCustomRole = mutation({
+  args: {
+    userId: v.id("users"),
+    customRoleId: v.optional(v.id("customRoles")),
+  },
+  handler: async (ctx, { userId, customRoleId }) => {
+    await requireManager(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    if (customRoleId) {
+      const role = await ctx.db.get(customRoleId);
+      if (!role) {
+        throw new ConvexError({ code: "not_found", message: "Role not found" });
+      }
+    }
+    await ctx.db.patch(userId, { customRoleId });
     return { ok: true };
   },
 });
@@ -333,6 +390,12 @@ export const applyStatus = internalMutation({
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    if (status === "suspended" && target.role === "admin") {
+      throw new ConvexError({
+        code: "bad_request",
+        message: "Admins cannot be suspended — change their role first",
+      });
     }
     await ctx.db.patch(userId, { status });
     return { clerkUserId: target.clerkUserId };
@@ -442,5 +505,121 @@ export const departments = query({
     const set = new Set<string>();
     for (const u of users) if (u.department) set.add(u.department);
     return [...set].sort((a, b) => a.localeCompare(b));
+  },
+});
+
+// --- Applicant Management (Bewerbermanagement) access -----------------------
+
+/** Admin-only: designate/undesignate a user as an Applicant Access delegate. */
+export const setApplicantDelegate = mutation({
+  args: { userId: v.id("users"), delegate: v.boolean() },
+  handler: async (ctx, { userId, delegate }) => {
+    const admin = await requireAdmin(ctx);
+    await requireVaultUnlocked(ctx, admin._id);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    await ctx.db.patch(userId, { applicantAccessDelegate: delegate });
+    // Losing delegate rights only strips vault access if the user has no
+    // other way into the area — their own granted `applicantAccess` (or
+    // admin role) still lets them in, and their password should keep
+    // working for that.
+    if (!delegate && target.role !== "admin" && !target.applicantAccess) {
+      await clearVaultPasswordForUser(ctx, userId);
+    }
+    await ctx.db.insert("applicantAuditLog", {
+      actorUserId: admin._id,
+      action: delegate ? "grant_delegate" : "revoke_delegate",
+      target: target.email,
+      at: Date.now(),
+    });
+    return { ok: true };
+  },
+});
+
+/**
+ * Grant/revoke Applicant Management access. Callable by admins or designated
+ * delegates. Granting requires the target to already qualify (Manager+, or a
+ * custom role with `manage_members`) — enforced here even for admins, since
+ * it's a data-sensitivity rule, not an authority one.
+ */
+export const setApplicantAccess = mutation({
+  args: { userId: v.id("users"), access: v.boolean() },
+  handler: async (ctx, { userId, access }) => {
+    const actor = await requireApplicantDelegateOrAdmin(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    if (access) {
+      const customRole = target.customRoleId
+        ? await ctx.db.get(target.customRoleId)
+        : null;
+      if (!isApplicantEligible(target, customRole)) {
+        throw new ConvexError({
+          code: "forbidden",
+          message:
+            "This user must be at least Manager or hold a custom role with Manage Members before they can be granted Applicant Management access.",
+        });
+      }
+    }
+    await ctx.db.patch(userId, { applicantAccess: access });
+    // Revoking access deletes the user's own vault password/unlock — for
+    // security, a former member's password must not outlive their access.
+    // If they're still a delegate (or admin) they keep their password,
+    // since they can still reach the area.
+    if (!access && target.role !== "admin" && !target.applicantAccessDelegate) {
+      await clearVaultPasswordForUser(ctx, userId);
+    }
+    await ctx.db.insert("applicantAuditLog", {
+      actorUserId: actor._id,
+      action: access ? "grant_access" : "revoke_access",
+      target: target.email,
+      at: Date.now(),
+    });
+    return { ok: true };
+  },
+});
+
+/** Users eligible to be granted Applicant Management access, for the picker. */
+export const eligibleForApplicantAccess = query({
+  args: {},
+  handler: async ctx => {
+    await requireApplicantDelegateOrAdmin(ctx);
+    const users = await ctx.db.query("users").collect();
+    const customRoles = await ctx.db.query("customRoles").collect();
+    const customRoleById = new Map(customRoles.map(r => [r._id, r]));
+    return users
+      .filter(
+        u =>
+          u.status === "active" &&
+          isApplicantEligible(
+            u,
+            u.customRoleId ? (customRoleById.get(u.customRoleId) ?? null) : null
+          )
+      )
+      .map(u => ({
+        _id: u._id,
+        name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
+        email: u.email,
+        role: u.role,
+        applicantAccess: u.applicantAccess ?? false,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+/** Admin-only: set a cosmetic display-name override for a user's role badge. */
+export const setRoleLabel = mutation({
+  args: { userId: v.id("users"), roleLabel: v.optional(v.string()) },
+  handler: async (ctx, { userId, roleLabel }) => {
+    await requireAdmin(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    await ctx.db.patch(userId, { roleLabel: roleLabel?.trim() || undefined });
+    return { ok: true };
   },
 });

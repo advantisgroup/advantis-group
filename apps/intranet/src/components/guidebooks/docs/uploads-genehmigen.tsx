@@ -19,7 +19,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "links",
-          items: [{ label: "Uploads öffnen", href: "/admin?tab=uploads" }],
+          items: [{ label: "Uploads öffnen", href: "/admin/uploads" }],
         },
         {
           kind: "text",
@@ -47,7 +47,7 @@ const DOC: DocContent = {
       blocks: [
         {
           kind: "links",
-          items: [{ label: "Mitglieder öffnen", href: "/admin?tab=members" }],
+          items: [{ label: "Mitglieder öffnen", href: "/admin/members" }],
         },
         {
           kind: "text",

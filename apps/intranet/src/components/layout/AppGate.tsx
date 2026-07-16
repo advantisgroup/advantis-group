@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 
 import { api } from "@advantis/convex/api";
+import { useAuth } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -26,16 +27,22 @@ function FullScreenLoader() {
 }
 
 export function AppGate({ children }: { children: ReactNode }) {
+  const { isLoaded, isSignedIn } = useAuth();
   const ensure = useMutation(api.users.ensureCurrentUser);
   const me = useQuery(api.users.me);
   const ensured = useRef(false);
 
   useEffect(() => {
-    if (!ensured.current) {
+    if (!ensured.current && isSignedIn) {
       ensured.current = true;
       void ensure({});
     }
-  }, [ensure]);
+  }, [ensure, isSignedIn]);
+
+  // Clerk itself hasn't resolved auth state yet — never trust `me` until it has,
+  // otherwise a transiently-unauthenticated Convex query flashes Request Access.
+  if (!isLoaded) return <FullScreenLoader />;
+  if (!isSignedIn) return <FullScreenLoader />;
 
   if (me === undefined) return <FullScreenLoader />;
   if (me === null) return <RequestAccessGate />;

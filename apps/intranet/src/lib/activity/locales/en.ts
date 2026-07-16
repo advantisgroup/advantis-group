@@ -60,6 +60,12 @@ export const en: Dict = {
   "overview.nextSyncHint":
     "Genesys and Clockodo are polled every 2 minutes during the day and every 10 minutes overnight — this counts down to that. Clockodo can also push updates sooner via webhook.",
   "overview.liveHint": "Updates in real time — no refresh needed.",
+  "overview.outdated": "Update available",
+  "overview.outdatedHint":
+    "Running v{current} — the latest ActivityTrack version is v{latest}.",
+  "overview.latestVersion": "ActivityTrack v{version}",
+  "overview.latestVersionHint":
+    "Latest published ActivityTrack desktop-agent version, mirrored hourly from GitHub releases.",
 
   "devices.heading": "Devices",
   "devices.sub":
@@ -92,6 +98,7 @@ export const en: Dict = {
   "people.active": "Active",
   "people.save": "Save",
   "people.delete": "Delete",
+  "people.edit": "Edit person",
   "people.cancel": "Cancel",
   "people.confirmDelete": "Really delete this person?",
   "people.empty": "No people added yet.",
@@ -99,8 +106,11 @@ export const en: Dict = {
   "people.genesysId": "Genesys ID",
   "people.clockodoId": "Clockodo ID",
   "people.manageInIntegrations": "Manage in Integrations →",
+  "people.integrationIds": "Integration IDs",
   "people.intranetUser": "Intranet account",
   "people.intranetUserNone": "Not linked",
+  "people.intranetUserHint":
+    "Links this tracked person to their intranet login, so their role and department show up alongside their live status.",
   "people.idsHint":
     "Links the person to Genesys and Clockodo for the fused live state.",
 
@@ -242,6 +252,7 @@ export const en: Dict = {
   "timeline.tabs.day": "Day detail",
   "timeline.tabs.discarded": "Discarded",
   "timeline.tabs.export": "Export",
+  "timeline.tabs.pattern": "Pattern report",
   "timeline.discarded.heading": "Discarded signals",
   "timeline.discarded.sub":
     "State changes that were rejected instead of being written to the timeline.",
@@ -289,6 +300,45 @@ export const en: Dict = {
     "No data for this period. Try a wider time frame or a different device.",
   "reports.trend.heading": "Weekly trend",
   "reports.trend.sub": "Active and idle hours per week.",
+
+  // Weekly pattern report — a generated-on-request, plain-language read of one
+  // employee's week (see `activity/lib/patterns.ts` for the detection rules).
+  // Finding sentences are templates; `{placeholders}` are filled and
+  // colour-highlighted client-side by `HighlightedSentence`.
+  "pattern.heading": "Weekly pattern report",
+  "pattern.subtitle":
+    "A plain-language read of this person's week, generated on request.",
+  "pattern.week.thisWeek": "This week",
+  "pattern.week.lastWeek": "Last week",
+  "pattern.generate": "Generate report",
+  "pattern.regenerate": "Regenerate",
+  "pattern.generating": "Reading the week's activity…",
+  "pattern.lastGenerated": "Generated {time}",
+  "pattern.empty":
+    "No report yet for this week — generate one to see what stood out.",
+  "pattern.chart.daily.heading": "Active vs. idle, by day",
+  "pattern.chart.switches.heading": "Quick active/idle flips, by day",
+  "pattern.chart.switches.sub":
+    "Short flickers between active and idle (under 10 minutes) — a lot of these in one day usually means a lot of task-switching or an unreliable idle read, not necessarily a problem.",
+  "pattern.overview":
+    "{name} was active for {activeShare} of tracked time this week — {active} active, {idle} inactive.",
+  "pattern.quickFlips":
+    "There's been a lot of switching between active and idle — {count} quick flips under {threshold} this week.",
+  "pattern.longIdleStreak":
+    "The longest single inactive stretch was {duration} — worth checking in.",
+  "pattern.inactivityIncrease":
+    "Inactivity increased {deltaPct} compared to last week — from {prevIdle} to {idle}.",
+  "pattern.inactivityDecrease":
+    "Inactivity dropped {deltaPct} compared to last week — from {prevIdle} to {idle}.",
+  "pattern.activeIncrease":
+    "Active time is up {deltaPct} versus last week ({active} vs. {prevActive}).",
+  "pattern.activeDecrease":
+    "Active time is down {deltaPct} versus last week ({active} vs. {prevActive}).",
+  "pattern.steady":
+    "No unusual patterns this week — activity has stayed consistent with last week.",
+  "pattern.noBaseline":
+    "This is the first week of tracked data for {name}, so there's nothing to compare yet.",
+
   "timeline.export.heading": "Export data",
   "timeline.export.sub":
     "This person's activity for a date range, as CSV or JSON.",

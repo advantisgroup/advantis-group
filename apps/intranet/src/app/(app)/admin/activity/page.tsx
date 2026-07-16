@@ -8,6 +8,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   Activity,
+  ArrowUpCircle,
   ChevronRight,
   Clock,
   Coffee,
@@ -48,6 +49,7 @@ import { describeStatus, type StatusInput } from "@/lib/activity/status";
 import { useNow } from "@/lib/activity/useNow";
 import { useQueryParam } from "@/lib/activity/useQueryParam";
 import { useSlashFocus } from "@/lib/activity/useSlashFocus";
+import { isOlderVersion } from "@/lib/activity/version";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
@@ -256,16 +258,22 @@ function DeviceCard({
   segments,
   dayStart,
   nowPct,
+  latestAgentVersion,
 }: {
   d: TeamRow;
   segments: StateSegment[] | null;
   dayStart: number;
   nowPct: number;
+  latestAgentVersion: string | null | undefined;
 }) {
   const { t, lang } = useI18n();
   // "Since when": for an offline device the honest answer is its last
   // heartbeat; otherwise the moment the fused state last changed.
   const since = !d.online ? d.lastSeen : d.finalStateSince;
+  const outdated =
+    !!d.agentVersion &&
+    !!latestAgentVersion &&
+    isOlderVersion(d.agentVersion, latestAgentVersion);
 
   return (
     <Link
@@ -286,6 +294,20 @@ function DeviceCard({
                 {d.windowsUser}
               </p>
             </div>
+            {outdated && (
+              <InfoTip
+                text={t("overview.outdatedHint", {
+                  current: d.agentVersion!,
+                  latest: latestAgentVersion,
+                })}
+                className="shrink-0"
+              >
+                <span className="flex items-center gap-1 rounded-full border border-warn/30 bg-warn/10 px-2 py-0.5 text-[10px] font-medium whitespace-nowrap text-warn">
+                  <ArrowUpCircle className="h-3 w-3" />
+                  {t("overview.outdated")}
+                </span>
+              </InfoTip>
+            )}
             <ChevronRight
               className={cn(
                 "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-150",
@@ -331,6 +353,23 @@ function DeviceCard({
 }
 
 /**
+ * Small, informational "latest ActivityTrack version" pill — not a warning,
+ * just the reference point the per-card "Update available" badges are
+ * measured against. Hidden until the hourly GitHub-mirroring cron has
+ * populated a value (see convex/activity/agentVersion.ts).
+ */
+function LatestVersionBadge({ version }: { version: string }) {
+  const { t } = useI18n();
+  return (
+    <InfoTip text={t("overview.latestVersionHint")} side="bottom">
+      <span className="flex items-center gap-1.5 rounded-full border border-border bg-panel/60 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+        {t("overview.latestVersion", { version })}
+      </span>
+    </InfoTip>
+  );
+}
+
+/**
  * "Next sync in …" — a live countdown to the next scheduled Genesys/Clockodo
  * poll, computed client-side from the same cadence as `crons.ts` (no
  * round-trip needed). Ticks every second in its own isolated subtree — the
@@ -357,6 +396,9 @@ function NextSyncBadge() {
 export default function OverviewPage() {
   const { t } = useI18n();
   const team = useQuery(api.activity.stats.teamOverview);
+  const latestAgentVersion = useQuery(
+    api.activity.agentVersion.getLatestAgentVersion
+  );
   // The active chip lives in `?filter=` so a reload or shared link keeps it.
   const [filter, setFilter] = useQueryParam<FilterValue>(
     "filter",
@@ -376,6 +418,31 @@ export default function OverviewPage() {
     [today]
   );
   const nowPct = ((now - dayStart) / DAY_MS) * 100;
+
+  // Debug visibility into the version check from the browser console — the
+  // cron that populates `latestAgentVersion` runs hourly server-side, so
+  // "why isn't the badge showing" is otherwise invisible from the client.
+  useEffect(() => {
+    if (!team) return;
+    console.warn("[ActivityTrack] latestAgentVersion:", latestAgentVersion);
+    console.warn(
+      "[ActivityTrack] device agentVersions:",
+      team.map(d => ({ hostname: d.hostname, agentVersion: d.agentVersion }))
+    );
+    if (latestAgentVersion) {
+      const outdated = team.filter(
+        d =>
+          d.agentVersion && isOlderVersion(d.agentVersion, latestAgentVersion)
+      );
+      console.warn(
+        "[ActivityTrack] outdated devices:",
+        outdated.map(d => ({
+          hostname: d.hostname,
+          agentVersion: d.agentVersion,
+        }))
+      );
+    }
+  }, [team, latestAgentVersion]);
 
   // Surface the attention count in the browser tab ("(2) …") so a manager with
   // the dashboard pinned sees trouble without switching tabs.
@@ -437,6 +504,9 @@ export default function OverviewPage() {
         action={
           team !== undefined ? (
             <div className="flex items-center gap-2">
+              {latestAgentVersion && (
+                <LatestVersionBadge version={latestAgentVersion} />
+              )}
               <NextSyncBadge />
               <span
                 title={t("overview.liveHint")}
@@ -577,6 +647,7 @@ export default function OverviewPage() {
                             }
                             dayStart={dayStart}
                             nowPct={nowPct}
+                            latestAgentVersion={latestAgentVersion}
                           />
                         </StaggerItem>
                       ))}

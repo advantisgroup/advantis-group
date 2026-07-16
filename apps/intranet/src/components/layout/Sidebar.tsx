@@ -15,8 +15,10 @@ import {
   MessageSquare,
   Plane,
   Plug,
+  Rss,
   Settings,
   ShieldCheck,
+  UserSearch,
   Users,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -24,11 +26,13 @@ import { useTranslations } from "next-intl";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
+import { AdminSidebar } from "@/components/layout/AdminSidebar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
 import {
   useCurrentUser,
+  useHasApplicantAccess,
   useIsAdmin,
   useIsManager,
 } from "@/components/providers/current-user";
@@ -72,14 +76,27 @@ export function Sidebar() {
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const user = useCurrentUser();
+  const hasApplicantAccess = useHasApplicantAccess();
   const { setOpenMobile, state } = useSidebar();
 
-  // Context-aware nav: inside the ActivityTrack area the main nav slides out and
-  // the activity nav slides in (see the sliding container below).
+  // Context-aware nav: inside the ActivityTrack or Admin areas the main nav
+  // slides out and the matching scoped nav slides in (see the sliding
+  // container below). Integrations stays a flat link — it's one provider
+  // today, not enough surface yet to warrant its own sidebar section.
   const isActivity = pathname.startsWith("/admin/activity");
+  const isAdminArea =
+    !isActivity &&
+    pathname.startsWith("/admin") &&
+    !pathname.startsWith("/admin/integrations");
+  const panel: "main" | "admin" | "activity" = isActivity
+    ? "activity"
+    : isAdminArea
+      ? "admin"
+      : "main";
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
+  const activeUpdate = useQuery(api.updates.bannerActive);
   const chatUnread =
     chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const hasGuidebooks = accessibleGuidebooks(user).length > 0;
@@ -152,6 +169,16 @@ export function Sidebar() {
           icon: Users,
           tourAttr: "tour-nav-directory",
         },
+        ...(hasApplicantAccess
+          ? [
+              {
+                href: "/applicants",
+                labelKey: "applicants",
+                icon: UserSearch,
+                tourAttr: "tour-nav-applicants",
+              },
+            ]
+          : []),
       ],
     },
     {
@@ -207,21 +234,24 @@ export function Sidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Two nav panels laid out side-by-side; translate-X swaps between them
-            when entering/leaving the activity area. Respects reduced motion. */}
+        {/* Three nav panels laid out side-by-side; translate-X swaps between
+            them when entering/leaving the Admin or ActivityTrack areas.
+            Respects reduced motion. */}
         <div className="relative overflow-x-hidden">
           <div
             className={cn(
-              "flex w-[200%] transition-transform duration-200 ease-out motion-reduce:transition-none",
-              isActivity ? "-translate-x-1/2" : "translate-x-0"
+              "flex w-[300%] transition-transform duration-200 ease-out motion-reduce:transition-none",
+              panel === "admin" && "-translate-x-1/3",
+              panel === "activity" && "-translate-x-2/3",
+              panel === "main" && "translate-x-0"
             )}
           >
             <div
               className={cn(
-                "w-1/2 shrink-0",
-                isActivity && "pointer-events-none"
+                "w-1/3 shrink-0",
+                panel !== "main" && "pointer-events-none"
               )}
-              aria-hidden={isActivity}
+              aria-hidden={panel !== "main"}
             >
               {groups.map(group => {
                 const items = group.items.filter(
@@ -280,10 +310,19 @@ export function Sidebar() {
             </div>
             <div
               className={cn(
-                "w-1/2 shrink-0",
-                !isActivity && "pointer-events-none"
+                "w-1/3 shrink-0",
+                panel !== "admin" && "pointer-events-none"
               )}
-              aria-hidden={!isActivity}
+              aria-hidden={panel !== "admin"}
+            >
+              <AdminSidebar />
+            </div>
+            <div
+              className={cn(
+                "w-1/3 shrink-0",
+                panel !== "activity" && "pointer-events-none"
+              )}
+              aria-hidden={panel !== "activity"}
             >
               <ActivitySidebar />
             </div>
@@ -302,6 +341,21 @@ export function Sidebar() {
           />
           <SettingsMenu className="shrink-0 hover:bg-sidebar-accent" />
         </div>
+        {/* Deliberately not a NavGroup item — Updates lives here, tucked next
+            to the footer branding, rather than competing for space in the
+            main tabs. Covers mobile too: this footer is shared by the
+            desktop rail and the mobile drawer opened from BottomNav. */}
+        <Link
+          href="/updates"
+          onClick={close}
+          className="relative flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+        >
+          <Rss className="size-3.5 shrink-0" />
+          <SidebarLabel>{t("updates")}</SidebarLabel>
+          {activeUpdate?.top ? (
+            <span className="size-1.5 shrink-0 rounded-full bg-primary" />
+          ) : null}
+        </Link>
         <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
           Advantis Group
         </p>

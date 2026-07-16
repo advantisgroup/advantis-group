@@ -77,7 +77,12 @@ export const teamOverview = query({
         const person = device.personId
           ? (peopleById.get(device.personId) ?? null)
           : null;
-        const latest = await latestSample(ctx, device.deviceId);
+        // The ingest patch keeps a `lastSample` summary on the device row, so
+        // this query normally never reads `activitySamples`. The fallback
+        // covers devices that haven't ingested since the field was
+        // introduced; it self-heals on their next heartbeat.
+        const latest =
+          device.lastSample ?? (await latestSample(ctx, device.deviceId));
         const tzOffset = latest?.tzOffsetMinutes ?? 0;
         const day = localDay(now, tzOffset);
 
@@ -99,6 +104,7 @@ export const teamOverview = query({
           deviceDocId: device._id,
           deviceId: device.deviceId,
           hostname: device.hostname,
+          agentVersion: device.agentVersion ?? null,
           personId: device.personId ?? null,
           personName: person?.name ?? null,
           personEmployeeId: employeeId,
@@ -162,6 +168,33 @@ export const recentSamples = query({
   },
 });
 
+/**
+ * Raw samples for one device inside a [startMs, endMs) window — the timeline's
+ * selected local day. Unlike `recentSamples`, a past day is a closed range:
+ * new inserts never invalidate it, so Convex serves repeat visits from the
+ * query cache without re-reading the table. "Today" reads only today's rows.
+ */
+export const samplesForDay = query({
+  args: {
+    deviceId: v.string(),
+    startMs: v.number(),
+    endMs: v.number(),
+  },
+  handler: async (ctx, { deviceId, startMs, endMs }) => {
+    await requireUser(ctx);
+    return await ctx.db
+      .query("activitySamples")
+      .withIndex("by_device_time", q =>
+        q
+          .eq("deviceId", deviceId)
+          .gte("capturedAt", startMs)
+          .lt("capturedAt", endMs)
+      )
+      // 24h at the nominal 15s cadence is 5760 rows; cap with headroom.
+      .take(6000);
+  },
+});
+
 /** Per-employee export bundle for a [startDay, endDay] range. Capped. */
 export const exportDevice = query({
   args: {
@@ -182,7 +215,7 @@ export const exportDevice = query({
 
     const startMs = new Date(`${startDay}T00:00:00Z`).getTime();
     const endMs = new Date(`${endDay}T23:59:59.999Z`).getTime();
-    const samples = await ctx.db
+    const rows = await ctx.db
       .query("activitySamples")
       .withIndex("by_device_time", q =>
         q
@@ -192,6 +225,19 @@ export const exportDevice = query({
       )
       .order("desc")
       .take(Math.min(sampleLimit ?? 10000, 20000));
+
+    // Samples no longer store the per-device fields; backfill the export
+    // shape from the device row so CSV/JSON columns stay populated. Rows
+    // written before the slimming keep their own (exact) values.
+    const device = await ctx.db
+      .query("devices")
+      .withIndex("by_deviceId", q => q.eq("deviceId", deviceId))
+      .unique();
+    const samples = rows.map(s => ({
+      ...s,
+      windowsUser: s.windowsUser ?? device?.lastWindowsUser ?? "",
+      hostname: s.hostname ?? device?.hostname ?? "",
+    }));
 
     return { deviceId, startDay, endDay, daily, samples };
   },

@@ -37,9 +37,12 @@
     "type-check:convex": "turbo run type-check --filter=@advantis/convex",
     "convex:dev": "turbo run dev --filter=@advantis/convex",
     "convex:deploy": "turbo run convex:deploy --filter=@advantis/convex",
-    "setup-env": "bun scripts/setup-env.mjs"
+    "setup-env": "bun scripts/setup-env.mjs",
+    "updates:publish": "bun run scripts/publish-update.ts"
   },
   "devDependencies": {
+    "@advantis/convex": "workspace:*",
+    "gray-matter": "^4.0.3",
     "prettier": "^3.4.2",
     "turbo": "^2.5.4",
     "typescript": "^5.9.3"
@@ -52,5 +55,8 @@
     "esbuild",
     "protobufjs",
     "unrs-resolver"
-  ]
+  ],
+  "dependencies": {
+    "@types/node": "^26.1.1"
+  }
 }

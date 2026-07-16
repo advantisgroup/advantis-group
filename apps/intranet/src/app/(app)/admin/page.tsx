@@ -10,21 +10,19 @@ import {
   Clock,
   Copy,
   KeyRound,
-  Lock,
   Mail,
   MoreHorizontal,
   RotateCw,
   Search,
-  Send,
   ShieldCheck,
-  UploadCloud,
-  UserMinus,
   Users,
   Users2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { CustomRolesPanel } from "@/app/(app)/admin/CustomRolesPanel";
+import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { OneDriveAuditPanel } from "@/components/onedrive/OneDriveAuditPanel";
 import { TeamAccessPanel } from "@/components/onedrive/TeamAccessPanel";
 import { UploadApprovalQueue } from "@/components/onedrive/UploadApprovalQueue";
@@ -45,10 +43,14 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -58,7 +60,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatDateTime, initials } from "@/lib/format";
+import { formatDateTime, initials, roleLabel } from "@/lib/format";
 import { TEAMS } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -444,19 +446,96 @@ function AdminOverview({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
+/**
+ * The role badge, admin-editable: clicking it opens a small popover to set a
+ * cosmetic display-name override (e.g. "Geschäftsführerin" for an admin whose
+ * permissions stay exactly admin — this never touches `role` itself).
+ */
+function RoleBadge({
+  member,
+  isAdmin,
+  tRoles,
+  onSave,
+}: {
+  member: { role: Role; roleLabel?: string | null };
+  isAdmin: boolean;
+  tRoles: (role: string) => string;
+  onSave: (value: string) => void;
+}) {
+  const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(member.roleLabel ?? "");
+
+  if (!isAdmin) {
+    return (
+      <Badge variant="muted" className="hidden sm:inline-flex">
+        {roleLabel(member, tRoles)}
+      </Badge>
+    );
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={o => {
+        setOpen(o);
+        if (o) setValue(member.roleLabel ?? "");
+      }}
+    >
+      <PopoverTrigger asChild>
+        <button type="button" className="hidden sm:inline-flex">
+          <Badge variant="muted" className="cursor-pointer">
+            {roleLabel(member, tRoles)}
+          </Badge>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-2" align="end">
+        <p className="text-xs font-medium text-muted-foreground">
+          {t("roleLabelHint")}
+        </p>
+        <Input
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          placeholder={tRoles(member.role)}
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setValue("");
+              onSave("");
+              setOpen(false);
+            }}
+          >
+            {t("roleLabelReset")}
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              onSave(value);
+              setOpen(false);
+            }}
+          >
+            {tc("save")}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function Members({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const tRoles = useTranslations("Roles");
   const tTeams = useTranslations("Teams");
-  const me = useCurrentUser();
-  const confirm = useConfirm();
   const members = useQuery(api.users.list, { includeSuspended: true });
-  const setStatus = useAction(api.users.setStatus);
-  const removeMember = useAction(api.members.remove);
-  const reinvite = useAction(api.members.reinvite);
-  const setUploadPermission = useAction(api.users.setUploadPermission);
-  const setGfAccess = useAction(api.users.setGfAccess);
+  const customRoles = useQuery(api.customRoles.list);
+  const setApplicantDelegate = useMutation(api.users.setApplicantDelegate);
+  const setRoleLabelMutation = useMutation(api.users.setRoleLabel);
+  const assignCustomRole = useMutation(api.users.assignCustomRole);
   const handleError = useErrorHandler();
 
   type Member = NonNullable<typeof members>[number];
@@ -485,67 +564,50 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
     return list;
   }, [members, search, roleFilter, statusFilter, teamFilter]);
 
-  async function toggleStatus(userId: Id<"users">, active: boolean) {
-    if (active) {
-      const ok = await confirm({
-        title: t("suspend"),
-        description: tc("deleteWarning"),
-        confirmLabel: t("suspend"),
-        cancelLabel: tc("cancel"),
-      });
-      if (!ok) return;
-    }
-    setStatus({ userId, status: active ? "suspended" : "active" }).catch(
-      handleError
-    );
-  }
-
-  async function onRemove(m: Member) {
-    const ok = await confirm({
-      title: t("removeTitle", { name: m.name }),
-      description: t("removeBody"),
-      confirmLabel: t("removeMember"),
-      cancelLabel: tc("cancel"),
-    });
-    if (!ok) return;
-    setSelectedId(null);
-    removeMember({ userId: m._id as Id<"users"> })
-      .then(() => toast.success(t("removed")))
-      .catch(handleError);
-  }
-
-  function onReinvite(m: Member) {
-    reinvite({ userId: m._id as Id<"users"> })
-      .then(() => toast.success(t("reinviteSent")))
-      .catch(handleError);
-  }
-
   function copyEmail(email: string) {
     void navigator.clipboard.writeText(email);
     toast.success(t("emailCopied"));
   }
 
-  function toggleUploads(m: Member) {
-    setUploadPermission({
+  function toggleApplicantDelegate(m: Member) {
+    setApplicantDelegate({
       userId: m._id as Id<"users">,
-      enabled: !m.uploadRequestsEnabled,
+      delegate: !m.applicantAccessDelegate,
     })
       .then(() =>
         toast.success(
-          m.uploadRequestsEnabled ? t("uploadsDisabled") : t("uploadsEnabled")
+          m.applicantAccessDelegate
+            ? t("applicantDelegateRevoked")
+            : t("applicantDelegateGranted")
         )
       )
       .catch(handleError);
   }
 
-  function toggleGf(m: Member) {
-    setGfAccess({ userId: m._id as Id<"users">, gfAccess: !m.gfAccess })
-      .then(() => toast.success(m.gfAccess ? t("gfRevoked") : t("gfGranted")))
+  function saveRoleLabel(m: Member, value: string) {
+    setRoleLabelMutation({
+      userId: m._id as Id<"users">,
+      roleLabel: value.trim() || undefined,
+    })
+      .then(() => toast.success(t("roleLabelSaved")))
       .catch(handleError);
   }
 
+  function onCustomRoleChange(m: Member, customRoleId: string) {
+    assignCustomRole({
+      userId: m._id as Id<"users">,
+      customRoleId:
+        customRoleId === "none"
+          ? undefined
+          : (customRoleId as Id<"customRoles">),
+    }).catch(handleError);
+  }
+
+  // Quick actions only — everything that manages the account (roles,
+  // permissions, suspend, remove) lives in the UserProfile drawer/dialog,
+  // which already scales to more actions and adapts to mobile vs desktop
+  // without this menu growing forever.
   function MemberMenu({ m }: { m: Member }) {
-    const isSelf = m._id === me._id;
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -553,55 +615,20 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem onClick={() => setSelectedId(m._id as Id<"users">)}>
             <Users2 className="size-4" /> {t("viewProfile")}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => copyEmail(m.email)}>
             <Copy className="size-4" /> {t("copyEmail")}
           </DropdownMenuItem>
-          {/* OneDrive: upload-request permission is manager-grantable. */}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => toggleUploads(m)}>
-            <UploadCloud className="size-4" />{" "}
-            {m.uploadRequestsEnabled ? t("disableUploads") : t("enableUploads")}
-          </DropdownMenuItem>
           {isAdmin && (
-            <DropdownMenuItem onClick={() => toggleGf(m)}>
-              <Lock className="size-4" />{" "}
-              {m.gfAccess ? t("revokeGf") : t("grantGf")}
+            <DropdownMenuItem onClick={() => toggleApplicantDelegate(m)}>
+              <Users2 className="size-4" />{" "}
+              {m.applicantAccessDelegate
+                ? t("revokeApplicantDelegate")
+                : t("grantApplicantDelegate")}
             </DropdownMenuItem>
-          )}
-          {isAdmin && (
-            <>
-              <DropdownMenuItem onClick={() => onReinvite(m)}>
-                <Send className="size-4" /> {t("reinvite")}
-              </DropdownMenuItem>
-              {!isSelf && (
-                <DropdownMenuItem
-                  onClick={() =>
-                    void toggleStatus(
-                      m._id as Id<"users">,
-                      m.status === "active"
-                    )
-                  }
-                >
-                  <ShieldCheck className="size-4" />{" "}
-                  {m.status === "active" ? t("suspend") : t("activate")}
-                </DropdownMenuItem>
-              )}
-              {!isSelf && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => void onRemove(m)}
-                  >
-                    <UserMinus className="size-4" /> {t("removeMember")}
-                  </DropdownMenuItem>
-                </>
-              )}
-            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -655,9 +682,42 @@ function Members({ isAdmin }: { isAdmin: boolean }) {
                 GF
               </Badge>
             )}
-            <Badge variant="muted" className="hidden sm:inline-flex">
-              {tRoles(m.role)}
-            </Badge>
+            {m.applicantAccessDelegate && (
+              <Badge
+                variant="muted"
+                className="hidden text-[10px] sm:inline-flex"
+                title={t("applicantDelegateBadgeTitle")}
+              >
+                BM
+              </Badge>
+            )}
+            <RoleBadge
+              member={m}
+              isAdmin={isAdmin}
+              tRoles={tRoles}
+              onSave={value => saveRoleLabel(m, value)}
+            />
+            {customRoles && customRoles.length > 0 && (
+              <Select
+                value={m.customRoleId ?? "none"}
+                onValueChange={v => onCustomRoleChange(m, v)}
+              >
+                <SelectTrigger
+                  className="hidden h-7 w-auto min-w-28 text-xs sm:inline-flex"
+                  aria-label={t("customRole")}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{t("customRoleNone")}</SelectItem>
+                  {customRoles.map(role => (
+                    <SelectItem key={role._id} value={role._id}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
             <TourProgressChip userId={m._id as Id<"users">} />
             <MemberMenu m={m} />
           </div>
@@ -922,9 +982,7 @@ export default function AdminPage() {
   }, [currentStep?.id]);
 
   if (!isManager) {
-    return (
-      <p className="py-20 text-center text-sm text-muted-foreground">403</p>
-    );
+    return <ForbiddenScreen />;
   }
 
   return (
@@ -961,6 +1019,9 @@ export default function AdminPage() {
           >
             {t("uploads")}
           </TabsTrigger>
+          <TabsTrigger value="roles" className="py-2 sm:py-1.5">
+            {t("customRolesTab")}
+          </TabsTrigger>
           {isAdmin && (
             <TabsTrigger value="guests" className="py-2 sm:py-1.5">
               {t("guests")}
@@ -975,6 +1036,9 @@ export default function AdminPage() {
         </TabsContent>
         <TabsContent value="members">
           <Members isAdmin={isAdmin} />
+        </TabsContent>
+        <TabsContent value="roles">
+          <CustomRolesPanel />
         </TabsContent>
         <TabsContent value="uploads" className="space-y-8">
           <div>

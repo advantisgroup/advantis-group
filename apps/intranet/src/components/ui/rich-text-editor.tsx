@@ -55,13 +55,22 @@ function isInsideTag(root: HTMLElement, node: Node | null, tag: string) {
 export function RichTextEditor({
   value,
   onChange,
+  onFocus,
+  onBlur,
   placeholder,
   className,
+  minHeight,
 }: {
   value: string;
   onChange: (html: string) => void;
+  /** Fires when the editor gains focus — e.g. to track "which field is active" for external assignment (see the applicant CV fallback form). */
+  onFocus?: () => void;
+  /** Fires after the editor's own blur handling (which already commits the value via onChange) — for callers that only want to persist on blur rather than on every keystroke. */
+  onBlur?: () => void;
   placeholder?: string;
   className?: string;
+  /** Overrides the default `min-h-[14rem]` — smaller editors (e.g. a single CV field) don't need that much room. */
+  minHeight?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   // Which toolbar styles apply to the current selection/caret — drives the
@@ -181,12 +190,19 @@ export function RichTextEditor({
         contentEditable
         suppressContentEditableWarning
         onInput={emit}
-        onBlur={emit}
+        onFocus={onFocus}
+        onBlur={() => {
+          emit();
+          onBlur?.();
+        }}
         onKeyUp={refreshActive}
         onMouseUp={refreshActive}
         role="textbox"
         aria-multiline="true"
-        className="rich-text min-h-[14rem] max-h-[28rem] overflow-y-auto px-3.5 py-3 outline-none"
+        className={cn(
+          "rich-text max-h-[28rem] overflow-y-auto px-3.5 py-3 outline-none",
+          minHeight ?? "min-h-[14rem]"
+        )}
       />
     </div>
   );

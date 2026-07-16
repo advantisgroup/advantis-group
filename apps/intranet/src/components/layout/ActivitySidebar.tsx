@@ -6,6 +6,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
   ArrowLeft,
+  DatabaseZap,
   HelpCircle,
   LayoutDashboard,
   type LucideIcon,
@@ -47,6 +48,11 @@ const ACTIVITY_NAV: ActivityNavItem[] = [
     href: "/admin/activity/settings",
     labelKey: "nav.settings",
     icon: Settings,
+  },
+  {
+    href: "/admin/activity/migration",
+    labelKey: "nav.migration",
+    icon: DatabaseZap,
   },
   { href: "/admin/activity/help", labelKey: "nav.help", icon: HelpCircle },
 ];

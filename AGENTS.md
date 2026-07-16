@@ -35,6 +35,18 @@ Run from repo root unless noted; Turborepo filters by workspace name.
 Always type-check and lint/format touched packages before calling a change
 done.
 
+## Multi-item sessions and commits
+
+When a single session is asked to ship several distinct features, improvements,
+or fixes together, group them by how they relate (e.g. all touching the same
+subsystem, or one plan) but still commit each piece of work separately on the
+same branch, rather than squashing everything into one commit. This keeps the
+branch bisectable — if something breaks (a Vercel preview build, CI, a runtime
+regression), the offending commit narrows down fast instead of forcing a search
+through one giant diff. If grouping vs. separating conflicts with another
+instruction in a given task (e.g. the user explicitly asks for a single
+commit), ask the user how they want it handled rather than guessing.
+
 ## ActivityTrack (`/admin/activity`)
 
 The highest-complexity area of the codebase. A fused "is this person working
@@ -78,13 +90,53 @@ or embedding official logo assets — trademark usage has its own legal
 constraints beyond a copyright line, and no logo files exist in this repo
 today (`apps/intranet/public/` only has Advantis's own logos).
 
+## Publishing Updates (incidents / maintenance / changelog)
+
+The intranet's global banner + `/updates` feed can be published from a
+markdown file — useful for an agent shipping a change worth announcing. See
+[`docs/publish-guide.md`](./docs/publish-guide.md) for the full how-to
+(frontmatter reference, required env, the `bun run updates:publish` script)
+and [`docs/writing-good-updates.md`](./docs/writing-good-updates.md) for
+what makes a good title/summary/body. `docs/` is where agent- and
+human-facing docs for this repo live going forward — add new ones there
+rather than growing this file further.
+
+## Convex preview deployments
+
+`scripts/vercel-preview-convex-build.sh` claims a Convex preview deployment
+keyed by git branch name on every non-production Vercel build, logging
+`[convex-preview] ...` lines (branch, resolved backend URL) so a backend
+change on a branch that didn't get a `--preview-create` is visible in the
+build log. Convex has no CLI/API command to delete a preview deployment
+(open feature request: get-convex/convex-backend#455) and every deployment
+— prod, dev, and every preview ever claimed — counts against the team's
+total Convex deployment limit. If a branch's backend (and its data) resets
+without cause, check the Convex dashboard's deployment count against the
+team's plan limit and manually delete preview deployments for merged/closed
+PRs there.
+
 ## House style
 
 - No comments explaining _what_ code does — only _why_, for non-obvious
   constraints (see existing files in `packages/convex/convex/activity/` for
   the norm: dense "why" comments on tricky invariants, nothing else).
+- **Primary actions never live inline in a view.** Create/add/log flows
+  (new applicant, log a contact, schedule an appointment, …) open a dialog
+  — a bottom sheet on mobile — or navigate to a dedicated page; they are
+  never rendered as an always-visible form card sitting on top of the
+  content. Views stay read-focused overviews with explicit action buttons.
+  See `apps/intranet/src/components/applicants/EntryDialogs.tsx` for the
+  canonical pattern.
 - Don't add speculative abstractions, fallbacks, or error handling for cases
   that can't occur. Match the existing minimal, direct style.
 - i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
   (ActivityTrack) and `apps/intranet/src/i18n/messages/{en,de}.json` (rest of
   the intranet) — always update both languages together.
+- Prefer short, single-line labels over long inline descriptions, especially
+  in compact UI (badges, dropdown items, table cells, permission/capability
+  lists) — a wrapping paragraph reflows the layout around it and is worse on
+  mobile. When more explanation is genuinely needed, put it behind a tooltip
+  (`@/components/ui/tooltip`'s `Tooltip`/`TooltipTrigger`/`TooltipContent`,
+  triggered by a small `Info` icon) rather than inlining it. Only write the
+  long form inline when the surface already has dedicated space for it (e.g.
+  a settings page section, not a card in a grid).
