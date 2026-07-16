@@ -1,0 +1,158 @@
+/**
+ * CRUD for Performance "topics" — admin-set monthly goals/todos for an
+ * employee. Ported from the reference script's `topic_save`/`topic_delete`/
+ * `topic_status` routes.
+ *
+ * Creating, editing, and deleting a topic is admin-only; the employee
+ * themself may only change its status (matches `topic_status` being
+ * `login_required` rather than `admin_required` in the source).
+ */
+import { ConvexError, v } from "convex/values";
+
+import { type Doc, type Id } from "./_generated/dataModel";
+import { mutation, type MutationCtx } from "./_generated/server";
+import { resolveActiveSession } from "./performanceAuth";
+
+const TOPIC_STATUSES = ["offen", "erreicht", "nicht_erreicht"] as const;
+const statusValidator = v.union(
+  v.literal("offen"),
+  v.literal("erreicht"),
+  v.literal("nicht_erreicht")
+);
+
+async function requireLogin(
+  ctx: MutationCtx,
+  token: string
+): Promise<Doc<"performanceLogins">> {
+  const resolved = await resolveActiveSession(ctx, token);
+  if (!resolved) {
+    throw new ConvexError({
+      code: "unauthenticated",
+      message: "Please sign in.",
+    });
+  }
+  return resolved.login;
+}
+
+function requireAdmin(login: Doc<"performanceLogins">): void {
+  if (login.role !== "admin") {
+    throw new ConvexError({ code: "forbidden", message: "Admins only." });
+  }
+}
+
+function requireCanView(
+  login: Doc<"performanceLogins">,
+  employeeId: Id<"performanceEmployees">
+): void {
+  if (login.role === "admin") return;
+  if (login.employeeId === employeeId) return;
+  throw new ConvexError({
+    code: "forbidden",
+    message: "You can't view this employee.",
+  });
+}
+
+async function getOwnTopic(
+  ctx: MutationCtx,
+  id: Id<"performanceTopics">,
+  employeeId: Id<"performanceEmployees">
+): Promise<Doc<"performanceTopics">> {
+  const topic = await ctx.db.get(id);
+  if (!topic || topic.employeeId !== employeeId) {
+    throw new ConvexError({ code: "not_found", message: "Topic not found." });
+  }
+  return topic;
+}
+
+/** Create a new topic, or edit an existing one when `id` is given. */
+export const saveTopic = mutation({
+  args: {
+    token: v.string(),
+    employeeId: v.id("performanceEmployees"),
+    id: v.optional(v.id("performanceTopics")),
+    ym: v.string(),
+    topic: v.string(),
+    todo: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    status: v.optional(statusValidator),
+  },
+  handler: async (ctx, args): Promise<{ id: Id<"performanceTopics"> }> => {
+    const login = await requireLogin(ctx, args.token);
+    requireAdmin(login);
+
+    const topic = args.topic.trim();
+    if (!topic) {
+      throw new ConvexError({
+        code: "validation",
+        message: "Bitte ein Topic eintragen.",
+      });
+    }
+    const todo = args.todo?.trim() || undefined;
+    const endDate = args.endDate?.trim() || undefined;
+    const status =
+      args.status && TOPIC_STATUSES.includes(args.status)
+        ? args.status
+        : "offen";
+    const now = Date.now();
+
+    if (args.id) {
+      const existing = await getOwnTopic(ctx, args.id, args.employeeId);
+      await ctx.db.patch(existing._id, {
+        topic,
+        todo,
+        endDate,
+        status,
+        updatedAt: now,
+      });
+      return { id: existing._id };
+    }
+    const id = await ctx.db.insert("performanceTopics", {
+      employeeId: args.employeeId,
+      ym: args.ym,
+      topic,
+      todo,
+      endDate,
+      status,
+      createdBy: login.name,
+      createdAt: now,
+      updatedAt: now,
+    });
+    return { id };
+  },
+});
+
+export const deleteTopic = mutation({
+  args: {
+    token: v.string(),
+    employeeId: v.id("performanceEmployees"),
+    id: v.id("performanceTopics"),
+  },
+  handler: async (ctx, { token, employeeId, id }): Promise<{ ok: true }> => {
+    const login = await requireLogin(ctx, token);
+    requireAdmin(login);
+    const existing = await getOwnTopic(ctx, id, employeeId);
+    await ctx.db.delete(existing._id);
+    return { ok: true };
+  },
+});
+
+/** Set a topic's status — the employee themself may do this too, not just
+ * an admin. */
+export const setTopicStatus = mutation({
+  args: {
+    token: v.string(),
+    employeeId: v.id("performanceEmployees"),
+    id: v.id("performanceTopics"),
+    status: statusValidator,
+  },
+  handler: async (
+    ctx,
+    { token, employeeId, id, status }
+  ): Promise<{ ok: true }> => {
+    const login = await requireLogin(ctx, token);
+    requireCanView(login, employeeId);
+    const existing = await getOwnTopic(ctx, id, employeeId);
+    await ctx.db.patch(existing._id, { status, updatedAt: Date.now() });
+    return { ok: true };
+  },
+});
