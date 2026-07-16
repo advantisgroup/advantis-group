@@ -36,6 +36,8 @@ import {
   aggregateOppReport,
   EXCLUDED_OWNERS,
   readSalesforceExport,
+  type RawLead,
+  type RawOpp,
 } from "./performance/lib/salesforceImport";
 import {
   METRIC_KEYS,
@@ -328,12 +330,21 @@ async function upsertSnapshot(
   uploadedAt: number
 ): Promise<void> {
   const employeeId = await findOrCreateEmployee(ctx, employeeName);
-  const existing = await ctx.db
+  // Convex indexes aren't unique constraints (see the schema comment on
+  // by_employee_date), so more than one row can in principle match — e.g. a
+  // raced concurrent upload. Merge into the first match and drop any extras
+  // instead of using .unique(), which throws on ambiguity and would abort
+  // the entire import over a single duplicate row.
+  const matches = await ctx.db
     .query("performanceReports")
     .withIndex("by_employee_date", q =>
       q.eq("employeeId", employeeId).eq("reportDate", reportDate)
     )
-    .unique();
+    .collect();
+  const [existing, ...duplicates] = matches;
+  if (duplicates.length > 0) {
+    await Promise.all(duplicates.map(d => ctx.db.delete(d._id)));
+  }
   if (existing) {
     await ctx.db.patch(existing._id, { ...fields, sourceFile, uploadedAt });
   } else {
@@ -563,6 +574,32 @@ async function buildCallSnapshots(
   return { snapshots, skipped };
 }
 
+/** Runs the applyImport mutation and surfaces any failure's real message.
+ * Convex redacts a plain thrown Error down to an opaque "Server Error" for
+ * the caller unless it's a ConvexError — so without this, apps/api (and the
+ * admin uploading the file) would see no detail at all about what actually
+ * went wrong inside the transaction. */
+async function runApplyImport(
+  ctx: ActionCtx,
+  args: {
+    snapshots: EmployeeSnapshot[];
+    rawLeads?: RawLead[];
+    rawOpps?: RawOpp[];
+    sourceFile: string;
+    uploadLogLabel: string;
+    storageId: Id<"_storage">;
+  }
+): Promise<{ rowsImported: number }> {
+  try {
+    return await ctx.runMutation(internal.performanceImport.applyImport, args);
+  } catch (err) {
+    if (err instanceof ConvexError) throw err;
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[performanceImport] applyImport failed:", err);
+    throw new ConvexError({ code: "import_mutation_failed", message });
+  }
+}
+
 /**
  * Detects the report type (Salesforce Lead/Opp, call report as CSV or
  * Excel, or an aggregated template) and imports it — ported from
@@ -605,15 +642,12 @@ export const apiImportReport = action({
         ctx,
         detected.rows
       );
-      const result = await ctx.runMutation(
-        internal.performanceImport.applyImport,
-        {
-          snapshots,
-          sourceFile: filename,
-          uploadLogLabel: `${filename} (Call-Report ${toISODate(detected.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
-          storageId,
-        }
-      );
+      const result = await runApplyImport(ctx, {
+        snapshots,
+        sourceFile: filename,
+        uploadLogLabel: `${filename} (Call-Report ${toISODate(detected.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
+        storageId,
+      });
       return { status: "ok", rowsImported: result.rowsImported, skipped };
     }
 
@@ -629,57 +663,45 @@ export const apiImportReport = action({
     if (sf) {
       if (sf.kind === "lead") {
         const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
-        const result = await ctx.runMutation(
-          internal.performanceImport.applyImport,
-          {
-            snapshots,
-            rawLeads: raw,
-            sourceFile: filename,
-            uploadLogLabel: `${filename} (Lead-Report, ${sf.rows.length} Zeilen)`,
-            storageId,
-          }
-        );
+        const result = await runApplyImport(ctx, {
+          snapshots,
+          rawLeads: raw,
+          sourceFile: filename,
+          uploadLogLabel: `${filename} (Lead-Report, ${sf.rows.length} Zeilen)`,
+          storageId,
+        });
         return { status: "ok", rowsImported: result.rowsImported };
       }
       const { snapshots, raw } = aggregateOppReport(sf.rows, sf.reportDate);
-      const result = await ctx.runMutation(
-        internal.performanceImport.applyImport,
-        {
-          snapshots,
-          rawOpps: raw,
-          sourceFile: filename,
-          uploadLogLabel: `${filename} (Opportunity-Report, ${sf.rows.length} Zeilen)`,
-          storageId,
-        }
-      );
+      const result = await runApplyImport(ctx, {
+        snapshots,
+        rawOpps: raw,
+        sourceFile: filename,
+        uploadLogLabel: `${filename} (Opportunity-Report, ${sf.rows.length} Zeilen)`,
+        storageId,
+      });
       return { status: "ok", rowsImported: result.rowsImported };
     }
 
     const calls = readCallExport(rows);
     if (calls) {
       const { snapshots, skipped } = await buildCallSnapshots(ctx, calls.rows);
-      const result = await ctx.runMutation(
-        internal.performanceImport.applyImport,
-        {
-          snapshots,
-          sourceFile: filename,
-          uploadLogLabel: `${filename} (Call-Report ${toISODate(calls.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
-          storageId,
-        }
-      );
+      const result = await runApplyImport(ctx, {
+        snapshots,
+        sourceFile: filename,
+        uploadLogLabel: `${filename} (Call-Report ${toISODate(calls.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
+        storageId,
+      });
       return { status: "ok", rowsImported: result.rowsImported, skipped };
     }
 
     const template = parseAggregatedTemplate(rows);
-    const result = await ctx.runMutation(
-      internal.performanceImport.applyImport,
-      {
-        snapshots: template,
-        sourceFile: filename,
-        uploadLogLabel: filename,
-        storageId,
-      }
-    );
+    const result = await runApplyImport(ctx, {
+      snapshots: template,
+      sourceFile: filename,
+      uploadLogLabel: filename,
+      storageId,
+    });
     return { status: "ok", rowsImported: result.rowsImported };
   },
 });
