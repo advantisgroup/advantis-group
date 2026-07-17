@@ -23,6 +23,7 @@ import {
   mutation,
   query,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { EXCLUDED_OWNERS } from "./performance/lib/salesforceImport";
 import {
@@ -445,6 +446,7 @@ export const applyImport = internalMutation({
     sourceFile: v.string(),
     uploadLogLabel: v.string(),
     storageId: v.id("_storage"),
+    contentHash: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<{ rowsImported: number }> => {
     const now = Date.now();
@@ -463,9 +465,42 @@ export const applyImport = internalMutation({
       storageId: args.storageId,
       rowsImported: args.snapshots.length,
       uploadedAt: now,
+      contentHash: args.contentHash,
     });
     await purgeExcluded(ctx);
     return { rowsImported: args.snapshots.length };
+  },
+});
+
+async function lookupUploadByHash(
+  ctx: { db: QueryCtx["db"] },
+  contentHash: string
+): Promise<{ filename: string; uploadedAt: number } | null> {
+  const existing = await ctx.db
+    .query("performanceUploadLog")
+    .withIndex("by_contentHash", q => q.eq("contentHash", contentHash))
+    .first();
+  if (!existing) return null;
+  return { filename: existing.filename, uploadedAt: existing.uploadedAt };
+}
+
+/** Finds a prior upload of the exact same file (by content hash), so
+ * `apiImportReport` can recognize an accidental re-upload — of any report
+ * type, since every upload funnels through the same hash check before
+ * type-specific parsing — and skip re-importing it. */
+export const findUploadByHash = internalQuery({
+  args: { contentHash: v.string() },
+  handler: async (ctx, { contentHash }) => lookupUploadByHash(ctx, contentHash),
+});
+
+/** Same lookup, callable by `apps/api` before it even stages the file —
+ * lets the upload route skip the storage write entirely for an obvious
+ * re-upload instead of staging-then-deleting. */
+export const apiFindUploadByHash = query({
+  args: { serverKey: v.string(), contentHash: v.string() },
+  handler: async (ctx, { serverKey, contentHash }) => {
+    assertServerKey(serverKey);
+    return lookupUploadByHash(ctx, contentHash);
   },
 });
 

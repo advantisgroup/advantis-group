@@ -65,10 +65,14 @@ export async function downloadPerformanceFile(
 
 export interface UploadReportResult {
   ok: boolean;
-  status?: "ok" | "empty";
+  status?: "ok" | "empty" | "duplicate";
   error?: string;
   rowsImported?: number;
   skipped?: string[];
+  // Only set when status is "duplicate" — the earlier upload this file's
+  // content matches.
+  filename?: string;
+  uploadedAt?: number;
 }
 
 /** Uploads one report file to `POST /performance/uploads`, reporting real

@@ -178,9 +178,9 @@ export default function DashboardTeamPage() {
           />
         </div>
       </CardHeader>
-      <CardContent className="overflow-x-auto overflow-y-visible">
+      <CardContent className="overflow-x-auto">
         <Table>
-          <TableHeader className="sticky top-16 z-10 bg-card">
+          <TableHeader>
             <TableRow>
               <SortableHead
                 label={t("colName")}

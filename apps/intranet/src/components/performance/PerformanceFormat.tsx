@@ -72,3 +72,29 @@ export function DeltaBadge({
     </span>
   );
 }
+
+/** "VM ↑X.X · VJ ↓Y.Y" pair — the standard month-over-month/year-over-year
+ * comparison shown under most Performance KPI values. */
+export function DeltaPair({
+  dVm,
+  dVj,
+}: {
+  dVm: number | undefined;
+  dVj: number | undefined;
+}) {
+  if (dVm === undefined && dVj === undefined) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+      {dVm !== undefined && (
+        <span className="inline-flex items-center gap-1">
+          VM <DeltaBadge value={dVm} />
+        </span>
+      )}
+      {dVj !== undefined && (
+        <span className="inline-flex items-center gap-1">
+          VJ <DeltaBadge value={dVj} />
+        </span>
+      )}
+    </div>
+  );
+}

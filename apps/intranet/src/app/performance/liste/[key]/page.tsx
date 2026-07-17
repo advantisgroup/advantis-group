@@ -193,7 +193,7 @@ export default function DrilldownPage() {
                   {t("listCount", { count: items.length })}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="overflow-x-auto overflow-y-visible">
+              <CardContent className="overflow-x-auto">
                 {!data ? (
                   <div className="space-y-2">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -206,7 +206,7 @@ export default function DrilldownPage() {
                   </p>
                 ) : data.kind === "lead" ? (
                   <Table>
-                    <TableHeader className="sticky top-16 z-10 bg-card">
+                    <TableHeader>
                       <TableRow>
                         <TableHead>{t("colOwner")}</TableHead>
                         <TableHead>{t("colStatus")}</TableHead>
@@ -245,7 +245,7 @@ export default function DrilldownPage() {
                   </Table>
                 ) : (
                   <Table>
-                    <TableHeader className="sticky top-16 z-10 bg-card">
+                    <TableHeader>
                       <TableRow>
                         <TableHead>{t("colOwner")}</TableHead>
                         <TableHead>{t("colStage")}</TableHead>
