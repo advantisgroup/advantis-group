@@ -204,7 +204,7 @@ export function Sidebar() {
           href: "/admin/activity",
           labelKey: "activity",
           icon: Activity,
-          adminOnly: true,
+          managerOnly: true,
           external: true,
         },
         {
