@@ -507,7 +507,7 @@ export default function PerformanceUploadPage() {
         }}
       />
 
-      <main className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

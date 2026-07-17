@@ -45,7 +45,6 @@ import { normalizeZipLocalHeaders } from "./performance/lib/xlsxZip";
 import { toISODate } from "./performance/lib/workdays";
 import { assertServerKey, parseAggregatedTemplate } from "./performanceImport";
 
-const ALLOWED_EXTENSIONS = [".xlsx", ".xlsm", ".csv"];
 // Safely under Convex's 8192-element array-argument limit, with headroom
 // for the rest of each row's payload size.
 const RAW_CHUNK_SIZE = 2000;
@@ -201,6 +200,15 @@ export type ImportResult =
  * is set only by the latter, to patch the existing log row in place
  * instead of inserting a new one.
  */
+// Matches the extension anywhere, not just at the string's end: a
+// re-import's `filename` comes from an upload-log row, and every row
+// logged before this file's own refactor stored a decorated label
+// ("report.csv (Call-Report 2026-07-01: 9 matched, 3 skipped)") instead
+// of the raw filename — `.endsWith()` never matches those. Trimming down
+// to the matched prefix also self-heals the log entry's filename back to
+// something readable the next time it's (re)written.
+const EXTENSION_RE = /\.(xlsx|xlsm|csv)\b/i;
+
 async function processReport(
   ctx: ActionCtx,
   args: {
@@ -212,16 +220,16 @@ async function processReport(
     replaceLogId?: Id<"performanceUploadLog">;
   }
 ): Promise<ImportResult> {
-  const { filename, storageId, contentHash, fileSize, batchId, replaceLogId } =
-    args;
-  const lowerName = filename.toLowerCase();
-  const extension = ALLOWED_EXTENSIONS.find(ext => lowerName.endsWith(ext));
-  if (!extension) {
+  const { storageId, contentHash, fileSize, batchId, replaceLogId } = args;
+  const match = EXTENSION_RE.exec(args.filename);
+  if (!match) {
     throw new ConvexError({
       code: "validation",
       message: "Unsupported file extension.",
     });
   }
+  const extension = `.${match[1].toLowerCase()}`;
+  const filename = args.filename.slice(0, match.index + match[0].length);
 
   const blob = await ctx.storage.get(storageId);
   if (!blob) {
