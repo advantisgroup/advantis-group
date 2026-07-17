@@ -867,6 +867,19 @@ export default defineSchema({
         tzOffsetMinutes: v.number(),
       })
     ),
+    // Running total for the device's current local day, maintained alongside
+    // `dailyStats` by the same ingest patch so teamOverview (reactive, read by
+    // every open dashboard tab) can read today's totals off the row it's
+    // already reading instead of a separate per-device `dailyStats` query —
+    // that extra query was one more document every connected viewer re-read
+    // on every ingest tick.
+    todayStats: v.optional(
+      v.object({
+        day: v.string(),
+        activeSeconds: v.number(),
+        idleSeconds: v.number(),
+      })
+    ),
   })
     .index("by_deviceId", ["deviceId"])
     .index("by_status", ["status"])

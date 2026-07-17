@@ -142,8 +142,15 @@ export const recordSamples = internalMutation({
 
       // Flush the accumulated per-day deltas: one dailyStats read + one
       // write per (device, local day) instead of one pair per sample.
+      // `todayStats` mirrors whichever day is most recent in the batch, so
+      // the device row always reflects the day `newest` falls in.
+      const currentDay = localDay(newest.capturedAt, newest.tzOffsetMinutes);
+      let todayStats: Doc<"devices">["todayStats"];
       for (const [day, totals] of dayTotals) {
-        await flushDay(ctx, deviceId, day, totals);
+        const dayTotal = await flushDay(ctx, deviceId, day, totals);
+        if (day === currentDay) {
+          todayStats = { day, ...dayTotal };
+        }
       }
 
       const lastSample = {
@@ -171,6 +178,7 @@ export const recordSamples = internalMutation({
           status: device.status,
           lastIngestAt: receivedAt,
           lastSample,
+          ...(todayStats ? { todayStats } : {}),
         });
       } else {
         await ctx.db.insert("devices", {
@@ -182,6 +190,7 @@ export const recordSamples = internalMutation({
           agentVersion: newest.agentVersion,
           lastIngestAt: receivedAt,
           lastSample,
+          ...(todayStats ? { todayStats } : {}),
         });
       }
 
@@ -274,19 +283,22 @@ async function flushDay(
   deviceId: string,
   day: string,
   { activeDelta, idleDelta, firstSeen, lastSeen }: DayTotals
-): Promise<void> {
+): Promise<{ activeSeconds: number; idleSeconds: number }> {
   const existing = await ctx.db
     .query("dailyStats")
     .withIndex("by_device_day", q => q.eq("deviceId", deviceId).eq("day", day))
     .unique();
 
   if (existing) {
+    const activeSeconds = existing.activeSeconds + activeDelta;
+    const idleSeconds = existing.idleSeconds + idleDelta;
     await ctx.db.patch(existing._id, {
-      activeSeconds: existing.activeSeconds + activeDelta,
-      idleSeconds: existing.idleSeconds + idleDelta,
+      activeSeconds,
+      idleSeconds,
       firstSeen: Math.min(existing.firstSeen, firstSeen),
       lastSeen: Math.max(existing.lastSeen, lastSeen),
     });
+    return { activeSeconds, idleSeconds };
   } else {
     await ctx.db.insert("dailyStats", {
       deviceId,
@@ -296,5 +308,6 @@ async function flushDay(
       firstSeen,
       lastSeen,
     });
+    return { activeSeconds: activeDelta, idleSeconds: idleDelta };
   }
 }
