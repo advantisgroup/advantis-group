@@ -52,12 +52,9 @@ function CallStatCard({
 export default function DashboardCallsPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const token = getPerformanceToken();
+  const token = getPerformanceToken() ?? "";
   const [ym] = usePerformanceYm();
-  const data = useQuery(
-    api.performanceQueries.teamDashboard,
-    token ? { token, ym } : "skip"
-  );
+  const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
 
   const callsChart = useMemo(
     () =>

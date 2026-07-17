@@ -16,6 +16,7 @@ import {
   randomToken,
   verifyPassword,
 } from "./activity/lib/crypto";
+import { getCurrentUser } from "./lib/auth";
 
 const SESSION_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
@@ -211,22 +212,44 @@ export const login = action({
   },
 });
 
+/** Alternative to the password-session token: if the caller is signed into
+ * the intranet via Clerk and an admin has linked their account to a
+ * Performance login (`performanceLogins.linkedUserId`, set via the
+ * Benutzer page's "Intranet account" field), that login authenticates
+ * them without a separate password. Never throws — just returns null when
+ * there's no Clerk identity or no matching active login, so callers fall
+ * through to "please sign in" the same as an invalid password token. */
+async function resolveClerkLinkedLogin(
+  ctx: QueryCtx | MutationCtx
+): Promise<{ session: null; login: Doc<"performanceLogins"> } | null> {
+  const user = await getCurrentUser(ctx);
+  if (!user) return null;
+  const login = await ctx.db
+    .query("performanceLogins")
+    .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+    .first();
+  if (!login || !login.active) return null;
+  return { session: null, login };
+}
+
 export async function resolveActiveSession(
   ctx: QueryCtx | MutationCtx,
   token: string
 ): Promise<{
-  session: Doc<"performanceSessions">;
+  session: Doc<"performanceSessions"> | null;
   login: Doc<"performanceLogins">;
 } | null> {
-  if (!token) return null;
-  const session = await ctx.db
-    .query("performanceSessions")
-    .withIndex("by_token", q => q.eq("token", token))
-    .unique();
-  if (!session || session.expiresAt < Date.now()) return null;
-  const login = await ctx.db.get(session.loginId);
-  if (!login || !login.active) return null;
-  return { session, login };
+  if (token) {
+    const session = await ctx.db
+      .query("performanceSessions")
+      .withIndex("by_token", q => q.eq("token", token))
+      .unique();
+    if (session && session.expiresAt >= Date.now()) {
+      const login = await ctx.db.get(session.loginId);
+      if (login && login.active) return { session, login };
+    }
+  }
+  return resolveClerkLinkedLogin(ctx);
 }
 
 /** Require a valid session belonging to an active admin login; throws
@@ -261,6 +284,11 @@ export const validateSession = query({
       name: resolved.login.name,
       role: resolved.login.role,
       employeeId: resolved.login.employeeId ?? null,
+      // True when this session came from the caller's linked Clerk
+      // identity rather than the password-session token — the client uses
+      // this to skip the password-only chrome (exit/change-password links
+      // that assume a Performance session exists to invalidate).
+      viaClerk: resolved.session === null,
     };
   },
 });
@@ -269,7 +297,7 @@ export const touchSession = mutation({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
     const resolved = await resolveActiveSession(ctx, token);
-    if (resolved)
+    if (resolved?.session)
       await ctx.db.patch(resolved.session._id, { lastUsedAt: Date.now() });
     return { ok: true };
   },
@@ -315,6 +343,7 @@ export const insertLogin = internalMutation({
     passwordHash: v.string(),
     role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
     employeeId: v.optional(v.id("performanceEmployees")),
+    linkedUserId: v.optional(v.id("users")),
   },
   handler: async (ctx, args): Promise<Id<"performanceLogins">> =>
     await ctx.db.insert("performanceLogins", {
@@ -322,6 +351,18 @@ export const insertLogin = internalMutation({
       active: true,
       createdAt: Date.now(),
     }),
+});
+
+/** The login already linked to `userId`, if any — the action-side lookup
+ * `createLogin`/`updateLogin`'s conflict checks need (actions have no
+ * `ctx.db`). */
+export const getLoginLinkedTo = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, { userId }): Promise<Doc<"performanceLogins"> | null> =>
+    await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", userId))
+      .first(),
 });
 
 export const setPasswordHash = internalMutation({
@@ -337,11 +378,18 @@ export const listLogins = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
     await requireAdminLogin(ctx, token);
-    const [logins, employees] = await Promise.all([
+    const [logins, employees, users] = await Promise.all([
       ctx.db.query("performanceLogins").collect(),
       ctx.db.query("performanceEmployees").collect(),
+      ctx.db.query("users").collect(),
     ]);
     const employeeName = new Map(employees.map(e => [e._id, e.name]));
+    const userName = new Map(
+      users.map(u => [
+        u._id,
+        [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
+      ])
+    );
     return logins
       .map(l => ({
         id: l._id,
@@ -352,6 +400,10 @@ export const listLogins = query({
         employeeId: l.employeeId ?? null,
         employeeName: l.employeeId
           ? (employeeName.get(l.employeeId) ?? null)
+          : null,
+        linkedUserId: l.linkedUserId ?? null,
+        linkedUserName: l.linkedUserId
+          ? (userName.get(l.linkedUserId) ?? null)
           : null,
         createdAt: l.createdAt,
       }))
@@ -373,6 +425,132 @@ export const listEmployeesForLink = query({
   },
 });
 
+/** Active intranet accounts available to link a login to, for the same
+ * page's "Intranet account" field — each annotated with the Performance
+ * login it's already linked to (if any), so the admin UI can warn before
+ * reassigning one out from under another login. */
+export const listIntranetUsersForLink = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    await requireAdminLogin(ctx, token);
+    const [users, logins] = await Promise.all([
+      ctx.db.query("users").collect(),
+      ctx.db.query("performanceLogins").collect(),
+    ]);
+    const linkedToLoginName = new Map(
+      logins
+        .filter(l => l.linkedUserId)
+        .map(l => [l.linkedUserId!, l.name] as const)
+    );
+    return users
+      .filter(u => u.status === "active")
+      .map(u => ({
+        id: u._id,
+        name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
+        email: u.email,
+        avatarUrl: u.avatarUrl ?? null,
+        linkedToLoginName: linkedToLoginName.get(u._id) ?? null,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  },
+});
+
+/** Whether the caller — signed into a real Performance password session
+ * right now — could link that login to their own signed-in intranet
+ * (Clerk) account, for the self-service "link me" prompt shown after a
+ * password login. Admin-only by design (self-linking a `mitarbeiter` login
+ * goes through the admin picker on the Benutzer page instead, so an admin
+ * always sees who's linked to what). Deliberately narrower than that admin
+ * picker in one other way too: only offers linking the login the caller is
+ * *currently signed in as*, to their *own* Clerk identity — never someone
+ * else's. */
+export const myLinkableClerkIdentity = query({
+  args: { token: v.string() },
+  handler: async (
+    ctx,
+    { token }
+  ): Promise<
+    | { eligible: false }
+    | {
+        eligible: true;
+        loginId: Id<"performanceLogins">;
+        name: string;
+        email: string;
+      }
+  > => {
+    const resolved = await resolveActiveSession(ctx, token);
+    // Only a genuine password session is offered this prompt — one that
+    // already resolved via a Clerk link (resolved.session === null) is
+    // linked already, and has nothing to gain from it.
+    if (!resolved || !resolved.session) return { eligible: false };
+    if (resolved.login.role !== "admin") return { eligible: false };
+    if (resolved.login.linkedUserId) return { eligible: false };
+
+    const user = await getCurrentUser(ctx);
+    if (!user) return { eligible: false };
+
+    const conflict = await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+      .first();
+    if (conflict) return { eligible: false };
+
+    return {
+      eligible: true,
+      loginId: resolved.login._id,
+      name:
+        [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email,
+      email: user.email,
+    };
+  },
+});
+
+/** Links the caller's current password-session login to their own signed-in
+ * intranet account — the mutation behind the self-service "link me" prompt.
+ * Re-checks every condition `myLinkableClerkIdentity` reported, since
+ * either side could have changed between the query and this call. */
+export const linkMyAccount = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, { token }): Promise<{ ok: true }> => {
+    const resolved = await resolveActiveSession(ctx, token);
+    if (!resolved || !resolved.session) {
+      throw new ConvexError({
+        code: "unauthenticated",
+        message: "Please sign in.",
+      });
+    }
+    if (resolved.login.role !== "admin") {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "Admin session required.",
+      });
+    }
+    if (resolved.login.linkedUserId) {
+      throw new ConvexError({
+        code: "already_linked",
+        message: "This login is already linked to an intranet account.",
+      });
+    }
+
+    const user = await getCurrentUser(ctx);
+    if (!user) {
+      throw new ConvexError({
+        code: "no_intranet_account",
+        message: "No signed-in intranet account found.",
+      });
+    }
+
+    const conflict = await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+      .first();
+    if (conflict) throw alreadyLinked();
+
+    await ctx.db.patch(resolved.login._id, { linkedUserId: user._id });
+    return { ok: true };
+  },
+});
+
 function emailTaken(): ConvexError<{ code: string; message: string }> {
   return new ConvexError({
     code: "email_taken",
@@ -387,26 +565,52 @@ function passwordTooShort(): ConvexError<{ code: string; message: string }> {
   });
 }
 
+function alreadyLinked(): ConvexError<{ code: string; message: string }> {
+  return new ConvexError({
+    code: "already_linked",
+    message:
+      "This intranet account is already linked to another Performance login.",
+  });
+}
+
 /** Admin creates a new Performance login directly — unlike `setupAccount`,
  * this isn't gated by the `PERFORMANCE_ADMIN_EMAILS` allowlist, since that
- * allowlist only exists to bootstrap the very first admin. */
+ * allowlist only exists to bootstrap the very first admin.
+ *
+ * `password` is only required when `linkedUserId` is omitted. A login
+ * created with `linkedUserId` set authenticates entirely through that
+ * person's existing intranet (Clerk) session (see `resolveActiveSession`)
+ * — they never see a password, so one is never asked for; a random,
+ * never-surfaced hash fills the (mandatory) `passwordHash` column so the
+ * account still can't be brute-forced if an admin later unlinks it. */
 export const createLogin = action({
   args: {
     token: v.string(),
     email: v.string(),
     name: v.string(),
-    password: v.string(),
+    password: v.optional(v.string()),
     role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
     employeeId: v.optional(v.id("performanceEmployees")),
+    linkedUserId: v.optional(v.id("users")),
   },
   handler: async (
     ctx,
-    { token, email, name, password, role, employeeId }
+    { token, email, name, password, role, employeeId, linkedUserId }
   ): Promise<{ id: Id<"performanceLogins"> }> => {
     await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
       token,
     });
-    if (password.length < 8) throw passwordTooShort();
+
+    if (linkedUserId) {
+      const conflict = await ctx.runQuery(
+        internal.performanceAuth.getLoginLinkedTo,
+        { userId: linkedUserId }
+      );
+      if (conflict) throw alreadyLinked();
+    } else if (!password || password.length < 8) {
+      throw passwordTooShort();
+    }
+
     const normalizedEmail = email.trim().toLowerCase();
     const existing: Doc<"performanceLogins"> | null = await ctx.runQuery(
       internal.performanceAuth.getLoginByEmail,
@@ -414,7 +618,7 @@ export const createLogin = action({
     );
     if (existing) throw emailTaken();
 
-    const passwordHash = await hashPassword(password);
+    const passwordHash = await hashPassword(password ?? randomToken());
     const id: Id<"performanceLogins"> = await ctx.runMutation(
       internal.performanceAuth.insertLogin,
       {
@@ -423,6 +627,7 @@ export const createLogin = action({
         passwordHash,
         role,
         employeeId,
+        linkedUserId,
       }
     );
     return { id };
@@ -442,10 +647,11 @@ export const updateLogin = mutation({
     role: v.optional(v.union(v.literal("admin"), v.literal("mitarbeiter"))),
     active: v.optional(v.boolean()),
     employeeId: v.optional(v.union(v.id("performanceEmployees"), v.null())),
+    linkedUserId: v.optional(v.union(v.id("users"), v.null())),
   },
   handler: async (
     ctx,
-    { token, loginId, name, role, active, employeeId }
+    { token, loginId, name, role, active, employeeId, linkedUserId }
   ): Promise<{ ok: true }> => {
     await requireAdminLogin(ctx, token);
     const target = await ctx.db.get(loginId);
@@ -475,12 +681,25 @@ export const updateLogin = mutation({
       }
     }
 
+    if (linkedUserId) {
+      const conflict = await ctx.db
+        .query("performanceLogins")
+        .withIndex("by_linkedUserId", q => q.eq("linkedUserId", linkedUserId))
+        .first();
+      if (conflict && conflict._id !== loginId) {
+        throw alreadyLinked();
+      }
+    }
+
     await ctx.db.patch(loginId, {
       ...(name !== undefined ? { name: name.trim() } : {}),
       ...(role !== undefined ? { role } : {}),
       ...(active !== undefined ? { active } : {}),
       ...(employeeId !== undefined
         ? { employeeId: employeeId ?? undefined }
+        : {}),
+      ...(linkedUserId !== undefined
+        ? { linkedUserId: linkedUserId ?? undefined }
         : {}),
     });
     return { ok: true };

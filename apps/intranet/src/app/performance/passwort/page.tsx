@@ -5,50 +5,49 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { useAction, useQuery } from "convex/react";
+import { useAction } from "convex/react";
 import { KeyRound, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
+import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
+import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import {
-  clearPerformanceToken,
-  getPerformanceToken,
-} from "@/lib/performanceAuth";
+import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 export default function PerformancePasswordPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
   const handleError = useErrorHandler();
-  const [token] = useState<string | null>(() => getPerformanceToken());
+  const { token, session } = usePerformanceSession();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
 
-  useEffect(() => {
-    if (!token) router.replace("/performance/login");
-  }, [router, token]);
-
-  const session = useQuery(
-    api.performanceAuth.validateSession,
-    token ? { token } : "skip"
-  );
   const changeOwnPassword = useAction(api.performanceAuth.changeOwnPassword);
 
   useEffect(() => {
-    if (token && session && !session.valid) {
+    // Wait for the query to resolve — a visitor with no password cookie may
+    // still resolve via their linked Clerk identity.
+    if (!session) return;
+    if (!session.valid) {
       clearPerformanceToken();
       router.replace("/performance/login");
+      return;
     }
-  }, [token, session, router]);
+    // Clerk-linked accounts have no password to change — this page doesn't
+    // apply to them (the nav entry that links here is already hidden).
+    if (session.viaClerk) router.replace("/performance");
+  }, [session, router]);
 
   function exit() {
     clearPerformanceToken();
@@ -58,13 +57,12 @@ export default function PerformancePasswordPage() {
   const mismatch =
     confirmPassword.length > 0 && newPassword !== confirmPassword;
   const canSubmit =
-    !!token &&
     currentPassword.length > 0 &&
     newPassword.length >= 8 &&
     newPassword === confirmPassword;
 
   async function handleSubmit() {
-    if (!token || !canSubmit) return;
+    if (!canSubmit) return;
     setSaving(true);
     setDone(false);
     try {
@@ -81,12 +79,13 @@ export default function PerformancePasswordPage() {
   }
 
   if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid) return null;
+  if (!session.valid || session.viaClerk) return null;
 
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
         <PerformanceWordmark />
+        <BackToIntranetLink />
         <div className="flex-1" />
         <Link
           href={
@@ -101,6 +100,7 @@ export default function PerformancePasswordPage() {
             {t("backToDashboard")}
           </Button>
         </Link>
+        <PerformanceAccountMenu />
         <SettingsMenu />
         <Button variant="ghost" size="sm" onClick={exit}>
           <LogOut className="mr-2 h-4 w-4" />
