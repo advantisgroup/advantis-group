@@ -6,24 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Download,
-  LayoutDashboard,
-  LogOut,
-  Phone,
-  Upload,
-  Users,
-} from "lucide-react";
+import { Download, LayoutDashboard, Phone, Upload, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
-import { SettingsMenu } from "@/components/layout/SettingsMenu";
-import { Link } from "@/components/Link";
-import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
-import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { fmtYm } from "@/components/performance/PerformanceFormat";
+import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import {
   PerformanceYmProvider,
@@ -49,13 +38,11 @@ import {
 
 function DashboardChrome({
   token,
-  name,
   viaClerk,
   onExit,
   children,
 }: {
   token: string;
-  name: string;
   viaClerk: boolean;
   onExit: () => void;
   children: ReactNode;
@@ -90,43 +77,24 @@ function DashboardChrome({
     },
   ];
 
+  const navItems = [
+    { href: "/performance/benutzer", label: t("usersLink"), icon: Users },
+    ...(viaClerk
+      ? []
+      : [
+          { href: "/performance/upload", label: t("uploadLink"), icon: Upload },
+        ]),
+    ...(viaClerk
+      ? []
+      : [{ href: "/performance/passwort", label: t("passwordLink") }]),
+  ];
+
   return (
     <div className="min-h-screen bg-muted/20">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
-        <PerformanceWordmark />
-        <BackToIntranetLink />
-        <div className="flex-1" />
-        <span className="text-sm text-muted-foreground">{name}</span>
-        <Link href="/performance/benutzer">
-          <Button variant="ghost" size="sm">
-            <Users className="mr-2 h-4 w-4" />
-            {t("usersLink")}
-          </Button>
-        </Link>
-        {!viaClerk && (
-          <Link href="/performance/upload">
-            <Button variant="ghost" size="sm">
-              <Upload className="mr-2 h-4 w-4" />
-              {t("uploadLink")}
-            </Button>
-          </Link>
-        )}
-        {!viaClerk && (
-          <Link href="/performance/passwort">
-            <Button variant="ghost" size="sm">
-              {t("passwordLink")}
-            </Button>
-          </Link>
-        )}
-        <PerformanceAccountMenu />
-        <SettingsMenu />
-        {!viaClerk && (
-          <Button variant="ghost" size="sm" onClick={onExit}>
-            <LogOut className="mr-2 h-4 w-4" />
-            {t("exit")}
-          </Button>
-        )}
-      </header>
+      <PerformanceHeader
+        navItems={navItems}
+        onExit={viaClerk ? undefined : onExit}
+      />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
         {!viaClerk && <SelfLinkPrompt token={token} />}
@@ -239,19 +207,7 @@ export default function PerformanceDashboardLayout({
     if (session.employeeId) return null; // redirecting
     return (
       <div className="min-h-screen bg-muted/20">
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
-          <PerformanceWordmark />
-          <BackToIntranetLink />
-          <div className="flex-1" />
-          <PerformanceAccountMenu />
-          <SettingsMenu />
-          {!session.viaClerk && (
-            <Button variant="ghost" size="sm" onClick={exit}>
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("exit")}
-            </Button>
-          )}
-        </header>
+        <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
         <main className="mx-auto max-w-3xl p-4 md:p-6">
           <Card>
             <CardHeader className="items-center text-center">
@@ -268,12 +224,7 @@ export default function PerformanceDashboardLayout({
 
   return (
     <PerformanceYmProvider>
-      <DashboardChrome
-        token={token}
-        name={session.name}
-        viaClerk={session.viaClerk}
-        onExit={exit}
-      >
+      <DashboardChrome token={token} viaClerk={session.viaClerk} onExit={exit}>
         {children}
       </DashboardChrome>
     </PerformanceYmProvider>
