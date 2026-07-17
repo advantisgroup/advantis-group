@@ -495,9 +495,25 @@ export const resetLoginPassword = action({
     password: v.string(),
   },
   handler: async (ctx, { token, loginId, password }): Promise<{ ok: true }> => {
-    await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
-      token,
-    });
+    const admin = await ctx.runQuery(
+      internal.performanceAuth.assertAdminSession,
+      {
+        token,
+      }
+    );
+    // An admin resets a colleague's password without needing their current
+    // one — that's exactly the escape hatch `changeOwnPassword` deliberately
+    // doesn't offer. Keeping the two paths mutually exclusive (rather than
+    // letting this one double as a shortcut for your own account) is what
+    // makes "there are two password screens" make sense instead of being
+    // redundant.
+    if (admin._id === loginId) {
+      throw new ConvexError({
+        code: "use_change_own_password",
+        message:
+          "Use „My password“ to change your own password (it verifies your current one).",
+      });
+    }
     if (password.length < 8) throw passwordTooShort();
     const passwordHash = await hashPassword(password);
     await ctx.runMutation(internal.performanceAuth.setPasswordHash, {
