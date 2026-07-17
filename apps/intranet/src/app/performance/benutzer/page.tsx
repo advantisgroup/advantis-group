@@ -133,7 +133,7 @@ export default function PerformanceUsersPage() {
               <p className="text-sm text-muted-foreground">{t("usersEmpty")}</p>
             ) : (
               <Table>
-                <TableHeader className="sticky top-16 z-10 bg-card">
+                <TableHeader>
                   <TableRow>
                     <TableHead>{t("nameLabel")}</TableHead>
                     <TableHead>{t("emailLabel")}</TableHead>
