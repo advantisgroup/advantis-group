@@ -1,16 +1,9 @@
 "use client";
 
-import { Rocket, X } from "lucide-react";
+import { Rocket } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipContent,
@@ -21,44 +14,16 @@ import {
 import { useOnboarding } from "./OnboardingProvider";
 
 /**
- * Header entry point for the onboarding wizard, shown until it's completed or
- * dismissed. Employees just reopen it (they already had the forced flow and
- * chose to skip or come back later); managers/admins — who never get the
- * forced auto-open — get an explicit dismiss action here too, since the icon
- * is the only place they'll ever see onboarding mentioned.
+ * Header entry point for the onboarding wizard, shown until it's completed.
+ * Skipping/dismissing the modal only stops it from forcing itself open again
+ * — this icon stays in the header as a standing reminder for both employees
+ * and managers/admins until onboarding is actually completed.
  */
 export function OnboardingTrigger() {
   const t = useTranslations("Onboarding");
-  const isManagerOrAdmin = useIsManager();
-  const { isCompleted, isDismissed, reopen, dismiss } = useOnboarding();
+  const { isCompleted, reopen } = useOnboarding();
 
-  if (isCompleted || isDismissed) return null;
-
-  if (isManagerOrAdmin) {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="text-muted-foreground hover:text-foreground"
-            aria-label={t("triggerTooltip")}
-          >
-            <Rocket />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="text-sm">
-          <DropdownMenuItem onClick={reopen}>
-            {t("triggerLabel")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={dismiss}>
-            <X />
-            {t("dismiss")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    );
-  }
+  if (isCompleted) return null;
 
   return (
     <TooltipProvider delayDuration={150}>
