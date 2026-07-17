@@ -23,6 +23,22 @@ export function clearPerformanceToken(): void {
   document.cookie = `${COOKIE}=; path=/; max-age=0`;
 }
 
+// Remembers the last month picked on the team dashboard/employee detail
+// pages, so navigating between them (or reloading) doesn't silently reset
+// back to the current month. Purely a UX convenience — every page still
+// falls back to the server's current-month default when nothing is stored.
+const LAST_YM_KEY = "performance_last_ym";
+
+export function getLastPerformanceYm(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  return window.localStorage.getItem(LAST_YM_KEY) ?? undefined;
+}
+
+export function setLastPerformanceYm(ym: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LAST_YM_KEY, ym);
+}
+
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
   "http://localhost:3002";
@@ -45,4 +61,50 @@ export async function downloadPerformanceFile(
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export interface UploadReportResult {
+  ok: boolean;
+  status?: "ok" | "empty";
+  error?: string;
+  rowsImported?: number;
+  skipped?: string[];
+}
+
+/** Uploads one report file to `POST /performance/uploads`, reporting real
+ * upload progress (0–1) — uses XHR rather than `fetch` since `fetch` has no
+ * upload-progress event, matching the pattern already proven by
+ * `uploadToConvex` in `lib/upload.ts`. `onProgress` fires only for the
+ * client→server transfer; parsing/import happens after it reaches 1. */
+export function uploadPerformanceReport(
+  file: File,
+  token: string,
+  onProgress?: (fraction: number) => void
+): Promise<UploadReportResult> {
+  return new Promise(resolve => {
+    const form = new FormData();
+    form.append("file", file);
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `${API_BASE}/performance/uploads`);
+    xhr.setRequestHeader("authorization", `Bearer ${token}`);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
+    };
+    xhr.onload = () => {
+      let body: Partial<UploadReportResult> = {};
+      try {
+        body = JSON.parse(xhr.responseText) as Partial<UploadReportResult>;
+      } catch {
+        // Non-JSON error body (e.g. a proxy error page) — fall through to
+        // the generic ok:false below.
+      }
+      resolve(
+        xhr.status >= 200 && xhr.status < 300
+          ? { ok: true, ...body }
+          : { ok: false, error: body.error }
+      );
+    };
+    xhr.onerror = () => resolve({ ok: false });
+    xhr.send(form);
+  });
 }

@@ -6,6 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Doc, type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +68,7 @@ function TopicForm({
         status,
       });
       onSaved();
+      toast.success(topic ? t("topicUpdatedToast") : t("topicCreatedToast"));
     } catch (err) {
       handleError(err);
     } finally {

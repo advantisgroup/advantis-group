@@ -1,19 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Download, LogOut, Upload } from "lucide-react";
+import {
+  CheckCircle2,
+  Clock,
+  Download,
+  FileSpreadsheet,
+  FileText,
+  Info,
+  Loader2,
+  LogOut,
+  RotateCw,
+  Upload,
+  UploadCloud,
+  X,
+  XCircle,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
+import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -22,23 +37,58 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, relativeTime } from "@/lib/format";
 import {
   clearPerformanceToken,
   downloadPerformanceFile,
   getPerformanceToken,
+  uploadPerformanceReport,
 } from "@/lib/performanceAuth";
+import { formatFileSize } from "@/lib/upload";
+import { cn } from "@/lib/utils";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
-  "http://localhost:3002";
+const ACCEPTED_EXTENSIONS = [".xlsx", ".xlsm", ".csv"];
 
-interface UploadOutcome {
-  filename: string;
-  status: "ok" | "empty" | "error";
-  message?: string;
+type QueueStatus =
+  | "queued"
+  | "uploading"
+  | "processing"
+  | "done"
+  | "empty"
+  | "error";
+
+interface QueueItem {
+  id: string;
+  file: File;
+  status: QueueStatus;
+  progress: number;
   rowsImported?: number;
   skipped?: string[];
+  error?: string;
+}
+
+function FileIcon({ name }: { name: string }) {
+  const isCsv = name.toLowerCase().endsWith(".csv");
+  const Icon = isCsv ? FileText : FileSpreadsheet;
+  return <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />;
+}
+
+function StatusIcon({ status }: { status: QueueStatus }) {
+  switch (status) {
+    case "queued":
+      return <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />;
+    case "uploading":
+    case "processing":
+      return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />;
+    case "done":
+      return (
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+      );
+    case "empty":
+      return <Info className="h-4 w-4 shrink-0 text-muted-foreground" />;
+    case "error":
+      return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
+  }
 }
 
 export default function PerformanceUploadPage() {
@@ -46,6 +96,9 @@ export default function PerformanceUploadPage() {
   const locale = useLocale();
   const router = useRouter();
   const [token] = useState<string | null>(() => getPerformanceToken());
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
 
   useEffect(() => {
     if (!token) router.replace("/performance/login");
@@ -74,58 +127,78 @@ export default function PerformanceUploadPage() {
     token && isAdmin ? { token } : "skip"
   );
 
-  const [uploading, setUploading] = useState(false);
-  const [results, setResults] = useState<UploadOutcome[]>([]);
-
-  async function handleFiles(files: FileList | null) {
-    if (!files || files.length === 0 || !token) return;
-    setUploading(true);
-    setResults([]);
-    const outcomes: UploadOutcome[] = [];
-    for (const file of Array.from(files)) {
-      try {
-        const form = new FormData();
-        form.append("file", file);
-        const res = await fetch(`${API_BASE}/performance/uploads`, {
-          method: "POST",
-          headers: { authorization: `Bearer ${token}` },
-          body: form,
-        });
-        const responseBody = (await res.json()) as {
-          error?: string;
-          status?: "ok" | "empty";
-          rowsImported?: number;
-          skipped?: string[];
-        };
-        if (!res.ok) {
-          outcomes.push({
-            filename: file.name,
-            status: "error",
-            message: responseBody.error ?? t("uploadFailed"),
-          });
-        } else if (responseBody.status === "empty") {
-          outcomes.push({ filename: file.name, status: "empty" });
-        } else {
-          outcomes.push({
-            filename: file.name,
-            status: "ok",
-            rowsImported: responseBody.rowsImported,
-            skipped: responseBody.skipped,
-          });
-        }
-      } catch {
-        outcomes.push({
-          filename: file.name,
-          status: "error",
-          message: t("uploadFailed"),
-        });
-      }
-    }
-    setResults(outcomes);
-    setUploading(false);
+  function updateItem(id: string, patch: Partial<QueueItem>) {
+    setQueue(prev => prev.map(it => (it.id === id ? { ...it, ...patch } : it)));
   }
 
-  if (!session?.valid || session.role !== "admin") return null;
+  async function enqueue(files: File[]) {
+    if (!token || files.length === 0) return;
+    const items: QueueItem[] = files.map(file => {
+      const accepted = ACCEPTED_EXTENSIONS.some(ext =>
+        file.name.toLowerCase().endsWith(ext)
+      );
+      return {
+        id: crypto.randomUUID(),
+        file,
+        status: accepted ? "queued" : "error",
+        progress: 0,
+        error: accepted ? undefined : t("uploadUnsupportedType"),
+      };
+    });
+    setQueue(prev => [...items, ...prev]);
+
+    for (const item of items) {
+      if (item.status !== "queued") continue;
+      await runUpload(item.id, item.file);
+    }
+  }
+
+  async function runUpload(id: string, file: File) {
+    if (!token) return;
+    updateItem(id, { status: "uploading", progress: 0, error: undefined });
+    const result = await uploadPerformanceReport(file, token, frac =>
+      updateItem(id, {
+        progress: frac,
+        status: frac >= 1 ? "processing" : "uploading",
+      })
+    );
+    if (!result.ok) {
+      updateItem(id, {
+        status: "error",
+        error: result.error ?? t("uploadFailed"),
+      });
+    } else if (result.status === "empty") {
+      updateItem(id, { status: "empty" });
+    } else {
+      updateItem(id, {
+        status: "done",
+        rowsImported: result.rowsImported,
+        skipped: result.skipped,
+      });
+    }
+  }
+
+  function retryItem(id: string) {
+    const item = queue.find(it => it.id === id);
+    if (item) void runUpload(id, item.file);
+  }
+
+  function removeItem(id: string) {
+    setQueue(prev => prev.filter(it => it.id !== id));
+  }
+
+  function clearFinished() {
+    setQueue(prev =>
+      prev.filter(it => it.status === "queued" || it.status === "uploading")
+    );
+  }
+
+  const hasFinished = queue.some(it =>
+    ["done", "empty", "error"].includes(it.status)
+  );
+
+  if (session === undefined) return <PerformancePageSkeleton />;
+  if (!session.valid || session.role !== "admin") return null;
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -137,6 +210,7 @@ export default function PerformanceUploadPage() {
             {t("backToDashboard")}
           </Button>
         </Link>
+        <SettingsMenu />
         <Button
           variant="ghost"
           size="sm"
@@ -175,45 +249,181 @@ export default function PerformanceUploadPage() {
               <Download className="mr-2 h-4 w-4" />
               {t("templateDownload")}
             </Button>
-            <Input
-              type="file"
-              multiple
-              accept=".xlsx,.xlsm,.csv"
-              disabled={uploading}
-              onChange={e => void handleFiles(e.target.files)}
-            />
-            {uploading && (
-              <p className="text-sm text-muted-foreground">{t("uploading")}</p>
-            )}
-            {results.length > 0 && (
-              <ul className="space-y-2 text-sm">
-                {results.map((r, i) => (
-                  <li
-                    key={i}
-                    className="rounded-md border border-border/70 p-3"
-                  >
-                    <span className="font-medium">{r.filename}</span>
-                    {r.status === "ok" && (
-                      <span className="ml-2 text-emerald-600">
-                        {t("uploadOk", { count: r.rowsImported ?? 0 })}
-                      </span>
-                    )}
-                    {r.status === "empty" && (
-                      <span className="ml-2 text-muted-foreground">
-                        {t("uploadEmpty")}
-                      </span>
-                    )}
-                    {r.status === "error" && (
-                      <span className="ml-2 text-destructive">{r.message}</span>
-                    )}
-                    {r.skipped && r.skipped.length > 0 && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {t("uploadSkipped", { names: r.skipped.join(", ") })}
-                      </p>
-                    )}
-                  </li>
-                ))}
-              </ul>
+
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => inputRef.current?.click()}
+              onKeyDown={e => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }
+              }}
+              onDragEnter={e => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragOver={e => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={e => {
+                e.preventDefault();
+                setDragging(false);
+              }}
+              onDrop={e => {
+                e.preventDefault();
+                setDragging(false);
+                if (e.dataTransfer.files.length) {
+                  void enqueue(Array.from(e.dataTransfer.files));
+                }
+              }}
+              className={cn(
+                "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                dragging
+                  ? "border-primary bg-primary/5"
+                  : "border-border/70 hover:border-border hover:bg-muted/30"
+              )}
+            >
+              <UploadCloud className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm font-medium">{t("uploadDropzoneTitle")}</p>
+              <p className="text-xs text-muted-foreground">
+                {t("uploadDropzoneHint")}
+              </p>
+              <input
+                ref={inputRef}
+                type="file"
+                multiple
+                accept={ACCEPTED_EXTENSIONS.join(",")}
+                className="hidden"
+                onChange={e => {
+                  if (e.target.files?.length) {
+                    void enqueue(Array.from(e.target.files));
+                  }
+                  e.target.value = "";
+                }}
+              />
+            </div>
+
+            {queue.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    {t("uploadQueueTitle")}
+                  </p>
+                  {hasFinished && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={clearFinished}
+                    >
+                      {t("uploadClearFinished")}
+                    </Button>
+                  )}
+                </div>
+                <ul className="space-y-2">
+                  {queue.map(item => (
+                    <li
+                      key={item.id}
+                      className="rounded-md border border-border/70 p-3"
+                    >
+                      <div className="flex items-center gap-2">
+                        <FileIcon name={item.file.name} />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-sm font-medium">
+                              {item.file.name}
+                            </span>
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {formatFileSize(item.file.size)}
+                            </span>
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-1.5 text-xs">
+                            <StatusIcon status={item.status} />
+                            {item.status === "queued" && (
+                              <span className="text-muted-foreground">
+                                {t("uploadStatusQueued")}
+                              </span>
+                            )}
+                            {item.status === "uploading" && (
+                              <span className="text-muted-foreground">
+                                {t("uploadStatusUploading", {
+                                  percent: Math.round(item.progress * 100),
+                                })}
+                              </span>
+                            )}
+                            {item.status === "processing" && (
+                              <span className="text-muted-foreground">
+                                {t("uploadStatusProcessing")}
+                              </span>
+                            )}
+                            {item.status === "done" && (
+                              <span className="text-emerald-600 dark:text-emerald-400">
+                                {t("uploadOk", {
+                                  count: item.rowsImported ?? 0,
+                                })}
+                              </span>
+                            )}
+                            {item.status === "empty" && (
+                              <span className="text-muted-foreground">
+                                {t("uploadEmpty")}
+                              </span>
+                            )}
+                            {item.status === "error" && (
+                              <span className="text-destructive">
+                                {item.error}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {item.status === "error" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            title={t("uploadRetry")}
+                            onClick={() => retryItem(item.id)}
+                          >
+                            <RotateCw className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        {(item.status === "queued" ||
+                          item.status === "done" ||
+                          item.status === "empty" ||
+                          item.status === "error") && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={() => removeItem(item.id)}
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                      {item.status === "uploading" && (
+                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className="h-full rounded-full bg-primary transition-all"
+                            style={{
+                              width: `${Math.round(item.progress * 100)}%`,
+                            }}
+                          />
+                        </div>
+                      )}
+                      {item.skipped && item.skipped.length > 0 && (
+                        <p className="mt-1 pl-7 text-xs text-muted-foreground">
+                          {t("uploadSkipped", {
+                            names: item.skipped.join(", "),
+                          })}
+                        </p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -229,7 +439,7 @@ export default function PerformanceUploadPage() {
               </p>
             ) : (
               <Table>
-                <TableHeader>
+                <TableHeader className="sticky top-16 z-10 bg-card">
                   <TableRow>
                     <TableHead>{t("uploadLogFile")}</TableHead>
                     <TableHead>{t("uploadLogRows")}</TableHead>
@@ -243,7 +453,7 @@ export default function PerformanceUploadPage() {
                         {row.filename}
                       </TableCell>
                       <TableCell>{row.rowsImported}</TableCell>
-                      <TableCell>
+                      <TableCell title={relativeTime(row.uploadedAt)}>
                         {formatDateTime(row.uploadedAt, locale)}
                       </TableCell>
                     </TableRow>

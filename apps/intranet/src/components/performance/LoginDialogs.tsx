@@ -6,6 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useMutation } from "convex/react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -117,6 +118,7 @@ export function CreateLoginDialog({
       });
       reset();
       onOpenChange(false);
+      toast.success(t("userCreatedToast"));
     } catch (err) {
       handleError(err);
     } finally {
@@ -226,6 +228,7 @@ export function EditLoginDialog({
   token: string;
   employees: EmployeeOption[];
 }) {
+  const t = useTranslations("Performance");
   const handleError = useErrorHandler();
   const updateLogin = useMutation(api.performanceAuth.updateLogin);
 
@@ -247,6 +250,7 @@ export function EditLoginDialog({
               try {
                 await updateLogin({ token, loginId: login.id, ...patch });
                 onOpenChange(false);
+                toast.success(t("userUpdatedToast"));
               } catch (err) {
                 handleError(err);
               }
@@ -384,6 +388,7 @@ export function ResetPasswordDialog({
       await resetLoginPassword({ token, loginId, password });
       setPassword("");
       onOpenChange(false);
+      toast.success(t("userPasswordResetToast"));
     } catch (err) {
       handleError(err);
     } finally {

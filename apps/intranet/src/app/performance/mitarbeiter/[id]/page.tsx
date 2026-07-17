@@ -33,8 +33,10 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { toast } from "sonner";
 
 import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import {
@@ -44,6 +46,10 @@ import {
   fmtPct,
   fmtYm,
 } from "@/components/performance/PerformanceFormat";
+import {
+  PerformanceContentSkeleton,
+  PerformancePageSkeleton,
+} from "@/components/performance/PerformanceSkeleton";
 import { TopicDialog } from "@/components/performance/TopicDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,9 +67,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 import {
   clearPerformanceToken,
+  getLastPerformanceYm,
   getPerformanceToken,
+  setLastPerformanceYm,
 } from "@/lib/performanceAuth";
 
 const BADGE_ICONS: Record<string, string> = {
@@ -157,7 +166,13 @@ export default function EmployeeDetailPage() {
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
   const [token] = useState<string | null>(() => getPerformanceToken());
-  const [ym, setYm] = useState<string | undefined>(undefined);
+  const [ym, setYmState] = useState<string | undefined>(() =>
+    getLastPerformanceYm()
+  );
+  function setYm(v: string) {
+    setYmState(v);
+    setLastPerformanceYm(v);
+  }
   const [topicDialog, setTopicDialog] = useState<
     { open: true; topic: Doc<"performanceTopics"> | null } | { open: false }
   >({ open: false });
@@ -168,6 +183,7 @@ export default function EmployeeDetailPage() {
     if (!token) router.replace("/performance/login");
   }, [router, token]);
 
+  const handleError = useErrorHandler();
   const session = useQuery(
     api.performanceAuth.validateSession,
     token ? { token } : "skip"
@@ -216,13 +232,15 @@ export default function EmployeeDetailPage() {
     router.replace("/performance/login");
   }
 
-  if (!session?.valid) return null;
+  if (session === undefined) return <PerformancePageSkeleton />;
+  if (!session.valid) return null;
   if (!canView) {
     return (
       <div className="min-h-screen bg-muted/20">
         <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
           <PerformanceWordmark />
           <div className="flex-1" />
+          <SettingsMenu />
           <Button variant="ghost" size="sm" onClick={exit}>
             <LogOut className="mr-2 h-4 w-4" />
             {t("exit")}
@@ -264,6 +282,7 @@ export default function EmployeeDetailPage() {
             {t("passwordLink")}
           </Button>
         </Link>
+        <SettingsMenu />
         <Button variant="ghost" size="sm" onClick={exit}>
           <LogOut className="mr-2 h-4 w-4" />
           {t("exit")}
@@ -298,7 +317,9 @@ export default function EmployeeDetailPage() {
           )}
         </div>
 
-        {!data ? null : !data.cur ? (
+        {!data ? (
+          <PerformanceContentSkeleton />
+        ) : !data.cur ? (
           <Card>
             <CardHeader className="items-center text-center">
               <CardTitle>{t("dashboardEmptyTitle")}</CardTitle>
@@ -477,12 +498,17 @@ export default function EmployeeDetailPage() {
               <CardContent className="flex flex-wrap gap-2">
                 {Object.keys(data.monthBadges).length === 0 ? (
                   <p className="text-sm text-muted-foreground">
-                    {t("topicEmpty")}
+                    {t("badgesEmpty")}
                   </p>
                 ) : (
                   Object.entries(data.monthBadges).map(([key, info]) => (
-                    <Badge key={key} variant="success">
-                      {BADGE_ICONS[key] ?? ""} {key} · {fmtNum(info.value)}
+                    <Badge
+                      key={key}
+                      variant="success"
+                      title={t(`badgeLabel.${key}`)}
+                    >
+                      {BADGE_ICONS[key] ?? ""} {t(`badgeLabel.${key}`)} ·{" "}
+                      {fmtNum(info.value)}
                     </Badge>
                   ))
                 )}
@@ -539,6 +565,8 @@ export default function EmployeeDetailPage() {
                                 | "erreicht"
                                 | "nicht_erreicht",
                             })
+                              .then(() => toast.success(t("topicStatusToast")))
+                              .catch(handleError)
                           }
                         >
                           <SelectTrigger className="h-8 w-36 text-xs">
@@ -642,7 +670,9 @@ export default function EmployeeDetailPage() {
                     token,
                     employeeId,
                     id: deleteTarget._id,
-                  });
+                  })
+                    .then(() => toast.success(t("topicDeletedToast")))
+                    .catch(handleError);
                 }
                 setDeleteTarget(null);
               }}

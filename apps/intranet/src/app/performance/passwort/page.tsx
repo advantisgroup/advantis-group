@@ -9,8 +9,10 @@ import { useAction, useQuery } from "convex/react";
 import { KeyRound, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
+import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -78,7 +80,8 @@ export default function PerformancePasswordPage() {
     }
   }
 
-  if (!session?.valid) return null;
+  if (session === undefined) return <PerformancePageSkeleton />;
+  if (!session.valid) return null;
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -98,6 +101,7 @@ export default function PerformancePasswordPage() {
             {t("backToDashboard")}
           </Button>
         </Link>
+        <SettingsMenu />
         <Button variant="ghost" size="sm" onClick={exit}>
           <LogOut className="mr-2 h-4 w-4" />
           {t("exit")}
@@ -111,6 +115,9 @@ export default function PerformancePasswordPage() {
               <KeyRound className="h-4 w-4 text-primary" />
               {t("passwordTitle")}
             </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              {t("passwordIntro")}
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">

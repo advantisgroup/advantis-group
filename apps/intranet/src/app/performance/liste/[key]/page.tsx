@@ -9,8 +9,10 @@ import { useQuery } from "convex/react";
 import { LogOut } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
+import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -20,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -116,7 +119,8 @@ export default function DrilldownPage() {
     return all.filter(i => i.owner === empFilter);
   }, [data?.items, empFilter]);
 
-  if (!session?.valid) return null;
+  if (session === undefined) return <PerformancePageSkeleton />;
+  if (!session.valid) return null;
 
   function exit() {
     clearPerformanceToken();
@@ -133,6 +137,7 @@ export default function DrilldownPage() {
             {t("backToDashboard")}
           </Button>
         </Link>
+        <SettingsMenu />
         <Button variant="ghost" size="sm" onClick={exit}>
           <LogOut className="mr-2 h-4 w-4" />
           {t("exit")}
@@ -189,13 +194,19 @@ export default function DrilldownPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="overflow-x-auto">
-                {items.length === 0 ? (
+                {!data ? (
+                  <div className="space-y-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-full rounded-md" />
+                    ))}
+                  </div>
+                ) : items.length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     {t("listEmpty")}
                   </p>
-                ) : data?.kind === "lead" ? (
+                ) : data.kind === "lead" ? (
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-16 z-10 bg-card">
                       <TableRow>
                         <TableHead>{t("colOwner")}</TableHead>
                         <TableHead>{t("colStatus")}</TableHead>
@@ -234,7 +245,7 @@ export default function DrilldownPage() {
                   </Table>
                 ) : (
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-16 z-10 bg-card">
                       <TableRow>
                         <TableHead>{t("colOwner")}</TableHead>
                         <TableHead>{t("colStage")}</TableHead>
