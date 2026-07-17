@@ -1,0 +1,116 @@
+{
+  "eyebrow": "Knowledge base",
+  "title": "Guidebooks",
+  "subtitle": "Reference guides and tools for your team",
+  "empty": "No guidebooks for you yet",
+  "emptyHint": "Guidebooks assigned to your team will appear here.",
+  "notFound": "Guidebook not found",
+  "notFoundHint": "It may have been moved or removed.",
+  "noAccess": "No access to this guidebook",
+  "noAccessHint": "It's restricted to other teams. Ask an admin if you need access.",
+  "caseSearch": {
+    "title": "Case Management — Keyword Search",
+    "description": "Type a keyword to instantly find the matching case fields and queue."
+  },
+  "problembehandlungen": {
+    "title": "Troubleshooting — IT & Workstation",
+    "description": "First aid for audio, browser, display and internet problems — step by step with screenshots."
+  },
+  "onedriveSchulung": {
+    "title": "OneDrive — Training",
+    "description": "Open OneDrive, use bookmarks properly and upload files."
+  },
+  "emailSignaturen": {
+    "title": "Email Signature — Outlook & IONOS",
+    "description": "Set up a signature in Outlook (desktop & web) and in IONOS webmail."
+  },
+  "clockodoZeiterfassung": {
+    "title": "Time Tracking — Clockodo",
+    "description": "Clock in/out, log breaks, and correct time entries after the fact."
+  },
+  "onboarding": {
+    "title": "Onboarding Checklist",
+    "description": "Everything for your first week — accounts, signature, time tracking and finding colleagues."
+  },
+  "chatTipps": {
+    "title": "Chat — Groups & Messages",
+    "description": "Starting conversations, managing groups, reacting and replying."
+  },
+  "kalender": {
+    "title": "Calendar & Events",
+    "description": "Views, creating events, seeing absences and exporting the calendar."
+  },
+  "profilKonto": {
+    "title": "Profile, Notifications & Account",
+    "description": "Complete your profile, check connections and set notification preferences."
+  },
+  "abwesenheitenGenehmigen": {
+    "title": "Approving Absences",
+    "description": "Review, approve or deny your team's requests — including Clockodo-sourced ones."
+  },
+  "verwaltungMitglieder": {
+    "title": "Admin: Members & Access",
+    "description": "Review access requests, invite employees, and manage members."
+  },
+  "ankuendigungenTermine": {
+    "title": "Creating Announcements & Events",
+    "description": "Write company-wide announcements and add events to the shared calendar."
+  },
+  "uploadsGenehmigen": {
+    "title": "Approving File Uploads",
+    "description": "Review pending OneDrive uploads, approve them, and manage permissions."
+  },
+  "passwoerterBrowser": {
+    "title": "Managing Passwords in Chrome & Edge",
+    "description": "View and change saved passwords, generate strong ones, and check for data breaches."
+  },
+  "docViewer": {
+    "zoomImage": "Enlarge image",
+    "download": "Download",
+    "downloadHint": "Original document (Word)"
+  },
+  "switcher": {
+    "label": "Switch guidebook",
+    "previous": "Previous",
+    "next": "Next"
+  },
+  "searchPlaceholder": "Search guidebooks…",
+  "noResults": "No guidebooks match your search",
+  "categoryAll": "All",
+  "categoryInteractive": "Interactive tools",
+  "topicOnboarding": "Getting Started",
+  "topicCollaboration": "Communication",
+  "topicTimeAccount": "Time & Account",
+  "topicItWorkplace": "IT & Workplace",
+  "topicManagement": "For Managers",
+  "managerBadge": "For managers",
+  "featured": "Pinned Guides",
+  "highlight": "Pin to top",
+  "unhighlight": "Unpin",
+  "highlighted": "Pinned",
+  "unhighlighted": "Unpinned",
+  "continueReading": "Continue where you left off:",
+  "addFavorite": "Pin guidebook",
+  "removeFavorite": "Unpin guidebook",
+  "toc": "On this page",
+  "print": "Print",
+  "feedbackQuestion": "Was this guidebook helpful?",
+  "feedbackThanks": "Thanks for your feedback!",
+  "feedbackYes": "Yes, helpful",
+  "feedbackNo": "Not really",
+  "feedbackStats": "{helpful} of {total} found this helpful",
+  "related": "More guidebooks",
+  "wikiChat": {
+    "title": "Wiki chat",
+    "chats": "Chats",
+    "newChat": "New chat",
+    "newShort": "New",
+    "emptyChats": "No chats yet.",
+    "rename": "Rename",
+    "delete": "Delete",
+    "privacyAria": "Privacy note",
+    "privacyHint": "Your chats are encrypted and only visible to you.",
+    "emptyPrompt": "Ask me anything about UTA products,\ntariffs, toll boxes or procedures.",
+    "placeholder": "Type a question… (Enter to send)"
+  }
+}

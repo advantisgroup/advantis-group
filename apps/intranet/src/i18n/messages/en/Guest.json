@@ -1,0 +1,14 @@
+{
+  "loginTitle": "Guest tour",
+  "loginIntro": "Enter your guest code, or open the link from your invitation email, to view a read-only tour of the Advantis intranet.",
+  "codePlaceholder": "Guest code",
+  "invalid": "This code is invalid or has expired.",
+  "enter": "Enter tour",
+  "badge": "Guest tour · read-only",
+  "exit": "Exit",
+  "welcome": "Welcome, {label}",
+  "intro": "This is a read-only preview of selected content. Sensitive company data is not shown.",
+  "announcements": "Announcements",
+  "events": "Events",
+  "empty": "Nothing shared yet"
+}

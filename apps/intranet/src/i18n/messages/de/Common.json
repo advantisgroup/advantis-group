@@ -1,0 +1,22 @@
+{
+  "save": "Speichern",
+  "cancel": "Abbrechen",
+  "create": "Erstellen",
+  "edit": "Bearbeiten",
+  "delete": "Löschen",
+  "confirm": "Bestätigen",
+  "search": "Suchen",
+  "loading": "Wird geladen…",
+  "empty": "Noch nichts vorhanden",
+  "back": "Zurück",
+  "all": "Alle",
+  "none": "Keine",
+  "optional": "optional",
+  "send": "Senden",
+  "close": "Schließen",
+  "open": "Öffnen",
+  "copy": "Kopieren",
+  "areYouSure": "Bist du sicher?",
+  "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+  "fromOneDrive": "Aus OneDrive"
+}

@@ -1,0 +1,116 @@
+{
+  "eyebrow": "Wissensdatenbank",
+  "title": "Wiki",
+  "subtitle": "Anleitungen und Tools für dein Team",
+  "empty": "Noch kein Wiki-Inhalt für dich",
+  "emptyHint": "Wiki-Inhalte für dein Team erscheinen hier.",
+  "notFound": "Wiki-Eintrag nicht gefunden",
+  "notFoundHint": "Er wurde möglicherweise verschoben oder entfernt.",
+  "noAccess": "Kein Zugriff auf diesen Wiki-Eintrag",
+  "noAccessHint": "Er ist anderen Teams vorbehalten. Wende dich an einen Admin, wenn du Zugriff brauchst.",
+  "caseSearch": {
+    "title": "Case Management — Stichwortsuche",
+    "description": "Stichwort eingeben und sofort die passenden Case-Felder und Queue finden."
+  },
+  "problembehandlungen": {
+    "title": "Problembehandlung — IT & Arbeitsplatz",
+    "description": "Erste Hilfe bei Audio-, Browser-, Bildschirm- und Internet-Problemen — Schritt für Schritt mit Screenshots."
+  },
+  "onedriveSchulung": {
+    "title": "OneDrive — Schulung",
+    "description": "OneDrive öffnen, Lesezeichen richtig nutzen und Dateien hochladen."
+  },
+  "emailSignaturen": {
+    "title": "E-Mail-Signatur — Outlook & IONOS",
+    "description": "Signatur in Outlook (Desktop & Web) und im IONOS-Webmail einrichten."
+  },
+  "clockodoZeiterfassung": {
+    "title": "Zeiterfassung — Clockodo",
+    "description": "Ein-/Ausstempeln, Pausen erfassen und Zeiteinträge nachträglich korrigieren."
+  },
+  "onboarding": {
+    "title": "Onboarding-Checkliste",
+    "description": "Alles Wichtige für die erste Woche — Zugänge, Signatur, Zeiterfassung und Kolleg:innen finden."
+  },
+  "chatTipps": {
+    "title": "Chat — Gruppen & Nachrichten",
+    "description": "Unterhaltungen starten, Gruppen verwalten, reagieren und antworten."
+  },
+  "kalender": {
+    "title": "Kalender & Termine",
+    "description": "Ansichten, Termine anlegen, Abwesenheiten anzeigen und den Kalender exportieren."
+  },
+  "profilKonto": {
+    "title": "Profil, Benachrichtigungen & Konto",
+    "description": "Profil vervollständigen, Verknüpfungen prüfen und Benachrichtigungen einstellen."
+  },
+  "abwesenheitenGenehmigen": {
+    "title": "Abwesenheiten genehmigen",
+    "description": "Anträge eures Teams prüfen, genehmigen oder ablehnen — inkl. Clockodo-Anträgen."
+  },
+  "verwaltungMitglieder": {
+    "title": "Verwaltung: Mitglieder & Zugang",
+    "description": "Zugangsanfragen prüfen, Mitarbeiter einladen und Mitglieder verwalten."
+  },
+  "ankuendigungenTermine": {
+    "title": "Ankündigungen & Termine erstellen",
+    "description": "Unternehmensweite Ankündigungen verfassen und Termine im gemeinsamen Kalender anlegen."
+  },
+  "uploadsGenehmigen": {
+    "title": "Datei-Uploads genehmigen",
+    "description": "Ausstehende OneDrive-Uploads prüfen, freigeben und Berechtigungen verwalten."
+  },
+  "passwoerterBrowser": {
+    "title": "Passwörter in Chrome & Edge verwalten",
+    "description": "Gespeicherte Passwörter anzeigen, ändern, sichere Passwörter generieren und auf Datenlecks prüfen."
+  },
+  "docViewer": {
+    "zoomImage": "Bild vergrößern",
+    "download": "Herunterladen",
+    "downloadHint": "Original-Dokument (Word)"
+  },
+  "switcher": {
+    "label": "Wiki-Eintrag wechseln",
+    "previous": "Vorheriger Eintrag",
+    "next": "Nächster Eintrag"
+  },
+  "searchPlaceholder": "Wiki durchsuchen…",
+  "noResults": "Keine Einträge passen zur Suche",
+  "categoryAll": "Alle",
+  "categoryInteractive": "Interaktive Tools",
+  "topicOnboarding": "Erste Schritte",
+  "topicCollaboration": "Kommunikation",
+  "topicTimeAccount": "Zeit & Konto",
+  "topicItWorkplace": "IT & Arbeitsplatz",
+  "topicManagement": "Für Führungskräfte",
+  "managerBadge": "Für Führungskräfte",
+  "featured": "Angeheftete Guides",
+  "highlight": "Oben anheften",
+  "unhighlight": "Lösen",
+  "highlighted": "Angeheftet",
+  "unhighlighted": "Nicht mehr angeheftet",
+  "continueReading": "Mach weiter, wo du aufgehört hast:",
+  "addFavorite": "Eintrag anpinnen",
+  "removeFavorite": "Eintrag lösen",
+  "toc": "Auf dieser Seite",
+  "print": "Drucken",
+  "feedbackQuestion": "War dieser Eintrag hilfreich?",
+  "feedbackThanks": "Danke für dein Feedback!",
+  "feedbackYes": "Ja, hilfreich",
+  "feedbackNo": "Eher nicht",
+  "feedbackStats": "{helpful} von {total} fanden das hilfreich",
+  "related": "Weitere Einträge",
+  "wikiChat": {
+    "title": "Wiki-Chat",
+    "chats": "Chats",
+    "newChat": "Neuer Chat",
+    "newShort": "Neu",
+    "emptyChats": "Noch keine Chats.",
+    "rename": "Umbenennen",
+    "delete": "Löschen",
+    "privacyAria": "Datenschutz-Hinweis",
+    "privacyHint": "Deine Chats sind verschlüsselt und nur für dich sichtbar.",
+    "emptyPrompt": "Stell mir eine Frage zu UTA-Produkten,\nTarifen, Mautboxen oder Abläufen.",
+    "placeholder": "Frage eingeben… (Enter zum Senden)"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "save": "Save",
+  "cancel": "Cancel",
+  "create": "Create",
+  "edit": "Edit",
+  "delete": "Delete",
+  "confirm": "Confirm",
+  "search": "Search",
+  "loading": "Loading…",
+  "empty": "Nothing here yet",
+  "back": "Back",
+  "all": "All",
+  "none": "None",
+  "optional": "optional",
+  "send": "Send",
+  "close": "Close",
+  "open": "Open",
+  "copy": "Copy",
+  "areYouSure": "Are you sure?",
+  "deleteWarning": "This action can't be undone.",
+  "fromOneDrive": "From OneDrive"
+}

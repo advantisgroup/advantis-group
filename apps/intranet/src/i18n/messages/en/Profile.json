@@ -1,0 +1,13 @@
+{
+  "title": "Profile",
+  "message": "Send message",
+  "contact": "Contact",
+  "mutual": "Mutual chats & groups",
+  "upcoming": "Upcoming time off",
+  "memberCount": "{count} members",
+  "notFound": "This member could not be found.",
+  "organisation": "Organization",
+  "manager": "Manager",
+  "reports": "{count, plural, one {Direct report} other {Direct reports}}",
+  "online": "Online"
+}
