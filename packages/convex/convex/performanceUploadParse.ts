@@ -254,10 +254,7 @@ async function processReport(
       // no data, no upload-log entry.
       return { status: "empty", reportDate: toISODate(detected.reportDate) };
     }
-    const { snapshots, skipped } = await buildCallSnapshots(
-      ctx,
-      detected.rows
-    );
+    const { snapshots, skipped } = await buildCallSnapshots(ctx, detected.rows);
     const result = await runApplyImport(ctx, {
       snapshots,
       sourceFile: filename,
@@ -394,7 +391,13 @@ export const apiImportReport = action({
       }
     }
 
-    return processReport(ctx, { filename, storageId, contentHash, fileSize, batchId });
+    return processReport(ctx, {
+      filename,
+      storageId,
+      contentHash,
+      fileSize,
+      batchId,
+    });
   },
 });
 
