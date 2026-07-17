@@ -1186,6 +1186,8 @@
     "uploadUnsupportedType": "Dateityp nicht unterstützt — bitte .xlsx, .xlsm oder .csv verwenden.",
     "uploadOk": "{count} Datenzeile(n) importiert",
     "uploadEmpty": "Keine Aktivität in diesem Report — ignoriert.",
+    "uploadDuplicateStatus": "Bereits hochgeladen",
+    "uploadDuplicateDetail": "Gleich wie „{filename}“, hochgeladen am {date} – keine Änderung.",
     "uploadSkipped": "Keinem Teammitglied zugeordnet: {names}",
     "uploadDropzoneTitle": "Report-Dateien hier ablegen",
     "uploadDropzoneHint": "oder klicken zum Auswählen · .xlsx, .xlsm, .csv",

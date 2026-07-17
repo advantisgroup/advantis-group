@@ -9,6 +9,7 @@ import { useQuery } from "convex/react";
 import {
   CheckCircle2,
   Clock,
+  Copy,
   Download,
   FileSpreadsheet,
   FileText,
@@ -55,6 +56,7 @@ type QueueStatus =
   | "processing"
   | "done"
   | "empty"
+  | "duplicate"
   | "error";
 
 interface QueueItem {
@@ -65,6 +67,7 @@ interface QueueItem {
   rowsImported?: number;
   skipped?: string[];
   error?: string;
+  duplicateOf?: { filename: string; uploadedAt: number };
 }
 
 function FileIcon({ name }: { name: string }) {
@@ -86,6 +89,10 @@ function StatusIcon({ status }: { status: QueueStatus }) {
       );
     case "empty":
       return <Info className="h-4 w-4 shrink-0 text-muted-foreground" />;
+    case "duplicate":
+      return (
+        <Copy className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+      );
     case "error":
       return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
   }
@@ -169,6 +176,14 @@ export default function PerformanceUploadPage() {
       });
     } else if (result.status === "empty") {
       updateItem(id, { status: "empty" });
+    } else if (result.status === "duplicate") {
+      updateItem(id, {
+        status: "duplicate",
+        duplicateOf:
+          result.filename && result.uploadedAt !== undefined
+            ? { filename: result.filename, uploadedAt: result.uploadedAt }
+            : undefined,
+      });
     } else {
       updateItem(id, {
         status: "done",
@@ -194,7 +209,7 @@ export default function PerformanceUploadPage() {
   }
 
   const hasFinished = queue.some(it =>
-    ["done", "empty", "error"].includes(it.status)
+    ["done", "empty", "duplicate", "error"].includes(it.status)
   );
 
   if (session === undefined) return <PerformancePageSkeleton />;
@@ -371,6 +386,19 @@ export default function PerformanceUploadPage() {
                                 {t("uploadEmpty")}
                               </span>
                             )}
+                            {item.status === "duplicate" && (
+                              <span className="text-amber-600 dark:text-amber-400">
+                                {item.duplicateOf
+                                  ? t("uploadDuplicateDetail", {
+                                      filename: item.duplicateOf.filename,
+                                      date: formatDateTime(
+                                        item.duplicateOf.uploadedAt,
+                                        locale
+                                      ),
+                                    })
+                                  : t("uploadDuplicateStatus")}
+                              </span>
+                            )}
                             {item.status === "error" && (
                               <span className="text-destructive">
                                 {item.error}
@@ -392,6 +420,7 @@ export default function PerformanceUploadPage() {
                         {(item.status === "queued" ||
                           item.status === "done" ||
                           item.status === "empty" ||
+                          item.status === "duplicate" ||
                           item.status === "error") && (
                           <Button
                             variant="ghost"
@@ -439,7 +468,7 @@ export default function PerformanceUploadPage() {
               </p>
             ) : (
               <Table>
-                <TableHeader className="sticky top-16 z-10 bg-card">
+                <TableHeader>
                   <TableRow>
                     <TableHead>{t("uploadLogFile")}</TableHead>
                     <TableHead>{t("uploadLogRows")}</TableHead>

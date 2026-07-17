@@ -92,6 +92,7 @@ async function runApplyImport(
     sourceFile: string;
     uploadLogLabel: string;
     storageId: Id<"_storage">;
+    contentHash: string;
   }
 ): Promise<{ rowsImported: number }> {
   return runSafely("applyImport", () =>
@@ -183,7 +184,8 @@ async function buildCallSnapshots(
 
 export type ImportResult =
   | { status: "ok"; rowsImported: number; skipped?: string[] }
-  | { status: "empty"; reportDate: string };
+  | { status: "empty"; reportDate: string }
+  | { status: "duplicate"; filename: string; uploadedAt: number };
 
 /**
  * Detects the report type (Salesforce Lead/Opp, call report as CSV or
@@ -200,10 +202,11 @@ export const apiImportReport = action({
     serverKey: v.string(),
     filename: v.string(),
     storageId: v.id("_storage"),
+    contentHash: v.string(),
   },
   handler: async (
     ctx,
-    { serverKey, filename, storageId }
+    { serverKey, filename, storageId, contentHash }
   ): Promise<ImportResult> => {
     assertServerKey(serverKey);
 
@@ -214,6 +217,21 @@ export const apiImportReport = action({
         code: "validation",
         message: "Unsupported file extension.",
       });
+    }
+
+    // Checked before any parsing — covers every report type (Salesforce
+    // Lead/Opp, call report, aggregated template) uniformly, and skips the
+    // (potentially expensive) parse entirely for a re-upload.
+    const priorUpload = await ctx.runQuery(
+      internal.performanceImport.findUploadByHash,
+      { contentHash }
+    );
+    if (priorUpload) {
+      return {
+        status: "duplicate",
+        filename: priorUpload.filename,
+        uploadedAt: priorUpload.uploadedAt,
+      };
     }
 
     const blob = await ctx.storage.get(storageId);
@@ -248,6 +266,7 @@ export const apiImportReport = action({
         sourceFile: filename,
         uploadLogLabel: `${filename} (Call-Report ${toISODate(detected.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
         storageId,
+        contentHash,
       });
       return { status: "ok", rowsImported: result.rowsImported, skipped };
     }
@@ -267,6 +286,7 @@ export const apiImportReport = action({
           sourceFile: filename,
           uploadLogLabel: `${filename} (Lead-Report, ${sf.rows.length} Zeilen)`,
           storageId,
+          contentHash,
         });
         await writeRawLeads(ctx, raw);
         return { status: "ok", rowsImported: result.rowsImported };
@@ -277,6 +297,7 @@ export const apiImportReport = action({
         sourceFile: filename,
         uploadLogLabel: `${filename} (Opportunity-Report, ${sf.rows.length} Zeilen)`,
         storageId,
+        contentHash,
       });
       await writeRawOpps(ctx, raw);
       return { status: "ok", rowsImported: result.rowsImported };
@@ -290,6 +311,7 @@ export const apiImportReport = action({
         sourceFile: filename,
         uploadLogLabel: `${filename} (Call-Report ${toISODate(calls.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
         storageId,
+        contentHash,
       });
       return { status: "ok", rowsImported: result.rowsImported, skipped };
     }
@@ -300,6 +322,7 @@ export const apiImportReport = action({
       sourceFile: filename,
       uploadLogLabel: filename,
       storageId,
+      contentHash,
     });
     return { status: "ok", rowsImported: result.rowsImported };
   },

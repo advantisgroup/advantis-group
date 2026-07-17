@@ -122,6 +122,25 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
         );
       }
 
+      // Content hash, not filename — catches a re-upload of the same
+      // report under a renamed file too, and works uniformly across every
+      // report type (Salesforce Lead/Opp, call report, aggregated
+      // template) since it's checked before any type-specific parsing.
+      const digest = await crypto.subtle.digest("SHA-256", bytes);
+      const contentHash = Buffer.from(digest).toString("hex");
+
+      const priorUpload = await getConvex().query(
+        api.performanceImport.apiFindUploadByHash,
+        { serverKey: serverKey(), contentHash }
+      );
+      if (priorUpload) {
+        return {
+          status: "duplicate" as const,
+          filename: priorUpload.filename,
+          uploadedAt: priorUpload.uploadedAt,
+        };
+      }
+
       const uploadUrl = await getConvex().mutation(
         api.performanceImport.apiGenerateUploadUrl,
         {
@@ -153,13 +172,15 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
             serverKey: serverKey(),
             filename: file.name,
             storageId,
+            contentHash,
           }
         );
 
-        if (result.status === "empty") {
-          // No activity that day (e.g. a weekend): drop the staged file,
-          // same as the reference script deleting it rather than logging an
-          // empty import.
+        if (result.status === "empty" || result.status === "duplicate") {
+          // "empty": no activity that day (e.g. a weekend). "duplicate": a
+          // concurrent upload of the same file won the race against the
+          // pre-stage hash check above. Either way, drop the now-orphaned
+          // staged file rather than leaving it in storage.
           await getConvex().mutation(api.performanceImport.apiDeleteStorage, {
             serverKey: serverKey(),
             storageId,

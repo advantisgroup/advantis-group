@@ -772,7 +772,14 @@ export default defineSchema({
     storageId: v.id("_storage"),
     rowsImported: v.number(),
     uploadedAt: v.number(),
-  }).index("by_uploadedAt", ["uploadedAt"]),
+    // SHA-256 of the raw file bytes, computed by apps/api before staging —
+    // lets apiImportReport recognize a re-upload of an already-imported
+    // file (any report type) and skip re-processing it instead of silently
+    // re-running an import that would just overwrite identical data.
+    contentHash: v.optional(v.string()),
+  })
+    .index("by_uploadedAt", ["uploadedAt"])
+    .index("by_contentHash", ["contentHash"]),
 
   // ========================================================================
   // ActivityTrack — workforce-activity dashboard, ported into the intranet.
