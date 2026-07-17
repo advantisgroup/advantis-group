@@ -1,0 +1,16 @@
+{
+  "title": "Directory",
+  "searchPlaceholder": "Search people…",
+  "department": "Department",
+  "role": "Role",
+  "jobTitle": "Job title",
+  "startChat": "Message",
+  "noResults": "No people found",
+  "sortName": "Sort: Name",
+  "sortDepartment": "Sort: Department",
+  "sortRole": "Sort: Role",
+  "groupByDept": "Group by department",
+  "noDepartment": "No department",
+  "online": "Online",
+  "outUntil": "Out until {date}"
+}

@@ -1,0 +1,9 @@
+{
+  "eyebrow": "Debug",
+  "title": "Error pages",
+  "subtitle": "Live previews of this app's full-page error states, so you don't have to reproduce them for real.",
+  "forbidden": "Forbidden",
+  "notFound": "Not found",
+  "boundary": "Unexpected error boundary",
+  "excludedNote": "Access denied (blocked email domain) isn't listed here — mounting it immediately deletes the current account and signs out, so there's no safe way to preview it live."
+}

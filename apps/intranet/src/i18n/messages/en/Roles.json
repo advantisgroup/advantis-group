@@ -1,0 +1,8 @@
+{
+  "admin": "Administrator",
+  "admin_desc": "Full access to every admin area",
+  "manager": "Manager",
+  "manager_desc": "Manages members, uploads, integrations",
+  "employee": "Employee",
+  "employee_desc": "Standard access, no admin areas"
+}

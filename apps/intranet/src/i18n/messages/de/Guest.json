@@ -1,0 +1,14 @@
+{
+  "loginTitle": "Gast-Tour",
+  "loginIntro": "Gib deinen Gast-Code ein oder öffne den Link aus deiner Einladungs-E-Mail, um eine schreibgeschützte Tour durch das Advantis-Intranet zu sehen.",
+  "codePlaceholder": "Gast-Code",
+  "invalid": "Dieser Code ist ungültig oder abgelaufen.",
+  "enter": "Tour starten",
+  "badge": "Gast-Tour · schreibgeschützt",
+  "exit": "Verlassen",
+  "welcome": "Willkommen, {label}",
+  "intro": "Dies ist eine schreibgeschützte Vorschau ausgewählter Inhalte. Sensible Unternehmensdaten werden nicht angezeigt.",
+  "announcements": "Ankündigungen",
+  "events": "Termine",
+  "empty": "Noch nichts freigegeben"
+}

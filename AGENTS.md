@@ -139,8 +139,19 @@ PRs there.
 - Don't add speculative abstractions, fallbacks, or error handling for cases
   that can't occur. Match the existing minimal, direct style.
 - i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
-  (ActivityTrack) and `apps/intranet/src/i18n/messages/{en,de}.json` (rest of
-  the intranet) — always update both languages together.
+  (ActivityTrack) and `apps/intranet/src/i18n/messages/{en,de}/` (rest of the
+  intranet) — always update both languages together. The second set is split
+  one file per top-level namespace (`messages/en/Admin.json`,
+  `messages/de/Admin.json`, etc.), matching the `useTranslations("Admin")`
+  call sites 1:1, and `src/i18n/request.ts` statically imports every one of
+  those files and merges them into the `messages` object per locale. **When
+  adding a brand-new namespace** (not just new keys in an existing one),
+  create both `messages/en/<Namespace>.json` and `messages/de/<Namespace>.json`,
+  then add both imports and both entries in `messagesByLocale` in
+  `request.ts` — this isn't auto-discovered, so a namespace whose files exist
+  but aren't wired into `request.ts` silently resolves to missing
+  translations. Adding keys to an existing namespace's JSON needs no
+  `request.ts` change.
 - Prefer short, single-line labels over long inline descriptions, especially
   in compact UI (badges, dropdown items, table cells, permission/capability
   lists) — a wrapping paragraph reflows the layout around it and is worse on

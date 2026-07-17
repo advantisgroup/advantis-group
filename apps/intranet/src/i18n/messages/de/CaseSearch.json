@@ -1,0 +1,19 @@
+{
+  "searchPlaceholder": "z.B. PIN, Chargeback, Blocking, Refund, Invoice …",
+  "clear": "Leeren",
+  "allTypes": "Alle",
+  "emptyTitle": "Stichwort eingeben oder Record Type wählen",
+  "casesAvailable": "{count} Cases verfügbar",
+  "noResultsTitle": "Keine Treffer für „{query}“",
+  "noResultsHint": "Anderen Begriff versuchen oder Record-Type-Filter entfernen.",
+  "resultsCount": "{count, plural, one {# Treffer} other {# Treffer}}",
+  "topN": "(Top {n})",
+  "whenToUse": "Wann verwenden:",
+  "mandatoryTitle": "Pflichtangaben im Case",
+  "mandatoryHint": "Hake sie ab, während du den Case vorbereitest — alle sind erforderlich.",
+  "reset": "Zurücksetzen",
+  "fieldCategory": "Category",
+  "fieldSubcategory": "Subcategory",
+  "fieldSubcategoryDetail": "Subcategory Detail",
+  "fieldProcessor": "Processor / Queue"
+}

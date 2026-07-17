@@ -1,0 +1,9 @@
+{
+  "title": "Zugang anfragen",
+  "intro": "Du bist angemeldet, hast aber noch keinen Zugang zum Intranet.",
+  "messageLabel": "Nachricht an die Administratoren (optional)",
+  "requestButton": "Zugang anfragen",
+  "pending": "Deine Zugangsanfrage wird geprüft. Du erhältst eine E-Mail, sobald entschieden wurde.",
+  "denied": "Deine Zugangsanfrage wurde abgelehnt. Wende dich an deine Führungskraft oder die IT, falls das ein Fehler ist.",
+  "signedInAs": "Angemeldet als"
+}

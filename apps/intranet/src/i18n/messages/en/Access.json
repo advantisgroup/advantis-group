@@ -1,0 +1,9 @@
+{
+  "title": "Request access",
+  "intro": "You're signed in but don't have access to the intranet yet.",
+  "messageLabel": "Message to the administrators (optional)",
+  "requestButton": "Request access",
+  "pending": "Your access request is pending review. You'll be notified by email once it's decided.",
+  "denied": "Your access request was declined. Contact your manager or IT if you think this is a mistake.",
+  "signedInAs": "Signed in as"
+}

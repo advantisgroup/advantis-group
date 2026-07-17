@@ -1,0 +1,232 @@
+{
+  "back": "Back",
+  "next": "Next",
+  "replayCheckpoint": "Replay the tour for this page",
+  "nudgeBody": "New here? Take a quick tour of this page to see what it can do.",
+  "nudgeStart": "Show me",
+  "nudgeDismiss": "Dismiss",
+  "nextSection": "Next section",
+  "finish": "Finish",
+  "skipStep": "Skip this step",
+  "skipCheckpoint": "Skip section",
+  "snooze": "Snooze 24 h",
+  "endTour": "End tour",
+  "chipTitle": "Onboarding tour",
+  "chipStart": "Pick a section to get started.",
+  "chipRemaining": "{count, plural, one {# section left to explore.} other {# sections left to explore.}}",
+  "chipAria": "Onboarding tour: {done} of {total} checkpoints complete",
+  "viewInSettings": "View details in settings",
+  "settingsHint": "Review any checkpoint or restart the full tour from here.",
+  "restartTour": "Restart entire tour",
+  "redo": "Redo",
+  "skipCheckpointTitle": "Skip “{name}”?",
+  "skipCheckpointBody": "You can redo this section anytime from Settings → Tour.",
+  "skipConfirm": "Skip",
+  "keepGoing": "Keep going",
+  "endTourTitle": "End the tour?",
+  "endTourBody": "Your progress is saved. You can restart anytime from Settings → Tour.",
+  "doneTitle": "Congratulations!",
+  "doneBody": "You've completed the intranet tour.",
+  "getStarted": "Get started",
+  "redoTour": "Redo tour",
+  "checkpoints": {
+    "dashboard": "Dashboard",
+    "announcements": "Announcements",
+    "calendar": "Calendar",
+    "absences": "Absences",
+    "chat": "Chat",
+    "directory": "Directory",
+    "guidebooks": "Guidebooks",
+    "notifications": "Notifications",
+    "settings": "Settings",
+    "admin": "Admin Panel",
+    "activity": "Activity Tracking",
+    "files": "Files"
+  },
+  "steps": {
+    "dashboard": {
+      "sidebar": {
+        "title": "Your navigation",
+        "description": "Everything you need is in this sidebar. Quick access to all intranet sections."
+      },
+      "header": {
+        "title": "Quick actions",
+        "description": "Notifications, settings, and your account are always available up here."
+      },
+      "actions": {
+        "title": "Quick actions",
+        "description": "Jump straight into the things you do most — upload a file, or (as a manager) create events and announcements. On desktop, ⌘K opens the search palette from anywhere."
+      },
+      "main": {
+        "title": "Your dashboard",
+        "description": "A snapshot of what's happening — upcoming events, latest news, and who's out today. Every row links to the tab it came from."
+      },
+      "customize": {
+        "title": "Make it yours",
+        "description": "Hide the cards you don't need — your layout is saved to your account and follows you across devices."
+      }
+    },
+    "announcements": {
+      "nav": {
+        "title": "Company announcements",
+        "description": "Stay up to date with news and updates from across the organisation."
+      },
+      "toolbar": {
+        "title": "Find what matters",
+        "description": "Search the feed, filter to unread or pinned posts, sort by reactions, or clear everything with mark-all-read. Posts count as read once you've actually scrolled past them."
+      },
+      "list": {
+        "title": "The announcements feed",
+        "description": "Pinned posts stay on top; long posts collapse behind \"read more\". React with emoji, open images full-size, and download attachments."
+      },
+      "new": {
+        "title": "Publish announcements",
+        "description": "Write rich-text posts for everyone or one department — you'll see how many people it will reach. Pin important ones, schedule for later, set an expiry, and edit after publishing. A draft is kept if you close the dialog."
+      }
+    },
+    "calendar": {
+      "nav": {
+        "title": "Team calendar",
+        "description": "View and create events visible to everyone or specific teams."
+      },
+      "toolbar": {
+        "title": "Navigate the calendar",
+        "description": "Switch between month, week and agenda views, page through periods with the arrows (or your keyboard's ← → keys, T for today), jump straight to a date, and export the current view as an .ics file."
+      },
+      "filters": {
+        "title": "Focus the view",
+        "description": "The legend is interactive: click a type to hide or show it, narrow to one department, or keep only your own absences. Department-targeted events get their own color."
+      },
+      "view": {
+        "title": "Events and absences together",
+        "description": "Events and approved absences (including those synced from Clockodo) share one calendar. Multi-day entries span every day they cover; click a day for its overview or any chip for details."
+      },
+      "add": {
+        "title": "Create events",
+        "description": "As a manager you can create events for everyone or a single department. From an event's details you can edit or duplicate it, and clicking a day offers a quick-create shortcut."
+      }
+    },
+    "absences": {
+      "nav": {
+        "title": "Absences",
+        "description": "Request and track vacation, sick days, and personal time."
+      },
+      "stats": {
+        "title": "Your year at a glance",
+        "description": "Vacation days used, sick days, and open requests for the current year, calculated from your approved absences."
+      },
+      "filters": {
+        "title": "Filter your history",
+        "description": "Narrow the list by status or type. Below, everything is grouped by year — click any entry for its full timeline."
+      },
+      "list": {
+        "title": "Your absences",
+        "description": "Everything here is synced from Clockodo and read-only — approve, deny, or edit time off there. Managers also see who on the team is out over the next two weeks."
+      }
+    },
+    "chat": {
+      "nav": {
+        "title": "Team messaging",
+        "description": "Direct messages and group conversations with your colleagues."
+      },
+      "list": {
+        "title": "Your conversations",
+        "description": "Start a new chat or pick up where you left off."
+      }
+    },
+    "directory": {
+      "nav": {
+        "title": "People directory",
+        "description": "Find colleagues, see their role, department, and start a chat."
+      },
+      "filters": {
+        "title": "Find anyone fast",
+        "description": "Search matches names, emails, job titles and teams. Combine the department select with role and team chips, change the sorting, group by department, or jump by letter."
+      },
+      "grid": {
+        "title": "Browse your team",
+        "description": "A green dot means someone is online right now; a plane marks colleagues who are currently out. Click a card for the full profile — contact links, manager and direct reports, and upcoming absences."
+      }
+    },
+    "guidebooks": {
+      "nav": {
+        "title": "Guidebooks",
+        "description": "SOPs, case search, and team knowledge — all in one place."
+      },
+      "list": {
+        "title": "Your knowledge base",
+        "description": "Search across guidebooks, pin your favorites so they sort first, and jump back in via the \"continue where you left off\" banner. Inside a guide you get a table of contents, a reading-progress bar, print support, and a quick way to say whether it helped."
+      }
+    },
+    "notifications": {
+      "bell": {
+        "title": "Notification bell",
+        "description": "The bell turns active when something needs your attention."
+      },
+      "feed": {
+        "title": "Your notification feed",
+        "description": "Everything grouped by day. Hover a row to mark it read/unread or dismiss it; older read items tuck away behind a toggle."
+      },
+      "prefs": {
+        "title": "Tune what reaches you",
+        "description": "Mute individual notification types and opt into native browser notifications for background tabs — the same controls also live in Settings."
+      }
+    },
+    "settings": {
+      "nav": {
+        "title": "Your settings",
+        "description": "Personalise your profile, change your language, and pick a theme."
+      },
+      "profile": {
+        "title": "Profile card",
+        "description": "Keep your name, job title and contact details current — the completeness bar shows what's missing. Photos are auto-cropped, and account security lives behind \"Manage account\"."
+      },
+      "prefs": {
+        "title": "Make the app yours",
+        "description": "Pick your default calendar view, the page you land on after signing in, and which day your week starts — saved to your account."
+      },
+      "connections": {
+        "title": "Your integrations",
+        "description": "See whether your Clockodo account is linked (so your absences sync into the intranet) and whether an ActivityTrack record points at you."
+      }
+    },
+    "admin": {
+      "nav": {
+        "title": "Admin panel",
+        "description": "Manage your team: invite members, approve access requests, and adjust roles."
+      },
+      "members": {
+        "title": "Member management",
+        "description": "The Members tab lets you change roles, manage teams, suspend, or remove users."
+      }
+    },
+    "activity": {
+      "nav": {
+        "title": "Activity tracking",
+        "description": "Monitor device activity, employee states, and generate reports for your fleet."
+      },
+      "stats": {
+        "title": "Fleet overview",
+        "description": "Live counts show who's active, idle, or offline across all tracked devices."
+      }
+    },
+    "files": {
+      "nav": {
+        "title": "Files",
+        "description": "Browse the team's OneDrive right here in the intranet."
+      },
+      "toolbar": {
+        "title": "Your OneDrive toolbar",
+        "description": "Search the whole drive, switch between list and grid view, create folders, and jump back via the breadcrumbs. Pinned folders and your recent uploads sit right below for quick access."
+      },
+      "dropzone": {
+        "title": "Upload files",
+        "description": "Click here or drop files anywhere on the page. Uploads run through a queue in the corner with per-file progress and a retry for anything that fails."
+      },
+      "browser": {
+        "title": "Work with files",
+        "description": "Sort by name, date or size via the column headers, select multiple files for bulk download or delete, and use ↑ ↓ + Enter to navigate by keyboard. The ⋯ menu offers preview, versions, copy-link and folder pinning."
+      }
+    }
+  }
+}
