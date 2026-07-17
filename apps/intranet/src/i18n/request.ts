@@ -1,3 +1,5 @@
+// i18n messages are split one file per namespace under messages/{locale}/.
+// See "House style" in AGENTS.md before adding or renaming a namespace here.
 import { cookies } from "next/headers";
 
 import { getRequestConfig } from "next-intl/server";
@@ -81,10 +83,10 @@ import enUpdates from "./messages/en/Updates.json";
 export { defaultLocale, LOCALE_COOKIE, locales };
 export type { Locale };
 
-// Each namespace (top-level key in the old messages/{locale}.json) now lives
-// in its own file under messages/{locale}/. When adding a new namespace,
-// create messages/en/<Namespace>.json and messages/de/<Namespace>.json, then
-// add both imports above and both entries below — see AGENTS.md.
+// New namespace checklist (see AGENTS.md "House style"): create both
+// messages/en/<Namespace>.json and messages/de/<Namespace>.json, then add
+// both imports above and both entries below. Adding keys to an existing
+// namespace's JSON needs no change here.
 const messagesByLocale = {
   en: {
     App: enApp,
