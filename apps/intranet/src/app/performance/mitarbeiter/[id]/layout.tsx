@@ -18,8 +18,10 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
+import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
+import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
@@ -163,6 +165,7 @@ function EmployeeChrome({
 
         {children}
       </main>
+      <PerformanceBottomTabs />
     </div>
   );
 }
@@ -232,15 +235,17 @@ export default function EmployeeDetailLayout({
   }
 
   return (
-    <PerformanceYmProvider>
-      <EmployeeChrome
-        token={token!}
-        employeeId={employeeId}
-        isAdmin={!!isAdmin}
-        onExit={exit}
-      >
-        {children}
-      </EmployeeChrome>
-    </PerformanceYmProvider>
+    <BottomNavTabsProvider>
+      <PerformanceYmProvider>
+        <EmployeeChrome
+          token={token!}
+          employeeId={employeeId}
+          isAdmin={!!isAdmin}
+          onExit={exit}
+        >
+          {children}
+        </EmployeeChrome>
+      </PerformanceYmProvider>
+    </BottomNavTabsProvider>
   );
 }
