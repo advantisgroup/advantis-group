@@ -772,6 +772,8 @@ export default defineSchema({
   }).index("by_employee_ym", ["employeeId", "ym"]),
 
   performanceUploadLog: defineTable({
+    // Raw original filename — never a composed/decorated label, so the UI
+    // can show it in full instead of parsing detail back out of a string.
     filename: v.string(),
     storageId: v.id("_storage"),
     rowsImported: v.number(),
@@ -781,9 +783,37 @@ export default defineSchema({
     // file (any report type) and skip re-processing it instead of silently
     // re-running an import that would just overwrite identical data.
     contentHash: v.optional(v.string()),
+    // What kind of report this was detected as — drives the badge/icon in
+    // the upload log instead of the old baked-in-string description.
+    reportKind: v.optional(
+      v.union(
+        v.literal("lead"),
+        v.literal("opp"),
+        v.literal("call"),
+        v.literal("template")
+      )
+    ),
+    // The report's own date (YYYY-MM-DD), as detected from its content —
+    // not the upload time. Undefined for the aggregated template, which
+    // spans multiple days itself.
+    reportDate: v.optional(v.string()),
+    // Total data rows in the source file, before any team-matching filter
+    // — lets the UI show "40 of 41 matched" instead of just the imported
+    // count.
+    sourceRowCount: v.optional(v.number()),
+    // Call-report agent names that didn't match a known team member —
+    // previously only ever shown in the upload queue's toast for that one
+    // session, never persisted for later reference in the log.
+    skippedNames: v.optional(v.array(v.string())),
+    fileSize: v.optional(v.number()),
+    // Client-generated id shared by every file selected/dropped in the
+    // same batch — lets the upload log show "17 files uploaded together"
+    // instead of 17 unrelated-looking rows with the same timestamp.
+    batchId: v.optional(v.string()),
   })
     .index("by_uploadedAt", ["uploadedAt"])
-    .index("by_contentHash", ["contentHash"]),
+    .index("by_contentHash", ["contentHash"])
+    .index("by_batchId", ["batchId"]),
 
   // ========================================================================
   // ActivityTrack — workforce-activity dashboard, ported into the intranet.

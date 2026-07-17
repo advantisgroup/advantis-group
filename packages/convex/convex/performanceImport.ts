@@ -335,7 +335,17 @@ async function upsertSnapshot(
     await Promise.all(duplicates.map(d => ctx.db.delete(d._id)));
   }
   if (existing) {
-    await ctx.db.patch(existing._id, { ...fields, sourceFile, uploadedAt });
+    // A re-import (fixing a past bug, or an admin re-uploading the same
+    // day's report) usually recomputes byte-identical values — a day's
+    // historical data doesn't change once reported, only new days get
+    // new data. Skipping a no-op write avoids burning a mutation on
+    // every row of every file in a bulk re-import for nothing.
+    const unchanged = (Object.keys(fields) as (keyof SnapshotFields)[]).every(
+      key => existing[key] === fields[key]
+    );
+    if (!unchanged) {
+      await ctx.db.patch(existing._id, { ...fields, sourceFile, uploadedAt });
+    }
   } else {
     await ctx.db.insert("performanceReports", {
       employeeId,
@@ -440,13 +450,29 @@ const rawOppValidator = v.object({
   customerNumber: v.optional(v.string()),
 });
 
+const reportKindValidator = v.union(
+  v.literal("lead"),
+  v.literal("opp"),
+  v.literal("call"),
+  v.literal("template")
+);
+
 export const applyImport = internalMutation({
   args: {
     snapshots: v.array(snapshotValidator),
     sourceFile: v.string(),
-    uploadLogLabel: v.string(),
     storageId: v.id("_storage"),
     contentHash: v.optional(v.string()),
+    reportKind: v.optional(reportKindValidator),
+    reportDate: v.optional(v.string()),
+    sourceRowCount: v.optional(v.number()),
+    skippedNames: v.optional(v.array(v.string())),
+    fileSize: v.optional(v.number()),
+    batchId: v.optional(v.string()),
+    // Set only by a re-import (see `reimportUpload`) — updates this row in
+    // place instead of inserting a new one, so re-processing an
+    // already-uploaded file doesn't leave a duplicate log entry behind.
+    replaceLogId: v.optional(v.id("performanceUploadLog")),
   },
   handler: async (ctx, args): Promise<{ rowsImported: number }> => {
     const now = Date.now();
@@ -460,13 +486,24 @@ export const applyImport = internalMutation({
         now
       );
     }
-    await ctx.db.insert("performanceUploadLog", {
-      filename: args.uploadLogLabel,
+    const logFields = {
+      filename: args.sourceFile,
       storageId: args.storageId,
       rowsImported: args.snapshots.length,
       uploadedAt: now,
       contentHash: args.contentHash,
-    });
+      reportKind: args.reportKind,
+      reportDate: args.reportDate,
+      sourceRowCount: args.sourceRowCount,
+      skippedNames: args.skippedNames,
+      fileSize: args.fileSize,
+      batchId: args.batchId,
+    };
+    if (args.replaceLogId) {
+      await ctx.db.patch(args.replaceLogId, logFields);
+    } else {
+      await ctx.db.insert("performanceUploadLog", logFields);
+    }
     await purgeExcluded(ctx);
     return { rowsImported: args.snapshots.length };
   },
@@ -553,12 +590,47 @@ export const listUploadLog = query({
     const rows = await ctx.db
       .query("performanceUploadLog")
       .order("desc")
-      .take(30);
+      .take(60);
     return rows.map(r => ({
       _id: r._id,
       filename: r.filename,
       rowsImported: r.rowsImported,
       uploadedAt: r.uploadedAt,
+      reportKind: r.reportKind,
+      reportDate: r.reportDate,
+      sourceRowCount: r.sourceRowCount,
+      skippedNames: r.skippedNames,
+      fileSize: r.fileSize,
+      batchId: r.batchId,
     }));
   },
+});
+
+// ---------------------------------------------- re-import (from Node action)
+// `reimportUpload`/`reimportBatch` live in performanceUploadParse.ts (a "use
+// node" action file, needed for the xlsx/CSV parsers) but actions can't
+// touch ctx.db directly — these internal query wrappers are how they read
+// the admin session and the log rows to reprocess.
+
+/** Actions can't call `requireAdminLogin` directly (it needs `ctx.db`) —
+ * this wraps it as an internal query an action can `ctx.runQuery` into. */
+export const requireAdminByToken = internalQuery({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    await requireAdminLogin(ctx, token);
+  },
+});
+
+export const getUploadLogRow = internalQuery({
+  args: { logId: v.id("performanceUploadLog") },
+  handler: async (ctx, { logId }) => await ctx.db.get(logId),
+});
+
+export const getUploadLogRowsByBatch = internalQuery({
+  args: { batchId: v.string() },
+  handler: async (ctx, { batchId }) =>
+    await ctx.db
+      .query("performanceUploadLog")
+      .withIndex("by_batchId", q => q.eq("batchId", batchId))
+      .collect(),
 });
