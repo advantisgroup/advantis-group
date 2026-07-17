@@ -655,11 +655,13 @@ export default defineSchema({
     .index("by_status", ["status"]),
 
   // --- Performance (sales KPI dashboard) -----------------------------------
-  // Password-protected area, fully separate from Clerk employee accounts —
-  // an interim step before it's coupled to Clerk auth. See
-  // `performanceAuth.ts`. `linkedUserId` is a forward-compat hook only
-  // (nothing reads it yet); it's what will make the eventual Clerk cutover a
-  // join instead of a rewrite, mirroring how `people.userId` already works.
+  // Password-protected area, fully separate from Clerk employee accounts.
+  // `linkedUserId` lets an admin link a login to its owner's intranet
+  // (Clerk) account — see `performanceAuth.ts`'s `resolveActiveSession`,
+  // which then authenticates that person from their existing Clerk session
+  // instead of a separate password, mirroring how `people.userId` links a
+  // person record to its account. The password login stays fully
+  // functional either way (admins, and any not-yet-linked employee).
   performanceLogins: defineTable({
     email: v.string(),
     name: v.string(),
@@ -669,7 +671,9 @@ export default defineSchema({
     linkedUserId: v.optional(v.id("users")),
     active: v.boolean(),
     createdAt: v.number(),
-  }).index("by_email", ["email"]),
+  })
+    .index("by_email", ["email"])
+    .index("by_linkedUserId", ["linkedUserId"]),
 
   performanceSessions: defineTable({
     token: v.string(),

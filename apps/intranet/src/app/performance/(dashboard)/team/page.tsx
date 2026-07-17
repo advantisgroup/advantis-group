@@ -109,12 +109,9 @@ function SortableHead({
 export default function DashboardTeamPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
-  const token = getPerformanceToken();
+  const token = getPerformanceToken() ?? "";
   const [ym] = usePerformanceYm();
-  const data = useQuery(
-    api.performanceQueries.teamDashboard,
-    token ? { token, ym } : "skip"
-  );
+  const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
 
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>(() =>

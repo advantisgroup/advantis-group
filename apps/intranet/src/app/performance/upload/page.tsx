@@ -26,8 +26,11 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
+import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
+import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -42,7 +45,6 @@ import { formatDateTime, relativeTime } from "@/lib/format";
 import {
   clearPerformanceToken,
   downloadPerformanceFile,
-  getPerformanceToken,
   uploadPerformanceReport,
 } from "@/lib/performanceAuth";
 import { formatFileSize } from "@/lib/upload";
@@ -102,36 +104,35 @@ export default function PerformanceUploadPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const router = useRouter();
-  const [token] = useState<string | null>(() => getPerformanceToken());
+  const { token, session } = usePerformanceSession();
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
 
   useEffect(() => {
-    if (!token) router.replace("/performance/login");
-  }, [router, token]);
-
-  const session = useQuery(
-    api.performanceAuth.validateSession,
-    token ? { token } : "skip"
-  );
-
-  useEffect(() => {
-    if (token && session && !session.valid) {
+    // Wait for the query to resolve — a visitor with no password cookie may
+    // still resolve via their linked Clerk identity.
+    if (!session) return;
+    if (!session.valid) {
       clearPerformanceToken();
       router.replace("/performance/login");
+      return;
     }
-  }, [token, session, router]);
-
-  useEffect(() => {
-    if (session?.valid && session.role !== "admin")
+    if (session.role !== "admin") {
       router.replace("/performance");
+      return;
+    }
+    // Uploads go through apps/api, which authenticates the bearer token
+    // directly against a Performance session — it has no notion of the
+    // caller's Clerk identity, so a Clerk-linked (passwordless) account
+    // can't use this page.
+    if (session.viaClerk) router.replace("/performance");
   }, [session, router]);
 
   const isAdmin = session?.valid && session.role === "admin";
   const log = useQuery(
     api.performanceImport.listUploadLog,
-    token && isAdmin ? { token } : "skip"
+    isAdmin ? { token } : "skip"
   );
 
   function updateItem(id: string, patch: Partial<QueueItem>) {
@@ -213,18 +214,21 @@ export default function PerformanceUploadPage() {
   );
 
   if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || session.role !== "admin") return null;
+  if (!session.valid || session.role !== "admin" || session.viaClerk)
+    return null;
 
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
         <PerformanceWordmark />
+        <BackToIntranetLink />
         <div className="flex-1" />
         <Link href="/performance">
           <Button variant="ghost" size="sm">
             {t("backToDashboard")}
           </Button>
         </Link>
+        <PerformanceAccountMenu />
         <SettingsMenu />
         <Button
           variant="ghost"
