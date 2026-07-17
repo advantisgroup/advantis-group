@@ -35,7 +35,6 @@ export interface OnboardingContextValue {
   currentStepId: OnboardingStepId;
   stepStatuses: Record<OnboardingStepId, OnboardingStepStatus>;
   isCompleted: boolean;
-  isDismissed: boolean;
   next: () => void;
   back: () => void;
   /** Skip the whole flow from the welcome step — fully dismisses. */
@@ -47,8 +46,6 @@ export interface OnboardingContextValue {
   complete: () => void;
   /** Reopen the panel voluntarily (header trigger), resuming at the saved step. */
   reopen: () => void;
-  /** Dismiss without opening the panel at all (header trigger's dismiss action). */
-  dismiss: () => void;
   /** Reset all progress/completion and reopen at step 0 (Settings restart card). */
   restart: () => void;
 }

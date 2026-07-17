@@ -204,11 +204,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     setOpen(true);
   }, []);
 
-  const dismiss = useCallback(() => {
-    if (!local) return;
-    persist({ ...local, dismissedAt: Date.now() }, true);
-  }, [local, persist]);
-
   const restart = useCallback(() => {
     void resetOnboardingRemote({});
     const stepStatuses = {} as Record<
@@ -245,14 +240,12 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           ONBOARDING_STEPS.map(s => [s, "pending"])
         ) as Record<OnboardingStepId, "pending" | "completed" | "skipped">),
       isCompleted: local?.completedAt != null,
-      isDismissed: local?.dismissedAt != null,
       next,
       back,
       skip,
       close,
       complete,
       reopen,
-      dismiss,
       restart,
     }),
     [
@@ -266,7 +259,6 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       close,
       complete,
       reopen,
-      dismiss,
       restart,
     ]
   );
