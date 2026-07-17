@@ -19,7 +19,19 @@ log() {
   echo "[convex-preview] $(date -u +%FT%TZ) $*"
 }
 
-if [ "$VERCEL_ENV" = "production" ]; then
+if [ -z "${VERCEL_ENV:-}" ]; then
+  # `set -u` would otherwise abort on a bare $VERCEL_ENV reference here.
+  # Vercel populates this automatically for every deployment unless the
+  # project's "Automatically expose System Environment Variables" setting
+  # (Project Settings > Environment Variables) is off — check that if this
+  # keeps happening. Default to building as-is rather than guessing this
+  # is a preview: the preview branch below calls `npx convex deploy`, which
+  # claims a Convex deployment slot (a limited resource, see this script's
+  # header comment) — wrongly claiming one on an actual production build
+  # is worse than skipping a preview backend on an actual preview build.
+  log "VERCEL_ENV is unset - building as-is without a Convex preview deploy"
+  eval "$BUILD_CMD"
+elif [ "$VERCEL_ENV" = "production" ]; then
   log "VERCEL_ENV=production - skipping Convex preview deploy, building as-is"
   eval "$BUILD_CMD"
 else
