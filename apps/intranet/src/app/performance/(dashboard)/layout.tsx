@@ -17,7 +17,6 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
-import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
@@ -256,12 +255,10 @@ export default function PerformanceDashboardLayout({
   }
 
   return (
-    <BottomNavTabsProvider>
-      <PerformanceYmProvider>
-        <DashboardChrome token={token!} name={session.name} onExit={exit}>
-          {children}
-        </DashboardChrome>
-      </PerformanceYmProvider>
-    </BottomNavTabsProvider>
+    <PerformanceYmProvider>
+      <DashboardChrome token={token!} name={session.name} onExit={exit}>
+        {children}
+      </DashboardChrome>
+    </PerformanceYmProvider>
   );
 }

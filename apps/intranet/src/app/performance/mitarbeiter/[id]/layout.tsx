@@ -18,7 +18,6 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
-import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
@@ -235,17 +234,15 @@ export default function EmployeeDetailLayout({
   }
 
   return (
-    <BottomNavTabsProvider>
-      <PerformanceYmProvider>
-        <EmployeeChrome
-          token={token!}
-          employeeId={employeeId}
-          isAdmin={!!isAdmin}
-          onExit={exit}
-        >
-          {children}
-        </EmployeeChrome>
-      </PerformanceYmProvider>
-    </BottomNavTabsProvider>
+    <PerformanceYmProvider>
+      <EmployeeChrome
+        token={token!}
+        employeeId={employeeId}
+        isAdmin={!!isAdmin}
+        onExit={exit}
+      >
+        {children}
+      </EmployeeChrome>
+    </PerformanceYmProvider>
   );
 }

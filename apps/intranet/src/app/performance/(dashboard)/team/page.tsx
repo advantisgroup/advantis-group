@@ -178,7 +178,7 @@ export default function DashboardTeamPage() {
           />
         </div>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
+      <CardContent className="overflow-x-auto overflow-y-visible">
         <Table>
           <TableHeader className="sticky top-16 z-10 bg-card">
             <TableRow>

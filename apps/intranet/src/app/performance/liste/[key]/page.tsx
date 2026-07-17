@@ -193,7 +193,7 @@ export default function DrilldownPage() {
                   {t("listCount", { count: items.length })}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="overflow-x-auto">
+              <CardContent className="overflow-x-auto overflow-y-visible">
                 {!data ? (
                   <div className="space-y-2">
                     {Array.from({ length: 5 }).map((_, i) => (
