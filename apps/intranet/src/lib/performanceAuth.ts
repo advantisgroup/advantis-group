@@ -39,6 +39,24 @@ export function setLastPerformanceYm(ym: string): void {
   window.localStorage.setItem(LAST_YM_KEY, ym);
 }
 
+// Tracks a "Not now" dismissal of the self-service Clerk-link prompt, keyed
+// per login so dismissing it while testing one account doesn't hide it for
+// another login tried later in the same browser. Not synced anywhere —
+// worst case a re-dismissed prompt reappears once on a new device/browser.
+const LINK_PROMPT_DISMISSED_PREFIX = "performance_link_prompt_dismissed_";
+
+export function isLinkPromptDismissed(loginId: string): boolean {
+  if (typeof window === "undefined") return false;
+  return (
+    window.localStorage.getItem(LINK_PROMPT_DISMISSED_PREFIX + loginId) === "1"
+  );
+}
+
+export function dismissLinkPrompt(loginId: string): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LINK_PROMPT_DISMISSED_PREFIX + loginId, "1");
+}
+
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
   "http://localhost:3002";

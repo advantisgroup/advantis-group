@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { useParams, usePathname, useRouter } from "next/navigation";
 
@@ -20,6 +20,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
+import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
+import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { fmtYm } from "@/components/performance/PerformanceFormat";
@@ -28,6 +30,7 @@ import {
   PerformanceYmProvider,
   usePerformanceYm,
 } from "@/components/performance/PerformanceYmContext";
+import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,21 +41,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  clearPerformanceToken,
-  getPerformanceToken,
-} from "@/lib/performanceAuth";
+import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 function EmployeeChrome({
   token,
   employeeId,
   isAdmin,
+  viaClerk,
   onExit,
   children,
 }: {
   token: string;
   employeeId: Id<"performanceEmployees">;
   isAdmin: boolean;
+  viaClerk: boolean;
   onExit: () => void;
   children: ReactNode;
 }) {
@@ -100,32 +102,38 @@ function EmployeeChrome({
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
         <PerformanceWordmark />
+        <BackToIntranetLink />
         <div className="flex-1" />
         {isAdmin && (
-          <>
-            <Link href="/performance">
-              <Button variant="ghost" size="sm">
-                {t("backToDashboard")}
-              </Button>
-            </Link>
-            <Link href="/performance/upload">
-              <Button variant="ghost" size="sm">
-                <Upload className="mr-2 h-4 w-4" />
-                {t("uploadLink")}
-              </Button>
-            </Link>
-          </>
+          <Link href="/performance">
+            <Button variant="ghost" size="sm">
+              {t("backToDashboard")}
+            </Button>
+          </Link>
         )}
-        <Link href="/performance/passwort">
-          <Button variant="ghost" size="sm">
-            {t("passwordLink")}
-          </Button>
-        </Link>
+        {isAdmin && !viaClerk && (
+          <Link href="/performance/upload">
+            <Button variant="ghost" size="sm">
+              <Upload className="mr-2 h-4 w-4" />
+              {t("uploadLink")}
+            </Button>
+          </Link>
+        )}
+        {!viaClerk && (
+          <Link href="/performance/passwort">
+            <Button variant="ghost" size="sm">
+              {t("passwordLink")}
+            </Button>
+          </Link>
+        )}
+        <PerformanceAccountMenu />
         <SettingsMenu />
-        <Button variant="ghost" size="sm" onClick={onExit}>
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("exit")}
-        </Button>
+        {!viaClerk && (
+          <Button variant="ghost" size="sm" onClick={onExit}>
+            <LogOut className="mr-2 h-4 w-4" />
+            {t("exit")}
+          </Button>
+        )}
       </header>
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
@@ -178,24 +186,17 @@ export default function EmployeeDetailLayout({
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
-  const [token] = useState<string | null>(() => getPerformanceToken());
-
-  useEffect(() => {
-    if (!token) router.replace("/performance/login");
-  }, [router, token]);
-
-  const session = useQuery(
-    api.performanceAuth.validateSession,
-    token ? { token } : "skip"
-  );
+  const { token, session } = usePerformanceSession();
   const logout = useMutation(api.performanceAuth.logout);
 
   useEffect(() => {
-    if (token && session && !session.valid) {
+    // Wait for the query to resolve — a visitor with no password cookie may
+    // still resolve via their linked Clerk identity.
+    if (session && !session.valid) {
       clearPerformanceToken();
       router.replace("/performance/login");
     }
-  }, [token, session, router]);
+  }, [session, router]);
 
   const isAdmin = session?.valid && session.role === "admin";
   const canView =
@@ -215,12 +216,16 @@ export default function EmployeeDetailLayout({
       <div className="min-h-screen bg-muted/20">
         <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
           <PerformanceWordmark />
+          <BackToIntranetLink />
           <div className="flex-1" />
+          <PerformanceAccountMenu />
           <SettingsMenu />
-          <Button variant="ghost" size="sm" onClick={exit}>
-            <LogOut className="mr-2 h-4 w-4" />
-            {t("exit")}
-          </Button>
+          {!session.viaClerk && (
+            <Button variant="ghost" size="sm" onClick={exit}>
+              <LogOut className="mr-2 h-4 w-4" />
+              {t("exit")}
+            </Button>
+          )}
         </header>
         <main className="mx-auto max-w-3xl p-4 md:p-6">
           <Card>
@@ -236,9 +241,10 @@ export default function EmployeeDetailLayout({
   return (
     <PerformanceYmProvider>
       <EmployeeChrome
-        token={token!}
+        token={token}
         employeeId={employeeId}
         isAdmin={!!isAdmin}
+        viaClerk={session.viaClerk}
         onExit={exit}
       >
         {children}

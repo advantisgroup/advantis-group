@@ -12,14 +12,17 @@ import { useTranslations } from "next-intl";
 
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
+import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
 import {
   CreateLoginDialog,
   EditLoginDialog,
   type LoginRow,
   ResetPasswordDialog,
 } from "@/components/performance/LoginDialogs";
+import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,15 +40,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  clearPerformanceToken,
-  getPerformanceToken,
-} from "@/lib/performanceAuth";
+import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 export default function PerformanceUsersPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
-  const [token] = useState<string | null>(() => getPerformanceToken());
+  const { token, session } = usePerformanceSession();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<LoginRow | null>(null);
   const [resetting, setResetting] = useState<Id<"performanceLogins"> | null>(
@@ -53,34 +53,29 @@ export default function PerformanceUsersPage() {
   );
 
   useEffect(() => {
-    if (!token) router.replace("/performance/login");
-  }, [router, token]);
-
-  const session = useQuery(
-    api.performanceAuth.validateSession,
-    token ? { token } : "skip"
-  );
-
-  useEffect(() => {
-    if (token && session && !session.valid) {
+    // Wait for the query to resolve — a visitor with no password cookie may
+    // still resolve via their linked Clerk identity.
+    if (!session) return;
+    if (!session.valid) {
       clearPerformanceToken();
       router.replace("/performance/login");
+      return;
     }
-  }, [token, session, router]);
-
-  useEffect(() => {
-    if (session?.valid && session.role !== "admin")
-      router.replace("/performance");
+    if (session.role !== "admin") router.replace("/performance");
   }, [session, router]);
 
   const isAdmin = session?.valid && session.role === "admin";
   const logins = useQuery(
     api.performanceAuth.listLogins,
-    token && isAdmin ? { token } : "skip"
+    isAdmin ? { token } : "skip"
   );
   const employees = useQuery(
     api.performanceAuth.listEmployeesForLink,
-    token && isAdmin ? { token } : "skip"
+    isAdmin ? { token } : "skip"
+  );
+  const intranetUsers = useQuery(
+    api.performanceAuth.listIntranetUsersForLink,
+    isAdmin ? { token } : "skip"
   );
 
   function exit() {
@@ -95,17 +90,21 @@ export default function PerformanceUsersPage() {
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
         <PerformanceWordmark />
+        <BackToIntranetLink />
         <div className="flex-1" />
         <Link href="/performance">
           <Button variant="ghost" size="sm">
             {t("backToDashboard")}
           </Button>
         </Link>
+        <PerformanceAccountMenu />
         <SettingsMenu />
-        <Button variant="ghost" size="sm" onClick={exit}>
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("exit")}
-        </Button>
+        {!session.viaClerk && (
+          <Button variant="ghost" size="sm" onClick={exit}>
+            <LogOut className="mr-2 h-4 w-4" />
+            {t("exit")}
+          </Button>
+        )}
       </header>
 
       <main className="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
@@ -139,6 +138,7 @@ export default function PerformanceUsersPage() {
                     <TableHead>{t("emailLabel")}</TableHead>
                     <TableHead>{t("userRoleLabel")}</TableHead>
                     <TableHead>{t("userEmployeeLabel")}</TableHead>
+                    <TableHead>{t("userIntranetAccountLabel")}</TableHead>
                     <TableHead>{t("userStatusLabel")}</TableHead>
                     <TableHead />
                   </TableRow>
@@ -165,6 +165,7 @@ export default function PerformanceUsersPage() {
                           : t("userRoleEmployee")}
                       </TableCell>
                       <TableCell>{login.employeeName ?? "–"}</TableCell>
+                      <TableCell>{login.linkedUserName ?? "–"}</TableCell>
                       <TableCell>
                         <Badge variant={login.active ? "success" : "muted"}>
                           {login.active
@@ -232,13 +233,14 @@ export default function PerformanceUsersPage() {
         </Card>
       </main>
 
-      {token && (
+      {session.valid && (
         <>
           <CreateLoginDialog
             open={creating}
             onOpenChange={setCreating}
             token={token}
             employees={employees ?? []}
+            intranetUsers={intranetUsers ?? []}
           />
           <EditLoginDialog
             login={editing}
@@ -247,6 +249,7 @@ export default function PerformanceUsersPage() {
             }}
             token={token}
             employees={employees ?? []}
+            intranetUsers={intranetUsers ?? []}
           />
           <ResetPasswordDialog
             loginId={resetting}

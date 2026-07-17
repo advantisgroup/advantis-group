@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import { usePathname, useRouter } from "next/navigation";
 
@@ -19,6 +19,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
+import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
+import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { fmtYm } from "@/components/performance/PerformanceFormat";
@@ -27,6 +29,8 @@ import {
   PerformanceYmProvider,
   usePerformanceYm,
 } from "@/components/performance/PerformanceYmContext";
+import { SelfLinkPrompt } from "@/components/performance/SelfLinkPrompt";
+import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,17 +45,18 @@ import { formatIsoDate } from "@/lib/format";
 import {
   clearPerformanceToken,
   downloadPerformanceFile,
-  getPerformanceToken,
 } from "@/lib/performanceAuth";
 
 function DashboardChrome({
   token,
   name,
+  viaClerk,
   onExit,
   children,
 }: {
   token: string;
   name: string;
+  viaClerk: boolean;
   onExit: () => void;
   children: ReactNode;
 }) {
@@ -89,6 +94,7 @@ function DashboardChrome({
     <div className="min-h-screen bg-muted/20">
       <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
         <PerformanceWordmark />
+        <BackToIntranetLink />
         <div className="flex-1" />
         <span className="text-sm text-muted-foreground">{name}</span>
         <Link href="/performance/benutzer">
@@ -97,25 +103,33 @@ function DashboardChrome({
             {t("usersLink")}
           </Button>
         </Link>
-        <Link href="/performance/upload">
-          <Button variant="ghost" size="sm">
-            <Upload className="mr-2 h-4 w-4" />
-            {t("uploadLink")}
-          </Button>
-        </Link>
-        <Link href="/performance/passwort">
-          <Button variant="ghost" size="sm">
-            {t("passwordLink")}
-          </Button>
-        </Link>
+        {!viaClerk && (
+          <Link href="/performance/upload">
+            <Button variant="ghost" size="sm">
+              <Upload className="mr-2 h-4 w-4" />
+              {t("uploadLink")}
+            </Button>
+          </Link>
+        )}
+        {!viaClerk && (
+          <Link href="/performance/passwort">
+            <Button variant="ghost" size="sm">
+              {t("passwordLink")}
+            </Button>
+          </Link>
+        )}
+        <PerformanceAccountMenu />
         <SettingsMenu />
-        <Button variant="ghost" size="sm" onClick={onExit}>
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("exit")}
-        </Button>
+        {!viaClerk && (
+          <Button variant="ghost" size="sm" onClick={onExit}>
+            <LogOut className="mr-2 h-4 w-4" />
+            {t("exit")}
+          </Button>
+        )}
       </header>
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+        {!viaClerk && <SelfLinkPrompt token={token} />}
         <div className="flex flex-wrap items-center gap-3">
           <Select
             value={ym ?? data?.ym ?? ""}
@@ -147,7 +161,7 @@ function DashboardChrome({
               })}
             </span>
           )}
-          {data && data.snaps.length > 0 && (
+          {!viaClerk && data && data.snaps.length > 0 && (
             <Button
               variant="outline"
               size="sm"
@@ -185,29 +199,23 @@ export default function PerformanceDashboardLayout({
 }) {
   const t = useTranslations("Performance");
   const router = useRouter();
-  const [token] = useState<string | null>(() => getPerformanceToken());
-
-  useEffect(() => {
-    if (!token) router.replace("/performance/login");
-  }, [router, token]);
-
-  const session = useQuery(
-    api.performanceAuth.validateSession,
-    token ? { token } : "skip"
-  );
+  const { token, session } = usePerformanceSession();
   const logout = useMutation(api.performanceAuth.logout);
   const touchSession = useMutation(api.performanceAuth.touchSession);
 
   useEffect(() => {
-    if (token) void touchSession({ token });
+    void touchSession({ token });
   }, [token, touchSession]);
 
   useEffect(() => {
-    if (token && session && !session.valid) {
+    // Wait for the query to resolve before redirecting — a visitor with no
+    // password cookie may still resolve via their linked Clerk identity, so
+    // "no cookie" alone isn't grounds to bounce to the login page.
+    if (session && !session.valid) {
       clearPerformanceToken();
       router.replace("/performance/login");
     }
-  }, [token, session, router]);
+  }, [session, router]);
 
   // Employee logins have their own detail page — this layout is the admin
   // team view.
@@ -233,12 +241,16 @@ export default function PerformanceDashboardLayout({
       <div className="min-h-screen bg-muted/20">
         <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
           <PerformanceWordmark />
+          <BackToIntranetLink />
           <div className="flex-1" />
+          <PerformanceAccountMenu />
           <SettingsMenu />
-          <Button variant="ghost" size="sm" onClick={exit}>
-            <LogOut className="mr-2 h-4 w-4" />
-            {t("exit")}
-          </Button>
+          {!session.viaClerk && (
+            <Button variant="ghost" size="sm" onClick={exit}>
+              <LogOut className="mr-2 h-4 w-4" />
+              {t("exit")}
+            </Button>
+          )}
         </header>
         <main className="mx-auto max-w-3xl p-4 md:p-6">
           <Card>
@@ -256,7 +268,12 @@ export default function PerformanceDashboardLayout({
 
   return (
     <PerformanceYmProvider>
-      <DashboardChrome token={token!} name={session.name} onExit={exit}>
+      <DashboardChrome
+        token={token}
+        name={session.name}
+        viaClerk={session.viaClerk}
+        onExit={exit}
+      >
         {children}
       </DashboardChrome>
     </PerformanceYmProvider>

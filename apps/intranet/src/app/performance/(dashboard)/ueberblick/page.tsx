@@ -126,12 +126,9 @@ function ListStatCard({
 export default function DashboardOverviewPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const token = getPerformanceToken();
+  const token = getPerformanceToken() ?? "";
   const [ym] = usePerformanceYm();
-  const data = useQuery(
-    api.performanceQueries.teamDashboard,
-    token ? { token, ym } : "skip"
-  );
+  const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
 
   const fc2 = useMemo(() => {
     const fc = data?.total.fc;

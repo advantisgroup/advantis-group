@@ -36,20 +36,18 @@ export default function EmployeeTopicsPage() {
   const t = useTranslations("Performance");
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
-  const token = getPerformanceToken();
+  const token = getPerformanceToken() ?? "";
   const [ym] = usePerformanceYm();
   const handleError = useErrorHandler();
 
-  const session = useQuery(
-    api.performanceAuth.validateSession,
-    token ? { token } : "skip"
-  );
+  const session = useQuery(api.performanceAuth.validateSession, { token });
   const isAdmin = session?.valid && session.role === "admin";
 
-  const data = useQuery(
-    api.performanceQueries.employeeDetail,
-    token ? { token, employeeId, ym } : "skip"
-  );
+  const data = useQuery(api.performanceQueries.employeeDetail, {
+    token,
+    employeeId,
+    ym,
+  });
   const setTopicStatus = useMutation(api.performanceTopics.setTopicStatus);
   const deleteTopic = useMutation(api.performanceTopics.deleteTopic);
 
@@ -103,7 +101,7 @@ export default function EmployeeTopicsPage() {
                     value={topic.status}
                     onValueChange={v =>
                       void setTopicStatus({
-                        token: token!,
+                        token,
                         employeeId,
                         id: topic._id,
                         status: v as "offen" | "erreicht" | "nicht_erreicht",

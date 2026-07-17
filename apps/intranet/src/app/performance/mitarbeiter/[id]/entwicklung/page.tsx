@@ -32,12 +32,13 @@ export default function EmployeeDevelopmentPage() {
   const locale = useLocale();
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
-  const token = getPerformanceToken();
+  const token = getPerformanceToken() ?? "";
   const [ym] = usePerformanceYm();
-  const data = useQuery(
-    api.performanceQueries.employeeDetail,
-    token ? { token, employeeId, ym } : "skip"
-  );
+  const data = useQuery(api.performanceQueries.employeeDetail, {
+    token,
+    employeeId,
+    ym,
+  });
 
   const rateChart = useMemo(
     () =>
