@@ -10,7 +10,6 @@ import { useMutation, useQuery } from "convex/react";
 import {
   LayoutDashboard,
   ListTodo,
-  LogOut,
   Phone,
   TrendingUp,
   Upload,
@@ -18,13 +17,9 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
-import { SettingsMenu } from "@/components/layout/SettingsMenu";
-import { Link } from "@/components/Link";
-import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
-import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { fmtYm } from "@/components/performance/PerformanceFormat";
+import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import {
   PerformanceYmProvider,
@@ -32,7 +27,6 @@ import {
 } from "@/components/performance/PerformanceYmContext";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Select,
@@ -98,43 +92,22 @@ function EmployeeChrome({
     },
   ];
 
+  const navItems = [
+    ...(isAdmin ? [{ href: "/performance", label: t("backToDashboard") }] : []),
+    ...(isAdmin && !viaClerk
+      ? [{ href: "/performance/upload", label: t("uploadLink"), icon: Upload }]
+      : []),
+    ...(viaClerk
+      ? []
+      : [{ href: "/performance/passwort", label: t("passwordLink") }]),
+  ];
+
   return (
     <div className="min-h-screen bg-muted/20">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
-        <PerformanceWordmark />
-        <BackToIntranetLink />
-        <div className="flex-1" />
-        {isAdmin && (
-          <Link href="/performance">
-            <Button variant="ghost" size="sm">
-              {t("backToDashboard")}
-            </Button>
-          </Link>
-        )}
-        {isAdmin && !viaClerk && (
-          <Link href="/performance/upload">
-            <Button variant="ghost" size="sm">
-              <Upload className="mr-2 h-4 w-4" />
-              {t("uploadLink")}
-            </Button>
-          </Link>
-        )}
-        {!viaClerk && (
-          <Link href="/performance/passwort">
-            <Button variant="ghost" size="sm">
-              {t("passwordLink")}
-            </Button>
-          </Link>
-        )}
-        <PerformanceAccountMenu />
-        <SettingsMenu />
-        {!viaClerk && (
-          <Button variant="ghost" size="sm" onClick={onExit}>
-            <LogOut className="mr-2 h-4 w-4" />
-            {t("exit")}
-          </Button>
-        )}
-      </header>
+      <PerformanceHeader
+        navItems={navItems}
+        onExit={viaClerk ? undefined : onExit}
+      />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -214,19 +187,7 @@ export default function EmployeeDetailLayout({
   if (!canView) {
     return (
       <div className="min-h-screen bg-muted/20">
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
-          <PerformanceWordmark />
-          <BackToIntranetLink />
-          <div className="flex-1" />
-          <PerformanceAccountMenu />
-          <SettingsMenu />
-          {!session.viaClerk && (
-            <Button variant="ghost" size="sm" onClick={exit}>
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("exit")}
-            </Button>
-          )}
-        </header>
+        <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
         <main className="mx-auto max-w-3xl p-4 md:p-6">
           <Card>
             <div className="p-6 text-center text-sm text-muted-foreground">

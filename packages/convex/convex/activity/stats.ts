@@ -86,12 +86,20 @@ export const teamOverview = query({
         const tzOffset = latest?.tzOffsetMinutes ?? 0;
         const day = localDay(now, tzOffset);
 
-        const stats = await ctx.db
-          .query("dailyStats")
-          .withIndex("by_device_day", q =>
-            q.eq("deviceId", device.deviceId).eq("day", day)
-          )
-          .unique();
+        // The ingest patch also keeps a `todayStats` summary on the device
+        // row (mirroring `lastSample`), so this normally never has to run a
+        // separate `dailyStats` query per device. Falls back for devices
+        // whose cached day has rolled over (rare: only when a device goes
+        // quiet across local midnight) or predates the field.
+        const stats =
+          device.todayStats?.day === day
+            ? device.todayStats
+            : await ctx.db
+                .query("dailyStats")
+                .withIndex("by_device_day", q =>
+                  q.eq("deviceId", device.deviceId).eq("day", day)
+                )
+                .unique();
 
         const online = now - device.lastSeen < onlineThresholdMs;
         const active = online && latest != null && latest.idleMs < inactivityMs;

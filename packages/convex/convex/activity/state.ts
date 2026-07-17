@@ -450,7 +450,7 @@ export const mappings = query({
   args: { secret: v.string() },
   handler: async (ctx, { secret }) => {
     assertSignalSecret(secret);
-    const people = await ctx.db.query("people").collect();
+    const people = await ctx.db.query("people").take(2000);
     return people
       .filter(p => p.active && p.employeeId)
       .map(p => ({

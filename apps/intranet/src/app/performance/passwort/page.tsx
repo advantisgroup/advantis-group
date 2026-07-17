@@ -6,14 +6,10 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useAction } from "convex/react";
-import { KeyRound, LogOut } from "lucide-react";
+import { KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { SettingsMenu } from "@/components/layout/SettingsMenu";
-import { Link } from "@/components/Link";
-import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
-import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
-import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
+import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Button } from "@/components/ui/button";
@@ -83,30 +79,20 @@ export default function PerformancePasswordPage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
-        <PerformanceWordmark />
-        <BackToIntranetLink />
-        <div className="flex-1" />
-        <Link
-          href={
-            session.role === "admin"
-              ? "/performance"
-              : session.employeeId
-                ? `/performance/mitarbeiter/${session.employeeId}`
-                : "/performance"
-          }
-        >
-          <Button variant="ghost" size="sm">
-            {t("backToDashboard")}
-          </Button>
-        </Link>
-        <PerformanceAccountMenu />
-        <SettingsMenu />
-        <Button variant="ghost" size="sm" onClick={exit}>
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("exit")}
-        </Button>
-      </header>
+      <PerformanceHeader
+        navItems={[
+          {
+            href:
+              session.role === "admin"
+                ? "/performance"
+                : session.employeeId
+                  ? `/performance/mitarbeiter/${session.employeeId}`
+                  : "/performance",
+            label: t("backToDashboard"),
+          },
+        ]}
+        onExit={exit}
+      />
 
       <main className="mx-auto max-w-md space-y-6 p-4 md:p-6">
         <Card>

@@ -175,7 +175,15 @@ function toDateWithFallback(v: CellValue, fallback: Date | null): Date | null {
     );
   }
   if (v === null || v === undefined || v === "") return fallback;
-  const s = String(v).trim();
+  // Genesys interval columns ("Intervallstart"/"Intervallende") are a
+  // date *and* time, e.g. "01.07.26 00:00" — every parser below matches a
+  // bare date only (anchored start-to-end), so without this the time
+  // suffix makes all of them fail and every row silently falls back to
+  // `fallback` (today's date, for the CSV import path). That collapsed
+  // many different days' call reports onto a single day on import, each
+  // overwriting the last. The date is always the first whitespace-
+  // delimited token in every format this function supports.
+  const s = String(v).trim().split(/\s+/)[0];
   const parsers: DateParser[] = [
     str => {
       const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(str);

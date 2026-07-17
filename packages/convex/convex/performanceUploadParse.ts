@@ -45,7 +45,6 @@ import { normalizeZipLocalHeaders } from "./performance/lib/xlsxZip";
 import { toISODate } from "./performance/lib/workdays";
 import { assertServerKey, parseAggregatedTemplate } from "./performanceImport";
 
-const ALLOWED_EXTENSIONS = [".xlsx", ".xlsm", ".csv"];
 // Safely under Convex's 8192-element array-argument limit, with headroom
 // for the rest of each row's payload size.
 const RAW_CHUNK_SIZE = 2000;
@@ -90,9 +89,15 @@ async function runApplyImport(
   args: {
     snapshots: EmployeeSnapshot[];
     sourceFile: string;
-    uploadLogLabel: string;
     storageId: Id<"_storage">;
     contentHash: string;
+    reportKind?: "lead" | "opp" | "call" | "template";
+    reportDate?: string;
+    sourceRowCount?: number;
+    skippedNames?: string[];
+    fileSize?: number;
+    batchId?: string;
+    replaceLogId?: Id<"performanceUploadLog">;
   }
 ): Promise<{ rowsImported: number }> {
   return runSafely("applyImport", () =>
@@ -190,8 +195,162 @@ export type ImportResult =
 /**
  * Detects the report type (Salesforce Lead/Opp, call report as CSV or
  * Excel, or an aggregated template) and imports it — ported from
- * `import_file`.
- *
+ * `import_file`. Shared by a fresh upload (`apiImportReport`) and a
+ * re-import of an already-stored file (`reimportUpload`); `replaceLogId`
+ * is set only by the latter, to patch the existing log row in place
+ * instead of inserting a new one.
+ */
+// Matches the extension anywhere, not just at the string's end: a
+// re-import's `filename` comes from an upload-log row, and every row
+// logged before this file's own refactor stored a decorated label
+// ("report.csv (Call-Report 2026-07-01: 9 matched, 3 skipped)") instead
+// of the raw filename — `.endsWith()` never matches those. Trimming down
+// to the matched prefix also self-heals the log entry's filename back to
+// something readable the next time it's (re)written.
+const EXTENSION_RE = /\.(xlsx|xlsm|csv)\b/i;
+
+async function processReport(
+  ctx: ActionCtx,
+  args: {
+    filename: string;
+    storageId: Id<"_storage">;
+    contentHash: string;
+    fileSize?: number;
+    batchId?: string;
+    replaceLogId?: Id<"performanceUploadLog">;
+  }
+): Promise<ImportResult> {
+  const { storageId, contentHash, fileSize, batchId, replaceLogId } = args;
+  const match = EXTENSION_RE.exec(args.filename);
+  if (!match) {
+    throw new ConvexError({
+      code: "validation",
+      message: "Unsupported file extension.",
+    });
+  }
+  const extension = `.${match[1].toLowerCase()}`;
+  const filename = args.filename.slice(0, match.index + match[0].length);
+
+  const blob = await ctx.storage.get(storageId);
+  if (!blob) {
+    throw new ConvexError({
+      code: "not_found",
+      message: "Uploaded file is no longer available.",
+    });
+  }
+
+  if (extension === ".csv") {
+    const text = stripBom(await blob.text());
+    const detected = readCallCsv(text);
+    if (!detected) {
+      throw new ConvexError({
+        code: "unrecognized_report",
+        message:
+          "CSV nicht erkannt. Erwartet wird ein Call-Report mit Agentenname und Call-Spalten.",
+      });
+    }
+    if (detected.rows.length === 0) {
+      // A report with zero activity (e.g. a weekend): ignored entirely,
+      // no data, no upload-log entry.
+      return { status: "empty", reportDate: toISODate(detected.reportDate) };
+    }
+    const { snapshots, skipped } = await buildCallSnapshots(
+      ctx,
+      detected.rows
+    );
+    const result = await runApplyImport(ctx, {
+      snapshots,
+      sourceFile: filename,
+      storageId,
+      contentHash,
+      reportKind: "call",
+      reportDate: toISODate(detected.reportDate),
+      sourceRowCount: detected.rows.length,
+      skippedNames: skipped,
+      fileSize,
+      batchId,
+      replaceLogId,
+    });
+    return { status: "ok", rowsImported: result.rowsImported, skipped };
+  }
+
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const rows = readSheetRows(bytes);
+  console.warn(
+    `[performanceUploadParse] ${filename}: parsed ${rows.length} sheet rows`
+  );
+
+  const sf = readSalesforceExport(rows);
+  if (sf) {
+    if (sf.kind === "lead") {
+      const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
+      const result = await runApplyImport(ctx, {
+        snapshots,
+        sourceFile: filename,
+        storageId,
+        contentHash,
+        reportKind: "lead",
+        reportDate: toISODate(sf.reportDate),
+        sourceRowCount: sf.rows.length,
+        fileSize,
+        batchId,
+        replaceLogId,
+      });
+      await writeRawLeads(ctx, raw);
+      return { status: "ok", rowsImported: result.rowsImported };
+    }
+    const { snapshots, raw } = aggregateOppReport(sf.rows, sf.reportDate);
+    const result = await runApplyImport(ctx, {
+      snapshots,
+      sourceFile: filename,
+      storageId,
+      contentHash,
+      reportKind: "opp",
+      reportDate: toISODate(sf.reportDate),
+      sourceRowCount: sf.rows.length,
+      fileSize,
+      batchId,
+      replaceLogId,
+    });
+    await writeRawOpps(ctx, raw);
+    return { status: "ok", rowsImported: result.rowsImported };
+  }
+
+  const calls = readCallExport(rows);
+  if (calls) {
+    const { snapshots, skipped } = await buildCallSnapshots(ctx, calls.rows);
+    const result = await runApplyImport(ctx, {
+      snapshots,
+      sourceFile: filename,
+      storageId,
+      contentHash,
+      reportKind: "call",
+      reportDate: toISODate(calls.reportDate),
+      sourceRowCount: calls.rows.length,
+      skippedNames: skipped,
+      fileSize,
+      batchId,
+      replaceLogId,
+    });
+    return { status: "ok", rowsImported: result.rowsImported, skipped };
+  }
+
+  const template = parseAggregatedTemplate(rows);
+  const result = await runApplyImport(ctx, {
+    snapshots: template,
+    sourceFile: filename,
+    storageId,
+    contentHash,
+    reportKind: "template",
+    sourceRowCount: template.length,
+    fileSize,
+    batchId,
+    replaceLogId,
+  });
+  return { status: "ok", rowsImported: result.rowsImported };
+}
+
+/**
  * Server-key gated: only `apps/api`'s upload route calls this, after it has
  * already verified the caller holds a valid, admin-role Performance
  * session — same trust boundary as the `api*`-prefixed OneDrive functions
@@ -203,127 +362,104 @@ export const apiImportReport = action({
     filename: v.string(),
     storageId: v.id("_storage"),
     contentHash: v.string(),
+    // Admin-confirmed re-import of a file whose content hash already
+    // matches a prior upload — bypasses the duplicate check below. Needed
+    // for legitimately re-importing after a bug fix (or a corrected
+    // upstream export) rather than being permanently blocked by an old,
+    // no-longer-representative upload-log entry.
+    force: v.optional(v.boolean()),
+    fileSize: v.optional(v.number()),
+    batchId: v.optional(v.string()),
   },
   handler: async (
     ctx,
-    { serverKey, filename, storageId, contentHash }
+    { serverKey, filename, storageId, contentHash, force, fileSize, batchId }
   ): Promise<ImportResult> => {
     assertServerKey(serverKey);
-
-    const lowerName = filename.toLowerCase();
-    const extension = ALLOWED_EXTENSIONS.find(ext => lowerName.endsWith(ext));
-    if (!extension) {
-      throw new ConvexError({
-        code: "validation",
-        message: "Unsupported file extension.",
-      });
-    }
 
     // Checked before any parsing — covers every report type (Salesforce
     // Lead/Opp, call report, aggregated template) uniformly, and skips the
     // (potentially expensive) parse entirely for a re-upload.
-    const priorUpload = await ctx.runQuery(
-      internal.performanceImport.findUploadByHash,
-      { contentHash }
-    );
-    if (priorUpload) {
-      return {
-        status: "duplicate",
-        filename: priorUpload.filename,
-        uploadedAt: priorUpload.uploadedAt,
-      };
+    if (!force) {
+      const priorUpload = await ctx.runQuery(
+        internal.performanceImport.findUploadByHash,
+        { contentHash }
+      );
+      if (priorUpload) {
+        return {
+          status: "duplicate",
+          filename: priorUpload.filename,
+          uploadedAt: priorUpload.uploadedAt,
+        };
+      }
     }
 
-    const blob = await ctx.storage.get(storageId);
-    if (!blob) {
+    return processReport(ctx, { filename, storageId, contentHash, fileSize, batchId });
+  },
+});
+
+/** Re-processes a file already sitting in storage from a prior upload —
+ * rereads it fresh through the (possibly since-fixed) detection/parsing
+ * logic and patches the existing log row in place, rather than requiring
+ * the admin to re-select and re-upload the same file from their computer.
+ * Session-token gated (called directly from the browser, not through
+ * apps/api) since there's no new file to stage/scan here. */
+export const reimportUpload = action({
+  args: { token: v.string(), logId: v.id("performanceUploadLog") },
+  handler: async (ctx, { token, logId }): Promise<ImportResult> => {
+    await ctx.runQuery(internal.performanceImport.requireAdminByToken, {
+      token,
+    });
+    const log = await ctx.runQuery(internal.performanceImport.getUploadLogRow, {
+      logId,
+    });
+    if (!log) {
       throw new ConvexError({
         code: "not_found",
-        message: "Uploaded file is no longer available.",
+        message: "Upload-log entry not found.",
       });
     }
-
-    if (extension === ".csv") {
-      const text = stripBom(await blob.text());
-      const detected = readCallCsv(text);
-      if (!detected) {
-        throw new ConvexError({
-          code: "unrecognized_report",
-          message:
-            "CSV nicht erkannt. Erwartet wird ein Call-Report mit Agentenname und Call-Spalten.",
-        });
-      }
-      if (detected.rows.length === 0) {
-        // A report with zero activity (e.g. a weekend): ignored entirely,
-        // no data, no upload-log entry.
-        return { status: "empty", reportDate: toISODate(detected.reportDate) };
-      }
-      const { snapshots, skipped } = await buildCallSnapshots(
-        ctx,
-        detected.rows
-      );
-      const result = await runApplyImport(ctx, {
-        snapshots,
-        sourceFile: filename,
-        uploadLogLabel: `${filename} (Call-Report ${toISODate(detected.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
-        storageId,
-        contentHash,
-      });
-      return { status: "ok", rowsImported: result.rowsImported, skipped };
-    }
-
-    const bytes = new Uint8Array(await blob.arrayBuffer());
-    const rows = readSheetRows(bytes);
-    console.warn(
-      `[performanceUploadParse] ${filename}: parsed ${rows.length} sheet rows`
-    );
-
-    const sf = readSalesforceExport(rows);
-    if (sf) {
-      if (sf.kind === "lead") {
-        const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
-        const result = await runApplyImport(ctx, {
-          snapshots,
-          sourceFile: filename,
-          uploadLogLabel: `${filename} (Lead-Report, ${sf.rows.length} Zeilen)`,
-          storageId,
-          contentHash,
-        });
-        await writeRawLeads(ctx, raw);
-        return { status: "ok", rowsImported: result.rowsImported };
-      }
-      const { snapshots, raw } = aggregateOppReport(sf.rows, sf.reportDate);
-      const result = await runApplyImport(ctx, {
-        snapshots,
-        sourceFile: filename,
-        uploadLogLabel: `${filename} (Opportunity-Report, ${sf.rows.length} Zeilen)`,
-        storageId,
-        contentHash,
-      });
-      await writeRawOpps(ctx, raw);
-      return { status: "ok", rowsImported: result.rowsImported };
-    }
-
-    const calls = readCallExport(rows);
-    if (calls) {
-      const { snapshots, skipped } = await buildCallSnapshots(ctx, calls.rows);
-      const result = await runApplyImport(ctx, {
-        snapshots,
-        sourceFile: filename,
-        uploadLogLabel: `${filename} (Call-Report ${toISODate(calls.reportDate)}: ${snapshots.length} Team-Agenten übernommen, ${skipped.length} ignoriert)`,
-        storageId,
-        contentHash,
-      });
-      return { status: "ok", rowsImported: result.rowsImported, skipped };
-    }
-
-    const template = parseAggregatedTemplate(rows);
-    const result = await runApplyImport(ctx, {
-      snapshots: template,
-      sourceFile: filename,
-      uploadLogLabel: filename,
-      storageId,
-      contentHash,
+    return processReport(ctx, {
+      filename: log.filename,
+      storageId: log.storageId,
+      contentHash: log.contentHash ?? "",
+      fileSize: log.fileSize,
+      batchId: log.batchId,
+      replaceLogId: logId,
     });
-    return { status: "ok", rowsImported: result.rowsImported };
+  },
+});
+
+/** Re-imports every file in a batch, sequentially (not in parallel) so a
+ * large batch doesn't fan out into a burst of concurrent Node actions —
+ * each file's parse is small and fast, and the DB layer already skips a
+ * write when the reprocessed values come out unchanged (see
+ * `upsertSnapshot`), so re-running an already-correct file is cheap. */
+export const reimportBatch = action({
+  args: { token: v.string(), batchId: v.string() },
+  handler: async (
+    ctx,
+    { token, batchId }
+  ): Promise<{ results: (ImportResult & { logId: string })[] }> => {
+    await ctx.runQuery(internal.performanceImport.requireAdminByToken, {
+      token,
+    });
+    const rows = await ctx.runQuery(
+      internal.performanceImport.getUploadLogRowsByBatch,
+      { batchId }
+    );
+    const results: (ImportResult & { logId: string })[] = [];
+    for (const log of rows) {
+      const result = await processReport(ctx, {
+        filename: log.filename,
+        storageId: log.storageId,
+        contentHash: log.contentHash ?? "",
+        fileSize: log.fileSize,
+        batchId: log.batchId,
+        replaceLogId: log._id,
+      });
+      results.push({ ...result, logId: log._id });
+    }
+    return { results };
   },
 });

@@ -101,6 +101,8 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       await rateLimit("performance.upload", rateKey, 30, "1 h");
 
       const file = body.file;
+      const force = body.force === "true";
+      const batchId = body.batchId;
       const lowerName = file.name.toLowerCase();
       const extension = ALLOWED_EXTENSIONS.find(ext => lowerName.endsWith(ext));
       if (!extension) {
@@ -129,16 +131,18 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       const digest = await crypto.subtle.digest("SHA-256", bytes);
       const contentHash = Buffer.from(digest).toString("hex");
 
-      const priorUpload = await getConvex().query(
-        api.performanceImport.apiFindUploadByHash,
-        { serverKey: serverKey(), contentHash }
-      );
-      if (priorUpload) {
-        return {
-          status: "duplicate" as const,
-          filename: priorUpload.filename,
-          uploadedAt: priorUpload.uploadedAt,
-        };
+      if (!force) {
+        const priorUpload = await getConvex().query(
+          api.performanceImport.apiFindUploadByHash,
+          { serverKey: serverKey(), contentHash }
+        );
+        if (priorUpload) {
+          return {
+            status: "duplicate" as const,
+            filename: priorUpload.filename,
+            uploadedAt: priorUpload.uploadedAt,
+          };
+        }
       }
 
       const uploadUrl = await getConvex().mutation(
@@ -173,6 +177,9 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
             filename: file.name,
             storageId,
             contentHash,
+            force,
+            fileSize: bytes.length,
+            batchId,
           }
         );
 
@@ -191,7 +198,13 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
         throw Errors.badRequest(extractConvexMessage(err, "Import failed"));
       }
     },
-    { body: t.Object({ file: t.File() }) }
+    {
+      body: t.Object({
+        file: t.File(),
+        force: t.Optional(t.String()),
+        batchId: t.Optional(t.String()),
+      }),
+    }
   )
 
   // Blank upload template with the aggregated-format's recognized headers

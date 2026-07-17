@@ -93,6 +93,16 @@ export interface UploadReportResult {
   uploadedAt?: number;
 }
 
+export interface UploadReportOptions {
+  onProgress?: (fraction: number) => void;
+  // Re-import despite a content-hash match against a prior upload — see
+  // UploadReportResult's "duplicate" status.
+  force?: boolean;
+  // Shared by every file selected/dropped together, so the upload log can
+  // show them as one batch instead of unrelated same-timestamp rows.
+  batchId?: string;
+}
+
 /** Uploads one report file to `POST /performance/uploads`, reporting real
  * upload progress (0–1) — uses XHR rather than `fetch` since `fetch` has no
  * upload-progress event, matching the pattern already proven by
@@ -101,11 +111,14 @@ export interface UploadReportResult {
 export function uploadPerformanceReport(
   file: File,
   token: string,
-  onProgress?: (fraction: number) => void
+  options?: UploadReportOptions
 ): Promise<UploadReportResult> {
+  const { onProgress, force, batchId } = options ?? {};
   return new Promise(resolve => {
     const form = new FormData();
     form.append("file", file);
+    if (force) form.append("force", "true");
+    if (batchId) form.append("batchId", batchId);
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE}/performance/uploads`);
     xhr.setRequestHeader("authorization", `Bearer ${token}`);

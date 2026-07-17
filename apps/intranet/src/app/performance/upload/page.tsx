@@ -1,21 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
+import { type Id } from "@advantis/convex/dataModel";
+import { useAction, useQuery } from "convex/react";
 import {
+  AlertCircle,
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
   Clock,
   Copy,
   Download,
   FileSpreadsheet,
   FileText,
   Info,
+  Layers,
   Loader2,
-  LogOut,
   RotateCw,
   Upload,
   UploadCloud,
@@ -23,14 +27,12 @@ import {
   XCircle,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
-import { SettingsMenu } from "@/components/layout/SettingsMenu";
-import { Link } from "@/components/Link";
-import { BackToIntranetLink } from "@/components/performance/BackToIntranetLink";
-import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
-import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
+import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -41,7 +43,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDateTime, relativeTime } from "@/lib/format";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useErrorHandler } from "@/hooks/use-error-handler";
+import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
 import {
   clearPerformanceToken,
   downloadPerformanceFile,
@@ -70,7 +78,15 @@ interface QueueItem {
   skipped?: string[];
   error?: string;
   duplicateOf?: { filename: string; uploadedAt: number };
+  batchId?: string;
 }
+
+const REPORT_KIND_LABEL_KEY: Record<string, string> = {
+  lead: "uploadKindLead",
+  opp: "uploadKindOpp",
+  call: "uploadKindCall",
+  template: "uploadKindTemplate",
+};
 
 function FileIcon({ name }: { name: string }) {
   const isCsv = name.toLowerCase().endsWith(".csv");
@@ -98,6 +114,213 @@ function StatusIcon({ status }: { status: QueueStatus }) {
     case "error":
       return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
   }
+}
+
+interface UploadLogRow {
+  _id: string;
+  filename: string;
+  rowsImported: number;
+  uploadedAt: number;
+  reportKind?: "lead" | "opp" | "call" | "template";
+  reportDate?: string;
+  sourceRowCount?: number;
+  skippedNames?: string[];
+  fileSize?: number;
+  batchId?: string;
+}
+
+function LogRow({
+  row,
+  locale,
+  token,
+  indent,
+}: {
+  row: UploadLogRow;
+  locale: string;
+  token: string;
+  indent?: boolean;
+}) {
+  const t = useTranslations("Performance");
+  const handleError = useErrorHandler();
+  const reimportUpload = useAction(api.performanceUploadParse.reimportUpload);
+  const [reimporting, setReimporting] = useState(false);
+  // Predates this session's date-parsing fix (and the richer metadata added
+  // alongside it) — worth a re-import even though we can't tell from stored
+  // data alone whether this particular file was actually affected.
+  const legacy = !row.reportKind;
+
+  async function reimport() {
+    setReimporting(true);
+    try {
+      const result = await reimportUpload({
+        token,
+        logId: row._id as Id<"performanceUploadLog">,
+      });
+      if (result.status === "ok") toast.success(t("uploadReimportOk"));
+      else if (result.status === "empty") toast.info(t("uploadEmpty"));
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setReimporting(false);
+    }
+  }
+
+  return (
+    <TableRow>
+      <TableCell className={cn("break-all", indent && "pl-8")}>
+        <span className="inline-flex items-center gap-1.5">
+          {row.filename}
+          {legacy && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <AlertCircle className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              </TooltipTrigger>
+              <TooltipContent>{t("uploadLogLegacy")}</TooltipContent>
+            </Tooltip>
+          )}
+        </span>
+      </TableCell>
+      <TableCell>
+        {row.reportKind ? (
+          <Badge variant="muted">
+            {t(REPORT_KIND_LABEL_KEY[row.reportKind] ?? row.reportKind)}
+          </Badge>
+        ) : (
+          <span className="text-muted-foreground">–</span>
+        )}
+      </TableCell>
+      <TableCell>
+        {row.reportDate ? formatIsoDate(row.reportDate, locale) : "–"}
+      </TableCell>
+      <TableCell>
+        <span className="inline-flex items-center gap-1.5">
+          {row.sourceRowCount && row.sourceRowCount !== row.rowsImported
+            ? t("uploadLogMatched", {
+                matched: row.rowsImported,
+                total: row.sourceRowCount,
+              })
+            : row.rowsImported}
+          {row.skippedNames && row.skippedNames.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                {t("uploadSkipped", { names: row.skippedNames.join(", ") })}
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </span>
+      </TableCell>
+      <TableCell>{row.fileSize ? formatFileSize(row.fileSize) : "–"}</TableCell>
+      <TableCell title={relativeTime(row.uploadedAt)}>
+        {formatDateTime(row.uploadedAt, locale)}
+      </TableCell>
+      <TableCell>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          title={t("uploadReimport")}
+          disabled={reimporting}
+          onClick={() => void reimport()}
+        >
+          {reimporting ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RotateCw className="h-3.5 w-3.5" />
+          )}
+        </Button>
+      </TableCell>
+    </TableRow>
+  );
+}
+
+function BatchRows({
+  batchId,
+  rows,
+  expanded,
+  onToggle,
+  locale,
+  token,
+}: {
+  batchId: string;
+  rows: UploadLogRow[];
+  expanded: boolean;
+  onToggle: () => void;
+  locale: string;
+  token: string;
+}) {
+  const t = useTranslations("Performance");
+  const handleError = useErrorHandler();
+  const reimportBatch = useAction(api.performanceUploadParse.reimportBatch);
+  const [reimporting, setReimporting] = useState(false);
+  const totalRows = rows.reduce((sum, r) => sum + r.rowsImported, 0);
+  const latest = rows[0].uploadedAt;
+
+  async function reimportAll() {
+    setReimporting(true);
+    try {
+      const { results } = await reimportBatch({ token, batchId });
+      const ok = results.filter(r => r.status === "ok").length;
+      toast.success(
+        t("uploadReimportBatchOk", { count: ok, total: results.length })
+      );
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setReimporting(false);
+    }
+  }
+
+  return (
+    <>
+      <TableRow className="hover:bg-muted/50">
+        <TableCell colSpan={3} className="cursor-pointer" onClick={onToggle}>
+          <span className="inline-flex items-center gap-2 font-medium">
+            {expanded ? (
+              <ChevronDown className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+            )}
+            <Layers className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            {t("uploadLogBatch", { count: rows.length })}
+          </span>
+        </TableCell>
+        <TableCell>{totalRows}</TableCell>
+        <TableCell />
+        <TableCell title={relativeTime(latest)}>
+          {formatDateTime(latest, locale)}
+        </TableCell>
+        <TableCell>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            title={t("uploadReimportBatch")}
+            disabled={reimporting}
+            onClick={() => void reimportAll()}
+          >
+            {reimporting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RotateCw className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        </TableCell>
+      </TableRow>
+      {expanded &&
+        rows.map(row => (
+          <LogRow
+            key={row._id}
+            row={row}
+            locale={locale}
+            token={token}
+            indent
+          />
+        ))}
+    </>
+  );
 }
 
 export default function PerformanceUploadPage() {
@@ -141,6 +364,10 @@ export default function PerformanceUploadPage() {
 
   async function enqueue(files: File[]) {
     if (!token || files.length === 0) return;
+    // Shared by every file dropped/picked together, so the upload log can
+    // later show them as one batch — tagged even for a single file; the
+    // log only renders batch chrome once a batchId actually repeats.
+    const batchId = crypto.randomUUID();
     const items: QueueItem[] = files.map(file => {
       const accepted = ACCEPTED_EXTENSIONS.some(ext =>
         file.name.toLowerCase().endsWith(ext)
@@ -151,25 +378,33 @@ export default function PerformanceUploadPage() {
         status: accepted ? "queued" : "error",
         progress: 0,
         error: accepted ? undefined : t("uploadUnsupportedType"),
+        batchId,
       };
     });
     setQueue(prev => [...items, ...prev]);
 
     for (const item of items) {
       if (item.status !== "queued") continue;
-      await runUpload(item.id, item.file);
+      await runUpload(item.id, item.file, { batchId: item.batchId });
     }
   }
 
-  async function runUpload(id: string, file: File) {
+  async function runUpload(
+    id: string,
+    file: File,
+    opts?: { force?: boolean; batchId?: string }
+  ) {
     if (!token) return;
     updateItem(id, { status: "uploading", progress: 0, error: undefined });
-    const result = await uploadPerformanceReport(file, token, frac =>
-      updateItem(id, {
-        progress: frac,
-        status: frac >= 1 ? "processing" : "uploading",
-      })
-    );
+    const result = await uploadPerformanceReport(file, token, {
+      onProgress: frac =>
+        updateItem(id, {
+          progress: frac,
+          status: frac >= 1 ? "processing" : "uploading",
+        }),
+      force: opts?.force,
+      batchId: opts?.batchId,
+    });
     if (!result.ok) {
       updateItem(id, {
         status: "error",
@@ -196,7 +431,13 @@ export default function PerformanceUploadPage() {
 
   function retryItem(id: string) {
     const item = queue.find(it => it.id === id);
-    if (item) void runUpload(id, item.file);
+    if (item) void runUpload(id, item.file, { batchId: item.batchId });
+  }
+
+  function forceItem(id: string) {
+    const item = queue.find(it => it.id === id);
+    if (item)
+      void runUpload(id, item.file, { force: true, batchId: item.batchId });
   }
 
   function removeItem(id: string) {
@@ -213,37 +454,60 @@ export default function PerformanceUploadPage() {
     ["done", "empty", "duplicate", "error"].includes(it.status)
   );
 
+  const [expandedBatches, setExpandedBatches] = useState<Set<string>>(
+    new Set()
+  );
+  function toggleBatch(batchId: string) {
+    setExpandedBatches(prev => {
+      const next = new Set(prev);
+      if (next.has(batchId)) next.delete(batchId);
+      else next.add(batchId);
+      return next;
+    });
+  }
+  const logGroups = useMemo(() => {
+    if (!log) return [];
+    type LogRow = (typeof log)[number];
+    const byBatch = new Map<string, LogRow[]>();
+    for (const row of log) {
+      if (!row.batchId) continue;
+      const arr = byBatch.get(row.batchId) ?? [];
+      arr.push(row);
+      byBatch.set(row.batchId, arr);
+    }
+    const groups: { key: string; rows: LogRow[]; batched: boolean }[] = [];
+    const seen = new Set<string>();
+    for (const row of log) {
+      if (row.batchId && (byBatch.get(row.batchId)?.length ?? 0) > 1) {
+        if (seen.has(row.batchId)) continue;
+        seen.add(row.batchId);
+        groups.push({
+          key: row.batchId,
+          rows: byBatch.get(row.batchId)!,
+          batched: true,
+        });
+      } else {
+        groups.push({ key: row._id, rows: [row], batched: false });
+      }
+    }
+    return groups;
+  }, [log]);
+
   if (session === undefined) return <PerformancePageSkeleton />;
   if (!session.valid || session.role !== "admin" || session.viaClerk)
     return null;
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b bg-background/90 px-4 backdrop-blur">
-        <PerformanceWordmark />
-        <BackToIntranetLink />
-        <div className="flex-1" />
-        <Link href="/performance">
-          <Button variant="ghost" size="sm">
-            {t("backToDashboard")}
-          </Button>
-        </Link>
-        <PerformanceAccountMenu />
-        <SettingsMenu />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            clearPerformanceToken();
-            router.replace("/performance/login");
-          }}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          {t("exit")}
-        </Button>
-      </header>
+      <PerformanceHeader
+        navItems={[{ href: "/performance", label: t("backToDashboard") }]}
+        onExit={() => {
+          clearPerformanceToken();
+          router.replace("/performance/login");
+        }}
+      />
 
-      <main className="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -410,6 +674,16 @@ export default function PerformanceUploadPage() {
                             )}
                           </div>
                         </div>
+                        {item.status === "duplicate" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 shrink-0 px-2 text-xs"
+                            onClick={() => forceItem(item.id)}
+                          >
+                            {t("uploadImportAnyway")}
+                          </Button>
+                        )}
                         {item.status === "error" && (
                           <Button
                             variant="ghost"
@@ -465,7 +739,7 @@ export default function PerformanceUploadPage() {
           <CardHeader>
             <CardTitle>{t("uploadLogTitle")}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-auto">
             {!log || log.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 {t("uploadLogEmpty")}
@@ -475,22 +749,35 @@ export default function PerformanceUploadPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("uploadLogFile")}</TableHead>
+                    <TableHead>{t("uploadLogType")}</TableHead>
+                    <TableHead>{t("uploadLogDate")}</TableHead>
                     <TableHead>{t("uploadLogRows")}</TableHead>
+                    <TableHead>{t("uploadLogSize")}</TableHead>
                     <TableHead>{t("uploadLogWhen")}</TableHead>
+                    <TableHead />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {log.map(row => (
-                    <TableRow key={row._id}>
-                      <TableCell className="max-w-xs truncate">
-                        {row.filename}
-                      </TableCell>
-                      <TableCell>{row.rowsImported}</TableCell>
-                      <TableCell title={relativeTime(row.uploadedAt)}>
-                        {formatDateTime(row.uploadedAt, locale)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {logGroups.map(group =>
+                    group.batched ? (
+                      <BatchRows
+                        key={group.key}
+                        batchId={group.key}
+                        rows={group.rows}
+                        expanded={expandedBatches.has(group.key)}
+                        onToggle={() => toggleBatch(group.key)}
+                        locale={locale}
+                        token={token}
+                      />
+                    ) : (
+                      <LogRow
+                        key={group.key}
+                        row={group.rows[0]}
+                        locale={locale}
+                        token={token}
+                      />
+                    )
+                  )}
                 </TableBody>
               </Table>
             )}
