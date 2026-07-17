@@ -127,6 +127,15 @@ PRs there.
   content. Views stay read-focused overviews with explicit action buttons.
   See `apps/intranet/src/components/applicants/EntryDialogs.tsx` for the
   canonical pattern.
+- **A page with tabs uses `RouteTabs`, never a bare desktop-only tab bar.**
+  Below the mobile breakpoint, `RouteTabs` renders nothing itself and hands
+  its tabs to the global `BottomNav` via `useBottomNavTabs`
+  (`components/layout/bottom-nav-tabs.tsx`), so the bottom nav becomes the
+  tab switcher instead of a second, competing control floating over
+  thumb-zone space. A page that rolls its own tab strip and leaves it
+  rendered on mobile is inconsistent with every other tabbed page in the
+  app. See `apps/intranet/src/components/applicants/RouteTabs.tsx` for the
+  canonical pattern.
 - Don't add speculative abstractions, fallbacks, or error handling for cases
   that can't occur. Match the existing minimal, direct style.
 - i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
