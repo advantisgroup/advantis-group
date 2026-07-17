@@ -127,8 +127,34 @@ async function reportsInRange(
     .collect();
 }
 
+/** Merges `next` onto `base`, keeping `base`'s value for any field `next`
+ * didn't measure. A plain `{...base, ...next}` spread is unsafe here:
+ * `reportToSnapshot` always sets `unqualifiedReasons` as an own key (even
+ * when `undefined`), so a later row without a Lead report would spread an
+ * explicit `undefined` over an earlier real value instead of leaving it
+ * alone. */
+function mergeSnapshot(base: Snapshot, next: Snapshot): Snapshot {
+  const merged = { ...base } as unknown as Record<string, unknown>;
+  for (const [k, v] of Object.entries(next)) {
+    if (v !== undefined) merged[k] = v;
+  }
+  return merged as unknown as Snapshot;
+}
+
 /** Latest report per employee within the month — "Monatswert = jüngster
- * Snapshot des Mitarbeiters in diesem Monat". */
+ * Snapshot des Mitarbeiters in diesem Monat", per-field. `performanceReports`
+ * is one row per report *date*, and each import only writes the fields its
+ * source file actually measured (see the schema comment: undefined means
+ * "not measured this snapshot", not zero) — a Lead/Opp report and a call
+ * report for the same employee routinely land on different dates within the
+ * same month. Taking a single newest-dated row wholesale would let a
+ * call-only import (which never touches leadsCreated/workableCreated/etc.)
+ * blank out an earlier Lead/Opp import's month-to-date totals the moment its
+ * date becomes the newest — those totals are still sitting untouched in the
+ * older row, just no longer surfaced. Folding every row in ascending-date
+ * order (each row's *measured* fields override the running merge; anything
+ * it left unmeasured carries forward) reconstructs the true "latest known
+ * value per field" instead. */
 async function latestSnapshots(
   ctx: QueryCtx,
   ym: string,
@@ -136,18 +162,17 @@ async function latestSnapshots(
 ): Promise<Snapshot[]> {
   const names = await employeeNameMap(ctx);
   const rows = await reportsInRange(ctx, ym, employeeId);
-  const latest = new Map<
-    Id<"performanceEmployees">,
-    Doc<"performanceReports">
-  >();
-  for (const r of rows) {
-    if (!names.has(r.employeeId)) continue;
-    const cur = latest.get(r.employeeId);
-    if (!cur || r.reportDate > cur.reportDate) latest.set(r.employeeId, r);
-  }
-  const snaps = [...latest.entries()].map(([id, r]) =>
-    reportToSnapshot(r, names.get(id)!)
+  const sorted = [...rows].sort((a, b) =>
+    a.reportDate.localeCompare(b.reportDate)
   );
+  const merged = new Map<Id<"performanceEmployees">, Snapshot>();
+  for (const r of sorted) {
+    if (!names.has(r.employeeId)) continue;
+    const snap = reportToSnapshot(r, names.get(r.employeeId)!);
+    const cur = merged.get(r.employeeId);
+    merged.set(r.employeeId, cur ? mergeSnapshot(cur, snap) : snap);
+  }
+  const snaps = [...merged.values()];
   snaps.sort((a, b) => a.name.localeCompare(b.name));
   return snaps;
 }
