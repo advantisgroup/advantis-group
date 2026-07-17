@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -20,11 +20,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -111,7 +106,15 @@ function EmployeeSelect({
  * intranet accounts this draws from, and showing the avatar lets an admin
  * visually confirm the right person even when the Performance login's own
  * email doesn't match (e.g. a consulting-for-* address), which is the
- * common case this picker exists for. */
+ * common case this picker exists for.
+ *
+ * Deliberately not a Radix `Popover`: this always renders inside a `Dialog`,
+ * and nesting one portaled Radix overlay's trigger inside another's content
+ * is a known source of swallowed taps on touch devices (the Dialog's
+ * dismissable layer can eat the pointer event meant for the Popover
+ * trigger) — confirmed broken on mobile Safari. Rendering the expanded list
+ * directly in the form's own DOM subtree (same stacking context as the
+ * Dialog, no second portal) sidesteps that entirely. */
 function IntranetUserPicker({
   value,
   onChange,
@@ -126,6 +129,7 @@ function IntranetUserPicker({
   const t = useTranslations("Performance");
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
   const selected = users.find(u => u.id === value) ?? null;
 
   const filtered = useMemo(() => {
@@ -136,105 +140,120 @@ function IntranetUserPicker({
     );
   }, [users, search]);
 
+  function close() {
+    setOpen(false);
+    setSearch("");
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: PointerEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) close();
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
   return (
-    <Popover
-      open={open}
-      onOpenChange={o => {
-        setOpen(o);
-        if (!o) setSearch("");
-      }}
-    >
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="w-full justify-between gap-2 font-normal"
-        >
-          {selected ? (
-            <span className="flex min-w-0 items-center gap-2">
-              <Avatar className="size-5 shrink-0">
-                {selected.avatarUrl && (
-                  <AvatarImage src={selected.avatarUrl} alt={selected.name} />
-                )}
-                <AvatarFallback className="text-[9px]">
-                  {initials(selected.name, selected.email)}
-                </AvatarFallback>
-              </Avatar>
-              <span className="truncate">{selected.name}</span>
-            </span>
-          ) : (
-            <span className="truncate text-muted-foreground">
+    <div ref={containerRef} className="relative">
+      <Button
+        type="button"
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        className="w-full justify-between gap-2 font-normal"
+        onClick={() => setOpen(o => !o)}
+      >
+        {selected ? (
+          <span className="flex min-w-0 items-center gap-2">
+            <Avatar className="size-5 shrink-0">
+              {selected.avatarUrl && (
+                <AvatarImage src={selected.avatarUrl} alt={selected.name} />
+              )}
+              <AvatarFallback className="text-[9px]">
+                {initials(selected.name, selected.email)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="truncate">{selected.name}</span>
+          </span>
+        ) : (
+          <span className="truncate text-muted-foreground">{placeholder}</span>
+        )}
+        <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </Button>
+      {open && (
+        <div className="absolute left-0 right-0 top-full z-10 mt-1 rounded-lg border border-border/70 bg-card shadow-overlay">
+          <div className="border-b p-2">
+            <Input
+              autoFocus
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder={t("userIntranetAccountSearch")}
+              className="h-8"
+            />
+          </div>
+          <ScrollArea className="max-h-64">
+            <button
+              type="button"
+              className="flex w-full items-center border-b border-border/60 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent"
+              onClick={() => {
+                onChange(null);
+                close();
+              }}
+            >
               {placeholder}
-            </span>
-          )}
-          <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[22rem] p-0" align="start">
-        <div className="border-b p-2">
-          <Input
-            autoFocus
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder={t("userIntranetAccountSearch")}
-            className="h-8"
-          />
-        </div>
-        <ScrollArea className="h-64">
-          <button
-            type="button"
-            className="flex w-full items-center border-b border-border/60 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent"
-            onClick={() => {
-              onChange(null);
-              setOpen(false);
-            }}
-          >
-            {placeholder}
-          </button>
-          {filtered.length === 0 ? (
-            <p className="px-3 py-4 text-center text-xs text-muted-foreground">
-              {t("userIntranetAccountEmpty")}
-            </p>
-          ) : (
-            filtered.map(u => {
-              const linkedElsewhere = u.linkedToLoginName && u.id !== value;
-              return (
-                <button
-                  type="button"
-                  key={u.id}
-                  className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-2 text-left last:border-b-0 hover:bg-accent"
-                  onClick={() => {
-                    onChange(u.id);
-                    setOpen(false);
-                  }}
-                >
-                  <Avatar className="size-8 shrink-0">
-                    {u.avatarUrl && (
-                      <AvatarImage src={u.avatarUrl} alt={u.name} />
+            </button>
+            {filtered.length === 0 ? (
+              <p className="px-3 py-4 text-center text-xs text-muted-foreground">
+                {t("userIntranetAccountEmpty")}
+              </p>
+            ) : (
+              filtered.map(u => {
+                const linkedElsewhere = u.linkedToLoginName && u.id !== value;
+                return (
+                  <button
+                    type="button"
+                    key={u.id}
+                    className="flex w-full items-center gap-3 border-b border-border/60 px-3 py-2 text-left last:border-b-0 hover:bg-accent"
+                    onClick={() => {
+                      onChange(u.id);
+                      close();
+                    }}
+                  >
+                    <Avatar className="size-8 shrink-0">
+                      {u.avatarUrl && (
+                        <AvatarImage src={u.avatarUrl} alt={u.name} />
+                      )}
+                      <AvatarFallback className="text-xs">
+                        {initials(u.name, u.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{u.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {u.email}
+                      </p>
+                    </div>
+                    {linkedElsewhere && (
+                      <Badge variant="muted" className="shrink-0 text-[10px]">
+                        {t("userAlreadyLinkedBadge")}
+                      </Badge>
                     )}
-                    <AvatarFallback className="text-xs">
-                      {initials(u.name, u.email)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{u.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {u.email}
-                    </p>
-                  </div>
-                  {linkedElsewhere && (
-                    <Badge variant="muted" className="shrink-0 text-[10px]">
-                      {t("userAlreadyLinkedBadge")}
-                    </Badge>
-                  )}
-                </button>
-              );
-            })
-          )}
-        </ScrollArea>
-      </PopoverContent>
-    </Popover>
+                  </button>
+                );
+              })
+            )}
+          </ScrollArea>
+        </div>
+      )}
+    </div>
   );
 }
 
