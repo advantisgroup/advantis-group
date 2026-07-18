@@ -77,18 +77,24 @@ export const recordSamples = internalMutation({
       // One ranged read replaces a per-sample point read: every existing
       // capturedAt in the batch's window, deduped in memory. `seen` also
       // absorbs intra-batch duplicates (the old per-sample read caught those
-      // because `ctx.db` sees the mutation's own writes).
+      // because `ctx.db` sees the mutation's own writes). A keepalive-only
+      // batch never inserts into (or dedupes against) `activitySamples`, so
+      // skip the lookup entirely — otherwise every ~keepalive-interval tick
+      // from every idle device pays for a read that can't affect the outcome.
       const oldest = deviceSamples[0]!;
       const newest = deviceSamples[deviceSamples.length - 1]!;
-      const existing = await ctx.db
-        .query("activitySamples")
-        .withIndex("by_device_time", q =>
-          q
-            .eq("deviceId", deviceId)
-            .gte("capturedAt", oldest.capturedAt)
-            .lte("capturedAt", newest.capturedAt)
-        )
-        .collect();
+      const allKeepalive = deviceSamples.every(s => s.kind === "keepalive");
+      const existing = allKeepalive
+        ? []
+        : await ctx.db
+            .query("activitySamples")
+            .withIndex("by_device_time", q =>
+              q
+                .eq("deviceId", deviceId)
+                .gte("capturedAt", oldest.capturedAt)
+                .lte("capturedAt", newest.capturedAt)
+            )
+            .collect();
       const seen = new Set(existing.map(doc => doc.capturedAt));
 
       const dayTotals = new Map<string, DayTotals>();
