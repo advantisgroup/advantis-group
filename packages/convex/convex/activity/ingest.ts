@@ -13,7 +13,10 @@ import { applyStateSignal } from "./state";
  * http.ts) / the Elysia ingestion layer, never from clients.
  */
 
-const MAX_ATTRIBUTION_MS = 120_000;
+// Must stay comfortably above the desktop agent's KEEPALIVE_INTERVAL
+// (apps/desktop/src-tauri/src/tracker.rs in ActivityTrack) or idle gaps get
+// truncated / the offline threshold flickers — see the comment there.
+const MAX_ATTRIBUTION_MS = 360_000;
 const NOMINAL_FIRST_MS = 15_000;
 const MAX_TZ_OFFSET_MINUTES = 840;
 const MIN_INGEST_INTERVAL_MS = 3_000;

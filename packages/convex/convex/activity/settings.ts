@@ -35,7 +35,10 @@ export interface AppConfig {
 
 export const CONFIG_DEFAULTS: AppConfig = {
   inactivityThresholdSeconds: 300,
-  offlineThresholdSeconds: 120,
+  // Must stay above the desktop agent's keepalive interval (180s, see
+  // tracker.rs in ActivityTrack) with margin, or "online" flickers offline
+  // between keepalives. Kept equal to MAX_ATTRIBUTION_MS in ingest.ts.
+  offlineThresholdSeconds: 360,
   retentionDays: 90,
 };
 
