@@ -220,7 +220,8 @@ export default defineSchema({
     .index("by_role", ["role"])
     .index("by_status", ["status"])
     .index("by_clockodoUserId", ["clockodoUserId"])
-    .index("by_departmentId", ["departmentId"]),
+    .index("by_departmentId", ["departmentId"])
+    .index("by_avatarStorageId", ["avatarStorageId"]),
 
   /**
    * Canonical org departments. Replaces the free-text `users.department` —
@@ -567,7 +568,8 @@ export default defineSchema({
   })
     .index("by_lastMessageAt", ["lastMessageAt"])
     .index("by_dmKey", ["dmKey"])
-    .index("by_deleteAt", ["deleteAt"]),
+    .index("by_deleteAt", ["deleteAt"])
+    .index("by_avatarStorageId", ["avatarStorageId"]),
 
   conversationMembers: defineTable({
     conversationId: v.id("conversations"),
@@ -605,6 +607,26 @@ export default defineSchema({
     deletedAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_conversation", ["conversationId"]),
+
+  /**
+   * Reverse index from an attachment's storage id to whatever owns it
+   * (a chat message or an announcement), maintained on every write that adds
+   * an attachment. `files.canAccessFile` used to resolve a shared file link
+   * by scanning every message (and every announcement) ever created org-wide
+   * — unbounded, and only getting slower as chat history grows. This makes
+   * that an indexed point lookup instead; the full scan stays as a fallback
+   * for rows written before this index existed (see the comment on
+   * canAccessFile), so a missed write path degrades to "slow" rather than
+   * "wrong". Not deduped on edit/re-save — a duplicate row for the same
+   * (storageId, owner) is harmless, since canAccessFile only needs "at least
+   * one row exists".
+   */
+  attachmentOwners: defineTable({
+    storageId: v.id("_storage"),
+    kind: v.union(v.literal("message"), v.literal("announcement")),
+    conversationId: v.optional(v.id("conversations")),
+    announcementId: v.optional(v.id("announcements")),
+  }).index("by_storageId", ["storageId"]),
 
   messageReactions: defineTable({
     messageId: v.id("messages"),

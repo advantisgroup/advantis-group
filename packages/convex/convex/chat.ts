@@ -753,6 +753,15 @@ export const sendMessage = mutation({
       ...(mentions.length > 0 ? { mentions } : {}),
       createdAt: now,
     });
+    await Promise.all(
+      attachments.map(a =>
+        ctx.db.insert("attachmentOwners", {
+          storageId: a.storageId,
+          kind: "message",
+          conversationId: args.conversationId,
+        })
+      )
+    );
     await ctx.db.patch(args.conversationId, {
       lastMessageAt: now,
       lastMessagePreview: messagePreview(body, attachments.length),
@@ -827,6 +836,20 @@ export const editMessage = mutation({
       ...(attachments ? { attachments } : {}),
       editedAt: Date.now(),
     });
+    // A newly-added attachment needs an index row too — canAccessFile's fast
+    // path otherwise never finds it. Existing ones already have a row from
+    // send; a harmless duplicate for those already covered.
+    if (attachments) {
+      await Promise.all(
+        attachments.map(a =>
+          ctx.db.insert("attachmentOwners", {
+            storageId: a.storageId,
+            kind: "message",
+            conversationId: message.conversationId,
+          })
+        )
+      );
+    }
     return { ok: true };
   },
 });

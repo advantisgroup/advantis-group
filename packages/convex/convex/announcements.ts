@@ -83,6 +83,15 @@ export const create = mutation({
       expiresAt: args.expiresAt,
       createdAt: now,
     });
+    await Promise.all(
+      storageIds.map(storageId =>
+        ctx.db.insert("attachmentOwners", {
+          storageId,
+          kind: "announcement",
+          announcementId: id,
+        })
+      )
+    );
 
     if (publishedAt > now) {
       // Scheduled: notify the audience when it actually goes live.
@@ -150,12 +159,26 @@ export const update = mutation({
         message: "Only the author or an admin can edit",
       });
     }
-    // Clean up removed attachments.
+    // Clean up removed attachments, and index newly-added ones so
+    // canAccessFile's fast path can find them (existing ones already have a
+    // row from create/an earlier update).
     if (patch.attachmentStorageIds) {
+      const prev = new Set<string>(announcement.attachmentStorageIds);
       const next = new Set<string>(patch.attachmentStorageIds);
       for (const old of announcement.attachmentStorageIds) {
         if (!next.has(old)) await ctx.storage.delete(old);
       }
+      await Promise.all(
+        patch.attachmentStorageIds
+          .filter(id => !prev.has(id))
+          .map(storageId =>
+            ctx.db.insert("attachmentOwners", {
+              storageId,
+              kind: "announcement",
+              announcementId,
+            })
+          )
+      );
     }
     await ctx.db.patch(announcementId, {
       ...patch,
