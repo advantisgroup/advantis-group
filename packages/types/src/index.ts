@@ -18,6 +18,19 @@ export function isManagerRole(role: Role | null | undefined): boolean {
   return role === "admin" || role === "manager";
 }
 
+// ---------------------------------------------------------------------------
+// Feature flags
+// ---------------------------------------------------------------------------
+
+/**
+ * Keys for globally disableable features, admin-toggled from
+ * `/admin/feature-flags`. Adding a new one is a one-entry addition here plus
+ * a registry entry in `packages/convex/convex/featureFlags.ts` — see that
+ * file for how enforcement is wired up per feature.
+ */
+export const FEATURE_FLAG_KEYS = ["activitytrack", "chat"] as const;
+export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
+
 export function isAdminRole(role: Role | null | undefined): boolean {
   return role === "admin";
 }

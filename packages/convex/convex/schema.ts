@@ -497,7 +497,12 @@ export default defineSchema({
     /** Author's "email everyone" choice at publish time. */
     emailRequested: v.boolean(),
     emailSentAt: v.optional(v.number()),
-    source: v.union(v.literal("ui"), v.literal("markdown")),
+    /** "system" = auto-published by a backend action (e.g. a feature-flag toggle), not an admin authoring a post. */
+    source: v.union(
+      v.literal("ui"),
+      v.literal("markdown"),
+      v.literal("system")
+    ),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
@@ -545,6 +550,23 @@ export default defineSchema({
     .index("by_update", ["updateId"])
     .index("by_resendEmailId", ["resendEmailId"])
     .index("by_update_user", ["updateId", "userId"]),
+
+  /**
+   * Global feature kill-switches (see `featureFlags.ts`). One row per key in
+   * `FEATURE_FLAG_KEYS`; a missing row means enabled (the default). `reason`
+   * is the admin-supplied or premade explanation, reused both for the
+   * in-app "disabled" screen and the linked Update post. `updateId` links to
+   * the Update created when the flag was last disabled, so re-enabling can
+   * post a follow-up on the same post instead of a brand-new one.
+   */
+  featureFlags: defineTable({
+    key: v.string(),
+    enabled: v.boolean(),
+    reason: v.optional(v.string()),
+    updatedAt: v.number(),
+    updatedByUserId: v.id("users"),
+    updateId: v.optional(v.id("updates")),
+  }).index("by_key", ["key"]),
 
   // --- Chat ----------------------------------------------------------------
   conversations: defineTable({

@@ -51,6 +51,7 @@ import type * as crons from "../crons.js";
 import type * as customRoles from "../customRoles.js";
 import type * as emails from "../emails.js";
 import type * as events from "../events.js";
+import type * as featureFlags from "../featureFlags.js";
 import type * as files from "../files.js";
 import type * as guest from "../guest.js";
 import type * as guidebookFeedback from "../guidebookFeedback.js";
@@ -147,6 +148,7 @@ declare const fullApi: ApiFromModules<{
   customRoles: typeof customRoles;
   emails: typeof emails;
   events: typeof events;
+  featureFlags: typeof featureFlags;
   files: typeof files;
   guest: typeof guest;
   guidebookFeedback: typeof guidebookFeedback;
