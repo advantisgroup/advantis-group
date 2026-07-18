@@ -475,7 +475,7 @@ export const listTermine = query({
       .query("applicantAppointments")
       .withIndex("by_datum", q => q.gte("datum", from).lte("datum", to))
       .collect();
-    const applicants = await ctx.db.query("applicants").collect();
+    const applicants = await ctx.db.query("applicants").take(5000);
     const nameById = new Map(applicants.map(a => [a._id, a.name]));
     return termine
       .map(t => ({ ...t, applicantName: nameById.get(t.applicantId) ?? null }))
@@ -573,7 +573,7 @@ export const apiFindDuplicateByContact = query({
     const mailNeu = (email ?? "").trim().toLowerCase();
     const telNeu = (telefon ?? "").replace(/\D/g, "");
     if (!mailNeu && telNeu.length < 6) return null;
-    const applicants = await ctx.db.query("applicants").collect();
+    const applicants = await ctx.db.query("applicants").take(5000);
     const match = applicants.find(a => {
       const mailMatch =
         mailNeu && (a.email ?? "").trim().toLowerCase() === mailNeu;
