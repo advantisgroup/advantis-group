@@ -102,9 +102,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
     pathname.startsWith("/updates/") && pathname !== "/updates/new";
 
   // Keep presence fresh while the app is open so chat can show online state.
+  // 60s leaves ample margin under the 5-minute online window
+  // (UserProfile.ONLINE_WINDOW_MS) while halving the sitewide heartbeat
+  // volume every signed-in user generates regardless of which page they're on.
   useEffect(() => {
     void heartbeat({});
-    const id = setInterval(() => void heartbeat({}), 30_000);
+    const id = setInterval(() => void heartbeat({}), 60_000);
     return () => clearInterval(id);
   }, [heartbeat]);
 
