@@ -5,6 +5,7 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { isFeatureEnabled } from "./featureFlags";
 import { assertAttachmentSizeOk } from "./lib/attachments";
 import { requireUser } from "./lib/auth";
 import { createNotification } from "./lib/notify";
@@ -27,6 +28,16 @@ function memberDisplay(user: Doc<"users"> | null): string {
   return (
     [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
   );
+}
+
+/** Blocks new chat activity while the `chat` feature flag is off. Reading existing conversations/messages stays unaffected. */
+async function requireChatEnabled(ctx: QueryCtx | MutationCtx): Promise<void> {
+  if (!(await isFeatureEnabled(ctx, "chat"))) {
+    throw new ConvexError({
+      code: "feature_disabled",
+      message: "Chat is currently disabled by an administrator.",
+    });
+  }
 }
 
 async function getMembership(
@@ -362,6 +373,7 @@ export const getOrCreateDm = mutation({
   args: { otherUserId: v.id("users") },
   handler: async (ctx, { otherUserId }) => {
     const user = await requireUser(ctx);
+    await requireChatEnabled(ctx);
     if (otherUserId === user._id) {
       throw new ConvexError({
         code: "bad_request",
@@ -421,6 +433,7 @@ export const createGroup = mutation({
   args: { name: v.string(), memberIds: v.array(v.id("users")) },
   handler: async (ctx, { name, memberIds }) => {
     const user = await requireUser(ctx);
+    await requireChatEnabled(ctx);
     const now = Date.now();
     const conversationId = await ctx.db.insert("conversations", {
       type: "group",
@@ -706,6 +719,7 @@ export const sendMessage = mutation({
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+    await requireChatEnabled(ctx);
     const membership = await requireMembership(
       ctx,
       args.conversationId,

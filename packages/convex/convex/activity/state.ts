@@ -4,6 +4,7 @@ import { mutation, query } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
 import { requireUser } from "../lib/auth";
+import { isFeatureEnabled } from "../featureFlags";
 import { computeEmployeeState, type StateSignals } from "./lib/state";
 import {
   isWithinBusinessHours,
@@ -176,6 +177,17 @@ export async function applyStateSignal(
   employeeId: string;
   finalState: import("./lib/state").EmployeeState;
 }> {
+  // ActivityTrack disabled: stop persisting new signals from any source
+  // (agent/Genesys/Clockodo) without erroring the caller, and report back
+  // whatever state was last known instead of computing a fresh one.
+  if (!(await isFeatureEnabled(ctx, "activitytrack"))) {
+    const current = await getStateRow(ctx, args.employeeId);
+    return {
+      employeeId: args.employeeId,
+      finalState: current?.finalState ?? "IDLE",
+    };
+  }
+
   const now = Date.now();
 
   const existing = await getStateRow(ctx, args.employeeId);

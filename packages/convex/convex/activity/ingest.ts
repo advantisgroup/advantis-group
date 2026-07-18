@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
 import type { MutationCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
+import { isFeatureEnabled } from "../featureFlags";
 import { readConfig } from "./settings";
 import { logEvent } from "./events";
 import { applyStateSignal } from "./state";
@@ -50,6 +51,13 @@ export const recordSamples = internalMutation({
     samples: v.array(sampleValidator),
   },
   handler: async (ctx, { samples }) => {
+    // ActivityTrack disabled: drop the batch without persisting anything
+    // (raw samples, dailyStats, device rows, or fused state) and without
+    // erroring the agent, which has no concept of this flag.
+    if (!(await isFeatureEnabled(ctx, "activitytrack"))) {
+      return { inserted: 0, throttled: false };
+    }
+
     const receivedAt = Date.now();
     const inactivityMs =
       (await readConfig(ctx)).inactivityThresholdSeconds * 1000;
