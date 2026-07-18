@@ -1,0 +1,31 @@
+{
+  "title": "Feature-Flags",
+  "subtitle": "Ganze Funktionen für alle deaktivieren. Beim Deaktivieren wird ein Update veröffentlicht, das erklärt, was los ist; Admins behalten Zugriff, um es wieder zu aktivieren.",
+  "enabled": "Aktiviert",
+  "disabled": "Deaktiviert",
+  "lastChanged": "Zuletzt geändert am {date}",
+  "disableAction": "Deaktivieren",
+  "enableAction": "Aktivieren",
+  "disabledToast": "{label} deaktiviert",
+  "enabledToast": "{label} wieder aktiviert",
+  "disableDialog": {
+    "title": "{label} deaktivieren?",
+    "description": "Dies veröffentlicht ein Update, das alle sehen, und nimmt {label} für Nicht-Admins sofort offline.",
+    "premade": "Vorgefertigte Nachricht verwenden",
+    "custom": "Eigene Nachricht schreiben",
+    "customPlaceholder": "Erkläre, was los ist und warum…",
+    "confirm": "Deaktivieren"
+  },
+  "enableDialog": {
+    "title": "{label} wieder aktivieren?",
+    "description": "Optional eine Folgenachricht zum selben Update hinzufügen. Leer lassen, um die Standard-\"wieder online\"-Nachricht zu verwenden.",
+    "placeholder": "Optionale Folgenachricht…",
+    "confirm": "Aktivieren"
+  },
+  "disabledScreen": {
+    "code": "Nicht verfügbar",
+    "title": "{label} ist deaktiviert",
+    "description": "Diese Funktion wurde von einem Administrator deaktiviert. Bitte wende dich für weitere Fragen an deine Administration.",
+    "backToDashboard": "Zurück zur Übersicht"
+  }
+}

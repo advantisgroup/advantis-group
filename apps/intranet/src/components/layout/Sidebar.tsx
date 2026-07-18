@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { type FeatureFlagKey } from "@advantis/types";
 import { useQuery } from "convex/react";
 import {
   Activity,
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useFeatureFlags } from "@/components/feature-flags/FeatureGate";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
@@ -60,6 +62,8 @@ interface NavItem {
   badge?: number;
   managerOnly?: boolean;
   adminOnly?: boolean;
+  /** Hidden for non-admins while this feature is disabled (admins still see it, to reach the toggle). */
+  featureKey?: FeatureFlagKey;
   /** Marks the item as leading to a separate area (shows an external-link hint). */
   external?: boolean;
   /** Tour targeting attribute value. */
@@ -79,6 +83,10 @@ export function Sidebar() {
   const user = useCurrentUser();
   const hasApplicantAccess = useHasApplicantAccess();
   const { setOpenMobile, state } = useSidebar();
+  const featureFlags = useFeatureFlags();
+  const disabledFeatures = new Set(
+    (featureFlags ?? []).filter(f => !f.enabled).map(f => f.key)
+  );
 
   // Context-aware nav: inside the ActivityTrack or Admin areas the main nav
   // slides out and the matching scoped nav slides in (see the sliding
@@ -141,6 +149,7 @@ export function Sidebar() {
           labelKey: "chat",
           icon: MessageSquare,
           badge: chatUnread,
+          featureKey: "chat",
           tourAttr: "tour-nav-chat",
         },
       ],
@@ -205,6 +214,7 @@ export function Sidebar() {
           labelKey: "activity",
           icon: Activity,
           managerOnly: true,
+          featureKey: "activitytrack",
           external: true,
         },
         {
@@ -266,7 +276,10 @@ export function Sidebar() {
                 const items = group.items.filter(
                   item =>
                     (!item.managerOnly || isManager) &&
-                    (!item.adminOnly || isAdmin)
+                    (!item.adminOnly || isAdmin) &&
+                    (!item.featureKey ||
+                      isAdmin ||
+                      !disabledFeatures.has(item.featureKey))
                 );
                 if (items.length === 0) return null;
                 return (

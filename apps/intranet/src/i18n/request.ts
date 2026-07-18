@@ -23,6 +23,7 @@ import deDashboard from "./messages/de/Dashboard.json";
 import deDirectory from "./messages/de/Directory.json";
 import deErrors from "./messages/de/Errors.json";
 import deErrorsCatalog from "./messages/de/ErrorsCatalog.json";
+import deFeatureFlags from "./messages/de/FeatureFlags.json";
 import deFiles from "./messages/de/Files.json";
 import deFileViewer from "./messages/de/FileViewer.json";
 import deForbidden from "./messages/de/Forbidden.json";
@@ -60,6 +61,7 @@ import enDashboard from "./messages/en/Dashboard.json";
 import enDirectory from "./messages/en/Directory.json";
 import enErrors from "./messages/en/Errors.json";
 import enErrorsCatalog from "./messages/en/ErrorsCatalog.json";
+import enFeatureFlags from "./messages/en/FeatureFlags.json";
 import enFiles from "./messages/en/Files.json";
 import enFileViewer from "./messages/en/FileViewer.json";
 import enForbidden from "./messages/en/Forbidden.json";
@@ -126,6 +128,7 @@ const messagesByLocale = {
     privacy: enprivacy,
     terms: enterms,
     Applicants: enApplicants,
+    FeatureFlags: enFeatureFlags,
   },
   de: {
     App: deApp,
@@ -165,6 +168,7 @@ const messagesByLocale = {
     privacy: deprivacy,
     terms: determs,
     Applicants: deApplicants,
+    FeatureFlags: deFeatureFlags,
   },
 } satisfies Record<Locale, Record<string, unknown>>;
 
