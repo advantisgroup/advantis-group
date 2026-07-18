@@ -13,6 +13,7 @@ import {
   type LucideIcon,
   Mail,
   Plug,
+  PowerOff,
   ScrollText,
   ShieldCheck,
   Upload,
@@ -106,6 +107,12 @@ const ADMIN_NAV: AdminNavItem[] = [
     href: "/admin/audit",
     labelKey: "nav.audit",
     icon: ScrollText,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/feature-flags",
+    labelKey: "nav.featureFlags",
+    icon: PowerOff,
     adminOnly: true,
   },
 ];

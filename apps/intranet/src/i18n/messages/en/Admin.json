@@ -147,7 +147,8 @@
     "teams": "Teams",
     "guests": "Guests",
     "dataCleanup": "Data cleanup",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "featureFlags": "Feature flags"
   },
   "dataCleanup": {
     "title": "Org data cleanup",

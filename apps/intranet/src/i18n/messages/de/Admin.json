@@ -147,7 +147,8 @@
     "teams": "Teams",
     "guests": "Gäste",
     "dataCleanup": "Stammdaten-Bereinigung",
-    "audit": "Audit-Log"
+    "audit": "Audit-Log",
+    "featureFlags": "Feature-Flags"
   },
   "dataCleanup": {
     "title": "Stammdaten-Bereinigung",
