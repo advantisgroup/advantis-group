@@ -1,8 +1,9 @@
 "use node";
 
-import { action, internalAction } from "../_generated/server";
+import { action } from "../_generated/server";
 import type { ActionCtx } from "../_generated/server";
 import { api } from "../_generated/api";
+import { gatedInternalAction } from "../lib/featureGate";
 import { signalSecret } from "./lib/integrationsShared";
 import { appError } from "./lib/errors";
 import { pollGenesys } from "./genesys";
@@ -30,7 +31,8 @@ async function runPollAll(ctx: ActionCtx): Promise<void> {
   console.log(`[activity:poll] finished in ${Date.now() - start}ms`);
 }
 
-export const pollAll = internalAction({
+/** Scheduled cron entry point. Gated — the cron itself keeps firing, but does nothing while disabled. */
+export const pollAll = gatedInternalAction("activitytrack")({
   args: {},
   handler: async ctx => {
     await runPollAll(ctx);

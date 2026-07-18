@@ -1,9 +1,8 @@
 import { v } from "convex/values";
 
-import { internalMutation } from "../_generated/server";
 import type { MutationCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { isFeatureEnabled } from "../featureFlags";
+import { gatedInternalMutation } from "../lib/featureGate";
 import { readConfig } from "./settings";
 import { logEvent } from "./events";
 import { applyStateSignal } from "./state";
@@ -46,18 +45,16 @@ function localDay(capturedAt: number, tzOffsetMinutes: number): string {
   return new Date(localMs).toISOString().slice(0, 10);
 }
 
-export const recordSamples = internalMutation({
+/**
+ * Gated: the caller (`http.ts`'s `/ingest` action) catches the
+ * "feature_disabled" error and answers the agent with the same 200 it'd get
+ * for an empty batch, since the agent has no concept of this flag.
+ */
+export const recordSamples = gatedInternalMutation("activitytrack")({
   args: {
     samples: v.array(sampleValidator),
   },
   handler: async (ctx, { samples }) => {
-    // ActivityTrack disabled: drop the batch without persisting anything
-    // (raw samples, dailyStats, device rows, or fused state) and without
-    // erroring the agent, which has no concept of this flag.
-    if (!(await isFeatureEnabled(ctx, "activitytrack"))) {
-      return { inserted: 0, throttled: false };
-    }
-
     const receivedAt = Date.now();
     const inactivityMs =
       (await readConfig(ctx)).inactivityThresholdSeconds * 1000;

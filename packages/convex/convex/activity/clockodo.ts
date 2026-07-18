@@ -5,6 +5,7 @@ import { v } from "convex/values";
 import { action } from "../_generated/server";
 import { api, internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
+import { gatedAction } from "../lib/featureGate";
 import {
   signalSecret,
   reportHealth,
@@ -305,8 +306,8 @@ export async function pollClockodo(
   }
 }
 
-/** On-demand Clockodo refresh for one user (used by the webhook re-pull path). */
-export const refreshClockodo = action({
+/** On-demand Clockodo refresh for one user (used by the webhook re-pull path). Gated. */
+export const refreshClockodo = gatedAction("activitytrack")({
   args: {
     secret: v.string(),
     employeeId: v.string(),
@@ -365,7 +366,7 @@ export const refreshClockodo = action({
  * where the entry can no longer be fetched — deleting the running entry must
  * still clear the working state.
  */
-export const refreshClockodoByEntry = action({
+export const refreshClockodoByEntry = gatedAction("activitytrack")({
   args: {
     secret: v.string(),
     entryId: v.string(),

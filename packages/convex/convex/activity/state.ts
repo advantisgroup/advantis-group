@@ -1,10 +1,10 @@
 import { v } from "convex/values";
 
-import { mutation, query } from "../_generated/server";
+import { query } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
 import { requireUser } from "../lib/auth";
-import { isFeatureEnabled } from "../featureFlags";
+import { gatedMutation } from "../lib/featureGate";
 import { computeEmployeeState, type StateSignals } from "./lib/state";
 import {
   isWithinBusinessHours,
@@ -169,6 +169,10 @@ export interface StateSignalArgs {
  * `agent` signal (device-token-guarded, called directly from within Convex —
  * see `activity/ingest.ts`). Callers other than `pushSignal` are already
  * authenticated by their own means, so this function itself trusts its input.
+ *
+ * Only reachable through those two callers, both gated by the
+ * `activitytrack` feature flag (see `lib/featureGate.ts`), so this never
+ * runs while it's disabled.
  */
 export async function applyStateSignal(
   ctx: MutationCtx,
@@ -177,17 +181,6 @@ export async function applyStateSignal(
   employeeId: string;
   finalState: import("./lib/state").EmployeeState;
 }> {
-  // ActivityTrack disabled: stop persisting new signals from any source
-  // (agent/Genesys/Clockodo) without erroring the caller, and report back
-  // whatever state was last known instead of computing a fresh one.
-  if (!(await isFeatureEnabled(ctx, "activitytrack"))) {
-    const current = await getStateRow(ctx, args.employeeId);
-    return {
-      employeeId: args.employeeId,
-      finalState: current?.finalState ?? "IDLE",
-    };
-  }
-
   const now = Date.now();
 
   const existing = await getStateRow(ctx, args.employeeId);
@@ -347,7 +340,7 @@ export async function applyStateSignal(
  * own `employeeId`, so this mutation's `agent` source exists for parity/
  * future callers rather than the deployed agent.
  */
-export const pushSignal = mutation({
+export const pushSignal = gatedMutation("activitytrack")({
   args: {
     secret: v.string(),
     employeeId: v.string(),
@@ -415,7 +408,7 @@ export const resolveEmployeeId = query({
 });
 
 /** Report an integration source's health (server-to-server). */
-export const reportHealth = mutation({
+export const reportHealth = gatedMutation("activitytrack")({
   args: {
     secret: v.string(),
     source: v.union(v.literal("genesys"), v.literal("clockodo")),

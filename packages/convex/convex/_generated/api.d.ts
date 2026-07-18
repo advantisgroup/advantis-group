@@ -69,6 +69,7 @@ import type * as lib_audience from "../lib/audience.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_clerk from "../lib/clerk.js";
 import type * as lib_clockodoId from "../lib/clockodoId.js";
+import type * as lib_featureGate from "../lib/featureGate.js";
 import type * as lib_notify from "../lib/notify.js";
 import type * as lib_permissions from "../lib/permissions.js";
 import type * as members from "../members.js";
@@ -166,6 +167,7 @@ declare const fullApi: ApiFromModules<{
   "lib/auth": typeof lib_auth;
   "lib/clerk": typeof lib_clerk;
   "lib/clockodoId": typeof lib_clockodoId;
+  "lib/featureGate": typeof lib_featureGate;
   "lib/notify": typeof lib_notify;
   "lib/permissions": typeof lib_permissions;
   members: typeof members;

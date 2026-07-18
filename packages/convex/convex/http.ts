@@ -1,4 +1,5 @@
 import { httpRouter } from "convex/server";
+import { ConvexError } from "convex/values";
 
 import { httpAction } from "./_generated/server";
 import type { ActionCtx } from "./_generated/server";
@@ -10,6 +11,16 @@ import {
 import { z } from "zod";
 import { verifyPassword } from "./activity/lib/crypto";
 import { DEBUG_PASSWORD_SETTING_KEY } from "./activity/settings";
+
+/** True for the ConvexError a feature-gated function throws (see `lib/featureGate.ts`). */
+function isFeatureDisabledError(err: unknown): boolean {
+  return (
+    err instanceof ConvexError &&
+    typeof err.data === "object" &&
+    err.data !== null &&
+    (err.data as { code?: unknown }).code === "feature_disabled"
+  );
+}
 
 /**
  * ActivityTrack desktop-agent HTTP endpoints, served on the Convex `.site`
@@ -126,18 +137,26 @@ http.route({
 
     let inserted = 0;
     if (accepted.length > 0) {
-      const result = await ctx.runMutation(
-        internal.activity.ingest.recordSamples,
-        {
-          samples: accepted,
+      try {
+        const result = await ctx.runMutation(
+          internal.activity.ingest.recordSamples,
+          {
+            samples: accepted,
+          }
+        );
+        inserted = result.inserted;
+        if (result.throttled && inserted === 0) {
+          return new Response("rate limited", {
+            status: 429,
+            headers: { "retry-after": "30" },
+          });
         }
-      );
-      inserted = result.inserted;
-      if (result.throttled && inserted === 0) {
-        return new Response("rate limited", {
-          status: 429,
-          headers: { "retry-after": "30" },
-        });
+      } catch (err) {
+        // ActivityTrack disabled: recordSamples is feature-gated (see
+        // lib/featureGate.ts) and throws instead of persisting. The agent has
+        // no concept of this flag, so answer exactly like an accepted-but-
+        // empty batch instead of surfacing a 500.
+        if (!isFeatureDisabledError(err)) throw err;
       }
     }
 
