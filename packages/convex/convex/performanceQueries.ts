@@ -102,29 +102,53 @@ function reportToSnapshot(
   return snap;
 }
 
+/**
+ * Per-request memoization: `teamDashboard`/`employeeDetail` each ask for the
+ * same (ym, employeeId) report range several times over via different helper
+ * paths (team totals, call days, badge history, …), and — unlike Convex's
+ * subscriber-level dedup, which only avoids redundant work *between*
+ * clients — nothing dedupes repeats *within* one query execution. A query
+ * handler never observes writes from other requests mid-execution, so
+ * caching by key for the life of one call is exact, not approximate.
+ */
+interface QueryCache {
+  reports: Map<string, Doc<"performanceReports">[]>;
+  badges?: Record<string, Record<string, BadgeResult>>;
+}
+
+function newQueryCache(): QueryCache {
+  return { reports: new Map() };
+}
+
 async function reportsInRange(
   ctx: QueryCtx,
   ym: string,
-  employeeId?: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache
 ): Promise<Doc<"performanceReports">[]> {
+  const key = `${ym}:${employeeId ?? ""}`;
+  const hit = cache.reports.get(key);
+  if (hit) return hit;
+
   const { start, end } = monthBounds(ym);
-  if (employeeId) {
-    return await ctx.db
-      .query("performanceReports")
-      .withIndex("by_employee_date", q =>
-        q
-          .eq("employeeId", employeeId)
-          .gte("reportDate", start)
-          .lte("reportDate", end)
-      )
-      .collect();
-  }
-  return await ctx.db
-    .query("performanceReports")
-    .withIndex("by_reportDate", q =>
-      q.gte("reportDate", start).lte("reportDate", end)
-    )
-    .collect();
+  const rows = employeeId
+    ? await ctx.db
+        .query("performanceReports")
+        .withIndex("by_employee_date", q =>
+          q
+            .eq("employeeId", employeeId)
+            .gte("reportDate", start)
+            .lte("reportDate", end)
+        )
+        .collect()
+    : await ctx.db
+        .query("performanceReports")
+        .withIndex("by_reportDate", q =>
+          q.gte("reportDate", start).lte("reportDate", end)
+        )
+        .collect();
+  cache.reports.set(key, rows);
+  return rows;
 }
 
 /** Merges `next` onto `base`, keeping `base`'s value for any field `next`
@@ -158,10 +182,11 @@ function mergeSnapshot(base: Snapshot, next: Snapshot): Snapshot {
 async function latestSnapshots(
   ctx: QueryCtx,
   ym: string,
-  employeeId?: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache
 ): Promise<Snapshot[]> {
   const names = await employeeNameMap(ctx);
-  const rows = await reportsInRange(ctx, ym, employeeId);
+  const rows = await reportsInRange(ctx, ym, employeeId, cache);
   const sorted = [...rows].sort((a, b) =>
     a.reportDate.localeCompare(b.reportDate)
   );
@@ -193,9 +218,10 @@ interface MonthCalls extends Partial<
 async function monthCallsMap(
   ctx: QueryCtx,
   ym: string,
-  employeeId?: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache
 ): Promise<Map<Id<"performanceEmployees">, MonthCalls>> {
-  const rows = await reportsInRange(ctx, ym, employeeId);
+  const rows = await reportsInRange(ctx, ym, employeeId, cache);
   const sums = new Map<
     Id<"performanceEmployees">,
     {
@@ -235,9 +261,10 @@ async function monthCallsMap(
  * had the day off". */
 async function reportDatesWithCalls(
   ctx: QueryCtx,
-  ym: string
+  ym: string,
+  cache: QueryCache
 ): Promise<Set<string>> {
-  const rows = await reportsInRange(ctx, ym);
+  const rows = await reportsInRange(ctx, ym, undefined, cache);
   return new Set(
     rows.filter(r => r.callsToday !== undefined).map(r => r.reportDate)
   );
@@ -253,10 +280,11 @@ interface CallDay {
 async function callDaysList(
   ctx: QueryCtx,
   ym: string,
-  employeeId?: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache
 ): Promise<CallDay[]> {
   const names = await employeeNameMap(ctx);
-  const rows = await reportsInRange(ctx, ym, employeeId);
+  const rows = await reportsInRange(ctx, ym, employeeId, cache);
   const byDate = new Map<
     string,
     Partial<Record<(typeof DAILY_KEYS)[number], number>>
@@ -287,9 +315,10 @@ async function callDaysList(
 async function hasCallData(
   ctx: QueryCtx,
   ym: string,
-  employeeId?: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees"> | undefined,
+  cache: QueryCache
 ): Promise<boolean> {
-  const calls = await monthCallsMap(ctx, ym, employeeId);
+  const calls = await monthCallsMap(ctx, ym, employeeId, cache);
   const check = (c: MonthCalls | undefined) =>
     !!(c?.callsToday || c?.talkTotalSec || c?.loginSec);
   if (employeeId) return check(calls.get(employeeId));
@@ -329,10 +358,11 @@ interface TeamTotals {
  * FC1 forecast added. */
 export async function teamTotals(
   ctx: QueryCtx,
-  ym: string
+  ym: string,
+  cache: QueryCache = newQueryCache()
 ): Promise<TeamTotals> {
-  const rawSnaps = await latestSnapshots(ctx, ym);
-  const calls = await monthCallsMap(ctx, ym);
+  const rawSnaps = await latestSnapshots(ctx, ym, undefined, cache);
+  const calls = await monthCallsMap(ctx, ym, undefined, cache);
   const withCalls = rawSnaps.map(s => {
     const c = calls.get(s.employeeId as Id<"performanceEmployees">);
     const next: Snapshot = { ...s };
@@ -369,7 +399,7 @@ export async function teamTotals(
 
   const asOf = total.reportDate ? parseISODate(total.reportDate) : new Date();
   const present =
-    calls.size > 0 ? await reportDatesWithCalls(ctx, ym) : undefined;
+    calls.size > 0 ? await reportDatesWithCalls(ctx, ym, cache) : undefined;
   const missing = present ? missingCallDays(ym, asOf, present) : undefined;
 
   const snaps = withCalls.map(s =>
@@ -388,21 +418,22 @@ export async function teamTotals(
  * snapshot for every month they have data, oldest first. */
 async function employeeHistoryList(
   ctx: QueryCtx,
-  employeeId: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees">,
+  cache: QueryCache
 ): Promise<Snapshot[]> {
   const months = await monthsWithData(ctx, employeeId);
   const hist: Snapshot[] = [];
   for (const ym of months) {
-    const snaps = await latestSnapshots(ctx, ym, employeeId);
+    const snaps = await latestSnapshots(ctx, ym, employeeId, cache);
     if (snaps.length === 0) continue;
     let s = snaps[0];
-    const calls = await monthCallsMap(ctx, ym, employeeId);
+    const calls = await monthCallsMap(ctx, ym, employeeId, cache);
     const c = calls.get(employeeId);
     for (const k of DAILY_KEYS) s[k] = c?.[k];
     s.talkAvgSec = c?.talkAvgSec;
     const asOf = s.reportDate ? parseISODate(s.reportDate) : new Date();
     const missing = c?.workDays
-      ? missingCallDays(ym, asOf, await reportDatesWithCalls(ctx, ym))
+      ? missingCallDays(ym, asOf, await reportDatesWithCalls(ctx, ym, cache))
       : undefined;
     s = addForecast(enrich(s), ym, c?.workDays, missing);
     s.ym = ym;
@@ -415,34 +446,44 @@ async function employeeHistoryList(
 
 async function awardBadgesForMonth(
   ctx: QueryCtx,
-  ym: string
+  ym: string,
+  cache: QueryCache
 ): Promise<Record<string, BadgeResult>> {
-  const { snaps } = await teamTotals(ctx, ym);
+  const { snaps } = await teamTotals(ctx, ym, cache);
   return awardBadges(snaps);
 }
 
-/** Badges of every completed month. Recomputed per call rather than
- * cached (unlike the reference script's manual cache) — Convex's own
- * query reactivity already avoids redundant work for subscribers, and a
- * sales team's history is small enough that this is cheap regardless. */
+/** Badges of every completed month. Not cached across requests (unlike the
+ * reference script's manual cache) — Convex's own query reactivity already
+ * avoids redundant work for subscribers, and a sales team's history is small
+ * enough that recomputing it once per request is cheap regardless. It *is*
+ * memoized on `cache` for the life of one request, though: employeeDetail
+ * calls this (directly or via badgeCountsForEmployee/badgeHistoryForEmployee)
+ * up to three times, and each call recomputes every completed month's team
+ * totals from scratch — real, measured cost worth not paying three times
+ * over for the same request. */
 async function allBadgesMap(
-  ctx: QueryCtx
+  ctx: QueryCtx,
+  cache: QueryCache
 ): Promise<Record<string, Record<string, BadgeResult>>> {
+  if (cache.badges) return cache.badges;
   const months = await monthsWithData(ctx);
   const data: Record<string, Record<string, BadgeResult>> = {};
   for (const ym of months) {
     if (!monthCompleted(ym)) continue;
-    const got = await awardBadgesForMonth(ctx, ym);
+    const got = await awardBadgesForMonth(ctx, ym, cache);
     if (Object.keys(got).length > 0) data[ym] = got;
   }
+  cache.badges = data;
   return data;
 }
 
 async function badgeCountsForEmployee(
   ctx: QueryCtx,
-  employeeId: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees">,
+  cache: QueryCache
 ): Promise<Record<string, number>> {
-  const all = await allBadgesMap(ctx);
+  const all = await allBadgesMap(ctx, cache);
   const counts: Record<string, number> = {};
   for (const badge of BADGES) counts[badge.key] = 0;
   for (const badges of Object.values(all)) {
@@ -456,9 +497,10 @@ async function badgeCountsForEmployee(
 
 async function badgeHistoryForEmployee(
   ctx: QueryCtx,
-  employeeId: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees">,
+  cache: QueryCache
 ): Promise<{ ym: string; key: string; value: number }[]> {
-  const all = await allBadgesMap(ctx);
+  const all = await allBadgesMap(ctx, cache);
   const out: { ym: string; key: string; value: number }[] = [];
   for (const ym of Object.keys(all).sort().reverse()) {
     for (const [key, info] of Object.entries(all[ym])) {
@@ -483,22 +525,23 @@ export const teamDashboard = query({
     requireAdmin(login);
 
     const ym = ymArg ?? defaultYm();
+    const cache = newQueryCache();
     const months = await monthsWithData(ctx);
-    const { total, snaps, unqualified } = await teamTotals(ctx, ym);
-    const days = await callDaysList(ctx, ym);
-    const hasCalls = await hasCallData(ctx, ym);
+    const { total, snaps, unqualified } = await teamTotals(ctx, ym, cache);
+    const days = await callDaysList(ctx, ym, undefined, cache);
+    const hasCalls = await hasCallData(ctx, ym, undefined, cache);
 
     const vmYm = shiftYm(ym, -1);
     const vjYm = shiftYm(ym, -12);
     const totalVm = months.includes(vmYm)
-      ? (await teamTotals(ctx, vmYm)).total
+      ? (await teamTotals(ctx, vmYm, cache)).total
       : undefined;
     const totalVj = months.includes(vjYm)
-      ? (await teamTotals(ctx, vjYm)).total
+      ? (await teamTotals(ctx, vjYm, cache)).total
       : undefined;
 
     const badgeCounts: Record<string, Record<string, number>> = {};
-    const allBadges = await allBadgesMap(ctx);
+    const allBadges = await allBadgesMap(ctx, cache);
     for (const badges of Object.values(allBadges)) {
       for (const [key, info] of Object.entries(badges)) {
         for (const employeeId of info.winners) {
@@ -548,7 +591,8 @@ export const employeeDetail = query({
       });
     }
 
-    const hist = await employeeHistoryList(ctx, employeeId);
+    const cache = newQueryCache();
+    const hist = await employeeHistoryList(ctx, employeeId, cache);
     const today = defaultYm();
     const months = [...new Set([...hist.map(h => h.ym!), today])].sort();
     const ym = ymArg && months.includes(ymArg) ? ymArg : today;
@@ -564,7 +608,11 @@ export const employeeDetail = query({
     let avg: Record<string, number | undefined> = {};
     let bench: Record<string, number | undefined> = {};
     if (cur) {
-      const { total: teamTotal, snaps: teamSnaps } = await teamTotals(ctx, ym);
+      const { total: teamTotal, snaps: teamSnaps } = await teamTotals(
+        ctx,
+        ym,
+        cache
+      );
       avg = teamAverages(teamSnaps, teamTotal);
       ({ alerts, highlights } = employeeSignals(
         cur,
@@ -588,18 +636,18 @@ export const employeeDetail = query({
       return (a.endDate ?? "9999").localeCompare(b.endDate ?? "9999");
     });
 
-    const myBadges = await badgeCountsForEmployee(ctx, employeeId);
-    const allBadges = await allBadgesMap(ctx);
+    const myBadges = await badgeCountsForEmployee(ctx, employeeId, cache);
+    const allBadges = await allBadgesMap(ctx, cache);
     const monthBadges = Object.fromEntries(
       Object.entries(allBadges[ym] ?? {}).filter(([, info]) =>
         info.winners.includes(employeeId)
       )
     );
-    const badgeHist = await badgeHistoryForEmployee(ctx, employeeId);
+    const badgeHist = await badgeHistoryForEmployee(ctx, employeeId, cache);
     const nBadges = Object.values(myBadges).reduce((a, b) => a + b, 0);
 
-    const days = await callDaysList(ctx, ym, employeeId);
-    const hasCalls = await hasCallData(ctx, ym, employeeId);
+    const days = await callDaysList(ctx, ym, employeeId, cache);
+    const hasCalls = await hasCallData(ctx, ym, employeeId, cache);
 
     return {
       employee: { id: employee._id, name: employee.name },
