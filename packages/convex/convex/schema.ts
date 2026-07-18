@@ -558,6 +558,11 @@ export default defineSchema({
     /** Set when a DM is left by one side; the chat is purged once this passes
      *  (unless the person who left rejoins, which clears it). */
     deleteAt: v.optional(v.number()),
+    /** Preview text for the sidebar, maintained by sendMessage/deleteMessage
+     *  on the same patch that already sets lastMessageAt — so listConversations
+     *  can read it off the conversation row it's already loading instead of a
+     *  separate `messages.order("desc").first()` query per conversation. */
+    lastMessagePreview: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_lastMessageAt", ["lastMessageAt"])
@@ -576,6 +581,11 @@ export default defineSchema({
     pinnedAt: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
     mutedAt: v.optional(v.number()),
+    /** Unread message count, incremented by sendMessage for every member but
+     *  the sender and reset by markRead — replaces a `.take(50)` scan of
+     *  `messages` per conversation on every listConversations execution.
+     *  Undefined reads as 0 (pre-migration rows / never-messaged members). */
+    unreadCount: v.optional(v.number()),
   })
     .index("by_conversation", ["conversationId"])
     .index("by_user", ["userId"])
