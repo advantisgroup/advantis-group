@@ -20,6 +20,52 @@ import {
 } from "@/components/performance/PerformanceFormat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+/** Renders the average reference line's label as a solid pill anchored to
+ * the line's own (x, y) via Recharts' `viewBox` — not a fixed chart corner
+ * like `position: "insideTopRight"`, which drifted away from the line
+ * whenever the average sat somewhere other than the very top of the chart,
+ * and used the same low-contrast axis color as the gridlines, making both
+ * the line and the label hard to spot against the bars. */
+function makeAvgLabel(text: string) {
+  return function AvgRefLabel({
+    viewBox,
+  }: {
+    viewBox?: { x?: number; y?: number; width?: number };
+  }) {
+    const width = 84;
+    const height = 20;
+    const lineY = viewBox?.y ?? 0;
+    const x = (viewBox?.x ?? 0) + (viewBox?.width ?? 0) - width - 2;
+    // Flip below the line when there isn't enough headroom above it (the
+    // average sitting near the top of the chart), so the pill never clips.
+    const y = lineY > height + 8 ? lineY - height - 6 : lineY + 6;
+    return (
+      <g>
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          rx={4}
+          fill="var(--chart-panel)"
+          stroke="var(--chart-fg)"
+          strokeOpacity={0.4}
+        />
+        <text
+          x={x + width / 2}
+          y={y + height / 2 + 4}
+          textAnchor="middle"
+          fontSize={11}
+          fontWeight={600}
+          fill="var(--chart-fg)"
+        >
+          {text}
+        </text>
+      </g>
+    );
+  };
+}
+
 /**
  * Daily closed-won development over the trailing 3 months — bars above the
  * period average render green, at-or-below render red, with a dashed
@@ -73,14 +119,12 @@ export function ClosedWonTrendChart({
             <Tooltip {...tooltipStyle} />
             <ReferenceLine
               y={avg}
-              stroke={CHART.axis}
-              strokeDasharray="4 4"
-              label={{
-                value: t("wonTrendAvgLabel", { value: fmtNum(avg) }),
-                position: "insideTopRight",
-                fill: CHART.axis,
-                fontSize: 11,
-              }}
+              stroke="var(--chart-fg)"
+              strokeWidth={1.5}
+              strokeDasharray="6 3"
+              label={makeAvgLabel(
+                t("wonTrendAvgLabel", { value: fmtNum(avg) })
+              )}
             />
             <Bar
               dataKey="won"
