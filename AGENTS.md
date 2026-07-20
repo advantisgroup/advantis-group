@@ -116,7 +116,7 @@ team's plan limit and manually delete preview deployments for merged/closed
 PRs there.
 
 `apps/api` is wrapped by a separate `scripts/vercel-preview-convex-api-build.sh`
-instead, resolving the *same* branch-scoped backend and writing it to
+instead, resolving the _same_ branch-scoped backend and writing it to
 `apps/api/src/lib/convexPreviewUrl.generated.ts` (a `getConvex()` fallback)
 rather than baking it into a client bundle — it's a plain server, not a
 Next.js app, so there's no `NEXT_PUBLIC_*` build-time inlining to piggyback
