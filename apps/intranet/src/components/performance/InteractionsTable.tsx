@@ -29,6 +29,10 @@ export interface InteractionDay {
   count: number;
   totalDurationSec: number;
   avgDurationSec: number;
+  // Only set team-wide — one row per employee per day rather than one
+  // summed row per day for the whole team.
+  employeeId?: string;
+  employeeName?: string;
 }
 
 export interface InteractionTotal {
@@ -37,22 +41,25 @@ export interface InteractionTotal {
   avgDurationSec: number;
 }
 
-/** First/last interaction, count, total and average duration per day for a
- * month, with a grand-total row — shared by the dashboard's and the
- * employee detail's "Interaktionen" tab. */
+/** First/last interaction, count, total and average duration per employee
+ * per day for a month, with a grand-total row — shared by the dashboard's
+ * (team-wide, one row per employee per day) and the employee detail's (one
+ * row per day, already scoped to that employee) "Interaktionen" tab. */
 export function InteractionsTable({
   days,
   total,
-  hrefForDate,
+  hrefForRow,
 }: {
   days: InteractionDay[];
   total: InteractionTotal;
-  /** Day rows navigate to this day's individual interactions when set. */
-  hrefForDate?: (date: string) => string;
+  /** Rows navigate to this day's (and, team-wide, this employee's)
+   * individual interactions when set. */
+  hrefForRow?: (row: InteractionDay) => string;
 }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
   const router = useRouter();
+  const showEmployee = days.some(d => d.employeeName !== undefined);
 
   return (
     <Card>
@@ -69,6 +76,7 @@ export function InteractionsTable({
             <TableHeader>
               <TableRow>
                 <TableHead>{t("colDate")}</TableHead>
+                {showEmployee && <TableHead>{t("colName")}</TableHead>}
                 <TableHead>{t("colFrom")}</TableHead>
                 <TableHead>{t("colTo")}</TableHead>
                 <TableHead className="text-right">{t("colCount")}</TableHead>
@@ -78,25 +86,26 @@ export function InteractionsTable({
                 <TableHead className="text-right">
                   {t("colAvgDuration")}
                 </TableHead>
-                {hrefForDate && <TableHead className="w-8" />}
+                {hrefForRow && <TableHead className="w-8" />}
               </TableRow>
             </TableHeader>
             <TableBody>
               {days.map(d => (
                 <TableRow
-                  key={d.date}
+                  key={`${d.employeeId ?? ""}\n${d.date}`}
                   className={
-                    hrefForDate ? "cursor-pointer hover:bg-muted/50" : undefined
+                    hrefForRow ? "cursor-pointer hover:bg-muted/50" : undefined
                   }
                   onClick={
-                    hrefForDate
-                      ? () => router.push(hrefForDate(d.date))
-                      : undefined
+                    hrefForRow ? () => router.push(hrefForRow(d)) : undefined
                   }
                 >
                   <TableCell className="font-medium">
                     {formatIsoDate(d.date, locale)}
                   </TableCell>
+                  {showEmployee && (
+                    <TableCell>{d.employeeName ?? "–"}</TableCell>
+                  )}
                   <TableCell className="tabular-nums">
                     {fmtTimeOfDay(d.from)}
                   </TableCell>
@@ -112,7 +121,7 @@ export function InteractionsTable({
                   <TableCell className="text-right tabular-nums">
                     {fmtDurationPrecise(d.avgDurationSec)}
                   </TableCell>
-                  {hrefForDate && (
+                  {hrefForRow && (
                     <TableCell className="w-8">
                       <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </TableCell>
@@ -125,6 +134,7 @@ export function InteractionsTable({
                 <TableCell className="font-semibold">
                   {t("interactionsTotalRow")}
                 </TableCell>
+                {showEmployee && <TableCell />}
                 <TableCell />
                 <TableCell />
                 <TableCell className="text-right font-semibold tabular-nums">
@@ -136,7 +146,7 @@ export function InteractionsTable({
                 <TableCell className="text-right font-semibold tabular-nums">
                   {fmtDurationPrecise(total.avgDurationSec)}
                 </TableCell>
-                {hrefForDate && <TableCell />}
+                {hrefForRow && <TableCell />}
               </TableRow>
             </TableFooter>
           </Table>
