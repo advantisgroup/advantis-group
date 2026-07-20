@@ -119,7 +119,7 @@ export function FilterableBarChart({
           data={chartData}
           barCategoryGap="12%"
           barGap={4}
-          margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+          margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
         >
           <CartesianGrid stroke={CHART.grid} vertical={false} />
           <XAxis
@@ -135,7 +135,7 @@ export function FilterableBarChart({
             tickLine={false}
             axisLine={false}
             fontSize={11}
-            width={36}
+            width={50}
             tickFormatter={yTickFormatter}
             {...(yScale === "log"
               ? {

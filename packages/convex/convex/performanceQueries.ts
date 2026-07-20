@@ -401,18 +401,56 @@ async function monthsWithData(
   employeeId?: Id<"performanceEmployees">
 ): Promise<string[]> {
   const names = await employeeNameMap(ctx);
-  const rows = employeeId
-    ? await ctx.db
-        .query("performanceReports")
-        .withIndex("by_employee_date", q => q.eq("employeeId", employeeId))
-        .collect()
-    : await ctx.db.query("performanceReports").collect();
-  const yms = new Set<string>();
-  for (const r of rows) {
-    if (!names.has(r.employeeId)) continue;
-    yms.add(r.reportDate.slice(0, 7));
+
+  if (employeeId) {
+    const rows = await ctx.db
+      .query("performanceReports")
+      .withIndex("by_employee_date", q => q.eq("employeeId", employeeId))
+      .collect();
+    const yms = new Set<string>();
+    for (const r of rows) {
+      if (!names.has(r.employeeId)) continue;
+      yms.add(r.reportDate.slice(0, 7));
+    }
+    return [...yms].sort();
   }
-  return [...yms].sort();
+
+  // Team-wide: `performanceReports` gains roughly one row per employee per
+  // report day and never shrinks, so a plain `.collect()` here read every
+  // report ever imported just to bucket its date — the largest single read
+  // cost on `teamDashboard`/`employeeDetail` (the latter via
+  // `allBadgesMap`), both of which call this on every page load. A normal
+  // import never writes an excluded owner's row in the first place (see
+  // `isPerson` in salesforceImport.ts), so a per-month existence check —
+  // one indexed read instead of the whole table — is safe in practice, not
+  // just cheap.
+  const earliest = await ctx.db
+    .query("performanceReports")
+    .withIndex("by_reportDate")
+    .order("asc")
+    .first();
+  if (!earliest) return [];
+  const latest = await ctx.db
+    .query("performanceReports")
+    .withIndex("by_reportDate")
+    .order("desc")
+    .first();
+
+  const yms: string[] = [];
+  let ym = earliest.reportDate.slice(0, 7);
+  const lastYm = latest!.reportDate.slice(0, 7);
+  while (ym <= lastYm) {
+    const { start, end } = monthBounds(ym);
+    const hit = await ctx.db
+      .query("performanceReports")
+      .withIndex("by_reportDate", q =>
+        q.gte("reportDate", start).lte("reportDate", end)
+      )
+      .first();
+    if (hit) yms.push(ym);
+    ym = shiftYm(ym, 1);
+  }
+  return yms;
 }
 
 interface TeamTotals {

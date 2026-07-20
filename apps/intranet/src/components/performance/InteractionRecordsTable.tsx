@@ -373,6 +373,7 @@ export function InteractionRecordsTable({
                       dir={sortDir}
                       onClick={() => toggleSort("startedAt")}
                     />
+                    <TableHead>{t("colTo")}</TableHead>
                     <SortableHead
                       label={t("colTotalDuration")}
                       active={sortKey === "durationSec"}
@@ -398,6 +399,9 @@ export function InteractionRecordsTable({
                       )}
                       <TableCell className="tabular-nums">
                         {fmtTimeOfDay(r.startedAt)}
+                      </TableCell>
+                      <TableCell className="tabular-nums">
+                        {fmtTimeOfDay(r.startedAt + r.durationSec * 1000)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {fmtDurationPrecise(r.durationSec)}

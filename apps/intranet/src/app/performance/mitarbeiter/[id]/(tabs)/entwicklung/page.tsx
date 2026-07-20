@@ -102,7 +102,7 @@ export default function EmployeeDevelopmentPage() {
             <ResponsiveContainer width="100%" height={280}>
               <LineChart
                 data={rateChart}
-                margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+                margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
               >
                 <CartesianGrid stroke={CHART.grid} vertical={false} />
                 <XAxis
@@ -117,7 +117,7 @@ export default function EmployeeDevelopmentPage() {
                   tickLine={false}
                   axisLine={false}
                   fontSize={11}
-                  width={32}
+                  width={40}
                   unit="%"
                 />
                 <Tooltip {...tooltipStyle} />
@@ -145,7 +145,7 @@ export default function EmployeeDevelopmentPage() {
             <ResponsiveContainer width="100%" height={280}>
               <LineChart
                 data={rateChart}
-                margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+                margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
               >
                 <CartesianGrid stroke={CHART.grid} vertical={false} />
                 <XAxis
@@ -160,7 +160,7 @@ export default function EmployeeDevelopmentPage() {
                   tickLine={false}
                   axisLine={false}
                   fontSize={11}
-                  width={32}
+                  width={40}
                   unit="%"
                 />
                 <Tooltip {...tooltipStyle} />
@@ -215,7 +215,7 @@ export default function EmployeeDevelopmentPage() {
           <ResponsiveContainer width="100%" height={280}>
             <LineChart
               data={wonPerDayChart}
-              margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+              margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
             >
               <CartesianGrid stroke={CHART.grid} vertical={false} />
               <XAxis
@@ -230,7 +230,7 @@ export default function EmployeeDevelopmentPage() {
                 tickLine={false}
                 axisLine={false}
                 fontSize={11}
-                width={32}
+                width={36}
               />
               <Tooltip {...tooltipStyle} />
               <Line
