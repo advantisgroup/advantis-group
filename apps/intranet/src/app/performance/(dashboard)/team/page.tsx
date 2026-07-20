@@ -192,7 +192,7 @@ export default function DashboardTeamPage() {
         </div>
       </CardHeader>
       <CardContent className="overflow-x-auto">
-        <Table>
+        <Table className="whitespace-nowrap">
           <TableHeader>
             <TableRow>
               <SortableHead
