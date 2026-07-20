@@ -7,7 +7,14 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import { KeyRound, Pencil, Plus } from "lucide-react";
+import {
+  KeyRound,
+  Pencil,
+  Plus,
+  ShieldCheck,
+  UserCheck,
+  Users as UsersIcon,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -17,6 +24,7 @@ import {
   type LoginRow,
   ResetPasswordDialog,
 } from "@/components/performance/LoginDialogs";
+import { MetricTile } from "@/components/performance/MetricTile";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
@@ -90,12 +98,32 @@ export default function PerformanceUsersPage() {
         onExit={session.viaClerk ? undefined : exit}
       />
 
-      <main className="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+        {logins && logins.length > 0 && (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <MetricTile
+              icon={UsersIcon}
+              label={t("usersStatTotal")}
+              value={String(logins.length)}
+            />
+            <MetricTile
+              icon={UserCheck}
+              label={t("usersStatActive")}
+              value={String(logins.filter(l => l.active).length)}
+            />
+            <MetricTile
+              icon={ShieldCheck}
+              label={t("usersStatAdmins")}
+              value={String(logins.filter(l => l.role === "admin").length)}
+            />
+          </div>
+        )}
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
             <div>
               <CardTitle className="text-base">{t("usersTitle")}</CardTitle>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {t("usersIntro")}
               </p>
             </div>
@@ -129,7 +157,7 @@ export default function PerformanceUsersPage() {
                 <TableBody>
                   {logins.map(login => (
                     <TableRow key={login.id}>
-                      <TableCell className="font-medium">
+                      <TableCell className="py-4 font-medium">
                         <span className="inline-flex items-center gap-1.5">
                           {login.name}
                           {session.valid && login.id === session.loginId && (
@@ -139,13 +167,17 @@ export default function PerformanceUsersPage() {
                           )}
                         </span>
                       </TableCell>
-                      <TableCell className="max-w-[14rem] truncate">
+                      <TableCell className="max-w-xs truncate text-muted-foreground">
                         {login.email}
                       </TableCell>
                       <TableCell>
-                        {login.role === "admin"
-                          ? t("userRoleAdmin")
-                          : t("userRoleEmployee")}
+                        <Badge
+                          variant={login.role === "admin" ? "default" : "muted"}
+                        >
+                          {login.role === "admin"
+                            ? t("userRoleAdmin")
+                            : t("userRoleEmployee")}
+                        </Badge>
                       </TableCell>
                       <TableCell>{login.employeeName ?? "–"}</TableCell>
                       <TableCell>{login.linkedUserName ?? "–"}</TableCell>
