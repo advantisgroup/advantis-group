@@ -50,12 +50,17 @@ else
   DEPLOY_LOG="$(mktemp)"
   trap 'rm -f "$DEPLOY_LOG"' EXIT
 
-  (cd "$ROOT/packages/convex" && npx convex deploy) | tee "$DEPLOY_LOG"
+  # 2>&1 matters: without --cmd, convex CLI appears to print its "✔
+  # Deployed Convex functions to https://…" confirmation to stderr rather
+  # than stdout (vercel-preview-convex-build.sh never needs this fallback
+  # parse at all — it gets the URL handed to it directly via
+  # --cmd-url-env-var-name — so this divergence never showed up there).
+  # Confirmed against a real Preview build log: the line was visible in
+  # Vercel's build output, which merges both streams, but absent from a
+  # stdout-only tee.
+  (cd "$ROOT/packages/convex" && npx convex deploy) 2>&1 | tee "$DEPLOY_LOG"
 
-  # convex CLI's own deploy summary line ("✔ Deployed Convex functions to
-  # https://…") is what's parsed here, same as vercel-preview-convex-build.sh
-  # — but that script hands the resolved URL to `--cmd-url-env-var-name`
-  # instead of re-parsing its own tee'd log, so it never hit this: CLI
+  # convex CLI's own deploy summary line is what's parsed here. Its
   # spinner/progress output uses \r redraws and ANSI codes that can leave a
   # stray control byte inside the domain string, breaking a plain grep even
   # though the line looks clean once a terminal renders it. Normalize \r to
