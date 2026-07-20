@@ -167,7 +167,11 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <PageHeader title={t("title")} description={t("subtitle")} icon={<ShieldCheck />} />
+      <PageHeader
+        title={t("title")}
+        description={t("subtitle")}
+        icon={<ShieldCheck />}
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map(s => (
@@ -180,33 +184,33 @@ export default function AdminPage() {
           as a set of quick-access cards rather than duplicating each
           section's content here as tabs. */}
       <div className="space-y-6">
-        {ADMIN_NAV_GROUPS.filter(group => group.labelKey !== "nav.groupGeneral").map(
-          group => {
-            const items = group.items.filter(
-              item =>
-                (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
-            );
-            if (items.length === 0) return null;
-            return (
-              <section key={group.labelKey}>
-                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t(group.labelKey)}
-                </h2>
-                <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                  {items.map(item => (
-                    <QuickLinkCard
-                      key={item.href}
-                      href={item.href}
-                      icon={item.icon}
-                      label={t(item.labelKey)}
-                      count={counts[item.href]}
-                    />
-                  ))}
-                </div>
-              </section>
-            );
-          }
-        )}
+        {ADMIN_NAV_GROUPS.filter(
+          group => group.labelKey !== "nav.groupGeneral"
+        ).map(group => {
+          const items = group.items.filter(
+            item =>
+              (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
+          );
+          if (items.length === 0) return null;
+          return (
+            <section key={group.labelKey}>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {t(group.labelKey)}
+              </h2>
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                {items.map(item => (
+                  <QuickLinkCard
+                    key={item.href}
+                    href={item.href}
+                    icon={item.icon}
+                    label={t(item.labelKey)}
+                    count={counts[item.href]}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </div>
   );
