@@ -124,3 +124,38 @@ export function DeltaPair({
     </div>
   );
 }
+
+/** "VM ↑X.X · VJ ↓Y.Y · Ø Team ↑Z.Z" — the employee detail's KPI cards
+ * additionally compare against this month's team average, alongside the
+ * usual VM/VJ. */
+export function DeltaTriple({
+  dVm,
+  dVj,
+  dTeam,
+}: {
+  dVm: number | undefined;
+  dVj: number | undefined;
+  dTeam: number | undefined;
+}) {
+  if (dVm === undefined && dVj === undefined && dTeam === undefined)
+    return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+      {dVm !== undefined && (
+        <span className="inline-flex items-center gap-1">
+          VM <DeltaBadge value={dVm} />
+        </span>
+      )}
+      {dVj !== undefined && (
+        <span className="inline-flex items-center gap-1">
+          VJ <DeltaBadge value={dVj} />
+        </span>
+      )}
+      {dTeam !== undefined && (
+        <span className="inline-flex items-center gap-1">
+          Ø Team <DeltaBadge value={dTeam} />
+        </span>
+      )}
+    </div>
+  );
+}
