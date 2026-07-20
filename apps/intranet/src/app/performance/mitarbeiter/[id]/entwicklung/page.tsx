@@ -9,8 +9,6 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -20,6 +18,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
 import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
 import { fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
@@ -175,50 +174,22 @@ export default function EmployeeDevelopmentPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart
-              data={funnelChart}
-              margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
-            >
-              <CartesianGrid stroke={CHART.grid} vertical={false} />
-              <XAxis
-                dataKey="label"
-                stroke={CHART.axis}
-                tickLine={false}
-                axisLine={false}
-                fontSize={11}
-              />
-              <YAxis
-                stroke={CHART.axis}
-                tickLine={false}
-                axisLine={false}
-                fontSize={11}
-                width={32}
-              />
-              <Tooltip {...tooltipStyle} />
-              <Bar
-                dataKey="leads"
-                name={t("dashboardLeadsCreatedMonth")}
-                fill={CHART.info}
-                maxBarSize={10}
-                radius={[3, 3, 0, 0]}
-              />
-              <Bar
-                dataKey="workable"
-                name={t("colWorkable")}
-                fill={CHART.active}
-                maxBarSize={10}
-                radius={[3, 3, 0, 0]}
-              />
-              <Bar
-                dataKey="won"
-                name={t("colWon")}
-                fill={CHART.accent}
-                maxBarSize={10}
-                radius={[3, 3, 0, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+          <FilterableBarChart
+            data={funnelChart}
+            series={[
+              {
+                key: "leads",
+                name: t("dashboardLeadsCreatedMonth"),
+                color: CHART.info,
+              },
+              {
+                key: "workable",
+                name: t("colWorkable"),
+                color: CHART.active,
+              },
+              { key: "won", name: t("colWon"), color: CHART.accent },
+            ]}
+          />
         </CardContent>
       </Card>
 

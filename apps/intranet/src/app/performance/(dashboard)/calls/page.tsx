@@ -5,17 +5,9 @@ import { useMemo } from "react";
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 
-import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
+import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
+import { CHART } from "@/components/activity/charts/theme";
 import {
   DeltaPair,
   fmtDayShort,
@@ -147,44 +139,21 @@ export default function DashboardCallsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart
-                data={callsChart}
-                margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
-              >
-                <CartesianGrid stroke={CHART.grid} vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  stroke={CHART.axis}
-                  tickLine={false}
-                  axisLine={false}
-                  fontSize={11}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  stroke={CHART.axis}
-                  tickLine={false}
-                  axisLine={false}
-                  fontSize={11}
-                  width={32}
-                />
-                <Tooltip {...tooltipStyle} />
-                <Bar
-                  dataKey="answered"
-                  name={t("callsAnsweredLabel")}
-                  fill={CHART.active}
-                  maxBarSize={12}
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="outbound"
-                  name={t("callsOutboundLabel")}
-                  fill={CHART.accent}
-                  maxBarSize={12}
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <FilterableBarChart
+              data={callsChart}
+              series={[
+                {
+                  key: "answered",
+                  name: t("callsAnsweredLabel"),
+                  color: CHART.active,
+                },
+                {
+                  key: "outbound",
+                  name: t("callsOutboundLabel"),
+                  color: CHART.accent,
+                },
+              ]}
+            />
           </CardContent>
         </Card>
 
@@ -195,48 +164,23 @@ export default function DashboardCallsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart
-                data={timeChart}
-                margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
-              >
-                <CartesianGrid stroke={CHART.grid} vertical={false} />
-                <XAxis
-                  dataKey="label"
-                  stroke={CHART.axis}
-                  tickLine={false}
-                  axisLine={false}
-                  fontSize={11}
-                  interval="preserveStartEnd"
-                />
-                <YAxis
-                  stroke={CHART.axis}
-                  tickLine={false}
-                  axisLine={false}
-                  fontSize={11}
-                  width={32}
-                  tickFormatter={(v: number) => fmtDuration(v)}
-                />
-                <Tooltip
-                  {...tooltipStyle}
-                  formatter={(value: number) => fmtDuration(value)}
-                />
-                <Bar
-                  dataKey="talk"
-                  name={t("callsTotalTalkLabel")}
-                  fill={CHART.idle}
-                  maxBarSize={12}
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar
-                  dataKey="login"
-                  name={t("callsLoginLabel")}
-                  fill={CHART.info}
-                  maxBarSize={12}
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <FilterableBarChart
+              data={timeChart}
+              series={[
+                {
+                  key: "talk",
+                  name: t("callsTotalTalkLabel"),
+                  color: CHART.idle,
+                },
+                {
+                  key: "login",
+                  name: t("callsLoginLabel"),
+                  color: CHART.info,
+                },
+              ]}
+              yTickFormatter={(v: number) => fmtDuration(v)}
+              tooltipFormatter={(value: number) => fmtDuration(value)}
+            />
           </CardContent>
         </Card>
       </div>
