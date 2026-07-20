@@ -336,20 +336,23 @@ export interface WonDay {
 }
 
 /** Daily closed-won series (team-wide, or one employee) for the trailing 3
- * calendar months ending with `ym`, workdays only — feeds the trend chart
- * shown above the dashboard / at the top of the employee detail page. Reads
- * `performanceWonOpps` (one row per opportunity, keyed by its actual Close
- * Date) rather than diffing `performanceReports.wonMonth` day-over-day —
- * that cumulative counter only advances on days an Opportunity report is
- * actually uploaded, so with uploads spaced days or weeks apart it produced
- * one lump-sum spike instead of a real daily trend. */
+ * calendar months ending with the *actual* current month, workdays only —
+ * feeds the trend chart shown above the dashboard / at the top of the
+ * employee detail page. Deliberately ignores the dashboard's selected `ym`
+ * filter — it's meant to always show "the last 3 months", not "3 months
+ * ending with whatever month you're browsing". Reads `performanceWonOpps`
+ * (one row per opportunity, keyed by its actual Close Date) rather than
+ * diffing `performanceReports.wonMonth` day-over-day — that cumulative
+ * counter only advances on days an Opportunity report is actually
+ * uploaded, so with uploads spaced days or weeks apart it produced one
+ * lump-sum spike instead of a real daily trend. */
 async function closedWonTrend(
   ctx: QueryCtx,
-  ym: string,
   employeeId: Id<"performanceEmployees"> | undefined
 ): Promise<{ days: WonDay[]; avg: number }> {
-  const { start } = monthBounds(shiftYm(ym, -2));
-  const { end } = monthBounds(ym);
+  const currentYm = defaultYm();
+  const { start } = monthBounds(shiftYm(currentYm, -2));
+  const { end } = monthBounds(currentYm);
 
   let ownerName: string | undefined;
   if (employeeId) {
@@ -596,7 +599,7 @@ export const teamDashboard = query({
     const { total, snaps, unqualified } = await teamTotals(ctx, ym, cache);
     const days = await callDaysList(ctx, ym, undefined, cache);
     const hasCalls = await hasCallData(ctx, ym, undefined, cache);
-    const wonTrend = await closedWonTrend(ctx, ym, undefined);
+    const wonTrend = await closedWonTrend(ctx, undefined);
 
     const vmYm = shiftYm(ym, -1);
     const vjYm = shiftYm(ym, -12);
@@ -716,7 +719,7 @@ export const employeeDetail = query({
 
     const days = await callDaysList(ctx, ym, employeeId, cache);
     const hasCalls = await hasCallData(ctx, ym, employeeId, cache);
-    const wonTrend = await closedWonTrend(ctx, ym, employeeId);
+    const wonTrend = await closedWonTrend(ctx, employeeId);
 
     return {
       employee: { id: employee._id, name: employee.name },
