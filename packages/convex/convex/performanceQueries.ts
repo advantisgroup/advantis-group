@@ -840,6 +840,73 @@ export const interactionsMonth = query({
   },
 });
 
+export interface InteractionRecord {
+  id: Id<"performanceInteractions">;
+  employeeId: Id<"performanceEmployees">;
+  employeeName: string;
+  startedAt: number;
+  durationSec: number;
+  direction: string | undefined;
+}
+
+/** Every individual interaction on one day — the drill-down behind an
+ * `interactionsMonth` day row. Team-wide (admin) when `employeeId` is
+ * omitted, one employee's own interactions otherwise — same
+ * admin-or-self visibility rule as `employeeDetail`. */
+export const interactionsDayDetail = query({
+  args: {
+    token: v.string(),
+    date: v.string(),
+    employeeId: v.optional(v.id("performanceEmployees")),
+  },
+  handler: async (ctx, { token, date, employeeId }) => {
+    const login = await requireSession(ctx, token);
+    if (employeeId) {
+      requireCanView(login, employeeId);
+    } else {
+      requireAdmin(login);
+    }
+
+    const rows = employeeId
+      ? await ctx.db
+          .query("performanceInteractions")
+          .withIndex("by_employee_date", q =>
+            q.eq("employeeId", employeeId).eq("date", date)
+          )
+          .collect()
+      : await ctx.db
+          .query("performanceInteractions")
+          .withIndex("by_date", q => q.eq("date", date))
+          .collect();
+
+    const names = await employeeNameMap(ctx);
+    const records: InteractionRecord[] = rows
+      .filter(r => names.has(r.employeeId))
+      .map(r => ({
+        id: r._id,
+        employeeId: r.employeeId,
+        employeeName: names.get(r.employeeId)!,
+        startedAt: r.startedAt,
+        durationSec: r.durationSec,
+        direction: r.direction,
+      }))
+      .sort((a, b) => a.startedAt - b.startedAt);
+
+    const count = records.length;
+    const totalDurationSec = records.reduce((a, r) => a + r.durationSec, 0);
+
+    return {
+      date,
+      records,
+      total: {
+        count,
+        totalDurationSec,
+        avgDurationSec: count ? Math.round(totalDurationSec / count) : 0,
+      },
+    };
+  },
+});
+
 // -------------------------------------------------------------- drill-down
 
 const LISTS: Record<

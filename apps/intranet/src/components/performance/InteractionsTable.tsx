@@ -1,5 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
+import { ChevronRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import {
@@ -40,12 +43,16 @@ export interface InteractionTotal {
 export function InteractionsTable({
   days,
   total,
+  hrefForDate,
 }: {
   days: InteractionDay[];
   total: InteractionTotal;
+  /** Day rows navigate to this day's individual interactions when set. */
+  hrefForDate?: (date: string) => string;
 }) {
   const t = useTranslations("Performance");
   const locale = useLocale();
+  const router = useRouter();
 
   return (
     <Card>
@@ -71,11 +78,22 @@ export function InteractionsTable({
                 <TableHead className="text-right">
                   {t("colAvgDuration")}
                 </TableHead>
+                {hrefForDate && <TableHead className="w-8" />}
               </TableRow>
             </TableHeader>
             <TableBody>
               {days.map(d => (
-                <TableRow key={d.date}>
+                <TableRow
+                  key={d.date}
+                  className={
+                    hrefForDate ? "cursor-pointer hover:bg-muted/50" : undefined
+                  }
+                  onClick={
+                    hrefForDate
+                      ? () => router.push(hrefForDate(d.date))
+                      : undefined
+                  }
+                >
                   <TableCell className="font-medium">
                     {formatIsoDate(d.date, locale)}
                   </TableCell>
@@ -94,6 +112,11 @@ export function InteractionsTable({
                   <TableCell className="text-right tabular-nums">
                     {fmtDurationPrecise(d.avgDurationSec)}
                   </TableCell>
+                  {hrefForDate && (
+                    <TableCell className="w-8">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -113,6 +136,7 @@ export function InteractionsTable({
                 <TableCell className="text-right font-semibold tabular-nums">
                   {fmtDurationPrecise(total.avgDurationSec)}
                 </TableCell>
+                {hrefForDate && <TableCell />}
               </TableRow>
             </TableFooter>
           </Table>

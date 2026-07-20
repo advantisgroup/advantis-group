@@ -234,6 +234,8 @@
   "wonTrendFootnote": "Workdays over the last 3 months. Days above the average are marked green, days below red.",
   "interactionsTitle": "Interactions",
   "interactionsEmpty": "No interactions this month.",
+  "interactionDirection": "Direction",
+  "interactionAvgInline": "avg {value}",
   "interactionsTotalRow": "Total",
   "colDate": "Date",
   "colFrom": "From",

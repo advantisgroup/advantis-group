@@ -49,7 +49,10 @@ export function ClosedWonTrendChart({
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
+          >
             <CartesianGrid stroke={CHART.grid} vertical={false} />
             <XAxis
               dataKey="label"
