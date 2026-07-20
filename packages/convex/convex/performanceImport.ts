@@ -25,6 +25,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
+import { monthBounds } from "./performance/lib/kpi";
 import { EXCLUDED_OWNERS } from "./performance/lib/salesforceImport";
 import {
   METRIC_KEYS,
@@ -400,6 +401,46 @@ export const getTeamEmployeeNames = internalQuery({
   },
 });
 
+/** Same roster as `getTeamEmployeeNames`, with each employee's id — the
+ * interactions importer needs the id (a foreign key into
+ * `performanceInteractions`), not just the name `matchEmployee` returns. */
+export const getTeamEmployeesWithId = internalQuery({
+  args: {},
+  handler: async (
+    ctx
+  ): Promise<{ id: Id<"performanceEmployees">; name: string }[]> => {
+    const employees = await ctx.db.query("performanceEmployees").collect();
+    return employees
+      .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
+      .map(e => ({ id: e._id, name: e.name }));
+  },
+});
+
+/** Employees with at least one Performance report in each of `months`
+ * ("YYYY-MM") — the "already active in the Performance Dashboard this
+ * month" gate for imported interactions, so a raw Genesys export doesn't
+ * pull in agents from queues/departments this feature doesn't track. */
+export const getActiveEmployeeIdsByMonth = internalQuery({
+  args: { months: v.array(v.string()) },
+  handler: async (
+    ctx,
+    { months }
+  ): Promise<Record<string, Id<"performanceEmployees">[]>> => {
+    const out: Record<string, Id<"performanceEmployees">[]> = {};
+    for (const ym of months) {
+      const { start, end } = monthBounds(ym);
+      const rows = await ctx.db
+        .query("performanceReports")
+        .withIndex("by_reportDate", q =>
+          q.gte("reportDate", start).lte("reportDate", end)
+        )
+        .collect();
+      out[ym] = [...new Set(rows.map(r => r.employeeId))];
+    }
+    return out;
+  },
+});
+
 const snapshotFieldsValidator = v.object({
   leadsCreated: v.optional(v.number()),
   workableCreated: v.optional(v.number()),
@@ -633,4 +674,85 @@ export const getUploadLogRowsByBatch = internalQuery({
       .query("performanceUploadLog")
       .withIndex("by_batchId", q => q.eq("batchId", batchId))
       .collect(),
+});
+
+// ------------------------------------------------------------- interactions
+// Raw per-interaction rows (`performanceInteractions`) are a full snapshot
+// of the source export for the months it covers, not a delta — wholesale-
+// replaced per calendar month on import, same rationale as
+// `performanceRawLeads`/`Opps`. See `performanceUploadParse.ts`'s
+// `writeInteractions`, the only caller.
+
+const interactionInsertValidator = v.object({
+  employeeId: v.id("performanceEmployees"),
+  date: v.string(),
+  startedAt: v.number(),
+  durationSec: v.number(),
+  direction: v.optional(v.string()),
+});
+
+export const clearInteractionsForMonths = internalMutation({
+  args: { months: v.array(v.string()) },
+  handler: async (ctx, { months }): Promise<void> => {
+    for (const ym of months) {
+      const { start, end } = monthBounds(ym);
+      const rows = await ctx.db
+        .query("performanceInteractions")
+        .withIndex("by_date", q => q.gte("date", start).lte("date", end))
+        .collect();
+      await Promise.all(rows.map(row => ctx.db.delete(row._id)));
+    }
+  },
+});
+
+export const insertInteractionsChunk = internalMutation({
+  args: {
+    rows: v.array(interactionInsertValidator),
+    sourceFile: v.string(),
+    uploadedAt: v.number(),
+  },
+  handler: async (ctx, { rows, sourceFile, uploadedAt }): Promise<void> => {
+    await Promise.all(
+      rows.map(row =>
+        ctx.db.insert("performanceInteractions", {
+          ...row,
+          sourceFile,
+          uploadedAt,
+        })
+      )
+    );
+  },
+});
+
+export const logInteractionsImport = internalMutation({
+  args: {
+    sourceFile: v.string(),
+    storageId: v.id("_storage"),
+    contentHash: v.optional(v.string()),
+    sourceRowCount: v.optional(v.number()),
+    skippedNames: v.optional(v.array(v.string())),
+    fileSize: v.optional(v.number()),
+    batchId: v.optional(v.string()),
+    rowsImported: v.number(),
+    replaceLogId: v.optional(v.id("performanceUploadLog")),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    const logFields = {
+      filename: args.sourceFile,
+      storageId: args.storageId,
+      rowsImported: args.rowsImported,
+      uploadedAt: Date.now(),
+      contentHash: args.contentHash,
+      reportKind: "interactions" as const,
+      sourceRowCount: args.sourceRowCount,
+      skippedNames: args.skippedNames,
+      fileSize: args.fileSize,
+      batchId: args.batchId,
+    };
+    if (args.replaceLogId) {
+      await ctx.db.patch(args.replaceLogId, logFields);
+    } else {
+      await ctx.db.insert("performanceUploadLog", logFields);
+    }
+  },
 });

@@ -86,6 +86,7 @@ const REPORT_KIND_LABEL_KEY: Record<string, string> = {
   opp: "uploadKindOpp",
   call: "uploadKindCall",
   template: "uploadKindTemplate",
+  interactions: "uploadKindInteractions",
 };
 
 function FileIcon({ name }: { name: string }) {
@@ -121,7 +122,7 @@ interface UploadLogRow {
   filename: string;
   rowsImported: number;
   uploadedAt: number;
-  reportKind?: "lead" | "opp" | "call" | "template";
+  reportKind?: "lead" | "opp" | "call" | "template" | "interactions";
   reportDate?: string;
   sourceRowCount?: number;
   skippedNames?: string[];

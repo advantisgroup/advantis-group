@@ -806,6 +806,28 @@ export default defineSchema({
     customerNumber: v.optional(v.string()),
   }).index("by_owner", ["owner"]),
 
+  // One row per employee per Genesys interaction (raw, not aggregated) —
+  // imported from the "Interaktionen" export, distinct from the aggregated
+  // Genesys agent report `performanceReports.callsToday`/etc. already cover.
+  // An interaction with several participating agents (transfer/conference)
+  // produces one row per matched employee, since each of them genuinely
+  // handled it. `date` is the calendar day of `startedAt` (ISO
+  // "YYYY-MM-DD", UTC) — kept alongside the timestamp so day-scoped queries
+  // can use an index instead of re-deriving the date from every row.
+  // Wholesale-replaced per calendar month on import (see
+  // `interactionImport.ts`), same rationale as `performanceRawLeads`/`Opps`.
+  performanceInteractions: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    date: v.string(),
+    startedAt: v.number(),
+    durationSec: v.number(),
+    direction: v.optional(v.string()),
+    sourceFile: v.string(),
+    uploadedAt: v.number(),
+  })
+    .index("by_employee_date", ["employeeId", "date"])
+    .index("by_date", ["date"]),
+
   // Admin-set monthly goals/todos for an employee. Status can be updated by
   // the employee themself; only an admin can create/edit/delete the topic
   // itself.
@@ -844,7 +866,8 @@ export default defineSchema({
         v.literal("lead"),
         v.literal("opp"),
         v.literal("call"),
-        v.literal("template")
+        v.literal("template"),
+        v.literal("interactions")
       )
     ),
     // The report's own date (YYYY-MM-DD), as detected from its content —

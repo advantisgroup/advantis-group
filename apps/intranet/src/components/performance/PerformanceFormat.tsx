@@ -24,6 +24,22 @@ export function fmtDuration(totalSeconds: number | undefined | null): string {
   return `${m}m`;
 }
 
+/** Same as `fmtDuration`, but keeps seconds precision for values under a
+ * minute — most individual interactions are shorter than that, and
+ * "0m" would otherwise hide the actual duration. */
+export function fmtDurationPrecise(
+  totalSeconds: number | undefined | null
+): string {
+  if (totalSeconds === undefined || totalSeconds === null) return "–";
+  const total = Math.round(totalSeconds);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
 /** "2026-07-16" -> "16.07" (locale-aware day/month, no year — for chart
  * axis labels where space is tight). */
 export function fmtDayShort(iso: string, locale: string): string {
@@ -34,6 +50,16 @@ export function fmtDayShort(iso: string, locale: string): string {
     month: "2-digit",
     timeZone: "UTC",
   });
+}
+
+/** Epoch ms carrying a wall-clock time-of-day as UTC fields (see
+ * `interactionImport.ts`'s timestamp parsing) -> "07:40". Uses the UTC
+ * getters directly rather than a locale/timezone conversion, since the
+ * value was never really UTC to begin with — just stamped that way to
+ * avoid guessing a timezone the source data doesn't carry. */
+export function fmtTimeOfDay(ms: number): string {
+  const d = new Date(ms);
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
 
 /** "2026-07" -> "July 2026" (locale-aware, UTC so it never shifts a day

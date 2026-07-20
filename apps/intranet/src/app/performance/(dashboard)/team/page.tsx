@@ -36,17 +36,33 @@ type SortKey =
   | "name"
   | "leadsCreated"
   | "workableCreated"
+  | "workableRate"
   | "hitrate"
   | "wonMonth"
-  | "fc1";
+  | "wonPerDay"
+  | "fc1"
+  | "oppsOpen"
+  | "overduesAnalysis"
+  | "overduesOpps"
+  | "oppsOver30"
+  | "leadsNoAction14"
+  | "oppsNoAction14";
 
 const SORT_KEYS: SortKey[] = [
   "name",
   "leadsCreated",
   "workableCreated",
+  "workableRate",
   "hitrate",
   "wonMonth",
+  "wonPerDay",
   "fc1",
+  "oppsOpen",
+  "overduesAnalysis",
+  "overduesOpps",
+  "oppsOver30",
+  "leadsNoAction14",
+  "oppsNoAction14",
 ];
 const SORT_STORAGE_KEY = "performance_team_sort";
 
@@ -203,9 +219,9 @@ export default function DashboardTeamPage() {
                 align="right"
               />
               <SortableHead
-                label={t("colHitrate")}
-                sortKey="hitrate"
-                active={sort.key === "hitrate"}
+                label={t("colWorkableRate")}
+                sortKey="workableRate"
+                active={sort.key === "workableRate"}
                 dir={sort.dir}
                 onSort={toggleSort}
                 align="right"
@@ -219,9 +235,73 @@ export default function DashboardTeamPage() {
                 align="right"
               />
               <SortableHead
+                label={t("colHitrate")}
+                sortKey="hitrate"
+                active={sort.key === "hitrate"}
+                dir={sort.dir}
+                onSort={toggleSort}
+                align="right"
+              />
+              <SortableHead
+                label={t("colWonPerDay")}
+                sortKey="wonPerDay"
+                active={sort.key === "wonPerDay"}
+                dir={sort.dir}
+                onSort={toggleSort}
+                align="right"
+              />
+              <SortableHead
                 label={t("colForecast")}
                 sortKey="fc1"
                 active={sort.key === "fc1"}
+                dir={sort.dir}
+                onSort={toggleSort}
+                align="right"
+              />
+              <SortableHead
+                label={t("colOppsOpen")}
+                sortKey="oppsOpen"
+                active={sort.key === "oppsOpen"}
+                dir={sort.dir}
+                onSort={toggleSort}
+                align="right"
+              />
+              <SortableHead
+                label={t("colAnalysis30")}
+                sortKey="overduesAnalysis"
+                active={sort.key === "overduesAnalysis"}
+                dir={sort.dir}
+                onSort={toggleSort}
+                align="right"
+              />
+              <SortableHead
+                label={t("colOppOverdue")}
+                sortKey="overduesOpps"
+                active={sort.key === "overduesOpps"}
+                dir={sort.dir}
+                onSort={toggleSort}
+                align="right"
+              />
+              <SortableHead
+                label={t("colOpps30")}
+                sortKey="oppsOver30"
+                active={sort.key === "oppsOver30"}
+                dir={sort.dir}
+                onSort={toggleSort}
+                align="right"
+              />
+              <SortableHead
+                label={t("colLeads14")}
+                sortKey="leadsNoAction14"
+                active={sort.key === "leadsNoAction14"}
+                dir={sort.dir}
+                onSort={toggleSort}
+                align="right"
+              />
+              <SortableHead
+                label={t("colOpps14")}
+                sortKey="oppsNoAction14"
+                active={sort.key === "oppsNoAction14"}
                 dir={sort.dir}
                 onSort={toggleSort}
                 align="right"
@@ -235,7 +315,7 @@ export default function DashboardTeamPage() {
             {visibleSnaps.length === 0 && (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={17}
                   className="text-center text-sm text-muted-foreground"
                 >
                   {t("dashboardSearchEmpty")}
@@ -261,13 +341,37 @@ export default function DashboardTeamPage() {
                     {fmtNum(s.workableCreated)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
-                    {fmtPct(s.hitrate)}
+                    {fmtPct(s.workableRate)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {fmtNum(s.wonMonth)}
                   </TableCell>
                   <TableCell className="text-right tabular-nums">
+                    {fmtPct(s.hitrate)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(s.wonPerDay)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
                     {fmtNum(s.fc1)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(s.oppsOpen)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(s.overduesAnalysis)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(s.overduesOpps)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(s.oppsOver30)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(s.leadsNoAction14)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(s.oppsNoAction14)}
                   </TableCell>
                   <TableCell>
                     {Object.entries(badges).some(([, n]) => n > 0) ? (

@@ -244,17 +244,21 @@ export default function DashboardOverviewPage() {
         <Card className="border-none bg-foreground text-background">
           <CardContent className="flex flex-col gap-1.5 p-5">
             <span className="text-xs font-medium uppercase tracking-wide text-background/70">
-              {t("dashboardForecastTitle")}
+              {fc?.isActual
+                ? t("dashboardForecastTitleDone")
+                : t("dashboardForecastTitle")}
             </span>
             <span className="text-4xl font-semibold tabular-nums">
               {fmtNum(fc?.fc1)}
             </span>
             {fc && (
               <p className="text-xs text-background/70">
-                {t("dashboardForecastSubtitle", {
-                  won: fmtNum(data.total.wonMonth),
-                  remaining: fc.remaining,
-                })}
+                {fc.isActual
+                  ? t("dashboardForecastSubtitleDone")
+                  : t("dashboardForecastSubtitle", {
+                      won: fmtNum(data.total.wonMonth),
+                      remaining: fc.remaining,
+                    })}
               </p>
             )}
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-background/70">
