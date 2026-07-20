@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Building2,
   Clock,
+  DatabaseZap,
   KeyRound,
   LayoutDashboard,
   type LucideIcon,
@@ -39,7 +40,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-interface AdminNavItem {
+export interface AdminNavItem {
   href: string;
   labelKey: string;
   icon: LucideIcon;
@@ -47,73 +48,103 @@ interface AdminNavItem {
   adminOnly?: boolean;
 }
 
-const ADMIN_NAV: AdminNavItem[] = [
-  { href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard },
+export interface AdminNavGroup {
+  labelKey: string;
+  items: AdminNavItem[];
+}
+
+/**
+ * The full `/admin` nav, categorized. Exported so the Overview page can
+ * render the same sections as quick-access cards instead of maintaining a
+ * second, drift-prone copy of "what's in the admin area."
+ */
+export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
-    href: "/admin/requests",
-    labelKey: "nav.requests",
-    icon: Clock,
-    managerOnly: true,
+    labelKey: "nav.groupGeneral",
+    items: [
+      { href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard },
+    ],
   },
   {
-    href: "/admin/invites",
-    labelKey: "nav.invites",
-    icon: Mail,
-    managerOnly: true,
+    labelKey: "nav.groupAccess",
+    items: [
+      {
+        href: "/admin/requests",
+        labelKey: "nav.requests",
+        icon: Clock,
+        managerOnly: true,
+      },
+      {
+        href: "/admin/invites",
+        labelKey: "nav.invites",
+        icon: Mail,
+        managerOnly: true,
+      },
+      {
+        href: "/admin/members",
+        labelKey: "nav.members",
+        icon: Users,
+        managerOnly: true,
+      },
+      {
+        href: "/admin/roles",
+        labelKey: "nav.roles",
+        icon: ShieldCheck,
+        managerOnly: true,
+      },
+      {
+        href: "/admin/guests",
+        labelKey: "nav.guests",
+        icon: KeyRound,
+        adminOnly: true,
+      },
+    ],
   },
   {
-    href: "/admin/members",
-    labelKey: "nav.members",
-    icon: Users,
-    managerOnly: true,
-  },
-  { href: "/admin/uploads", labelKey: "nav.uploads", icon: Upload },
-  {
-    href: "/admin/integrations",
-    labelKey: "nav.integrations",
-    icon: Plug,
-  },
-  {
-    href: "/admin/roles",
-    labelKey: "nav.roles",
-    icon: ShieldCheck,
-    managerOnly: true,
-  },
-  {
-    href: "/admin/departments",
-    labelKey: "nav.departments",
-    icon: Building2,
-    adminOnly: true,
-  },
-  {
-    href: "/admin/teams",
-    labelKey: "nav.teams",
-    icon: Users2,
-    adminOnly: true,
+    labelKey: "nav.groupOrganization",
+    items: [
+      {
+        href: "/admin/departments",
+        labelKey: "nav.departments",
+        icon: Building2,
+        adminOnly: true,
+      },
+      {
+        href: "/admin/teams",
+        labelKey: "nav.teams",
+        icon: Users2,
+        adminOnly: true,
+      },
+      {
+        href: "/admin/data-cleanup",
+        labelKey: "nav.dataCleanup",
+        icon: DatabaseZap,
+        adminOnly: true,
+      },
+    ],
   },
   {
-    href: "/admin/guests",
-    labelKey: "nav.guests",
-    icon: KeyRound,
-    adminOnly: true,
-  },
-  {
-    href: "/admin/data-cleanup",
-    labelKey: "nav.dataCleanup",
-    icon: Building2,
-    adminOnly: true,
-  },
-  {
-    href: "/admin/audit",
-    labelKey: "nav.audit",
-    icon: ScrollText,
-    adminOnly: true,
-  },
-  {
-    href: "/admin/feature-flags",
-    labelKey: "nav.featureFlags",
-    icon: PowerOff,
-    adminOnly: true,
+    labelKey: "nav.groupSystem",
+    items: [
+      { href: "/admin/uploads", labelKey: "nav.uploads", icon: Upload },
+      {
+        href: "/admin/integrations",
+        labelKey: "nav.integrations",
+        icon: Plug,
+      },
+      {
+        href: "/admin/audit",
+        labelKey: "nav.audit",
+        icon: ScrollText,
+        adminOnly: true,
+      },
+      {
+        href: "/admin/feature-flags",
+        labelKey: "nav.featureFlags",
+        icon: PowerOff,
+        adminOnly: true,
+      },
+    ],
   },
 ];
 
@@ -122,7 +153,8 @@ const ADMIN_NAV: AdminNavItem[] = [
  * `/admin/*` (but not `/admin/activity/*` or `/admin/integrations/*`, which
  * have their own dedicated sidebars/gates). Config-driven exactly like
  * `ActivitySidebar`, reusing the same sidebar primitives. The first item
- * returns to the normal intranet nav.
+ * returns to the normal intranet nav. Items are grouped by function
+ * (access & people, organization, system) rather than one long flat list.
  */
 export function AdminSidebar() {
   const t = useTranslations("Admin");
@@ -142,10 +174,6 @@ export function AdminSidebar() {
   );
   const pendingCount = pendingUploads?.length ?? 0;
 
-  const items = ADMIN_NAV.filter(
-    item => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
-  );
-
   return (
     <>
       <SidebarGroup>
@@ -161,44 +189,52 @@ export function AdminSidebar() {
         </SidebarMenu>
       </SidebarGroup>
 
-      <SidebarGroup>
-        <SidebarGroupLabel>{t("nav.group")}</SidebarGroupLabel>
-        <SidebarMenu>
-          {items.map(item => {
-            const active =
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(item.href);
-            const Icon = item.icon;
-            return (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                  asChild
-                  active={active}
-                  tooltip={t(item.labelKey)}
-                >
-                  <Link
-                    href={item.href}
-                    onClick={close}
-                    aria-current={active ? "page" : undefined}
-                    data-tour={
-                      item.href === "/admin" ? "tour-nav-admin" : undefined
-                    }
-                  >
-                    <Icon />
-                    <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
-                    {item.href === "/admin/uploads" && pendingCount > 0 && (
-                      <SidebarMenuBadge>
-                        {pendingCount > 99 ? "99+" : pendingCount}
-                      </SidebarMenuBadge>
-                    )}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroup>
+      {ADMIN_NAV_GROUPS.map(group => {
+        const items = group.items.filter(
+          item => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
+        );
+        if (items.length === 0) return null;
+        return (
+          <SidebarGroup key={group.labelKey}>
+            <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
+            <SidebarMenu>
+              {items.map(item => {
+                const active =
+                  item.href === "/admin"
+                    ? pathname === "/admin"
+                    : pathname.startsWith(item.href);
+                const Icon = item.icon;
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      active={active}
+                      tooltip={t(item.labelKey)}
+                    >
+                      <Link
+                        href={item.href}
+                        onClick={close}
+                        aria-current={active ? "page" : undefined}
+                        data-tour={
+                          item.href === "/admin" ? "tour-nav-admin" : undefined
+                        }
+                      >
+                        <Icon />
+                        <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
+                        {item.href === "/admin/uploads" && pendingCount > 0 && (
+                          <SidebarMenuBadge>
+                            {pendingCount > 99 ? "99+" : pendingCount}
+                          </SidebarMenuBadge>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        );
+      })}
     </>
   );
 }
