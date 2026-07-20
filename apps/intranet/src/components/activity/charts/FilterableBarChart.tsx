@@ -86,7 +86,7 @@ export function FilterableBarChart({
       <ResponsiveContainer width="100%" height={height}>
         <BarChart
           data={data}
-          barCategoryGap="30%"
+          barCategoryGap="12%"
           barGap={4}
           margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
         >
