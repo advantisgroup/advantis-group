@@ -336,20 +336,23 @@ export interface WonDay {
 }
 
 /** Daily closed-won series (team-wide, or one employee) for the trailing 3
- * calendar months ending with `ym`, workdays only — feeds the trend chart
- * shown above the dashboard / at the top of the employee detail page. Reads
- * `performanceWonOpps` (one row per opportunity, keyed by its actual Close
- * Date) rather than diffing `performanceReports.wonMonth` day-over-day —
- * that cumulative counter only advances on days an Opportunity report is
- * actually uploaded, so with uploads spaced days or weeks apart it produced
- * one lump-sum spike instead of a real daily trend. */
+ * calendar months ending with the *actual* current month, workdays only —
+ * feeds the trend chart shown above the dashboard / at the top of the
+ * employee detail page. Deliberately ignores the dashboard's selected `ym`
+ * filter — it's meant to always show "the last 3 months", not "3 months
+ * ending with whatever month you're browsing". Reads `performanceWonOpps`
+ * (one row per opportunity, keyed by its actual Close Date) rather than
+ * diffing `performanceReports.wonMonth` day-over-day — that cumulative
+ * counter only advances on days an Opportunity report is actually
+ * uploaded, so with uploads spaced days or weeks apart it produced one
+ * lump-sum spike instead of a real daily trend. */
 async function closedWonTrend(
   ctx: QueryCtx,
-  ym: string,
   employeeId: Id<"performanceEmployees"> | undefined
 ): Promise<{ days: WonDay[]; avg: number }> {
-  const { start } = monthBounds(shiftYm(ym, -2));
-  const { end } = monthBounds(ym);
+  const currentYm = defaultYm();
+  const { start } = monthBounds(shiftYm(currentYm, -2));
+  const { end } = monthBounds(currentYm);
 
   let ownerName: string | undefined;
   if (employeeId) {
@@ -596,7 +599,7 @@ export const teamDashboard = query({
     const { total, snaps, unqualified } = await teamTotals(ctx, ym, cache);
     const days = await callDaysList(ctx, ym, undefined, cache);
     const hasCalls = await hasCallData(ctx, ym, undefined, cache);
-    const wonTrend = await closedWonTrend(ctx, ym, undefined);
+    const wonTrend = await closedWonTrend(ctx, undefined);
 
     const vmYm = shiftYm(ym, -1);
     const vjYm = shiftYm(ym, -12);
@@ -716,7 +719,7 @@ export const employeeDetail = query({
 
     const days = await callDaysList(ctx, ym, employeeId, cache);
     const hasCalls = await hasCallData(ctx, ym, employeeId, cache);
-    const wonTrend = await closedWonTrend(ctx, ym, employeeId);
+    const wonTrend = await closedWonTrend(ctx, employeeId);
 
     return {
       employee: { id: employee._id, name: employee.name },
@@ -756,13 +759,19 @@ export interface InteractionDay {
   count: number;
   totalDurationSec: number;
   avgDurationSec: number;
+  // Only set team-wide (no `employeeId` arg) — one row per employee per
+  // day rather than one summed row per day for the whole team.
+  employeeId?: Id<"performanceEmployees">;
+  employeeName?: string;
 }
 
 /** Daily "Interaktionen" evaluation for one month: first/last interaction,
  * count, total and average duration per day, plus the month's grand total.
- * Team-wide (admin) when `employeeId` is omitted, one employee's own
- * interactions otherwise — same admin-or-self visibility rule as
- * `employeeDetail`. */
+ * One employee's own daily rows when `employeeId` is given; team-wide (
+ * admin) otherwise — but team-wide still breaks out one row per employee
+ * per day (not summed across the whole team into a single row), since a
+ * per-day team total conflates dozens of agents' work into one number.
+ * Same admin-or-self visibility rule as `employeeDetail`. */
 export const interactionsMonth = query({
   args: {
     token: v.string(),
@@ -791,12 +800,25 @@ export const interactionsMonth = query({
           .withIndex("by_date", q => q.gte("date", start).lte("date", end))
           .collect();
 
-    const byDate = new Map<
+    const names = employeeId ? undefined : await employeeNameMap(ctx);
+
+    const byKey = new Map<
       string,
-      { count: number; totalSec: number; first: number; last: number }
+      {
+        date: string;
+        employeeId?: Id<"performanceEmployees">;
+        count: number;
+        totalSec: number;
+        first: number;
+        last: number;
+      }
     >();
     for (const r of rows) {
-      const cur = byDate.get(r.date) ?? {
+      if (names && !names.has(r.employeeId)) continue;
+      const key = employeeId ? r.date : `${r.employeeId}\n${r.date}`;
+      const cur = byKey.get(key) ?? {
+        date: r.date,
+        employeeId: employeeId ? undefined : r.employeeId,
         count: 0,
         totalSec: 0,
         first: r.startedAt,
@@ -806,18 +828,26 @@ export const interactionsMonth = query({
       cur.totalSec += r.durationSec;
       if (r.startedAt < cur.first) cur.first = r.startedAt;
       if (r.startedAt > cur.last) cur.last = r.startedAt;
-      byDate.set(r.date, cur);
+      byKey.set(key, cur);
     }
 
-    const days: InteractionDay[] = [...byDate.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([date, d]) => ({
-        date,
+    const days: InteractionDay[] = [...byKey.values()]
+      .sort((a, b) => {
+        const byDate = a.date.localeCompare(b.date);
+        if (byDate !== 0) return byDate;
+        const nameA = a.employeeId ? (names?.get(a.employeeId) ?? "") : "";
+        const nameB = b.employeeId ? (names?.get(b.employeeId) ?? "") : "";
+        return nameA.localeCompare(nameB);
+      })
+      .map(d => ({
+        date: d.date,
         from: d.first,
         to: d.last,
         count: d.count,
         totalDurationSec: d.totalSec,
         avgDurationSec: Math.round(d.totalSec / d.count),
+        employeeId: d.employeeId,
+        employeeName: d.employeeId ? names?.get(d.employeeId) : undefined,
       }));
 
     const count = days.reduce((a, d) => a + d.count, 0);

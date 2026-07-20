@@ -17,6 +17,8 @@ import {
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
+import { TeamTable } from "@/components/performance/TeamTable";
+import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -344,22 +346,9 @@ export default function DashboardOverviewPage() {
         ))}
       </div>
 
-      {data.unqualified.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {t("dashboardUnqualified")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {data.unqualified.map(u => (
-              <Badge key={u.reason} variant="muted">
-                {u.reason} · {u.count}
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <UnqualifiedReasonsChart reasons={data.unqualified} />
+
+      <TeamTable data={data} />
 
       {fc && (
         <p className="text-xs text-muted-foreground">

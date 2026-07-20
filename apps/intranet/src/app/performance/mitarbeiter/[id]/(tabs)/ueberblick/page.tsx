@@ -16,6 +16,7 @@ import {
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
+import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPerformanceToken } from "@/lib/performanceAuth";
@@ -278,22 +279,7 @@ export default function EmployeeOverviewPage() {
         </CardContent>
       </Card>
 
-      {data.reasons.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {t("dashboardUnqualified")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {data.reasons.map(r => (
-              <Badge key={r.reason} variant="muted">
-                {r.reason} · {r.count}
-              </Badge>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+      <UnqualifiedReasonsChart reasons={data.reasons} />
     </div>
   );
 }

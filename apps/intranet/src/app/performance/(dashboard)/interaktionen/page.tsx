@@ -22,7 +22,11 @@ export default function DashboardInteractionsPage() {
     <InteractionsTable
       days={data.days}
       total={data.total}
-      hrefForDate={date => `/performance/interaktionen/${date}`}
+      hrefForRow={row =>
+        row.employeeId
+          ? `/performance/mitarbeiter/${row.employeeId}/interaktionen/${row.date}`
+          : `/performance/interaktionen/${row.date}`
+      }
     />
   );
 }

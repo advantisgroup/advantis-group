@@ -28,8 +28,8 @@ export default function EmployeeInteractionsPage() {
     <InteractionsTable
       days={data.days}
       total={data.total}
-      hrefForDate={date =>
-        `/performance/mitarbeiter/${employeeId}/interaktionen/${date}`
+      hrefForRow={row =>
+        `/performance/mitarbeiter/${employeeId}/interaktionen/${row.date}`
       }
     />
   );
