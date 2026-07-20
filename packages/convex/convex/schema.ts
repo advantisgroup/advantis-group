@@ -806,6 +806,21 @@ export default defineSchema({
     customerNumber: v.optional(v.string()),
   }).index("by_owner", ["owner"]),
 
+  // One row per closed-won opportunity, keyed by its actual Close Date —
+  // powers the daily closed-won trend chart. `wonMonth` on
+  // `performanceReports` is a cumulative month-to-date counter meant to be
+  // diffed across daily uploads, which produced a single lump-sum spike on
+  // whatever day an opp report happened to be uploaded when uploads aren't
+  // daily. This table sidesteps that entirely by reading the real per-
+  // opportunity close date out of the export. Replaced wholesale on every
+  // Opportunity import, same rationale as `performanceRawOpps`.
+  performanceWonOpps: defineTable({
+    owner: v.string(),
+    closeDate: v.string(),
+  })
+    .index("by_owner", ["owner"])
+    .index("by_closeDate", ["closeDate"]),
+
   // One row per employee per Genesys interaction (raw, not aggregated) —
   // imported from the "Interaktionen" export, distinct from the aggregated
   // Genesys agent report `performanceReports.callsToday`/etc. already cover.

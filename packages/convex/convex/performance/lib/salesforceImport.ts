@@ -355,15 +355,21 @@ const OPP_STATE_FIELDS: (keyof MetricFields)[] = [
   "oppsPending",
 ];
 
+export interface WonOpp {
+  owner: string;
+  closeDate: string;
+}
+
 export function aggregateOppReport(
   rows: Record<string, CellValue>[],
   reportDate: Date
-): { snapshots: EmployeeSnapshot[]; raw: RawOpp[] } {
+): { snapshots: EmployeeSnapshot[]; raw: RawOpp[]; wonOpps: WonOpp[] } {
   const curYm = ym(reportDate);
   const reportDateIso = toISODate(reportDate);
   const monthly = new Map<string, Partial<MetricFields>>(); // key: `${owner}\n${ym}`
   const state = new Map<string, Partial<MetricFields>>(); // key: owner
   const raw: RawOpp[] = [];
+  const wonOpps: WonOpp[] = [];
   const monthlyOwnerYm = new Map<string, { owner: string; ym: string }>();
 
   for (const r of rows) {
@@ -389,6 +395,7 @@ export function aggregateOppReport(
       const key = `${owner}\n${closeYm}`;
       monthlyOwnerYm.set(key, { owner, ym: closeYm });
       bump(monthly, key, "wonMonth");
+      wonOpps.push({ owner, closeDate: toISODate(close) });
     }
 
     if (!CLOSED_STAGES.has(stage)) {
@@ -441,5 +448,5 @@ export function aggregateOppReport(
     snapshots.merge(owner, reportDateIso, defaults);
   }
 
-  return { snapshots: snapshots.toArray(), raw };
+  return { snapshots: snapshots.toArray(), raw, wonOpps };
 }
