@@ -368,11 +368,13 @@ async function closedWonTrend(
         .collect();
 
   const perDate = wonDeltasByDate(
-    rows.filter(r => names.has(r.employeeId)).map(r => ({
-      employeeId: r.employeeId,
-      reportDate: r.reportDate,
-      wonMonth: r.wonMonth,
-    }))
+    rows
+      .filter(r => names.has(r.employeeId))
+      .map(r => ({
+        employeeId: r.employeeId,
+        reportDate: r.reportDate,
+        wonMonth: r.wonMonth,
+      }))
   );
 
   const today = todayUTC();

@@ -123,9 +123,7 @@ export function readInteractionsCsv(text: string): InteractionRow[] | null {
       date: toISODate(started),
       durationSec,
       direction:
-        "direction" in colmap
-          ? r[colmap.direction] || undefined
-          : undefined,
+        "direction" in colmap ? r[colmap.direction] || undefined : undefined,
     });
   }
   return rows;

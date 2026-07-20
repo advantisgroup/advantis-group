@@ -208,7 +208,11 @@ interface InteractionInsert {
 async function buildInteractionInserts(
   ctx: ActionCtx,
   rows: InteractionRow[]
-): Promise<{ inserts: InteractionInsert[]; months: string[]; skipped: string[] }> {
+): Promise<{
+  inserts: InteractionInsert[];
+  months: string[];
+  skipped: string[];
+}> {
   const employees: { id: Id<"performanceEmployees">; name: string }[] =
     await ctx.runQuery(internal.performanceImport.getTeamEmployeesWithId, {});
   if (employees.length === 0) {
