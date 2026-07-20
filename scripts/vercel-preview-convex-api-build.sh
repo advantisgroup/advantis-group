@@ -50,9 +50,27 @@ else
   DEPLOY_LOG="$(mktemp)"
   trap 'rm -f "$DEPLOY_LOG"' EXIT
 
-  (cd "$ROOT/packages/convex" && npx convex deploy) | tee "$DEPLOY_LOG"
+  # 2>&1 matters: without --cmd, convex CLI appears to print its "✔
+  # Deployed Convex functions to https://…" confirmation to stderr rather
+  # than stdout (vercel-preview-convex-build.sh never needs this fallback
+  # parse at all — it gets the URL handed to it directly via
+  # --cmd-url-env-var-name — so this divergence never showed up there).
+  # Confirmed against a real Preview build log: the line was visible in
+  # Vercel's build output, which merges both streams, but absent from a
+  # stdout-only tee.
+  (cd "$ROOT/packages/convex" && npx convex deploy) 2>&1 | tee "$DEPLOY_LOG"
 
-  CONVEX_URL="$(grep -oE 'https://[a-zA-Z0-9.-]+\.convex\.cloud' "$DEPLOY_LOG" | tail -1 || true)"
+  # convex CLI's own deploy summary line is what's parsed here. Its
+  # spinner/progress output uses \r redraws and ANSI codes that can leave a
+  # stray control byte inside the domain string, breaking a plain grep even
+  # though the line looks clean once a terminal renders it. Normalize \r to
+  # \n and strip ANSI (CSI + OSC) sequences before matching.
+  CONVEX_URL="$(
+    tr '\r' '\n' < "$DEPLOY_LOG" \
+      | sed -E 's/\x1b\[[0-9;]*[a-zA-Z]//g; s/\x1b\][0-9]+;[^\x07]*\x07//g' \
+      | grep -oE 'https://[a-zA-Z0-9.-]+\.convex\.cloud' \
+      | tail -1 || true
+  )"
   if [ -n "$CONVEX_URL" ]; then
     log "resolved backend: $CONVEX_URL - writing to convexPreviewUrl.generated.ts"
     write_url "$CONVEX_URL"
