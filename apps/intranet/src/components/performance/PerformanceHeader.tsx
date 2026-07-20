@@ -17,6 +17,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface PerformanceHeaderNavItem {
   href: string;
@@ -54,30 +59,53 @@ export function PerformanceHeader({
       <PerformanceWordmark className="shrink-0" />
       <div className="flex-1" />
 
-      {/* Desktop: the full row inline, same as before. */}
-      <div className="hidden items-center gap-2 md:flex">
+      {/* Desktop: grouped into "navigation" vs. "account" clusters, separated
+       * by thin dividers, instead of one flat row of equal-weight buttons. */}
+      <div className="hidden items-center gap-3 md:flex">
         <Link href="/">
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="text-muted-foreground">
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t("backToIntranet")}
           </Button>
         </Link>
-        {navItems.map(item => (
-          <Link key={item.href} href={item.href}>
-            <Button variant="ghost" size="sm">
-              {item.icon && <item.icon className="mr-2 h-4 w-4" />}
-              {item.label}
-            </Button>
-          </Link>
-        ))}
-        <PerformanceAccountMenu />
-        <SettingsMenu />
-        {onExit && (
-          <Button variant="ghost" size="sm" onClick={onExit}>
-            <LogOut className="mr-2 h-4 w-4" />
-            {t("exit")}
-          </Button>
+
+        {navItems.length > 0 && (
+          <>
+            <div className="h-6 w-px bg-border" aria-hidden />
+            <div className="flex items-center gap-0.5 rounded-lg bg-muted/50 p-1">
+              {navItems.map(item => (
+                <Link key={item.href} href={item.href}>
+                  <Button variant="ghost" size="sm" className="h-8">
+                    {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+                    {item.label}
+                  </Button>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
+
+        <div className="h-6 w-px bg-border" aria-hidden />
+
+        <div className="flex items-center gap-1">
+          <PerformanceAccountMenu />
+          <SettingsMenu />
+          {onExit && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onExit}
+                  aria-label={t("exit")}
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t("exit")}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
       </div>
 
       {/* Mobile: collapse every text-label action into one menu; the account
