@@ -135,7 +135,10 @@
   "customRoleNone": "Keine",
   "backToDashboard": "Zurück zum Dashboard",
   "nav": {
-    "group": "Verwaltung",
+    "groupGeneral": "Allgemein",
+    "groupAccess": "Zugriff & Mitglieder",
+    "groupOrganization": "Organisation",
+    "groupSystem": "System",
     "overview": "Übersicht",
     "requests": "Anfragen",
     "invites": "Einladungen",
