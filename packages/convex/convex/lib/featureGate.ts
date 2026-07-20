@@ -1,11 +1,13 @@
 import { ConvexError } from "convex/values";
 
+import { internal } from "../_generated/api";
 import {
   action,
   internalAction,
   internalMutation,
   mutation,
 } from "../_generated/server";
+import type { ActionCtx, MutationCtx, QueryCtx } from "../_generated/server";
 import type { FeatureFlagKey } from "../featureFlags";
 import { isFeatureEnabled } from "../featureFlags";
 
@@ -45,7 +47,8 @@ export function disabledFeatureError(key: FeatureFlagKey): ConvexError<{
  */
 function gate<Builder extends (config: never) => unknown>(
   builder: Builder,
-  featureKey: FeatureFlagKey
+  featureKey: FeatureFlagKey,
+  checkEnabled: (ctx: unknown, featureKey: FeatureFlagKey) => Promise<boolean>
 ): Builder {
   return ((config: Record<string, unknown>) => {
     const { handler, ...rest } = config as {
@@ -54,7 +57,7 @@ function gate<Builder extends (config: never) => unknown>(
     return builder({
       ...rest,
       handler: async (ctx: unknown, ...args: unknown[]) => {
-        if (!(await isFeatureEnabled(ctx as never, featureKey))) {
+        if (!(await checkEnabled(ctx, featureKey))) {
           throw disabledFeatureError(featureKey);
         }
         return handler(ctx, ...args);
@@ -63,11 +66,31 @@ function gate<Builder extends (config: never) => unknown>(
   }) as unknown as Builder;
 }
 
-export const gatedMutation = (featureKey: FeatureFlagKey) =>
-  gate(mutation, featureKey);
-export const gatedAction = (featureKey: FeatureFlagKey) =>
-  gate(action, featureKey);
-export const gatedInternalMutation = (featureKey: FeatureFlagKey) =>
-  gate(internalMutation, featureKey);
-export const gatedInternalAction = (featureKey: FeatureFlagKey) =>
-  gate(internalAction, featureKey);
+/** Queries/mutations have `ctx.db` and can check the flag row directly. */
+const checkEnabledDirect = (
+  ctx: unknown,
+  featureKey: FeatureFlagKey
+): Promise<boolean> =>
+  isFeatureEnabled(ctx as QueryCtx | MutationCtx, featureKey);
+
+/** Actions have no `ctx.db` — they must go through `ctx.runQuery` instead. */
+const checkEnabledViaQuery = (
+  ctx: unknown,
+  featureKey: FeatureFlagKey
+): Promise<boolean> =>
+  (ctx as ActionCtx).runQuery(internal.featureFlags.isEnabledInternal, {
+    key: featureKey,
+  });
+
+export const gatedMutation = (featureKey: FeatureFlagKey): typeof mutation =>
+  gate(mutation, featureKey, checkEnabledDirect);
+export const gatedAction = (featureKey: FeatureFlagKey): typeof action =>
+  gate(action, featureKey, checkEnabledViaQuery);
+export const gatedInternalMutation = (
+  featureKey: FeatureFlagKey
+): typeof internalMutation =>
+  gate(internalMutation, featureKey, checkEnabledDirect);
+export const gatedInternalAction = (
+  featureKey: FeatureFlagKey
+): typeof internalAction =>
+  gate(internalAction, featureKey, checkEnabledViaQuery);

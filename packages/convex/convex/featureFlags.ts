@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
-import { mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { requireAdmin, requireUser } from "./lib/auth";
 import { appendTimeline, insertUpdate } from "./updates";
@@ -66,6 +66,13 @@ export async function isFeatureEnabled(
   const row = await getFlagRow(ctx, key);
   return row?.enabled ?? true;
 }
+
+/** Actions can't touch `ctx.db` directly — this is what `gatedAction`/`gatedInternalAction` call via `ctx.runQuery`. */
+export const isEnabledInternal = internalQuery({
+  args: { key: featureKeyValidator },
+  handler: async (ctx, args) =>
+    isFeatureEnabled(ctx, args.key as FeatureFlagKey),
+});
 
 /** Reactive read for UI gating (FeatureGate) and the admin toggle panel. */
 export const list = query({
