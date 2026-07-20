@@ -166,8 +166,13 @@ function LogRow({
   }
 
   return (
-    <TableRow>
-      <TableCell className={cn("break-all", indent && "pl-8")}>
+    <TableRow className={indent ? "bg-muted/30" : undefined}>
+      <TableCell
+        className={cn(
+          "break-all",
+          indent && "border-l-2 border-l-foreground/30 pl-6"
+        )}
+      >
         <span className="inline-flex items-center gap-1.5">
           {row.filename}
           {legacy && (
