@@ -359,7 +359,15 @@ async function upsertSnapshot(
 }
 
 /** Removes data for excluded owners that may still be lingering from an
- * earlier import. */
+ * earlier import. `aggregateLeadReport`/`aggregateOppReport` already skip
+ * `EXCLUDED_OWNERS` via `isPerson` before a row is ever built, so a normal
+ * import never introduces new excluded-owner data — this is only cleanup
+ * for rows written before that filter existed (or before a name was added
+ * to the set). Exposed as its own on-demand mutation (`purgeExcludedOwners`
+ * below) rather than run automatically on every `applyImport`: it was
+ * unconditionally full-scanning `performanceReports`/`RawLeads`/`RawOpps`/
+ * `WonOpps` on every single upload for a cleanup that, once run, has
+ * nothing left to find. */
 async function purgeExcluded(ctx: MutationCtx): Promise<void> {
   if (EXCLUDED_OWNERS.size === 0) return;
   const employees = await ctx.db.query("performanceEmployees").collect();
@@ -396,6 +404,16 @@ async function purgeExcluded(ctx: MutationCtx): Promise<void> {
       .map(r => ctx.db.delete(r._id))
   );
 }
+
+/** On-demand runner for `purgeExcluded` — invoke manually (e.g. from the
+ * Convex dashboard) after adding a name to `EXCLUDED_OWNERS`, instead of
+ * paying for a full scan of every import table on every routine upload. */
+export const purgeExcludedOwners = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    await purgeExcluded(ctx);
+  },
+});
 
 export const getTeamEmployeeNames = internalQuery({
   args: {},
@@ -556,7 +574,6 @@ export const applyImport = internalMutation({
     } else {
       await ctx.db.insert("performanceUploadLog", logFields);
     }
-    await purgeExcluded(ctx);
     return { rowsImported: args.snapshots.length };
   },
 });

@@ -185,6 +185,18 @@ function LogRow({
             </Tooltip>
           )}
         </span>
+        <button
+          type="button"
+          onClick={() => {
+            void navigator.clipboard.writeText(row._id);
+            toast.success(t("uploadIdCopied"));
+          }}
+          title={t("uploadCopyId")}
+          className="mt-0.5 flex items-center gap-1 break-all font-mono text-[10px] text-muted-foreground/70 hover:text-foreground"
+        >
+          <Copy className="h-3 w-3 shrink-0" />
+          {row._id}
+        </button>
       </TableCell>
       <TableCell>
         {row.reportKind ? (
@@ -209,9 +221,17 @@ function LogRow({
           {row.skippedNames && row.skippedNames.length > 0 && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Info className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <Badge
+                  variant="outline"
+                  className="cursor-default gap-1 font-normal text-muted-foreground"
+                >
+                  <Info className="h-3 w-3 shrink-0" />
+                  {t("uploadSkippedCount", {
+                    count: row.skippedNames.length,
+                  })}
+                </Badge>
               </TooltipTrigger>
-              <TooltipContent>
+              <TooltipContent className="max-w-xs whitespace-normal break-words">
                 {t("uploadSkipped", { names: row.skippedNames.join(", ") })}
               </TooltipContent>
             </Tooltip>
