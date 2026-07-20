@@ -415,6 +415,36 @@ export const purgeExcludedOwners = internalMutation({
   },
 });
 
+/** Diagnostic for the milliseconds-vs-seconds import bug fixed in
+ * `parseDuration` (`callImport.ts`): lists every stored report row whose
+ * loginSec/talkTotalSec/talkAvgSec is still past the physical one-day
+ * ceiling, i.e. was imported before the fix and needs a re-import to pick
+ * up the corrected value. Run manually from the Convex dashboard — not
+ * wired to any client route, since it's a one-off audit, not part of the
+ * app's regular read path. */
+export const findImplausibleDurations = internalQuery({
+  args: {},
+  handler: async (ctx) => {
+    const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
+    const rows = await ctx.db.query("performanceReports").collect();
+    return rows
+      .filter(
+        r =>
+          (r.loginSec ?? 0) > MAX_PLAUSIBLE_DAY_SECONDS ||
+          (r.talkTotalSec ?? 0) > MAX_PLAUSIBLE_DAY_SECONDS ||
+          (r.talkAvgSec ?? 0) > MAX_PLAUSIBLE_DAY_SECONDS
+      )
+      .map(r => ({
+        reportDate: r.reportDate,
+        employeeId: r.employeeId,
+        sourceFile: r.sourceFile,
+        loginSec: r.loginSec,
+        talkTotalSec: r.talkTotalSec,
+        talkAvgSec: r.talkAvgSec,
+      }));
+  },
+});
+
 export const getTeamEmployeeNames = internalQuery({
   args: {},
   handler: async (ctx): Promise<string[]> => {

@@ -100,10 +100,29 @@ const SUMMARY_NAMES = new Set([
 
 // ------------------------------------------------------------ duration parsing
 
+// A duration cell here is always either a single interaction or a single
+// employee's single-day total/average — none of which can physically
+// exceed 24h. Some vendor exports (confirmed against real Genesys
+// call-report CSVs: an agent's avg-handling-time cell times their handled
+// count reproduces the file's own "total" cell exactly once both are
+// read as milliseconds, e.g. 216587.3125 * 64 = 13861588) encode a bare
+// numeric cell in milliseconds instead of seconds, with nothing in the
+// file itself flagging which unit it's in. A value past the physical
+// ceiling can only be milliseconds, so reinterpret it rather than store
+// an impossible day-count of seconds.
+const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
+
+function capMillisToSeconds(seconds: number): number {
+  return seconds > MAX_PLAUSIBLE_DAY_SECONDS
+    ? Math.round(seconds / 1000)
+    : seconds;
+}
+
 /** Parses a cell into seconds, or null. Accepts 'HH:MM:SS', 'MM:SS',
  * '1h 20m 15s', an Excel time value, and decimals (day fraction or
- * seconds). A `Date` is read as a time-of-day via its UTC hour/min/sec —
- * see `types.ts`'s note on `CellValue` for the UTC contract. */
+ * seconds — or milliseconds, see `capMillisToSeconds`). A `Date` is read
+ * as a time-of-day via its UTC hour/min/sec — see `types.ts`'s note on
+ * `CellValue` for the UTC contract. */
 export function parseDuration(v: CellValue): number | null {
   if (v === null || v === undefined || v === "") return null;
   if (v instanceof Date) {
@@ -112,7 +131,7 @@ export function parseDuration(v: CellValue): number | null {
   if (typeof v === "number") {
     // Excel stores times as a day fraction (0.25 = 6 hours).
     if (v > 0 && v < 1) return Math.round(v * 86_400);
-    return Math.round(v); // otherwise interpret as seconds
+    return capMillisToSeconds(Math.round(v));
   }
   const s = String(v).trim();
   if (!s || s === "-" || s === "–") return null;
@@ -129,7 +148,7 @@ export function parseDuration(v: CellValue): number | null {
   }
 
   const f = parseFloat(s.replace(",", "."));
-  return Number.isFinite(f) ? Math.round(f) : null;
+  return Number.isFinite(f) ? capMillisToSeconds(Math.round(f)) : null;
 }
 
 /** Seconds as H:MM:SS or M:SS. */
