@@ -180,6 +180,7 @@ export default function DashboardCallsPage() {
               ]}
               yTickFormatter={(v: number) => fmtDuration(v)}
               tooltipFormatter={(value: number) => fmtDuration(value)}
+              yScale="log"
             />
           </CardContent>
         </Card>
