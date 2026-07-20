@@ -117,15 +117,6 @@ export function ClosedWonTrendChart({
               allowDecimals={false}
             />
             <Tooltip {...tooltipStyle} />
-            <ReferenceLine
-              y={avg}
-              stroke="var(--chart-fg)"
-              strokeWidth={1.5}
-              strokeDasharray="6 3"
-              label={makeAvgLabel(
-                t("wonTrendAvgLabel", { value: fmtNum(avg) })
-              )}
-            />
             <Bar
               dataKey="won"
               name={t("dashboardMetricWon")}
@@ -139,6 +130,18 @@ export function ClosedWonTrendChart({
                 />
               ))}
             </Bar>
+            {/* Declared after Bar so it paints on top — SVG stacks by
+                document order, and a line declared before the bars was
+                getting covered by every bar taller than the average. */}
+            <ReferenceLine
+              y={avg}
+              stroke="var(--chart-fg)"
+              strokeWidth={1.5}
+              strokeDasharray="6 3"
+              label={makeAvgLabel(
+                t("wonTrendAvgLabel", { value: fmtNum(avg) })
+              )}
+            />
           </BarChart>
         </ResponsiveContainer>
         <p className="mt-2 text-xs text-muted-foreground">
