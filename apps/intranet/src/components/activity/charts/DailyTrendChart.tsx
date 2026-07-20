@@ -30,7 +30,7 @@ export function DailyTrendChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
         <CartesianGrid stroke={CHART.grid} vertical={false} />
         <XAxis
           dataKey="label"
@@ -45,7 +45,7 @@ export function DailyTrendChart({
           tickLine={false}
           axisLine={false}
           fontSize={11}
-          width={36}
+          width={40}
           unit="h"
         />
         <Tooltip {...tooltipStyle} />

@@ -33,7 +33,7 @@ export function HourlyStateChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
-      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
         <CartesianGrid stroke={CHART.grid} vertical={false} />
         <XAxis
           dataKey="hour"
@@ -49,7 +49,7 @@ export function HourlyStateChart({
           tickLine={false}
           axisLine={false}
           fontSize={11}
-          width={36}
+          width={40}
           unit="m"
         />
         <Tooltip

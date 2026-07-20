@@ -29,7 +29,7 @@ export function IntradayChart({
     <ResponsiveContainer width="100%" height={200}>
       <AreaChart
         data={data}
-        margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+        margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
       >
         <defs>
           <linearGradient id="activeFill" x1="0" y1="0" x2="0" y2="1">
@@ -51,7 +51,7 @@ export function IntradayChart({
           tickLine={false}
           axisLine={false}
           fontSize={11}
-          width={36}
+          width={40}
           unit="%"
           domain={[0, 100]}
         />
