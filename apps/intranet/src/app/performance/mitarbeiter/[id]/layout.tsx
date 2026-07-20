@@ -8,6 +8,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
+  Activity,
   LayoutDashboard,
   ListTodo,
   Phone,
@@ -17,6 +18,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
+import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
@@ -90,6 +92,12 @@ function EmployeeChrome({
       icon: ListTodo,
       count: data?.topics.length,
     },
+    {
+      value: "interaktionen",
+      href: `/performance/mitarbeiter/${employeeId}/interaktionen`,
+      label: t("tabInteractions"),
+      icon: Activity,
+    },
   ];
 
   const navItems = [
@@ -110,6 +118,13 @@ function EmployeeChrome({
       />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+        {data && (
+          <ClosedWonTrendChart
+            days={data.wonTrend.days}
+            avg={data.wonTrend.avg}
+          />
+        )}
+
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-xl font-semibold">{data?.employee.name}</h1>
           <Select

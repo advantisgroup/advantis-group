@@ -29,6 +29,10 @@ import {
   type CallRow,
 } from "./performance/lib/callImport";
 import {
+  readInteractionsCsv,
+  type InteractionRow,
+} from "./performance/lib/interactionImport";
+import {
   aggregateLeadReport,
   aggregateOppReport,
   readSalesforceExport,
@@ -42,7 +46,7 @@ import {
   type SnapshotFields,
 } from "./performance/lib/types";
 import { normalizeZipLocalHeaders } from "./performance/lib/xlsxZip";
-import { toISODate } from "./performance/lib/workdays";
+import { toISODate, todayUTC } from "./performance/lib/workdays";
 import { assertServerKey, parseAggregatedTemplate } from "./performanceImport";
 
 // Safely under Convex's 8192-element array-argument limit, with headroom
@@ -187,6 +191,96 @@ async function buildCallSnapshots(
   return { snapshots, skipped };
 }
 
+interface InteractionInsert {
+  employeeId: Id<"performanceEmployees">;
+  date: string;
+  startedAt: number;
+  durationSec: number;
+  direction?: string;
+}
+
+/** Matches each interaction's `Benutzer` name(s) against the team roster
+ * and keeps only those already active in the Performance Dashboard for the
+ * interaction's own calendar month — per the import rule: a raw Genesys
+ * export otherwise pulls in every agent who touched the queue, not just
+ * the sales team this feature tracks. A multi-agent interaction (transfer/
+ * conference) produces one insert per matched, active employee. */
+async function buildInteractionInserts(
+  ctx: ActionCtx,
+  rows: InteractionRow[]
+): Promise<{ inserts: InteractionInsert[]; months: string[]; skipped: string[] }> {
+  const employees: { id: Id<"performanceEmployees">; name: string }[] =
+    await ctx.runQuery(internal.performanceImport.getTeamEmployeesWithId, {});
+  if (employees.length === 0) {
+    throw new ConvexError({
+      code: "no_employees",
+      message:
+        "Es sind noch keine Mitarbeiter vorhanden. Bitte zuerst den Lead- oder Opportunity-Report hochladen.",
+    });
+  }
+  const known = employees.map(e => e.name);
+  const idByName = new Map(employees.map(e => [e.name, e.id]));
+
+  const months = [...new Set(rows.map(r => r.date.slice(0, 7)))];
+  const activeByMonth: Record<string, Id<"performanceEmployees">[]> =
+    await ctx.runQuery(internal.performanceImport.getActiveEmployeeIdsByMonth, {
+      months,
+    });
+  const activeSets = new Map(
+    Object.entries(activeByMonth).map(([ym, ids]) => [ym, new Set(ids)])
+  );
+
+  const inserts: InteractionInsert[] = [];
+  const skipped = new Set<string>();
+  for (const row of rows) {
+    const active = activeSets.get(row.date.slice(0, 7));
+    for (const rawName of row.names) {
+      const matched = matchEmployee(rawName, known);
+      if (!matched) {
+        skipped.add(rawName);
+        continue;
+      }
+      const employeeId = idByName.get(matched)!;
+      if (!active?.has(employeeId)) continue;
+      inserts.push({
+        employeeId,
+        date: row.date,
+        startedAt: row.startedAt,
+        durationSec: row.durationSec,
+        direction: row.direction,
+      });
+    }
+  }
+  return { inserts, months, skipped: [...skipped] };
+}
+
+/** Wholesale-replaces every month the upload covers, then writes the new
+ * rows in bounded-size chunks (see `RAW_CHUNK_SIZE`) — same clear-then-
+ * insert shape as `writeRawLeads`/`writeRawOpps`. */
+async function writeInteractions(
+  ctx: ActionCtx,
+  inserts: InteractionInsert[],
+  months: string[],
+  sourceFile: string
+): Promise<void> {
+  await runSafely("clearInteractionsForMonths", () =>
+    ctx.runMutation(internal.performanceImport.clearInteractionsForMonths, {
+      months,
+    })
+  );
+  const uploadedAt = Date.now();
+  for (let i = 0; i < inserts.length; i += RAW_CHUNK_SIZE) {
+    const chunk = inserts.slice(i, i + RAW_CHUNK_SIZE);
+    await runSafely("insertInteractionsChunk", () =>
+      ctx.runMutation(internal.performanceImport.insertInteractionsChunk, {
+        rows: chunk,
+        sourceFile,
+        uploadedAt,
+      })
+    );
+  }
+}
+
 export type ImportResult =
   | { status: "ok"; rowsImported: number; skipped?: string[] }
   | { status: "empty"; reportDate: string }
@@ -242,33 +336,64 @@ async function processReport(
   if (extension === ".csv") {
     const text = stripBom(await blob.text());
     const detected = readCallCsv(text);
-    if (!detected) {
-      throw new ConvexError({
-        code: "unrecognized_report",
-        message:
-          "CSV nicht erkannt. Erwartet wird ein Call-Report mit Agentenname und Call-Spalten.",
+    if (detected) {
+      if (detected.rows.length === 0) {
+        // A report with zero activity (e.g. a weekend): ignored entirely,
+        // no data, no upload-log entry.
+        return { status: "empty", reportDate: toISODate(detected.reportDate) };
+      }
+      const { snapshots, skipped } = await buildCallSnapshots(
+        ctx,
+        detected.rows
+      );
+      const result = await runApplyImport(ctx, {
+        snapshots,
+        sourceFile: filename,
+        storageId,
+        contentHash,
+        reportKind: "call",
+        reportDate: toISODate(detected.reportDate),
+        sourceRowCount: detected.rows.length,
+        skippedNames: skipped,
+        fileSize,
+        batchId,
+        replaceLogId,
       });
+      return { status: "ok", rowsImported: result.rowsImported, skipped };
     }
-    if (detected.rows.length === 0) {
-      // A report with zero activity (e.g. a weekend): ignored entirely,
-      // no data, no upload-log entry.
-      return { status: "empty", reportDate: toISODate(detected.reportDate) };
+
+    const interactionRows = readInteractionsCsv(text);
+    if (interactionRows) {
+      if (interactionRows.length === 0) {
+        // Recognized, but no employee-attributable interaction at all.
+        return { status: "empty", reportDate: toISODate(todayUTC()) };
+      }
+      const { inserts, months, skipped } = await buildInteractionInserts(
+        ctx,
+        interactionRows
+      );
+      await writeInteractions(ctx, inserts, months, filename);
+      await runSafely("logInteractionsImport", () =>
+        ctx.runMutation(internal.performanceImport.logInteractionsImport, {
+          sourceFile: filename,
+          storageId,
+          contentHash,
+          sourceRowCount: interactionRows.length,
+          skippedNames: skipped,
+          fileSize,
+          batchId,
+          rowsImported: inserts.length,
+          replaceLogId,
+        })
+      );
+      return { status: "ok", rowsImported: inserts.length, skipped };
     }
-    const { snapshots, skipped } = await buildCallSnapshots(ctx, detected.rows);
-    const result = await runApplyImport(ctx, {
-      snapshots,
-      sourceFile: filename,
-      storageId,
-      contentHash,
-      reportKind: "call",
-      reportDate: toISODate(detected.reportDate),
-      sourceRowCount: detected.rows.length,
-      skippedNames: skipped,
-      fileSize,
-      batchId,
-      replaceLogId,
+
+    throw new ConvexError({
+      code: "unrecognized_report",
+      message:
+        "CSV nicht erkannt. Erwartet wird ein Call-Report mit Agentenname und Call-Spalten, oder ein Interaktionen-Export.",
     });
-    return { status: "ok", rowsImported: result.rowsImported, skipped };
   }
 
   const bytes = new Uint8Array(await blob.arrayBuffer());

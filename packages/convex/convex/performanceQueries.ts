@@ -29,6 +29,7 @@ import {
   performanceMarks,
   shiftYm,
   teamAverages,
+  wonDeltasByDate,
   type BadgeResult,
   type Snapshot,
 } from "./performance/lib/kpi";
@@ -38,7 +39,12 @@ import {
   METRIC_KEYS,
   type MetricFields,
 } from "./performance/lib/types";
-import { parseISODate, toISODate } from "./performance/lib/workdays";
+import {
+  isWorkday,
+  parseISODate,
+  todayUTC,
+  toISODate,
+} from "./performance/lib/workdays";
 import { resolveActiveSession } from "./performanceAuth";
 
 // ------------------------------------------------------------------ helpers
@@ -325,6 +331,69 @@ async function hasCallData(
   return [...calls.values()].some(check);
 }
 
+export interface WonDay {
+  date: string;
+  won: number;
+}
+
+/** Daily closed-won series (team-wide, or one employee) for the trailing 3
+ * calendar months ending with `ym`, workdays only — feeds the trend chart
+ * shown above the dashboard / at the top of the employee detail page. Not
+ * routed through `reportsInRange`'s per-`ym` cache since it spans 3 months
+ * at once via a single ranged index scan instead of one query per month. */
+async function closedWonTrend(
+  ctx: QueryCtx,
+  ym: string,
+  employeeId: Id<"performanceEmployees"> | undefined
+): Promise<{ days: WonDay[]; avg: number }> {
+  const names = await employeeNameMap(ctx);
+  const { start } = monthBounds(shiftYm(ym, -2));
+  const { end } = monthBounds(ym);
+
+  const rows = employeeId
+    ? await ctx.db
+        .query("performanceReports")
+        .withIndex("by_employee_date", q =>
+          q
+            .eq("employeeId", employeeId)
+            .gte("reportDate", start)
+            .lte("reportDate", end)
+        )
+        .collect()
+    : await ctx.db
+        .query("performanceReports")
+        .withIndex("by_reportDate", q =>
+          q.gte("reportDate", start).lte("reportDate", end)
+        )
+        .collect();
+
+  const perDate = wonDeltasByDate(
+    rows.filter(r => names.has(r.employeeId)).map(r => ({
+      employeeId: r.employeeId,
+      reportDate: r.reportDate,
+      wonMonth: r.wonMonth,
+    }))
+  );
+
+  const today = todayUTC();
+  const endDate = parseISODate(end);
+  const last = endDate.getTime() < today.getTime() ? endDate : today;
+  const days: WonDay[] = [];
+  for (
+    let d = parseISODate(start);
+    d.getTime() <= last.getTime();
+    d = new Date(d.getTime() + 86_400_000)
+  ) {
+    if (!isWorkday(d)) continue;
+    const iso = toISODate(d);
+    days.push({ date: iso, won: perDate.get(iso) ?? 0 });
+  }
+  const avg = days.length
+    ? days.reduce((a, d) => a + d.won, 0) / days.length
+    : 0;
+  return { days, avg: Math.round(avg * 100) / 100 };
+}
+
 /** All months that have at least one report — the month selector's
  * options. */
 async function monthsWithData(
@@ -530,6 +599,7 @@ export const teamDashboard = query({
     const { total, snaps, unqualified } = await teamTotals(ctx, ym, cache);
     const days = await callDaysList(ctx, ym, undefined, cache);
     const hasCalls = await hasCallData(ctx, ym, undefined, cache);
+    const wonTrend = await closedWonTrend(ctx, ym, undefined);
 
     const vmYm = shiftYm(ym, -1);
     const vjYm = shiftYm(ym, -12);
@@ -560,6 +630,7 @@ export const teamDashboard = query({
       unqualified,
       days,
       hasCalls,
+      wonTrend,
       badgeCounts,
       marks: performanceMarks(snaps),
       monthDone: monthCompleted(ym),
@@ -648,6 +719,7 @@ export const employeeDetail = query({
 
     const days = await callDaysList(ctx, ym, employeeId, cache);
     const hasCalls = await hasCallData(ctx, ym, employeeId, cache);
+    const wonTrend = await closedWonTrend(ctx, ym, employeeId);
 
     return {
       employee: { id: employee._id, name: employee.name },
@@ -668,11 +740,100 @@ export const employeeDetail = query({
       nBadges,
       days,
       hasCalls,
+      wonTrend,
       dVm: computeDeltas(cur, vm),
       dVj: computeDeltas(cur, vj),
       vm,
       vj,
       monthDone: monthCompleted(ym),
+    };
+  },
+});
+
+// ------------------------------------------------------------- interactions
+
+export interface InteractionDay {
+  date: string;
+  from: number;
+  to: number;
+  count: number;
+  totalDurationSec: number;
+  avgDurationSec: number;
+}
+
+/** Daily "Interaktionen" evaluation for one month: first/last interaction,
+ * count, total and average duration per day, plus the month's grand total.
+ * Team-wide (admin) when `employeeId` is omitted, one employee's own
+ * interactions otherwise — same admin-or-self visibility rule as
+ * `employeeDetail`. */
+export const interactionsMonth = query({
+  args: {
+    token: v.string(),
+    ym: v.optional(v.string()),
+    employeeId: v.optional(v.id("performanceEmployees")),
+  },
+  handler: async (ctx, { token, ym: ymArg, employeeId }) => {
+    const login = await requireSession(ctx, token);
+    if (employeeId) {
+      requireCanView(login, employeeId);
+    } else {
+      requireAdmin(login);
+    }
+
+    const ym = ymArg ?? defaultYm();
+    const { start, end } = monthBounds(ym);
+    const rows = employeeId
+      ? await ctx.db
+          .query("performanceInteractions")
+          .withIndex("by_employee_date", q =>
+            q.eq("employeeId", employeeId).gte("date", start).lte("date", end)
+          )
+          .collect()
+      : await ctx.db
+          .query("performanceInteractions")
+          .withIndex("by_date", q => q.gte("date", start).lte("date", end))
+          .collect();
+
+    const byDate = new Map<
+      string,
+      { count: number; totalSec: number; first: number; last: number }
+    >();
+    for (const r of rows) {
+      const cur = byDate.get(r.date) ?? {
+        count: 0,
+        totalSec: 0,
+        first: r.startedAt,
+        last: r.startedAt,
+      };
+      cur.count++;
+      cur.totalSec += r.durationSec;
+      if (r.startedAt < cur.first) cur.first = r.startedAt;
+      if (r.startedAt > cur.last) cur.last = r.startedAt;
+      byDate.set(r.date, cur);
+    }
+
+    const days: InteractionDay[] = [...byDate.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, d]) => ({
+        date,
+        from: d.first,
+        to: d.last,
+        count: d.count,
+        totalDurationSec: d.totalSec,
+        avgDurationSec: Math.round(d.totalSec / d.count),
+      }));
+
+    const count = days.reduce((a, d) => a + d.count, 0);
+    const totalDurationSec = days.reduce((a, d) => a + d.totalDurationSec, 0);
+
+    return {
+      ym,
+      days,
+      total: {
+        count,
+        totalDurationSec,
+        avgDurationSec: count ? Math.round(totalDurationSec / count) : 0,
+      },
     };
   },
 });

@@ -71,7 +71,7 @@ const CALL_ALIASES: Record<string, string[]> = {
 
 /** Header normalization: lowercase, umlauts folded, non-alphanumerics
  * stripped. */
-function normHeader(v: CellValue): string {
+export function normHeader(v: CellValue): string {
   if (v === null || v === undefined) return "";
   let s = String(v).trim().toLowerCase();
   for (const [a, b] of [
@@ -389,7 +389,7 @@ export function matchEmployee(
 
 // ------------------------------------------------------------- CSV reports
 
-function sniffDelimiter(sample: string): string {
+export function sniffDelimiter(sample: string): string {
   for (const d of [";", ",", "\t"]) {
     if (sample.split(d).length - 1 >= 3) return d;
   }
@@ -399,7 +399,7 @@ function sniffDelimiter(sample: string): string {
 /** Minimal RFC4180-ish CSV parser (quoted fields, "" escaping, CRLF/LF) —
  * intentionally hand-rolled rather than a Node CSV library, so this module
  * has no dependency that wouldn't run in Convex's isolate. */
-function parseCsvText(text: string, delimiter: string): string[][] {
+export function parseCsvText(text: string, delimiter: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
   let field = "";

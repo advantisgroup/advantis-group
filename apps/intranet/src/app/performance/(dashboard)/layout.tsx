@@ -6,10 +6,18 @@ import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { Download, LayoutDashboard, Phone, Upload, Users } from "lucide-react";
+import {
+  Activity,
+  Download,
+  LayoutDashboard,
+  Phone,
+  Upload,
+  Users,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
+import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
@@ -74,6 +82,12 @@ function DashboardChrome({
       label: t("tabTeam"),
       icon: Users,
       count: data?.snaps.length,
+    },
+    {
+      value: "interaktionen",
+      href: "/performance/interaktionen",
+      label: t("tabInteractions"),
+      icon: Activity,
     },
   ];
 
@@ -146,6 +160,13 @@ function DashboardChrome({
             </Button>
           )}
         </div>
+
+        {data && (
+          <ClosedWonTrendChart
+            days={data.wonTrend.days}
+            avg={data.wonTrend.avg}
+          />
+        )}
 
         <Card className="overflow-hidden">
           <div className="px-2">
