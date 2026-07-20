@@ -29,7 +29,6 @@ import {
   performanceMarks,
   shiftYm,
   teamAverages,
-  wonDeltasByDate,
   type BadgeResult,
   type Snapshot,
 } from "./performance/lib/kpi";
@@ -338,44 +337,40 @@ export interface WonDay {
 
 /** Daily closed-won series (team-wide, or one employee) for the trailing 3
  * calendar months ending with `ym`, workdays only — feeds the trend chart
- * shown above the dashboard / at the top of the employee detail page. Not
- * routed through `reportsInRange`'s per-`ym` cache since it spans 3 months
- * at once via a single ranged index scan instead of one query per month. */
+ * shown above the dashboard / at the top of the employee detail page. Reads
+ * `performanceWonOpps` (one row per opportunity, keyed by its actual Close
+ * Date) rather than diffing `performanceReports.wonMonth` day-over-day —
+ * that cumulative counter only advances on days an Opportunity report is
+ * actually uploaded, so with uploads spaced days or weeks apart it produced
+ * one lump-sum spike instead of a real daily trend. */
 async function closedWonTrend(
   ctx: QueryCtx,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined
 ): Promise<{ days: WonDay[]; avg: number }> {
-  const names = await employeeNameMap(ctx);
   const { start } = monthBounds(shiftYm(ym, -2));
   const { end } = monthBounds(ym);
 
-  const rows = employeeId
-    ? await ctx.db
-        .query("performanceReports")
-        .withIndex("by_employee_date", q =>
-          q
-            .eq("employeeId", employeeId)
-            .gte("reportDate", start)
-            .lte("reportDate", end)
-        )
-        .collect()
-    : await ctx.db
-        .query("performanceReports")
-        .withIndex("by_reportDate", q =>
-          q.gte("reportDate", start).lte("reportDate", end)
-        )
-        .collect();
+  let ownerName: string | undefined;
+  if (employeeId) {
+    const employee = await ctx.db.get(employeeId);
+    if (!employee) return { days: [], avg: 0 };
+    ownerName = employee.name;
+  }
 
-  const perDate = wonDeltasByDate(
-    rows
-      .filter(r => names.has(r.employeeId))
-      .map(r => ({
-        employeeId: r.employeeId,
-        reportDate: r.reportDate,
-        wonMonth: r.wonMonth,
-      }))
-  );
+  const rows = await ctx.db
+    .query("performanceWonOpps")
+    .withIndex("by_closeDate", q =>
+      q.gte("closeDate", start).lte("closeDate", end)
+    )
+    .collect();
+
+  const perDate = new Map<string, number>();
+  for (const r of rows) {
+    if (EXCLUDED_OWNERS.has(r.owner.toLowerCase())) continue;
+    if (ownerName !== undefined && r.owner !== ownerName) continue;
+    perDate.set(r.closeDate, (perDate.get(r.closeDate) ?? 0) + 1);
+  }
 
   const today = todayUTC();
   const endDate = parseISODate(end);
@@ -831,6 +826,73 @@ export const interactionsMonth = query({
     return {
       ym,
       days,
+      total: {
+        count,
+        totalDurationSec,
+        avgDurationSec: count ? Math.round(totalDurationSec / count) : 0,
+      },
+    };
+  },
+});
+
+export interface InteractionRecord {
+  id: Id<"performanceInteractions">;
+  employeeId: Id<"performanceEmployees">;
+  employeeName: string;
+  startedAt: number;
+  durationSec: number;
+  direction: string | undefined;
+}
+
+/** Every individual interaction on one day — the drill-down behind an
+ * `interactionsMonth` day row. Team-wide (admin) when `employeeId` is
+ * omitted, one employee's own interactions otherwise — same
+ * admin-or-self visibility rule as `employeeDetail`. */
+export const interactionsDayDetail = query({
+  args: {
+    token: v.string(),
+    date: v.string(),
+    employeeId: v.optional(v.id("performanceEmployees")),
+  },
+  handler: async (ctx, { token, date, employeeId }) => {
+    const login = await requireSession(ctx, token);
+    if (employeeId) {
+      requireCanView(login, employeeId);
+    } else {
+      requireAdmin(login);
+    }
+
+    const rows = employeeId
+      ? await ctx.db
+          .query("performanceInteractions")
+          .withIndex("by_employee_date", q =>
+            q.eq("employeeId", employeeId).eq("date", date)
+          )
+          .collect()
+      : await ctx.db
+          .query("performanceInteractions")
+          .withIndex("by_date", q => q.eq("date", date))
+          .collect();
+
+    const names = await employeeNameMap(ctx);
+    const records: InteractionRecord[] = rows
+      .filter(r => names.has(r.employeeId))
+      .map(r => ({
+        id: r._id,
+        employeeId: r.employeeId,
+        employeeName: names.get(r.employeeId)!,
+        startedAt: r.startedAt,
+        durationSec: r.durationSec,
+        direction: r.direction,
+      }))
+      .sort((a, b) => a.startedAt - b.startedAt);
+
+    const count = records.length;
+    const totalDurationSec = records.reduce((a, r) => a + r.durationSec, 0);
+
+    return {
+      date,
+      records,
       total: {
         count,
         totalDurationSec,

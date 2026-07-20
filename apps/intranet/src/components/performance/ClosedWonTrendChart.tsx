@@ -51,7 +51,7 @@ export function ClosedWonTrendChart({
         <ResponsiveContainer width="100%" height={220}>
           <BarChart
             data={data}
-            margin={{ top: 8, right: 8, bottom: 0, left: -16 }}
+            margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
           >
             <CartesianGrid stroke={CHART.grid} vertical={false} />
             <XAxis
@@ -67,7 +67,7 @@ export function ClosedWonTrendChart({
               tickLine={false}
               axisLine={false}
               fontSize={11}
-              width={28}
+              width={34}
               allowDecimals={false}
             />
             <Tooltip {...tooltipStyle} />
@@ -85,6 +85,7 @@ export function ClosedWonTrendChart({
             <Bar
               dataKey="won"
               name={t("dashboardMetricWon")}
+              fill={CHART.active}
               radius={[3, 3, 0, 0]}
             >
               {data.map(d => (

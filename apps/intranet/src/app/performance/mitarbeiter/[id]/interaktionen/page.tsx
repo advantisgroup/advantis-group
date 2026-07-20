@@ -24,5 +24,13 @@ export default function EmployeeInteractionsPage() {
 
   if (!data) return <PerformanceContentSkeleton />;
 
-  return <InteractionsTable days={data.days} total={data.total} />;
+  return (
+    <InteractionsTable
+      days={data.days}
+      total={data.total}
+      hrefForDate={date =>
+        `/performance/mitarbeiter/${employeeId}/interaktionen/${date}`
+      }
+    />
+  );
 }

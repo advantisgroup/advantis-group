@@ -38,6 +38,7 @@ import {
   readSalesforceExport,
   type RawLead,
   type RawOpp,
+  type WonOpp,
 } from "./performance/lib/salesforceImport";
 import {
   type EmployeeSnapshot,
@@ -134,6 +135,20 @@ async function writeRawOpps(ctx: ActionCtx, raw: RawOpp[]): Promise<void> {
     const chunk = raw.slice(i, i + RAW_CHUNK_SIZE);
     await runSafely("insertRawOppsChunk", () =>
       ctx.runMutation(internal.performanceImport.insertRawOppsChunk, {
+        rows: chunk,
+      })
+    );
+  }
+}
+
+async function writeWonOpps(ctx: ActionCtx, wonOpps: WonOpp[]): Promise<void> {
+  await runSafely("clearWonOpps", () =>
+    ctx.runMutation(internal.performanceImport.clearWonOpps, {})
+  );
+  for (let i = 0; i < wonOpps.length; i += RAW_CHUNK_SIZE) {
+    const chunk = wonOpps.slice(i, i + RAW_CHUNK_SIZE);
+    await runSafely("insertWonOppsChunk", () =>
+      ctx.runMutation(internal.performanceImport.insertWonOppsChunk, {
         rows: chunk,
       })
     );
@@ -425,7 +440,10 @@ async function processReport(
       await writeRawLeads(ctx, raw);
       return { status: "ok", rowsImported: result.rowsImported };
     }
-    const { snapshots, raw } = aggregateOppReport(sf.rows, sf.reportDate);
+    const { snapshots, raw, wonOpps } = aggregateOppReport(
+      sf.rows,
+      sf.reportDate
+    );
     const result = await runApplyImport(ctx, {
       snapshots,
       sourceFile: filename,
@@ -439,6 +457,7 @@ async function processReport(
       replaceLogId,
     });
     await writeRawOpps(ctx, raw);
+    await writeWonOpps(ctx, wonOpps);
     return { status: "ok", rowsImported: result.rowsImported };
   }
 

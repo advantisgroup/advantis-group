@@ -5,29 +5,66 @@ import { useParams } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import {
-  Award,
-  Phone,
-  Target,
-  TrendingDown,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { Award, Phone, Target, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { MetricTile } from "@/components/performance/MetricTile";
-import { fmtNum, fmtPct } from "@/components/performance/PerformanceFormat";
+import {
+  DeltaTriple,
+  fmtNum,
+  fmtPct,
+} from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPerformanceToken } from "@/lib/performanceAuth";
+import { cn } from "@/lib/utils";
 
 const BADGE_ICONS: Record<string, string> = {
   hitrate: "🎯",
   won: "🏆",
   calls: "📞",
 };
+
+function PrimaryKpiCard({
+  accent,
+  label,
+  value,
+  subtitle,
+  dVm,
+  dVj,
+  dTeam,
+}: {
+  accent: "emerald" | "purple" | "slate" | "amber";
+  label: string;
+  value: string;
+  subtitle?: string;
+  dVm?: number;
+  dVj?: number;
+  dTeam?: number;
+}) {
+  const border = {
+    emerald: "border-t-emerald-500",
+    purple: "border-t-purple-500",
+    slate: "border-t-foreground/60",
+    amber: "border-t-amber-500",
+  }[accent];
+  return (
+    <Card className={cn("border-t-2", border)}>
+      <CardContent className="flex flex-col gap-1.5 p-4">
+        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {label}
+        </span>
+        <span className="text-3xl font-semibold tabular-nums">{value}</span>
+        {subtitle && (
+          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        )}
+        <DeltaTriple dVm={dVm} dVj={dVj} dTeam={dTeam} />
+      </CardContent>
+    </Card>
+  );
+}
 
 type Signal = {
   key: string;
@@ -103,9 +140,70 @@ export default function EmployeeOverviewPage() {
     );
   }
 
+  const fc = data.cur.fc;
+
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <PrimaryKpiCard
+          accent="emerald"
+          label={t("dashboardWorkableRate")}
+          value={fmtPct(data.cur.workableRate)}
+          subtitle={`${fmtNum(data.cur.workableCreated)} / ${fmtNum(data.cur.leadsCreated)}`}
+          dVm={data.dVm.workableRate}
+          dVj={data.dVj.workableRate}
+          dTeam={data.dTeam.workableRate}
+        />
+        <PrimaryKpiCard
+          accent="purple"
+          label={t("dashboardMetricHitrate")}
+          value={fmtPct(data.cur.hitrate)}
+          subtitle={`${fmtNum(data.cur.wonMonth)} / ${fmtNum(data.cur.workableCreated)}`}
+          dVm={data.dVm.hitrate}
+          dVj={data.dVj.hitrate}
+          dTeam={data.dTeam.hitrate}
+        />
+        <PrimaryKpiCard
+          accent="slate"
+          label={
+            fc?.isActual
+              ? t("dashboardForecastTitleDone")
+              : t("dashboardForecastTitle")
+          }
+          value={fmtNum(data.cur.fc1)}
+          subtitle={
+            fc?.isActual
+              ? t("dashboardForecastSubtitleDone")
+              : fc
+                ? t("dashboardForecastSubtitle", {
+                    won: fmtNum(data.cur.wonMonth),
+                    remaining: fc.remaining,
+                  })
+                : undefined
+          }
+          dVm={data.dVm.fc1}
+          dVj={data.dVj.fc1}
+          dTeam={data.dTeam.fc1}
+        />
+        <PrimaryKpiCard
+          accent="amber"
+          label={t("dashboardWonPerWorkday")}
+          value={fmtNum(data.cur.wonPerDay)}
+          subtitle={
+            fc
+              ? t("dashboardWonPerWorkdaySubtitle", {
+                  elapsed: fc.elapsed,
+                  total: fc.total,
+                })
+              : undefined
+          }
+          dVm={data.dVm.wonPerDay}
+          dVj={data.dVj.wonPerDay}
+          dTeam={data.dTeam.wonPerDay}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <MetricTile
           icon={Users}
           label={t("dashboardMetricLeads")}
@@ -119,21 +217,10 @@ export default function EmployeeOverviewPage() {
           delta={data.dVm.workableCreated}
         />
         <MetricTile
-          icon={TrendingUp}
-          label={t("dashboardMetricHitrate")}
-          value={fmtPct(data.cur.hitrate)}
-          delta={data.dVm.hitrate}
-        />
-        <MetricTile
           icon={Award}
           label={t("dashboardMetricWon")}
           value={fmtNum(data.cur.wonMonth)}
           delta={data.dVm.wonMonth}
-        />
-        <MetricTile
-          icon={TrendingDown}
-          label={t("dashboardMetricForecast")}
-          value={fmtNum(data.cur.fc1)}
         />
         <MetricTile
           icon={Phone}

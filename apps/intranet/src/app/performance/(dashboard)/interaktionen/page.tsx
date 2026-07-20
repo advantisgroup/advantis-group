@@ -18,5 +18,11 @@ export default function DashboardInteractionsPage() {
 
   if (!data) return <PerformanceContentSkeleton />;
 
-  return <InteractionsTable days={data.days} total={data.total} />;
+  return (
+    <InteractionsTable
+      days={data.days}
+      total={data.total}
+      hrefForDate={date => `/performance/interaktionen/${date}`}
+    />
+  );
 }

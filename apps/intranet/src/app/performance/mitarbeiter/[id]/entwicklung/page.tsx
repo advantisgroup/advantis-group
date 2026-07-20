@@ -20,10 +20,22 @@ import {
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
 import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
-import { fmtYm } from "@/components/performance/PerformanceFormat";
+import {
+  fmtNum,
+  fmtPct,
+  fmtYm,
+} from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeDevelopmentPage() {
@@ -235,6 +247,100 @@ export default function EmployeeDevelopmentPage() {
           <p className="mt-2 text-xs text-muted-foreground">
             {t("wonPerWorkdayFootnote")}
           </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            {t("historicalMonthlyTitle")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table className="whitespace-nowrap">
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("colMonth")}</TableHead>
+                <TableHead className="text-right">{t("colLeads")}</TableHead>
+                <TableHead className="text-right">{t("colWorkable")}</TableHead>
+                <TableHead className="text-right">
+                  {t("colWorkableRate")}
+                </TableHead>
+                <TableHead className="text-right">{t("colWon")}</TableHead>
+                <TableHead className="text-right">{t("colHitrate")}</TableHead>
+                <TableHead className="text-right">
+                  {t("colWonPerDay")}
+                </TableHead>
+                <TableHead className="text-right">{t("colWorkdays")}</TableHead>
+                <TableHead className="text-right">{t("colForecast")}</TableHead>
+                <TableHead className="text-right">{t("colOppsOpen")}</TableHead>
+                <TableHead className="text-right">{t("colClose7d")}</TableHead>
+                <TableHead className="text-right">
+                  {t("colAnalysis30")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("colOppOverdue")}
+                </TableHead>
+                <TableHead className="text-right">{t("colOpps30")}</TableHead>
+                <TableHead className="text-right">{t("colLeads14")}</TableHead>
+                <TableHead className="text-right">{t("colOpps14")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[...data.hist].reverse().map(h => (
+                <TableRow key={h.ym}>
+                  <TableCell className="font-medium">
+                    {h.ym ? fmtYm(h.ym, locale) : "–"}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.leadsCreated)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.workableCreated)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtPct(h.workableRate)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.wonMonth)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtPct(h.hitrate)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.wonPerDay)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {h.fc ? `${h.fc.elapsed}/${h.fc.total}` : "–"}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.fc1)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.oppsOpen)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.oppsClose7d)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.overduesAnalysis)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.overduesOpps)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.oppsOver30)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.leadsNoAction14)}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {fmtNum(h.oppsNoAction14)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

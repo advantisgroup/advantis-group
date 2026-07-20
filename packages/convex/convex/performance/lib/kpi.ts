@@ -231,44 +231,6 @@ export function computeDeltas(
   return out;
 }
 
-export interface WonDayInput {
-  employeeId: string;
-  reportDate: string;
-  wonMonth: number | undefined;
-}
-
-/** Daily closed-won counts from cumulative month-to-date `wonMonth`
- * snapshots: each employee's day-over-day increase, reset at the calendar-
- * month boundary, summed across employees per date. A decrease (a
- * correction pulling a deal back out of Closed Won) clips to 0 rather than
- * showing a negative "closed" count for the day. */
-export function wonDeltasByDate(rows: WonDayInput[]): Map<string, number> {
-  const byEmployee = new Map<string, WonDayInput[]>();
-  for (const r of rows) {
-    if (r.wonMonth === undefined) continue;
-    const arr = byEmployee.get(r.employeeId) ?? [];
-    arr.push(r);
-    byEmployee.set(r.employeeId, arr);
-  }
-  const perDate = new Map<string, number>();
-  for (const empRows of byEmployee.values()) {
-    empRows.sort((a, b) => a.reportDate.localeCompare(b.reportDate));
-    let curMonth = "";
-    let last = 0;
-    for (const r of empRows) {
-      const month = r.reportDate.slice(0, 7);
-      if (month !== curMonth) {
-        curMonth = month;
-        last = 0;
-      }
-      const delta = Math.max(0, r.wonMonth! - last);
-      last = r.wonMonth!;
-      perDate.set(r.reportDate, (perDate.get(r.reportDate) ?? 0) + delta);
-    }
-  }
-  return perDate;
-}
-
 export function shiftYm(ym: string, months: number): string {
   const [y, m] = ym.split("-").map(Number);
   const idx = y * 12 + (m - 1) + months;

@@ -389,6 +389,12 @@ async function purgeExcluded(ctx: MutationCtx): Promise<void> {
       .filter(r => EXCLUDED_OWNERS.has(r.owner.toLowerCase()))
       .map(r => ctx.db.delete(r._id))
   );
+  const wonOpps = await ctx.db.query("performanceWonOpps").collect();
+  await Promise.all(
+    wonOpps
+      .filter(r => EXCLUDED_OWNERS.has(r.owner.toLowerCase()))
+      .map(r => ctx.db.delete(r._id))
+  );
 }
 
 export const getTeamEmployeeNames = internalQuery({
@@ -489,6 +495,11 @@ const rawOppValidator = v.object({
   age: v.optional(v.number()),
   lastActivity: v.optional(v.string()),
   customerNumber: v.optional(v.string()),
+});
+
+const wonOppValidator = v.object({
+  owner: v.string(),
+  closeDate: v.string(),
 });
 
 const reportKindValidator = v.union(
@@ -619,6 +630,23 @@ export const insertRawOppsChunk = internalMutation({
   handler: async (ctx, { rows }): Promise<void> => {
     await Promise.all(
       rows.map(row => ctx.db.insert("performanceRawOpps", row))
+    );
+  },
+});
+
+export const clearWonOpps = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<void> => {
+    const existing = await ctx.db.query("performanceWonOpps").collect();
+    await Promise.all(existing.map(row => ctx.db.delete(row._id)));
+  },
+});
+
+export const insertWonOppsChunk = internalMutation({
+  args: { rows: v.array(wonOppValidator) },
+  handler: async (ctx, { rows }): Promise<void> => {
+    await Promise.all(
+      rows.map(row => ctx.db.insert("performanceWonOpps", row))
     );
   },
 });
