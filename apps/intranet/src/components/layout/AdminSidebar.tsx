@@ -191,7 +191,8 @@ export function AdminSidebar() {
 
       {ADMIN_NAV_GROUPS.map(group => {
         const items = group.items.filter(
-          item => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
+          item =>
+            (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
         );
         if (items.length === 0) return null;
         return (
