@@ -1,9 +1,12 @@
 "use client";
 
+import { useRef, useState, type UIEvent } from "react";
+
 import { useTranslations } from "next-intl";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { formatIsoDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 import { fmtDuration, fmtNum } from "./PerformanceFormat";
 
@@ -16,33 +19,64 @@ export interface LastDayInteractionRow {
   employeeName?: string;
 }
 
-function StatRow({ label, value }: { label: string; value: string }) {
+const SLIDE_SIZE = 3;
+
+/** "Alex GRUBER" -> "Alex G." — enough to tell employees apart in the chip
+ * row without the full surname eating space. */
+function abbreviateName(name: string): string {
+  const [first, ...rest] = name.trim().split(/\s+/);
+  const last = rest[rest.length - 1];
+  return last ? `${first} ${last[0].toUpperCase()}.` : first;
+}
+
+function StatBlock({
+  label,
+  value,
+  size,
+}: {
+  label: string;
+  value: string;
+  size: "lg" | "md";
+}) {
   return (
-    <div className="flex items-baseline justify-between gap-2 text-xs">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-semibold tabular-nums">{value}</span>
+    <div className="flex flex-col gap-0.5">
+      <span
+        className={cn(
+          "tabular-nums",
+          size === "lg" ? "text-3xl font-bold" : "text-lg font-semibold"
+        )}
+      >
+        {value}
+      </span>
+      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+        {label}
+      </span>
     </div>
   );
 }
 
-/** Stacked full-width rows rather than side-by-side columns — three
- * differently-long labels ("Interaktionen" vs. "Gesamt Gesprächszeit")
- * wrap to a different number of lines when cramped into a shared row,
- * which misaligned each column's value against its neighbors. */
-function RowStats({ row }: { row: LastDayInteractionRow }) {
+function EmployeeStats({ row }: { row: LastDayInteractionRow }) {
   const t = useTranslations("Performance");
   return (
-    <div className="flex flex-col gap-1">
-      <StatRow label={t("interactionsStatCount")} value={fmtNum(row.count)} />
-      <StatRow
-        label={t("callsAvgDurationLabel")}
-        value={fmtDuration(row.avgDurationSec)}
+    <>
+      <StatBlock
+        label={t("interactionsStatCount")}
+        value={fmtNum(row.count)}
+        size="lg"
       />
-      <StatRow
-        label={t("callsTotalTalkLabel")}
-        value={fmtDuration(row.totalDurationSec)}
-      />
-    </div>
+      <div className="flex gap-6">
+        <StatBlock
+          label={t("callsAvgDurationLabel")}
+          value={fmtDuration(row.avgDurationSec)}
+          size="md"
+        />
+        <StatBlock
+          label={t("callsTotalTalkLabel")}
+          value={fmtDuration(row.totalDurationSec)}
+          size="md"
+        />
+      </div>
+    </>
   );
 }
 
@@ -50,7 +84,12 @@ function RowStats({ row }: { row: LastDayInteractionRow }) {
  * always the most recent day with any interactions, broken out per employee
  * on the team dashboard (rows carry `employeeName` there — see
  * `interactionsMonth`'s team-wide shape) or a single stat set on the
- * employee view (rows never carry `employeeName` there). */
+ * employee view (rows never carry `employeeName` there).
+ *
+ * Team view: a scroll-snap carousel of up to `SLIDE_SIZE` employee cards per
+ * slide (same native-scroll pattern as `CvFallbackModal`'s mobile carousel —
+ * no carousel library needed), with a name-chip row below to jump straight
+ * to any employee's slide. */
 export function LastDayInteractions({
   days,
   locale,
@@ -59,18 +98,40 @@ export function LastDayInteractions({
   locale: string;
 }) {
   const t = useTranslations("Performance");
-  const withData = days.filter(d => d.count > 0);
-  if (withData.length === 0) return null;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeSlide, setActiveSlide] = useState(0);
 
+  const withData = days.filter(d => d.count > 0);
   const lastDate = withData.reduce(
     (max, d) => (d.date > max ? d.date : max),
-    withData[0].date
+    withData[0]?.date ?? ""
   );
   const rows = withData.filter(d => d.date === lastDate);
   const isTeam = rows.some(r => r.employeeName !== undefined);
+
+  const slides: LastDayInteractionRow[][] = [];
+  for (let i = 0; i < rows.length; i += SLIDE_SIZE) {
+    slides.push(rows.slice(i, i + SLIDE_SIZE));
+  }
+
+  if (withData.length === 0) return null;
+
   const title = t("lastDayInteractionsTitle", {
     date: formatIsoDate(lastDate, locale),
   });
+
+  function scrollToSlide(index: number) {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTo({ left: index * el.clientWidth, behavior: "smooth" });
+    setActiveSlide(index);
+  }
+
+  function handleScroll(e: UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    if (!el.clientWidth) return;
+    setActiveSlide(Math.round(el.scrollLeft / el.clientWidth));
+  }
 
   if (!isTeam) {
     return (
@@ -79,7 +140,7 @@ export function LastDayInteractions({
           <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {title}
           </p>
-          <RowStats row={rows[0]} />
+          <EmployeeStats row={rows[0]} />
         </CardContent>
       </Card>
     );
@@ -91,17 +152,58 @@ export function LastDayInteractions({
         <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {title}
         </p>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {rows.map(row => (
+
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {slides.map((slide, i) => (
             <div
-              key={row.employeeId ?? row.employeeName}
-              className="flex flex-col gap-2 rounded-md border border-border/60 p-3"
+              key={i}
+              className="grid w-full shrink-0 snap-center gap-3"
+              style={{
+                gridTemplateColumns: `repeat(${slide.length}, minmax(0, 1fr))`,
+              }}
             >
-              <span className="text-xs font-medium">{row.employeeName}</span>
-              <RowStats row={row} />
+              {slide.map(row => (
+                <div
+                  key={row.employeeId ?? row.employeeName}
+                  className="flex flex-col gap-3 rounded-lg border border-border/60 p-4"
+                >
+                  <span className="text-sm font-medium">
+                    {row.employeeName}
+                  </span>
+                  <EmployeeStats row={row} />
+                </div>
+              ))}
             </div>
           ))}
         </div>
+
+        {slides.length > 1 && (
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 border-t pt-3">
+            {rows.map((row, i) => {
+              const slideIndex = Math.floor(i / SLIDE_SIZE);
+              const active = slideIndex === activeSlide;
+              return (
+                <button
+                  key={row.employeeId ?? row.employeeName}
+                  type="button"
+                  onClick={() => scrollToSlide(slideIndex)}
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-xs transition-colors",
+                    active
+                      ? "bg-accent text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {abbreviateName(row.employeeName ?? "")}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
