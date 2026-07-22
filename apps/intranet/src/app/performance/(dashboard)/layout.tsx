@@ -211,7 +211,11 @@ function DashboardChrome({
 
   const navItems = [
     { href: "/performance/benutzer", label: t("usersLink"), icon: Users },
-    { href: "/performance/upload", label: t("uploadLink"), icon: Upload },
+    ...(viaClerk
+      ? []
+      : [
+          { href: "/performance/upload", label: t("uploadLink"), icon: Upload },
+        ]),
     ...(viaClerk
       ? []
       : [{ href: "/performance/passwort", label: t("passwordLink") }]),
