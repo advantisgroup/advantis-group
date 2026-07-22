@@ -11,6 +11,7 @@ import {
   Download,
   LayoutDashboard,
   Phone,
+  TrendingUp,
   Upload,
   Users,
 } from "lucide-react";
@@ -139,6 +140,10 @@ function DashboardTopSection({
       </Card>
     );
   }
+  // The Entwicklung tab already shows a closed-won trend chart itself
+  // (over its own trailing-3-month window) further down the page — no
+  // top-of-page chart needed here too.
+  if (activeTab === "entwicklung") return null;
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
@@ -190,6 +195,12 @@ function DashboardChrome({
       href: "/performance/interaktionen",
       label: t("tabInteractions"),
       icon: Activity,
+    },
+    {
+      value: "entwicklung",
+      href: "/performance/entwicklung",
+      label: t("tabDevelopment"),
+      icon: TrendingUp,
     },
   ];
 
