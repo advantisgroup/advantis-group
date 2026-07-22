@@ -16,10 +16,15 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
+import { CHART } from "@/components/activity/charts/theme";
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import { fmtYm } from "@/components/performance/PerformanceFormat";
+import {
+  buildCallActivityChartData,
+  fmtYm,
+} from "@/components/performance/PerformanceFormat";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import {
@@ -43,6 +48,60 @@ import {
   clearPerformanceToken,
   downloadPerformanceFile,
 } from "@/lib/performanceAuth";
+
+interface DashboardTopData {
+  hasCalls: boolean;
+  days: { date: string; values: { callsAnswered?: number; callsOutbound?: number } }[];
+  wonTrend: { days: { date: string; won: number }[]; avg: number };
+}
+
+/** The chart shown above the tab bar, tab-dependent: the Calls tab promotes
+ * its own "Call-Aktivität" chart up here (so it isn't shown twice — see
+ * `calls/page.tsx`, which no longer renders it in the page body); every
+ * other tab keeps the closed-won trend chart that used to render
+ * unconditionally here. */
+function DashboardTopSection({
+  data,
+  activeTab,
+  t,
+  locale,
+}: {
+  data: DashboardTopData;
+  activeTab: string;
+  t: ReturnType<typeof useTranslations>;
+  locale: string;
+}) {
+  if (activeTab === "calls") {
+    if (!data.hasCalls) return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            {t("dashboardCallActivity")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FilterableBarChart
+            data={buildCallActivityChartData(data.days, locale)}
+            series={[
+              {
+                key: "answered",
+                name: t("callsAnsweredLabel"),
+                color: CHART.active,
+              },
+              {
+                key: "outbound",
+                name: t("callsOutboundLabel"),
+                color: CHART.accent,
+              },
+            ]}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+  return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
+}
 
 function DashboardChrome({
   token,
@@ -162,10 +221,7 @@ function DashboardChrome({
         </div>
 
         {data && (
-          <ClosedWonTrendChart
-            days={data.wonTrend.days}
-            avg={data.wonTrend.avg}
-          />
+          <DashboardTopSection data={data} activeTab={activeTab} t={t} locale={locale} />
         )}
 
         <Card className="overflow-hidden">

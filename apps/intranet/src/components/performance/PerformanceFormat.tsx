@@ -52,6 +52,28 @@ export function fmtDayShort(iso: string, locale: string): string {
   });
 }
 
+export interface CallActivityChartDay {
+  label: string;
+  answered: number;
+  outbound: number;
+  [key: string]: string | number;
+}
+
+/** Shapes a Calls-tab day list (`teamDashboard`/`employeeDetail`'s `days`)
+ * into the "Call-Aktivität" chart's data — shared between the Calls page
+ * body and the dashboard chrome's promoted top-of-page chart so both read
+ * the same fields the same way. */
+export function buildCallActivityChartData(
+  days: { date: string; values: { callsAnswered?: number; callsOutbound?: number } }[],
+  locale: string
+): CallActivityChartDay[] {
+  return days.map(d => ({
+    label: fmtDayShort(d.date, locale),
+    answered: d.values.callsAnswered ?? 0,
+    outbound: d.values.callsOutbound ?? 0,
+  }));
+}
+
 /** Epoch ms carrying a wall-clock time-of-day as UTC fields (see
  * `interactionImport.ts`'s timestamp parsing) -> "07:40". Uses the UTC
  * getters directly rather than a locale/timezone conversion, since the
