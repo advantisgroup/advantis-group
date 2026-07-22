@@ -29,7 +29,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import { PerformanceShell } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
@@ -524,16 +524,14 @@ export default function PerformanceUploadPage() {
     return null;
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={[{ href: "/performance", label: t("backToDashboard") }]}
-        onExit={() => {
-          clearPerformanceToken();
-          router.replace("/performance/login");
-        }}
-      />
-
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+    <PerformanceShell
+      navItems={[{ href: "/performance", label: t("backToDashboard") }]}
+      onExit={() => {
+        clearPerformanceToken();
+        router.replace("/performance/login");
+      }}
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -809,7 +807,7 @@ export default function PerformanceUploadPage() {
             )}
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </PerformanceShell>
   );
 }

@@ -9,7 +9,7 @@ import { useAction } from "convex/react";
 import { KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import { PerformanceShell } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Button } from "@/components/ui/button";
@@ -78,23 +78,21 @@ export default function PerformancePasswordPage() {
   if (!session.valid || session.viaClerk) return null;
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={[
-          {
-            href:
-              session.role === "admin"
-                ? "/performance"
-                : session.employeeId
-                  ? `/performance/mitarbeiter/${session.employeeId}`
-                  : "/performance",
-            label: t("backToDashboard"),
-          },
-        ]}
-        onExit={exit}
-      />
-
-      <main className="mx-auto max-w-md space-y-6 p-4 md:p-6">
+    <PerformanceShell
+      navItems={[
+        {
+          href:
+            session.role === "admin"
+              ? "/performance"
+              : session.employeeId
+                ? `/performance/mitarbeiter/${session.employeeId}`
+                : "/performance",
+          label: t("backToDashboard"),
+        },
+      ]}
+      onExit={exit}
+    >
+      <div className="mx-auto max-w-md space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -155,7 +153,7 @@ export default function PerformancePasswordPage() {
             </Button>
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </PerformanceShell>
   );
 }

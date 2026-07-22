@@ -25,7 +25,7 @@ import {
   ResetPasswordDialog,
 } from "@/components/performance/LoginDialogs";
 import { MetricTile } from "@/components/performance/MetricTile";
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import { PerformanceShell } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
@@ -92,13 +92,11 @@ export default function PerformanceUsersPage() {
   if (!session.valid || session.role !== "admin") return null;
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={[{ href: "/performance", label: t("backToDashboard") }]}
-        onExit={session.viaClerk ? undefined : exit}
-      />
-
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+    <PerformanceShell
+      navItems={[{ href: "/performance", label: t("backToDashboard") }]}
+      onExit={session.viaClerk ? undefined : exit}
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
         {logins && logins.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <MetricTile
@@ -246,7 +244,7 @@ export default function PerformanceUsersPage() {
             )}
           </CardContent>
         </Card>
-      </main>
+      </div>
 
       {session.valid && (
         <>
@@ -275,6 +273,6 @@ export default function PerformanceUsersPage() {
           />
         </>
       )}
-    </div>
+    </PerformanceShell>
   );
 }

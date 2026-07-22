@@ -25,13 +25,12 @@ import {
   LastDayInteractions,
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
-import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import {
   buildCallActivityChartData,
   fmtDayShort,
   fmtYm,
 } from "@/components/performance/PerformanceFormat";
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import { PerformanceShell } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import {
   PerformanceYmProvider,
@@ -222,13 +221,11 @@ function DashboardChrome({
   ];
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={viaClerk ? undefined : onExit}
-      />
-
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+    <PerformanceShell
+      navItems={navItems}
+      onExit={viaClerk ? undefined : onExit}
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
         {!viaClerk && <SelfLinkPrompt token={token} />}
         <div className="flex flex-wrap items-center gap-3">
           <Select
@@ -296,9 +293,8 @@ function DashboardChrome({
         </Card>
 
         {children}
-      </main>
-      <PerformanceBottomTabs />
-    </div>
+      </div>
+    </PerformanceShell>
   );
 }
 
@@ -348,9 +344,11 @@ export default function PerformanceDashboardLayout({
   if (session.role !== "admin") {
     if (session.employeeId) return null; // redirecting
     return (
-      <div className="min-h-screen bg-muted/20">
-        <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
-        <main className="mx-auto max-w-3xl p-4 md:p-6">
+      <PerformanceShell
+        navItems={[]}
+        onExit={session.viaClerk ? undefined : exit}
+      >
+        <div className="mx-auto max-w-3xl">
           <Card>
             <CardHeader className="items-center text-center">
               <CardTitle>{t("notLinkedTitle")}</CardTitle>
@@ -359,8 +357,8 @@ export default function PerformanceDashboardLayout({
               {t("notLinkedBody")}
             </CardContent>
           </Card>
-        </main>
-      </div>
+        </div>
+      </PerformanceShell>
     );
   }
 
