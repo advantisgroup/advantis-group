@@ -79,6 +79,8 @@
   "dashboardMetricForecast": "FC1 forecast",
   "dashboardMetricCalls": "Calls",
   "dashboardCallActivity": "Call activity",
+  "dashboardLoggedInTitle": "Employees logged in per day",
+  "dashboardLoggedInSeries": "Logged in",
   "dashboardEmployees": "Team",
   "dashboardSearchPlaceholder": "Search employees…",
   "dashboardSearchEmpty": "No employees match your search.",

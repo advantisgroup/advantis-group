@@ -27,6 +27,7 @@ import {
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import {
   buildCallActivityChartData,
+  fmtDayShort,
   fmtYm,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
@@ -57,6 +58,7 @@ interface DashboardTopData {
   hasCalls: boolean;
   days: { date: string; values: { callsAnswered?: number; callsOutbound?: number } }[];
   wonTrend: { days: { date: string; won: number }[]; avg: number };
+  loggedIn: { date: string; count: number }[];
 }
 
 /** The chart shown above the tab bar, tab-dependent: the Calls tab promotes
@@ -109,6 +111,33 @@ function DashboardTopSection({
   if (activeTab === "interaktionen") {
     if (!interactionDays) return null;
     return <LastDayInteractions days={interactionDays} locale={locale} />;
+  }
+  if (activeTab === "team") {
+    const chartData = data.loggedIn.map(d => ({
+      label: fmtDayShort(d.date, locale),
+      count: d.count,
+    }));
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            {t("dashboardLoggedInTitle")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FilterableBarChart
+            data={chartData}
+            series={[
+              {
+                key: "count",
+                name: t("dashboardLoggedInSeries"),
+                color: CHART.active,
+              },
+            ]}
+          />
+        </CardContent>
+      </Card>
+    );
   }
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }

@@ -317,6 +317,52 @@ async function callDaysList(
   return out;
 }
 
+export interface LoggedInDay {
+  date: string;
+  count: number;
+}
+
+/** Every calendar day of the month with the count of distinct employees who
+ * had a lead created that day ("logged in" — created leads that day =
+ * attendance, per the Team tab's brief) — feeds the day-by-day chart there.
+ * Reads `performanceRawLeads`, which is a full snapshot of currently-active
+ * leads (see the schema comment), so an employee's older leads that have
+ * since converted/closed can drop out of this count for past days —
+ * accepted trade-off, there's no daily-attendance history stored anywhere
+ * else to fall back to. */
+async function loggedInDaysList(
+  ctx: QueryCtx,
+  ym: string
+): Promise<LoggedInDay[]> {
+  const { start, end } = monthBounds(ym);
+  const rows = await ctx.db
+    .query("performanceRawLeads")
+    .withIndex("by_createDate", q =>
+      q.gte("createDate", start).lte("createDate", end)
+    )
+    .collect();
+
+  const byDate = new Map<string, Set<string>>();
+  for (const r of rows) {
+    if (!r.createDate || EXCLUDED_OWNERS.has(r.owner.toLowerCase())) continue;
+    const owners = byDate.get(r.createDate) ?? new Set<string>();
+    owners.add(r.owner);
+    byDate.set(r.createDate, owners);
+  }
+
+  const out: LoggedInDay[] = [];
+  const last = parseISODate(end);
+  for (
+    let d = parseISODate(start);
+    d.getTime() <= last.getTime();
+    d = new Date(d.getTime() + 86_400_000)
+  ) {
+    const iso = toISODate(d);
+    out.push({ date: iso, count: byDate.get(iso)?.size ?? 0 });
+  }
+  return out;
+}
+
 async function hasCallData(
   ctx: QueryCtx,
   ym: string,
@@ -638,6 +684,7 @@ export const teamDashboard = query({
     const days = await callDaysList(ctx, ym, undefined, cache);
     const hasCalls = await hasCallData(ctx, ym, undefined, cache);
     const wonTrend = await closedWonTrend(ctx, undefined);
+    const loggedIn = await loggedInDaysList(ctx, ym);
 
     const vmYm = shiftYm(ym, -1);
     const vjYm = shiftYm(ym, -12);
@@ -669,6 +716,7 @@ export const teamDashboard = query({
       days,
       hasCalls,
       wonTrend,
+      loggedIn,
       badgeCounts,
       marks: performanceMarks(snaps),
       monthDone: monthCompleted(ym),

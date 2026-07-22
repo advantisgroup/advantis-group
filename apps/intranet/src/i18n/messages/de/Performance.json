@@ -79,6 +79,8 @@
   "dashboardMetricForecast": "FC1-Prognose",
   "dashboardMetricCalls": "Calls",
   "dashboardCallActivity": "Call-Aktivität",
+  "dashboardLoggedInTitle": "Angemeldete Mitarbeiter pro Tag",
+  "dashboardLoggedInSeries": "Angemeldet",
   "dashboardEmployees": "Team",
   "dashboardSearchPlaceholder": "Mitarbeiter suchen…",
   "dashboardSearchEmpty": "Keine Mitarbeiter gefunden.",

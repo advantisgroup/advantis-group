@@ -792,7 +792,12 @@ export default defineSchema({
     statusDetails: v.optional(v.string()),
     createDate: v.optional(v.string()),
     lastActivity: v.optional(v.string()),
-  }).index("by_owner", ["owner"]),
+  })
+    .index("by_owner", ["owner"])
+    // Powers the Team tab's "daily logged-in employees" chart (distinct
+    // owners with a lead created that day) — an indexed range scan instead
+    // of a full-table collect.
+    .index("by_createDate", ["createDate"]),
 
   performanceRawOpps: defineTable({
     reportDate: v.string(),
