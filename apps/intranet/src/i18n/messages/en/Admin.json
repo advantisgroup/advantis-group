@@ -57,6 +57,8 @@
   "revoked": "Revoked",
   "noGuests": "No guest logins",
   "teams": "Teams",
+  "hireDate": "Hire date",
+  "hireDateUnset": "Set hire date",
   "external": "External",
   "externalMembers": "External members",
   "externalMembersHint": "Members whose email is outside your company domains. They have full access according to their role.",

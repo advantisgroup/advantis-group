@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { requireUser } from "../lib/auth";
+import { requireUser, requireCapability } from "../lib/auth";
 import { gatedMutation } from "../lib/featureGate";
 import { computeEmployeeState, type StateSignals } from "./lib/state";
 import {
@@ -466,11 +466,16 @@ export const mappings = query({
   },
 });
 
-/** Reactive dashboard read: every cached employee state joined to its person. */
+/**
+ * Reactive dashboard read: every cached employee state joined to its person.
+ * Org-wide presence data, so it requires `view_activity_admin` (Managers+, or
+ * a custom role granted the capability) rather than just being signed in —
+ * use `myState` for a caller's own status.
+ */
 export const overview = query({
   args: {},
   handler: async ctx => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
 
     const rows = await ctx.db.query("employeeStates").take(2000);
 
@@ -512,6 +517,36 @@ export const get = query({
   handler: async (ctx, { employeeId }) => {
     await requireUser(ctx);
     return await getStateRow(ctx, employeeId);
+  },
+});
+
+/**
+ * The caller's own fused status — the overview's "your day" widget. This is
+ * self-data, not team surveillance, so it stays open to any signed-in user
+ * regardless of `view_activity_admin`. Returns `null` for callers with no
+ * `people` roster row (not everyone is on the ActivityTrack roster).
+ */
+export const myState = query({
+  args: {},
+  handler: async ctx => {
+    const user = await requireUser(ctx);
+    const person = await ctx.db
+      .query("people")
+      .withIndex("by_userId", q => q.eq("userId", user._id))
+      .first();
+    if (!person?.employeeId) return null;
+    const state = await getStateRow(ctx, person.employeeId);
+    if (!state) return null;
+    return {
+      finalState: state.finalState,
+      finalStateSince: state.finalStateSince ?? null,
+      clockodoWorking: state.clockodoWorking ?? null,
+      clockodoBreak: state.clockodoBreak ?? null,
+      clockodoAbsent: state.clockodoAbsent ?? null,
+      clockodoClockedOut: state.clockodoClockedOut ?? null,
+      clockodoClockedOutCertain: state.clockodoClockedOutCertain ?? null,
+      updatedAt: state.updatedAt,
+    };
   },
 });
 

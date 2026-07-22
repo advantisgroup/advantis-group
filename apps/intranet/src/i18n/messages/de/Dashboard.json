@@ -1,15 +1,11 @@
 {
   "title": "Übersicht",
-  "greeting": "Willkommen zurück, {name}",
   "upcomingEvents": "Anstehende Termine",
   "latestAnnouncements": "Neueste Ankündigungen",
   "unreadChats": "Ungelesene Nachrichten",
   "noEvents": "Keine anstehenden Termine",
   "noAnnouncements": "Keine Ankündigungen",
   "noUnread": "Alles gelesen",
-  "greetingMorning": "Guten Morgen, {name}",
-  "greetingAfternoon": "Guten Tag, {name}",
-  "greetingEvening": "Guten Abend, {name}",
   "nextAbsence": "Nächste Abwesenheit: {type}, {start} – {end}",
   "whosOutToday": "Wer ist heute abwesend",
   "nobodyOut": "Heute sind alle da",
@@ -22,5 +18,95 @@
   "paletteHint": "⌘K zum Suchen",
   "openCalendar": "Kalender öffnen",
   "openAnnouncements": "Ankündigungen öffnen",
-  "openChat": "Chat öffnen"
+  "openChat": "Chat öffnen",
+  "sectionForYou": "Für dich",
+  "sectionTeamCompany": "Team & Unternehmen",
+  "sectionAdmin": "Admin",
+  "celebrationsTitle": "Heutige Anlässe",
+  "celebrationsEmpty": "Heute keine Geburtstage oder Jubiläen",
+  "birthdayLabel": "🎂 Geburtstag",
+  "anniversaryLabel": "🎉 {years, plural, one {# Jahr} other {# Jahre}} heute",
+  "yourDayTitle": "Dein Tag",
+  "clockodoNotLinked": "Verknüpfe dein Clockodo-Konto in den Einstellungen, um deinen Status hier zu sehen",
+  "clockodoWorking": "Eingestempelt",
+  "clockodoBreak": "In der Pause",
+  "clockodoClockedOut": "Ausgestempelt",
+  "clockodoAbsent": "Abwesend",
+  "sinceTime": "seit {time}",
+  "teamStatusTitle": "Team-Status",
+  "teamOnline": "{online} von {total} online",
+  "teamActive": "{active} aktiv am Arbeiten",
+  "teamOnBreak": "{count} in der Pause",
+  "teamAbsent": "{count} abwesend",
+  "openActivity": "ActivityTrack öffnen",
+  "myPerformanceTitle": "Deine Leistung",
+  "badgesEarned": "Verdiente Abzeichen",
+  "noPerformanceData": "Noch keine auffälligen Werte diesen Monat",
+  "teamPerformanceTitle": "Team-Leistung",
+  "wonThisMonth": "Gewonnen diesen Monat",
+  "hitrate": "Trefferquote",
+  "openPerformance": "Performance-Dashboard öffnen",
+  "openSettings": "Einstellungen öffnen",
+  "adminStatsTitle": "Admin-Kennzahlen",
+  "pendingApprovals": "Offene Abwesenheitsanträge",
+  "openApplicantPipeline": "Offen im Bewerberpool",
+  "openAdminAbsences": "Prüfen",
+  "openApplicants": "Bewerber öffnen",
+  "recentActivityTitle": "Letzte Admin-Aktivität",
+  "openAuditLog": "Audit-Log öffnen",
+  "noRecentActivity": "Keine aktuelle Admin-Aktivität",
+  "vaultLockedHint": "Entsperre das Bewerbermanagement, um dies zu sehen",
+  "greetings": {
+    "lateNight": [
+      { "title": "Noch wach, {name}?", "subtitle": "Die Nachtschicht heißt dich willkommen." },
+      { "title": "Nachteule heute?", "subtitle": "Mitternachtsöl brennt — Respekt." },
+      { "title": "Wow, es ist spät.", "subtitle": "Alles okay, {name}? Wir sind trotzdem für dich da." },
+      { "title": "Hallo, Dunkelheit.", "subtitle": "Und hallo, {name}. Der Kaffee ist wahrscheinlich schon kalt." }
+    ],
+    "earlyMorning": [
+      { "title": "Guten Morgen, {name}", "subtitle": "Auf geht's — lass uns den Tag nutzen." },
+      { "title": "Mit der Sonne aufgestanden, {name}?", "subtitle": "Beeindruckend. Wir suchen noch unseren Kaffee." },
+      { "title": "Morgen, {name}!", "subtitle": "Frischer Kaffee, frisches Postfach, frischer Start." },
+      { "title": "Frühaufsteher, {name}?", "subtitle": "Der frühe Vogel fängt den Wurm — oder in diesem Fall das Postfach." }
+    ],
+    "lateMorning": [
+      { "title": "Guten Morgen, {name}", "subtitle": "Hoffentlich wirkt der Kaffee schon." },
+      { "title": "Vormittags-Check-in, {name}", "subtitle": "Du machst das großartig. Wahrscheinlich." },
+      { "title": "Morgen-Schwung, {name}", "subtitle": "Lass uns dranbleiben." },
+      { "title": "Hey {name}, wie läuft dein Vormittag?", "subtitle": "Hier ist, was heute los ist." }
+    ],
+    "afternoon": [
+      { "title": "Guten Tag, {name}", "subtitle": "Hoffentlich hat das Mittagessen geschmeckt." },
+      { "title": "Nachmittag, {name}", "subtitle": "Das Mittagstief ist real — hier ist etwas Ablenkung." },
+      { "title": "Halbzeit, {name}", "subtitle": "Der Tag ist noch nicht vorbei, aber du schaffst das." },
+      { "title": "Hey {name}, Energie-Check nach dem Mittagessen", "subtitle": "Hier ist, was neu ist." }
+    ],
+    "evening": [
+      { "title": "Guten Abend, {name}", "subtitle": "Feierabend, oder geht's gerade erst los?" },
+      { "title": "Abend, {name}", "subtitle": "Immer noch da? Wir wissen das zu schätzen." },
+      { "title": "Lässt du den Tag ausklingen, {name}?", "subtitle": "Hier noch ein kurzer Blick, bevor du gehst." },
+      { "title": "Hey {name}, arbeitest du länger?", "subtitle": "Kein Urteil — nur ein Update." }
+    ],
+    "night": [
+      { "title": "Mitternachtsöl, {name}?", "subtitle": "Wir sehen dich." },
+      { "title": "Später Abend, {name}?", "subtitle": "Hoffentlich lohnt es sich — hier das Neueste." },
+      { "title": "Immer noch dabei, {name}?", "subtitle": "Vergiss nicht, irgendwann auch zu schlafen." },
+      { "title": "Nachtschicht, {name}?", "subtitle": "Respekt. Hier ist, was los ist." }
+    ],
+    "friday": [
+      { "title": "Endlich Freitag, {name}!", "subtitle": "Die Ziellinie ist in Sicht." },
+      { "title": "Freitagsgefühl, {name}?", "subtitle": "Fast geschafft — noch ein letzter Schub." },
+      { "title": "Es ist Freitag, {name}!", "subtitle": "Lass uns die Woche stark beenden." }
+    ],
+    "monday": [
+      { "title": "Guten Montag, {name}", "subtitle": "Neue Woche, sauberer Start." },
+      { "title": "Neue Woche, {name}!", "subtitle": "Lass uns was draus machen." },
+      { "title": "Schon wieder Montag, {name}?", "subtitle": "Hier ist alles, um wieder reinzukommen." }
+    ],
+    "weekend": [
+      { "title": "Arbeitest du am Wochenende, {name}?", "subtitle": "Engagement — oder hast du uns einfach vermisst?" },
+      { "title": "Es ist Wochenende, {name}!", "subtitle": "Was auch immer dich hergebracht hat, willkommen." },
+      { "title": "Wochenendbesuch, {name}?", "subtitle": "Hier ein kurzer Blick, dann genieß deinen freien Tag." }
+    ]
+  }
 }

@@ -119,6 +119,23 @@ export const removeProfile = mutation({
 // Applicants
 // ===========================================================================
 
+/**
+ * Just the "new" pipeline count — the overview's admin quick-stats widget.
+ * Same access gate as `list`, but skips the per-applicant document/interview
+ * fan-out since only the count is needed here.
+ */
+export const pipelineCount = query({
+  args: {},
+  handler: async ctx => {
+    await requireApplicantAccess(ctx);
+    const applicants = await ctx.db.query("applicants").collect();
+    const contacts = await ctx.db.query("applicantContacts").collect();
+    const contactedIds = new Set(contacts.map(c => c.applicantId));
+    const open = applicants.filter(a => !contactedIds.has(a._id)).length;
+    return { open, total: applicants.length };
+  },
+});
+
 export const list = query({
   args: {},
   handler: async ctx => {

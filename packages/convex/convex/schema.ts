@@ -212,6 +212,18 @@ export default defineSchema({
      * `users.setUpdatesEmailConsent` and the filter in `updatesEmail.sendBulk`.
      */
     updatesEmailConsent: v.optional(v.boolean()),
+    /**
+     * Self-editable, "YYYY-MM-DD". Only ever surfaced to others when
+     * `showBirthdayPublicly` is true — see `users.todaysCelebrations`.
+     */
+    dateOfBirth: v.optional(v.string()),
+    /** Opt-in: show `dateOfBirth` (day/month only) to the rest of the org. */
+    showBirthdayPublicly: v.optional(v.boolean()),
+    /**
+     * "YYYY-MM-DD", editable only by Managers+ (see `users.setHireDate`) —
+     * drives the overview's work-anniversary shoutouts.
+     */
+    hireDate: v.optional(v.string()),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })

@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
-import { requireUser } from "./lib/auth";
+import { requireUser, requireManager } from "./lib/auth";
 
 function displayName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
@@ -95,6 +95,22 @@ export const listForCalendar = query({
         };
       })
     );
+  },
+});
+
+/**
+ * Pending absence requests awaiting a manager's decision — the overview's
+ * admin "quick stats" widget. Managers+ only.
+ */
+export const pendingForApproval = query({
+  args: {},
+  handler: async ctx => {
+    await requireManager(ctx);
+    const rows = await ctx.db
+      .query("absences")
+      .withIndex("by_status", q => q.eq("status", "pending"))
+      .collect();
+    return { count: rows.length };
   },
 });
 

@@ -583,6 +583,14 @@ function AdminControls({
             <TeamsEditor userId={user._id} teams={user.teams} />
           </div>
         )}
+        {!isSelf && (
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm text-muted-foreground">
+              {t("hireDate")}
+            </span>
+            <HireDateEditor userId={user._id} hireDate={user.hireDate} />
+          </div>
+        )}
         {/* Permission grants and lifecycle actions only make sense on
             someone else's account — a member can't grant themselves access
             or reinvite/suspend/remove themselves.
@@ -671,6 +679,76 @@ function AdminControls({
         onVerified={doToggleApplicantDelegate}
       />
     </Section>
+  );
+}
+
+/**
+ * Managers+ only editor for `hireDate` — drives the overview's work
+ * anniversary shoutouts. Not sensitive like `dateOfBirth`, so no visibility
+ * toggle is needed; it's just Manager+-only to *set*.
+ */
+function HireDateEditor({
+  userId,
+  hireDate,
+}: {
+  userId: Id<"users">;
+  hireDate: string | null;
+}) {
+  const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
+  const locale = useLocale();
+  const setHireDate = useMutation(api.users.setHireDate);
+  const handleError = useErrorHandler();
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState(hireDate ?? "");
+
+  function save() {
+    setHireDate({ userId, hireDate: value || undefined })
+      .then(() => toast.success(tc("save")))
+      .catch(handleError);
+    setOpen(false);
+  }
+
+  return (
+    <Popover
+      open={open}
+      onOpenChange={o => {
+        setOpen(o);
+        if (o) setValue(hireDate ?? "");
+      }}
+    >
+      <PopoverTrigger asChild>
+        <Button size="sm" variant="outline" className="h-8">
+          <CalendarClock className="size-3.5" />
+          {hireDate ? formatIsoDate(hireDate, locale) : t("hireDateUnset")}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 space-y-2" align="end">
+        <Input
+          type="date"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+        />
+        <div className="flex justify-end gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setValue("");
+              setHireDate({ userId, hireDate: undefined })
+                .then(() => toast.success(tc("save")))
+                .catch(handleError);
+              setOpen(false);
+            }}
+          >
+            {tc("clear")}
+          </Button>
+          <Button size="sm" onClick={save}>
+            {tc("save")}
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 

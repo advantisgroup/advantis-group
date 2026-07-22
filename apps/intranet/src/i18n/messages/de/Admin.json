@@ -57,6 +57,8 @@
   "revoked": "Widerrufen",
   "noGuests": "Keine Gast-Zugänge",
   "teams": "Teams",
+  "hireDate": "Eintrittsdatum",
+  "hireDateUnset": "Eintrittsdatum festlegen",
   "external": "Extern",
   "externalMembers": "Externe Mitglieder",
   "externalMembersHint": "Mitglieder, deren E-Mail-Adresse außerhalb Ihrer Firmendomains liegt. Sie haben gemäß ihrer Rolle vollen Zugriff.",

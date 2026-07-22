@@ -40,6 +40,9 @@ export interface CurrentUser {
   avatar: string | null;
   lastSeenAt: number | null;
   createdAt: number;
+  dateOfBirth: string | null;
+  showBirthdayPublicly: boolean;
+  hireDate: string | null;
 }
 
 const CurrentUserContext = createContext<CurrentUser | null>(null);

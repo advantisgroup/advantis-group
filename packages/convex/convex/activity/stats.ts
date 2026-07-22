@@ -2,12 +2,13 @@ import { v } from "convex/values";
 
 import { query } from "../_generated/server";
 import type { QueryCtx } from "../_generated/server";
-import { requireUser } from "../lib/auth";
+import { requireUser, requireCapability } from "../lib/auth";
 import { readConfig } from "./settings";
 
 /**
- * Read models for the dashboard. All gated at any signed-in user; the extra
- * manager/admin capabilities are about mutations, not visibility.
+ * Read models for the dashboard. `teamOverview` exposes org-wide presence
+ * data, so it requires `view_activity_admin` (Managers+, or a custom role
+ * granted the capability) rather than just being signed in.
  *
  * The "online" window and the idle→inactive threshold come from the operational
  * config (Settings → Configuration), defaulting to 2 min / 5 min.
@@ -32,7 +33,7 @@ async function latestSample(ctx: QueryCtx, deviceId: string) {
 export const teamOverview = query({
   args: {},
   handler: async ctx => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
     const now = Date.now();
     const config = await readConfig(ctx);
     const onlineThresholdMs = config.offlineThresholdSeconds * 1000;
@@ -139,6 +140,53 @@ export const teamOverview = query({
         };
       })
     );
+  },
+});
+
+/**
+ * Compact counts for the overview's "Team status" widget — same underlying
+ * data as `teamOverview`, reduced to totals so the widget doesn't pull the
+ * full per-device payload just to render a few numbers.
+ */
+export const dashboardSummary = query({
+  args: {},
+  handler: async ctx => {
+    await requireCapability(ctx, "view_activity_admin");
+    const now = Date.now();
+    const config = await readConfig(ctx);
+    const onlineThresholdMs = config.offlineThresholdSeconds * 1000;
+    const inactivityMs = config.inactivityThresholdSeconds * 1000;
+
+    const devices = await ctx.db
+      .query("devices")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
+
+    let online = 0;
+    let active = 0;
+    let onBreak = 0;
+    let absent = 0;
+    for (const device of devices) {
+      const latest =
+        device.lastSample ?? (await latestSample(ctx, device.deviceId));
+      const isOnline = now - device.lastSeen < onlineThresholdMs;
+      if (isOnline) online++;
+      if (isOnline && latest != null && latest.idleMs < inactivityMs) active++;
+      if (device.personId) {
+        const person = await ctx.db.get(device.personId);
+        const employeeId = person?.employeeId;
+        const st = employeeId
+          ? await ctx.db
+              .query("employeeStates")
+              .withIndex("by_employeeId", q => q.eq("employeeId", employeeId))
+              .unique()
+          : null;
+        if (st?.clockodoBreak) onBreak++;
+        if (st?.clockodoAbsent) absent++;
+      }
+    }
+
+    return { total: devices.length, online, active, onBreak, absent };
   },
 });
 
