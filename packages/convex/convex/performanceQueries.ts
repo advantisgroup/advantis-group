@@ -851,20 +851,27 @@ export interface InteractionDay {
   employeeName?: string;
 }
 
-/** Daily "Interaktionen" evaluation for one month: first/last interaction,
- * count, total and average duration per day, plus the month's grand total.
- * One employee's own daily rows when `employeeId` is given; team-wide (
- * admin) otherwise — but team-wide still breaks out one row per employee
- * per day (not summed across the whole team into a single row), since a
- * per-day team total conflates dozens of agents' work into one number.
- * Same admin-or-self visibility rule as `employeeDetail`. */
+/** Daily "Interaktionen" evaluation for a date range: first/last
+ * interaction, count, total and average duration per day, plus the grand
+ * total. One employee's own daily rows when `employeeId` is given;
+ * team-wide (admin) otherwise — but team-wide still breaks out one row per
+ * employee per day (not summed across the whole team into a single row),
+ * since a per-day team total conflates dozens of agents' work into one
+ * number. Same admin-or-self visibility rule as `employeeDetail`.
+ *
+ * The range defaults to the calendar month (`ym`, current month if
+ * omitted) but an explicit `start`/`end` (both required together) overrides
+ * it — the Interaktionen tab's day/week/month period filter uses this to
+ * scope to a single day or week instead of always a full month. */
 export const interactionsMonth = query({
   args: {
     token: v.string(),
     ym: v.optional(v.string()),
+    start: v.optional(v.string()),
+    end: v.optional(v.string()),
     employeeId: v.optional(v.id("performanceEmployees")),
   },
-  handler: async (ctx, { token, ym: ymArg, employeeId }) => {
+  handler: async (ctx, { token, ym: ymArg, start: startArg, end: endArg, employeeId }) => {
     const login = await requireSession(ctx, token);
     if (employeeId) {
       requireCanView(login, employeeId);
@@ -873,7 +880,8 @@ export const interactionsMonth = query({
     }
 
     const ym = ymArg ?? defaultYm();
-    const { start, end } = monthBounds(ym);
+    const { start, end } =
+      startArg && endArg ? { start: startArg, end: endArg } : monthBounds(ym);
     const rows = employeeId
       ? await ctx.db
           .query("performanceInteractions")
