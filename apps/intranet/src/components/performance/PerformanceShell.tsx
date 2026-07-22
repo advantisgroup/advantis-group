@@ -24,7 +24,7 @@ import {
  * visitor with no Clerk session at all still needs to reach, and `AppGate`
  * has no bypass for that (it just spins forever waiting for a Clerk sign-in
  * that will never come). So this is a parallel shell built from the same
- * pieces, not a relocation into the real one — same idea as `/admin/activity`
+ * pieces, not a relocation into the real one — same idea as `/activity`
  * getting its own sliding sidebar panel, just one level further out since
  * Performance can't share `(app)`'s `AppGate`/`SidebarProvider` at all.
  *

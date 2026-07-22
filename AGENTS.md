@@ -9,7 +9,7 @@ date rather than duplicating its content elsewhere.
 Bun workspaces + Turborepo monorepo.
 
 - `apps/intranet` — Next.js internal tool (Clerk auth). Includes
-  `/admin/activity` ("ActivityTrack"), guidebooks, absences, admin tools.
+  `/activity` ("ActivityTrack"), guidebooks, absences, admin tools.
 - `apps/marketing` — Next.js public marketing site.
 - `apps/api` — Elysia server-to-server API (agent enrollment, integration
   webhooks/relays). Holds `ACTIVITYTRACK_SIGNAL_SECRET` and is the only thing
@@ -47,7 +47,7 @@ through one giant diff. If grouping vs. separating conflicts with another
 instruction in a given task (e.g. the user explicitly asks for a single
 commit), ask the user how they want it handled rather than guessing.
 
-## ActivityTrack (`/admin/activity`)
+## ActivityTrack (`/activity`)
 
 The highest-complexity area of the codebase. A fused "is this person working
 right now" state, combined from three independent sources:

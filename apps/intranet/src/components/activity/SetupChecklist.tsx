@@ -41,19 +41,19 @@ export function SetupChecklist() {
     {
       id: "approve",
       done: devices.some(d => d.status === "active"),
-      href: "/admin/activity/devices",
+      href: "/activity/devices",
     },
     {
       id: "people",
       done: people.length > 0,
-      href: "/admin/activity/people",
+      href: "/activity/people",
     },
     {
       id: "link",
       done: devices.some(d => d.personId != null),
-      href: "/admin/activity/devices",
+      href: "/activity/devices",
     },
-    { id: "debugpw", done: debugPwSet, href: "/admin/activity/settings" },
+    { id: "debugpw", done: debugPwSet, href: "/activity/settings" },
   ];
   const remaining = items.filter(i => !i.done).length;
   if (remaining === 0) return null; // fully set up — don't nag.

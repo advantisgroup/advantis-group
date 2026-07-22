@@ -221,14 +221,14 @@ export default function DevicesPage() {
   // place and the two layouts can't drift apart in behaviour.
 
   const timelineHref = (deviceId: string) =>
-    `/admin/activity/timeline/${encodeURIComponent(deviceId)}`;
+    `/activity/timeline/${encodeURIComponent(deviceId)}`;
 
   const emptyMessage =
     devices.length === 0 ? (
       <>
         {t("devices.empty")}{" "}
         <Link
-          href="/admin/activity/help"
+          href="/activity/help"
           className="whitespace-nowrap text-signal hover:underline"
         >
           {t("devices.emptyCta")}

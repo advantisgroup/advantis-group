@@ -342,7 +342,7 @@ export default function ReportsPage() {
                   <TableRow key={d.deviceId} className="group">
                     <TableCell>
                       <Link
-                        href={`/admin/activity/timeline/${encodeURIComponent(d.deviceId)}`}
+                        href={`/activity/timeline/${encodeURIComponent(d.deviceId)}`}
                         className="font-medium text-fg transition-colors group-hover:text-signal"
                       >
                         {d.personName ?? d.hostname}
@@ -362,7 +362,7 @@ export default function ReportsPage() {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Link
-                        href={`/admin/activity/timeline/${encodeURIComponent(d.deviceId)}`}
+                        href={`/activity/timeline/${encodeURIComponent(d.deviceId)}`}
                         aria-label={d.personName ?? d.hostname}
                       >
                         <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-signal" />

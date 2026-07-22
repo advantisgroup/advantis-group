@@ -150,11 +150,13 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
 
 /**
  * The admin-scoped navigation that slides in while the user is inside
- * `/admin/*` (but not `/admin/activity/*` or `/admin/integrations/*`, which
- * have their own dedicated sidebars/gates). Config-driven exactly like
- * `ActivitySidebar`, reusing the same sidebar primitives. The first item
- * returns to the normal intranet nav. Items are grouped by function
- * (access & people, organization, system) rather than one long flat list.
+ * `/admin/*` (but not `/admin/integrations/*`, which has its own dedicated
+ * sidebar/gate; ActivityTrack lives entirely outside `/admin` now, at
+ * `/activity`, with its own sliding panel — see `ActivitySidebar`).
+ * Config-driven exactly like `ActivitySidebar`, reusing the same sidebar
+ * primitives. The first item returns to the normal intranet nav. Items are
+ * grouped by function (access & people, organization, system) rather than
+ * one long flat list.
  */
 export function AdminSidebar() {
   const t = useTranslations("Admin");

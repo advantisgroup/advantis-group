@@ -17,6 +17,16 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "img.clerk.com" },
     ],
   },
+  async redirects() {
+    return [
+      // ActivityTrack moved out from under /admin — keep old bookmarks/links working.
+      {
+        source: "/admin/activity/:path*",
+        destination: "/activity/:path*",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);
