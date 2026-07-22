@@ -29,6 +29,7 @@ import {
   performanceMarks,
   shiftYm,
   teamAverages,
+  teamHitrate,
   type BadgeResult,
   type Snapshot,
 } from "./performance/lib/kpi";
@@ -596,6 +597,7 @@ export async function teamTotals(
       ? Math.round(totalRaw.talkTotalSec / totalRaw.callsToday)
       : undefined;
   let total = enrich(totalRaw);
+  total.hitrate = teamHitrate(withCalls);
   total.reportDate = withCalls.reduce<string | null>(
     (max, s) =>
       s.reportDate && (!max || s.reportDate > max) ? s.reportDate : max,

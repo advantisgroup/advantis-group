@@ -76,6 +76,23 @@ export function enrich(snap: Snapshot): Snapshot {
   };
 }
 
+/** Team hitrate as sum(wonMonth)/sum(workableCreated) across employees,
+ * excluding anyone whose own hitrate exceeds 100% — that only happens when
+ * Closed-Won leads close from a prior month's Workable Leads, and folding
+ * such an employee's Leads/Workable Leads into the team sum would skew the
+ * team's real conversion rate upward. Other team totals (leads, workable,
+ * won counts) are unaffected — only the Hitrate figure excludes them. */
+export function teamHitrate(snaps: Snapshot[]): number | undefined {
+  const included = snaps.filter(s => {
+    const own = rate(s.wonMonth, s.workableCreated);
+    return own === undefined || own <= 100;
+  });
+  return rate(
+    nsum(included.map(s => s.wonMonth)),
+    nsum(included.map(s => s.workableCreated))
+  );
+}
+
 /** Workdays of the month up to `asOf` with no call report at all —
  * `presentDates` is the set of report dates that *do* have `callsToday`
  * measured (fetched by the caller). Distinguishes a missing report from
