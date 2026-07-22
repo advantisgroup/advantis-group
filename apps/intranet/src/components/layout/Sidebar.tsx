@@ -92,7 +92,7 @@ export function Sidebar() {
   // slides out and the matching scoped nav slides in (see the sliding
   // container below). Integrations stays a flat link — it's one provider
   // today, not enough surface yet to warrant its own sidebar section.
-  const isActivity = pathname.startsWith("/admin/activity");
+  const isActivity = pathname.startsWith("/activity");
   const isAdminArea =
     !isActivity &&
     pathname.startsWith("/admin") &&
@@ -210,7 +210,7 @@ export function Sidebar() {
           tourAttr: "tour-nav-admin",
         },
         {
-          href: "/admin/activity",
+          href: "/activity",
           labelKey: "activity",
           icon: Activity,
           managerOnly: true,
@@ -293,7 +293,6 @@ export function Sidebar() {
                             : item.href === "/admin"
                               ? pathname === "/admin" ||
                                 (pathname.startsWith("/admin") &&
-                                  !pathname.startsWith("/admin/activity") &&
                                   !pathname.startsWith("/admin/integrations"))
                               : pathname.startsWith(item.href);
                         const Icon = item.icon;

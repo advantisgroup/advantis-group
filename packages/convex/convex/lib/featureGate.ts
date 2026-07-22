@@ -23,8 +23,8 @@ import { isFeatureEnabled } from "../featureFlags";
  * Only wrap the functions that actually *produce* data for the feature
  * (ingest, state fusion, integration relays/pollers) — read-only queries and
  * admin management/config/migration tooling stay on so an admin can still
- * use `/admin/activity` (they keep UI access via `FeatureGate`) to fix
- * things and re-enable it.
+ * use `/activity` (they keep UI access via `FeatureGate`) to fix things and
+ * re-enable it.
  */
 export function disabledFeatureError(key: FeatureFlagKey): ConvexError<{
   code: "feature_disabled";

@@ -316,21 +316,21 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
   },
   {
     id: "activity",
-    route: "/admin/activity",
+    route: "/activity",
     managerOnly: true,
     steps: [
       {
         id: "activity.nav",
         targetAttr: "tour-nav-activity",
         popoutSide: "right",
-        route: "/admin/activity",
+        route: "/activity",
         skipOnMobile: true,
       },
       {
         id: "activity.stats",
         targetAttr: "tour-activity-stats",
         popoutSide: "bottom",
-        route: "/admin/activity",
+        route: "/activity",
       },
     ],
   },

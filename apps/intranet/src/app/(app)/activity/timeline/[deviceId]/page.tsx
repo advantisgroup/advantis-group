@@ -140,7 +140,7 @@ export default function TimelinePage({
   // Keeps ?day/?tab so switching people compares the same view.
   const openPerson = (id: string) => {
     router.push(
-      `/admin/activity/timeline/${encodeURIComponent(id)}${window.location.search}`
+      `/activity/timeline/${encodeURIComponent(id)}${window.location.search}`
     );
   };
 
@@ -295,7 +295,7 @@ export default function TimelinePage({
   return (
     <section className="space-y-6">
       <Link
-        href="/admin/activity"
+        href="/activity"
         className="group inline-flex items-center gap-1 text-sm text-signal"
       >
         <ArrowLeft className="h-4 w-4 transition-transform duration-150 group-hover:-translate-x-0.5" />
@@ -448,7 +448,7 @@ export default function TimelinePage({
                     <p className="text-sm text-muted-foreground">
                       {t("timeline.hourly.unlinked")}{" "}
                       <Link
-                        href="/admin/activity/people"
+                        href="/activity/people"
                         className="whitespace-nowrap text-signal hover:underline"
                       >
                         {t("timeline.unlinkedCta")}

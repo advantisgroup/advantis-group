@@ -277,7 +277,7 @@ function DeviceCard({
 
   return (
     <Link
-      href={`/admin/activity/timeline/${encodeURIComponent(d.deviceId)}`}
+      href={`/activity/timeline/${encodeURIComponent(d.deviceId)}`}
       className="group block h-full"
     >
       <Card className="relative h-full overflow-hidden transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-signal/40 group-hover:shadow-card-hover">
