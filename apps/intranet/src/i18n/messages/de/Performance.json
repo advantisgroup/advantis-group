@@ -241,6 +241,7 @@
   "wonTrendFootnote": "Werktage der letzten 3 Monate. Tage über dem Schnitt grün, Tage darunter rot markiert.",
   "interactionsTitle": "Interaktionen",
   "interactionsEmpty": "Keine Interaktionen in diesem Monat.",
+  "lastDayInteractionsTitle": "Interaktionen am {date}",
   "interactionDirection": "Richtung",
   "interactionAvgInline": "Ø {value}",
   "interactionsTotalRow": "Gesamt",

@@ -21,6 +21,10 @@ import { FilterableBarChart } from "@/components/activity/charts/FilterableBarCh
 import { CHART } from "@/components/activity/charts/theme";
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
+import {
+  LastDayInteractions,
+  type LastDayInteractionRow,
+} from "@/components/performance/LastDayInteractions";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import {
   buildCallActivityChartData,
@@ -56,11 +60,13 @@ interface EmployeeTopData {
  * (see `calls/page.tsx`, which no longer renders it in the page body). */
 function EmployeeTopSection({
   data,
+  interactionDays,
   activeTab,
   t,
   locale,
 }: {
   data: EmployeeTopData;
+  interactionDays: LastDayInteractionRow[] | undefined;
   activeTab: string;
   t: ReturnType<typeof useTranslations>;
   locale: string;
@@ -94,6 +100,10 @@ function EmployeeTopSection({
       </Card>
     );
   }
+  if (activeTab === "interaktionen") {
+    if (!interactionDays) return null;
+    return <LastDayInteractions days={interactionDays} locale={locale} />;
+  }
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
@@ -120,6 +130,11 @@ function EmployeeChrome({
     token,
     employeeId,
     ym,
+  });
+  const interactions = useQuery(api.performanceQueries.interactionsMonth, {
+    token,
+    ym,
+    employeeId,
   });
 
   const activeTab = pathname.split("/").filter(Boolean)[3] ?? "ueberblick";
@@ -179,6 +194,7 @@ function EmployeeChrome({
         {data && (
           <EmployeeTopSection
             data={data}
+            interactionDays={interactions?.days}
             activeTab={activeTab}
             t={t}
             locale={locale}

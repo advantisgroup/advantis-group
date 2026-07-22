@@ -20,6 +20,10 @@ import { FilterableBarChart } from "@/components/activity/charts/FilterableBarCh
 import { CHART } from "@/components/activity/charts/theme";
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
+import {
+  LastDayInteractions,
+  type LastDayInteractionRow,
+} from "@/components/performance/LastDayInteractions";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import {
   buildCallActivityChartData,
@@ -62,11 +66,13 @@ interface DashboardTopData {
  * unconditionally here. */
 function DashboardTopSection({
   data,
+  interactionDays,
   activeTab,
   t,
   locale,
 }: {
   data: DashboardTopData;
+  interactionDays: LastDayInteractionRow[] | undefined;
   activeTab: string;
   t: ReturnType<typeof useTranslations>;
   locale: string;
@@ -100,6 +106,10 @@ function DashboardTopSection({
       </Card>
     );
   }
+  if (activeTab === "interaktionen") {
+    if (!interactionDays) return null;
+    return <LastDayInteractions days={interactionDays} locale={locale} />;
+  }
   return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
@@ -119,6 +129,10 @@ function DashboardChrome({
   const pathname = usePathname();
   const [ym, setYm] = usePerformanceYm();
   const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
+  const interactions = useQuery(api.performanceQueries.interactionsMonth, {
+    token,
+    ym,
+  });
 
   const activeTab = pathname.split("/").filter(Boolean)[1] ?? "ueberblick";
 
@@ -221,7 +235,13 @@ function DashboardChrome({
         </div>
 
         {data && (
-          <DashboardTopSection data={data} activeTab={activeTab} t={t} locale={locale} />
+          <DashboardTopSection
+            data={data}
+            interactionDays={interactions?.days}
+            activeTab={activeTab}
+            t={t}
+            locale={locale}
+          />
         )}
 
         <Card className="overflow-hidden">
