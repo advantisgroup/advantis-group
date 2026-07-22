@@ -110,11 +110,25 @@ async function runApplyImport(
   );
 }
 
+/** Loops a batched `clear*` mutation (see performanceImport.ts's
+ * `CLEAR_BATCH_SIZE` comment) until a full pass deletes nothing, instead of
+ * relying on one unbounded collect-then-delete that fails once the stored
+ * table crosses Convex's per-execution read limit. */
+async function clearInBatches(
+  label: string,
+  clearOnce: () => Promise<{ more: boolean }>
+): Promise<void> {
+  let more = true;
+  while (more) {
+    ({ more } = await runSafely(label, clearOnce));
+  }
+}
+
 /** Wholesale-replaces a raw drill-down table in bounded-size chunks, so a
  * large export's raw rows never cross Convex's array-argument limit in a
  * single call. */
 async function writeRawLeads(ctx: ActionCtx, raw: RawLead[]): Promise<void> {
-  await runSafely("clearRawLeads", () =>
+  await clearInBatches("clearRawLeads", () =>
     ctx.runMutation(internal.performanceImport.clearRawLeads, {})
   );
   for (let i = 0; i < raw.length; i += RAW_CHUNK_SIZE) {
@@ -128,7 +142,7 @@ async function writeRawLeads(ctx: ActionCtx, raw: RawLead[]): Promise<void> {
 }
 
 async function writeRawOpps(ctx: ActionCtx, raw: RawOpp[]): Promise<void> {
-  await runSafely("clearRawOpps", () =>
+  await clearInBatches("clearRawOpps", () =>
     ctx.runMutation(internal.performanceImport.clearRawOpps, {})
   );
   for (let i = 0; i < raw.length; i += RAW_CHUNK_SIZE) {
@@ -142,7 +156,7 @@ async function writeRawOpps(ctx: ActionCtx, raw: RawOpp[]): Promise<void> {
 }
 
 async function writeWonOpps(ctx: ActionCtx, wonOpps: WonOpp[]): Promise<void> {
-  await runSafely("clearWonOpps", () =>
+  await clearInBatches("clearWonOpps", () =>
     ctx.runMutation(internal.performanceImport.clearWonOpps, {})
   );
   for (let i = 0; i < wonOpps.length; i += RAW_CHUNK_SIZE) {
@@ -282,7 +296,7 @@ async function writeInteractions(
   months: string[],
   sourceFile: string
 ): Promise<void> {
-  await runSafely("clearInteractionsForMonths", () =>
+  await clearInBatches("clearInteractionsForMonths", () =>
     ctx.runMutation(internal.performanceImport.clearInteractionsForMonths, {
       months,
     })
