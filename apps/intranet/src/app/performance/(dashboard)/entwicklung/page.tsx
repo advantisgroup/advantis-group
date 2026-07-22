@@ -18,10 +18,7 @@ import {
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
 import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
-import {
-  fmtDayShort,
-  fmtYm,
-} from "@/components/performance/PerformanceFormat";
+import { fmtDayShort, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getPerformanceToken } from "@/lib/performanceAuth";
@@ -103,10 +100,22 @@ export default function DashboardDevelopmentPage() {
             <FilterableBarChart
               data={funnelChart}
               series={[
-                { key: "leads", name: t("dashboardLeadsCreatedMonth"), color: CHART.info },
-                { key: "workable", name: t("colWorkable"), color: CHART.active },
+                {
+                  key: "leads",
+                  name: t("dashboardLeadsCreatedMonth"),
+                  color: CHART.info,
+                },
+                {
+                  key: "workable",
+                  name: t("colWorkable"),
+                  color: CHART.active,
+                },
                 { key: "won", name: t("colWon"), color: CHART.accent },
-                { key: "unqualified", name: t("developmentUnqualifiedLabel"), color: CHART.idle },
+                {
+                  key: "unqualified",
+                  name: t("developmentUnqualifiedLabel"),
+                  color: CHART.idle,
+                },
               ]}
             />
           </CardContent>

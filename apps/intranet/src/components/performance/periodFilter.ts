@@ -23,7 +23,11 @@ function parseIso(iso: string): Date {
 
 export function todayIso(): string {
   const now = new Date();
-  return toIso(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())));
+  return toIso(
+    new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+    )
+  );
 }
 
 /** Monday of the week containing `d`. */
@@ -48,8 +52,12 @@ export function computePeriodRange(
     const end = new Date(start.getTime() + 6 * 86_400_000);
     return { start: toIso(start), end: toIso(end) };
   }
-  const start = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0));
+  const start = new Date(
+    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1)
+  );
+  const end = new Date(
+    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0)
+  );
   return { start: toIso(start), end: toIso(end) };
 }
 
@@ -67,6 +75,8 @@ export function shiftAnchor(
     return toIso(new Date(anchor.getTime() + direction * 7 * 86_400_000));
   }
   return toIso(
-    new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + direction, 1))
+    new Date(
+      Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + direction, 1)
+    )
   );
 }

@@ -424,7 +424,7 @@ export const purgeExcludedOwners = internalMutation({
  * app's regular read path. */
 export const findImplausibleDurations = internalQuery({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
     const rows = await ctx.db.query("performanceReports").collect();
     return rows

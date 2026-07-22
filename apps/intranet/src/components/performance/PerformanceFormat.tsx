@@ -64,7 +64,10 @@ export interface CallActivityChartDay {
  * body and the dashboard chrome's promoted top-of-page chart so both read
  * the same fields the same way. */
 export function buildCallActivityChartData(
-  days: { date: string; values: { callsAnswered?: number; callsOutbound?: number } }[],
+  days: {
+    date: string;
+    values: { callsAnswered?: number; callsOutbound?: number };
+  }[],
   locale: string
 ): CallActivityChartDay[] {
   return days.map(d => ({

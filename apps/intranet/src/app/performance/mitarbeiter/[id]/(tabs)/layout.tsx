@@ -50,7 +50,10 @@ import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 interface EmployeeTopData {
   hasCalls: boolean;
-  days: { date: string; values: { callsAnswered?: number; callsOutbound?: number } }[];
+  days: {
+    date: string;
+    values: { callsAnswered?: number; callsOutbound?: number };
+  }[];
   wonTrend: { days: { date: string; won: number }[]; avg: number };
 }
 
@@ -104,7 +107,9 @@ function EmployeeTopSection({
     if (!interactionDays) return null;
     return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
-  return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
+  return (
+    <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />
+  );
 }
 
 function EmployeeChrome({

@@ -43,7 +43,8 @@ export default function DashboardInteractionsPage() {
   const employees = useMemo(() => {
     const seen = new Map<string, string>();
     for (const d of data?.days ?? []) {
-      if (d.employeeId && d.employeeName) seen.set(d.employeeId, d.employeeName);
+      if (d.employeeId && d.employeeName)
+        seen.set(d.employeeId, d.employeeName);
     }
     return [...seen.entries()]
       .map(([id, name]) => ({ id, name }))

@@ -57,7 +57,10 @@ import {
 
 interface DashboardTopData {
   hasCalls: boolean;
-  days: { date: string; values: { callsAnswered?: number; callsOutbound?: number } }[];
+  days: {
+    date: string;
+    values: { callsAnswered?: number; callsOutbound?: number };
+  }[];
   wonTrend: { days: { date: string; won: number }[]; avg: number };
   loggedIn: { date: string; count: number }[];
 }
@@ -144,7 +147,9 @@ function DashboardTopSection({
   // (over its own trailing-3-month window) further down the page — no
   // top-of-page chart needed here too.
   if (activeTab === "entwicklung") return null;
-  return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
+  return (
+    <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />
+  );
 }
 
 function DashboardChrome({

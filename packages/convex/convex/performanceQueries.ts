@@ -465,7 +465,9 @@ async function stateFieldTrend(
 
   const rows = await ctx.db
     .query("performanceReports")
-    .withIndex("by_reportDate", q => q.gte("reportDate", start).lte("reportDate", end))
+    .withIndex("by_reportDate", q =>
+      q.gte("reportDate", start).lte("reportDate", end)
+    )
     .collect();
 
   const byDate = new Map<string, number>();
@@ -805,11 +807,7 @@ export const teamDevelopment = query({
 
     const cache = newQueryCache();
     const currentYm = defaultYm();
-    const months = [
-      shiftYm(currentYm, -2),
-      shiftYm(currentYm, -1),
-      currentYm,
-    ];
+    const months = [shiftYm(currentYm, -2), shiftYm(currentYm, -1), currentYm];
 
     const monthly: DevelopmentMonth[] = [];
     for (const ym of months) {
@@ -991,7 +989,10 @@ export const interactionsMonth = query({
     end: v.optional(v.string()),
     employeeId: v.optional(v.id("performanceEmployees")),
   },
-  handler: async (ctx, { token, ym: ymArg, start: startArg, end: endArg, employeeId }) => {
+  handler: async (
+    ctx,
+    { token, ym: ymArg, start: startArg, end: endArg, employeeId }
+  ) => {
     const login = await requireSession(ctx, token);
     if (employeeId) {
       requireCanView(login, employeeId);
