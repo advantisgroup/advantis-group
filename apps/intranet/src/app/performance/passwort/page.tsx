@@ -9,7 +9,8 @@ import { useAction } from "convex/react";
 import { KeyRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { PerformanceShell } from "@/components/performance/PerformanceShell";
+import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
+import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Button } from "@/components/ui/button";
@@ -77,22 +78,23 @@ export default function PerformancePasswordPage() {
   if (session === undefined) return <PerformancePageSkeleton />;
   if (!session.valid || session.viaClerk) return null;
 
+  const navItems = [
+    {
+      href:
+        session.role === "admin"
+          ? "/performance"
+          : session.employeeId
+            ? `/performance/mitarbeiter/${session.employeeId}`
+            : "/performance",
+      label: t("backToDashboard"),
+    },
+  ];
+
   return (
-    <PerformanceShell
-      navItems={[
-        {
-          href:
-            session.role === "admin"
-              ? "/performance"
-              : session.employeeId
-                ? `/performance/mitarbeiter/${session.employeeId}`
-                : "/performance",
-          label: t("backToDashboard"),
-        },
-      ]}
-      onExit={exit}
-    >
-      <div className="mx-auto max-w-md space-y-6">
+    <div className="min-h-screen bg-muted/20">
+      <PerformanceHeader navItems={navItems} onExit={exit} />
+
+      <main className="mx-auto max-w-md space-y-6 p-4 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -153,7 +155,8 @@ export default function PerformancePasswordPage() {
             </Button>
           </CardContent>
         </Card>
-      </div>
-    </PerformanceShell>
+      </main>
+      <PerformanceBottomTabs navItems={navItems} onExit={exit} />
+    </div>
   );
 }

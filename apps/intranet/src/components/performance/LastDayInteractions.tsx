@@ -16,27 +16,29 @@ export interface LastDayInteractionRow {
   employeeName?: string;
 }
 
-function StatChip({ label, value }: { label: string; value: string }) {
+function StatRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
-      <span className="text-sm font-semibold tabular-nums">{value}</span>
+    <div className="flex items-baseline justify-between gap-2 text-xs">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-semibold tabular-nums">{value}</span>
     </div>
   );
 }
 
+/** Stacked full-width rows rather than side-by-side columns — three
+ * differently-long labels ("Interaktionen" vs. "Gesamt Gesprächszeit")
+ * wrap to a different number of lines when cramped into a shared row,
+ * which misaligned each column's value against its neighbors. */
 function RowStats({ row }: { row: LastDayInteractionRow }) {
   const t = useTranslations("Performance");
   return (
-    <div className="flex gap-4">
-      <StatChip label={t("interactionsStatCount")} value={fmtNum(row.count)} />
-      <StatChip
+    <div className="flex flex-col gap-1">
+      <StatRow label={t("interactionsStatCount")} value={fmtNum(row.count)} />
+      <StatRow
         label={t("callsAvgDurationLabel")}
         value={fmtDuration(row.avgDurationSec)}
       />
-      <StatChip
+      <StatRow
         label={t("callsTotalTalkLabel")}
         value={fmtDuration(row.totalDurationSec)}
       />

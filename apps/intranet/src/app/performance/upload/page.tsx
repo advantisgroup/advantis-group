@@ -29,7 +29,8 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { PerformanceShell } from "@/components/performance/PerformanceShell";
+import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
+import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
@@ -523,15 +524,17 @@ export default function PerformanceUploadPage() {
   if (!session.valid || session.role !== "admin" || session.viaClerk)
     return null;
 
+  const navItems = [{ href: "/performance", label: t("backToDashboard") }];
+  const exit = () => {
+    clearPerformanceToken();
+    router.replace("/performance/login");
+  };
+
   return (
-    <PerformanceShell
-      navItems={[{ href: "/performance", label: t("backToDashboard") }]}
-      onExit={() => {
-        clearPerformanceToken();
-        router.replace("/performance/login");
-      }}
-    >
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="min-h-screen bg-muted/20">
+      <PerformanceHeader navItems={navItems} onExit={exit} />
+
+      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -807,7 +810,8 @@ export default function PerformanceUploadPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </PerformanceShell>
+      </main>
+      <PerformanceBottomTabs navItems={navItems} onExit={exit} />
+    </div>
   );
 }

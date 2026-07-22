@@ -10,7 +10,8 @@ import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { InteractionRecordsTable } from "@/components/performance/InteractionRecordsTable";
-import { PerformanceShell } from "@/components/performance/PerformanceShell";
+import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
+import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,33 +53,36 @@ export default function EmployeeInteractionDayPage() {
 
   if (!canView) {
     return (
-      <PerformanceShell
-        navItems={[]}
-        onExit={session.viaClerk ? undefined : exit}
-      >
-        <div className="mx-auto max-w-3xl">
+      <div className="min-h-screen bg-muted/20">
+        <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
+        <main className="mx-auto max-w-3xl p-4 md:p-6">
           <Card>
             <div className="p-6 text-center text-sm text-muted-foreground">
               {t("notLinkedBody")}
             </div>
           </Card>
-        </div>
-      </PerformanceShell>
+        </main>
+        <PerformanceBottomTabs onExit={session.viaClerk ? undefined : exit} />
+      </div>
     );
   }
 
+  const navItems = [
+    {
+      href: `/performance/mitarbeiter/${employeeId}/interaktionen`,
+      label: t("backToDashboard"),
+    },
+    ...(isAdmin ? [{ href: "/performance", label: t("tabOverview") }] : []),
+  ];
+
   return (
-    <PerformanceShell
-      navItems={[
-        {
-          href: `/performance/mitarbeiter/${employeeId}/interaktionen`,
-          label: t("backToDashboard"),
-        },
-        ...(isAdmin ? [{ href: "/performance", label: t("tabOverview") }] : []),
-      ]}
-      onExit={session.viaClerk ? undefined : exit}
-    >
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="min-h-screen bg-muted/20">
+      <PerformanceHeader
+        navItems={navItems}
+        onExit={session.viaClerk ? undefined : exit}
+      />
+
+      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
         <div>
           <h1 className="text-xl font-semibold">
             {formatIsoDate(params.date, locale)}
@@ -102,7 +106,11 @@ export default function EmployeeInteractionDayPage() {
             showEmployee={false}
           />
         )}
-      </div>
-    </PerformanceShell>
+      </main>
+      <PerformanceBottomTabs
+        navItems={navItems}
+        onExit={session.viaClerk ? undefined : exit}
+      />
+    </div>
   );
 }

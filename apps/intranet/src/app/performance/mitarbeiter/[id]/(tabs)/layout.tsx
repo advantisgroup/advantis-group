@@ -25,11 +25,12 @@ import {
   LastDayInteractions,
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
+import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import {
   buildCallActivityChartData,
   fmtYm,
 } from "@/components/performance/PerformanceFormat";
-import { PerformanceShell } from "@/components/performance/PerformanceShell";
+import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import {
   PerformanceYmProvider,
@@ -188,11 +189,13 @@ function EmployeeChrome({
   ];
 
   return (
-    <PerformanceShell
-      navItems={navItems}
-      onExit={viaClerk ? undefined : onExit}
-    >
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div className="min-h-screen bg-muted/20">
+      <PerformanceHeader
+        navItems={navItems}
+        onExit={viaClerk ? undefined : onExit}
+      />
+
+      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
         {data && (
           <EmployeeTopSection
             data={data}
@@ -237,8 +240,12 @@ function EmployeeChrome({
         </Card>
 
         {children}
-      </div>
-    </PerformanceShell>
+      </main>
+      <PerformanceBottomTabs
+        navItems={navItems}
+        onExit={viaClerk ? undefined : onExit}
+      />
+    </div>
   );
 }
 
@@ -278,18 +285,17 @@ export default function EmployeeDetailLayout({
   if (!session.valid) return null;
   if (!canView) {
     return (
-      <PerformanceShell
-        navItems={[]}
-        onExit={session.viaClerk ? undefined : exit}
-      >
-        <div className="mx-auto max-w-3xl">
+      <div className="min-h-screen bg-muted/20">
+        <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
+        <main className="mx-auto max-w-3xl p-4 md:p-6">
           <Card>
             <div className="p-6 text-center text-sm text-muted-foreground">
               {t("notLinkedBody")}
             </div>
           </Card>
-        </div>
-      </PerformanceShell>
+        </main>
+        <PerformanceBottomTabs onExit={session.viaClerk ? undefined : exit} />
+      </div>
     );
   }
 
