@@ -17,11 +17,19 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
+import { CHART } from "@/components/activity/charts/theme";
 import { RouteTabs, type RouteTab } from "@/components/applicants/RouteTabs";
 import { ClosedWonTrendChart } from "@/components/performance/ClosedWonTrendChart";
-import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import { fmtYm } from "@/components/performance/PerformanceFormat";
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import {
+  LastDayInteractions,
+  type LastDayInteractionRow,
+} from "@/components/performance/LastDayInteractions";
+import {
+  buildCallActivityChartData,
+  fmtYm,
+} from "@/components/performance/PerformanceFormat";
+import { PerformanceShell } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import {
   PerformanceYmProvider,
@@ -29,7 +37,7 @@ import {
 } from "@/components/performance/PerformanceYmContext";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -38,6 +46,70 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { clearPerformanceToken } from "@/lib/performanceAuth";
+
+interface EmployeeTopData {
+  hasCalls: boolean;
+  days: {
+    date: string;
+    values: { callsAnswered?: number; callsOutbound?: number };
+  }[];
+  wonTrend: { days: { date: string; won: number }[]; avg: number };
+}
+
+/** Same tab-dependent top-of-page chart as the team dashboard's
+ * `DashboardTopSection` ((dashboard)/layout.tsx) — the Calls tab promotes
+ * its own "Call-Aktivität" chart up here instead of the closed-won trend
+ * (see `calls/page.tsx`, which no longer renders it in the page body). */
+function EmployeeTopSection({
+  data,
+  interactionDays,
+  activeTab,
+  t,
+  locale,
+}: {
+  data: EmployeeTopData;
+  interactionDays: LastDayInteractionRow[] | undefined;
+  activeTab: string;
+  t: ReturnType<typeof useTranslations>;
+  locale: string;
+}) {
+  if (activeTab === "calls") {
+    if (!data.hasCalls) return null;
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            {t("dashboardCallActivity")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FilterableBarChart
+            data={buildCallActivityChartData(data.days, locale)}
+            series={[
+              {
+                key: "answered",
+                name: t("callsAnsweredLabel"),
+                color: CHART.active,
+              },
+              {
+                key: "outbound",
+                name: t("callsOutboundLabel"),
+                color: CHART.accent,
+              },
+            ]}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+  if (activeTab === "interaktionen") {
+    if (!interactionDays) return null;
+    return <LastDayInteractions days={interactionDays} locale={locale} />;
+  }
+  return (
+    <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />
+  );
+}
 
 function EmployeeChrome({
   token,
@@ -62,6 +134,11 @@ function EmployeeChrome({
     token,
     employeeId,
     ym,
+  });
+  const interactions = useQuery(api.performanceQueries.interactionsMonth, {
+    token,
+    ym,
+    employeeId,
   });
 
   const activeTab = pathname.split("/").filter(Boolean)[3] ?? "ueberblick";
@@ -111,17 +188,18 @@ function EmployeeChrome({
   ];
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={viaClerk ? undefined : onExit}
-      />
-
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+    <PerformanceShell
+      navItems={navItems}
+      onExit={viaClerk ? undefined : onExit}
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
         {data && (
-          <ClosedWonTrendChart
-            days={data.wonTrend.days}
-            avg={data.wonTrend.avg}
+          <EmployeeTopSection
+            data={data}
+            interactionDays={interactions?.days}
+            activeTab={activeTab}
+            t={t}
+            locale={locale}
           />
         )}
 
@@ -159,9 +237,8 @@ function EmployeeChrome({
         </Card>
 
         {children}
-      </main>
-      <PerformanceBottomTabs />
-    </div>
+      </div>
+    </PerformanceShell>
   );
 }
 
@@ -201,16 +278,18 @@ export default function EmployeeDetailLayout({
   if (!session.valid) return null;
   if (!canView) {
     return (
-      <div className="min-h-screen bg-muted/20">
-        <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
-        <main className="mx-auto max-w-3xl p-4 md:p-6">
+      <PerformanceShell
+        navItems={[]}
+        onExit={session.viaClerk ? undefined : exit}
+      >
+        <div className="mx-auto max-w-3xl">
           <Card>
             <div className="p-6 text-center text-sm text-muted-foreground">
               {t("notLinkedBody")}
             </div>
           </Card>
-        </main>
-      </div>
+        </div>
+      </PerformanceShell>
     );
   }
 

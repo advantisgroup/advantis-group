@@ -8,7 +8,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import { PerformanceShell } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -115,13 +115,11 @@ export default function DrilldownPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={[{ href: "/performance", label: t("backToDashboard") }]}
-        onExit={session.viaClerk ? undefined : exit}
-      />
-
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+    <PerformanceShell
+      navItems={[{ href: "/performance", label: t("backToDashboard") }]}
+      onExit={session.viaClerk ? undefined : exit}
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
         {!validKey ? (
           <Card>
             <CardContent className="p-6 text-center text-sm text-muted-foreground">
@@ -280,7 +278,7 @@ export default function DrilldownPage() {
             </Card>
           </>
         )}
-      </main>
-    </div>
+      </div>
+    </PerformanceShell>
   );
 }

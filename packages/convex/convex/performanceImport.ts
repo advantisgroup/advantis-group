@@ -424,7 +424,7 @@ export const purgeExcludedOwners = internalMutation({
  * app's regular read path. */
 export const findImplausibleDurations = internalQuery({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
     const rows = await ctx.db.query("performanceReports").collect();
     return rows
@@ -647,11 +647,25 @@ export const apiFindUploadByHash = query({
 // number in the thousands, which risks Convex's 8192-element array-argument
 // limit if shipped as a single call — see performanceUploadParse.ts, the
 // only caller.
+//
+// The clear side is itself batched (`.take` + report `more`, looped by the
+// caller) rather than a single `.collect()` + `Promise.all(delete)` — once
+// the *stored* table (independent of whatever the new upload contains)
+// crosses Convex's 4096-reads-per-execution ceiling, an unbounded clear
+// fails every subsequent upload's clear-then-reimport step, no matter how
+// small the new file is (the "Opp Report kann nicht verarbeitet werden"
+// crash this fixes: shrinking the new file never helped, because the crash
+// was in clearing old data, not parsing new data).
+const CLEAR_BATCH_SIZE = 500;
+
 export const clearRawLeads = internalMutation({
   args: {},
-  handler: async (ctx): Promise<void> => {
-    const existing = await ctx.db.query("performanceRawLeads").collect();
-    await Promise.all(existing.map(row => ctx.db.delete(row._id)));
+  handler: async (ctx): Promise<{ more: boolean }> => {
+    const batch = await ctx.db
+      .query("performanceRawLeads")
+      .take(CLEAR_BATCH_SIZE);
+    await Promise.all(batch.map(row => ctx.db.delete(row._id)));
+    return { more: batch.length === CLEAR_BATCH_SIZE };
   },
 });
 
@@ -666,9 +680,12 @@ export const insertRawLeadsChunk = internalMutation({
 
 export const clearRawOpps = internalMutation({
   args: {},
-  handler: async (ctx): Promise<void> => {
-    const existing = await ctx.db.query("performanceRawOpps").collect();
-    await Promise.all(existing.map(row => ctx.db.delete(row._id)));
+  handler: async (ctx): Promise<{ more: boolean }> => {
+    const batch = await ctx.db
+      .query("performanceRawOpps")
+      .take(CLEAR_BATCH_SIZE);
+    await Promise.all(batch.map(row => ctx.db.delete(row._id)));
+    return { more: batch.length === CLEAR_BATCH_SIZE };
   },
 });
 
@@ -683,9 +700,12 @@ export const insertRawOppsChunk = internalMutation({
 
 export const clearWonOpps = internalMutation({
   args: {},
-  handler: async (ctx): Promise<void> => {
-    const existing = await ctx.db.query("performanceWonOpps").collect();
-    await Promise.all(existing.map(row => ctx.db.delete(row._id)));
+  handler: async (ctx): Promise<{ more: boolean }> => {
+    const batch = await ctx.db
+      .query("performanceWonOpps")
+      .take(CLEAR_BATCH_SIZE);
+    await Promise.all(batch.map(row => ctx.db.delete(row._id)));
+    return { more: batch.length === CLEAR_BATCH_SIZE };
   },
 });
 
@@ -766,17 +786,31 @@ const interactionInsertValidator = v.object({
   direction: v.optional(v.string()),
 });
 
+/** Batched like `clearRawLeads`/`clearRawOpps`/`clearWonOpps` above — deletes
+ * up to `CLEAR_BATCH_SIZE` rows across the given months per call and reports
+ * `more` whenever it deleted anything, so the caller loops until a full pass
+ * over every month finds nothing left instead of risking the same unbounded
+ * collect-then-delete blowing Convex's per-execution read limit on a month
+ * with heavy interaction volume. */
 export const clearInteractionsForMonths = internalMutation({
   args: { months: v.array(v.string()) },
-  handler: async (ctx, { months }): Promise<void> => {
+  handler: async (ctx, { months }): Promise<{ more: boolean }> => {
+    let remaining = CLEAR_BATCH_SIZE;
+    let deletedAny = false;
     for (const ym of months) {
+      if (remaining <= 0) break;
       const { start, end } = monthBounds(ym);
-      const rows = await ctx.db
+      const batch = await ctx.db
         .query("performanceInteractions")
         .withIndex("by_date", q => q.gte("date", start).lte("date", end))
-        .collect();
-      await Promise.all(rows.map(row => ctx.db.delete(row._id)));
+        .take(remaining);
+      if (batch.length > 0) {
+        await Promise.all(batch.map(row => ctx.db.delete(row._id)));
+        deletedAny = true;
+        remaining -= batch.length;
+      }
     }
+    return { more: deletedAny };
   },
 });
 

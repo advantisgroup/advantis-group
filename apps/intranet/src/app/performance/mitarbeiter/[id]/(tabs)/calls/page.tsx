@@ -57,15 +57,9 @@ export default function EmployeeCallsPage() {
     ym,
   });
 
-  const callsChart = useMemo(
-    () =>
-      (data?.days ?? []).map(d => ({
-        label: fmtDayShort(d.date, locale),
-        answered: d.values.callsAnswered ?? 0,
-        outbound: d.values.callsOutbound ?? 0,
-      })),
-    [data?.days, locale]
-  );
+  // The "Call-Aktivität" chart (answered/outbound) no longer renders here —
+  // it's promoted to the top of the page by (tabs)/layout.tsx's
+  // EmployeeTopSection for this tab, so it isn't shown twice.
   const timeChart = useMemo(
     () =>
       (data?.days ?? []).map(d => ({
@@ -140,60 +134,33 @@ export default function EmployeeCallsPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {t("dashboardCallActivity")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FilterableBarChart
-              data={callsChart}
-              series={[
-                {
-                  key: "answered",
-                  name: t("callsAnsweredLabel"),
-                  color: CHART.active,
-                },
-                {
-                  key: "outbound",
-                  name: t("callsOutboundLabel"),
-                  color: CHART.accent,
-                },
-              ]}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">
-              {t("callsTotalTalkLabel")} / {t("callsLoginLabel")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FilterableBarChart
-              data={timeChart}
-              series={[
-                {
-                  key: "talk",
-                  name: t("callsTotalTalkLabel"),
-                  color: CHART.idle,
-                },
-                {
-                  key: "login",
-                  name: t("callsLoginLabel"),
-                  color: CHART.info,
-                },
-              ]}
-              yTickFormatter={(v: number) => fmtDuration(v)}
-              tooltipFormatter={(value: number) => fmtDuration(value)}
-              yScale="log"
-            />
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">
+            {t("callsTotalTalkLabel")} / {t("callsLoginLabel")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <FilterableBarChart
+            data={timeChart}
+            series={[
+              {
+                key: "talk",
+                name: t("callsTotalTalkLabel"),
+                color: CHART.idle,
+              },
+              {
+                key: "login",
+                name: t("callsLoginLabel"),
+                color: CHART.info,
+              },
+            ]}
+            yTickFormatter={(v: number) => fmtDuration(v)}
+            tooltipFormatter={(value: number) => fmtDuration(value)}
+            yScale="log"
+          />
+        </CardContent>
+      </Card>
 
       <p className="text-xs text-muted-foreground">{t("callsFootnote")}</p>
     </div>

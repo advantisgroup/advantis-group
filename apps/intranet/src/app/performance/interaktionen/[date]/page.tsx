@@ -9,7 +9,7 @@ import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { InteractionRecordsTable } from "@/components/performance/InteractionRecordsTable";
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
+import { PerformanceShell } from "@/components/performance/PerformanceShell";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,15 +54,13 @@ export default function DashboardInteractionDayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={[
-          { href: "/performance/interaktionen", label: t("backToDashboard") },
-        ]}
-        onExit={session.viaClerk ? undefined : exit}
-      />
-
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+    <PerformanceShell
+      navItems={[
+        { href: "/performance/interaktionen", label: t("backToDashboard") },
+      ]}
+      onExit={session.viaClerk ? undefined : exit}
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
         <div>
           <h1 className="text-xl font-semibold">
             {formatIsoDate(params.date, locale)}
@@ -86,7 +84,7 @@ export default function DashboardInteractionDayPage() {
             showEmployee
           />
         )}
-      </main>
-    </div>
+      </div>
+    </PerformanceShell>
   );
 }

@@ -317,6 +317,52 @@ async function callDaysList(
   return out;
 }
 
+export interface LoggedInDay {
+  date: string;
+  count: number;
+}
+
+/** Every calendar day of the month with the count of distinct employees who
+ * had a lead created that day ("logged in" — created leads that day =
+ * attendance, per the Team tab's brief) — feeds the day-by-day chart there.
+ * Reads `performanceRawLeads`, which is a full snapshot of currently-active
+ * leads (see the schema comment), so an employee's older leads that have
+ * since converted/closed can drop out of this count for past days —
+ * accepted trade-off, there's no daily-attendance history stored anywhere
+ * else to fall back to. */
+async function loggedInDaysList(
+  ctx: QueryCtx,
+  ym: string
+): Promise<LoggedInDay[]> {
+  const { start, end } = monthBounds(ym);
+  const rows = await ctx.db
+    .query("performanceRawLeads")
+    .withIndex("by_createDate", q =>
+      q.gte("createDate", start).lte("createDate", end)
+    )
+    .collect();
+
+  const byDate = new Map<string, Set<string>>();
+  for (const r of rows) {
+    if (!r.createDate || EXCLUDED_OWNERS.has(r.owner.toLowerCase())) continue;
+    const owners = byDate.get(r.createDate) ?? new Set<string>();
+    owners.add(r.owner);
+    byDate.set(r.createDate, owners);
+  }
+
+  const out: LoggedInDay[] = [];
+  const last = parseISODate(end);
+  for (
+    let d = parseISODate(start);
+    d.getTime() <= last.getTime();
+    d = new Date(d.getTime() + 86_400_000)
+  ) {
+    const iso = toISODate(d);
+    out.push({ date: iso, count: byDate.get(iso)?.size ?? 0 });
+  }
+  return out;
+}
+
 async function hasCallData(
   ctx: QueryCtx,
   ym: string,
@@ -392,6 +438,62 @@ async function closedWonTrend(
     ? days.reduce((a, d) => a + d.won, 0) / days.length
     : 0;
   return { days, avg: Math.round(avg * 100) / 100 };
+}
+
+export interface StateFieldDay {
+  date: string;
+  value: number;
+}
+
+/** Daily team-wide trend of a "state" metric (a level, not a daily event
+ * count — e.g. `oppsOpen`, `leadsAnalysis`, `leadsDetailsIdent`) over the
+ * same trailing-3-month window as `closedWonTrend`, for the team-level
+ * Entwicklung tab. Each import writes one row per employee for its own
+ * report date with that day's *known* state — summing every employee's
+ * value on a day something was actually uploaded gives that day's true
+ * team total; a day with no upload at all gets no rows, so its value is
+ * carried forward from the last day we did have data, rather than reading
+ * as a (wrong) drop to zero. */
+async function stateFieldTrend(
+  ctx: QueryCtx,
+  field: keyof MetricFields
+): Promise<StateFieldDay[]> {
+  const currentYm = defaultYm();
+  const { start } = monthBounds(shiftYm(currentYm, -2));
+  const { end } = monthBounds(currentYm);
+  const names = await employeeNameMap(ctx);
+
+  const rows = await ctx.db
+    .query("performanceReports")
+    .withIndex("by_reportDate", q =>
+      q.gte("reportDate", start).lte("reportDate", end)
+    )
+    .collect();
+
+  const byDate = new Map<string, number>();
+  for (const r of rows) {
+    if (!names.has(r.employeeId)) continue;
+    const v = r[field];
+    if (v === undefined) continue;
+    byDate.set(r.reportDate, (byDate.get(r.reportDate) ?? 0) + v);
+  }
+
+  const today = todayUTC();
+  const endDate = parseISODate(end);
+  const last = endDate.getTime() < today.getTime() ? endDate : today;
+  const out: StateFieldDay[] = [];
+  let carry = 0;
+  for (
+    let d = parseISODate(start);
+    d.getTime() <= last.getTime();
+    d = new Date(d.getTime() + 86_400_000)
+  ) {
+    const iso = toISODate(d);
+    const v = byDate.get(iso);
+    if (v !== undefined) carry = v;
+    out.push({ date: iso, value: carry });
+  }
+  return out;
 }
 
 /** All months that have at least one report — the month selector's
@@ -638,6 +740,7 @@ export const teamDashboard = query({
     const days = await callDaysList(ctx, ym, undefined, cache);
     const hasCalls = await hasCallData(ctx, ym, undefined, cache);
     const wonTrend = await closedWonTrend(ctx, undefined);
+    const loggedIn = await loggedInDaysList(ctx, ym);
 
     const vmYm = shiftYm(ym, -1);
     const vjYm = shiftYm(ym, -12);
@@ -669,6 +772,7 @@ export const teamDashboard = query({
       days,
       hasCalls,
       wonTrend,
+      loggedIn,
       badgeCounts,
       marks: performanceMarks(snaps),
       monthDone: monthCompleted(ym),
@@ -676,6 +780,68 @@ export const teamDashboard = query({
       dVj: computeDeltas(total, totalVj),
       vmYm,
       vjYm,
+    };
+  },
+});
+
+export interface DevelopmentMonth {
+  ym: string;
+  leadsCreated?: number;
+  workableCreated?: number;
+  unqualifiedTotal: number;
+  wonMonth?: number;
+  hitrate?: number;
+}
+
+/** Team-level "Entwicklung" tab: trailing 3 calendar months ending with the
+ * actual current month, admin only — same window convention as
+ * `closedWonTrend`, deliberately ignoring the dashboard's selected `ym`
+ * filter for the same reason. `monthly` gives one point per month for the
+ * funnel/hitrate/unqualified metrics (naturally monthly, not daily); the
+ * rest are full daily series over the whole window. */
+export const teamDevelopment = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    const login = await requireSession(ctx, token);
+    requireAdmin(login);
+
+    const cache = newQueryCache();
+    const currentYm = defaultYm();
+    const months = [shiftYm(currentYm, -2), shiftYm(currentYm, -1), currentYm];
+
+    const monthly: DevelopmentMonth[] = [];
+    for (const ym of months) {
+      const { total, unqualified } = await teamTotals(ctx, ym, cache);
+      monthly.push({
+        ym,
+        leadsCreated: total.leadsCreated,
+        workableCreated: total.workableCreated,
+        unqualifiedTotal: unqualified.reduce((a, r) => a + r.count, 0),
+        wonMonth: total.wonMonth,
+        hitrate: total.hitrate,
+      });
+    }
+
+    const wonTrend = await closedWonTrend(ctx, undefined);
+    const callsPerDay: CallDay[] = [];
+    for (const ym of months) {
+      callsPerDay.push(...(await callDaysList(ctx, ym, undefined, cache)));
+    }
+    const leadsAnalysisPerDay = await stateFieldTrend(ctx, "leadsAnalysis");
+    const leadsDetailsIdentPerDay = await stateFieldTrend(
+      ctx,
+      "leadsDetailsIdent"
+    );
+    const oppsOpenPerDay = await stateFieldTrend(ctx, "oppsOpen");
+
+    return {
+      monthly,
+      closedWonPerDay: wonTrend.days,
+      wonPerDayAvg: wonTrend.avg,
+      callsPerDay,
+      leadsAnalysisPerDay,
+      leadsDetailsIdentPerDay,
+      oppsOpenPerDay,
     };
   },
 });
@@ -803,20 +969,30 @@ export interface InteractionDay {
   employeeName?: string;
 }
 
-/** Daily "Interaktionen" evaluation for one month: first/last interaction,
- * count, total and average duration per day, plus the month's grand total.
- * One employee's own daily rows when `employeeId` is given; team-wide (
- * admin) otherwise — but team-wide still breaks out one row per employee
- * per day (not summed across the whole team into a single row), since a
- * per-day team total conflates dozens of agents' work into one number.
- * Same admin-or-self visibility rule as `employeeDetail`. */
+/** Daily "Interaktionen" evaluation for a date range: first/last
+ * interaction, count, total and average duration per day, plus the grand
+ * total. One employee's own daily rows when `employeeId` is given;
+ * team-wide (admin) otherwise — but team-wide still breaks out one row per
+ * employee per day (not summed across the whole team into a single row),
+ * since a per-day team total conflates dozens of agents' work into one
+ * number. Same admin-or-self visibility rule as `employeeDetail`.
+ *
+ * The range defaults to the calendar month (`ym`, current month if
+ * omitted) but an explicit `start`/`end` (both required together) overrides
+ * it — the Interaktionen tab's day/week/month period filter uses this to
+ * scope to a single day or week instead of always a full month. */
 export const interactionsMonth = query({
   args: {
     token: v.string(),
     ym: v.optional(v.string()),
+    start: v.optional(v.string()),
+    end: v.optional(v.string()),
     employeeId: v.optional(v.id("performanceEmployees")),
   },
-  handler: async (ctx, { token, ym: ymArg, employeeId }) => {
+  handler: async (
+    ctx,
+    { token, ym: ymArg, start: startArg, end: endArg, employeeId }
+  ) => {
     const login = await requireSession(ctx, token);
     if (employeeId) {
       requireCanView(login, employeeId);
@@ -825,7 +1001,8 @@ export const interactionsMonth = query({
     }
 
     const ym = ymArg ?? defaultYm();
-    const { start, end } = monthBounds(ym);
+    const { start, end } =
+      startArg && endArg ? { start: startArg, end: endArg } : monthBounds(ym);
     const rows = employeeId
       ? await ctx.db
           .query("performanceInteractions")
