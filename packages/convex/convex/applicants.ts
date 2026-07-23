@@ -119,6 +119,23 @@ export const removeProfile = mutation({
 // Applicants
 // ===========================================================================
 
+/**
+ * Just the "new" pipeline count — the overview's admin quick-stats widget.
+ * Same access gate as `list`, but skips the per-applicant document/interview
+ * fan-out since only the count is needed here.
+ */
+export const pipelineCount = query({
+  args: {},
+  handler: async ctx => {
+    await requireApplicantAccess(ctx);
+    const applicants = await ctx.db.query("applicants").collect();
+    const contacts = await ctx.db.query("applicantContacts").collect();
+    const contactedIds = new Set(contacts.map(c => c.applicantId));
+    const open = applicants.filter(a => !contactedIds.has(a._id)).length;
+    return { open, total: applicants.length };
+  },
+});
+
 export const list = query({
   args: {},
   handler: async ctx => {
@@ -475,7 +492,7 @@ export const listTermine = query({
       .query("applicantAppointments")
       .withIndex("by_datum", q => q.gte("datum", from).lte("datum", to))
       .collect();
-    const applicants = await ctx.db.query("applicants").collect();
+    const applicants = await ctx.db.query("applicants").take(5000);
     const nameById = new Map(applicants.map(a => [a._id, a.name]));
     return termine
       .map(t => ({ ...t, applicantName: nameById.get(t.applicantId) ?? null }))
@@ -573,7 +590,7 @@ export const apiFindDuplicateByContact = query({
     const mailNeu = (email ?? "").trim().toLowerCase();
     const telNeu = (telefon ?? "").replace(/\D/g, "");
     if (!mailNeu && telNeu.length < 6) return null;
-    const applicants = await ctx.db.query("applicants").collect();
+    const applicants = await ctx.db.query("applicants").take(5000);
     const match = applicants.find(a => {
       const mailMatch =
         mailNeu && (a.email ?? "").trim().toLowerCase() === mailNeu;

@@ -1,3 +1,15 @@
+import { ConvexError } from "convex/values";
+
+/** True for the ConvexError a feature-gated Convex function throws (see packages/convex/convex/lib/featureGate.ts). */
+export function isFeatureDisabledError(err: unknown): boolean {
+  return (
+    err instanceof ConvexError &&
+    typeof err.data === "object" &&
+    err.data !== null &&
+    (err.data as { code?: unknown }).code === "feature_disabled"
+  );
+}
+
 /** Application error carrying an HTTP status and a stable code. */
 export class ApiError extends Error {
   readonly status: number;

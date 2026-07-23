@@ -23,7 +23,11 @@ import { toast } from "sonner";
 
 import { ProviderBadge } from "@/components/branding/ProviderMark";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
-import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
+import {
+  NotificationPreferences,
+  Switch,
+} from "@/components/notifications/NotificationPreferences";
+import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
 import type { CheckpointStatus } from "@/components/tour/tour-types";
@@ -227,6 +231,35 @@ function ConnectionsCard() {
   );
 }
 
+function OnboardingRestartCard() {
+  const t = useTranslations("Onboarding");
+  const { restart } = useOnboarding();
+
+  return (
+    <Card data-tour="tour-settings-onboarding">
+      <CardContent className="flex items-center justify-between gap-3 p-5">
+        <div>
+          <p className="font-semibold tracking-tight">
+            {t("settingsCardTitle")}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {t("restartOnboardingHint")}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={restart}
+        >
+          <RotateCw className="size-3.5" />
+          {t("restartOnboarding")}
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   const t = useTranslations("Settings");
   const tc = useTranslations("Common");
@@ -250,6 +283,10 @@ export default function SettingsPage() {
   const [jobTitle, setJobTitle] = useState(user.jobTitle ?? "");
   const [department, setDepartment] = useState(user.department ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
+  const [dateOfBirth, setDateOfBirth] = useState(user.dateOfBirth ?? "");
+  const [showBirthdayPublicly, setShowBirthdayPublicly] = useState(
+    user.showBirthdayPublicly ?? false
+  );
   const [busy, setBusy] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<{
     blob: Blob;
@@ -284,6 +321,8 @@ export default function SettingsPage() {
         jobTitle,
         department,
         phone,
+        dateOfBirth,
+        showBirthdayPublicly,
       });
       toast.success(t("saved"));
     } catch (e) {
@@ -429,6 +468,30 @@ export default function SettingsPage() {
               <Input value={phone} onChange={e => setPhone(e.target.value)} />
             </div>
           </div>
+          <div className="space-y-1.5">
+            <Label>{t("dateOfBirth")}</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                type="date"
+                className="max-w-48"
+                value={dateOfBirth}
+                onChange={e => setDateOfBirth(e.target.value)}
+              />
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={showBirthdayPublicly}
+                  onToggle={() => setShowBirthdayPublicly(v => !v)}
+                  label={t("showBirthdayPublicly")}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {t("showBirthdayPublicly")}
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t("dateOfBirthHint")}
+            </p>
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
             <Button
               variant="outline"
@@ -486,6 +549,8 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       )}
+
+      <OnboardingRestartCard />
 
       {/* Onboarding Tour */}
       {tourState && (

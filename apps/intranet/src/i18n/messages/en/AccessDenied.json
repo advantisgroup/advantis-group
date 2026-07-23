@@ -1,0 +1,7 @@
+{
+  "title": "Access denied",
+  "signedInAs": "Signed in as",
+  "description": "This intranet is only accessible to authorized advantis GmbH employees. Your email address isn't part of an approved company domain, so no access can be granted here.",
+  "removing": "Removing your account…",
+  "autoRemoveNotice": "For security reasons, your account is being removed automatically."
+}

@@ -65,6 +65,9 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     avatar,
     lastSeenAt: user.lastSeenAt ?? null,
     createdAt: user.createdAt,
+    dateOfBirth: user.dateOfBirth ?? null,
+    showBirthdayPublicly: user.showBirthdayPublicly ?? false,
+    hireDate: user.hireDate ?? null,
   };
 }
 
@@ -83,46 +86,93 @@ export const ensureCurrentUser = mutation({
   handler: async ctx => ensureUser(ctx),
 });
 
+const listArgs = {
+  search: v.optional(v.string()),
+  department: v.optional(v.string()),
+  includeSuspended: v.optional(v.boolean()),
+};
+
+async function queryUsers(
+  ctx: QueryCtx,
+  args: { search?: string; department?: string; includeSuspended?: boolean }
+) {
+  let users = await ctx.db.query("users").collect();
+
+  if (!args.includeSuspended) {
+    users = users.filter(u => u.status === "active");
+  }
+  if (args.department) {
+    users = users.filter(
+      u => u.department?.toLowerCase() === args.department!.toLowerCase()
+    );
+  }
+  if (args.search) {
+    const q = args.search.toLowerCase();
+    users = users.filter(u =>
+      [
+        u.firstName,
+        u.lastName,
+        u.email,
+        u.jobTitle,
+        u.department,
+        ...(u.teams ?? []),
+      ]
+        .filter(Boolean)
+        .some(field => field!.toLowerCase().includes(q))
+    );
+  }
+
+  users.sort((a, b) =>
+    (a.firstName ?? a.email).localeCompare(b.firstName ?? b.email)
+  );
+
+  const nameById = new Map(
+    users.map(u => [
+      u._id as string,
+      [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
+    ])
+  );
+
+  return { users, nameById };
+}
+
+/**
+ * Plain user directory — every non-presence, non-absence consumer (command
+ * palette, chat pickers, admin panels, people admin) uses this. Deliberately
+ * stays clear of the `presence`/`absences` tables: those are written far more
+ * often than `users` (presence on a sitewide ~60s heartbeat), and joining
+ * them into this reactive query would re-run the whole directory for every
+ * subscriber on every heartbeat from anyone. See `directoryList` for the
+ * variant that needs that data.
+ */
 export const list = query({
-  args: {
-    search: v.optional(v.string()),
-    department: v.optional(v.string()),
-    includeSuspended: v.optional(v.boolean()),
-  },
+  args: listArgs,
   handler: async (ctx, args) => {
     await requireUser(ctx);
-    let users = await ctx.db.query("users").collect();
-
-    if (!args.includeSuspended) {
-      users = users.filter(u => u.status === "active");
-    }
-    if (args.department) {
-      users = users.filter(
-        u => u.department?.toLowerCase() === args.department!.toLowerCase()
-      );
-    }
-    if (args.search) {
-      const q = args.search.toLowerCase();
-      users = users.filter(u =>
-        [
-          u.firstName,
-          u.lastName,
-          u.email,
-          u.jobTitle,
-          u.department,
-          ...(u.teams ?? []),
-        ]
-          .filter(Boolean)
-          .some(field => field!.toLowerCase().includes(q))
-      );
-    }
-
-    users.sort((a, b) =>
-      (a.firstName ?? a.email).localeCompare(b.firstName ?? b.email)
+    const { users, nameById } = await queryUsers(ctx, args);
+    return Promise.all(
+      users.map(async u => ({
+        ...(await withAvatar(ctx, u)),
+        managerName: u.managerId
+          ? (nameById.get(u.managerId as string) ?? null)
+          : null,
+      }))
     );
+  },
+});
 
-    // Directory extras, resolved in bulk: live presence, whoever is out today
-    // (approved absences covering today), and the manager's display name.
+/**
+ * Directory page only: `list` plus live presence and "out today" absence
+ * status. Isolated from `list` so the sitewide presence heartbeat only
+ * invalidates the one page that actually renders online status, not every
+ * command palette / admin panel that merely lists users.
+ */
+export const directoryList = query({
+  args: listArgs,
+  handler: async (ctx, args) => {
+    await requireUser(ctx);
+    const { users, nameById } = await queryUsers(ctx, args);
+
     const presenceRows = await ctx.db.query("presence").collect();
     const lastActiveByUser = new Map(
       presenceRows.map(p => [p.userId, p.lastActiveAt])
@@ -139,12 +189,6 @@ export const list = query({
         if (!prev || a.endDate > prev) outByUser.set(a.userId, a.endDate);
       }
     }
-    const nameById = new Map(
-      users.map(u => [
-        u._id as string,
-        [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
-      ])
-    );
 
     return Promise.all(
       users.map(async u => ({
@@ -233,6 +277,8 @@ const profileArgs = {
   department: v.optional(v.string()),
   phone: v.optional(v.string()),
   avatarStorageId: v.optional(v.id("_storage")),
+  dateOfBirth: v.optional(v.string()),
+  showBirthdayPublicly: v.optional(v.boolean()),
 };
 
 export const applyProfileUpdate = internalMutation({
@@ -254,6 +300,12 @@ export const applyProfileUpdate = internalMutation({
       ...(args.phone !== undefined ? { phone: args.phone } : {}),
       ...(args.avatarStorageId
         ? { avatarStorageId: args.avatarStorageId }
+        : {}),
+      ...(args.dateOfBirth !== undefined
+        ? { dateOfBirth: args.dateOfBirth }
+        : {}),
+      ...(args.showBirthdayPublicly !== undefined
+        ? { showBirthdayPublicly: args.showBirthdayPublicly }
         : {}),
     });
     const avatarUrl = args.avatarStorageId
@@ -370,6 +422,20 @@ export const setManager = mutation({
   handler: async (ctx, { userId, managerId }) => {
     await requireAdmin(ctx);
     await ctx.db.patch(userId, { managerId });
+    return { ok: true };
+  },
+});
+
+/** Manager+: set another user's hire date, for work-anniversary shoutouts. */
+export const setHireDate = mutation({
+  args: { userId: v.id("users"), hireDate: v.optional(v.string()) },
+  handler: async (ctx, { userId, hireDate }) => {
+    await requireManager(ctx);
+    const target = await ctx.db.get(userId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "User not found" });
+    }
+    await ctx.db.patch(userId, { hireDate });
     return { ok: true };
   },
 });
@@ -493,6 +559,58 @@ export const setUploadPermission = action({
       });
     }
     return { ok: true };
+  },
+});
+
+/**
+ * Today's birthdays (opt-in only) and work anniversaries, for the overview's
+ * "celebrations" widget. Anniversaries are always shown (a hire date isn't
+ * sensitive); birthdays only for users who set `showBirthdayPublicly`. Only
+ * matches month/day, not year — `dateOfBirth`/`hireDate` are "YYYY-MM-DD".
+ */
+export const todaysCelebrations = query({
+  args: {},
+  handler: async ctx => {
+    await requireUser(ctx);
+    const now = new Date();
+    const todayMonthDay = now.toISOString().slice(5, 10);
+    const currentYear = now.getUTCFullYear();
+
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
+
+    const celebrations: Array<{
+      userId: Doc<"users">["_id"];
+      name: string;
+      avatar: string | null;
+      type: "birthday" | "anniversary";
+      years: number | null;
+    }> = [];
+
+    for (const u of users) {
+      const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
+      const avatar = u.avatarStorageId
+        ? await ctx.storage.getUrl(u.avatarStorageId)
+        : (u.avatarUrl ?? null);
+
+      if (
+        u.showBirthdayPublicly &&
+        u.dateOfBirth?.slice(5, 10) === todayMonthDay
+      ) {
+        celebrations.push({ userId: u._id, name, avatar, type: "birthday", years: null });
+      }
+      if (u.hireDate?.slice(5, 10) === todayMonthDay) {
+        const hireYear = Number(u.hireDate.slice(0, 4));
+        const years = currentYear - hireYear;
+        if (years > 0) {
+          celebrations.push({ userId: u._id, name, avatar, type: "anniversary", years });
+        }
+      }
+    }
+
+    return celebrations;
   },
 });
 

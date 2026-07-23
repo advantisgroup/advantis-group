@@ -1,5 +1,5 @@
 import { api } from "@advantis/convex/api";
-import { type DriveQuota } from "@advantis/types";
+import { type DriveQuota } from "../types.js";
 
 import { getConvex, getConvexServerKey } from "../convex.js";
 import { decrypt, encrypt } from "../crypto.js";
@@ -132,7 +132,26 @@ async function getToken(force = false): Promise<string> {
 
 // --- Low-level fetch with error mapping + throttle handling -----------------
 
-function mapStatus(status: number, context: string): never {
+/** Reads and logs Graph's actual error body before mapping the status to our
+ * `ApiError` taxonomy — previously only the status code was ever logged (and
+ * only for the unmapped-status fallback at that), which left every 5xx
+ * genuinely undiagnosable: e.g. `[onedrive] subscription renewal failed:
+ * 500` with no way to tell *why* Graph rejected the request. The body is
+ * still never returned to the caller (see this file's header comment) —
+ * only logged server-side. */
+async function mapStatus(res: Response, context: string): Promise<never> {
+  const bodyText = await res.text().catch(() => "");
+  let detail: unknown = bodyText || undefined;
+  if (bodyText) {
+    try {
+      detail = JSON.parse(bodyText);
+    } catch {
+      // Not JSON — log the raw text as-is.
+    }
+  }
+  console.error(`[onedrive] ${context} failed: ${res.status}`, detail);
+
+  const status = res.status;
   if (status === 401 || status === 403) {
     throw Errors.forbidden("OneDrive denied the request");
   }
@@ -144,7 +163,6 @@ function mapStatus(status: number, context: string): never {
     throw Errors.rateLimited("OneDrive is throttling requests");
   if (status >= 500)
     throw Errors.upstream("OneDrive is temporarily unavailable");
-  console.error(`[onedrive] ${context} failed: ${status}`);
   throw Errors.upstream("OneDrive request failed");
 }
 
@@ -186,7 +204,7 @@ async function graphRequest(
       await new Promise(r => setTimeout(r, waitMs));
       continue;
     }
-    if (!res.ok) mapStatus(res.status, context);
+    if (!res.ok) await mapStatus(res, context);
     return res;
   }
 }
@@ -474,7 +492,7 @@ async function uploadLarge(
     if (res.status === 200 || res.status === 201) {
       lastBody = (await res.json()) as GraphItem;
     } else if (res.status !== 202) {
-      mapStatus(res.status, "uploadChunk");
+      await mapStatus(res, "uploadChunk");
     }
     offset = end;
   }

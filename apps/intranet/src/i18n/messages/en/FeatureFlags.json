@@ -1,0 +1,31 @@
+{
+  "title": "Feature flags",
+  "subtitle": "Turn whole features off for everyone. Disabling posts an update explaining what's happening; admins keep access so they can turn it back on.",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  "lastChanged": "Last changed {date}",
+  "disableAction": "Disable",
+  "enableAction": "Enable",
+  "disabledToast": "{label} disabled",
+  "enabledToast": "{label} re-enabled",
+  "disableDialog": {
+    "title": "Disable {label}?",
+    "description": "This posts an update everyone will see and takes {label} offline for non-admins immediately.",
+    "premade": "Use the premade message",
+    "custom": "Write a custom message",
+    "customPlaceholder": "Explain what's happening and why…",
+    "confirm": "Disable"
+  },
+  "enableDialog": {
+    "title": "Re-enable {label}?",
+    "description": "Optionally add a follow-up message posted to the same update. Leave blank to use the default \"back online\" message.",
+    "placeholder": "Optional follow-up message…",
+    "confirm": "Enable"
+  },
+  "disabledScreen": {
+    "code": "Unavailable",
+    "title": "{label} is disabled",
+    "description": "This feature has been disabled by an administrator. Please contact your administrator for further inquiries.",
+    "backToDashboard": "Back to Dashboard"
+  }
+}

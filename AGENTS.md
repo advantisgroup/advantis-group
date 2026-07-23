@@ -9,7 +9,7 @@ date rather than duplicating its content elsewhere.
 Bun workspaces + Turborepo monorepo.
 
 - `apps/intranet` — Next.js internal tool (Clerk auth). Includes
-  `/admin/activity` ("ActivityTrack"), guidebooks, absences, admin tools.
+  `/activity` ("ActivityTrack"), guidebooks, absences, admin tools.
 - `apps/marketing` — Next.js public marketing site.
 - `apps/api` — Elysia server-to-server API (agent enrollment, integration
   webhooks/relays). Holds `ACTIVITYTRACK_SIGNAL_SECRET` and is the only thing
@@ -47,7 +47,7 @@ through one giant diff. If grouping vs. separating conflicts with another
 instruction in a given task (e.g. the user explicitly asks for a single
 commit), ask the user how they want it handled rather than guessing.
 
-## ActivityTrack (`/admin/activity`)
+## ActivityTrack (`/activity`)
 
 The highest-complexity area of the codebase. A fused "is this person working
 right now" state, combined from three independent sources:
@@ -115,6 +115,18 @@ without cause, check the Convex dashboard's deployment count against the
 team's plan limit and manually delete preview deployments for merged/closed
 PRs there.
 
+`apps/api` is wrapped by a separate `scripts/vercel-preview-convex-api-build.sh`
+instead, resolving the _same_ branch-scoped backend and writing it to
+`apps/api/src/lib/convexPreviewUrl.generated.ts` (a `getConvex()` fallback)
+rather than baking it into a client bundle — it's a plain server, not a
+Next.js app, so there's no `NEXT_PUBLIC_*` build-time inlining to piggyback
+on, and a Vercel Function's runtime env vars come from the project's stored
+Environment Variables, not whatever a build subprocess exported. Without
+this, `apps/api`'s Preview deployments talk to a different Convex backend
+than `apps/intranet`'s — session tokens issued by one are invalid on the
+other, which surfaces as every Performance report upload failing with
+`Forbidden` on preview regardless of file content.
+
 ## House style
 
 - No comments explaining _what_ code does — only _why_, for non-obvious
@@ -127,11 +139,31 @@ PRs there.
   content. Views stay read-focused overviews with explicit action buttons.
   See `apps/intranet/src/components/applicants/EntryDialogs.tsx` for the
   canonical pattern.
+- **A page with tabs uses `RouteTabs`, never a bare desktop-only tab bar.**
+  Below the mobile breakpoint, `RouteTabs` renders nothing itself and hands
+  its tabs to the global `BottomNav` via `useBottomNavTabs`
+  (`components/layout/bottom-nav-tabs.tsx`), so the bottom nav becomes the
+  tab switcher instead of a second, competing control floating over
+  thumb-zone space. A page that rolls its own tab strip and leaves it
+  rendered on mobile is inconsistent with every other tabbed page in the
+  app. See `apps/intranet/src/components/applicants/RouteTabs.tsx` for the
+  canonical pattern.
 - Don't add speculative abstractions, fallbacks, or error handling for cases
   that can't occur. Match the existing minimal, direct style.
 - i18n strings live in `apps/intranet/src/lib/activity/locales/{en,de}.ts`
-  (ActivityTrack) and `apps/intranet/src/i18n/messages/{en,de}.json` (rest of
-  the intranet) — always update both languages together.
+  (ActivityTrack) and `apps/intranet/src/i18n/messages/{en,de}/` (rest of the
+  intranet) — always update both languages together. The second set is split
+  one file per top-level namespace (`messages/en/Admin.json`,
+  `messages/de/Admin.json`, etc.), matching the `useTranslations("Admin")`
+  call sites 1:1, and `src/i18n/request.ts` statically imports every one of
+  those files and merges them into the `messages` object per locale. **When
+  adding a brand-new namespace** (not just new keys in an existing one),
+  create both `messages/en/<Namespace>.json` and `messages/de/<Namespace>.json`,
+  then add both imports and both entries in `messagesByLocale` in
+  `request.ts` — this isn't auto-discovered, so a namespace whose files exist
+  but aren't wired into `request.ts` silently resolves to missing
+  translations. Adding keys to an existing namespace's JSON needs no
+  `request.ts` change.
 - Prefer short, single-line labels over long inline descriptions, especially
   in compact UI (badges, dropdown items, table cells, permission/capability
   lists) — a wrapping paragraph reflows the layout around it and is worse on

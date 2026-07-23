@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
 
-type Person = FunctionReturnType<typeof api.users.list>[number];
+type Person = FunctionReturnType<typeof api.users.directoryList>[number];
 type SortKey = "name" | "department" | "role";
 
 export default function DirectoryPage() {
@@ -60,7 +60,7 @@ export default function DirectoryPage() {
   const gridRef = useRef<HTMLDivElement>(null);
 
   const departments = useQuery(api.users.departments) ?? [];
-  const people = useQuery(api.users.list, {
+  const people = useQuery(api.users.directoryList, {
     search: search || undefined,
     department: department === "all" ? undefined : department,
   });

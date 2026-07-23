@@ -1,0 +1,110 @@
+{
+  "title": "Nutzungsbedingungen – Intranet",
+  "subtitle": "Bedingungen für die Nutzung des Advantis-Group-Intranets durch autorisierte Mitarbeitende",
+  "updated": "Stand: Juli 2026",
+  "tableOfContents": "Inhaltsverzeichnis",
+  "viewPrivacy": "Datenschutzerklärung ansehen",
+  "sections": [
+    {
+      "id": "scope",
+      "title": "Geltungsbereich",
+      "paragraphs": [
+        "Diese Nutzungsbedingungen gelten ausschließlich für Personen, denen die advantis GmbH ausdrücklich Zugang zum Intranet gewährt hat und deren Konto aktiv freigeschaltet ist (nachfolgend „Nutzer:innen“).",
+        "Das bloße Anlegen eines Kontos oder ein Anmeldeversuch begründet keinen Anspruch auf Zugang und macht diese Nutzungsbedingungen nicht anwendbar. Personen ohne Berechtigung erhalten stattdessen einen Hinweis auf die fehlende Berechtigung; ihr Konto wird automatisiert gelöscht (siehe Datenschutzerklärung, Abschnitt „Nicht autorisierte Zugriffsversuche“)."
+      ]
+    },
+    {
+      "id": "access",
+      "title": "Zugang und Berechtigung",
+      "paragraphs": [
+        "Zugang zum Intranet erhalten ausschließlich Personen mit einer aktiven Geschäftsbeziehung zur advantis GmbH, deren geschäftliche E-Mail-Adresse zu einer zugelassenen Firmendomain gehört, oder die eine ausdrückliche Einladung bzw. Freigabe durch eine Führungskraft oder Administrator:in erhalten haben.",
+        "Zugangsanfragen werden von Führungskräften oder Administrator:innen geprüft und können abgelehnt werden. Registrierungsversuche mit nicht zugelassenen E-Mail-Domains werden automatisch abgelehnt; das dabei angelegte Konto wird unverzüglich gelöscht.",
+        "Nutzer:innen sind verpflichtet, ihre Zugangsdaten vertraulich zu behandeln und nicht an Dritte weiterzugeben."
+      ]
+    },
+    {
+      "id": "purpose",
+      "title": "Bestimmungsgemäße Nutzung",
+      "paragraphs": [
+        "Das Intranet dient ausschließlich internen betrieblichen Zwecken der advantis GmbH, insbesondere der Kommunikation, Terminplanung, Abwesenheitsverwaltung, Ablage interner Dokumente sowie dem teaminternen Austausch.",
+        "Über das Intranet zugängliche Inhalte, Dokumente und Informationen sind vertraulich und dürfen ohne Zustimmung nicht an unternehmensfremde Dritte weitergegeben werden.",
+        "Eine private oder gewerbliche Nutzung außerhalb des Beschäftigungsverhältnisses ist nicht gestattet."
+      ]
+    },
+    {
+      "id": "monitoring",
+      "title": "Hinweis zur Auswertung von Nutzungsdaten",
+      "paragraphs": [
+        "Im Zusammenhang mit der Nutzung des Intranets werden bestimmte Nutzungs-, Anwesenheits- und Verfügbarkeitsdaten zu Auswertungszwecken verarbeitet, wie in der Datenschutzerklärung im Einzelnen beschrieben.",
+        "Mit der Nutzung des Intranets nehmen Nutzer:innen zur Kenntnis, dass diese Verarbeitung im Rahmen des bestehenden Beschäftigungsverhältnisses erfolgt."
+      ]
+    },
+    {
+      "id": "obligations",
+      "title": "Pflichten der Nutzer:innen",
+      "paragraphs": ["Nutzer:innen verpflichten sich,"],
+      "list": [
+        {
+          "description": "ihre Konto- und Profildaten aktuell zu halten,"
+        },
+        {
+          "description": "geltende IT- und Sicherheitsrichtlinien der advantis GmbH einzuhalten,"
+        },
+        {
+          "description": "im internen Chat und in Ankündigungen einen respektvollen Umgangston zu wahren,"
+        },
+        {
+          "description": "sicherheitsrelevante Vorfälle, etwa den Verdacht auf unbefugten Zugriff, unverzüglich zu melden."
+        }
+      ]
+    },
+    {
+      "id": "availability",
+      "title": "Verfügbarkeit",
+      "paragraphs": [
+        "Das Intranet wird als internes Arbeitswerkzeug „wie besehen“ bereitgestellt. Die advantis GmbH kann Funktionen jederzeit anpassen, einschränken oder einstellen und übernimmt keine Gewähr für eine unterbrechungsfreie Verfügbarkeit."
+      ]
+    },
+    {
+      "id": "suspension",
+      "title": "Sperrung und Beendigung des Zugangs",
+      "paragraphs": [
+        "Der Zugang kann jederzeit eingeschränkt, gesperrt oder beendet werden, insbesondere bei Beendigung des Beschäftigungsverhältnisses, einem Verstoß gegen diese Nutzungsbedingungen oder aus Sicherheitsgründen.",
+        "Mit Beendigung des Zugangs wird das Konto gemäß der Datenschutzerklärung gelöscht oder anonymisiert; gesetzliche Aufbewahrungspflichten bleiben unberührt."
+      ]
+    },
+    {
+      "id": "ip",
+      "title": "Geistiges Eigentum",
+      "paragraphs": [
+        "Sämtliche über das Intranet bereitgestellten Inhalte, Dokumente, Vorlagen und Materialien sind Eigentum der advantis GmbH oder ihrer Lizenzgeber und dürfen ausschließlich für interne Zwecke verwendet werden."
+      ]
+    },
+    {
+      "id": "liability",
+      "title": "Haftung",
+      "paragraphs": [
+        "Die advantis GmbH haftet unbeschränkt für Vorsatz und grobe Fahrlässigkeit sowie nach Maßgabe des Produkthaftungsgesetzes. Im Übrigen haftet sie nur bei Verletzung wesentlicher Vertragspflichten und beschränkt auf den vorhersehbaren, vertragstypischen Schaden. Die Haftung für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit bleibt unberührt."
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Änderungen dieser Nutzungsbedingungen",
+      "paragraphs": [
+        "Wir können diese Nutzungsbedingungen mit Wirkung für die Zukunft anpassen, etwa bei Änderungen der eingesetzten Systeme. Über wesentliche Änderungen informieren wir in angemessener Form."
+      ]
+    },
+    {
+      "id": "law",
+      "title": "Anwendbares Recht und Gerichtsstand",
+      "paragraphs": [
+        "Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts. Gerichtsstand ist, soweit gesetzlich zulässig, Nürnberg."
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Kontakt",
+      "paragraphs": ["Fragen zu diesen Nutzungsbedingungen richten Sie bitte an:"]
+    }
+  ]
+}

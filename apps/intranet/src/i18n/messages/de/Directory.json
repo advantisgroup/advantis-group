@@ -1,0 +1,16 @@
+{
+  "title": "Mitarbeiter",
+  "searchPlaceholder": "Personen suchen…",
+  "department": "Abteilung",
+  "role": "Rolle",
+  "jobTitle": "Position",
+  "startChat": "Nachricht",
+  "noResults": "Keine Personen gefunden",
+  "sortName": "Sortierung: Name",
+  "sortDepartment": "Sortierung: Abteilung",
+  "sortRole": "Sortierung: Rolle",
+  "groupByDept": "Nach Abteilung gruppieren",
+  "noDepartment": "Keine Abteilung",
+  "online": "Online",
+  "outUntil": "Abwesend bis {date}"
+}

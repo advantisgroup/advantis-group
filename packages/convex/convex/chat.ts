@@ -7,6 +7,7 @@ import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
 import { requireUser } from "./lib/auth";
+import { gatedMutation } from "./lib/featureGate";
 import { createNotification } from "./lib/notify";
 import { attachmentValidator } from "./schema";
 
@@ -93,6 +94,47 @@ function dmPartnerId(
   if (conversation.type !== "dm" || !conversation.dmKey) return null;
   const ids = conversation.dmKey.split(":") as Id<"users">[];
   return ids.find(id => id !== meId) ?? null;
+}
+
+/** Sidebar preview text for a message — mirrors what listConversations used
+ *  to compute on the fly from the live row before it was denormalized onto
+ *  conversations.lastMessagePreview. */
+function messagePreview(body: string, attachmentCount: number): string {
+  return body || (attachmentCount > 0 ? "📎 Attachment" : "");
+}
+
+/** Pre-migration fallback for conversations.lastMessagePreview: the exact
+ *  query listConversations used to run on every single execution. */
+async function legacyLastMessagePreview(
+  ctx: QueryCtx,
+  conversationId: Id<"conversations">
+): Promise<string> {
+  const lastMessage = await ctx.db
+    .query("messages")
+    .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+    .order("desc")
+    .first();
+  if (!lastMessage) return "";
+  return lastMessage.deletedAt
+    ? "Message deleted"
+    : messagePreview(lastMessage.body, lastMessage.attachments.length);
+}
+
+/** Pre-migration fallback for conversationMembers.unreadCount: the exact
+ *  `.take(50)` scan listConversations used to run on every single execution. */
+async function legacyUnreadCount(
+  ctx: QueryCtx,
+  conversationId: Id<"conversations">,
+  lastReadAt: number,
+  meId: Id<"users">
+): Promise<number> {
+  const recent = await ctx.db
+    .query("messages")
+    .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+    .order("desc")
+    .take(50);
+  return recent.filter(m => m.createdAt > lastReadAt && m.senderUserId !== meId)
+    .length;
 }
 
 function requireGroup(conversation: Doc<"conversations"> | null): void {
@@ -182,27 +224,6 @@ export const listConversations = query({
         const otherLeft =
           conversation.type === "dm" && !!partnerId && others.length === 0;
 
-        const lastMessage = await ctx.db
-          .query("messages")
-          .withIndex("by_conversation", q =>
-            q.eq("conversationId", conversation._id)
-          )
-          .order("desc")
-          .first();
-
-        // Unread = messages after my lastReadAt not sent by me.
-        const recent = await ctx.db
-          .query("messages")
-          .withIndex("by_conversation", q =>
-            q.eq("conversationId", conversation._id)
-          )
-          .order("desc")
-          .take(50);
-        const unread = recent.filter(
-          m =>
-            m.createdAt > membership.lastReadAt && m.senderUserId !== user._id
-        ).length;
-
         const title =
           conversation.type === "group"
             ? (conversation.name ?? "Group")
@@ -219,6 +240,24 @@ export const listConversations = query({
           conversation.type === "group"
             ? await Promise.all(others.slice(0, 4).map(u => userAvatar(ctx, u)))
             : [];
+
+        // Fallback for conversations/memberships from before lastMessagePreview
+        // /unreadCount existed: only taken once, since sendMessage/markRead
+        // populate both fields on every subsequent write, exactly like the
+        // lastSample fallback in activity/stats.ts.
+        const [preview, unread] = await Promise.all([
+          conversation.lastMessagePreview !== undefined
+            ? conversation.lastMessagePreview
+            : legacyLastMessagePreview(ctx, conversation._id),
+          membership.unreadCount !== undefined
+            ? membership.unreadCount
+            : legacyUnreadCount(
+                ctx,
+                conversation._id,
+                membership.lastReadAt,
+                user._id
+              ),
+        ]);
 
         return {
           _id: conversation._id,
@@ -238,12 +277,7 @@ export const listConversations = query({
           archived: !!membership.archivedAt,
           muted: !!membership.mutedAt,
           lastMessageAt: conversation.lastMessageAt,
-          lastMessagePreview: lastMessage
-            ? lastMessage.deletedAt
-              ? "Message deleted"
-              : lastMessage.body ||
-                (lastMessage.attachments.length > 0 ? "📎 Attachment" : "")
-            : "",
+          lastMessagePreview: preview,
           unread,
         };
       })
@@ -325,7 +359,7 @@ export const mutualConversations = query({
   },
 });
 
-export const getOrCreateDm = mutation({
+export const getOrCreateDm = gatedMutation("chat")({
   args: { otherUserId: v.id("users") },
   handler: async (ctx, { otherUserId }) => {
     const user = await requireUser(ctx);
@@ -384,7 +418,7 @@ export const getOrCreateDm = mutation({
   },
 });
 
-export const createGroup = mutation({
+export const createGroup = gatedMutation("chat")({
   args: { name: v.string(), memberIds: v.array(v.id("users")) },
   handler: async (ctx, { name, memberIds }) => {
     const user = await requireUser(ctx);
@@ -662,7 +696,7 @@ export const toggleReaction = mutation({
   },
 });
 
-export const sendMessage = mutation({
+export const sendMessage = gatedMutation("chat")({
   args: {
     conversationId: v.id("conversations"),
     body: v.string(),
@@ -720,9 +754,29 @@ export const sendMessage = mutation({
       ...(mentions.length > 0 ? { mentions } : {}),
       createdAt: now,
     });
-    await ctx.db.patch(args.conversationId, { lastMessageAt: now });
+    await Promise.all(
+      attachments.map(a =>
+        ctx.db.insert("attachmentOwners", {
+          storageId: a.storageId,
+          kind: "message",
+          conversationId: args.conversationId,
+        })
+      )
+    );
+    await ctx.db.patch(args.conversationId, {
+      lastMessageAt: now,
+      lastMessagePreview: messagePreview(body, attachments.length),
+    });
     // Sender has implicitly read their own message.
-    await ctx.db.patch(membership._id, { lastReadAt: now });
+    await ctx.db.patch(membership._id, { lastReadAt: now, unreadCount: 0 });
+    // Every other member is now one message further behind.
+    await Promise.all(
+      memberRows
+        .filter(m => m.userId !== user._id)
+        .map(m =>
+          ctx.db.patch(m._id, { unreadCount: (m.unreadCount ?? 0) + 1 })
+        )
+    );
 
     // Notify @mentioned members, unless they've muted this conversation.
     if (mentions.length > 0) {
@@ -783,6 +837,20 @@ export const editMessage = mutation({
       ...(attachments ? { attachments } : {}),
       editedAt: Date.now(),
     });
+    // A newly-added attachment needs an index row too — canAccessFile's fast
+    // path otherwise never finds it. Existing ones already have a row from
+    // send; a harmless duplicate for those already covered.
+    if (attachments) {
+      await Promise.all(
+        attachments.map(a =>
+          ctx.db.insert("attachmentOwners", {
+            storageId: a.storageId,
+            kind: "message",
+            conversationId: message.conversationId,
+          })
+        )
+      );
+    }
     return { ok: true };
   },
 });
@@ -815,6 +883,16 @@ export const deleteMessage = mutation({
       attachments: [],
       linkPreviews: [],
     });
+    // If this was the conversation's most recent message, the sidebar
+    // preview (denormalized onto the conversation row) needs to catch up —
+    // matching what listConversations used to compute live by re-reading
+    // `deletedAt` off the latest message every time.
+    const conversation = await ctx.db.get(message.conversationId);
+    if (conversation && conversation.lastMessageAt === message.createdAt) {
+      await ctx.db.patch(message.conversationId, {
+        lastMessagePreview: "Message deleted",
+      });
+    }
     return { ok: true };
   },
 });
@@ -825,7 +903,10 @@ export const markRead = mutation({
     const user = await requireUser(ctx);
     const membership = await getMembership(ctx, conversationId, user._id);
     if (membership) {
-      await ctx.db.patch(membership._id, { lastReadAt: Date.now() });
+      await ctx.db.patch(membership._id, {
+        lastReadAt: Date.now(),
+        unreadCount: 0,
+      });
     }
     return { ok: true };
   },

@@ -6,6 +6,7 @@ import { ApiError } from "./lib/errors.js";
 import { activityRoute } from "./routes/activity.js";
 import { applicantsRoute } from "./routes/applicants.js";
 import { onedriveRoute } from "./routes/onedrive.js";
+import { performanceRoute } from "./routes/performance.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { internalClockodoImportRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
@@ -64,6 +65,7 @@ export const app = new Elysia()
   .use(internalUpdatesRoute)
   .use(activityRoute)
   .use(onedriveRoute)
+  .use(performanceRoute)
   .use(wikiChatRoute)
   .use(applicantsRoute);
 

@@ -212,6 +212,18 @@ export default defineSchema({
      * `users.setUpdatesEmailConsent` and the filter in `updatesEmail.sendBulk`.
      */
     updatesEmailConsent: v.optional(v.boolean()),
+    /**
+     * Self-editable, "YYYY-MM-DD". Only ever surfaced to others when
+     * `showBirthdayPublicly` is true — see `users.todaysCelebrations`.
+     */
+    dateOfBirth: v.optional(v.string()),
+    /** Opt-in: show `dateOfBirth` (day/month only) to the rest of the org. */
+    showBirthdayPublicly: v.optional(v.boolean()),
+    /**
+     * "YYYY-MM-DD", editable only by Managers+ (see `users.setHireDate`) —
+     * drives the overview's work-anniversary shoutouts.
+     */
+    hireDate: v.optional(v.string()),
     createdAt: v.number(),
     lastSeenAt: v.optional(v.number()),
   })
@@ -220,7 +232,8 @@ export default defineSchema({
     .index("by_role", ["role"])
     .index("by_status", ["status"])
     .index("by_clockodoUserId", ["clockodoUserId"])
-    .index("by_departmentId", ["departmentId"]),
+    .index("by_departmentId", ["departmentId"])
+    .index("by_avatarStorageId", ["avatarStorageId"]),
 
   /**
    * Canonical org departments. Replaces the free-text `users.department` —
@@ -496,7 +509,12 @@ export default defineSchema({
     /** Author's "email everyone" choice at publish time. */
     emailRequested: v.boolean(),
     emailSentAt: v.optional(v.number()),
-    source: v.union(v.literal("ui"), v.literal("markdown")),
+    /** "system" = auto-published by a backend action (e.g. a feature-flag toggle), not an admin authoring a post. */
+    source: v.union(
+      v.literal("ui"),
+      v.literal("markdown"),
+      v.literal("system")
+    ),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
@@ -545,6 +563,23 @@ export default defineSchema({
     .index("by_resendEmailId", ["resendEmailId"])
     .index("by_update_user", ["updateId", "userId"]),
 
+  /**
+   * Global feature kill-switches (see `featureFlags.ts`). One row per key in
+   * `FEATURE_FLAG_KEYS`; a missing row means enabled (the default). `reason`
+   * is the admin-supplied or premade explanation, reused both for the
+   * in-app "disabled" screen and the linked Update post. `updateId` links to
+   * the Update created when the flag was last disabled, so re-enabling can
+   * post a follow-up on the same post instead of a brand-new one.
+   */
+  featureFlags: defineTable({
+    key: v.string(),
+    enabled: v.boolean(),
+    reason: v.optional(v.string()),
+    updatedAt: v.number(),
+    updatedByUserId: v.id("users"),
+    updateId: v.optional(v.id("updates")),
+  }).index("by_key", ["key"]),
+
   // --- Chat ----------------------------------------------------------------
   conversations: defineTable({
     type: v.union(v.literal("dm"), v.literal("group")),
@@ -558,11 +593,17 @@ export default defineSchema({
     /** Set when a DM is left by one side; the chat is purged once this passes
      *  (unless the person who left rejoins, which clears it). */
     deleteAt: v.optional(v.number()),
+    /** Preview text for the sidebar, maintained by sendMessage/deleteMessage
+     *  on the same patch that already sets lastMessageAt — so listConversations
+     *  can read it off the conversation row it's already loading instead of a
+     *  separate `messages.order("desc").first()` query per conversation. */
+    lastMessagePreview: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_lastMessageAt", ["lastMessageAt"])
     .index("by_dmKey", ["dmKey"])
-    .index("by_deleteAt", ["deleteAt"]),
+    .index("by_deleteAt", ["deleteAt"])
+    .index("by_avatarStorageId", ["avatarStorageId"]),
 
   conversationMembers: defineTable({
     conversationId: v.id("conversations"),
@@ -576,6 +617,11 @@ export default defineSchema({
     pinnedAt: v.optional(v.number()),
     archivedAt: v.optional(v.number()),
     mutedAt: v.optional(v.number()),
+    /** Unread message count, incremented by sendMessage for every member but
+     *  the sender and reset by markRead — replaces a `.take(50)` scan of
+     *  `messages` per conversation on every listConversations execution.
+     *  Undefined reads as 0 (pre-migration rows / never-messaged members). */
+    unreadCount: v.optional(v.number()),
   })
     .index("by_conversation", ["conversationId"])
     .index("by_user", ["userId"])
@@ -595,6 +641,26 @@ export default defineSchema({
     deletedAt: v.optional(v.number()),
     createdAt: v.number(),
   }).index("by_conversation", ["conversationId"]),
+
+  /**
+   * Reverse index from an attachment's storage id to whatever owns it
+   * (a chat message or an announcement), maintained on every write that adds
+   * an attachment. `files.canAccessFile` used to resolve a shared file link
+   * by scanning every message (and every announcement) ever created org-wide
+   * — unbounded, and only getting slower as chat history grows. This makes
+   * that an indexed point lookup instead; the full scan stays as a fallback
+   * for rows written before this index existed (see the comment on
+   * canAccessFile), so a missed write path degrades to "slow" rather than
+   * "wrong". Not deduped on edit/re-save — a duplicate row for the same
+   * (storageId, owner) is harmless, since canAccessFile only needs "at least
+   * one row exists".
+   */
+  attachmentOwners: defineTable({
+    storageId: v.id("_storage"),
+    kind: v.union(v.literal("message"), v.literal("announcement")),
+    conversationId: v.optional(v.id("conversations")),
+    announcementId: v.optional(v.id("announcements")),
+  }).index("by_storageId", ["storageId"]),
 
   messageReactions: defineTable({
     messageId: v.id("messages"),
@@ -654,6 +720,210 @@ export default defineSchema({
     .index("by_token", ["token"])
     .index("by_status", ["status"]),
 
+  // --- Performance (sales KPI dashboard) -----------------------------------
+  // Password-protected area, fully separate from Clerk employee accounts.
+  // `linkedUserId` lets an admin link a login to its owner's intranet
+  // (Clerk) account — see `performanceAuth.ts`'s `resolveActiveSession`,
+  // which then authenticates that person from their existing Clerk session
+  // instead of a separate password, mirroring how `people.userId` links a
+  // person record to its account. The password login stays fully
+  // functional either way (admins, and any not-yet-linked employee).
+  performanceLogins: defineTable({
+    email: v.string(),
+    name: v.string(),
+    passwordHash: v.string(),
+    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    employeeId: v.optional(v.id("performanceEmployees")),
+    linkedUserId: v.optional(v.id("users")),
+    active: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_email", ["email"])
+    .index("by_linkedUserId", ["linkedUserId"]),
+
+  performanceSessions: defineTable({
+    token: v.string(),
+    loginId: v.id("performanceLogins"),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    lastUsedAt: v.number(),
+  }).index("by_token", ["token"]),
+
+  // Sales-team roster for the Performance feature; rows are created on first
+  // report import (added in a later phase — this table exists now so
+  // `performanceLogins.employeeId` can reference it).
+  performanceEmployees: defineTable({
+    name: v.string(),
+    active: v.boolean(),
+  }).index("by_name", ["name"]),
+
+  // One row per employee per report day. Metric columns are nullable —
+  // null means "not measured in this snapshot", not zero — so a report
+  // that only covers some metrics (e.g. a call report on a day with no
+  // Salesforce export) never overwrites the others with a false zero.
+  // `reportDate` is an ISO "YYYY-MM-DD" string so lexicographic and
+  // chronological order coincide for range queries.
+  performanceReports: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    reportDate: v.string(),
+    leadsCreated: v.optional(v.number()),
+    workableCreated: v.optional(v.number()),
+    leadsAnalysis: v.optional(v.number()),
+    leadsDetailsIdent: v.optional(v.number()),
+    oppsOpen: v.optional(v.number()),
+    oppsClose7d: v.optional(v.number()),
+    oppsPending: v.optional(v.number()),
+    wonMonth: v.optional(v.number()),
+    callsToday: v.optional(v.number()),
+    overduesAnalysis: v.optional(v.number()),
+    overduesOpps: v.optional(v.number()),
+    oppsOver30: v.optional(v.number()),
+    leadsNoAction14: v.optional(v.number()),
+    oppsNoAction14: v.optional(v.number()),
+    callsAnswered: v.optional(v.number()),
+    callsOutbound: v.optional(v.number()),
+    talkTotalSec: v.optional(v.number()),
+    talkAvgSec: v.optional(v.number()),
+    loginSec: v.optional(v.number()),
+    unqualifiedReasons: v.optional(v.string()),
+    sourceFile: v.string(),
+    uploadedAt: v.number(),
+  })
+    .index("by_employee_date", ["employeeId", "reportDate"])
+    .index("by_reportDate", ["reportDate"]),
+
+  // Drill-down rows for the currently-open Salesforce leads/opportunities.
+  // Replaced wholesale on every Salesforce import (the source report is
+  // itself a full point-in-time snapshot, not a delta) rather than
+  // accumulated — old rows would otherwise describe leads/opps that may no
+  // longer be open.
+  performanceRawLeads: defineTable({
+    reportDate: v.string(),
+    owner: v.string(),
+    status: v.optional(v.string()),
+    statusDetails: v.optional(v.string()),
+    createDate: v.optional(v.string()),
+    lastActivity: v.optional(v.string()),
+  })
+    .index("by_owner", ["owner"])
+    // Powers the Team tab's "daily logged-in employees" chart (distinct
+    // owners with a lead created that day) — an indexed range scan instead
+    // of a full-table collect.
+    .index("by_createDate", ["createDate"]),
+
+  performanceRawOpps: defineTable({
+    reportDate: v.string(),
+    owner: v.string(),
+    stage: v.optional(v.string()),
+    stageDetails: v.optional(v.string()),
+    createdDate: v.optional(v.string()),
+    closeDate: v.optional(v.string()),
+    age: v.optional(v.number()),
+    lastActivity: v.optional(v.string()),
+    customerNumber: v.optional(v.string()),
+  }).index("by_owner", ["owner"]),
+
+  // One row per closed-won opportunity, keyed by its actual Close Date —
+  // powers the daily closed-won trend chart. `wonMonth` on
+  // `performanceReports` is a cumulative month-to-date counter meant to be
+  // diffed across daily uploads, which produced a single lump-sum spike on
+  // whatever day an opp report happened to be uploaded when uploads aren't
+  // daily. This table sidesteps that entirely by reading the real per-
+  // opportunity close date out of the export. Replaced wholesale on every
+  // Opportunity import, same rationale as `performanceRawOpps`.
+  performanceWonOpps: defineTable({
+    owner: v.string(),
+    closeDate: v.string(),
+  })
+    .index("by_owner", ["owner"])
+    .index("by_closeDate", ["closeDate"]),
+
+  // One row per employee per Genesys interaction (raw, not aggregated) —
+  // imported from the "Interaktionen" export, distinct from the aggregated
+  // Genesys agent report `performanceReports.callsToday`/etc. already cover.
+  // An interaction with several participating agents (transfer/conference)
+  // produces one row per matched employee, since each of them genuinely
+  // handled it. `date` is the calendar day of `startedAt` (ISO
+  // "YYYY-MM-DD", UTC) — kept alongside the timestamp so day-scoped queries
+  // can use an index instead of re-deriving the date from every row.
+  // Wholesale-replaced per calendar month on import (see
+  // `interactionImport.ts`), same rationale as `performanceRawLeads`/`Opps`.
+  performanceInteractions: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    date: v.string(),
+    startedAt: v.number(),
+    durationSec: v.number(),
+    direction: v.optional(v.string()),
+    sourceFile: v.string(),
+    uploadedAt: v.number(),
+  })
+    .index("by_employee_date", ["employeeId", "date"])
+    .index("by_date", ["date"]),
+
+  // Admin-set monthly goals/todos for an employee. Status can be updated by
+  // the employee themself; only an admin can create/edit/delete the topic
+  // itself.
+  performanceTopics: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    ym: v.string(),
+    topic: v.string(),
+    todo: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    status: v.union(
+      v.literal("offen"),
+      v.literal("erreicht"),
+      v.literal("nicht_erreicht")
+    ),
+    createdBy: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_employee_ym", ["employeeId", "ym"]),
+
+  performanceUploadLog: defineTable({
+    // Raw original filename — never a composed/decorated label, so the UI
+    // can show it in full instead of parsing detail back out of a string.
+    filename: v.string(),
+    storageId: v.id("_storage"),
+    rowsImported: v.number(),
+    uploadedAt: v.number(),
+    // SHA-256 of the raw file bytes, computed by apps/api before staging —
+    // lets apiImportReport recognize a re-upload of an already-imported
+    // file (any report type) and skip re-processing it instead of silently
+    // re-running an import that would just overwrite identical data.
+    contentHash: v.optional(v.string()),
+    // What kind of report this was detected as — drives the badge/icon in
+    // the upload log instead of the old baked-in-string description.
+    reportKind: v.optional(
+      v.union(
+        v.literal("lead"),
+        v.literal("opp"),
+        v.literal("call"),
+        v.literal("template"),
+        v.literal("interactions")
+      )
+    ),
+    // The report's own date (YYYY-MM-DD), as detected from its content —
+    // not the upload time. Undefined for the aggregated template, which
+    // spans multiple days itself.
+    reportDate: v.optional(v.string()),
+    // Total data rows in the source file, before any team-matching filter
+    // — lets the UI show "40 of 41 matched" instead of just the imported
+    // count.
+    sourceRowCount: v.optional(v.number()),
+    // Call-report agent names that didn't match a known team member —
+    // previously only ever shown in the upload queue's toast for that one
+    // session, never persisted for later reference in the log.
+    skippedNames: v.optional(v.array(v.string())),
+    fileSize: v.optional(v.number()),
+    // Client-generated id shared by every file selected/dropped in the
+    // same batch — lets the upload log show "17 files uploaded together"
+    // instead of 17 unrelated-looking rows with the same timestamp.
+    batchId: v.optional(v.string()),
+  })
+    .index("by_uploadedAt", ["uploadedAt"])
+    .index("by_contentHash", ["contentHash"])
+    .index("by_batchId", ["batchId"]),
+
   // ========================================================================
   // ActivityTrack — workforce-activity dashboard, ported into the intranet.
   //
@@ -704,6 +974,19 @@ export default defineSchema({
         idleMs: v.number(),
         active: v.boolean(),
         tzOffsetMinutes: v.number(),
+      })
+    ),
+    // Running total for the device's current local day, maintained alongside
+    // `dailyStats` by the same ingest patch so teamOverview (reactive, read by
+    // every open dashboard tab) can read today's totals off the row it's
+    // already reading instead of a separate per-device `dailyStats` query —
+    // that extra query was one more document every connected viewer re-read
+    // on every ingest tick.
+    todayStats: v.optional(
+      v.object({
+        day: v.string(),
+        activeSeconds: v.number(),
+        idleSeconds: v.number(),
       })
     ),
   })
@@ -1118,6 +1401,16 @@ export default defineSchema({
     /** Release key of the last dismissed "What's new" dialog. */
     dismissedWhatsNew: v.optional(v.string()),
     browserPushEnabled: v.optional(v.boolean()),
+    onboardingStartedAt: v.optional(v.number()),
+    onboardingCompletedAt: v.optional(v.number()),
+    /** Set when the user skips onboarding from the welcome step. Distinct from
+     * `onboardingCompletedAt` for future analytics, but both hide the header
+     * trigger and resume affordance the same way. */
+    onboardingDismissedAt: v.optional(v.number()),
+    /** Resume index into the onboarding wizard's step list. */
+    onboardingStep: v.optional(v.number()),
+    /** JSON-encoded Record<OnboardingStepId, "pending"|"completed"|"skipped">. */
+    onboardingStepStatuses: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 

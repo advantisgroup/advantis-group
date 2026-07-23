@@ -27,7 +27,7 @@ export function WeekSwitchesChart({
 }) {
   return (
     <ResponsiveContainer width="100%" height={180}>
-      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>
+      <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
         <CartesianGrid stroke={CHART.grid} vertical={false} />
         <XAxis
           dataKey="label"
@@ -41,7 +41,7 @@ export function WeekSwitchesChart({
           tickLine={false}
           axisLine={false}
           fontSize={11}
-          width={28}
+          width={32}
           allowDecimals={false}
         />
         <Tooltip {...tooltipStyle} />

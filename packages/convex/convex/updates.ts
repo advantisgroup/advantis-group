@@ -146,6 +146,62 @@ function defaultStatus(type: Doc<"updates">["type"]): Doc<"updates">["status"] {
   return undefined;
 }
 
+export interface InsertUpdateArgs {
+  type: Doc<"updates">["type"];
+  slug?: string;
+  title: string;
+  summary: string;
+  bodyFormat: Doc<"updates">["bodyFormat"];
+  body: string;
+  authorUserId: Id<"users">;
+  audience: Audience;
+  guestVisible?: boolean;
+  affectedSystems?: string[];
+  status?: Doc<"updates">["status"];
+  startedAt?: number;
+  /** Future timestamp schedules the update instead of publishing now. */
+  publishAt?: number;
+  emailRequested: boolean;
+  source: Doc<"updates">["source"];
+}
+
+/**
+ * Shared insert + publish-side-effects logic behind every way an Update gets
+ * created — the `/updates/new` UI form, the markdown publish script, and
+ * system-generated posts like a feature-flag toggle — so they can't drift.
+ */
+export async function insertUpdate(
+  ctx: MutationCtx,
+  args: InsertUpdateArgs
+): Promise<Id<"updates">> {
+  const now = Date.now();
+  const publishedAt =
+    args.publishAt && args.publishAt > now ? args.publishAt : now;
+  const id = await ctx.db.insert("updates", {
+    type: args.type,
+    slug: args.slug,
+    title: args.title,
+    summary: args.summary,
+    bodyFormat: args.bodyFormat,
+    body: args.body,
+    authorUserId: args.authorUserId,
+    audience: args.audience,
+    guestVisible: args.guestVisible ?? false,
+    affectedSystems: args.affectedSystems,
+    status: args.status ?? defaultStatus(args.type),
+    timeline: [],
+    startedAt: args.startedAt ?? publishedAt,
+    revision: 1,
+    publishedAt,
+    emailRequested: args.emailRequested,
+    source: args.source,
+    createdAt: now,
+  });
+  const update = await ctx.db.get(id);
+  if (update) await schedulePublishSideEffects(ctx, update);
+  return id;
+}
+
 export const create = mutation({
   args: {
     type: v.union(
@@ -168,30 +224,11 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const author = await requireAdmin(ctx);
-    const now = Date.now();
-    const publishedAt =
-      args.publishAt && args.publishAt > now ? args.publishAt : now;
-    const id = await ctx.db.insert("updates", {
-      type: args.type,
-      title: args.title,
-      summary: args.summary,
-      bodyFormat: args.bodyFormat,
-      body: args.body,
+    const id = await insertUpdate(ctx, {
+      ...args,
       authorUserId: author._id,
-      audience: args.audience,
-      guestVisible: args.guestVisible ?? false,
-      affectedSystems: args.affectedSystems,
-      status: args.status ?? defaultStatus(args.type),
-      timeline: [],
-      startedAt: args.startedAt ?? publishedAt,
-      revision: 1,
-      publishedAt,
-      emailRequested: args.emailRequested,
       source: "ui",
-      createdAt: now,
     });
-    const update = await ctx.db.get(id);
-    if (update) await schedulePublishSideEffects(ctx, update);
     return { id };
   },
 });
@@ -257,9 +294,7 @@ export const publishFromMarkdown = mutation({
       return { id: existing._id, updated: true };
     }
 
-    const publishedAt =
-      args.publishAt && args.publishAt > now ? args.publishAt : now;
-    const id = await ctx.db.insert("updates", {
+    const id = await insertUpdate(ctx, {
       type: args.type,
       slug: args.slug,
       title: args.title,
@@ -268,19 +303,14 @@ export const publishFromMarkdown = mutation({
       body: args.body,
       authorUserId: author._id,
       audience: args.audience,
-      guestVisible: args.guestVisible ?? false,
+      guestVisible: args.guestVisible,
       affectedSystems: args.affectedSystems,
-      status: args.status ?? defaultStatus(args.type),
-      timeline: [],
-      startedAt: args.startedAt ?? publishedAt,
-      revision: 1,
-      publishedAt,
+      status: args.status,
+      startedAt: args.startedAt,
+      publishAt: args.publishAt,
       emailRequested: args.emailRequested,
       source: "markdown",
-      createdAt: now,
     });
-    const update = await ctx.db.get(id);
-    if (update) await schedulePublishSideEffects(ctx, update);
     return { id, updated: false };
   },
 });
@@ -311,6 +341,54 @@ export const publishScheduled = internalMutation({
   },
 });
 
+export interface AppendTimelineArgs {
+  authorUserId: Id<"users">;
+  status?: Doc<"updates">["status"];
+  message: string;
+}
+
+/**
+ * Shared "post a follow-up" logic behind `addTimelineEntry` and
+ * system-generated follow-ups (e.g. a feature flag re-enabling closing out
+ * the post it made when it was disabled). No email — only the initial
+ * publish sends one, to avoid inbox spam mid-incident.
+ */
+export async function appendTimeline(
+  ctx: MutationCtx,
+  updateId: Id<"updates">,
+  args: AppendTimelineArgs
+): Promise<void> {
+  const update = await ctx.db.get(updateId);
+  if (!update) return;
+  const now = Date.now();
+  const timeline = [
+    ...(update.timeline ?? []),
+    {
+      at: now,
+      status: args.status,
+      message: args.message,
+      authorUserId: args.authorUserId,
+    },
+  ];
+  const patch: Record<string, unknown> = { timeline, updatedAt: now };
+  if (args.status) {
+    patch.status = args.status;
+    patch.revision = update.revision + 1;
+    if (TERMINAL_STATUSES.has(args.status)) patch.resolvedAt = now;
+  }
+  await ctx.db.patch(updateId, patch);
+
+  const recipients = (
+    await resolveAudienceUserIds(ctx, update.audience)
+  ).filter(uid => uid !== args.authorUserId);
+  await notifyUsers(ctx, recipients, {
+    type: `update:${update.type}`,
+    title: `${update.title} — update`,
+    body: args.message,
+    link: `/updates/${updateId}`,
+  });
+}
+
 /** Post a status/timeline entry — the incident.io-style running log. No email. */
 export const addTimelineEntry = mutation({
   args: {
@@ -324,32 +402,10 @@ export const addTimelineEntry = mutation({
     if (!update) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
-    const now = Date.now();
-    const timeline = [
-      ...(update.timeline ?? []),
-      {
-        at: now,
-        status: args.status,
-        message: args.message,
-        authorUserId: user._id,
-      },
-    ];
-    const patch: Record<string, unknown> = { timeline, updatedAt: now };
-    if (args.status) {
-      patch.status = args.status;
-      patch.revision = update.revision + 1;
-      if (TERMINAL_STATUSES.has(args.status)) patch.resolvedAt = now;
-    }
-    await ctx.db.patch(args.updateId, patch);
-
-    const recipients = (
-      await resolveAudienceUserIds(ctx, update.audience)
-    ).filter(uid => uid !== user._id);
-    await notifyUsers(ctx, recipients, {
-      type: `update:${update.type}`,
-      title: `${update.title} — update`,
-      body: args.message,
-      link: `/updates/${args.updateId}`,
+    await appendTimeline(ctx, args.updateId, {
+      authorUserId: user._id,
+      status: args.status,
+      message: args.message,
     });
     return { ok: true };
   },

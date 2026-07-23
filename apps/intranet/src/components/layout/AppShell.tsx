@@ -20,6 +20,9 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Link } from "@/components/Link";
 import { MarkLogo } from "@/components/Logo";
 import { BrowserNotificationBridge } from "@/components/notifications/BrowserNotificationBridge";
+import { OnboardingPanel } from "@/components/onboarding/OnboardingPanel";
+import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
+import { OnboardingTrigger } from "@/components/onboarding/OnboardingTrigger";
 import { TourCompletionScreen } from "@/components/tour/TourCompletionScreen";
 import { TourOverlay } from "@/components/tour/TourOverlay";
 import { TourPopout } from "@/components/tour/TourPopout";
@@ -99,9 +102,12 @@ function AppShellInner({ children }: { children: ReactNode }) {
     pathname.startsWith("/updates/") && pathname !== "/updates/new";
 
   // Keep presence fresh while the app is open so chat can show online state.
+  // 60s leaves ample margin under the 5-minute online window
+  // (UserProfile.ONLINE_WINDOW_MS) while halving the sitewide heartbeat
+  // volume every signed-in user generates regardless of which page they're on.
   useEffect(() => {
     void heartbeat({});
-    const id = setInterval(() => void heartbeat({}), 30_000);
+    const id = setInterval(() => void heartbeat({}), 60_000);
     return () => clearInterval(id);
   }, [heartbeat]);
 
@@ -137,6 +143,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
           </div>
           {/* Tour progress — compact checkmark chip; self-hides when finished. */}
           {!isUpdatesReading && <TourProgressChip />}
+          {!isUpdatesReading && <OnboardingTrigger />}
           <div data-tour="tour-notifications-btn" className="flex items-center">
             <NotificationsMenu />
           </div>
@@ -174,6 +181,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
       <TourSpotlight targetRect={targetRect} visible={tourActive} />
       <TourPopout />
       <TourCompletionScreen />
+      <OnboardingPanel />
     </>
   );
 }
@@ -183,9 +191,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <BottomNavTabsProvider>
         <TourProvider>
-          <FileViewerProvider>
-            <AppShellInner>{children}</AppShellInner>
-          </FileViewerProvider>
+          <OnboardingProvider>
+            <FileViewerProvider>
+              <AppShellInner>{children}</AppShellInner>
+            </FileViewerProvider>
+          </OnboardingProvider>
         </TourProvider>
       </BottomNavTabsProvider>
     </SidebarProvider>

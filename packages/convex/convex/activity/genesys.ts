@@ -2,9 +2,9 @@
 
 import { v } from "convex/values";
 
-import { action } from "../_generated/server";
 import { api } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
+import { gatedAction } from "../lib/featureGate";
 import {
   normalizePresence,
   normalizeRoutingStatus,
@@ -143,8 +143,8 @@ export async function pollGenesys(
   }
 }
 
-/** On-demand single-user Genesys sync (used by the dashboard /sync endpoint). */
-export const syncGenesys = action({
+/** On-demand single-user Genesys sync (used by the dashboard /sync endpoint). Gated. */
+export const syncGenesys = gatedAction("activitytrack")({
   args: {
     secret: v.string(),
     employeeId: v.string(),

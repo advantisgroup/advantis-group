@@ -1,0 +1,15 @@
+{
+  "placeholder": "Seiten, Personen, Ankündigungen suchen…",
+  "pages": "Seiten",
+  "people": "Personen",
+  "announcements": "Ankündigungen",
+  "guidebooks": "Wiki",
+  "applicants": "Bewerber",
+  "noResults": "Keine Ergebnisse gefunden",
+  "emptyState": "Beginne zu tippen, um Seiten, Personen und Ankündigungen zu durchsuchen",
+  "hint": "Suchen",
+  "actions": "Aktionen",
+  "actionNewEvent": "Neuer Termin",
+  "actionNewAnnouncement": "Neue Ankündigung",
+  "actionUpload": "Datei hochladen"
+}

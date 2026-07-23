@@ -7,10 +7,12 @@ import { internal } from "./_generated/api";
  * Hourly Clockodo → absences reconcile. The webhook (apps/api) is the fast
  * path; this cron catches webhooks that were missed, disabled server-side, or
  * fired before the affected employee got linked to an intranet account.
- * Endpoints/base match apps/api's client so both paths see the same data.
+ * Endpoints/base match `activity/clockodo.ts`'s already-working poller (the
+ * v2 API this file used to call — including `/v2/users`, below — has since
+ * been retired and returns 410 Gone) so both paths see the same data.
  */
 const BASE_URL = () =>
-  process.env.CLOCKODO_API_URL ?? "https://my.clockodo.com/api";
+  process.env.CLOCKODO_API_URL ?? "https://my.clockodo.com/api/v4";
 
 function headers(): Record<string, string> {
   return {
@@ -50,12 +52,13 @@ export const syncClockodoAbsences = internalAction({
       return;
     }
 
-    const emailByClockodoId = new Map<number, string>();
-    const usersBody = await clockodoGet<{
-      users?: { id: number; email: string }[];
-    }>(`/v2/users`);
-    for (const u of usersBody.users ?? []) emailByClockodoId.set(u.id, u.email);
-
+    // No users-list lookup here (the old `/v2/users` call this used to
+    // build an email fallback from is gone — 410 — on Clockodo's retired v2
+    // API). `clockodoSync.ts`'s `resolveUser` already matches by
+    // `clockodoUserId` first (via `users.by_clockodoUserId`, falling back to
+    // `people.by_clockodoUserId`) and only needs email for accounts with
+    // neither link yet — same as `activity/clockodo.ts`'s poller, which
+    // never fetches a user list at all.
     const now = new Date();
     const years = [now.getFullYear()];
     // Early in the year, absences spanning the boundary (and late corrections)
@@ -63,13 +66,12 @@ export const syncClockodoAbsences = internalAction({
     if (now.getMonth() === 0) years.push(now.getFullYear() - 1);
 
     for (const year of years) {
-      const body = await clockodoGet<{ absences?: ClockodoAbsence[] }>(
-        `/absences?year=${year}`
+      const body = await clockodoGet<{ data?: ClockodoAbsence[] }>(
+        `/absences?year=${year}&filter[scope]=viewableAbsences`
       );
-      const absences = (body.absences ?? []).map(a => ({
+      const absences = (body.data ?? []).map(a => ({
         externalId: String(a.id),
         clockodoUserId: a.users_id,
-        email: emailByClockodoId.get(a.users_id),
         dateSince: a.date_since,
         dateUntil: a.date_until,
         clockodoType: a.type,

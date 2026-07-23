@@ -36,30 +36,30 @@ interface ActivityNavItem {
 }
 
 const ACTIVITY_NAV: ActivityNavItem[] = [
-  { href: "/admin/activity", labelKey: "nav.overview", icon: LayoutDashboard },
-  { href: "/admin/activity/devices", labelKey: "nav.devices", icon: Monitor },
-  { href: "/admin/activity/people", labelKey: "nav.people", icon: Users },
+  { href: "/activity", labelKey: "nav.overview", icon: LayoutDashboard },
+  { href: "/activity/devices", labelKey: "nav.devices", icon: Monitor },
+  { href: "/activity/people", labelKey: "nav.people", icon: Users },
   {
-    href: "/admin/activity/reports",
+    href: "/activity/reports",
     labelKey: "nav.reports",
     icon: FileBarChart,
   },
   {
-    href: "/admin/activity/settings",
+    href: "/activity/settings",
     labelKey: "nav.settings",
     icon: Settings,
   },
   {
-    href: "/admin/activity/migration",
+    href: "/activity/migration",
     labelKey: "nav.migration",
     icon: DatabaseZap,
   },
-  { href: "/admin/activity/help", labelKey: "nav.help", icon: HelpCircle },
+  { href: "/activity/help", labelKey: "nav.help", icon: HelpCircle },
 ];
 
 /**
  * The activity-scoped navigation that slides in while the user is inside
- * `/admin/activity/*`. Config-driven exactly like the main `Sidebar`, reusing
+ * `/activity/*`. Config-driven exactly like the main `Sidebar`, reusing
  * the same sidebar primitives. The first item returns the user to the normal
  * intranet admin area.
  */
@@ -93,8 +93,8 @@ export function ActivitySidebar() {
         <SidebarMenu>
           {ACTIVITY_NAV.map(item => {
             const active =
-              item.href === "/admin/activity"
-                ? pathname === "/admin/activity"
+              item.href === "/activity"
+                ? pathname === "/activity"
                 : pathname.startsWith(item.href);
             const Icon = item.icon;
             return (
@@ -112,17 +112,16 @@ export function ActivitySidebar() {
                     // area, so the tour spotlights this Overview entry (the
                     // first item) instead of the now-hidden main-nav link.
                     data-tour={
-                      item.href === "/admin/activity"
+                      item.href === "/activity"
                         ? "tour-nav-activity"
                         : undefined
                     }
                   >
                     <Icon />
                     <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
-                    {item.href === "/admin/activity/devices" &&
-                      pendingCount > 0 && (
-                        <SidebarMenuBadge>{pendingCount}</SidebarMenuBadge>
-                      )}
+                    {item.href === "/activity/devices" && pendingCount > 0 && (
+                      <SidebarMenuBadge>{pendingCount}</SidebarMenuBadge>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

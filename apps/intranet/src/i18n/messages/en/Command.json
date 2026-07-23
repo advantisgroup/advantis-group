@@ -1,0 +1,15 @@
+{
+  "placeholder": "Search pages, people, announcements…",
+  "pages": "Pages",
+  "people": "People",
+  "announcements": "Announcements",
+  "guidebooks": "Guidebooks",
+  "applicants": "Applicants",
+  "noResults": "No results found",
+  "emptyState": "Start typing to search pages, people, and announcements",
+  "hint": "Search",
+  "actions": "Actions",
+  "actionNewEvent": "New event",
+  "actionNewAnnouncement": "New announcement",
+  "actionUpload": "Upload file"
+}

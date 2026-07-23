@@ -4,6 +4,7 @@ import { api } from "@advantis/convex/api";
 
 import { logClockodoWebhookDelivery } from "../lib/clockodoWebhookLog.js";
 import { getConvex } from "../lib/convex.js";
+import { isFeatureDisabledError } from "../lib/errors.js";
 
 /**
  * ActivityTrack desktop-agent + integration ingestion, ported from the old
@@ -58,6 +59,17 @@ const fail = (
 };
 
 export const activityRoute = new Elysia()
+  // Every route below eventually calls a feature-gated Convex function (see
+  // packages/convex/convex/lib/featureGate.ts) once ActivityTrack is
+  // disabled. Rather than try/catching that in each handler, translate it
+  // here once — the one place this route group's Convex calls funnel their
+  // errors through.
+  .onError(({ error, set }) => {
+    if (isFeatureDisabledError(error)) {
+      set.status = 503;
+      return { ok: false, error: "feature_disabled" as const };
+    }
+  })
   // --- Desktop agent --------------------------------------------------------
   .post("/agent/register", async ({ body, set }) => {
     const deviceId = str(body, "deviceId");

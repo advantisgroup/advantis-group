@@ -6,26 +6,44 @@ import { useMemo } from "react";
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
-  CalendarDays,
+  Building2,
   CalendarPlus,
   Command,
-  MapPin,
+  Heart,
   Megaphone,
-  MessageSquare,
-  Plane,
+  ShieldCheck,
   Settings2,
   Upload,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { Link } from "@/components/Link";
 import {
-  useCurrentUser,
+  AdminStatsCard,
+  RecentActivityCard,
+  TeamPerformanceCard,
+  TeamStatusCard,
+} from "@/components/dashboard/AdminWidgets";
+import {
+  ChatsCard,
+  MyDayCard,
+  MyPerformanceCard,
+} from "@/components/dashboard/ForYouWidgets";
+import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
+import { SectionHeading } from "@/components/dashboard/SectionHeading";
+import {
+  AnnouncementsCard,
+  CelebrationsCard,
+  EventsCard,
+  WhosOutCard,
+} from "@/components/dashboard/TeamCompanyWidgets";
+import { Link } from "@/components/Link";
+import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
+import {
+  useHasCapability,
+  useIsAdmin,
   useIsManager,
 } from "@/components/providers/current-user";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -33,147 +51,74 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { htmlToText } from "@/components/ui/rich-text";
-import { Skeleton } from "@/components/ui/skeleton";
-import { isoToday } from "@/lib/absences";
-import {
-  formatDateTime,
-  formatIsoDate,
-  formatTime,
-  initials,
-  relativeTime,
-} from "@/lib/format";
+import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const now = Date.now();
 const startOfToday = new Date(now).setHours(0, 0, 0, 0);
 
-const CARD_IDS = ["events", "announcements", "chats", "whosout"] as const;
+const CARD_IDS = [
+  "chats",
+  "myday",
+  "myperformance",
+  "events",
+  "announcements",
+  "whosout",
+  "celebrations",
+  "teamstatus",
+  "teamperformance",
+  "adminstats",
+  "adminactivity",
+] as const;
 type CardId = (typeof CARD_IDS)[number];
 
-function DashCard({
-  icon,
-  title,
-  count,
-  children,
-}: {
-  icon: ReactNode;
-  title: string;
-  count?: number;
-  children: ReactNode;
-}) {
-  return (
-    <Card className="group/card overflow-hidden transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-18px_rgb(0_0_0/0.18)]">
-      <div className="flex items-center gap-3 border-b border-border/60 px-5 py-3.5">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary [&_svg]:size-[18px]">
-          {icon}
-        </span>
-        <h2 className="flex-1 text-sm font-semibold tracking-tight">{title}</h2>
-        {count ? (
-          <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-primary/10 px-2 text-xs font-semibold tabular-nums text-primary">
-            {count}
-          </span>
-        ) : null}
-      </div>
-      <div className="p-2">{children}</div>
-    </Card>
-  );
+interface Widget {
+  id: CardId;
+  node: ReactNode;
+  wide?: boolean;
 }
 
-function Empty({
-  children,
-  href,
-  linkLabel,
-}: {
-  children: ReactNode;
-  href?: string;
-  linkLabel?: string;
-}) {
+function widget(id: CardId, node: ReactNode, wide?: boolean): Widget {
+  return { id, node, wide };
+}
+
+function WidgetGrid({ widgets }: { widgets: Widget[] }) {
   return (
-    <div className="px-3 py-6 text-center">
-      <p className="text-sm text-muted-foreground">{children}</p>
-      {href && linkLabel && (
-        <Link
-          href={href}
-          className="mt-1 inline-block text-xs font-medium text-primary hover:underline"
-        >
-          {linkLabel}
-        </Link>
+    <div
+      className={cn(
+        "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3",
+        "[&>*]:opacity-0 [&>*]:animate-[fadeInUp_0.5s_ease-out_forwards]"
       )}
-    </div>
-  );
-}
-
-function RowSkeletons() {
-  return (
-    <div className="space-y-2 px-3 py-2">
-      {[0, 1, 2].map(i => (
-        <div key={i} className="flex items-center gap-3">
-          <Skeleton className="size-8 shrink-0 rounded-full" />
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <Skeleton className="h-3.5 w-3/5" />
-            <Skeleton className="h-3 w-2/5" />
-          </div>
+    >
+      {widgets.map((w, i) => (
+        <div
+          key={w.id}
+          className={cn(w.wide && "sm:col-span-2")}
+          style={{ animationDelay: `${0.05 * i}s` }}
+        >
+          {w.node}
         </div>
       ))}
     </div>
   );
 }
 
-/** Rich list row: optional leading visual, title, subtitle, trailing meta. */
-function Row({
-  href,
-  leading,
-  title,
-  subtitle,
-  trailing,
-}: {
-  href: string;
-  leading?: ReactNode;
-  title: string;
-  subtitle?: string | null;
-  trailing?: ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-accent"
-    >
-      {leading}
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium leading-tight">{title}</p>
-        {subtitle ? (
-          <p className="truncate text-xs leading-tight text-muted-foreground">
-            {subtitle}
-          </p>
-        ) : null}
-      </div>
-      {trailing ? (
-        <div className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
-          {trailing}
-        </div>
-      ) : null}
-    </Link>
-  );
-}
-
 export default function DashboardPage() {
   const t = useTranslations("Dashboard");
-  const tAbs = useTranslations("Absences");
   const locale = useLocale();
-  const user = useCurrentUser();
   const isManager = useIsManager();
+  const isAdmin = useIsAdmin();
+  const hasActivityCapability = useHasCapability("view_activity_admin");
+  const { session: performanceSession } = usePerformanceSession();
+  const hasMyPerformance = Boolean(
+    performanceSession?.valid && performanceSession.employeeId
+  );
+  const hasTeamPerformance =
+    isManager && Boolean(performanceSession?.valid && performanceSession.role === "admin");
+
   const events = useQuery(api.events.listForRange, {
     start: startOfToday,
     end: now + 30 * 24 * 60 * 60 * 1000,
-  });
-  const announcements = useQuery(api.announcements.list, { limit: 5 });
-  const conversations = useQuery(api.chat.listConversations);
-  const myAbsences = useQuery(api.absences.myAbsences);
-  const today = isoToday();
-  const outToday = useQuery(api.absences.listForCalendar, {
-    start: today,
-    end: today,
   });
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
@@ -190,70 +135,65 @@ export default function DashboardPage() {
     await setPrefs({ hiddenDashboardCards: [...next] });
   }
 
-  const unreadChats = conversations?.filter(c => c.unread > 0) ?? [];
-  const todayLabel = new Date(now).toLocaleDateString(locale, {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-
-  const hour = new Date().getHours();
-  const greetingKey =
-    hour < 12
-      ? "greetingMorning"
-      : hour < 18
-        ? "greetingAfternoon"
-        : "greetingEvening";
-
-  const nextAbsence = useMemo(() => {
-    return (myAbsences ?? [])
-      .filter(a => a.status === "approved" && a.endDate >= today)
-      .sort((a, b) => a.startDate.localeCompare(b.startDate))[0];
-  }, [myAbsences, today]);
-
-  const todaysEvents = useMemo(
-    () =>
-      (events ?? []).filter(e => {
-        const iso = (ms: number) => {
-          const d = new Date(ms);
-          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        };
-        return iso(e.start) <= today && today <= iso(e.end);
-      }),
-    [events, today]
-  );
+  const todaysEvents = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return (events ?? []).filter(e => {
+      const iso = (ms: number) => {
+        const d = new Date(ms);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      return iso(e.start) <= today && today <= iso(e.end);
+    });
+  }, [events]);
 
   const cardLabels: Record<CardId, string> = {
+    chats: t("unreadChats"),
+    myday: t("yourDayTitle"),
+    myperformance: t("myPerformanceTitle"),
     events: t("upcomingEvents"),
     announcements: t("latestAnnouncements"),
-    chats: t("unreadChats"),
     whosout: t("whosOutToday"),
+    celebrations: t("celebrationsTitle"),
+    teamstatus: t("teamStatusTitle"),
+    teamperformance: t("teamPerformanceTitle"),
+    adminstats: t("adminStatsTitle"),
+    adminactivity: t("recentActivityTitle"),
   };
 
+  const forYouWidgets: Widget[] = [
+    widget("chats", <ChatsCard />),
+    widget("myday", <MyDayCard />),
+    ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
+  ].filter(w => showCard(w.id));
+
+  const teamCompanyWidgets: Widget[] = [
+    widget("events", <EventsCard />),
+    widget("announcements", <AnnouncementsCard />),
+    widget("whosout", <WhosOutCard />),
+    widget("celebrations", <CelebrationsCard />, true),
+  ].filter(w => showCard(w.id));
+
+  const adminWidgets: Widget[] = [
+    ...(hasActivityCapability ? [widget("teamstatus", <TeamStatusCard />)] : []),
+    ...(hasTeamPerformance
+      ? [widget("teamperformance", <TeamPerformanceCard />)]
+      : []),
+    widget("adminstats", <AdminStatsCard />),
+    ...(isAdmin ? [widget("adminactivity", <RecentActivityCard />)] : []),
+  ].filter(w => showCard(w.id));
+
+  const availableCardIds = CARD_IDS.filter(id => {
+    if (id === "myperformance") return hasMyPerformance;
+    if (id === "teamstatus") return hasActivityCapability;
+    if (id === "teamperformance") return hasTeamPerformance;
+    if (id === "adminstats" || id === "adminactivity") return isManager;
+    return true;
+  });
+
   return (
-    <div className="mx-auto max-w-5xl" data-tour="tour-dashboard-main">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-sm font-medium capitalize text-muted-foreground">
-            {todayLabel}
-          </p>
-          <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">
-            {t(greetingKey, { name: user.firstName ?? user.name })}
-          </h1>
-          {nextAbsence && (
-            <Link
-              href="/absences"
-              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-            >
-              <Plane className="size-3.5 text-primary" />
-              {t("nextAbsence", {
-                type: tAbs(nextAbsence.type),
-                start: formatIsoDate(nextAbsence.startDate, locale),
-                end: formatIsoDate(nextAbsence.endDate, locale),
-              })}
-            </Link>
-          )}
-        </div>
+    <div className="mx-auto max-w-6xl" data-tour="tour-dashboard-main">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <GreetingHeader />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -268,7 +208,7 @@ export default function DashboardPage() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>{t("customize")}</DropdownMenuLabel>
-            {CARD_IDS.map(id => (
+            {availableCardIds.map(id => (
               <DropdownMenuCheckboxItem
                 key={id}
                 checked={showCard(id)}
@@ -345,189 +285,34 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div
-        className={cn(
-          "grid gap-4 md:grid-cols-2",
-          "[&>*]:opacity-0 [&>*]:animate-[fadeInUp_0.5s_ease-out_forwards]"
-        )}
-      >
-        {showCard("events") && (
-          <div style={{ animationDelay: "0.05s" }}>
-            <DashCard
-              icon={<CalendarDays />}
-              title={t("upcomingEvents")}
-              count={events?.length}
-            >
-              {events === undefined ? (
-                <RowSkeletons />
-              ) : events.length === 0 ? (
-                <Empty href="/calendar" linkLabel={t("openCalendar")}>
-                  {t("noEvents")}
-                </Empty>
-              ) : (
-                events
-                  .slice(0, 5)
-                  .map(e => (
-                    <Row
-                      key={e._id}
-                      href="/calendar"
-                      title={e.title}
-                      subtitle={e.location}
-                      leading={
-                        e.location ? (
-                          <MapPin className="size-4 shrink-0 text-muted-foreground" />
-                        ) : (
-                          <span className="size-1.5 shrink-0 rounded-full bg-primary/60" />
-                        )
-                      }
-                      trailing={
-                        <span className="whitespace-nowrap">
-                          {formatDateTime(e.start, locale)}
-                        </span>
-                      }
-                    />
-                  ))
-              )}
-            </DashCard>
-          </div>
-        )}
+      {forYouWidgets.length > 0 && (
+        <section className="mb-8">
+          <SectionHeading icon={<Heart />} title={t("sectionForYou")} />
+          <WidgetGrid widgets={forYouWidgets} />
+        </section>
+      )}
 
-        {showCard("announcements") && (
-          <div style={{ animationDelay: "0.1s" }}>
-            <DashCard icon={<Megaphone />} title={t("latestAnnouncements")}>
-              {announcements === undefined ? (
-                <RowSkeletons />
-              ) : announcements.length === 0 ? (
-                <Empty href="/announcements" linkLabel={t("openAnnouncements")}>
-                  {t("noAnnouncements")}
-                </Empty>
-              ) : (
-                announcements.slice(0, 5).map(a => (
-                  <Row
-                    key={a._id}
-                    href="/announcements"
-                    title={a.title}
-                    subtitle={htmlToText(a.body) || undefined}
-                    leading={
-                      <Avatar className="size-8 shrink-0">
-                        {a.authorAvatar && (
-                          <AvatarImage
-                            src={a.authorAvatar}
-                            alt={a.authorName}
-                          />
-                        )}
-                        <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-                          {initials(a.authorName, a.authorName)}
-                        </AvatarFallback>
-                      </Avatar>
-                    }
-                    trailing={
-                      <>
-                        <span className="whitespace-nowrap">
-                          {relativeTime(a.publishedAt)}
-                        </span>
-                        {!a.read && (
-                          <span className="h-2 w-2 rounded-full bg-primary" />
-                        )}
-                      </>
-                    }
-                  />
-                ))
-              )}
-            </DashCard>
-          </div>
-        )}
+      {teamCompanyWidgets.length > 0 && (
+        <section className="mb-8">
+          <SectionHeading
+            icon={<Building2 />}
+            title={t("sectionTeamCompany")}
+            tint="bg-sky-500/10 text-sky-600 dark:text-sky-300"
+          />
+          <WidgetGrid widgets={teamCompanyWidgets} />
+        </section>
+      )}
 
-        {showCard("chats") && (
-          <div style={{ animationDelay: "0.15s" }}>
-            <DashCard
-              icon={<MessageSquare />}
-              title={t("unreadChats")}
-              count={unreadChats.length || undefined}
-            >
-              {conversations === undefined ? (
-                <RowSkeletons />
-              ) : unreadChats.length === 0 ? (
-                <Empty href="/chat" linkLabel={t("openChat")}>
-                  {t("noUnread")}
-                </Empty>
-              ) : (
-                unreadChats.slice(0, 5).map(c => (
-                  <Row
-                    key={c._id}
-                    href={`/chat?c=${c._id}`}
-                    title={c.title}
-                    subtitle={c.lastMessagePreview}
-                    leading={
-                      <Avatar className="size-8 shrink-0">
-                        {c.avatar && (
-                          <AvatarImage src={c.avatar} alt={c.title} />
-                        )}
-                        <AvatarFallback className="text-[10px]">
-                          {initials(c.title)}
-                        </AvatarFallback>
-                      </Avatar>
-                    }
-                    trailing={
-                      <>
-                        {c.lastMessageAt && (
-                          <span className="whitespace-nowrap">
-                            {relativeTime(c.lastMessageAt)}
-                          </span>
-                        )}
-                        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-xs font-semibold text-primary-foreground">
-                          {c.unread}
-                        </span>
-                      </>
-                    }
-                  />
-                ))
-              )}
-            </DashCard>
-          </div>
-        )}
-
-        {showCard("whosout") && (
-          <div style={{ animationDelay: "0.2s" }}>
-            <DashCard
-              icon={<Plane />}
-              title={t("whosOutToday")}
-              count={outToday?.length || undefined}
-            >
-              {outToday === undefined ? (
-                <RowSkeletons />
-              ) : outToday.length === 0 ? (
-                <Empty href="/calendar" linkLabel={t("openCalendar")}>
-                  {t("nobodyOut")}
-                </Empty>
-              ) : (
-                outToday.slice(0, 5).map(a => (
-                  <Row
-                    key={a._id}
-                    href="/calendar"
-                    title={a.userName}
-                    subtitle={tAbs(a.type)}
-                    leading={
-                      <Avatar className="size-8 shrink-0">
-                        <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
-                          {initials(a.userName)}
-                        </AvatarFallback>
-                      </Avatar>
-                    }
-                    trailing={
-                      <span className="whitespace-nowrap">
-                        {t("outUntil", {
-                          date: formatIsoDate(a.endDate, locale),
-                        })}
-                      </span>
-                    }
-                  />
-                ))
-              )}
-            </DashCard>
-          </div>
-        )}
-      </div>
+      {isManager && adminWidgets.length > 0 && (
+        <section className="mb-8">
+          <SectionHeading
+            icon={<ShieldCheck />}
+            title={t("sectionAdmin")}
+            tint="bg-amber-500/10 text-amber-600 dark:text-amber-300"
+          />
+          <WidgetGrid widgets={adminWidgets} />
+        </section>
+      )}
     </div>
   );
 }

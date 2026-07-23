@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { type FeatureFlagKey } from "@advantis/types";
 import { useQuery } from "convex/react";
 import {
   Activity,
@@ -11,6 +12,7 @@ import {
   Cloud,
   ExternalLink,
   LayoutDashboard,
+  LineChart,
   Megaphone,
   MessageSquare,
   Plane,
@@ -23,6 +25,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { useFeatureFlags } from "@/components/feature-flags/FeatureGate";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
@@ -59,6 +62,8 @@ interface NavItem {
   badge?: number;
   managerOnly?: boolean;
   adminOnly?: boolean;
+  /** Hidden for non-admins while this feature is disabled (admins still see it, to reach the toggle). */
+  featureKey?: FeatureFlagKey;
   /** Marks the item as leading to a separate area (shows an external-link hint). */
   external?: boolean;
   /** Tour targeting attribute value. */
@@ -78,12 +83,16 @@ export function Sidebar() {
   const user = useCurrentUser();
   const hasApplicantAccess = useHasApplicantAccess();
   const { setOpenMobile, state } = useSidebar();
+  const featureFlags = useFeatureFlags();
+  const disabledFeatures = new Set(
+    (featureFlags ?? []).filter(f => !f.enabled).map(f => f.key)
+  );
 
   // Context-aware nav: inside the ActivityTrack or Admin areas the main nav
   // slides out and the matching scoped nav slides in (see the sliding
   // container below). Integrations stays a flat link — it's one provider
   // today, not enough surface yet to warrant its own sidebar section.
-  const isActivity = pathname.startsWith("/admin/activity");
+  const isActivity = pathname.startsWith("/activity");
   const isAdminArea =
     !isActivity &&
     pathname.startsWith("/admin") &&
@@ -140,6 +149,7 @@ export function Sidebar() {
           labelKey: "chat",
           icon: MessageSquare,
           badge: chatUnread,
+          featureKey: "chat",
           tourAttr: "tour-nav-chat",
         },
       ],
@@ -179,6 +189,14 @@ export function Sidebar() {
               },
             ]
           : []),
+        {
+          href: "/performance",
+          labelKey: "performance",
+          icon: LineChart,
+          // Its own login (not yet Clerk-coupled), so flag it as a separate
+          // area like ActivityTrack rather than a normal in-app link.
+          external: true,
+        },
       ],
     },
     {
@@ -192,10 +210,11 @@ export function Sidebar() {
           tourAttr: "tour-nav-admin",
         },
         {
-          href: "/admin/activity",
+          href: "/activity",
           labelKey: "activity",
           icon: Activity,
-          adminOnly: true,
+          managerOnly: true,
+          featureKey: "activitytrack",
           external: true,
         },
         {
@@ -257,7 +276,10 @@ export function Sidebar() {
                 const items = group.items.filter(
                   item =>
                     (!item.managerOnly || isManager) &&
-                    (!item.adminOnly || isAdmin)
+                    (!item.adminOnly || isAdmin) &&
+                    (!item.featureKey ||
+                      isAdmin ||
+                      !disabledFeatures.has(item.featureKey))
                 );
                 if (items.length === 0) return null;
                 return (
@@ -271,7 +293,6 @@ export function Sidebar() {
                             : item.href === "/admin"
                               ? pathname === "/admin" ||
                                 (pathname.startsWith("/admin") &&
-                                  !pathname.startsWith("/admin/activity") &&
                                   !pathname.startsWith("/admin/integrations"))
                               : pathname.startsWith(item.href);
                         const Icon = item.icon;

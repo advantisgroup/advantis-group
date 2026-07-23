@@ -402,7 +402,7 @@ function ClockodoUserDetailBody({
             {row.linkedUserId &&
               (row.deviceId ? (
                 <Link
-                  href={`/admin/activity/timeline/${encodeURIComponent(row.deviceId)}`}
+                  href={`/activity/timeline/${encodeURIComponent(row.deviceId)}`}
                   className="shrink-0 text-muted-foreground hover:text-fg"
                   title={t("activityTrackLink")}
                 >

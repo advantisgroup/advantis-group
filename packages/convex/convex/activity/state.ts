@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 
-import { mutation, query } from "../_generated/server";
+import { query } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { requireUser } from "../lib/auth";
+import { requireUser, requireCapability } from "../lib/auth";
+import { gatedMutation } from "../lib/featureGate";
 import { computeEmployeeState, type StateSignals } from "./lib/state";
 import {
   isWithinBusinessHours,
@@ -168,6 +169,10 @@ export interface StateSignalArgs {
  * `agent` signal (device-token-guarded, called directly from within Convex —
  * see `activity/ingest.ts`). Callers other than `pushSignal` are already
  * authenticated by their own means, so this function itself trusts its input.
+ *
+ * Only reachable through those two callers, both gated by the
+ * `activitytrack` feature flag (see `lib/featureGate.ts`), so this never
+ * runs while it's disabled.
  */
 export async function applyStateSignal(
   ctx: MutationCtx,
@@ -335,7 +340,7 @@ export async function applyStateSignal(
  * own `employeeId`, so this mutation's `agent` source exists for parity/
  * future callers rather than the deployed agent.
  */
-export const pushSignal = mutation({
+export const pushSignal = gatedMutation("activitytrack")({
   args: {
     secret: v.string(),
     employeeId: v.string(),
@@ -403,7 +408,7 @@ export const resolveEmployeeId = query({
 });
 
 /** Report an integration source's health (server-to-server). */
-export const reportHealth = mutation({
+export const reportHealth = gatedMutation("activitytrack")({
   args: {
     secret: v.string(),
     source: v.union(v.literal("genesys"), v.literal("clockodo")),
@@ -450,7 +455,7 @@ export const mappings = query({
   args: { secret: v.string() },
   handler: async (ctx, { secret }) => {
     assertSignalSecret(secret);
-    const people = await ctx.db.query("people").collect();
+    const people = await ctx.db.query("people").take(2000);
     return people
       .filter(p => p.active && p.employeeId)
       .map(p => ({
@@ -461,11 +466,16 @@ export const mappings = query({
   },
 });
 
-/** Reactive dashboard read: every cached employee state joined to its person. */
+/**
+ * Reactive dashboard read: every cached employee state joined to its person.
+ * Org-wide presence data, so it requires `view_activity_admin` (Managers+, or
+ * a custom role granted the capability) rather than just being signed in —
+ * use `myState` for a caller's own status.
+ */
 export const overview = query({
   args: {},
   handler: async ctx => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
 
     const rows = await ctx.db.query("employeeStates").take(2000);
 
@@ -507,6 +517,36 @@ export const get = query({
   handler: async (ctx, { employeeId }) => {
     await requireUser(ctx);
     return await getStateRow(ctx, employeeId);
+  },
+});
+
+/**
+ * The caller's own fused status — the overview's "your day" widget. This is
+ * self-data, not team surveillance, so it stays open to any signed-in user
+ * regardless of `view_activity_admin`. Returns `null` for callers with no
+ * `people` roster row (not everyone is on the ActivityTrack roster).
+ */
+export const myState = query({
+  args: {},
+  handler: async ctx => {
+    const user = await requireUser(ctx);
+    const person = await ctx.db
+      .query("people")
+      .withIndex("by_userId", q => q.eq("userId", user._id))
+      .first();
+    if (!person?.employeeId) return null;
+    const state = await getStateRow(ctx, person.employeeId);
+    if (!state) return null;
+    return {
+      finalState: state.finalState,
+      finalStateSince: state.finalStateSince ?? null,
+      clockodoWorking: state.clockodoWorking ?? null,
+      clockodoBreak: state.clockodoBreak ?? null,
+      clockodoAbsent: state.clockodoAbsent ?? null,
+      clockodoClockedOut: state.clockodoClockedOut ?? null,
+      clockodoClockedOutCertain: state.clockodoClockedOutCertain ?? null,
+      updatedAt: state.updatedAt,
+    };
   },
 });
 

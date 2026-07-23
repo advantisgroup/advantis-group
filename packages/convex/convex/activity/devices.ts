@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 import { query, mutation } from "../_generated/server";
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
+import { gatedMutation } from "../lib/featureGate";
 import { writeAudit } from "./audit";
 import { appError } from "./lib/errors";
 import {
@@ -122,7 +123,7 @@ export const link = mutation({
  * Elysia API layer (POST /api/agent/register). Idempotent (one row per
  * deviceId); lands in the pending queue for a manager to approve.
  */
-export const requestEnrollment = mutation({
+export const requestEnrollment = gatedMutation("activitytrack")({
   args: {
     secret: v.string(),
     deviceId: v.string(),
@@ -183,7 +184,7 @@ export const requestEnrollment = mutation({
  * its deviceId + pairing nonce until a manager approves it. On the first poll
  * after approval we mint the device's token and return it ONCE.
  */
-export const claimToken = mutation({
+export const claimToken = gatedMutation("activitytrack")({
   args: { secret: v.string(), deviceId: v.string(), claimNonce: v.string() },
   handler: async (ctx, { secret, deviceId, claimNonce }) => {
     assertSignalSecret(secret);

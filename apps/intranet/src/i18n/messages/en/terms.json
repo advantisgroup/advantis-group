@@ -1,0 +1,110 @@
+{
+  "title": "Terms of Use – Intranet",
+  "subtitle": "Terms governing the use of the Advantis Group intranet by authorized employees",
+  "updated": "Last updated: July 2026",
+  "tableOfContents": "Table of contents",
+  "viewPrivacy": "View Privacy Policy",
+  "sections": [
+    {
+      "id": "scope",
+      "title": "Scope",
+      "paragraphs": [
+        "These Terms of Use apply exclusively to individuals to whom advantis GmbH has expressly granted access to the Intranet and whose account is actively provisioned (“users”).",
+        "Merely creating an account or attempting to sign in does not create any entitlement to access and does not make these Terms of Use applicable. Individuals without authorization instead receive a notice that access has been denied, and their account is deleted automatically (see the Privacy Policy, “Unauthorized access attempts”)."
+      ]
+    },
+    {
+      "id": "access",
+      "title": "Access and authorization",
+      "paragraphs": [
+        "Access to the Intranet is granted exclusively to individuals with an active business relationship with advantis GmbH whose business email address belongs to an approved company domain, or who have received an explicit invitation or approval from a manager or administrator.",
+        "Access requests are reviewed by managers or administrators and may be declined. Sign-up attempts using email domains that are not approved are automatically denied, and the account created in the process is deleted without delay.",
+        "Users must keep their access credentials confidential and must not share them with third parties."
+      ]
+    },
+    {
+      "id": "purpose",
+      "title": "Intended use",
+      "paragraphs": [
+        "The Intranet serves exclusively internal business purposes of advantis GmbH, in particular communication, scheduling, absence management, storage of internal documents, and team collaboration.",
+        "Content, documents and information accessible through the Intranet are confidential and must not be shared with third parties outside the company without consent.",
+        "Private or commercial use unrelated to the employment relationship is not permitted."
+      ]
+    },
+    {
+      "id": "monitoring",
+      "title": "Notice regarding evaluation of usage data",
+      "paragraphs": [
+        "In connection with using the Intranet, certain usage, attendance and availability data is processed for evaluation purposes, as described in detail in the Privacy Policy.",
+        "By using the Intranet, users acknowledge that this processing takes place within the context of their existing employment relationship."
+      ]
+    },
+    {
+      "id": "obligations",
+      "title": "User obligations",
+      "paragraphs": ["Users agree to"],
+      "list": [
+        {
+          "description": "keep their account and profile data up to date,"
+        },
+        {
+          "description": "comply with advantis GmbH's applicable IT and security policies,"
+        },
+        {
+          "description": "maintain a respectful tone in internal chat and announcements,"
+        },
+        {
+          "description": "report security-relevant incidents, such as suspected unauthorized access, without delay."
+        }
+      ]
+    },
+    {
+      "id": "availability",
+      "title": "Availability",
+      "paragraphs": [
+        "The Intranet is provided as an internal work tool “as is.” advantis GmbH may modify, restrict or discontinue features at any time and does not guarantee uninterrupted availability."
+      ]
+    },
+    {
+      "id": "suspension",
+      "title": "Suspension and termination of access",
+      "paragraphs": [
+        "Access may be restricted, suspended or terminated at any time, in particular upon termination of the employment relationship, a violation of these Terms of Use, or for security reasons.",
+        "Upon termination of access, the account is deleted or anonymized in accordance with the Privacy Policy; statutory retention obligations remain unaffected."
+      ]
+    },
+    {
+      "id": "ip",
+      "title": "Intellectual property",
+      "paragraphs": [
+        "All content, documents, templates and materials made available through the Intranet are the property of advantis GmbH or its licensors and may be used solely for internal purposes."
+      ]
+    },
+    {
+      "id": "liability",
+      "title": "Liability",
+      "paragraphs": [
+        "advantis GmbH is liable without limitation for intent and gross negligence, and in accordance with the Product Liability Act. Beyond that, it is liable only for breach of material contractual obligations and limited to foreseeable damage typical for this type of contract. Liability for damages arising from injury to life, body or health remains unaffected."
+      ]
+    },
+    {
+      "id": "changes",
+      "title": "Changes to these Terms of Use",
+      "paragraphs": [
+        "We may amend these Terms of Use with effect for the future, for example when the systems we use change. We will inform users of material changes in an appropriate manner."
+      ]
+    },
+    {
+      "id": "law",
+      "title": "Governing law and jurisdiction",
+      "paragraphs": [
+        "These Terms of Use are governed by the laws of the Federal Republic of Germany, excluding the UN Convention on Contracts for the International Sale of Goods. To the extent legally permissible, the place of jurisdiction is Nuremberg."
+      ]
+    },
+    {
+      "id": "contact",
+      "title": "Contact",
+      "paragraphs": ["Questions about these Terms of Use can be directed to:"]
+    }
+  ]
+}

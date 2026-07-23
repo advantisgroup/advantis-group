@@ -79,6 +79,42 @@ export const deleteFile = mutation({
   },
 });
 
+/** Whether `user` can view an announcement, mirroring `canAccessFile`'s
+ *  original inline check. */
+function userCanViewAnnouncement(
+  user: { _id: Id<"users">; departmentId?: Id<"departments"> },
+  userDept: { name: string } | null,
+  audience: {
+    kind: "all" | "departmentId" | "department" | "users";
+    departmentId?: Id<"departments"> | null;
+    department?: string;
+    userIds?: Id<"users">[];
+  }
+): boolean {
+  if (audience.kind === "all") return true;
+  if (audience.kind === "departmentId")
+    return user.departmentId === audience.departmentId;
+  if (audience.kind === "department")
+    return userDept ? userDept.name === audience.department : false;
+  if (audience.kind === "users")
+    return (audience.userIds ?? []).includes(user._id);
+  return false;
+}
+
+async function isConversationMember(
+  ctx: { db: import("./_generated/server").QueryCtx["db"] },
+  conversationId: Id<"conversations">,
+  userId: Id<"users">
+): Promise<boolean> {
+  const row = await ctx.db
+    .query("conversationMembers")
+    .withIndex("by_user_conversation", q =>
+      q.eq("userId", userId).eq("conversationId", conversationId)
+    )
+    .unique();
+  return row !== null;
+}
+
 /**
  * Check if a user has access to a file based on where it's used.
  * Returns { hasAccess: true } if:
@@ -106,7 +142,7 @@ export const canAccessFile = query({
     // Check if used as a user avatar (public to everyone)
     const userAvatar = await ctx.db
       .query("users")
-      .filter(q => q.eq(q.field("avatarStorageId"), storageCId))
+      .withIndex("by_avatarStorageId", q => q.eq("avatarStorageId", storageCId))
       .first();
     if (userAvatar) {
       return granted("public_user_avatar");
@@ -120,26 +156,52 @@ export const canAccessFile = query({
     // Check if used as a conversation/group avatar
     const conversationAvatar = await ctx.db
       .query("conversations")
-      .filter(q => q.eq(q.field("avatarStorageId"), storageCId))
+      .withIndex("by_avatarStorageId", q => q.eq("avatarStorageId", storageCId))
       .first();
     if (conversationAvatar) {
-      const userInConversation = await ctx.db
-        .query("conversationMembers")
-        .filter(q =>
-          q.and(
-            q.eq(q.field("conversationId"), conversationAvatar._id),
-            q.eq(q.field("userId"), user._id)
-          )
-        )
-        .first();
-      if (userInConversation) {
+      if (await isConversationMember(ctx, conversationAvatar._id, user._id)) {
         return granted("conversation_member");
       }
     }
 
-    // Check if used in an announcement the user can view
-    const announcements = await ctx.db.query("announcements").collect();
+    // Fast path: an indexed point lookup instead of scanning every message
+    // and announcement ever created org-wide. Only rows written after
+    // attachmentOwners existed are indexed (see the schema comment) — an
+    // empty result here doesn't yet mean "no access", just "check the slow
+    // path", which the pre-migration fallback below still does in full.
+    const owners = await ctx.db
+      .query("attachmentOwners")
+      .withIndex("by_storageId", q => q.eq("storageId", storageCId))
+      .collect();
 
+    if (owners.length > 0) {
+      let userDept: { name: string } | null = null;
+      for (const owner of owners) {
+        if (owner.kind === "announcement" && owner.announcementId) {
+          const ann = await ctx.db.get(owner.announcementId);
+          if (!ann) continue;
+          if (ann.audience.kind === "department" && userDept === null) {
+            userDept = user.departmentId
+              ? await ctx.db.get(user.departmentId)
+              : null;
+          }
+          if (userCanViewAnnouncement(user, userDept, ann.audience)) {
+            return granted("announcement_audience");
+          }
+        } else if (owner.kind === "message" && owner.conversationId) {
+          if (await isConversationMember(ctx, owner.conversationId, user._id)) {
+            return granted("message_conversation_member");
+          }
+        }
+      }
+      return { hasAccess: false as const, reason: "not_found_or_no_access" };
+    }
+
+    // Slow path fallback for attachments written before attachmentOwners
+    // existed. Self-healing isn't possible here the way lastSample/todayStats
+    // are (nothing re-touches an old message/announcement on its own), so
+    // this stays in place rather than being removed once the index is live.
+    const announcements = await ctx.db.query("announcements").collect();
     for (const ann of announcements) {
       if (!ann.attachmentStorageIds.length && !ann.attachments?.length)
         continue;
@@ -149,49 +211,21 @@ export const canAccessFile = query({
       ];
       if (!ids.some(id => id === storageCId)) continue;
 
-      const audience = ann.audience;
-      let hasAccess = false;
-
-      if (audience.kind === "all") {
-        hasAccess = true;
-      } else if (audience.kind === "departmentId") {
-        hasAccess = user.departmentId === audience.departmentId;
-      } else if (audience.kind === "department") {
-        const userDept = user.departmentId
-          ? await ctx.db.get(user.departmentId)
-          : null;
-        hasAccess = userDept ? userDept.name === audience.department : false;
-      } else if (audience.kind === "users") {
-        hasAccess = audience.userIds.includes(user._id);
-      }
-
-      if (hasAccess) {
+      const userDept = user.departmentId
+        ? await ctx.db.get(user.departmentId)
+        : null;
+      if (userCanViewAnnouncement(user, userDept, ann.audience)) {
         return granted("announcement_audience");
       }
     }
 
-    // Check if used in a message in a conversation the user is a member of
     const messages = await ctx.db.query("messages").collect();
-
     for (const msg of messages) {
       if (!msg.attachments.length) continue;
       const ids = msg.attachments.map(a => a.storageId);
       if (!ids.some(id => id === storageCId)) continue;
 
-      const conversation = await ctx.db.get(msg.conversationId);
-      if (!conversation) continue;
-
-      const userInConversation = await ctx.db
-        .query("conversationMembers")
-        .filter(q =>
-          q.and(
-            q.eq(q.field("conversationId"), conversation._id),
-            q.eq(q.field("userId"), user._id)
-          )
-        )
-        .first();
-
-      if (userInConversation) {
+      if (await isConversationMember(ctx, msg.conversationId, user._id)) {
         return granted("message_conversation_member");
       }
     }

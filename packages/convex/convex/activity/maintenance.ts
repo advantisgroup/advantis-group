@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internalMutation, mutation } from "../_generated/server";
 import type { MutationCtx } from "../_generated/server";
 import { requireAdmin } from "../lib/auth";
+import { gatedInternalMutation } from "../lib/featureGate";
 import { writeAudit } from "./audit";
 import { readConfig } from "./settings";
 import {
@@ -245,7 +246,9 @@ const CLOCKODO_OWNED_STATES: ReadonlySet<EmployeeState> = new Set([
  *      only assert the ACTIVE fallback if no non-Clockodo sample already
  *      covers that instant — otherwise that more specific evidence stands.
  */
-export const reconcileClockodoDayForEmployee = internalMutation({
+export const reconcileClockodoDayForEmployee = gatedInternalMutation(
+  "activitytrack"
+)({
   args: {
     employeeId: v.string(),
     dayStartMs: v.number(),

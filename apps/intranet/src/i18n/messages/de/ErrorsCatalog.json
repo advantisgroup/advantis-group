@@ -1,0 +1,9 @@
+{
+  "eyebrow": "Debug",
+  "title": "Fehlerseiten",
+  "subtitle": "Live-Vorschau der ganzseitigen Fehlerzustände dieser App, damit du sie nicht real nachstellen musst.",
+  "forbidden": "Zugriff verweigert",
+  "notFound": "Nicht gefunden",
+  "boundary": "Unerwarteter Fehler",
+  "excludedNote": "„Zugriff verweigert“ wegen gesperrter E-Mail-Domain ist hier nicht aufgeführt — das Einbinden würde das aktuelle Konto sofort löschen und abmelden, daher gibt es keine sichere Live-Vorschau dafür."
+}

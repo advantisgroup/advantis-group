@@ -11,15 +11,14 @@
   },
   "scripts": {
     "dev": "bun --watch --verbose --no-clear-screen src/index.ts",
-    "start": "bun run src/index.ts",
-    "build": "tsc --noEmit",
+    "start": "bun run --no-env-file src/index.ts",
+    "build": "bash ../../scripts/vercel-preview-convex-api-build.sh \"tsc --noEmit\"",
     "onedrive:auth": "bun run scripts/onedrive-auth.ts",
     "type-check": "tsc --noEmit",
     "lint": "echo \"@advantis/api: no lint\""
   },
   "dependencies": {
     "@advantis/convex": "workspace:*",
-    "@advantis/types": "workspace:*",
     "@anthropic-ai/sdk": "^0.106.0",
     "@clerk/backend": "^2.18.0",
     "@elysiajs/cors": "^1.4.2",
@@ -29,7 +28,8 @@
     "elysia": "^1.4.22",
     "file-type": "^21.0.0",
     "resend": "^6.9.1",
-    "svix": "^1.42.0"
+    "svix": "^1.42.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/bun": "latest",
