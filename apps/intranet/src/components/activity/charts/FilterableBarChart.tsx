@@ -20,6 +20,13 @@ export interface BarSeries {
   key: string;
   name: string;
   color: string;
+  /** Plot this series against the right-hand axis instead of the shared
+   * left one. Use when two series differ by an order of magnitude or more
+   * (e.g. minutes-per-day talk time vs. hours-per-day login time) — a
+   * shared linear axis flattens the smaller series to an invisible sliver,
+   * and a shared log axis produces cramped, sometimes duplicate tick
+   * labels. Each axis gets its own independent, "nice" linear scale. */
+  axis?: "left" | "right";
 }
 
 // D3's log scale can't place exactly 0 anywhere on the axis — floor a true
@@ -71,6 +78,7 @@ export function FilterableBarChart({
   }
 
   const visible = series.filter(s => !hidden.has(s.key));
+  const hasRightAxis = series.some(s => s.axis === "right");
 
   const chartData = useMemo(() => {
     if (yScale !== "log") return data;
@@ -131,6 +139,7 @@ export function FilterableBarChart({
             interval="preserveStartEnd"
           />
           <YAxis
+            yAxisId="left"
             stroke={CHART.axis}
             tickLine={false}
             axisLine={false}
@@ -145,6 +154,18 @@ export function FilterableBarChart({
                 }
               : undefined)}
           />
+          {hasRightAxis && (
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              stroke={CHART.axis}
+              tickLine={false}
+              axisLine={false}
+              fontSize={11}
+              width={50}
+              tickFormatter={yTickFormatter}
+            />
+          )}
           <Tooltip
             {...tooltipStyle}
             formatter={
@@ -173,6 +194,7 @@ export function FilterableBarChart({
           {visible.map(s => (
             <Bar
               key={s.key}
+              yAxisId={s.axis === "right" ? "right" : "left"}
               dataKey={s.key}
               name={s.name}
               fill={s.color}
