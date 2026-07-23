@@ -29,6 +29,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { FlaggedRowsDialog } from "@/components/performance/FlaggedRowsDialog";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
@@ -535,6 +536,8 @@ export default function PerformanceUploadPage() {
       <PerformanceHeader navItems={navItems} onExit={exit} />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+        {token && <FlaggedRowsDialog token={token} />}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
