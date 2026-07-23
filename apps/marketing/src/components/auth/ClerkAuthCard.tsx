@@ -16,8 +16,8 @@ export const ClerkAuthCard = ({
 }) => {
   const locale = useLocale();
 
-  const signInPath = `/${locale}/sign-in`;
-  const signUpPath = `/${locale}/sign-up`;
+  const signInPath = `/sign-in`;
+  const signUpPath = `/sign-up`;
 
   return (
     <AuthShell title={title} subtitle={subtitle}>
@@ -26,14 +26,14 @@ export const ClerkAuthCard = ({
           path={signInPath}
           routing="path"
           signUpUrl={signUpPath}
-          fallbackRedirectUrl={`/${locale}/account`}
+          fallbackRedirectUrl={`/account`}
         />
       ) : (
         <SignUp
           path={signUpPath}
           routing="path"
           signInUrl={signInPath}
-          fallbackRedirectUrl={`/${locale}/account`}
+          fallbackRedirectUrl={`/account`}
         />
       )}
     </AuthShell>
