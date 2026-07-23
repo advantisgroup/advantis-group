@@ -30,7 +30,7 @@ function primaryEmail(data: ClerkUserData): string | undefined {
 }
 
 /**
- * POST /webhooks/clerk — svix-verified Clerk lifecycle events from the intranet
+ * POST /webhooks/clerk — svix-verified Clerk lifecycle events from the shared
  * Clerk instance. Keeps the Convex `users` mirror fresh; never creates members.
  */
 export const clerkWebhookRoute = new Elysia().post(

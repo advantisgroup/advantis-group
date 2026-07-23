@@ -3,27 +3,27 @@ import { ConvexError } from "convex/values";
 import { type Role } from "./auth";
 
 /**
- * Direct integration with Clerk's Backend API for the intranet Clerk instance.
+ * Direct integration with Clerk's Backend API for the shared Clerk instance
+ * (root domain advantisgroup.de, covering both marketing and the intranet).
  *
  * Invitations are created straight from Convex actions rather than proxied
  * through the Elysia API. That removes a fragile server-key handshake between
  * two deployments — the only thing that needs configuring is the Clerk secret
- * key in the Convex environment (`INTERNAL_CLERK_SECRET_KEY`). Clerk itself
- * sends the invitation email and gates sign-up to the invited address, which is
- * also what lets external domains through a restricted sign-up mode.
+ * key in the Convex environment (`CLERK_SECRET_KEY`). Clerk itself sends the
+ * invitation email and gates sign-up to the invited address, which is also
+ * what lets external domains through a restricted sign-up mode.
  */
 
 const CLERK_API = "https://api.clerk.com/v1";
 
 function clerkSecretKey(): string {
-  const key =
-    process.env.INTERNAL_CLERK_SECRET_KEY ?? process.env.CLERK_SECRET_KEY;
+  const key = process.env.CLERK_SECRET_KEY;
   if (!key) {
     throw new ConvexError({
       code: "internal",
       message:
-        "Clerk is not configured for invitations. Set INTERNAL_CLERK_SECRET_KEY " +
-        "in the Convex environment (npx convex env set INTERNAL_CLERK_SECRET_KEY sk_...).",
+        "Clerk is not configured for invitations. Set CLERK_SECRET_KEY " +
+        "in the Convex environment (npx convex env set CLERK_SECRET_KEY sk_...).",
     });
   }
   return key;

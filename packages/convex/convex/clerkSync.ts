@@ -5,7 +5,7 @@ import { mutation } from "./_generated/server";
 /**
  * Server-key gated mutations invoked by the Elysia API's Clerk webhook handler
  * (api.advantisgroup.de). These keep the intranet `users` table in sync with
- * the intranet Clerk instance's user lifecycle. They never *create* members —
+ * the shared Clerk instance's user lifecycle. They never *create* members —
  * provisioning is gated by invites/approvals via lib/auth.ensureUser — they
  * only refresh profiles and deactivate removed accounts.
  */

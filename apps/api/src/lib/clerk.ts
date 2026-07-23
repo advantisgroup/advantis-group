@@ -2,18 +2,14 @@ import { createClerkClient, type ClerkClient } from "@clerk/backend";
 
 let clerkClient: ClerkClient | null = null;
 
-/** Clerk backend client for the INTRANET Clerk instance. */
+/** Clerk backend client for the shared Clerk instance (root domain advantisgroup.de). */
 export function getClerkClient(): ClerkClient {
   if (clerkClient) return clerkClient;
-  const secretKey =
-    process.env.INTERNAL_CLERK_SECRET_KEY ?? process.env.CLERK_SECRET_KEY;
-  const publishableKey =
-    process.env.NEXT_PUBLIC_INTERNAL_CLERK_PUBLISHABLE_KEY ??
-    process.env.INTERNAL_CLERK_PUBLISHABLE_KEY ??
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (!secretKey || !publishableKey) {
     throw new Error(
-      "INTERNAL_CLERK_SECRET_KEY and a publishable key must be set to verify requests"
+      "CLERK_SECRET_KEY and NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY must be set to verify requests"
     );
   }
   clerkClient = createClerkClient({ secretKey, publishableKey });

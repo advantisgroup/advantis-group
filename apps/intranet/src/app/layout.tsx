@@ -74,11 +74,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="bg-background text-foreground antialiased">
-        <ClerkProvider
-          publishableKey={
-            process.env.NEXT_PUBLIC_INTERNAL_CLERK_PUBLISHABLE_KEY
-          }
-        >
+        <ClerkProvider>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <ConvexClientProvider>
               <ThemeProvider
