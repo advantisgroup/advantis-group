@@ -120,7 +120,9 @@ export default defineSchema({
     sentAt: v.number(),
     status: v.union(v.literal("sent"), v.literal("failed")),
     error: v.optional(v.string()),
-  }).index("by_clerkUserId_sentAt", ["clerkUserId", "sentAt"]),
+  })
+    .index("by_clerkUserId_sentAt", ["clerkUserId", "sentAt"])
+    .index("by_accountEmail_sentAt", ["accountEmail", "sentAt"]),
 
   notifyEmails: defineTable({
     email: v.string(),
