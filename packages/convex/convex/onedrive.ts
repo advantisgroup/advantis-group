@@ -6,6 +6,8 @@ import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalAction, mutation, query } from "./_generated/server";
 import { getUserByClerkId, requireCapability, requireUser } from "./lib/auth";
 import { createNotification, notifyUsers } from "./lib/notify";
+import { recordUnifiedAudit } from "./lib/auditLogWrite";
+import { batchUserSummaries, displayName } from "./lib/users";
 
 /**
  * OneDrive system-of-record. The Elysia API owns the Microsoft Graph credentials
@@ -23,10 +25,6 @@ function assertServerKey(serverKey: string): void {
   }
 }
 
-function userName(u: Doc<"users">): string {
-  return [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
-}
-
 async function approverIds(ctx: MutationCtx): Promise<Id<"users">[]> {
   const admins = await ctx.db
     .query("users")
@@ -41,17 +39,43 @@ async function approverIds(ctx: MutationCtx): Promise<Id<"users">[]> {
     .map(u => u._id);
 }
 
+type OnedriveAuditAction =
+  | "request"
+  | "upload"
+  | "approve"
+  | "deny"
+  | "mkdir"
+  | "move"
+  | "rename"
+  | "delete"
+  | "restore"
+  | "share"
+  | "grant_gf_access"
+  | "revoke_gf_access"
+  | "enable_uploads"
+  | "disable_uploads"
+  | "teamAccessGrant"
+  | "teamAccessRevoke";
+
 async function writeAudit(
   ctx: MutationCtx,
   actorUserId: Id<"users">,
-  action: string,
+  action: OnedriveAuditAction,
   target?: string
 ): Promise<void> {
+  const at = Date.now();
   await ctx.db.insert("onedriveAudit", {
     actorUserId,
     action,
     target,
-    at: Date.now(),
+    at,
+  });
+  await recordUnifiedAudit(ctx, {
+    domain: "onedrive",
+    actorUserId,
+    action,
+    target,
+    at,
   });
 }
 
@@ -69,7 +93,7 @@ export const apiUserContext = query({
     return {
       userId: user._id,
       role: user.role,
-      name: userName(user),
+      name: displayName(user),
       email: user.email,
       gfAccess: user.gfAccess ?? false,
       uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
@@ -119,7 +143,7 @@ export const apiSubmitRequest = mutation({
     await notifyUsers(ctx, await approverIds(ctx), {
       type: "upload_request",
       title: "Upload awaiting approval",
-      body: `${userName(requester)} wants to upload "${args.fileName}" to ${args.targetFolderPath || "Advantis Group"}`,
+      body: `${displayName(requester)} wants to upload "${args.fileName}" to ${args.targetFolderPath || "Advantis Group"}`,
       link: "/admin/uploads",
     });
     return { uploadId };
@@ -291,7 +315,14 @@ export const apiRecordAction = mutation({
   args: {
     serverKey: v.string(),
     actorUserId: v.id("users"),
-    action: v.string(),
+    action: v.union(
+      v.literal("mkdir"),
+      v.literal("move"),
+      v.literal("rename"),
+      v.literal("delete"),
+      v.literal("restore"),
+      v.literal("share")
+    ),
     target: v.optional(v.string()),
   },
   handler: async (ctx, { serverKey, actorUserId, action, target }) => {
@@ -345,7 +376,7 @@ export const apiUploadersByItemIds = query({
         .first();
       if (!row) continue;
       const u = await ctx.db.get(row.requesterUserId);
-      if (u) out[itemId] = userName(u);
+      if (u) out[itemId] = displayName(u);
     }
     return out;
   },
@@ -364,7 +395,7 @@ export const apiTeamAccessRoster = query({
     return users
       .map(u => ({
         userId: u._id,
-        name: userName(u),
+        name: displayName(u),
         email: u.email,
         permissionId: u.oneDrivePermissionId ?? null,
       }))
@@ -391,7 +422,7 @@ export const apiSetTeamAccess = mutation({
       ctx,
       actorUserId,
       "teamAccessGrant",
-      target ? userName(target) : undefined
+      target ? displayName(target) : undefined
     );
     return { ok: true };
   },
@@ -412,7 +443,7 @@ export const apiClearTeamAccess = mutation({
       ctx,
       actorUserId,
       "teamAccessRevoke",
-      target ? userName(target) : undefined
+      target ? displayName(target) : undefined
     );
     return { ok: true };
   },
@@ -443,7 +474,7 @@ export const listPending = query({
           : null;
         return {
           ...row,
-          requesterName: requester ? userName(requester) : "unknown",
+          requesterName: requester ? displayName(requester) : "unknown",
           previewUrl,
         };
       })
@@ -477,17 +508,13 @@ export const auditFeed = query({
       .withIndex("by_at")
       .order("desc")
       .take(Math.min(limit ?? 100, 500));
-    const actorIds = [...new Set(rows.map(r => r.actorUserId))];
-    const byId = new Map(
-      (await Promise.all(actorIds.map(id => ctx.db.get(id)))).flatMap(u =>
-        u ? [[u._id, u] as const] : []
-      )
+    const byId = await batchUserSummaries(
+      ctx,
+      rows.map(r => r.actorUserId)
     );
     return rows.map(row => ({
       ...row,
-      actorName: byId.get(row.actorUserId)
-        ? userName(byId.get(row.actorUserId)!)
-        : "unknown",
+      user: byId.get(row.actorUserId) ?? null,
     }));
   },
 });

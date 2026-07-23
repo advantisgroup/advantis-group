@@ -849,6 +849,7 @@ export const listUploadLog = query({
     await requireAdminLogin(ctx, token);
     const rows = await ctx.db
       .query("performanceUploadLog")
+      .withIndex("by_uploadedAt")
       .order("desc")
       .take(60);
     return rows.map(r => ({

@@ -165,8 +165,18 @@ export default defineSchema({
      * drives the admin "External" grouping. Set at provisioning time.
      */
     external: v.optional(v.boolean()),
-    /** Clockodo coworker id, for linking absence mirrors to this user. */
-    clockodoUserId: v.optional(v.number()),
+    /**
+     * Clockodo coworker id, for linking absence mirrors to this user.
+     * Canonical type is `string` (matching `people.clockodoUserId` and
+     * Clockodo's own API) — this field temporarily accepts `v.union(v.string(),
+     * v.number())` to stay backward-compatible with any pre-existing rows
+     * still holding a `number`. All writers now write `string`. Once a
+     * one-time backfill (`orgDataMigration.backfillClockodoUserIdStrings`)
+     * confirms no `number` rows remain in production, narrow this back to
+     * `v.optional(v.string())` and delete the backfill + the
+     * `toClockodoIdNumber`/legacy-number-read paths.
+     */
+    clockodoUserId: v.optional(v.union(v.string(), v.number())),
     /**
      * OneDrive: allowlist flag for the Geschäftsführung sub-tree. Access is a
      * dedicated allowlist (admin-managed), NOT tied to manager rank — undefined
@@ -234,8 +244,8 @@ export default defineSchema({
     .index("by_role", ["role"])
     .index("by_status", ["status"])
     .index("by_clockodoUserId", ["clockodoUserId"])
-    .index("by_departmentId", ["departmentId"])
-    .index("by_avatarStorageId", ["avatarStorageId"]),
+    .index("by_avatarStorageId", ["avatarStorageId"])
+    .index("by_managerId", ["managerId"]),
 
   /**
    * Canonical org departments. Replaces the free-text `users.department` —
@@ -250,9 +260,7 @@ export default defineSchema({
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     createdBy: v.id("users"),
-  })
-    .index("by_name", ["name"])
-    .index("by_archivedAt", ["archivedAt"]),
+  }),
 
   /**
    * Canonical teams (access-control tags, e.g. "customer-care"). Replaces
@@ -267,9 +275,7 @@ export default defineSchema({
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     createdBy: v.id("users"),
-  })
-    .index("by_slug", ["slug"])
-    .index("by_archivedAt", ["archivedAt"]),
+  }).index("by_slug", ["slug"]),
 
   /**
    * users <-> teams membership. A join table rather than an id array on
@@ -281,7 +287,6 @@ export default defineSchema({
     teamId: v.id("teams"),
   })
     .index("by_user", ["userId"])
-    .index("by_team", ["teamId"])
     .index("by_user_team", ["userId", "teamId"]),
 
   /**
@@ -324,7 +329,7 @@ export default defineSchema({
     capabilities: v.array(capabilityValidator),
     createdBy: v.id("users"),
     createdAt: v.number(),
-  }).index("by_name", ["name"]),
+  }),
 
   invites: defineTable({
     email: v.string(),
@@ -434,9 +439,7 @@ export default defineSchema({
     expiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  })
-    .index("by_publishedAt", ["publishedAt"])
-    .index("by_pinned_publishedAt", ["pinned", "publishedAt"]),
+  }).index("by_publishedAt", ["publishedAt"]),
 
   announcementReads: defineTable({
     announcementId: v.id("announcements"),
@@ -602,7 +605,6 @@ export default defineSchema({
     lastMessagePreview: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_lastMessageAt", ["lastMessageAt"])
     .index("by_dmKey", ["dmKey"])
     .index("by_deleteAt", ["deleteAt"])
     .index("by_avatarStorageId", ["avatarStorageId"]),
@@ -757,7 +759,7 @@ export default defineSchema({
   performanceEmployees: defineTable({
     name: v.string(),
     active: v.boolean(),
-  }).index("by_name", ["name"]),
+  }),
 
   // One row per employee per report day. Metric columns are nullable —
   // null means "not measured in this snapshot", not zero — so a report
@@ -807,7 +809,6 @@ export default defineSchema({
     createDate: v.optional(v.string()),
     lastActivity: v.optional(v.string()),
   })
-    .index("by_owner", ["owner"])
     // Powers the Team tab's "daily logged-in employees" chart (distinct
     // owners with a lead created that day) — an indexed range scan instead
     // of a full-table collect.
@@ -823,7 +824,7 @@ export default defineSchema({
     age: v.optional(v.number()),
     lastActivity: v.optional(v.string()),
     customerNumber: v.optional(v.string()),
-  }).index("by_owner", ["owner"]),
+  }),
 
   // One row per closed-won opportunity, keyed by its actual Close Date —
   // powers the daily closed-won trend chart. `wonMonth` on
@@ -836,9 +837,7 @@ export default defineSchema({
   performanceWonOpps: defineTable({
     owner: v.string(),
     closeDate: v.string(),
-  })
-    .index("by_owner", ["owner"])
-    .index("by_closeDate", ["closeDate"]),
+  }).index("by_closeDate", ["closeDate"]),
 
   // One row per employee per Genesys interaction (raw, not aggregated) —
   // imported from the "Interaktionen" export, distinct from the aggregated
@@ -1227,9 +1226,7 @@ export default defineSchema({
     idleSeconds: v.number(),
     firstSeen: v.number(),
     lastSeen: v.number(),
-  })
-    .index("by_device_day", ["deviceId", "day"])
-    .index("by_day", ["day"]),
+  }).index("by_device_day", ["deviceId", "day"]),
 
   // Generated-on-request weekly pattern reports (one per employee per ISO
   // week, regenerating overwrites the same week's row). Findings are stored
@@ -1305,7 +1302,20 @@ export default defineSchema({
   // Append-only audit of privileged dashboard actions.
   activityAuditLog: defineTable({
     actorUserId: v.id("users"),
-    action: v.string(),
+    action: v.union(
+      v.literal("settings.config"),
+      v.literal("settings.update"),
+      v.literal("person.create"),
+      v.literal("person.update"),
+      v.literal("person.remove"),
+      v.literal("event.resolve"),
+      v.literal("device.approve"),
+      v.literal("device.disable"),
+      v.literal("device.remove"),
+      v.literal("device.link"),
+      v.literal("maintenance.quarantineOutOfHours"),
+      v.literal("maintenance.pruneNow")
+    ),
     target: v.optional(v.string()),
     at: v.number(),
   }).index("by_at", ["at"]),
@@ -1382,9 +1392,7 @@ export default defineSchema({
     lastError: v.optional(v.string()),
     startedAt: v.optional(v.number()),
     updatedAt: v.number(),
-  })
-    .index("by_migration", ["migrationId"])
-    .index("by_migration_table", ["migrationId", "table"]),
+  }).index("by_migration", ["migrationId"]),
 
   // Maps a source (old-deployment) document id to the freshly-inserted target
   // id, so later steps can resolve references (e.g. a device's `personId`)
@@ -1500,9 +1508,30 @@ export default defineSchema({
     .index("by_driveItemId", ["driveItemId"]),
 
   // Append-only audit of OneDrive actions (requests, approvals, deletes, …).
+  // `request`/`upload`/`approve`/`deny` are written directly from
+  // `onedrive.ts`; `mkdir`/`move`/`rename`/`delete`/`restore`/`share` are
+  // relayed from the Elysia API's Graph-backed file actions via
+  // `apiRecordAction` (see apps/api/src/routes/onedrive.ts `recordAction`).
   onedriveAudit: defineTable({
     actorUserId: v.id("users"),
-    action: v.string(),
+    action: v.union(
+      v.literal("request"),
+      v.literal("upload"),
+      v.literal("approve"),
+      v.literal("deny"),
+      v.literal("mkdir"),
+      v.literal("move"),
+      v.literal("rename"),
+      v.literal("delete"),
+      v.literal("restore"),
+      v.literal("share"),
+      v.literal("grant_gf_access"),
+      v.literal("revoke_gf_access"),
+      v.literal("enable_uploads"),
+      v.literal("disable_uploads"),
+      v.literal("teamAccessGrant"),
+      v.literal("teamAccessRevoke")
+    ),
     target: v.optional(v.string()),
     at: v.number(),
   }).index("by_at", ["at"]),
@@ -1512,10 +1541,47 @@ export default defineSchema({
   integrationsAuditLog: defineTable({
     actorUserId: v.id("users"),
     integration: v.union(v.literal("clockodo")),
-    action: v.string(),
+    action: v.union(v.literal("clockodo.link"), v.literal("clockodo.unlink")),
     target: v.optional(v.string()),
     at: v.number(),
   }).index("by_at", ["at"]),
+
+  /**
+   * Unified audit log (Group 10 of the backend QoL backlog) — a single
+   * table for everything `activityAuditLog`, `onedriveAudit`,
+   * `integrationsAuditLog`, and `applicantAuditLog` record, discriminated
+   * by `domain`. Those four tables share near-identical shape and were
+   * already merged manually at *read* time (see `auditLog.ts`'s `list`,
+   * which only covers activity/onedrive/integrations today).
+   *
+   * Chosen approach: dual-write. Every existing write site now also writes
+   * a row here (see `lib/auditLogWrite.ts`'s `recordUnifiedAudit`), but the
+   * 4 original tables are left fully in place — nothing here deletes them,
+   * stops writing to them, or migrates their historical rows. Reads
+   * (`auditLog.ts`) still read the old tables; this table isn't wired into
+   * any reader yet. This is intentionally the safer, additive half of the
+   * migration — cutting reads over to this table (and eventually retiring
+   * the 4 old ones + backfilling their history) is a follow-up, not done
+   * here. `action` is a plain string (not a literal union) since it now
+   * spans 4 different domains' action vocabularies — the per-domain tables
+   * keep their own stricter literal unions as the source of truth.
+   */
+  auditLog: defineTable({
+    domain: v.union(
+      v.literal("activity"),
+      v.literal("onedrive"),
+      v.literal("integrations"),
+      v.literal("applicant")
+    ),
+    actorUserId: v.id("users"),
+    action: v.string(),
+    /** Only meaningful for `domain: "integrations"` (e.g. "clockodo"). */
+    integration: v.optional(v.string()),
+    target: v.optional(v.string()),
+    at: v.number(),
+  })
+    .index("by_at", ["at"])
+    .index("by_domain_at", ["domain", "at"]),
 
   /**
    * Temporary diagnostic aid: raw wire responses from third-party APIs,
@@ -1571,7 +1637,7 @@ export default defineSchema({
     skills: v.array(v.string()),
     createdByUserId: v.id("users"),
     createdAt: v.number(),
-  }).index("by_name", ["name"]),
+  }),
 
   applicants: defineTable({
     name: v.string(),
@@ -1591,7 +1657,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_createdAt", ["createdAt"])
-    .index("by_profil", ["profilId"]),
+    .index("by_profil", ["profilId"])
+    .index("by_email", ["email"]),
 
   /** Uploaded CV PDFs, stored in Convex file storage. */
   applicantDocuments: defineTable({

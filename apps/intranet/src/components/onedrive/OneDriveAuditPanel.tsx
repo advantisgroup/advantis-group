@@ -36,7 +36,7 @@ export function OneDriveAuditPanel() {
           className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm"
         >
           <span className="min-w-0">
-            <span className="font-medium">{row.actorName}</span>{" "}
+            <span className="font-medium">{row.user?.name ?? "unknown"}</span>{" "}
             <span className="text-muted-foreground">
               {t(`audit_${row.action}`)}
             </span>

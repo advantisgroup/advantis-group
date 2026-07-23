@@ -11,6 +11,7 @@ import {
   terminTypValidator,
 } from "./schema";
 import { getUserByClerkId, requireApplicantAccess } from "./lib/auth";
+import { batchUserSummaries, toUserSummary } from "./lib/users";
 
 /**
  * Bewerbermanagement (Applicant Management). Everything below is gated by
@@ -128,6 +129,11 @@ export const pipelineCount = query({
   args: {},
   handler: async ctx => {
     await requireApplicantAccess(ctx);
+    // Both tables are still fully scanned here — there's no aggregate/
+    // counter table backing applicant counts, so a true index-only count
+    // isn't available yet. Flagged as a follow-up (would need a maintained
+    // counter document or a Convex aggregate component); left as-is since
+    // this is a low-traffic overview widget, not a hot path.
     const applicants = await ctx.db.query("applicants").collect();
     const contacts = await ctx.db.query("applicantContacts").collect();
     const contactedIds = new Set(contacts.map(c => c.applicantId));
@@ -135,6 +141,16 @@ export const pipelineCount = query({
     return { open, total: applicants.length };
   },
 });
+
+// Safety ceiling for `list` — the applicant tracker is org-scoped (not
+// expected to reach this), but an unbounded `.collect()` risks scanning an
+// ever-growing table. A true `.paginate()` conversion would ripple through
+// every intranet caller's data-fetching (SkillProfilePanel,
+// ApplicantListView, TerminCalendar, CommandPalette, the [id] layout) since
+// they all currently expect a flat array from `useQuery` — left as a
+// follow-up rather than done here to keep this pass's UI-side blast radius
+// minimal, per the "minimal mechanical caller updates only" constraint.
+const LIST_HARD_CAP = 2000;
 
 export const list = query({
   args: {},
@@ -144,65 +160,84 @@ export const list = query({
       .query("applicants")
       .withIndex("by_createdAt")
       .order("desc")
-      .collect();
-    return Promise.all(
-      applicants.map(async a => {
-        const [kontakte, emails, interviews, termine, documents] =
-          await Promise.all([
-            ctx.db
-              .query("applicantContacts")
-              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
-              .collect(),
-            ctx.db
-              .query("applicantEmails")
-              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
-              .collect(),
-            ctx.db
-              .query("applicantInterviews")
-              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
-              .collect(),
-            ctx.db
-              .query("applicantAppointments")
-              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
-              .collect(),
-            ctx.db
-              .query("applicantDocuments")
-              .withIndex("by_applicant", q => q.eq("applicantId", a._id))
-              .collect(),
-          ]);
+      .take(LIST_HARD_CAP);
 
-        // Earliest appointment that hasn't been converted to a contact yet —
-        // the applicant's "next thing to happen" (may be in the past, in
-        // which case the UI shows it as overdue).
-        const nextOpenTermin =
-          termine
-            .filter(tm => !tm.uebernommen)
-            .sort((x, y) =>
-              (x.datum + x.uhrzeit).localeCompare(y.datum + y.uhrzeit)
-            )[0] ?? null;
+    // Batch-fetch each child table once instead of firing 5 indexed queries
+    // per applicant (was 5*N round trips for N applicants).
+    const applicantIds = new Set(applicants.map(a => a._id));
+    const [allKontakte, allEmails, allInterviews, allTermine, allDocuments] =
+      await Promise.all([
+        ctx.db.query("applicantContacts").collect(),
+        ctx.db.query("applicantEmails").collect(),
+        ctx.db.query("applicantInterviews").collect(),
+        ctx.db.query("applicantAppointments").collect(),
+        ctx.db.query("applicantDocuments").collect(),
+      ]);
 
-        // Latest logged touchpoint of any kind (ISO date string compare).
-        const lastActivity =
-          [...kontakte, ...emails, ...interviews]
-            .map(e => e.datum)
-            .sort()
-            .at(-1) ?? null;
+    const groupByApplicant = <T extends { applicantId: Id<"applicants"> }>(
+      rows: T[]
+    ) => {
+      const map = new Map<Id<"applicants">, T[]>();
+      for (const row of rows) {
+        if (!applicantIds.has(row.applicantId)) continue;
+        const bucket = map.get(row.applicantId);
+        if (bucket) bucket.push(row);
+        else map.set(row.applicantId, [row]);
+      }
+      return map;
+    };
 
-        return {
-          ...a,
-          status: kontakte.length > 0 ? ("pool" as const) : ("neu" as const),
-          documentsCount: documents.length,
-          lastActivity,
-          nextOpenTermin: nextOpenTermin
-            ? {
-                datum: nextOpenTermin.datum,
-                uhrzeit: nextOpenTermin.uhrzeit,
-                typ: nextOpenTermin.typ,
-              }
-            : null,
-        };
-      })
+    const kontakteByApplicant = groupByApplicant(allKontakte);
+    const emailsByApplicant = groupByApplicant(allEmails);
+    const interviewsByApplicant = groupByApplicant(allInterviews);
+    const termineByApplicant = groupByApplicant(allTermine);
+    const documentsByApplicant = groupByApplicant(allDocuments);
+    const creatorsById = await batchUserSummaries(
+      ctx,
+      applicants.map(a => a.createdByUserId)
     );
+
+    return applicants.map(a => {
+      const kontakte = kontakteByApplicant.get(a._id) ?? [];
+      const emails = emailsByApplicant.get(a._id) ?? [];
+      const interviews = interviewsByApplicant.get(a._id) ?? [];
+      const termine = termineByApplicant.get(a._id) ?? [];
+      const documents = documentsByApplicant.get(a._id) ?? [];
+
+      // Earliest appointment that hasn't been converted to a contact yet —
+      // the applicant's "next thing to happen" (may be in the past, in
+      // which case the UI shows it as overdue).
+      const nextOpenTermin =
+        termine
+          .filter(tm => !tm.uebernommen)
+          .sort((x, y) =>
+            (x.datum + x.uhrzeit).localeCompare(y.datum + y.uhrzeit)
+          )[0] ?? null;
+
+      // Latest logged touchpoint of any kind (ISO date string compare).
+      const lastActivity =
+        [...kontakte, ...emails, ...interviews]
+          .map(e => e.datum)
+          .sort()
+          .at(-1) ?? null;
+
+      return {
+        ...a,
+        status: kontakte.length > 0 ? ("pool" as const) : ("neu" as const),
+        documentsCount: documents.length,
+        lastActivity,
+        nextOpenTermin: nextOpenTermin
+          ? {
+              datum: nextOpenTermin.datum,
+              uhrzeit: nextOpenTermin.uhrzeit,
+              typ: nextOpenTermin.typ,
+            }
+          : null,
+        // Additive — `createdByUserId` was previously only exposed as a raw
+        // id (see Group 8 of the QoL backlog).
+        createdByUser: creatorsById.get(a.createdByUserId) ?? null,
+      };
+    });
   },
 });
 
@@ -211,6 +246,9 @@ export const get = query({
   handler: async (ctx, { applicantId }) => {
     await requireApplicantAccess(ctx);
     const applicant = await requireApplicant(ctx, applicantId);
+    const createdByUser = toUserSummary(
+      await ctx.db.get(applicant.createdByUserId)
+    );
     const [kontakte, emails, interviews, termine, documents] =
       await Promise.all([
         ctx.db
@@ -248,6 +286,7 @@ export const get = query({
       interviews,
       termine,
       documents: documentsWithUrl,
+      createdByUser,
     };
   },
 });
@@ -492,8 +531,17 @@ export const listTermine = query({
       .query("applicantAppointments")
       .withIndex("by_datum", q => q.gte("datum", from).lte("datum", to))
       .collect();
-    const applicants = await ctx.db.query("applicants").take(5000);
-    const nameById = new Map(applicants.map(a => [a._id, a.name]));
+    // Only resolve names for the applicants actually referenced in this
+    // date range, instead of scanning the whole applicants table.
+    const uniqueApplicantIds = [...new Set(termine.map(t => t.applicantId))];
+    const applicants = await Promise.all(
+      uniqueApplicantIds.map(id => ctx.db.get(id))
+    );
+    const nameById = new Map(
+      applicants
+        .filter((a): a is NonNullable<typeof a> => a !== null)
+        .map(a => [a._id, a.name])
+    );
     return termine
       .map(t => ({ ...t, applicantName: nameById.get(t.applicantId) ?? null }))
       .sort((a, b) => (a.datum + a.uhrzeit).localeCompare(b.datum + b.uhrzeit));
@@ -590,14 +638,30 @@ export const apiFindDuplicateByContact = query({
     const mailNeu = (email ?? "").trim().toLowerCase();
     const telNeu = (telefon ?? "").replace(/\D/g, "");
     if (!mailNeu && telNeu.length < 6) return null;
-    const applicants = await ctx.db.query("applicants").take(5000);
-    const match = applicants.find(a => {
-      const mailMatch =
-        mailNeu && (a.email ?? "").trim().toLowerCase() === mailNeu;
-      const telMatch =
-        telNeu.length >= 6 && (a.telefon ?? "").replace(/\D/g, "") === telNeu;
-      return mailMatch || telMatch;
-    });
+
+    // Prefer the indexed exact-email lookup (case-sensitive) — the common
+    // case, since applicant emails are stored as entered. Only fall back to
+    // a bounded full scan for case-insensitive email matches or phone-only
+    // matches (no phone index exists, and numbers need normalization).
+    let match = mailNeu
+      ? await ctx.db
+          .query("applicants")
+          .withIndex("by_email", q => q.eq("email", mailNeu))
+          .first()
+      : null;
+
+    if (!match && (mailNeu || telNeu.length >= 6)) {
+      const applicants = await ctx.db.query("applicants").take(5000);
+      match =
+        applicants.find(a => {
+          const mailMatch =
+            mailNeu && (a.email ?? "").trim().toLowerCase() === mailNeu;
+          const telMatch =
+            telNeu.length >= 6 &&
+            (a.telefon ?? "").replace(/\D/g, "") === telNeu;
+          return mailMatch || telMatch;
+        }) ?? null;
+    }
     if (!match) return null;
     const matchedOn =
       mailNeu && (match.email ?? "").trim().toLowerCase() === mailNeu

@@ -288,3 +288,36 @@ export const runBackfill = mutation({
     return { departmentsCreated, teamsCreated, usersUpdated };
   },
 });
+
+/**
+ * Group 1 (clockodoUserId type unification) backfill: `users.clockodoUserId`
+ * historically stored a `number`; the canonical type is now `string`
+ * (matching `people.clockodoUserId` and Clockodo's own API — see
+ * `lib/clockodoId.ts` and `schema.ts`). All writers already write `string`;
+ * this one-time admin mutation normalizes any remaining legacy `number` rows
+ * left over from before that change. Idempotent — safe to re-run.
+ *
+ * Once a run reports `remainingNumberRows: 0`, the schema's
+ * `clockodoUserId: v.union(v.string(), v.number())` can be narrowed back to
+ * `v.optional(v.string())` and this mutation (plus the legacy-number read
+ * paths in `clockodoSync.ts` / `integrations/clockodoView.ts`) can be
+ * deleted.
+ */
+export const backfillClockodoUserIdStrings = mutation({
+  args: {},
+  handler: async ctx => {
+    await requireAdmin(ctx);
+    const users = await ctx.db.query("users").collect();
+    let updated = 0;
+    for (const u of users) {
+      if (typeof u.clockodoUserId === "number") {
+        await ctx.db.patch(u._id, { clockodoUserId: String(u.clockodoUserId) });
+        updated++;
+      }
+    }
+    const remainingNumberRows = (await ctx.db.query("users").collect()).filter(
+      u => typeof u.clockodoUserId === "number"
+    ).length;
+    return { updated, remainingNumberRows };
+  },
+});

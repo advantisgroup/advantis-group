@@ -17,6 +17,7 @@ import {
   requireVaultUnlocked,
 } from "./lib/auth";
 import { listUserPermissions } from "./lib/permissions";
+import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -96,11 +97,15 @@ async function queryUsers(
   ctx: QueryCtx,
   args: { search?: string; department?: string; includeSuspended?: boolean }
 ) {
-  let users = await ctx.db.query("users").collect();
-
-  if (!args.includeSuspended) {
-    users = users.filter(u => u.status === "active");
-  }
+  // Most callers only want active users — use the `by_status` index to skip
+  // suspended rows at the DB layer rather than fetching everyone and
+  // filtering in JS.
+  let users = args.includeSuspended
+    ? await ctx.db.query("users").collect()
+    : await ctx.db
+        .query("users")
+        .withIndex("by_status", q => q.eq("status", "active"))
+        .collect();
   if (args.department) {
     users = users.filter(
       u => u.department?.toLowerCase() === args.department!.toLowerCase()
@@ -250,9 +255,12 @@ export const orgContext = query({
     const user = await ctx.db.get(userId);
     if (!user) return { manager: null, reports: [] };
     const manager = user.managerId ? await ctx.db.get(user.managerId) : null;
-    const reports = (await ctx.db.query("users").collect()).filter(
-      u => u.managerId === userId && u.status === "active"
-    );
+    const reports = (
+      await ctx.db
+        .query("users")
+        .withIndex("by_managerId", q => q.eq("managerId", userId))
+        .collect()
+    ).filter(u => u.status === "active");
     const brief = async (u: Doc<"users">) => {
       const full = await withAvatar(ctx, u);
       return {
@@ -501,11 +509,19 @@ export const applyGfAccess = internalMutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { gfAccess });
+    const auditAt = Date.now();
     await ctx.db.insert("onedriveAudit", {
       actorUserId: admin._id,
       action: gfAccess ? "grant_gf_access" : "revoke_gf_access",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "onedrive",
+      actorUserId: admin._id,
+      action: gfAccess ? "grant_gf_access" : "revoke_gf_access",
+      target: target.email,
+      at: auditAt,
     });
     return { clerkUserId: target.clerkUserId, gfAccess };
   },
@@ -535,11 +551,19 @@ export const applyUploadPermission = internalMutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { uploadRequestsEnabled: enabled });
+    const auditAt = Date.now();
     await ctx.db.insert("onedriveAudit", {
       actorUserId: actor._id,
       action: enabled ? "enable_uploads" : "disable_uploads",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "onedrive",
+      actorUserId: actor._id,
+      action: enabled ? "enable_uploads" : "disable_uploads",
+      target: target.email,
+      at: auditAt,
     });
     return { clerkUserId: target.clerkUserId, enabled };
   },
@@ -632,7 +656,10 @@ export const departments = query({
   args: {},
   handler: async ctx => {
     await requireUser(ctx);
-    const users = await ctx.db.query("users").collect();
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
     const set = new Set<string>();
     for (const u of users) if (u.department) set.add(u.department);
     return [...set].sort((a, b) => a.localeCompare(b));
@@ -659,11 +686,19 @@ export const setApplicantDelegate = mutation({
     if (!delegate && target.role !== "admin" && !target.applicantAccess) {
       await clearVaultPasswordForUser(ctx, userId);
     }
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: admin._id,
       action: delegate ? "grant_delegate" : "revoke_delegate",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: admin._id,
+      action: delegate ? "grant_delegate" : "revoke_delegate",
+      target: target.email,
+      at: auditAt,
     });
     return { ok: true };
   },
@@ -703,11 +738,19 @@ export const setApplicantAccess = mutation({
     if (!access && target.role !== "admin" && !target.applicantAccessDelegate) {
       await clearVaultPasswordForUser(ctx, userId);
     }
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: actor._id,
       action: access ? "grant_access" : "revoke_access",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: actor._id,
+      action: access ? "grant_access" : "revoke_access",
+      target: target.email,
+      at: auditAt,
     });
     return { ok: true };
   },
@@ -718,17 +761,18 @@ export const eligibleForApplicantAccess = query({
   args: {},
   handler: async ctx => {
     await requireApplicantDelegateOrAdmin(ctx);
-    const users = await ctx.db.query("users").collect();
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
     const customRoles = await ctx.db.query("customRoles").collect();
     const customRoleById = new Map(customRoles.map(r => [r._id, r]));
     return users
-      .filter(
-        u =>
-          u.status === "active" &&
-          isApplicantEligible(
-            u,
-            u.customRoleId ? (customRoleById.get(u.customRoleId) ?? null) : null
-          )
+      .filter(u =>
+        isApplicantEligible(
+          u,
+          u.customRoleId ? (customRoleById.get(u.customRoleId) ?? null) : null
+        )
       )
       .map(u => ({
         _id: u._id,

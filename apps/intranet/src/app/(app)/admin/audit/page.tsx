@@ -101,7 +101,9 @@ export default function AuditLogPage() {
                 >
                   {t(`auditLog.source_${row.source}`)}
                 </Badge>
-                <span className="font-medium">{row.actorName}</span>
+                <span className="font-medium">
+                  {row.user?.name ?? "unknown"}
+                </span>
                 <Badge variant="muted" className="font-mono text-[10px]">
                   {row.action}
                 </Badge>

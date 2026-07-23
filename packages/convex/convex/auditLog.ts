@@ -1,9 +1,8 @@
 import { v } from "convex/values";
 
-import { type Doc } from "./_generated/dataModel";
 import { query } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
-import { displayName } from "./activity/lib/users";
+import { batchUserSummaries } from "./lib/users";
 
 /**
  * Read-only merge of the three privileged-action audit tables
@@ -61,18 +60,14 @@ export const list = query({
       .sort((a, b) => b.at - a.at)
       .slice(0, take);
 
-    const actorIds = [...new Set(merged.map(r => r.actorUserId))];
-    const actorsById = new Map(
-      (await Promise.all(actorIds.map(id => ctx.db.get(id)))).flatMap(u =>
-        u ? [[u._id, u] as const] : []
-      )
+    const actorsById = await batchUserSummaries(
+      ctx,
+      merged.map(r => r.actorUserId)
     );
 
     return merged.map(row => ({
       ...row,
-      actorName: actorsById.get(row.actorUserId)
-        ? displayName(actorsById.get(row.actorUserId) as Doc<"users">)
-        : "unknown",
+      user: actorsById.get(row.actorUserId) ?? null,
     }));
   },
 });

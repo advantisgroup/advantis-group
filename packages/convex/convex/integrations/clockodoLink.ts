@@ -26,7 +26,8 @@ export const linkClockodoUser = mutation({
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 
-    await ctx.db.patch(userId, { clockodoUserId });
+    const clockodoUserIdStr = toClockodoIdString(clockodoUserId);
+    await ctx.db.patch(userId, { clockodoUserId: clockodoUserIdStr });
 
     const person = await ctx.db
       .query("people")
@@ -34,7 +35,7 @@ export const linkClockodoUser = mutation({
       .first();
     if (person) {
       await ctx.db.patch(person._id, {
-        clockodoUserId: toClockodoIdString(clockodoUserId),
+        clockodoUserId: clockodoUserIdStr,
       });
     }
 

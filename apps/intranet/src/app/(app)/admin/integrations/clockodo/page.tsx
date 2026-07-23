@@ -744,7 +744,7 @@ export default function ClockodoIntegrationPage() {
   // Merge the reactive intranet-side link data into the (non-reactive) live
   // Clockodo list once both are available.
   const merged = (rows ?? []).map(row => {
-    const link = links?.find(l => l.clockodoUserId === row.id);
+    const link = links?.find(l => l.clockodoUserId === String(row.id));
     return {
       ...row,
       linkedUserId: link?.userId ?? null,
