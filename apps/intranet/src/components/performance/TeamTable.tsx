@@ -171,7 +171,7 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-3">
+      <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-baseline gap-2">
           <CardTitle className="text-base">{t("dashboardEmployees")}</CardTitle>
           <span className="text-xs text-muted-foreground">
@@ -181,7 +181,7 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
             })}
           </span>
         </div>
-        <div className="relative w-full max-w-[16rem]">
+        <div className="relative w-full sm:max-w-[16rem]">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}

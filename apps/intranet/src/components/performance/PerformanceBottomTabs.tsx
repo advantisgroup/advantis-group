@@ -88,7 +88,7 @@ export function PerformanceBottomTabs({
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
         <SheetContent
           side="bottom"
-          className="max-h-[75vh] overflow-y-auto rounded-t-2xl"
+          className="max-h-[75vh] overflow-y-auto rounded-t-2xl p-4"
         >
           <SheetTitle>{t("menuLabel")}</SheetTitle>
           <div className="mt-4 flex items-center gap-1 border-b pb-3">

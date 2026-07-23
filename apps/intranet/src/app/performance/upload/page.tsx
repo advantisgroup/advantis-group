@@ -551,7 +551,7 @@ export default function PerformanceUploadPage() {
     <div className="min-h-screen bg-muted/20">
       <PerformanceHeader navItems={navItems} onExit={exit} />
 
-      <main className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-7xl space-y-6 p-4 pb-24 md:p-6">
         {token && <FlaggedRowsDialog token={token} />}
         {token && <RescanOlderUploads token={token} />}
 

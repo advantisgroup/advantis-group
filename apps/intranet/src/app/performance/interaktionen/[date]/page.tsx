@@ -65,7 +65,7 @@ export default function DashboardInteractionDayPage() {
         onExit={session.viaClerk ? undefined : exit}
       />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div>
           <h1 className="text-xl font-semibold">
             {formatIsoDate(params.date, locale)}
