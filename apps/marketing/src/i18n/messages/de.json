@@ -477,6 +477,11 @@
     "menuLabel": "Konto",
     "guest": "Gast",
     "providerHint": "Fahre mit Google oder erstelle dein Konto per E-Mail.",
+    "authShellHighlights": [
+      "Verfolge den Status deiner Anfragen",
+      "Verwalte dein Profil an einem Ort",
+      "Sicher verschlüsselt mit Clerk"
+    ],
     "signInPageCta": "Anmeldeseite öffnen",
     "signUpPageCta": "Registrierungsseite öffnen",
     "signIn": "Anmelden",
