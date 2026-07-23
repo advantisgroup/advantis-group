@@ -58,12 +58,11 @@ export async function getUserByClerkId(
  * authenticated Clerk identity has not (yet) been provisioned an intranet
  * account. Never throws — callers decide how to handle the null case.
  *
- * Two separate Clerk instances issue identities against this deployment (the
- * marketing site and the intranet — see auth.config.ts), each with its own
- * `subject` for the same person. The `users` row is keyed by the intranet
- * instance's clerkUserId, so a marketing-issued identity for that same
- * person never matches on `subject` — email is the only field the two
- * instances share, so fall back to it when the id lookup misses.
+ * Marketing and the intranet now share a single Clerk instance (see
+ * auth.config.ts), so `subject` lookups are the primary path. The email
+ * fallback below is legacy-compat only, for any session issued while
+ * marketing and the intranet were still on separate Clerk instances with
+ * different `subject`s for the same person.
  */
 export async function getCurrentUser(
   ctx: QueryCtx | MutationCtx

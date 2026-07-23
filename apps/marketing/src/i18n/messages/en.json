@@ -477,6 +477,11 @@
     "menuLabel": "Account",
     "guest": "Guest user",
     "providerHint": "Continue with  Google or use your email to create an account.",
+    "authShellHighlights": [
+      "Track the status of your requests",
+      "Manage your profile in one place",
+      "Secured with Clerk"
+    ],
     "signInPageCta": "Open sign-in page",
     "signUpPageCta": "Open sign-up page",
     "signIn": "Sign in",

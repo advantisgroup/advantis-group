@@ -1,5 +1,5 @@
 import { api } from "@advantis/convex/api";
-import { auth } from "@clerk/nextjs/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { Elysia, t } from "elysia";
 
@@ -39,9 +39,10 @@ const errorSchema = t.Object({
 export const submissions = new Elysia().get(
   "/submissions",
   async ({ set }) => {
-    const { userId } = await auth();
+    const user = await currentUser();
+    const accountEmail = user?.primaryEmailAddress?.emailAddress;
 
-    if (!userId) {
+    if (!accountEmail) {
       set.status = 401;
       return { error: "Unauthorized" };
     }
@@ -62,9 +63,9 @@ export const submissions = new Elysia().get(
 
     try {
       const submissions = await convex.query(
-        api.emails.listEmailsByClerkUserId,
+        api.emails.listEmailsByAccountEmail,
         {
-          clerkUserId: userId,
+          accountEmail,
         }
       );
       if (!submissions) {

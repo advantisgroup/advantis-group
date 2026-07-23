@@ -2,7 +2,13 @@
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { CalendarDays, MapPin, Megaphone, PartyPopper, Plane } from "lucide-react";
+import {
+  CalendarDays,
+  MapPin,
+  Megaphone,
+  PartyPopper,
+  Plane,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -102,7 +108,9 @@ export function AnnouncementsCard() {
                 <span className="whitespace-nowrap">
                   {relativeTime(a.publishedAt)}
                 </span>
-                {!a.read && <span className="h-2 w-2 rounded-full bg-primary" />}
+                {!a.read && (
+                  <span className="h-2 w-2 rounded-full bg-primary" />
+                )}
               </>
             }
           />

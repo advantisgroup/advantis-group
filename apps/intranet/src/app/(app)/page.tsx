@@ -114,7 +114,8 @@ export default function DashboardPage() {
     performanceSession?.valid && performanceSession.employeeId
   );
   const hasTeamPerformance =
-    isManager && Boolean(performanceSession?.valid && performanceSession.role === "admin");
+    isManager &&
+    Boolean(performanceSession?.valid && performanceSession.role === "admin");
 
   const events = useQuery(api.events.listForRange, {
     start: startOfToday,
@@ -163,7 +164,9 @@ export default function DashboardPage() {
   const forYouWidgets: Widget[] = [
     widget("chats", <ChatsCard />),
     widget("myday", <MyDayCard />),
-    ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
+    ...(hasMyPerformance
+      ? [widget("myperformance", <MyPerformanceCard />)]
+      : []),
   ].filter(w => showCard(w.id));
 
   const teamCompanyWidgets: Widget[] = [
@@ -174,7 +177,9 @@ export default function DashboardPage() {
   ].filter(w => showCard(w.id));
 
   const adminWidgets: Widget[] = [
-    ...(hasActivityCapability ? [widget("teamstatus", <TeamStatusCard />)] : []),
+    ...(hasActivityCapability
+      ? [widget("teamstatus", <TeamStatusCard />)]
+      : []),
     ...(hasTeamPerformance
       ? [widget("teamperformance", <TeamPerformanceCard />)]
       : []),
