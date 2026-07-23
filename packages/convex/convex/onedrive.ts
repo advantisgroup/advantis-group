@@ -41,10 +41,28 @@ async function approverIds(ctx: MutationCtx): Promise<Id<"users">[]> {
     .map(u => u._id);
 }
 
+type OnedriveAuditAction =
+  | "request"
+  | "upload"
+  | "approve"
+  | "deny"
+  | "mkdir"
+  | "move"
+  | "rename"
+  | "delete"
+  | "restore"
+  | "share"
+  | "grant_gf_access"
+  | "revoke_gf_access"
+  | "enable_uploads"
+  | "disable_uploads"
+  | "teamAccessGrant"
+  | "teamAccessRevoke";
+
 async function writeAudit(
   ctx: MutationCtx,
   actorUserId: Id<"users">,
-  action: string,
+  action: OnedriveAuditAction,
   target?: string
 ): Promise<void> {
   await ctx.db.insert("onedriveAudit", {
@@ -291,7 +309,14 @@ export const apiRecordAction = mutation({
   args: {
     serverKey: v.string(),
     actorUserId: v.id("users"),
-    action: v.string(),
+    action: v.union(
+      v.literal("mkdir"),
+      v.literal("move"),
+      v.literal("rename"),
+      v.literal("delete"),
+      v.literal("restore"),
+      v.literal("share")
+    ),
     target: v.optional(v.string()),
   },
   handler: async (ctx, { serverKey, actorUserId, action, target }) => {

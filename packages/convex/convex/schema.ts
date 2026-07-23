@@ -1315,7 +1315,20 @@ export default defineSchema({
   // Append-only audit of privileged dashboard actions.
   activityAuditLog: defineTable({
     actorUserId: v.id("users"),
-    action: v.string(),
+    action: v.union(
+      v.literal("settings.config"),
+      v.literal("settings.update"),
+      v.literal("person.create"),
+      v.literal("person.update"),
+      v.literal("person.remove"),
+      v.literal("event.resolve"),
+      v.literal("device.approve"),
+      v.literal("device.disable"),
+      v.literal("device.remove"),
+      v.literal("device.link"),
+      v.literal("maintenance.quarantineOutOfHours"),
+      v.literal("maintenance.pruneNow")
+    ),
     target: v.optional(v.string()),
     at: v.number(),
   }).index("by_at", ["at"]),
@@ -1510,9 +1523,30 @@ export default defineSchema({
     .index("by_driveItemId", ["driveItemId"]),
 
   // Append-only audit of OneDrive actions (requests, approvals, deletes, …).
+  // `request`/`upload`/`approve`/`deny` are written directly from
+  // `onedrive.ts`; `mkdir`/`move`/`rename`/`delete`/`restore`/`share` are
+  // relayed from the Elysia API's Graph-backed file actions via
+  // `apiRecordAction` (see apps/api/src/routes/onedrive.ts `recordAction`).
   onedriveAudit: defineTable({
     actorUserId: v.id("users"),
-    action: v.string(),
+    action: v.union(
+      v.literal("request"),
+      v.literal("upload"),
+      v.literal("approve"),
+      v.literal("deny"),
+      v.literal("mkdir"),
+      v.literal("move"),
+      v.literal("rename"),
+      v.literal("delete"),
+      v.literal("restore"),
+      v.literal("share"),
+      v.literal("grant_gf_access"),
+      v.literal("revoke_gf_access"),
+      v.literal("enable_uploads"),
+      v.literal("disable_uploads"),
+      v.literal("teamAccessGrant"),
+      v.literal("teamAccessRevoke")
+    ),
     target: v.optional(v.string()),
     at: v.number(),
   }).index("by_at", ["at"]),
@@ -1522,7 +1556,7 @@ export default defineSchema({
   integrationsAuditLog: defineTable({
     actorUserId: v.id("users"),
     integration: v.union(v.literal("clockodo")),
-    action: v.string(),
+    action: v.union(v.literal("clockodo.link"), v.literal("clockodo.unlink")),
     target: v.optional(v.string()),
     at: v.number(),
   }).index("by_at", ["at"]),

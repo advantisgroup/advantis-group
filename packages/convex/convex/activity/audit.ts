@@ -11,10 +11,24 @@ import { displayName } from "./lib/users";
  * mutation that mutates devices/people/settings so managers can review who did
  * what. Append-only.
  */
+type ActivityAuditAction =
+  | "settings.config"
+  | "settings.update"
+  | "person.create"
+  | "person.update"
+  | "person.remove"
+  | "event.resolve"
+  | "device.approve"
+  | "device.disable"
+  | "device.remove"
+  | "device.link"
+  | "maintenance.quarantineOutOfHours"
+  | "maintenance.pruneNow";
+
 export async function writeAudit(
   ctx: MutationCtx,
   actorUserId: Id<"users">,
-  action: string,
+  action: ActivityAuditAction,
   target?: string
 ): Promise<void> {
   await ctx.db.insert("activityAuditLog", {
