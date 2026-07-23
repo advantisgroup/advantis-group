@@ -18,7 +18,7 @@ function assertServerKey(serverKey: string) {
     throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
   }
 }
-
+ 
 type AbsenceType = Doc<"absences">["type"];
 type AbsenceStatus = Doc<"absences">["status"];
 
