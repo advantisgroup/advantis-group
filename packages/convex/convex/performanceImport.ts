@@ -25,6 +25,10 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
+import {
+  fmtDuration,
+  MAX_PLAUSIBLE_DAY_SECONDS,
+} from "./performance/lib/callImport";
 import { monthBounds } from "./performance/lib/kpi";
 import { EXCLUDED_OWNERS } from "./performance/lib/salesforceImport";
 import {
@@ -578,9 +582,9 @@ const flaggedRowInputValidator = v.object({
  * untouched so a routine re-import can't silently undo an admin's earlier
  * call. A different raw value at the same key (the upstream file changed,
  * still implausibly) reopens it as `pending` for a fresh look. */
-async function upsertFlaggedRow(
+async function upsertFlaggedRowById(
   ctx: MutationCtx,
-  employeeName: string,
+  employeeId: Id<"performanceEmployees">,
   reportDate: string,
   field: "talkTotalSec" | "talkAvgSec" | "loginSec",
   rawSeconds: number,
@@ -588,7 +592,6 @@ async function upsertFlaggedRow(
   sourceFile: string,
   uploadedAt: number
 ): Promise<void> {
-  const employeeId = await findOrCreateEmployee(ctx, employeeName);
   // Same non-unique-index caveat as `upsertSnapshot` — merge into the first
   // match and drop any extras rather than `.unique()`.
   const matches = await ctx.db
@@ -631,6 +634,31 @@ async function upsertFlaggedRow(
   }
 }
 
+/** `upsertFlaggedRowById`, resolving the employee by name first — the shape
+ * an import's `EmployeeSnapshot`-style row arrives in. */
+async function upsertFlaggedRow(
+  ctx: MutationCtx,
+  employeeName: string,
+  reportDate: string,
+  field: "talkTotalSec" | "talkAvgSec" | "loginSec",
+  rawSeconds: number,
+  rawText: string,
+  sourceFile: string,
+  uploadedAt: number
+): Promise<void> {
+  const employeeId = await findOrCreateEmployee(ctx, employeeName);
+  await upsertFlaggedRowById(
+    ctx,
+    employeeId,
+    reportDate,
+    field,
+    rawSeconds,
+    rawText,
+    sourceFile,
+    uploadedAt
+  );
+}
+
 export const applyImport = internalMutation({
   args: {
     snapshots: v.array(snapshotValidator),
@@ -644,6 +672,7 @@ export const applyImport = internalMutation({
     flaggedRows: v.optional(v.array(flaggedRowInputValidator)),
     fileSize: v.optional(v.number()),
     batchId: v.optional(v.string()),
+    uploadedBy: v.optional(v.string()),
     // Set only by a re-import (see `reimportUpload`) — updates this row in
     // place instead of inserting a new one, so re-processing an
     // already-uploaded file doesn't leave a duplicate log entry behind.
@@ -651,6 +680,13 @@ export const applyImport = internalMutation({
   },
   handler: async (ctx, args): Promise<{ rowsImported: number }> => {
     const now = Date.now();
+    // A re-import doesn't necessarily carry a fresh `uploadedBy` (the
+    // original uploader isn't necessarily who clicked "re-import") — fall
+    // back to whatever the row already had instead of blanking it out.
+    const existingLog = args.replaceLogId
+      ? await ctx.db.get(args.replaceLogId)
+      : null;
+    const uploadedBy = args.uploadedBy ?? existingLog?.uploadedBy;
     for (const snap of args.snapshots) {
       await upsertSnapshot(
         ctx,
@@ -685,6 +721,7 @@ export const applyImport = internalMutation({
       skippedNames: args.skippedNames,
       fileSize: args.fileSize,
       batchId: args.batchId,
+      uploadedBy,
     };
     if (args.replaceLogId) {
       await ctx.db.patch(args.replaceLogId, logFields);
@@ -825,7 +862,107 @@ export const listUploadLog = query({
       skippedNames: r.skippedNames,
       fileSize: r.fileSize,
       batchId: r.batchId,
+      uploadedBy: r.uploadedBy,
+      scannedForFlags: r.scannedForFlags,
     }));
+  },
+});
+
+/** Call-report uploads the browser hasn't yet re-checked client-side for
+ * implausible-duration cells (see `scannedForFlags` in schema.ts) — covers
+ * every file imported before that check existed. Resolves each one's
+ * storage URL server-side (the only thing that needs `ctx.storage`) so the
+ * client can `fetch()` the bytes directly and do the actual parsing itself,
+ * instead of spending a Convex action on a re-check of old history. */
+export interface UnscannedCallUpload {
+  _id: Id<"performanceUploadLog">;
+  filename: string;
+  fileUrl: string;
+  reportDate?: string;
+  uploadedAt: number;
+  batchId?: string;
+}
+
+export const listUnscannedCallUploads = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }): Promise<UnscannedCallUpload[]> => {
+    await requireAdminLogin(ctx, token);
+    const rows = await ctx.db
+      .query("performanceUploadLog")
+      .filter(q => q.eq(q.field("reportKind"), "call"))
+      .collect();
+    const unscanned = rows.filter(r => !r.scannedForFlags);
+    const withUrls = await Promise.all(
+      unscanned.map(async (r): Promise<UnscannedCallUpload | null> => {
+        const fileUrl = await ctx.storage.getUrl(r.storageId);
+        if (fileUrl === null) return null;
+        return {
+          _id: r._id,
+          filename: r.filename,
+          fileUrl,
+          reportDate: r.reportDate,
+          uploadedAt: r.uploadedAt,
+          batchId: r.batchId,
+        };
+      })
+    );
+    return withUrls.filter((r): r is UnscannedCallUpload => r !== null);
+  },
+});
+
+/** Team roster for the client-side rescan to match agent names against —
+ * same set `getTeamEmployeeNames` gives the server-side import path, just
+ * exposed to a signed-in admin instead of `internal.*`-only. */
+export const listEmployeeNames = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }): Promise<string[]> => {
+    await requireAdminLogin(ctx, token);
+    const employees = await ctx.db.query("performanceEmployees").collect();
+    return employees
+      .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
+      .map(e => e.name);
+  },
+});
+
+/** Records what a client-side rescan of one already-uploaded call report
+ * found, without re-running the full import pipeline (`applyImport`) —
+ * the report's other metrics were already imported correctly the first
+ * time; a rescan only ever finds *additional* implausible-duration cells
+ * the parser now catches, so this just files those and marks the upload as
+ * checked. Safe to call repeatedly (`upsertFlaggedRow`'s usual dedup). */
+export const recordScanResults = mutation({
+  args: {
+    token: v.string(),
+    logId: v.id("performanceUploadLog"),
+    flaggedRows: v.array(flaggedRowInputValidator),
+  },
+  handler: async (
+    ctx,
+    { token, logId, flaggedRows }
+  ): Promise<{ flagged: number }> => {
+    await requireAdminLogin(ctx, token);
+    const log = await ctx.db.get(logId);
+    if (!log) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Upload-log entry not found.",
+      });
+    }
+    const now = Date.now();
+    for (const flagged of flaggedRows) {
+      await upsertFlaggedRow(
+        ctx,
+        flagged.employeeName,
+        flagged.reportDate,
+        flagged.field,
+        flagged.rawSeconds,
+        flagged.rawText,
+        log.filename,
+        now
+      );
+    }
+    await ctx.db.patch(logId, { scannedForFlags: true });
+    return { flagged: flaggedRows.length };
   },
 });
 
@@ -1021,10 +1158,14 @@ export const logInteractionsImport = internalMutation({
     skippedNames: v.optional(v.array(v.string())),
     fileSize: v.optional(v.number()),
     batchId: v.optional(v.string()),
+    uploadedBy: v.optional(v.string()),
     rowsImported: v.number(),
     replaceLogId: v.optional(v.id("performanceUploadLog")),
   },
   handler: async (ctx, args): Promise<void> => {
+    const existingLog = args.replaceLogId
+      ? await ctx.db.get(args.replaceLogId)
+      : null;
     const logFields = {
       filename: args.sourceFile,
       storageId: args.storageId,
@@ -1036,6 +1177,7 @@ export const logInteractionsImport = internalMutation({
       skippedNames: args.skippedNames,
       fileSize: args.fileSize,
       batchId: args.batchId,
+      uploadedBy: args.uploadedBy ?? existingLog?.uploadedBy,
     };
     if (args.replaceLogId) {
       await ctx.db.patch(args.replaceLogId, logFields);

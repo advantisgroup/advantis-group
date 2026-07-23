@@ -9,7 +9,12 @@ const nextConfig: NextConfig = {
   // react-pdf/pdfjs-dist ship modern-syntax ESM meant for native
   // <script type=module> use; Next's official Next.js integration guide for
   // react-pdf recommends transpiling both rather than leaving them raw.
-  transpilePackages: ["pdfjs-dist", "react-pdf"],
+  // @advantis/convex's `./performance/*` subpaths point straight at raw
+  // .ts source (there's no build step for that package) so the client-side
+  // report-rescan feature can reuse the same parsing logic the Convex
+  // import pipeline uses — this is what makes Next transpile that source
+  // instead of erroring on it.
+  transpilePackages: ["pdfjs-dist", "react-pdf", "@advantis/convex"],
   images: {
     remotePatterns: [
       // Convex file storage (avatars, chat images, announcement attachments)

@@ -10,8 +10,14 @@ import { Errors } from "./errors.js";
  * `@admin_required` on `/upload`. Performance auth is intentionally
  * separate from Clerk (see `packages/convex/convex/performanceAuth.ts`),
  * so this doesn't go through `requireAuth`/Clerk at all.
+ *
+ * Returns the login's display identity so callers (the upload route) can
+ * stamp "who uploaded this" onto the upload-log entry instead of it being
+ * unrecoverable after the fact.
  */
-export async function requirePerformanceAdmin(request: Request): Promise<void> {
+export async function requirePerformanceAdmin(
+  request: Request
+): Promise<{ name: string; email: string }> {
   const auth = request.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
   if (!token) throw Errors.unauthorized();
@@ -20,4 +26,5 @@ export async function requirePerformanceAdmin(request: Request): Promise<void> {
     token,
   });
   if (!session.valid || session.role !== "admin") throw Errors.forbidden();
+  return { name: session.name, email: session.email };
 }

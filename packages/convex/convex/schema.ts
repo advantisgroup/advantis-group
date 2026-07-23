@@ -921,6 +921,19 @@ export default defineSchema({
     // same batch — lets the upload log show "17 files uploaded together"
     // instead of 17 unrelated-looking rows with the same timestamp.
     batchId: v.optional(v.string()),
+    // Display name (falling back to email) of the admin who uploaded this
+    // file, resolved from their Performance session by apps/api at upload
+    // time — undefined for rows written before this existed, and preserved
+    // across a re-import (`replaceLogId`) rather than being overwritten by
+    // whichever admin happened to click "re-import".
+    uploadedBy: v.optional(v.string()),
+    // Set once the browser has downloaded this call report and re-checked
+    // it client-side for the implausible-duration cells the parser now
+    // catches on import (see `performanceFlaggedRows`) — a file uploaded
+    // before that check existed never ran it. Client-side, not a Convex
+    // action, so re-checking years of history doesn't burn function time;
+    // only the (small) set of found flags gets written back.
+    scannedForFlags: v.optional(v.boolean()),
   })
     .index("by_uploadedAt", ["uploadedAt"])
     .index("by_contentHash", ["contentHash"])
