@@ -94,7 +94,7 @@ export default function PerformancePasswordPage() {
     <div className="min-h-screen bg-muted/20">
       <PerformanceHeader navItems={navItems} onExit={exit} />
 
-      <main className="mx-auto max-w-md space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-md space-y-6 p-4 pb-24 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">

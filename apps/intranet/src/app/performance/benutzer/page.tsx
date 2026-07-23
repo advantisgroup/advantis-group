@@ -101,7 +101,7 @@ export default function PerformanceUsersPage() {
         onExit={session.viaClerk ? undefined : exit}
       />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         {logins && logins.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <MetricTile

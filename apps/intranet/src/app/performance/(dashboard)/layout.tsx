@@ -228,7 +228,7 @@ function DashboardChrome({
         onExit={viaClerk ? undefined : onExit}
       />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         {!viaClerk && <SelfLinkPrompt token={token} />}
         <div className="flex flex-wrap items-center gap-3">
           <Select
@@ -353,7 +353,7 @@ export default function PerformanceDashboardLayout({
     return (
       <div className="min-h-screen bg-muted/20">
         <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
-        <main className="mx-auto max-w-3xl p-4 md:p-6">
+        <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
           <Card>
             <CardHeader className="items-center text-center">
               <CardTitle>{t("notLinkedTitle")}</CardTitle>

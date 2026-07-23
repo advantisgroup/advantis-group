@@ -55,7 +55,7 @@ export default function EmployeeInteractionDayPage() {
     return (
       <div className="min-h-screen bg-muted/20">
         <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
-        <main className="mx-auto max-w-3xl p-4 md:p-6">
+        <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
           <Card>
             <div className="p-6 text-center text-sm text-muted-foreground">
               {t("notLinkedBody")}
@@ -82,7 +82,7 @@ export default function EmployeeInteractionDayPage() {
         onExit={session.viaClerk ? undefined : exit}
       />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div>
           <h1 className="text-xl font-semibold">
             {formatIsoDate(params.date, locale)}
