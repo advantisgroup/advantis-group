@@ -590,7 +590,8 @@ export const todaysCelebrations = query({
     }> = [];
 
     for (const u of users) {
-      const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
+      const name =
+        [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
       const avatar = u.avatarStorageId
         ? await ctx.storage.getUrl(u.avatarStorageId)
         : (u.avatarUrl ?? null);
@@ -599,13 +600,25 @@ export const todaysCelebrations = query({
         u.showBirthdayPublicly &&
         u.dateOfBirth?.slice(5, 10) === todayMonthDay
       ) {
-        celebrations.push({ userId: u._id, name, avatar, type: "birthday", years: null });
+        celebrations.push({
+          userId: u._id,
+          name,
+          avatar,
+          type: "birthday",
+          years: null,
+        });
       }
       if (u.hireDate?.slice(5, 10) === todayMonthDay) {
         const hireYear = Number(u.hireDate.slice(0, 4));
         const years = currentYear - hireYear;
         if (years > 0) {
-          celebrations.push({ userId: u._id, name, avatar, type: "anniversary", years });
+          celebrations.push({
+            userId: u._id,
+            name,
+            avatar,
+            type: "anniversary",
+            years,
+          });
         }
       }
     }

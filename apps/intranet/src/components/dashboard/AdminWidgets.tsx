@@ -14,7 +14,10 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
+import {
+  useCurrentUser,
+  useIsAdmin,
+} from "@/components/providers/current-user";
 import { relativeTime } from "@/lib/format";
 
 import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
