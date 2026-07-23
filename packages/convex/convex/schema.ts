@@ -926,6 +926,38 @@ export default defineSchema({
     .index("by_contentHash", ["contentHash"])
     .index("by_batchId", ["batchId"]),
 
+  // A single employee/day/field whose parsed duration failed the physical
+  // 24h plausibility check (see callImport.ts's `capExplicitDuration`) gets
+  // excluded from `performanceReports` and parked here instead of being
+  // silently dropped — an admin reviews the source cell and either edits in
+  // a corrected value, ignores it, or force-imports the raw parsed value.
+  // Re-importing the same bad cell refreshes a still-`pending` row in place
+  // rather than duplicating it; a row already `ignored`/`resolved` for the
+  // exact same raw value is left alone so a routine re-import can't
+  // silently undo an admin's earlier call.
+  performanceFlaggedRows: defineTable({
+    employeeId: v.id("performanceEmployees"),
+    reportDate: v.string(),
+    field: v.union(
+      v.literal("talkTotalSec"),
+      v.literal("talkAvgSec"),
+      v.literal("loginSec")
+    ),
+    rawSeconds: v.number(),
+    rawText: v.string(),
+    sourceFile: v.string(),
+    uploadedAt: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("ignored"),
+      v.literal("resolved")
+    ),
+    resolvedAt: v.optional(v.number()),
+    resolvedValue: v.optional(v.number()),
+  })
+    .index("by_employee_date_field", ["employeeId", "reportDate", "field"])
+    .index("by_status", ["status"]),
+
   // ========================================================================
   // ActivityTrack — workforce-activity dashboard, ported into the intranet.
   //

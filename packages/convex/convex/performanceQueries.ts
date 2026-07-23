@@ -33,6 +33,7 @@ import {
   type BadgeResult,
   type Snapshot,
 } from "./performance/lib/kpi";
+import { MAX_PLAUSIBLE_DAY_SECONDS } from "./performance/lib/callImport";
 import { EXCLUDED_OWNERS } from "./performance/lib/salesforceImport";
 import {
   DAILY_KEYS,
@@ -208,6 +209,24 @@ async function latestSnapshots(
   return snaps;
 }
 
+const DAILY_DURATION_KEYS = new Set<(typeof DAILY_KEYS)[number]>([
+  "talkTotalSec",
+  "loginSec",
+]);
+
+/** A single employee's single-day duration can't plausibly exceed 24h (see
+ * callImport.ts's MAX_PLAUSIBLE_DAY_SECONDS). Guards the team/day sums below
+ * against a bad historical row — imported before the parser caught this, or
+ * edited by hand — blowing up an otherwise-normal day's or month's total. */
+function plausibleDailyValue(
+  key: (typeof DAILY_KEYS)[number],
+  v: number
+): number | undefined {
+  return DAILY_DURATION_KEYS.has(key) && v > MAX_PLAUSIBLE_DAY_SECONDS
+    ? undefined
+    : v;
+}
+
 interface MonthCalls extends Partial<
   Record<(typeof DAILY_KEYS)[number], number>
 > {
@@ -242,7 +261,9 @@ async function monthCallsMap(
     if ((r.callsToday ?? 0) > 0) cur.workDays++;
     for (const k of DAILY_KEYS) {
       const v = r[k];
-      if (v !== undefined) cur.vals[k] = (cur.vals[k] ?? 0) + v;
+      if (v === undefined) continue;
+      const safe = plausibleDailyValue(k, v);
+      if (safe !== undefined) cur.vals[k] = (cur.vals[k] ?? 0) + safe;
     }
     sums.set(r.employeeId, cur);
   }
@@ -300,7 +321,9 @@ async function callDaysList(
     const cur = byDate.get(r.reportDate) ?? {};
     for (const k of DAILY_KEYS) {
       const v = r[k];
-      if (v !== undefined) cur[k] = (cur[k] ?? 0) + v;
+      if (v === undefined) continue;
+      const safe = plausibleDailyValue(k, v);
+      if (safe !== undefined) cur[k] = (cur[k] ?? 0) + safe;
     }
     byDate.set(r.reportDate, cur);
   }
