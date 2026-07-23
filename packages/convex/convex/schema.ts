@@ -244,7 +244,6 @@ export default defineSchema({
     .index("by_role", ["role"])
     .index("by_status", ["status"])
     .index("by_clockodoUserId", ["clockodoUserId"])
-    .index("by_departmentId", ["departmentId"])
     .index("by_avatarStorageId", ["avatarStorageId"]),
 
   /**
@@ -260,9 +259,7 @@ export default defineSchema({
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     createdBy: v.id("users"),
-  })
-    .index("by_name", ["name"])
-    .index("by_archivedAt", ["archivedAt"]),
+  }),
 
   /**
    * Canonical teams (access-control tags, e.g. "customer-care"). Replaces
@@ -278,8 +275,7 @@ export default defineSchema({
     createdAt: v.number(),
     createdBy: v.id("users"),
   })
-    .index("by_slug", ["slug"])
-    .index("by_archivedAt", ["archivedAt"]),
+    .index("by_slug", ["slug"]),
 
   /**
    * users <-> teams membership. A join table rather than an id array on
@@ -291,7 +287,6 @@ export default defineSchema({
     teamId: v.id("teams"),
   })
     .index("by_user", ["userId"])
-    .index("by_team", ["teamId"])
     .index("by_user_team", ["userId", "teamId"]),
 
   /**
@@ -334,7 +329,7 @@ export default defineSchema({
     capabilities: v.array(capabilityValidator),
     createdBy: v.id("users"),
     createdAt: v.number(),
-  }).index("by_name", ["name"]),
+  }),
 
   invites: defineTable({
     email: v.string(),
@@ -445,8 +440,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
-    .index("by_publishedAt", ["publishedAt"])
-    .index("by_pinned_publishedAt", ["pinned", "publishedAt"]),
+    .index("by_publishedAt", ["publishedAt"]),
 
   announcementReads: defineTable({
     announcementId: v.id("announcements"),
@@ -612,7 +606,6 @@ export default defineSchema({
     lastMessagePreview: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_lastMessageAt", ["lastMessageAt"])
     .index("by_dmKey", ["dmKey"])
     .index("by_deleteAt", ["deleteAt"])
     .index("by_avatarStorageId", ["avatarStorageId"]),
@@ -767,7 +760,7 @@ export default defineSchema({
   performanceEmployees: defineTable({
     name: v.string(),
     active: v.boolean(),
-  }).index("by_name", ["name"]),
+  }),
 
   // One row per employee per report day. Metric columns are nullable —
   // null means "not measured in this snapshot", not zero — so a report
@@ -817,7 +810,6 @@ export default defineSchema({
     createDate: v.optional(v.string()),
     lastActivity: v.optional(v.string()),
   })
-    .index("by_owner", ["owner"])
     // Powers the Team tab's "daily logged-in employees" chart (distinct
     // owners with a lead created that day) — an indexed range scan instead
     // of a full-table collect.
@@ -833,7 +825,7 @@ export default defineSchema({
     age: v.optional(v.number()),
     lastActivity: v.optional(v.string()),
     customerNumber: v.optional(v.string()),
-  }).index("by_owner", ["owner"]),
+  }),
 
   // One row per closed-won opportunity, keyed by its actual Close Date —
   // powers the daily closed-won trend chart. `wonMonth` on
@@ -846,9 +838,7 @@ export default defineSchema({
   performanceWonOpps: defineTable({
     owner: v.string(),
     closeDate: v.string(),
-  })
-    .index("by_owner", ["owner"])
-    .index("by_closeDate", ["closeDate"]),
+  }).index("by_closeDate", ["closeDate"]),
 
   // One row per employee per Genesys interaction (raw, not aggregated) —
   // imported from the "Interaktionen" export, distinct from the aggregated
@@ -1237,9 +1227,7 @@ export default defineSchema({
     idleSeconds: v.number(),
     firstSeen: v.number(),
     lastSeen: v.number(),
-  })
-    .index("by_device_day", ["deviceId", "day"])
-    .index("by_day", ["day"]),
+  }).index("by_device_day", ["deviceId", "day"]),
 
   // Generated-on-request weekly pattern reports (one per employee per ISO
   // week, regenerating overwrites the same week's row). Findings are stored
@@ -1406,8 +1394,7 @@ export default defineSchema({
     startedAt: v.optional(v.number()),
     updatedAt: v.number(),
   })
-    .index("by_migration", ["migrationId"])
-    .index("by_migration_table", ["migrationId", "table"]),
+    .index("by_migration", ["migrationId"]),
 
   // Maps a source (old-deployment) document id to the freshly-inserted target
   // id, so later steps can resolve references (e.g. a device's `personId`)
@@ -1615,7 +1602,7 @@ export default defineSchema({
     skills: v.array(v.string()),
     createdByUserId: v.id("users"),
     createdAt: v.number(),
-  }).index("by_name", ["name"]),
+  }),
 
   applicants: defineTable({
     name: v.string(),
