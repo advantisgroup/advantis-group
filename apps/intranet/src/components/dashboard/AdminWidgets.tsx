@@ -179,7 +179,7 @@ export function RecentActivityCard() {
           <Row
             key={r._id}
             href="/admin/audit"
-            title={`${r.actorName} · ${r.action}`}
+            title={`${r.user?.name ?? "unknown"} · ${r.action}`}
             subtitle={r.target ?? undefined}
             trailing={
               <span className="whitespace-nowrap">{relativeTime(r.at)}</span>

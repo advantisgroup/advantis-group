@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { query } from "./_generated/server";
 import { requireAdmin } from "./lib/auth";
-import { batchGetUsers, displayName } from "./lib/users";
+import { batchUserSummaries } from "./lib/users";
 
 /**
  * Read-only merge of the three privileged-action audit tables
@@ -60,14 +60,14 @@ export const list = query({
       .sort((a, b) => b.at - a.at)
       .slice(0, take);
 
-    const actorsById = await batchGetUsers(
+    const actorsById = await batchUserSummaries(
       ctx,
       merged.map(r => r.actorUserId)
     );
 
     return merged.map(row => ({
       ...row,
-      actorName: displayName(actorsById.get(row.actorUserId) ?? null),
+      user: actorsById.get(row.actorUserId) ?? null,
     }));
   },
 });

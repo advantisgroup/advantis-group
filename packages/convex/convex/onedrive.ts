@@ -6,7 +6,7 @@ import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalAction, mutation, query } from "./_generated/server";
 import { getUserByClerkId, requireCapability, requireUser } from "./lib/auth";
 import { createNotification, notifyUsers } from "./lib/notify";
-import { batchGetUsers, displayName } from "./lib/users";
+import { batchUserSummaries, displayName } from "./lib/users";
 
 /**
  * OneDrive system-of-record. The Elysia API owns the Microsoft Graph credentials
@@ -499,13 +499,13 @@ export const auditFeed = query({
       .withIndex("by_at")
       .order("desc")
       .take(Math.min(limit ?? 100, 500));
-    const byId = await batchGetUsers(
+    const byId = await batchUserSummaries(
       ctx,
       rows.map(r => r.actorUserId)
     );
     return rows.map(row => ({
       ...row,
-      actorName: displayName(byId.get(row.actorUserId) ?? null),
+      user: byId.get(row.actorUserId) ?? null,
     }));
   },
 });

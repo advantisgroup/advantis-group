@@ -11,6 +11,7 @@ import {
   terminTypValidator,
 } from "./schema";
 import { getUserByClerkId, requireApplicantAccess } from "./lib/auth";
+import { batchUserSummaries, toUserSummary } from "./lib/users";
 
 /**
  * Bewerbermanagement (Applicant Management). Everything below is gated by
@@ -191,6 +192,10 @@ export const list = query({
     const interviewsByApplicant = groupByApplicant(allInterviews);
     const termineByApplicant = groupByApplicant(allTermine);
     const documentsByApplicant = groupByApplicant(allDocuments);
+    const creatorsById = await batchUserSummaries(
+      ctx,
+      applicants.map(a => a.createdByUserId)
+    );
 
     return applicants.map(a => {
       const kontakte = kontakteByApplicant.get(a._id) ?? [];
@@ -228,6 +233,9 @@ export const list = query({
               typ: nextOpenTermin.typ,
             }
           : null,
+        // Additive — `createdByUserId` was previously only exposed as a raw
+        // id (see Group 8 of the QoL backlog).
+        createdByUser: creatorsById.get(a.createdByUserId) ?? null,
       };
     });
   },
@@ -238,6 +246,9 @@ export const get = query({
   handler: async (ctx, { applicantId }) => {
     await requireApplicantAccess(ctx);
     const applicant = await requireApplicant(ctx, applicantId);
+    const createdByUser = toUserSummary(
+      await ctx.db.get(applicant.createdByUserId)
+    );
     const [kontakte, emails, interviews, termine, documents] =
       await Promise.all([
         ctx.db
@@ -275,6 +286,7 @@ export const get = query({
       interviews,
       termine,
       documents: documentsWithUrl,
+      createdByUser,
     };
   },
 });
