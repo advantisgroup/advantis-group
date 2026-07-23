@@ -1,5 +1,6 @@
 import { query } from "../_generated/server";
 import { requireCapability } from "../lib/auth";
+import { toClockodoIdString } from "../lib/clockodoId";
 
 /**
  * Every intranet user linked to a Clockodo account, joined to their
@@ -33,7 +34,11 @@ export const listWithLinks = query({
             [u.firstName, u.lastName].filter(Boolean).join(" ").trim() ||
             u.email,
           email: u.email,
-          clockodoUserId: u.clockodoUserId!,
+          // Normalize legacy `number` rows (pending backfill) to `string`.
+          clockodoUserId:
+            typeof u.clockodoUserId === "number"
+              ? toClockodoIdString(u.clockodoUserId)
+              : u.clockodoUserId!,
           personId: person?._id ?? null,
           deviceId: device?.deviceId ?? null,
         };

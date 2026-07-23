@@ -165,8 +165,18 @@ export default defineSchema({
      * drives the admin "External" grouping. Set at provisioning time.
      */
     external: v.optional(v.boolean()),
-    /** Clockodo coworker id, for linking absence mirrors to this user. */
-    clockodoUserId: v.optional(v.number()),
+    /**
+     * Clockodo coworker id, for linking absence mirrors to this user.
+     * Canonical type is `string` (matching `people.clockodoUserId` and
+     * Clockodo's own API) — this field temporarily accepts `v.union(v.string(),
+     * v.number())` to stay backward-compatible with any pre-existing rows
+     * still holding a `number`. All writers now write `string`. Once a
+     * one-time backfill (`orgDataMigration.backfillClockodoUserIdStrings`)
+     * confirms no `number` rows remain in production, narrow this back to
+     * `v.optional(v.string())` and delete the backfill + the
+     * `toClockodoIdNumber`/legacy-number-read paths.
+     */
+    clockodoUserId: v.optional(v.union(v.string(), v.number())),
     /**
      * OneDrive: allowlist flag for the Geschäftsführung sub-tree. Access is a
      * dedicated allowlist (admin-managed), NOT tied to manager rank — undefined

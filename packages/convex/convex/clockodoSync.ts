@@ -67,10 +67,22 @@ async function resolveUser(
   clockodoUserId: number,
   email: string | undefined
 ): Promise<Doc<"users"> | null> {
-  const byClockodo = await ctx.db
-    .query("users")
-    .withIndex("by_clockodoUserId", q => q.eq("clockodoUserId", clockodoUserId))
-    .first();
+  const clockodoUserIdStr = toClockodoIdString(clockodoUserId);
+  // `by_clockodoUserId` may still contain legacy `number` rows pending
+  // backfill (see schema.ts comment), so probe both representations.
+  const byClockodo =
+    (await ctx.db
+      .query("users")
+      .withIndex("by_clockodoUserId", q =>
+        q.eq("clockodoUserId", clockodoUserIdStr)
+      )
+      .first()) ??
+    (await ctx.db
+      .query("users")
+      .withIndex("by_clockodoUserId", q =>
+        q.eq("clockodoUserId", clockodoUserId)
+      )
+      .first());
   if (byClockodo) return byClockodo;
 
   if (email) {
@@ -80,8 +92,8 @@ async function resolveUser(
       .first();
     if (byEmail) {
       // Backfill the Clockodo link for next time.
-      if (byEmail.clockodoUserId !== clockodoUserId) {
-        await ctx.db.patch(byEmail._id, { clockodoUserId });
+      if (byEmail.clockodoUserId !== clockodoUserIdStr) {
+        await ctx.db.patch(byEmail._id, { clockodoUserId: clockodoUserIdStr });
       }
       return byEmail;
     }
