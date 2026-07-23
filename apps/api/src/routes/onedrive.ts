@@ -703,9 +703,17 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     };
   });
 
+type OneDriveAuditAction =
+  | "mkdir"
+  | "move"
+  | "rename"
+  | "delete"
+  | "restore"
+  | "share";
+
 async function recordAction(
   user: OneDriveUser,
-  action: string,
+  action: OneDriveAuditAction,
   target: string
 ): Promise<void> {
   try {
