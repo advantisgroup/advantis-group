@@ -274,8 +274,7 @@ export default defineSchema({
     archivedAt: v.optional(v.number()),
     createdAt: v.number(),
     createdBy: v.id("users"),
-  })
-    .index("by_slug", ["slug"]),
+  }).index("by_slug", ["slug"]),
 
   /**
    * users <-> teams membership. A join table rather than an id array on
@@ -439,8 +438,7 @@ export default defineSchema({
     expiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  })
-    .index("by_publishedAt", ["publishedAt"]),
+  }).index("by_publishedAt", ["publishedAt"]),
 
   announcementReads: defineTable({
     announcementId: v.id("announcements"),
@@ -1393,8 +1391,7 @@ export default defineSchema({
     lastError: v.optional(v.string()),
     startedAt: v.optional(v.number()),
     updatedAt: v.number(),
-  })
-    .index("by_migration", ["migrationId"]),
+  }).index("by_migration", ["migrationId"]),
 
   // Maps a source (old-deployment) document id to the freshly-inserted target
   // id, so later steps can resolve references (e.g. a device's `personId`)
