@@ -35,6 +35,14 @@ Run from repo root unless noted; Turborepo filters by workspace name.
 Always type-check and lint/format touched packages before calling a change
 done.
 
+## Asking questions
+
+The user (Kaleb) does not mind being asked clarifying questions, and does not
+mind agents surfacing a large number of improvement suggestions at once (30+
+is fine). Don't self-censor or trim suggestion lists down to a "safe" handful
+out of concern for overwhelming him — err toward asking and toward listing
+more candidate improvements rather than fewer.
+
 ## Multi-item sessions and commits
 
 When a single session is asked to ship several distinct features, improvements,
