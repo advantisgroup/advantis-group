@@ -37,14 +37,10 @@ const Toaster = ({ ...props }: ToasterProps) => {
           // Solid popover surface with a colored left accent bar + tinted
           // icon, so toasts stay legible over any page background instead of
           // reading as a transparent wash.
-          toast:
-            "!shadow-lg !border-l-4 !bg-popover !text-popover-foreground",
-          success:
-            "!border-l-success [&_[data-icon]]:text-success",
-          error:
-            "!border-l-destructive [&_[data-icon]]:text-destructive",
-          warning:
-            "!border-l-warning [&_[data-icon]]:text-warning",
+          toast: "!shadow-lg !border-l-4 !bg-popover !text-popover-foreground",
+          success: "!border-l-success [&_[data-icon]]:text-success",
+          error: "!border-l-destructive [&_[data-icon]]:text-destructive",
+          warning: "!border-l-warning [&_[data-icon]]:text-warning",
           info: "!border-l-accent-foreground/40 [&_[data-icon]]:text-accent-foreground",
         },
       }}
