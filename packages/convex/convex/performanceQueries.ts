@@ -46,40 +46,13 @@ import {
   todayUTC,
   toISODate,
 } from "./performance/lib/workdays";
-import { resolveActiveSession } from "./performanceAuth";
+import {
+  requireAdminRole as requireAdmin,
+  requireCanViewEmployee as requireCanView,
+  requireSessionLogin as requireSession,
+} from "./performanceAuth";
 
 // ------------------------------------------------------------------ helpers
-
-async function requireSession(ctx: QueryCtx, token: string) {
-  const resolved = await resolveActiveSession(ctx, token);
-  if (!resolved) {
-    throw new ConvexError({
-      code: "unauthenticated",
-      message: "Please sign in.",
-    });
-  }
-  return resolved.login;
-}
-
-function requireAdmin(login: Doc<"performanceLogins">): void {
-  if (login.role !== "admin") {
-    throw new ConvexError({ code: "forbidden", message: "Admins only." });
-  }
-}
-
-/** Mirrors `may_view_employee`: an admin sees everyone; a `mitarbeiter`
- * login only its own linked employee. */
-function requireCanView(
-  login: Doc<"performanceLogins">,
-  employeeId: Id<"performanceEmployees">
-): void {
-  if (login.role === "admin") return;
-  if (login.employeeId === employeeId) return;
-  throw new ConvexError({
-    code: "forbidden",
-    message: "You can't view this employee.",
-  });
-}
 
 async function employeeNameMap(
   ctx: QueryCtx

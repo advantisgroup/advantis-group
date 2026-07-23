@@ -272,6 +272,50 @@ export async function requireAdminLogin(
   return resolved.login;
 }
 
+/**
+ * Require *any* valid Performance session (not necessarily admin) and
+ * return its login row; throws `unauthenticated` otherwise. Was
+ * reimplemented near-identically as `requireLogin`/`requireSession` in both
+ * performanceTopics.ts and performanceQueries.ts — consolidated here.
+ */
+export async function requireSessionLogin(
+  ctx: QueryCtx | MutationCtx,
+  token: string
+): Promise<Doc<"performanceLogins">> {
+  const resolved = await resolveActiveSession(ctx, token);
+  if (!resolved) {
+    throw new ConvexError({
+      code: "unauthenticated",
+      message: "Please sign in.",
+    });
+  }
+  return resolved.login;
+}
+
+/** Throws unless `login` is a Performance admin. For call sites that
+ * already hold a resolved login (e.g. via `requireSessionLogin`) and just
+ * need the role check, without re-resolving the session — see
+ * `requireAdminLogin` for the resolve-and-check-in-one-call version. */
+export function requireAdminRole(login: Doc<"performanceLogins">): void {
+  if (login.role !== "admin") {
+    throw new ConvexError({ code: "forbidden", message: "Admins only." });
+  }
+}
+
+/** Mirrors the reference script's `may_view_employee`: an admin sees
+ * everyone; a `mitarbeiter` login only its own linked employee. */
+export function requireCanViewEmployee(
+  login: Doc<"performanceLogins">,
+  employeeId: Id<"performanceEmployees">
+): void {
+  if (login.role === "admin") return;
+  if (login.employeeId === employeeId) return;
+  throw new ConvexError({
+    code: "forbidden",
+    message: "You can't view this employee.",
+  });
+}
+
 export const validateSession = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
