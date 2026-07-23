@@ -24,7 +24,7 @@
   "hero": {
     "title": "Mehr als ein Unternehmen, komplette",
     "titleHighlight": "Sales Power",
-    "subtitle": "Wir bringen Ihren Vertrieb auf das nächste Level!",
+    "subtitle": "Wir bringen Deinen Vertrieb auf das nächste Level!",
     "ctaPrimary": "Jetzt Kontakt aufnehmen",
     "ctaSecondary": "Unsere Marken entdecken"
   },
@@ -61,14 +61,14 @@
     "eyebrow": "Markenarchitektur",
     "title": "Unsere",
     "titleHighlight": "Marken",
-    "subtitle": "Vier starke Marken, ein gemeinsames Ziel: Ihr Vertriebserfolg",
+    "subtitle": "Vier starke Marken, ein gemeinsames Ziel: Dein Vertriebserfolg",
     "salespirates": {
       "tagline": "Externe Vertriebsagentur",
       "description": "Wir generieren Leads im Cold Calling, qualifizieren vor und übernehmen Deinen Inside Sales. Vom Lead bis zum Abschluss für einen maximalen Erfolg Deines Sales."
     },
     "rodeo": {
       "tagline": "Strategische Beratung",
-      "description": "Sales ist Wild West. Wir richten Ihren Vertrieb neu aus, machen ihn skalierbar und führen mit Effizienz zum Wachstum."
+      "description": "Sales ist Wild West. Wir richten Deinen Vertrieb neu aus, machen ihn skalierbar und führen mit Effizienz zum Wachstum."
     },
     "oldschool": {
       "tagline": "Authentische Trainings",
@@ -76,7 +76,7 @@
     },
     "salesai": {
       "tagline": "KI für den Vertrieb",
-      "description": "Wir zeigen, welche KI-Tools für Sales wirklich Sinn machen und wie Sie Ihren Vertrieb smarter gestalten."
+      "description": "Wir zeigen, welche KI-Tools für Sales wirklich Sinn machen und wie Du Deinen Vertrieb smarter gestaltest."
     },
     "cta": "Alle Marken entdecken"
   },
@@ -89,7 +89,7 @@
     "benefits": "Kostenfreie Erstberatung • Individuelle Lösungen • Individuelle Angebote"
   },
   "footer": {
-    "description": "Wir sind Ihr Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und vier starken Marken bringen wir Ihr Unternehmen voran.",
+    "description": "Wir sind Dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und vier starken Marken bringen wir Dein Unternehmen voran.",
     "quickLinks": "Quick Links",
     "ourBrands": "Unsere Marken",
     "contact": "Kontakt",
@@ -97,12 +97,12 @@
     "phone": "Telefon",
     "address": "Adresse",
     "legal": "Rechtliches",
-    "followUs": "Folgen Sie uns",
+    "followUs": "Folge uns",
     "copyright": "Alle Rechte vorbehalten."
   },
   "contact": {
     "title": "Kontakt",
-    "subtitle": "Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten",
+    "subtitle": "Lass uns gemeinsam an Deinem Vertriebserfolg arbeiten",
     "email": "E-Mail",
     "phone": "Telefon",
     "address": "Adresse",
@@ -115,7 +115,7 @@
       "otherInquiriesShort": "Anfrage"
     },
     "form": {
-      "company": "Ihr Firmenname",
+      "company": "Dein Firmenname",
       "firstName": "Vorname",
       "lastName": "Nachname",
       "email": "E-Mail",
@@ -124,40 +124,40 @@
       "submit": "Absenden",
       "callbackRequest": "Rückruf anfordern",
       "phonePlaceholder": "+49 123 456789",
-      "desiredTime": "Wann können wir Sie erreichen?",
+      "desiredTime": "Wann können wir Dich erreichen?",
       "notes": "Anmerkungen (optional)",
       "notesPlaceholder": "Worum geht es in dem Gespräch?",
-      "callbackEmailNote": "Für die Bestätigung Ihres Rückrufs",
-      "callbackTimeNote": "Wir rufen Sie zum gewünschten Zeitpunkt an",
-      "privacyPrefix": "Mit dem Absenden des Formulars erklären Sie sich damit einverstanden, dass die",
-      "privacySuffix": "Ihre angegebenen Daten zum Zweck der Bearbeitung Ihrer Anfrage verwendet. Ihre Daten werden ausschließlich zur Beantwortung Ihrer Anfrage gespeichert und nicht an Dritte weitergegeben.",
-      "privacySuffixCallback": "Ihre angegebenen Daten zum Zweck der Rückrufvereinbarung verwendet.",
-      "privacyLink": "Weitere Informationen finden Sie in unserer Datenschutzerklärung.",
+      "callbackEmailNote": "Für die Bestätigung Deines Rückrufs",
+      "callbackTimeNote": "Wir rufen Dich zum gewünschten Zeitpunkt an",
+      "privacyPrefix": "Mit dem Absenden des Formulars erklärst Du dich damit einverstanden, dass die",
+      "privacySuffix": "Deine angegebenen Daten zum Zweck der Bearbeitung Deiner Anfrage verwendet. Deine Daten werden ausschließlich zur Beantwortung Deiner Anfrage gespeichert und nicht an Dritte weitergegeben.",
+      "privacySuffixCallback": "Deine angegebenen Daten zum Zweck der Rückrufvereinbarung verwendet.",
+      "privacyLink": "Weitere Informationen findest Du in unserer Datenschutzerklärung.",
       "privacyNoteLabel": "HINWEIS AUF DATENSCHUTZ:"
     },
     "sidebar": {
       "title": "Warum",
-      "description1": "Ob Sie Unterstützung im aktiven Vertrieb, in der strategischen Beratung oder bei der Auswahl moderner KI-Lösungen suchen – wir helfen Ihnen dabei!",
-      "descriptionMessage": "Kontaktieren Sie uns für ein unverbindliches Beratungsgespräch und lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten.",
-      "descriptionCallback": "Vereinbaren Sie einen Rückruf und wir besprechen gemeinsam, wie wir Ihren Vertrieb voranbringen können.",
-      "descriptionOther": "Nutzen Sie dieses Formular für allgemeine Anfragen, Fragen zu Ihren Rechten oder andere Anliegen.",
-      "closingMessage": "Wir freuen uns auf Ihre Anfrage!",
-      "closingCallback": "Wir freuen uns auf Ihren Anruf!",
-      "closingOther": "Wir beantworten Ihre Anfrage schnellstmöglich!"
+      "description1": "Ob Du Unterstützung im aktiven Vertrieb, in der strategischen Beratung oder bei der Auswahl moderner KI-Lösungen suchst – wir helfen Dir dabei!",
+      "descriptionMessage": "Kontaktiere uns für ein unverbindliches Beratungsgespräch und lass uns gemeinsam an Deinem Vertriebserfolg arbeiten.",
+      "descriptionCallback": "Vereinbare einen Rückruf und wir besprechen gemeinsam, wie wir Deinen Vertrieb voranbringen können.",
+      "descriptionOther": "Nutze dieses Formular für allgemeine Anfragen, Fragen zu Deinen Rechten oder andere Anliegen.",
+      "closingMessage": "Wir freuen uns auf Deine Anfrage!",
+      "closingCallback": "Wir freuen uns auf Deinen Anruf!",
+      "closingOther": "Wir beantworten Deine Anfrage schnellstmöglich!"
     },
     "messages": {
-      "writeUs": "Schreiben Sie uns",
-      "writeUsDesc": "Senden Sie uns eine Nachricht und wir melden uns innerhalb von 24 Stunden",
+      "writeUs": "Schreib uns",
+      "writeUsDesc": "Sende uns eine Nachricht und wir melden uns innerhalb von 24 Stunden",
       "callback": "Rückruf vereinbaren",
-      "callbackDesc": "Teilen Sie uns mit, wann wir Sie am besten erreichen können",
+      "callbackDesc": "Teile uns mit, wann wir Dich am besten erreichen können",
       "otherInquiry": "Andere Anfrage",
-      "otherInquiryDesc": "Haben Sie Fragen oder allgemeine Anliegen? Wir helfen Ihnen gerne!",
+      "otherInquiryDesc": "Hast Du Fragen oder allgemeine Anliegen? Wir helfen Dir gerne!",
       "successTitle": "Gesendet!",
-      "successDesc": "Wir werden uns in bis zu 24h bei ihnen melden.",
+      "successDesc": "Wir werden uns in bis zu 24h bei Dir melden.",
       "callSuccessTitle": "Rückruf angefordert!",
-      "callSuccessDesc": "Wir rufen Sie zum gewünschten Zeitpunkt an.",
+      "callSuccessDesc": "Wir rufen Dich zum gewünschten Zeitpunkt an.",
       "errorTitle": "Etwas ist schiefgelaufen",
-      "errorDesc": "Bitte überprüfen Sie Ihre Eingaben"
+      "errorDesc": "Bitte überprüfe Deine Eingaben"
     },
     "submissionBanner": {
       "title": "Formulare vorübergehend nicht verfügbar",
@@ -177,45 +177,45 @@
         "remove": "Abbestellen"
       },
       "errors": {
-        "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-        "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+        "network": "Netzwerkfehler. Bitte überprüfe Deine Verbindung und versuche es erneut.",
         "invalidEmail": "Bitte eine gültige E-Mail-Adresse eingeben."
       },
       "subscribe": {
-        "title": "Bleiben Sie auf dem Laufenden",
-        "description": "Tragen Sie Ihre E-Mail ein und wir benachrichtigen Sie, sobald unsere Kontaktformulare wieder online sind.",
+        "title": "Bleib auf dem Laufenden",
+        "description": "Trag Deine E-Mail ein und wir benachrichtigen Dich, sobald unsere Kontaktformulare wieder online sind.",
         "cta": "Benachrichtigen",
         "loading": "Speichern…"
       },
       "remove": {
         "title": "E-Mail entfernen",
-        "description": "Geben Sie die E-Mail-Adresse ein, die aus unserer Benachrichtigungsliste entfernt werden soll.",
+        "description": "Gib die E-Mail-Adresse ein, die aus unserer Benachrichtigungsliste entfernt werden soll.",
         "cta": "Entfernen",
         "loading": "Entfernen…"
       },
       "success": {
-        "title": "Sie stehen auf der Liste!",
-        "description": "Wir senden Ihnen eine Benachrichtigung, sobald die Kontaktformulare wieder live sind."
+        "title": "Du stehst auf der Liste!",
+        "description": "Wir senden Dir eine Benachrichtigung, sobald die Kontaktformulare wieder live sind."
       },
       "duplicate": {
-        "title": "Sie stehen bereits auf der Liste!",
-        "description": "Ihre E-Mail-Adresse ist bereits hinterlegt. Wir melden uns, sobald die Formulare wieder live sind."
+        "title": "Du stehst bereits auf der Liste!",
+        "description": "Deine E-Mail-Adresse ist bereits hinterlegt. Wir melden uns, sobald die Formulare wieder live sind."
       },
       "removed": {
         "title": "E-Mail entfernt",
-        "description": "Ihre E-Mail-Adresse wurde aus unserer Benachrichtigungsliste entfernt. Sie erhalten keine weiteren Updates."
+        "description": "Deine E-Mail-Adresse wurde aus unserer Benachrichtigungsliste entfernt. Du erhältst keine weiteren Updates."
       }
     },
     "otherForm": {
       "topic": "Thema",
-      "selectTopic": "Bitte wählen Sie ein Thema",
+      "selectTopic": "Bitte wähle ein Thema",
       "topics": {
         "withdrawal": "Widerrufsrecht",
         "question": "Frage",
         "legal": "Rechtliches"
       },
       "subject": "Betreff",
-      "subjectPlaceholder": "Geben Sie einen spezifischen Betreff ein",
+      "subjectPlaceholder": "Gib einen spezifischen Betreff ein",
       "optional": "optional"
     },
     "accountHelper": {
@@ -237,7 +237,7 @@
   "about": {
     "hero": {
       "badge": "Über uns",
-      "titlePart1": "Ihre Heimat für",
+      "titlePart1": "Deine Heimat für",
       "titlePart2": "exzellenten Vertrieb",
       "subtitle": "Die <brand>advantis GmbH</brand> vereint über 15 Jahre Vertriebserfahrung unter einem Dach – mit Leidenschaft, Pragmatismus und einem klaren Fokus auf Erfolg."
     },
@@ -273,7 +273,7 @@
     },
     "cta": {
       "title": "Bereit für den nächsten Schritt?",
-      "description": "Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten. Ob Unterstützung im aktiven Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen Ihnen dabei.",
+      "description": "Lass uns gemeinsam an Deinem Vertriebserfolg arbeiten. Ob Unterstützung im aktiven Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen Dir dabei.",
       "button": "Kontakt aufnehmen"
     }
   },
@@ -301,7 +301,7 @@
     },
     "grid": {
       "title": "Unser Team",
-      "subtitle": "Die Experten an Ihrer Seite",
+      "subtitle": "Die Experten an Deiner Seite",
       "cardFooter": "Advantis Team"
     }
   },
@@ -311,12 +311,12 @@
       "titlePrefix": "Unsere",
       "titleSuffix": "Marken",
       "subtitle": "Maßgeschneiderte Sales-Lösungen für nachhaltigen Erfolg",
-      "scroll": "Entdecken Sie unsere Marken"
+      "scroll": "Entdecke unsere Marken"
     },
     "items": {
       "salespirates": {
-        "tagline": "Ihre externe Vertriebsagentur",
-        "description": "Ihre externe Vertriebsagentur für den Inbound- oder Outboundsales. Wir liefern Leads oder unterstützen Ihren Vertrieb – aktiv, zielgerichtet und mit messbaren Ergebnissen.",
+        "tagline": "Deine externe Vertriebsagentur",
+        "description": "Deine externe Vertriebsagentur für den Inbound- oder Outboundsales. Wir liefern Leads oder unterstützen Deinen Vertrieb – aktiv, zielgerichtet und mit messbaren Ergebnissen.",
         "highlights": {
           "0": "Lead-Generierung & Qualifizierung",
           "1": "Inbound & Outbound Sales",
@@ -325,7 +325,7 @@
       },
       "rodeo": {
         "tagline": "Strategische Sales-Beratung",
-        "description": "Sales ist Wild West und mit Rodeo kennen wir uns aus! Wir liefern Ihnen eine strategische Sales-Beratung, die Ihren Vertrieb neu ausrichtet, absolut skalierbar macht und mit Effizienz zum Wachstum führt.",
+        "description": "Sales ist Wild West und mit Rodeo kennen wir uns aus! Wir liefern Dir eine strategische Sales-Beratung, die Deinen Vertrieb neu ausrichtet, absolut skalierbar macht und mit Effizienz zum Wachstum führt.",
         "highlights": {
           "0": "Strategische Neuausrichtung",
           "1": "Skalierbare Prozesse",
@@ -334,7 +334,7 @@
       },
       "oldschool": {
         "tagline": "Authentische Sales-Trainings",
-        "description": "Die Welt braucht keinen neuen Sales Schnick-Schnack. Wir bringen Ihre Sales Teams mit authentischen Sales-Coachings to the Max! Das Zauberwort hier ist Nachhaltigkeit. Sie können 1000 Sales Coachings buchen, ohne im daily Business jemals erfolgreich damit zu sein – wir haben das eine Training, dass Sie und Ihr Team wirklich weiterbringt. Erfahrung, Empathie und echte Praxis treffen bei uns auf moderne Lernmethoden.",
+        "description": "Die Welt braucht keinen neuen Sales Schnick-Schnack. Wir bringen Dein Sales Team mit authentischen Sales-Coachings to the Max! Das Zauberwort hier ist Nachhaltigkeit. Du kannst 1000 Sales Coachings buchen, ohne im daily Business jemals erfolgreich damit zu sein – wir haben das eine Training, das Dich und Dein Team wirklich weiterbringt. Erfahrung, Empathie und echte Praxis treffen bei uns auf moderne Lernmethoden.",
         "highlights": {
           "0": "Nachhaltige Trainings",
           "1": "Praxisorientiert",
@@ -343,7 +343,7 @@
       },
       "salesai": {
         "tagline": "KI für intelligenten Vertrieb",
-        "description": "Alle sprechen über KI Tools. Wir beraten Sie, welche KI-Tools für Sales-Teams aktuell Sinn machen und einen echten Mehrwert bringen. Wir zeigen Ihnen, wie KI Technologie Ihren Vertrieb tatsächlich smarter macht.",
+        "description": "Alle sprechen über KI Tools. Wir beraten Dich, welche KI-Tools für Sales-Teams aktuell Sinn machen und einen echten Mehrwert bringen. Wir zeigen Dir, wie KI Technologie Deinen Vertrieb tatsächlich smarter macht.",
         "highlights": {
           "0": "KI-Tool Beratung",
           "1": "Praktische Integration",
@@ -353,8 +353,8 @@
     },
     "cta": {
       "titlePart1": "Welche Marke",
-      "titlePart2": "passt zu Ihnen?",
-      "description": "Lassen Sie uns gemeinsam herausfinden, wie wir Ihren Vertrieb auf das nächste Level bringen können.",
+      "titlePart2": "passt zu Dir?",
+      "description": "Lass uns gemeinsam herausfinden, wie wir Deinen Vertrieb auf das nächste Level bringen können.",
       "button": "Jetzt Kontakt aufnehmen"
     },
     "learnMore": "Mehr erfahren"
@@ -459,15 +459,15 @@
   },
   "email": {
     "greeting": "Hallo {firstName} {lastName},",
-    "bodyIntro": "vielen Dank für Ihre Nachricht. Dies ist eine Kopie der Anfrage, die wir soeben erhalten haben.",
-    "bodyOutro": "Wir prüfen Ihr Anliegen und werden uns schnellstmöglich – in der Regel innerhalb der nächsten 24 Stunden – bei Ihnen melden.",
-    "yourMessage": "Ihre Nachricht:",
+    "bodyIntro": "vielen Dank für Deine Nachricht. Dies ist eine Kopie der Anfrage, die wir soeben erhalten haben.",
+    "bodyOutro": "Wir prüfen Dein Anliegen und werden uns schnellstmöglich – in der Regel innerhalb der nächsten 24 Stunden – bei Dir melden.",
+    "yourMessage": "Deine Nachricht:",
     "poweredBy": "Powered by",
     "rightsReserved": "Alle Rechte vorbehalten.",
     "subject": "Betreff",
     "topic": "Thema",
-    "confirmationTitle": "Wir haben Ihre Anfrage erhalten",
-    "confirmationBody": "Vielen Dank für Ihre Nachricht. Wir haben Ihr Anliegen erfasst und werden uns so schnell wie möglich bei Ihnen melden.",
+    "confirmationTitle": "Wir haben Deine Anfrage erhalten",
+    "confirmationBody": "Vielen Dank für Deine Nachricht. Wir haben Dein Anliegen erfasst und werden uns so schnell wie möglich bei Dir melden.",
     "submissionType": "Anfragetyp",
     "contactEmail": "E-Mail",
     "contactPhone": "Telefon",
@@ -537,7 +537,7 @@
       "offeringsTitle": "Unsere Leistungen",
       "ctaTitle": "Jetzt beraten lassen",
       "ctaButton": "Kostenlos beraten lassen",
-      "relatedTitle": "Das könnte Sie auch interessieren",
+      "relatedTitle": "Das könnte Dich auch interessieren",
       "backLabel": "Zurück zur Übersicht",
       "seoLabel": "Themen",
       "vertriebstrainingTile": {
@@ -554,9 +554,9 @@
         "title": "Customer Care – Professioneller Kundenservice mit KI-Unterstützung",
         "heroSubtitle": "Ein exzellenter Customer Care entscheidet heute maßgeblich darüber, wie Kunden ein Unternehmen wahrnehmen. Die Advantis Group verbindet persönliche Kundenbetreuung mit modernen AI-Lösungen. Künstliche Intelligenz unterstützt unsere Servicemitarbeiter durch intelligente Wissensdatenbanken, Antwortvorschläge in Echtzeit, automatische Gesprächszusammenfassungen, Ticketklassifizierung und Workflow-Automatisierung. So entstehen schnellere Reaktionszeiten, höhere Qualität und ein konsistentes Kundenerlebnis.",
         "whatTitle": "Was bedeutet Customer Care?",
-        "whatText": "Customer Care umfasst alle Maßnahmen zur Betreuung Ihrer Kunden entlang der gesamten Customer Journey – von der ersten Anfrage bis zum After-Sales-Service. Moderne AI-Systeme analysieren Anfragen, priorisieren Tickets, erkennen Stimmungen (Sentiment Analysis) und unterstützen Mitarbeitende mit passenden Lösungsvorschlägen.",
+        "whatText": "Customer Care umfasst alle Maßnahmen zur Betreuung Deiner Kunden entlang der gesamten Customer Journey – von der ersten Anfrage bis zum After-Sales-Service. Moderne AI-Systeme analysieren Anfragen, priorisieren Tickets, erkennen Stimmungen (Sentiment Analysis) und unterstützen Mitarbeitende mit passenden Lösungsvorschlägen.",
         "offeringsText": "Wir übernehmen Customer Service Hotlines, Beschwerde- und Reklamationsmanagement, After-Sales-Service sowie Kundenbetreuung per Telefon, E-Mail und Chat. Unsere AI-Lösungen automatisieren wiederkehrende Prozesse, erstellen Gesprächsnotizen, schlagen Antworten vor und helfen dabei, Service-Level einzuhalten.",
-        "aiTitle": "AI-Lösungen für Ihren Customer Care",
+        "aiTitle": "AI-Lösungen für Deinen Customer Care",
         "aiItems": [
           "KI-Chatbots für Standardanfragen",
           "AI Voicebots zur Vorqualifizierung",
@@ -572,19 +572,19 @@
         "extraSections": [
           {
             "title": "Customer Care Outsourcing",
-            "text": "Unsere Teams arbeiten nahtlos mit Ihren Prozessen zusammen. Durch den Einsatz von AI können Bearbeitungszeiten reduziert, First-Contact-Resolution verbessert und Kosten gesenkt werden."
+            "text": "Unsere Teams arbeiten nahtlos mit Deinen Prozessen zusammen. Durch den Einsatz von AI können Bearbeitungszeiten reduziert, First-Contact-Resolution verbessert und Kosten gesenkt werden."
           },
           {
             "title": "Technologie",
-            "text": "Wir integrieren uns u. a. in Salesforce, HubSpot, Microsoft Dynamics, Zendesk, Freshdesk, SAP und individuelle CRM-Systeme. AI-Agenten lassen sich in bestehende Systemlandschaften integrieren, ohne Ihre Prozesse zu ersetzen."
+            "text": "Wir integrieren uns u. a. in Salesforce, HubSpot, Microsoft Dynamics, Zendesk, Freshdesk, SAP und individuelle CRM-Systeme. AI-Agenten lassen sich in bestehende Systemlandschaften integrieren, ohne Deine Prozesse zu ersetzen."
           },
           {
             "title": "Datenschutz",
             "text": "Alle AI-Lösungen werden unter Berücksichtigung der DSGVO eingesetzt. Datenschutz, Informationssicherheit und transparente Prozesse haben höchste Priorität."
           }
         ],
-        "whyText": "Wir kombinieren erfahrene Customer-Care-Teams mit intelligenter Automatisierung. Dadurch erhalten Sie einen modernen Kundenservice, der persönliche Betreuung mit Effizienz, Skalierbarkeit und messbaren Ergebnissen verbindet.",
-        "ctaText": "Sie möchten Ihren Kundenservice modernisieren oder AI sinnvoll integrieren? Wir entwickeln gemeinsam mit Ihnen eine individuelle Customer-Care-Strategie – von der Prozessanalyse bis zur operativen Umsetzung.",
+        "whyText": "Wir kombinieren erfahrene Customer-Care-Teams mit intelligenter Automatisierung. Dadurch erhältst Du einen modernen Kundenservice, der persönliche Betreuung mit Effizienz, Skalierbarkeit und messbaren Ergebnissen verbindet.",
+        "ctaText": "Möchtest Du Deinen Kundenservice modernisieren oder AI sinnvoll integrieren? Wir entwickeln gemeinsam mit Dir eine individuelle Customer-Care-Strategie – von der Prozessanalyse bis zur operativen Umsetzung.",
         "seoKeywords": "Customer Care, Kundenservice, Customer Service, Beschwerdemanagement, After-Sales-Service, KI Kundenservice, AI Customer Care, Chatbot, Voicebot, CRM, Salesforce, DSGVO."
       },
       "contact-center": {
@@ -629,7 +629,7 @@
           }
         ],
         "whyText": "Wir kombinieren moderne Contact-Center-Technologie mit erfahrenen Service- und Vertriebsteams. Das Ergebnis sind schnellere Prozesse, zufriedene Kunden, messbare KPIs und eine skalierbare Kommunikationslösung für Unternehmen jeder Größe.",
-        "ctaText": "Sie möchten Ihr Call Center zu einem modernen Contact Center weiterentwickeln oder AI sinnvoll einsetzen? Gemeinsam entwickeln wir eine individuelle Lösung – von der Strategie bis zum operativen Betrieb.",
+        "ctaText": "Möchtest Du Dein Call Center zu einem modernen Contact Center weiterentwickeln oder AI sinnvoll einsetzen? Gemeinsam entwickeln wir eine individuelle Lösung – von der Strategie bis zum operativen Betrieb.",
         "seoKeywords": "Contact Center, Contact Center Outsourcing, Kundenservice, Customer Service, Inbound Service, Outbound Service, Helpdesk, Service Desk, Omnichannel, AI Contact Center, KI Kundenservice, Voicebot, Chatbot, Contact Center Deutschland, CRM, Salesforce, Customer Experience, BPO, DSGVO."
       },
       "telesales": {
@@ -641,7 +641,7 @@
         "heroSubtitle": "Professioneller Telesales ist weit mehr als Telefonverkauf. Die Advantis Group verbindet erfahrene Sales Consultants mit modernen AI-Lösungen, datengetriebenen Vertriebsprozessen und bewährten Verkaufsstrategien. Das Ergebnis sind mehr qualifizierte Gespräche, höhere Abschlussquoten und nachhaltiges Umsatzwachstum.",
         "whatTitle": "Warum Telesales?",
         "whatText": "Der telefonische Vertrieb ermöglicht den direkten Dialog mit Entscheidern, verkürzt Vertriebszyklen und schafft persönliche Beziehungen. Besonders im B2B-Umfeld ist Telesales ein effizienter Kanal zur Leadgenerierung und Neukundengewinnung.",
-        "offeringsText": "Wir übernehmen die telefonische Neukundengewinnung, Leadqualifizierung, Terminvereinbarung, Angebotsverfolgung, Cross- und Upselling, Bestandskundenbetreuung sowie die vollständige Begleitung Ihrer Sales Pipeline – von der Erstansprache bis zum Vertragsabschluss.",
+        "offeringsText": "Wir übernehmen die telefonische Neukundengewinnung, Leadqualifizierung, Terminvereinbarung, Angebotsverfolgung, Cross- und Upselling, Bestandskundenbetreuung sowie die vollständige Begleitung Deiner Sales Pipeline – von der Erstansprache bis zum Vertragsabschluss.",
         "aiTitle": "AI-gestützte Vertriebsunterstützung",
         "aiItems": [
           "KI-gestützte Lead-Priorisierung",
@@ -661,15 +661,15 @@
           },
           {
             "title": "CRM & Digitalisierung",
-            "text": "Unsere Teams arbeiten direkt in Salesforce, HubSpot, Microsoft Dynamics oder Ihrem bestehenden CRM. Alle Aktivitäten werden transparent dokumentiert und durch KI-gestützte Auswertungen ergänzt."
+            "text": "Unsere Teams arbeiten direkt in Salesforce, HubSpot, Microsoft Dynamics oder Deinem bestehenden CRM. Alle Aktivitäten werden transparent dokumentiert und durch KI-gestützte Auswertungen ergänzt."
           },
           {
             "title": "Branchen",
             "text": "Unsere Telesales-Teams unterstützen Unternehmen aus Industrie, Software, SaaS, Energie, Mobilität, Logistik, Handel, Finanzdienstleistungen und vielen weiteren B2B-Branchen."
           }
         ],
-        "whyText": "Wir kombinieren operative Vertriebserfahrung, moderne Technologien und AI-Automatisierung. Dadurch steigern wir die Produktivität Ihrer Vertriebsorganisation und schaffen messbare Ergebnisse – von mehr Leads bis zu höheren Abschlussquoten.",
-        "ctaText": "Sie möchten Ihren telefonischen Vertrieb professionalisieren oder einen skalierbaren Telesales-Prozess aufbauen? Gemeinsam entwickeln wir die passende Strategie und übernehmen auf Wunsch die komplette operative Umsetzung.",
+        "whyText": "Wir kombinieren operative Vertriebserfahrung, moderne Technologien und AI-Automatisierung. Dadurch steigern wir die Produktivität Deiner Vertriebsorganisation und schaffen messbare Ergebnisse – von mehr Leads bis zu höheren Abschlussquoten.",
+        "ctaText": "Möchtest Du Deinen telefonischen Vertrieb professionalisieren oder einen skalierbaren Telesales-Prozess aufbauen? Gemeinsam entwickeln wir die passende Strategie und übernehmen auf Wunsch die komplette operative Umsetzung.",
         "seoKeywords": "Telesales, Telefonvertrieb, B2B Vertrieb, Neukundengewinnung, Leadgenerierung, Inside Sales, Sales Outsourcing, Kaltakquise, Terminvereinbarung, Business Development, AI Sales, KI im Vertrieb, CRM, Salesforce, Vertrieb auslagern, Lead Management, Conversion Optimierung."
       },
       "new-customer-acquisition": {
@@ -678,10 +678,10 @@
         "metaTitle": "Neukundengewinnung mit KI",
         "metaDescription": "Individuelle Strategien zur Neukundengewinnung: Leadgenerierung, Qualifizierung und Vertragsabschluss – datenbasiert und KI-gestützt.",
         "title": "Neukundengewinnung – Nachhaltiges Wachstum durch moderne Vertriebsstrategien & KI",
-        "heroSubtitle": "Neue Kunden sind die Grundlage für nachhaltiges Unternehmenswachstum. Die Advantis Group entwickelt individuelle Strategien zur Neukundengewinnung und kombiniert erfahrene Vertriebsteams mit datenbasierten Prozessen und künstlicher Intelligenz. So erreichen Sie schneller die richtigen Entscheider und steigern Ihre Abschlussquote.",
+        "heroSubtitle": "Neue Kunden sind die Grundlage für nachhaltiges Unternehmenswachstum. Die Advantis Group entwickelt individuelle Strategien zur Neukundengewinnung und kombiniert erfahrene Vertriebsteams mit datenbasierten Prozessen und künstlicher Intelligenz. So erreichst Du schneller die richtigen Entscheider und steigerst Deine Abschlussquote.",
         "whatTitle": "",
         "whatText": "",
-        "offeringsText": "Wir unterstützen Sie entlang des gesamten Vertriebsprozesses – von der Zielgruppenanalyse über Leadgenerierung, Leadqualifizierung und Terminvereinbarung bis hin zum Angebotsmanagement, Follow-up und erfolgreichen Vertragsabschluss. Auf Wunsch übernehmen wir den kompletten Vertriebsprozess als Outsourcing-Partner.",
+        "offeringsText": "Wir unterstützen Dich entlang des gesamten Vertriebsprozesses – von der Zielgruppenanalyse über Leadgenerierung, Leadqualifizierung und Terminvereinbarung bis hin zum Angebotsmanagement, Follow-up und erfolgreichen Vertragsabschluss. Auf Wunsch übernehmen wir den kompletten Vertriebsprozess als Outsourcing-Partner.",
         "aiTitle": "KI-gestützte Neukundengewinnung",
         "aiItems": [
           "AI-gestützte Zielgruppenanalyse",
@@ -697,7 +697,7 @@
         "extraSections": [
           {
             "title": "Mehr qualifizierte Leads",
-            "text": "Erfolgreiche Neukundengewinnung beginnt mit der richtigen Zielgruppe. Gemeinsam definieren wir Ihr Ideal Customer Profile (ICP), identifizieren Potenziale und entwickeln einen skalierbaren Lead-Funnel für langfristiges Wachstum."
+            "text": "Erfolgreiche Neukundengewinnung beginnt mit der richtigen Zielgruppe. Gemeinsam definieren wir Dein Ideal Customer Profile (ICP), identifizieren Potenziale und entwickeln einen skalierbaren Lead-Funnel für langfristiges Wachstum."
           },
           {
             "title": "Omnichannel-Vertrieb",
@@ -713,7 +713,7 @@
           }
         ],
         "whyText": "Wir verbinden Strategie, operative Umsetzung und moderne AI-Technologien. Das Ergebnis sind mehr qualifizierte Leads, kürzere Vertriebszyklen, höhere Conversion Rates und ein planbarer Vertriebserfolg.",
-        "ctaText": "Sie möchten Ihre Neukundengewinnung professionalisieren oder Ihren Vertrieb skalieren? Gemeinsam entwickeln wir eine individuelle Strategie und begleiten Sie von der ersten Idee bis zum messbaren Erfolg.",
+        "ctaText": "Möchtest Du Deine Neukundengewinnung professionalisieren oder Deinen Vertrieb skalieren? Gemeinsam entwickeln wir eine individuelle Strategie und begleiten Dich von der ersten Idee bis zum messbaren Erfolg.",
         "seoKeywords": "Neukundengewinnung, B2B Neukunden, Leadgenerierung, Lead Management, Lead Qualifizierung, Vertrieb, Telesales, Inside Sales, Sales Outsourcing, Business Development, Kaltakquise, Terminvereinbarung, CRM, Salesforce, KI im Vertrieb, AI Sales, Vertrieb automatisieren, Conversion Optimierung."
       },
       "customer-experience": {
@@ -749,11 +749,11 @@
           },
           {
             "title": "CRM & Daten",
-            "text": "Wir integrieren bestehende CRM-Systeme wie Salesforce, HubSpot, Microsoft Dynamics oder SAP und schaffen eine 360°-Sicht auf Ihre Kunden. So stehen Ihrem Team alle relevanten Informationen in jedem Kontakt zur Verfügung."
+            "text": "Wir integrieren bestehende CRM-Systeme wie Salesforce, HubSpot, Microsoft Dynamics oder SAP und schaffen eine 360°-Sicht auf Deine Kunden. So stehen Deinem Team alle relevanten Informationen in jedem Kontakt zur Verfügung."
           }
         ],
         "whyText": "Wir verbinden Customer Care, Vertrieb, Digitalisierung und künstliche Intelligenz zu einer ganzheitlichen Customer-Experience-Strategie. Unser Ziel sind messbare Verbesserungen entlang der gesamten Customer Journey.",
-        "ctaText": "Sie möchten Ihre Customer Experience nachhaltig verbessern? Gemeinsam analysieren wir Ihre Kundenreise, entwickeln individuelle Maßnahmen und setzen moderne AI-Lösungen ein, um Ihre Kunden langfristig zu begeistern.",
+        "ctaText": "Möchtest Du Deine Customer Experience nachhaltig verbessern? Gemeinsam analysieren wir Deine Kundenreise, entwickeln individuelle Maßnahmen und setzen moderne AI-Lösungen ein, um Deine Kunden langfristig zu begeistern.",
         "seoKeywords": "Customer Experience, Customer Journey, Kundenzufriedenheit, Customer Experience Management, Customer Care, Contact Center, Omnichannel, Customer Service, CX Strategie, KI Customer Experience, AI Customer Service, Voicebot, Chatbot, CRM, Salesforce, NPS, CSAT."
       },
       "ai-automation": {
@@ -799,7 +799,7 @@
           }
         ],
         "whyText": "Wir verbinden AI-Kompetenz mit langjähriger Erfahrung in Vertrieb, Customer Care und Prozessoptimierung. Gemeinsam identifizieren wir Automatisierungspotenziale, entwickeln individuelle Lösungen und begleiten die Einführung bis in den operativen Betrieb.",
-        "ctaText": "Sie möchten künstliche Intelligenz sinnvoll in Ihrem Unternehmen einsetzen? Wir analysieren Ihre Prozesse, identifizieren Quick Wins und entwickeln eine skalierbare KI-Strategie – von der ersten Idee bis zur erfolgreichen Implementierung.",
+        "ctaText": "Möchtest Du künstliche Intelligenz sinnvoll in Deinem Unternehmen einsetzen? Wir analysieren Deine Prozesse, identifizieren Quick Wins und entwickeln eine skalierbare KI-Strategie – von der ersten Idee bis zur erfolgreichen Implementierung.",
         "seoKeywords": "KI-Automatisierung, Artificial Intelligence, AI Automation, AI Agents, KI-Agenten, Business Process Automation, Prozessautomatisierung, KI im Vertrieb, KI im Kundenservice, Chatbot, Voicebot, CRM Automatisierung, Salesforce KI, Workflow Automation, Generative AI, Digitale Transformation, Machine Learning, Automatisierung Unternehmen."
       },
       "crm": {
@@ -826,11 +826,11 @@
         "extraSections": [
           {
             "title": "Mehr als Software – optimierte Prozesse",
-            "text": "Ein CRM entfaltet seinen Mehrwert erst durch klar definierte Prozesse. Gemeinsam analysieren wir Ihre Customer Journey, Sales Pipeline und Serviceabläufe und schaffen standardisierte, messbare und skalierbare Workflows."
+            "text": "Ein CRM entfaltet seinen Mehrwert erst durch klar definierte Prozesse. Gemeinsam analysieren wir Deine Customer Journey, Sales Pipeline und Serviceabläufe und schaffen standardisierte, messbare und skalierbare Workflows."
           },
           {
-            "title": "Ihre Vorteile",
-            "text": "Mit einem optimal eingerichteten CRM steigern Sie Transparenz, Abschlussquoten und Kundenzufriedenheit. Gleichzeitig reduzieren Sie manuelle Tätigkeiten, verbessern die Zusammenarbeit zwischen Vertrieb und Service und erhalten belastbare Kennzahlen für fundierte Entscheidungen."
+            "title": "Deine Vorteile",
+            "text": "Mit einem optimal eingerichteten CRM steigerst Du Transparenz, Abschlussquoten und Kundenzufriedenheit. Gleichzeitig reduzierst Du manuelle Tätigkeiten, verbesserst die Zusammenarbeit zwischen Vertrieb und Service und erhältst belastbare Kennzahlen für fundierte Entscheidungen."
           },
           {
             "title": "Datenschutz & Integration",
@@ -838,7 +838,7 @@
           }
         ],
         "whyText": "Wir kombinieren langjährige operative Erfahrung in Vertrieb, Customer Care und Digitalisierung mit tiefem Know-how in Salesforce und HubSpot. Unser Fokus liegt auf messbaren Ergebnissen, hoher Benutzerakzeptanz und nachhaltiger Prozessverbesserung.",
-        "ctaText": "Sie möchten Salesforce oder HubSpot optimal nutzen oder ein CRM neu einführen? Wir begleiten Sie von der Analyse über die Implementierung bis zur kontinuierlichen Optimierung und unterstützen Ihr Team im täglichen Einsatz.",
+        "ctaText": "Möchtest Du Salesforce oder HubSpot optimal nutzen oder ein CRM neu einführen? Wir begleiten Dich von der Analyse über die Implementierung bis zur kontinuierlichen Optimierung und unterstützen Dein Team im täglichen Einsatz.",
         "seoKeywords": "CRM Beratung, Salesforce Beratung, HubSpot Beratung, Salesforce Implementierung, HubSpot Implementierung, CRM Einführung, CRM Optimierung, Sales Automation, Marketing Automation, Lead Management, Opportunity Management, Customer Relationship Management, CRM Deutschland, KI im CRM, Salesforce Experten, HubSpot Experten."
       },
       "sales-academy": {
@@ -877,7 +877,7 @@
           }
         ],
         "whyText": "Unsere Trainer verfügen über langjährige operative Erfahrung im B2B-Vertrieb, Customer Care und Contact Center. Wir vermitteln keine Theorie aus Lehrbüchern, sondern praxiserprobte Methoden, die täglich im Vertrieb erfolgreich eingesetzt werden.",
-        "ctaText": "Sie möchten Ihre Vertriebsmannschaft weiterentwickeln oder eine moderne Sales Academy in Ihrem Unternehmen etablieren? Gemeinsam entwickeln wir ein individuelles Trainingskonzept – als Präsenztraining, Online-Workshop oder Blended-Learning-Programm.",
+        "ctaText": "Möchtest Du Deine Vertriebsmannschaft weiterentwickeln oder eine moderne Sales Academy in Deinem Unternehmen etablieren? Gemeinsam entwickeln wir ein individuelles Trainingskonzept – als Präsenztraining, Online-Workshop oder Blended-Learning-Programm.",
         "seoKeywords": "Sales Academy, Vertriebstraining, Sales Training, Verkaufstraining, Telesales Training, Inside Sales Training, Kaltakquise Training, Customer Care Training, Contact Center Training, Salesforce Training, HubSpot Training, Sales Coaching, Führungskräftetraining Vertrieb, Onboarding Vertrieb, KI im Vertrieb, Sales Enablement."
       },
       "lead-management": {
@@ -917,7 +917,7 @@
           }
         ],
         "whyText": "Unsere Erfahrung aus Vertrieb, Customer Care, CRM und Digitalisierung ermöglicht es uns, Lead-Management-Prozesse ganzheitlich zu gestalten. Wir verbinden operative Umsetzung mit moderner KI und schaffen skalierbare Prozesse für nachhaltiges Wachstum.",
-        "ctaText": "Sie möchten Ihre Leadbearbeitung professionalisieren oder Ihre Conversion Rate steigern? Gemeinsam entwickeln wir einen effizienten Lead-Management-Prozess – von der ersten Kontaktaufnahme bis zum erfolgreichen Vertragsabschluss.",
+        "ctaText": "Möchtest Du Deine Leadbearbeitung professionalisieren oder Deine Conversion Rate steigern? Gemeinsam entwickeln wir einen effizienten Lead-Management-Prozess – von der ersten Kontaktaufnahme bis zum erfolgreichen Vertragsabschluss.",
         "seoKeywords": "Lead Management, Lead Scoring, Lead Qualifizierung, Lead Nurturing, Lead Routing, Sales Funnel, Conversion Rate, Opportunity Management, CRM, Salesforce, HubSpot, Leadgenerierung, Vertriebsprozess, Marketing Automation, KI Lead Management, AI Sales."
       },
       "sales-outsourcing": {
@@ -926,10 +926,10 @@
         "metaTitle": "Sales Outsourcing: Vertrieb auslagern",
         "metaDescription": "Vertrieb auslagern an die Advantis Group: Leadgenerierung, Inside Sales und komplette Vertriebsprozesse als externer Partner.",
         "title": "Sales Outsourcing – Vertrieb auslagern mit erfahrenen Sales-Experten",
-        "heroSubtitle": "Nicht jedes Unternehmen braucht einen eigenen Vertriebsapparat – aber jedes Unternehmen braucht Vertriebserfolg. Die Advantis Group übernimmt Teile oder den kompletten Vertriebsprozess Ihres Unternehmens: von der Leadgenerierung bis zum Vertragsabschluss. Flexibel, skalierbar und ohne die Fixkosten eines eigenen Sales-Teams.",
+        "heroSubtitle": "Nicht jedes Unternehmen braucht einen eigenen Vertriebsapparat – aber jedes Unternehmen braucht Vertriebserfolg. Die Advantis Group übernimmt Teile oder den kompletten Vertriebsprozess Deines Unternehmens: von der Leadgenerierung bis zum Vertragsabschluss. Flexibel, skalierbar und ohne die Fixkosten eines eigenen Sales-Teams.",
         "whatTitle": "Was bedeutet Sales Outsourcing?",
         "whatText": "Sales Outsourcing bedeutet, dass ein externer Partner Vertriebsaufgaben übernimmt – von einzelnen Prozessschritten wie der Terminvereinbarung bis zum kompletten Sales Funnel. Unternehmen gewinnen dadurch Flexibilität, sparen Aufbauzeit und profitieren von eingespielten, erfahrenen Vertriebsteams.",
-        "offeringsText": "Wir übernehmen Leadgenerierung, Terminierung, Inside Sales, Angebotsverfolgung und komplette Vertriebsprozesse als externer Partner. Auf Wunsch agieren wir als verlängerter Arm Ihres Vertriebsteams oder als eigenständige Vertriebseinheit für neue Märkte und Produkte.",
+        "offeringsText": "Wir übernehmen Leadgenerierung, Terminierung, Inside Sales, Angebotsverfolgung und komplette Vertriebsprozesse als externer Partner. Auf Wunsch agieren wir als verlängerter Arm Deines Vertriebsteams oder als eigenständige Vertriebseinheit für neue Märkte und Produkte.",
         "aiTitle": "KI-gestütztes Sales Outsourcing",
         "aiItems": [
           "KI-gestützte Lead-Priorisierung und Zielgruppenanalyse",
@@ -942,19 +942,19 @@
         "extraSections": [
           {
             "title": "Flexibel skalieren",
-            "text": "Ob Projektgeschäft, Markteintritt oder Kapazitätsspitzen – wir skalieren Ihr Vertriebsteam bedarfsgerecht, ohne dass Sie eigene Mitarbeitende einstellen, einarbeiten oder auslasten müssen."
+            "text": "Ob Projektgeschäft, Markteintritt oder Kapazitätsspitzen – wir skalieren Dein Vertriebsteam bedarfsgerecht, ohne dass Du eigene Mitarbeitende einstellen, einarbeiten oder auslasten musst."
           },
           {
             "title": "Transparente Zusammenarbeit",
-            "text": "Alle Aktivitäten werden in Ihrem CRM dokumentiert und sind jederzeit nachvollziehbar. Regelmäßige Reportings und klare KPIs sorgen für volle Transparenz über den Erfolg der Zusammenarbeit."
+            "text": "Alle Aktivitäten werden in Deinem CRM dokumentiert und sind jederzeit nachvollziehbar. Regelmäßige Reportings und klare KPIs sorgen für volle Transparenz über den Erfolg der Zusammenarbeit."
           },
           {
             "title": "Für welche Unternehmen?",
             "text": "Unsere Sales-Outsourcing-Lösungen eignen sich für B2B-Unternehmen aus Industrie, Software, SaaS, Energie, Logistik, Handel und Finanzdienstleistungen, die Vertriebskapazität aufbauen wollen, ohne das volle Risiko eines eigenen Teams zu tragen."
           }
         ],
-        "whyText": "Wir bringen über 15 Jahre operative Vertriebserfahrung und moderne KI-Technologie in jede Zusammenarbeit ein. Sie erhalten ein eingespieltes Sales-Team, das von Tag eins an liefert – messbar, skalierbar und ohne langwierigen Aufbauprozess.",
-        "ctaText": "Sie möchten Vertriebskapazität aufbauen, ohne ein eigenes Team aufzubauen? Gemeinsam finden wir das passende Modell – von einzelnen Vertriebsaufgaben bis zum kompletten Outsourcing Ihres Sales-Prozesses.",
+        "whyText": "Wir bringen über 15 Jahre operative Vertriebserfahrung und moderne KI-Technologie in jede Zusammenarbeit ein. Du erhältst ein eingespieltes Sales-Team, das von Tag eins an liefert – messbar, skalierbar und ohne langwierigen Aufbauprozess.",
+        "ctaText": "Möchtest Du Vertriebskapazität aufbauen, ohne ein eigenes Team aufzubauen? Gemeinsam finden wir das passende Modell – von einzelnen Vertriebsaufgaben bis zum kompletten Outsourcing Deines Sales-Prozesses.",
         "seoKeywords": "Sales Outsourcing, Vertrieb auslagern, Vertriebsoutsourcing, Außendienst outsourcen, Inside Sales Outsourcing, Vertriebspartner, B2B Vertrieb, Leadgenerierung, Telesales, Neukundengewinnung, Sales as a Service, KI im Vertrieb, Vertriebsprozess, CRM, Salesforce."
       },
       "business-development": {
@@ -987,11 +987,11 @@
           },
           {
             "title": "Partnerschaften & Kooperationen",
-            "text": "Wir identifizieren strategische Partner und Vertriebskanäle und unterstützen beim Aufbau langfristiger Kooperationen, die Ihr Wachstum zusätzlich beschleunigen."
+            "text": "Wir identifizieren strategische Partner und Vertriebskanäle und unterstützen beim Aufbau langfristiger Kooperationen, die Dein Wachstum zusätzlich beschleunigen."
           }
         ],
         "whyText": "Wir verbinden strategische Beratung mit operativer Vertriebserfahrung und moderner KI-Technologie. So werden aus Wachstumsideen konkrete, messbare Ergebnisse – von der ersten Marktanalyse bis zur erfolgreichen Umsetzung.",
-        "ctaText": "Sie möchten neue Märkte erschließen oder Ihre Wachstumsstrategie schärfen? Gemeinsam entwickeln wir einen klaren Fahrplan – von der Analyse bis zur operativen Umsetzung.",
+        "ctaText": "Möchtest Du neue Märkte erschließen oder Deine Wachstumsstrategie schärfen? Gemeinsam entwickeln wir einen klaren Fahrplan – von der Analyse bis zur operativen Umsetzung.",
         "seoKeywords": "Business Development, Marktentwicklung, Markteintritt, Wachstumsstrategie, Vertriebsstrategie, Neue Märkte erschließen, Vertriebsstrukturen aufbauen, B2B Vertrieb, Sales Outsourcing, KI im Vertrieb, Strategieberatung, Expansion, Partnerschaften."
       }
     }
