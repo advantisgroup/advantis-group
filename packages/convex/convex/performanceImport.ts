@@ -16,7 +16,7 @@
  */
 import { ConvexError, v } from "convex/values";
 
-import { type Id } from "./_generated/dataModel";
+import { type Doc, type Id } from "./_generated/dataModel";
 import {
   internalMutation,
   internalQuery,
@@ -557,6 +557,80 @@ const reportKindValidator = v.union(
   v.literal("template")
 );
 
+const flaggableFieldValidator = v.union(
+  v.literal("talkTotalSec"),
+  v.literal("talkAvgSec"),
+  v.literal("loginSec")
+);
+
+const flaggedRowInputValidator = v.object({
+  employeeName: v.string(),
+  reportDate: v.string(),
+  field: flaggableFieldValidator,
+  rawSeconds: v.number(),
+  rawText: v.string(),
+});
+
+/** Upserts a single flagged (implausible-duration) row, keyed on
+ * (employeeId, reportDate, field) like `upsertSnapshot`. A re-import of the
+ * exact same bad cell refreshes a still-`pending` row's metadata in place;
+ * one already `ignored`/`resolved` for that exact raw value is left
+ * untouched so a routine re-import can't silently undo an admin's earlier
+ * call. A different raw value at the same key (the upstream file changed,
+ * still implausibly) reopens it as `pending` for a fresh look. */
+async function upsertFlaggedRow(
+  ctx: MutationCtx,
+  employeeName: string,
+  reportDate: string,
+  field: "talkTotalSec" | "talkAvgSec" | "loginSec",
+  rawSeconds: number,
+  rawText: string,
+  sourceFile: string,
+  uploadedAt: number
+): Promise<void> {
+  const employeeId = await findOrCreateEmployee(ctx, employeeName);
+  // Same non-unique-index caveat as `upsertSnapshot` — merge into the first
+  // match and drop any extras rather than `.unique()`.
+  const matches = await ctx.db
+    .query("performanceFlaggedRows")
+    .withIndex("by_employee_date_field", q =>
+      q
+        .eq("employeeId", employeeId)
+        .eq("reportDate", reportDate)
+        .eq("field", field)
+    )
+    .collect();
+  const [existing, ...duplicates] = matches;
+  if (duplicates.length > 0) {
+    await Promise.all(duplicates.map(d => ctx.db.delete(d._id)));
+  }
+  if (existing) {
+    if (existing.status !== "pending" && existing.rawSeconds === rawSeconds) {
+      return;
+    }
+    await ctx.db.patch(existing._id, {
+      rawSeconds,
+      rawText,
+      sourceFile,
+      uploadedAt,
+      status: "pending",
+      resolvedAt: undefined,
+      resolvedValue: undefined,
+    });
+  } else {
+    await ctx.db.insert("performanceFlaggedRows", {
+      employeeId,
+      reportDate,
+      field,
+      rawSeconds,
+      rawText,
+      sourceFile,
+      uploadedAt,
+      status: "pending",
+    });
+  }
+}
+
 export const applyImport = internalMutation({
   args: {
     snapshots: v.array(snapshotValidator),
@@ -567,6 +641,7 @@ export const applyImport = internalMutation({
     reportDate: v.optional(v.string()),
     sourceRowCount: v.optional(v.number()),
     skippedNames: v.optional(v.array(v.string())),
+    flaggedRows: v.optional(v.array(flaggedRowInputValidator)),
     fileSize: v.optional(v.number()),
     batchId: v.optional(v.string()),
     // Set only by a re-import (see `reimportUpload`) — updates this row in
@@ -582,6 +657,18 @@ export const applyImport = internalMutation({
         snap.employeeName,
         snap.reportDate,
         snap.fields,
+        args.sourceFile,
+        now
+      );
+    }
+    for (const flagged of args.flaggedRows ?? []) {
+      await upsertFlaggedRow(
+        ctx,
+        flagged.employeeName,
+        flagged.reportDate,
+        flagged.field,
+        flagged.rawSeconds,
+        flagged.rawText,
         args.sourceFile,
         now
       );
@@ -739,6 +826,98 @@ export const listUploadLog = query({
       fileSize: r.fileSize,
       batchId: r.batchId,
     }));
+  },
+});
+
+/** Pending call-report rows needing admin attention (see
+ * `performanceFlaggedRows` in schema.ts), newest first, joined with the
+ * employee's current name for display. */
+export const listFlaggedRows = query({
+  args: { token: v.string() },
+  handler: async (ctx, { token }) => {
+    await requireAdminLogin(ctx, token);
+    const rows = await ctx.db
+      .query("performanceFlaggedRows")
+      .withIndex("by_status", q => q.eq("status", "pending"))
+      .order("desc")
+      .collect();
+    const employees = await ctx.db.query("performanceEmployees").collect();
+    const nameById = new Map(employees.map(e => [e._id, e.name]));
+    return rows.map(r => ({
+      _id: r._id,
+      employeeId: r.employeeId,
+      employeeName: nameById.get(r.employeeId) ?? "?",
+      reportDate: r.reportDate,
+      field: r.field,
+      rawSeconds: r.rawSeconds,
+      rawText: r.rawText,
+      sourceFile: r.sourceFile,
+      uploadedAt: r.uploadedAt,
+    }));
+  },
+});
+
+/** Resolves one flagged row: `ignore` just dismisses it (the field stays
+ * unmeasured in `performanceReports`); `force` writes the rejected raw value
+ * through as-is (the admin has confirmed it's real, e.g. a genuinely long
+ * shift); `edit` writes an admin-supplied corrected value instead. Both
+ * writing paths create the `performanceReports` row if this employee/day had
+ * no other measured field to have created one already (see
+ * `buildCallSnapshots`: a row with nothing left after a flagged field never
+ * reaches `upsertSnapshot`). */
+export const resolveFlaggedRow = mutation({
+  args: {
+    token: v.string(),
+    id: v.id("performanceFlaggedRows"),
+    action: v.union(v.literal("ignore"), v.literal("force"), v.literal("edit")),
+    value: v.optional(v.number()),
+  },
+  handler: async (ctx, { token, id, action, value }): Promise<void> => {
+    await requireAdminLogin(ctx, token);
+    const row = await ctx.db.get(id);
+    if (!row) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Flagged row not found.",
+      });
+    }
+
+    if (action === "ignore") {
+      await ctx.db.patch(id, { status: "ignored", resolvedAt: Date.now() });
+      return;
+    }
+
+    const applied = action === "force" ? row.rawSeconds : value;
+    if (applied === undefined) {
+      throw new ConvexError({
+        code: "validation",
+        message: "A corrected value (in seconds) is required.",
+      });
+    }
+
+    const report = await ctx.db
+      .query("performanceReports")
+      .withIndex("by_employee_date", q =>
+        q.eq("employeeId", row.employeeId).eq("reportDate", row.reportDate)
+      )
+      .first();
+    const patch: Partial<Doc<"performanceReports">> = { [row.field]: applied };
+    if (report) {
+      await ctx.db.patch(report._id, patch);
+    } else {
+      await ctx.db.insert("performanceReports", {
+        employeeId: row.employeeId,
+        reportDate: row.reportDate,
+        sourceFile: row.sourceFile,
+        uploadedAt: Date.now(),
+        ...patch,
+      });
+    }
+    await ctx.db.patch(id, {
+      status: "resolved",
+      resolvedAt: Date.now(),
+      resolvedValue: applied,
+    });
   },
 });
 

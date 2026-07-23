@@ -110,7 +110,7 @@ const SUMMARY_NAMES = new Set([
 // file itself flagging which unit it's in. A value past the physical
 // ceiling can only be milliseconds, so reinterpret it rather than store
 // an impossible day-count of seconds.
-const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
+export const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
 
 function capMillisToSeconds(seconds: number): number {
   return seconds > MAX_PLAUSIBLE_DAY_SECONDS
@@ -118,12 +118,39 @@ function capMillisToSeconds(seconds: number): number {
     : seconds;
 }
 
+// Unlike a bare number, HH:MM:SS/MM:SS/"1h 20m 15s" text already states its
+// own unit — there's no alternate unit to reinterpret it as. A result past
+// the physical ceiling here means the cell itself is bad (e.g. a
+// month-to-date running total exported into what should be a single day's
+// column, seen in the wild as a literal "51583:08:14"-style string), so it
+// gets dropped rather than trusted — `onImplausible` lets a caller that
+// cares (see `parseDurationField`) capture the rejected value instead of it
+// silently vanishing.
+function capExplicitDuration(
+  seconds: number,
+  onImplausible?: (rawSeconds: number) => void
+): number | null {
+  if (seconds > MAX_PLAUSIBLE_DAY_SECONDS) {
+    onImplausible?.(seconds);
+    return null;
+  }
+  return seconds;
+}
+
 /** Parses a cell into seconds, or null. Accepts 'HH:MM:SS', 'MM:SS',
  * '1h 20m 15s', an Excel time value, and decimals (day fraction or
  * seconds — or milliseconds, see `capMillisToSeconds`). A `Date` is read
  * as a time-of-day via its UTC hour/min/sec — see `types.ts`'s note on
- * `CellValue` for the UTC contract. */
-export function parseDuration(v: CellValue): number | null {
+ * `CellValue` for the UTC contract. Any parsed result past
+ * `MAX_PLAUSIBLE_DAY_SECONDS` becomes null (explicit-unit formats, via
+ * `capExplicitDuration` — `onImplausible` is called with the rejected
+ * value first) or gets reinterpreted as milliseconds (bare numbers, via
+ * `capMillisToSeconds` — a confirmed vendor quirk, not surfaced as a
+ * rejection). */
+export function parseDuration(
+  v: CellValue,
+  onImplausible?: (rawSeconds: number) => void
+): number | null {
   if (v === null || v === undefined || v === "") return null;
   if (v instanceof Date) {
     return v.getUTCHours() * 3600 + v.getUTCMinutes() * 60 + v.getUTCSeconds();
@@ -137,18 +164,49 @@ export function parseDuration(v: CellValue): number | null {
   if (!s || s === "-" || s === "–") return null;
 
   let m = /^(\d+):([0-5]?\d):([0-5]?\d)(?:[.,]\d+)?$/.exec(s); // HH:MM:SS
-  if (m) return +m[1] * 3600 + +m[2] * 60 + +m[3];
+  if (m)
+    return capExplicitDuration(
+      +m[1] * 3600 + +m[2] * 60 + +m[3],
+      onImplausible
+    );
 
   m = /^(\d+):([0-5]?\d)$/.exec(s); // MM:SS
-  if (m) return +m[1] * 60 + +m[2];
+  if (m) return capExplicitDuration(+m[1] * 60 + +m[2], onImplausible);
 
   m = /^(?:(\d+)\s*h)?\s*(?:(\d+)\s*m(?:in)?)?\s*(?:(\d+)\s*s)?$/i.exec(s); // 1h 20m 15s
   if (m && (m[1] || m[2] || m[3])) {
-    return +(m[1] ?? 0) * 3600 + +(m[2] ?? 0) * 60 + +(m[3] ?? 0);
+    return capExplicitDuration(
+      +(m[1] ?? 0) * 3600 + +(m[2] ?? 0) * 60 + +(m[3] ?? 0),
+      onImplausible
+    );
   }
 
   const f = parseFloat(s.replace(",", "."));
   return Number.isFinite(f) ? capMillisToSeconds(Math.round(f)) : null;
+}
+
+export type FlaggableDurationField = "talkTotalSec" | "talkAvgSec" | "loginSec";
+
+export interface DurationFlag {
+  field: FlaggableDurationField;
+  rawSeconds: number;
+  rawText: string;
+}
+
+/** Parses one of the three call-duration fields and, if the cell's value
+ * failed the plausibility check, also returns a `DurationFlag` describing
+ * what was rejected — so the row-building loops in `readCallExport`/
+ * `readCallCsv` can surface it instead of just losing the value silently. */
+function parseDurationField(
+  field: FlaggableDurationField,
+  v: CellValue
+): { value: number | null; flag?: DurationFlag } {
+  let rejected: number | undefined;
+  const value = parseDuration(v, raw => {
+    rejected = raw;
+  });
+  if (rejected === undefined) return { value };
+  return { value, flag: { field, rawSeconds: rejected, rawText: String(v) } };
 }
 
 /** Seconds as H:MM:SS or M:SS. */
@@ -242,6 +300,9 @@ export interface CallRow {
   talkAvgSec: number | null;
   talkTotalSec: number | null;
   loginSec: number | null;
+  // Present only when one of the three duration fields above failed the
+  // plausibility check and got dropped — see `parseDurationField`.
+  flags?: DurationFlag[];
 }
 
 const DATE_IN_TEXT_RE = /(\d{4}-\d{2}-\d{2})/;
@@ -307,18 +368,31 @@ export function readCallExport(
       "callsAnswered" in colmap ? toInt(r[colmap.callsAnswered]) : 0;
     const callsOutbound =
       "callsOutbound" in colmap ? toInt(r[colmap.callsOutbound]) : 0;
-    let talkAvgSec =
-      "talkAvgSec" in colmap ? parseDuration(r[colmap.talkAvgSec]) : null;
-    let talkTotalSec =
-      "talkTotalSec" in colmap ? parseDuration(r[colmap.talkTotalSec]) : null;
-    const loginSec =
-      "loginSec" in colmap ? parseDuration(r[colmap.loginSec]) : null;
+    const talkAvgSecR =
+      "talkAvgSec" in colmap
+        ? parseDurationField("talkAvgSec", r[colmap.talkAvgSec])
+        : { value: null };
+    const talkTotalSecR =
+      "talkTotalSec" in colmap
+        ? parseDurationField("talkTotalSec", r[colmap.talkTotalSec])
+        : { value: null };
+    const loginSecR =
+      "loginSec" in colmap
+        ? parseDurationField("loginSec", r[colmap.loginSec])
+        : { value: null };
+    let talkAvgSec = talkAvgSecR.value;
+    let talkTotalSec = talkTotalSecR.value;
+    const loginSec = loginSecR.value;
 
     const calls = (callsAnswered || 0) + (callsOutbound || 0);
     if (talkTotalSec === null && talkAvgSec && calls)
       talkTotalSec = talkAvgSec * calls;
     if (talkAvgSec === null && talkTotalSec && calls)
       talkAvgSec = Math.round(talkTotalSec / calls);
+
+    const flags = [talkAvgSecR.flag, talkTotalSecR.flag, loginSecR.flag].filter(
+      (f): f is DurationFlag => f !== undefined
+    );
 
     rows.push({
       employee: name,
@@ -329,6 +403,7 @@ export function readCallExport(
       talkTotalSec,
       loginSec,
       callsToday: calls,
+      flags: flags.length > 0 ? flags : undefined,
     });
   }
   if (rows.length === 0) return null;
@@ -485,6 +560,7 @@ interface CsvWorkingRow {
   talkAvgSec: number | null;
   talkTotalSec: number | null;
   loginSec: number | null;
+  flags?: DurationFlag[];
 }
 
 function finalizeCsvRow(rec: CsvWorkingRow): CallRow {
@@ -520,6 +596,7 @@ function finalizeCsvRow(rec: CsvWorkingRow): CallRow {
     talkTotalSec,
     loginSec: rec.loginSec,
     callsToday,
+    flags: rec.flags,
   };
 }
 
@@ -576,6 +653,22 @@ export function readCallCsv(
       "date" in colmap ? toDateWithFallback(r[colmap.date], null) : null;
     if (date) dates.push(date);
 
+    const talkAvgSecR =
+      "talkAvgSec" in colmap
+        ? parseDurationField("talkAvgSec", r[colmap.talkAvgSec])
+        : { value: null };
+    const talkTotalSecR =
+      "talkTotalSec" in colmap
+        ? parseDurationField("talkTotalSec", r[colmap.talkTotalSec])
+        : { value: null };
+    const loginSecR =
+      "loginSec" in colmap
+        ? parseDurationField("loginSec", r[colmap.loginSec])
+        : { value: null };
+    const flags = [talkAvgSecR.flag, talkTotalSecR.flag, loginSecR.flag].filter(
+      (f): f is DurationFlag => f !== undefined
+    );
+
     const rec: CsvWorkingRow = {
       employee: name,
       date,
@@ -585,19 +678,21 @@ export function readCallCsv(
         "callsOutbound" in colmap ? toInt(r[colmap.callsOutbound]) : null,
       callsHandled:
         "callsHandled" in colmap ? toInt(r[colmap.callsHandled]) : null,
-      talkAvgSec:
-        "talkAvgSec" in colmap ? parseDuration(r[colmap.talkAvgSec]) : null,
-      talkTotalSec:
-        "talkTotalSec" in colmap ? parseDuration(r[colmap.talkTotalSec]) : null,
-      loginSec: "loginSec" in colmap ? parseDuration(r[colmap.loginSec]) : null,
+      talkAvgSec: talkAvgSecR.value,
+      talkTotalSec: talkTotalSecR.value,
+      loginSec: loginSecR.value,
+      flags: flags.length > 0 ? flags : undefined,
     };
-    // Skip a row with no value at all (agent wasn't on duty).
+    // Skip a row with no value at all (agent wasn't on duty) — a row that
+    // only ever had a rejected implausible value still has something worth
+    // surfacing, so a pending flag keeps it out of this "empty" path.
     if (
       !rec.callsAnswered &&
       !rec.callsOutbound &&
       !rec.callsHandled &&
       !rec.talkTotalSec &&
-      !rec.loginSec
+      !rec.loginSec &&
+      !rec.flags
     ) {
       emptyCount++;
       continue;

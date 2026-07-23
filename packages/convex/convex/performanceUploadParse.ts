@@ -27,6 +27,7 @@ import {
   readCallCsv,
   readCallExport,
   type CallRow,
+  type DurationFlag,
 } from "./performance/lib/callImport";
 import {
   readInteractionsCsv,
@@ -100,6 +101,7 @@ async function runApplyImport(
     reportDate?: string;
     sourceRowCount?: number;
     skippedNames?: string[];
+    flaggedRows?: FlaggedRowInput[];
     fileSize?: number;
     batchId?: string;
     replaceLogId?: Id<"performanceUploadLog">;
@@ -178,14 +180,25 @@ const CALL_FIELDS: (keyof CallRow & keyof MetricFields)[] = [
   "loginSec",
 ];
 
+export interface FlaggedRowInput extends DurationFlag {
+  employeeName: string;
+  reportDate: string;
+}
+
 /** One row per employee/day, matched against the known team; agents with
  * no unambiguous team match are skipped (reported in `skipped`), same as
  * `import_calls`. Requires at least one Lead/Opportunity report to have
- * been imported already, so there's a team to match against. */
+ * been imported already, so there's a team to match against. A row whose
+ * duration cell got rejected by `parseDurationField` isn't dropped
+ * silently — it's reported in `flaggedRows` for admin review instead. */
 async function buildCallSnapshots(
   ctx: ActionCtx,
   rows: CallRow[]
-): Promise<{ snapshots: EmployeeSnapshot[]; skipped: string[] }> {
+): Promise<{
+  snapshots: EmployeeSnapshot[];
+  skipped: string[];
+  flaggedRows: FlaggedRowInput[];
+}> {
   const known: string[] = await ctx.runQuery(
     internal.performanceImport.getTeamEmployeeNames,
     {}
@@ -199,11 +212,16 @@ async function buildCallSnapshots(
   }
   const snapshots: EmployeeSnapshot[] = [];
   const skipped: string[] = [];
+  const flaggedRows: FlaggedRowInput[] = [];
   for (const rec of rows) {
     const emp = matchEmployee(rec.employee, known);
     if (!emp) {
       skipped.push(cleanAgentName(rec.employee));
       continue;
+    }
+    const reportDate = toISODate(rec.date);
+    for (const flag of rec.flags ?? []) {
+      flaggedRows.push({ employeeName: emp, reportDate, ...flag });
     }
     const fields: SnapshotFields = {};
     for (const f of CALL_FIELDS) {
@@ -211,13 +229,9 @@ async function buildCallSnapshots(
       if (value !== null && value !== undefined) fields[f] = value;
     }
     if (Object.keys(fields).length === 0) continue;
-    snapshots.push({
-      employeeName: emp,
-      reportDate: toISODate(rec.date),
-      fields,
-    });
+    snapshots.push({ employeeName: emp, reportDate, fields });
   }
-  return { snapshots, skipped };
+  return { snapshots, skipped, flaggedRows };
 }
 
 interface InteractionInsert {
@@ -375,7 +389,7 @@ async function processReport(
         // no data, no upload-log entry.
         return { status: "empty", reportDate: toISODate(detected.reportDate) };
       }
-      const { snapshots, skipped } = await buildCallSnapshots(
+      const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
         ctx,
         detected.rows
       );
@@ -388,6 +402,7 @@ async function processReport(
         reportDate: toISODate(detected.reportDate),
         sourceRowCount: detected.rows.length,
         skippedNames: skipped,
+        flaggedRows,
         fileSize,
         batchId,
         replaceLogId,
@@ -477,7 +492,10 @@ async function processReport(
 
   const calls = readCallExport(rows);
   if (calls) {
-    const { snapshots, skipped } = await buildCallSnapshots(ctx, calls.rows);
+    const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
+      ctx,
+      calls.rows
+    );
     const result = await runApplyImport(ctx, {
       snapshots,
       sourceFile: filename,
@@ -487,6 +505,7 @@ async function processReport(
       reportDate: toISODate(calls.reportDate),
       sourceRowCount: calls.rows.length,
       skippedNames: skipped,
+      flaggedRows,
       fileSize,
       batchId,
       replaceLogId,
