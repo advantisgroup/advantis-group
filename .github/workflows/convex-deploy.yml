@@ -6,6 +6,7 @@ on:
     paths:
       - "packages/convex/**"
       - ".github/workflows/convex-deploy.yml"
+  workflow_dispatch: {}
 permissions:
   contents: read
 concurrency:
