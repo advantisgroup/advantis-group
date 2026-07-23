@@ -64,7 +64,7 @@ export function SettingsMenu({ className }: { className?: string }) {
           <SlidersHorizontal className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-60 rounded-xl p-3">
+      <DropdownMenuContent align="end" className="w-60 p-3">
         <p className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t("language")}
         </p>
