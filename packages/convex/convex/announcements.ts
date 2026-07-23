@@ -8,14 +8,8 @@ import { assertAttachmentSizeOk } from "./lib/attachments";
 import { requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
+import { displayName } from "./lib/users";
 import { attachmentValidator, audienceValidator } from "./schema";
-
-function authorName(user: Doc<"users"> | null): string {
-  if (!user) return "Unknown";
-  return (
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
-  );
-}
 
 function aggregateReactions(
   rows: { emoji: string; userId: Id<"users"> }[],
@@ -316,7 +310,7 @@ export const list = query({
           scheduled: a.publishedAt > now,
           expired: !!a.expiresAt && a.expiresAt <= now,
           updatedAt: a.updatedAt ?? null,
-          authorName: authorName(author),
+          authorName: displayName(author),
           authorAvatar,
           authorId: a.authorUserId,
           audience: a.audience,
@@ -488,7 +482,7 @@ export const viewers = query({
           : (u?.avatarUrl ?? null);
         return {
           userId: r.userId,
-          name: authorName(u),
+          name: displayName(u),
           avatar,
           readAt: r.readAt,
         };

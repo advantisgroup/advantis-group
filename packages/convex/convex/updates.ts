@@ -7,6 +7,7 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { requireAdmin, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
+import { displayName } from "./lib/users";
 import { audienceValidator } from "./schema";
 
 /**
@@ -42,13 +43,6 @@ function assertServerKey(serverKey: string) {
   if (!expected || serverKey !== expected) {
     throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
   }
-}
-
-function authorName(user: Doc<"users"> | null): string {
-  if (!user) return "Unknown";
-  return (
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
-  );
 }
 
 async function resolveAudienceUserIds(
@@ -90,7 +84,7 @@ export const previewEmailRecipients = query({
       .filter(u => !u.external || u.updatesEmailConsent === true)
       .map(u => ({
         userId: u._id,
-        name: authorName(u),
+        name: displayName(u),
         email: u.email,
         external: u.external ?? false,
       }))
@@ -525,7 +519,7 @@ export const list = query({
           scheduled: u.publishedAt > now,
           ongoing,
           durationMs,
-          authorName: authorName(author),
+          authorName: displayName(author),
         };
       })
     );
@@ -555,7 +549,7 @@ export const get = query({
     const timeline = await Promise.all(
       (update.timeline ?? []).map(async entry => {
         const entryAuthor = await ctx.db.get(entry.authorUserId);
-        return { ...entry, authorName: authorName(entryAuthor) };
+        return { ...entry, authorName: displayName(entryAuthor) };
       })
     );
     const isAdmin = user.role === "admin";
@@ -576,7 +570,7 @@ export const get = query({
           const u = await ctx.db.get(r.userId);
           return {
             userId: r.userId,
-            name: authorName(u),
+            name: displayName(u),
             email: r.email,
             status: r.status,
             sentAt: r.sentAt ?? null,
@@ -602,7 +596,7 @@ export const get = query({
       resolvedAt: update.resolvedAt ?? null,
       publishedAt: update.publishedAt,
       scheduled: update.publishedAt > Date.now(),
-      authorName: authorName(author),
+      authorName: displayName(author),
       authorId: update.authorUserId,
       timeline,
       isAdmin,
