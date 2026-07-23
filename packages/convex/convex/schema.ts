@@ -244,7 +244,8 @@ export default defineSchema({
     .index("by_role", ["role"])
     .index("by_status", ["status"])
     .index("by_clockodoUserId", ["clockodoUserId"])
-    .index("by_avatarStorageId", ["avatarStorageId"]),
+    .index("by_avatarStorageId", ["avatarStorageId"])
+    .index("by_managerId", ["managerId"]),
 
   /**
    * Canonical org departments. Replaces the free-text `users.department` —
@@ -1619,7 +1620,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_createdAt", ["createdAt"])
-    .index("by_profil", ["profilId"]),
+    .index("by_profil", ["profilId"])
+    .index("by_email", ["email"]),
 
   /** Uploaded CV PDFs, stored in Convex file storage. */
   applicantDocuments: defineTable({

@@ -96,11 +96,15 @@ async function queryUsers(
   ctx: QueryCtx,
   args: { search?: string; department?: string; includeSuspended?: boolean }
 ) {
-  let users = await ctx.db.query("users").collect();
-
-  if (!args.includeSuspended) {
-    users = users.filter(u => u.status === "active");
-  }
+  // Most callers only want active users — use the `by_status` index to skip
+  // suspended rows at the DB layer rather than fetching everyone and
+  // filtering in JS.
+  let users = args.includeSuspended
+    ? await ctx.db.query("users").collect()
+    : await ctx.db
+        .query("users")
+        .withIndex("by_status", q => q.eq("status", "active"))
+        .collect();
   if (args.department) {
     users = users.filter(
       u => u.department?.toLowerCase() === args.department!.toLowerCase()
@@ -250,9 +254,12 @@ export const orgContext = query({
     const user = await ctx.db.get(userId);
     if (!user) return { manager: null, reports: [] };
     const manager = user.managerId ? await ctx.db.get(user.managerId) : null;
-    const reports = (await ctx.db.query("users").collect()).filter(
-      u => u.managerId === userId && u.status === "active"
-    );
+    const reports = (
+      await ctx.db
+        .query("users")
+        .withIndex("by_managerId", q => q.eq("managerId", userId))
+        .collect()
+    ).filter(u => u.status === "active");
     const brief = async (u: Doc<"users">) => {
       const full = await withAvatar(ctx, u);
       return {
@@ -632,7 +639,10 @@ export const departments = query({
   args: {},
   handler: async ctx => {
     await requireUser(ctx);
-    const users = await ctx.db.query("users").collect();
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
     const set = new Set<string>();
     for (const u of users) if (u.department) set.add(u.department);
     return [...set].sort((a, b) => a.localeCompare(b));
@@ -718,17 +728,18 @@ export const eligibleForApplicantAccess = query({
   args: {},
   handler: async ctx => {
     await requireApplicantDelegateOrAdmin(ctx);
-    const users = await ctx.db.query("users").collect();
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
     const customRoles = await ctx.db.query("customRoles").collect();
     const customRoleById = new Map(customRoles.map(r => [r._id, r]));
     return users
-      .filter(
-        u =>
-          u.status === "active" &&
-          isApplicantEligible(
-            u,
-            u.customRoleId ? (customRoleById.get(u.customRoleId) ?? null) : null
-          )
+      .filter(u =>
+        isApplicantEligible(
+          u,
+          u.customRoleId ? (customRoleById.get(u.customRoleId) ?? null) : null
+        )
       )
       .map(u => ({
         _id: u._id,
