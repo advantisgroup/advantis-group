@@ -95,7 +95,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
   .post(
     "/uploads",
     async ({ request, body }) => {
-      await requirePerformanceAdmin(request);
+      const admin = await requirePerformanceAdmin(request);
 
       const rateKey = request.headers.get("authorization") ?? "unknown";
       await rateLimit("performance.upload", rateKey, 30, "1 h");
@@ -180,6 +180,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
             force,
             fileSize: bytes.length,
             batchId,
+            uploadedBy: admin.name || admin.email,
           }
         );
 

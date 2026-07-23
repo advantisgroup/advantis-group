@@ -33,6 +33,7 @@ import { FlaggedRowsDialog } from "@/components/performance/FlaggedRowsDialog";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { RescanOlderUploads } from "@/components/performance/RescanOlderUploads";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -130,6 +131,7 @@ interface UploadLogRow {
   skippedNames?: string[];
   fileSize?: number;
   batchId?: string;
+  uploadedBy?: string;
 }
 
 function LogRow({
@@ -172,12 +174,15 @@ function LogRow({
     <TableRow className={indent ? "bg-muted/30" : undefined}>
       <TableCell
         className={cn(
-          "break-all",
+          "max-w-[20rem]",
           indent && "border-l-2 border-l-foreground/30 pl-6"
         )}
       >
-        <span className="inline-flex items-center gap-1.5">
-          {row.filename}
+        <span
+          className="flex min-w-0 items-center gap-1.5"
+          title={row.filename}
+        >
+          <span className="truncate">{row.filename}</span>
           {legacy && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -193,11 +198,11 @@ function LogRow({
             void navigator.clipboard.writeText(row._id);
             toast.success(t("uploadIdCopied"));
           }}
-          title={t("uploadCopyId")}
-          className="mt-0.5 flex items-center gap-1 break-all font-mono text-[10px] text-muted-foreground/70 hover:text-foreground"
+          title={`${t("uploadCopyId")}: ${row._id}`}
+          className="mt-0.5 flex min-w-0 max-w-full items-center gap-1 font-mono text-[10px] text-muted-foreground/70 hover:text-foreground"
         >
           <Copy className="h-3 w-3 shrink-0" />
-          {row._id}
+          <span className="truncate">{row._id}</span>
         </button>
       </TableCell>
       <TableCell>
@@ -243,6 +248,9 @@ function LogRow({
       <TableCell>{row.fileSize ? formatFileSize(row.fileSize) : "–"}</TableCell>
       <TableCell title={relativeTime(row.uploadedAt)}>
         {formatDateTime(row.uploadedAt, locale)}
+      </TableCell>
+      <TableCell className="max-w-[10rem] truncate" title={row.uploadedBy}>
+        {row.uploadedBy ?? <span className="text-muted-foreground">–</span>}
       </TableCell>
       <TableCell>
         <Button
@@ -319,6 +327,14 @@ function BatchRows({
         <TableCell />
         <TableCell title={relativeTime(latest)}>
           {formatDateTime(latest, locale)}
+        </TableCell>
+        <TableCell
+          className="max-w-[10rem] truncate"
+          title={rows[0].uploadedBy}
+        >
+          {rows[0].uploadedBy ?? (
+            <span className="text-muted-foreground">–</span>
+          )}
         </TableCell>
         <TableCell>
           <Button
@@ -535,8 +551,9 @@ export default function PerformanceUploadPage() {
     <div className="min-h-screen bg-muted/20">
       <PerformanceHeader navItems={navItems} onExit={exit} />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-7xl space-y-6 p-4 md:p-6">
         {token && <FlaggedRowsDialog token={token} />}
+        {token && <RescanOlderUploads token={token} />}
 
         <Card>
           <CardHeader>
@@ -784,6 +801,7 @@ export default function PerformanceUploadPage() {
                     <TableHead>{t("uploadLogRows")}</TableHead>
                     <TableHead>{t("uploadLogSize")}</TableHead>
                     <TableHead>{t("uploadLogWhen")}</TableHead>
+                    <TableHead>{t("uploadLogBy")}</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>

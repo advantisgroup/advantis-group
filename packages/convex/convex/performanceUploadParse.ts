@@ -104,6 +104,7 @@ async function runApplyImport(
     flaggedRows?: FlaggedRowInput[];
     fileSize?: number;
     batchId?: string;
+    uploadedBy?: string;
     replaceLogId?: Id<"performanceUploadLog">;
   }
 ): Promise<{ rowsImported: number }> {
@@ -358,10 +359,18 @@ async function processReport(
     contentHash: string;
     fileSize?: number;
     batchId?: string;
+    uploadedBy?: string;
     replaceLogId?: Id<"performanceUploadLog">;
   }
 ): Promise<ImportResult> {
-  const { storageId, contentHash, fileSize, batchId, replaceLogId } = args;
+  const {
+    storageId,
+    contentHash,
+    fileSize,
+    batchId,
+    uploadedBy,
+    replaceLogId,
+  } = args;
   const match = EXTENSION_RE.exec(args.filename);
   if (!match) {
     throw new ConvexError({
@@ -405,6 +414,7 @@ async function processReport(
         flaggedRows,
         fileSize,
         batchId,
+        uploadedBy,
         replaceLogId,
       });
       return { status: "ok", rowsImported: result.rowsImported, skipped };
@@ -430,6 +440,7 @@ async function processReport(
           skippedNames: skipped,
           fileSize,
           batchId,
+          uploadedBy,
           rowsImported: inserts.length,
           replaceLogId,
         })
@@ -464,6 +475,7 @@ async function processReport(
         sourceRowCount: sf.rows.length,
         fileSize,
         batchId,
+        uploadedBy,
         replaceLogId,
       });
       await writeRawLeads(ctx, raw);
@@ -483,6 +495,7 @@ async function processReport(
       sourceRowCount: sf.rows.length,
       fileSize,
       batchId,
+      uploadedBy,
       replaceLogId,
     });
     await writeRawOpps(ctx, raw);
@@ -508,6 +521,7 @@ async function processReport(
       flaggedRows,
       fileSize,
       batchId,
+      uploadedBy,
       replaceLogId,
     });
     return { status: "ok", rowsImported: result.rowsImported, skipped };
@@ -523,6 +537,7 @@ async function processReport(
     sourceRowCount: template.length,
     fileSize,
     batchId,
+    uploadedBy,
     replaceLogId,
   });
   return { status: "ok", rowsImported: result.rowsImported };
@@ -548,10 +563,20 @@ export const apiImportReport = action({
     force: v.optional(v.boolean()),
     fileSize: v.optional(v.number()),
     batchId: v.optional(v.string()),
+    uploadedBy: v.optional(v.string()),
   },
   handler: async (
     ctx,
-    { serverKey, filename, storageId, contentHash, force, fileSize, batchId }
+    {
+      serverKey,
+      filename,
+      storageId,
+      contentHash,
+      force,
+      fileSize,
+      batchId,
+      uploadedBy,
+    }
   ): Promise<ImportResult> => {
     assertServerKey(serverKey);
 
@@ -578,6 +603,7 @@ export const apiImportReport = action({
       contentHash,
       fileSize,
       batchId,
+      uploadedBy,
     });
   },
 });
@@ -609,6 +635,7 @@ export const reimportUpload = action({
       contentHash: log.contentHash ?? "",
       fileSize: log.fileSize,
       batchId: log.batchId,
+      uploadedBy: log.uploadedBy,
       replaceLogId: logId,
     });
   },
@@ -640,6 +667,7 @@ export const reimportBatch = action({
         contentHash: log.contentHash ?? "",
         fileSize: log.fileSize,
         batchId: log.batchId,
+        uploadedBy: log.uploadedBy,
         replaceLogId: log._id,
       });
       results.push({ ...result, logId: log._id });
