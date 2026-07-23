@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import Image from "next/image";
 
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Building2, Mail, Phone, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
@@ -68,14 +68,6 @@ export const Footer = () => {
       label: t("nav.contact"),
       path: "/contact",
     },
-    ...(intranetUrl
-      ? [
-          {
-            label: t("nav.intranet"),
-            path: intranetUrl,
-          },
-        ]
-      : []),
   ];
 
   const brandLinks = [
@@ -169,6 +161,18 @@ export const Footer = () => {
                     </Link>
                   </li>
                 ))}
+                {intranetUrl && (
+                  <li>
+                    <Link
+                      href={intranetUrl}
+                      className="group/intranet relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-advantis/30 bg-advantis/10 px-3 py-1.5 text-xs font-medium text-advantis transition-colors hover:bg-advantis/20"
+                    >
+                      <Building2 className="h-3.5 w-3.5" />
+                      <span>{t("nav.intranet")}</span>
+                      <span className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover/intranet:translate-x-full" />
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
 
