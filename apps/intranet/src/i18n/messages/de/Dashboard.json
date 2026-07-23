@@ -67,7 +67,10 @@
       { "title": "Guten Morgen, {name}", "subtitle": "Auf geht's — lass uns den Tag nutzen." },
       { "title": "Mit der Sonne aufgestanden, {name}?", "subtitle": "Beeindruckend. Wir suchen noch unseren Kaffee." },
       { "title": "Morgen, {name}!", "subtitle": "Frischer Kaffee, frisches Postfach, frischer Start." },
-      { "title": "Frühaufsteher, {name}?", "subtitle": "Der frühe Vogel fängt den Wurm — oder in diesem Fall das Postfach." }
+      {
+        "title": "Frühaufsteher, {name}?",
+        "subtitle": "Der frühe Vogel fängt den Wurm — oder in diesem Fall das Postfach."
+      }
     ],
     "lateMorning": [
       { "title": "Guten Morgen, {name}", "subtitle": "Hoffentlich wirkt der Kaffee schon." },
