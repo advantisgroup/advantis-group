@@ -147,12 +147,12 @@ export function EmailTemplate({
           <img
             src="https://advantisgroup.de/base_logo_tb_First.png"
             width="100"
-            alt="Advantis Group"
+            alt="ADVANTIS GROUP"
             style={footerLogo}
           />
 
           <p style={copyright}>
-            &copy; {new Date().getFullYear()} advantis GmbH. {t.rightsReserved}
+            &copy; {new Date().getFullYear()} ADVANTIS GROUP. {t.rightsReserved}
             <br />
             <a href="https://advantisgroup.de" style={link}>
               advantisgroup.de

@@ -66,7 +66,7 @@ export const HomeServices = () => {
     <section
       id="leistungen"
       ref={sectionRef}
-      className="relative overflow-hidden py-24 md:py-32"
+      className="relative overflow-hidden py-16 md:py-20"
     >
       <div className="container relative z-10 mx-auto px-4">
         <div className="mx-auto max-w-7xl space-y-14">

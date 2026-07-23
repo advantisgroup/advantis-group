@@ -10,7 +10,7 @@ export const TrustBadges = () => {
   const t = useTranslations("trustBadges");
 
   return (
-    <section className="relative overflow-hidden py-16 md:py-20">
+    <section className="relative overflow-hidden py-10 md:py-14">
       <div className="container relative z-10 mx-auto px-4">
         <div className="mx-auto max-w-4xl space-y-8 text-center">
           <p className="font-[family-name:var(--font-outfit)] text-xs uppercase tracking-[0.35em] text-primary/80">

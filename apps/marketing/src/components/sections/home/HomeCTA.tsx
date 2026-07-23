@@ -11,7 +11,7 @@ export const HomeCTA = () => {
   const t = useTranslations("cta");
 
   return (
-    <section className="relative py-40 overflow-hidden">
+    <section className="relative py-20 md:py-28 overflow-hidden">
       {/* Background with smooth blend */}
       <div className="absolute inset-0 bg-linear-to-b from-primary/10 via-background/95 to-background" />
       <div className="absolute inset-0 dot-pattern opacity-20" />

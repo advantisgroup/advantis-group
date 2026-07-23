@@ -13,7 +13,7 @@ export const HomeIntro = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden py-16 md:py-20"
+      className="relative overflow-hidden py-10 md:py-14"
     >
       <div className="container relative z-10 mx-auto px-4">
         <div
@@ -22,9 +22,9 @@ export const HomeIntro = () => {
           }`}
           style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
         >
-          <p className="font-[family-name:var(--font-outfit)] text-xs uppercase tracking-[0.35em] text-primary/80">
+          <h2 className="font-[family-name:var(--font-outfit)] text-3xl leading-[1.05] md:text-5xl">
             {t("eyebrow")}
-          </p>
+          </h2>
           <p className="text-lg leading-relaxed text-muted-foreground md:text-xl">
             {t("text")}
           </p>

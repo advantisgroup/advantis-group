@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { BrandText } from "@/components/effects/BrandText";
 import { CountUp } from "@/components/effects/CountUp";
 import { ScrollReveal } from "@/components/effects/ScrollReveal";
 import { SectionDivider } from "@/components/layout/SectionDivider";
@@ -104,9 +103,7 @@ export default function UberUns() {
             >
               {t.rich("hero.subtitle", {
                 brand: chunks => (
-                  <BrandText brand="advantis" className="font-semibold">
-                    {chunks as string}
-                  </BrandText>
+                  <span className="font-semibold">{chunks}</span>
                 ),
               })}
             </motion.p>
@@ -191,11 +188,7 @@ export default function UberUns() {
                   <div className="prose prose-lg dark:prose-invert max-w-none">
                     <p className="text-xl leading-relaxed font-medium text-foreground">
                       {t.rich("story.text1", {
-                        brand: chunks => (
-                          <BrandText brand="advantis">
-                            {chunks as string}
-                          </BrandText>
-                        ),
+                        brand: chunks => <>{chunks}</>,
                         founder: chunks => (
                           <span className="font-bold text-foreground">
                             {chunks}
@@ -205,11 +198,7 @@ export default function UberUns() {
                     </p>
                     <p className="text-lg text-muted-foreground leading-relaxed">
                       {t.rich("story.text2", {
-                        brand: chunks => (
-                          <BrandText brand="advantis">
-                            {chunks as string}
-                          </BrandText>
-                        ),
+                        brand: chunks => <>{chunks}</>,
                       })}
                     </p>
                     <p className="text-lg text-muted-foreground leading-relaxed">
@@ -222,7 +211,7 @@ export default function UberUns() {
                     <div className="relative w-48 h-16 grayscale hover:grayscale-0 transition-all duration-500">
                       <Image
                         src={logo}
-                        alt="Advantis Group"
+                        alt="ADVANTIS GROUP"
                         fill
                         className="object-contain object-left"
                       />

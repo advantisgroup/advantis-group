@@ -69,7 +69,7 @@ export const HomeBrands = () => {
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden py-24 md:py-32"
+      className="relative overflow-hidden py-16 md:py-20"
     >
       <div className="absolute inset-0 bg-linear-to-b from-background via-primary/4 to-primary/8" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent,oklch(0.64_0.2_14_/_0.12),transparent)] [background-size:100%_1px] [background-position:0_30%] [background-repeat:no-repeat]" />

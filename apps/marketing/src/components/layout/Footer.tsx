@@ -12,7 +12,6 @@ import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { Link } from "@/i18n/navigation";
 
 import { SectionDivider } from "./SectionDivider";
-import { BrandText } from "../effects/BrandText";
 
 export const Footer = () => {
   const t = useTranslations();
@@ -221,8 +220,7 @@ export const Footer = () => {
           <div className="pt-8 border-t border-border">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-xs text-muted-foreground">
-                © {new Date().getFullYear().toString()}{" "}
-                <BrandText brand="advantis">advantis</BrandText> GmbH.{" "}
+                © {new Date().getFullYear().toString()} ADVANTIS GROUP.{" "}
                 {t("footer.copyright")}
               </p>
               <div className="flex items-center gap-6">
