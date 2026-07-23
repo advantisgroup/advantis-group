@@ -1547,6 +1547,43 @@ export default defineSchema({
   }).index("by_at", ["at"]),
 
   /**
+   * Unified audit log (Group 10 of the backend QoL backlog) — a single
+   * table for everything `activityAuditLog`, `onedriveAudit`,
+   * `integrationsAuditLog`, and `applicantAuditLog` record, discriminated
+   * by `domain`. Those four tables share near-identical shape and were
+   * already merged manually at *read* time (see `auditLog.ts`'s `list`,
+   * which only covers activity/onedrive/integrations today).
+   *
+   * Chosen approach: dual-write. Every existing write site now also writes
+   * a row here (see `lib/auditLogWrite.ts`'s `recordUnifiedAudit`), but the
+   * 4 original tables are left fully in place — nothing here deletes them,
+   * stops writing to them, or migrates their historical rows. Reads
+   * (`auditLog.ts`) still read the old tables; this table isn't wired into
+   * any reader yet. This is intentionally the safer, additive half of the
+   * migration — cutting reads over to this table (and eventually retiring
+   * the 4 old ones + backfilling their history) is a follow-up, not done
+   * here. `action` is a plain string (not a literal union) since it now
+   * spans 4 different domains' action vocabularies — the per-domain tables
+   * keep their own stricter literal unions as the source of truth.
+   */
+  auditLog: defineTable({
+    domain: v.union(
+      v.literal("activity"),
+      v.literal("onedrive"),
+      v.literal("integrations"),
+      v.literal("applicant")
+    ),
+    actorUserId: v.id("users"),
+    action: v.string(),
+    /** Only meaningful for `domain: "integrations"` (e.g. "clockodo"). */
+    integration: v.optional(v.string()),
+    target: v.optional(v.string()),
+    at: v.number(),
+  })
+    .index("by_at", ["at"])
+    .index("by_domain_at", ["domain", "at"]),
+
+  /**
    * Temporary diagnostic aid: raw wire responses from third-party APIs,
    * captured so their actual (often under-documented) field shapes can be
    * inspected directly in the Convex dashboard's Data tab rather than

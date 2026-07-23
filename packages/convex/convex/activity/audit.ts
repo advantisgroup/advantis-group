@@ -4,6 +4,7 @@ import { query } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { requireManager } from "../lib/auth";
+import { recordUnifiedAudit } from "../lib/auditLogWrite";
 import { displayName } from "./lib/users";
 
 /**
@@ -31,11 +32,19 @@ export async function writeAudit(
   action: ActivityAuditAction,
   target?: string
 ): Promise<void> {
+  const at = Date.now();
   await ctx.db.insert("activityAuditLog", {
     actorUserId,
     action,
     target,
-    at: Date.now(),
+    at,
+  });
+  await recordUnifiedAudit(ctx, {
+    domain: "activity",
+    actorUserId,
+    action,
+    target,
+    at,
   });
 }
 

@@ -6,6 +6,7 @@ import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalAction, mutation, query } from "./_generated/server";
 import { getUserByClerkId, requireCapability, requireUser } from "./lib/auth";
 import { createNotification, notifyUsers } from "./lib/notify";
+import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import { batchUserSummaries, displayName } from "./lib/users";
 
 /**
@@ -62,11 +63,19 @@ async function writeAudit(
   action: OnedriveAuditAction,
   target?: string
 ): Promise<void> {
+  const at = Date.now();
   await ctx.db.insert("onedriveAudit", {
     actorUserId,
     action,
     target,
-    at: Date.now(),
+    at,
+  });
+  await recordUnifiedAudit(ctx, {
+    domain: "onedrive",
+    actorUserId,
+    action,
+    target,
+    at,
   });
 }
 

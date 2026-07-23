@@ -11,6 +11,7 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { hashPassword, verifyPassword } from "./activity/lib/crypto";
+import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
   requireAdmin,
   requireApplicantAreaMember,
@@ -101,10 +102,20 @@ export const storePasswordHash = internalMutation({
       .withIndex("by_user", q => q.eq("userId", userId))
       .unique();
     if (unlock) await ctx.db.delete(unlock._id);
+    const auditAt = Date.now();
+    const auditAction = existing
+      ? "vault_password_rotated"
+      : "vault_password_set";
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: userId,
-      action: existing ? "vault_password_rotated" : "vault_password_set",
-      at: Date.now(),
+      action: auditAction,
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: userId,
+      action: auditAction,
+      at: auditAt,
     });
   },
 });
@@ -164,6 +175,12 @@ export const recordUnlock = internalMutation({
       action: "vault_unlocked",
       at: now,
     });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: userId,
+      action: "vault_unlocked",
+      at: now,
+    });
   },
 });
 
@@ -217,10 +234,17 @@ export const lock = mutation({
       .withIndex("by_user", q => q.eq("userId", user._id))
       .unique();
     if (existing) await ctx.db.delete(existing._id);
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: user._id,
       action: "vault_locked",
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: user._id,
+      action: "vault_locked",
+      at: auditAt,
     });
   },
 });
@@ -239,11 +263,19 @@ export const resetPassword = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await clearVaultPasswordForUser(ctx, userId);
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: admin._id,
       action: "vault_password_reset_by_admin",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: admin._id,
+      action: "vault_password_reset_by_admin",
+      target: target.email,
+      at: auditAt,
     });
   },
 });

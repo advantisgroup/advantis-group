@@ -17,6 +17,7 @@ import {
   requireVaultUnlocked,
 } from "./lib/auth";
 import { listUserPermissions } from "./lib/permissions";
+import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -508,11 +509,19 @@ export const applyGfAccess = internalMutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { gfAccess });
+    const auditAt = Date.now();
     await ctx.db.insert("onedriveAudit", {
       actorUserId: admin._id,
       action: gfAccess ? "grant_gf_access" : "revoke_gf_access",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "onedrive",
+      actorUserId: admin._id,
+      action: gfAccess ? "grant_gf_access" : "revoke_gf_access",
+      target: target.email,
+      at: auditAt,
     });
     return { clerkUserId: target.clerkUserId, gfAccess };
   },
@@ -542,11 +551,19 @@ export const applyUploadPermission = internalMutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { uploadRequestsEnabled: enabled });
+    const auditAt = Date.now();
     await ctx.db.insert("onedriveAudit", {
       actorUserId: actor._id,
       action: enabled ? "enable_uploads" : "disable_uploads",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "onedrive",
+      actorUserId: actor._id,
+      action: enabled ? "enable_uploads" : "disable_uploads",
+      target: target.email,
+      at: auditAt,
     });
     return { clerkUserId: target.clerkUserId, enabled };
   },
@@ -669,11 +686,19 @@ export const setApplicantDelegate = mutation({
     if (!delegate && target.role !== "admin" && !target.applicantAccess) {
       await clearVaultPasswordForUser(ctx, userId);
     }
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: admin._id,
       action: delegate ? "grant_delegate" : "revoke_delegate",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: admin._id,
+      action: delegate ? "grant_delegate" : "revoke_delegate",
+      target: target.email,
+      at: auditAt,
     });
     return { ok: true };
   },
@@ -713,11 +738,19 @@ export const setApplicantAccess = mutation({
     if (!access && target.role !== "admin" && !target.applicantAccessDelegate) {
       await clearVaultPasswordForUser(ctx, userId);
     }
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: actor._id,
       action: access ? "grant_access" : "revoke_access",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: actor._id,
+      action: access ? "grant_access" : "revoke_access",
+      target: target.email,
+      at: auditAt,
     });
     return { ok: true };
   },
