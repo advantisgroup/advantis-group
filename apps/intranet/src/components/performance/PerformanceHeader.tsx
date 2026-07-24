@@ -7,6 +7,7 @@ import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
+import { usePerformanceCompany } from "@/components/performance/PerformanceCompanyProvider";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -41,6 +42,11 @@ export function PerformanceHeader({
   onExit?: () => void;
 }) {
   const t = useTranslations("Performance");
+  // "Back to intranet" only makes sense on Advantis's own grandfathered
+  // host — a client's own domain (e.g. salespirates.de) never has a
+  // Clerk-gated intranet to go back to; `/` there just re-resolves to their
+  // own Performance dashboard via proxy.ts, which is confusing, not useful.
+  const onAdvantisHost = usePerformanceCompany() === null;
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center gap-2 border-b bg-background/90 px-4 backdrop-blur">
@@ -50,12 +56,18 @@ export function PerformanceHeader({
       {/* Desktop only: grouped into "navigation" vs. "account" clusters,
        * separated by thin dividers. */}
       <div className="hidden items-center gap-3 md:flex">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {t("backToIntranet")}
-          </Button>
-        </Link>
+        {onAdvantisHost && (
+          <Link href="/">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t("backToIntranet")}
+            </Button>
+          </Link>
+        )}
 
         {navItems.length > 0 && (
           <>

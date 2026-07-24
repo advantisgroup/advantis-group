@@ -801,13 +801,19 @@ export const listEmployeesForLink = query({
 /** Active intranet accounts available to link a login to, for the same
  * page's "Intranet account" field — each annotated with the Performance
  * login it's already linked to (if any), so the admin UI can warn before
- * reassigning one out from under another login. Not company-scoped: the
- * intranet `users` table has no company concept of its own (it's Advantis's
- * own staff table), so this is naturally Advantis-only in effect today. */
+ * reassigning one out from under another login. The intranet `users` table
+ * has no company concept of its own (it's Advantis's own staff table), so
+ * this returns nothing for any caller whose own company isn't Advantis —
+ * their staff never have Clerk intranet accounts, and this table is
+ * Advantis's private employee directory, not something another company's
+ * admin should ever be able to read. */
 export const listIntranetUsersForLink = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
-    await requireAdminLogin(ctx, token);
+    const admin = await requireAdminLogin(ctx, token);
+    const company = admin.companyId ? await ctx.db.get(admin.companyId) : null;
+    if (company?.slug !== "advantis") return [];
+
     const [users, logins] = await Promise.all([
       ctx.db.query("users").collect(),
       ctx.db.query("performanceLogins").collect(),

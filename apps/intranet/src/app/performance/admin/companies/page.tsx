@@ -6,14 +6,16 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import {
   Building2,
   Check,
   Copy,
   ExternalLink,
+  Pencil,
   Plus,
   RotateCw,
+  Trash2,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -46,15 +48,35 @@ import { clearPerformanceToken } from "@/lib/performanceAuth";
 // so this page (unlike the rest of Performance) is isSuperAdmin-only, not
 // gated on a per-company permission.
 
+type CompanyStatus =
+  | "provisioning"
+  | "pending_dns"
+  | "pending_routing"
+  | "active"
+  | "failed";
+
 interface DnsRecord {
   type: string;
-  domain: string;
+  domain?: string;
   value: string;
 }
 
 interface DnsProvider {
   name: string;
   docsUrl: string;
+}
+
+interface CompanyRow {
+  id: Id<"companies">;
+  name: string;
+  slug: string;
+  domain: string;
+  status: CompanyStatus;
+  adminBootstrapEmails: string[];
+  dnsVerification: DnsRecord[] | null;
+  dnsRouting: DnsRecord[] | null;
+  dnsProvider: DnsProvider | null;
+  provisioningError: string | null;
 }
 
 /** The provider's own favicon, derived from the docs URL's hostname —
@@ -133,10 +155,18 @@ function CopyableField({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Shared renderer for both DNS steps — ownership verification (`records`
+ * carry the exact `domain` Vercel expects the record on) and routing
+ * (no per-record `domain`; it's always the company's own domain, already
+ * named by the surrounding UI). `title` distinguishes which step this is,
+ * since showing the wrong instructions at the wrong time is exactly what
+ * let a company look "active" while still not resolving at all. */
 function DnsInstructions({
+  title,
   records,
   provider,
 }: {
+  title: string;
   records: DnsRecord[];
   provider?: DnsProvider | null;
 }) {
@@ -145,15 +175,15 @@ function DnsInstructions({
   return (
     <div className="space-y-3 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
       <p className="font-medium text-amber-700 dark:text-amber-400">
-        {t("companyDnsInstructions")}
+        {title}
       </p>
       {records.map((r, i) => (
         <div key={i} className="space-y-1 font-mono">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span>{r.type}</span>
-            <span className="break-all">{r.domain}</span>
+            {r.domain && <span className="break-all">{r.domain}</span>}
           </div>
-          <CopyableField label={`${r.type} ${r.domain}`} value={r.value} />
+          <CopyableField label={`${r.type} ${r.domain ?? ""}`} value={r.value} />
         </div>
       ))}
       {provider && (
@@ -170,6 +200,52 @@ function DnsInstructions({
       )}
     </div>
   );
+}
+
+/** The two DNS-related blocks a company in `pending_dns`/`pending_routing`
+ * needs shown, keyed off its current status — factored out since both the
+ * create-dialog result and each list row need the identical logic. */
+function CompanyDnsStatus({
+  status,
+  dnsVerification,
+  dnsRouting,
+  dnsProvider,
+}: {
+  status: CompanyStatus;
+  dnsVerification: DnsRecord[] | null;
+  dnsRouting: DnsRecord[] | null;
+  dnsProvider: DnsProvider | null;
+}) {
+  const t = useTranslations("Performance");
+  if (status === "pending_dns" && dnsVerification) {
+    return (
+      <DnsInstructions
+        title={t("companyDnsInstructions")}
+        records={dnsVerification}
+        provider={dnsProvider}
+      />
+    );
+  }
+  if (status === "pending_routing" && dnsRouting) {
+    return (
+      <DnsInstructions
+        title={t("companyDnsRoutingInstructions")}
+        records={dnsRouting}
+        provider={dnsProvider}
+      />
+    );
+  }
+  return null;
+}
+
+function statusBadgeVariant(
+  status: CompanyStatus
+): "success" | "destructive" | "warning" | "muted" {
+  if (status === "active") return "success";
+  if (status === "failed") return "destructive";
+  if (status === "pending_dns" || status === "pending_routing")
+    return "warning";
+  return "muted";
 }
 
 function CreateCompanyDialog({
@@ -191,8 +267,9 @@ function CreateCompanyDialog({
   const [emails, setEmails] = useState("");
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{
-    status: "active" | "pending_dns" | "failed";
+    status: CompanyStatus | "failed";
     dnsVerification: DnsRecord[];
+    dnsRouting: DnsRecord[];
     dnsProvider: DnsProvider | null;
     error?: string;
   } | null>(null);
@@ -275,7 +352,8 @@ function CreateCompanyDialog({
                 className={
                   result.status === "active"
                     ? "text-sm text-emerald-600"
-                    : result.status === "pending_dns"
+                    : result.status === "pending_dns" ||
+                        result.status === "pending_routing"
                       ? "text-sm text-amber-600 dark:text-amber-400"
                       : "text-sm text-destructive"
                 }
@@ -284,11 +362,15 @@ function CreateCompanyDialog({
                   ? t("companyProvisionedSuccess")
                   : result.status === "pending_dns"
                     ? t("companyProvisionedPendingDns")
-                    : (result.error ?? t("companyProvisionedFailed"))}
+                    : result.status === "pending_routing"
+                      ? t("companyProvisionedPendingRouting")
+                      : (result.error ?? t("companyProvisionedFailed"))}
               </p>
-              <DnsInstructions
-                records={result.dnsVerification}
-                provider={result.dnsProvider}
+              <CompanyDnsStatus
+                status={result.status}
+                dnsVerification={result.dnsVerification}
+                dnsRouting={result.dnsRouting}
+                dnsProvider={result.dnsProvider}
               />
             </>
           )}
@@ -309,6 +391,206 @@ function CreateCompanyDialog({
   );
 }
 
+function EditCompanyDialog({
+  open,
+  onOpenChange,
+  token,
+  company,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  token: string;
+  company: CompanyRow | null;
+}) {
+  const t = useTranslations("Performance");
+  const handleError = useErrorHandler();
+  const updateCompany = useMutation(api.companies.updateCompany);
+  const [name, setName] = useState("");
+  const [emails, setEmails] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open && company) {
+      setName(company.name);
+      setEmails(company.adminBootstrapEmails.join(", "));
+    }
+  }, [open, company]);
+
+  const canSave = !!name.trim();
+
+  async function handleSave() {
+    if (!company || !canSave) return;
+    setSaving(true);
+    try {
+      await updateCompany({
+        token,
+        companyId: company.id,
+        name: name.trim(),
+        adminBootstrapEmails: emails
+          .split(/[,;\s]+/)
+          .map(e => e.trim())
+          .filter(Boolean),
+      });
+      onOpenChange(false);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md gap-0 p-0">
+        <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
+          <DialogTitle className="leading-snug">
+            {t("companyEditTitle")}
+          </DialogTitle>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("companyNameLabel")}
+            </label>
+            <Input value={name} onChange={e => setName(e.target.value)} />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("companyAdminEmailsLabel")}
+            </label>
+            <Input value={emails} onChange={e => setEmails(e.target.value)} />
+            <p className="text-xs text-muted-foreground">
+              {t("companyAdminEmailsHint")}
+            </p>
+          </div>
+        </div>
+        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t("topicCancel")}
+          </Button>
+          <Button
+            onClick={() => void handleSave()}
+            disabled={saving || !canSave}
+          >
+            {t("companySaveChanges")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DeleteCompanyDialog({
+  open,
+  onOpenChange,
+  token,
+  company,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  token: string;
+  company: CompanyRow | null;
+}) {
+  const t = useTranslations("Performance");
+  const handleError = useErrorHandler();
+  const deleteCompany = useAction(api.companies.deleteCompany);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDelete() {
+    if (!company) return;
+    setDeleting(true);
+    try {
+      await deleteCompany({ token, companyId: company.id });
+      onOpenChange(false);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md gap-0 p-0">
+        <div className="space-y-3 px-6 pb-5 pt-6 pr-12">
+          <DialogTitle className="leading-snug">
+            {t("companyDeleteTitle")}
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            {t("companyDeleteWarning", { name: company?.name ?? "" })}
+          </p>
+        </div>
+        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t("topicCancel")}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={() => void handleDelete()}
+            disabled={deleting}
+          >
+            <Trash2 className="mr-2 h-3.5 w-3.5" />
+            {t("companyDeleteConfirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CompanyActions({
+  company,
+  checking,
+  onRetry,
+  onCheck,
+  onEdit,
+  onDelete,
+}: {
+  company: CompanyRow;
+  checking: boolean;
+  onRetry: () => void;
+  onCheck: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const t = useTranslations("Performance");
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-1">
+      {company.status === "failed" && (
+        <Button variant="ghost" size="sm" onClick={onRetry}>
+          <RotateCw className="mr-2 h-3.5 w-3.5" />
+          {t("companyRetry")}
+        </Button>
+      )}
+      {(company.status === "pending_dns" ||
+        company.status === "pending_routing") && (
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={checking}
+          onClick={onCheck}
+        >
+          <RotateCw className="mr-2 h-3.5 w-3.5" />
+          {t("companyCheckVerification")}
+        </Button>
+      )}
+      <Button variant="ghost" size="sm" onClick={onEdit}>
+        <Pencil className="mr-2 h-3.5 w-3.5" />
+        {t("companyEdit")}
+      </Button>
+      {company.slug !== "advantis" && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive"
+          onClick={onDelete}
+        >
+          <Trash2 className="mr-2 h-3.5 w-3.5" />
+          {t("companyDelete")}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export default function PerformanceCompaniesAdminPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
@@ -323,6 +605,10 @@ export default function PerformanceCompaniesAdminPage() {
     domain: string;
   } | null>(null);
   const [checking, setChecking] = useState<Id<"companies"> | null>(null);
+  const [editing, setEditing] = useState<CompanyRow | null>(null);
+  const [deletingCompany, setDeletingCompany] = useState<CompanyRow | null>(
+    null
+  );
 
   useEffect(() => {
     if (!session) return;
@@ -390,7 +676,7 @@ export default function PerformanceCompaniesAdminPage() {
               {t("companyNew")}
             </Button>
           </CardHeader>
-          <CardContent className="overflow-x-auto">
+          <CardContent>
             {companies === undefined ? (
               <p className="text-sm text-muted-foreground">{t("loading")}</p>
             ) : companies.length === 0 ? (
@@ -398,80 +684,116 @@ export default function PerformanceCompaniesAdminPage() {
                 {t("companiesEmpty")}
               </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("companyNameLabel")}</TableHead>
-                    <TableHead>{t("companyDomainLabel")}</TableHead>
-                    <TableHead>{t("companyStatusLabel")}</TableHead>
-                    <TableHead />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Mobile: one card per company — a 4-column table with DNS
+                    instructions crammed into one cell doesn't fit a phone
+                    (columns overlapped/cut off in practice). */}
+                <div className="space-y-3 md:hidden">
                   {companies.map(c => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.name}</TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {c.domain}
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <Badge
-                          variant={
-                            c.status === "active"
-                              ? "success"
-                              : c.status === "failed"
-                                ? "destructive"
-                                : c.status === "pending_dns"
-                                  ? "warning"
-                                  : "muted"
-                          }
-                        >
-                          {t(`companyStatus_${c.status}`)}
-                        </Badge>
+                    <Card key={c.id}>
+                      <CardContent className="space-y-3 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate font-medium">{c.name}</p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {c.domain}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={statusBadgeVariant(c.status)}
+                            className="shrink-0"
+                          >
+                            {t(`companyStatus_${c.status}`)}
+                          </Badge>
+                        </div>
                         {c.status === "failed" && c.provisioningError && (
-                          <p className="mt-1 truncate text-xs text-destructive">
+                          <p className="text-xs text-destructive">
                             {c.provisioningError}
                           </p>
                         )}
-                        {c.status === "pending_dns" && c.dnsVerification && (
-                          <div className="mt-2">
-                            <DnsInstructions
-                              records={c.dnsVerification}
-                              provider={c.dnsProvider}
-                            />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {c.status === "failed" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
+                        <CompanyDnsStatus
+                          status={c.status}
+                          dnsVerification={c.dnsVerification}
+                          dnsRouting={c.dnsRouting}
+                          dnsProvider={c.dnsProvider}
+                        />
+                        <div className="border-t border-border-soft pt-3">
+                          <CompanyActions
+                            company={c}
+                            checking={checking === c.id}
+                            onRetry={() => {
                               setRetrying({ name: c.name, domain: c.domain });
                               setCreating(true);
                             }}
-                          >
-                            <RotateCw className="mr-2 h-3.5 w-3.5" />
-                            {t("companyRetry")}
-                          </Button>
-                        )}
-                        {c.status === "pending_dns" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            disabled={checking === c.id}
-                            onClick={() => void handleCheck(c.id)}
-                          >
-                            <RotateCw className="mr-2 h-3.5 w-3.5" />
-                            {t("companyCheckVerification")}
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
+                            onCheck={() => void handleCheck(c.id)}
+                            onEdit={() => setEditing(c)}
+                            onDelete={() => setDeletingCompany(c)}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+
+                <Card className="hidden overflow-x-auto md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t("companyNameLabel")}</TableHead>
+                        <TableHead>{t("companyDomainLabel")}</TableHead>
+                        <TableHead>{t("companyStatusLabel")}</TableHead>
+                        <TableHead />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {companies.map(c => (
+                        <TableRow key={c.id}>
+                          <TableCell className="font-medium">
+                            {c.name}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {c.domain}
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <Badge variant={statusBadgeVariant(c.status)}>
+                              {t(`companyStatus_${c.status}`)}
+                            </Badge>
+                            {c.status === "failed" && c.provisioningError && (
+                              <p className="mt-1 truncate text-xs text-destructive">
+                                {c.provisioningError}
+                              </p>
+                            )}
+                            <div className="mt-2">
+                              <CompanyDnsStatus
+                                status={c.status}
+                                dnsVerification={c.dnsVerification}
+                                dnsRouting={c.dnsRouting}
+                                dnsProvider={c.dnsProvider}
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <CompanyActions
+                              company={c}
+                              checking={checking === c.id}
+                              onRetry={() => {
+                                setRetrying({
+                                  name: c.name,
+                                  domain: c.domain,
+                                });
+                                setCreating(true);
+                              }}
+                              onCheck={() => void handleCheck(c.id)}
+                              onEdit={() => setEditing(c)}
+                              onDelete={() => setDeletingCompany(c)}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </Card>
+              </>
             )}
           </CardContent>
         </Card>
@@ -481,6 +803,22 @@ export default function PerformanceCompaniesAdminPage() {
         onOpenChange={setCreating}
         token={token}
         prefill={retrying}
+      />
+      <EditCompanyDialog
+        open={editing !== null}
+        onOpenChange={open => {
+          if (!open) setEditing(null);
+        }}
+        token={token}
+        company={editing}
+      />
+      <DeleteCompanyDialog
+        open={deletingCompany !== null}
+        onOpenChange={open => {
+          if (!open) setDeletingCompany(null);
+        }}
+        token={token}
+        company={deletingCompany}
       />
       <PerformanceBottomTabs
         navItems={navItems}

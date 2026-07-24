@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { PerformanceAccountMenu } from "@/components/performance/PerformanceAccountMenu";
+import { usePerformanceCompany } from "@/components/performance/PerformanceCompanyProvider";
 import { type PerformanceHeaderNavItem } from "@/components/performance/PerformanceHeader";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -36,6 +37,11 @@ export function PerformanceBottomTabs({
   const t = useTranslations("Performance");
   const { tabs, activeValue } = useBottomNavTabs();
   const [menuOpen, setMenuOpen] = useState(false);
+  // "Back to intranet" only makes sense on Advantis's own grandfathered
+  // host — a client's own domain (e.g. salespirates.de) never has a
+  // Clerk-gated intranet to go back to; `/` there just re-resolves to their
+  // own Performance dashboard via proxy.ts, which is confusing, not useful.
+  const onAdvantisHost = usePerformanceCompany() === null;
 
   if ((!tabs || tabs.length === 0) && navItems.length === 0 && !onExit) {
     return null;
@@ -96,14 +102,16 @@ export function PerformanceBottomTabs({
             <SettingsMenu />
           </div>
           <nav className="flex flex-col py-2">
-            <Link
-              href="/"
-              onClick={() => setMenuOpen(false)}
-              className="flex items-center gap-3 rounded-md px-2 py-2.5 text-sm hover:bg-accent"
-            >
-              <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-              {t("backToIntranet")}
-            </Link>
+            {onAdvantisHost && (
+              <Link
+                href="/"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 rounded-md px-2 py-2.5 text-sm hover:bg-accent"
+              >
+                <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+                {t("backToIntranet")}
+              </Link>
+            )}
             {navItems.map(item => (
               <Link
                 key={item.href}
