@@ -101,6 +101,129 @@ function normalizeDnsVerification(raw: unknown): DnsVerificationRecord[] {
     }));
 }
 
+// ---------------------------------------------------------- DNS provider hint
+
+interface DnsProviderInfo {
+  name: string;
+  docsUrl: string;
+}
+
+/** Matched against a domain's nameserver hostnames (substring match, case
+ * insensitive) — not exhaustive, just the common registrars/DNS hosts worth
+ * a direct link to their "add a TXT record" docs instead of making every
+ * admin hunt for it themselves. Unmatched nameservers just mean no hint is
+ * shown, never an error. */
+const KNOWN_DNS_PROVIDERS: { match: string; name: string; docsUrl: string }[] =
+  [
+    {
+      match: "ionos",
+      name: "IONOS",
+      docsUrl:
+        "https://www.ionos.com/help/domains/configuring-name-servers-and-dns-records/creating-and-configuring-additional-dns-records-for-domains/",
+    },
+    {
+      match: "domaincontrol",
+      name: "GoDaddy",
+      docsUrl: "https://www.godaddy.com/help/add-a-txt-record-19232",
+    },
+    {
+      match: "cloudflare",
+      name: "Cloudflare",
+      docsUrl:
+        "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/",
+    },
+    {
+      match: "registrar-servers",
+      name: "Namecheap",
+      docsUrl:
+        "https://www.namecheap.com/support/knowledgebase/article.aspx/317/2237/how-do-i-add-txtspfdkimdmarc-records-for-my-domain/",
+    },
+    {
+      match: "domains.google",
+      name: "Google Domains",
+      docsUrl: "https://support.google.com/domains/answer/9211383",
+    },
+    {
+      match: "awsdns",
+      name: "AWS Route 53",
+      docsUrl:
+        "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/rrsets-working-with.html",
+    },
+    {
+      match: "squarespacedns",
+      name: "Squarespace Domains",
+      docsUrl: "https://support.squarespace.com/hc/en-us/articles/205812378",
+    },
+    {
+      match: "hostinger",
+      name: "Hostinger",
+      docsUrl:
+        "https://support.hostinger.com/en/articles/1583227-how-to-manage-dns-records",
+    },
+    {
+      match: "ovh",
+      name: "OVH",
+      docsUrl:
+        "https://docs.ovh.com/us/en/domains/web_hosting_general_information_about_dns_servers/",
+    },
+    {
+      match: "vercel-dns",
+      name: "Vercel DNS",
+      docsUrl: "https://vercel.com/docs/domains/managing-dns-records",
+    },
+    {
+      match: "netlify",
+      name: "Netlify DNS",
+      docsUrl: "https://docs.netlify.com/domains-https/netlify-dns/",
+    },
+    {
+      match: "dnsimple",
+      name: "DNSimple",
+      docsUrl: "https://support.dnsimple.com/articles/txt-record/",
+    },
+    {
+      match: "strato",
+      name: "STRATO",
+      docsUrl:
+        "https://www.strato.de/faq/domains/wie-lege-ich-einen-txt-eintrag-an/",
+    },
+    {
+      match: "united-domains",
+      name: "united-domains",
+      docsUrl: "https://www.united-domains.de/hilfe/dns-verwaltung",
+    },
+  ];
+
+/** Best-effort lookup of which DNS provider actually manages `domain`'s
+ * records (via its nameservers, not the registrar — a domain can be
+ * registered at one company but have its DNS hosted somewhere else
+ * entirely, and the nameserver is what actually determines where the TXT
+ * record needs to be added). Uses a public DNS-over-HTTPS resolver so no
+ * extra credentials are needed. Returns `null` on any failure or unknown
+ * provider — this is a UI hint only, never allowed to block provisioning. */
+async function detectDnsProvider(
+  domain: string
+): Promise<DnsProviderInfo | null> {
+  try {
+    const res = await fetch(
+      `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=NS`,
+      { headers: { accept: "application/dns-json" } }
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as { Answer?: { data?: string }[] };
+    const nameservers = (json.Answer ?? [])
+      .map(a => (a.data ?? "").toLowerCase())
+      .filter(Boolean);
+    for (const ns of nameservers) {
+      const hit = KNOWN_DNS_PROVIDERS.find(p => ns.includes(p.match));
+      if (hit) return { name: hit.name, docsUrl: hit.docsUrl };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /** Adds `domain` (the company's own, independently-owned domain) to the
  * platform's single Vercel project via the Domains API. Lives here (a plain
  * Convex action using `fetch` + a deployment env var) rather than behind an
@@ -270,12 +393,19 @@ export const applyDomainResult = internalMutation({
     dnsVerification: v.array(
       v.object({ type: v.string(), domain: v.string(), value: v.string() })
     ),
+    dnsProvider: v.optional(
+      v.object({ name: v.string(), docsUrl: v.string() })
+    ),
   },
-  handler: async (ctx, { companyId, verified, dnsVerification }) => {
+  handler: async (
+    ctx,
+    { companyId, verified, dnsVerification, dnsProvider }
+  ) => {
     await ctx.db.patch(companyId, {
       status: verified ? "active" : "pending_dns",
       vercelVerified: verified,
       dnsVerification: verified ? undefined : dnsVerification,
+      dnsProvider: verified ? undefined : dnsProvider,
       provisioningError: undefined,
       updatedAt: Date.now(),
     });
@@ -388,6 +518,7 @@ export const listCompanies = query({
         domain: c.domain,
         status: c.status,
         dnsVerification: c.dnsVerification ?? null,
+        dnsProvider: c.dnsProvider ?? null,
         provisioningError: c.provisioningError ?? null,
         createdAt: c.createdAt,
       }))
@@ -416,6 +547,7 @@ export const createCompany = action({
     companyId: Id<"companies">;
     status: "active" | "pending_dns" | "failed";
     dnsVerification: DnsVerificationRecord[];
+    dnsProvider: DnsProviderInfo | null;
     error?: string;
   }> => {
     await ctx.runQuery(internal.performanceAuth.assertSuperAdminSession, {
@@ -458,19 +590,29 @@ export const createCompany = action({
 
     if (company.vercelVerified) {
       // Already verified on an earlier run of this same action.
-      return { companyId, status: "active", dnsVerification: [] };
+      return {
+        companyId,
+        status: "active",
+        dnsVerification: [],
+        dnsProvider: null,
+      };
     }
 
     try {
       const result = await addVercelDomain(normalizedDomain);
+      const dnsProvider = result.verified
+        ? null
+        : await detectDnsProvider(normalizedDomain);
       await ctx.runMutation(internal.companies.applyDomainResult, {
         companyId,
         ...result,
+        dnsProvider: dnsProvider ?? undefined,
       });
       return {
         companyId,
         status: result.verified ? "active" : "pending_dns",
         dnsVerification: result.dnsVerification,
+        dnsProvider,
       };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -482,6 +624,7 @@ export const createCompany = action({
         companyId,
         status: "failed",
         dnsVerification: [],
+        dnsProvider: null,
         error: message,
       };
     }
@@ -500,6 +643,7 @@ export const checkDomainVerification = action({
   ): Promise<{
     status: "active" | "pending_dns";
     dnsVerification: DnsVerificationRecord[];
+    dnsProvider: DnsProviderInfo | null;
   }> => {
     await ctx.runQuery(internal.performanceAuth.assertSuperAdminSession, {
       token,
@@ -515,13 +659,18 @@ export const checkDomainVerification = action({
     }
 
     const result = await checkVercelDomain(company.domain);
+    const dnsProvider = result.verified
+      ? null
+      : await detectDnsProvider(company.domain);
     await ctx.runMutation(internal.companies.applyDomainResult, {
       companyId,
       ...result,
+      dnsProvider: dnsProvider ?? undefined,
     });
     return {
       status: result.verified ? "active" : "pending_dns",
       dnsVerification: result.dnsVerification,
+      dnsProvider,
     };
   },
 });

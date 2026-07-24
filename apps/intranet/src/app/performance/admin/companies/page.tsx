@@ -7,7 +7,14 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useQuery } from "convex/react";
-import { Building2, Plus, RotateCw } from "lucide-react";
+import {
+  Building2,
+  Check,
+  Copy,
+  ExternalLink,
+  Plus,
+  RotateCw,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
@@ -45,22 +52,89 @@ interface DnsRecord {
   value: string;
 }
 
-function DnsInstructions({ records }: { records: DnsRecord[] }) {
+interface DnsProvider {
+  name: string;
+  docsUrl: string;
+}
+
+/** A single copyable DNS field — full value always visible (wraps instead of
+ * truncating, since a truncated TXT value is unreadable and unselectable on
+ * mobile) with a tap target to copy it instead of relying on manual
+ * text selection, which is fiddly on a phone. */
+function CopyableField({ label, value }: { label: string; value: string }) {
+  const t = useTranslations("Performance");
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard API can be unavailable (insecure context, permissions) —
+      // the value is still fully visible and selectable, so this is a
+      // graceful no-op, not an error worth surfacing.
+    }
+  }
+
+  return (
+    <div className="flex items-start gap-2">
+      <span className="min-w-0 flex-1 break-all font-mono text-xs">
+        {value}
+      </span>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="shrink-0"
+        onClick={() => void handleCopy()}
+        aria-label={copied ? t("companyDnsCopied") : t("companyDnsCopy")}
+      >
+        {copied ? (
+          <Check className="h-3.5 w-3.5 text-emerald-600" />
+        ) : (
+          <Copy className="h-3.5 w-3.5" />
+        )}
+      </Button>
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}
+
+function DnsInstructions({
+  records,
+  provider,
+}: {
+  records: DnsRecord[];
+  provider?: DnsProvider | null;
+}) {
   const t = useTranslations("Performance");
   if (records.length === 0) return null;
   return (
-    <div className="space-y-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
+    <div className="space-y-3 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
       <p className="font-medium text-amber-700 dark:text-amber-400">
         {t("companyDnsInstructions")}
       </p>
       {records.map((r, i) => (
-        <div key={i} className="grid grid-cols-[3rem_1fr] gap-x-2 font-mono">
-          <span className="text-muted-foreground">{r.type}</span>
-          <span className="truncate">{r.domain}</span>
-          <span />
-          <span className="truncate text-muted-foreground">{r.value}</span>
+        <div key={i} className="space-y-1 font-mono">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <span>{r.type}</span>
+            <span className="break-all">{r.domain}</span>
+          </div>
+          <CopyableField label={`${r.type} ${r.domain}`} value={r.value} />
         </div>
       ))}
+      {provider && (
+        <a
+          href={provider.docsUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1 text-amber-700 underline underline-offset-2 dark:text-amber-400"
+        >
+          {t("companyDnsProviderHint", { provider: provider.name })}
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      )}
     </div>
   );
 }
@@ -86,6 +160,7 @@ function CreateCompanyDialog({
   const [result, setResult] = useState<{
     status: "active" | "pending_dns" | "failed";
     dnsVerification: DnsRecord[];
+    dnsProvider: DnsProvider | null;
     error?: string;
   } | null>(null);
 
@@ -178,7 +253,10 @@ function CreateCompanyDialog({
                     ? t("companyProvisionedPendingDns")
                     : (result.error ?? t("companyProvisionedFailed"))}
               </p>
-              <DnsInstructions records={result.dnsVerification} />
+              <DnsInstructions
+                records={result.dnsVerification}
+                provider={result.dnsProvider}
+              />
             </>
           )}
         </div>
@@ -324,7 +402,10 @@ export default function PerformanceCompaniesAdminPage() {
                         )}
                         {c.status === "pending_dns" && c.dnsVerification && (
                           <div className="mt-2">
-                            <DnsInstructions records={c.dnsVerification} />
+                            <DnsInstructions
+                              records={c.dnsVerification}
+                              provider={c.dnsProvider}
+                            />
                           </div>
                         )}
                       </TableCell>

@@ -760,6 +760,15 @@ export default defineSchema({
         v.object({ type: v.string(), domain: v.string(), value: v.string() })
       )
     ),
+    // Best-effort hint (nameserver-based, not authoritative) for which DNS
+    // provider actually manages this domain's records — shown as "add it at
+    // <provider>" plus a docs link so whoever owns the domain doesn't have
+    // to hunt for their own registrar's instructions. Cleared once verified
+    // (no longer relevant, and could go stale if the domain later moves
+    // providers).
+    dnsProvider: v.optional(
+      v.object({ name: v.string(), docsUrl: v.string() })
+    ),
     vercelVerified: v.optional(v.boolean()),
     provisioningError: v.optional(v.string()),
     createdAt: v.number(),
