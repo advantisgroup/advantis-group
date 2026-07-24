@@ -6,6 +6,7 @@ export default function SignUpPage() {
   return (
     <AuthShell>
       <SignUp
+        signInUrl="/sign-in"
         appearance={{
           elements: {
             rootBox: "w-full flex justify-center",
