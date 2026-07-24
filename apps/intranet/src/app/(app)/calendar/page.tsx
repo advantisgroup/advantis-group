@@ -79,6 +79,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate, formatTime } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
@@ -367,6 +368,21 @@ export default function CalendarPage() {
       window.history.replaceState(null, "", "/calendar");
     }
   }, []);
+
+  // Deep link from a notification/dashboard widget: /calendar?event=<id> or
+  // ?absence=<id> opens the matching detail dialog directly.
+  const deepLinkEventId = useDeepLinkId("event");
+  const deepLinkAbsenceId = useDeepLinkId("absence");
+  useEffect(() => {
+    if (deepLinkEventId) {
+      setDetail({ kind: "event", id: deepLinkEventId as Id<"events"> });
+    }
+  }, [deepLinkEventId]);
+  useEffect(() => {
+    if (deepLinkAbsenceId) {
+      setDetail({ kind: "absence", id: deepLinkAbsenceId as Id<"absences"> });
+    }
+  }, [deepLinkAbsenceId]);
 
   // The queried range depends on the active view: the month grid spans whole
   // weeks; the week view a single week; the agenda the whole month.
