@@ -17,7 +17,7 @@ export default async function PerformanceLayout({
 }: {
   children: ReactNode;
 }) {
-  // Set by proxy.ts's tenant-subdomain rewrite; absent on the main intranet
+  // Set by proxy.ts's tenant-domain rewrite; absent on the main intranet
   // host, where PerformanceCompanyProvider falls back to Advantis's slug.
   const headerList = await headers();
   const companyId = headerList.get("x-performance-company-id");

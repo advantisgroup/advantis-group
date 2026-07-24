@@ -11,7 +11,7 @@ import { createContext, useContext, type ReactNode } from "react";
  * never a trust boundary (see `proxy.ts`'s doc comment): every Convex call
  * re-derives `companyId` from the resolved session, not from this context.
  *
- * `null` on the grandfathered main intranet host (no tenant subdomain
+ * `null` on the grandfathered main intranet host (no company domain
  * involved) — callers fall back to Advantis's own slug in that case (see
  * `usePerformanceCompanySlug`).
  */

@@ -725,45 +725,48 @@ export default defineSchema({
     .index("by_status", ["status"]),
 
   // --- Performance (sales KPI dashboard) -----------------------------------
-  // Multi-tenant: each client company gets its own subdomain, provisioned
-  // end-to-end (see `companies.ts`) with no manual step beyond one "Add
-  // Company" action — no env var edits, no manual Clerk/Vercel dashboard
-  // clicks. A bring-your-own custom domain is also supported, but needs one
-  // DNS record the client creates on their own registrar — unavoidable, not
-  // a gap in the automation.
+  // Multi-tenant: each client company brings its own, fully independent
+  // domain (e.g. "salespirates.de") — there is no Advantis-owned wildcard
+  // root. `companies.ts` adds that domain to the Vercel project via the
+  // Domains API on creation; Vercel then reports the DNS record(s)
+  // (`dnsVerification`) the domain's owner must add on their own registrar
+  // before it verifies — one manual step per company, unavoidable since
+  // nobody can write into a DNS zone they don't control, not a gap in the
+  // automation. Everything else (the company row, its built-in roles, the
+  // Vercel API call itself) is zero-touch.
   companies: defineTable({
     name: v.string(),
+    // Internal identifier only (session/self-setup scoping) — auto-derived
+    // from `domain` at creation time, never itself used for routing.
     slug: v.string(),
-    subdomain: v.string(),
-    customDomain: v.optional(v.string()),
-    customDomainStatus: v.optional(
-      v.union(
-        v.literal("pending_dns"),
-        v.literal("verified"),
-        v.literal("failed")
-      )
-    ),
+    // The company's own domain, exact-matched against the request Host
+    // header (`companies.getByDomain`) — e.g. "salespirates.de" or
+    // "app.salespirates.de". Whatever they actually point at Vercel.
+    domain: v.string(),
     status: v.union(
-      v.literal("provisioning"),
-      v.literal("active"),
-      v.literal("failed")
+      v.literal("provisioning"), // row just created, about to call Vercel
+      v.literal("pending_dns"), // added to Vercel, waiting on the owner's DNS record
+      v.literal("active"), // DNS verified — live
+      v.literal("failed") // a real error (not just "not verified yet")
     ),
     // Per-company replacement for the old global `PERFORMANCE_ADMIN_EMAILS`
     // env var — the emails that can self-claim this company's built-in Admin
     // role via `setupAccount`, set once at creation time.
     adminBootstrapEmails: v.array(v.string()),
-    // Vercel Domains API bookkeeping, so re-running provisioning after a
-    // partial failure (see `companies.createCompany`) never double-adds the
-    // domain.
-    vercelDomainId: v.optional(v.string()),
+    // The DNS record(s) Vercel reports are still needed — shown verbatim in
+    // the admin UI so whoever owns the domain knows exactly what to add.
+    dnsVerification: v.optional(
+      v.array(
+        v.object({ type: v.string(), domain: v.string(), value: v.string() })
+      )
+    ),
     vercelVerified: v.optional(v.boolean()),
     provisioningError: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_slug", ["slug"])
-    .index("by_subdomain", ["subdomain"])
-    .index("by_customDomain", ["customDomain"])
+    .index("by_domain", ["domain"])
     .index("by_status", ["status"]),
 
   // Named bundles of permission keys (`performance/lib/permissions.ts`),

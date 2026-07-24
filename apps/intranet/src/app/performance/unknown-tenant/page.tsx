@@ -6,9 +6,10 @@ import { useTranslations } from "next-intl";
 import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Reached only via `proxy.ts`'s tenant-subdomain rewrite, when the Host
-// doesn't resolve to any active company — a mistyped or stale subdomain of
-// the Performance wildcard root, not a real error in the app itself.
+// Reached only via `proxy.ts`'s tenant-domain rewrite, when the Host either
+// doesn't match any registered company or matches one that isn't active yet
+// (still provisioning, pending DNS, or failed) — not a real error in the
+// app itself.
 export default function UnknownTenantPage() {
   const t = useTranslations("Performance");
 

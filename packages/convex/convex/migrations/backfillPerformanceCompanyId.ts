@@ -63,14 +63,14 @@ export const ensureAdvantisCompany = internalMutation({
     }
 
     const now = Date.now();
-    // `subdomain` is bookkeeping only here — Advantis is grandfathered to
-    // serve at the existing production hostname directly (proxy.ts never
-    // rewrites that host), not a wildcard subdomain, so this value is never
-    // actually looked up by `companies.getBySubdomain`.
+    // `domain` is bookkeeping only here — Advantis is grandfathered to serve
+    // at the existing production hostname directly (proxy.ts excludes that
+    // host from the tenant lookup entirely), so this value is never
+    // actually looked up by `companies.getByDomain`.
     const companyId = await ctx.db.insert("companies", {
       name: "Advantis",
       slug: "advantis",
-      subdomain: "advantis.internal",
+      domain: "advantis.internal",
       status: "active",
       adminBootstrapEmails: getSeedAdminEmails(),
       createdAt: now,

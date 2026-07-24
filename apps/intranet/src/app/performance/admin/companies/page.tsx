@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useQuery } from "convex/react";
 import { Building2, Plus, RotateCw } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -38,6 +39,32 @@ import { clearPerformanceToken } from "@/lib/performanceAuth";
 // so this page (unlike the rest of Performance) is isSuperAdmin-only, not
 // gated on a per-company permission.
 
+interface DnsRecord {
+  type: string;
+  domain: string;
+  value: string;
+}
+
+function DnsInstructions({ records }: { records: DnsRecord[] }) {
+  const t = useTranslations("Performance");
+  if (records.length === 0) return null;
+  return (
+    <div className="space-y-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
+      <p className="font-medium text-amber-700 dark:text-amber-400">
+        {t("companyDnsInstructions")}
+      </p>
+      {records.map((r, i) => (
+        <div key={i} className="grid grid-cols-[3rem_1fr] gap-x-2 font-mono">
+          <span className="text-muted-foreground">{r.type}</span>
+          <span className="truncate">{r.domain}</span>
+          <span />
+          <span className="truncate text-muted-foreground">{r.value}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function CreateCompanyDialog({
   open,
   onOpenChange,
@@ -47,31 +74,31 @@ function CreateCompanyDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   token: string;
-  prefill: { name: string; slug: string } | null;
+  prefill: { name: string; domain: string } | null;
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
   const createCompany = useAction(api.companies.createCompany);
   const [name, setName] = useState(prefill?.name ?? "");
-  const [slug, setSlug] = useState(prefill?.slug ?? "");
+  const [domain, setDomain] = useState(prefill?.domain ?? "");
   const [emails, setEmails] = useState("");
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<{
-    status: "active" | "failed";
-    subdomain: string;
+    status: "active" | "pending_dns" | "failed";
+    dnsVerification: DnsRecord[];
     error?: string;
   } | null>(null);
 
   useEffect(() => {
     if (open) {
       setName(prefill?.name ?? "");
-      setSlug(prefill?.slug ?? "");
+      setDomain(prefill?.domain ?? "");
       setEmails("");
       setResult(null);
     }
   }, [open, prefill]);
 
-  const canSave = !!name.trim() && !!slug.trim();
+  const canSave = !!name.trim() && !!domain.trim();
 
   async function handleSave() {
     if (!canSave) return;
@@ -81,7 +108,7 @@ function CreateCompanyDialog({
       const res = await createCompany({
         token,
         name: name.trim(),
-        slug: slug.trim(),
+        domain: domain.trim(),
         adminBootstrapEmails: emails
           .split(/[,;\s]+/)
           .map(e => e.trim())
@@ -110,19 +137,15 @@ function CreateCompanyDialog({
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
-              {t("companySlugLabel")}
+              {t("companyDomainLabel")}
             </label>
             <Input
-              value={slug}
-              onChange={e =>
-                setSlug(
-                  e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
-                )
-              }
-              placeholder="acme"
+              value={domain}
+              onChange={e => setDomain(e.target.value.trim().toLowerCase())}
+              placeholder="salespirates.de"
             />
             <p className="text-xs text-muted-foreground">
-              {t("companySlugHint")}
+              {t("companyDomainHint")}
             </p>
           </div>
           <div className="space-y-1.5">
@@ -132,24 +155,31 @@ function CreateCompanyDialog({
             <Input
               value={emails}
               onChange={e => setEmails(e.target.value)}
-              placeholder="admin@acme.com, lead@acme.com"
+              placeholder="admin@salespirates.de, lead@salespirates.de"
             />
             <p className="text-xs text-muted-foreground">
               {t("companyAdminEmailsHint")}
             </p>
           </div>
           {result && (
-            <p
-              className={
-                result.status === "active"
-                  ? "text-sm text-emerald-600"
-                  : "text-sm text-destructive"
-              }
-            >
-              {result.status === "active"
-                ? t("companyProvisionedSuccess", { subdomain: result.subdomain })
-                : (result.error ?? t("companyProvisionedFailed"))}
-            </p>
+            <>
+              <p
+                className={
+                  result.status === "active"
+                    ? "text-sm text-emerald-600"
+                    : result.status === "pending_dns"
+                      ? "text-sm text-amber-600 dark:text-amber-400"
+                      : "text-sm text-destructive"
+                }
+              >
+                {result.status === "active"
+                  ? t("companyProvisionedSuccess")
+                  : result.status === "pending_dns"
+                    ? t("companyProvisionedPendingDns")
+                    : (result.error ?? t("companyProvisionedFailed"))}
+              </p>
+              <DnsInstructions records={result.dnsVerification} />
+            </>
           )}
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
@@ -169,10 +199,13 @@ export default function PerformanceCompaniesAdminPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
   const { token, session } = usePerformanceSession();
+  const handleError = useErrorHandler();
+  const checkDomainVerification = useAction(api.companies.checkDomainVerification);
   const [creating, setCreating] = useState(false);
-  const [retrying, setRetrying] = useState<{ name: string; slug: string } | null>(
+  const [retrying, setRetrying] = useState<{ name: string; domain: string } | null>(
     null
   );
+  const [checking, setChecking] = useState<Id<"companies"> | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -193,6 +226,17 @@ export default function PerformanceCompaniesAdminPage() {
   function exit() {
     clearPerformanceToken();
     router.replace("/performance/login");
+  }
+
+  async function handleCheck(companyId: Id<"companies">) {
+    setChecking(companyId);
+    try {
+      await checkDomainVerification({ token, companyId });
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setChecking(null);
+    }
   }
 
   if (session === undefined) return <PerformancePageSkeleton />;
@@ -241,7 +285,7 @@ export default function PerformanceCompaniesAdminPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t("companyNameLabel")}</TableHead>
-                    <TableHead>{t("companySubdomainLabel")}</TableHead>
+                    <TableHead>{t("companyDomainLabel")}</TableHead>
                     <TableHead>{t("companyStatusLabel")}</TableHead>
                     <TableHead />
                   </TableRow>
@@ -251,24 +295,31 @@ export default function PerformanceCompaniesAdminPage() {
                     <TableRow key={c.id}>
                       <TableCell className="font-medium">{c.name}</TableCell>
                       <TableCell className="text-muted-foreground">
-                        {c.subdomain}
+                        {c.domain}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="max-w-xs">
                         <Badge
                           variant={
                             c.status === "active"
                               ? "success"
                               : c.status === "failed"
                                 ? "destructive"
-                                : "muted"
+                                : c.status === "pending_dns"
+                                  ? "warning"
+                                  : "muted"
                           }
                         >
                           {t(`companyStatus_${c.status}`)}
                         </Badge>
                         {c.status === "failed" && c.provisioningError && (
-                          <p className="mt-1 max-w-xs truncate text-xs text-destructive">
+                          <p className="mt-1 truncate text-xs text-destructive">
                             {c.provisioningError}
                           </p>
+                        )}
+                        {c.status === "pending_dns" && c.dnsVerification && (
+                          <div className="mt-2">
+                            <DnsInstructions records={c.dnsVerification} />
+                          </div>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -277,12 +328,23 @@ export default function PerformanceCompaniesAdminPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              setRetrying({ name: c.name, slug: c.slug });
+                              setRetrying({ name: c.name, domain: c.domain });
                               setCreating(true);
                             }}
                           >
                             <RotateCw className="mr-2 h-3.5 w-3.5" />
                             {t("companyRetry")}
+                          </Button>
+                        )}
+                        {c.status === "pending_dns" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={checking === c.id}
+                            onClick={() => void handleCheck(c.id)}
+                          >
+                            <RotateCw className="mr-2 h-3.5 w-3.5" />
+                            {t("companyCheckVerification")}
                           </Button>
                         )}
                       </TableCell>

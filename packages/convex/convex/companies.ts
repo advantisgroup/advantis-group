@@ -13,39 +13,41 @@ import { BUILT_IN_ROLES } from "./performance/lib/permissions";
 
 /**
  * Company provisioning: the "Add Company" flow that brings a new Performance
- * tenant fully online with zero manual steps — no env var edits, no manual
- * Clerk/Vercel dashboard clicks, no code deploy. See the plan this was built
- * from for the full rationale; the short version:
+ * tenant online on **its own, fully independent domain** — e.g.
+ * "salespirates.de" — with as little manual work as possible:
  *
- * - `createCompany` (the one thing the admin UI calls) resolves to a
- *   subdomain of one Advantis-owned wildcard root domain
- *   (`PERFORMANCE_PLATFORM_ROOT_DOMAIN`), which Vercel's Domains API
- *   verifies synchronously since it's already covered by the wildcard's own
- *   verification — no DNS wait, no polling loop needed for this path.
- * - Every step is idempotent by construction (check-by-slug before insert,
- *   skip the Vercel call if already verified), so re-running "create
- *   company" after a partial failure — surfaced via `status: "failed"` +
- *   `provisioningError` — never double-creates rows or double-adds the
- *   domain. The admin UI's "Retry" button is just this same action again.
+ * - `createCompany` (the one thing the admin UI calls) adds the company's
+ *   domain to the platform's single Vercel project via the Domains API.
+ * - Because it's a domain Advantis doesn't own, Vercel can't auto-verify it
+ *   the way it could a subdomain of an already-owned wildcard root — the
+ *   domain's owner has to add one DNS record (returned as
+ *   `dnsVerification`) on their own registrar. That's the one unavoidable
+ *   manual step per company: nobody can be automated around writing into a
+ *   DNS zone they don't control. Everything else — the company row, its
+ *   built-in roles, the Vercel API call itself — is zero-touch.
+ * - Every step is idempotent by construction (check-by-domain before
+ *   insert, skip the Vercel call if already verified), so re-running
+ *   "create company" after a partial failure — surfaced via
+ *   `status: "failed"` + `provisioningError` — never double-creates rows or
+ *   double-adds the domain. The admin UI's "Retry" button is just this same
+ *   action again; "Check verification" re-checks Vercel without re-adding
+ *   anything.
  */
 
 // --------------------------------------------------------------- Vercel API
 
-/** Adds `subdomain` to the platform's single Vercel project via the Domains
- * API. Lives here (a plain Convex action using `fetch` + a deployment env
- * var) rather than behind an `apps/api` hop, mirroring how
- * `activity/genesys.ts`/`activity/clockodo.ts` already call their external
- * APIs directly from Convex actions — this is a plain bearer-token REST
- * call with no OAuth flow or Node-only dependency, the same shape as those.
- *
- * NOTE: the exact response shape here (fields checked below) is based on
- * Vercel's documented Domains API at the time this was written, not a
- * verified live call — this session's network access to Vercel's docs was
- * blocked, so double-check the response shape against
- * https://vercel.com/docs/rest-api (Domains) before this first ships. */
-async function addVercelDomain(
-  subdomain: string
-): Promise<{ vercelDomainId: string; verified: boolean }> {
+function vercelHeaders(apiToken: string) {
+  return {
+    authorization: `Bearer ${apiToken}`,
+    "content-type": "application/json",
+  };
+}
+
+function requireVercelConfig(): {
+  apiToken: string;
+  projectId: string;
+  teamId?: string;
+} {
   const apiToken = process.env.VERCEL_API_TOKEN;
   const projectId = process.env.VERCEL_PROJECT_ID;
   if (!apiToken || !projectId) {
@@ -53,37 +55,110 @@ async function addVercelDomain(
       "VERCEL_API_TOKEN / VERCEL_PROJECT_ID are not configured on this Convex deployment."
     );
   }
-  const teamId = process.env.VERCEL_TEAM_ID;
+  return { apiToken, projectId, teamId: process.env.VERCEL_TEAM_ID };
+}
+
+function vercelProjectDomainUrl(
+  projectId: string,
+  teamId: string | undefined,
+  domainPath?: string
+): URL {
   const url = new URL(
-    `https://api.vercel.com/v10/projects/${projectId}/domains`
+    `https://api.vercel.com/v10/projects/${projectId}/domains${domainPath ? `/${domainPath}` : ""}`
   );
   if (teamId) url.searchParams.set("teamId", teamId);
+  return url;
+}
 
-  const res = await fetch(url, {
+interface DnsVerificationRecord {
+  type: string;
+  domain: string;
+  value: string;
+}
+
+interface VercelDomainResult {
+  verified: boolean;
+  dnsVerification: DnsVerificationRecord[];
+}
+
+/** Adds `domain` (the company's own, independently-owned domain) to the
+ * platform's single Vercel project via the Domains API. Lives here (a plain
+ * Convex action using `fetch` + a deployment env var) rather than behind an
+ * `apps/api` hop, mirroring how `activity/genesys.ts`/`activity/clockodo.ts`
+ * already call their external APIs directly from Convex actions — this is
+ * a plain bearer-token REST call with no OAuth flow or Node-only
+ * dependency, the same shape as those.
+ *
+ * NOTE: the exact response shape here (fields checked below) is based on
+ * Vercel's documented Domains API at the time this was written, not a
+ * verified live call — this session's network access to Vercel's docs was
+ * blocked, so double-check the response shape (and whether a separate
+ * `GET /v6/domains/{domain}/config` "misconfigured" check is also needed
+ * beyond the ownership `verified` flag here) against
+ * https://vercel.com/docs/rest-api (Domains) before this first ships. */
+async function addVercelDomain(domain: string): Promise<VercelDomainResult> {
+  const { apiToken, projectId, teamId } = requireVercelConfig();
+
+  const res = await fetch(vercelProjectDomainUrl(projectId, teamId), {
     method: "POST",
-    headers: {
-      authorization: `Bearer ${apiToken}`,
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ name: subdomain }),
+    headers: vercelHeaders(apiToken),
+    body: JSON.stringify({ name: domain }),
   });
   const json = (await res.json().catch(() => ({}))) as {
-    name?: string;
     verified?: boolean;
+    verification?: DnsVerificationRecord[];
     error?: { code?: string; message?: string };
   };
 
   if (!res.ok) {
     // Already attached to this project from an earlier, partially-failed
-    // run — treat as success so a retry is idempotent instead of erroring.
+    // run — treat as success (re-check its current state) so a retry is
+    // idempotent instead of erroring.
     if (res.status === 409 || json.error?.code === "domain_already_in_use") {
-      return { vercelDomainId: subdomain, verified: true };
+      return checkVercelDomain(domain);
     }
     throw new Error(
       `Vercel domain add failed (${res.status}): ${json.error?.message ?? "unknown error"}`
     );
   }
-  return { vercelDomainId: subdomain, verified: json.verified ?? true };
+  return {
+    verified: json.verified ?? false,
+    dnsVerification: json.verification ?? [],
+  };
+}
+
+/** Re-checks a domain already added to the project — the "Check
+ * verification" button's server call, and the 409/retry fallback above. */
+async function checkVercelDomain(domain: string): Promise<VercelDomainResult> {
+  const { apiToken, projectId, teamId } = requireVercelConfig();
+  const res = await fetch(
+    vercelProjectDomainUrl(projectId, teamId, encodeURIComponent(domain)),
+    { headers: vercelHeaders(apiToken) }
+  );
+  const json = (await res.json().catch(() => ({}))) as {
+    verified?: boolean;
+    verification?: DnsVerificationRecord[];
+    error?: { code?: string; message?: string };
+  };
+  if (!res.ok) {
+    throw new Error(
+      `Vercel domain check failed (${res.status}): ${json.error?.message ?? "unknown error"}`
+    );
+  }
+  return {
+    verified: json.verified ?? false,
+    dnsVerification: json.verification ?? [],
+  };
+}
+
+// ------------------------------------------------------------------- slug
+
+/** Internal identifier only — never itself used for routing (that's
+ * `domain`, exact-matched). Derived from the domain so the admin UI doesn't
+ * need a separate field; disambiguated with a numeric suffix in the rare
+ * case two different domains slugify the same way. */
+function slugify(domain: string): string {
+  return domain.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
 // -------------------------------------------------------------- mutations
@@ -91,17 +166,16 @@ async function addVercelDomain(
 export const upsertProvisioningRow = internalMutation({
   args: {
     name: v.string(),
-    slug: v.string(),
-    subdomain: v.string(),
+    domain: v.string(),
     adminBootstrapEmails: v.array(v.string()),
   },
   handler: async (
     ctx,
-    { name, slug, subdomain, adminBootstrapEmails }
+    { name, domain, adminBootstrapEmails }
   ): Promise<{ companyId: Id<"companies"> }> => {
     const existing = await ctx.db
       .query("companies")
-      .withIndex("by_slug", q => q.eq("slug", slug))
+      .withIndex("by_domain", q => q.eq("domain", domain))
       .unique();
 
     if (existing) {
@@ -119,11 +193,23 @@ export const upsertProvisioningRow = internalMutation({
       return { companyId: existing._id };
     }
 
+    const baseSlug = slugify(domain);
+    let slug = baseSlug;
+    let suffix = 2;
+    while (
+      await ctx.db
+        .query("companies")
+        .withIndex("by_slug", q => q.eq("slug", slug))
+        .unique()
+    ) {
+      slug = `${baseSlug}-${suffix++}`;
+    }
+
     const now = Date.now();
     const companyId = await ctx.db.insert("companies", {
       name,
       slug,
-      subdomain,
+      domain,
       status: "provisioning",
       adminBootstrapEmails: adminBootstrapEmails
         .map(e => e.trim().toLowerCase())
@@ -146,17 +232,19 @@ export const upsertProvisioningRow = internalMutation({
   },
 });
 
-export const markActive = internalMutation({
+export const applyDomainResult = internalMutation({
   args: {
     companyId: v.id("companies"),
-    vercelDomainId: v.string(),
-    vercelVerified: v.boolean(),
+    verified: v.boolean(),
+    dnsVerification: v.array(
+      v.object({ type: v.string(), domain: v.string(), value: v.string() })
+    ),
   },
-  handler: async (ctx, { companyId, vercelDomainId, vercelVerified }) => {
+  handler: async (ctx, { companyId, verified, dnsVerification }) => {
     await ctx.db.patch(companyId, {
-      status: "active",
-      vercelDomainId,
-      vercelVerified,
+      status: verified ? "active" : "pending_dns",
+      vercelVerified: verified,
+      dnsVerification: verified ? undefined : dnsVerification,
       provisioningError: undefined,
       updatedAt: Date.now(),
     });
@@ -183,7 +271,7 @@ export const getByIdInternal = internalQuery({
 });
 
 /** Action-side lookup (no `ctx.db`) for `performanceAuth.ts`'s `login`/
- * `setupAccount`, which resolve a company by its subdomain slug before
+ * `setupAccount`, which resolve a company by its (internal) slug before
  * touching any Performance login. */
 export const getBySlugInternal = internalQuery({
   args: { slug: v.string() },
@@ -219,23 +307,37 @@ export const getRoleByIdInternal = internalQuery({
     await ctx.db.get(roleId),
 });
 
-/** Public — read by Next.js middleware (`fetchQuery`) on every request to a
- * tenant subdomain, so it only returns what the UI shell needs (never the
- * admin-bootstrap emails or Vercel bookkeeping). Only resolves companies
- * that are actually `"active"` — a still-provisioning or failed row isn't
- * live yet. */
-export const getBySubdomain = query({
-  args: { subdomain: v.string() },
+/** Public — read by Next.js middleware (`fetchQuery`) on every request whose
+ * Host isn't the main intranet's own, so it only returns what the UI shell
+ * needs (never the admin-bootstrap emails or Vercel bookkeeping). Returns
+ * `null` only when no company was ever registered for this domain at all
+ * (most likely a Vercel preview/other hostname, not a mistyped tenant
+ * domain) — a row that exists but isn't `"active"` yet (still provisioning,
+ * pending DNS, or failed) is still returned, with its status, so the
+ * middleware can show "this company isn't live yet" instead of silently
+ * falling through to the main Advantis intranet. */
+export const getByDomain = query({
+  args: { domain: v.string() },
   handler: async (
     ctx,
-    { subdomain }
-  ): Promise<{ companyId: Id<"companies">; name: string; slug: string } | null> => {
+    { domain }
+  ): Promise<{
+    companyId: Id<"companies">;
+    name: string;
+    slug: string;
+    status: Doc<"companies">["status"];
+  } | null> => {
     const company = await ctx.db
       .query("companies")
-      .withIndex("by_subdomain", q => q.eq("subdomain", subdomain))
+      .withIndex("by_domain", q => q.eq("domain", domain))
       .unique();
-    if (!company || company.status !== "active") return null;
-    return { companyId: company._id, name: company.name, slug: company.slug };
+    if (!company) return null;
+    return {
+      companyId: company._id,
+      name: company.name,
+      slug: company.slug,
+      status: company.status,
+    };
   },
 });
 
@@ -252,9 +354,9 @@ export const listCompanies = query({
       .map(c => ({
         id: c._id,
         name: c.name,
-        slug: c.slug,
-        subdomain: c.subdomain,
+        domain: c.domain,
         status: c.status,
+        dnsVerification: c.dnsVerification ?? null,
         provisioningError: c.provisioningError ?? null,
         createdAt: c.createdAt,
       }))
@@ -265,39 +367,37 @@ export const listCompanies = query({
 // ----------------------------------------------------------------- action
 
 /** The one action the "Add Company" admin UI calls. Safe to call again for
- * the same `slug` at any point — see the module doc comment above for why. */
+ * the same `domain` at any point — see the module doc comment above for
+ * why. Returns `status: "pending_dns"` in the (expected, common) case where
+ * the domain was added to Vercel but still needs its owner to add a DNS
+ * record — that's a normal outcome, not a failure. */
 export const createCompany = action({
   args: {
     token: v.string(),
     name: v.string(),
-    slug: v.string(),
+    domain: v.string(),
     adminBootstrapEmails: v.array(v.string()),
   },
   handler: async (
     ctx,
-    { token, name, slug, adminBootstrapEmails }
+    { token, name, domain, adminBootstrapEmails }
   ): Promise<{
     companyId: Id<"companies">;
-    status: "active" | "failed";
-    subdomain: string;
+    status: "active" | "pending_dns" | "failed";
+    dnsVerification: DnsVerificationRecord[];
     error?: string;
   }> => {
     await ctx.runQuery(internal.performanceAuth.assertSuperAdminSession, {
       token,
     });
 
-    const normalizedSlug = slug.trim().toLowerCase();
-    if (!/^[a-z0-9-]+$/.test(normalizedSlug)) {
+    const normalizedDomain = domain.trim().toLowerCase();
+    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(
+      normalizedDomain
+    )) {
       throw new ConvexError({
         code: "validation",
-        message: "Slug must be lowercase letters, numbers, and hyphens only.",
-      });
-    }
-    const rootDomain = process.env.PERFORMANCE_PLATFORM_ROOT_DOMAIN;
-    if (!rootDomain) {
-      throw new ConvexError({
-        code: "not_configured",
-        message: "PERFORMANCE_PLATFORM_ROOT_DOMAIN is not set.",
+        message: "Enter a valid domain, e.g. salespirates.de.",
       });
     }
     const trimmedName = name.trim();
@@ -307,11 +407,10 @@ export const createCompany = action({
         message: "Name is required.",
       });
     }
-    const subdomain = `${normalizedSlug}.${rootDomain}`;
 
     const { companyId } = await ctx.runMutation(
       internal.companies.upsertProvisioningRow,
-      { name: trimmedName, slug: normalizedSlug, subdomain, adminBootstrapEmails }
+      { name: trimmedName, domain: normalizedDomain, adminBootstrapEmails }
     );
 
     const company = await ctx.runQuery(internal.companies.getByIdInternal, {
@@ -325,25 +424,60 @@ export const createCompany = action({
     }
 
     if (company.vercelVerified) {
-      // Already attached to Vercel on an earlier run of this same action.
-      return { companyId, status: "active", subdomain };
+      // Already verified on an earlier run of this same action.
+      return { companyId, status: "active", dnsVerification: [] };
     }
 
     try {
-      const domain = await addVercelDomain(subdomain);
-      await ctx.runMutation(internal.companies.markActive, {
+      const result = await addVercelDomain(normalizedDomain);
+      await ctx.runMutation(internal.companies.applyDomainResult, {
         companyId,
-        vercelDomainId: domain.vercelDomainId,
-        vercelVerified: domain.verified,
+        ...result,
       });
-      return { companyId, status: "active", subdomain };
+      return {
+        companyId,
+        status: result.verified ? "active" : "pending_dns",
+        dnsVerification: result.dnsVerification,
+      };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await ctx.runMutation(internal.companies.markFailed, {
         companyId,
         error: message,
       });
-      return { companyId, status: "failed", subdomain, error: message };
+      return { companyId, status: "failed", dnsVerification: [], error: message };
     }
+  },
+});
+
+/** Re-checks a `"pending_dns"` company's domain against Vercel, without
+ * re-adding it — the admin UI's "Check verification" button, for after the
+ * domain's owner has (hopefully) added the DNS record `createCompany`
+ * reported. */
+export const checkDomainVerification = action({
+  args: { token: v.string(), companyId: v.id("companies") },
+  handler: async (
+    ctx,
+    { token, companyId }
+  ): Promise<{ status: "active" | "pending_dns"; dnsVerification: DnsVerificationRecord[] }> => {
+    await ctx.runQuery(internal.performanceAuth.assertSuperAdminSession, {
+      token,
+    });
+    const company = await ctx.runQuery(internal.companies.getByIdInternal, {
+      companyId,
+    });
+    if (!company) {
+      throw new ConvexError({ code: "not_found", message: "Company not found." });
+    }
+
+    const result = await checkVercelDomain(company.domain);
+    await ctx.runMutation(internal.companies.applyDomainResult, {
+      companyId,
+      ...result,
+    });
+    return {
+      status: result.verified ? "active" : "pending_dns",
+      dnsVerification: result.dnsVerification,
+    };
   },
 });
