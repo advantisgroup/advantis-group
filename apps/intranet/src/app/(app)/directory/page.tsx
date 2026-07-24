@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials, roleLabel } from "@/lib/format";
 import { TEAMS, teamColor } from "@/lib/teams";
@@ -58,6 +59,16 @@ export default function DirectoryPage() {
   const [grouped, setGrouped] = useState(false);
   const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
+
+  // Deep link from a notification/mention: /directory?user=<id> opens their
+  // profile dialog directly instead of requiring a click from the grid.
+  const deepLinkUserId = useDeepLinkId("user");
+  useEffect(() => {
+    // One-shot sync from the deep-link id (already a one-shot value itself)
+    // into local dialog state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (deepLinkUserId) setProfileId(deepLinkUserId as Id<"users">);
+  }, [deepLinkUserId]);
 
   const departments = useQuery(api.users.departments) ?? [];
   const people = useQuery(api.users.directoryList, {

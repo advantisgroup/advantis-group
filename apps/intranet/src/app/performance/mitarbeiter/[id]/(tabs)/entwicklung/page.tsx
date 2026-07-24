@@ -2,11 +2,6 @@
 
 import { useMemo } from "react";
 
-import { useParams } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 import {
   CartesianGrid,
@@ -20,13 +15,13 @@ import {
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
 import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
+import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
 import {
   fmtNum,
   fmtPct,
   fmtYm,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -36,20 +31,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeDevelopmentPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const params = useParams<{ id: string }>();
-  const employeeId = params.id as Id<"performanceEmployees">;
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
+  const data = useEmployeeDetailData();
 
   const rateChart = useMemo(
     () =>

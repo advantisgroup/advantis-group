@@ -2,15 +2,11 @@
 
 import { useMemo } from "react";
 
-import { useParams } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
 import { CHART } from "@/components/activity/charts/theme";
+import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
 import {
   DeltaPair,
   fmtDayShort,
@@ -18,9 +14,7 @@ import {
   fmtNum,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 
 function CallStatCard({
   label,
@@ -47,15 +41,7 @@ function CallStatCard({
 export default function EmployeeCallsPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const params = useParams<{ id: string }>();
-  const employeeId = params.id as Id<"performanceEmployees">;
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
+  const data = useEmployeeDetailData();
 
   // The "Call-Aktivität" chart (answered/outbound) no longer renders here —
   // it's promoted to the top of the page by (tabs)/layout.tsx's

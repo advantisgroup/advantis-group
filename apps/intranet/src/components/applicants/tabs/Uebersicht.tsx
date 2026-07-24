@@ -251,7 +251,7 @@ export function Uebersicht({
                           key={s}
                           className={cn(
                             "flex items-center gap-2 rounded px-1 -mx-1",
-                            isHighlighted(s) && "skill-hl"
+                            isHighlighted(s) && "deeplink-hl"
                           )}
                         >
                           <Check className="size-3.5 shrink-0 text-success" />
@@ -282,7 +282,7 @@ export function Uebersicht({
                     <Badge
                       key={s}
                       variant="muted"
-                      className={cn(isHighlighted(s) && "skill-hl")}
+                      className={cn(isHighlighted(s) && "deeplink-hl")}
                     >
                       {s}
                     </Badge>

@@ -144,7 +144,7 @@ export const apiSubmitRequest = mutation({
       type: "upload_request",
       title: "Upload awaiting approval",
       body: `${displayName(requester)} wants to upload "${args.fileName}" to ${args.targetFolderPath || "Advantis Group"}`,
-      link: "/admin/uploads",
+      link: `/admin/uploads?upload=${uploadId}`,
     });
     return { uploadId };
   },

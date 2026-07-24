@@ -231,7 +231,7 @@ function IntranetUserPicker({
               className="h-8"
             />
           </div>
-          <ScrollArea className="max-h-64">
+          <ScrollArea className="h-64">
             <button
               type="button"
               className="flex w-full items-center border-b border-border/60 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent"

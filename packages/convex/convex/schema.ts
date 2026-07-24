@@ -849,6 +849,25 @@ export default defineSchema({
     .index("by_company", ["companyId"])
     .index("by_company_name", ["companyId", "name"]),
 
+  // Backfilled nightly (see crons.ts's `cacheCompletedMonthBadges`) with one
+  // row per completed month once its badges are computed. A completed
+  // month's underlying reports never change (see the "historical data
+  // doesn't change once reported" convention on `performanceReports`), so
+  // once a row exists here it's permanent — reading it lets
+  // `performanceQueries.allBadgesMap` skip recomputing that month's team
+  // totals from scratch on every request.
+  performanceBadgeCache: defineTable({
+    companyId: v.optional(v.id("companies")),
+    ym: v.string(),
+    badges: v.record(
+      v.string(),
+      v.object({ value: v.number(), winners: v.array(v.string()) })
+    ),
+    computedAt: v.number(),
+  })
+    .index("by_ym", ["ym"])
+    .index("by_company_ym", ["companyId", "ym"]),
+
   // One row per employee per report day. Metric columns are nullable —
   // null means "not measured in this snapshot", not zero — so a report
   // that only covers some metrics (e.g. a call report on a day with no
@@ -904,7 +923,12 @@ export default defineSchema({
     // owners with a lead created that day) — an indexed range scan instead
     // of a full-table collect.
     .index("by_createDate", ["createDate"])
-    .index("by_company_createDate", ["companyId", "createDate"]),
+    .index("by_company_createDate", ["companyId", "createDate"])
+    // `drilldown`'s per-employee view (a `mitarbeiter` login, or an admin
+    // drilling into one name) otherwise reads every open lead in the table
+    // just to filter to one owner in memory. Company-first so the scan
+    // never crosses tenants for a same-named owner.
+    .index("by_company_owner", ["companyId", "owner"]),
 
   performanceRawOpps: defineTable({
     companyId: v.optional(v.id("companies")),
@@ -917,7 +941,9 @@ export default defineSchema({
     age: v.optional(v.number()),
     lastActivity: v.optional(v.string()),
     customerNumber: v.optional(v.string()),
-  }).index("by_company", ["companyId"]),
+  })
+    .index("by_company", ["companyId"])
+    .index("by_company_owner", ["companyId", "owner"]),
 
   // One row per closed-won opportunity, keyed by its actual Close Date —
   // powers the daily closed-won trend chart. `wonMonth` on

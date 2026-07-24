@@ -97,9 +97,10 @@
   animation: tour-pulse-ring 1.8s ease-in-out infinite;
 }
 
-/* One-shot flash for a skill chip landed on from a Skill-Profile match
-   search — fades from a warm highlight back to the resting style. */
-@keyframes skill-flash {
+/* One-shot flash for an item landed on via a deep link (a notification's
+   `link`, a skill-profile match, …) — fades from a warm highlight back to
+   the resting style. */
+@keyframes deeplink-flash {
   0% {
     background: color-mix(in oklch, var(--warning) 35%, transparent);
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--warning) 45%, transparent);
@@ -116,12 +117,12 @@
   }
 }
 
-.skill-hl {
-  animation: skill-flash 2.5s ease-out forwards;
+.deeplink-hl {
+  animation: deeplink-flash 2.5s ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skill-hl {
+  .deeplink-hl {
     animation: none;
     background: color-mix(in oklch, var(--warning) 12%, transparent);
   }

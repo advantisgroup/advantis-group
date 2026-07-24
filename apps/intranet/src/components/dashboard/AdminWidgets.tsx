@@ -178,7 +178,7 @@ export function RecentActivityCard() {
         rows.map(r => (
           <Row
             key={r._id}
-            href="/admin/audit"
+            href={`/admin/audit?entry=${r._id}`}
             title={`${r.user?.name ?? "unknown"} · ${r.action}`}
             subtitle={r.target ?? undefined}
             trailing={

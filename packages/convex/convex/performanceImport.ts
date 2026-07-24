@@ -302,24 +302,42 @@ export function parseAggregatedTemplate(
 
 // ----------------------------------------------------------------- upserts
 
-async function findOrCreateEmployee(
+/** Per-mutation memoization for `findOrCreateEmployee`, keyed by lowercased
+ * name. A bulk import calls it once per snapshot/flagged row — without this,
+ * each call did its own `.collect()` of the whole `performanceEmployees`
+ * table, so a single file with dozens of rows re-read that table dozens of
+ * times over in one mutation. Built once per `applyImport`/`recordScanResults`
+ * call and kept current as new employees get inserted mid-loop. */
+type EmployeeCache = Map<string, Id<"performanceEmployees">>;
+
+async function loadEmployeeCache(
   ctx: MutationCtx,
-  companyId: Id<"companies">,
-  name: string
-): Promise<Id<"performanceEmployees">> {
-  const trimmed = name.trim();
-  const lower = trimmed.toLowerCase();
+  companyId: Id<"companies">
+): Promise<EmployeeCache> {
   const all = await ctx.db
     .query("performanceEmployees")
     .withIndex("by_company", q => q.eq("companyId", companyId))
     .collect();
-  const existing = all.find(e => e.name.toLowerCase() === lower);
-  if (existing) return existing._id;
-  return await ctx.db.insert("performanceEmployees", {
+  return new Map(all.map(e => [e.name.toLowerCase(), e._id]));
+}
+
+async function findOrCreateEmployee(
+  ctx: MutationCtx,
+  companyId: Id<"companies">,
+  name: string,
+  cache: EmployeeCache
+): Promise<Id<"performanceEmployees">> {
+  const trimmed = name.trim();
+  const lower = trimmed.toLowerCase();
+  const existing = cache.get(lower);
+  if (existing) return existing;
+  const id = await ctx.db.insert("performanceEmployees", {
     name: trimmed,
     active: true,
     companyId,
   });
+  cache.set(lower, id);
+  return id;
 }
 
 /** Partial upsert: only the supplied fields are updated, so a Lead report
@@ -332,9 +350,15 @@ async function upsertSnapshot(
   reportDate: string,
   fields: SnapshotFields,
   sourceFile: string,
-  uploadedAt: number
+  uploadedAt: number,
+  cache: EmployeeCache
 ): Promise<void> {
-  const employeeId = await findOrCreateEmployee(ctx, companyId, employeeName);
+  const employeeId = await findOrCreateEmployee(
+    ctx,
+    companyId,
+    employeeName,
+    cache
+  );
   // Convex indexes aren't unique constraints (see the schema comment on
   // by_employee_date), so more than one row can in principle match — e.g. a
   // raced concurrent upload. Merge into the first match and drop any extras
@@ -666,9 +690,15 @@ async function upsertFlaggedRow(
   rawSeconds: number,
   rawText: string,
   sourceFile: string,
-  uploadedAt: number
+  uploadedAt: number,
+  cache: EmployeeCache
 ): Promise<void> {
-  const employeeId = await findOrCreateEmployee(ctx, companyId, employeeName);
+  const employeeId = await findOrCreateEmployee(
+    ctx,
+    companyId,
+    employeeName,
+    cache
+  );
   await upsertFlaggedRowById(
     ctx,
     companyId,
@@ -711,6 +741,7 @@ export const applyImport = internalMutation({
       ? await ctx.db.get(args.replaceLogId)
       : null;
     const uploadedBy = args.uploadedBy ?? existingLog?.uploadedBy;
+    const employeeCache = await loadEmployeeCache(ctx, args.companyId);
     for (const snap of args.snapshots) {
       await upsertSnapshot(
         ctx,
@@ -719,7 +750,8 @@ export const applyImport = internalMutation({
         snap.reportDate,
         snap.fields,
         args.sourceFile,
-        now
+        now,
+        employeeCache
       );
     }
     for (const flagged of args.flaggedRows ?? []) {
@@ -732,7 +764,8 @@ export const applyImport = internalMutation({
         flagged.rawSeconds,
         flagged.rawText,
         args.sourceFile,
-        now
+        now,
+        employeeCache
       );
     }
     const logFields = {
@@ -1017,6 +1050,7 @@ export const recordScanResults = mutation({
     await requirePermission(ctx, login, "upload_reports", log.companyId);
     const companyId = log.companyId;
     const now = Date.now();
+    const employeeCache = await loadEmployeeCache(ctx, companyId);
     for (const flagged of flaggedRows) {
       await upsertFlaggedRow(
         ctx,
@@ -1027,7 +1061,8 @@ export const recordScanResults = mutation({
         flagged.rawSeconds,
         flagged.rawText,
         log.filename,
-        now
+        now,
+        employeeCache
       );
     }
     await ctx.db.patch(logId, { scannedForFlags: true });

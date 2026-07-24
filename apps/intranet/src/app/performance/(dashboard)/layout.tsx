@@ -26,6 +26,7 @@ import {
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
+import { PerformanceDashboardDataProvider } from "@/components/performance/PerformanceDashboardContext";
 import {
   buildCallActivityChartData,
   fmtDayShort,
@@ -295,7 +296,9 @@ function DashboardChrome({
           </div>
         </Card>
 
-        {children}
+        <PerformanceDashboardDataProvider data={data}>
+          {children}
+        </PerformanceDashboardDataProvider>
       </main>
       <PerformanceBottomTabs
         navItems={navItems}

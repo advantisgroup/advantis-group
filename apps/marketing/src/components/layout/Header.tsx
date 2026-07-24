@@ -18,6 +18,7 @@ import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "@/i18n/navigation";
+import { isAuthRoute } from "@/lib/utils";
 
 import { SettingsMenu } from "./SettingsMenu";
 import { AccountMenu } from "../auth/AccountMenu";
@@ -74,6 +75,10 @@ export const Header = () => {
       window.scrollTo(0, scrollYRef.current);
     };
   }, [isMobile, mobileMenuOpen]);
+
+  // The auth cards have their own minimal shell — the marketing chrome
+  // would otherwise occlude them (see AuthShell).
+  if (isAuthRoute(pathname)) return null;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();

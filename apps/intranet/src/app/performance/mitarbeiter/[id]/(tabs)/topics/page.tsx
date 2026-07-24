@@ -11,6 +11,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { TopicDialog } from "@/components/performance/TopicDialog";
@@ -43,11 +44,7 @@ export default function EmployeeTopicsPage() {
   const session = useQuery(api.performanceAuth.validateSession, { token });
   const isAdmin = session?.valid && session.permissions.includes("manage_roster");
 
-  const data = useQuery(api.performanceQueries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
+  const data = useEmployeeDetailData();
   const setTopicStatus = useMutation(api.performanceTopics.setTopicStatus);
   const deleteTopic = useMutation(api.performanceTopics.deleteTopic);
 

@@ -94,6 +94,7 @@ export function Signal({
 /** Per-source signals (workstation / Genesys / Clockodo) for one employee. */
 export function SourceSignals({
   deviceIdle,
+  deviceOnline = true,
   genesysRoutingStatus,
   genesysPresence,
   clockodoWorking,
@@ -102,6 +103,13 @@ export function SourceSignals({
   clockodoClockedOut = null,
 }: {
   deviceIdle: boolean | null;
+  /** Whether the workstation's heartbeat is within the online window (see
+   * `device.online` on the timeline page). `deviceIdle` is only a stale
+   * snapshot from whenever the last sample actually arrived — showing it
+   * unqualified while the device has been unreachable for hours reads as
+   * contradicting the page's own "Offline" verdict just above it. Defaults
+   * to `true` so callers that don't track reachability keep prior behaviour. */
+  deviceOnline?: boolean;
   genesysRoutingStatus: string | null;
   genesysPresence: string | null;
   clockodoWorking: boolean | null;
@@ -124,13 +132,21 @@ export function SourceSignals({
     <div>
       <Signal
         label={t("state.source.agent")}
-        tone={deviceIdle == null ? "neutral" : deviceIdle ? "warn" : "ok"}
-        value={
-          deviceIdle == null
-            ? null
+        tone={
+          !deviceOnline || deviceIdle == null
+            ? "neutral"
             : deviceIdle
-              ? t("common.idle")
-              : t("common.active")
+              ? "warn"
+              : "ok"
+        }
+        value={
+          !deviceOnline
+            ? t("timeline.offline")
+            : deviceIdle == null
+              ? null
+              : deviceIdle
+                ? t("common.idle")
+                : t("common.active")
         }
       />
       <Signal

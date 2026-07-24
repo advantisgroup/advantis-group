@@ -26,6 +26,7 @@ import {
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
+import { PerformanceEmployeeDetailProvider } from "@/components/performance/PerformanceEmployeeDetailContext";
 import {
   buildCallActivityChartData,
   fmtYm,
@@ -239,7 +240,9 @@ function EmployeeChrome({
           </div>
         </Card>
 
-        {children}
+        <PerformanceEmployeeDetailProvider data={data}>
+          {children}
+        </PerformanceEmployeeDetailProvider>
       </main>
       <PerformanceBottomTabs
         navItems={navItems}
