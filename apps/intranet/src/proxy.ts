@@ -1,4 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
+import {
+  NextResponse,
+  type NextFetchEvent,
+  type NextRequest,
+} from "next/server";
 
 import { api } from "@advantis/convex/api";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
@@ -91,10 +95,7 @@ async function resolveTenantRewrite(
   return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
 }
 
-export default clerkMiddleware(async (auth, req) => {
-  const tenantRewrite = await resolveTenantRewrite(req);
-  if (tenantRewrite) return tenantRewrite;
-
+const clerkHandler = clerkMiddleware(async (auth, req) => {
   if (!isPublicRoute(req)) {
     // Land signed-out visitors on sign-up rather than Clerk's configured
     // sign-in default — it's the better-designed entry point, and existing
@@ -104,6 +105,27 @@ export default clerkMiddleware(async (auth, req) => {
     });
   }
 });
+
+/** The tenant-domain check must run *before* `clerkMiddleware` gets a chance
+ * to touch the request at all — not just before our own `auth.protect()`
+ * call. Clerk's SDK performs its own cross-origin session-handshake step as
+ * part of initializing `auth()`, which validates the eventual redirect
+ * target against Clerk's configured allowed origins. A brand-new company
+ * domain is never one of those (and never should need to be — Performance
+ * deliberately doesn't share auth with Clerk), so if a tenant request ever
+ * reached `clerkMiddleware`'s own internals, that handshake step 400s with
+ * "does not match one of the allowed values for parameter redirect_url"
+ * before our tenant rewrite below ever gets a chance to run. Resolving the
+ * tenant here, outside `clerkMiddleware` entirely, means a registered
+ * company domain never enters Clerk's code path at all. */
+export default async function middleware(
+  req: NextRequest,
+  event: NextFetchEvent
+) {
+  const tenantRewrite = await resolveTenantRewrite(req);
+  if (tenantRewrite) return tenantRewrite;
+  return clerkHandler(req, event);
+}
 
 export const config = {
   matcher: [
