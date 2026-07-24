@@ -29,14 +29,18 @@ function validatePermissions(permissions: string[]): void {
   }
 }
 
-/** Resolves which company's roles the caller is allowed to act on: their
- * own, or — for a super-admin — whichever `companyId` they explicitly pass
- * (the roles UI's company picker). */
+/** Resolves which company's roles the caller is allowed to act on: an
+ * explicitly passed `companyId` always wins (the roles UI's company
+ * picker, for a super-admin managing another company's roles), otherwise
+ * the caller's own `companyId` — including a super-admin backfilled from
+ * an existing company login (see `resolveCompanyId` in performanceAuth.ts
+ * for the same reasoning). Only a super-admin with no company at all
+ * requires the explicit arg. */
 async function resolveTargetCompanyId(
   admin: Doc<"performanceLogins">,
   companyId: Id<"companies"> | undefined
 ): Promise<Id<"companies">> {
-  const targetCompanyId = admin.isSuperAdmin ? companyId : admin.companyId;
+  const targetCompanyId = companyId ?? admin.companyId;
   if (!targetCompanyId) {
     throw new ConvexError({
       code: "validation",
