@@ -1,25 +1,19 @@
 "use client";
 
-import { useParams } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { useQuery } from "convex/react";
 import { Award, Phone, Target, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { MetricTile } from "@/components/performance/MetricTile";
+import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
 import {
   DeltaTriple,
   fmtNum,
   fmtPct,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 import { cn } from "@/lib/utils";
 
 const BADGE_ICONS: Record<string, string> = {
@@ -120,15 +114,7 @@ function SignalList({
 
 export default function EmployeeOverviewPage() {
   const t = useTranslations("Performance");
-  const params = useParams<{ id: string }>();
-  const employeeId = params.id as Id<"performanceEmployees">;
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
+  const data = useEmployeeDetailData();
 
   if (!data) return <PerformanceContentSkeleton />;
   if (!data.cur) {

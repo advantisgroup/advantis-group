@@ -2,12 +2,11 @@
 
 import { useMemo } from "react";
 
-import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
 import { CHART } from "@/components/activity/charts/theme";
+import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import {
   DeltaPair,
   fmtDayShort,
@@ -15,9 +14,7 @@ import {
   fmtNum,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 
 function CallStatCard({
   label,
@@ -44,9 +41,7 @@ function CallStatCard({
 export default function DashboardCallsPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
+  const data = useDashboardData();
 
   // The "Call-Aktivität" chart (answered/outbound) no longer renders here —
   // it's promoted to the top of the page by (dashboard)/layout.tsx's
