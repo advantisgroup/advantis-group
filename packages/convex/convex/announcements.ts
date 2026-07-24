@@ -102,7 +102,7 @@ export const create = mutation({
         type: "announcement",
         title: "New announcement",
         body: args.title,
-        link: "/announcements",
+        link: `/announcements?id=${id}`,
       });
     }
 
@@ -125,7 +125,7 @@ export const notifyPublished = internalMutation({
       type: "announcement",
       title: "New announcement",
       body: announcement.title,
-      link: "/announcements",
+      link: `/announcements?id=${announcementId}`,
     });
   },
 });

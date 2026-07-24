@@ -61,6 +61,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, initials } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
@@ -670,11 +671,13 @@ function CollapsibleBody({ html }: { html: string }) {
 
 function AnnouncementCard({
   a,
+  highlighted,
   onEdit,
   onDelete,
   onOpenImage,
 }: {
   a: Announcement;
+  highlighted: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onOpenImage: (url: string, name: string) => void;
@@ -687,6 +690,17 @@ function AnnouncementCard({
   const toggleReaction = useMutation(api.announcements.toggleReaction);
   const canManage = a.authorId === me._id || me.role === "admin";
   const articleRef = useRef<HTMLElement>(null);
+
+  // Deep link from a notification: scroll the matching card into view and
+  // give it the same warm flash used elsewhere on landing.
+  useEffect(() => {
+    if (highlighted) {
+      articleRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [highlighted]);
 
   // Mark as read only once the article has actually been scrolled into view —
   // keeps the unread dot and filter meaningful on long feeds.
@@ -713,7 +727,8 @@ function AnnouncementCard({
       className={cn(
         "group relative overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
         a.pinned && "border-primary/30",
-        (a.scheduled || a.expired) && "opacity-80"
+        (a.scheduled || a.expired) && "opacity-80",
+        highlighted && "deeplink-hl"
       )}
     >
       {a.pinned && (
@@ -942,6 +957,10 @@ export default function AnnouncementsPage() {
     name: string;
   } | null>(null);
 
+  // Deep link from a notification: /announcements?id=<id> highlights the
+  // matching card once the list has loaded.
+  const highlightId = useDeepLinkId("id");
+
   // Deep link from the dashboard quick action: /announcements?new=1.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -1002,6 +1021,7 @@ export default function AnnouncementsPage() {
     <AnnouncementCard
       key={a._id}
       a={a}
+      highlighted={a._id === highlightId}
       onEdit={() => {
         setEditing(a);
         setDialogOpen(true);
