@@ -553,31 +553,31 @@ export async function requireCanViewEmployee(
   await requirePermission(ctx, login, "view_all_employees", employee.companyId);
 }
 
-/** Resolves which company a company-scoped query/mutation should act on:
- * the caller's own for a normal login, or — for a cross-company
- * super-admin, who has no `companyId` of their own — whichever `companyId`
- * they explicitly passed in. Shared by every Performance module (queries,
- * import, topics) that takes an optional `companyId` arg for this reason. */
+/** Resolves which company a company-scoped query/mutation should act on: an
+ * explicitly passed `companyId` always wins (how a super-admin views another
+ * company's data), otherwise the caller's own `companyId`. A super-admin
+ * backfilled from an existing company login (see the migration) still has
+ * their original `companyId` and defaults to it just like a normal login;
+ * only a super-admin with no company at all (self-service setup via
+ * `setupSuperAdminAccount`) requires an explicit arg. Shared by every
+ * Performance module (queries, import, topics) that takes an optional
+ * `companyId` arg for this reason. */
 export function resolveCompanyId(
   login: Doc<"performanceLogins">,
   companyIdArg: Id<"companies"> | undefined
 ): Id<"companies"> {
+  if (companyIdArg) return companyIdArg;
+  if (login.companyId) return login.companyId;
   if (login.isSuperAdmin) {
-    if (!companyIdArg) {
-      throw new ConvexError({
-        code: "validation",
-        message: "companyId is required.",
-      });
-    }
-    return companyIdArg;
-  }
-  if (!login.companyId) {
     throw new ConvexError({
-      code: "forbidden",
-      message: "This login has no company.",
+      code: "validation",
+      message: "companyId is required.",
     });
   }
-  return login.companyId;
+  throw new ConvexError({
+    code: "forbidden",
+    message: "This login has no company.",
+  });
 }
 
 export const validateSession = query({
