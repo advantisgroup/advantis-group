@@ -413,6 +413,7 @@ export default function TimelinePage({
                       <>
                         <SourceSignals
                           deviceIdle={liveState.deviceIdle ?? null}
+                          deviceOnline={device.online}
                           genesysRoutingStatus={
                             liveState.genesysRoutingStatus ?? null
                           }
