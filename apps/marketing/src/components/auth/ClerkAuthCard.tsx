@@ -16,8 +16,12 @@ export const ClerkAuthCard = ({
 }) => {
   const locale = useLocale();
 
-  const signInPath = `/sign-in`;
-  const signUpPath = `/sign-up`;
+  // `routing="path"` requires `path` to match the URL the component is
+  // actually mounted at — with `localePrefix: "always"` (next-intl
+  // middleware) that's always `/{locale}/sign-in`, never the bare
+  // `/sign-in`. A mismatch here is why Clerk silently fails to render.
+  const signInPath = `/${locale}/sign-in`;
+  const signUpPath = `/${locale}/sign-up`;
 
   return (
     <AuthShell title={title} subtitle={subtitle}>

@@ -2,12 +2,11 @@
 
 import { useMemo } from "react";
 
-import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
 import { AlertTriangle, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import {
   DeltaBadge,
   DeltaPair,
@@ -16,14 +15,12 @@ import {
   fmtYm,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { TeamTable } from "@/components/performance/TeamTable";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatIsoDate } from "@/lib/format";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 import { cn } from "@/lib/utils";
 
 const LIST_KEYS = [
@@ -128,9 +125,7 @@ function ListStatCard({
 export default function DashboardOverviewPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
+  const data = useDashboardData();
 
   const fc2 = useMemo(() => {
     const fc = data?.total.fc;

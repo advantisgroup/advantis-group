@@ -12,7 +12,12 @@
 import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
-import { query, type QueryCtx } from "./_generated/server";
+import {
+  internalMutation,
+  query,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import {
   addForecast,
   aggregateReasons,
@@ -54,8 +59,14 @@ import {
 
 // ------------------------------------------------------------------ helpers
 
+/** `teamTotals` and everything it transitively reads are also called from
+ * `cacheCompletedMonthBadges` (a mutation, backfilling the badge cache
+ * below) as well as every query in this file — widened to accept either
+ * context since both only ever read through it. */
+type Ctx = QueryCtx | MutationCtx;
+
 async function employeeNameMap(
-  ctx: QueryCtx
+  ctx: Ctx
 ): Promise<Map<Id<"performanceEmployees">, string>> {
   const employees = await ctx.db.query("performanceEmployees").collect();
   return new Map(
@@ -101,7 +112,7 @@ function newQueryCache(): QueryCache {
 }
 
 async function reportsInRange(
-  ctx: QueryCtx,
+  ctx: Ctx,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache
@@ -160,7 +171,7 @@ function mergeSnapshot(base: Snapshot, next: Snapshot): Snapshot {
  * it left unmeasured carries forward) reconstructs the true "latest known
  * value per field" instead. */
 async function latestSnapshots(
-  ctx: QueryCtx,
+  ctx: Ctx,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache
@@ -214,7 +225,7 @@ interface MonthCalls extends Partial<
  * an average of daily averages, which would be skewed by uneven call
  * counts. */
 async function monthCallsMap(
-  ctx: QueryCtx,
+  ctx: Ctx,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache
@@ -260,7 +271,7 @@ async function monthCallsMap(
  * basis for telling "nobody reported this day" apart from "this employee
  * had the day off". */
 async function reportDatesWithCalls(
-  ctx: QueryCtx,
+  ctx: Ctx,
   ym: string,
   cache: QueryCache
 ): Promise<Set<string>> {
@@ -496,7 +507,7 @@ async function stateFieldTrend(
 /** All months that have at least one report — the month selector's
  * options. */
 async function monthsWithData(
-  ctx: QueryCtx,
+  ctx: Ctx,
   employeeId?: Id<"performanceEmployees">
 ): Promise<string[]> {
   const names = await employeeNameMap(ctx);
@@ -563,7 +574,7 @@ interface TeamTotals {
  * daily values — the display values are the month-summed ones) and the
  * FC1 forecast added. */
 export async function teamTotals(
-  ctx: QueryCtx,
+  ctx: Ctx,
   ym: string,
   cache: QueryCache = newQueryCache()
 ): Promise<TeamTotals> {
@@ -652,7 +663,7 @@ async function employeeHistoryList(
 // ------------------------------------------------------------------ badges
 
 async function awardBadgesForMonth(
-  ctx: QueryCtx,
+  ctx: Ctx,
   ym: string,
   cache: QueryCache
 ): Promise<Record<string, BadgeResult>> {
@@ -660,15 +671,16 @@ async function awardBadgesForMonth(
   return awardBadges(snaps);
 }
 
-/** Badges of every completed month. Not cached across requests (unlike the
- * reference script's manual cache) — Convex's own query reactivity already
- * avoids redundant work for subscribers, and a sales team's history is small
- * enough that recomputing it once per request is cheap regardless. It *is*
- * memoized on `cache` for the life of one request, though: employeeDetail
- * calls this (directly or via badgeCountsForEmployee/badgeHistoryForEmployee)
- * up to three times, and each call recomputes every completed month's team
- * totals from scratch — real, measured cost worth not paying three times
- * over for the same request. */
+/** Badges of every completed month. A completed month's reports don't change
+ * (see the "historical data doesn't change once reported" convention in
+ * performanceImport.ts's `upsertSnapshot`), so once a month is done its badge
+ * result is permanent — `performanceBadgeCache` (backfilled nightly by
+ * `cacheCompletedMonthBadges`) is a point read for any month it already has.
+ * A month that isn't cached yet (freshly completed, before the next cron
+ * run) still falls back to computing it live here, so this is never wrong,
+ * only sometimes not yet cached. Also memoized on `cache` for the life of one
+ * request: employeeDetail calls this (directly or via
+ * badgeCountsForEmployee/badgeHistoryForEmployee) up to three times. */
 async function allBadgesMap(
   ctx: QueryCtx,
   cache: QueryCache
@@ -678,12 +690,46 @@ async function allBadgesMap(
   const data: Record<string, Record<string, BadgeResult>> = {};
   for (const ym of months) {
     if (!monthCompleted(ym)) continue;
-    const got = await awardBadgesForMonth(ctx, ym, cache);
+    const cached = await ctx.db
+      .query("performanceBadgeCache")
+      .withIndex("by_ym", q => q.eq("ym", ym))
+      .unique();
+    const got = cached
+      ? cached.badges
+      : await awardBadgesForMonth(ctx, ym, cache);
     if (Object.keys(got).length > 0) data[ym] = got;
   }
   cache.badges = data;
   return data;
 }
+
+/** Backfills `performanceBadgeCache` for every completed month that doesn't
+ * have a row yet — run nightly (see crons.ts). Skips months already cached,
+ * since a completed month's badges never change once computed. */
+export const cacheCompletedMonthBadges = internalMutation({
+  args: {},
+  handler: async (ctx): Promise<{ cached: number }> => {
+    const months = await monthsWithData(ctx);
+    const cache = newQueryCache();
+    let cached = 0;
+    for (const ym of months) {
+      if (!monthCompleted(ym)) continue;
+      const existing = await ctx.db
+        .query("performanceBadgeCache")
+        .withIndex("by_ym", q => q.eq("ym", ym))
+        .unique();
+      if (existing) continue;
+      const badges = await awardBadgesForMonth(ctx, ym, cache);
+      await ctx.db.insert("performanceBadgeCache", {
+        ym,
+        badges,
+        computedAt: Date.now(),
+      });
+      cached++;
+    }
+    return { cached };
+  },
+});
 
 async function badgeCountsForEmployee(
   ctx: QueryCtx,
@@ -1216,12 +1262,26 @@ export const drilldown = query({
       empFilter = employee.name;
     }
 
+    // A `mitarbeiter` login (or an admin drilling into one name) only ever
+    // wants one owner's rows — push that into the index instead of reading
+    // every open lead/opp in the table just to filter it away in memory.
+    // The team-wide view (no `empFilter`) genuinely needs every row, so it
+    // still collects the whole table.
     let rows: (Doc<"performanceRawLeads"> | Doc<"performanceRawOpps">)[] =
       def.kind === "lead"
-        ? await ctx.db.query("performanceRawLeads").collect()
-        : await ctx.db.query("performanceRawOpps").collect();
+        ? empFilter
+          ? await ctx.db
+              .query("performanceRawLeads")
+              .withIndex("by_owner", q => q.eq("owner", empFilter))
+              .collect()
+          : await ctx.db.query("performanceRawLeads").collect()
+        : empFilter
+          ? await ctx.db
+              .query("performanceRawOpps")
+              .withIndex("by_owner", q => q.eq("owner", empFilter))
+              .collect()
+          : await ctx.db.query("performanceRawOpps").collect();
     rows = rows.filter(r => !EXCLUDED_OWNERS.has(r.owner.toLowerCase()));
-    if (empFilter) rows = rows.filter(r => r.owner === empFilter);
 
     interface Item {
       reportDate: string;

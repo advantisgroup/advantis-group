@@ -60,6 +60,17 @@ crons.daily(
   {}
 );
 
+// Backfills the completed-month badge cache (performanceBadgeCache) so
+// teamDashboard/employeeDetail stop recomputing every completed month's team
+// totals from scratch on every request — a completed month's badges never
+// change, so this only ever has new months (the one that just closed) to do.
+crons.daily(
+  "performance: cache completed month badges",
+  { hourUTC: 3, minuteUTC: 5 },
+  internal.performanceQueries.cacheCompletedMonthBadges,
+  {}
+);
+
 crons.daily(
   "activity: prune old state history",
   { hourUTC: 3, minuteUTC: 15 },
