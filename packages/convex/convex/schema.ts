@@ -745,20 +745,31 @@ export default defineSchema({
     domain: v.string(),
     status: v.union(
       v.literal("provisioning"), // row just created, about to call Vercel
-      v.literal("pending_dns"), // added to Vercel, waiting on the owner's DNS record
-      v.literal("active"), // DNS verified — live
+      v.literal("pending_dns"), // added to Vercel, waiting on the owner's ownership-verification DNS record
+      v.literal("pending_routing"), // ownership verified, but no A/CNAME actually routes traffic to Vercel yet
+      v.literal("active"), // ownership verified AND traffic correctly routed — actually live
       v.literal("failed") // a real error (not just "not verified yet")
     ),
     // Per-company replacement for the old global `PERFORMANCE_ADMIN_EMAILS`
     // env var — the emails that can self-claim this company's built-in Admin
     // role via `setupAccount`, set once at creation time.
     adminBootstrapEmails: v.array(v.string()),
-    // The DNS record(s) Vercel reports are still needed — shown verbatim in
-    // the admin UI so whoever owns the domain knows exactly what to add.
+    // The ownership-verification TXT record Vercel reports is still needed
+    // — shown verbatim in the admin UI so whoever owns the domain knows
+    // exactly what to add. Proves domain ownership; does NOT by itself mean
+    // traffic actually reaches Vercel (see `dnsRouting`).
     dnsVerification: v.optional(
       v.array(
         v.object({ type: v.string(), domain: v.string(), value: v.string() })
       )
+    ),
+    // The A/CNAME record Vercel's domain-config check recommends — the
+    // second, separate step after ownership verification: without this,
+    // the domain can show `verified: true` while still not resolving to
+    // Vercel at all (`misconfigured: true`), which is a real, observed
+    // failure mode this field exists to fix, not a redundant check.
+    dnsRouting: v.optional(
+      v.array(v.object({ type: v.string(), value: v.string() }))
     ),
     // Best-effort hint (nameserver-based, not authoritative) for which DNS
     // provider actually manages this domain's records — shown as "add it at

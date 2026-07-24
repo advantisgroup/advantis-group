@@ -302,6 +302,121 @@ async function checkVercelDomain(domain: string): Promise<VercelDomainResult> {
   };
 }
 
+interface DnsRoutingRecord {
+  type: string;
+  value: string;
+}
+
+interface VercelDomainConfig {
+  misconfigured: boolean;
+  routing: DnsRoutingRecord[];
+}
+
+/** Ownership verification (`addVercelDomain`/`checkVercelDomain`'s
+ * `verified` flag) proves the domain's owner controls it — it does NOT
+ * mean traffic actually reaches Vercel. A domain can show `verified: true`
+ * while still having no A/CNAME record pointed at Vercel at all (observed
+ * directly: a company marked "active" whose URL then failed to resolve in
+ * the browser). This is the second, separate check — Vercel's own domain
+ * *configuration* status — that has to pass too before a company is
+ * genuinely live. `misconfigured: true` means "not routing correctly yet";
+ * `routing` is the recommended A/CNAME record to add, straight from
+ * Vercel's own recommendation (CNAME preferred when offered, else the
+ * first recommended A record). */
+async function checkVercelDomainConfig(
+  domain: string
+): Promise<VercelDomainConfig> {
+  const { apiToken, teamId } = requireVercelConfig();
+  const url = new URL(
+    `https://api.vercel.com/v6/domains/${encodeURIComponent(domain)}/config`
+  );
+  if (teamId) url.searchParams.set("teamId", teamId);
+  const res = await fetch(url, { headers: vercelHeaders(apiToken) });
+  const json = (await res.json().catch(() => ({}))) as {
+    misconfigured?: boolean;
+    recommendedCNAME?: { rank: number; value: string }[];
+    recommendedIPv4?: { rank: number; value: string[] }[];
+    error?: { code?: string; message?: string };
+  };
+  if (!res.ok) {
+    throw new Error(
+      `Vercel domain config check failed (${res.status}): ${json.error?.message ?? "unknown error"}`
+    );
+  }
+  const cname = json.recommendedCNAME?.find(r => r.rank === 1)?.value;
+  const ipv4 = json.recommendedIPv4?.find(r => r.rank === 1)?.value?.[0];
+  const routing: DnsRoutingRecord[] = cname
+    ? [{ type: "CNAME", value: cname }]
+    : ipv4
+      ? [{ type: "A", value: ipv4 }]
+      : [];
+  return { misconfigured: json.misconfigured ?? true, routing };
+}
+
+interface ResolvedDomainState {
+  status: "pending_dns" | "pending_routing" | "active";
+  dnsVerification: DnsVerificationRecord[];
+  dnsRouting: DnsRoutingRecord[];
+  dnsProvider: DnsProviderInfo | null;
+}
+
+/** The full two-step state of a domain: ownership verification
+ * (`ownership`, already fetched by the caller via `addVercelDomain` or
+ * `checkVercelDomain`) plus — only once ownership passes — whether it's
+ * actually routing traffic to Vercel (`checkVercelDomainConfig`). Only
+ * `"active"` when both are true; `"pending_routing"` is a real, distinct
+ * state from `"pending_dns"`; skipping it is what let a company show
+ * "active" while its URL still failed to resolve at all. */
+async function resolveDomainState(
+  domain: string,
+  ownership: VercelDomainResult
+): Promise<ResolvedDomainState> {
+  if (!ownership.verified) {
+    return {
+      status: "pending_dns",
+      dnsVerification: ownership.dnsVerification,
+      dnsRouting: [],
+      dnsProvider: await detectDnsProvider(domain),
+    };
+  }
+  const config = await checkVercelDomainConfig(domain);
+  if (config.misconfigured) {
+    return {
+      status: "pending_routing",
+      dnsVerification: [],
+      dnsRouting: config.routing,
+      dnsProvider: await detectDnsProvider(domain),
+    };
+  }
+  return {
+    status: "active",
+    dnsVerification: [],
+    dnsRouting: [],
+    dnsProvider: null,
+  };
+}
+
+/** Detaches `domain` from the platform's Vercel project — the "Remove
+ * company" action's counterpart to `addVercelDomain`. A 404 means it's
+ * already gone (a previous partial run, or removed by hand in the Vercel
+ * dashboard) — treated as success, not an error, so removal stays
+ * idempotent the same way provisioning is. */
+async function removeVercelDomain(domain: string): Promise<void> {
+  const { apiToken, projectId, teamId } = requireVercelConfig();
+  const res = await fetch(
+    vercelProjectDomainUrl(projectId, teamId, encodeURIComponent(domain)),
+    { method: "DELETE", headers: vercelHeaders(apiToken) }
+  );
+  if (!res.ok && res.status !== 404) {
+    const json = (await res.json().catch(() => ({}))) as {
+      error?: { message?: string };
+    };
+    throw new Error(
+      `Vercel domain removal failed (${res.status}): ${json.error?.message ?? "unknown error"}`
+    );
+  }
+}
+
 // ------------------------------------------------------------------- slug
 
 /** Internal identifier only — never itself used for routing (that's
@@ -389,23 +504,30 @@ export const upsertProvisioningRow = internalMutation({
 export const applyDomainResult = internalMutation({
   args: {
     companyId: v.id("companies"),
-    verified: v.boolean(),
+    status: v.union(
+      v.literal("pending_dns"),
+      v.literal("pending_routing"),
+      v.literal("active")
+    ),
     dnsVerification: v.array(
       v.object({ type: v.string(), domain: v.string(), value: v.string() })
     ),
+    dnsRouting: v.array(v.object({ type: v.string(), value: v.string() })),
     dnsProvider: v.optional(
       v.object({ name: v.string(), docsUrl: v.string() })
     ),
   },
   handler: async (
     ctx,
-    { companyId, verified, dnsVerification, dnsProvider }
+    { companyId, status, dnsVerification, dnsRouting, dnsProvider }
   ) => {
+    const active = status === "active";
     await ctx.db.patch(companyId, {
-      status: verified ? "active" : "pending_dns",
-      vercelVerified: verified,
-      dnsVerification: verified ? undefined : dnsVerification,
-      dnsProvider: verified ? undefined : dnsProvider,
+      status,
+      vercelVerified: status !== "pending_dns",
+      dnsVerification: status === "pending_dns" ? dnsVerification : undefined,
+      dnsRouting: status === "pending_routing" ? dnsRouting : undefined,
+      dnsProvider: active ? undefined : dnsProvider,
       provisioningError: undefined,
       updatedAt: Date.now(),
     });
@@ -420,6 +542,299 @@ export const markFailed = internalMutation({
       provisioningError: error,
       updatedAt: Date.now(),
     });
+  },
+});
+
+/** Edits a company's name/admin-bootstrap-emails from the admin UI. Domain
+ * isn't editable here — changing it means re-provisioning against Vercel
+ * from scratch (a new domain add, new DNS records, new verification), not
+ * a plain field edit; deleting and re-creating the company is the correct
+ * path for that. */
+export const updateCompany = mutation({
+  args: {
+    token: v.string(),
+    companyId: v.id("companies"),
+    name: v.string(),
+    adminBootstrapEmails: v.array(v.string()),
+  },
+  handler: async (ctx, { token, companyId, name, adminBootstrapEmails }) => {
+    await ctx.runQuery(internal.performanceAuth.assertSuperAdminSession, {
+      token,
+    });
+    const trimmedName = name.trim();
+    if (!trimmedName) {
+      throw new ConvexError({
+        code: "validation",
+        message: "Name is required.",
+      });
+    }
+    const company = await ctx.db.get(companyId);
+    if (!company) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Company not found.",
+      });
+    }
+    await ctx.db.patch(companyId, {
+      name: trimmedName,
+      adminBootstrapEmails,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// ------------------------------------------------------- delete a company
+
+/** Every table with data scoped to one company, for `deleteCompany`'s
+ * cascade. Explicit per-table batch-delete mutations (rather than one
+ * generic helper) because each table's companyId-scoped index has a
+ * different name — the same reason `performanceImport.ts`'s
+ * `clearRawLeads`/`clearRawOpps`/`clearWonOpps` are separate functions
+ * instead of one parameterized over an index name Convex can't type
+ * generically across tables. `performanceTopics` has no `companyId` of its
+ * own (see schema) so it's deleted via its employees' ids instead — see
+ * `deleteTopicsForEmployeesBatch`. */
+const DELETE_BATCH_SIZE = 200;
+
+async function deleteBatch<T extends { _id: unknown }>(
+  rows: T[],
+  del: (id: T["_id"]) => Promise<void>
+): Promise<{ more: boolean }> {
+  for (const row of rows) await del(row._id);
+  return { more: rows.length === DELETE_BATCH_SIZE };
+}
+
+export const deleteLoginsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_company_email", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteSessionsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceSessions")
+      .filter(q => q.eq(q.field("companyId"), companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteEmployeesAndTopicsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const employees = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    for (const employee of employees) {
+      // performanceTopics has no companyId of its own — only reachable via
+      // its employeeId, so each employee's topics are cleared before the
+      // employee row itself is deleted.
+      const topics = await ctx.db
+        .query("performanceTopics")
+        .withIndex("by_employee_ym", q => q.eq("employeeId", employee._id))
+        .collect();
+      for (const topic of topics) await ctx.db.delete(topic._id);
+      await ctx.db.delete(employee._id);
+    }
+    return { more: employees.length === DELETE_BATCH_SIZE };
+  },
+});
+
+export const deleteBadgeCacheBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceBadgeCache")
+      .withIndex("by_company_ym", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteReportsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceReports")
+      .withIndex("by_company_reportDate", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteRawLeadsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceRawLeads")
+      .withIndex("by_company_createDate", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteRawOppsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceRawOpps")
+      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteWonOppsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceWonOpps")
+      .withIndex("by_company_closeDate", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteInteractionsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceInteractions")
+      .withIndex("by_company_date", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteUploadLogBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceUploadLog")
+      .withIndex("by_company_uploadedAt", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteFlaggedRowsBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("performanceFlaggedRows")
+      .withIndex("by_company_status", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteRolesBatch = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    const rows = await ctx.db
+      .query("companyRoles")
+      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .take(DELETE_BATCH_SIZE);
+    return deleteBatch(rows, id => ctx.db.delete(id));
+  },
+});
+
+export const deleteCompanyRow = internalMutation({
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }) => {
+    await ctx.db.delete(companyId);
+  },
+});
+
+async function drainDeleteBatches(step: () => Promise<{ more: boolean }>) {
+  let more = true;
+  while (more) ({ more } = await step());
+}
+
+/** Permanently removes a company: detaches its domain from the Vercel
+ * project, then cascades through every table with data scoped to it before
+ * deleting the company row itself. The Advantis company (the grandfathered
+ * production tenant, identified by its fixed `"advantis"` slug) can never
+ * be deleted this way — doing so would take down the main intranet's own
+ * Performance section, not just a client's. Irreversible, so the admin UI
+ * gates this behind an explicit confirmation. */
+export const deleteCompany = action({
+  args: { token: v.string(), companyId: v.id("companies") },
+  handler: async (ctx, { token, companyId }): Promise<void> => {
+    await ctx.runQuery(internal.performanceAuth.assertSuperAdminSession, {
+      token,
+    });
+    const company = await ctx.runQuery(internal.companies.getByIdInternal, {
+      companyId,
+    });
+    if (!company) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Company not found.",
+      });
+    }
+    if (company.slug === "advantis") {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "The Advantis company can't be deleted.",
+      });
+    }
+
+    if (company.vercelVerified || company.status !== "provisioning") {
+      await removeVercelDomain(company.domain);
+    }
+
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteLoginsBatch, { companyId })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteSessionsBatch, { companyId })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteEmployeesAndTopicsBatch, {
+        companyId,
+      })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteBadgeCacheBatch, { companyId })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteReportsBatch, { companyId })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteRawLeadsBatch, { companyId })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteRawOppsBatch, { companyId })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteWonOppsBatch, { companyId })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteInteractionsBatch, {
+        companyId,
+      })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteUploadLogBatch, { companyId })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteFlaggedRowsBatch, {
+        companyId,
+      })
+    );
+    await drainDeleteBatches(() =>
+      ctx.runMutation(internal.companies.deleteRolesBatch, { companyId })
+    );
+    await ctx.runMutation(internal.companies.deleteCompanyRow, { companyId });
   },
 });
 
@@ -515,9 +930,12 @@ export const listCompanies = query({
       .map(c => ({
         id: c._id,
         name: c.name,
+        slug: c.slug,
         domain: c.domain,
         status: c.status,
+        adminBootstrapEmails: c.adminBootstrapEmails,
         dnsVerification: c.dnsVerification ?? null,
+        dnsRouting: c.dnsRouting ?? null,
         dnsProvider: c.dnsProvider ?? null,
         provisioningError: c.provisioningError ?? null,
         createdAt: c.createdAt,
@@ -530,9 +948,10 @@ export const listCompanies = query({
 
 /** The one action the "Add Company" admin UI calls. Safe to call again for
  * the same `domain` at any point — see the module doc comment above for
- * why. Returns `status: "pending_dns"` in the (expected, common) case where
- * the domain was added to Vercel but still needs its owner to add a DNS
- * record — that's a normal outcome, not a failure. */
+ * why. Returns `status: "pending_dns"`/`"pending_routing"` in the
+ * (expected, common) cases where the domain still needs a DNS record from
+ * its owner before it's actually live — that's a normal outcome, not a
+ * failure. */
 export const createCompany = action({
   args: {
     token: v.string(),
@@ -545,8 +964,9 @@ export const createCompany = action({
     { token, name, domain, adminBootstrapEmails }
   ): Promise<{
     companyId: Id<"companies">;
-    status: "active" | "pending_dns" | "failed";
+    status: "active" | "pending_dns" | "pending_routing" | "failed";
     dnsVerification: DnsVerificationRecord[];
+    dnsRouting: DnsRoutingRecord[];
     dnsProvider: DnsProviderInfo | null;
     error?: string;
   }> => {
@@ -588,32 +1008,22 @@ export const createCompany = action({
       });
     }
 
-    if (company.vercelVerified) {
-      // Already verified on an earlier run of this same action.
-      return {
-        companyId,
-        status: "active",
-        dnsVerification: [],
-        dnsProvider: null,
-      };
-    }
-
     try {
-      const result = await addVercelDomain(normalizedDomain);
-      const dnsProvider = result.verified
-        ? null
-        : await detectDnsProvider(normalizedDomain);
+      // Ownership already verified on an earlier run of this same action —
+      // skip re-adding the domain, but still re-resolve the full state
+      // (routing can still be pending, or may have just been fixed).
+      const ownership = company.vercelVerified
+        ? await checkVercelDomain(normalizedDomain)
+        : await addVercelDomain(normalizedDomain);
+      const resolved = await resolveDomainState(normalizedDomain, ownership);
       await ctx.runMutation(internal.companies.applyDomainResult, {
         companyId,
-        ...result,
-        dnsProvider: dnsProvider ?? undefined,
+        status: resolved.status,
+        dnsVerification: resolved.dnsVerification,
+        dnsRouting: resolved.dnsRouting,
+        dnsProvider: resolved.dnsProvider ?? undefined,
       });
-      return {
-        companyId,
-        status: result.verified ? "active" : "pending_dns",
-        dnsVerification: result.dnsVerification,
-        dnsProvider,
-      };
+      return { companyId, ...resolved };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await ctx.runMutation(internal.companies.markFailed, {
@@ -624,6 +1034,7 @@ export const createCompany = action({
         companyId,
         status: "failed",
         dnsVerification: [],
+        dnsRouting: [],
         dnsProvider: null,
         error: message,
       };
@@ -631,18 +1042,19 @@ export const createCompany = action({
   },
 });
 
-/** Re-checks a `"pending_dns"` company's domain against Vercel, without
- * re-adding it — the admin UI's "Check verification" button, for after the
- * domain's owner has (hopefully) added the DNS record `createCompany`
- * reported. */
+/** Re-checks a `"pending_dns"`/`"pending_routing"` company's domain against
+ * Vercel, without re-adding it — the admin UI's "Check verification"
+ * button, for after the domain's owner has (hopefully) added the DNS
+ * record `createCompany` reported. */
 export const checkDomainVerification = action({
   args: { token: v.string(), companyId: v.id("companies") },
   handler: async (
     ctx,
     { token, companyId }
   ): Promise<{
-    status: "active" | "pending_dns";
+    status: "active" | "pending_dns" | "pending_routing";
     dnsVerification: DnsVerificationRecord[];
+    dnsRouting: DnsRoutingRecord[];
     dnsProvider: DnsProviderInfo | null;
   }> => {
     await ctx.runQuery(internal.performanceAuth.assertSuperAdminSession, {
@@ -658,19 +1070,15 @@ export const checkDomainVerification = action({
       });
     }
 
-    const result = await checkVercelDomain(company.domain);
-    const dnsProvider = result.verified
-      ? null
-      : await detectDnsProvider(company.domain);
+    const ownership = await checkVercelDomain(company.domain);
+    const resolved = await resolveDomainState(company.domain, ownership);
     await ctx.runMutation(internal.companies.applyDomainResult, {
       companyId,
-      ...result,
-      dnsProvider: dnsProvider ?? undefined,
+      status: resolved.status,
+      dnsVerification: resolved.dnsVerification,
+      dnsRouting: resolved.dnsRouting,
+      dnsProvider: resolved.dnsProvider ?? undefined,
     });
-    return {
-      status: result.verified ? "active" : "pending_dns",
-      dnsVerification: result.dnsVerification,
-      dnsProvider,
-    };
+    return resolved;
   },
 });
