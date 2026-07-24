@@ -134,7 +134,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       if (!force) {
         const priorUpload = await getConvex().query(
           api.performanceImport.apiFindUploadByHash,
-          { serverKey: serverKey(), contentHash }
+          { serverKey: serverKey(), companyId: admin.companyId, contentHash }
         );
         if (priorUpload) {
           return {
@@ -174,6 +174,7 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
           api.performanceUploadParse.apiImportReport,
           {
             serverKey: serverKey(),
+            companyId: admin.companyId,
             filename: file.name,
             storageId,
             contentHash,
@@ -224,11 +225,12 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
   .get(
     "/export",
     async ({ request, query }) => {
-      await requirePerformanceAdmin(request);
+      const admin = await requirePerformanceAdmin(request);
       const rows = await getConvex().query(
         api.performanceExport.apiExportTeam,
         {
           serverKey: serverKey(),
+          companyId: admin.companyId,
           ym: query.ym,
         }
       );
