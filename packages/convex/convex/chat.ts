@@ -778,23 +778,47 @@ export const sendMessage = gatedMutation("chat")({
         )
     );
 
-    // Notify @mentioned members, unless they've muted this conversation.
-    if (mentions.length > 0) {
+    // Notify other members, unless they've muted this conversation.
+    // @mentions get a distinct, more urgent notification; everyone else
+    // still needs to hear about the message itself (this is what feeds
+    // BrowserNotificationBridge — without a row here, a plain message
+    // never surfaces an OS/browser notification for its recipients).
+    {
       const conversation = await ctx.db.get(args.conversationId);
-      const title =
+      const senderName = memberDisplay(user);
+      const contextLabel =
         conversation?.type === "group"
           ? (conversation.name ?? "Group")
-          : memberDisplay(user);
+          : senderName;
       const muted = new Set(
         memberRows.filter(m => m.mutedAt).map(m => m.userId)
       );
+      const mentionSet = new Set(mentions);
+
       for (const uid of mentions) {
         if (muted.has(uid)) continue;
         await createNotification(ctx, {
           userId: uid,
           type: "chat-mention",
-          title: `${memberDisplay(user)} mentioned you`,
-          body: `${title}: ${body.slice(0, 120)}`,
+          title: `${senderName} mentioned you`,
+          body: `${contextLabel}: ${body.slice(0, 120)}`,
+          link: `/chat?c=${args.conversationId}`,
+        });
+      }
+
+      const preview = messagePreview(body, attachments.length).slice(0, 120);
+      for (const member of memberRows) {
+        if (member.userId === user._id) continue;
+        if (muted.has(member.userId)) continue;
+        if (mentionSet.has(member.userId)) continue;
+        await createNotification(ctx, {
+          userId: member.userId,
+          type: "chat-message",
+          title: senderName,
+          body:
+            conversation?.type === "group"
+              ? `${contextLabel}: ${preview}`
+              : preview,
           link: `/chat?c=${args.conversationId}`,
         });
       }

@@ -14,6 +14,7 @@ import {
   Mail,
   MailOpen,
   Megaphone,
+  MessageSquare,
   Plane,
   ShieldCheck,
   Trash2,
@@ -30,12 +31,13 @@ import { useNow } from "@/lib/activity/useNow";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Category = "absence" | "announcement" | "uploads" | "system";
+type Category = "absence" | "announcement" | "uploads" | "chat" | "system";
 
 const CATEGORY_ICON: Record<Category, typeof Bell> = {
   absence: Plane,
   announcement: Megaphone,
   uploads: UploadCloud,
+  chat: MessageSquare,
   system: ShieldCheck,
 };
 
@@ -43,6 +45,7 @@ const CATEGORY_TINT: Record<Category, string> = {
   absence: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
   announcement: "bg-primary/10 text-primary",
   uploads: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+  chat: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
   system: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
 };
 
@@ -50,6 +53,7 @@ function categoryOf(type: string): Category {
   if (type.startsWith("absence")) return "absence";
   if (type === "announcement") return "announcement";
   if (type.startsWith("upload")) return "uploads";
+  if (type.startsWith("chat")) return "chat";
   return "system";
 }
 
@@ -172,6 +176,7 @@ export default function NotificationsPage() {
           {(
             [
               { key: "all", label: t("all") },
+              { key: "chat", label: t("cat_chat") },
               { key: "absence", label: t("cat_absence") },
               { key: "announcement", label: t("cat_announcement") },
               { key: "uploads", label: t("cat_uploads") },

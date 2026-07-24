@@ -1,18 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { useRouter } from "next/navigation";
-
-/** A conversation row as returned by `api.chat.listConversations`. */
-interface ConversationRow {
-  _id: string;
-  title: string;
-  lastMessagePreview: string;
-  unread: number;
-  muted: boolean;
-  archived: boolean;
-}
+import { api } from "@advantis/convex/api";
+import { useMutation } from "convex/react";
 
 type Permission = "default" | "granted" | "denied" | "unsupported";
 
@@ -24,17 +15,17 @@ function currentPermission(): Permission {
 }
 
 /**
- * Fire a native browser notification when a new unread message lands in a
- * non-muted, non-archived conversation while the tab is in the background.
- * Opt-in: the caller surfaces `requestPermission` behind a button. Purely
- * client-side — no server state.
+ * Surfaces the "Enable notifications" affordance in the chat header.
+ * Delivering the actual native notification for new messages (including
+ * this conversation list's own unread bumps) happens app-wide via
+ * <BrowserNotificationBridge>, gated on userPreferences.browserPushEnabled —
+ * granting permission here also flips that preference on so the two stay in
+ * sync and messages don't get silently dropped for users who only ever see
+ * this bell button.
  */
-export function useChatNotifications(
-  conversations: ConversationRow[] | undefined
-) {
-  const router = useRouter();
+export function useChatNotifications() {
   const [permission, setPermission] = useState<Permission>("unsupported");
-  const seen = useRef<Map<string, number>>(new Map());
+  const setUserPrefs = useMutation(api.userPreferences.setMine);
 
   useEffect(() => {
     // Read the browser permission after paint so we don't diverge from SSR
@@ -47,39 +38,10 @@ export function useChatNotifications(
     if (typeof Notification === "undefined") return;
     const result = await Notification.requestPermission();
     setPermission(result as Permission);
-  }, []);
-
-  useEffect(() => {
-    if (!conversations) return;
-    const granted =
-      typeof Notification !== "undefined" &&
-      Notification.permission === "granted";
-
-    for (const c of conversations) {
-      // Baseline on first sight so we never notify for history on load.
-      const before = seen.current.get(c._id) ?? c.unread;
-      const isNew = c.unread > before;
-      if (
-        granted &&
-        isNew &&
-        !c.muted &&
-        !c.archived &&
-        typeof document !== "undefined" &&
-        document.hidden
-      ) {
-        const notification = new Notification(c.title, {
-          body: c.lastMessagePreview || "New message",
-          tag: c._id,
-        });
-        notification.onclick = () => {
-          window.focus();
-          router.push(`/chat?c=${c._id}`);
-          notification.close();
-        };
-      }
-      seen.current.set(c._id, c.unread);
+    if (result === "granted") {
+      await setUserPrefs({ browserPushEnabled: true });
     }
-  }, [conversations, router]);
+  }, [setUserPrefs]);
 
   return { permission, requestPermission };
 }

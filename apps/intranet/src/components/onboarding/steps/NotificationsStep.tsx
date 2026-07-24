@@ -9,7 +9,11 @@ import { BellRing } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { Switch } from "@/components/notifications/NotificationPreferences";
+import {
+  MUTABLE_TYPES,
+  Switch,
+} from "@/components/notifications/NotificationPreferences";
+import { cn } from "@/lib/utils";
 
 const RING_KEYFRAMES = {
   rotate: [0, -14, 12, -8, 5, -2, 0],
@@ -89,33 +93,51 @@ export function NotificationsStep() {
       </div>
 
       <div className="space-y-1">
-        <div className="flex items-center justify-between gap-3 border-b border-border/60 py-3">
-          <span className="min-w-0">
-            <span className="block text-sm font-medium">
-              {tn("browserTitle")}
+        <div className="border-b border-border/60 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">
+                {tn("browserTitle")}
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                {tn("browserHint")}
+              </span>
             </span>
-            <span className="block text-xs text-muted-foreground">
-              {tn("browserHint")}
-            </span>
-          </span>
-          <Switch
-            checked={browserEnabled}
-            onToggle={() => void toggleBrowser()}
-            label={tn("browserTitle")}
-          />
+            <Switch
+              checked={browserEnabled}
+              onToggle={() => void toggleBrowser()}
+              label={tn("browserTitle")}
+            />
+          </div>
+          {permission === "denied" && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+              {tn("browserDeniedHint")}
+            </p>
+          )}
         </div>
-        {[
-          "absence_request",
-          "absence_decision",
-          "announcement",
-          "upload_request",
-          "upload_decision",
-        ].map(type => (
+        {MUTABLE_TYPES.map(({ type, icon: Icon, tint }) => (
           <div
             key={type}
             className="flex items-center justify-between gap-3 border-b border-border/60 py-3 last:border-b-0"
           >
-            <span className="text-sm font-medium">{tn(`type_${type}`)}</span>
+            <div className="flex items-center gap-3">
+              <span
+                className={cn(
+                  "flex size-9 shrink-0 items-center justify-center rounded-lg",
+                  tint
+                )}
+              >
+                <Icon className="size-[18px]" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium">
+                  {tn(`type_${type}`)}
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  {tn(`desc_${type}`)}
+                </span>
+              </span>
+            </div>
             <Switch
               checked={!muted.includes(type)}
               onToggle={() => toggleType(type)}
