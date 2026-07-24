@@ -761,6 +761,22 @@ export default defineSchema({
     active: v.boolean(),
   }),
 
+  // Backfilled nightly (see crons.ts's `cacheCompletedMonthBadges`) with one
+  // row per completed month once its badges are computed. A completed
+  // month's underlying reports never change (see the "historical data
+  // doesn't change once reported" convention on `performanceReports`), so
+  // once a row exists here it's permanent — reading it lets
+  // `performanceQueries.allBadgesMap` skip recomputing that month's team
+  // totals from scratch on every request.
+  performanceBadgeCache: defineTable({
+    ym: v.string(),
+    badges: v.record(
+      v.string(),
+      v.object({ value: v.number(), winners: v.array(v.string()) })
+    ),
+    computedAt: v.number(),
+  }).index("by_ym", ["ym"]),
+
   // One row per employee per report day. Metric columns are nullable —
   // null means "not measured in this snapshot", not zero — so a report
   // that only covers some metrics (e.g. a call report on a day with no
