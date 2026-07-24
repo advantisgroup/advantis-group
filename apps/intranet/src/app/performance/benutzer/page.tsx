@@ -67,10 +67,13 @@ export default function PerformanceUsersPage() {
       router.replace("/performance/login");
       return;
     }
-    if (session.role !== "admin") router.replace("/performance");
+    if (!session.permissions.includes("manage_logins")) {
+      router.replace("/performance");
+    }
   }, [session, router]);
 
-  const isAdmin = session?.valid && session.role === "admin";
+  const isAdmin =
+    session?.valid && session.permissions.includes("manage_logins");
   const logins = useQuery(
     api.performanceAuth.listLogins,
     isAdmin ? { token } : "skip"
@@ -83,6 +86,7 @@ export default function PerformanceUsersPage() {
     api.performanceAuth.listIntranetUsersForLink,
     isAdmin ? { token } : "skip"
   );
+  const roles = useQuery(api.companyRoles.list, isAdmin ? { token } : "skip");
 
   function exit() {
     clearPerformanceToken();
@@ -90,7 +94,8 @@ export default function PerformanceUsersPage() {
   }
 
   if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || session.role !== "admin") return null;
+  if (!session.valid || !session.permissions.includes("manage_logins"))
+    return null;
 
   const navItems = [{ href: "/performance", label: t("backToDashboard") }];
 
@@ -117,7 +122,10 @@ export default function PerformanceUsersPage() {
             <MetricTile
               icon={ShieldCheck}
               label={t("usersStatAdmins")}
-              value={String(logins.filter(l => l.role === "admin").length)}
+              value={String(
+                logins.filter(l => l.isSuperAdmin || l.roleName === "Admin")
+                  .length
+              )}
             />
           </div>
         )}
@@ -175,11 +183,11 @@ export default function PerformanceUsersPage() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={login.role === "admin" ? "default" : "muted"}
+                          variant={login.isSuperAdmin ? "default" : "muted"}
                         >
-                          {login.role === "admin"
-                            ? t("userRoleAdmin")
-                            : t("userRoleEmployee")}
+                          {login.isSuperAdmin
+                            ? t("userRoleSuperAdmin")
+                            : (login.roleName ?? "–")}
                         </Badge>
                       </TableCell>
                       <TableCell>{login.employeeName ?? "–"}</TableCell>
@@ -259,6 +267,7 @@ export default function PerformanceUsersPage() {
             token={token}
             employees={employees ?? []}
             intranetUsers={intranetUsers ?? []}
+            roles={roles ?? []}
           />
           <EditLoginDialog
             login={editing}
@@ -268,6 +277,7 @@ export default function PerformanceUsersPage() {
             token={token}
             employees={employees ?? []}
             intranetUsers={intranetUsers ?? []}
+            roles={roles ?? []}
           />
           <ResetPasswordDialog
             loginId={resetting}

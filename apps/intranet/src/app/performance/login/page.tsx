@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
+import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { setPerformanceToken } from "@/lib/performanceAuth";
 export default function PerformanceLoginPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
+  const slug = usePerformanceCompanySlug();
   const login = useAction(api.performanceAuth.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +33,7 @@ export default function PerformanceLoginPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const result = await login({ email, password });
+      const result = await login({ slug, email, password });
       setPerformanceToken(result.token, result.expiresAt);
       router.replace("/performance");
     } catch {

@@ -52,9 +52,11 @@ import {
   toISODate,
 } from "./performance/lib/workdays";
 import {
-  requireAdminRole as requireAdmin,
+  hasPermission,
   requireCanViewEmployee as requireCanView,
+  requirePermission,
   requireSessionLogin as requireSession,
+  resolveCompanyId,
 } from "./performanceAuth";
 
 // ------------------------------------------------------------------ helpers
@@ -66,9 +68,13 @@ import {
 type Ctx = QueryCtx | MutationCtx;
 
 async function employeeNameMap(
-  ctx: Ctx
+  ctx: Ctx,
+  companyId: Id<"companies">
 ): Promise<Map<Id<"performanceEmployees">, string>> {
-  const employees = await ctx.db.query("performanceEmployees").collect();
+  const employees = await ctx.db
+    .query("performanceEmployees")
+    .withIndex("by_company", q => q.eq("companyId", companyId))
+    .collect();
   return new Map(
     employees
       .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
@@ -113,6 +119,7 @@ function newQueryCache(): QueryCache {
 
 async function reportsInRange(
   ctx: Ctx,
+  companyId: Id<"companies">,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache
@@ -134,8 +141,11 @@ async function reportsInRange(
         .collect()
     : await ctx.db
         .query("performanceReports")
-        .withIndex("by_reportDate", q =>
-          q.gte("reportDate", start).lte("reportDate", end)
+        .withIndex("by_company_reportDate", q =>
+          q
+            .eq("companyId", companyId)
+            .gte("reportDate", start)
+            .lte("reportDate", end)
         )
         .collect();
   cache.reports.set(key, rows);
@@ -172,12 +182,13 @@ function mergeSnapshot(base: Snapshot, next: Snapshot): Snapshot {
  * value per field" instead. */
 async function latestSnapshots(
   ctx: Ctx,
+  companyId: Id<"companies">,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache
 ): Promise<Snapshot[]> {
-  const names = await employeeNameMap(ctx);
-  const rows = await reportsInRange(ctx, ym, employeeId, cache);
+  const names = await employeeNameMap(ctx, companyId);
+  const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
   const sorted = [...rows].sort((a, b) =>
     a.reportDate.localeCompare(b.reportDate)
   );
@@ -226,11 +237,12 @@ interface MonthCalls extends Partial<
  * counts. */
 async function monthCallsMap(
   ctx: Ctx,
+  companyId: Id<"companies">,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache
 ): Promise<Map<Id<"performanceEmployees">, MonthCalls>> {
-  const rows = await reportsInRange(ctx, ym, employeeId, cache);
+  const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
   const sums = new Map<
     Id<"performanceEmployees">,
     {
@@ -272,10 +284,11 @@ async function monthCallsMap(
  * had the day off". */
 async function reportDatesWithCalls(
   ctx: Ctx,
+  companyId: Id<"companies">,
   ym: string,
   cache: QueryCache
 ): Promise<Set<string>> {
-  const rows = await reportsInRange(ctx, ym, undefined, cache);
+  const rows = await reportsInRange(ctx, companyId, ym, undefined, cache);
   return new Set(
     rows.filter(r => r.callsToday !== undefined).map(r => r.reportDate)
   );
@@ -290,12 +303,13 @@ interface CallDay {
  * (team-wide, or one employee) — feeds the day-by-day chart. */
 async function callDaysList(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache
 ): Promise<CallDay[]> {
-  const names = await employeeNameMap(ctx);
-  const rows = await reportsInRange(ctx, ym, employeeId, cache);
+  const names = await employeeNameMap(ctx, companyId);
+  const rows = await reportsInRange(ctx, companyId, ym, employeeId, cache);
   const byDate = new Map<
     string,
     Partial<Record<(typeof DAILY_KEYS)[number], number>>
@@ -340,13 +354,17 @@ export interface LoggedInDay {
  * else to fall back to. */
 async function loggedInDaysList(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   ym: string
 ): Promise<LoggedInDay[]> {
   const { start, end } = monthBounds(ym);
   const rows = await ctx.db
     .query("performanceRawLeads")
-    .withIndex("by_createDate", q =>
-      q.gte("createDate", start).lte("createDate", end)
+    .withIndex("by_company_createDate", q =>
+      q
+        .eq("companyId", companyId)
+        .gte("createDate", start)
+        .lte("createDate", end)
     )
     .collect();
 
@@ -373,11 +391,12 @@ async function loggedInDaysList(
 
 async function hasCallData(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   ym: string,
   employeeId: Id<"performanceEmployees"> | undefined,
   cache: QueryCache
 ): Promise<boolean> {
-  const calls = await monthCallsMap(ctx, ym, employeeId, cache);
+  const calls = await monthCallsMap(ctx, companyId, ym, employeeId, cache);
   const check = (c: MonthCalls | undefined) =>
     !!(c?.callsToday || c?.talkTotalSec || c?.loginSec);
   if (employeeId) return check(calls.get(employeeId));
@@ -402,6 +421,7 @@ export interface WonDay {
  * lump-sum spike instead of a real daily trend. */
 async function closedWonTrend(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   employeeId: Id<"performanceEmployees"> | undefined
 ): Promise<{ days: WonDay[]; avg: number }> {
   const currentYm = defaultYm();
@@ -417,8 +437,8 @@ async function closedWonTrend(
 
   const rows = await ctx.db
     .query("performanceWonOpps")
-    .withIndex("by_closeDate", q =>
-      q.gte("closeDate", start).lte("closeDate", end)
+    .withIndex("by_company_closeDate", q =>
+      q.eq("companyId", companyId).gte("closeDate", start).lte("closeDate", end)
     )
     .collect();
 
@@ -464,17 +484,21 @@ export interface StateFieldDay {
  * as a (wrong) drop to zero. */
 async function stateFieldTrend(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   field: keyof MetricFields
 ): Promise<StateFieldDay[]> {
   const currentYm = defaultYm();
   const { start } = monthBounds(shiftYm(currentYm, -2));
   const { end } = monthBounds(currentYm);
-  const names = await employeeNameMap(ctx);
+  const names = await employeeNameMap(ctx, companyId);
 
   const rows = await ctx.db
     .query("performanceReports")
-    .withIndex("by_reportDate", q =>
-      q.gte("reportDate", start).lte("reportDate", end)
+    .withIndex("by_company_reportDate", q =>
+      q
+        .eq("companyId", companyId)
+        .gte("reportDate", start)
+        .lte("reportDate", end)
     )
     .collect();
 
@@ -508,9 +532,10 @@ async function stateFieldTrend(
  * options. */
 async function monthsWithData(
   ctx: Ctx,
+  companyId: Id<"companies">,
   employeeId?: Id<"performanceEmployees">
 ): Promise<string[]> {
-  const names = await employeeNameMap(ctx);
+  const names = await employeeNameMap(ctx, companyId);
 
   if (employeeId) {
     const rows = await ctx.db
@@ -536,13 +561,13 @@ async function monthsWithData(
   // just cheap.
   const earliest = await ctx.db
     .query("performanceReports")
-    .withIndex("by_reportDate")
+    .withIndex("by_company_reportDate", q => q.eq("companyId", companyId))
     .order("asc")
     .first();
   if (!earliest) return [];
   const latest = await ctx.db
     .query("performanceReports")
-    .withIndex("by_reportDate")
+    .withIndex("by_company_reportDate", q => q.eq("companyId", companyId))
     .order("desc")
     .first();
 
@@ -553,8 +578,11 @@ async function monthsWithData(
     const { start, end } = monthBounds(ym);
     const hit = await ctx.db
       .query("performanceReports")
-      .withIndex("by_reportDate", q =>
-        q.gte("reportDate", start).lte("reportDate", end)
+      .withIndex("by_company_reportDate", q =>
+        q
+          .eq("companyId", companyId)
+          .gte("reportDate", start)
+          .lte("reportDate", end)
       )
       .first();
     if (hit) yms.push(ym);
@@ -575,11 +603,12 @@ interface TeamTotals {
  * FC1 forecast added. */
 export async function teamTotals(
   ctx: Ctx,
+  companyId: Id<"companies">,
   ym: string,
   cache: QueryCache = newQueryCache()
 ): Promise<TeamTotals> {
-  const rawSnaps = await latestSnapshots(ctx, ym, undefined, cache);
-  const calls = await monthCallsMap(ctx, ym, undefined, cache);
+  const rawSnaps = await latestSnapshots(ctx, companyId, ym, undefined, cache);
+  const calls = await monthCallsMap(ctx, companyId, ym, undefined, cache);
   const withCalls = rawSnaps.map(s => {
     const c = calls.get(s.employeeId as Id<"performanceEmployees">);
     const next: Snapshot = { ...s };
@@ -617,7 +646,9 @@ export async function teamTotals(
 
   const asOf = total.reportDate ? parseISODate(total.reportDate) : new Date();
   const present =
-    calls.size > 0 ? await reportDatesWithCalls(ctx, ym, cache) : undefined;
+    calls.size > 0
+      ? await reportDatesWithCalls(ctx, companyId, ym, cache)
+      : undefined;
   const missing = present ? missingCallDays(ym, asOf, present) : undefined;
 
   const snaps = withCalls.map(s =>
@@ -636,22 +667,27 @@ export async function teamTotals(
  * snapshot for every month they have data, oldest first. */
 async function employeeHistoryList(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   employeeId: Id<"performanceEmployees">,
   cache: QueryCache
 ): Promise<Snapshot[]> {
-  const months = await monthsWithData(ctx, employeeId);
+  const months = await monthsWithData(ctx, companyId, employeeId);
   const hist: Snapshot[] = [];
   for (const ym of months) {
-    const snaps = await latestSnapshots(ctx, ym, employeeId, cache);
+    const snaps = await latestSnapshots(ctx, companyId, ym, employeeId, cache);
     if (snaps.length === 0) continue;
     let s = snaps[0];
-    const calls = await monthCallsMap(ctx, ym, employeeId, cache);
+    const calls = await monthCallsMap(ctx, companyId, ym, employeeId, cache);
     const c = calls.get(employeeId);
     for (const k of DAILY_KEYS) s[k] = c?.[k];
     s.talkAvgSec = c?.talkAvgSec;
     const asOf = s.reportDate ? parseISODate(s.reportDate) : new Date();
     const missing = c?.workDays
-      ? missingCallDays(ym, asOf, await reportDatesWithCalls(ctx, ym, cache))
+      ? missingCallDays(
+          ym,
+          asOf,
+          await reportDatesWithCalls(ctx, companyId, ym, cache)
+        )
       : undefined;
     s = addForecast(enrich(s), ym, c?.workDays, missing);
     s.ym = ym;
@@ -664,10 +700,11 @@ async function employeeHistoryList(
 
 async function awardBadgesForMonth(
   ctx: Ctx,
+  companyId: Id<"companies">,
   ym: string,
   cache: QueryCache
 ): Promise<Record<string, BadgeResult>> {
-  const { snaps } = await teamTotals(ctx, ym, cache);
+  const { snaps } = await teamTotals(ctx, companyId, ym, cache);
   return awardBadges(snaps);
 }
 
@@ -683,20 +720,23 @@ async function awardBadgesForMonth(
  * badgeCountsForEmployee/badgeHistoryForEmployee) up to three times. */
 async function allBadgesMap(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   cache: QueryCache
 ): Promise<Record<string, Record<string, BadgeResult>>> {
   if (cache.badges) return cache.badges;
-  const months = await monthsWithData(ctx);
+  const months = await monthsWithData(ctx, companyId);
   const data: Record<string, Record<string, BadgeResult>> = {};
   for (const ym of months) {
     if (!monthCompleted(ym)) continue;
     const cached = await ctx.db
       .query("performanceBadgeCache")
-      .withIndex("by_ym", q => q.eq("ym", ym))
+      .withIndex("by_company_ym", q =>
+        q.eq("companyId", companyId).eq("ym", ym)
+      )
       .unique();
     const got = cached
       ? cached.badges
-      : await awardBadgesForMonth(ctx, ym, cache);
+      : await awardBadgesForMonth(ctx, companyId, ym, cache);
     if (Object.keys(got).length > 0) data[ym] = got;
   }
   cache.badges = data;
@@ -709,23 +749,29 @@ async function allBadgesMap(
 export const cacheCompletedMonthBadges = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ cached: number }> => {
-    const months = await monthsWithData(ctx);
-    const cache = newQueryCache();
+    const companies = await ctx.db.query("companies").collect();
     let cached = 0;
-    for (const ym of months) {
-      if (!monthCompleted(ym)) continue;
-      const existing = await ctx.db
-        .query("performanceBadgeCache")
-        .withIndex("by_ym", q => q.eq("ym", ym))
-        .unique();
-      if (existing) continue;
-      const badges = await awardBadgesForMonth(ctx, ym, cache);
-      await ctx.db.insert("performanceBadgeCache", {
-        ym,
-        badges,
-        computedAt: Date.now(),
-      });
-      cached++;
+    for (const company of companies) {
+      const months = await monthsWithData(ctx, company._id);
+      const cache = newQueryCache();
+      for (const ym of months) {
+        if (!monthCompleted(ym)) continue;
+        const existing = await ctx.db
+          .query("performanceBadgeCache")
+          .withIndex("by_company_ym", q =>
+            q.eq("companyId", company._id).eq("ym", ym)
+          )
+          .unique();
+        if (existing) continue;
+        const badges = await awardBadgesForMonth(ctx, company._id, ym, cache);
+        await ctx.db.insert("performanceBadgeCache", {
+          companyId: company._id,
+          ym,
+          badges,
+          computedAt: Date.now(),
+        });
+        cached++;
+      }
     }
     return { cached };
   },
@@ -733,10 +779,11 @@ export const cacheCompletedMonthBadges = internalMutation({
 
 async function badgeCountsForEmployee(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   employeeId: Id<"performanceEmployees">,
   cache: QueryCache
 ): Promise<Record<string, number>> {
-  const all = await allBadgesMap(ctx, cache);
+  const all = await allBadgesMap(ctx, companyId, cache);
   const counts: Record<string, number> = {};
   for (const badge of BADGES) counts[badge.key] = 0;
   for (const badges of Object.values(all)) {
@@ -750,10 +797,11 @@ async function badgeCountsForEmployee(
 
 async function badgeHistoryForEmployee(
   ctx: QueryCtx,
+  companyId: Id<"companies">,
   employeeId: Id<"performanceEmployees">,
   cache: QueryCache
 ): Promise<{ ym: string; key: string; value: number }[]> {
-  const all = await allBadgesMap(ctx, cache);
+  const all = await allBadgesMap(ctx, companyId, cache);
   const out: { ym: string; key: string; value: number }[] = [];
   for (const ym of Object.keys(all).sort().reverse()) {
     for (const [key, info] of Object.entries(all[ym])) {
@@ -770,33 +818,45 @@ function defaultYm(): string {
 
 // ------------------------------------------------------------------ queries
 
-/** Team dashboard: admin only. */
+/** Team dashboard: requires `view_all_employees` for the resolved company
+ * (own company for a company-scoped login; `companyId` arg required for a
+ * cross-company super-admin — see `resolveCompanyId`). */
 export const teamDashboard = query({
-  args: { token: v.string(), ym: v.optional(v.string()) },
-  handler: async (ctx, { token, ym: ymArg }) => {
+  args: {
+    token: v.string(),
+    ym: v.optional(v.string()),
+    companyId: v.optional(v.id("companies")),
+  },
+  handler: async (ctx, { token, ym: ymArg, companyId: companyIdArg }) => {
     const login = await requireSession(ctx, token);
-    requireAdmin(login);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "view_all_employees", companyId);
 
     const ym = ymArg ?? defaultYm();
     const cache = newQueryCache();
-    const months = await monthsWithData(ctx);
-    const { total, snaps, unqualified } = await teamTotals(ctx, ym, cache);
-    const days = await callDaysList(ctx, ym, undefined, cache);
-    const hasCalls = await hasCallData(ctx, ym, undefined, cache);
-    const wonTrend = await closedWonTrend(ctx, undefined);
-    const loggedIn = await loggedInDaysList(ctx, ym);
+    const months = await monthsWithData(ctx, companyId);
+    const { total, snaps, unqualified } = await teamTotals(
+      ctx,
+      companyId,
+      ym,
+      cache
+    );
+    const days = await callDaysList(ctx, companyId, ym, undefined, cache);
+    const hasCalls = await hasCallData(ctx, companyId, ym, undefined, cache);
+    const wonTrend = await closedWonTrend(ctx, companyId, undefined);
+    const loggedIn = await loggedInDaysList(ctx, companyId, ym);
 
     const vmYm = shiftYm(ym, -1);
     const vjYm = shiftYm(ym, -12);
     const totalVm = months.includes(vmYm)
-      ? (await teamTotals(ctx, vmYm, cache)).total
+      ? (await teamTotals(ctx, companyId, vmYm, cache)).total
       : undefined;
     const totalVj = months.includes(vjYm)
-      ? (await teamTotals(ctx, vjYm, cache)).total
+      ? (await teamTotals(ctx, companyId, vjYm, cache)).total
       : undefined;
 
     const badgeCounts: Record<string, Record<string, number>> = {};
-    const allBadges = await allBadgesMap(ctx, cache);
+    const allBadges = await allBadgesMap(ctx, companyId, cache);
     for (const badges of Object.values(allBadges)) {
       for (const [key, info] of Object.entries(badges)) {
         for (const employeeId of info.winners) {
@@ -844,10 +904,11 @@ export interface DevelopmentMonth {
  * funnel/hitrate/unqualified metrics (naturally monthly, not daily); the
  * rest are full daily series over the whole window. */
 export const teamDevelopment = query({
-  args: { token: v.string() },
-  handler: async (ctx, { token }) => {
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { token, companyId: companyIdArg }) => {
     const login = await requireSession(ctx, token);
-    requireAdmin(login);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "view_all_employees", companyId);
 
     const cache = newQueryCache();
     const currentYm = defaultYm();
@@ -855,7 +916,12 @@ export const teamDevelopment = query({
 
     const monthly: DevelopmentMonth[] = [];
     for (const ym of months) {
-      const { total, unqualified } = await teamTotals(ctx, ym, cache);
+      const { total, unqualified } = await teamTotals(
+        ctx,
+        companyId,
+        ym,
+        cache
+      );
       monthly.push({
         ym,
         leadsCreated: total.leadsCreated,
@@ -866,17 +932,24 @@ export const teamDevelopment = query({
       });
     }
 
-    const wonTrend = await closedWonTrend(ctx, undefined);
+    const wonTrend = await closedWonTrend(ctx, companyId, undefined);
     const callsPerDay: CallDay[] = [];
     for (const ym of months) {
-      callsPerDay.push(...(await callDaysList(ctx, ym, undefined, cache)));
+      callsPerDay.push(
+        ...(await callDaysList(ctx, companyId, ym, undefined, cache))
+      );
     }
-    const leadsAnalysisPerDay = await stateFieldTrend(ctx, "leadsAnalysis");
+    const leadsAnalysisPerDay = await stateFieldTrend(
+      ctx,
+      companyId,
+      "leadsAnalysis"
+    );
     const leadsDetailsIdentPerDay = await stateFieldTrend(
       ctx,
+      companyId,
       "leadsDetailsIdent"
     );
-    const oppsOpenPerDay = await stateFieldTrend(ctx, "oppsOpen");
+    const oppsOpenPerDay = await stateFieldTrend(ctx, companyId, "oppsOpen");
 
     return {
       monthly,
@@ -900,7 +973,6 @@ export const employeeDetail = query({
   },
   handler: async (ctx, { token, employeeId, ym: ymArg }) => {
     const login = await requireSession(ctx, token);
-    requireCanView(login, employeeId);
 
     const employee = await ctx.db.get(employeeId);
     if (!employee || EXCLUDED_OWNERS.has(employee.name.toLowerCase())) {
@@ -909,9 +981,17 @@ export const employeeDetail = query({
         message: "Employee not found.",
       });
     }
+    await requireCanView(ctx, login, employee);
+    if (!employee.companyId) {
+      throw new ConvexError({
+        code: "not_found",
+        message: "Employee has no company (pending migration).",
+      });
+    }
+    const companyId = employee.companyId;
 
     const cache = newQueryCache();
-    const hist = await employeeHistoryList(ctx, employeeId, cache);
+    const hist = await employeeHistoryList(ctx, companyId, employeeId, cache);
     const today = defaultYm();
     const months = [...new Set([...hist.map(h => h.ym!), today])].sort();
     const ym = ymArg && months.includes(ymArg) ? ymArg : today;
@@ -929,6 +1009,7 @@ export const employeeDetail = query({
     if (cur) {
       const { total: teamTotal, snaps: teamSnaps } = await teamTotals(
         ctx,
+        companyId,
         ym,
         cache
       );
@@ -955,19 +1036,29 @@ export const employeeDetail = query({
       return (a.endDate ?? "9999").localeCompare(b.endDate ?? "9999");
     });
 
-    const myBadges = await badgeCountsForEmployee(ctx, employeeId, cache);
-    const allBadges = await allBadgesMap(ctx, cache);
+    const myBadges = await badgeCountsForEmployee(
+      ctx,
+      companyId,
+      employeeId,
+      cache
+    );
+    const allBadges = await allBadgesMap(ctx, companyId, cache);
     const monthBadges = Object.fromEntries(
       Object.entries(allBadges[ym] ?? {}).filter(([, info]) =>
         info.winners.includes(employeeId)
       )
     );
-    const badgeHist = await badgeHistoryForEmployee(ctx, employeeId, cache);
+    const badgeHist = await badgeHistoryForEmployee(
+      ctx,
+      companyId,
+      employeeId,
+      cache
+    );
     const nBadges = Object.values(myBadges).reduce((a, b) => a + b, 0);
 
-    const days = await callDaysList(ctx, ym, employeeId, cache);
-    const hasCalls = await hasCallData(ctx, ym, employeeId, cache);
-    const wonTrend = await closedWonTrend(ctx, employeeId);
+    const days = await callDaysList(ctx, companyId, ym, employeeId, cache);
+    const hasCalls = await hasCallData(ctx, companyId, ym, employeeId, cache);
+    const wonTrend = await closedWonTrend(ctx, companyId, employeeId);
 
     return {
       employee: { id: employee._id, name: employee.name },
@@ -1032,16 +1123,40 @@ export const interactionsMonth = query({
     start: v.optional(v.string()),
     end: v.optional(v.string()),
     employeeId: v.optional(v.id("performanceEmployees")),
+    companyId: v.optional(v.id("companies")),
   },
   handler: async (
     ctx,
-    { token, ym: ymArg, start: startArg, end: endArg, employeeId }
+    {
+      token,
+      ym: ymArg,
+      start: startArg,
+      end: endArg,
+      employeeId,
+      companyId: companyIdArg,
+    }
   ) => {
     const login = await requireSession(ctx, token);
+    let companyId: Id<"companies">;
     if (employeeId) {
-      requireCanView(login, employeeId);
+      const employee = await ctx.db.get(employeeId);
+      if (!employee) {
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee not found.",
+        });
+      }
+      await requireCanView(ctx, login, employee);
+      if (!employee.companyId) {
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee has no company (pending migration).",
+        });
+      }
+      companyId = employee.companyId;
     } else {
-      requireAdmin(login);
+      companyId = resolveCompanyId(login, companyIdArg);
+      await requirePermission(ctx, login, "view_all_employees", companyId);
     }
 
     const ym = ymArg ?? defaultYm();
@@ -1056,10 +1171,14 @@ export const interactionsMonth = query({
           .collect()
       : await ctx.db
           .query("performanceInteractions")
-          .withIndex("by_date", q => q.gte("date", start).lte("date", end))
+          .withIndex("by_company_date", q =>
+            q.eq("companyId", companyId).gte("date", start).lte("date", end)
+          )
           .collect();
 
-    const names = employeeId ? undefined : await employeeNameMap(ctx);
+    const names = employeeId
+      ? undefined
+      : await employeeNameMap(ctx, companyId);
 
     const byKey = new Map<
       string,
@@ -1142,13 +1261,33 @@ export const interactionsDayDetail = query({
     token: v.string(),
     date: v.string(),
     employeeId: v.optional(v.id("performanceEmployees")),
+    companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { token, date, employeeId }) => {
+  handler: async (
+    ctx,
+    { token, date, employeeId, companyId: companyIdArg }
+  ) => {
     const login = await requireSession(ctx, token);
+    let companyId: Id<"companies">;
     if (employeeId) {
-      requireCanView(login, employeeId);
+      const employee = await ctx.db.get(employeeId);
+      if (!employee) {
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee not found.",
+        });
+      }
+      await requireCanView(ctx, login, employee);
+      if (!employee.companyId) {
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee has no company (pending migration).",
+        });
+      }
+      companyId = employee.companyId;
     } else {
-      requireAdmin(login);
+      companyId = resolveCompanyId(login, companyIdArg);
+      await requirePermission(ctx, login, "view_all_employees", companyId);
     }
 
     const rows = employeeId
@@ -1160,10 +1299,12 @@ export const interactionsDayDetail = query({
           .collect()
       : await ctx.db
           .query("performanceInteractions")
-          .withIndex("by_date", q => q.eq("date", date))
+          .withIndex("by_company_date", q =>
+            q.eq("companyId", companyId).eq("date", date)
+          )
           .collect();
 
-    const names = await employeeNameMap(ctx);
+    const names = await employeeNameMap(ctx, companyId);
     const records: InteractionRecord[] = rows
       .filter(r => names.has(r.employeeId))
       .map(r => ({
@@ -1234,15 +1375,26 @@ export const drilldown = query({
     token: v.string(),
     key: v.string(),
     employeeName: v.optional(v.string()),
+    companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { token, key, employeeName }) => {
+  handler: async (
+    ctx,
+    { token, key, employeeName, companyId: companyIdArg }
+  ) => {
     const def = LISTS[key];
     if (!def)
       throw new ConvexError({ code: "not_found", message: "Unknown list." });
     const login = await requireSession(ctx, token);
 
     let empFilter = employeeName;
-    if (login.role !== "admin") {
+    let companyId: Id<"companies">;
+    if (
+      login.isSuperAdmin ||
+      (await hasPermission(ctx, login, "view_all_employees"))
+    ) {
+      companyId = resolveCompanyId(login, companyIdArg);
+      await requirePermission(ctx, login, "view_all_employees", companyId);
+    } else {
       if (!login.employeeId) {
         throw new ConvexError({
           code: "forbidden",
@@ -1250,7 +1402,7 @@ export const drilldown = query({
         });
       }
       const employee = await ctx.db.get(login.employeeId);
-      if (!employee) {
+      if (!employee || !employee.companyId) {
         throw new ConvexError({
           code: "forbidden",
           message: "No linked employee.",
@@ -1260,6 +1412,7 @@ export const drilldown = query({
         throw new ConvexError({ code: "forbidden", message: "Not allowed." });
       }
       empFilter = employee.name;
+      companyId = employee.companyId;
     }
 
     // A `mitarbeiter` login (or an admin drilling into one name) only ever
@@ -1272,15 +1425,27 @@ export const drilldown = query({
         ? empFilter
           ? await ctx.db
               .query("performanceRawLeads")
-              .withIndex("by_owner", q => q.eq("owner", empFilter))
+              .withIndex("by_company_owner", q =>
+                q.eq("companyId", companyId).eq("owner", empFilter)
+              )
               .collect()
-          : await ctx.db.query("performanceRawLeads").collect()
+          : await ctx.db
+              .query("performanceRawLeads")
+              .withIndex("by_company_createDate", q =>
+                q.eq("companyId", companyId)
+              )
+              .collect()
         : empFilter
           ? await ctx.db
               .query("performanceRawOpps")
-              .withIndex("by_owner", q => q.eq("owner", empFilter))
+              .withIndex("by_company_owner", q =>
+                q.eq("companyId", companyId).eq("owner", empFilter)
+              )
               .collect()
-          : await ctx.db.query("performanceRawOpps").collect();
+          : await ctx.db
+              .query("performanceRawOpps")
+              .withIndex("by_company", q => q.eq("companyId", companyId))
+              .collect();
     rows = rows.filter(r => !EXCLUDED_OWNERS.has(r.owner.toLowerCase()));
 
     interface Item {

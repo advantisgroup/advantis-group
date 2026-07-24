@@ -93,6 +93,7 @@ async function runSafely<T>(label: string, fn: () => Promise<T>): Promise<T> {
 async function runApplyImport(
   ctx: ActionCtx,
   args: {
+    companyId: Id<"companies">;
     snapshots: EmployeeSnapshot[];
     sourceFile: string;
     storageId: Id<"_storage">;
@@ -130,42 +131,57 @@ async function clearInBatches(
 /** Wholesale-replaces a raw drill-down table in bounded-size chunks, so a
  * large export's raw rows never cross Convex's array-argument limit in a
  * single call. */
-async function writeRawLeads(ctx: ActionCtx, raw: RawLead[]): Promise<void> {
+async function writeRawLeads(
+  ctx: ActionCtx,
+  companyId: Id<"companies">,
+  raw: RawLead[]
+): Promise<void> {
   await clearInBatches("clearRawLeads", () =>
-    ctx.runMutation(internal.performanceImport.clearRawLeads, {})
+    ctx.runMutation(internal.performanceImport.clearRawLeads, { companyId })
   );
   for (let i = 0; i < raw.length; i += RAW_CHUNK_SIZE) {
     const chunk = raw.slice(i, i + RAW_CHUNK_SIZE);
     await runSafely("insertRawLeadsChunk", () =>
       ctx.runMutation(internal.performanceImport.insertRawLeadsChunk, {
+        companyId,
         rows: chunk,
       })
     );
   }
 }
 
-async function writeRawOpps(ctx: ActionCtx, raw: RawOpp[]): Promise<void> {
+async function writeRawOpps(
+  ctx: ActionCtx,
+  companyId: Id<"companies">,
+  raw: RawOpp[]
+): Promise<void> {
   await clearInBatches("clearRawOpps", () =>
-    ctx.runMutation(internal.performanceImport.clearRawOpps, {})
+    ctx.runMutation(internal.performanceImport.clearRawOpps, { companyId })
   );
   for (let i = 0; i < raw.length; i += RAW_CHUNK_SIZE) {
     const chunk = raw.slice(i, i + RAW_CHUNK_SIZE);
     await runSafely("insertRawOppsChunk", () =>
       ctx.runMutation(internal.performanceImport.insertRawOppsChunk, {
+        companyId,
         rows: chunk,
       })
     );
   }
 }
 
-async function writeWonOpps(ctx: ActionCtx, wonOpps: WonOpp[]): Promise<void> {
+async function writeWonOpps(
+  ctx: ActionCtx,
+  companyId: Id<"companies">,
+  wonOpps: WonOpp[]
+): Promise<void> {
   await clearInBatches("clearWonOpps", () =>
-    ctx.runMutation(internal.performanceImport.clearWonOpps, {})
+    ctx.runMutation(internal.performanceImport.clearWonOpps, { companyId })
   );
   for (let i = 0; i < wonOpps.length; i += RAW_CHUNK_SIZE) {
     const chunk = wonOpps.slice(i, i + RAW_CHUNK_SIZE);
     await runSafely("insertWonOppsChunk", () =>
       ctx.runMutation(internal.performanceImport.insertWonOppsChunk, {
+        companyId,
         rows: chunk,
       })
     );
@@ -194,6 +210,7 @@ export interface FlaggedRowInput extends DurationFlag {
  * silently — it's reported in `flaggedRows` for admin review instead. */
 async function buildCallSnapshots(
   ctx: ActionCtx,
+  companyId: Id<"companies">,
   rows: CallRow[]
 ): Promise<{
   snapshots: EmployeeSnapshot[];
@@ -202,7 +219,7 @@ async function buildCallSnapshots(
 }> {
   const known: string[] = await ctx.runQuery(
     internal.performanceImport.getTeamEmployeeNames,
-    {}
+    { companyId }
   );
   if (known.length === 0) {
     throw new ConvexError({
@@ -251,6 +268,7 @@ interface InteractionInsert {
  * conference) produces one insert per matched, active employee. */
 async function buildInteractionInserts(
   ctx: ActionCtx,
+  companyId: Id<"companies">,
   rows: InteractionRow[]
 ): Promise<{
   inserts: InteractionInsert[];
@@ -258,7 +276,9 @@ async function buildInteractionInserts(
   skipped: string[];
 }> {
   const employees: { id: Id<"performanceEmployees">; name: string }[] =
-    await ctx.runQuery(internal.performanceImport.getTeamEmployeesWithId, {});
+    await ctx.runQuery(internal.performanceImport.getTeamEmployeesWithId, {
+      companyId,
+    });
   if (employees.length === 0) {
     throw new ConvexError({
       code: "no_employees",
@@ -272,6 +292,7 @@ async function buildInteractionInserts(
   const months = [...new Set(rows.map(r => r.date.slice(0, 7)))];
   const activeByMonth: Record<string, Id<"performanceEmployees">[]> =
     await ctx.runQuery(internal.performanceImport.getActiveEmployeeIdsByMonth, {
+      companyId,
       months,
     });
   const activeSets = new Map(
@@ -307,12 +328,14 @@ async function buildInteractionInserts(
  * insert shape as `writeRawLeads`/`writeRawOpps`. */
 async function writeInteractions(
   ctx: ActionCtx,
+  companyId: Id<"companies">,
   inserts: InteractionInsert[],
   months: string[],
   sourceFile: string
 ): Promise<void> {
   await clearInBatches("clearInteractionsForMonths", () =>
     ctx.runMutation(internal.performanceImport.clearInteractionsForMonths, {
+      companyId,
       months,
     })
   );
@@ -321,6 +344,7 @@ async function writeInteractions(
     const chunk = inserts.slice(i, i + RAW_CHUNK_SIZE);
     await runSafely("insertInteractionsChunk", () =>
       ctx.runMutation(internal.performanceImport.insertInteractionsChunk, {
+        companyId,
         rows: chunk,
         sourceFile,
         uploadedAt,
@@ -353,6 +377,7 @@ const EXTENSION_RE = /\.(xlsx|xlsm|csv)\b/i;
 
 async function processReport(
   ctx: ActionCtx,
+  companyId: Id<"companies">,
   args: {
     filename: string;
     storageId: Id<"_storage">;
@@ -400,9 +425,11 @@ async function processReport(
       }
       const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
         ctx,
+        companyId,
         detected.rows
       );
       const result = await runApplyImport(ctx, {
+        companyId,
         snapshots,
         sourceFile: filename,
         storageId,
@@ -428,11 +455,13 @@ async function processReport(
       }
       const { inserts, months, skipped } = await buildInteractionInserts(
         ctx,
+        companyId,
         interactionRows
       );
-      await writeInteractions(ctx, inserts, months, filename);
+      await writeInteractions(ctx, companyId, inserts, months, filename);
       await runSafely("logInteractionsImport", () =>
         ctx.runMutation(internal.performanceImport.logInteractionsImport, {
+          companyId,
           sourceFile: filename,
           storageId,
           contentHash,
@@ -466,6 +495,7 @@ async function processReport(
     if (sf.kind === "lead") {
       const { snapshots, raw } = aggregateLeadReport(sf.rows, sf.reportDate);
       const result = await runApplyImport(ctx, {
+        companyId,
         snapshots,
         sourceFile: filename,
         storageId,
@@ -478,7 +508,7 @@ async function processReport(
         uploadedBy,
         replaceLogId,
       });
-      await writeRawLeads(ctx, raw);
+      await writeRawLeads(ctx, companyId, raw);
       return { status: "ok", rowsImported: result.rowsImported };
     }
     const { snapshots, raw, wonOpps } = aggregateOppReport(
@@ -486,6 +516,7 @@ async function processReport(
       sf.reportDate
     );
     const result = await runApplyImport(ctx, {
+      companyId,
       snapshots,
       sourceFile: filename,
       storageId,
@@ -498,8 +529,8 @@ async function processReport(
       uploadedBy,
       replaceLogId,
     });
-    await writeRawOpps(ctx, raw);
-    await writeWonOpps(ctx, wonOpps);
+    await writeRawOpps(ctx, companyId, raw);
+    await writeWonOpps(ctx, companyId, wonOpps);
     return { status: "ok", rowsImported: result.rowsImported };
   }
 
@@ -507,9 +538,11 @@ async function processReport(
   if (calls) {
     const { snapshots, skipped, flaggedRows } = await buildCallSnapshots(
       ctx,
+      companyId,
       calls.rows
     );
     const result = await runApplyImport(ctx, {
+      companyId,
       snapshots,
       sourceFile: filename,
       storageId,
@@ -529,6 +562,7 @@ async function processReport(
 
   const template = parseAggregatedTemplate(rows);
   const result = await runApplyImport(ctx, {
+    companyId,
     snapshots: template,
     sourceFile: filename,
     storageId,
@@ -552,6 +586,7 @@ async function processReport(
 export const apiImportReport = action({
   args: {
     serverKey: v.string(),
+    companyId: v.id("companies"),
     filename: v.string(),
     storageId: v.id("_storage"),
     contentHash: v.string(),
@@ -569,6 +604,7 @@ export const apiImportReport = action({
     ctx,
     {
       serverKey,
+      companyId,
       filename,
       storageId,
       contentHash,
@@ -582,11 +618,13 @@ export const apiImportReport = action({
 
     // Checked before any parsing — covers every report type (Salesforce
     // Lead/Opp, call report, aggregated template) uniformly, and skips the
-    // (potentially expensive) parse entirely for a re-upload.
+    // (potentially expensive) parse entirely for a re-upload. Scoped to
+    // `companyId` — two different client companies uploading
+    // byte-identical files must not collide.
     if (!force) {
       const priorUpload = await ctx.runQuery(
         internal.performanceImport.findUploadByHash,
-        { contentHash }
+        { companyId, contentHash }
       );
       if (priorUpload) {
         return {
@@ -597,7 +635,7 @@ export const apiImportReport = action({
       }
     }
 
-    return processReport(ctx, {
+    return processReport(ctx, companyId, {
       filename,
       storageId,
       contentHash,
@@ -615,21 +653,29 @@ export const apiImportReport = action({
  * Session-token gated (called directly from the browser, not through
  * apps/api) since there's no new file to stage/scan here. */
 export const reimportUpload = action({
-  args: { token: v.string(), logId: v.id("performanceUploadLog") },
-  handler: async (ctx, { token, logId }): Promise<ImportResult> => {
-    await ctx.runQuery(internal.performanceImport.requireAdminByToken, {
-      token,
-    });
+  args: {
+    token: v.string(),
+    logId: v.id("performanceUploadLog"),
+    companyId: v.optional(v.id("companies")),
+  },
+  handler: async (
+    ctx,
+    { token, logId, companyId: companyIdArg }
+  ): Promise<ImportResult> => {
+    const { companyId } = await ctx.runQuery(
+      internal.performanceImport.requireAdminByToken,
+      { token, companyId: companyIdArg }
+    );
     const log = await ctx.runQuery(internal.performanceImport.getUploadLogRow, {
       logId,
     });
-    if (!log) {
+    if (!log || log.companyId !== companyId) {
       throw new ConvexError({
         code: "not_found",
         message: "Upload-log entry not found.",
       });
     }
-    return processReport(ctx, {
+    return processReport(ctx, companyId, {
       filename: log.filename,
       storageId: log.storageId,
       contentHash: log.contentHash ?? "",
@@ -647,21 +693,30 @@ export const reimportUpload = action({
  * write when the reprocessed values come out unchanged (see
  * `upsertSnapshot`), so re-running an already-correct file is cheap. */
 export const reimportBatch = action({
-  args: { token: v.string(), batchId: v.string() },
+  args: {
+    token: v.string(),
+    batchId: v.string(),
+    companyId: v.optional(v.id("companies")),
+  },
   handler: async (
     ctx,
-    { token, batchId }
+    { token, batchId, companyId: companyIdArg }
   ): Promise<{ results: (ImportResult & { logId: string })[] }> => {
-    await ctx.runQuery(internal.performanceImport.requireAdminByToken, {
-      token,
-    });
+    const { companyId } = await ctx.runQuery(
+      internal.performanceImport.requireAdminByToken,
+      { token, companyId: companyIdArg }
+    );
     const rows = await ctx.runQuery(
       internal.performanceImport.getUploadLogRowsByBatch,
       { batchId }
     );
     const results: (ImportResult & { logId: string })[] = [];
     for (const log of rows) {
-      const result = await processReport(ctx, {
+      // A batch id is only ever shared by files uploaded together by the
+      // same company — skip anything that somehow doesn't match instead of
+      // silently importing it into the wrong company.
+      if (log.companyId !== companyId) continue;
+      const result = await processReport(ctx, companyId, {
         filename: log.filename,
         storageId: log.storageId,
         contentHash: log.contentHash ?? "",

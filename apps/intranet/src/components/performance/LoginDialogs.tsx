@@ -35,7 +35,9 @@ export interface LoginRow {
   id: Id<"performanceLogins">;
   email: string;
   name: string;
-  role: "admin" | "mitarbeiter";
+  roleId: Id<"companyRoles"> | null;
+  roleName: string | null;
+  isSuperAdmin: boolean;
   active: boolean;
   employeeId: Id<"performanceEmployees"> | null;
   employeeName: string | null;
@@ -47,6 +49,11 @@ export interface EmployeeOption {
   id: Id<"performanceEmployees">;
   name: string;
   active: boolean;
+}
+
+export interface RoleOption {
+  id: Id<"companyRoles">;
+  name: string;
 }
 
 export interface IntranetUserOption {
@@ -94,6 +101,31 @@ function EmployeeSelect({
         {employees.map(e => (
           <SelectItem key={e.id} value={e.id}>
             {e.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function RoleSelect({
+  value,
+  onChange,
+  roles,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  roles: RoleOption[];
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {roles.map(r => (
+          <SelectItem key={r.id} value={r.id}>
+            {r.name}
           </SelectItem>
         ))}
       </SelectContent>
@@ -263,12 +295,14 @@ export function CreateLoginDialog({
   token,
   employees,
   intranetUsers,
+  roles,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   token: string;
   employees: EmployeeOption[];
   intranetUsers: IntranetUserOption[];
+  roles: RoleOption[];
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
@@ -276,7 +310,7 @@ export function CreateLoginDialog({
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"admin" | "mitarbeiter">("mitarbeiter");
+  const [roleId, setRoleId] = useState<string>(roles[0]?.id ?? "");
   const [employeeId, setEmployeeId] = useState(NONE);
   const [linkedUserId, setLinkedUserId] = useState<Id<"users"> | null>(null);
   const [linkedUserTouched, setLinkedUserTouched] = useState(false);
@@ -298,7 +332,7 @@ export function CreateLoginDialog({
     setEmail("");
     setName("");
     setPassword("");
-    setRole("mitarbeiter");
+    setRoleId(roles[0]?.id ?? "");
     setEmployeeId(NONE);
     setLinkedUserId(null);
     setLinkedUserTouched(false);
@@ -306,7 +340,10 @@ export function CreateLoginDialog({
 
   const needsPassword = !effectiveLinkedUserId;
   const canSave =
-    !!email.trim() && !!name.trim() && (!needsPassword || password.length >= 8);
+    !!email.trim() &&
+    !!name.trim() &&
+    !!roleId &&
+    (!needsPassword || password.length >= 8);
 
   async function handleSave() {
     if (!canSave) return;
@@ -317,7 +354,7 @@ export function CreateLoginDialog({
         email: email.trim(),
         name: name.trim(),
         password: needsPassword ? password : undefined,
-        role,
+        roleId: roleId as Id<"companyRoles">,
         employeeId:
           employeeId === NONE
             ? undefined
@@ -399,20 +436,7 @@ export function CreateLoginDialog({
               <label className="text-xs font-medium text-muted-foreground">
                 {t("userRoleLabel")}
               </label>
-              <Select
-                value={role}
-                onValueChange={v => setRole(v as "admin" | "mitarbeiter")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">{t("userRoleAdmin")}</SelectItem>
-                  <SelectItem value="mitarbeiter">
-                    {t("userRoleEmployee")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <RoleSelect value={roleId} onChange={setRoleId} roles={roles} />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
@@ -449,12 +473,14 @@ export function EditLoginDialog({
   token,
   employees,
   intranetUsers,
+  roles,
 }: {
   login: LoginRow | null;
   onOpenChange: (open: boolean) => void;
   token: string;
   employees: EmployeeOption[];
   intranetUsers: IntranetUserOption[];
+  roles: RoleOption[];
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
@@ -474,6 +500,7 @@ export function EditLoginDialog({
             login={login}
             employees={employees}
             intranetUsers={intranetUsers}
+            roles={roles}
             onCancel={() => onOpenChange(false)}
             onSave={async patch => {
               try {
@@ -495,16 +522,18 @@ function EditLoginForm({
   login,
   employees,
   intranetUsers,
+  roles,
   onCancel,
   onSave,
 }: {
   login: LoginRow;
   employees: EmployeeOption[];
   intranetUsers: IntranetUserOption[];
+  roles: RoleOption[];
   onCancel: () => void;
   onSave: (patch: {
     name: string;
-    role: "admin" | "mitarbeiter";
+    roleId: Id<"companyRoles"> | undefined;
     active: boolean;
     employeeId: Id<"performanceEmployees"> | null;
     linkedUserId: Id<"users"> | null;
@@ -512,7 +541,9 @@ function EditLoginForm({
 }) {
   const t = useTranslations("Performance");
   const [name, setName] = useState(login.name);
-  const [role, setRole] = useState(login.role);
+  const [roleId, setRoleId] = useState<string>(
+    login.roleId ?? roles[0]?.id ?? ""
+  );
   const [active, setActive] = useState(login.active);
   const [employeeId, setEmployeeId] = useState(login.employeeId ?? NONE);
   // Existing logins are never re-linked automatically: if this one is
@@ -531,7 +562,7 @@ function EditLoginForm({
     try {
       await onSave({
         name: name.trim() || login.name,
-        role,
+        roleId: login.isSuperAdmin ? undefined : (roleId as Id<"companyRoles">),
         active,
         employeeId:
           employeeId === NONE
@@ -572,20 +603,13 @@ function EditLoginForm({
             <label className="text-xs font-medium text-muted-foreground">
               {t("userRoleLabel")}
             </label>
-            <Select
-              value={role}
-              onValueChange={v => setRole(v as "admin" | "mitarbeiter")}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">{t("userRoleAdmin")}</SelectItem>
-                <SelectItem value="mitarbeiter">
-                  {t("userRoleEmployee")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            {login.isSuperAdmin ? (
+              <p className="pt-2 text-sm text-muted-foreground">
+                {t("userRoleSuperAdmin")}
+              </p>
+            ) : (
+              <RoleSelect value={roleId} onChange={setRoleId} roles={roles} />
+            )}
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">

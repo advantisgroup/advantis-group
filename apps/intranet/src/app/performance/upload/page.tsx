@@ -385,7 +385,7 @@ export default function PerformanceUploadPage() {
       router.replace("/performance/login");
       return;
     }
-    if (session.role !== "admin") {
+    if (!session.permissions.includes("upload_reports")) {
       router.replace("/performance");
       return;
     }
@@ -396,7 +396,8 @@ export default function PerformanceUploadPage() {
     if (session.viaClerk) router.replace("/performance");
   }, [session, router]);
 
-  const isAdmin = session?.valid && session.role === "admin";
+  const isAdmin =
+    session?.valid && session.permissions.includes("upload_reports");
   const log = useQuery(
     api.performanceImport.listUploadLog,
     isAdmin ? { token } : "skip"
@@ -538,7 +539,11 @@ export default function PerformanceUploadPage() {
   }, [log]);
 
   if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || session.role !== "admin" || session.viaClerk)
+  if (
+    !session.valid ||
+    !session.permissions.includes("upload_reports") ||
+    session.viaClerk
+  )
     return null;
 
   const navItems = [{ href: "/performance", label: t("backToDashboard") }];

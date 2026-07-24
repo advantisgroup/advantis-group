@@ -39,7 +39,12 @@ import {
   type SheetRow,
   type SnapshotFields,
 } from "./performance/lib/types";
-import { requireAdminLogin } from "./performanceAuth";
+import {
+  requireAdminLogin,
+  requirePermission,
+  requireSessionLogin,
+  resolveCompanyId,
+} from "./performanceAuth";
 import { toISODate } from "./performance/lib/workdays";
 
 /** Same convention as `onedrive.ts`: functions prefixed `api*` are
@@ -305,13 +310,20 @@ export function parseAggregatedTemplate(
  * call and kept current as new employees get inserted mid-loop. */
 type EmployeeCache = Map<string, Id<"performanceEmployees">>;
 
-async function loadEmployeeCache(ctx: MutationCtx): Promise<EmployeeCache> {
-  const all = await ctx.db.query("performanceEmployees").collect();
+async function loadEmployeeCache(
+  ctx: MutationCtx,
+  companyId: Id<"companies">
+): Promise<EmployeeCache> {
+  const all = await ctx.db
+    .query("performanceEmployees")
+    .withIndex("by_company", q => q.eq("companyId", companyId))
+    .collect();
   return new Map(all.map(e => [e.name.toLowerCase(), e._id]));
 }
 
 async function findOrCreateEmployee(
   ctx: MutationCtx,
+  companyId: Id<"companies">,
   name: string,
   cache: EmployeeCache
 ): Promise<Id<"performanceEmployees">> {
@@ -322,6 +334,7 @@ async function findOrCreateEmployee(
   const id = await ctx.db.insert("performanceEmployees", {
     name: trimmed,
     active: true,
+    companyId,
   });
   cache.set(lower, id);
   return id;
@@ -332,6 +345,7 @@ async function findOrCreateEmployee(
  * other instead of overwriting. */
 async function upsertSnapshot(
   ctx: MutationCtx,
+  companyId: Id<"companies">,
   employeeName: string,
   reportDate: string,
   fields: SnapshotFields,
@@ -339,7 +353,12 @@ async function upsertSnapshot(
   uploadedAt: number,
   cache: EmployeeCache
 ): Promise<void> {
-  const employeeId = await findOrCreateEmployee(ctx, employeeName, cache);
+  const employeeId = await findOrCreateEmployee(
+    ctx,
+    companyId,
+    employeeName,
+    cache
+  );
   // Convex indexes aren't unique constraints (see the schema comment on
   // by_employee_date), so more than one row can in principle match — e.g. a
   // raced concurrent upload. Merge into the first match and drop any extras
@@ -370,6 +389,7 @@ async function upsertSnapshot(
   } else {
     await ctx.db.insert("performanceReports", {
       employeeId,
+      companyId,
       reportDate,
       ...fields,
       sourceFile,
@@ -466,9 +486,12 @@ export const findImplausibleDurations = internalQuery({
 });
 
 export const getTeamEmployeeNames = internalQuery({
-  args: {},
-  handler: async (ctx): Promise<string[]> => {
-    const employees = await ctx.db.query("performanceEmployees").collect();
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<string[]> => {
+    const employees = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .collect();
     return employees
       .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
       .map(e => e.name);
@@ -479,11 +502,15 @@ export const getTeamEmployeeNames = internalQuery({
  * interactions importer needs the id (a foreign key into
  * `performanceInteractions`), not just the name `matchEmployee` returns. */
 export const getTeamEmployeesWithId = internalQuery({
-  args: {},
+  args: { companyId: v.id("companies") },
   handler: async (
-    ctx
+    ctx,
+    { companyId }
   ): Promise<{ id: Id<"performanceEmployees">; name: string }[]> => {
-    const employees = await ctx.db.query("performanceEmployees").collect();
+    const employees = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .collect();
     return employees
       .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
       .map(e => ({ id: e._id, name: e.name }));
@@ -495,18 +522,21 @@ export const getTeamEmployeesWithId = internalQuery({
  * month" gate for imported interactions, so a raw Genesys export doesn't
  * pull in agents from queues/departments this feature doesn't track. */
 export const getActiveEmployeeIdsByMonth = internalQuery({
-  args: { months: v.array(v.string()) },
+  args: { companyId: v.id("companies"), months: v.array(v.string()) },
   handler: async (
     ctx,
-    { months }
+    { companyId, months }
   ): Promise<Record<string, Id<"performanceEmployees">[]>> => {
     const out: Record<string, Id<"performanceEmployees">[]> = {};
     for (const ym of months) {
       const { start, end } = monthBounds(ym);
       const rows = await ctx.db
         .query("performanceReports")
-        .withIndex("by_reportDate", q =>
-          q.gte("reportDate", start).lte("reportDate", end)
+        .withIndex("by_company_reportDate", q =>
+          q
+            .eq("companyId", companyId)
+            .gte("reportDate", start)
+            .lte("reportDate", end)
         )
         .collect();
       out[ym] = [...new Set(rows.map(r => r.employeeId))];
@@ -600,6 +630,7 @@ const flaggedRowInputValidator = v.object({
  * still implausibly) reopens it as `pending` for a fresh look. */
 async function upsertFlaggedRowById(
   ctx: MutationCtx,
+  companyId: Id<"companies">,
   employeeId: Id<"performanceEmployees">,
   reportDate: string,
   field: "talkTotalSec" | "talkAvgSec" | "loginSec",
@@ -639,6 +670,7 @@ async function upsertFlaggedRowById(
   } else {
     await ctx.db.insert("performanceFlaggedRows", {
       employeeId,
+      companyId,
       reportDate,
       field,
       rawSeconds,
@@ -654,6 +686,7 @@ async function upsertFlaggedRowById(
  * an import's `EmployeeSnapshot`-style row arrives in. */
 async function upsertFlaggedRow(
   ctx: MutationCtx,
+  companyId: Id<"companies">,
   employeeName: string,
   reportDate: string,
   field: "talkTotalSec" | "talkAvgSec" | "loginSec",
@@ -663,9 +696,15 @@ async function upsertFlaggedRow(
   uploadedAt: number,
   cache: EmployeeCache
 ): Promise<void> {
-  const employeeId = await findOrCreateEmployee(ctx, employeeName, cache);
+  const employeeId = await findOrCreateEmployee(
+    ctx,
+    companyId,
+    employeeName,
+    cache
+  );
   await upsertFlaggedRowById(
     ctx,
+    companyId,
     employeeId,
     reportDate,
     field,
@@ -678,6 +717,7 @@ async function upsertFlaggedRow(
 
 export const applyImport = internalMutation({
   args: {
+    companyId: v.id("companies"),
     snapshots: v.array(snapshotValidator),
     sourceFile: v.string(),
     storageId: v.id("_storage"),
@@ -704,10 +744,11 @@ export const applyImport = internalMutation({
       ? await ctx.db.get(args.replaceLogId)
       : null;
     const uploadedBy = args.uploadedBy ?? existingLog?.uploadedBy;
-    const employeeCache = await loadEmployeeCache(ctx);
+    const employeeCache = await loadEmployeeCache(ctx, args.companyId);
     for (const snap of args.snapshots) {
       await upsertSnapshot(
         ctx,
+        args.companyId,
         snap.employeeName,
         snap.reportDate,
         snap.fields,
@@ -719,6 +760,7 @@ export const applyImport = internalMutation({
     for (const flagged of args.flaggedRows ?? []) {
       await upsertFlaggedRow(
         ctx,
+        args.companyId,
         flagged.employeeName,
         flagged.reportDate,
         flagged.field,
@@ -730,6 +772,7 @@ export const applyImport = internalMutation({
       );
     }
     const logFields = {
+      companyId: args.companyId,
       filename: args.sourceFile,
       storageId: args.storageId,
       rowsImported: args.snapshots.length,
@@ -754,33 +797,42 @@ export const applyImport = internalMutation({
 
 async function lookupUploadByHash(
   ctx: { db: QueryCtx["db"] },
+  companyId: Id<"companies">,
   contentHash: string
 ): Promise<{ filename: string; uploadedAt: number } | null> {
   const existing = await ctx.db
     .query("performanceUploadLog")
-    .withIndex("by_contentHash", q => q.eq("contentHash", contentHash))
+    .withIndex("by_company_contentHash", q =>
+      q.eq("companyId", companyId).eq("contentHash", contentHash)
+    )
     .first();
   if (!existing) return null;
   return { filename: existing.filename, uploadedAt: existing.uploadedAt };
 }
 
-/** Finds a prior upload of the exact same file (by content hash), so
- * `apiImportReport` can recognize an accidental re-upload — of any report
- * type, since every upload funnels through the same hash check before
- * type-specific parsing — and skip re-importing it. */
+/** Finds a prior upload of the exact same file (by content hash) *within
+ * the same company* — two different client companies uploading
+ * byte-identical files (e.g. the blank template) must not collide — so
+ * `apiImportReport` can recognize an accidental re-upload and skip
+ * re-importing it. */
 export const findUploadByHash = internalQuery({
-  args: { contentHash: v.string() },
-  handler: async (ctx, { contentHash }) => lookupUploadByHash(ctx, contentHash),
+  args: { companyId: v.id("companies"), contentHash: v.string() },
+  handler: async (ctx, { companyId, contentHash }) =>
+    lookupUploadByHash(ctx, companyId, contentHash),
 });
 
 /** Same lookup, callable by `apps/api` before it even stages the file —
  * lets the upload route skip the storage write entirely for an obvious
  * re-upload instead of staging-then-deleting. */
 export const apiFindUploadByHash = query({
-  args: { serverKey: v.string(), contentHash: v.string() },
-  handler: async (ctx, { serverKey, contentHash }) => {
+  args: {
+    serverKey: v.string(),
+    companyId: v.id("companies"),
+    contentHash: v.string(),
+  },
+  handler: async (ctx, { serverKey, companyId, contentHash }) => {
     assertServerKey(serverKey);
-    return lookupUploadByHash(ctx, contentHash);
+    return lookupUploadByHash(ctx, companyId, contentHash);
   },
 });
 
@@ -802,11 +854,19 @@ export const apiFindUploadByHash = query({
 // was in clearing old data, not parsing new data).
 const CLEAR_BATCH_SIZE = 500;
 
+// NOTE: each of these three clear/insert pairs used to operate on the
+// *entire* table with no company filter — a real bug in a multi-tenant
+// world (importing one company's Salesforce export would wipe every other
+// company's raw leads/opps/won-opps too, since these are wholesale-replaced
+// snapshots, not deltas). Every clear is now scoped to the one company
+// whose import is in flight.
+
 export const clearRawLeads = internalMutation({
-  args: {},
-  handler: async (ctx): Promise<{ more: boolean }> => {
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query("performanceRawLeads")
+      .withIndex("by_company_createDate", q => q.eq("companyId", companyId))
       .take(CLEAR_BATCH_SIZE);
     await Promise.all(batch.map(row => ctx.db.delete(row._id)));
     return { more: batch.length === CLEAR_BATCH_SIZE };
@@ -814,19 +874,22 @@ export const clearRawLeads = internalMutation({
 });
 
 export const insertRawLeadsChunk = internalMutation({
-  args: { rows: v.array(rawLeadValidator) },
-  handler: async (ctx, { rows }): Promise<void> => {
+  args: { companyId: v.id("companies"), rows: v.array(rawLeadValidator) },
+  handler: async (ctx, { companyId, rows }): Promise<void> => {
     await Promise.all(
-      rows.map(row => ctx.db.insert("performanceRawLeads", row))
+      rows.map(row =>
+        ctx.db.insert("performanceRawLeads", { ...row, companyId })
+      )
     );
   },
 });
 
 export const clearRawOpps = internalMutation({
-  args: {},
-  handler: async (ctx): Promise<{ more: boolean }> => {
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query("performanceRawOpps")
+      .withIndex("by_company", q => q.eq("companyId", companyId))
       .take(CLEAR_BATCH_SIZE);
     await Promise.all(batch.map(row => ctx.db.delete(row._id)));
     return { more: batch.length === CLEAR_BATCH_SIZE };
@@ -834,19 +897,22 @@ export const clearRawOpps = internalMutation({
 });
 
 export const insertRawOppsChunk = internalMutation({
-  args: { rows: v.array(rawOppValidator) },
-  handler: async (ctx, { rows }): Promise<void> => {
+  args: { companyId: v.id("companies"), rows: v.array(rawOppValidator) },
+  handler: async (ctx, { companyId, rows }): Promise<void> => {
     await Promise.all(
-      rows.map(row => ctx.db.insert("performanceRawOpps", row))
+      rows.map(row =>
+        ctx.db.insert("performanceRawOpps", { ...row, companyId })
+      )
     );
   },
 });
 
 export const clearWonOpps = internalMutation({
-  args: {},
-  handler: async (ctx): Promise<{ more: boolean }> => {
+  args: { companyId: v.id("companies") },
+  handler: async (ctx, { companyId }): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query("performanceWonOpps")
+      .withIndex("by_company_closeDate", q => q.eq("companyId", companyId))
       .take(CLEAR_BATCH_SIZE);
     await Promise.all(batch.map(row => ctx.db.delete(row._id)));
     return { more: batch.length === CLEAR_BATCH_SIZE };
@@ -854,22 +920,26 @@ export const clearWonOpps = internalMutation({
 });
 
 export const insertWonOppsChunk = internalMutation({
-  args: { rows: v.array(wonOppValidator) },
-  handler: async (ctx, { rows }): Promise<void> => {
+  args: { companyId: v.id("companies"), rows: v.array(wonOppValidator) },
+  handler: async (ctx, { companyId, rows }): Promise<void> => {
     await Promise.all(
-      rows.map(row => ctx.db.insert("performanceWonOpps", row))
+      rows.map(row =>
+        ctx.db.insert("performanceWonOpps", { ...row, companyId })
+      )
     );
   },
 });
 
 /** Most recent uploads, for the admin upload page's log table. */
 export const listUploadLog = query({
-  args: { token: v.string() },
-  handler: async (ctx, { token }) => {
-    await requireAdminLogin(ctx, token);
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { token, companyId: companyIdArg }) => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "upload_reports", companyId);
     const rows = await ctx.db
       .query("performanceUploadLog")
-      .withIndex("by_uploadedAt")
+      .withIndex("by_company_uploadedAt", q => q.eq("companyId", companyId))
       .order("desc")
       .take(60);
     return rows.map(r => ({
@@ -905,11 +975,17 @@ export interface UnscannedCallUpload {
 }
 
 export const listUnscannedCallUploads = query({
-  args: { token: v.string() },
-  handler: async (ctx, { token }): Promise<UnscannedCallUpload[]> => {
-    await requireAdminLogin(ctx, token);
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (
+    ctx,
+    { token, companyId: companyIdArg }
+  ): Promise<UnscannedCallUpload[]> => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "upload_reports", companyId);
     const rows = await ctx.db
       .query("performanceUploadLog")
+      .withIndex("by_company_uploadedAt", q => q.eq("companyId", companyId))
       .filter(q => q.eq(q.field("reportKind"), "call"))
       .collect();
     const unscanned = rows.filter(r => !r.scannedForFlags);
@@ -935,10 +1011,18 @@ export const listUnscannedCallUploads = query({
  * same set `getTeamEmployeeNames` gives the server-side import path, just
  * exposed to a signed-in admin instead of `internal.*`-only. */
 export const listEmployeeNames = query({
-  args: { token: v.string() },
-  handler: async (ctx, { token }): Promise<string[]> => {
-    await requireAdminLogin(ctx, token);
-    const employees = await ctx.db.query("performanceEmployees").collect();
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (
+    ctx,
+    { token, companyId: companyIdArg }
+  ): Promise<string[]> => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "upload_reports", companyId);
+    const employees = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .collect();
     return employees
       .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
       .map(e => e.name);
@@ -961,19 +1045,22 @@ export const recordScanResults = mutation({
     ctx,
     { token, logId, flaggedRows }
   ): Promise<{ flagged: number }> => {
-    await requireAdminLogin(ctx, token);
+    const login = await requireSessionLogin(ctx, token);
     const log = await ctx.db.get(logId);
-    if (!log) {
+    if (!log || !log.companyId) {
       throw new ConvexError({
         code: "not_found",
         message: "Upload-log entry not found.",
       });
     }
+    await requirePermission(ctx, login, "upload_reports", log.companyId);
+    const companyId = log.companyId;
     const now = Date.now();
-    const employeeCache = await loadEmployeeCache(ctx);
+    const employeeCache = await loadEmployeeCache(ctx, companyId);
     for (const flagged of flaggedRows) {
       await upsertFlaggedRow(
         ctx,
+        companyId,
         flagged.employeeName,
         flagged.reportDate,
         flagged.field,
@@ -993,15 +1080,22 @@ export const recordScanResults = mutation({
  * `performanceFlaggedRows` in schema.ts), newest first, joined with the
  * employee's current name for display. */
 export const listFlaggedRows = query({
-  args: { token: v.string() },
-  handler: async (ctx, { token }) => {
-    await requireAdminLogin(ctx, token);
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (ctx, { token, companyId: companyIdArg }) => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "view_flagged_rows", companyId);
     const rows = await ctx.db
       .query("performanceFlaggedRows")
-      .withIndex("by_status", q => q.eq("status", "pending"))
+      .withIndex("by_company_status", q =>
+        q.eq("companyId", companyId).eq("status", "pending")
+      )
       .order("desc")
       .collect();
-    const employees = await ctx.db.query("performanceEmployees").collect();
+    const employees = await ctx.db
+      .query("performanceEmployees")
+      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .collect();
     const nameById = new Map(employees.map(e => [e._id, e.name]));
     return rows.map(r => ({
       _id: r._id,
@@ -1033,14 +1127,15 @@ export const resolveFlaggedRow = mutation({
     value: v.optional(v.number()),
   },
   handler: async (ctx, { token, id, action, value }): Promise<void> => {
-    await requireAdminLogin(ctx, token);
+    const login = await requireSessionLogin(ctx, token);
     const row = await ctx.db.get(id);
-    if (!row) {
+    if (!row || !row.companyId) {
       throw new ConvexError({
         code: "not_found",
         message: "Flagged row not found.",
       });
     }
+    await requirePermission(ctx, login, "resolve_flagged_rows", row.companyId);
 
     if (action === "ignore") {
       await ctx.db.patch(id, { status: "ignored", resolvedAt: Date.now() });
@@ -1067,6 +1162,7 @@ export const resolveFlaggedRow = mutation({
     } else {
       await ctx.db.insert("performanceReports", {
         employeeId: row.employeeId,
+        companyId: row.companyId,
         reportDate: row.reportDate,
         sourceFile: row.sourceFile,
         uploadedAt: Date.now(),
@@ -1087,12 +1183,20 @@ export const resolveFlaggedRow = mutation({
 // touch ctx.db directly — these internal query wrappers are how they read
 // the admin session and the log rows to reprocess.
 
-/** Actions can't call `requireAdminLogin` directly (it needs `ctx.db`) —
- * this wraps it as an internal query an action can `ctx.runQuery` into. */
+/** Actions can't call `requirePermission` directly (it needs `ctx.db`) —
+ * this wraps the "can upload reports" check as an internal query an action
+ * can `ctx.runQuery` into, and resolves which company the caller's import
+ * is scoped to (their own, or an explicit `companyId` for a super-admin). */
 export const requireAdminByToken = internalQuery({
-  args: { token: v.string() },
-  handler: async (ctx, { token }) => {
-    await requireAdminLogin(ctx, token);
+  args: { token: v.string(), companyId: v.optional(v.id("companies")) },
+  handler: async (
+    ctx,
+    { token, companyId: companyIdArg }
+  ): Promise<{ companyId: Id<"companies"> }> => {
+    const login = await requireSessionLogin(ctx, token);
+    const companyId = resolveCompanyId(login, companyIdArg);
+    await requirePermission(ctx, login, "upload_reports", companyId);
+    return { companyId };
   },
 });
 
@@ -1132,8 +1236,8 @@ const interactionInsertValidator = v.object({
  * collect-then-delete blowing Convex's per-execution read limit on a month
  * with heavy interaction volume. */
 export const clearInteractionsForMonths = internalMutation({
-  args: { months: v.array(v.string()) },
-  handler: async (ctx, { months }): Promise<{ more: boolean }> => {
+  args: { companyId: v.id("companies"), months: v.array(v.string()) },
+  handler: async (ctx, { companyId, months }): Promise<{ more: boolean }> => {
     let remaining = CLEAR_BATCH_SIZE;
     let deletedAny = false;
     for (const ym of months) {
@@ -1141,7 +1245,9 @@ export const clearInteractionsForMonths = internalMutation({
       const { start, end } = monthBounds(ym);
       const batch = await ctx.db
         .query("performanceInteractions")
-        .withIndex("by_date", q => q.gte("date", start).lte("date", end))
+        .withIndex("by_company_date", q =>
+          q.eq("companyId", companyId).gte("date", start).lte("date", end)
+        )
         .take(remaining);
       if (batch.length > 0) {
         await Promise.all(batch.map(row => ctx.db.delete(row._id)));
@@ -1155,15 +1261,20 @@ export const clearInteractionsForMonths = internalMutation({
 
 export const insertInteractionsChunk = internalMutation({
   args: {
+    companyId: v.id("companies"),
     rows: v.array(interactionInsertValidator),
     sourceFile: v.string(),
     uploadedAt: v.number(),
   },
-  handler: async (ctx, { rows, sourceFile, uploadedAt }): Promise<void> => {
+  handler: async (
+    ctx,
+    { companyId, rows, sourceFile, uploadedAt }
+  ): Promise<void> => {
     await Promise.all(
       rows.map(row =>
         ctx.db.insert("performanceInteractions", {
           ...row,
+          companyId,
           sourceFile,
           uploadedAt,
         })
@@ -1174,6 +1285,7 @@ export const insertInteractionsChunk = internalMutation({
 
 export const logInteractionsImport = internalMutation({
   args: {
+    companyId: v.id("companies"),
     sourceFile: v.string(),
     storageId: v.id("_storage"),
     contentHash: v.optional(v.string()),
@@ -1190,6 +1302,7 @@ export const logInteractionsImport = internalMutation({
       ? await ctx.db.get(args.replaceLogId)
       : null;
     const logFields = {
+      companyId: args.companyId,
       filename: args.sourceFile,
       storageId: args.storageId,
       rowsImported: args.rowsImported,
