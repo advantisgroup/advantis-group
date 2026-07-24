@@ -69,7 +69,7 @@ function ThemePreviewCard({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25 }}
-            className="absolute inset-0 ring-2 ring-inset ring-primary"
+            className="absolute inset-0 rounded-lg ring-2 ring-inset ring-primary"
           />
         )}
       </motion.div>
