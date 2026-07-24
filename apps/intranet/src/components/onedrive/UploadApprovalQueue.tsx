@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -28,6 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 
@@ -66,6 +67,17 @@ export function UploadApprovalQueue({
   const t = useTranslations("Admin");
   const pending = useQuery(api.onedrive.listPending);
   const [selected, setSelected] = useState<PendingUpload | null>(null);
+
+  // Deep link from a notification: /admin/uploads?upload=<id> opens the
+  // inspector dialog for that upload once the queue has loaded.
+  const deepLinkUploadId = useDeepLinkId("upload");
+  useEffect(() => {
+    if (!deepLinkUploadId || !pending) return;
+    const match = pending.find(u => u._id === deepLinkUploadId);
+    // One-shot sync from the deep-link id into local dialog state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (match) setSelected(match);
+  }, [deepLinkUploadId, pending]);
 
   if (pending === undefined) {
     return (

@@ -52,7 +52,7 @@ export function EventsCard() {
           .map(e => (
             <Row
               key={e._id}
-              href="/calendar"
+              href={`/calendar?event=${e._id}`}
               title={e.title}
               subtitle={e.location}
               leading={
@@ -90,7 +90,7 @@ export function AnnouncementsCard() {
         announcements.slice(0, 5).map(a => (
           <Row
             key={a._id}
-            href="/announcements"
+            href={`/announcements?id=${a._id}`}
             title={a.title}
             subtitle={htmlToText(a.body) || undefined}
             leading={
@@ -146,7 +146,7 @@ export function WhosOutCard() {
         outToday.slice(0, 5).map(a => (
           <Row
             key={a._id}
-            href="/calendar"
+            href={`/calendar?absence=${a._id}`}
             title={a.userName}
             subtitle={tAbs(a.type)}
             leading={
@@ -183,7 +183,7 @@ export function CelebrationsCard() {
         celebrations.map(c => (
           <Row
             key={`${c.userId}-${c.type}`}
-            href="/directory"
+            href={`/directory?user=${c.userId}`}
             title={c.name}
             subtitle={
               c.type === "birthday"

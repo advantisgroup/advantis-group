@@ -68,7 +68,7 @@ export const create = mutation({
       .first();
     if (prior) return { status: "pending" as const };
 
-    await ctx.db.insert("accessRequests", {
+    const requestId = await ctx.db.insert("accessRequests", {
       email,
       clerkUserId: identity.subject,
       name: identity.name ?? undefined,
@@ -81,7 +81,7 @@ export const create = mutation({
       type: "access_request",
       title: "New access request",
       body: `${identity.name ?? email} requested access to the intranet`,
-      link: "/admin/access",
+      link: `/admin/requests?request=${requestId}`,
     });
 
     return { status: "pending" as const };
