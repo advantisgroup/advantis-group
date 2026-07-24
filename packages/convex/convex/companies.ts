@@ -81,6 +81,26 @@ interface VercelDomainResult {
   dnsVerification: DnsVerificationRecord[];
 }
 
+/** Vercel's actual Domains API response includes extra fields per
+ * verification record (e.g. `reason: "pending_domain_verification"`) beyond
+ * what was assumed when this was written without a live call to check
+ * against — normalize to just the fields our schema/UI actually need instead
+ * of passing the raw response straight through, so an extra field Vercel
+ * adds (here or later) can't blow up `applyDomainResult`'s argument
+ * validator again. */
+function normalizeDnsVerification(raw: unknown): DnsVerificationRecord[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter(
+      (r): r is Record<string, unknown> => typeof r === "object" && r !== null
+    )
+    .map(r => ({
+      type: String(r.type ?? ""),
+      domain: String(r.domain ?? ""),
+      value: String(r.value ?? ""),
+    }));
+}
+
 /** Adds `domain` (the company's own, independently-owned domain) to the
  * platform's single Vercel project via the Domains API. Lives here (a plain
  * Convex action using `fetch` + a deployment env var) rather than behind an
@@ -89,13 +109,13 @@ interface VercelDomainResult {
  * a plain bearer-token REST call with no OAuth flow or Node-only
  * dependency, the same shape as those.
  *
- * NOTE: the exact response shape here (fields checked below) is based on
- * Vercel's documented Domains API at the time this was written, not a
- * verified live call — this session's network access to Vercel's docs was
- * blocked, so double-check the response shape (and whether a separate
+ * Confirmed against a real response: each `verification` record also
+ * carries a `reason` (e.g. `"pending_domain_verification"`) alongside
+ * `type`/`domain`/`value` — see `normalizeDnsVerification`, which strips
+ * that (and anything else Vercel might add) down to the fields our
+ * schema/UI use. Still unconfirmed: whether a separate
  * `GET /v6/domains/{domain}/config` "misconfigured" check is also needed
- * beyond the ownership `verified` flag here) against
- * https://vercel.com/docs/rest-api (Domains) before this first ships. */
+ * beyond the ownership `verified` flag here. */
 async function addVercelDomain(domain: string): Promise<VercelDomainResult> {
   const { apiToken, projectId, teamId } = requireVercelConfig();
 
@@ -106,7 +126,11 @@ async function addVercelDomain(domain: string): Promise<VercelDomainResult> {
   });
   const json = (await res.json().catch(() => ({}))) as {
     verified?: boolean;
-    verification?: DnsVerificationRecord[];
+    // Vercel's actual response includes more fields per record (e.g.
+    // `reason`) than our own `DnsVerificationRecord` — kept loose here and
+    // normalized down in `normalizeDnsVerification` instead of typed to our
+    // own shape, so an extra field can't cause a mismatch.
+    verification?: unknown[];
     error?: { code?: string; message?: string };
   };
 
@@ -123,7 +147,7 @@ async function addVercelDomain(domain: string): Promise<VercelDomainResult> {
   }
   return {
     verified: json.verified ?? false,
-    dnsVerification: json.verification ?? [],
+    dnsVerification: normalizeDnsVerification(json.verification),
   };
 }
 
@@ -137,7 +161,11 @@ async function checkVercelDomain(domain: string): Promise<VercelDomainResult> {
   );
   const json = (await res.json().catch(() => ({}))) as {
     verified?: boolean;
-    verification?: DnsVerificationRecord[];
+    // Vercel's actual response includes more fields per record (e.g.
+    // `reason`) than our own `DnsVerificationRecord` — kept loose here and
+    // normalized down in `normalizeDnsVerification` instead of typed to our
+    // own shape, so an extra field can't cause a mismatch.
+    verification?: unknown[];
     error?: { code?: string; message?: string };
   };
   if (!res.ok) {
@@ -147,7 +175,7 @@ async function checkVercelDomain(domain: string): Promise<VercelDomainResult> {
   }
   return {
     verified: json.verified ?? false,
-    dnsVerification: json.verification ?? [],
+    dnsVerification: normalizeDnsVerification(json.verification),
   };
 }
 

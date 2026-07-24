@@ -993,7 +993,7 @@ export const createLogin = action({
         token,
       }
     );
-    const targetCompanyId = admin.isSuperAdmin ? companyId : admin.companyId;
+    const targetCompanyId = companyId ?? admin.companyId;
     if (!targetCompanyId) {
       throw new ConvexError({
         code: "validation",
