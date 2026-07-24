@@ -81,7 +81,7 @@ export default function PerformancePasswordPage() {
   const navItems = [
     {
       href:
-        session.role === "admin"
+        session.permissions.includes("view_all_employees")
           ? "/performance"
           : session.employeeId
             ? `/performance/mitarbeiter/${session.employeeId}`

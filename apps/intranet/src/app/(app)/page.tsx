@@ -115,7 +115,10 @@ export default function DashboardPage() {
   );
   const hasTeamPerformance =
     isManager &&
-    Boolean(performanceSession?.valid && performanceSession.role === "admin");
+    Boolean(
+      performanceSession?.valid &&
+        performanceSession.permissions.includes("view_all_employees")
+    );
 
   const events = useQuery(api.events.listForRange, {
     start: startOfToday,

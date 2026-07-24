@@ -33,10 +33,12 @@ export default function EmployeeInteractionDayPage() {
     }
   }, [session, router]);
 
-  const isAdmin = session?.valid && session.role === "admin";
+  const isAdmin =
+    session?.valid && session.permissions.includes("view_all_employees");
   const canView =
     session?.valid &&
-    (session.role === "admin" || session.employeeId === employeeId);
+    (session.permissions.includes("view_all_employees") ||
+      session.employeeId === employeeId);
 
   const data = useQuery(
     api.performanceQueries.interactionsDayDetail,

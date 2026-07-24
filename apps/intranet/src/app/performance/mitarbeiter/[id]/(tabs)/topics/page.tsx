@@ -41,7 +41,7 @@ export default function EmployeeTopicsPage() {
   const handleError = useErrorHandler();
 
   const session = useQuery(api.performanceAuth.validateSession, { token });
-  const isAdmin = session?.valid && session.role === "admin";
+  const isAdmin = session?.valid && session.permissions.includes("manage_roster");
 
   const data = useQuery(api.performanceQueries.employeeDetail, {
     token,

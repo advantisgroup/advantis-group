@@ -333,7 +333,7 @@ export default function PerformanceDashboardLayout({
   // Employee logins have their own detail page — this layout is the admin
   // team view.
   useEffect(() => {
-    if (!session?.valid || session.role === "admin") return;
+    if (!session?.valid || session.permissions.includes("view_all_employees")) return;
     if (session.employeeId) {
       router.replace(`/performance/mitarbeiter/${session.employeeId}`);
     }
@@ -348,7 +348,7 @@ export default function PerformanceDashboardLayout({
   if (session === undefined) return <PerformancePageSkeleton />;
   if (!session.valid) return null;
 
-  if (session.role !== "admin") {
+  if (!session.permissions.includes("view_all_employees")) {
     if (session.employeeId) return null; // redirecting
     return (
       <div className="min-h-screen bg-muted/20">

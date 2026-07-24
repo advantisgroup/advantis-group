@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
+import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { setPerformanceToken } from "@/lib/performanceAuth";
 export default function PerformanceSetupPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
+  const slug = usePerformanceCompanySlug();
   const setupAccount = useAction(api.performanceAuth.setupAccount);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -32,7 +34,7 @@ export default function PerformanceSetupPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const result = await setupAccount({ email, name, password });
+      const result = await setupAccount({ slug, email, name, password });
       setPerformanceToken(result.token, result.expiresAt);
       router.replace("/performance");
     } catch {
