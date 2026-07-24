@@ -86,52 +86,68 @@ export function OnboardingPanel() {
           />
 
           <motion.div
-            key={currentStepId}
             initial={{ opacity: 0, y: 10, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.98 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="relative flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-2xl"
           >
-            {!isBare && (
-              <div className="flex items-center gap-2 px-6 pt-5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t("stepOfTotal", {
-                    step: stepIndex + 1,
-                    total: steps.length,
-                  })}
-                </span>
-                <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
-                  <motion.div
-                    className="h-full rounded-full bg-primary"
-                    animate={{
-                      width: `${((stepIndex + 1) / steps.length) * 100}%`,
-                    }}
-                    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                  />
+            <motion.div
+              layout
+              transition={{
+                layout: { duration: 0.25, ease: [0.16, 1, 0.3, 1] },
+              }}
+              className="flex flex-1 flex-col overflow-hidden"
+            >
+              {!isBare && (
+                <div className="flex items-center gap-2 px-6 pt-5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("stepOfTotal", {
+                      step: stepIndex + 1,
+                      total: steps.length,
+                    })}
+                  </span>
+                  <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                    <motion.div
+                      className="h-full rounded-full bg-primary"
+                      animate={{
+                        width: `${((stepIndex + 1) / steps.length) * 100}%`,
+                      }}
+                      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
-              {STEP_CONTENT[currentStepId]()}
-            </div>
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.div
+                  key={currentStepId}
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -8 }}
+                  transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+                  className="min-h-0 flex-1 overflow-y-auto px-6 py-5"
+                >
+                  {STEP_CONTENT[currentStepId]()}
+                </motion.div>
+              </AnimatePresence>
 
-            {!isBare && (
-              <div className="flex items-center gap-2 border-t border-border/70 px-6 py-4">
-                {!isFirst && (
-                  <Button variant="outline" size="sm" onClick={back}>
-                    <ChevronLeft />
-                    {t("back")}
+              {!isBare && (
+                <div className="flex items-center gap-2 border-t border-border/70 px-6 py-4">
+                  {!isFirst && (
+                    <Button variant="outline" size="sm" onClick={back}>
+                      <ChevronLeft />
+                      {t("back")}
+                    </Button>
+                  )}
+                  <div className="flex-1" />
+                  <Button size="sm" onClick={next}>
+                    {t("next")}
+                    <ChevronRight />
                   </Button>
-                )}
-                <div className="flex-1" />
-                <Button size="sm" onClick={next}>
-                  {t("next")}
-                  <ChevronRight />
-                </Button>
-              </div>
-            )}
+                </div>
+              )}
+            </motion.div>
           </motion.div>
         </motion.div>
       )}
