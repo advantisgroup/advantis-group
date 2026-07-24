@@ -57,6 +57,38 @@ interface DnsProvider {
   docsUrl: string;
 }
 
+/** The provider's own favicon, derived from the docs URL's hostname —
+ * avoids bundling/maintaining actual brand logo assets ourselves (a
+ * trademark gray area) in favor of the same lightweight attribution
+ * pattern browsers and link previews already use: fetch the provider's own
+ * live icon from their own site rather than approximating their mark.
+ * Returns `null` for a malformed URL; the caller just omits the icon. */
+function providerFaviconUrl(docsUrl: string): string | null {
+  try {
+    const host = new URL(docsUrl).hostname;
+    return `https://www.google.com/s2/favicons?sz=64&domain=${host}`;
+  } catch {
+    return null;
+  }
+}
+
+/** Renders nothing if the favicon fails to load (same graceful-omit
+ * approach as `ProviderMark`'s logo fallback) — the text label alongside
+ * it already identifies the provider either way. */
+function ProviderFavicon({ provider }: { provider: DnsProvider }) {
+  const src = providerFaviconUrl(provider.docsUrl);
+  const [failed, setFailed] = useState(!src);
+  if (failed || !src) return null;
+  return (
+    <img
+      src={src}
+      alt=""
+      className="h-4 w-4 shrink-0 rounded-sm"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 /** A single copyable DNS field — full value always visible (wraps instead of
  * truncating, since a truncated TXT value is unreadable and unselectable on
  * mobile) with a tap target to copy it instead of relying on manual
@@ -129,10 +161,11 @@ function DnsInstructions({
           href={provider.docsUrl}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-1 text-amber-700 underline underline-offset-2 dark:text-amber-400"
+          className="flex items-center gap-1.5 text-amber-700 underline underline-offset-2 dark:text-amber-400"
         >
+          <ProviderFavicon provider={provider} />
           {t("companyDnsProviderHint", { provider: provider.name })}
-          <ExternalLink className="h-3 w-3" />
+          <ExternalLink className="h-3 w-3 shrink-0" />
         </a>
       )}
     </div>
