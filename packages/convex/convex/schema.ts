@@ -725,6 +725,63 @@ export default defineSchema({
     .index("by_status", ["status"]),
 
   // --- Performance (sales KPI dashboard) -----------------------------------
+  // Multi-tenant: each client company gets its own subdomain, provisioned
+  // end-to-end (see `companies.ts`) with no manual step beyond one "Add
+  // Company" action — no env var edits, no manual Clerk/Vercel dashboard
+  // clicks. A bring-your-own custom domain is also supported, but needs one
+  // DNS record the client creates on their own registrar — unavoidable, not
+  // a gap in the automation.
+  companies: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    subdomain: v.string(),
+    customDomain: v.optional(v.string()),
+    customDomainStatus: v.optional(
+      v.union(
+        v.literal("pending_dns"),
+        v.literal("verified"),
+        v.literal("failed")
+      )
+    ),
+    status: v.union(
+      v.literal("provisioning"),
+      v.literal("active"),
+      v.literal("failed")
+    ),
+    // Per-company replacement for the old global `PERFORMANCE_ADMIN_EMAILS`
+    // env var — the emails that can self-claim this company's built-in Admin
+    // role via `setupAccount`, set once at creation time.
+    adminBootstrapEmails: v.array(v.string()),
+    // Vercel Domains API bookkeeping, so re-running provisioning after a
+    // partial failure (see `companies.createCompany`) never double-adds the
+    // domain.
+    vercelDomainId: v.optional(v.string()),
+    vercelVerified: v.optional(v.boolean()),
+    provisioningError: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_subdomain", ["subdomain"])
+    .index("by_customDomain", ["customDomain"])
+    .index("by_status", ["status"]),
+
+  // Named bundles of permission keys (`performance/lib/permissions.ts`),
+  // scoped per company — the customization layer letting a company's own
+  // admin (or a cross-company `isSuperAdmin`) reshape who-can-do-what
+  // without a code change. Every company is seeded with three built-ins
+  // (Admin, Team Lead, Mitarbeiter) on creation; `isBuiltIn` rows stay
+  // editable — e.g. a company can narrow "Team Lead" below its
+  // Admin-equivalent default at any time — just not deletable, so a company
+  // can never end up with zero usable roles.
+  companyRoles: defineTable({
+    companyId: v.id("companies"),
+    name: v.string(),
+    permissions: v.array(v.string()),
+    isBuiltIn: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_company", ["companyId"]),
+
   // Password-protected area, fully separate from Clerk employee accounts.
   // `linkedUserId` lets an admin link a login to its owner's intranet
   // (Clerk) account — see `performanceAuth.ts`'s `resolveActiveSession`,
@@ -736,18 +793,43 @@ export default defineSchema({
     email: v.string(),
     name: v.string(),
     passwordHash: v.string(),
-    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    // Deprecated: superseded by `companyId`/`roleId`/`isSuperAdmin` below.
+    // Kept optional (not removed) only until
+    // `migrations/backfillPerformanceCompanyId.ts` has re-derived every
+    // row's `roleId` from it — safe to delete this field once that's
+    // confirmed complete.
+    role: v.optional(v.union(v.literal("admin"), v.literal("mitarbeiter"))),
+    // Absent only for `isSuperAdmin` logins — every company member belongs
+    // to exactly one company.
+    companyId: v.optional(v.id("companies")),
+    // Absent only for `isSuperAdmin` logins; otherwise required, and must
+    // reference a `companyRoles` row belonging to the same `companyId` (see
+    // `performanceAuth.ts`'s `requirePermission`).
+    roleId: v.optional(v.id("companyRoles")),
+    // Platform-level, cross-company — bypasses every company/permission
+    // check, including for companies that don't exist yet at the time it's
+    // granted. Bootstrapped via the `PERFORMANCE_SUPER_ADMIN_EMAILS` env
+    // var; never assignable through the per-company roles UI.
+    isSuperAdmin: v.optional(v.boolean()),
     employeeId: v.optional(v.id("performanceEmployees")),
     linkedUserId: v.optional(v.id("users")),
     active: v.boolean(),
     createdAt: v.number(),
   })
+    // Global lookup, still needed for `isSuperAdmin` logins (no companyId to
+    // scope by). Company-scoped logins are looked up via `by_company_email`
+    // instead — email uniqueness is per-company, not global.
     .index("by_email", ["email"])
+    .index("by_company_email", ["companyId", "email"])
     .index("by_linkedUserId", ["linkedUserId"]),
 
   performanceSessions: defineTable({
     token: v.string(),
     loginId: v.id("performanceLogins"),
+    // Denormalized from `performanceLogins.companyId` at creation time
+    // (absent for a super-admin session) so session-gated calls don't need
+    // an extra `ctx.db.get(loginId)` for the common case.
+    companyId: v.optional(v.id("companies")),
     expiresAt: v.number(),
     createdAt: v.number(),
     lastUsedAt: v.number(),
@@ -759,7 +841,10 @@ export default defineSchema({
   performanceEmployees: defineTable({
     name: v.string(),
     active: v.boolean(),
-  }),
+    companyId: v.optional(v.id("companies")),
+  })
+    .index("by_company", ["companyId"])
+    .index("by_company_name", ["companyId", "name"]),
 
   // One row per employee per report day. Metric columns are nullable —
   // null means "not measured in this snapshot", not zero — so a report
@@ -769,6 +854,7 @@ export default defineSchema({
   // chronological order coincide for range queries.
   performanceReports: defineTable({
     employeeId: v.id("performanceEmployees"),
+    companyId: v.optional(v.id("companies")),
     reportDate: v.string(),
     leadsCreated: v.optional(v.number()),
     workableCreated: v.optional(v.number()),
@@ -794,7 +880,8 @@ export default defineSchema({
     uploadedAt: v.number(),
   })
     .index("by_employee_date", ["employeeId", "reportDate"])
-    .index("by_reportDate", ["reportDate"]),
+    .index("by_reportDate", ["reportDate"])
+    .index("by_company_reportDate", ["companyId", "reportDate"]),
 
   // Drill-down rows for the currently-open Salesforce leads/opportunities.
   // Replaced wholesale on every Salesforce import (the source report is
@@ -802,6 +889,7 @@ export default defineSchema({
   // accumulated — old rows would otherwise describe leads/opps that may no
   // longer be open.
   performanceRawLeads: defineTable({
+    companyId: v.optional(v.id("companies")),
     reportDate: v.string(),
     owner: v.string(),
     status: v.optional(v.string()),
@@ -812,9 +900,11 @@ export default defineSchema({
     // Powers the Team tab's "daily logged-in employees" chart (distinct
     // owners with a lead created that day) — an indexed range scan instead
     // of a full-table collect.
-    .index("by_createDate", ["createDate"]),
+    .index("by_createDate", ["createDate"])
+    .index("by_company_createDate", ["companyId", "createDate"]),
 
   performanceRawOpps: defineTable({
+    companyId: v.optional(v.id("companies")),
     reportDate: v.string(),
     owner: v.string(),
     stage: v.optional(v.string()),
@@ -824,7 +914,7 @@ export default defineSchema({
     age: v.optional(v.number()),
     lastActivity: v.optional(v.string()),
     customerNumber: v.optional(v.string()),
-  }),
+  }).index("by_company", ["companyId"]),
 
   // One row per closed-won opportunity, keyed by its actual Close Date —
   // powers the daily closed-won trend chart. `wonMonth` on
@@ -835,9 +925,12 @@ export default defineSchema({
   // opportunity close date out of the export. Replaced wholesale on every
   // Opportunity import, same rationale as `performanceRawOpps`.
   performanceWonOpps: defineTable({
+    companyId: v.optional(v.id("companies")),
     owner: v.string(),
     closeDate: v.string(),
-  }).index("by_closeDate", ["closeDate"]),
+  })
+    .index("by_closeDate", ["closeDate"])
+    .index("by_company_closeDate", ["companyId", "closeDate"]),
 
   // One row per employee per Genesys interaction (raw, not aggregated) —
   // imported from the "Interaktionen" export, distinct from the aggregated
@@ -851,6 +944,7 @@ export default defineSchema({
   // `interactionImport.ts`), same rationale as `performanceRawLeads`/`Opps`.
   performanceInteractions: defineTable({
     employeeId: v.id("performanceEmployees"),
+    companyId: v.optional(v.id("companies")),
     date: v.string(),
     startedAt: v.number(),
     durationSec: v.number(),
@@ -859,7 +953,8 @@ export default defineSchema({
     uploadedAt: v.number(),
   })
     .index("by_employee_date", ["employeeId", "date"])
-    .index("by_date", ["date"]),
+    .index("by_date", ["date"])
+    .index("by_company_date", ["companyId", "date"]),
 
   // Admin-set monthly goals/todos for an employee. Status can be updated by
   // the employee themself; only an admin can create/edit/delete the topic
@@ -881,6 +976,7 @@ export default defineSchema({
   }).index("by_employee_ym", ["employeeId", "ym"]),
 
   performanceUploadLog: defineTable({
+    companyId: v.optional(v.id("companies")),
     // Raw original filename — never a composed/decorated label, so the UI
     // can show it in full instead of parsing detail back out of a string.
     filename: v.string(),
@@ -936,7 +1032,12 @@ export default defineSchema({
   })
     .index("by_uploadedAt", ["uploadedAt"])
     .index("by_contentHash", ["contentHash"])
-    .index("by_batchId", ["batchId"]),
+    .index("by_batchId", ["batchId"])
+    .index("by_company_uploadedAt", ["companyId", "uploadedAt"])
+    // Duplicate-upload detection must be per-company — two different client
+    // companies could upload files with identical bytes/hash by coincidence
+    // (e.g. the blank template).
+    .index("by_company_contentHash", ["companyId", "contentHash"]),
 
   // A single employee/day/field whose parsed duration failed the physical
   // 24h plausibility check (see callImport.ts's `capExplicitDuration`) gets
@@ -949,6 +1050,7 @@ export default defineSchema({
   // silently undo an admin's earlier call.
   performanceFlaggedRows: defineTable({
     employeeId: v.id("performanceEmployees"),
+    companyId: v.optional(v.id("companies")),
     reportDate: v.string(),
     field: v.union(
       v.literal("talkTotalSec"),
@@ -968,7 +1070,8 @@ export default defineSchema({
     resolvedValue: v.optional(v.number()),
   })
     .index("by_employee_date_field", ["employeeId", "reportDate", "field"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_company_status", ["companyId", "status"]),
 
   // ========================================================================
   // ActivityTrack — workforce-activity dashboard, ported into the intranet.
