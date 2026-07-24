@@ -812,7 +812,11 @@ export default defineSchema({
     // Powers the Team tab's "daily logged-in employees" chart (distinct
     // owners with a lead created that day) — an indexed range scan instead
     // of a full-table collect.
-    .index("by_createDate", ["createDate"]),
+    .index("by_createDate", ["createDate"])
+    // `drilldown`'s per-employee view (a `mitarbeiter` login, or an admin
+    // drilling into one name) otherwise reads every open lead in the table
+    // just to filter to one owner in memory.
+    .index("by_owner", ["owner"]),
 
   performanceRawOpps: defineTable({
     reportDate: v.string(),
@@ -824,7 +828,7 @@ export default defineSchema({
     age: v.optional(v.number()),
     lastActivity: v.optional(v.string()),
     customerNumber: v.optional(v.string()),
-  }),
+  }).index("by_owner", ["owner"]),
 
   // One row per closed-won opportunity, keyed by its actual Close Date —
   // powers the daily closed-won trend chart. `wonMonth` on

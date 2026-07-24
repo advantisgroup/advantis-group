@@ -1216,12 +1216,26 @@ export const drilldown = query({
       empFilter = employee.name;
     }
 
+    // A `mitarbeiter` login (or an admin drilling into one name) only ever
+    // wants one owner's rows — push that into the index instead of reading
+    // every open lead/opp in the table just to filter it away in memory.
+    // The team-wide view (no `empFilter`) genuinely needs every row, so it
+    // still collects the whole table.
     let rows: (Doc<"performanceRawLeads"> | Doc<"performanceRawOpps">)[] =
       def.kind === "lead"
-        ? await ctx.db.query("performanceRawLeads").collect()
-        : await ctx.db.query("performanceRawOpps").collect();
+        ? empFilter
+          ? await ctx.db
+              .query("performanceRawLeads")
+              .withIndex("by_owner", q => q.eq("owner", empFilter))
+              .collect()
+          : await ctx.db.query("performanceRawLeads").collect()
+        : empFilter
+          ? await ctx.db
+              .query("performanceRawOpps")
+              .withIndex("by_owner", q => q.eq("owner", empFilter))
+              .collect()
+          : await ctx.db.query("performanceRawOpps").collect();
     rows = rows.filter(r => !EXCLUDED_OWNERS.has(r.owner.toLowerCase()));
-    if (empFilter) rows = rows.filter(r => r.owner === empFilter);
 
     interface Item {
       reportDate: string;
