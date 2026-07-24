@@ -12,10 +12,21 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { mutation, type MutationCtx } from "./_generated/server";
 import {
-  requireAdminRole as requireAdmin,
   requireCanViewEmployee as requireCanView,
+  requirePermission,
   requireSessionLogin as requireLogin,
 } from "./performanceAuth";
+
+async function getEmployeeOrThrow(
+  ctx: MutationCtx,
+  employeeId: Id<"performanceEmployees">
+): Promise<Doc<"performanceEmployees">> {
+  const employee = await ctx.db.get(employeeId);
+  if (!employee) {
+    throw new ConvexError({ code: "not_found", message: "Employee not found." });
+  }
+  return employee;
+}
 
 const TOPIC_STATUSES = ["offen", "erreicht", "nicht_erreicht"] as const;
 const statusValidator = v.union(
@@ -50,7 +61,8 @@ export const saveTopic = mutation({
   },
   handler: async (ctx, args): Promise<{ id: Id<"performanceTopics"> }> => {
     const login = await requireLogin(ctx, args.token);
-    requireAdmin(login);
+    const employee = await getEmployeeOrThrow(ctx, args.employeeId);
+    await requirePermission(ctx, login, "manage_roster", employee.companyId);
 
     const topic = args.topic.trim();
     if (!topic) {
@@ -101,7 +113,8 @@ export const deleteTopic = mutation({
   },
   handler: async (ctx, { token, employeeId, id }): Promise<{ ok: true }> => {
     const login = await requireLogin(ctx, token);
-    requireAdmin(login);
+    const employee = await getEmployeeOrThrow(ctx, employeeId);
+    await requirePermission(ctx, login, "manage_roster", employee.companyId);
     const existing = await getOwnTopic(ctx, id, employeeId);
     await ctx.db.delete(existing._id);
     return { ok: true };
@@ -122,7 +135,8 @@ export const setTopicStatus = mutation({
     { token, employeeId, id, status }
   ): Promise<{ ok: true }> => {
     const login = await requireLogin(ctx, token);
-    requireCanView(login, employeeId);
+    const employee = await getEmployeeOrThrow(ctx, employeeId);
+    await requireCanView(ctx, login, employee);
     const existing = await getOwnTopic(ctx, id, employeeId);
     await ctx.db.patch(existing._id, { status, updatedAt: Date.now() });
     return { ok: true };
