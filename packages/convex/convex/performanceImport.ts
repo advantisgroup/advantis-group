@@ -533,7 +533,10 @@ export const getActiveEmployeeIdsByMonth = internalQuery({
       const rows = await ctx.db
         .query("performanceReports")
         .withIndex("by_company_reportDate", q =>
-          q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end)
+          q
+            .eq("companyId", companyId)
+            .gte("reportDate", start)
+            .lte("reportDate", end)
         )
         .collect();
       out[ym] = [...new Set(rows.map(r => r.employeeId))];
@@ -1009,7 +1012,10 @@ export const listUnscannedCallUploads = query({
  * exposed to a signed-in admin instead of `internal.*`-only. */
 export const listEmployeeNames = query({
   args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (ctx, { token, companyId: companyIdArg }): Promise<string[]> => {
+  handler: async (
+    ctx,
+    { token, companyId: companyIdArg }
+  ): Promise<string[]> => {
     const login = await requireSessionLogin(ctx, token);
     const companyId = resolveCompanyId(login, companyIdArg);
     await requirePermission(ctx, login, "upload_reports", companyId);

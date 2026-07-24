@@ -562,9 +562,7 @@ function EditLoginForm({
     try {
       await onSave({
         name: name.trim() || login.name,
-        roleId: login.isSuperAdmin
-          ? undefined
-          : (roleId as Id<"companyRoles">),
+        roleId: login.isSuperAdmin ? undefined : (roleId as Id<"companyRoles">),
         active,
         employeeId:
           employeeId === NONE

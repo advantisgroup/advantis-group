@@ -142,7 +142,10 @@ async function reportsInRange(
     : await ctx.db
         .query("performanceReports")
         .withIndex("by_company_reportDate", q =>
-          q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end)
+          q
+            .eq("companyId", companyId)
+            .gte("reportDate", start)
+            .lte("reportDate", end)
         )
         .collect();
   cache.reports.set(key, rows);
@@ -358,7 +361,10 @@ async function loggedInDaysList(
   const rows = await ctx.db
     .query("performanceRawLeads")
     .withIndex("by_company_createDate", q =>
-      q.eq("companyId", companyId).gte("createDate", start).lte("createDate", end)
+      q
+        .eq("companyId", companyId)
+        .gte("createDate", start)
+        .lte("createDate", end)
     )
     .collect();
 
@@ -489,7 +495,10 @@ async function stateFieldTrend(
   const rows = await ctx.db
     .query("performanceReports")
     .withIndex("by_company_reportDate", q =>
-      q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end)
+      q
+        .eq("companyId", companyId)
+        .gte("reportDate", start)
+        .lte("reportDate", end)
     )
     .collect();
 
@@ -570,7 +579,10 @@ async function monthsWithData(
     const hit = await ctx.db
       .query("performanceReports")
       .withIndex("by_company_reportDate", q =>
-        q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end)
+        q
+          .eq("companyId", companyId)
+          .gte("reportDate", start)
+          .lte("reportDate", end)
       )
       .first();
     if (hit) yms.push(ym);
@@ -634,7 +646,9 @@ export async function teamTotals(
 
   const asOf = total.reportDate ? parseISODate(total.reportDate) : new Date();
   const present =
-    calls.size > 0 ? await reportDatesWithCalls(ctx, companyId, ym, cache) : undefined;
+    calls.size > 0
+      ? await reportDatesWithCalls(ctx, companyId, ym, cache)
+      : undefined;
   const missing = present ? missingCallDays(ym, asOf, present) : undefined;
 
   const snaps = withCalls.map(s =>
@@ -669,7 +683,11 @@ async function employeeHistoryList(
     s.talkAvgSec = c?.talkAvgSec;
     const asOf = s.reportDate ? parseISODate(s.reportDate) : new Date();
     const missing = c?.workDays
-      ? missingCallDays(ym, asOf, await reportDatesWithCalls(ctx, companyId, ym, cache))
+      ? missingCallDays(
+          ym,
+          asOf,
+          await reportDatesWithCalls(ctx, companyId, ym, cache)
+        )
       : undefined;
     s = addForecast(enrich(s), ym, c?.workDays, missing);
     s.ym = ym;
@@ -712,7 +730,9 @@ async function allBadgesMap(
     if (!monthCompleted(ym)) continue;
     const cached = await ctx.db
       .query("performanceBadgeCache")
-      .withIndex("by_company_ym", q => q.eq("companyId", companyId).eq("ym", ym))
+      .withIndex("by_company_ym", q =>
+        q.eq("companyId", companyId).eq("ym", ym)
+      )
       .unique();
     const got = cached
       ? cached.badges
@@ -815,7 +835,12 @@ export const teamDashboard = query({
     const ym = ymArg ?? defaultYm();
     const cache = newQueryCache();
     const months = await monthsWithData(ctx, companyId);
-    const { total, snaps, unqualified } = await teamTotals(ctx, companyId, ym, cache);
+    const { total, snaps, unqualified } = await teamTotals(
+      ctx,
+      companyId,
+      ym,
+      cache
+    );
     const days = await callDaysList(ctx, companyId, ym, undefined, cache);
     const hasCalls = await hasCallData(ctx, companyId, ym, undefined, cache);
     const wonTrend = await closedWonTrend(ctx, companyId, undefined);
@@ -891,7 +916,12 @@ export const teamDevelopment = query({
 
     const monthly: DevelopmentMonth[] = [];
     for (const ym of months) {
-      const { total, unqualified } = await teamTotals(ctx, companyId, ym, cache);
+      const { total, unqualified } = await teamTotals(
+        ctx,
+        companyId,
+        ym,
+        cache
+      );
       monthly.push({
         ym,
         leadsCreated: total.leadsCreated,
@@ -905,9 +935,15 @@ export const teamDevelopment = query({
     const wonTrend = await closedWonTrend(ctx, companyId, undefined);
     const callsPerDay: CallDay[] = [];
     for (const ym of months) {
-      callsPerDay.push(...(await callDaysList(ctx, companyId, ym, undefined, cache)));
+      callsPerDay.push(
+        ...(await callDaysList(ctx, companyId, ym, undefined, cache))
+      );
     }
-    const leadsAnalysisPerDay = await stateFieldTrend(ctx, companyId, "leadsAnalysis");
+    const leadsAnalysisPerDay = await stateFieldTrend(
+      ctx,
+      companyId,
+      "leadsAnalysis"
+    );
     const leadsDetailsIdentPerDay = await stateFieldTrend(
       ctx,
       companyId,
@@ -1000,14 +1036,24 @@ export const employeeDetail = query({
       return (a.endDate ?? "9999").localeCompare(b.endDate ?? "9999");
     });
 
-    const myBadges = await badgeCountsForEmployee(ctx, companyId, employeeId, cache);
+    const myBadges = await badgeCountsForEmployee(
+      ctx,
+      companyId,
+      employeeId,
+      cache
+    );
     const allBadges = await allBadgesMap(ctx, companyId, cache);
     const monthBadges = Object.fromEntries(
       Object.entries(allBadges[ym] ?? {}).filter(([, info]) =>
         info.winners.includes(employeeId)
       )
     );
-    const badgeHist = await badgeHistoryForEmployee(ctx, companyId, employeeId, cache);
+    const badgeHist = await badgeHistoryForEmployee(
+      ctx,
+      companyId,
+      employeeId,
+      cache
+    );
     const nBadges = Object.values(myBadges).reduce((a, b) => a + b, 0);
 
     const days = await callDaysList(ctx, companyId, ym, employeeId, cache);
@@ -1095,7 +1141,10 @@ export const interactionsMonth = query({
     if (employeeId) {
       const employee = await ctx.db.get(employeeId);
       if (!employee) {
-        throw new ConvexError({ code: "not_found", message: "Employee not found." });
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee not found.",
+        });
       }
       await requireCanView(ctx, login, employee);
       if (!employee.companyId) {
@@ -1127,7 +1176,9 @@ export const interactionsMonth = query({
           )
           .collect();
 
-    const names = employeeId ? undefined : await employeeNameMap(ctx, companyId);
+    const names = employeeId
+      ? undefined
+      : await employeeNameMap(ctx, companyId);
 
     const byKey = new Map<
       string,
@@ -1212,13 +1263,19 @@ export const interactionsDayDetail = query({
     employeeId: v.optional(v.id("performanceEmployees")),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { token, date, employeeId, companyId: companyIdArg }) => {
+  handler: async (
+    ctx,
+    { token, date, employeeId, companyId: companyIdArg }
+  ) => {
     const login = await requireSession(ctx, token);
     let companyId: Id<"companies">;
     if (employeeId) {
       const employee = await ctx.db.get(employeeId);
       if (!employee) {
-        throw new ConvexError({ code: "not_found", message: "Employee not found." });
+        throw new ConvexError({
+          code: "not_found",
+          message: "Employee not found.",
+        });
       }
       await requireCanView(ctx, login, employee);
       if (!employee.companyId) {
@@ -1320,7 +1377,10 @@ export const drilldown = query({
     employeeName: v.optional(v.string()),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { token, key, employeeName, companyId: companyIdArg }) => {
+  handler: async (
+    ctx,
+    { token, key, employeeName, companyId: companyIdArg }
+  ) => {
     const def = LISTS[key];
     if (!def)
       throw new ConvexError({ code: "not_found", message: "Unknown list." });
@@ -1328,7 +1388,10 @@ export const drilldown = query({
 
     let empFilter = employeeName;
     let companyId: Id<"companies">;
-    if (login.isSuperAdmin || (await hasPermission(ctx, login, "view_all_employees"))) {
+    if (
+      login.isSuperAdmin ||
+      (await hasPermission(ctx, login, "view_all_employees"))
+    ) {
       companyId = resolveCompanyId(login, companyIdArg);
       await requirePermission(ctx, login, "view_all_employees", companyId);
     } else {
@@ -1368,7 +1431,9 @@ export const drilldown = query({
               .collect()
           : await ctx.db
               .query("performanceRawLeads")
-              .withIndex("by_company_createDate", q => q.eq("companyId", companyId))
+              .withIndex("by_company_createDate", q =>
+                q.eq("companyId", companyId)
+              )
               .collect()
         : empFilter
           ? await ctx.db

@@ -147,7 +147,10 @@ function RoleDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button onClick={() => void handleSave()} disabled={saving || !name.trim()}>
+          <Button
+            onClick={() => void handleSave()}
+            disabled={saving || !name.trim()}
+          >
             {t("roleSave")}
           </Button>
         </DialogFooter>

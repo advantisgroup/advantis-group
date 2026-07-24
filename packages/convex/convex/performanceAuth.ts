@@ -47,7 +47,10 @@ export function getSuperAdminEmails(): string[] {
   return parseEmailList(process.env.PERFORMANCE_SUPER_ADMIN_EMAILS);
 }
 
-function isEligibleBootstrapEmail(company: Doc<"companies">, email: string): boolean {
+function isEligibleBootstrapEmail(
+  company: Doc<"companies">,
+  email: string
+): boolean {
   if (company.adminBootstrapEmails.includes(email)) return true;
   return company.slug === "advantis" && getSeedAdminEmails().includes(email);
 }
@@ -75,10 +78,7 @@ export const getLoginByCompanyEmail = internalQuery({
  * dedicated index, since super-admin logins are expected to be rare. */
 export const getSuperAdminLoginByEmail = internalQuery({
   args: { email: v.string() },
-  handler: async (
-    ctx,
-    { email }
-  ): Promise<Doc<"performanceLogins"> | null> => {
+  handler: async (ctx, { email }): Promise<Doc<"performanceLogins"> | null> => {
     const candidates = await ctx.db
       .query("performanceLogins")
       .withIndex("by_email", q => q.eq("email", email))
@@ -129,7 +129,8 @@ export const createSuperAdminLoginIfMissing = internalMutation({
       .query("performanceLogins")
       .withIndex("by_email", q => q.eq("email", email))
       .collect();
-    if (candidates.some(c => c.isSuperAdmin === true)) return { created: false };
+    if (candidates.some(c => c.isSuperAdmin === true))
+      return { created: false };
     await ctx.db.insert("performanceLogins", {
       email,
       name,
@@ -304,7 +305,11 @@ export const setupSuperAdminAccount = action({
       internal.performanceAuth.createSession,
       { loginId: loginRow._id }
     );
-    return { token: session.token, expiresAt: session.expiresAt, name: loginRow.name };
+    return {
+      token: session.token,
+      expiresAt: session.expiresAt,
+      name: loginRow.name,
+    };
   },
 });
 
@@ -971,11 +976,23 @@ export const createLogin = action({
   },
   handler: async (
     ctx,
-    { token, email, name, password, roleId, employeeId, linkedUserId, companyId }
-  ): Promise<{ id: Id<"performanceLogins"> }> => {
-    const admin = await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
+    {
       token,
-    });
+      email,
+      name,
+      password,
+      roleId,
+      employeeId,
+      linkedUserId,
+      companyId,
+    }
+  ): Promise<{ id: Id<"performanceLogins"> }> => {
+    const admin = await ctx.runQuery(
+      internal.performanceAuth.assertAdminSession,
+      {
+        token,
+      }
+    );
     const targetCompanyId = admin.isSuperAdmin ? companyId : admin.companyId;
     if (!targetCompanyId) {
       throw new ConvexError({

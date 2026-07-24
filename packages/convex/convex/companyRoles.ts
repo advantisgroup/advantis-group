@@ -94,7 +94,10 @@ export const create = mutation({
 
     const trimmed = name.trim();
     if (!trimmed) {
-      throw new ConvexError({ code: "validation", message: "Name is required." });
+      throw new ConvexError({
+        code: "validation",
+        message: "Name is required.",
+      });
     }
     validatePermissions(permissions);
 
@@ -127,7 +130,12 @@ export const update = mutation({
     if (!role) {
       throw new ConvexError({ code: "not_found", message: "Role not found." });
     }
-    await requirePermission(ctx, resolved.login, "manage_roles", role.companyId);
+    await requirePermission(
+      ctx,
+      resolved.login,
+      "manage_roles",
+      role.companyId
+    );
 
     if (permissions !== undefined) validatePermissions(permissions);
 
@@ -158,7 +166,12 @@ export const remove = mutation({
     if (!role) {
       throw new ConvexError({ code: "not_found", message: "Role not found." });
     }
-    await requirePermission(ctx, resolved.login, "manage_roles", role.companyId);
+    await requirePermission(
+      ctx,
+      resolved.login,
+      "manage_roles",
+      role.companyId
+    );
 
     if (role.isBuiltIn) {
       throw new ConvexError({

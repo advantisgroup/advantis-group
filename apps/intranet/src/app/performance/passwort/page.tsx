@@ -80,12 +80,11 @@ export default function PerformancePasswordPage() {
 
   const navItems = [
     {
-      href:
-        session.permissions.includes("view_all_employees")
-          ? "/performance"
-          : session.employeeId
-            ? `/performance/mitarbeiter/${session.employeeId}`
-            : "/performance",
+      href: session.permissions.includes("view_all_employees")
+        ? "/performance"
+        : session.employeeId
+          ? `/performance/mitarbeiter/${session.employeeId}`
+          : "/performance",
       label: t("backToDashboard"),
     },
   ];

@@ -42,7 +42,8 @@ export default function EmployeeTopicsPage() {
   const handleError = useErrorHandler();
 
   const session = useQuery(api.performanceAuth.validateSession, { token });
-  const isAdmin = session?.valid && session.permissions.includes("manage_roster");
+  const isAdmin =
+    session?.valid && session.permissions.includes("manage_roster");
 
   const data = useEmployeeDetailData();
   const setTopicStatus = useMutation(api.performanceTopics.setTopicStatus);

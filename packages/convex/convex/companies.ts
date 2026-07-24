@@ -158,7 +158,10 @@ async function checkVercelDomain(domain: string): Promise<VercelDomainResult> {
  * need a separate field; disambiguated with a numeric suffix in the rare
  * case two different domains slugify the same way. */
 function slugify(domain: string): string {
-  return domain.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return domain
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 // -------------------------------------------------------------- mutations
@@ -392,9 +395,11 @@ export const createCompany = action({
     });
 
     const normalizedDomain = domain.trim().toLowerCase();
-    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(
-      normalizedDomain
-    )) {
+    if (
+      !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(
+        normalizedDomain
+      )
+    ) {
       throw new ConvexError({
         code: "validation",
         message: "Enter a valid domain, e.g. salespirates.de.",
@@ -445,7 +450,12 @@ export const createCompany = action({
         companyId,
         error: message,
       });
-      return { companyId, status: "failed", dnsVerification: [], error: message };
+      return {
+        companyId,
+        status: "failed",
+        dnsVerification: [],
+        error: message,
+      };
     }
   },
 });
@@ -459,7 +469,10 @@ export const checkDomainVerification = action({
   handler: async (
     ctx,
     { token, companyId }
-  ): Promise<{ status: "active" | "pending_dns"; dnsVerification: DnsVerificationRecord[] }> => {
+  ): Promise<{
+    status: "active" | "pending_dns";
+    dnsVerification: DnsVerificationRecord[];
+  }> => {
     await ctx.runQuery(internal.performanceAuth.assertSuperAdminSession, {
       token,
     });
@@ -467,7 +480,10 @@ export const checkDomainVerification = action({
       companyId,
     });
     if (!company) {
-      throw new ConvexError({ code: "not_found", message: "Company not found." });
+      throw new ConvexError({
+        code: "not_found",
+        message: "Company not found.",
+      });
     }
 
     const result = await checkVercelDomain(company.domain);

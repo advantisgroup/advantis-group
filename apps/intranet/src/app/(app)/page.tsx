@@ -117,7 +117,7 @@ export default function DashboardPage() {
     isManager &&
     Boolean(
       performanceSession?.valid &&
-        performanceSession.permissions.includes("view_all_employees")
+      performanceSession.permissions.includes("view_all_employees")
     );
 
   const events = useQuery(api.events.listForRange, {

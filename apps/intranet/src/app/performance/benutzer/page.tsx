@@ -72,7 +72,8 @@ export default function PerformanceUsersPage() {
     }
   }, [session, router]);
 
-  const isAdmin = session?.valid && session.permissions.includes("manage_logins");
+  const isAdmin =
+    session?.valid && session.permissions.includes("manage_logins");
   const logins = useQuery(
     api.performanceAuth.listLogins,
     isAdmin ? { token } : "skip"
@@ -85,10 +86,7 @@ export default function PerformanceUsersPage() {
     api.performanceAuth.listIntranetUsersForLink,
     isAdmin ? { token } : "skip"
   );
-  const roles = useQuery(
-    api.companyRoles.list,
-    isAdmin ? { token } : "skip"
-  );
+  const roles = useQuery(api.companyRoles.list, isAdmin ? { token } : "skip");
 
   function exit() {
     clearPerformanceToken();
@@ -184,7 +182,9 @@ export default function PerformanceUsersPage() {
                         {login.email}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={login.isSuperAdmin ? "default" : "muted"}>
+                        <Badge
+                          variant={login.isSuperAdmin ? "default" : "muted"}
+                        >
                           {login.isSuperAdmin
                             ? t("userRoleSuperAdmin")
                             : (login.roleName ?? "–")}

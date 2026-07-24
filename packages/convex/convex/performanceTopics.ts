@@ -23,7 +23,10 @@ async function getEmployeeOrThrow(
 ): Promise<Doc<"performanceEmployees">> {
   const employee = await ctx.db.get(employeeId);
   if (!employee) {
-    throw new ConvexError({ code: "not_found", message: "Employee not found." });
+    throw new ConvexError({
+      code: "not_found",
+      message: "Employee not found.",
+    });
   }
   return employee;
 }

@@ -40,5 +40,9 @@ export async function requirePerformanceAdmin(
     // Only a super-admin session lacks companyId — see the doc comment.
     throw Errors.forbidden();
   }
-  return { name: session.name, email: session.email, companyId: session.companyId };
+  return {
+    name: session.name,
+    email: session.email,
+    companyId: session.companyId,
+  };
 }

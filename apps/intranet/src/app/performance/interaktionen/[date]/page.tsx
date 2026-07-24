@@ -33,7 +33,8 @@ export default function DashboardInteractionDayPage() {
 
   useEffect(() => {
     // Team-wide day detail is admin-only, same gate as PerformanceDashboardLayout.
-    if (!session?.valid || session.permissions.includes("view_all_employees")) return;
+    if (!session?.valid || session.permissions.includes("view_all_employees"))
+      return;
     if (session.employeeId) {
       router.replace(`/performance/mitarbeiter/${session.employeeId}`);
     }
@@ -47,7 +48,8 @@ export default function DashboardInteractionDayPage() {
   );
 
   if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || !session.permissions.includes("view_all_employees")) return null;
+  if (!session.valid || !session.permissions.includes("view_all_employees"))
+    return null;
 
   function exit() {
     clearPerformanceToken();

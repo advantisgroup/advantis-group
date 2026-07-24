@@ -183,17 +183,24 @@ export const backfillTableBatch = internalMutation({
   },
 });
 
-async function drainBatches(label: string, step: () => Promise<{ more: boolean }>) {
+async function drainBatches(
+  label: string,
+  step: () => Promise<{ more: boolean }>
+) {
   let more = true;
   let rounds = 0;
   while (more) {
     ({ more } = await step());
     rounds++;
     if (rounds % 10 === 0) {
-      console.log(`[backfillPerformanceCompanyId] ${label}: ${rounds} batches so far`);
+      console.log(
+        `[backfillPerformanceCompanyId] ${label}: ${rounds} batches so far`
+      );
     }
   }
-  console.log(`[backfillPerformanceCompanyId] ${label}: done (${rounds} batches)`);
+  console.log(
+    `[backfillPerformanceCompanyId] ${label}: done (${rounds} batches)`
+  );
 }
 
 export const run = internalAction({

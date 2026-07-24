@@ -186,7 +186,10 @@ function CreateCompanyDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button onClick={() => void handleSave()} disabled={saving || !canSave}>
+          <Button
+            onClick={() => void handleSave()}
+            disabled={saving || !canSave}
+          >
             {t("companyCreateSubmit")}
           </Button>
         </DialogFooter>
@@ -200,11 +203,14 @@ export default function PerformanceCompaniesAdminPage() {
   const router = useRouter();
   const { token, session } = usePerformanceSession();
   const handleError = useErrorHandler();
-  const checkDomainVerification = useAction(api.companies.checkDomainVerification);
-  const [creating, setCreating] = useState(false);
-  const [retrying, setRetrying] = useState<{ name: string; domain: string } | null>(
-    null
+  const checkDomainVerification = useAction(
+    api.companies.checkDomainVerification
   );
+  const [creating, setCreating] = useState(false);
+  const [retrying, setRetrying] = useState<{
+    name: string;
+    domain: string;
+  } | null>(null);
   const [checking, setChecking] = useState<Id<"companies"> | null>(null);
 
   useEffect(() => {

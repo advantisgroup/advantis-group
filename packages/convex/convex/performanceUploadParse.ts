@@ -658,7 +658,10 @@ export const reimportUpload = action({
     logId: v.id("performanceUploadLog"),
     companyId: v.optional(v.id("companies")),
   },
-  handler: async (ctx, { token, logId, companyId: companyIdArg }): Promise<ImportResult> => {
+  handler: async (
+    ctx,
+    { token, logId, companyId: companyIdArg }
+  ): Promise<ImportResult> => {
     const { companyId } = await ctx.runQuery(
       internal.performanceImport.requireAdminByToken,
       { token, companyId: companyIdArg }
