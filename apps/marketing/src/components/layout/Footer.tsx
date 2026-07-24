@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 import { Building2, Mail, Phone, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -10,11 +11,13 @@ import { useTranslations } from "next-intl";
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { Link } from "@/i18n/navigation";
+import { isAuthRoute } from "@/lib/utils";
 
 import { SectionDivider } from "./SectionDivider";
 import { BrandText } from "../effects/BrandText";
 
 export const Footer = () => {
+  const pathname = usePathname();
   const t = useTranslations();
   const footerRef = useRef<HTMLElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -46,6 +49,10 @@ export const Footer = () => {
 
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // The auth cards have their own minimal shell — the marketing chrome
+  // would otherwise occlude them (see AuthShell).
+  if (isAuthRoute(pathname)) return null;
 
   const footerLinks = [
     {
