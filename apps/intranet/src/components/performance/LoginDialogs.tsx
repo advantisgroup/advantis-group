@@ -9,6 +9,7 @@ import { ChevronsUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -307,6 +308,11 @@ export function CreateLoginDialog({
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
   const createLogin = useAction(api.performanceAuth.createLogin);
+  // Only Advantis has staff with intranet Clerk accounts to link — every
+  // other company's "users" is naturally empty (and the field itself would
+  // be a confusing dead end for a client admin), so the whole picker is
+  // Advantis-only, not just its data.
+  const showIntranetLink = usePerformanceCompanySlug() === "advantis";
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -401,20 +407,22 @@ export function CreateLoginDialog({
             </label>
             <Input value={name} onChange={e => setName(e.target.value)} />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("userIntranetAccountLabel")}
-            </label>
-            <IntranetUserPicker
-              value={effectiveLinkedUserId}
-              onChange={v => {
-                setLinkedUserId(v);
-                setLinkedUserTouched(true);
-              }}
-              users={intranetUsers}
-              placeholder={t("userIntranetAccountNone")}
-            />
-          </div>
+          {showIntranetLink && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("userIntranetAccountLabel")}
+              </label>
+              <IntranetUserPicker
+                value={effectiveLinkedUserId}
+                onChange={v => {
+                  setLinkedUserId(v);
+                  setLinkedUserTouched(true);
+                }}
+                users={intranetUsers}
+                placeholder={t("userIntranetAccountNone")}
+              />
+            </div>
+          )}
           {needsPassword ? (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
@@ -540,6 +548,7 @@ function EditLoginForm({
   }) => void | Promise<void>;
 }) {
   const t = useTranslations("Performance");
+  const showIntranetLink = usePerformanceCompanySlug() === "advantis";
   const [name, setName] = useState(login.name);
   const [roleId, setRoleId] = useState<string>(
     login.roleId ?? roles[0]?.id ?? ""
@@ -587,17 +596,19 @@ function EditLoginForm({
           </label>
           <Input value={name} onChange={e => setName(e.target.value)} />
         </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("userIntranetAccountLabel")}
-          </label>
-          <IntranetUserPicker
-            value={linkedUserId}
-            onChange={setLinkedUserId}
-            users={intranetUsers}
-            placeholder={t("userIntranetAccountNone")}
-          />
-        </div>
+        {showIntranetLink && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("userIntranetAccountLabel")}
+            </label>
+            <IntranetUserPicker
+              value={linkedUserId}
+              onChange={setLinkedUserId}
+              users={intranetUsers}
+              placeholder={t("userIntranetAccountNone")}
+            />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
