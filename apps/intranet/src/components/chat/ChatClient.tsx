@@ -54,7 +54,7 @@ export function ChatClient() {
 
   const [search, setSearch] = useState("");
   const [showArchived, setShowArchived] = useState(false);
-  const { permission, requestPermission } = useChatNotifications(conversations);
+  const { permission, requestPermission } = useChatNotifications();
 
   function select(id: Id<"conversations">) {
     router.push(`/chat?c=${id}`);

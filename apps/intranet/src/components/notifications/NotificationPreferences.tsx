@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
+  AtSign,
   BellRing,
   CalendarCheck,
   Megaphone,
+  MessageSquare,
   Plane,
   UploadCloud,
 } from "lucide-react";
@@ -22,33 +24,44 @@ import type { LucideIcon } from "lucide-react";
  * Every mutable notification type with its icon/tint. `access_request`
  * (system) is deliberately absent — admins must not mute access requests.
  */
-const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] = [
-  {
-    type: "absence_request",
-    icon: Plane,
-    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  },
-  {
-    type: "absence_decision",
-    icon: CalendarCheck,
-    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  },
-  {
-    type: "announcement",
-    icon: Megaphone,
-    tint: "bg-primary/10 text-primary",
-  },
-  {
-    type: "upload_request",
-    icon: UploadCloud,
-    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  },
-  {
-    type: "upload_decision",
-    icon: UploadCloud,
-    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  },
-];
+export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] =
+  [
+    {
+      type: "chat-message",
+      icon: MessageSquare,
+      tint: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
+    },
+    {
+      type: "chat-mention",
+      icon: AtSign,
+      tint: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
+    },
+    {
+      type: "absence_request",
+      icon: Plane,
+      tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
+    },
+    {
+      type: "absence_decision",
+      icon: CalendarCheck,
+      tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
+    },
+    {
+      type: "announcement",
+      icon: Megaphone,
+      tint: "bg-primary/10 text-primary",
+    },
+    {
+      type: "upload_request",
+      icon: UploadCloud,
+      tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+    },
+    {
+      type: "upload_decision",
+      icon: UploadCloud,
+      tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+    },
+  ];
 
 export function Switch({
   checked,
@@ -137,25 +150,32 @@ export function NotificationPreferences() {
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 py-3">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-300">
-            <BellRing className="size-[18px]" />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-sm font-medium">
-              {t("browserTitle")}
+      <div className="border-b border-border/60 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-300">
+              <BellRing className="size-[18px]" />
             </span>
-            <span className="block text-xs text-muted-foreground">
-              {t("browserHint")}
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">
+                {t("browserTitle")}
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                {t("browserHint")}
+              </span>
             </span>
-          </span>
+          </div>
+          <Switch
+            checked={browserEnabled}
+            onToggle={() => void toggleBrowser()}
+            label={t("browserTitle")}
+          />
         </div>
-        <Switch
-          checked={browserEnabled}
-          onToggle={() => void toggleBrowser()}
-          label={t("browserTitle")}
-        />
+        {permission === "denied" && (
+          <p className="ml-12 mt-2 text-xs text-amber-600 dark:text-amber-400">
+            {t("browserDeniedHint")}
+          </p>
+        )}
       </div>
       {MUTABLE_TYPES.map(({ type, icon: Icon, tint }) => (
         <div
@@ -165,13 +185,20 @@ export function NotificationPreferences() {
           <div className="flex items-center gap-3">
             <span
               className={cn(
-                "flex size-9 items-center justify-center rounded-lg",
+                "flex size-9 shrink-0 items-center justify-center rounded-lg",
                 tint
               )}
             >
               <Icon className="size-[18px]" />
             </span>
-            <span className="text-sm font-medium">{t(`type_${type}`)}</span>
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">
+                {t(`type_${type}`)}
+              </span>
+              <span className="block text-xs text-muted-foreground">
+                {t(`desc_${type}`)}
+              </span>
+            </span>
           </div>
           <Switch
             checked={!muted.includes(type)}
