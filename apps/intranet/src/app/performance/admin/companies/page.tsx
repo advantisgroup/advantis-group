@@ -10,6 +10,7 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import {
   Building2,
   Check,
+  ChevronDown,
   Copy,
   ExternalLink,
   Pencil,
@@ -33,6 +34,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -225,8 +231,9 @@ function DnsInstructions({
 }
 
 /** The two DNS-related blocks a company in `pending_dns`/`pending_routing`
- * needs shown, keyed off its current status — factored out since both the
- * create-dialog result and each list row need the identical logic. */
+ * needs shown, keyed off its current status. Only ever rendered inside
+ * `CompanyStatusBadge`'s popover now — never inline in a row or dialog,
+ * which is what made either one blow up in height. */
 function CompanyDnsStatus({
   status,
   dnsVerification,
@@ -270,6 +277,61 @@ function statusBadgeVariant(
   return "muted";
 }
 
+/** The status badge, plus — only while there's an actual DNS record still
+ * needed — a click-to-open popover with the record itself (mirrors
+ * Vercel's own "Invalid Configuration" row: a compact badge everywhere the
+ * company is listed, never the record dumped inline). Replaces having
+ * `CompanyDnsStatus`'s full instructions block permanently expanded in
+ * every row, which is what blew up row height for anything not yet
+ * routing. A row with nothing to add (active, provisioning, failed) just
+ * renders the plain badge. */
+function CompanyStatusBadge({
+  status,
+  dnsVerification,
+  dnsRouting,
+  dnsProvider,
+}: {
+  status: CompanyStatus;
+  dnsVerification: DnsRecord[] | null;
+  dnsRouting: DnsRecord[] | null;
+  dnsProvider: DnsProvider | null;
+}) {
+  const t = useTranslations("Performance");
+  const hasDetails =
+    (status === "pending_dns" && !!dnsVerification?.length) ||
+    (status === "pending_routing" && !!dnsRouting?.length);
+
+  const badge = (
+    <Badge variant={statusBadgeVariant(status)}>
+      {t(`companyStatus_${status}`)}
+      {hasDetails && <ChevronDown className="h-3 w-3" />}
+    </Badge>
+  );
+
+  if (!hasDetails) return badge;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {badge}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80">
+        <CompanyDnsStatus
+          status={status}
+          dnsVerification={dnsVerification}
+          dnsRouting={dnsRouting}
+          dnsProvider={dnsProvider}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function CreateCompanyDialog({
   open,
   onOpenChange,
@@ -288,31 +350,29 @@ function CreateCompanyDialog({
   const [domain, setDomain] = useState(prefill?.domain ?? "");
   const [emails, setEmails] = useState("");
   const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState<{
-    status: CompanyStatus | "failed";
-    dnsVerification: DnsRecord[];
-    dnsRouting: DnsRecord[];
-    dnsProvider: DnsProvider | null;
-    error?: string;
-  } | null>(null);
 
   useEffect(() => {
     if (open) {
       setName(prefill?.name ?? "");
       setDomain(prefill?.domain ?? "");
       setEmails("");
-      setResult(null);
     }
   }, [open, prefill]);
 
   const canSave = !!name.trim() && !!domain.trim();
 
+  // Whatever comes back — active, still waiting on a DNS record, or a
+  // provisioning failure — is a normal, non-throwing outcome that already
+  // shows up on the company's own row the moment this closes (status
+  // badge, and its popover for any DNS record still needed). Nothing
+  // about that belongs duplicated inside the dialog itself; only an
+  // actual thrown error (bad input, session issue) keeps it open so the
+  // form can be corrected and resubmitted.
   async function handleSave() {
     if (!canSave) return;
     setSaving(true);
-    setResult(null);
     try {
-      const res = await createCompany({
+      await createCompany({
         token,
         name: name.trim(),
         domain: domain.trim(),
@@ -321,7 +381,7 @@ function CreateCompanyDialog({
           .map(e => e.trim())
           .filter(Boolean),
       });
-      setResult(res);
+      onOpenChange(false);
     } catch (err) {
       handleError(err);
     } finally {
@@ -368,37 +428,6 @@ function CreateCompanyDialog({
               {t("companyAdminEmailsHint")}
             </p>
           </div>
-          {result && (
-            <>
-              <p
-                className={
-                  result.status === "active"
-                    ? "text-sm text-emerald-600"
-                    : result.status === "pending_dns" ||
-                        result.status === "pending_routing"
-                      ? "text-sm text-amber-600 dark:text-amber-400"
-                      : "text-sm text-destructive"
-                }
-              >
-                {result.status === "active"
-                  ? t("companyProvisionedSuccess")
-                  : result.status === "pending_dns"
-                    ? t("companyProvisionedPendingDns")
-                    : result.status === "pending_routing"
-                      ? t("companyProvisionedPendingRouting")
-                      : (result.error ?? t("companyProvisionedFailed"))}
-              </p>
-              {result.dnsProvider && (
-                <DnsProviderNote provider={result.dnsProvider} />
-              )}
-              <CompanyDnsStatus
-                status={result.status}
-                dnsVerification={result.dnsVerification}
-                dnsRouting={result.dnsRouting}
-                dnsProvider={result.dnsProvider}
-              />
-            </>
-          )}
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -722,24 +751,20 @@ export default function PerformanceCompaniesAdminPage() {
                               <DnsProviderNote provider={c.dnsProvider} />
                             )}
                           </div>
-                          <Badge
-                            variant={statusBadgeVariant(c.status)}
-                            className="shrink-0"
-                          >
-                            {t(`companyStatus_${c.status}`)}
-                          </Badge>
+                          <div className="shrink-0">
+                            <CompanyStatusBadge
+                              status={c.status}
+                              dnsVerification={c.dnsVerification}
+                              dnsRouting={c.dnsRouting}
+                              dnsProvider={c.dnsProvider}
+                            />
+                          </div>
                         </div>
                         {c.status === "failed" && c.provisioningError && (
                           <p className="text-xs text-destructive">
                             {c.provisioningError}
                           </p>
                         )}
-                        <CompanyDnsStatus
-                          status={c.status}
-                          dnsVerification={c.dnsVerification}
-                          dnsRouting={c.dnsRouting}
-                          dnsProvider={c.dnsProvider}
-                        />
                         <div className="border-t border-border-soft pt-3">
                           <CompanyActions
                             company={c}
@@ -783,22 +808,17 @@ export default function PerformanceCompaniesAdminPage() {
                             )}
                           </TableCell>
                           <TableCell className="max-w-xs">
-                            <Badge variant={statusBadgeVariant(c.status)}>
-                              {t(`companyStatus_${c.status}`)}
-                            </Badge>
+                            <CompanyStatusBadge
+                              status={c.status}
+                              dnsVerification={c.dnsVerification}
+                              dnsRouting={c.dnsRouting}
+                              dnsProvider={c.dnsProvider}
+                            />
                             {c.status === "failed" && c.provisioningError && (
                               <p className="mt-1 truncate text-xs text-destructive">
                                 {c.provisioningError}
                               </p>
                             )}
-                            <div className="mt-2">
-                              <CompanyDnsStatus
-                                status={c.status}
-                                dnsVerification={c.dnsVerification}
-                                dnsRouting={c.dnsRouting}
-                                dnsProvider={c.dnsProvider}
-                              />
-                            </div>
                           </TableCell>
                           <TableCell className="text-right">
                             <CompanyActions
