@@ -194,34 +194,60 @@ const KNOWN_DNS_PROVIDERS: { match: string; name: string; docsUrl: string }[] =
     },
   ];
 
+/** Looks up the `NS` records for exactly `name` (no climbing) via a public
+ * DNS-over-HTTPS resolver — no extra credentials needed. Returns `[]` on any
+ * failure, a non-DNS-configured name, or a name with no `NS` records at all
+ * (the overwhelmingly common case: NS records only exist at a zone's own
+ * apex, never at an arbitrary subdomain within it). */
+async function queryNameservers(name: string): Promise<string[]> {
+  try {
+    const res = await fetch(
+      `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=NS`,
+      { headers: { accept: "application/dns-json" } }
+    );
+    if (!res.ok) return [];
+    const json = (await res.json()) as { Answer?: { data?: string }[] };
+    return (json.Answer ?? [])
+      .map(a => (a.data ?? "").toLowerCase())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 /** Best-effort lookup of which DNS provider actually manages `domain`'s
  * records (via its nameservers, not the registrar — a domain can be
  * registered at one company but have its DNS hosted somewhere else
  * entirely, and the nameserver is what actually determines where the TXT
- * record needs to be added). Uses a public DNS-over-HTTPS resolver so no
- * extra credentials are needed. Returns `null` on any failure or unknown
- * provider — this is a UI hint only, never allowed to block provisioning. */
+ * record needs to be added). Returns `null` on any failure or unknown
+ * provider — this is a UI hint only, never allowed to block provisioning.
+ *
+ * A company's `domain` is very often a subdomain (e.g.
+ * "performance.bluejutzu.dev"), but `NS` records only exist at a zone's
+ * apex — querying the exact subdomain returns no answer at all even though
+ * the zone that actually contains it (here "bluejutzu.dev") has a
+ * perfectly good one. Confirmed directly against Vercel's own domain
+ * config panel, which correctly names the provider for a subdomain company
+ * while the old single-shot lookup here came back empty. So: walk up
+ * label-by-label from the full domain and stop at the first name that
+ * has any `NS` records — that's the actual zone apex, whether or not its
+ * nameservers happen to match a provider we recognize. Never climbs past
+ * the registrable domain into the public suffix itself (e.g. bare "dev"),
+ * since the loop bottoms out at two labels. */
 async function detectDnsProvider(
   domain: string
 ): Promise<DnsProviderInfo | null> {
-  try {
-    const res = await fetch(
-      `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(domain)}&type=NS`,
-      { headers: { accept: "application/dns-json" } }
-    );
-    if (!res.ok) return null;
-    const json = (await res.json()) as { Answer?: { data?: string }[] };
-    const nameservers = (json.Answer ?? [])
-      .map(a => (a.data ?? "").toLowerCase())
-      .filter(Boolean);
+  const labels = domain.split(".");
+  for (let i = 0; i <= labels.length - 2; i++) {
+    const nameservers = await queryNameservers(labels.slice(i).join("."));
+    if (nameservers.length === 0) continue;
     for (const ns of nameservers) {
       const hit = KNOWN_DNS_PROVIDERS.find(p => ns.includes(p.match));
       if (hit) return { name: hit.name, docsUrl: hit.docsUrl };
     }
     return null;
-  } catch {
-    return null;
   }
+  return null;
 }
 
 /** Adds `domain` (the company's own, independently-owned domain) to the
