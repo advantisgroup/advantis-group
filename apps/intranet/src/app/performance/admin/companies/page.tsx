@@ -111,6 +111,27 @@ function ProviderFavicon({ provider }: { provider: DnsProvider }) {
   );
 }
 
+/** Always-visible "DNS managed by X" line — unlike `DnsInstructions` (which
+ * only makes sense while a record still needs adding), this has nothing to
+ * do with the company's current status: the provider is detected fresh on
+ * every `createCompany`/`checkDomainVerification` call and kept regardless
+ * of whether the domain is still pending or already `active`, so it's the
+ * one place `dnsProvider` should always render if present. */
+function DnsProviderNote({ provider }: { provider: DnsProvider }) {
+  const t = useTranslations("Performance");
+  return (
+    <a
+      href={provider.docsUrl}
+      target="_blank"
+      rel="noreferrer"
+      className="flex items-center gap-1.5 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+    >
+      <ProviderFavicon provider={provider} />
+      {t("companyDnsProviderDetected", { provider: provider.name })}
+    </a>
+  );
+}
+
 /** A single copyable DNS field — full value always visible (wraps instead of
  * truncating, since a truncated TXT value is unreadable and unselectable on
  * mobile) with a tap target to copy it instead of relying on manual
@@ -174,16 +195,17 @@ function DnsInstructions({
   if (records.length === 0) return null;
   return (
     <div className="space-y-3 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
-      <p className="font-medium text-amber-700 dark:text-amber-400">
-        {title}
-      </p>
+      <p className="font-medium text-amber-700 dark:text-amber-400">{title}</p>
       {records.map((r, i) => (
         <div key={i} className="space-y-1 font-mono">
           <div className="flex items-center gap-2 text-muted-foreground">
             <span>{r.type}</span>
             {r.domain && <span className="break-all">{r.domain}</span>}
           </div>
-          <CopyableField label={`${r.type} ${r.domain ?? ""}`} value={r.value} />
+          <CopyableField
+            label={`${r.type} ${r.domain ?? ""}`}
+            value={r.value}
+          />
         </div>
       ))}
       {provider && (
@@ -366,6 +388,9 @@ function CreateCompanyDialog({
                       ? t("companyProvisionedPendingRouting")
                       : (result.error ?? t("companyProvisionedFailed"))}
               </p>
+              {result.dnsProvider && (
+                <DnsProviderNote provider={result.dnsProvider} />
+              )}
               <CompanyDnsStatus
                 status={result.status}
                 dnsVerification={result.dnsVerification}
@@ -562,12 +587,7 @@ function CompanyActions({
       )}
       {(company.status === "pending_dns" ||
         company.status === "pending_routing") && (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={checking}
-          onClick={onCheck}
-        >
+        <Button variant="ghost" size="sm" disabled={checking} onClick={onCheck}>
           <RotateCw className="mr-2 h-3.5 w-3.5" />
           {t("companyCheckVerification")}
         </Button>
@@ -698,6 +718,9 @@ export default function PerformanceCompaniesAdminPage() {
                             <p className="truncate text-xs text-muted-foreground">
                               {c.domain}
                             </p>
+                            {c.dnsProvider && (
+                              <DnsProviderNote provider={c.dnsProvider} />
+                            )}
                           </div>
                           <Badge
                             variant={statusBadgeVariant(c.status)}
@@ -753,6 +776,11 @@ export default function PerformanceCompaniesAdminPage() {
                           </TableCell>
                           <TableCell className="text-muted-foreground">
                             {c.domain}
+                            {c.dnsProvider && (
+                              <div className="mt-1">
+                                <DnsProviderNote provider={c.dnsProvider} />
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell className="max-w-xs">
                             <Badge variant={statusBadgeVariant(c.status)}>

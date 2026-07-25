@@ -332,6 +332,7 @@
   "companyDnsInstructions": "Add this DNS record on the domain's own registrar to prove ownership:",
   "companyDnsRoutingInstructions": "Ownership is verified, but this domain doesn't route traffic to Vercel yet — add this DNS record too:",
   "companyDnsProviderHint": "This domain's DNS looks like it's managed by {provider} — see their guide",
+  "companyDnsProviderDetected": "DNS managed by {provider}",
   "companyDnsCopy": "Copy",
   "companyDnsCopied": "Copied",
   "companyStatusLabel": "Status",
