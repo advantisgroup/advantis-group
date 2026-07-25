@@ -361,6 +361,8 @@
   "roleBuiltInBadge": "Built-in",
   "roleSave": "Save",
   "roleDelete": "Delete",
+  "permissionGroup_read": "View",
+  "permissionGroup_write": "Manage",
   "permission_view_own_dashboard": "View own dashboard",
   "permission_view_all_employees": "View every employee's dashboard",
   "permission_upload_reports": "Upload reports",

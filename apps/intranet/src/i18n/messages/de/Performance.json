@@ -361,6 +361,8 @@
   "roleBuiltInBadge": "Integriert",
   "roleSave": "Speichern",
   "roleDelete": "Löschen",
+  "permissionGroup_read": "Ansehen",
+  "permissionGroup_write": "Verwalten",
   "permission_view_own_dashboard": "Eigenes Dashboard ansehen",
   "permission_view_all_employees": "Dashboard aller Mitarbeiter ansehen",
   "permission_upload_reports": "Reports hochladen",

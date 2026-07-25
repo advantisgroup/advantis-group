@@ -216,12 +216,12 @@ function DashboardChrome({
     },
   ];
 
-  // Companies (cross-company, isSuperAdmin-only) and Roles (per-company,
-  // manage_roles-only) each gate themselves identically on their own page —
-  // mirrored here so the link only ever appears for whoever can actually
-  // land on it. There's no cross-company roles UI yet (see that page's own
-  // comment), so a super-admin doesn't get a Roles link that would just
-  // bounce them back to the dashboard.
+  // Companies (isSuperAdmin-only) and Roles (isSuperAdmin, via its own
+  // company picker, or any per-company admin with manage_roles) each gate
+  // themselves identically on their own page — mirrored here so the link
+  // only ever appears for whoever can actually land on it. A super-admin
+  // always has every permission (see performanceAuth.ts's validateSession),
+  // so `permissions.includes("manage_roles")` alone already covers both.
   const navItems = [
     { href: "/performance/benutzer", label: t("usersLink"), icon: Users },
     ...(isSuperAdmin
@@ -233,7 +233,7 @@ function DashboardChrome({
           },
         ]
       : []),
-    ...(!isSuperAdmin && permissions.includes("manage_roles")
+    ...(permissions.includes("manage_roles")
       ? [
           {
             href: "/performance/admin/roles",

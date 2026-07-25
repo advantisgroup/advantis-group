@@ -51,6 +51,36 @@ const PERMISSIONS = [
   "resolve_flagged_rows",
 ] as const;
 
+// A flat 9-item checkbox list read as an undifferentiated wall — grouped
+// here into "view" (never changes anything) vs. "manage" (creates/edits/
+// deletes) purely for how the edit dialog renders them; storage
+// (`companyRoles.permissions`) stays an unordered flat array either way,
+// so this has no effect outside this one form.
+const PERMISSION_GROUPS: {
+  key: "read" | "write";
+  permissions: (typeof PERMISSIONS)[number][];
+}[] = [
+  {
+    key: "read",
+    permissions: [
+      "view_own_dashboard",
+      "view_all_employees",
+      "view_flagged_rows",
+      "export_data",
+    ],
+  },
+  {
+    key: "write",
+    permissions: [
+      "upload_reports",
+      "manage_roster",
+      "manage_logins",
+      "manage_roles",
+      "resolve_flagged_rows",
+    ],
+  },
+];
+
 interface RoleRow {
   id: Id<"companyRoles">;
   name: string;
@@ -142,18 +172,25 @@ function RoleDialog({
             </label>
             <Input value={name} onChange={e => setName(e.target.value)} />
           </div>
-          <div className="space-y-2">
-            {PERMISSIONS.map(p => (
-              <label
-                key={p}
-                className="flex items-center gap-2 rounded-md border border-transparent px-1 py-1 text-sm hover:border-border/60"
-              >
-                <Checkbox
-                  checked={permissions.has(p)}
-                  onCheckedChange={() => togglePermission(p)}
-                />
-                {t(`permission_${p}`)}
-              </label>
+          <div className="space-y-4">
+            {PERMISSION_GROUPS.map(group => (
+              <div key={group.key} className="space-y-1">
+                <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t(`permissionGroup_${group.key}`)}
+                </p>
+                {group.permissions.map(p => (
+                  <label
+                    key={p}
+                    className="flex items-center gap-2 rounded-md border border-transparent px-1 py-1 text-sm hover:border-border/60"
+                  >
+                    <Checkbox
+                      checked={permissions.has(p)}
+                      onCheckedChange={() => togglePermission(p)}
+                    />
+                    {t(`permission_${p}`)}
+                  </label>
+                ))}
+              </div>
             ))}
           </div>
         </div>
