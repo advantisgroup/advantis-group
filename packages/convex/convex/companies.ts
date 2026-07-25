@@ -371,12 +371,18 @@ async function resolveDomainState(
   domain: string,
   ownership: VercelDomainResult
 ): Promise<ResolvedDomainState> {
+  // Detected once per call and kept in every branch, including "active" —
+  // a domain can go straight to active on its very first check (DNS was
+  // already fully configured before "Add Company" was ever clicked), so
+  // gating this on the pending states left those domains with no provider
+  // hint at all, not even transiently.
+  const dnsProvider = await detectDnsProvider(domain);
   if (!ownership.verified) {
     return {
       status: "pending_dns",
       dnsVerification: ownership.dnsVerification,
       dnsRouting: [],
-      dnsProvider: await detectDnsProvider(domain),
+      dnsProvider,
     };
   }
   const config = await checkVercelDomainConfig(domain);
@@ -385,14 +391,14 @@ async function resolveDomainState(
       status: "pending_routing",
       dnsVerification: [],
       dnsRouting: config.routing,
-      dnsProvider: await detectDnsProvider(domain),
+      dnsProvider,
     };
   }
   return {
     status: "active",
     dnsVerification: [],
     dnsRouting: [],
-    dnsProvider: null,
+    dnsProvider,
   };
 }
 
@@ -521,13 +527,15 @@ export const applyDomainResult = internalMutation({
     ctx,
     { companyId, status, dnsVerification, dnsRouting, dnsProvider }
   ) => {
-    const active = status === "active";
     await ctx.db.patch(companyId, {
       status,
       vercelVerified: status !== "pending_dns",
       dnsVerification: status === "pending_dns" ? dnsVerification : undefined,
       dnsRouting: status === "pending_routing" ? dnsRouting : undefined,
-      dnsProvider: active ? undefined : dnsProvider,
+      // Kept regardless of status now (see `resolveDomainState`) — still
+      // just a UI hint, so a `null`/missing detection is a silent no-op,
+      // never an error.
+      dnsProvider,
       provisioningError: undefined,
       updatedAt: Date.now(),
     });

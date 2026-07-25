@@ -332,6 +332,7 @@
   "companyDnsInstructions": "Diesen DNS-Eintrag bei der eigenen Registrierungsstelle der Domain hinzufügen, um die Inhaberschaft zu bestätigen:",
   "companyDnsRoutingInstructions": "Inhaberschaft ist bestätigt, aber diese Domain leitet noch keinen Traffic an Vercel weiter — auch diesen DNS-Eintrag hinzufügen:",
   "companyDnsProviderHint": "Diese Domain scheint über {provider} verwaltet zu werden — Anleitung ansehen",
+  "companyDnsProviderDetected": "DNS verwaltet über {provider}",
   "companyDnsCopy": "Kopieren",
   "companyDnsCopied": "Kopiert",
   "companyStatusLabel": "Status",

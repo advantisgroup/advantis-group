@@ -774,9 +774,10 @@ export default defineSchema({
     // Best-effort hint (nameserver-based, not authoritative) for which DNS
     // provider actually manages this domain's records — shown as "add it at
     // <provider>" plus a docs link so whoever owns the domain doesn't have
-    // to hunt for their own registrar's instructions. Cleared once verified
-    // (no longer relevant, and could go stale if the domain later moves
-    // providers).
+    // to hunt for their own registrar's instructions. Kept even once
+    // `active` (re-detected on every `createCompany`/`checkDomainVerification`
+    // call, so it can still go stale between calls, but never disappears
+    // just because the domain finished verifying).
     dnsProvider: v.optional(
       v.object({ name: v.string(), docsUrl: v.string() })
     ),
