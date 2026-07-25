@@ -702,7 +702,7 @@ export default function PerformanceCompaniesAdminPage() {
         navItems={navItems}
         onExit={session.viaClerk ? undefined : exit}
       />
-      <main className="mx-auto max-w-4xl space-y-6 p-4 pb-24 md:p-6">
+      <main className="mx-auto max-w-7xl space-y-6 p-4 pb-24 md:p-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
             <div>
