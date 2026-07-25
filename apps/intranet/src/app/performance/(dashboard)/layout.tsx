@@ -8,9 +8,11 @@ import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
   Activity,
+  Building2,
   Download,
   LayoutDashboard,
   Phone,
+  ShieldCheck,
   TrendingUp,
   Upload,
   Users,
@@ -156,11 +158,15 @@ function DashboardTopSection({
 function DashboardChrome({
   token,
   viaClerk,
+  isSuperAdmin,
+  permissions,
   onExit,
   children,
 }: {
   token: string;
   viaClerk: boolean;
+  isSuperAdmin: boolean;
+  permissions: string[];
   onExit: () => void;
   children: ReactNode;
 }) {
@@ -210,8 +216,32 @@ function DashboardChrome({
     },
   ];
 
+  // Companies (cross-company, isSuperAdmin-only) and Roles (per-company,
+  // manage_roles-only) each gate themselves identically on their own page —
+  // mirrored here so the link only ever appears for whoever can actually
+  // land on it. There's no cross-company roles UI yet (see that page's own
+  // comment), so a super-admin doesn't get a Roles link that would just
+  // bounce them back to the dashboard.
   const navItems = [
     { href: "/performance/benutzer", label: t("usersLink"), icon: Users },
+    ...(isSuperAdmin
+      ? [
+          {
+            href: "/performance/admin/companies",
+            label: t("companiesLink"),
+            icon: Building2,
+          },
+        ]
+      : []),
+    ...(!isSuperAdmin && permissions.includes("manage_roles")
+      ? [
+          {
+            href: "/performance/admin/roles",
+            label: t("rolesLink"),
+            icon: ShieldCheck,
+          },
+        ]
+      : []),
     ...(viaClerk
       ? []
       : [
@@ -374,7 +404,13 @@ export default function PerformanceDashboardLayout({
 
   return (
     <PerformanceYmProvider>
-      <DashboardChrome token={token} viaClerk={session.viaClerk} onExit={exit}>
+      <DashboardChrome
+        token={token}
+        viaClerk={session.viaClerk}
+        isSuperAdmin={session.isSuperAdmin}
+        permissions={session.permissions}
+        onExit={exit}
+      >
         {children}
       </DashboardChrome>
     </PerformanceYmProvider>

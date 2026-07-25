@@ -26,6 +26,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { clearPerformanceToken } from "@/lib/performanceAuth";
 
@@ -56,11 +63,17 @@ function RoleDialog({
   onOpenChange,
   token,
   role,
+  companyId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   token: string;
   role: RoleRow | null;
+  /** The company a new role is created under — only meaningful for a
+   * super-admin, who has no `companyId` of their own to fall back to
+   * server-side (see `companyRoles.resolveTargetCompanyId`). Ignored when
+   * editing an existing role, which already belongs to a company. */
+  companyId: Id<"companies"> | null;
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
@@ -102,6 +115,7 @@ function RoleDialog({
       } else {
         await createRole({
           token,
+          companyId: companyId ?? undefined,
           name: name.trim(),
           permissions: [...permissions],
         });
@@ -166,6 +180,10 @@ export default function PerformanceRolesAdminPage() {
   const handleError = useErrorHandler();
   const removeRole = useMutation(api.companyRoles.remove);
   const [editing, setEditing] = useState<RoleRow | null | "new">(null);
+  // Only meaningful for a super-admin, who has no company of their own —
+  // a scoped company admin's own companyId is resolved server-side and
+  // never needs picking.
+  const [companyId, setCompanyId] = useState<Id<"companies"> | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -174,20 +192,38 @@ export default function PerformanceRolesAdminPage() {
       router.replace("/performance/login");
       return;
     }
-    // Cross-company role management from this page isn't built yet — a
-    // super-admin manages roles per company from the intranet directly
-    // against a chosen companyId; this page covers the common case (a
-    // company's own admin managing their own roles).
-    if (session.isSuperAdmin || !session.permissions.includes("manage_roles")) {
+    // Neither a scoped company admin nor the cross-company super-admin —
+    // nothing on this page applies to them.
+    if (
+      !session.isSuperAdmin &&
+      !session.permissions.includes("manage_roles")
+    ) {
       router.replace("/performance");
     }
   }, [session, router]);
 
+  const isSuperAdmin = session?.valid && session.isSuperAdmin;
   const canManage =
     session?.valid &&
-    !session.isSuperAdmin &&
-    session.permissions.includes("manage_roles");
-  const roles = useQuery(api.companyRoles.list, canManage ? { token } : "skip");
+    (session.isSuperAdmin || session.permissions.includes("manage_roles"));
+
+  // A super-admin has no companyId of their own (`companyRoles.list`
+  // requires one explicitly in that case) — everyone else's own company is
+  // resolved server-side from their session, so no company arg is passed.
+  const companies = useQuery(
+    api.companies.listCompanies,
+    isSuperAdmin ? { token } : "skip"
+  );
+  const roles = useQuery(
+    api.companyRoles.list,
+    !canManage
+      ? "skip"
+      : isSuperAdmin
+        ? companyId
+          ? { token, companyId }
+          : "skip"
+        : { token }
+  );
 
   function exit() {
     clearPerformanceToken();
@@ -207,6 +243,7 @@ export default function PerformanceRolesAdminPage() {
   if (!session.valid || !canManage) return null;
 
   const navItems = [{ href: "/performance", label: t("backToDashboard") }];
+  const canCreate = !isSuperAdmin || !!companyId;
 
   return (
     <div className="min-h-screen bg-muted/20">
@@ -226,13 +263,38 @@ export default function PerformanceRolesAdminPage() {
                 {t("rolesIntro")}
               </p>
             </div>
-            <Button size="sm" onClick={() => setEditing("new")}>
+            <Button
+              size="sm"
+              onClick={() => setEditing("new")}
+              disabled={!canCreate}
+            >
               <Plus className="mr-2 h-4 w-4" />
               {t("roleNew")}
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {roles === undefined ? (
+            {isSuperAdmin && (
+              <Select
+                value={companyId ?? undefined}
+                onValueChange={v => setCompanyId(v as Id<"companies">)}
+              >
+                <SelectTrigger className="w-full sm:w-72">
+                  <SelectValue placeholder={t("rolesCompanyPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies?.map(c => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} · {c.domain}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            {isSuperAdmin && !companyId ? (
+              <p className="text-sm text-muted-foreground">
+                {t("rolesCompanyEmpty")}
+              </p>
+            ) : roles === undefined ? (
               <p className="text-sm text-muted-foreground">{t("loading")}</p>
             ) : roles.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("rolesEmpty")}</p>
@@ -289,6 +351,7 @@ export default function PerformanceRolesAdminPage() {
         }}
         token={token}
         role={editing === "new" || editing === null ? null : editing}
+        companyId={companyId}
       />
       <PerformanceBottomTabs
         navItems={navItems}
