@@ -1,7 +1,7 @@
-import { cors } from "@elysiajs/cors";
 import { Elysia } from "elysia";
 
-import { isAllowedOrigin, PORT } from "./lib/env.js";
+import { dynamicCors } from "./lib/cors.js";
+import { PORT } from "./lib/env.js";
 import { ApiError } from "./lib/errors.js";
 import { activityRoute } from "./routes/activity.js";
 import { applicantsRoute } from "./routes/applicants.js";
@@ -20,23 +20,7 @@ import { onedriveWebhookRoute } from "./routes/webhooks/onedrive.js";
 import { resendWebhookRoute } from "./routes/webhooks/resend.js";
 
 export const app = new Elysia()
-  .use(
-    cors({
-      origin: request => {
-        const origin = request.headers.get("origin");
-        if (!origin) return false;
-        return isAllowedOrigin(origin);
-      },
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-      allowedHeaders: [
-        "Content-Type",
-        "Authorization",
-        "Cookie",
-        "x-convex-server-key",
-      ],
-    })
-  )
+  .use(dynamicCors())
   .onError(({ error, set }) => {
     if (error instanceof ApiError) {
       set.status = error.status;
