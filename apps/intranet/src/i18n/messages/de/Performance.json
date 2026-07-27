@@ -253,6 +253,8 @@
   "userRoleAdmin": "Admin",
   "userRoleEmployee": "Mitarbeiter",
   "userRoleSuperAdmin": "Super-Admin",
+  "userSuperAdminToggleLabel": "Super-Admin",
+  "userSuperAdminToggleInfo": "Gewährt vollen unternehmensübergreifenden Zugriff und umgeht die Rollen und Berechtigungen dieses Unternehmens vollständig. Nur ein anderer Super-Admin kann dies vergeben oder entziehen, niemals für das eigene Konto.",
   "userEmployeeLabel": "Verknüpfter Mitarbeiter",
   "userEmployeeNone": "Keiner",
   "userIntranetAccountLabel": "Intranet-Konto",

@@ -253,6 +253,8 @@
   "userRoleAdmin": "Admin",
   "userRoleEmployee": "Employee",
   "userRoleSuperAdmin": "Super Admin",
+  "userSuperAdminToggleLabel": "Super Admin",
+  "userSuperAdminToggleInfo": "Grants full cross-company access, bypassing this company's roles and permissions entirely. Only another super-admin can grant or revoke it, and never on their own account.",
   "userEmployeeLabel": "Linked employee",
   "userEmployeeNone": "None",
   "userIntranetAccountLabel": "Intranet account",

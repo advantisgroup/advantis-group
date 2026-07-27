@@ -1144,6 +1144,39 @@ export const updateLogin = mutation({
   },
 });
 
+/** Super-admin-only: flips an existing login's cross-company `isSuperAdmin`
+ * flag on or off. Promoting leaves `companyId`/`roleId` in place (unused
+ * while the flag is set, per `hasPermission`'s bypass) so demoting later
+ * restores the login's original company scope and role with no re-picking
+ * needed — the same behavior the one-time backfill migration relied on.
+ * Blocked on the caller's own login so a super-admin can't strand
+ * themselves without Convex Dashboard access. */
+export const setSuperAdmin = mutation({
+  args: {
+    token: v.string(),
+    loginId: v.id("performanceLogins"),
+    isSuperAdmin: v.boolean(),
+  },
+  handler: async (
+    ctx,
+    { token, loginId, isSuperAdmin }
+  ): Promise<{ ok: true }> => {
+    const admin = await requireSuperAdminLogin(ctx, token);
+    if (admin._id === loginId) {
+      throw new ConvexError({
+        code: "cannot_edit_self",
+        message: "You can't change your own super-admin status here.",
+      });
+    }
+    const target = await ctx.db.get(loginId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "Login not found." });
+    }
+    await ctx.db.patch(loginId, { isSuperAdmin });
+    return { ok: true };
+  },
+});
+
 /** Admin sets a new password for another login in their own company (or, for
  * a super-admin, any login). */
 export const resetLoginPassword = action({
