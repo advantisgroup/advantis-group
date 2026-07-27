@@ -278,6 +278,8 @@ export default function PerformanceUsersPage() {
             employees={employees ?? []}
             intranetUsers={intranetUsers ?? []}
             roles={roles ?? []}
+            viewerIsSuperAdmin={session.isSuperAdmin}
+            viewerLoginId={session.loginId}
           />
           <ResetPasswordDialog
             loginId={resetting}

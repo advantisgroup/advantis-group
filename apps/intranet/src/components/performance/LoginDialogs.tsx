@@ -9,6 +9,7 @@ import { ChevronsUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { InfoTip } from "@/components/activity/InfoTip";
 import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -482,6 +483,8 @@ export function EditLoginDialog({
   employees,
   intranetUsers,
   roles,
+  viewerIsSuperAdmin,
+  viewerLoginId,
 }: {
   login: LoginRow | null;
   onOpenChange: (open: boolean) => void;
@@ -489,10 +492,13 @@ export function EditLoginDialog({
   employees: EmployeeOption[];
   intranetUsers: IntranetUserOption[];
   roles: RoleOption[];
+  viewerIsSuperAdmin: boolean;
+  viewerLoginId: Id<"performanceLogins"> | null;
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
   const updateLogin = useMutation(api.performanceAuth.updateLogin);
+  const setSuperAdmin = useMutation(api.performanceAuth.setSuperAdmin);
 
   return (
     <Dialog
@@ -509,9 +515,18 @@ export function EditLoginDialog({
             employees={employees}
             intranetUsers={intranetUsers}
             roles={roles}
+            viewerIsSuperAdmin={viewerIsSuperAdmin}
+            viewerLoginId={viewerLoginId}
             onCancel={() => onOpenChange(false)}
-            onSave={async patch => {
+            onSave={async ({ isSuperAdmin, ...patch }) => {
               try {
+                if (isSuperAdmin !== login.isSuperAdmin) {
+                  await setSuperAdmin({
+                    token,
+                    loginId: login.id,
+                    isSuperAdmin,
+                  });
+                }
                 await updateLogin({ token, loginId: login.id, ...patch });
                 onOpenChange(false);
                 toast.success(t("userUpdatedToast"));
@@ -531,6 +546,8 @@ function EditLoginForm({
   employees,
   intranetUsers,
   roles,
+  viewerIsSuperAdmin,
+  viewerLoginId,
   onCancel,
   onSave,
 }: {
@@ -538,6 +555,8 @@ function EditLoginForm({
   employees: EmployeeOption[];
   intranetUsers: IntranetUserOption[];
   roles: RoleOption[];
+  viewerIsSuperAdmin: boolean;
+  viewerLoginId: Id<"performanceLogins"> | null;
   onCancel: () => void;
   onSave: (patch: {
     name: string;
@@ -545,6 +564,7 @@ function EditLoginForm({
     active: boolean;
     employeeId: Id<"performanceEmployees"> | null;
     linkedUserId: Id<"users"> | null;
+    isSuperAdmin: boolean;
   }) => void | Promise<void>;
 }) {
   const t = useTranslations("Performance");
@@ -564,20 +584,26 @@ function EditLoginForm({
       suggestIntranetUser(intranetUsers, login.email)?.id ??
       null
   );
+  const [isSuperAdmin, setIsSuperAdmin] = useState(login.isSuperAdmin);
   const [saving, setSaving] = useState(false);
+
+  // Only another super-admin can grant/revoke the flag, and never on their
+  // own login — see performanceAuth.ts's setSuperAdmin for why.
+  const canToggleSuperAdmin = viewerIsSuperAdmin && login.id !== viewerLoginId;
 
   async function handleSave() {
     setSaving(true);
     try {
       await onSave({
         name: name.trim() || login.name,
-        roleId: login.isSuperAdmin ? undefined : (roleId as Id<"companyRoles">),
+        roleId: isSuperAdmin ? undefined : (roleId as Id<"companyRoles">),
         active,
         employeeId:
           employeeId === NONE
             ? null
             : (employeeId as Id<"performanceEmployees">),
         linkedUserId,
+        isSuperAdmin,
       });
     } finally {
       setSaving(false);
@@ -614,7 +640,7 @@ function EditLoginForm({
             <label className="text-xs font-medium text-muted-foreground">
               {t("userRoleLabel")}
             </label>
-            {login.isSuperAdmin ? (
+            {isSuperAdmin ? (
               <p className="pt-2 text-sm text-muted-foreground">
                 {t("userRoleSuperAdmin")}
               </p>
@@ -634,13 +660,25 @@ function EditLoginForm({
             />
           </div>
         </div>
-        <label className="flex w-fit items-center gap-2 pt-1 text-sm">
-          <Checkbox
-            checked={active}
-            onCheckedChange={checked => setActive(checked === true)}
-          />
-          {t("userActiveLabel")}
-        </label>
+        <div className="flex flex-wrap items-center gap-4 pt-1">
+          <label className="flex w-fit items-center gap-2 text-sm">
+            <Checkbox
+              checked={active}
+              onCheckedChange={checked => setActive(checked === true)}
+            />
+            {t("userActiveLabel")}
+          </label>
+          {canToggleSuperAdmin && (
+            <label className="flex w-fit items-center gap-1.5 text-sm">
+              <Checkbox
+                checked={isSuperAdmin}
+                onCheckedChange={checked => setIsSuperAdmin(checked === true)}
+              />
+              {t("userSuperAdminToggleLabel")}
+              <InfoTip text={t("userSuperAdminToggleInfo")} />
+            </label>
+          )}
+        </div>
       </div>
       <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
         <Button variant="ghost" onClick={onCancel}>
