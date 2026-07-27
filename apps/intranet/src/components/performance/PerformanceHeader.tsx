@@ -58,11 +58,7 @@ export function PerformanceHeader({
       <div className="hidden items-center gap-3 md:flex">
         {onAdvantisHost && (
           <Link href="/">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground"
-            >
+            <Button variant="ghost" size="sm" className="text-muted-foreground">
               <ArrowLeft className="mr-2 h-4 w-4" />
               {t("backToIntranet")}
             </Button>

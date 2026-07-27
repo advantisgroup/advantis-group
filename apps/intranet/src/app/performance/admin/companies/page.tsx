@@ -258,7 +258,9 @@ function DnsInstructions({
           className="flex items-start gap-1.5 leading-relaxed text-amber-700 underline underline-offset-2 dark:text-amber-400"
         >
           <ProviderFavicon provider={provider} />
-          <span>{t("companyDnsProviderHint", { provider: provider.name })}</span>
+          <span>
+            {t("companyDnsProviderHint", { provider: provider.name })}
+          </span>
           <ExternalLink className="h-3 w-3 shrink-0" />
         </a>
       )}
