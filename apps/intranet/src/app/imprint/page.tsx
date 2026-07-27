@@ -4,8 +4,8 @@ import { useTranslations } from "next-intl";
 
 import { LegalPage, type LegalSection } from "@/components/legal/LegalPage";
 
-export default function PrivacyPage() {
-  const t = useTranslations("privacy");
+export default function ImprintPage() {
+  const t = useTranslations("imprint");
   const sections = t.raw("sections") as LegalSection[];
 
   return (
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
       sections={sections}
       crossPage={[
         { label: t("viewTerms"), href: "/terms" },
-        { label: t("viewImprint"), href: "/imprint" },
+        { label: t("viewPrivacy"), href: "/privacy" },
       ]}
     />
   );

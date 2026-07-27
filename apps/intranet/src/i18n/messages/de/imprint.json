@@ -1,0 +1,43 @@
+{
+  "title": "Impressum",
+  "subtitle": "Angaben gemäß § 5 Telemediengesetz (TMG) für das Advantis-Group-Intranet",
+  "updated": "Stand: Juli 2026",
+  "tableOfContents": "Inhaltsverzeichnis",
+  "viewTerms": "Nutzungsbedingungen ansehen",
+  "viewPrivacy": "Datenschutzerklärung ansehen",
+  "sections": [
+    {
+      "id": "provider",
+      "title": "Diensteanbieter",
+      "paragraphs": ["Angaben gemäß § 5 Telemediengesetz (TMG):"]
+    },
+    {
+      "id": "taxId",
+      "title": "Umsatzsteuer-ID",
+      "paragraphs": ["Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:", "DE463759734"]
+    },
+    {
+      "id": "register",
+      "title": "Registereintrag",
+      "paragraphs": ["Eintragung im Handelsregister."],
+      "list": [
+        {
+          "title": "Registergericht",
+          "description": "Amtsgericht Nürnberg"
+        },
+        {
+          "title": "Registernummer",
+          "description": "HRB 46148"
+        }
+      ]
+    },
+    {
+      "id": "responsible",
+      "title": "Verantwortlich für den Inhalt",
+      "paragraphs": [
+        "Verantwortlich für den Inhalt nach § 18 Abs. 2 Medienstaatsvertrag (MStV):",
+        "Andrea Reichl, advantis GmbH"
+      ]
+    }
+  ]
+}

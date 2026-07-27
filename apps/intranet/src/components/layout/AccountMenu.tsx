@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 import { useClerk } from "@clerk/nextjs";
 import {
+  Building2,
   FileText,
   LogOut,
   Settings as SettingsIcon,
@@ -100,6 +101,15 @@ export function AccountMenu({
         >
           <FileText className="mr-2 h-4 w-4" />
           {tNav("terms")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => {
+            onNavigate?.();
+            router.push("/imprint");
+          }}
+        >
+          <Building2 className="mr-2 h-4 w-4" />
+          {tNav("imprint")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

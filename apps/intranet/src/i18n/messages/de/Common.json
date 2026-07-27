@@ -19,5 +19,8 @@
   "copy": "Kopieren",
   "areYouSure": "Bist du sicher?",
   "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
-  "fromOneDrive": "Aus OneDrive"
+  "fromOneDrive": "Aus OneDrive",
+  "skipToContent": "Zum Inhalt springen",
+  "backToTop": "Nach oben",
+  "readingProgress": "Lesefortschritt"
 }

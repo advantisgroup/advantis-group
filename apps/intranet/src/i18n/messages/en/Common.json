@@ -19,5 +19,8 @@
   "copy": "Copy",
   "areYouSure": "Are you sure?",
   "deleteWarning": "This action can't be undone.",
-  "fromOneDrive": "From OneDrive"
+  "fromOneDrive": "From OneDrive",
+  "skipToContent": "Skip to content",
+  "backToTop": "Back to top",
+  "readingProgress": "Reading progress"
 }

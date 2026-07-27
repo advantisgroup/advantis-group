@@ -83,6 +83,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <Link href="/terms" className="hover:text-foreground">
             {t("terms")}
           </Link>
+          <Link href="/imprint" className="hover:text-foreground">
+            {t("imprint")}
+          </Link>
         </div>
       </div>
     </div>
