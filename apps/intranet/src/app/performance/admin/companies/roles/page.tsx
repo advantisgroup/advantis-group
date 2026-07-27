@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import { useRouter } from "next/navigation";
-
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
@@ -11,9 +9,6 @@ import { Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
-import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,7 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 // Every gate check in performanceAuth.ts corresponds to one of these keys —
 // this is the fixed part (packages/convex/convex/performance/lib/permissions.ts);
@@ -212,7 +206,6 @@ function RoleDialog({
 
 export default function PerformanceRolesAdminPage() {
   const t = useTranslations("Performance");
-  const router = useRouter();
   const { token, session } = usePerformanceSession();
   const handleError = useErrorHandler();
   const removeRole = useMutation(api.companyRoles.remove);
@@ -222,27 +215,9 @@ export default function PerformanceRolesAdminPage() {
   // never needs picking.
   const [companyId, setCompanyId] = useState<Id<"companies"> | null>(null);
 
-  useEffect(() => {
-    if (!session) return;
-    if (!session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-      return;
-    }
-    // Neither a scoped company admin nor the cross-company super-admin —
-    // nothing on this page applies to them.
-    if (
-      !session.isSuperAdmin &&
-      !session.permissions.includes("manage_roles")
-    ) {
-      router.replace("/performance");
-    }
-  }, [session, router]);
-
+  // Gated on isSuperAdmin-or-manage_roles by the parent layout — always
+  // true by the time this page is mounted.
   const isSuperAdmin = session?.valid && session.isSuperAdmin;
-  const canManage =
-    session?.valid &&
-    (session.isSuperAdmin || session.permissions.includes("manage_roles"));
 
   // A super-admin has no companyId of their own (`companyRoles.list`
   // requires one explicitly in that case) — everyone else's own company is
@@ -253,19 +228,8 @@ export default function PerformanceRolesAdminPage() {
   );
   const roles = useQuery(
     api.companyRoles.list,
-    !canManage
-      ? "skip"
-      : isSuperAdmin
-        ? companyId
-          ? { token, companyId }
-          : "skip"
-        : { token }
+    isSuperAdmin ? (companyId ? { token, companyId } : "skip") : { token }
   );
-
-  function exit() {
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  }
 
   async function handleDelete(roleId: Id<"companyRoles">) {
     try {
@@ -276,18 +240,10 @@ export default function PerformanceRolesAdminPage() {
     }
   }
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || !canManage) return null;
-
-  const navItems = [{ href: "/performance", label: t("backToDashboard") }];
   const canCreate = !isSuperAdmin || !!companyId;
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+    <>
       <main className="mx-auto max-w-3xl space-y-6 p-4 pb-24 md:p-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -390,10 +346,6 @@ export default function PerformanceRolesAdminPage() {
         role={editing === "new" || editing === null ? null : editing}
         companyId={companyId}
       />
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
-    </div>
+    </>
   );
 }

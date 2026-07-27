@@ -216,12 +216,13 @@ function DashboardChrome({
     },
   ];
 
-  // Companies (isSuperAdmin-only) and Roles (isSuperAdmin, via its own
-  // company picker, or any per-company admin with manage_roles) each gate
-  // themselves identically on their own page — mirrored here so the link
-  // only ever appears for whoever can actually land on it. A super-admin
+  // Company management and role management now live as tabs on one page
+  // (/performance/admin/companies) instead of two competing nav entries —
+  // a super-admin lands on the company list with a Roles tab alongside it,
+  // while a scoped admin who can only manage_roles goes straight to the
+  // Roles tab, since they have no company list to see. A super-admin
   // always has every permission (see performanceAuth.ts's validateSession),
-  // so `permissions.includes("manage_roles")` alone already covers both.
+  // so checking it first already covers both cases with one link.
   const navItems = [
     { href: "/performance/benutzer", label: t("usersLink"), icon: Users },
     ...(isSuperAdmin
@@ -232,16 +233,15 @@ function DashboardChrome({
             icon: Building2,
           },
         ]
-      : []),
-    ...(permissions.includes("manage_roles")
-      ? [
-          {
-            href: "/performance/admin/roles",
-            label: t("rolesLink"),
-            icon: ShieldCheck,
-          },
-        ]
-      : []),
+      : permissions.includes("manage_roles")
+        ? [
+            {
+              href: "/performance/admin/companies/roles",
+              label: t("rolesLink"),
+              icon: ShieldCheck,
+            },
+          ]
+        : []),
     ...(viaClerk
       ? []
       : [
