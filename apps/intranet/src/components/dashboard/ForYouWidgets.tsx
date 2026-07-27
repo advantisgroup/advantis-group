@@ -63,10 +63,7 @@ export function MyDayCard() {
 
   const today = todayLocalDay();
 
-  const dayStart = useMemo(
-    () => new Date(`${today}T00:00:00`).getTime(),
-    [today],
-  );
+  const dayStart = useMemo(() => new Date(`${today}T00:00:00`).getTime(), [today]);
 
   const statesRaw = useQuery(api.activity.state.stateBatch, {
     since: dayStart,

@@ -17,6 +17,8 @@
   "close": "Schließen",
   "open": "Öffnen",
   "copy": "Kopieren",
+  "copied": "In Zwischenablagen kopiert!",
+  "copyFailed": "Kopieren fehlgeschlagen..",
   "areYouSure": "Bist du sicher?",
   "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
   "fromOneDrive": "Aus OneDrive",

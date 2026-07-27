@@ -1,30 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { Check, Copy } from "lucide-react";
 
 import { useI18n } from "@/lib/activity/i18n";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-/**
- * Copy-to-clipboard button with success feedback: on a successful copy it swaps
- * the clipboard icon for a green check for ~1.5s, then reverts. Used anywhere an
- * id/email is worth grabbing (roster, device registry, timeline) so the boss can
- * paste into Genesys/Clockodo without hand-typing. `shrink-0` by default so it
- * never pushes neighbouring content around in a crowded row.
- */
 export function CopyButton({
   value,
   label,
   className,
   size = "sm",
+  children,
 }: {
   value: string;
-  /** Accessible label, e.g. "Copy employee ID". Falls back to a generic one. */
   label?: string;
   className?: string;
   size?: "sm" | "md";
+  children?: React.ReactNode;
 }) {
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
@@ -38,19 +33,36 @@ export function CopyButton({
   );
 
   async function copy() {
+    const promise = navigator.clipboard.writeText(value);
+
+    toast.promise(promise, {
+      loading: t("common.copy"),
+      success: t("common.copied"),
+      error: t("common.copyFailed"),
+    });
+
     try {
-      await navigator.clipboard.writeText(value);
+      await promise;
+
       setCopied(true);
+
       if (timer.current) clearTimeout(timer.current);
+
       timer.current = setTimeout(() => setCopied(false), 1500);
     } catch {
-      // Clipboard can reject (insecure context / permissions) — stay silent;
-      // the icon simply doesn't flip, so nothing misleads the user.
+      //
     }
   }
 
   const box = size === "sm" ? "h-8 w-8" : "h-9 w-9";
   const icon = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
+
+  if (children) {
+    return React.cloneElement(children as React.ReactElement, {
+      onClick: copy,
+      "aria-label": copied ? t("common.copied") : (label ?? t("common.copy")),
+    });
+  }
 
   return (
     <button
@@ -67,6 +79,7 @@ export function CopyButton({
       )}
     >
       {copied ? <Check className={cn(icon, "animate-scale-in")} /> : <Copy className={icon} />}
+
       <span className="sr-only" aria-live="polite">
         {copied ? t("common.copied") : ""}
       </span>

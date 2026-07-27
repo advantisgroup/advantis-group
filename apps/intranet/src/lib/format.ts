@@ -39,7 +39,7 @@ export function formatDateTime(ms: number, locale: string): string {
   });
 }
 
-export function formatTime(ms: number, locale: string): string {
+export function formatTime(ms: number, locale: Intl.LocalesArgument): string {
   return new Date(ms).toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",

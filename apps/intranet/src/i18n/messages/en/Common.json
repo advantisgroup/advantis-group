@@ -17,6 +17,8 @@
   "close": "Close",
   "open": "Open",
   "copy": "Copy",
+  "copied": "Copied to clipboard",
+  "copyFailed": "Failed to copy..",
   "areYouSure": "Are you sure?",
   "deleteWarning": "This action can't be undone.",
   "fromOneDrive": "From OneDrive",

@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Eye,
   FileText,
+  Link,
   Megaphone,
   Paperclip,
   Pencil,
@@ -60,12 +61,13 @@ import {
 } from "@/components/ui/select";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatDateTime, initials } from "@/lib/format";
+import { formatDateTime, formatTime, initials } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
 import { formatFileSize, isImage, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import type { FunctionReturnType } from "convex/server";
+import { CopyButton } from "@/components/activity/CopyButton";
 
 type Announcement = FunctionReturnType<typeof api.announcements.list>[number];
 type Audience = { kind: "all" } | { kind: "department"; department: string };
@@ -722,13 +724,22 @@ function AnnouncementCard({
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {a.authorName}
-            {a.updatedAt ? ` · ${t("edited")}` : ""}
+            {a.updatedAt ? ` · ${t("edited")} ${formatTime(a.updatedAt, "de-DE")}` : ""}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <time className="whitespace-nowrap text-xs text-muted-foreground">
-            {formatDateTime(a.publishedAt, locale)}
-          </time>
+          <CopyButton
+            value={`https://intern.advantisgroup.de/announcements?id=${a._id}`}
+            label="Copy announcement link"
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-muted-foreground opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            >
+              <Link className="h-4 w-4" />
+            </Button>
+          </CopyButton>
           {canManage && (
             <>
               <Button
@@ -751,6 +762,10 @@ function AnnouncementCard({
               </Button>
             </>
           )}
+
+          <time className="whitespace-nowrap text-xs text-muted-foreground">
+            {formatDateTime(a.publishedAt, locale)}
+          </time>
         </div>
       </header>
 
