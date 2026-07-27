@@ -16,6 +16,7 @@ import {
   UploadCloud,
   UserCog,
   Wrench,
+  Zap,
 } from "lucide-react";
 
 import { type TeamId } from "@/lib/teams";
@@ -34,6 +35,7 @@ import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
 import { ProfilKontoGuidebook } from "./docs/profil-konto";
 import { UploadsGenehmigenGuidebook } from "./docs/uploads-genehmigen";
 import { VerwaltungMitgliederGuidebook } from "./docs/verwaltung-mitglieder";
+import { WallboxSalesAcademyGuidebook } from "./wallbox-academy/WallboxAcademy";
 
 /**
  * "interactive" = a live tool (search, lookup, chat) rather than a fixed
@@ -87,6 +89,15 @@ export const GUIDEBOOKS: Guidebook[] = [
     category: "interactive",
     teams: ["customer-care"],
     Component: CaseSearchGuidebook,
+  },
+  {
+    slug: "wallbox-sales-academy",
+    titleKey: "wallboxSalesAcademy.title",
+    descriptionKey: "wallboxSalesAcademy.description",
+    icon: Zap,
+    category: "interactive",
+    teams: [],
+    Component: WallboxSalesAcademyGuidebook,
   },
   {
     slug: "problembehandlungen",

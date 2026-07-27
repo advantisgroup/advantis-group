@@ -64,6 +64,10 @@
     "title": "Managing Passwords in Chrome & Edge",
     "description": "View and change saved passwords, generate strong ones, and check for data breaches."
   },
+  "wallboxSalesAcademy": {
+    "title": "Wallbox Sales Academy",
+    "description": "B2B sales training for EV charging infrastructure — chapters with knowledge checks, research tasks and a warm-lead call simulator. German-language content."
+  },
   "docViewer": {
     "zoomImage": "Enlarge image",
     "download": "Download",

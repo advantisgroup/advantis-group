@@ -1588,6 +1588,38 @@ export default defineSchema({
     highlightedAt: v.number(),
   }).index("by_slug", ["slug"]),
 
+  // --- Wallbox Sales Academy (interactive guidebook) -------------------------
+  // Training progress lives per intranet account — no separate participant
+  // codes or admin PIN. `academyId` scopes the row to a specific interactive
+  // training module (only "wallbox-sales" exists today) so a future module
+  // can reuse the same two tables. `data` mirrors the original tool's
+  // per-participant result shape (chapters/research/calls/lastCh/started/
+  // finished), JSON-encoded like `tourProgress.checkpointStatuses`.
+  academyProgress: defineTable({
+    userId: v.id("users"),
+    academyId: v.string(),
+    data: v.string(),
+    updatedAt: v.number(),
+  })
+    .index("by_user_academy", ["userId", "academyId"])
+    .index("by_academy", ["academyId"]),
+
+  // Free-text "ask the trainer" questions raised from a chapter, answered by
+  // a manager in the academy's Trainer tab.
+  academyQuestions: defineTable({
+    userId: v.id("users"),
+    academyId: v.string(),
+    chapterId: v.string(),
+    chapterTitle: v.string(),
+    text: v.string(),
+    answer: v.optional(v.string()),
+    answered: v.boolean(),
+    createdAt: v.number(),
+    answeredAt: v.optional(v.number()),
+  })
+    .index("by_user_academy", ["userId", "academyId"])
+    .index("by_academy", ["academyId"]),
+
   // --- Per-user app preferences ---------------------------------------------
   // One row per user; every field optional so features can add preferences
   // without migrations. Client-side cosmetics (e.g. "always preview") stay in
