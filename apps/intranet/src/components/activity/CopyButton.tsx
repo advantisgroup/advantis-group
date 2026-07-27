@@ -58,8 +58,16 @@ export function CopyButton({
   const icon = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
 
   if (children) {
-    return React.cloneElement(children as React.ReactElement, {
-      onClick: copy,
+    const child = children as React.ReactElement<{
+      onClick?: React.MouseEventHandler;
+      "aria-label"?: string;
+    }>;
+
+    return React.cloneElement(child, {
+      onClick: (event) => {
+        child.props.onClick?.(event);
+        copy();
+      },
       "aria-label": copied ? t("common.copied") : (label ?? t("common.copy")),
     });
   }
