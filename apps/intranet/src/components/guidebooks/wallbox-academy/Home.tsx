@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 
 import { ACADEMY_ID } from "./use-academy-progress";
 
@@ -27,9 +28,17 @@ export function Home({
   const isAdmin = useIsAdmin();
   const convex = useConvex();
 
+  // An invitation's "Open the training" link/button carries the access
+  // code as ?code= so the participant doesn't have to copy-paste or retype
+  // it from the email.
+  const codeFromInvite = useDeepLinkId("code");
   const [code, setCode] = useState("");
   const [codeError, setCodeError] = useState("");
   const [checkingCode, setCheckingCode] = useState(false);
+
+  useEffect(() => {
+    if (codeFromInvite) setCode(codeFromInvite.toUpperCase());
+  }, [codeFromInvite]);
 
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");

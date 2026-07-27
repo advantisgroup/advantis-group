@@ -65,7 +65,8 @@ function userDisplayName(u: {
 // ─── Teilnehmer & Ergebnisse ───────────────────────────────────────────────
 
 function sendMailtoInvite(name: string, email: string, code: string) {
-  const body = `Hallo ${name},%0D%0A%0D%0Adu bist zur Wallbox Sales Academy eingeladen - unserem Onboarding-Training für den B2B-Vertrieb von Ladeinfrastruktur.%0D%0A%0D%0ASo startest du:%0D%0A1. Öffne im Intranet Guidebooks -> Wallbox Sales Academy%0D%0A2. Klicke auf "Ich bin Teilnehmer"%0D%0A3. Dein persönlicher Zugangscode: ${code}%0D%0A%0D%0ADas Training umfasst mehrere Kapitel inkl. Wissens-Checks, Rechercheaufgaben und Call-Simulator. Deine Fragen kannst du direkt in der App stellen.%0D%0A%0D%0AViel Erfolg!`;
+  const trainingUrl = `${window.location.origin}/guidebooks/wallbox-sales-academy?code=${encodeURIComponent(code)}`;
+  const body = `Hallo ${name},%0D%0A%0D%0Adu bist zur Wallbox Sales Academy eingeladen - unserem Onboarding-Training für den B2B-Vertrieb von Ladeinfrastruktur.%0D%0A%0D%0ASo startest du:%0D%0A1. Öffne diesen Link (Zugangscode ist schon ausgefüllt): ${trainingUrl}%0D%0A2. Klicke auf "Training starten"%0D%0A%0D%0AFalls der Link nicht klappt: Öffne im Intranet Guidebooks -> Wallbox Sales Academy und gib den Code ${code} manuell ein.%0D%0A%0D%0ADas Training umfasst mehrere Kapitel inkl. Wissens-Checks, Rechercheaufgaben und Call-Simulator. Deine Fragen kannst du direkt in der App stellen.%0D%0A%0D%0AViel Erfolg!`;
   const mailto = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent("Einladung: Wallbox Sales Academy - dein Zugangscode")}&body=${body}`;
   window.open(mailto, "_self");
   void navigator.clipboard
