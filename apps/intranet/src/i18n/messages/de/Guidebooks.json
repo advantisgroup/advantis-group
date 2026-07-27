@@ -64,6 +64,10 @@
     "title": "Passwörter in Chrome & Edge verwalten",
     "description": "Gespeicherte Passwörter anzeigen, ändern, sichere Passwörter generieren und auf Datenlecks prüfen."
   },
+  "wallboxSalesAcademy": {
+    "title": "Wallbox Sales Academy",
+    "description": "B2B-Vertriebstraining Ladeinfrastruktur: Kapitel mit Wissens-Checks, Rechercheaufgaben und Call-Simulator für Warm Leads."
+  },
   "docViewer": {
     "zoomImage": "Bild vergrößern",
     "download": "Herunterladen",
