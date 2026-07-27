@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import { useRouter } from "next/navigation";
-
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useMutation, useQuery } from "convex/react";
@@ -20,9 +18,6 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
-import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,7 +43,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { clearPerformanceToken } from "@/lib/performanceAuth";
 
 // Platform-level: creating a company is inherently a cross-company action,
 // so this page (unlike the rest of Performance) is isSuperAdmin-only, not
@@ -679,7 +673,6 @@ function CompanyActions({
 
 export default function PerformanceCompaniesAdminPage() {
   const t = useTranslations("Performance");
-  const router = useRouter();
   const { token, session } = usePerformanceSession();
   const handleError = useErrorHandler();
   const checkDomainVerification = useAction(
@@ -696,26 +689,13 @@ export default function PerformanceCompaniesAdminPage() {
     null
   );
 
-  useEffect(() => {
-    if (!session) return;
-    if (!session.valid) {
-      clearPerformanceToken();
-      router.replace("/performance/login");
-      return;
-    }
-    if (!session.isSuperAdmin) router.replace("/performance");
-  }, [session, router]);
-
+  // Gated on isSuperAdmin by the parent layout — always true by the time
+  // this page is mounted.
   const isSuperAdmin = session?.valid && session.isSuperAdmin;
   const companies = useQuery(
     api.companies.listCompanies,
     isSuperAdmin ? { token } : "skip"
   );
-
-  function exit() {
-    clearPerformanceToken();
-    router.replace("/performance/login");
-  }
 
   async function handleCheck(companyId: Id<"companies">) {
     setChecking(companyId);
@@ -728,17 +708,8 @@ export default function PerformanceCompaniesAdminPage() {
     }
   }
 
-  if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || !session.isSuperAdmin) return null;
-
-  const navItems = [{ href: "/performance", label: t("backToDashboard") }];
-
   return (
-    <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+    <>
       <main className="mx-auto max-w-7xl space-y-6 p-4 pb-24 md:p-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -907,10 +878,6 @@ export default function PerformanceCompaniesAdminPage() {
         token={token}
         company={deletingCompany}
       />
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
-    </div>
+    </>
   );
 }
