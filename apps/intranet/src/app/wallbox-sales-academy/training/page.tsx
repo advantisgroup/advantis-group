@@ -13,7 +13,7 @@ import { useAcademySession } from "@/components/guidebooks/wallbox-academy/sessi
 import { useAcademyProgress } from "@/components/guidebooks/wallbox-academy/use-academy-progress";
 import { WhoBar } from "@/components/guidebooks/wallbox-academy/WhoBar";
 
-const HOME = "/guidebooks/wallbox-sales-academy";
+const HOME = "/wallbox-sales-academy";
 
 export default function TrainingOverviewPage() {
   const router = useRouter();

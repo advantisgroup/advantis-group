@@ -2,23 +2,30 @@
 
 import { useRouter } from "next/navigation";
 
-import { Home } from "@/components/guidebooks/wallbox-academy/Home";
+import { AdminLogin } from "@/components/guidebooks/wallbox-academy/AdminLogin";
 import { useAcademySession } from "@/components/guidebooks/wallbox-academy/session";
+import { Link } from "@/components/Link";
 
-export default function WallboxAcademyHomePage() {
+export default function WallboxAcademyAdminHomePage() {
   const router = useRouter();
-  const { loginParticipant, loginAdmin } = useAcademySession();
+  const { loginAdmin } = useAcademySession();
 
   return (
-    <Home
-      onParticipantLogin={p => {
-        loginParticipant(p);
-        router.push("/guidebooks/wallbox-sales-academy/training");
-      }}
-      onAdminLogin={() => {
-        loginAdmin();
-        router.push("/guidebooks/wallbox-sales-academy/admin/teilnehmer");
-      }}
-    />
+    <div className="space-y-4">
+      <AdminLogin
+        onLogin={() => {
+          loginAdmin();
+          router.push("/guidebooks/wallbox-sales-academy/admin/teilnehmer");
+        }}
+      />
+      <p className="text-center text-sm text-muted-foreground">
+        Möchtest du das Training selbst absolvieren? Nutze deinen Zugangscode
+        auf der{" "}
+        <Link href="/wallbox-sales-academy" className="underline">
+          öffentlichen Teilnehmerseite
+        </Link>
+        .
+      </p>
+    </div>
   );
 }

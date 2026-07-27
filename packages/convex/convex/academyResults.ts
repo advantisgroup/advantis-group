@@ -13,10 +13,16 @@ function isFinished(raw: string | undefined): boolean {
   }
 }
 
+// getMine/saveMine are deliberately public (no `requireUser`) — knowing the
+// participantId is only possible after resolving an access code via
+// academyParticipants.findByCode, which is itself the real (and only) gate.
+// This lets external, account-less invitees load and save their own
+// progress. Everything below (listAll) stays intranet-gated for the
+// Trainer area.
+
 export const getMine = query({
   args: { participantId: v.id("academyParticipants") },
   handler: async (ctx, { participantId }) => {
-    await requireUser(ctx);
     const row = await ctx.db
       .query("academyResults")
       .withIndex("by_participant", q => q.eq("participantId", participantId))
@@ -37,7 +43,6 @@ export const saveMine = mutation({
     data: v.string(),
   },
   handler: async (ctx, { academyId, participantId, data }) => {
-    await requireUser(ctx);
     const existing = await ctx.db
       .query("academyResults")
       .withIndex("by_participant", q => q.eq("participantId", participantId))

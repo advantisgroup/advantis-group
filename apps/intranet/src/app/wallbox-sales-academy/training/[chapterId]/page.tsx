@@ -16,7 +16,7 @@ import { useReadQueryParam } from "@/components/guidebooks/wallbox-academy/use-r
 import { WhoBar } from "@/components/guidebooks/wallbox-academy/WhoBar";
 import { Card, CardContent } from "@/components/ui/card";
 
-const HOME = "/guidebooks/wallbox-sales-academy";
+const HOME = "/wallbox-sales-academy";
 
 export default function TrainingChapterPage() {
   const router = useRouter();

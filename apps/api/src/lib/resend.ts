@@ -158,7 +158,7 @@ function render(
         str(data, "academyName") || "the Wallbox Sales Academy";
       const code = str(data, "code");
       const by = str(data, "invitedByName");
-      const path = str(data, "path") || "/guidebooks/wallbox-sales-academy";
+      const path = str(data, "path") || "/wallbox-sales-academy";
       const url = `${INTERNAL_URL}${path}?code=${encodeURIComponent(code)}`;
       return {
         subject: `You've been invited to ${academyName}`,

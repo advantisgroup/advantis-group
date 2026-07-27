@@ -84,11 +84,15 @@ export const listAll = query({
   },
 });
 
-/** Participant login: resolve an access code to the participant it belongs to. */
+/**
+ * Participant login: resolve an access code to the participant it belongs
+ * to. Deliberately public (no `requireUser`) — the code is the whole
+ * credential, so external invitees without an intranet account can take the
+ * training, same as the original standalone tool.
+ */
 export const findByCode = query({
   args: { academyId: v.string(), code: v.string() },
   handler: async (ctx, { academyId, code }) => {
-    await requireUser(ctx);
     const participant = await ctx.db
       .query("academyParticipants")
       .withIndex("by_academy_code", q =>

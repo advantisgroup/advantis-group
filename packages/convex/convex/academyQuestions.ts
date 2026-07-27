@@ -4,6 +4,11 @@ import { mutation, query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 import { createNotification } from "./lib/notify";
 
+// ask/listMine are deliberately public (no `requireUser`) — same reasoning
+// as academyResults.getMine/saveMine: the participantId is only reachable
+// after resolving an access code, which is the real gate for account-less
+// participants.
+
 export const ask = mutation({
   args: {
     academyId: v.string(),
@@ -13,7 +18,6 @@ export const ask = mutation({
     text: v.string(),
   },
   handler: async (ctx, args) => {
-    await requireUser(ctx);
     const text = args.text.trim();
     if (!text) return null;
     return ctx.db.insert("academyQuestions", {
@@ -31,7 +35,6 @@ export const ask = mutation({
 export const listMine = query({
   args: { participantId: v.id("academyParticipants") },
   handler: async (ctx, { participantId }) => {
-    await requireUser(ctx);
     const rows = await ctx.db
       .query("academyQuestions")
       .withIndex("by_participant", q => q.eq("participantId", participantId))
@@ -83,7 +86,7 @@ export const answer = mutation({
           type: "academy_answer",
           title: "Deine Frage wurde beantwortet",
           body: question.text,
-          link: `/guidebooks/wallbox-sales-academy/training/${question.chapterId}?q=${questionId}`,
+          link: `/wallbox-sales-academy/training/${question.chapterId}?q=${questionId}`,
         });
       }
     }
