@@ -182,18 +182,57 @@ function CopyableField({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** One DNS record, laid out as the three fields every registrar's "add
+ * record" form actually asks for — Type, Host/Name, and Value — instead of
+ * a bare type + value pair. A record with no `domain` of its own (the
+ * routing step's CNAME/A: Vercel's config API returns those without a host,
+ * because it's always the company's own root domain) falls back to `@`,
+ * the near-universal registrar shorthand for "the domain itself, no
+ * subdomain" — spelling that out is what was missing before, since a CNAME
+ * is meaningless without knowing which host it's being added *to*. */
+function DnsRecordField({
+  record,
+  companyDomain,
+}: {
+  record: DnsRecord;
+  companyDomain: string;
+}) {
+  const t = useTranslations("Performance");
+  const host = record.domain && record.domain.length > 0 ? record.domain : "@";
+  return (
+    <div className="space-y-1.5 rounded border border-amber-500/20 bg-background/40 p-2">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+        <dt className="text-muted-foreground">{t("companyDnsFieldType")}</dt>
+        <dd className="font-mono">{record.type}</dd>
+        <dt className="text-muted-foreground">{t("companyDnsFieldHost")}</dt>
+        <dd className="break-all font-mono">{host}</dd>
+        <dt className="text-muted-foreground">{t("companyDnsFieldValue")}</dt>
+        <dd />
+      </dl>
+      <CopyableField label={`${record.type} ${host}`} value={record.value} />
+      {host === "@" && (
+        <p className="text-muted-foreground">
+          {t("companyDnsRootHint", { domain: companyDomain })}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** Shared renderer for both DNS steps — ownership verification (`records`
- * carry the exact `domain` Vercel expects the record on) and routing
- * (no per-record `domain`; it's always the company's own domain, already
- * named by the surrounding UI). `title` distinguishes which step this is,
- * since showing the wrong instructions at the wrong time is exactly what
- * let a company look "active" while still not resolving at all. */
+ * carry the exact `domain` Vercel expects the record on) and routing (no
+ * per-record `domain`; `DnsRecordField` falls back to `@`, the company's own
+ * root domain). `title` distinguishes which step this is, since showing the
+ * wrong instructions at the wrong time is exactly what let a company look
+ * "active" while still not resolving at all. */
 function DnsInstructions({
   title,
+  domain,
   records,
   provider,
 }: {
   title: string;
+  domain: string;
   records: DnsRecord[];
   provider?: DnsProvider | null;
 }) {
@@ -203,16 +242,7 @@ function DnsInstructions({
     <div className="space-y-3 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
       <p className="font-medium text-amber-700 dark:text-amber-400">{title}</p>
       {records.map((r, i) => (
-        <div key={i} className="space-y-1 font-mono">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <span>{r.type}</span>
-            {r.domain && <span className="break-all">{r.domain}</span>}
-          </div>
-          <CopyableField
-            label={`${r.type} ${r.domain ?? ""}`}
-            value={r.value}
-          />
-        </div>
+        <DnsRecordField key={i} record={r} companyDomain={domain} />
       ))}
       {provider && (
         <a
@@ -235,11 +265,13 @@ function DnsInstructions({
  * `CompanyStatusBadge`'s popover now — never inline in a row or dialog,
  * which is what made either one blow up in height. */
 function CompanyDnsStatus({
+  domain,
   status,
   dnsVerification,
   dnsRouting,
   dnsProvider,
 }: {
+  domain: string;
   status: CompanyStatus;
   dnsVerification: DnsRecord[] | null;
   dnsRouting: DnsRecord[] | null;
@@ -250,6 +282,7 @@ function CompanyDnsStatus({
     return (
       <DnsInstructions
         title={t("companyDnsInstructions")}
+        domain={domain}
         records={dnsVerification}
         provider={dnsProvider}
       />
@@ -259,6 +292,7 @@ function CompanyDnsStatus({
     return (
       <DnsInstructions
         title={t("companyDnsRoutingInstructions")}
+        domain={domain}
         records={dnsRouting}
         provider={dnsProvider}
       />
@@ -286,11 +320,13 @@ function statusBadgeVariant(
  * routing. A row with nothing to add (active, provisioning, failed) just
  * renders the plain badge. */
 function CompanyStatusBadge({
+  domain,
   status,
   dnsVerification,
   dnsRouting,
   dnsProvider,
 }: {
+  domain: string;
   status: CompanyStatus;
   dnsVerification: DnsRecord[] | null;
   dnsRouting: DnsRecord[] | null;
@@ -322,6 +358,7 @@ function CompanyStatusBadge({
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80">
         <CompanyDnsStatus
+          domain={domain}
           status={status}
           dnsVerification={dnsVerification}
           dnsRouting={dnsRouting}
@@ -753,6 +790,7 @@ export default function PerformanceCompaniesAdminPage() {
                           </div>
                           <div className="shrink-0">
                             <CompanyStatusBadge
+                              domain={c.domain}
                               status={c.status}
                               dnsVerification={c.dnsVerification}
                               dnsRouting={c.dnsRouting}
@@ -809,6 +847,7 @@ export default function PerformanceCompaniesAdminPage() {
                           </TableCell>
                           <TableCell className="max-w-xs">
                             <CompanyStatusBadge
+                              domain={c.domain}
                               status={c.status}
                               dnsVerification={c.dnsVerification}
                               dnsRouting={c.dnsRouting}
