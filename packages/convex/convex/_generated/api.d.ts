@@ -31,6 +31,7 @@ import type * as activity_lib_contracts from "../activity/lib/contracts.js";
 import type * as activity_lib_crypto from "../activity/lib/crypto.js";
 import type * as activity_lib_errors from "../activity/lib/errors.js";
 import type * as activity_lib_integrationsShared from "../activity/lib/integrationsShared.js";
+import type * as activity_lib_patterns from "../activity/lib/patterns.js";
 import type * as activity_lib_state from "../activity/lib/state.js";
 import type * as activity_lib_users from "../activity/lib/users.js";
 import type * as activity_maintenance from "../activity/maintenance.js";
@@ -44,8 +45,8 @@ import type * as activity_settings from "../activity/settings.js";
 import type * as activity_state from "../activity/state.js";
 import type * as activity_stats from "../activity/stats.js";
 import type * as announcements from "../announcements.js";
-import type * as applicants from "../applicants.js";
 import type * as applicantVault from "../applicantVault.js";
+import type * as applicants from "../applicants.js";
 import type * as auditLog from "../auditLog.js";
 import type * as chat from "../chat.js";
 import type * as clerkSync from "../clerkSync.js";
@@ -64,20 +65,23 @@ import type * as guidebookFeedback from "../guidebookFeedback.js";
 import type * as guidebookHighlights from "../guidebookHighlights.js";
 import type * as http from "../http.js";
 import type * as integrations_audit from "../integrations/audit.js";
-import type * as integrations_clockodoLink from "../integrations/clockodoLink.js";
-import type * as integrations_clockodoView from "../integrations/clockodoView.js";
 import type * as integrations_clockodo_client from "../integrations/clockodo/client.js";
 import type * as integrations_clockodo_users from "../integrations/clockodo/users.js";
+import type * as integrations_clockodoLink from "../integrations/clockodoLink.js";
+import type * as integrations_clockodoView from "../integrations/clockodoView.js";
 import type * as integrations_debug from "../integrations/debug.js";
 import type * as integrations_lib_auth from "../integrations/lib/auth.js";
 import type * as invites from "../invites.js";
+import type * as lib_attachments from "../lib/attachments.js";
 import type * as lib_audience from "../lib/audience.js";
+import type * as lib_auditLogWrite from "../lib/auditLogWrite.js";
 import type * as lib_auth from "../lib/auth.js";
 import type * as lib_clerk from "../lib/clerk.js";
 import type * as lib_clockodoId from "../lib/clockodoId.js";
 import type * as lib_featureGate from "../lib/featureGate.js";
 import type * as lib_notify from "../lib/notify.js";
 import type * as lib_permissions from "../lib/permissions.js";
+import type * as lib_users from "../lib/users.js";
 import type * as members from "../members.js";
 import type * as migrations_backfillPerformanceCompanyId from "../migrations/backfillPerformanceCompanyId.js";
 import type * as notifications from "../notifications.js";
@@ -86,7 +90,9 @@ import type * as orgData from "../orgData.js";
 import type * as orgDataMigration from "../orgDataMigration.js";
 import type * as outbound from "../outbound.js";
 import type * as performance_lib_callImport from "../performance/lib/callImport.js";
+import type * as performance_lib_interactionImport from "../performance/lib/interactionImport.js";
 import type * as performance_lib_kpi from "../performance/lib/kpi.js";
+import type * as performance_lib_permissions from "../performance/lib/permissions.js";
 import type * as performance_lib_salesforceImport from "../performance/lib/salesforceImport.js";
 import type * as performance_lib_types from "../performance/lib/types.js";
 import type * as performance_lib_workdays from "../performance/lib/workdays.js";
@@ -106,7 +112,11 @@ import type * as userPreferences from "../userPreferences.js";
 import type * as users from "../users.js";
 import type * as wikiChats from "../wikiChats.js";
 
-import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
   absenceSync: typeof absenceSync;
@@ -132,6 +142,7 @@ declare const fullApi: ApiFromModules<{
   "activity/lib/crypto": typeof activity_lib_crypto;
   "activity/lib/errors": typeof activity_lib_errors;
   "activity/lib/integrationsShared": typeof activity_lib_integrationsShared;
+  "activity/lib/patterns": typeof activity_lib_patterns;
   "activity/lib/state": typeof activity_lib_state;
   "activity/lib/users": typeof activity_lib_users;
   "activity/maintenance": typeof activity_maintenance;
@@ -145,8 +156,8 @@ declare const fullApi: ApiFromModules<{
   "activity/state": typeof activity_state;
   "activity/stats": typeof activity_stats;
   announcements: typeof announcements;
-  applicants: typeof applicants;
   applicantVault: typeof applicantVault;
+  applicants: typeof applicants;
   auditLog: typeof auditLog;
   chat: typeof chat;
   clerkSync: typeof clerkSync;
@@ -165,20 +176,23 @@ declare const fullApi: ApiFromModules<{
   guidebookHighlights: typeof guidebookHighlights;
   http: typeof http;
   "integrations/audit": typeof integrations_audit;
-  "integrations/clockodoLink": typeof integrations_clockodoLink;
-  "integrations/clockodoView": typeof integrations_clockodoView;
   "integrations/clockodo/client": typeof integrations_clockodo_client;
   "integrations/clockodo/users": typeof integrations_clockodo_users;
+  "integrations/clockodoLink": typeof integrations_clockodoLink;
+  "integrations/clockodoView": typeof integrations_clockodoView;
   "integrations/debug": typeof integrations_debug;
   "integrations/lib/auth": typeof integrations_lib_auth;
   invites: typeof invites;
+  "lib/attachments": typeof lib_attachments;
   "lib/audience": typeof lib_audience;
+  "lib/auditLogWrite": typeof lib_auditLogWrite;
   "lib/auth": typeof lib_auth;
   "lib/clerk": typeof lib_clerk;
   "lib/clockodoId": typeof lib_clockodoId;
   "lib/featureGate": typeof lib_featureGate;
   "lib/notify": typeof lib_notify;
   "lib/permissions": typeof lib_permissions;
+  "lib/users": typeof lib_users;
   members: typeof members;
   "migrations/backfillPerformanceCompanyId": typeof migrations_backfillPerformanceCompanyId;
   notifications: typeof notifications;
@@ -187,7 +201,9 @@ declare const fullApi: ApiFromModules<{
   orgDataMigration: typeof orgDataMigration;
   outbound: typeof outbound;
   "performance/lib/callImport": typeof performance_lib_callImport;
+  "performance/lib/interactionImport": typeof performance_lib_interactionImport;
   "performance/lib/kpi": typeof performance_lib_kpi;
+  "performance/lib/permissions": typeof performance_lib_permissions;
   "performance/lib/salesforceImport": typeof performance_lib_salesforceImport;
   "performance/lib/types": typeof performance_lib_types;
   "performance/lib/workdays": typeof performance_lib_workdays;
@@ -216,7 +232,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -226,6 +245,9 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "publ
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
 
 export declare const components: {};

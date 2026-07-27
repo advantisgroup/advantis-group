@@ -511,6 +511,69 @@ export const myState = query({
   },
 });
 
+export const stateBatch = query({
+  args: {
+    employeeIds: v.optional(v.array(v.string())),
+    since: v.number(),
+  },
+  handler: async (ctx, { employeeIds = [], since }) => {
+    const user = await requireUser(ctx);
+
+    const person = await ctx.db
+      .query("people")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .first();
+
+    const ids = [
+      ...new Set([...employeeIds, ...(person?.employeeId ? [person.employeeId] : [])]),
+    ].slice(0, 100);
+
+    return await Promise.all(
+      ids.map(async (employeeId) => {
+        const samples = await ctx.db
+          .query("stateSamples")
+          .withIndex("by_employee_time", (q) => q.eq("employeeId", employeeId).gte("at", since))
+          .order("asc")
+          .take(500);
+
+        if (samples.length === 0) {
+          return {
+            employeeId,
+            state: null,
+          };
+        }
+
+        const latest = samples[samples.length - 1];
+
+        // Find when this state started today
+        let finalStateSince = latest.at;
+
+        for (let i = samples.length - 1; i >= 0; i--) {
+          if (samples[i].state !== latest.state) {
+            break;
+          }
+
+          finalStateSince = samples[i].at;
+        }
+
+        return {
+          employeeId,
+          state: {
+            finalState: latest.state,
+            finalStateSince,
+            clockodoWorking: null,
+            clockodoBreak: null,
+            clockodoAbsent: null,
+            clockodoClockedOut: null,
+            clockodoClockedOutCertain: null,
+            updatedAt: latest.at,
+          },
+        };
+      }),
+    );
+  },
+});
+
 /**
  * Batched state history for the overview's per-card day strips: today's state
  * changes for many employees in one reactive query, so the overview grid does
@@ -518,10 +581,19 @@ export const myState = query({
  * strips are today-only and must not extend yesterday's state from midnight.
  */
 export const historyBatch = query({
-  args: { employeeIds: v.array(v.string()), since: v.number() },
+  args: { employeeIds: v.optional(v.array(v.string())), since: v.number() },
   handler: async (ctx, { employeeIds, since }) => {
-    await requireUser(ctx);
-    const ids = [...new Set(employeeIds)].slice(0, 100);
+    const user = await requireUser(ctx);
+    const person = await ctx.db
+      .query("people")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .first();
+
+    const ids = [...new Set(employeeIds), ...(person?.employeeId ? [person.employeeId] : [])].slice(
+      0,
+      100,
+    );
+
     return await Promise.all(
       ids.map(async (employeeId) => {
         const rows = await ctx.db
