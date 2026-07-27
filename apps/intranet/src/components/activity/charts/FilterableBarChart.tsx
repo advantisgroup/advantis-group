@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 import { cn } from "@/lib/utils";
 
 import { CHART, tooltipStyle } from "./theme";
+import { ChartInfoTip } from "./ChartInfoTip";
 
 export interface BarSeries {
   key: string;
@@ -158,15 +159,11 @@ export function FilterableBarChart({
               tickFormatter={yTickFormatter}
             />
           )}
-          <Tooltip
+          <ChartInfoTip
             {...tooltipStyle}
             formatter={
               tooltipFormatter
-                ? (
-                    value: number,
-                    _name: string,
-                    item: { dataKey?: string | number; payload?: unknown },
-                  ) => {
+                ? (value, _name, item) => {
                     const raw =
                       yScale === "log" &&
                       typeof item.dataKey === "string" &&
@@ -174,7 +171,13 @@ export function FilterableBarChart({
                       typeof item.payload === "object"
                         ? (item.payload as Record<string, unknown>)[`${item.dataKey}${RAW_SUFFIX}`]
                         : undefined;
-                    return tooltipFormatter(typeof raw === "number" ? raw : value);
+
+                    const resolvedValue =
+                      typeof raw === "number" ? raw : typeof value === "number" ? value : undefined;
+
+                    return resolvedValue === undefined
+                      ? undefined
+                      : tooltipFormatter(resolvedValue);
                   }
                 : undefined
             }
