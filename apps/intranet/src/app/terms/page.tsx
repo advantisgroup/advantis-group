@@ -15,7 +15,10 @@ export default function TermsPage() {
       updated={t("updated")}
       tocLabel={t("tableOfContents")}
       sections={sections}
-      crossPage={{ label: t("viewPrivacy"), href: "/privacy" }}
+      crossPage={[
+        { label: t("viewPrivacy"), href: "/privacy" },
+        { label: t("viewImprint"), href: "/imprint" },
+      ]}
     />
   );
 }

@@ -20,6 +20,7 @@ const isPublicRoute = createRouteMatcher([
   // Legal pages must be readable by anyone, including rejected sign-ups.
   "/privacy(.*)",
   "/terms(.*)",
+  "/imprint(.*)",
 ]);
 
 // The intranet's own hostname — every request here is excluded from the
