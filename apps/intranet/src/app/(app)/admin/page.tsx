@@ -17,11 +17,7 @@ import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
-import {
-  useHasCapability,
-  useIsAdmin,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useHasCapability, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -43,15 +39,13 @@ function StatCard({
           "grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset",
           accent
             ? "bg-signal/12 text-signal ring-signal/25"
-            : "bg-panel-2 text-muted-foreground ring-border"
+            : "bg-panel-2 text-muted-foreground ring-border",
         )}
       >
         <Icon className="size-4" />
       </span>
       <div className="min-w-0">
-        <p className="text-xl font-semibold leading-none tabular-nums">
-          {value}
-        </p>
+        <p className="text-xl font-semibold leading-none tabular-nums">{value}</p>
         <p className="mt-1 truncate text-xs text-muted-foreground">{label}</p>
       </div>
     </div>
@@ -77,9 +71,7 @@ function QuickLinkCard({
       <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary [&_svg]:size-4">
         <Icon />
       </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-        {label}
-      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
       {count ? (
         <Badge variant="warning">{count > 99 ? "99+" : count}</Badge>
       ) : (
@@ -96,18 +88,12 @@ export default function AdminPage() {
   const hasUploadsView = useHasCapability("manage_uploads");
 
   const members = useQuery(api.users.list, { includeSuspended: true });
-  const requests = useQuery(
-    api.accessRequests.list,
-    isManager ? { status: "pending" } : "skip"
-  );
-  const invites = useQuery(
-    api.invites.list,
-    isManager ? { status: "pending" } : "skip"
-  );
+  const requests = useQuery(api.accessRequests.list, isManager ? { status: "pending" } : "skip");
+  const invites = useQuery(api.invites.list, isManager ? { status: "pending" } : "skip");
   const guests = useQuery(api.guest.listTempLogins, isAdmin ? {} : "skip");
   const pendingUploads = useQuery(
     api.onedrive.listPending,
-    isManager || hasUploadsView ? {} : "skip"
+    isManager || hasUploadsView ? {} : "skip",
   );
 
   if (!isManager) {
@@ -115,10 +101,10 @@ export default function AdminPage() {
   }
 
   const dash = (n: number | undefined) => (n === undefined ? "—" : n);
-  const activeMembers = members?.filter(m => m.status === "active").length;
+  const activeMembers = members?.filter((m) => m.status === "active").length;
   const reqCount = requests?.length;
   const invCount = invites?.length;
-  const guestCount = guests?.filter(g => g.status === "active").length;
+  const guestCount = guests?.filter((g) => g.status === "active").length;
   const uploadCount = pendingUploads?.length;
 
   const stats: {
@@ -167,14 +153,10 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <PageHeader
-        title={t("title")}
-        description={t("subtitle")}
-        icon={<ShieldCheck />}
-      />
+      <PageHeader title={t("title")} description={t("subtitle")} icon={<ShieldCheck />} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map(s => (
+        {stats.map((s) => (
           <StatCard key={s.label} {...s} />
         ))}
       </div>
@@ -184,12 +166,9 @@ export default function AdminPage() {
           as a set of quick-access cards rather than duplicating each
           section's content here as tabs. */}
       <div className="space-y-6">
-        {ADMIN_NAV_GROUPS.filter(
-          group => group.labelKey !== "nav.groupGeneral"
-        ).map(group => {
+        {ADMIN_NAV_GROUPS.filter((group) => group.labelKey !== "nav.groupGeneral").map((group) => {
           const items = group.items.filter(
-            item =>
-              (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
+            (item) => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin),
           );
           if (items.length === 0) return null;
           return (
@@ -198,7 +177,7 @@ export default function AdminPage() {
                 {t(group.labelKey)}
               </h2>
               <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map(item => (
+                {items.map((item) => (
                   <QuickLinkCard
                     key={item.href}
                     href={item.href}

@@ -111,9 +111,7 @@ export function describeStatus(input: StatusInput): StatusDescriptor {
   if (clockodoClockedOut) {
     const certain = clockodoClockedOutCertain === true;
     return {
-      headlineKey: certain
-        ? "livestatus.clockedOutCertain"
-        : "livestatus.clockedOut",
+      headlineKey: certain ? "livestatus.clockedOutCertain" : "livestatus.clockedOut",
       tone: "muted",
       live: false,
       showIdleFor: false,

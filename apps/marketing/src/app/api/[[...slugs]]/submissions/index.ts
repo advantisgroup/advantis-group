@@ -14,11 +14,7 @@ const submissionSchema = t.Object({
   subject: t.String(),
   message: t.String(),
   company: t.Optional(t.String()),
-  submissionType: t.Union([
-    t.Literal("message"),
-    t.Literal("callback"),
-    t.Literal("other"),
-  ]),
+  submissionType: t.Union([t.Literal("message"), t.Literal("callback"), t.Literal("other")]),
   topic: t.Optional(t.String()),
   desiredDateTime: t.Optional(t.String()),
   notes: t.Optional(t.String()),
@@ -54,20 +50,16 @@ export const submissions = new Elysia().get(
       return {
         error: "Server configuration error.",
         code: "convex_not_configured",
-        detail:
-          "NEXT_PUBLIC_CONVEX_URL is missing, so submissions cannot be loaded.",
+        detail: "NEXT_PUBLIC_CONVEX_URL is missing, so submissions cannot be loaded.",
       };
     }
 
     const convex = new ConvexHttpClient(convexUrl);
 
     try {
-      const submissions = await convex.query(
-        api.emails.listEmailsByAccountEmail,
-        {
-          accountEmail,
-        }
-      );
+      const submissions = await convex.query(api.emails.listEmailsByAccountEmail, {
+        accountEmail,
+      });
       if (!submissions) {
         set.status = 404;
         return {
@@ -82,10 +74,7 @@ export const submissions = new Elysia().get(
       return {
         error: "Failed to load submissions.",
         code: "convex_query_failed",
-        detail:
-          error instanceof Error
-            ? error.message
-            : "Unknown Convex query error.",
+        detail: error instanceof Error ? error.message : "Unknown Convex query error.",
       };
     }
   },
@@ -98,5 +87,5 @@ export const submissions = new Elysia().get(
       404: errorSchema,
       500: errorSchema,
     },
-  }
+  },
 );

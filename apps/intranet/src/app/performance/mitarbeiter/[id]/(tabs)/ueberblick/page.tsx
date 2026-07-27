@@ -5,11 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { MetricTile } from "@/components/performance/MetricTile";
 import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
-import {
-  DeltaTriple,
-  fmtNum,
-  fmtPct,
-} from "@/components/performance/PerformanceFormat";
+import { DeltaTriple, fmtNum, fmtPct } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { Badge } from "@/components/ui/badge";
@@ -52,9 +48,7 @@ function PrimaryKpiCard({
           {label}
         </span>
         <span className="text-3xl font-semibold tabular-nums">{value}</span>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         <DeltaTriple dVm={dVm} dVj={dVj} dTeam={dTeam} />
       </CardContent>
     </Card>
@@ -70,24 +64,16 @@ type Signal = {
   trend: { text: string; dir: "good" | "bad" } | null;
 };
 
-function SignalList({
-  items,
-  kind,
-}: {
-  items: Signal[];
-  kind: "alert" | "highlight";
-}) {
+function SignalList({ items, kind }: { items: Signal[]; kind: "alert" | "highlight" }) {
   return (
     <ul className="space-y-3">
-      {items.map(s => (
+      {items.map((s) => (
         <li key={s.key} className="text-sm">
           <div className="flex items-center justify-between">
             <span className="font-medium">{s.label}</span>
             <span
               className={
-                kind === "alert"
-                  ? "text-destructive"
-                  : "text-emerald-600 dark:text-emerald-400"
+                kind === "alert" ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"
               }
             >
               {fmtNum(s.value)}
@@ -152,11 +138,7 @@ export default function EmployeeOverviewPage() {
         />
         <PrimaryKpiCard
           accent="slate"
-          label={
-            fc?.isActual
-              ? t("dashboardForecastTitleDone")
-              : t("dashboardForecastTitle")
-          }
+          label={fc?.isActual ? t("dashboardForecastTitleDone") : t("dashboardForecastTitle")}
           value={fmtNum(data.cur.fc1)}
           subtitle={
             fc?.isActual
@@ -257,8 +239,7 @@ export default function EmployeeOverviewPage() {
           ) : (
             Object.entries(data.monthBadges).map(([key, info]) => (
               <Badge key={key} variant="success" title={t(`badgeLabel.${key}`)}>
-                {BADGE_ICONS[key] ?? ""} {t(`badgeLabel.${key}`)} ·{" "}
-                {fmtNum(info.value)}
+                {BADGE_ICONS[key] ?? ""} {t(`badgeLabel.${key}`)} · {fmtNum(info.value)}
               </Badge>
             ))
           )}

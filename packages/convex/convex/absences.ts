@@ -6,36 +6,27 @@ import { requireUser, requireManager } from "./lib/auth";
 
 function displayName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
-  return (
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
-  );
+  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
 }
 
-function rangesOverlap(
-  aStart: string,
-  aEnd: string,
-  bStart: string,
-  bEnd: string
-): boolean {
+function rangesOverlap(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
 export const myAbsences = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const rows = await ctx.db
       .query("absences")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .order("desc")
       .take(100);
     return Promise.all(
-      rows.map(async a => ({
+      rows.map(async (a) => ({
         ...a,
-        reviewerName: a.reviewedByUserId
-          ? displayName(await ctx.db.get(a.reviewedByUserId))
-          : null,
-      }))
+        reviewerName: a.reviewedByUserId ? displayName(await ctx.db.get(a.reviewedByUserId)) : null,
+      })),
     );
   },
 });
@@ -52,13 +43,13 @@ export const upcomingForUser = query({
     const today = new Date().toISOString().slice(0, 10);
     const absences = await ctx.db
       .query("absences")
-      .withIndex("by_user", q => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .collect();
     return absences
-      .filter(a => a.status === "approved" && a.endDate >= today)
+      .filter((a) => a.status === "approved" && a.endDate >= today)
       .sort((a, b) => a.startDate.localeCompare(b.startDate))
       .slice(0, 5)
-      .map(a => ({
+      .map((a) => ({
         _id: a._id,
         type: a.type,
         startDate: a.startDate,
@@ -75,13 +66,11 @@ export const listForCalendar = query({
     await requireUser(ctx);
     const approved = await ctx.db
       .query("absences")
-      .withIndex("by_status", q => q.eq("status", "approved"))
+      .withIndex("by_status", (q) => q.eq("status", "approved"))
       .collect();
-    const overlapping = approved.filter(a =>
-      rangesOverlap(a.startDate, a.endDate, start, end)
-    );
+    const overlapping = approved.filter((a) => rangesOverlap(a.startDate, a.endDate, start, end));
     return Promise.all(
-      overlapping.map(async a => {
+      overlapping.map(async (a) => {
         const u = await ctx.db.get(a.userId);
         return {
           _id: a._id,
@@ -93,7 +82,7 @@ export const listForCalendar = query({
           endDate: a.endDate,
           halfDay: a.halfDay ?? false,
         };
-      })
+      }),
     );
   },
 });
@@ -104,11 +93,11 @@ export const listForCalendar = query({
  */
 export const pendingForApproval = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireManager(ctx);
     const rows = await ctx.db
       .query("absences")
-      .withIndex("by_status", q => q.eq("status", "pending"))
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
       .collect();
     return { count: rows.length };
   },
@@ -117,11 +106,11 @@ export const pendingForApproval = query({
 /** When the hourly Clockodo mirror last reconciled, for the freshness hint. */
 export const clockodoSyncStatus = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     const row = await ctx.db
       .query("activitySettings")
-      .withIndex("by_key", q => q.eq("key", "absenceSync.lastRunAt"))
+      .withIndex("by_key", (q) => q.eq("key", "absenceSync.lastRunAt"))
       .unique();
     return { lastRunAt: row ? Number(row.value) : null };
   },

@@ -20,11 +20,7 @@ function assertServerKey(serverKey: string) {
 }
 
 /** Load a chat and verify it belongs to the given user, or throw. */
-async function ownedChat(
-  ctx: MutationCtx,
-  id: Id<"wikiChats">,
-  clerkUserId: string
-) {
+async function ownedChat(ctx: MutationCtx, id: Id<"wikiChats">, clerkUserId: string) {
   const chat = await ctx.db.get(id);
   if (!chat || chat.clerkUserId !== clerkUserId) {
     throw new ConvexError({ code: "not_found", message: "Chat not found" });
@@ -38,11 +34,11 @@ export const list = query({
     assertServerKey(args.serverKey);
     const chats = await ctx.db
       .query("wikiChats")
-      .withIndex("by_user", q => q.eq("clerkUserId", args.clerkUserId))
+      .withIndex("by_user", (q) => q.eq("clerkUserId", args.clerkUserId))
       .collect();
     return chats
       .sort((a, b) => b.updatedAt - a.updatedAt)
-      .map(c => ({
+      .map((c) => ({
         id: c._id,
         title: c.title,
         messages: c.messages,

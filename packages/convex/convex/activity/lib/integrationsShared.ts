@@ -21,8 +21,7 @@ export function healthStatusOf(err: unknown): "unavailable" | "unconfigured" {
   return /not configured|not set/i.test(msg) ? "unconfigured" : "unavailable";
 }
 
-export const errMessage = (err: unknown) =>
-  err instanceof Error ? err.message : String(err);
+export const errMessage = (err: unknown) => (err instanceof Error ? err.message : String(err));
 
 /**
  * Today as YYYY-MM-DD in the *business* timezone — NOT UTC. The Clockodo
@@ -48,7 +47,7 @@ export async function reportHealth(
   ctx: ActionCtx,
   source: "genesys" | "clockodo",
   status: "ok" | "unavailable" | "unconfigured",
-  message?: string
+  message?: string,
 ): Promise<void> {
   try {
     await ctx.runMutation(api.activity.state.reportHealth, {

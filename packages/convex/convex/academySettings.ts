@@ -14,7 +14,7 @@ export const checkPin = query({
     await requireUser(ctx);
     const row = await ctx.db
       .query("academySettings")
-      .withIndex("by_academyId", q => q.eq("academyId", academyId))
+      .withIndex("by_academyId", (q) => q.eq("academyId", academyId))
       .unique();
     const current = row?.pin ?? DEFAULT_PIN;
     return current === pin.trim();
@@ -29,7 +29,7 @@ export const setPin = mutation({
     if (trimmed.length < 4) return;
     const row = await ctx.db
       .query("academySettings")
-      .withIndex("by_academyId", q => q.eq("academyId", academyId))
+      .withIndex("by_academyId", (q) => q.eq("academyId", academyId))
       .unique();
     const now = Date.now();
     if (row) {
@@ -54,25 +54,25 @@ export const resetAll = mutation({
 
     const participants = await ctx.db
       .query("academyParticipants")
-      .withIndex("by_academy", q => q.eq("academyId", academyId))
+      .withIndex("by_academy", (q) => q.eq("academyId", academyId))
       .collect();
-    await Promise.all(participants.map(p => ctx.db.delete(p._id)));
+    await Promise.all(participants.map((p) => ctx.db.delete(p._id)));
 
     const results = await ctx.db
       .query("academyResults")
-      .withIndex("by_academy", q => q.eq("academyId", academyId))
+      .withIndex("by_academy", (q) => q.eq("academyId", academyId))
       .collect();
-    await Promise.all(results.map(r => ctx.db.delete(r._id)));
+    await Promise.all(results.map((r) => ctx.db.delete(r._id)));
 
     const questions = await ctx.db
       .query("academyQuestions")
-      .withIndex("by_academy", q => q.eq("academyId", academyId))
+      .withIndex("by_academy", (q) => q.eq("academyId", academyId))
       .collect();
-    await Promise.all(questions.map(q => ctx.db.delete(q._id)));
+    await Promise.all(questions.map((q) => ctx.db.delete(q._id)));
 
     const settings = await ctx.db
       .query("academySettings")
-      .withIndex("by_academyId", q => q.eq("academyId", academyId))
+      .withIndex("by_academyId", (q) => q.eq("academyId", academyId))
       .unique();
     if (settings) await ctx.db.delete(settings._id);
   },

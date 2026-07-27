@@ -28,9 +28,7 @@ export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
         <div className="flex items-center justify-between gap-3 border-b border-border/70 p-4">
           <p className="text-sm font-semibold">
             {t("interviewHistory")}
-            <span className="ml-1.5 text-muted-foreground">
-              ({applicant.interviews.length})
-            </span>
+            <span className="ml-1.5 text-muted-foreground">({applicant.interviews.length})</span>
           </p>
           <Button size="sm" onClick={() => setLogOpen(true)}>
             <Plus className="size-4" />
@@ -52,7 +50,7 @@ export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
             />
           ) : (
             <div className="divide-y divide-border/70">
-              {applicant.interviews.map(iv => (
+              {applicant.interviews.map((iv) => (
                 <EntryRow
                   key={iv._id}
                   href={`/applicants/${applicant._id}/interviews/${iv._id}`}
@@ -62,9 +60,7 @@ export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
                   })}
                   meta={iv.interviewer || t("tabInterviews")}
                   note={iv.notiz}
-                  onDelete={() =>
-                    removeInterview({ interviewId: iv._id }).catch(handleError)
-                  }
+                  onDelete={() => removeInterview({ interviewId: iv._id }).catch(handleError)}
                   deleteLabel={t("deleteEntry")}
                 />
               ))}
@@ -72,11 +68,7 @@ export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
           )}
         </CardContent>
       </Card>
-      <InterviewDialog
-        open={logOpen}
-        onOpenChange={setLogOpen}
-        applicantId={applicant._id}
-      />
+      <InterviewDialog open={logOpen} onOpenChange={setLogOpen} applicantId={applicant._id} />
     </div>
   );
 }

@@ -63,17 +63,10 @@ export function StatCard({
   valueClassName?: string;
 }) {
   const pct =
-    progress === undefined
-      ? undefined
-      : Math.max(0, Math.min(100, Math.round(progress * 100)));
+    progress === undefined ? undefined : Math.max(0, Math.min(100, Math.round(progress * 100)));
 
   return (
-    <Card
-      className={cn(
-        "transition-shadow duration-200 hover:shadow-card-hover",
-        className
-      )}
-    >
+    <Card className={cn("transition-shadow duration-200 hover:shadow-card-hover", className)}>
       <CardContent className="flex flex-col gap-3 p-5">
         <div className="flex items-center justify-between gap-2">
           <span className="kicker flex items-center gap-1.5 truncate">
@@ -84,7 +77,7 @@ export function StatCard({
             <span
               className={cn(
                 "grid h-9 w-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset",
-                TILE[tone]
+                TILE[tone],
               )}
             >
               {icon}
@@ -97,7 +90,7 @@ export function StatCard({
             className={cn(
               "text-3xl font-semibold leading-none tabular-nums tracking-tight",
               TONE[tone],
-              valueClassName
+              valueClassName,
             )}
           >
             {value}
@@ -118,18 +111,13 @@ export function StatCard({
             aria-valuemax={100}
           >
             <div
-              className={cn(
-                "h-full rounded-full transition-[width] duration-500",
-                BAR[tone]
-              )}
+              className={cn("h-full rounded-full transition-[width] duration-500", BAR[tone])}
               style={{ width: `${pct}%` }}
             />
           </div>
         )}
 
-        {hint && (
-          <p className="truncate text-xs text-muted-foreground">{hint}</p>
-        )}
+        {hint && <p className="truncate text-xs text-muted-foreground">{hint}</p>}
       </CardContent>
     </Card>
   );

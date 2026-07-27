@@ -64,9 +64,7 @@ export const email = new Elysia().post(
       });
 
       const status = error ? "failed" : "sent";
-      const errorMsg = error
-        ? error.message || "Failed to send email"
-        : undefined;
+      const errorMsg = error ? error.message || "Failed to send email" : undefined;
 
       if (convex) {
         try {
@@ -111,8 +109,7 @@ export const email = new Elysia().post(
       };
     } catch (error) {
       set.status = 500;
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
 
       if (convex) {
         try {
@@ -174,5 +171,5 @@ export const email = new Elysia().post(
         error: t.String(),
       }),
     },
-  }
+  },
 );

@@ -1,10 +1,6 @@
 import type { ReactNode } from "react";
 
-import {
-  TourFirstVisitNudge,
-  TourReplayButton,
-  type CheckpointId,
-} from "@/components/tour";
+import { TourFirstVisitNudge, TourReplayButton, type CheckpointId } from "@/components/tour";
 
 export function PageHeader({
   title,
@@ -41,14 +37,10 @@ export function PageHeader({
               <h1 className="font-display text-2xl font-bold tracking-tight md:text-[1.75rem]">
                 {title}
               </h1>
-              {tourCheckpoint && (
-                <TourReplayButton checkpointId={tourCheckpoint} />
-              )}
+              {tourCheckpoint && <TourReplayButton checkpointId={tourCheckpoint} />}
             </span>
             {description && (
-              <p className="mt-1 break-words text-sm text-muted-foreground">
-                {description}
-              </p>
+              <p className="mt-1 break-words text-sm text-muted-foreground">{description}</p>
             )}
           </div>
         </div>

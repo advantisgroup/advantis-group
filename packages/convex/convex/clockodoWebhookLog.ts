@@ -17,10 +17,7 @@ function assertServerKey(serverKey: string) {
 export const logWebhookDelivery = mutation({
   args: {
     serverKey: v.string(),
-    endpoint: v.union(
-      v.literal("webhooks/clockodo"),
-      v.literal("integrations/clockodo/webhook")
-    ),
+    endpoint: v.union(v.literal("webhooks/clockodo"), v.literal("integrations/clockodo/webhook")),
     eventName: v.optional(v.string()),
     ok: v.boolean(),
     reason: v.string(),
@@ -39,11 +36,11 @@ const BATCH = 4_000;
 
 export const pruneOldWebhookLogs = internalMutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
     const stale = await ctx.db
       .query("clockodoWebhookLog")
-      .withIndex("by_at", q => q.lt("at", cutoff))
+      .withIndex("by_at", (q) => q.lt("at", cutoff))
       .take(BATCH);
     for (const row of stale) {
       await ctx.db.delete(row._id);

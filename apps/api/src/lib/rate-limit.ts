@@ -26,7 +26,7 @@ export async function rateLimit(
   name: string,
   key: string,
   limit: number,
-  window: Parameters<typeof Ratelimit.slidingWindow>[1]
+  window: Parameters<typeof Ratelimit.slidingWindow>[1],
 ): Promise<void> {
   const client = getRedis();
   if (!client) return;

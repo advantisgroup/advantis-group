@@ -2,15 +2,7 @@
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import {
-  Award,
-  Circle,
-  Clock,
-  Coffee,
-  LogOut,
-  MessageSquare,
-  TrendingUp,
-} from "lucide-react";
+import { Award, Circle, Clock, Coffee, LogOut, MessageSquare, TrendingUp } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
@@ -22,7 +14,7 @@ import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
 export function ChatsCard() {
   const t = useTranslations("Dashboard");
   const conversations = useQuery(api.chat.listConversations);
-  const unreadChats = conversations?.filter(c => c.unread > 0) ?? [];
+  const unreadChats = conversations?.filter((c) => c.unread > 0) ?? [];
 
   return (
     <DashCard
@@ -37,7 +29,7 @@ export function ChatsCard() {
           {t("noUnread")}
         </Empty>
       ) : (
-        unreadChats.slice(0, 5).map(c => (
+        unreadChats.slice(0, 5).map((c) => (
           <Row
             key={c._id}
             href={`/chat?c=${c._id}`}
@@ -46,9 +38,7 @@ export function ChatsCard() {
             leading={
               <Avatar className="size-8 shrink-0">
                 {c.avatar && <AvatarImage src={c.avatar} alt={c.title} />}
-                <AvatarFallback className="text-[10px]">
-                  {initials(c.title)}
-                </AvatarFallback>
+                <AvatarFallback className="text-[10px]">{initials(c.title)}</AvatarFallback>
               </Avatar>
             }
             trailing={
@@ -74,8 +64,7 @@ export function MyDayCard() {
     if (!state) return null;
     if (state.clockodoWorking)
       return { key: "clockodoWorking", icon: Circle, tint: "text-success" };
-    if (state.clockodoBreak)
-      return { key: "clockodoBreak", icon: Coffee, tint: "text-warning" };
+    if (state.clockodoBreak) return { key: "clockodoBreak", icon: Coffee, tint: "text-warning" };
     if (state.clockodoAbsent)
       return {
         key: "clockodoAbsent",
@@ -127,7 +116,7 @@ export function MyPerformanceCard() {
   const employeeId = session?.valid ? session.employeeId : null;
   const detail = useQuery(
     api.performanceQueries.employeeDetail,
-    employeeId ? { token: "", employeeId } : "skip"
+    employeeId ? { token: "", employeeId } : "skip",
   );
 
   const topHighlight = detail?.highlights?.[0];

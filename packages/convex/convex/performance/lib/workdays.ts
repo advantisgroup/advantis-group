@@ -23,9 +23,7 @@ export function toISODate(d: Date): string {
  * no detectable date of its own. */
 export function todayUTC(): Date {
   const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
 function addDays(d: Date, n: number): Date {
@@ -142,19 +140,12 @@ export interface Forecast {
 /** FC1 projection for a cumulative monthly value, on a workday basis (used
  * for the team / months without call data — see `performance/lib/kpi.ts`
  * for the per-employee "worked days" variant). */
-export function forecast(
-  value: number | null,
-  ym: string,
-  asOf: Date
-): Forecast {
+export function forecast(value: number | null, ym: string, asOf: Date): Forecast {
   const total = monthWorkdays(ym);
   const elapsed = workdaysElapsed(ym, asOf);
   const remaining = Math.max(total - elapsed, 0);
   const isActual = remaining === 0;
-  const perDay =
-    value !== null && elapsed
-      ? Math.round((value / elapsed) * 100) / 100
-      : null;
+  const perDay = value !== null && elapsed ? Math.round((value / elapsed) * 100) / 100 : null;
   let fc1: number | null;
   if (value === null) {
     fc1 = null;

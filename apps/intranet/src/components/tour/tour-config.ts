@@ -336,4 +336,4 @@ export const TOUR_CHECKPOINTS: TourCheckpoint[] = [
   },
 ];
 
-export const ALL_CHECKPOINT_IDS = TOUR_CHECKPOINTS.map(c => c.id);
+export const ALL_CHECKPOINT_IDS = TOUR_CHECKPOINTS.map((c) => c.id);

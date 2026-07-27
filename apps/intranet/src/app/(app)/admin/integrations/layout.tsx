@@ -12,11 +12,7 @@ import { useHasCapability } from "@/components/providers/current-user";
  * employee holding a custom role with `access_integrations`, without them
  * being promoted to manager.
  */
-export default function IntegrationsLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function IntegrationsLayout({ children }: { children: ReactNode }) {
   const hasIntegrationsAccess = useHasCapability("access_integrations");
 
   if (!hasIntegrationsAccess) {

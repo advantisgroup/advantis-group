@@ -23,11 +23,11 @@ export function displayName(user: Doc<"users"> | null): string {
  */
 export async function batchGetUsers(
   ctx: QueryCtx,
-  userIds: Id<"users">[]
+  userIds: Id<"users">[],
 ): Promise<Map<Id<"users">, Doc<"users">>> {
   const uniqueIds = [...new Set(userIds)];
-  const users = await Promise.all(uniqueIds.map(id => ctx.db.get(id)));
-  return new Map(users.flatMap(u => (u ? [[u._id, u] as const] : [])));
+  const users = await Promise.all(uniqueIds.map((id) => ctx.db.get(id)));
+  return new Map(users.flatMap((u) => (u ? [[u._id, u] as const] : [])));
 }
 
 /**
@@ -57,7 +57,7 @@ export function toUserSummary(user: Doc<"users"> | null): UserSummary | null {
  */
 export async function batchUserSummaries(
   ctx: QueryCtx,
-  userIds: Id<"users">[]
+  userIds: Id<"users">[],
 ): Promise<Map<Id<"users">, UserSummary>> {
   const byId = await batchGetUsers(ctx, userIds);
   const out = new Map<Id<"users">, UserSummary>();

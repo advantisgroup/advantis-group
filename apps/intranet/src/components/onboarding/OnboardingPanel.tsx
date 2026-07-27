@@ -42,8 +42,7 @@ const BARE_STEPS = new Set<OnboardingStepId>(["welcome", "finish"]);
 
 export function OnboardingPanel() {
   const t = useTranslations("Onboarding");
-  const { open, forced, steps, stepIndex, currentStepId, back, next, close } =
-    useOnboarding();
+  const { open, forced, steps, stepIndex, currentStepId, back, next, close } = useOnboarding();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {

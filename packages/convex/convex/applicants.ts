@@ -29,7 +29,7 @@ function assertServerKey(serverKey: string): void {
 
 async function requireApplicant(
   ctx: QueryCtx | MutationCtx,
-  applicantId: Id<"applicants">
+  applicantId: Id<"applicants">,
 ): Promise<Doc<"applicants">> {
   const applicant = await ctx.db.get(applicantId);
   if (!applicant) {
@@ -43,7 +43,7 @@ async function requireApplicant(
 
 /** Maps a Termin's `art` to the Kontakt `art` it becomes once converted. */
 function kontaktArtFromTerminArt(
-  art: Doc<"applicantAppointments">["art"]
+  art: Doc<"applicantAppointments">["art"],
 ): Doc<"applicantContacts">["art"] {
   if (art === "teams") return "video";
   if (art === "vor_ort") return "persoenlich";
@@ -56,7 +56,7 @@ function kontaktArtFromTerminArt(
 
 export const listProfiles = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireApplicantAccess(ctx);
     const profiles = await ctx.db.query("applicantSkillProfiles").collect();
     return profiles.sort((a, b) => a.name.localeCompare(b.name));
@@ -69,7 +69,7 @@ export const createProfile = mutation({
     const user = await requireApplicantAccess(ctx);
     const trimmed = name.trim();
     const existing = await ctx.db.query("applicantSkillProfiles").collect();
-    if (existing.some(p => p.name.toLowerCase() === trimmed.toLowerCase())) {
+    if (existing.some((p) => p.name.toLowerCase() === trimmed.toLowerCase())) {
       throw new ConvexError({
         code: "conflict",
         message: "A skill profile with this name already exists",
@@ -106,7 +106,7 @@ export const removeProfile = mutation({
     await requireApplicantAccess(ctx);
     const linked = await ctx.db
       .query("applicants")
-      .withIndex("by_profil", q => q.eq("profilId", profilId))
+      .withIndex("by_profil", (q) => q.eq("profilId", profilId))
       .collect();
     for (const applicant of linked) {
       await ctx.db.patch(applicant._id, { profilId: undefined });
@@ -127,7 +127,7 @@ export const removeProfile = mutation({
  */
 export const pipelineCount = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireApplicantAccess(ctx);
     // Both tables are still fully scanned here — there's no aggregate/
     // counter table backing applicant counts, so a true index-only count
@@ -136,8 +136,8 @@ export const pipelineCount = query({
     // this is a low-traffic overview widget, not a hot path.
     const applicants = await ctx.db.query("applicants").collect();
     const contacts = await ctx.db.query("applicantContacts").collect();
-    const contactedIds = new Set(contacts.map(c => c.applicantId));
-    const open = applicants.filter(a => !contactedIds.has(a._id)).length;
+    const contactedIds = new Set(contacts.map((c) => c.applicantId));
+    const open = applicants.filter((a) => !contactedIds.has(a._id)).length;
     return { open, total: applicants.length };
   },
 });
@@ -154,7 +154,7 @@ const LIST_HARD_CAP = 2000;
 
 export const list = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireApplicantAccess(ctx);
     const applicants = await ctx.db
       .query("applicants")
@@ -164,19 +164,16 @@ export const list = query({
 
     // Batch-fetch each child table once instead of firing 5 indexed queries
     // per applicant (was 5*N round trips for N applicants).
-    const applicantIds = new Set(applicants.map(a => a._id));
-    const [allKontakte, allEmails, allInterviews, allTermine, allDocuments] =
-      await Promise.all([
-        ctx.db.query("applicantContacts").collect(),
-        ctx.db.query("applicantEmails").collect(),
-        ctx.db.query("applicantInterviews").collect(),
-        ctx.db.query("applicantAppointments").collect(),
-        ctx.db.query("applicantDocuments").collect(),
-      ]);
+    const applicantIds = new Set(applicants.map((a) => a._id));
+    const [allKontakte, allEmails, allInterviews, allTermine, allDocuments] = await Promise.all([
+      ctx.db.query("applicantContacts").collect(),
+      ctx.db.query("applicantEmails").collect(),
+      ctx.db.query("applicantInterviews").collect(),
+      ctx.db.query("applicantAppointments").collect(),
+      ctx.db.query("applicantDocuments").collect(),
+    ]);
 
-    const groupByApplicant = <T extends { applicantId: Id<"applicants"> }>(
-      rows: T[]
-    ) => {
+    const groupByApplicant = <T extends { applicantId: Id<"applicants"> }>(rows: T[]) => {
       const map = new Map<Id<"applicants">, T[]>();
       for (const row of rows) {
         if (!applicantIds.has(row.applicantId)) continue;
@@ -194,10 +191,10 @@ export const list = query({
     const documentsByApplicant = groupByApplicant(allDocuments);
     const creatorsById = await batchUserSummaries(
       ctx,
-      applicants.map(a => a.createdByUserId)
+      applicants.map((a) => a.createdByUserId),
     );
 
-    return applicants.map(a => {
+    return applicants.map((a) => {
       const kontakte = kontakteByApplicant.get(a._id) ?? [];
       const emails = emailsByApplicant.get(a._id) ?? [];
       const interviews = interviewsByApplicant.get(a._id) ?? [];
@@ -209,15 +206,13 @@ export const list = query({
       // which case the UI shows it as overdue).
       const nextOpenTermin =
         termine
-          .filter(tm => !tm.uebernommen)
-          .sort((x, y) =>
-            (x.datum + x.uhrzeit).localeCompare(y.datum + y.uhrzeit)
-          )[0] ?? null;
+          .filter((tm) => !tm.uebernommen)
+          .sort((x, y) => (x.datum + x.uhrzeit).localeCompare(y.datum + y.uhrzeit))[0] ?? null;
 
       // Latest logged touchpoint of any kind (ISO date string compare).
       const lastActivity =
         [...kontakte, ...emails, ...interviews]
-          .map(e => e.datum)
+          .map((e) => e.datum)
           .sort()
           .at(-1) ?? null;
 
@@ -246,37 +241,34 @@ export const get = query({
   handler: async (ctx, { applicantId }) => {
     await requireApplicantAccess(ctx);
     const applicant = await requireApplicant(ctx, applicantId);
-    const createdByUser = toUserSummary(
-      await ctx.db.get(applicant.createdByUserId)
-    );
-    const [kontakte, emails, interviews, termine, documents] =
-      await Promise.all([
-        ctx.db
-          .query("applicantContacts")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-        ctx.db
-          .query("applicantEmails")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-        ctx.db
-          .query("applicantInterviews")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-        ctx.db
-          .query("applicantAppointments")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-        ctx.db
-          .query("applicantDocuments")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-      ]);
+    const createdByUser = toUserSummary(await ctx.db.get(applicant.createdByUserId));
+    const [kontakte, emails, interviews, termine, documents] = await Promise.all([
+      ctx.db
+        .query("applicantContacts")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+      ctx.db
+        .query("applicantEmails")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+      ctx.db
+        .query("applicantInterviews")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+      ctx.db
+        .query("applicantAppointments")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+      ctx.db
+        .query("applicantDocuments")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+    ]);
     const documentsWithUrl = await Promise.all(
-      documents.map(async d => ({
+      documents.map(async (d) => ({
         ...d,
         url: await ctx.storage.getUrl(d.storageId),
-      }))
+      })),
     );
     return {
       ...applicant,
@@ -353,29 +345,28 @@ export const remove = mutation({
     await requireApplicantAccess(ctx);
     await requireApplicant(ctx, applicantId);
 
-    const [kontakte, emails, interviews, termine, documents] =
-      await Promise.all([
-        ctx.db
-          .query("applicantContacts")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-        ctx.db
-          .query("applicantEmails")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-        ctx.db
-          .query("applicantInterviews")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-        ctx.db
-          .query("applicantAppointments")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-        ctx.db
-          .query("applicantDocuments")
-          .withIndex("by_applicant", q => q.eq("applicantId", applicantId))
-          .collect(),
-      ]);
+    const [kontakte, emails, interviews, termine, documents] = await Promise.all([
+      ctx.db
+        .query("applicantContacts")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+      ctx.db
+        .query("applicantEmails")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+      ctx.db
+        .query("applicantInterviews")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+      ctx.db
+        .query("applicantAppointments")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+      ctx.db
+        .query("applicantDocuments")
+        .withIndex("by_applicant", (q) => q.eq("applicantId", applicantId))
+        .collect(),
+    ]);
 
     for (const doc of documents) await ctx.storage.delete(doc.storageId);
     for (const rows of [kontakte, emails, interviews, termine, documents]) {
@@ -467,7 +458,7 @@ export const removeInterview = mutation({
 
 export const generateUploadUrl = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireApplicantAccess(ctx);
     return ctx.storage.generateUploadUrl();
   },
@@ -529,21 +520,17 @@ export const listTermine = query({
     await requireApplicantAccess(ctx);
     const termine = await ctx.db
       .query("applicantAppointments")
-      .withIndex("by_datum", q => q.gte("datum", from).lte("datum", to))
+      .withIndex("by_datum", (q) => q.gte("datum", from).lte("datum", to))
       .collect();
     // Only resolve names for the applicants actually referenced in this
     // date range, instead of scanning the whole applicants table.
-    const uniqueApplicantIds = [...new Set(termine.map(t => t.applicantId))];
-    const applicants = await Promise.all(
-      uniqueApplicantIds.map(id => ctx.db.get(id))
-    );
+    const uniqueApplicantIds = [...new Set(termine.map((t) => t.applicantId))];
+    const applicants = await Promise.all(uniqueApplicantIds.map((id) => ctx.db.get(id)));
     const nameById = new Map(
-      applicants
-        .filter((a): a is NonNullable<typeof a> => a !== null)
-        .map(a => [a._id, a.name])
+      applicants.filter((a): a is NonNullable<typeof a> => a !== null).map((a) => [a._id, a.name]),
     );
     return termine
-      .map(t => ({ ...t, applicantName: nameById.get(t.applicantId) ?? null }))
+      .map((t) => ({ ...t, applicantName: nameById.get(t.applicantId) ?? null }))
       .sort((a, b) => (a.datum + a.uhrzeit).localeCompare(b.datum + b.uhrzeit));
   },
 });
@@ -585,9 +572,7 @@ export const convertTermin = mutation({
         applicantId: termin.applicantId,
         datum: termin.datum,
         interviewer: "",
-        notiz:
-          termin.notiz ||
-          "Übernommen aus dem Terminkalender – Notizen ergänzen.",
+        notiz: termin.notiz || "Übernommen aus dem Terminkalender – Notizen ergänzen.",
         createdAt: Date.now(),
       });
     }
@@ -614,7 +599,7 @@ export const apiCheckAccess = query({
     if (!roleOk) return { userId: user._id, hasAccess: false };
     const unlock = await ctx.db
       .query("applicantVaultUnlocks")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const vaultUnlocked = !!unlock && unlock.expiresAt > Date.now();
     return { userId: user._id, hasAccess: vaultUnlocked };
@@ -646,19 +631,16 @@ export const apiFindDuplicateByContact = query({
     let match = mailNeu
       ? await ctx.db
           .query("applicants")
-          .withIndex("by_email", q => q.eq("email", mailNeu))
+          .withIndex("by_email", (q) => q.eq("email", mailNeu))
           .first()
       : null;
 
     if (!match && (mailNeu || telNeu.length >= 6)) {
       const applicants = await ctx.db.query("applicants").take(5000);
       match =
-        applicants.find(a => {
-          const mailMatch =
-            mailNeu && (a.email ?? "").trim().toLowerCase() === mailNeu;
-          const telMatch =
-            telNeu.length >= 6 &&
-            (a.telefon ?? "").replace(/\D/g, "") === telNeu;
+        applicants.find((a) => {
+          const mailMatch = mailNeu && (a.email ?? "").trim().toLowerCase() === mailNeu;
+          const telMatch = telNeu.length >= 6 && (a.telefon ?? "").replace(/\D/g, "") === telNeu;
           return mailMatch || telMatch;
         }) ?? null;
     }

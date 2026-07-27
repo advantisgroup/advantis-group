@@ -53,7 +53,7 @@ function GuestLogin() {
           <Input
             placeholder={t("codePlaceholder")}
             value={token}
-            onChange={e => setToken(e.target.value.trim())}
+            onChange={(e) => setToken(e.target.value.trim())}
           />
           {token && probe && !probe.valid && (
             <p className="text-sm text-destructive">{t("invalid")}</p>

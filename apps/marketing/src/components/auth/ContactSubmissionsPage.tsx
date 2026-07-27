@@ -4,13 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useClerk } from "@clerk/nextjs";
 import { motion, type Variants } from "framer-motion";
-import {
-  AlertCircle,
-  Building2,
-  Clock3,
-  Mail,
-  MessageSquareText,
-} from "lucide-react";
+import { AlertCircle, Building2, Clock3, Mail, MessageSquareText } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
@@ -49,13 +43,9 @@ const toFallbackLabel = (value: string) =>
     .trim()
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
-    .replace(/\b\w/g, char => char.toUpperCase());
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 
-const getDisplayLabel = (
-  value: string,
-  labels: Record<string, string>,
-  fallback: string
-) => {
+const getDisplayLabel = (value: string, labels: Record<string, string>, fallback: string) => {
   const key = toLookupKey(value);
   const translated = labels[key];
 
@@ -91,9 +81,7 @@ const parseSubmissionDate = (value: string) => {
     return parsed;
   }
 
-  const match = value.match(
-    /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/
-  );
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2}))?$/);
 
   if (!match) {
     return null;
@@ -107,7 +95,7 @@ const parseSubmissionDate = (value: string) => {
     Number(day),
     Number(hours),
     Number(minutes),
-    seconds ? Number(seconds) : 0
+    seconds ? Number(seconds) : 0,
   );
 };
 
@@ -116,9 +104,7 @@ export const ContactSubmissionsPage = () => {
   const t = useTranslations("auth.submissions");
   const { openUserProfile } = useClerk();
   const [submissions, setSubmissions] = useState<ContactSubmissionRecord[]>([]);
-  const [status, setStatus] = useState<"loading" | "ready" | "error">(
-    "loading"
-  );
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [errorDetail, setErrorDetail] = useState("");
 
   useEffect(() => {
@@ -162,9 +148,7 @@ export const ContactSubmissionsPage = () => {
       } catch (error) {
         console.error("Failed to load contact submissions", error);
         setErrorDetail(
-          error instanceof Error
-            ? error.message
-            : "Unknown error while loading submissions."
+          error instanceof Error ? error.message : "Unknown error while loading submissions.",
         );
         setStatus("error");
       }
@@ -179,7 +163,7 @@ export const ContactSubmissionsPage = () => {
         dateStyle: "medium",
         timeStyle: "short",
       }),
-    [locale]
+    [locale],
   );
 
   const submissionTypeLabels = useMemo(
@@ -188,7 +172,7 @@ export const ContactSubmissionsPage = () => {
       callback: t("types.callback"),
       other: t("types.other"),
     }),
-    [t]
+    [t],
   );
 
   const submissionStatusLabels = useMemo(
@@ -196,7 +180,7 @@ export const ContactSubmissionsPage = () => {
       sent: t("status.sent"),
       failed: t("status.failed"),
     }),
-    [t]
+    [t],
   );
 
   return (
@@ -235,9 +219,7 @@ export const ContactSubmissionsPage = () => {
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
                 <p className="font-medium">{t("errorTitle")}</p>
-                <p className="mt-1 text-sm text-destructive/80">
-                  {t("errorDescription")}
-                </p>
+                <p className="mt-1 text-sm text-destructive/80">{t("errorDescription")}</p>
                 {errorDetail ? (
                   <p className="mt-2 rounded-md border border-destructive/20 bg-card/60 px-3 py-2 font-mono text-xs text-destructive/90">
                     {errorDetail}
@@ -248,9 +230,7 @@ export const ContactSubmissionsPage = () => {
           </div>
         ) : submissions.length === 0 ? (
           <div className="rounded-4xl border border-border bg-card/70 p-8 shadow-2xl shadow-black/20 backdrop-blur">
-            <p className="text-lg font-medium text-foreground">
-              {t("emptyTitle")}
-            </p>
+            <p className="text-lg font-medium text-foreground">{t("emptyTitle")}</p>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               {t("emptyDescription")}
             </p>
@@ -262,19 +242,19 @@ export const ContactSubmissionsPage = () => {
             initial="hidden"
             animate="visible"
           >
-            {submissions.map(submission => {
+            {submissions.map((submission) => {
               const desiredDate = submission.desiredDateTime
                 ? parseSubmissionDate(submission.desiredDateTime)
                 : null;
               const submissionTypeLabel = getDisplayLabel(
                 submission.submissionType,
                 submissionTypeLabels,
-                "Submission"
+                "Submission",
               );
               const submissionStatusLabel = getDisplayLabel(
                 submission.status,
                 submissionStatusLabels,
-                "Status"
+                "Status",
               );
 
               return (
@@ -305,9 +285,7 @@ export const ContactSubmissionsPage = () => {
                       <div className="flex items-start gap-2">
                         <Mail className="mt-0.5 h-4 w-4 shrink-0" />
                         <div>
-                          <p className="font-medium text-foreground">
-                            {submission.email}
-                          </p>
+                          <p className="font-medium text-foreground">{submission.email}</p>
                           <p>{t("contactEmail")}</p>
                         </div>
                       </div>
@@ -315,9 +293,7 @@ export const ContactSubmissionsPage = () => {
                         <div className="flex items-start gap-2">
                           <Building2 className="mt-0.5 h-4 w-4 shrink-0" />
                           <div>
-                            <p className="font-medium text-foreground">
-                              {submission.company}
-                            </p>
+                            <p className="font-medium text-foreground">{submission.company}</p>
                             <p>{t("company")}</p>
                           </div>
                         </div>
@@ -339,9 +315,7 @@ export const ContactSubmissionsPage = () => {
                         <div className="flex items-start gap-2">
                           <MessageSquareText className="mt-0.5 h-4 w-4 shrink-0" />
                           <div>
-                            <p className="font-medium text-foreground">
-                              {submission.accountEmail}
-                            </p>
+                            <p className="font-medium text-foreground">{submission.accountEmail}</p>
                             <p>{t("accountEmail")}</p>
                           </div>
                         </div>
@@ -365,9 +339,7 @@ export const ContactSubmissionsPage = () => {
                           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                             {t("topic")}
                           </p>
-                          <p className="mt-1 text-sm text-foreground">
-                            {submission.topic}
-                          </p>
+                          <p className="mt-1 text-sm text-foreground">{submission.topic}</p>
                         </div>
                       ) : null}
                       {submission.notes ? (
@@ -385,9 +357,7 @@ export const ContactSubmissionsPage = () => {
                           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                             {t("deliveryIssue")}
                           </p>
-                          <p className="mt-1 text-sm text-destructive">
-                            {submission.error}
-                          </p>
+                          <p className="mt-1 text-sm text-destructive">{submission.error}</p>
                         </div>
                       ) : null}
                     </div>

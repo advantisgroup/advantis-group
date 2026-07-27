@@ -3,10 +3,7 @@
 import type { ReactNode } from "react";
 
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import {
-  useHasCapability,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useHasCapability, useIsManager } from "@/components/providers/current-user";
 
 /**
  * Broadest access gate for the whole `/admin` area — manager+, or an
@@ -28,11 +25,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const hasIntegrationsAccess = useHasCapability("access_integrations");
 
   const hasAnyAdminAccess =
-    isManager ||
-    hasManageUploads ||
-    hasManageMembers ||
-    hasActivityAdmin ||
-    hasIntegrationsAccess;
+    isManager || hasManageUploads || hasManageMembers || hasActivityAdmin || hasIntegrationsAccess;
 
   if (!hasAnyAdminAccess) {
     return <ForbiddenScreen />;

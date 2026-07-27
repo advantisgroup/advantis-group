@@ -35,7 +35,7 @@ export function MobileDrawer({
           data-tour={dataTour}
           className={cn(
             "fixed inset-x-0 bottom-0 z-50 flex h-[65vh] flex-col rounded-t-2xl border-t border-sidebar-border bg-sidebar text-sidebar-foreground shadow-2xl shadow-black/40 outline-none",
-            className
+            className,
           )}
         >
           {/* Visual drag handle — vaul makes the whole Content draggable */}

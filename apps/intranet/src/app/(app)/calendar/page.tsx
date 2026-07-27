@@ -1,14 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -48,10 +41,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
-import {
-  useCurrentUser,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,12 +63,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate, formatTime } from "@/lib/format";
@@ -176,7 +161,7 @@ function EventDialog({
   }, [draft]);
 
   const set = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) =>
-    setForm(f => ({ ...f, [key]: value }));
+    setForm((f) => ({ ...f, [key]: value }));
 
   async function submit() {
     if (!form.title.trim() || !form.start || !form.end) return;
@@ -214,9 +199,7 @@ function EventDialog({
     <Dialog open={draft !== null} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {form.eventId ? t("editEvent") : t("addEvent")}
-          </DialogTitle>
+          <DialogTitle>{form.eventId ? t("editEvent") : t("addEvent")}</DialogTitle>
           <DialogDescription>{t("addEventHint")}</DialogDescription>
         </DialogHeader>
         <div className="space-y-5">
@@ -224,18 +207,18 @@ function EventDialog({
             <Input
               placeholder={t("eventTitle")}
               value={form.title}
-              onChange={e => set("title", e.target.value)}
+              onChange={(e) => set("title", e.target.value)}
               className="h-11 text-base font-medium"
             />
             <Input
               placeholder={t("location")}
               value={form.location}
-              onChange={e => set("location", e.target.value)}
+              onChange={(e) => set("location", e.target.value)}
             />
             <Textarea
               placeholder={t("description")}
               value={form.description}
-              onChange={e => set("description", e.target.value)}
+              onChange={(e) => set("description", e.target.value)}
             />
           </div>
 
@@ -246,7 +229,7 @@ function EventDialog({
                 <Input
                   type="datetime-local"
                   value={form.start}
-                  onChange={e => set("start", e.target.value)}
+                  onChange={(e) => set("start", e.target.value)}
                 />
               </div>
               <div className="space-y-1.5">
@@ -254,7 +237,7 @@ function EventDialog({
                 <Input
                   type="datetime-local"
                   value={form.end}
-                  onChange={e => set("end", e.target.value)}
+                  onChange={(e) => set("end", e.target.value)}
                 />
               </div>
             </div>
@@ -264,7 +247,7 @@ function EventDialog({
                   type="checkbox"
                   className="size-4 accent-[var(--primary)]"
                   checked={form.allDay}
-                  onChange={e => set("allDay", e.target.checked)}
+                  onChange={(e) => set("allDay", e.target.checked)}
                 />
                 {t("allDay")}
               </label>
@@ -273,20 +256,20 @@ function EventDialog({
                   type="checkbox"
                   className="size-4 accent-[var(--primary)]"
                   checked={form.guestVisible}
-                  onChange={e => set("guestVisible", e.target.checked)}
+                  onChange={(e) => set("guestVisible", e.target.checked)}
                 />
                 {t("guestVisible")}
               </label>
             </div>
           </div>
 
-          <Select value={form.audience} onValueChange={v => set("audience", v)}>
+          <Select value={form.audience} onValueChange={(v) => set("audience", v)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{tc("all")}</SelectItem>
-              {departments.map(d => (
+              {departments.map((d) => (
                 <SelectItem key={d} value={d}>
                   {d}
                 </SelectItem>
@@ -351,10 +334,7 @@ export default function CalendarPage() {
   // The dense month grid is hard to read on phones, so default to the agenda
   // (list) view there. Runs once on mount; users can still switch freely.
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 767px)").matches
-    ) {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
       setView("list");
     }
   }, []);
@@ -411,10 +391,10 @@ export default function CalendarPage() {
   });
 
   const goPrev = useCallback(() => {
-    setCursor(c => (view === "week" ? subWeeks(c, 1) : subMonths(c, 1)));
+    setCursor((c) => (view === "week" ? subWeeks(c, 1) : subMonths(c, 1)));
   }, [view]);
   const goNext = useCallback(() => {
-    setCursor(c => (view === "week" ? addWeeks(c, 1) : addMonths(c, 1)));
+    setCursor((c) => (view === "week" ? addWeeks(c, 1) : addMonths(c, 1)));
   }, [view]);
 
   // Arrow keys page through periods, "t" jumps to today — unless a dialog is
@@ -437,7 +417,7 @@ export default function CalendarPage() {
     return Array.from({ length: 7 }, (_, i) =>
       new Date(monday.getTime() + i * 86400000).toLocaleDateString(locale, {
         weekday: "short",
-      })
+      }),
     );
   }, [locale, weekStartsOn]);
 
@@ -446,15 +426,11 @@ export default function CalendarPage() {
 
   const filteredEvents = useMemo(() => {
     if (!events) return undefined;
-    return events.filter(e => {
+    return events.filter((e) => {
       if (hiddenKinds.has("event")) return false;
       if (deptFilter !== "all") {
         const audience = e.audience as Audience;
-        if (
-          audience.kind === "department" &&
-          audience.department !== deptFilter
-        )
-          return false;
+        if (audience.kind === "department" && audience.department !== deptFilter) return false;
       }
       return true;
     });
@@ -462,7 +438,7 @@ export default function CalendarPage() {
 
   const filteredAbsences = useMemo(() => {
     if (!absences) return undefined;
-    return absences.filter(a => {
+    return absences.filter((a) => {
       if (hiddenKinds.has(a.type as FilterKind)) return false;
       if (onlyMyAbsences && a.userId !== me._id) return false;
       if (deptFilter !== "all" && a.userDepartment !== deptFilter) return false;
@@ -471,23 +447,17 @@ export default function CalendarPage() {
   }, [absences, hiddenKinds, onlyMyAbsences, deptFilter, me._id]);
 
   const detailEvent =
-    detail?.kind === "event"
-      ? events?.find(e => e._id === detail.id)
-      : undefined;
+    detail?.kind === "event" ? events?.find((e) => e._id === detail.id) : undefined;
   const detailAbsence =
-    detail?.kind === "absence"
-      ? absences?.find(a => a._id === detail.id)
-      : undefined;
+    detail?.kind === "absence" ? absences?.find((a) => a._id === detail.id) : undefined;
   const detailDay = detail?.kind === "day" ? detail.day : null;
   const dayEntries = detailDay
     ? {
         events: (filteredEvents ?? []).filter(
-          e =>
-            isoDay(new Date(e.start)) <= detailDay &&
-            detailDay <= isoDay(new Date(e.end))
+          (e) => isoDay(new Date(e.start)) <= detailDay && detailDay <= isoDay(new Date(e.end)),
         ),
         absences: (filteredAbsences ?? []).filter(
-          a => a.startDate <= detailDay && detailDay <= a.endDate
+          (a) => a.startDate <= detailDay && detailDay <= a.endDate,
         ),
       }
     : null;
@@ -544,21 +514,18 @@ export default function CalendarPage() {
     const iso = isoDay(day);
     return (
       filteredEvents?.filter(
-        e => isoDay(new Date(e.start)) <= iso && iso <= isoDay(new Date(e.end))
+        (e) => isoDay(new Date(e.start)) <= iso && iso <= isoDay(new Date(e.end)),
       ) ?? []
     );
   }
   function absencesOn(day: Date): CalAbsence[] {
     const iso = isoDay(day);
-    return (
-      filteredAbsences?.filter(a => a.startDate <= iso && iso <= a.endDate) ??
-      []
-    );
+    return filteredAbsences?.filter((a) => a.startDate <= iso && iso <= a.endDate) ?? [];
   }
 
   function exportIcs() {
     const ics = buildIcs(t("title"), [
-      ...(filteredEvents ?? []).map(e => ({
+      ...(filteredEvents ?? []).map((e) => ({
         uid: e._id,
         title: e.title,
         ...(e.allDay
@@ -570,7 +537,7 @@ export default function CalendarPage() {
         description: e.description ?? undefined,
         location: e.location ?? undefined,
       })),
-      ...(filteredAbsences ?? []).map(a => ({
+      ...(filteredAbsences ?? []).map((a) => ({
         uid: a._id,
         title: `${a.userName} · ${tAbs(a.type)}`,
         startDate: a.startDate,
@@ -595,15 +562,15 @@ export default function CalendarPage() {
 
   // Only days that actually have entries, for the agenda view.
   const agendaDays = gridDays
-    .map(day => ({
+    .map((day) => ({
       day,
       dayEvents: eventsOn(day),
       dayAbsences: absencesOn(day),
     }))
-    .filter(d => d.dayEvents.length > 0 || d.dayAbsences.length > 0);
+    .filter((d) => d.dayEvents.length > 0 || d.dayAbsences.length > 0);
 
   function toggleKind(kind: FilterKind) {
-    setHiddenKinds(prev => {
+    setHiddenKinds((prev) => {
       const next = new Set(prev);
       if (next.has(kind)) next.delete(kind);
       else next.add(kind);
@@ -624,11 +591,11 @@ export default function CalendarPage() {
       <div
         role="button"
         tabIndex={0}
-        onClick={ev => {
+        onClick={(ev) => {
           ev.stopPropagation();
           setDetail({ kind: "event", id: e._id });
         }}
-        onKeyDown={ev => {
+        onKeyDown={(ev) => {
           if (ev.key === "Enter") {
             ev.stopPropagation();
             setDetail({ kind: "event", id: e._id });
@@ -637,7 +604,7 @@ export default function CalendarPage() {
         className={cn(
           "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[11px] font-medium",
           eventChipClass(e),
-          continues && "opacity-75"
+          continues && "opacity-75",
         )}
         title={e.title}
       >
@@ -645,9 +612,7 @@ export default function CalendarPage() {
           <ChevronRight className="size-3 shrink-0 opacity-70" />
         ) : (
           !e.allDay && (
-            <span className="tabular-nums opacity-70">
-              {format(new Date(e.start), "HH:mm")}
-            </span>
+            <span className="tabular-nums opacity-70">{format(new Date(e.start), "HH:mm")}</span>
           )
         )}
         <span className="truncate">{e.title}</span>
@@ -660,11 +625,11 @@ export default function CalendarPage() {
       <div
         role="button"
         tabIndex={0}
-        onClick={ev => {
+        onClick={(ev) => {
           ev.stopPropagation();
           setDetail({ kind: "absence", id: a._id });
         }}
-        onKeyDown={ev => {
+        onKeyDown={(ev) => {
           if (ev.key === "Enter") {
             ev.stopPropagation();
             setDetail({ kind: "absence", id: a._id });
@@ -672,7 +637,7 @@ export default function CalendarPage() {
         }}
         className={cn(
           "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[11px] font-medium",
-          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other
+          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other,
         )}
         title={`${a.userName} · ${tAbs(a.type)}`}
       >
@@ -751,20 +716,15 @@ export default function CalendarPage() {
                 <ChevronRight className="size-4" />
               </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCursor(new Date())}
-            >
+            <Button variant="outline" size="sm" onClick={() => setCursor(new Date())}>
               {t("today")}
             </Button>
             <Input
               type="date"
               aria-label={t("jumpToDate")}
               value={format(cursor, "yyyy-MM-dd")}
-              onChange={e => {
-                if (e.target.value)
-                  setCursor(new Date(`${e.target.value}T12:00`));
+              onChange={(e) => {
+                if (e.target.value) setCursor(new Date(`${e.target.value}T12:00`));
               }}
               className="h-8 w-[8.75rem] text-xs"
             />
@@ -779,7 +739,7 @@ export default function CalendarPage() {
               { key: "week", label: t("viewWeek"), icon: CalendarRange },
               { key: "list", label: t("viewList"), icon: List },
             ] as const
-          ).map(v => {
+          ).map((v) => {
             const Icon = v.icon;
             return (
               <button
@@ -791,7 +751,7 @@ export default function CalendarPage() {
                   "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors",
                   view === v.key
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
                 <Icon className="size-4" />
@@ -808,7 +768,7 @@ export default function CalendarPage() {
         className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs"
         data-tour="tour-calendar-filters"
       >
-        {ALL_KINDS.map(kind => {
+        {ALL_KINDS.map((kind) => {
           const hidden = hiddenKinds.has(kind);
           return (
             <button
@@ -818,16 +778,14 @@ export default function CalendarPage() {
               onClick={() => toggleKind(kind)}
               className={cn(
                 "flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 font-medium transition-colors hover:bg-accent",
-                hidden
-                  ? "text-muted-foreground/50 line-through"
-                  : "text-muted-foreground"
+                hidden ? "text-muted-foreground/50 line-through" : "text-muted-foreground",
               )}
             >
               <span
                 className={cn(
                   "size-2.5 rounded-full",
                   kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
-                  hidden && "opacity-40"
+                  hidden && "opacity-40",
                 )}
               />
               {kind === "event" ? t("event") : tAbs(kind)}
@@ -837,12 +795,12 @@ export default function CalendarPage() {
         <button
           type="button"
           aria-pressed={onlyMyAbsences}
-          onClick={() => setOnlyMyAbsences(v => !v)}
+          onClick={() => setOnlyMyAbsences((v) => !v)}
           className={cn(
             "rounded-full border px-2.5 py-1 font-medium transition-colors",
             onlyMyAbsences
               ? "border-transparent bg-foreground text-background"
-              : "border-border text-muted-foreground hover:bg-accent"
+              : "border-border text-muted-foreground hover:bg-accent",
           )}
         >
           {t("onlyMyAbsences")}
@@ -854,7 +812,7 @@ export default function CalendarPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allDepartments")}</SelectItem>
-              {departments.map(d => (
+              {departments.map((d) => (
                 <SelectItem key={d} value={d}>
                   {d}
                 </SelectItem>
@@ -870,7 +828,7 @@ export default function CalendarPage() {
           <div className="border-b border-r border-border/60 bg-muted/30 p-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/70">
             {t("weekShort")}
           </div>
-          {weekdays.map(d => (
+          {weekdays.map((d) => (
             <div
               key={d}
               className="border-b border-r border-border/60 bg-muted/30 p-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground last:border-r-0"
@@ -885,8 +843,7 @@ export default function CalendarPage() {
             const isToday = isSameDay(day, new Date());
             const shownEvents = dayEvents.slice(0, 3);
             const absenceSlots = Math.max(0, 3 - shownEvents.length);
-            const aggregateAbsences =
-              dayAbsences.length > absenceSlots && dayAbsences.length > 1;
+            const aggregateAbsences = dayAbsences.length > absenceSlots && dayAbsences.length > 1;
             const eventOverflow = dayEvents.length - shownEvents.length;
             return (
               <Fragment key={day.toISOString()}>
@@ -900,19 +857,18 @@ export default function CalendarPage() {
                   onClick={() => setDetail({ kind: "day", day: isoDay(day) })}
                   className={cn(
                     "min-h-24 space-y-1 border-b border-r border-border/60 p-1.5 text-left align-top transition-colors last:border-r-0 hover:bg-accent/50",
-                    !inMonth && "bg-muted/20 text-muted-foreground"
+                    !inMonth && "bg-muted/20 text-muted-foreground",
                   )}
                 >
                   <div
                     className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
-                      isToday &&
-                        "bg-primary font-semibold text-primary-foreground"
+                      isToday && "bg-primary font-semibold text-primary-foreground",
                     )}
                   >
                     {day.getDate()}
                   </div>
-                  {shownEvents.map(e => (
+                  {shownEvents.map((e) => (
                     <EventChip key={e._id} e={e} day={day} />
                   ))}
                   {aggregateAbsences ? (
@@ -921,9 +877,7 @@ export default function CalendarPage() {
                       {t("outCount", { count: dayAbsences.length })}
                     </div>
                   ) : (
-                    dayAbsences
-                      .slice(0, absenceSlots)
-                      .map(a => <AbsenceChip key={a._id} a={a} />)
+                    dayAbsences.slice(0, absenceSlots).map((a) => <AbsenceChip key={a._id} a={a} />)
                   )}
                   {eventOverflow > 0 && (
                     <div className="px-1 text-[10px] font-medium text-muted-foreground">
@@ -940,7 +894,7 @@ export default function CalendarPage() {
       {/* Week view — one column per day, all entries listed */}
       {view === "week" && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
-          {gridDays.map(day => {
+          {gridDays.map((day) => {
             const dayEvents = eventsOn(day);
             const dayAbsences = absencesOn(day);
             const isToday = isSameDay(day, new Date());
@@ -949,7 +903,7 @@ export default function CalendarPage() {
                 key={day.toISOString()}
                 className={cn(
                   "flex min-h-48 flex-col rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]",
-                  isToday && "border-primary/40 ring-1 ring-primary/20"
+                  isToday && "border-primary/40 ring-1 ring-primary/20",
                 )}
               >
                 <button
@@ -963,7 +917,7 @@ export default function CalendarPage() {
                   <span
                     className={cn(
                       "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-semibold",
-                      isToday && "bg-primary text-primary-foreground"
+                      isToday && "bg-primary text-primary-foreground",
                     )}
                   >
                     {day.getDate()}
@@ -976,10 +930,10 @@ export default function CalendarPage() {
                     </p>
                   ) : (
                     <>
-                      {dayEvents.map(e => (
+                      {dayEvents.map((e) => (
                         <EventChip key={e._id} e={e} day={day} />
                       ))}
-                      {dayAbsences.map(a => (
+                      {dayAbsences.map((a) => (
                         <AbsenceChip key={a._id} a={a} />
                       ))}
                     </>
@@ -1009,7 +963,7 @@ export default function CalendarPage() {
                   <p
                     className={cn(
                       "text-sm font-semibold capitalize",
-                      isSameDay(day, new Date()) && "text-primary"
+                      isSameDay(day, new Date()) && "text-primary",
                     )}
                   >
                     {day.toLocaleDateString(locale, {
@@ -1020,7 +974,7 @@ export default function CalendarPage() {
                   </p>
                 </div>
                 <div className="min-w-0 flex-1 space-y-1.5">
-                  {dayEvents.map(e => (
+                  {dayEvents.map((e) => (
                     <button
                       key={e._id}
                       onClick={() => setDetail({ kind: "event", id: e._id })}
@@ -1029,17 +983,13 @@ export default function CalendarPage() {
                       <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                         <CalendarClock className="size-3.5" />
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {e.title}
-                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{e.title}</span>
                       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                        {e.allDay
-                          ? t("allDay")
-                          : `${formatTime(e.start, locale)}`}
+                        {e.allDay ? t("allDay") : `${formatTime(e.start, locale)}`}
                       </span>
                     </button>
                   ))}
-                  {dayAbsences.map(a => (
+                  {dayAbsences.map((a) => (
                     <button
                       key={a._id}
                       onClick={() => setDetail({ kind: "absence", id: a._id })}
@@ -1048,7 +998,7 @@ export default function CalendarPage() {
                       <span
                         className={cn(
                           "flex size-7 shrink-0 items-center justify-center rounded-md",
-                          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other
+                          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other,
                         )}
                       >
                         <Plane className="size-3.5" />
@@ -1056,9 +1006,7 @@ export default function CalendarPage() {
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {a.userName}
                       </span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {tAbs(a.type)}
-                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{tAbs(a.type)}</span>
                     </button>
                   ))}
                 </div>
@@ -1069,24 +1017,19 @@ export default function CalendarPage() {
       )}
 
       {/* Detail dialog (Google-Calendar style) */}
-      <Dialog open={detail !== null} onOpenChange={o => !o && setDetail(null)}>
+      <Dialog open={detail !== null} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent>
           {/* Day overview */}
           {detailDay && dayEntries && (
             <>
               <DialogHeader>
-                <DialogTitle className="capitalize">
-                  {longDate(detailDay)}
-                </DialogTitle>
+                <DialogTitle className="capitalize">{longDate(detailDay)}</DialogTitle>
               </DialogHeader>
               <div className="max-h-[60vh] space-y-4 overflow-y-auto">
-                {dayEntries.events.length === 0 &&
-                dayEntries.absences.length === 0 ? (
+                {dayEntries.events.length === 0 && dayEntries.absences.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 py-8 text-center">
                     <CalendarClock className="h-7 w-7 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      {t("noEntries")}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
                   </div>
                 ) : (
                   <>
@@ -1095,21 +1038,17 @@ export default function CalendarPage() {
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {t("events")}
                         </p>
-                        {dayEntries.events.map(e => (
+                        {dayEntries.events.map((e) => (
                           <button
                             key={e._id}
-                            onClick={() =>
-                              setDetail({ kind: "event", id: e._id })
-                            }
+                            onClick={() => setDetail({ kind: "event", id: e._id })}
                             className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left transition-colors hover:bg-accent"
                           >
                             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                               <CalendarClock className="h-4 w-4" />
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">
-                                {e.title}
-                              </p>
+                              <p className="truncate text-sm font-medium">{e.title}</p>
                               <p className="truncate text-xs text-muted-foreground">
                                 {e.allDay
                                   ? t("allDay")
@@ -1126,21 +1065,17 @@ export default function CalendarPage() {
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {t("absences")}
                         </p>
-                        {dayEntries.absences.map(a => (
+                        {dayEntries.absences.map((a) => (
                           <button
                             key={a._id}
-                            onClick={() =>
-                              setDetail({ kind: "absence", id: a._id })
-                            }
+                            onClick={() => setDetail({ kind: "absence", id: a._id })}
                             className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left transition-colors hover:bg-accent"
                           >
                             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                               <Plane className="h-4 w-4" />
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">
-                                {a.userName}
-                              </p>
+                              <p className="truncate text-sm font-medium">{a.userName}</p>
                               <p className="truncate text-xs text-muted-foreground">
                                 {tAbs(a.type)}
                               </p>
@@ -1175,8 +1110,7 @@ export default function CalendarPage() {
               event={detailEvent}
               when={eventWhen(detailEvent)}
               canManage={
-                isManager &&
-                (detailEvent.createdByUserId === me._id || me.role === "admin")
+                isManager && (detailEvent.createdByUserId === me._id || me.role === "admin")
               }
               onEdit={() => {
                 setDetail(null);
@@ -1201,25 +1135,14 @@ export default function CalendarPage() {
         </DialogContent>
       </Dialog>
 
-      <EventDialog
-        draft={eventDraft}
-        onOpenChange={open => !open && setEventDraft(null)}
-      />
+      <EventDialog draft={eventDraft} onOpenChange={(open) => !open && setEventDraft(null)} />
     </div>
   );
 
-  function DetailRow({
-    icon,
-    children,
-  }: {
-    icon: ReactNode;
-    children: ReactNode;
-  }) {
+  function DetailRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
     return (
       <div className="flex items-start gap-3 text-sm">
-        <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">
-          {icon}
-        </span>
+        <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">{icon}</span>
         <span className="min-w-0 flex-1">{children}</span>
       </div>
     );
@@ -1247,9 +1170,7 @@ export default function CalendarPage() {
         </DialogHeader>
         <div className="space-y-3">
           <DetailRow icon={<CalendarClock />}>{when}</DetailRow>
-          {event.location && (
-            <DetailRow icon={<MapPin />}>{event.location}</DetailRow>
-          )}
+          {event.location && <DetailRow icon={<MapPin />}>{event.location}</DetailRow>}
           <DetailRow icon={<User />}>
             <span className="text-muted-foreground">{t("organizer")}: </span>
             {event.createdByName}
@@ -1303,16 +1224,11 @@ export default function CalendarPage() {
         </DialogHeader>
         <div className="space-y-3">
           <DetailRow icon={<Plane />}>
-            <Badge
-              variant="muted"
-              className={ABSENCE_COLORS[absence.type] ?? ABSENCE_COLORS.other}
-            >
+            <Badge variant="muted" className={ABSENCE_COLORS[absence.type] ?? ABSENCE_COLORS.other}>
               {typeLabel}
             </Badge>
             {absence.userDepartment && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                {absence.userDepartment}
-              </span>
+              <span className="ml-2 text-xs text-muted-foreground">{absence.userDepartment}</span>
             )}
           </DetailRow>
           <DetailRow icon={<CalendarClock />}>{range}</DetailRow>

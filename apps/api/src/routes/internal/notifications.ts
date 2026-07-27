@@ -31,5 +31,5 @@ export const internalNotificationsRoute = new Elysia().post(
       data: t.Optional(t.Record(t.String(), t.Unknown())),
     }),
     response: { 200: t.Object({ sent: t.Boolean() }) },
-  }
+  },
 );

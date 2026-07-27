@@ -62,9 +62,7 @@ export function RescanOlderUploads({ token }: { token: string }) {
   const employeeNames = useQuery(api.performanceImport.listEmployeeNames, {
     token,
   });
-  const recordScanResults = useMutation(
-    api.performanceImport.recordScanResults
-  );
+  const recordScanResults = useMutation(api.performanceImport.recordScanResults);
 
   const [open, setOpen] = useState(false);
   const [batchFilter, setBatchFilter] = useState(ALL_BATCHES);
@@ -78,16 +76,13 @@ export function RescanOlderUploads({ token }: { token: string }) {
 
   const batches = useMemo(() => {
     if (!unscanned) return [];
-    return [
-      ...new Set(unscanned.map(r => r.batchId).filter((b): b is string => !!b)),
-    ];
+    return [...new Set(unscanned.map((r) => r.batchId).filter((b): b is string => !!b))];
   }, [unscanned]);
 
   const filtered = useMemo(() => {
     if (!unscanned) return [];
-    return unscanned.filter(r => {
-      if (batchFilter !== ALL_BATCHES && r.batchId !== batchFilter)
-        return false;
+    return unscanned.filter((r) => {
+      if (batchFilter !== ALL_BATCHES && r.batchId !== batchFilter) return false;
       if (dateFrom && (!r.reportDate || r.reportDate < dateFrom)) return false;
       if (dateTo && (!r.reportDate || r.reportDate > dateTo)) return false;
       return true;
@@ -96,11 +91,10 @@ export function RescanOlderUploads({ token }: { token: string }) {
 
   if (!unscanned || unscanned.length === 0) return null;
 
-  const allFilteredSelected =
-    filtered.length > 0 && filtered.every(r => selected.has(r._id));
+  const allFilteredSelected = filtered.length > 0 && filtered.every((r) => selected.has(r._id));
 
   function toggleAllFiltered() {
-    setSelected(prev => {
+    setSelected((prev) => {
       const next = new Set(prev);
       if (allFilteredSelected) {
         for (const r of filtered) next.delete(r._id);
@@ -112,7 +106,7 @@ export function RescanOlderUploads({ token }: { token: string }) {
   }
 
   function toggleOne(id: string) {
-    setSelected(prev => {
+    setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -122,17 +116,13 @@ export function RescanOlderUploads({ token }: { token: string }) {
 
   async function scanSelected() {
     if (!unscanned || !employeeNames || selected.size === 0) return;
-    const targets = unscanned.filter(r => selected.has(r._id));
+    const targets = unscanned.filter((r) => selected.has(r._id));
     setProgress({ done: 0, total: targets.length });
     let flaggedTotal = 0;
     for (let i = 0; i < targets.length; i++) {
       const log = targets[i];
       try {
-        const { flaggedRows } = await rescanCallReport(
-          log.filename,
-          log.fileUrl,
-          employeeNames
-        );
+        const { flaggedRows } = await rescanCallReport(log.filename, log.fileUrl, employeeNames);
         await recordScanResults({
           token,
           logId: log._id,
@@ -147,9 +137,7 @@ export function RescanOlderUploads({ token }: { token: string }) {
     setProgress(null);
     setSelected(new Set());
     toast.success(
-      flaggedTotal > 0
-        ? t("rescanDoneFound", { count: flaggedTotal })
-        : t("rescanDoneClean")
+      flaggedTotal > 0 ? t("rescanDoneFound", { count: flaggedTotal }) : t("rescanDoneClean"),
     );
   }
 
@@ -182,13 +170,11 @@ export function RescanOlderUploads({ token }: { token: string }) {
                 <SelectValue placeholder={t("rescanFilterBatch")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={ALL_BATCHES}>
-                  {t("rescanFilterAllBatches")}
-                </SelectItem>
-                {batches.map(b => (
+                <SelectItem value={ALL_BATCHES}>{t("rescanFilterAllBatches")}</SelectItem>
+                {batches.map((b) => (
                   <SelectItem key={b} value={b}>
                     {t("rescanFilterBatchOf", {
-                      count: unscanned.filter(r => r.batchId === b).length,
+                      count: unscanned.filter((r) => r.batchId === b).length,
                     })}
                   </SelectItem>
                 ))}
@@ -197,7 +183,7 @@ export function RescanOlderUploads({ token }: { token: string }) {
             <Input
               type="date"
               value={dateFrom}
-              onChange={e => setDateFrom(e.target.value)}
+              onChange={(e) => setDateFrom(e.target.value)}
               className="h-8 w-auto text-xs"
               title={t("rescanFilterDateFrom")}
             />
@@ -205,7 +191,7 @@ export function RescanOlderUploads({ token }: { token: string }) {
             <Input
               type="date"
               value={dateTo}
-              onChange={e => setDateTo(e.target.value)}
+              onChange={(e) => setDateTo(e.target.value)}
               className="h-8 w-auto text-xs"
               title={t("rescanFilterDateTo")}
             />
@@ -228,7 +214,7 @@ export function RescanOlderUploads({ token }: { token: string }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map(row => (
+                {filtered.map((row) => (
                   <TableRow key={row._id}>
                     <TableCell className="w-0">
                       <Checkbox
@@ -236,10 +222,7 @@ export function RescanOlderUploads({ token }: { token: string }) {
                         onCheckedChange={() => toggleOne(row._id)}
                       />
                     </TableCell>
-                    <TableCell
-                      className="max-w-[16rem] truncate"
-                      title={row.filename}
-                    >
+                    <TableCell className="max-w-[16rem] truncate" title={row.filename}>
                       {row.filename}
                       {row.batchId && (
                         <Badge variant="muted" className="ml-1.5 align-middle">
@@ -248,13 +231,9 @@ export function RescanOlderUploads({ token }: { token: string }) {
                       )}
                     </TableCell>
                     <TableCell>
-                      {row.reportDate
-                        ? formatIsoDate(row.reportDate, locale)
-                        : "–"}
+                      {row.reportDate ? formatIsoDate(row.reportDate, locale) : "–"}
                     </TableCell>
-                    <TableCell>
-                      {formatDateTime(row.uploadedAt, locale)}
-                    </TableCell>
+                    <TableCell>{formatDateTime(row.uploadedAt, locale)}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -266,9 +245,7 @@ export function RescanOlderUploads({ token }: { token: string }) {
               {t("rescanSelectedCount", { count: selected.size })}
             </span>
             <Button
-              disabled={
-                selected.size === 0 || progress !== null || !employeeNames
-              }
+              disabled={selected.size === 0 || progress !== null || !employeeNames}
               onClick={() => void scanSelected()}
             >
               {progress ? (

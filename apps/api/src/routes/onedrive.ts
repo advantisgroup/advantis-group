@@ -1,10 +1,6 @@
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import {
-  type OneDriveBreadcrumb,
-  type OneDriveItem,
-  type OneDriveListing,
-} from "../lib/types.js";
+import { type OneDriveBreadcrumb, type OneDriveItem, type OneDriveListing } from "../lib/types.js";
 import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
@@ -17,11 +13,7 @@ import {
   folderConfig,
   normalizePath,
 } from "../lib/onedrive/access.js";
-import {
-  getCachedListing,
-  invalidateAll,
-  setCachedListing,
-} from "../lib/onedrive/cache.js";
+import { getCachedListing, invalidateAll, setCachedListing } from "../lib/onedrive/cache.js";
 import {
   type OneDriveUser,
   requireManagerUser,
@@ -77,9 +69,7 @@ function toItem(child: GraphItem, user: OneDriveUser): OneDriveItem | null {
 }
 
 function breadcrumbs(relPath: string): OneDriveBreadcrumb[] {
-  const crumbs: OneDriveBreadcrumb[] = [
-    { id: "", name: "Advantis Group", path: "" },
-  ];
+  const crumbs: OneDriveBreadcrumb[] = [{ id: "", name: "Advantis Group", path: "" }];
   let acc = "";
   for (const seg of normalizePath(relPath).split("/").filter(Boolean)) {
     acc = acc ? `${acc}/${seg}` : seg;
@@ -88,10 +78,7 @@ function breadcrumbs(relPath: string): OneDriveBreadcrumb[] {
   return crumbs;
 }
 
-async function buildListing(
-  user: OneDriveUser,
-  relPath: string
-): Promise<OneDriveListing> {
+async function buildListing(user: OneDriveUser, relPath: string): Promise<OneDriveListing> {
   let folder = await getItemByPath(relPath);
   let folderRel = relPathOf(folder) ?? normalizePath(relPath);
   assertCanRead(user, folderRel);
@@ -102,9 +89,7 @@ async function buildListing(
   let previewItem: OneDriveItem | undefined;
   if (!folder.folder) {
     previewItem = toItem(folder, user) ?? undefined;
-    const parentRel = folderRel.includes("/")
-      ? folderRel.slice(0, folderRel.lastIndexOf("/"))
-      : "";
+    const parentRel = folderRel.includes("/") ? folderRel.slice(0, folderRel.lastIndexOf("/")) : "";
     folder = await getItemByPath(parentRel);
     folderRel = relPathOf(folder) ?? normalizePath(parentRel);
     assertCanRead(user, folderRel);
@@ -124,7 +109,7 @@ async function buildListing(
 
   // Best-effort: annotate files with who uploaded them (tracked in Convex).
   try {
-    const fileIds = items.filter(i => i.type === "file").map(i => i.id);
+    const fileIds = items.filter((i) => i.type === "file").map((i) => i.id);
     if (fileIds.length > 0) {
       const map = await getConvex().query(api.onedrive.apiUploadersByItemIds, {
         serverKey: serverKey(),
@@ -160,7 +145,7 @@ async function buildListing(
 /** Resolve a drive item id, ensure the user may read it, return its rel path. */
 async function readableItem(
   user: OneDriveUser,
-  id: string
+  id: string,
 ): Promise<{ item: GraphItem; rel: string }> {
   const item = await getItemById(id);
   const rel = relPathOf(item);
@@ -187,7 +172,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       await rateLimit("od.list", user.clerkUserId, 60, "1 m");
       return buildListing(user, query.path ?? "");
     },
-    { query: t.Object({ path: t.Optional(t.String()) }) }
+    { query: t.Object({ path: t.Optional(t.String()) }) },
   )
 
   // Drive storage usage — powers the 1 TB quota bar.
@@ -207,11 +192,11 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       if (q.length < 1) return { items: [] };
       const hits = await search(q);
       const items = hits
-        .map(hit => toItem(hit, user))
+        .map((hit) => toItem(hit, user))
         .filter((i): i is OneDriveItem => i !== null);
       return { items };
     },
-    { query: t.Object({ q: t.String() }) }
+    { query: t.Object({ q: t.String() }) },
   )
 
   // A short-lived preview/thumbnail URL for in-app viewing.
@@ -229,7 +214,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       }
       return { previewUrl, thumbnailUrl };
     },
-    { params: t.Object({ id: t.String() }) }
+    { params: t.Object({ id: t.String() }) },
   )
 
   // Stream a file's bytes back through the API (never exposes the drive).
@@ -247,7 +232,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         },
       });
     },
-    { params: t.Object({ id: t.String() }) }
+    { params: t.Object({ id: t.String() }) },
   )
 
   // Import a file straight into Convex storage (Graph -> API -> Convex),
@@ -265,10 +250,9 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       const bytes = await res.arrayBuffer();
       const contentType = item.file?.mimeType || "application/octet-stream";
 
-      const uploadUrl = await getConvex().mutation(
-        api.files.apiGenerateUploadUrl,
-        { serverKey: serverKey() }
-      );
+      const uploadUrl = await getConvex().mutation(api.files.apiGenerateUploadUrl, {
+        serverKey: serverKey(),
+      });
       const uploadRes = await fetch(uploadUrl, {
         method: "POST",
         headers: { "content-type": contentType },
@@ -279,9 +263,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
 
       return {
         storageId,
-        kind: contentType.startsWith("image/")
-          ? ("image" as const)
-          : ("file" as const),
+        kind: contentType.startsWith("image/") ? ("image" as const) : ("file" as const),
         name: item.name,
         size: item.size ?? bytes.byteLength,
         contentType,
@@ -289,7 +271,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         oneDrivePath: rel,
       };
     },
-    { params: t.Object({ id: t.String() }) }
+    { params: t.Object({ id: t.String() }) },
   )
 
   // Upload. Manager+ → straight to OneDrive; employee → staged pending request.
@@ -318,22 +300,12 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       // them concurrently instead of paying for both round trips serially —
       // the rare "scan blocked" case just wastes one harmless GET.
       if (access.canWrite) {
-        const [report, folder] = await Promise.all([
-          scanPromise,
-          getItemByPath(targetRel),
-        ]);
+        const [report, folder] = await Promise.all([scanPromise, getItemByPath(targetRel)]);
         if (report.verdict === "blocked") {
-          const reason = report.flags.find(f => f.severity === "danger");
-          throw Errors.badRequest(
-            reason?.detail ?? "This file type is not allowed"
-          );
+          const reason = report.flags.find((f) => f.severity === "danger");
+          throw Errors.badRequest(reason?.detail ?? "This file type is not allowed");
         }
-        const created = await uploadFile(
-          folder.id,
-          file.name,
-          bytes,
-          file.type
-        );
+        const created = await uploadFile(folder.id, file.name, bytes, file.type);
         await getConvex().mutation(api.onedrive.apiRecordDirectUpload, {
           serverKey: serverKey(),
           uploaderUserId: user.userId,
@@ -351,16 +323,13 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       // Employee: stage the bytes in Convex and open an approval request.
       const report = await scanPromise;
       if (report.verdict === "blocked") {
-        const reason = report.flags.find(f => f.severity === "danger");
-        throw Errors.badRequest(
-          reason?.detail ?? "This file type is not allowed"
-        );
+        const reason = report.flags.find((f) => f.severity === "danger");
+        throw Errors.badRequest(reason?.detail ?? "This file type is not allowed");
       }
       const scanJson = JSON.stringify(report);
-      const uploadUrl = await getConvex().mutation(
-        api.onedrive.apiGenerateStagingUrl,
-        { serverKey: serverKey() }
-      );
+      const uploadUrl = await getConvex().mutation(api.onedrive.apiGenerateStagingUrl, {
+        serverKey: serverKey(),
+      });
       const staged = await fetch(uploadUrl, {
         method: "POST",
         headers: {
@@ -375,19 +344,16 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       const { storageId } = (await staged.json()) as {
         storageId: Id<"_storage">;
       };
-      const { uploadId } = await getConvex().mutation(
-        api.onedrive.apiSubmitRequest,
-        {
-          serverKey: serverKey(),
-          requesterUserId: user.userId,
-          fileName: file.name,
-          size: bytes.byteLength,
-          contentType: file.type || "application/octet-stream",
-          targetFolderPath: targetRel,
-          stagingStorageId: storageId,
-          scanReport: scanJson,
-        }
-      );
+      const { uploadId } = await getConvex().mutation(api.onedrive.apiSubmitRequest, {
+        serverKey: serverKey(),
+        requesterUserId: user.userId,
+        fileName: file.name,
+        size: bytes.byteLength,
+        contentType: file.type || "application/octet-stream",
+        targetFolderPath: targetRel,
+        stagingStorageId: storageId,
+        scanReport: scanJson,
+      });
       return { status: "pending" as const, uploadId, scan: report };
     },
     {
@@ -395,7 +361,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         file: t.File(),
         path: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
   // Approve a pending upload: stream the staged bytes into OneDrive.
@@ -429,12 +395,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         if (!staged.ok) throw Errors.internal("Could not read staged file");
         const bytes = new Uint8Array(await staged.arrayBuffer());
         const folder = await getItemByPath(upload.targetFolderPath);
-        const created = await uploadFile(
-          folder.id,
-          upload.fileName,
-          bytes,
-          upload.contentType
-        );
+        const created = await uploadFile(folder.id, upload.fileName, bytes, upload.contentType);
         await getConvex().mutation(api.onedrive.apiMarkApproved, {
           serverKey: serverKey(),
           uploadId,
@@ -445,8 +406,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         await invalidateAll();
         return { ok: true as const };
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Upload failed";
+        const message = error instanceof Error ? error.message : "Upload failed";
         await getConvex().mutation(api.onedrive.apiMarkFailed, {
           serverKey: serverKey(),
           uploadId,
@@ -458,7 +418,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     {
       params: t.Object({ id: t.String() }),
       body: t.Optional(t.Object({ note: t.Optional(t.String()) })),
-    }
+    },
   )
 
   // Deny a pending upload: discard the staged bytes, notify the requester.
@@ -478,7 +438,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     {
       params: t.Object({ id: t.String() }),
       body: t.Optional(t.Object({ note: t.Optional(t.String()) })),
-    }
+    },
   )
 
   // Create a folder (manager+).
@@ -494,7 +454,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       await invalidateAll();
       return { id: created.id, name: created.name };
     },
-    { body: t.Object({ path: t.Optional(t.String()), name: t.String() }) }
+    { body: t.Object({ path: t.Optional(t.String()), name: t.String() }) },
   )
 
   // Rename and/or move an item (manager+).
@@ -526,7 +486,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         name: t.Optional(t.String()),
         destPath: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
   // Delete an item to the recycle bin (manager+).
@@ -541,7 +501,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       await invalidateAll();
       return { ok: true as const };
     },
-    { params: t.Object({ id: t.String() }) }
+    { params: t.Object({ id: t.String() }) },
   )
 
   // Version history (read).
@@ -552,7 +512,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       await readableItem(user, params.id);
       const versions = await listVersions(params.id);
       return {
-        versions: versions.map(v => ({
+        versions: versions.map((v) => ({
           id: v.id,
           size: v.size ?? 0,
           lastModified: v.lastModifiedDateTime,
@@ -560,7 +520,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         })),
       };
     },
-    { params: t.Object({ id: t.String() }) }
+    { params: t.Object({ id: t.String() }) },
   )
 
   // Restore a previous version (manager+).
@@ -575,7 +535,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       await invalidateAll();
       return { ok: true as const };
     },
-    { params: t.Object({ id: t.String(), versionId: t.String() }) }
+    { params: t.Object({ id: t.String(), versionId: t.String() }) },
   )
 
   // Create an expiring anonymous share link (manager+).
@@ -594,7 +554,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     {
       params: t.Object({ id: t.String() }),
       body: t.Optional(t.Object({ expiresInDays: t.Optional(t.Number()) })),
-    }
+    },
   )
 
   // List active employees + their direct Team-folder share status (manager+).
@@ -643,7 +603,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       });
       return { ok: true as const, alreadyHadAccess: false as const };
     },
-    { body: t.Object({ userId: t.String(), email: t.String() }) }
+    { body: t.Object({ userId: t.String(), email: t.String() }) },
   )
 
   // Revoke a direct Team-folder share (manager+).
@@ -661,7 +621,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       });
       return { ok: true as const };
     },
-    { body: t.Object({ userId: t.String(), permissionId: t.String() }) }
+    { body: t.Object({ userId: t.String(), permissionId: t.String() }) },
   )
 
   // Grant Team-folder access to every active employee missing it (manager+).
@@ -671,7 +631,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     const roster = await getConvex().query(api.onedrive.apiTeamAccessRoster, {
       serverKey: serverKey(),
     });
-    const missing = roster.filter(r => !r.permissionId);
+    const missing = roster.filter((r) => !r.permissionId);
     const team = await getItemByPath(folderConfig().team);
     let granted = 0;
     let alreadyHadAccess = 0;
@@ -690,10 +650,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
         if (existing) alreadyHadAccess++;
         else granted++;
       } catch (error) {
-        console.error(
-          `[onedrive] team-access sync failed for ${person.email}:`,
-          error
-        );
+        console.error(`[onedrive] team-access sync failed for ${person.email}:`, error);
       }
     }
     return {
@@ -703,18 +660,12 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     };
   });
 
-type OneDriveAuditAction =
-  | "mkdir"
-  | "move"
-  | "rename"
-  | "delete"
-  | "restore"
-  | "share";
+type OneDriveAuditAction = "mkdir" | "move" | "rename" | "delete" | "restore" | "share";
 
 async function recordAction(
   user: OneDriveUser,
   action: OneDriveAuditAction,
-  target: string
+  target: string,
 ): Promise<void> {
   try {
     await getConvex().mutation(api.onedrive.apiRecordAction, {

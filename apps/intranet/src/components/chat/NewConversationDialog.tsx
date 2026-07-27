@@ -48,7 +48,7 @@ export function NewConversationDialog({
   const [groupName, setGroupName] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const others = people?.filter(p => p._id !== me._id) ?? [];
+  const others = people?.filter((p) => p._id !== me._id) ?? [];
 
   function reset() {
     setGroupMode(false);
@@ -83,7 +83,7 @@ export function NewConversationDialog({
   }
 
   function toggle(id: string) {
-    setSelected(s => {
+    setSelected((s) => {
       const next = new Set(s);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -94,7 +94,7 @@ export function NewConversationDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         setOpen(o);
         if (!o) reset();
       }}
@@ -141,7 +141,7 @@ export function NewConversationDialog({
           <Input
             placeholder={t("groupName")}
             value={groupName}
-            onChange={e => setGroupName(e.target.value)}
+            onChange={(e) => setGroupName(e.target.value)}
           />
         )}
 
@@ -152,38 +152,29 @@ export function NewConversationDialog({
             </span>
             <div>
               <p className="text-sm font-medium">{t("noPeople")}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("noPeopleHint")}
-              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("noPeopleHint")}</p>
             </div>
           </div>
         ) : (
           <ScrollArea className="h-72 rounded-lg border border-border">
-            {others.map(p => (
+            {others.map((p) => (
               <div
                 key={p._id}
                 className="flex items-center gap-3 border-b border-border/60 px-3 py-2 last:border-b-0 hover:bg-accent"
               >
                 {groupMode && (
-                  <Checkbox
-                    checked={selected.has(p._id)}
-                    onCheckedChange={() => toggle(p._id)}
-                  />
+                  <Checkbox checked={selected.has(p._id)} onCheckedChange={() => toggle(p._id)} />
                 )}
                 <Avatar className="size-8">
                   {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                  <AvatarFallback className="text-xs">
-                    {initials(p.name, p.email)}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-xs">{initials(p.name, p.email)}</AvatarFallback>
                 </Avatar>
                 <button
                   className="min-w-0 flex-1 text-left"
                   onClick={() => (groupMode ? toggle(p._id) : startDm(p._id))}
                 >
                   <p className="truncate text-sm font-medium">{p.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {p.jobTitle || p.email}
-                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{p.jobTitle || p.email}</p>
                 </button>
               </div>
             ))}
@@ -192,10 +183,7 @@ export function NewConversationDialog({
 
         {groupMode && others.length > 0 && (
           <DialogFooter>
-            <Button
-              onClick={makeGroup}
-              disabled={!groupName.trim() || selected.size === 0}
-            >
+            <Button onClick={makeGroup} disabled={!groupName.trim() || selected.size === 0}>
               {tc("create")}
             </Button>
           </DialogFooter>

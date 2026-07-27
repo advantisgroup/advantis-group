@@ -22,11 +22,8 @@ export function getRecentlyViewed(): RecentApplicant[] {
 
 export function recordRecentlyViewed(id: string, name: string): void {
   try {
-    const rest = getRecentlyViewed().filter(r => r.id !== id);
-    const next = [{ id, name, viewedAt: Date.now() }, ...rest].slice(
-      0,
-      MAX_ENTRIES
-    );
+    const rest = getRecentlyViewed().filter((r) => r.id !== id);
+    const next = [{ id, name, viewedAt: Date.now() }, ...rest].slice(0, MAX_ENTRIES);
     localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
     // Storage may be unavailable (private browsing etc.) — fail silently.

@@ -61,23 +61,13 @@ import { uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 function CheckpointStatusIcon({ status }: { status: CheckpointStatus }) {
-  if (status === "completed")
-    return <Check className="size-3.5 text-green-500" />;
-  if (status === "skipped")
-    return <SkipForward className="size-3.5 text-muted-foreground" />;
-  if (status === "active")
-    return <Circle className="size-3.5 fill-blue-500 text-blue-500" />;
+  if (status === "completed") return <Check className="size-3.5 text-green-500" />;
+  if (status === "skipped") return <SkipForward className="size-3.5 text-muted-foreground" />;
+  if (status === "active") return <Circle className="size-3.5 fill-blue-500 text-blue-500" />;
   return <Circle className="size-3.5 text-muted-foreground/40" />;
 }
 
-const START_PAGES = [
-  "/",
-  "/calendar",
-  "/absences",
-  "/announcements",
-  "/chat",
-  "/files",
-] as const;
+const START_PAGES = ["/", "/calendar", "/absences", "/announcements", "/chat", "/files"] as const;
 
 function AppPreferencesCard() {
   const t = useTranslations("Settings");
@@ -105,7 +95,7 @@ function AppPreferencesCard() {
             <Label>{t("defaultCalendarView")}</Label>
             <Select
               value={prefs?.defaultCalendarView ?? "month"}
-              onValueChange={v =>
+              onValueChange={(v) =>
                 void setPrefs({
                   defaultCalendarView: v as "month" | "week" | "list",
                 })
@@ -125,13 +115,13 @@ function AppPreferencesCard() {
             <Label>{t("startPage")}</Label>
             <Select
               value={prefs?.startPage ?? "/"}
-              onValueChange={v => void setPrefs({ startPage: v })}
+              onValueChange={(v) => void setPrefs({ startPage: v })}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {START_PAGES.map(p => (
+                {START_PAGES.map((p) => (
                   <SelectItem key={p} value={p}>
                     {pageLabel[p]}
                   </SelectItem>
@@ -143,9 +133,7 @@ function AppPreferencesCard() {
             <Label>{t("weekStart")}</Label>
             <Select
               value={prefs?.weekStartsOn ?? "monday"}
-              onValueChange={v =>
-                void setPrefs({ weekStartsOn: v as "monday" | "sunday" })
-              }
+              onValueChange={(v) => void setPrefs({ weekStartsOn: v as "monday" | "sunday" })}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -168,17 +156,14 @@ function ConnectionsCard() {
   if (!connections) return null;
 
   const clockodoLinked =
-    connections.clockodoDirect ||
-    (connections.personLinked && connections.personHasClockodo);
+    connections.clockodoDirect || (connections.personLinked && connections.personHasClockodo);
 
   return (
     <Card data-tour="tour-settings-connections">
       <CardContent className="space-y-4 p-5">
         <div>
           <p className="font-semibold tracking-tight">{t("connections")}</p>
-          <p className="text-sm text-muted-foreground">
-            {t("connectionsHint")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("connectionsHint")}</p>
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border/70 px-3 py-2.5">
@@ -192,15 +177,8 @@ function ConnectionsCard() {
                   : t("clockodoUnlinkedHint")}
               </span>
             </div>
-            <Badge
-              variant={clockodoLinked ? "success" : "muted"}
-              className="shrink-0 gap-1"
-            >
-              {clockodoLinked ? (
-                <Link2 className="size-3" />
-              ) : (
-                <Unlink className="size-3" />
-              )}
+            <Badge variant={clockodoLinked ? "success" : "muted"} className="shrink-0 gap-1">
+              {clockodoLinked ? <Link2 className="size-3" /> : <Unlink className="size-3" />}
               {clockodoLinked ? t("linked") : t("notLinked")}
             </Badge>
           </div>
@@ -239,19 +217,10 @@ function OnboardingRestartCard() {
     <Card data-tour="tour-settings-onboarding">
       <CardContent className="flex items-center justify-between gap-3 p-5">
         <div>
-          <p className="font-semibold tracking-tight">
-            {t("settingsCardTitle")}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {t("restartOnboardingHint")}
-          </p>
+          <p className="font-semibold tracking-tight">{t("settingsCardTitle")}</p>
+          <p className="text-sm text-muted-foreground">{t("restartOnboardingHint")}</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          onClick={restart}
-        >
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={restart}>
           <RotateCw className="size-3.5" />
           {t("restartOnboarding")}
         </Button>
@@ -268,12 +237,7 @@ export default function SettingsPage() {
   const tt = useTranslations("Tour");
   const user = useCurrentUser();
   const clerk = useClerk();
-  const {
-    state: tourState,
-    visibleCheckpoints,
-    redoCheckpoint,
-    redoTour,
-  } = useTour();
+  const { state: tourState, visibleCheckpoints, redoCheckpoint, redoTour } = useTour();
   const updateProfile = useAction(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
   const handleError = useErrorHandler();
@@ -285,7 +249,7 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState(user.phone ?? "");
   const [dateOfBirth, setDateOfBirth] = useState(user.dateOfBirth ?? "");
   const [showBirthdayPublicly, setShowBirthdayPublicly] = useState(
-    user.showBirthdayPublicly ?? false
+    user.showBirthdayPublicly ?? false,
   );
   const [busy, setBusy] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<{
@@ -297,7 +261,7 @@ export default function SettingsPage() {
     () => () => {
       if (avatarPreview) URL.revokeObjectURL(avatarPreview.url);
     },
-    [avatarPreview]
+    [avatarPreview],
   );
 
   const completeness = [
@@ -308,9 +272,7 @@ export default function SettingsPage() {
     department.trim().length > 0,
     phone.trim().length > 0,
   ];
-  const completePct = Math.round(
-    (completeness.filter(Boolean).length / completeness.length) * 100
-  );
+  const completePct = Math.round((completeness.filter(Boolean).length / completeness.length) * 100);
 
   async function save() {
     setBusy(true);
@@ -350,10 +312,7 @@ export default function SettingsPage() {
       const cropped = new File([avatarPreview.blob], "avatar.jpg", {
         type: "image/jpeg",
       });
-      const avatarStorageId = await uploadToConvex(
-        () => generateUploadUrl({}),
-        cropped
-      );
+      const avatarStorageId = await uploadToConvex(() => generateUploadUrl({}), cropped);
       await updateProfile({ avatarStorageId });
       toast.success(t("saved"));
     } catch (e) {
@@ -380,23 +339,14 @@ export default function SettingsPage() {
               <Camera className="size-3.5" />
             </span>
             <span className="sr-only">{t("uploadAvatar")}</span>
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={onAvatar}
-            />
+            <input type="file" accept="image/*" className="hidden" onChange={onAvatar} />
           </label>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">
               {t("account")}
             </p>
-            <h2 className="truncate font-display text-xl font-bold tracking-tight">
-              {user.name}
-            </h2>
-            <p className="truncate text-sm text-muted-foreground">
-              {user.email}
-            </p>
+            <h2 className="truncate font-display text-xl font-bold tracking-tight">{user.name}</h2>
+            <p className="truncate text-sm text-muted-foreground">{user.email}</p>
             <Badge variant="muted" className="mt-1.5">
               {roleLabel(user, tRoles)}
             </Badge>
@@ -407,12 +357,8 @@ export default function SettingsPage() {
           {completePct < 100 && (
             <div className="space-y-1.5 rounded-lg border border-border/70 bg-muted/30 p-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-medium">
-                  {t("completeness", { pct: completePct })}
-                </span>
-                <span className="tabular-nums text-muted-foreground">
-                  {completePct}%
-                </span>
+                <span className="font-medium">{t("completeness", { pct: completePct })}</span>
+                <span className="tabular-nums text-muted-foreground">{completePct}%</span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
@@ -420,52 +366,36 @@ export default function SettingsPage() {
                   style={{ width: `${completePct}%` }}
                 />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {t("completenessHint")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("completenessHint")}</p>
             </div>
           )}
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold">{t("personalInfo")}</p>
             <span className="h-px flex-1 bg-border/60" />
           </div>
-          <p className="-mt-2 text-xs text-muted-foreground">
-            {t("accountHint")}
-          </p>
+          <p className="-mt-2 text-xs text-muted-foreground">{t("accountHint")}</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>{t("firstName")}</Label>
-              <Input
-                value={firstName}
-                onChange={e => setFirstName(e.target.value)}
-              />
+              <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>{t("lastName")}</Label>
-              <Input
-                value={lastName}
-                onChange={e => setLastName(e.target.value)}
-              />
+              <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>{t("jobTitle")}</Label>
-            <Input
-              value={jobTitle}
-              onChange={e => setJobTitle(e.target.value)}
-            />
+            <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>{t("department")}</Label>
-              <Input
-                value={department}
-                onChange={e => setDepartment(e.target.value)}
-              />
+              <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>{t("phone")}</Label>
-              <Input value={phone} onChange={e => setPhone(e.target.value)} />
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -475,29 +405,21 @@ export default function SettingsPage() {
                 type="date"
                 className="max-w-48"
                 value={dateOfBirth}
-                onChange={e => setDateOfBirth(e.target.value)}
+                onChange={(e) => setDateOfBirth(e.target.value)}
               />
               <div className="flex items-center gap-2">
                 <Switch
                   checked={showBirthdayPublicly}
-                  onToggle={() => setShowBirthdayPublicly(v => !v)}
+                  onToggle={() => setShowBirthdayPublicly((v) => !v)}
                   label={t("showBirthdayPublicly")}
                 />
-                <span className="text-sm text-muted-foreground">
-                  {t("showBirthdayPublicly")}
-                </span>
+                <span className="text-sm text-muted-foreground">{t("showBirthdayPublicly")}</span>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {t("dateOfBirthHint")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("dateOfBirthHint")}</p>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => clerk.openUserProfile()}
-            >
+            <Button variant="outline" size="sm" onClick={() => clerk.openUserProfile()}>
               <ShieldCheck className="size-3.5" />
               {t("manageAccount")}
               <ExternalLink className="size-3" />
@@ -532,9 +454,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-3 p-5">
           <div>
             <p className="font-semibold tracking-tight">{tn("preferences")}</p>
-            <p className="text-sm text-muted-foreground">
-              {tn("preferencesHint")}
-            </p>
+            <p className="text-sm text-muted-foreground">{tn("preferencesHint")}</p>
           </div>
           <NotificationPreferences />
         </CardContent>
@@ -560,22 +480,15 @@ export default function SettingsPage() {
               <p className="text-sm font-semibold">{tt("chipTitle")}</p>
               <span className="h-px flex-1 bg-border/60" />
             </div>
-            <p className="text-xs text-muted-foreground">
-              {tt("settingsHint")}
-            </p>
+            <p className="text-xs text-muted-foreground">{tt("settingsHint")}</p>
 
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-1.5"
-              onClick={redoTour}
-            >
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={redoTour}>
               <RotateCw className="size-3.5" />
               {tt("restartTour")}
             </Button>
 
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {visibleCheckpoints.map(cp => {
+              {visibleCheckpoints.map((cp) => {
                 const cpState = tourState.checkpoints[cp.id];
                 const status: CheckpointStatus = cpState?.status ?? "pending";
                 return (
@@ -585,9 +498,7 @@ export default function SettingsPage() {
                   >
                     <div className="flex min-w-0 items-center gap-2">
                       <CheckpointStatusIcon status={status} />
-                      <span className="truncate text-sm">
-                        {tt(`checkpoints.${cp.id}`)}
-                      </span>
+                      <span className="truncate text-sm">{tt(`checkpoints.${cp.id}`)}</span>
                     </div>
                     <Button
                       variant="ghost"
@@ -607,10 +518,7 @@ export default function SettingsPage() {
       )}
 
       {/* Avatar crop preview */}
-      <Dialog
-        open={avatarPreview !== null}
-        onOpenChange={o => !o && setAvatarPreview(null)}
-      >
+      <Dialog open={avatarPreview !== null} onOpenChange={(o) => !o && setAvatarPreview(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>{t("avatarPreviewTitle")}</DialogTitle>
@@ -621,9 +529,7 @@ export default function SettingsPage() {
               <img
                 src={avatarPreview.url}
                 alt={t("avatar")}
-                className={cn(
-                  "size-40 rounded-full border border-border object-cover"
-                )}
+                className={cn("size-40 rounded-full border border-border object-cover")}
               />
             </div>
           )}

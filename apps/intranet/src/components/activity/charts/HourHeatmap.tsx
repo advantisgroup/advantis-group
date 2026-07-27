@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface Bucket {
   hour: number;
@@ -22,7 +17,7 @@ export function HourHeatmap({ data }: { data: Bucket[] }) {
     <TooltipProvider delayDuration={100}>
       <div className="flex flex-col gap-2">
         <div className="grid grid-cols-12 gap-1 sm:grid-cols-24">
-          {data.map(b => {
+          {data.map((b) => {
             const empty = b.total === 0;
             const opacity = empty ? 0.06 : 0.18 + b.ratio * 0.82;
             return (

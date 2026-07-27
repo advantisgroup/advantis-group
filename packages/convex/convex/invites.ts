@@ -3,11 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { roleValidator } from "./schema";
-import {
-  getAllowedDomains,
-  isEmailDomainAllowed,
-  requireManager,
-} from "./lib/auth";
+import { getAllowedDomains, isEmailDomainAllowed, requireManager } from "./lib/auth";
 import { createClerkInvitation, revokeClerkInvitations } from "./lib/clerk";
 
 const roleArg = roleValidator;
@@ -51,7 +47,7 @@ export const createInviteRecord = internalMutation({
 
     const existingUser = await ctx.db
       .query("users")
-      .withIndex("by_email", q => q.eq("email", email))
+      .withIndex("by_email", (q) => q.eq("email", email))
       .first();
     if (existingUser) {
       throw new ConvexError({
@@ -65,8 +61,8 @@ export const createInviteRecord = internalMutation({
 
     const existingInvite = await ctx.db
       .query("invites")
-      .withIndex("by_email", q => q.eq("email", email))
-      .filter(q => q.eq(q.field("status"), "pending"))
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .filter((q) => q.eq(q.field("status"), "pending"))
       .first();
 
     let inviteId;
@@ -95,8 +91,7 @@ export const createInviteRecord = internalMutation({
     }
 
     const invitedByName =
-      [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
-      inviter.email;
+      [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") || inviter.email;
 
     return { inviteId, token, email, role: args.role, invitedByName };
   },
@@ -111,10 +106,7 @@ export const createInviteRecord = internalMutation({
 export const create = action({
   args: { email: v.string(), role: roleArg },
   handler: async (ctx, args): Promise<{ inviteId: string; token: string }> => {
-    const rec = await ctx.runMutation(
-      internal.invites.createInviteRecord,
-      args
-    );
+    const rec = await ctx.runMutation(internal.invites.createInviteRecord, args);
     await createClerkInvitation({
       email: rec.email,
       role: rec.role,
@@ -145,8 +137,7 @@ export const refreshInviteToken = internalMutation({
       email: invite.email,
       role: invite.role,
       invitedByName:
-        [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
-        inviter.email,
+        [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") || inviter.email,
     };
   },
 });
@@ -201,20 +192,17 @@ export const list = query({
   handler: async (ctx, { status }) => {
     await requireManager(ctx);
     const invites = await ctx.db.query("invites").order("desc").take(200);
-    const filtered = status
-      ? invites.filter(i => i.status === status)
-      : invites;
+    const filtered = status ? invites.filter((i) => i.status === status) : invites;
     return Promise.all(
-      filtered.map(async invite => {
+      filtered.map(async (invite) => {
         const inviter = await ctx.db.get(invite.invitedByUserId);
         return {
           ...invite,
           invitedByName: inviter
-            ? [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") ||
-              inviter.email
+            ? [inviter.firstName, inviter.lastName].filter(Boolean).join(" ") || inviter.email
             : "Unknown",
         };
-      })
+      }),
     );
   },
 });
@@ -226,7 +214,7 @@ export const list = query({
  */
 export const config = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireManager(ctx);
     return { allowedDomains: getAllowedDomains() };
   },
@@ -238,7 +226,7 @@ export const getByToken = query({
   handler: async (ctx, { token }) => {
     const invite = await ctx.db
       .query("invites")
-      .withIndex("by_token", q => q.eq("token", token))
+      .withIndex("by_token", (q) => q.eq("token", token))
       .first();
     if (!invite) return null;
     return {

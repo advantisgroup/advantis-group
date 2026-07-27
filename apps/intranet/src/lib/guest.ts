@@ -5,9 +5,7 @@ const COOKIE = "guest_token";
 
 export function getGuestToken(): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie
-    .split("; ")
-    .find(row => row.startsWith(`${COOKIE}=`));
+  const match = document.cookie.split("; ").find((row) => row.startsWith(`${COOKIE}=`));
   return match ? decodeURIComponent(match.split("=")[1]) : null;
 }
 

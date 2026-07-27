@@ -51,7 +51,7 @@ export function PerformanceBottomTabs({
     <>
       <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden">
         <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {tabs?.map(tab => {
+          {tabs?.map((tab) => {
             const Icon = tab.icon;
             const active = tab.value === activeValue;
             return (
@@ -61,9 +61,7 @@ export function PerformanceBottomTabs({
                 aria-label={tab.label}
                 className={cn(
                   "relative flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
-                  active
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                  active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {active && (
@@ -92,10 +90,7 @@ export function PerformanceBottomTabs({
       </div>
 
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-        <SheetContent
-          side="bottom"
-          className="max-h-[75vh] overflow-y-auto rounded-t-2xl p-4"
-        >
+        <SheetContent side="bottom" className="max-h-[75vh] overflow-y-auto rounded-t-2xl p-4">
           <SheetTitle>{t("menuLabel")}</SheetTitle>
           <div className="mt-4 flex items-center gap-1 border-b pb-3">
             <PerformanceAccountMenu />
@@ -112,16 +107,14 @@ export function PerformanceBottomTabs({
                 {t("backToIntranet")}
               </Link>
             )}
-            {navItems.map(item => (
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMenuOpen(false)}
                 className="flex items-center gap-3 rounded-md px-2 py-2.5 text-sm hover:bg-accent"
               >
-                {item.icon && (
-                  <item.icon className="h-4 w-4 text-muted-foreground" />
-                )}
+                {item.icon && <item.icon className="h-4 w-4 text-muted-foreground" />}
                 {item.label}
               </Link>
             ))}

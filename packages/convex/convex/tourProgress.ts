@@ -12,7 +12,7 @@ export const upsertMyProgress = mutation({
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("tourProgress")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const now = Date.now();
     if (existing) {
@@ -34,11 +34,11 @@ export const upsertMyProgress = mutation({
 
 export const getMyProgress = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     return ctx.db
       .query("tourProgress")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
   },
 });
@@ -49,31 +49,28 @@ export const getMemberProgress = query({
     await requireManager(ctx);
     return ctx.db
       .query("tourProgress")
-      .withIndex("by_user", q => q.eq("userId", args.userId))
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .unique();
   },
 });
 
 export const listMemberProgress = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireManager(ctx);
     const rows = await ctx.db.query("tourProgress").collect();
     const results = await Promise.all(
-      rows.map(async row => {
+      rows.map(async (row) => {
         const user = await ctx.db.get(row.userId);
         return {
           userId: row.userId,
           checkpointStatuses: row.checkpointStatuses,
           completedAt: row.completedAt,
           updatedAt: row.updatedAt,
-          name: user
-            ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
-              user.email
-            : null,
+          name: user ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || user.email : null,
           email: user?.email ?? null,
         };
-      })
+      }),
     );
     return results;
   },

@@ -81,24 +81,22 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<"all" | Category>("all");
   const [showOld, setShowOld] = useState(false);
 
-  const unreadCount = notifications?.filter(n => !n.readAt).length ?? 0;
+  const unreadCount = notifications?.filter((n) => !n.readAt).length ?? 0;
 
   const filtered = useMemo(
     () =>
       (notifications ?? [])
-        .filter(n => (tab === "unread" ? !n.readAt : true))
-        .filter(n => (filter === "all" ? true : categoryOf(n.type) === filter)),
-    [notifications, tab, filter]
+        .filter((n) => (tab === "unread" ? !n.readAt : true))
+        .filter((n) => (filter === "all" ? true : categoryOf(n.type) === filter)),
+    [notifications, tab, filter],
   );
 
   const now = useNow();
-  const oldCount = filtered.filter(
-    n => n.readAt && now - n.createdAt > OLD_AFTER_MS
-  ).length;
+  const oldCount = filtered.filter((n) => n.readAt && now - n.createdAt > OLD_AFTER_MS).length;
   const visible =
     showOld || tab === "unread"
       ? filtered
-      : filtered.filter(n => !n.readAt || now - n.createdAt <= OLD_AFTER_MS);
+      : filtered.filter((n) => !n.readAt || now - n.createdAt <= OLD_AFTER_MS);
 
   // Group by calendar day, newest day first (list is already newest-first).
   const byDay = useMemo(() => {
@@ -151,7 +149,7 @@ export default function NotificationsPage() {
               { key: "unread", label: t("unread") },
               { key: "all", label: t("all") },
             ] as const
-          ).map(s => (
+          ).map((s) => (
             <button
               key={s.key}
               type="button"
@@ -161,7 +159,7 @@ export default function NotificationsPage() {
                 "rounded-md px-3 py-1 text-sm font-medium transition-colors",
                 tab === s.key
                   ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               {s.label}
@@ -182,7 +180,7 @@ export default function NotificationsPage() {
               { key: "uploads", label: t("cat_uploads") },
               { key: "system", label: t("cat_system") },
             ] as const
-          ).map(f => (
+          ).map((f) => (
             <button
               key={f.key}
               type="button"
@@ -192,7 +190,7 @@ export default function NotificationsPage() {
                 "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 filter === f.key
                   ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               {f.label}
@@ -204,11 +202,7 @@ export default function NotificationsPage() {
       {/* Feed grouped by day */}
       <div data-tour="tour-notifications-feed" className="space-y-6">
         {byDay.length === 0 ? (
-          <EmptyState
-            icon={<Bell />}
-            title={t("allCaughtUp")}
-            description={t("empty")}
-          />
+          <EmptyState icon={<Bell />} title={t("allCaughtUp")} description={t("empty")} />
         ) : (
           byDay.map(([day, rows]) => (
             <div key={day} className="space-y-2">
@@ -216,7 +210,7 @@ export default function NotificationsPage() {
                 {dayLabel(day)}
               </p>
               <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]">
-                {rows.map(n => (
+                {rows.map((n) => (
                   <NotificationRow key={n._id} n={n} />
                 ))}
               </div>
@@ -240,9 +234,7 @@ export default function NotificationsPage() {
         <CardContent className="space-y-3 p-5">
           <div>
             <p className="font-semibold tracking-tight">{t("preferences")}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("preferencesHint")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("preferencesHint")}</p>
           </div>
           <NotificationPreferences />
         </CardContent>
@@ -269,40 +261,26 @@ function NotificationRow({ n }: { n: NotificationDoc }) {
     <div
       className={cn(
         "group flex items-start gap-3 border-b border-border/60 px-4 py-3 transition-colors last:border-b-0 hover:bg-accent/50",
-        !n.readAt && "bg-primary/5"
+        !n.readAt && "bg-primary/5",
       )}
     >
-      <button
-        onClick={open}
-        className="flex min-w-0 flex-1 items-start gap-3 text-left"
-      >
+      <button onClick={open} className="flex min-w-0 flex-1 items-start gap-3 text-left">
         <span
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-lg",
-            n.readAt ? "bg-muted text-muted-foreground" : CATEGORY_TINT[cat]
+            n.readAt ? "bg-muted text-muted-foreground" : CATEGORY_TINT[cat],
           )}
         >
           <Icon className="size-[18px]" />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
-            <span
-              className={cn(
-                "truncate text-sm",
-                n.readAt ? "font-medium" : "font-semibold"
-              )}
-            >
+            <span className={cn("truncate text-sm", n.readAt ? "font-medium" : "font-semibold")}>
               {n.title}
             </span>
-            {!n.readAt && (
-              <span className="size-2 shrink-0 rounded-full bg-primary" />
-            )}
+            {!n.readAt && <span className="size-2 shrink-0 rounded-full bg-primary" />}
           </span>
-          {n.body && (
-            <span className="mt-0.5 block text-xs text-muted-foreground">
-              {n.body}
-            </span>
-          )}
+          {n.body && <span className="mt-0.5 block text-xs text-muted-foreground">{n.body}</span>}
           <span className="mt-1 block text-[11px] text-muted-foreground">
             {relativeTime(n.createdAt)}
           </span>

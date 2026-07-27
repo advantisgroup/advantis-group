@@ -14,7 +14,7 @@ export default function ApplicantTerminDetailPage() {
   const applicant = useQuery(api.applicants.get, { applicantId });
 
   if (!applicant) return null;
-  const termin = applicant.termine.find(t => t._id === params.terminId);
+  const termin = applicant.termine.find((t) => t._id === params.terminId);
   if (!termin) return null;
 
   return <TerminDetailModal applicantId={applicantId} termin={termin} />;

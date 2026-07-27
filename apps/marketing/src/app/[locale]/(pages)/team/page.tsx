@@ -117,12 +117,8 @@ export default function Team() {
                     </div>
 
                     <div className="space-y-1">
-                      <h2 className="text-3xl font-bold">
-                        {teamMembers[0].name}
-                      </h2>
-                      <p className="text-lg text-primary font-medium">
-                        {teamMembers[0].role}
-                      </p>
+                      <h2 className="text-3xl font-bold">{teamMembers[0].name}</h2>
+                      <p className="text-lg text-primary font-medium">{teamMembers[0].role}</p>
                     </div>
 
                     {teamMembers[0].email && (
@@ -162,23 +158,14 @@ export default function Team() {
 
           {/* Team Grid */}
           <section>
-            <ScrollReveal
-              delay={100}
-              className="mb-12 text-center md:text-left"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold">
-                {t("grid.title")}
-              </h2>
+            <ScrollReveal delay={100} className="mb-12 text-center md:text-left">
+              <h2 className="text-3xl md:text-4xl font-bold">{t("grid.title")}</h2>
               <p className="text-muted-foreground mt-2">{t("grid.subtitle")}</p>
             </ScrollReveal>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {teamMembers.slice(1).map((member, index) => (
-                <ScrollReveal
-                  key={member.name || index}
-                  delay={index * 100}
-                  className="h-full"
-                >
+                <ScrollReveal key={member.name || index} delay={index * 100} className="h-full">
                   <div className="group h-full relative bg-card/40 hover:bg-card/60 backdrop-blur-sm border border-border/50 hover:border-primary/30 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/5 overflow-hidden">
                     {/* Hover Gradient */}
                     <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -196,9 +183,7 @@ export default function Team() {
                       <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">
                         {member.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {member.role}
-                      </p>
+                      <p className="text-sm text-muted-foreground mb-4">{member.role}</p>
 
                       <div className="mt-auto pt-4 border-t border-border/50 w-full opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
                         <span className="text-xs font-medium text-primary uppercase tracking-wider">

@@ -36,7 +36,7 @@ export function Quiz({
         <span className="text-xs text-muted-foreground">
           Versuch {attempts}
           {history.length
-            ? ` · frühere Versuche: ${history.map(h => `${h.correct}/${h.total}`).join(", ")}`
+            ? ` · frühere Versuche: ${history.map((h) => `${h.correct}/${h.total}`).join(", ")}`
             : ""}
         </span>
       </div>
@@ -59,13 +59,10 @@ export function Quiz({
                       key={oi}
                       type="button"
                       disabled={revealed}
-                      onClick={() =>
-                        onMutate(p => answerQuizQuestion(p, chapter, qi, oi))
-                      }
+                      onClick={() => onMutate((p) => answerQuizQuestion(p, chapter, qi, oi))}
                       className={cn(
                         "flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors",
-                        !revealed &&
-                          "border-border hover:border-ring/60 hover:bg-accent",
+                        !revealed && "border-border hover:border-ring/60 hover:bg-accent",
                         revealed &&
                           isCorrect &&
                           "border-success/60 bg-success/10 font-medium text-success",
@@ -73,15 +70,10 @@ export function Quiz({
                           !isCorrect &&
                           isChosen &&
                           "border-destructive/60 bg-destructive/10 text-destructive",
-                        revealed &&
-                          !isCorrect &&
-                          !isChosen &&
-                          "border-border opacity-60"
+                        revealed && !isCorrect && !isChosen && "border-border opacity-60",
                       )}
                     >
-                      {revealed && isCorrect ? (
-                        <Check className="size-3.5 shrink-0" />
-                      ) : null}
+                      {revealed && isCorrect ? <Check className="size-3.5 shrink-0" /> : null}
                       {revealed && !isCorrect && isChosen ? (
                         <X className="size-3.5 shrink-0" />
                       ) : null}
@@ -104,20 +96,13 @@ export function Quiz({
 
       {complete ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
-          <Badge
-            variant={
-              lastResult.correct / chapter.quiz.length >= 0.7
-                ? "success"
-                : "warning"
-            }
-          >
-            Ergebnis: {state?.correct ?? 0}/{chapter.quiz.length} richtig
-            (Versuch {attempts})
+          <Badge variant={lastResult.correct / chapter.quiz.length >= 0.7 ? "success" : "warning"}>
+            Ergebnis: {state?.correct ?? 0}/{chapter.quiz.length} richtig (Versuch {attempts})
           </Badge>
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onMutate(p => retryQuiz(p, chapter.id))}
+            onClick={() => onMutate((p) => retryQuiz(p, chapter.id))}
           >
             <RotateCcw className="size-3.5" />
             Quiz wiederholen

@@ -40,12 +40,7 @@ export function NotificationsMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          aria-label={t("title")}
-        >
+        <Button variant="ghost" size="icon" className="relative" aria-label={t("title")}>
           <Bell className="h-5 w-5" />
           {unread > 0 && (
             <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
@@ -54,10 +49,7 @@ export function NotificationsMenu() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-[min(20rem,calc(100vw-1rem))] p-0"
-      >
+      <DropdownMenuContent align="end" className="w-[min(20rem,calc(100vw-1rem))] p-0">
         <div className="flex items-center justify-between border-b px-3 py-2">
           <span className="text-sm font-semibold">{t("title")}</span>
           {unread > 0 && (
@@ -71,7 +63,7 @@ export function NotificationsMenu() {
         </div>
         <ScrollArea className="max-h-96">
           {ordered && ordered.length > 0 ? (
-            ordered.slice(0, 8).map(n => (
+            ordered.slice(0, 8).map((n) => (
               <button
                 key={n._id}
                 onClick={() => {
@@ -80,42 +72,35 @@ export function NotificationsMenu() {
                 }}
                 className={cn(
                   "flex w-full items-start gap-2.5 border-b px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted",
-                  !n.readAt && "bg-primary/5"
+                  !n.readAt && "bg-primary/5",
                 )}
               >
                 <span
                   className={cn(
                     "mt-1.5 size-1.5 shrink-0 rounded-full",
-                    n.readAt ? "bg-transparent" : "bg-primary"
+                    n.readAt ? "bg-transparent" : "bg-primary",
                   )}
                 />
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span
                     className={cn(
                       "truncate",
-                      n.readAt
-                        ? "font-medium text-muted-foreground"
-                        : "font-semibold"
+                      n.readAt ? "font-medium text-muted-foreground" : "font-semibold",
                     )}
                   >
                     {n.title}
                   </span>
                   {n.body && (
-                    <span className="line-clamp-2 text-xs text-muted-foreground">
-                      {n.body}
-                    </span>
+                    <span className="line-clamp-2 text-xs text-muted-foreground">{n.body}</span>
                   )}
                   <span className="text-[10px] text-muted-foreground">
-                    {relativeTime(n.createdAt)} ·{" "}
-                    {new Date(n.createdAt).toLocaleDateString(locale)}
+                    {relativeTime(n.createdAt)} · {new Date(n.createdAt).toLocaleDateString(locale)}
                   </span>
                 </span>
               </button>
             ))
           ) : (
-            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-              {t("empty")}
-            </p>
+            <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("empty")}</p>
           )}
         </ScrollArea>
         <Link

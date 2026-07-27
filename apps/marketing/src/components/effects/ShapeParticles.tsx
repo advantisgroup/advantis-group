@@ -67,8 +67,7 @@ export const ShapeParticles = ({
             const angle = (i / count) * Math.PI * 2;
             const radius = size * (1 + Math.random() * 0.1);
             const t = angle;
-            const diamondRadius =
-              radius / (Math.abs(Math.cos(t)) + Math.abs(Math.sin(t)));
+            const diamondRadius = radius / (Math.abs(Math.cos(t)) + Math.abs(Math.sin(t)));
 
             points.push({
               x: centerX + Math.cos(angle) * diamondRadius,
@@ -127,7 +126,7 @@ export const ShapeParticles = ({
 
       return points;
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -146,15 +145,10 @@ export const ShapeParticles = ({
     };
 
     const initParticles = () => {
-      const points = generateShapePoints(
-        particleCount,
-        shape,
-        canvas.width,
-        canvas.height
-      );
+      const points = generateShapePoints(particleCount, shape, canvas.width, canvas.height);
 
       if (particlesRef.current.length === 0) {
-        particlesRef.current = points.map(point => ({
+        particlesRef.current = points.map((point) => ({
           x: point.x,
           y: point.y,
           baseX: point.x,
@@ -195,15 +189,14 @@ export const ShapeParticles = ({
 
       const mouse = mouseRef.current;
 
-      particlesRef.current.forEach(particle => {
+      particlesRef.current.forEach((particle) => {
         // Mouse interaction - repel particles
         const dx = mouse.x - particle.x;
         const dy = mouse.y - particle.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < interactionRadius) {
-          const force =
-            ((interactionRadius - distance) / interactionRadius) * repelForce;
+          const force = ((interactionRadius - distance) / interactionRadius) * repelForce;
           const angle = Math.atan2(dy, dx);
 
           // Push away from mouse
@@ -220,9 +213,7 @@ export const ShapeParticles = ({
         particle.vy *= damping;
 
         // Clamp velocity to max
-        const speed = Math.sqrt(
-          particle.vx * particle.vx + particle.vy * particle.vy
-        );
+        const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
         if (speed > maxVelocity) {
           particle.vx = (particle.vx / speed) * maxVelocity;
           particle.vy = (particle.vy / speed) * maxVelocity;
@@ -251,8 +242,7 @@ export const ShapeParticles = ({
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance < connectionDistance) {
-          const opacity =
-            (1 - distance / connectionDistance) * connectionOpacity;
+          const opacity = (1 - distance / connectionDistance) * connectionOpacity;
           ctx.strokeStyle = `rgba(${particleColor}, ${opacity})`;
           ctx.lineWidth = 1;
           ctx.beginPath();
@@ -291,10 +281,7 @@ export const ShapeParticles = ({
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 pointer-events-auto"
-      />
+      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-auto" />
     </div>
   );
 };

@@ -3,11 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { isPermission } from "./performance/lib/permissions";
-import {
-  requireAdminLogin,
-  requirePermission,
-  resolveActiveSession,
-} from "./performanceAuth";
+import { requireAdminLogin, requirePermission, resolveActiveSession } from "./performanceAuth";
 
 /**
  * Per-company role CRUD — the customization surface behind "edit permissions
@@ -20,7 +16,7 @@ import {
  */
 
 function validatePermissions(permissions: string[]): void {
-  const bad = permissions.filter(p => !isPermission(p));
+  const bad = permissions.filter((p) => !isPermission(p));
   if (bad.length > 0) {
     throw new ConvexError({
       code: "validation",
@@ -38,7 +34,7 @@ function validatePermissions(permissions: string[]): void {
  * requires the explicit arg. */
 async function resolveTargetCompanyId(
   admin: Doc<"performanceLogins">,
-  companyId: Id<"companies"> | undefined
+  companyId: Id<"companies"> | undefined,
 ): Promise<Id<"companies">> {
   const targetCompanyId = companyId ?? admin.companyId;
   if (!targetCompanyId) {
@@ -57,10 +53,10 @@ export const list = query({
     const targetCompanyId = await resolveTargetCompanyId(admin, companyId);
     const roles = await ctx.db
       .query("companyRoles")
-      .withIndex("by_company", q => q.eq("companyId", targetCompanyId))
+      .withIndex("by_company", (q) => q.eq("companyId", targetCompanyId))
       .collect();
     return roles
-      .map(r => ({
+      .map((r) => ({
         id: r._id,
         name: r.name,
         permissions: r.permissions,
@@ -85,16 +81,8 @@ export const create = mutation({
         message: "Please sign in.",
       });
     }
-    const targetCompanyId = await resolveTargetCompanyId(
-      resolved.login,
-      companyId
-    );
-    await requirePermission(
-      ctx,
-      resolved.login,
-      "manage_roles",
-      targetCompanyId
-    );
+    const targetCompanyId = await resolveTargetCompanyId(resolved.login, companyId);
+    await requirePermission(ctx, resolved.login, "manage_roles", targetCompanyId);
 
     const trimmed = name.trim();
     if (!trimmed) {
@@ -134,12 +122,7 @@ export const update = mutation({
     if (!role) {
       throw new ConvexError({ code: "not_found", message: "Role not found." });
     }
-    await requirePermission(
-      ctx,
-      resolved.login,
-      "manage_roles",
-      role.companyId
-    );
+    await requirePermission(ctx, resolved.login, "manage_roles", role.companyId);
 
     if (permissions !== undefined) validatePermissions(permissions);
 
@@ -170,12 +153,7 @@ export const remove = mutation({
     if (!role) {
       throw new ConvexError({ code: "not_found", message: "Role not found." });
     }
-    await requirePermission(
-      ctx,
-      resolved.login,
-      "manage_roles",
-      role.companyId
-    );
+    await requirePermission(ctx, resolved.login, "manage_roles", role.companyId);
 
     if (role.isBuiltIn) {
       throw new ConvexError({
@@ -186,9 +164,9 @@ export const remove = mutation({
 
     const holders = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_company_email", q => q.eq("companyId", role.companyId))
+      .withIndex("by_company_email", (q) => q.eq("companyId", role.companyId))
       .collect();
-    if (holders.some(h => h.roleId === roleId)) {
+    if (holders.some((h) => h.roleId === roleId)) {
       throw new ConvexError({
         code: "role_in_use",
         message: "Reassign every login holding this role before deleting it.",

@@ -52,10 +52,7 @@ function round2(v: number): number {
   return Math.round(v * 100) / 100;
 }
 
-export function rate(
-  num: number | undefined,
-  den: number | undefined
-): number | undefined {
+export function rate(num: number | undefined, den: number | undefined): number | undefined {
   if (num === undefined || !den) return undefined;
   return round1((100 * num) / den);
 }
@@ -83,35 +80,24 @@ export function enrich(snap: Snapshot): Snapshot {
  * team's real conversion rate upward. Other team totals (leads, workable,
  * won counts) are unaffected — only the Hitrate figure excludes them. */
 export function teamHitrate(snaps: Snapshot[]): number | undefined {
-  const included = snaps.filter(s => {
+  const included = snaps.filter((s) => {
     const own = rate(s.wonMonth, s.workableCreated);
     return own === undefined || own <= 100;
   });
-  return rate(
-    nsum(included.map(s => s.wonMonth)),
-    nsum(included.map(s => s.workableCreated))
-  );
+  return rate(nsum(included.map((s) => s.wonMonth)), nsum(included.map((s) => s.workableCreated)));
 }
 
 /** Workdays of the month up to `asOf` with no call report at all —
  * `presentDates` is the set of report dates that *do* have `callsToday`
  * measured (fetched by the caller). Distinguishes a missing report from
  * an individual employee's day off. */
-export function missingCallDays(
-  ym: string,
-  asOf: Date,
-  presentDates: ReadonlySet<string>
-): Date[] {
+export function missingCallDays(ym: string, asOf: Date, presentDates: ReadonlySet<string>): Date[] {
   const { start, end } = monthBoundsISO(ym);
   const startDate = parseISODate(start);
   const endDate = parseISODate(end);
   const last = asOf.getTime() < endDate.getTime() ? asOf : endDate;
   const missing: Date[] = [];
-  for (
-    let d = startDate;
-    d.getTime() <= last.getTime();
-    d = new Date(d.getTime() + 86_400_000)
-  ) {
+  for (let d = startDate; d.getTime() <= last.getTime(); d = new Date(d.getTime() + 86_400_000)) {
     if (isWorkday(d) && !presentDates.has(toISODate(d))) missing.push(d);
   }
   return missing;
@@ -142,7 +128,7 @@ export function addForecast(
   snap: Snapshot,
   ym: string,
   workedDays?: number,
-  missingDays?: Date[]
+  missingDays?: Date[],
 ): Snapshot {
   const asOf = snap.reportDate ? parseISODate(snap.reportDate) : todayUTC();
   const value = snap.wonMonth;
@@ -225,10 +211,7 @@ const DELTA_KEYS: (keyof Snapshot)[] = [
  * plain per-KPI record like `computeTeamBenchmark`'s return value. */
 export type DeltaSource = Snapshot | Record<string, number | undefined>;
 
-function numField(
-  snap: DeltaSource | undefined,
-  key: string
-): number | undefined {
+function numField(snap: DeltaSource | undefined, key: string): number | undefined {
   if (!snap) return undefined;
   const v = (snap as Record<string, unknown>)[key];
   return typeof v === "number" ? v : undefined;
@@ -237,7 +220,7 @@ function numField(
 /** Per-KPI difference (undefined if either value is missing). */
 export function computeDeltas(
   cur: DeltaSource | undefined,
-  ref: DeltaSource | undefined
+  ref: DeltaSource | undefined,
 ): Record<string, number | undefined> {
   const out: Record<string, number | undefined> = {};
   for (const k of DELTA_KEYS) {
@@ -259,18 +242,14 @@ export function shiftYm(ym: string, months: number): string {
 /** KPIs compared as a real team value (sum/sum) rather than a per-employee
  * average — for rates, an average of individual rates would be skewed by
  * small denominators. */
-const AGGREGATE_KEYS = new Set<keyof Snapshot>([
-  "workableRate",
-  "hitrate",
-  "talkAvgSec",
-]);
+const AGGREGATE_KEYS = new Set<keyof Snapshot>(["workableRate", "hitrate", "talkAvgSec"]);
 
 /** Comparison baseline per KPI for the month: rates as the real team
  * value, quantities as the per-employee average. `total` must already be
  * `enrich`ed. */
 export function computeTeamBenchmark(
   total: Snapshot,
-  snaps: Snapshot[]
+  snaps: Snapshot[],
 ): Record<string, number | undefined> {
   const bench: Record<string, number | undefined> = {};
   for (const k of DELTA_KEYS) {
@@ -278,12 +257,8 @@ export function computeTeamBenchmark(
       bench[k] = numField(total, k);
       continue;
     }
-    const vals = snaps
-      .map(s => numField(s, k))
-      .filter((v): v is number => v !== undefined);
-    bench[k] = vals.length
-      ? round2(vals.reduce((a, b) => a + b, 0) / vals.length)
-      : undefined;
+    const vals = snaps.map((s) => numField(s, k)).filter((v): v is number => v !== undefined);
+    bench[k] = vals.length ? round2(vals.reduce((a, b) => a + b, 0) / vals.length) : undefined;
   }
   return bench;
 }
@@ -291,7 +266,7 @@ export function computeTeamBenchmark(
 /** 'Preis: 3; Kein Bedarf: 2' -> [{reason: 'Preis', count: 3}, ...],
  * summed across employees and sorted by count descending. */
 export function aggregateReasons(
-  texts: (string | undefined)[]
+  texts: (string | undefined)[],
 ): { reason: string; count: number }[] {
   const agg = new Map<string, number>();
   for (const t of texts) {
@@ -469,12 +444,11 @@ const SIGNAL_THRESHOLD = 0.3; // a value below this score doesn't stand out
  * prior months' leads hitting an absurd rate (e.g. 6 Workables, 28 Won =
  * 467%). */
 export function hitrateMinBase(snaps: Snapshot[]): number {
-  const vals = snaps.map(s => s.workableCreated ?? 0).filter(v => v > 0);
+  const vals = snaps.map((s) => s.workableCreated ?? 0).filter((v) => v > 0);
   if (vals.length === 0) return MIN_BASE;
   const sorted = [...vals].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
-  const median =
-    sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
   return Math.max(MIN_BASE, Math.round(0.25 * median));
 }
 
@@ -482,7 +456,7 @@ export function hitrateMinBase(snaps: Snapshot[]): number {
  * (sum/sum), quantities against the per-employee average. */
 export function teamAverages(
   snaps: Snapshot[],
-  total?: Snapshot
+  total?: Snapshot,
 ): Record<string, number | undefined> {
   const avg: Record<string, number | undefined> = {};
   for (const def of SIGNAL_DEFS) {
@@ -491,12 +465,8 @@ export function teamAverages(
       avg[def.key] = totalVal;
       continue;
     }
-    const vals = snaps
-      .map(s => numField(s, def.key))
-      .filter((v): v is number => v !== undefined);
-    avg[def.key] = vals.length
-      ? round2(vals.reduce((a, b) => a + b, 0) / vals.length)
-      : undefined;
+    const vals = snaps.map((s) => numField(s, def.key)).filter((v): v is number => v !== undefined);
+    avg[def.key] = vals.length ? round2(vals.reduce((a, b) => a + b, 0) / vals.length) : undefined;
   }
   return avg;
 }
@@ -532,7 +502,7 @@ export function employeeSignals(
   cur: Snapshot | undefined,
   avg: Record<string, number | undefined>,
   vm: Snapshot | undefined,
-  hrBase?: number
+  hrBase?: number,
 ): { alerts: Signal[]; highlights: Signal[] } {
   if (!cur) return { alerts: [], highlights: [] };
   const signals: Signal[] = [];
@@ -544,8 +514,7 @@ export function employeeSignals(
 
     let minBase = def.minBase;
     if (def.key === "hitrate" && hrBase) minBase = hrBase;
-    if (def.baseField && (numField(cur, def.baseField) ?? 0) < minBase)
-      continue;
+    if (def.baseField && (numField(cur, def.baseField) ?? 0) < minBase) continue;
 
     let diff: number;
     let rel: number;
@@ -594,11 +563,11 @@ export function employeeSignals(
     });
   }
   const alerts = signals
-    .filter(s => s.score < 0)
+    .filter((s) => s.score < 0)
     .sort((a, b) => a.score - b.score)
     .slice(0, 3);
   const highlights = signals
-    .filter(s => s.score > 0)
+    .filter((s) => s.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
   return { alerts, highlights };
@@ -654,17 +623,17 @@ export function awardBadges(snaps: Snapshot[]): Record<string, BadgeResult> {
   // leads wins. The basis is scoped to the whole team, even though some
   // employees are excluded from winning.
   const hrBase = hitrateMinBase(snaps);
-  const participants = snaps.filter(s => badgeEligible(s.name));
+  const participants = snaps.filter((s) => badgeEligible(s.name));
 
   const hrCand = participants.filter(
-    s => s.hitrate !== undefined && (s.workableCreated ?? 0) >= hrBase
+    (s) => s.hitrate !== undefined && (s.workableCreated ?? 0) >= hrBase,
   );
   if (hrCand.length) {
-    const best = Math.max(...hrCand.map(s => s.hitrate!));
+    const best = Math.max(...hrCand.map((s) => s.hitrate!));
     if (best > 0) {
       res.hitrate = {
         value: best,
-        winners: hrCand.filter(s => s.hitrate === best).map(s => s.employeeId),
+        winners: hrCand.filter((s) => s.hitrate === best).map((s) => s.employeeId),
       };
     }
   }
@@ -672,14 +641,12 @@ export function awardBadges(snaps: Snapshot[]): Record<string, BadgeResult> {
     ["won", "wonMonth"],
     ["calls", "callsToday"],
   ] as const) {
-    const cand = participants.filter(s => (s[field] ?? 0) > 0);
+    const cand = participants.filter((s) => (s[field] ?? 0) > 0);
     if (cand.length) {
-      const best = Math.max(...cand.map(s => s[field] ?? 0));
+      const best = Math.max(...cand.map((s) => s[field] ?? 0));
       res[key] = {
         value: best,
-        winners: cand
-          .filter(s => (s[field] ?? 0) === best)
-          .map(s => s.employeeId),
+        winners: cand.filter((s) => (s[field] ?? 0) === best).map((s) => s.employeeId),
       };
     }
   }
@@ -697,27 +664,23 @@ export interface PerformanceMark {
  * equal weight — a strong rate counts as much as a strong volume. Only
  * evaluated for employees with a solid basis on both.
  */
-export function performanceMarks(
-  snaps: Snapshot[]
-): Record<string, PerformanceMark> {
+export function performanceMarks(snaps: Snapshot[]): Record<string, PerformanceMark> {
   const hrBase = hitrateMinBase(snaps);
   const cand = snaps.filter(
-    s =>
-      s.hitrate !== undefined &&
-      s.wonMonth !== undefined &&
-      (s.workableCreated ?? 0) >= hrBase
+    (s) =>
+      s.hitrate !== undefined && s.wonMonth !== undefined && (s.workableCreated ?? 0) >= hrBase,
   );
   if (cand.length < 4) return {};
 
   const normalizer = (vals: number[]): ((v: number) => number) => {
     const lo = Math.min(...vals);
     const hi = Math.max(...vals);
-    return hi === lo ? () => 0.5 : v => (v - lo) / (hi - lo);
+    return hi === lo ? () => 0.5 : (v) => (v - lo) / (hi - lo);
   };
-  const nHr = normalizer(cand.map(s => s.hitrate!));
-  const nWon = normalizer(cand.map(s => s.wonMonth!));
+  const nHr = normalizer(cand.map((s) => s.hitrate!));
+  const nWon = normalizer(cand.map((s) => s.wonMonth!));
   const scored = cand
-    .map(s => ({
+    .map((s) => ({
       score: (nHr(s.hitrate!) + nWon(s.wonMonth!)) / 2,
       employeeId: s.employeeId,
     }))

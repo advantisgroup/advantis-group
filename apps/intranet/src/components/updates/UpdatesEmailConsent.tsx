@@ -37,12 +37,8 @@ export function UpdatesEmailConsent() {
           <Mail className="size-[18px]" />
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-medium">
-            {t("emailConsentTitle")}
-          </span>
-          <span className="block text-xs text-muted-foreground">
-            {t("emailConsentHint")}
-          </span>
+          <span className="block text-sm font-medium">{t("emailConsentTitle")}</span>
+          <span className="block text-xs text-muted-foreground">{t("emailConsentHint")}</span>
         </span>
       </div>
       <Switch

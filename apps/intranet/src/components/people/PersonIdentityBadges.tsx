@@ -3,11 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { teamColor, teamLabelKey } from "@/lib/teams";
 
 export type PersonRole = "admin" | "manager" | "employee";
@@ -68,23 +64,14 @@ export function PersonIdentityBadges({
           </TooltipContent>
         </Tooltip>
       )}
-      {visibleTags.map(tag => (
-        <Badge
-          key={tag.key}
-          variant="outline"
-          className="shrink-0 gap-1 text-[10px]"
-        >
-          {tag.dotClassName && (
-            <span className={`size-1.5 rounded-full ${tag.dotClassName}`} />
-          )}
+      {visibleTags.map((tag) => (
+        <Badge key={tag.key} variant="outline" className="shrink-0 gap-1 text-[10px]">
+          {tag.dotClassName && <span className={`size-1.5 rounded-full ${tag.dotClassName}`} />}
           {tag.label}
         </Badge>
       ))}
       {hiddenCount > 0 && (
-        <Badge
-          variant="outline"
-          className="shrink-0 text-[10px] text-muted-foreground"
-        >
+        <Badge variant="outline" className="shrink-0 text-[10px] text-muted-foreground">
           +{hiddenCount}
         </Badge>
       )}

@@ -34,9 +34,7 @@ export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
         <div className="flex items-center justify-between gap-3 border-b border-border/70 p-4">
           <p className="text-sm font-semibold">
             {t("contactHistory")}
-            <span className="ml-1.5 text-muted-foreground">
-              ({applicant.kontakte.length})
-            </span>
+            <span className="ml-1.5 text-muted-foreground">({applicant.kontakte.length})</span>
           </p>
           <Button size="sm" onClick={() => setLogOpen(true)}>
             <Plus className="size-4" />
@@ -58,7 +56,7 @@ export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
             />
           ) : (
             <div className="divide-y divide-border/70">
-              {applicant.kontakte.map(k => (
+              {applicant.kontakte.map((k) => (
                 <EntryRow
                   key={k._id}
                   href={`/applicants/${applicant._id}/kontakte/${k._id}`}
@@ -66,9 +64,7 @@ export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
                   title={t(`kontaktArt.${k.art}`)}
                   meta={formatIsoDate(k.datum, "de-DE")}
                   note={k.notiz}
-                  onDelete={() =>
-                    removeKontakt({ kontaktId: k._id }).catch(handleError)
-                  }
+                  onDelete={() => removeKontakt({ kontaktId: k._id }).catch(handleError)}
                   deleteLabel={t("deleteEntry")}
                 />
               ))}

@@ -47,8 +47,7 @@ const animationStyles = {
 
 const colorSchemes = {
   default: "text-foreground",
-  gradient:
-    "bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600",
+  gradient: "bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600",
   primary: "text-primary",
   secondary: "text-secondary",
   custom: "", // use customColor
@@ -114,7 +113,7 @@ export function CountUp({
           });
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1 },
     );
 
     if (containerRef.current) observer.observe(containerRef.current);
@@ -138,11 +137,10 @@ export function CountUp({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [value, animationConfig, hasAnimated, triggerOnView, onAnimationComplete]
+    [value, animationConfig, hasAnimated, triggerOnView, onAnimationComplete],
   );
 
-  const colorClass =
-    colorScheme === "custom" && customColor ? "" : colorSchemes[colorScheme];
+  const colorClass = colorScheme === "custom" && customColor ? "" : colorSchemes[colorScheme];
 
   const getHoverAnimation = function () {
     if (!interactive) return {};
@@ -166,21 +164,13 @@ export function CountUp({
       // Using cn directly with string literals for classes
       className={cn(
         "inline-flex items-center justify-center text-4xl font-bold text-black dark:textwhite",
-        className
+        className,
       )}
     >
       <motion.div
         {...getHoverAnimation()}
-        className={cn(
-          "flex items-center transition-all",
-          colorClass,
-          numberClassName
-        )}
-        style={
-          colorScheme === "custom" && customColor
-            ? { color: customColor }
-            : undefined
-        }
+        className={cn("flex items-center transition-all", colorClass, numberClassName)}
+        style={colorScheme === "custom" && customColor ? { color: customColor } : undefined}
       >
         {prefix && <span className="mr-1 text-foreground">{prefix}</span>}
         <motion.span className=" text-foreground">{rounded}</motion.span>

@@ -2,13 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
-import {
-  action,
-  internalMutation,
-  internalQuery,
-  mutation,
-  query,
-} from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { BUILT_IN_ROLES } from "./performance/lib/permissions";
 
 /**
@@ -52,7 +46,7 @@ function requireVercelConfig(): {
   const projectId = process.env.VERCEL_PROJECT_ID;
   if (!apiToken || !projectId) {
     throw new Error(
-      "VERCEL_API_TOKEN / VERCEL_PROJECT_ID are not configured on this Convex deployment."
+      "VERCEL_API_TOKEN / VERCEL_PROJECT_ID are not configured on this Convex deployment.",
     );
   }
   return { apiToken, projectId, teamId: process.env.VERCEL_TEAM_ID };
@@ -61,10 +55,10 @@ function requireVercelConfig(): {
 function vercelProjectDomainUrl(
   projectId: string,
   teamId: string | undefined,
-  domainPath?: string
+  domainPath?: string,
 ): URL {
   const url = new URL(
-    `https://api.vercel.com/v10/projects/${projectId}/domains${domainPath ? `/${domainPath}` : ""}`
+    `https://api.vercel.com/v10/projects/${projectId}/domains${domainPath ? `/${domainPath}` : ""}`,
   );
   if (teamId) url.searchParams.set("teamId", teamId);
   return url;
@@ -91,10 +85,8 @@ interface VercelDomainResult {
 function normalizeDnsVerification(raw: unknown): DnsVerificationRecord[] {
   if (!Array.isArray(raw)) return [];
   return raw
-    .filter(
-      (r): r is Record<string, unknown> => typeof r === "object" && r !== null
-    )
-    .map(r => ({
+    .filter((r): r is Record<string, unknown> => typeof r === "object" && r !== null)
+    .map((r) => ({
       type: String(r.type ?? ""),
       domain: String(r.domain ?? ""),
       value: String(r.value ?? ""),
@@ -113,86 +105,81 @@ interface DnsProviderInfo {
  * a direct link to their "add a TXT record" docs instead of making every
  * admin hunt for it themselves. Unmatched nameservers just mean no hint is
  * shown, never an error. */
-const KNOWN_DNS_PROVIDERS: { match: string; name: string; docsUrl: string }[] =
-  [
-    {
-      match: "ionos",
-      name: "IONOS",
-      docsUrl:
-        "https://www.ionos.com/help/domains/configuring-name-servers-and-dns-records/creating-and-configuring-additional-dns-records-for-domains/",
-    },
-    {
-      match: "domaincontrol",
-      name: "GoDaddy",
-      docsUrl: "https://www.godaddy.com/help/add-a-txt-record-19232",
-    },
-    {
-      match: "cloudflare",
-      name: "Cloudflare",
-      docsUrl:
-        "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/",
-    },
-    {
-      match: "registrar-servers",
-      name: "Namecheap",
-      docsUrl:
-        "https://www.namecheap.com/support/knowledgebase/article.aspx/317/2237/how-do-i-add-txtspfdkimdmarc-records-for-my-domain/",
-    },
-    {
-      match: "domains.google",
-      name: "Google Domains",
-      docsUrl: "https://support.google.com/domains/answer/9211383",
-    },
-    {
-      match: "awsdns",
-      name: "AWS Route 53",
-      docsUrl:
-        "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/rrsets-working-with.html",
-    },
-    {
-      match: "squarespacedns",
-      name: "Squarespace Domains",
-      docsUrl: "https://support.squarespace.com/hc/en-us/articles/205812378",
-    },
-    {
-      match: "hostinger",
-      name: "Hostinger",
-      docsUrl:
-        "https://support.hostinger.com/en/articles/1583227-how-to-manage-dns-records",
-    },
-    {
-      match: "ovh",
-      name: "OVH",
-      docsUrl:
-        "https://docs.ovh.com/us/en/domains/web_hosting_general_information_about_dns_servers/",
-    },
-    {
-      match: "vercel-dns",
-      name: "Vercel DNS",
-      docsUrl: "https://vercel.com/docs/domains/managing-dns-records",
-    },
-    {
-      match: "netlify",
-      name: "Netlify DNS",
-      docsUrl: "https://docs.netlify.com/domains-https/netlify-dns/",
-    },
-    {
-      match: "dnsimple",
-      name: "DNSimple",
-      docsUrl: "https://support.dnsimple.com/articles/txt-record/",
-    },
-    {
-      match: "strato",
-      name: "STRATO",
-      docsUrl:
-        "https://www.strato.de/faq/domains/wie-lege-ich-einen-txt-eintrag-an/",
-    },
-    {
-      match: "united-domains",
-      name: "united-domains",
-      docsUrl: "https://www.united-domains.de/hilfe/dns-verwaltung",
-    },
-  ];
+const KNOWN_DNS_PROVIDERS: { match: string; name: string; docsUrl: string }[] = [
+  {
+    match: "ionos",
+    name: "IONOS",
+    docsUrl:
+      "https://www.ionos.com/help/domains/configuring-name-servers-and-dns-records/creating-and-configuring-additional-dns-records-for-domains/",
+  },
+  {
+    match: "domaincontrol",
+    name: "GoDaddy",
+    docsUrl: "https://www.godaddy.com/help/add-a-txt-record-19232",
+  },
+  {
+    match: "cloudflare",
+    name: "Cloudflare",
+    docsUrl: "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/",
+  },
+  {
+    match: "registrar-servers",
+    name: "Namecheap",
+    docsUrl:
+      "https://www.namecheap.com/support/knowledgebase/article.aspx/317/2237/how-do-i-add-txtspfdkimdmarc-records-for-my-domain/",
+  },
+  {
+    match: "domains.google",
+    name: "Google Domains",
+    docsUrl: "https://support.google.com/domains/answer/9211383",
+  },
+  {
+    match: "awsdns",
+    name: "AWS Route 53",
+    docsUrl: "https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/rrsets-working-with.html",
+  },
+  {
+    match: "squarespacedns",
+    name: "Squarespace Domains",
+    docsUrl: "https://support.squarespace.com/hc/en-us/articles/205812378",
+  },
+  {
+    match: "hostinger",
+    name: "Hostinger",
+    docsUrl: "https://support.hostinger.com/en/articles/1583227-how-to-manage-dns-records",
+  },
+  {
+    match: "ovh",
+    name: "OVH",
+    docsUrl:
+      "https://docs.ovh.com/us/en/domains/web_hosting_general_information_about_dns_servers/",
+  },
+  {
+    match: "vercel-dns",
+    name: "Vercel DNS",
+    docsUrl: "https://vercel.com/docs/domains/managing-dns-records",
+  },
+  {
+    match: "netlify",
+    name: "Netlify DNS",
+    docsUrl: "https://docs.netlify.com/domains-https/netlify-dns/",
+  },
+  {
+    match: "dnsimple",
+    name: "DNSimple",
+    docsUrl: "https://support.dnsimple.com/articles/txt-record/",
+  },
+  {
+    match: "strato",
+    name: "STRATO",
+    docsUrl: "https://www.strato.de/faq/domains/wie-lege-ich-einen-txt-eintrag-an/",
+  },
+  {
+    match: "united-domains",
+    name: "united-domains",
+    docsUrl: "https://www.united-domains.de/hilfe/dns-verwaltung",
+  },
+];
 
 /** Looks up the `NS` records for exactly `name` (no climbing) via a public
  * DNS-over-HTTPS resolver — no extra credentials needed. Returns `[]` on any
@@ -203,13 +190,11 @@ async function queryNameservers(name: string): Promise<string[]> {
   try {
     const res = await fetch(
       `https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(name)}&type=NS`,
-      { headers: { accept: "application/dns-json" } }
+      { headers: { accept: "application/dns-json" } },
     );
     if (!res.ok) return [];
     const json = (await res.json()) as { Answer?: { data?: string }[] };
-    return (json.Answer ?? [])
-      .map(a => (a.data ?? "").toLowerCase())
-      .filter(Boolean);
+    return (json.Answer ?? []).map((a) => (a.data ?? "").toLowerCase()).filter(Boolean);
   } catch {
     return [];
   }
@@ -234,15 +219,13 @@ async function queryNameservers(name: string): Promise<string[]> {
  * nameservers happen to match a provider we recognize. Never climbs past
  * the registrable domain into the public suffix itself (e.g. bare "dev"),
  * since the loop bottoms out at two labels. */
-async function detectDnsProvider(
-  domain: string
-): Promise<DnsProviderInfo | null> {
+async function detectDnsProvider(domain: string): Promise<DnsProviderInfo | null> {
   const labels = domain.split(".");
   for (let i = 0; i <= labels.length - 2; i++) {
     const nameservers = await queryNameservers(labels.slice(i).join("."));
     if (nameservers.length === 0) continue;
     for (const ns of nameservers) {
-      const hit = KNOWN_DNS_PROVIDERS.find(p => ns.includes(p.match));
+      const hit = KNOWN_DNS_PROVIDERS.find((p) => ns.includes(p.match));
       if (hit) return { name: hit.name, docsUrl: hit.docsUrl };
     }
     return null;
@@ -291,7 +274,7 @@ async function addVercelDomain(domain: string): Promise<VercelDomainResult> {
       return checkVercelDomain(domain);
     }
     throw new Error(
-      `Vercel domain add failed (${res.status}): ${json.error?.message ?? "unknown error"}`
+      `Vercel domain add failed (${res.status}): ${json.error?.message ?? "unknown error"}`,
     );
   }
   return {
@@ -304,10 +287,9 @@ async function addVercelDomain(domain: string): Promise<VercelDomainResult> {
  * verification" button's server call, and the 409/retry fallback above. */
 async function checkVercelDomain(domain: string): Promise<VercelDomainResult> {
   const { apiToken, projectId, teamId } = requireVercelConfig();
-  const res = await fetch(
-    vercelProjectDomainUrl(projectId, teamId, encodeURIComponent(domain)),
-    { headers: vercelHeaders(apiToken) }
-  );
+  const res = await fetch(vercelProjectDomainUrl(projectId, teamId, encodeURIComponent(domain)), {
+    headers: vercelHeaders(apiToken),
+  });
   const json = (await res.json().catch(() => ({}))) as {
     verified?: boolean;
     // Vercel's actual response includes more fields per record (e.g.
@@ -319,7 +301,7 @@ async function checkVercelDomain(domain: string): Promise<VercelDomainResult> {
   };
   if (!res.ok) {
     throw new Error(
-      `Vercel domain check failed (${res.status}): ${json.error?.message ?? "unknown error"}`
+      `Vercel domain check failed (${res.status}): ${json.error?.message ?? "unknown error"}`,
     );
   }
   return {
@@ -349,13 +331,9 @@ interface VercelDomainConfig {
  * `routing` is the recommended A/CNAME record to add, straight from
  * Vercel's own recommendation (CNAME preferred when offered, else the
  * first recommended A record). */
-async function checkVercelDomainConfig(
-  domain: string
-): Promise<VercelDomainConfig> {
+async function checkVercelDomainConfig(domain: string): Promise<VercelDomainConfig> {
   const { apiToken, teamId } = requireVercelConfig();
-  const url = new URL(
-    `https://api.vercel.com/v6/domains/${encodeURIComponent(domain)}/config`
-  );
+  const url = new URL(`https://api.vercel.com/v6/domains/${encodeURIComponent(domain)}/config`);
   if (teamId) url.searchParams.set("teamId", teamId);
   const res = await fetch(url, { headers: vercelHeaders(apiToken) });
   const json = (await res.json().catch(() => ({}))) as {
@@ -366,11 +344,11 @@ async function checkVercelDomainConfig(
   };
   if (!res.ok) {
     throw new Error(
-      `Vercel domain config check failed (${res.status}): ${json.error?.message ?? "unknown error"}`
+      `Vercel domain config check failed (${res.status}): ${json.error?.message ?? "unknown error"}`,
     );
   }
-  const cname = json.recommendedCNAME?.find(r => r.rank === 1)?.value;
-  const ipv4 = json.recommendedIPv4?.find(r => r.rank === 1)?.value?.[0];
+  const cname = json.recommendedCNAME?.find((r) => r.rank === 1)?.value;
+  const ipv4 = json.recommendedIPv4?.find((r) => r.rank === 1)?.value?.[0];
   const routing: DnsRoutingRecord[] = cname
     ? [{ type: "CNAME", value: cname }]
     : ipv4
@@ -395,7 +373,7 @@ interface ResolvedDomainState {
  * "active" while its URL still failed to resolve at all. */
 async function resolveDomainState(
   domain: string,
-  ownership: VercelDomainResult
+  ownership: VercelDomainResult,
 ): Promise<ResolvedDomainState> {
   // Detected once per call and kept in every branch, including "active" —
   // a domain can go straight to active on its very first check (DNS was
@@ -435,16 +413,16 @@ async function resolveDomainState(
  * idempotent the same way provisioning is. */
 async function removeVercelDomain(domain: string): Promise<void> {
   const { apiToken, projectId, teamId } = requireVercelConfig();
-  const res = await fetch(
-    vercelProjectDomainUrl(projectId, teamId, encodeURIComponent(domain)),
-    { method: "DELETE", headers: vercelHeaders(apiToken) }
-  );
+  const res = await fetch(vercelProjectDomainUrl(projectId, teamId, encodeURIComponent(domain)), {
+    method: "DELETE",
+    headers: vercelHeaders(apiToken),
+  });
   if (!res.ok && res.status !== 404) {
     const json = (await res.json().catch(() => ({}))) as {
       error?: { message?: string };
     };
     throw new Error(
-      `Vercel domain removal failed (${res.status}): ${json.error?.message ?? "unknown error"}`
+      `Vercel domain removal failed (${res.status}): ${json.error?.message ?? "unknown error"}`,
     );
   }
 }
@@ -472,11 +450,11 @@ export const upsertProvisioningRow = internalMutation({
   },
   handler: async (
     ctx,
-    { name, domain, adminBootstrapEmails }
+    { name, domain, adminBootstrapEmails },
   ): Promise<{ companyId: Id<"companies"> }> => {
     const existing = await ctx.db
       .query("companies")
-      .withIndex("by_domain", q => q.eq("domain", domain))
+      .withIndex("by_domain", (q) => q.eq("domain", domain))
       .unique();
 
     if (existing) {
@@ -500,7 +478,7 @@ export const upsertProvisioningRow = internalMutation({
     while (
       await ctx.db
         .query("companies")
-        .withIndex("by_slug", q => q.eq("slug", slug))
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
         .unique()
     ) {
       slug = `${baseSlug}-${suffix++}`;
@@ -512,9 +490,7 @@ export const upsertProvisioningRow = internalMutation({
       slug,
       domain,
       status: "provisioning",
-      adminBootstrapEmails: adminBootstrapEmails
-        .map(e => e.trim().toLowerCase())
-        .filter(Boolean),
+      adminBootstrapEmails: adminBootstrapEmails.map((e) => e.trim().toLowerCase()).filter(Boolean),
       createdAt: now,
       updatedAt: now,
     });
@@ -536,23 +512,12 @@ export const upsertProvisioningRow = internalMutation({
 export const applyDomainResult = internalMutation({
   args: {
     companyId: v.id("companies"),
-    status: v.union(
-      v.literal("pending_dns"),
-      v.literal("pending_routing"),
-      v.literal("active")
-    ),
-    dnsVerification: v.array(
-      v.object({ type: v.string(), domain: v.string(), value: v.string() })
-    ),
+    status: v.union(v.literal("pending_dns"), v.literal("pending_routing"), v.literal("active")),
+    dnsVerification: v.array(v.object({ type: v.string(), domain: v.string(), value: v.string() })),
     dnsRouting: v.array(v.object({ type: v.string(), value: v.string() })),
-    dnsProvider: v.optional(
-      v.object({ name: v.string(), docsUrl: v.string() })
-    ),
+    dnsProvider: v.optional(v.object({ name: v.string(), docsUrl: v.string() })),
   },
-  handler: async (
-    ctx,
-    { companyId, status, dnsVerification, dnsRouting, dnsProvider }
-  ) => {
+  handler: async (ctx, { companyId, status, dnsVerification, dnsRouting, dnsProvider }) => {
     await ctx.db.patch(companyId, {
       status,
       vercelVerified: status !== "pending_dns",
@@ -632,7 +597,7 @@ const DELETE_BATCH_SIZE = 200;
 
 async function deleteBatch<T extends { _id: unknown }>(
   rows: T[],
-  del: (id: T["_id"]) => Promise<void>
+  del: (id: T["_id"]) => Promise<void>,
 ): Promise<{ more: boolean }> {
   for (const row of rows) await del(row._id);
   return { more: rows.length === DELETE_BATCH_SIZE };
@@ -643,9 +608,9 @@ export const deleteLoginsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_company_email", q => q.eq("companyId", companyId))
+      .withIndex("by_company_email", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -654,9 +619,9 @@ export const deleteSessionsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceSessions")
-      .filter(q => q.eq(q.field("companyId"), companyId))
+      .filter((q) => q.eq(q.field("companyId"), companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -665,7 +630,7 @@ export const deleteEmployeesAndTopicsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const employees = await ctx.db
       .query("performanceEmployees")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
     for (const employee of employees) {
       // performanceTopics has no companyId of its own — only reachable via
@@ -673,7 +638,7 @@ export const deleteEmployeesAndTopicsBatch = internalMutation({
       // employee row itself is deleted.
       const topics = await ctx.db
         .query("performanceTopics")
-        .withIndex("by_employee_ym", q => q.eq("employeeId", employee._id))
+        .withIndex("by_employee_ym", (q) => q.eq("employeeId", employee._id))
         .collect();
       for (const topic of topics) await ctx.db.delete(topic._id);
       await ctx.db.delete(employee._id);
@@ -687,9 +652,9 @@ export const deleteBadgeCacheBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceBadgeCache")
-      .withIndex("by_company_ym", q => q.eq("companyId", companyId))
+      .withIndex("by_company_ym", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -698,9 +663,9 @@ export const deleteReportsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceReports")
-      .withIndex("by_company_reportDate", q => q.eq("companyId", companyId))
+      .withIndex("by_company_reportDate", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -709,9 +674,9 @@ export const deleteRawLeadsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceRawLeads")
-      .withIndex("by_company_createDate", q => q.eq("companyId", companyId))
+      .withIndex("by_company_createDate", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -720,9 +685,9 @@ export const deleteRawOppsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceRawOpps")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -731,9 +696,9 @@ export const deleteWonOppsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceWonOpps")
-      .withIndex("by_company_closeDate", q => q.eq("companyId", companyId))
+      .withIndex("by_company_closeDate", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -742,9 +707,9 @@ export const deleteInteractionsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceInteractions")
-      .withIndex("by_company_date", q => q.eq("companyId", companyId))
+      .withIndex("by_company_date", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -753,9 +718,9 @@ export const deleteUploadLogBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceUploadLog")
-      .withIndex("by_company_uploadedAt", q => q.eq("companyId", companyId))
+      .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -764,9 +729,9 @@ export const deleteFlaggedRowsBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("performanceFlaggedRows")
-      .withIndex("by_company_status", q => q.eq("companyId", companyId))
+      .withIndex("by_company_status", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -775,9 +740,9 @@ export const deleteRolesBatch = internalMutation({
   handler: async (ctx, { companyId }) => {
     const rows = await ctx.db
       .query("companyRoles")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .take(DELETE_BATCH_SIZE);
-    return deleteBatch(rows, id => ctx.db.delete(id));
+    return deleteBatch(rows, (id) => ctx.db.delete(id));
   },
 });
 
@@ -827,46 +792,46 @@ export const deleteCompany = action({
     }
 
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteLoginsBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteLoginsBatch, { companyId }),
     );
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteSessionsBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteSessionsBatch, { companyId }),
     );
     await drainDeleteBatches(() =>
       ctx.runMutation(internal.companies.deleteEmployeesAndTopicsBatch, {
         companyId,
-      })
+      }),
     );
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteBadgeCacheBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteBadgeCacheBatch, { companyId }),
     );
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteReportsBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteReportsBatch, { companyId }),
     );
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteRawLeadsBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteRawLeadsBatch, { companyId }),
     );
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteRawOppsBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteRawOppsBatch, { companyId }),
     );
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteWonOppsBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteWonOppsBatch, { companyId }),
     );
     await drainDeleteBatches(() =>
       ctx.runMutation(internal.companies.deleteInteractionsBatch, {
         companyId,
-      })
+      }),
     );
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteUploadLogBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteUploadLogBatch, { companyId }),
     );
     await drainDeleteBatches(() =>
       ctx.runMutation(internal.companies.deleteFlaggedRowsBatch, {
         companyId,
-      })
+      }),
     );
     await drainDeleteBatches(() =>
-      ctx.runMutation(internal.companies.deleteRolesBatch, { companyId })
+      ctx.runMutation(internal.companies.deleteRolesBatch, { companyId }),
     );
     await ctx.runMutation(internal.companies.deleteCompanyRow, { companyId });
   },
@@ -888,7 +853,7 @@ export const getBySlugInternal = internalQuery({
   handler: async (ctx, { slug }): Promise<Doc<"companies"> | null> =>
     await ctx.db
       .query("companies")
-      .withIndex("by_slug", q => q.eq("slug", slug))
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique(),
 });
 
@@ -899,22 +864,18 @@ export const getBySlugInternal = internalQuery({
  * create). */
 export const getRoleByName = internalQuery({
   args: { companyId: v.id("companies"), name: v.string() },
-  handler: async (
-    ctx,
-    { companyId, name }
-  ): Promise<Doc<"companyRoles"> | null> => {
+  handler: async (ctx, { companyId, name }): Promise<Doc<"companyRoles"> | null> => {
     const roles = await ctx.db
       .query("companyRoles")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .collect();
-    return roles.find(r => r.name === name) ?? null;
+    return roles.find((r) => r.name === name) ?? null;
   },
 });
 
 export const getRoleByIdInternal = internalQuery({
   args: { roleId: v.id("companyRoles") },
-  handler: async (ctx, { roleId }): Promise<Doc<"companyRoles"> | null> =>
-    await ctx.db.get(roleId),
+  handler: async (ctx, { roleId }): Promise<Doc<"companyRoles"> | null> => await ctx.db.get(roleId),
 });
 
 /** Public — read by Next.js middleware (`fetchQuery`) on every request whose
@@ -930,7 +891,7 @@ export const getByDomain = query({
   args: { domain: v.string() },
   handler: async (
     ctx,
-    { domain }
+    { domain },
   ): Promise<{
     companyId: Id<"companies">;
     name: string;
@@ -939,7 +900,7 @@ export const getByDomain = query({
   } | null> => {
     const company = await ctx.db
       .query("companies")
-      .withIndex("by_domain", q => q.eq("domain", domain))
+      .withIndex("by_domain", (q) => q.eq("domain", domain))
       .unique();
     if (!company) return null;
     return {
@@ -961,7 +922,7 @@ export const listCompanies = query({
     });
     const companies = await ctx.db.query("companies").collect();
     return companies
-      .map(c => ({
+      .map((c) => ({
         id: c._id,
         name: c.name,
         slug: c.slug,
@@ -995,7 +956,7 @@ export const createCompany = action({
   },
   handler: async (
     ctx,
-    { token, name, domain, adminBootstrapEmails }
+    { token, name, domain, adminBootstrapEmails },
   ): Promise<{
     companyId: Id<"companies">;
     status: "active" | "pending_dns" | "pending_routing" | "failed";
@@ -1010,9 +971,7 @@ export const createCompany = action({
 
     const normalizedDomain = domain.trim().toLowerCase();
     if (
-      !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(
-        normalizedDomain
-      )
+      !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(normalizedDomain)
     ) {
       throw new ConvexError({
         code: "validation",
@@ -1027,10 +986,11 @@ export const createCompany = action({
       });
     }
 
-    const { companyId } = await ctx.runMutation(
-      internal.companies.upsertProvisioningRow,
-      { name: trimmedName, domain: normalizedDomain, adminBootstrapEmails }
-    );
+    const { companyId } = await ctx.runMutation(internal.companies.upsertProvisioningRow, {
+      name: trimmedName,
+      domain: normalizedDomain,
+      adminBootstrapEmails,
+    });
 
     const company = await ctx.runQuery(internal.companies.getByIdInternal, {
       companyId,
@@ -1084,7 +1044,7 @@ export const checkDomainVerification = action({
   args: { token: v.string(), companyId: v.id("companies") },
   handler: async (
     ctx,
-    { token, companyId }
+    { token, companyId },
   ): Promise<{
     status: "active" | "pending_dns" | "pending_routing";
     dnsVerification: DnsVerificationRecord[];

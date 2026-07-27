@@ -6,7 +6,7 @@ import { requireUser } from "./lib/auth";
 const preferenceFields = {
   hiddenDashboardCards: v.optional(v.array(v.string())),
   defaultCalendarView: v.optional(
-    v.union(v.literal("month"), v.literal("week"), v.literal("list"))
+    v.union(v.literal("month"), v.literal("week"), v.literal("list")),
   ),
   startPage: v.optional(v.string()),
   weekStartsOn: v.optional(v.union(v.literal("monday"), v.literal("sunday"))),
@@ -24,11 +24,11 @@ const preferenceFields = {
 
 export const getMine = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const prefs = await ctx.db
       .query("userPreferences")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     return prefs ?? null;
   },
@@ -40,7 +40,7 @@ export const setMine = mutation({
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("userPreferences")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const now = Date.now();
     if (existing) {
@@ -65,11 +65,11 @@ export const setMine = mutation({
  */
 export const resetOnboarding = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("userPreferences")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const now = Date.now();
     const reset = {

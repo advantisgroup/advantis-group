@@ -32,10 +32,7 @@ import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { PageHeader } from "@/components/PageHeader";
-import {
-  useCurrentUser,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -151,11 +148,7 @@ function EditorDialog({
     } else {
       try {
         const raw = localStorage.getItem(DRAFT_KEY);
-        setDraft(
-          raw
-            ? { ...EMPTY_DRAFT, ...(JSON.parse(raw) as Partial<Draft>) }
-            : EMPTY_DRAFT
-        );
+        setDraft(raw ? { ...EMPTY_DRAFT, ...(JSON.parse(raw) as Partial<Draft>) } : EMPTY_DRAFT);
       } catch {
         setDraft(EMPTY_DRAFT);
       }
@@ -173,15 +166,13 @@ function EditorDialog({
   }, [draft, open, editing]);
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
-    setDraft(d => ({ ...d, [key]: value }));
+    setDraft((d) => ({ ...d, [key]: value }));
 
   const audienceValue: Audience =
-    draft.audience === "all"
-      ? { kind: "all" }
-      : { kind: "department", department: draft.audience };
+    draft.audience === "all" ? { kind: "all" } : { kind: "department", department: draft.audience };
   const audienceCount = useQuery(
     api.announcements.audienceSize,
-    open ? { audience: audienceValue } : "skip"
+    open ? { audience: audienceValue } : "skip",
   );
 
   function toggleAlwaysPreview(v: boolean) {
@@ -192,23 +183,20 @@ function EditorDialog({
   const hasBody = htmlToText(draft.body).trim().length > 0;
   const canSend = draft.title.trim().length > 0 && hasBody;
   const files = useMemo(
-    () => attachmentUpload.entries.map(e => e.file),
-    [attachmentUpload.entries]
+    () => attachmentUpload.entries.map((e) => e.file),
+    [attachmentUpload.entries],
   );
 
   // Object URLs for image previews; revoked when the file set changes.
   const previews = useMemo(
     () =>
-      files.map(file => ({
+      files.map((file) => ({
         file,
         url: isImage(file) ? URL.createObjectURL(file) : null,
       })),
-    [files]
+    [files],
   );
-  useEffect(
-    () => () => previews.forEach(p => p.url && URL.revokeObjectURL(p.url)),
-    [previews]
-  );
+  useEffect(() => () => previews.forEach((p) => p.url && URL.revokeObjectURL(p.url)), [previews]);
 
   function addFiles(selected: File[]): boolean {
     const added = attachmentUpload.add(selected);
@@ -243,9 +231,7 @@ function EditorDialog({
           body: draft.body.trim(),
           pinned: draft.pinned,
           audience: audienceValue,
-          expiresAt: draft.expiresAt
-            ? new Date(draft.expiresAt).getTime()
-            : null,
+          expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
         });
         toast.success(t("updated"));
       } else {
@@ -260,12 +246,8 @@ function EditorDialog({
             audience: audienceValue,
             attachments,
             guestVisible: draft.guestVisible,
-            publishAt: draft.publishAt
-              ? new Date(draft.publishAt).getTime()
-              : undefined,
-            expiresAt: draft.expiresAt
-              ? new Date(draft.expiresAt).getTime()
-              : undefined,
+            publishAt: draft.publishAt ? new Date(draft.publishAt).getTime() : undefined,
+            expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : undefined,
           });
         } catch (e) {
           // The upload succeeded but `create` itself failed — clean up so
@@ -276,7 +258,7 @@ function EditorDialog({
         toast.success(
           draft.publishAt && new Date(draft.publishAt).getTime() > Date.now()
             ? t("scheduledToast")
-            : t("new")
+            : t("new"),
         );
         localStorage.removeItem(DRAFT_KEY);
       }
@@ -295,9 +277,7 @@ function EditorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {previewing ? t("preview") : editing ? t("edit") : t("new")}
-          </DialogTitle>
+          <DialogTitle>{previewing ? t("preview") : editing ? t("edit") : t("new")}</DialogTitle>
           <DialogDescription>{t("newHint")}</DialogDescription>
         </DialogHeader>
 
@@ -307,9 +287,7 @@ function EditorDialog({
             <header className="flex items-center gap-3 border-b border-border/60 px-5 py-3">
               <Avatar className="h-9 w-9">
                 {me.avatar && <AvatarImage src={me.avatar} alt={me.name} />}
-                <AvatarFallback className="text-xs">
-                  {initials(me.name, "")}
-                </AvatarFallback>
+                <AvatarFallback className="text-xs">{initials(me.name, "")}</AvatarFallback>
               </Avatar>
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
@@ -327,11 +305,11 @@ function EditorDialog({
               <RichText html={draft.body} />
               {previews.length > 0 && (
                 <div className="mt-4 space-y-3">
-                  {previews.some(p => p.url) && (
+                  {previews.some((p) => p.url) && (
                     <div className="flex flex-wrap gap-2">
                       {previews
-                        .filter(p => p.url)
-                        .map(p => (
+                        .filter((p) => p.url)
+                        .map((p) => (
                           <img
                             key={p.file.name}
                             src={p.url ?? ""}
@@ -341,11 +319,11 @@ function EditorDialog({
                         ))}
                     </div>
                   )}
-                  {previews.some(p => !p.url) && (
+                  {previews.some((p) => !p.url) && (
                     <div className="flex flex-wrap gap-2">
                       {previews
-                        .filter(p => !p.url)
-                        .map(p => (
+                        .filter((p) => !p.url)
+                        .map((p) => (
                           <span
                             key={p.file.name}
                             className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2"
@@ -375,12 +353,12 @@ function EditorDialog({
               <Input
                 placeholder={t("titlePlaceholder")}
                 value={draft.title}
-                onChange={e => set("title", e.target.value)}
+                onChange={(e) => set("title", e.target.value)}
                 className="h-11 text-base font-medium"
               />
               <RichTextEditor
                 value={draft.body}
-                onChange={v => set("body", v)}
+                onChange={(v) => set("body", v)}
                 placeholder={t("bodyLabel")}
               />
             </div>
@@ -389,16 +367,13 @@ function EditorDialog({
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("audience")}
               </p>
-              <Select
-                value={draft.audience}
-                onValueChange={v => set("audience", v)}
-              >
+              <Select value={draft.audience} onValueChange={(v) => set("audience", v)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("everyone")}</SelectItem>
-                  {departments.map(d => (
+                  {departments.map((d) => (
                     <SelectItem key={d} value={d}>
                       {t("department")}: {d}
                     </SelectItem>
@@ -416,7 +391,7 @@ function EditorDialog({
                     type="checkbox"
                     className="size-4 accent-[var(--primary)]"
                     checked={draft.pinned}
-                    onChange={e => set("pinned", e.target.checked)}
+                    onChange={(e) => set("pinned", e.target.checked)}
                   />
                   {t("pin")}
                 </label>
@@ -426,7 +401,7 @@ function EditorDialog({
                       type="checkbox"
                       className="size-4 accent-[var(--primary)]"
                       checked={draft.guestVisible}
-                      onChange={e => set("guestVisible", e.target.checked)}
+                      onChange={(e) => set("guestVisible", e.target.checked)}
                     />
                     {t("guestVisible")}
                   </label>
@@ -440,7 +415,7 @@ function EditorDialog({
                         type="file"
                         multiple
                         className="hidden"
-                        onChange={e => {
+                        onChange={(e) => {
                           addFiles(Array.from(e.target.files ?? []));
                           e.target.value = "";
                         }}
@@ -481,7 +456,7 @@ function EditorDialog({
                     <Input
                       type="datetime-local"
                       value={draft.publishAt}
-                      onChange={e => set("publishAt", e.target.value)}
+                      onChange={(e) => set("publishAt", e.target.value)}
                     />
                   </div>
                 )}
@@ -490,7 +465,7 @@ function EditorDialog({
                   <Input
                     type="datetime-local"
                     value={draft.expiresAt}
-                    onChange={e => set("expiresAt", e.target.value)}
+                    onChange={(e) => set("expiresAt", e.target.value)}
                   />
                 </div>
               </div>
@@ -500,7 +475,7 @@ function EditorDialog({
                   type="checkbox"
                   className="size-4 accent-[var(--primary)]"
                   checked={alwaysPreview}
-                  onChange={e => toggleAlwaysPreview(e.target.checked)}
+                  onChange={(e) => toggleAlwaysPreview(e.target.checked)}
                 />
                 {t("alwaysPreview")}
               </label>
@@ -523,11 +498,7 @@ function EditorDialog({
               <Button variant="ghost" onClick={() => onOpenChange(false)}>
                 {tc("cancel")}
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => setPreviewing(true)}
-                disabled={!canSend}
-              >
+              <Button variant="outline" onClick={() => setPreviewing(true)} disabled={!canSend}>
                 <Eye className="size-4" />
                 {t("preview")}
               </Button>
@@ -560,10 +531,7 @@ function ViewersPopover({
   const t = useTranslations("Announcements");
   const locale = useLocale();
   const [open, setOpen] = useState(false);
-  const viewers = useQuery(
-    api.announcements.viewers,
-    open ? { announcementId } : "skip"
-  );
+  const viewers = useQuery(api.announcements.viewers, open ? { announcementId } : "skip");
 
   return (
     <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
@@ -574,9 +542,7 @@ function ViewersPopover({
         >
           <Eye className="h-3.5 w-3.5" />
           <span className="tabular-nums">
-            {total !== undefined
-              ? t("readStats", { count, total })
-              : t("viewedBy", { count })}
+            {total !== undefined ? t("readStats", { count, total }) : t("viewedBy", { count })}
           </span>
         </button>
       </PopoverPrimitive.Trigger>
@@ -592,20 +558,13 @@ function ViewersPopover({
           {viewers === undefined ? (
             <p className="px-2 py-2 text-xs text-muted-foreground">…</p>
           ) : viewers.length === 0 ? (
-            <p className="px-2 py-2 text-xs text-muted-foreground">
-              {t("noViews")}
-            </p>
+            <p className="px-2 py-2 text-xs text-muted-foreground">{t("noViews")}</p>
           ) : (
-            viewers.map(v => (
-              <div
-                key={v.userId}
-                className="flex items-center gap-2 rounded-md px-2 py-1.5"
-              >
+            viewers.map((v) => (
+              <div key={v.userId} className="flex items-center gap-2 rounded-md px-2 py-1.5">
                 <Avatar className="size-6">
                   {v.avatar && <AvatarImage src={v.avatar} alt={v.name} />}
-                  <AvatarFallback className="text-[9px]">
-                    {initials(v.name)}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-[9px]">{initials(v.name)}</AvatarFallback>
                 </Avatar>
                 <span className="flex-1 truncate text-sm">{v.name}</span>
                 <span className="shrink-0 text-[10px] text-muted-foreground">
@@ -636,10 +595,7 @@ function CollapsibleBody({ html }: { html: string }) {
     <div>
       <div
         ref={ref}
-        className={cn(
-          "relative overflow-hidden",
-          overflowing && !expanded && "max-h-80"
-        )}
+        className={cn("relative overflow-hidden", overflowing && !expanded && "max-h-80")}
       >
         <RichText html={html} />
         {overflowing && !expanded && (
@@ -649,7 +605,7 @@ function CollapsibleBody({ html }: { html: string }) {
       {overflowing && (
         <button
           type="button"
-          onClick={() => setExpanded(v => !v)}
+          onClick={() => setExpanded((v) => !v)}
           className="mt-2 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
         >
           {expanded ? (
@@ -709,13 +665,13 @@ function AnnouncementCard({
     const el = articleRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
-      entries => {
-        if (entries.some(e => e.isIntersecting)) {
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
           void markRead({ announcementId: a._id });
           observer.disconnect();
         }
       },
-      { threshold: 0.4 }
+      { threshold: 0.4 },
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -728,18 +684,14 @@ function AnnouncementCard({
         "group relative overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
         a.pinned && "border-primary/30",
         (a.scheduled || a.expired) && "opacity-80",
-        highlighted && "deeplink-hl"
+        highlighted && "deeplink-hl",
       )}
     >
-      {a.pinned && (
-        <span className="absolute inset-y-0 left-0 w-1 bg-primary" />
-      )}
+      {a.pinned && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
       {/* Header: author + title (left), date/time + actions (right) */}
       <header className="flex items-start gap-3 border-b border-border/60 px-5 py-3.5">
         <Avatar className="size-9 shrink-0">
-          {a.authorAvatar && (
-            <AvatarImage src={a.authorAvatar} alt={a.authorName} />
-          )}
+          {a.authorAvatar && <AvatarImage src={a.authorAvatar} alt={a.authorName} />}
           <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
             {initials(a.authorName, a.authorName)}
           </AvatarFallback>
@@ -808,11 +760,11 @@ function AnnouncementCard({
         {a.attachments.length > 0 && (
           <div className="mt-4 space-y-3">
             {/* Images embed inline */}
-            {a.attachments.some(att => att.kind === "image" && att.url) && (
+            {a.attachments.some((att) => att.kind === "image" && att.url) && (
               <div className="flex flex-wrap gap-2">
                 {a.attachments
-                  .filter(att => att.kind === "image" && att.url)
-                  .map(att => {
+                  .filter((att) => att.kind === "image" && att.url)
+                  .map((att) => {
                     const fromOneDrive = Boolean(att.oneDrivePath);
                     return fromOneDrive ? (
                       <a
@@ -851,20 +803,16 @@ function AnnouncementCard({
             )}
 
             {/* Other files show as chips with name + type/size */}
-            {a.attachments.some(att => att.kind !== "image") && (
+            {a.attachments.some((att) => att.kind !== "image") && (
               <div className="flex flex-wrap gap-2">
                 {a.attachments
-                  .filter(att => att.kind !== "image")
-                  .map(att => {
+                  .filter((att) => att.kind !== "image")
+                  .map((att) => {
                     const fromOneDrive = Boolean(att.oneDrivePath);
                     return (
                       <a
                         key={att.storageId}
-                        href={
-                          fromOneDrive
-                            ? pathToUrl(att.oneDrivePath!)
-                            : (att.url ?? undefined)
-                        }
+                        href={fromOneDrive ? pathToUrl(att.oneDrivePath!) : (att.url ?? undefined)}
                         target={fromOneDrive ? undefined : "_blank"}
                         rel={fromOneDrive ? undefined : "noreferrer"}
                         download={fromOneDrive ? undefined : att.name}
@@ -886,9 +834,7 @@ function AnnouncementCard({
                               ? tc("fromOneDrive")
                               : [
                                   att.contentType?.split("/")[1]?.toUpperCase(),
-                                  att.size != null
-                                    ? formatFileSize(att.size)
-                                    : null,
+                                  att.size != null ? formatFileSize(att.size) : null,
                                 ]
                                   .filter(Boolean)
                                   .join(" · ") || t("attachments")}
@@ -912,15 +858,11 @@ function AnnouncementCard({
       <div className="flex items-center gap-2 border-t border-border/60 px-5 py-2.5">
         <ReactionPicker
           side="top"
-          onPick={emoji =>
-            void toggleReaction({ announcementId: a._id, emoji })
-          }
+          onPick={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
         />
         <ReactionChips
           reactions={a.reactions}
-          onToggle={emoji =>
-            void toggleReaction({ announcementId: a._id, emoji })
-          }
+          onToggle={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
         />
         <div className="ml-auto">
           <ViewersPopover
@@ -990,32 +932,29 @@ export default function AnnouncementsPage() {
     }
   }
 
-  const unreadCount = (announcements ?? []).filter(
-    a => !a.read && !a.scheduled
-  ).length;
+  const unreadCount = (announcements ?? []).filter((a) => !a.read && !a.scheduled).length;
 
   const filtered = useMemo(() => {
     let rows = announcements ?? [];
     const q = search.trim().toLowerCase();
     if (q) {
-      rows = rows.filter(a =>
-        [a.title, htmlToText(a.body), a.authorName].some(field =>
-          field.toLowerCase().includes(q)
-        )
+      rows = rows.filter((a) =>
+        [a.title, htmlToText(a.body), a.authorName].some((field) =>
+          field.toLowerCase().includes(q),
+        ),
       );
     }
-    if (filter === "unread") rows = rows.filter(a => !a.read && !a.scheduled);
-    if (filter === "pinned") rows = rows.filter(a => a.pinned);
+    if (filter === "unread") rows = rows.filter((a) => !a.read && !a.scheduled);
+    if (filter === "pinned") rows = rows.filter((a) => a.pinned);
     if (sort === "reactions") {
-      const score = (a: Announcement) =>
-        a.reactions.reduce((sum, r) => sum + r.count, 0);
+      const score = (a: Announcement) => a.reactions.reduce((sum, r) => sum + r.count, 0);
       rows = [...rows].sort((a, b) => score(b) - score(a));
     }
     return rows;
   }, [announcements, search, filter, sort]);
 
-  const pinnedRows = filtered.filter(a => a.pinned);
-  const otherRows = filtered.filter(a => !a.pinned);
+  const pinnedRows = filtered.filter((a) => a.pinned);
+  const otherRows = filtered.filter((a) => !a.pinned);
 
   const renderCard = (a: Announcement) => (
     <AnnouncementCard
@@ -1061,12 +1000,12 @@ export default function AnnouncementsPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder={tc("search")}
             className="pl-9"
           />
         </div>
-        {(["all", "unread", "pinned"] as const).map(f => (
+        {(["all", "unread", "pinned"] as const).map((f) => (
           <button
             key={f}
             type="button"
@@ -1075,14 +1014,14 @@ export default function AnnouncementsPage() {
               "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               filter === f
                 ? "border-transparent bg-foreground text-background"
-                : "border-border text-muted-foreground hover:bg-accent"
+                : "border-border text-muted-foreground hover:bg-accent",
             )}
           >
             {t(`filter_${f}`)}
             {f === "unread" && unreadCount > 0 ? ` (${unreadCount})` : ""}
           </button>
         ))}
-        <Select value={sort} onValueChange={v => setSort(v as Sort)}>
+        <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
           <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -1133,10 +1072,7 @@ export default function AnnouncementsPage() {
       </div>
 
       {/* Image lightbox */}
-      <Dialog
-        open={lightbox !== null}
-        onOpenChange={o => !o && setLightbox(null)}
-      >
+      <Dialog open={lightbox !== null} onOpenChange={(o) => !o && setLightbox(null)}>
         <DialogContent className="max-w-4xl p-2">
           {lightbox && (
             <img
@@ -1150,7 +1086,7 @@ export default function AnnouncementsPage() {
 
       <EditorDialog
         open={dialogOpen}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           setDialogOpen(open);
           if (!open) setEditing(null);
         }}

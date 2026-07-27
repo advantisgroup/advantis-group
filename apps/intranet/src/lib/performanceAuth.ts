@@ -6,9 +6,7 @@ const COOKIE = "performance_token";
 
 export function getPerformanceToken(): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie
-    .split("; ")
-    .find(row => row.startsWith(`${COOKIE}=`));
+  const match = document.cookie.split("; ").find((row) => row.startsWith(`${COOKIE}=`));
   return match ? decodeURIComponent(match.split("=")[1]) : null;
 }
 
@@ -47,9 +45,7 @@ const LINK_PROMPT_DISMISSED_PREFIX = "performance_link_prompt_dismissed_";
 
 export function isLinkPromptDismissed(loginId: string): boolean {
   if (typeof window === "undefined") return false;
-  return (
-    window.localStorage.getItem(LINK_PROMPT_DISMISSED_PREFIX + loginId) === "1"
-  );
+  return window.localStorage.getItem(LINK_PROMPT_DISMISSED_PREFIX + loginId) === "1";
 }
 
 export function dismissLinkPrompt(loginId: string): void {
@@ -57,16 +53,14 @@ export function dismissLinkPrompt(loginId: string): void {
   window.localStorage.setItem(LINK_PROMPT_DISMISSED_PREFIX + loginId, "1");
 }
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
-  "http://localhost:3002";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 
 /** Downloads an authenticated apps/api file response via a blob + object
  * URL — a plain `<a href>` can't carry the bearer token. */
 export async function downloadPerformanceFile(
   path: string,
   token: string,
-  filename: string
+  filename: string,
 ): Promise<void> {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { authorization: `Bearer ${token}` },
@@ -111,10 +105,10 @@ export interface UploadReportOptions {
 export function uploadPerformanceReport(
   file: File,
   token: string,
-  options?: UploadReportOptions
+  options?: UploadReportOptions,
 ): Promise<UploadReportResult> {
   const { onProgress, force, batchId } = options ?? {};
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const form = new FormData();
     form.append("file", file);
     if (force) form.append("force", "true");
@@ -122,7 +116,7 @@ export function uploadPerformanceReport(
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE}/performance/uploads`);
     xhr.setRequestHeader("authorization", `Bearer ${token}`);
-    xhr.upload.onprogress = e => {
+    xhr.upload.onprogress = (e) => {
       if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
     };
     xhr.onload = () => {
@@ -136,7 +130,7 @@ export function uploadPerformanceReport(
       resolve(
         xhr.status >= 200 && xhr.status < 300
           ? { ok: true, ...body }
-          : { ok: false, error: body.error }
+          : { ok: false, error: body.error },
       );
     };
     xhr.onerror = () => resolve({ ok: false });

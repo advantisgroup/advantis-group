@@ -32,9 +32,7 @@ function ThemePreviewCard({
       onClick={onSelect}
       className={cn(
         "flex flex-col gap-2 rounded-xl border p-2.5 text-left transition-colors",
-        active
-          ? "border-primary/50 bg-primary/5"
-          : "border-border hover:bg-accent"
+        active ? "border-primary/50 bg-primary/5" : "border-border hover:bg-accent",
       )}
     >
       <motion.div
@@ -42,10 +40,7 @@ function ThemePreviewCard({
         className="relative h-[74px] w-full overflow-hidden rounded-lg border border-black/10"
         style={{ backgroundColor: c.bg }}
       >
-        <div
-          className="flex h-5 items-center gap-1 px-2"
-          style={{ backgroundColor: c.chrome }}
-        >
+        <div className="flex h-5 items-center gap-1 px-2" style={{ backgroundColor: c.chrome }}>
           <span className="size-1.5 rounded-full bg-red-400/70" />
           <span className="size-1.5 rounded-full bg-yellow-400/70" />
           <span className="size-1.5 rounded-full bg-green-400/70" />
@@ -55,14 +50,8 @@ function ThemePreviewCard({
             className="h-2 w-3/5 rounded-full"
             style={{ backgroundColor: c.text, opacity: 0.85 }}
           />
-          <div
-            className="h-1.5 w-full rounded-full"
-            style={{ backgroundColor: c.bar }}
-          />
-          <div
-            className="h-1.5 w-4/5 rounded-full"
-            style={{ backgroundColor: c.bar }}
-          />
+          <div className="h-1.5 w-full rounded-full" style={{ backgroundColor: c.bar }} />
+          <div className="h-1.5 w-4/5 rounded-full" style={{ backgroundColor: c.bar }} />
         </div>
         {active && (
           <motion.div
@@ -74,11 +63,7 @@ function ThemePreviewCard({
         )}
       </motion.div>
       <span className="flex items-center gap-1.5 text-xs font-medium">
-        {mode === "light" ? (
-          <Sun className="size-3.5" />
-        ) : (
-          <Moon className="size-3.5" />
-        )}
+        {mode === "light" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
         {label}
       </span>
     </button>
@@ -92,15 +77,13 @@ export function ThemeStep() {
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
-    () => false
+    () => false,
   );
 
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-display text-lg font-semibold tracking-tight">
-          {t("themeTitle")}
-        </h2>
+        <h2 className="font-display text-lg font-semibold tracking-tight">{t("themeTitle")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("themeHint")}</p>
       </div>
 
@@ -126,16 +109,14 @@ export function ThemeStep() {
           "flex w-full items-center justify-between rounded-xl border px-3.5 py-3 text-left transition-colors",
           mounted && theme === "system"
             ? "border-primary/50 bg-primary/5"
-            : "border-border hover:bg-accent"
+            : "border-border hover:bg-accent",
         )}
       >
         <span className="flex items-center gap-2 text-sm font-medium">
           <Monitor className="size-4" />
           {ts("themeSystem")}
         </span>
-        <span className="text-xs text-muted-foreground">
-          {t("themeSystemNoPreview")}
-        </span>
+        <span className="text-xs text-muted-foreground">{t("themeSystemNoPreview")}</span>
       </button>
     </div>
   );

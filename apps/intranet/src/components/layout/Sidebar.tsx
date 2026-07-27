@@ -85,7 +85,7 @@ export function Sidebar() {
   const { setOpenMobile, state } = useSidebar();
   const featureFlags = useFeatureFlags();
   const disabledFeatures = new Set(
-    (featureFlags ?? []).filter(f => !f.enabled).map(f => f.key)
+    (featureFlags ?? []).filter((f) => !f.enabled).map((f) => f.key),
   );
 
   // Context-aware nav: inside the ActivityTrack or Admin areas the main nav
@@ -94,9 +94,7 @@ export function Sidebar() {
   // today, not enough surface yet to warrant its own sidebar section.
   const isActivity = pathname.startsWith("/activity");
   const isAdminArea =
-    !isActivity &&
-    pathname.startsWith("/admin") &&
-    !pathname.startsWith("/admin/integrations");
+    !isActivity && pathname.startsWith("/admin") && !pathname.startsWith("/admin/integrations");
   const panel: "main" | "admin" | "activity" = isActivity
     ? "activity"
     : isAdminArea
@@ -106,8 +104,7 @@ export function Sidebar() {
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
   const activeUpdate = useQuery(api.updates.bannerActive);
-  const chatUnread =
-    chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
+  const chatUnread = chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const hasGuidebooks = accessibleGuidebooks(user).length > 0;
 
   const groups: NavGroup[] = [
@@ -238,17 +235,8 @@ export function Sidebar() {
   return (
     <SidebarShell ariaLabel="Advantis Intranet" data-tour="tour-sidebar">
       <SidebarHeader>
-        <Link
-          href="/"
-          onClick={close}
-          aria-label="Advantis Intranet"
-          className="flex items-center"
-        >
-          {state === "collapsed" ? (
-            <MarkLogo size={28} className="size-7" />
-          ) : (
-            <WordmarkLogo />
-          )}
+        <Link href="/" onClick={close} aria-label="Advantis Intranet" className="flex items-center">
+          {state === "collapsed" ? <MarkLogo size={28} className="size-7" /> : <WordmarkLogo />}
         </Link>
       </SidebarHeader>
 
@@ -262,31 +250,26 @@ export function Sidebar() {
               "flex w-[300%] transition-transform duration-200 ease-out motion-reduce:transition-none",
               panel === "admin" && "-translate-x-1/3",
               panel === "activity" && "-translate-x-2/3",
-              panel === "main" && "translate-x-0"
+              panel === "main" && "translate-x-0",
             )}
           >
             <div
-              className={cn(
-                "w-1/3 shrink-0",
-                panel !== "main" && "pointer-events-none"
-              )}
+              className={cn("w-1/3 shrink-0", panel !== "main" && "pointer-events-none")}
               aria-hidden={panel !== "main"}
             >
-              {groups.map(group => {
+              {groups.map((group) => {
                 const items = group.items.filter(
-                  item =>
+                  (item) =>
                     (!item.managerOnly || isManager) &&
                     (!item.adminOnly || isAdmin) &&
-                    (!item.featureKey ||
-                      isAdmin ||
-                      !disabledFeatures.has(item.featureKey))
+                    (!item.featureKey || isAdmin || !disabledFeatures.has(item.featureKey)),
                 );
                 if (items.length === 0) return null;
                 return (
                   <SidebarGroup key={group.labelKey}>
                     <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
                     <SidebarMenu>
-                      {items.map(item => {
+                      {items.map((item) => {
                         const active =
                           item.href === "/"
                             ? pathname === "/"
@@ -298,11 +281,7 @@ export function Sidebar() {
                         const Icon = item.icon;
                         return (
                           <SidebarMenuItem key={item.href}>
-                            <SidebarMenuButton
-                              asChild
-                              active={active}
-                              tooltip={t(item.labelKey)}
-                            >
+                            <SidebarMenuButton asChild active={active} tooltip={t(item.labelKey)}>
                               <Link
                                 href={item.href}
                                 onClick={close}
@@ -330,19 +309,13 @@ export function Sidebar() {
               })}
             </div>
             <div
-              className={cn(
-                "w-1/3 shrink-0",
-                panel !== "admin" && "pointer-events-none"
-              )}
+              className={cn("w-1/3 shrink-0", panel !== "admin" && "pointer-events-none")}
               aria-hidden={panel !== "admin"}
             >
               <AdminSidebar />
             </div>
             <div
-              className={cn(
-                "w-1/3 shrink-0",
-                panel !== "activity" && "pointer-events-none"
-              )}
+              className={cn("w-1/3 shrink-0", panel !== "activity" && "pointer-events-none")}
               aria-hidden={panel !== "activity"}
             >
               <ActivitySidebar />

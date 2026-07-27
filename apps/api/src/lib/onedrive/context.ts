@@ -21,9 +21,7 @@ export interface OneDriveUser extends AccessUser {
  * + OneDrive flags) from Convex. This is the identity every OneDrive route
  * starts from — Graph itself only ever sees the service account.
  */
-export async function resolveOneDriveUser(
-  request: Request
-): Promise<OneDriveUser> {
+export async function resolveOneDriveUser(request: Request): Promise<OneDriveUser> {
   const { clerkUserId } = await requireAuth(request);
   const ctx = await getConvex().query(api.onedrive.apiUserContext, {
     serverKey: getConvexServerKey(),

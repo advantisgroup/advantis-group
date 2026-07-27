@@ -24,10 +24,10 @@ export const getForEmail = internalQuery({
 
 export const listActiveUsers = internalQuery({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     return ctx.db
       .query("users")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
   },
 });

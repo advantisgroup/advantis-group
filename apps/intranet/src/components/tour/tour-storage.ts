@@ -1,10 +1,6 @@
 import { TOUR_CHECKPOINTS } from "./tour-config";
 
-import type {
-  CheckpointId,
-  CheckpointStatus,
-  TourLocalState,
-} from "./tour-types";
+import type { CheckpointId, CheckpointStatus, TourLocalState } from "./tour-types";
 
 const VERSION = 1 as const;
 

@@ -1,15 +1,6 @@
 "use client";
 
-/* eslint-disable react-refresh/only-export-components --
-   Context provider colocated with its hook (useAcademySession), matching
-   components/providers/current-user.tsx's convention. */
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
 
 import { type Id } from "@advantis/convex/dataModel";
 
@@ -45,9 +36,7 @@ interface StoredSession {
  * original tool never persisting a login across a full app restart.
  */
 export function AcademySessionProvider({ children }: { children: ReactNode }) {
-  const [participant, setParticipant] = useState<ParticipantSession | null>(
-    null
-  );
+  const [participant, setParticipant] = useState<ParticipantSession | null>(null);
   const [isAdminSession, setIsAdminSession] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
@@ -109,9 +98,7 @@ export function AcademySessionProvider({ children }: { children: ReactNode }) {
 export function useAcademySession(): AcademySessionValue {
   const ctx = useContext(AcademySessionContext);
   if (!ctx) {
-    throw new Error(
-      "useAcademySession must be used within AcademySessionProvider"
-    );
+    throw new Error("useAcademySession must be used within AcademySessionProvider");
   }
   return ctx;
 }

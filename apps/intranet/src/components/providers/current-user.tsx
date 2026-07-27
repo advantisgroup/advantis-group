@@ -1,8 +1,5 @@
 "use client";
 
-/* eslint-disable react-refresh/only-export-components --
-   Context provider colocated with its hooks (useCurrentUser/useIsManager/
-   useIsAdmin), which are imported across the app. */
 import type { ReactNode } from "react";
 import { createContext, useContext } from "react";
 
@@ -54,11 +51,7 @@ export function CurrentUserProvider({
   user: CurrentUser;
   children: ReactNode;
 }) {
-  return (
-    <CurrentUserContext.Provider value={user}>
-      {children}
-    </CurrentUserContext.Provider>
-  );
+  return <CurrentUserContext.Provider value={user}>{children}</CurrentUserContext.Provider>;
 }
 
 export function useCurrentUser(): CurrentUser {
@@ -86,11 +79,7 @@ export function useIsAdmin(): boolean {
  */
 export function useHasCapability(capability: Capability): boolean {
   const user = useCurrentUser();
-  return (
-    user.role === "admin" ||
-    user.role === "manager" ||
-    user.capabilities.includes(capability)
-  );
+  return user.role === "admin" || user.role === "manager" || user.capabilities.includes(capability);
 }
 
 /** True when the user can see the Applicant Management nav item at all —
@@ -98,11 +87,7 @@ export function useHasCapability(capability: Capability): boolean {
  * others (see `useCanManageApplicantAccess` for the delegate-only case). */
 export function useHasApplicantAccess(): boolean {
   const user = useCurrentUser();
-  return (
-    user.role === "admin" ||
-    user.applicantAccess ||
-    user.applicantAccessDelegate
-  );
+  return user.role === "admin" || user.applicantAccess || user.applicantAccessDelegate;
 }
 
 /** True when the user can grant/revoke Applicant Management access for others. */

@@ -43,12 +43,8 @@ export function ChartsTab({
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Card className="animate-fade-up">
           <CardHeader>
-            <CardTitle className="text-base">
-              {t("timeline.trend.heading")}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {t("timeline.trend.sub")}
-            </p>
+            <CardTitle className="text-base">{t("timeline.trend.heading")}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t("timeline.trend.sub")}</p>
           </CardHeader>
           <CardContent className="pt-0 sm:pt-0">
             <DailyTrendChart
@@ -61,12 +57,8 @@ export function ChartsTab({
 
         <Card className="animate-fade-up">
           <CardHeader>
-            <CardTitle className="text-base">
-              {t("timeline.intraday.heading")}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {t("timeline.intraday.sub")}
-            </p>
+            <CardTitle className="text-base">{t("timeline.intraday.heading")}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t("timeline.intraday.sub")}</p>
           </CardHeader>
           <CardContent className="pt-0 sm:pt-0">
             {intraday.length === 0 ? (
@@ -74,10 +66,7 @@ export function ChartsTab({
                 {t("timeline.empty")}
               </p>
             ) : (
-              <IntradayChart
-                data={intraday}
-                seriesLabel={t("timeline.intraday.series")}
-              />
+              <IntradayChart data={intraday} seriesLabel={t("timeline.intraday.series")} />
             )}
           </CardContent>
         </Card>
@@ -85,12 +74,8 @@ export function ChartsTab({
 
       <Card className="animate-fade-up">
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("timeline.heatmap.heading")}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("timeline.heatmap.sub")}
-          </p>
+          <CardTitle className="text-base">{t("timeline.heatmap.heading")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("timeline.heatmap.sub")}</p>
         </CardHeader>
         <CardContent className="pt-0 sm:pt-0">
           <HourHeatmap data={heatmap} />
@@ -100,12 +85,8 @@ export function ChartsTab({
       {/* Per-hour state breakdown — what they were doing each hour today. */}
       <Card className="animate-fade-up">
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("timeline.hourly.heading")}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("timeline.hourly.sub")}
-          </p>
+          <CardTitle className="text-base">{t("timeline.hourly.heading")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("timeline.hourly.sub")}</p>
         </CardHeader>
         <CardContent className="pt-0 sm:pt-0">
           {!employeeId ? (

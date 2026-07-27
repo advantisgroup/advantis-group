@@ -60,24 +60,42 @@
     "lateNight": [
       { "title": "Still up, {name}?", "subtitle": "The night shift welcomes you." },
       { "title": "Night owl today?", "subtitle": "Burning the midnight oil — respect." },
-      { "title": "Whoa, it's late.", "subtitle": "Everything okay, {name}? We're here either way." },
-      { "title": "Hello, darkness.", "subtitle": "Also hello, {name}. Coffee's probably cold by now." }
+      {
+        "title": "Whoa, it's late.",
+        "subtitle": "Everything okay, {name}? We're here either way."
+      },
+      {
+        "title": "Hello, darkness.",
+        "subtitle": "Also hello, {name}. Coffee's probably cold by now."
+      }
     ],
     "earlyMorning": [
       { "title": "Good morning, {name}", "subtitle": "Rise and shine — let's make today count." },
-      { "title": "Up with the sun, {name}?", "subtitle": "Impressive. We're still finding our coffee." },
+      {
+        "title": "Up with the sun, {name}?",
+        "subtitle": "Impressive. We're still finding our coffee."
+      },
       { "title": "Morning, {name}!", "subtitle": "Fresh coffee, fresh inbox, fresh start." },
-      { "title": "Early bird, {name}?", "subtitle": "The worm — or in this case, the inbox — is yours." }
+      {
+        "title": "Early bird, {name}?",
+        "subtitle": "The worm — or in this case, the inbox — is yours."
+      }
     ],
     "lateMorning": [
       { "title": "Good morning, {name}", "subtitle": "Hope the coffee's kicking in." },
       { "title": "Mid-morning check-in, {name}", "subtitle": "You're doing great. Probably." },
       { "title": "Morning momentum, {name}", "subtitle": "Let's keep it rolling." },
-      { "title": "Hey {name}, how's the morning treating you?", "subtitle": "Here's what's happening today." }
+      {
+        "title": "Hey {name}, how's the morning treating you?",
+        "subtitle": "Here's what's happening today."
+      }
     ],
     "afternoon": [
       { "title": "Good afternoon, {name}", "subtitle": "Hope lunch hit the spot." },
-      { "title": "Afternoon, {name}", "subtitle": "The slump is real — here's something to distract you." },
+      {
+        "title": "Afternoon, {name}",
+        "subtitle": "The slump is real — here's something to distract you."
+      },
       { "title": "Halfway there, {name}", "subtitle": "The day's not done, but you've got this." },
       { "title": "Hey {name}, post-lunch energy check", "subtitle": "Here's what's new." }
     ],
@@ -90,7 +108,10 @@
     "night": [
       { "title": "Burning the midnight oil, {name}?", "subtitle": "We see you." },
       { "title": "Late one, {name}?", "subtitle": "Hope it's worth it — here's the latest." },
-      { "title": "Still at it, {name}?", "subtitle": "Don't forget to actually sleep at some point." },
+      {
+        "title": "Still at it, {name}?",
+        "subtitle": "Don't forget to actually sleep at some point."
+      },
       { "title": "Night shift, {name}?", "subtitle": "Respect. Here's what's going on." }
     ],
     "friday": [
@@ -101,12 +122,21 @@
     "monday": [
       { "title": "Happy Monday, {name}", "subtitle": "Fresh week, clean slate." },
       { "title": "New week, {name}!", "subtitle": "Let's make it a good one." },
-      { "title": "Monday again, {name}?", "subtitle": "Here's everything to get you back in the groove." }
+      {
+        "title": "Monday again, {name}?",
+        "subtitle": "Here's everything to get you back in the groove."
+      }
     ],
     "weekend": [
-      { "title": "Working on a weekend, {name}?", "subtitle": "Dedication — or did you just miss us?" },
+      {
+        "title": "Working on a weekend, {name}?",
+        "subtitle": "Dedication — or did you just miss us?"
+      },
       { "title": "It's the weekend, {name}!", "subtitle": "Whatever brought you here, welcome." },
-      { "title": "Weekend visitor, {name}?", "subtitle": "Here's a quick look, then go enjoy your day off." }
+      {
+        "title": "Weekend visitor, {name}?",
+        "subtitle": "Here's a quick look, then go enjoy your day off."
+      }
     ]
   }
 }

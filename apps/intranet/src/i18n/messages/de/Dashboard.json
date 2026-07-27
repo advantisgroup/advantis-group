@@ -60,13 +60,25 @@
     "lateNight": [
       { "title": "Noch wach, {name}?", "subtitle": "Die Nachtschicht heißt dich willkommen." },
       { "title": "Nachteule heute?", "subtitle": "Mitternachtsöl brennt — Respekt." },
-      { "title": "Wow, es ist spät.", "subtitle": "Alles okay, {name}? Wir sind trotzdem für dich da." },
-      { "title": "Hallo, Dunkelheit.", "subtitle": "Und hallo, {name}. Der Kaffee ist wahrscheinlich schon kalt." }
+      {
+        "title": "Wow, es ist spät.",
+        "subtitle": "Alles okay, {name}? Wir sind trotzdem für dich da."
+      },
+      {
+        "title": "Hallo, Dunkelheit.",
+        "subtitle": "Und hallo, {name}. Der Kaffee ist wahrscheinlich schon kalt."
+      }
     ],
     "earlyMorning": [
       { "title": "Guten Morgen, {name}", "subtitle": "Auf geht's — lass uns den Tag nutzen." },
-      { "title": "Mit der Sonne aufgestanden, {name}?", "subtitle": "Beeindruckend. Wir suchen noch unseren Kaffee." },
-      { "title": "Morgen, {name}!", "subtitle": "Frischer Kaffee, frisches Postfach, frischer Start." },
+      {
+        "title": "Mit der Sonne aufgestanden, {name}?",
+        "subtitle": "Beeindruckend. Wir suchen noch unseren Kaffee."
+      },
+      {
+        "title": "Morgen, {name}!",
+        "subtitle": "Frischer Kaffee, frisches Postfach, frischer Start."
+      },
       {
         "title": "Frühaufsteher, {name}?",
         "subtitle": "Der frühe Vogel fängt den Wurm — oder in diesem Fall das Postfach."
@@ -74,42 +86,81 @@
     ],
     "lateMorning": [
       { "title": "Guten Morgen, {name}", "subtitle": "Hoffentlich wirkt der Kaffee schon." },
-      { "title": "Vormittags-Check-in, {name}", "subtitle": "Du machst das großartig. Wahrscheinlich." },
+      {
+        "title": "Vormittags-Check-in, {name}",
+        "subtitle": "Du machst das großartig. Wahrscheinlich."
+      },
       { "title": "Morgen-Schwung, {name}", "subtitle": "Lass uns dranbleiben." },
-      { "title": "Hey {name}, wie läuft dein Vormittag?", "subtitle": "Hier ist, was heute los ist." }
+      {
+        "title": "Hey {name}, wie läuft dein Vormittag?",
+        "subtitle": "Hier ist, was heute los ist."
+      }
     ],
     "afternoon": [
       { "title": "Guten Tag, {name}", "subtitle": "Hoffentlich hat das Mittagessen geschmeckt." },
-      { "title": "Nachmittag, {name}", "subtitle": "Das Mittagstief ist real — hier ist etwas Ablenkung." },
-      { "title": "Halbzeit, {name}", "subtitle": "Der Tag ist noch nicht vorbei, aber du schaffst das." },
-      { "title": "Hey {name}, Energie-Check nach dem Mittagessen", "subtitle": "Hier ist, was neu ist." }
+      {
+        "title": "Nachmittag, {name}",
+        "subtitle": "Das Mittagstief ist real — hier ist etwas Ablenkung."
+      },
+      {
+        "title": "Halbzeit, {name}",
+        "subtitle": "Der Tag ist noch nicht vorbei, aber du schaffst das."
+      },
+      {
+        "title": "Hey {name}, Energie-Check nach dem Mittagessen",
+        "subtitle": "Hier ist, was neu ist."
+      }
     ],
     "evening": [
       { "title": "Guten Abend, {name}", "subtitle": "Feierabend, oder geht's gerade erst los?" },
       { "title": "Abend, {name}", "subtitle": "Immer noch da? Wir wissen das zu schätzen." },
-      { "title": "Lässt du den Tag ausklingen, {name}?", "subtitle": "Hier noch ein kurzer Blick, bevor du gehst." },
+      {
+        "title": "Lässt du den Tag ausklingen, {name}?",
+        "subtitle": "Hier noch ein kurzer Blick, bevor du gehst."
+      },
       { "title": "Hey {name}, arbeitest du länger?", "subtitle": "Kein Urteil — nur ein Update." }
     ],
     "night": [
       { "title": "Mitternachtsöl, {name}?", "subtitle": "Wir sehen dich." },
-      { "title": "Später Abend, {name}?", "subtitle": "Hoffentlich lohnt es sich — hier das Neueste." },
-      { "title": "Immer noch dabei, {name}?", "subtitle": "Vergiss nicht, irgendwann auch zu schlafen." },
+      {
+        "title": "Später Abend, {name}?",
+        "subtitle": "Hoffentlich lohnt es sich — hier das Neueste."
+      },
+      {
+        "title": "Immer noch dabei, {name}?",
+        "subtitle": "Vergiss nicht, irgendwann auch zu schlafen."
+      },
       { "title": "Nachtschicht, {name}?", "subtitle": "Respekt. Hier ist, was los ist." }
     ],
     "friday": [
       { "title": "Endlich Freitag, {name}!", "subtitle": "Die Ziellinie ist in Sicht." },
-      { "title": "Freitagsgefühl, {name}?", "subtitle": "Fast geschafft — noch ein letzter Schub." },
+      {
+        "title": "Freitagsgefühl, {name}?",
+        "subtitle": "Fast geschafft — noch ein letzter Schub."
+      },
       { "title": "Es ist Freitag, {name}!", "subtitle": "Lass uns die Woche stark beenden." }
     ],
     "monday": [
       { "title": "Guten Montag, {name}", "subtitle": "Neue Woche, sauberer Start." },
       { "title": "Neue Woche, {name}!", "subtitle": "Lass uns was draus machen." },
-      { "title": "Schon wieder Montag, {name}?", "subtitle": "Hier ist alles, um wieder reinzukommen." }
+      {
+        "title": "Schon wieder Montag, {name}?",
+        "subtitle": "Hier ist alles, um wieder reinzukommen."
+      }
     ],
     "weekend": [
-      { "title": "Arbeitest du am Wochenende, {name}?", "subtitle": "Engagement — oder hast du uns einfach vermisst?" },
-      { "title": "Es ist Wochenende, {name}!", "subtitle": "Was auch immer dich hergebracht hat, willkommen." },
-      { "title": "Wochenendbesuch, {name}?", "subtitle": "Hier ein kurzer Blick, dann genieß deinen freien Tag." }
+      {
+        "title": "Arbeitest du am Wochenende, {name}?",
+        "subtitle": "Engagement — oder hast du uns einfach vermisst?"
+      },
+      {
+        "title": "Es ist Wochenende, {name}!",
+        "subtitle": "Was auch immer dich hergebracht hat, willkommen."
+      },
+      {
+        "title": "Wochenendbesuch, {name}?",
+        "subtitle": "Hier ein kurzer Blick, dann genieß deinen freien Tag."
+      }
     ]
   }
 }

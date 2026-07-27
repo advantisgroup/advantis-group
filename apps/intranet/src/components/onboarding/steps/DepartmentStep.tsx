@@ -39,16 +39,14 @@ export function DepartmentStep() {
         <h2 className="font-display text-lg font-semibold tracking-tight">
           {t("departmentTitle")}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("departmentHint")}
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">{t("departmentHint")}</p>
       </div>
       <div className="space-y-1.5">
         <Label>{ts("department")}</Label>
         <Input
           value={department}
           placeholder={t("departmentPlaceholder")}
-          onChange={e => {
+          onChange={(e) => {
             setDepartment(e.target.value);
             scheduleSave(e.target.value);
           }}

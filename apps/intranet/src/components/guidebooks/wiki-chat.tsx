@@ -8,17 +8,10 @@ import { useLocale, useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
-  "https://api.advantisgroup.de";
+const API = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "https://api.advantisgroup.de";
 
 interface Message {
   role: "user" | "assistant";
@@ -134,9 +127,7 @@ export function WikiChat() {
 
   // Cross-origin requests to the API can't rely on the Clerk cookie, so send
   // the session token as a Bearer header (matches ConversationView).
-  async function authHeaders(
-    extra?: Record<string, string>
-  ): Promise<Record<string, string>> {
+  async function authHeaders(extra?: Record<string, string>): Promise<Record<string, string>> {
     const token = await getToken();
     return {
       ...(token ? { authorization: `Bearer ${token}` } : {}),
@@ -154,7 +145,7 @@ export function WikiChat() {
         });
         if (!res.ok) return;
         const data = (await res.json()) as { chats?: Omit<Chat, "remoteId">[] };
-        const loaded: Chat[] = (data.chats ?? []).map(c => ({
+        const loaded: Chat[] = (data.chats ?? []).map((c) => ({
           ...c,
           remoteId: c.id,
         }));
@@ -168,10 +159,7 @@ export function WikiChat() {
     })();
   }, [getToken]);
 
-  const activeChat = useMemo(
-    () => chats.find(c => c.id === activeId) ?? null,
-    [chats, activeId]
-  );
+  const activeChat = useMemo(() => chats.find((c) => c.id === activeId) ?? null, [chats, activeId]);
   const messages = useMemo(() => activeChat?.messages ?? [], [activeChat]);
 
   useEffect(() => {
@@ -187,10 +175,7 @@ export function WikiChat() {
     setQuote(pick(loadingQuotes));
     const start = Date.now();
     const quoteTimer = setInterval(() => setQuote(pick(loadingQuotes)), 1800);
-    const tick = setInterval(
-      () => setElapsed(Math.floor((Date.now() - start) / 1000)),
-      250
-    );
+    const tick = setInterval(() => setElapsed(Math.floor((Date.now() - start) / 1000)), 250);
     return () => {
       clearInterval(quoteTimer);
       clearInterval(tick);
@@ -198,28 +183,28 @@ export function WikiChat() {
   }, [loading, loadingQuotes]);
 
   function newChat() {
-    const empty = chats.find(c => c.messages.length === 0);
+    const empty = chats.find((c) => c.messages.length === 0);
     if (empty) {
       setActiveId(empty.id);
       return;
     }
     const chat = makeChat(t("wikiChat.newChat"));
-    setChats(prev => [chat, ...prev]);
+    setChats((prev) => [chat, ...prev]);
     setActiveId(chat.id);
   }
 
   function deleteChat(id: string) {
-    const chat = chats.find(c => c.id === id);
+    const chat = chats.find((c) => c.id === id);
     if (chat?.remoteId) {
-      void authHeaders().then(headers =>
+      void authHeaders().then((headers) =>
         fetch(`${API}/wiki-chat/chats/${chat.remoteId}`, {
           method: "DELETE",
           headers,
-        }).catch(() => {})
+        }).catch(() => {}),
       );
     }
-    setChats(prev => {
-      const next = prev.filter(c => c.id !== id);
+    setChats((prev) => {
+      const next = prev.filter((c) => c.id !== id);
       if (id === activeId) setActiveId(next[0]?.id ?? null);
       return next;
     });
@@ -234,15 +219,15 @@ export function WikiChat() {
     const id = renamingId;
     const title = renameValue.replace(/\s+/g, " ").trim();
     if (id && title) {
-      setChats(prev => prev.map(c => (c.id === id ? { ...c, title } : c)));
-      const chat = chats.find(c => c.id === id);
+      setChats((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)));
+      const chat = chats.find((c) => c.id === id);
       if (chat?.remoteId) {
-        void authHeaders({ "Content-Type": "application/json" }).then(headers =>
+        void authHeaders({ "Content-Type": "application/json" }).then((headers) =>
           fetch(`${API}/wiki-chat/chats/${chat.remoteId}`, {
             method: "PATCH",
             headers,
             body: JSON.stringify({ title }),
-          }).catch(() => {})
+          }).catch(() => {}),
         );
       }
     }
@@ -254,7 +239,7 @@ export function WikiChat() {
     chatId: string,
     remoteId: string | undefined,
     title: string,
-    msgs: Message[]
+    msgs: Message[],
   ) {
     try {
       if (remoteId) {
@@ -271,9 +256,7 @@ export function WikiChat() {
         });
         if (res.ok) {
           const { id } = (await res.json()) as { id: string };
-          setChats(prev =>
-            prev.map(c => (c.id === chatId ? { ...c, remoteId: id } : c))
-          );
+          setChats((prev) => prev.map((c) => (c.id === chatId ? { ...c, remoteId: id } : c)));
         }
       }
     } catch {
@@ -289,25 +272,20 @@ export function WikiChat() {
     // Ensure an active chat exists.
     let chatId = activeId;
     let base = chats;
-    if (!chatId || !chats.some(c => c.id === chatId)) {
+    if (!chatId || !chats.some((c) => c.id === chatId)) {
       const chat = makeChat(t("wikiChat.newChat"));
       base = [chat, ...chats];
       chatId = chat.id;
       setActiveId(chatId);
     }
-    const current = base.find(c => c.id === chatId)!;
+    const current = base.find((c) => c.id === chatId)!;
     const remoteId = current.remoteId;
     const isFirst = current.messages.length === 0;
-    const withUser: Message[] = [
-      ...current.messages,
-      { role: "user", content: text },
-    ];
-    const title = isFirst
-      ? deriveTitle(text, t("wikiChat.newChat"))
-      : current.title;
+    const withUser: Message[] = [...current.messages, { role: "user", content: text }];
+    const title = isFirst ? deriveTitle(text, t("wikiChat.newChat")) : current.title;
 
     setChats(
-      base.map(c =>
+      base.map((c) =>
         c.id === chatId
           ? {
               ...c,
@@ -315,22 +293,22 @@ export function WikiChat() {
               messages: [...withUser, { role: "assistant", content: "" }],
               updatedAt: Date.now(),
             }
-          : c
-      )
+          : c,
+      ),
     );
     setLoading(true);
 
     const writeAssistant = (content: string, error = false) =>
-      setChats(prev =>
-        prev.map(c =>
+      setChats((prev) =>
+        prev.map((c) =>
           c.id === chatId
             ? {
                 ...c,
                 messages: [...withUser, { role: "assistant", content, error }],
                 updatedAt: Date.now(),
               }
-            : c
-        )
+            : c,
+        ),
       );
 
     let finalMessages: Message[] = withUser;
@@ -354,23 +332,14 @@ export function WikiChat() {
       if (!accumulated.trim()) {
         const q = pick(errorQuotes);
         writeAssistant(q, true);
-        finalMessages = [
-          ...withUser,
-          { role: "assistant", content: q, error: true },
-        ];
+        finalMessages = [...withUser, { role: "assistant", content: q, error: true }];
       } else {
-        finalMessages = [
-          ...withUser,
-          { role: "assistant", content: accumulated },
-        ];
+        finalMessages = [...withUser, { role: "assistant", content: accumulated }];
       }
     } catch {
       const q = pick(errorQuotes);
       writeAssistant(q, true);
-      finalMessages = [
-        ...withUser,
-        { role: "assistant", content: q, error: true },
-      ];
+      finalMessages = [...withUser, { role: "assistant", content: q, error: true }];
     } finally {
       setLoading(false);
     }
@@ -399,10 +368,7 @@ export function WikiChat() {
                   <ShieldCheck className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent
-                side="bottom"
-                className="max-w-[15rem] text-balance leading-relaxed"
-              >
+              <TooltipContent side="bottom" className="max-w-[15rem] text-balance leading-relaxed">
                 {t("wikiChat.privacyHint")}
               </TooltipContent>
             </Tooltip>
@@ -422,23 +388,23 @@ export function WikiChat() {
                 {t("wikiChat.emptyChats")}
               </p>
             )}
-            {chats.map(chat => (
+            {chats.map((chat) => (
               <div
                 key={chat.id}
                 className={cn(
                   "group flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm transition-colors",
                   chat.id === activeId
                     ? "bg-background font-medium text-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
+                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
                 )}
               >
                 {renamingId === chat.id ? (
                   <input
                     autoFocus
                     value={renameValue}
-                    onChange={e => setRenameValue(e.target.value)}
+                    onChange={(e) => setRenameValue(e.target.value)}
                     onBlur={commitRename}
-                    onKeyDown={e => {
+                    onKeyDown={(e) => {
                       if (e.key === "Enter") commitRename();
                       if (e.key === "Escape") setRenamingId(null);
                     }}
@@ -505,10 +471,7 @@ export function WikiChat() {
               {messages.map((m, i) => (
                 <div
                   key={i}
-                  className={cn(
-                    "flex",
-                    m.role === "user" ? "justify-end" : "justify-start"
-                  )}
+                  className={cn("flex", m.role === "user" ? "justify-end" : "justify-start")}
                 >
                   <div
                     className={cn(
@@ -517,29 +480,21 @@ export function WikiChat() {
                         ? "rounded-br-sm bg-primary text-primary-foreground"
                         : m.error
                           ? "rounded-bl-sm border border-destructive/30 bg-destructive/5 text-destructive"
-                          : "rounded-bl-sm border border-border bg-background text-foreground"
+                          : "rounded-bl-sm border border-border bg-background text-foreground",
                     )}
                   >
                     {m.role === "assistant" && !m.error ? (
                       <ReactMarkdown
                         components={{
-                          p: ({ children }) => (
-                            <p className="mb-1 last:mb-0">{children}</p>
-                          ),
+                          p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
                           ul: ({ children }) => (
-                            <ul className="mb-1 ml-4 list-disc space-y-0.5">
-                              {children}
-                            </ul>
+                            <ul className="mb-1 ml-4 list-disc space-y-0.5">{children}</ul>
                           ),
                           ol: ({ children }) => (
-                            <ol className="mb-1 ml-4 list-decimal space-y-0.5">
-                              {children}
-                            </ol>
+                            <ol className="mb-1 ml-4 list-decimal space-y-0.5">{children}</ol>
                           ),
                           strong: ({ children }) => (
-                            <strong className="font-semibold">
-                              {children}
-                            </strong>
+                            <strong className="font-semibold">{children}</strong>
                           ),
                           code: ({ children }) => (
                             <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
@@ -582,8 +537,8 @@ export function WikiChat() {
             <textarea
               rows={1}
               value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
                   void send();

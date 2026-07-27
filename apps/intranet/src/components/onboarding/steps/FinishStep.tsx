@@ -34,9 +34,7 @@ export function FinishStep() {
       </motion.div>
 
       <div>
-        <h2 className="font-display text-2xl font-bold tracking-tight">
-          {t("finishTitle")}
-        </h2>
+        <h2 className="font-display text-2xl font-bold tracking-tight">{t("finishTitle")}</h2>
         <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
           {t("finishBody")}
         </p>
@@ -48,12 +46,7 @@ export function FinishStep() {
           <Button size="sm" onClick={finishWithTour} className="flex-1">
             {t("tourCtaButton")}
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={complete}
-            className="flex-1"
-          >
+          <Button size="sm" variant="outline" onClick={complete} className="flex-1">
             {t("finish")}
           </Button>
         </div>

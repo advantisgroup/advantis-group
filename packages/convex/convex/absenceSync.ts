@@ -11,16 +11,14 @@ import { internal } from "./_generated/api";
  * v2 API this file used to call — including `/v2/users`, below — has since
  * been retired and returns 410 Gone) so both paths see the same data.
  */
-const BASE_URL = () =>
-  process.env.CLOCKODO_API_URL ?? "https://my.clockodo.com/api/v4";
+const BASE_URL = () => process.env.CLOCKODO_API_URL ?? "https://my.clockodo.com/api/v4";
 
 function headers(): Record<string, string> {
   return {
     "X-ClockodoApiUser": process.env.CLOCKODO_API_USER!,
     "X-ClockodoApiKey": process.env.CLOCKODO_API_KEY!,
     "X-Clockodo-External-Application":
-      process.env.CLOCKODO_EXTERNAL_APP ??
-      "AdvantisIntranet;it@advantisgroup.de",
+      process.env.CLOCKODO_EXTERNAL_APP ?? "AdvantisIntranet;it@advantisgroup.de",
   };
 }
 
@@ -67,9 +65,9 @@ export const syncClockodoAbsences = internalAction({
 
     for (const year of years) {
       const body = await clockodoGet<{ data?: ClockodoAbsence[] }>(
-        `/absences?year=${year}&filter[scope]=viewableAbsences`
+        `/absences?year=${year}&filter[scope]=viewableAbsences`,
       );
-      const absences = (body.data ?? []).map(a => ({
+      const absences = (body.data ?? []).map((a) => ({
         externalId: String(a.id),
         clockodoUserId: a.users_id,
         dateSince: a.date_since,

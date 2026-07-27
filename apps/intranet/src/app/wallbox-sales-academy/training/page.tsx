@@ -26,11 +26,7 @@ export default function TrainingOverviewPage() {
   if (!participant) return null;
 
   return (
-    <TrainingOverview
-      participantId={participant.id}
-      name={participant.name}
-      onLogout={logout}
-    />
+    <TrainingOverview participantId={participant.id} name={participant.name} onLogout={logout} />
   );
 }
 
@@ -47,13 +43,11 @@ function TrainingOverview({
   const { progress, loading, mutate } = useAcademyProgress(participantId);
 
   if (loading) {
-    return (
-      <p className="text-sm text-muted-foreground">Lade Trainingsstand …</p>
-    );
+    return <p className="text-sm text-muted-foreground">Lade Trainingsstand …</p>;
   }
 
   function openChapter(index: number) {
-    void mutate(p => setLastChapter(p, index));
+    void mutate((p) => setLastChapter(p, index));
     router.push(`${HOME}/training/${CHAPTERS[index].id}`);
   }
 

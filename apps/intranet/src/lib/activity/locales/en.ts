@@ -28,13 +28,10 @@ export const en: Dict = {
   "login.toSignup": "No account yet? Register",
   "login.toSignin": "Already have an account? Sign in",
   "login.error": "Sign-in failed. Please check your details.",
-  "login.firstUserNote":
-    "The first account to register automatically becomes IT admin.",
+  "login.firstUserNote": "The first account to register automatically becomes IT admin.",
   "login.passwordHint": "Minimum 8 characters.",
-  "login.feature.insights":
-    "Activity patterns at a glance — charts instead of endless lists.",
-  "login.feature.privacy":
-    "Active/idle timing only — no screenshots, no keystrokes.",
+  "login.feature.insights": "Activity patterns at a glance — charts instead of endless lists.",
+  "login.feature.privacy": "Active/idle timing only — no screenshots, no keystrokes.",
 
   "overview.heading": "Team overview",
   "overview.empty": "No approved devices yet. Approve one under “Devices”.",
@@ -47,8 +44,7 @@ export const en: Dict = {
   "overview.total": "Devices total",
   "overview.ofTotal": "of {total} devices",
   "overview.online": "online",
-  "overview.sub":
-    "Who's working right now, who's gone quiet, and since when — at a glance.",
+  "overview.sub": "Who's working right now, who's gone quiet, and since when — at a glance.",
   "overview.filter.all": "All",
   "overview.filter.attention": "Inactive",
   "overview.filter.working": "Working",
@@ -61,15 +57,13 @@ export const en: Dict = {
     "Genesys and Clockodo are polled every 2 minutes during the day and every 10 minutes overnight — this counts down to that. Clockodo can also push updates sooner via webhook.",
   "overview.liveHint": "Updates in real time — no refresh needed.",
   "overview.outdated": "Update available",
-  "overview.outdatedHint":
-    "Running v{current} — the latest ActivityTrack version is v{latest}.",
+  "overview.outdatedHint": "Running v{current} — the latest ActivityTrack version is v{latest}.",
   "overview.latestVersion": "ActivityTrack v{version}",
   "overview.latestVersionHint":
     "Latest published ActivityTrack desktop-agent version, mirrored hourly from GitHub releases.",
 
   "devices.heading": "Devices",
-  "devices.sub":
-    "Approve new agents, link computers to people, and manage the fleet.",
+  "devices.sub": "Approve new agents, link computers to people, and manage the fleet.",
   "devices.pending": "Pending approval",
   "devices.all": "All devices",
   "devices.host": "Computer",
@@ -90,8 +84,7 @@ export const en: Dict = {
   "status.disabled": "Disabled",
 
   "people.heading": "People",
-  "people.sub":
-    "The roster: names, e-mail and the integration IDs behind the live status.",
+  "people.sub": "The roster: names, e-mail and the integration IDs behind the live status.",
   "people.add": "Add person",
   "people.name": "Name",
   "people.email": "Email",
@@ -111,8 +104,7 @@ export const en: Dict = {
   "people.intranetUserNone": "Not linked",
   "people.intranetUserHint":
     "Links this tracked person to their intranet login, so their role and department show up alongside their live status.",
-  "people.idsHint":
-    "Links the person to Genesys and Clockodo for the fused live state.",
+  "people.idsHint": "Links the person to Genesys and Clockodo for the fused live state.",
 
   "users.heading": "Users & roles",
   "users.email": "Email",
@@ -127,8 +119,7 @@ export const en: Dict = {
   "audit.empty": "No entries yet.",
 
   "settings.heading": "Settings",
-  "settings.subtitle":
-    "Configuration, system health, users and the audit log in one place.",
+  "settings.subtitle": "Configuration, system health, users and the audit log in one place.",
   "settings.tabs.config": "Configuration",
   "settings.tabs.system": "System health",
   "settings.tabs.users": "Users",
@@ -151,8 +142,7 @@ export const en: Dict = {
   "settings.trouble.quarantine": "Fix historical overnight data",
   "settings.trouble.quarantineHint":
     'Apply the business-hours rule retroactively — moves already-recorded "working" states outside 07:00–20:00 into Discarded data. Safe to run repeatedly.',
-  "settings.trouble.quarantineDone":
-    "Done — {count} entries moved to Discarded data.",
+  "settings.trouble.quarantineDone": "Done — {count} entries moved to Discarded data.",
   "settings.trouble.prune": "Run retention cleanup now",
   "settings.trouble.pruneHint":
     "Delete data older than the configured retention window immediately, instead of waiting for tonight's scheduled cleanup.",
@@ -175,8 +165,7 @@ export const en: Dict = {
   "settings.config.inactivityHint":
     "Idle time before someone counts as inactive (used in charts and KPIs).",
   "settings.config.offline": "Offline threshold",
-  "settings.config.offlineHint":
-    "Time without a heartbeat before a device shows as offline.",
+  "settings.config.offlineHint": "Time without a heartbeat before a device shows as offline.",
   "settings.config.retention": "Data retention",
   "settings.config.retentionHint":
     "How long raw samples and state history are kept before pruning.",
@@ -186,8 +175,7 @@ export const en: Dict = {
   "settings.config.saved": "Configuration saved.",
   "settings.config.invalid": "Please fill in every field.",
   "settings.debugPw.heading": "Tracker debug password",
-  "settings.debugPw.hint":
-    "Sets the password that unlocks the tracker UI on the PCs.",
+  "settings.debugPw.hint": "Sets the password that unlocks the tracker UI on the PCs.",
   "settings.debugPw.set": "Password is set.",
   "settings.debugPw.unset": "No password set yet.",
   "settings.debugPw.new": "New password",
@@ -200,8 +188,7 @@ export const en: Dict = {
   "settings.access.domainsLabel": "Allowed email domains",
   "settings.access.note":
     "Set via the ALLOWED_EMAIL_DOMAINS server environment variable. New sign-ins still go through the access-requests flow in the intranet admin area.",
-  "settings.access.noDomains":
-    "No domain restriction configured — any email domain is permitted.",
+  "settings.access.noDomains": "No domain restriction configured — any email domain is permitted.",
   "settings.access.adminsLabel": "Administrators",
   "settings.access.adminsHint":
     "Seeded via the ADMIN_EMAILS server environment variable, plus anyone granted the admin role in the intranet admin area.",
@@ -238,12 +225,9 @@ export const en: Dict = {
   "timeline.heatmap.heading": "Activity by time of day",
   "timeline.heatmap.sub": "When this person was active today.",
   "timeline.hourly.heading": "State by hour (today)",
-  "timeline.hourly.sub":
-    "Minutes per hour by state — idle, on a call, break, wrap-up.",
-  "timeline.hourly.empty":
-    "No state history for today yet. Data appears as signals arrive.",
-  "timeline.hourly.unlinked":
-    "This device isn't linked to a person with integrations.",
+  "timeline.hourly.sub": "Minutes per hour by state — idle, on a call, break, wrap-up.",
+  "timeline.hourly.empty": "No state history for today yet. Data appears as signals arrive.",
+  "timeline.hourly.unlinked": "This device isn't linked to a person with integrations.",
   "timeline.unlinkedCta": "Link it under People →",
   "timeline.state.heading": "Current state",
   "timeline.state.empty": "No state data for this person yet.",
@@ -296,8 +280,7 @@ export const en: Dict = {
   "reports.col.active": "Active",
   "reports.col.idle": "Idle",
   "reports.col.total": "Total",
-  "reports.empty":
-    "No data for this period. Try a wider time frame or a different device.",
+  "reports.empty": "No data for this period. Try a wider time frame or a different device.",
   "reports.trend.heading": "Weekly trend",
   "reports.trend.sub": "Active and idle hours per week.",
 
@@ -306,16 +289,14 @@ export const en: Dict = {
   // Finding sentences are templates; `{placeholders}` are filled and
   // colour-highlighted client-side by `HighlightedSentence`.
   "pattern.heading": "Weekly pattern report",
-  "pattern.subtitle":
-    "A plain-language read of this person's week, generated on request.",
+  "pattern.subtitle": "A plain-language read of this person's week, generated on request.",
   "pattern.week.thisWeek": "This week",
   "pattern.week.lastWeek": "Last week",
   "pattern.generate": "Generate report",
   "pattern.regenerate": "Regenerate",
   "pattern.generating": "Reading the week's activity…",
   "pattern.lastGenerated": "Generated {time}",
-  "pattern.empty":
-    "No report yet for this week — generate one to see what stood out.",
+  "pattern.empty": "No report yet for this week — generate one to see what stood out.",
   "pattern.chart.daily.heading": "Active vs. idle, by day",
   "pattern.chart.switches.heading": "Quick active/idle flips, by day",
   "pattern.chart.switches.sub":
@@ -340,8 +321,7 @@ export const en: Dict = {
     "This is the first week of tracked data for {name}, so there's nothing to compare yet.",
 
   "timeline.export.heading": "Export data",
-  "timeline.export.sub":
-    "This person's activity for a date range, as CSV or JSON.",
+  "timeline.export.sub": "This person's activity for a date range, as CSV or JSON.",
   "timeline.export.from": "From",
   "timeline.export.to": "To",
   "timeline.export.csv": "Download CSV",
@@ -452,16 +432,14 @@ export const en: Dict = {
   "error.network": "Can't reach the server. Please try again shortly.",
   "error.auth.required": "Please sign in again.",
   "error.auth.forbidden": "You don't have permission to do that.",
-  "error.notFound.device":
-    "That device was not found (it may have been removed).",
+  "error.notFound.device": "That device was not found (it may have been removed).",
   "error.notFound.person": "That person was not found.",
   "error.notFound.user": "That user was not found.",
   "error.notFound.slot": "That code was not found.",
   "error.notFound.event": "That entry was not found.",
   "error.clockodo.managedElsewhere":
     "This person is linked to an intranet account — manage their Clockodo ID from Admin → Integrations → Clockodo instead.",
-  "error.validation.password_short":
-    "The password must be at least 6 characters.",
+  "error.validation.password_short": "The password must be at least 6 characters.",
   "error.validation.out_of_range": "That value is outside the allowed range.",
   "error.user.cannot_demote_self": "You can't remove your own IT admin role.",
 
@@ -469,8 +447,7 @@ export const en: Dict = {
   "health.heading": "System health",
   "health.subtitle": "Device connectivity and reported issues at a glance.",
   "health.allGood.title": "All systems normal",
-  "health.allGood.body":
-    "Every device is reporting and there are no open issues.",
+  "health.allGood.body": "Every device is reporting and there are no open issues.",
   "health.attention.title": "{count} thing(s) need attention",
   "health.attention.body": "See the breakdown below.",
   "health.offline.heading": "Devices that have gone quiet",
@@ -506,18 +483,13 @@ export const en: Dict = {
   "health.src.dashboard": "Dashboard",
 
   // Plain-language descriptions per event code (for non-technical viewers).
-  "health.friendly.ingest.unauthorized":
-    "An unknown or blocked device tried to send data.",
+  "health.friendly.ingest.unauthorized": "An unknown or blocked device tried to send data.",
   "health.friendly.ingest.bad_payload": "A device sent malformed data.",
-  "health.friendly.enroll.unauthorized":
-    "An unauthorized install tried to register.",
-  "health.friendly.enroll.code_invalid":
-    "An invalid or expired enrollment code was used.",
-  "health.friendly.tracker.send_failed":
-    "A computer can't reach the server to send data.",
+  "health.friendly.enroll.unauthorized": "An unauthorized install tried to register.",
+  "health.friendly.enroll.code_invalid": "An invalid or expired enrollment code was used.",
+  "health.friendly.tracker.send_failed": "A computer can't reach the server to send data.",
   "health.friendly.tracker.enroll_failed": "A computer's initial setup failed.",
-  "health.friendly.tracker.queue_io":
-    "A computer can't buffer its data locally.",
+  "health.friendly.tracker.queue_io": "A computer can't buffer its data locally.",
   "health.friendly.dashboard.crash": "The dashboard hit an unexpected error.",
   "health.friendly.unknown": "An issue was reported.",
 
@@ -529,12 +501,10 @@ export const en: Dict = {
 
   // Auth provisioning gate (user row could not be created/loaded).
   "auth.error.title": "Couldn't finish signing you in",
-  "auth.error.body":
-    "We couldn't load your account. Please check your connection and try again.",
+  "auth.error.body": "We couldn't load your account. Please check your connection and try again.",
   "auth.error.not_allowed":
     "Your account isn't permitted to access this dashboard. Contact your administrator.",
-  "auth.error.domain_not_allowed":
-    "Your email domain isn't allowed. Contact your administrator.",
+  "auth.error.domain_not_allowed": "Your email domain isn't allowed. Contact your administrator.",
   "auth.error.retry": "Try again",
 
   // Help / FAQ, status tooltips, setup checklist, guardrail confirms.
@@ -548,8 +518,7 @@ export const en: Dict = {
   "help.deviceStatus.pending":
     "Waiting for an admin to approve this device before its data is counted.",
   "help.deviceStatus.active": "Approved and reporting normally.",
-  "help.deviceStatus.disabled":
-    "Turned off by an admin — it no longer reports or counts.",
+  "help.deviceStatus.disabled": "Turned off by an admin — it no longer reports or counts.",
 
   "faq.section.access": "Sign-in & access",
   "faq.section.tracker": "The desktop tracker",
@@ -584,8 +553,7 @@ export const en: Dict = {
   "faq.q.debug_password": "What is the tracker debug password?",
   "faq.a.debug_password":
     "It unlocks the tracker's local status/diagnostics window on a PC. Set or change it under Settings → Configuration. It never unlocks the dashboard — only the on-device debug view.",
-  "faq.q.integration_down":
-    "An integration (Genesys / Clockodo) shows as unavailable",
+  "faq.q.integration_down": "An integration (Genesys / Clockodo) shows as unavailable",
   "faq.a.integration_down":
     "Usually expired or missing API credentials, or the provider is unreachable. Check the integration's keys in the Convex environment variables. The dashboard keeps working from workstation activity alone while an integration is down.",
   "faq.q.clockodo_setup": "How do I connect the Clockodo webhook?",
@@ -634,6 +602,5 @@ export const en: Dict = {
     "{email} will become {role}. This changes what they can see and do immediately.",
   "users.confirmRoleConfirm": "Change role",
 
-  "error.user.last_admin":
-    "You can't demote the last IT admin — promote another admin first.",
+  "error.user.last_admin": "You can't demote the last IT admin — promote another admin first.",
 };

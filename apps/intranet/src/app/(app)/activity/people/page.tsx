@@ -70,12 +70,8 @@ export default function PeoplePage() {
   const [email, setEmail] = useState("");
   const [query, setQuery] = useState("");
   const searchRef = useSlashFocus<HTMLInputElement>();
-  const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(
-    null
-  );
-  const [editTarget, setEditTarget] = useState<GenericId<"people"> | null>(
-    null
-  );
+  const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(null);
+  const [editTarget, setEditTarget] = useState<GenericId<"people"> | null>(null);
 
   const canEdit = me?.role === "admin" || me?.role === "manager";
 
@@ -84,19 +80,15 @@ export default function PeoplePage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q || !people) return people ?? [];
-    return people.filter(p =>
+    return people.filter((p) =>
       [p.name, p.email, p.employeeId, p.genesysUserId, p.clockodoUserId]
         .filter(Boolean)
-        .some(v => String(v).toLowerCase().includes(q))
+        .some((v) => String(v).toLowerCase().includes(q)),
     );
   }, [people, query]);
 
   const header = (
-    <PageHeader
-      title={t("people.heading")}
-      description={t("people.sub")}
-      icon={<Users />}
-    />
+    <PageHeader title={t("people.heading")} description={t("people.sub")} icon={<Users />} />
   );
 
   if (people === undefined) {
@@ -125,7 +117,7 @@ export default function PeoplePage() {
   // The roster renders twice — stacked cards on mobile, a table from md up —
   // so the delete/edit buttons and read-only cells live in one place.
 
-  const linkableUsers = (intranetUsers ?? []).map(u => ({
+  const linkableUsers = (intranetUsers ?? []).map((u) => ({
     _id: u._id as string,
     name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
     role: u.role,
@@ -133,17 +125,12 @@ export default function PeoplePage() {
     teams: u.teams,
   }));
 
-  const editingPerson = editTarget
-    ? (people.find(p => p._id === editTarget) ?? null)
-    : null;
+  const editingPerson = editTarget ? (people.find((p) => p._id === editTarget) ?? null) : null;
 
   // Once a person is linked to an intranet account, `users.clockodoUserId`
   // (set via Admin → Integrations → Clockodo) is canonical — this cell links
   // out instead of showing a value that could drift from the real source.
-  const clockodoIdCell = (p: {
-    userId?: GenericId<"users">;
-    clockodoUserId?: string;
-  }) =>
+  const clockodoIdCell = (p: { userId?: GenericId<"users">; clockodoUserId?: string }) =>
     p.userId ? (
       <div className="flex min-w-[8rem] items-center gap-2">
         <span className="font-mono text-xs text-muted-foreground">
@@ -161,13 +148,9 @@ export default function PeoplePage() {
     );
 
   const userLinkCell = (p: { userId?: GenericId<"users"> }) => {
-    const linked = linkableUsers.find(u => u._id === (p.userId as string));
+    const linked = linkableUsers.find((u) => u._id === (p.userId as string));
     if (!linked) {
-      return (
-        <span className="text-sm text-muted-foreground">
-          {t("people.intranetUserNone")}
-        </span>
-      );
+      return <span className="text-sm text-muted-foreground">{t("people.intranetUserNone")}</span>;
     }
     return (
       <div className="space-y-1">
@@ -217,27 +200,20 @@ export default function PeoplePage() {
       {canEdit && (
         <Card className="animate-fade-up">
           <CardContent className="p-3 sm:p-4">
-            <form
-              onSubmit={onAdd}
-              className="flex flex-col gap-2 sm:flex-row sm:items-center"
-            >
+            <form onSubmit={onAdd} className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Input
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value)}
                 placeholder={t("people.name")}
                 className="sm:flex-1"
               />
               <Input
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("people.email")}
                 className="sm:flex-1"
               />
-              <Button
-                type="submit"
-                disabled={!name.trim()}
-                className="sm:w-auto"
-              >
+              <Button type="submit" disabled={!name.trim()} className="sm:w-auto">
                 <Plus className="h-4 w-4" />
                 {t("people.add")}
               </Button>
@@ -254,7 +230,7 @@ export default function PeoplePage() {
           <Input
             ref={searchRef}
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder={t("common.search")}
             aria-label={t("common.search")}
             className="pl-9"
@@ -278,38 +254,26 @@ export default function PeoplePage() {
             </CardContent>
           </Card>
         ) : (
-          filtered.map(p => (
+          filtered.map((p) => (
             <Card key={p._id}>
               <CardContent className="space-y-3 p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="min-w-0 flex-1 truncate font-medium text-fg">
-                    {p.name}
-                  </p>
+                  <p className="min-w-0 flex-1 truncate font-medium text-fg">{p.name}</p>
                   {canEdit && rowActions(p._id)}
                 </div>
                 <Field label={t("people.email")}>
-                  <p className="text-sm text-muted-foreground">
-                    {p.email?.trim() || "—"}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{p.email?.trim() || "—"}</p>
                 </Field>
                 <Field label={t("people.employeeId")}>
-                  <IdValue
-                    value={p.employeeId}
-                    label={t("people.employeeId")}
-                  />
+                  <IdValue value={p.employeeId} label={t("people.employeeId")} />
                 </Field>
                 <Field label={<BrandedText text={t("people.genesysId")} />}>
-                  <IdValue
-                    value={p.genesysUserId}
-                    label={t("people.genesysId")}
-                  />
+                  <IdValue value={p.genesysUserId} label={t("people.genesysId")} />
                 </Field>
                 <Field label={<BrandedText text={t("people.clockodoId")} />}>
                   {clockodoIdCell(p)}
                 </Field>
-                <Field label={t("people.intranetUser")}>
-                  {userLinkCell(p)}
-                </Field>
+                <Field label={t("people.intranetUser")}>{userLinkCell(p)}</Field>
                 <div className="pt-1">{activeBadge(p.active)}</div>
               </CardContent>
             </Card>
@@ -357,32 +321,20 @@ export default function PeoplePage() {
                 </TableCell>
               </TableRow>
             )}
-            {filtered.map(p => (
+            {filtered.map((p) => (
               <TableRow key={p._id}>
                 <TableCell className="text-fg">{p.name}</TableCell>
-                <TableCell className="text-muted-foreground">
-                  {p.email?.trim() || "—"}
+                <TableCell className="text-muted-foreground">{p.email?.trim() || "—"}</TableCell>
+                <TableCell>
+                  <IdValue value={p.employeeId} label={t("people.employeeId")} />
                 </TableCell>
                 <TableCell>
-                  <IdValue
-                    value={p.employeeId}
-                    label={t("people.employeeId")}
-                  />
-                </TableCell>
-                <TableCell>
-                  <IdValue
-                    value={p.genesysUserId}
-                    label={t("people.genesysId")}
-                  />
+                  <IdValue value={p.genesysUserId} label={t("people.genesysId")} />
                 </TableCell>
                 <TableCell>{clockodoIdCell(p)}</TableCell>
                 <TableCell>{userLinkCell(p)}</TableCell>
                 <TableCell>{activeBadge(p.active)}</TableCell>
-                {canEdit && (
-                  <TableCell className="text-right">
-                    {rowActions(p._id)}
-                  </TableCell>
-                )}
+                {canEdit && <TableCell className="text-right">{rowActions(p._id)}</TableCell>}
               </TableRow>
             ))}
           </TableBody>
@@ -392,7 +344,7 @@ export default function PeoplePage() {
       <EditPersonDialog
         person={editingPerson}
         linkableUsers={linkableUsers}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           if (!open) setEditTarget(null);
         }}
         onSave={(personId, patch) => {
@@ -406,10 +358,7 @@ export default function PeoplePage() {
         confirmLabel={t("people.delete")}
         onConfirm={async () => {
           if (deleteTarget) {
-            await remove(
-              { personId: deleteTarget },
-              { success: t("people.deleted") }
-            );
+            await remove({ personId: deleteTarget }, { success: t("people.deleted") });
           }
           setDeleteTarget(null);
         }}

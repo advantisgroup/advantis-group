@@ -2,13 +2,7 @@
 
 import { useEffect, useRef } from "react";
 
-import {
-  motion,
-  useInView,
-  useMotionValue,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 import { BrandText } from "../../effects/BrandText";
@@ -32,7 +26,7 @@ function CountUp({
     duration: 2.5,
   });
 
-  const displayValue = useTransform(springValue, current => {
+  const displayValue = useTransform(springValue, (current) => {
     const val = Math.round(current);
     return val.toString().padStart(3, "0");
   });
@@ -75,10 +69,7 @@ export const HomeFeatures = () => {
   ];
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative overflow-hidden py-24 md:py-32"
-    >
+    <section ref={sectionRef} className="relative overflow-hidden py-24 md:py-32">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.64_0.2_14_/_0.2),transparent_40%),radial-gradient(circle_at_85%_0%,oklch(0.76_0.16_68_/_0.12),transparent_45%)]" />
       <div className="absolute inset-0 bg-linear-to-b from-background via-background/95 to-background" />
 
@@ -87,9 +78,7 @@ export const HomeFeatures = () => {
           <div className="grid gap-16 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-20">
             <div
               className={`space-y-8 transition-[transform,opacity] duration-1000 ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "-translate-y-8 opacity-0"
+                isVisible ? "translate-y-0 opacity-100" : "-translate-y-8 opacity-0"
               }`}
               style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
             >
@@ -97,8 +86,7 @@ export const HomeFeatures = () => {
                 {t("eyebrow")}
               </p>
               <h2 className="font-[family-name:var(--font-outfit)] text-4xl leading-[1.05] md:text-6xl lg:text-7xl">
-                {t("title")}{" "}
-                <BrandText brand="advantis">{t("titleBrand")}</BrandText>?
+                {t("title")} <BrandText brand="advantis">{t("titleBrand")}</BrandText>?
               </h2>
               <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">
                 {t("subtitle")}
@@ -142,19 +130,14 @@ export const HomeFeatures = () => {
 
             <div
               className={`transition-[transform,opacity] duration-1000 delay-150 ${
-                isVisible
-                  ? "translate-y-0 opacity-100"
-                  : "translate-y-8 opacity-0"
+                isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
               }`}
               style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
             >
               <ul className="divide-y divide-border/60 rounded-[2rem] border border-border/60 bg-card/50">
-                {principles.map(principle => {
+                {principles.map((principle) => {
                   return (
-                    <li
-                      key={principle.id}
-                      className="group px-6 py-7 md:px-10 md:py-9"
-                    >
+                    <li key={principle.id} className="group px-6 py-7 md:px-10 md:py-9">
                       <div className="flex flex-col gap-4 md:flex-row md:items-start md:gap-8">
                         <span className="font-[family-name:var(--font-outfit)] text-sm tracking-[0.3em] text-primary/70 transition-colors group-hover:text-primary">
                           {principle.id}

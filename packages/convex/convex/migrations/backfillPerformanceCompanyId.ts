@@ -50,7 +50,7 @@ export const ensureAdvantisCompany = internalMutation({
   handler: async (ctx): Promise<{ companyId: Id<"companies"> }> => {
     const existing = await ctx.db
       .query("companies")
-      .withIndex("by_slug", q => q.eq("slug", "advantis"))
+      .withIndex("by_slug", (q) => q.eq("slug", "advantis"))
       .unique();
     if (existing) {
       if (existing.status !== "active") {
@@ -93,20 +93,20 @@ export const getAdvantisRoleIds = internalMutation({
   args: { companyId: v.id("companies") },
   handler: async (
     ctx,
-    { companyId }
+    { companyId },
   ): Promise<{
     adminRoleId: Id<"companyRoles">;
     mitarbeiterRoleId: Id<"companyRoles">;
   }> => {
     const roles = await ctx.db
       .query("companyRoles")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .collect();
-    const admin = roles.find(r => r.name === "Admin");
-    const mitarbeiter = roles.find(r => r.name === "Mitarbeiter");
+    const admin = roles.find((r) => r.name === "Admin");
+    const mitarbeiter = roles.find((r) => r.name === "Mitarbeiter");
     if (!admin || !mitarbeiter) {
       throw new Error(
-        "Advantis company is missing its built-in Admin/Mitarbeiter roles — run ensureAdvantisCompany first."
+        "Advantis company is missing its built-in Admin/Mitarbeiter roles — run ensureAdvantisCompany first.",
       );
     }
     return { adminRoleId: admin._id, mitarbeiterRoleId: mitarbeiter._id };
@@ -122,20 +122,18 @@ export const backfillLoginsBatch = internalMutation({
   },
   handler: async (
     ctx,
-    { companyId, adminRoleId, mitarbeiterRoleId, superAdminEmails }
+    { companyId, adminRoleId, mitarbeiterRoleId, superAdminEmails },
   ): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query("performanceLogins")
-      .filter(q => q.eq(q.field("companyId"), undefined))
+      .filter((q) => q.eq(q.field("companyId"), undefined))
       .take(BATCH_SIZE);
     for (const login of batch) {
       const roleId = login.role === "admin" ? adminRoleId : mitarbeiterRoleId;
       await ctx.db.patch(login._id, {
         companyId,
         roleId,
-        ...(superAdminEmails.includes(login.email.toLowerCase())
-          ? { isSuperAdmin: true }
-          : {}),
+        ...(superAdminEmails.includes(login.email.toLowerCase()) ? { isSuperAdmin: true } : {}),
       });
     }
     return { more: batch.length === BATCH_SIZE };
@@ -147,7 +145,7 @@ export const backfillSessionsBatch = internalMutation({
   handler: async (ctx, { companyId }): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query("performanceSessions")
-      .filter(q => q.eq(q.field("companyId"), undefined))
+      .filter((q) => q.eq(q.field("companyId"), undefined))
       .take(BATCH_SIZE);
     for (const session of batch) {
       await ctx.db.patch(session._id, { companyId });
@@ -167,14 +165,14 @@ export const backfillTableBatch = internalMutation({
       v.literal("performanceInteractions"),
       v.literal("performanceTopics"),
       v.literal("performanceUploadLog"),
-      v.literal("performanceFlaggedRows")
+      v.literal("performanceFlaggedRows"),
     ),
     companyId: v.id("companies"),
   },
   handler: async (ctx, { table, companyId }): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query(table)
-      .filter(q => q.eq(q.field("companyId"), undefined))
+      .filter((q) => q.eq(q.field("companyId"), undefined))
       .take(BATCH_SIZE);
     for (const row of batch) {
       await ctx.db.patch(row._id, { companyId });
@@ -183,24 +181,17 @@ export const backfillTableBatch = internalMutation({
   },
 });
 
-async function drainBatches(
-  label: string,
-  step: () => Promise<{ more: boolean }>
-) {
+async function drainBatches(label: string, step: () => Promise<{ more: boolean }>) {
   let more = true;
   let rounds = 0;
   while (more) {
     ({ more } = await step());
     rounds++;
     if (rounds % 10 === 0) {
-      console.log(
-        `[backfillPerformanceCompanyId] ${label}: ${rounds} batches so far`
-      );
+      console.log(`[backfillPerformanceCompanyId] ${label}: ${rounds} batches so far`);
     }
   }
-  console.log(
-    `[backfillPerformanceCompanyId] ${label}: done (${rounds} batches)`
-  );
+  console.log(`[backfillPerformanceCompanyId] ${label}: done (${rounds} batches)`);
 }
 
 export const run = internalAction({
@@ -208,32 +199,33 @@ export const run = internalAction({
   handler: async (ctx): Promise<void> => {
     const { companyId } = await ctx.runMutation(
       internal.migrations.backfillPerformanceCompanyId.ensureAdvantisCompany,
-      {}
+      {},
     );
     const { adminRoleId, mitarbeiterRoleId } = await ctx.runMutation(
       internal.migrations.backfillPerformanceCompanyId.getAdvantisRoleIds,
-      { companyId }
+      { companyId },
     );
     const superAdminEmails = getSuperAdminEmails();
 
     await drainBatches("performanceLogins", () =>
-      ctx.runMutation(
-        internal.migrations.backfillPerformanceCompanyId.backfillLoginsBatch,
-        { companyId, adminRoleId, mitarbeiterRoleId, superAdminEmails }
-      )
+      ctx.runMutation(internal.migrations.backfillPerformanceCompanyId.backfillLoginsBatch, {
+        companyId,
+        adminRoleId,
+        mitarbeiterRoleId,
+        superAdminEmails,
+      }),
     );
     await drainBatches("performanceSessions", () =>
-      ctx.runMutation(
-        internal.migrations.backfillPerformanceCompanyId.backfillSessionsBatch,
-        { companyId }
-      )
+      ctx.runMutation(internal.migrations.backfillPerformanceCompanyId.backfillSessionsBatch, {
+        companyId,
+      }),
     );
     for (const table of BACKFILL_TABLES) {
       await drainBatches(table, () =>
-        ctx.runMutation(
-          internal.migrations.backfillPerformanceCompanyId.backfillTableBatch,
-          { table, companyId }
-        )
+        ctx.runMutation(internal.migrations.backfillPerformanceCompanyId.backfillTableBatch, {
+          table,
+          companyId,
+        }),
       );
     }
     console.log("[backfillPerformanceCompanyId] complete");

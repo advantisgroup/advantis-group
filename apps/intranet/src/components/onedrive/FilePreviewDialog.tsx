@@ -7,12 +7,7 @@ import { Download, FileQuestion, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 
 /**
@@ -43,12 +38,8 @@ export function FilePreviewDialog({
     setLoading(true);
     void od
       .preview(item.id)
-      .then(r => {
-        setUrl(
-          isImage
-            ? (r.thumbnailUrl ?? r.previewUrl ?? null)
-            : (r.previewUrl ?? null)
-        );
+      .then((r) => {
+        setUrl(isImage ? (r.thumbnailUrl ?? r.previewUrl ?? null) : (r.previewUrl ?? null));
       })
       .catch(() => setUrl(null))
       .finally(() => setLoading(false));
@@ -64,17 +55,9 @@ export function FilePreviewDialog({
           {loading ? (
             <Loader2 className="size-6 animate-spin text-muted-foreground" />
           ) : url && isImage ? (
-            <img
-              src={url}
-              alt={item?.name ?? ""}
-              className="max-h-[70vh] w-auto object-contain"
-            />
+            <img src={url} alt={item?.name ?? ""} className="max-h-[70vh] w-auto object-contain" />
           ) : url ? (
-            <iframe
-              src={url}
-              title={item?.name ?? "preview"}
-              className="h-[70vh] w-full"
-            />
+            <iframe src={url} title={item?.name ?? "preview"} className="h-[70vh] w-full" />
           ) : (
             <div className="flex flex-col items-center gap-3 py-12 text-muted-foreground">
               <FileQuestion className="size-10" />

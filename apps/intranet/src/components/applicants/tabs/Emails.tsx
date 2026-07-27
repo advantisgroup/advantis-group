@@ -28,9 +28,7 @@ export function Emails({ applicant }: { applicant: ApplicantDetail }) {
         <div className="flex items-center justify-between gap-3 border-b border-border/70 p-4">
           <p className="text-sm font-semibold">
             {t("emailHistory")}
-            <span className="ml-1.5 text-muted-foreground">
-              ({applicant.emails.length})
-            </span>
+            <span className="ml-1.5 text-muted-foreground">({applicant.emails.length})</span>
           </p>
           <Button size="sm" onClick={() => setLogOpen(true)}>
             <Plus className="size-4" />
@@ -52,7 +50,7 @@ export function Emails({ applicant }: { applicant: ApplicantDetail }) {
             />
           ) : (
             <div className="divide-y divide-border/70">
-              {applicant.emails.map(m => (
+              {applicant.emails.map((m) => (
                 <EntryRow
                   key={m._id}
                   href={`/applicants/${applicant._id}/emails/${m._id}`}
@@ -60,9 +58,7 @@ export function Emails({ applicant }: { applicant: ApplicantDetail }) {
                   title={t(`emailKategorie.${m.kategorie}`)}
                   meta={formatIsoDate(m.datum, "de-DE")}
                   note={m.notiz}
-                  onDelete={() =>
-                    removeEmail({ emailId: m._id }).catch(handleError)
-                  }
+                  onDelete={() => removeEmail({ emailId: m._id }).catch(handleError)}
                   deleteLabel={t("deleteEntry")}
                 />
               ))}
@@ -70,11 +66,7 @@ export function Emails({ applicant }: { applicant: ApplicantDetail }) {
           )}
         </CardContent>
       </Card>
-      <EmailDialog
-        open={logOpen}
-        onOpenChange={setLogOpen}
-        applicantId={applicant._id}
-      />
+      <EmailDialog open={logOpen} onOpenChange={setLogOpen} applicantId={applicant._id} />
     </div>
   );
 }

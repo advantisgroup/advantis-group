@@ -25,16 +25,13 @@ function headers(): Record<string, string> {
   const user = process.env.CLOCKODO_API_USER;
   const key = process.env.CLOCKODO_API_KEY;
   if (!user || !key) {
-    throw Errors.internal(
-      "CLOCKODO_API_USER / CLOCKODO_API_KEY not configured"
-    );
+    throw Errors.internal("CLOCKODO_API_USER / CLOCKODO_API_KEY not configured");
   }
   return {
     "X-ClockodoApiUser": user,
     "X-ClockodoApiKey": key,
     "X-Clockodo-External-Application":
-      process.env.CLOCKODO_EXTERNAL_APP ??
-      "AdvantisIntranet;it@advantisgroup.de",
+      process.env.CLOCKODO_EXTERNAL_APP ?? "AdvantisIntranet;it@advantisgroup.de",
     "Content-Type": "application/json",
   };
 }
@@ -49,16 +46,12 @@ async function clockodoGet<T>(path: string): Promise<T> {
 }
 
 export async function getAbsence(id: number): Promise<ClockodoAbsence> {
-  const data = await clockodoGet<{ absence: ClockodoAbsence }>(
-    `/absences/${id}`
-  );
+  const data = await clockodoGet<{ absence: ClockodoAbsence }>(`/absences/${id}`);
   return data.absence;
 }
 
 export async function listAbsences(year: number): Promise<ClockodoAbsence[]> {
-  const data = await clockodoGet<{ absences: ClockodoAbsence[] }>(
-    `/absences?year=${year}`
-  );
+  const data = await clockodoGet<{ absences: ClockodoAbsence[] }>(`/absences?year=${year}`);
   return data.absences ?? [];
 }
 
@@ -67,9 +60,7 @@ export async function listAbsences(year: number): Promise<ClockodoAbsence[]> {
 let userCache: { map: Map<number, string>; expiresAt: number } | null = null;
 const USER_CACHE_TTL_MS = 5 * 60 * 1000;
 
-export async function getUserEmail(
-  usersId: number
-): Promise<string | undefined> {
+export async function getUserEmail(usersId: number): Promise<string | undefined> {
   if (!userCache || userCache.expiresAt < Date.now()) {
     const data = await clockodoGet<{ users: ClockodoUser[] }>(`/v2/users`);
     const map = new Map<number, string>();

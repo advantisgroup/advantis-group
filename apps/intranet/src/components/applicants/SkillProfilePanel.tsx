@@ -55,13 +55,12 @@ function ProfileForm({
   function addSkills() {
     const items = skillInput
       .split(/[,;\n]/)
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean);
     if (!items.length) return;
     const next = [...skills];
     for (const item of items) {
-      if (!next.some(s => s.toLowerCase() === item.toLowerCase()))
-        next.push(item);
+      if (!next.some((s) => s.toLowerCase() === item.toLowerCase())) next.push(item);
     }
     setSkills(next);
     setSkillInput("");
@@ -74,24 +73,20 @@ function ProfileForm({
           {profile._id ? t("editProfile") : t("newProfile")}
         </DialogTitle>
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("profileName")}
-          </label>
+          <label className="text-xs font-medium text-muted-foreground">{t("profileName")}</label>
           <Input
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             placeholder={t("profileNamePlaceholder")}
           />
         </div>
         <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("skills")}
-          </label>
+          <label className="text-xs font-medium text-muted-foreground">{t("skills")}</label>
           <div className="flex gap-2">
             <Input
               value={skillInput}
-              onChange={e => setSkillInput(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setSkillInput(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   addSkills();
@@ -105,13 +100,13 @@ function ProfileForm({
           </div>
           {skills.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {skills.map(s => (
+              {skills.map((s) => (
                 <Badge key={s} variant="muted" className="gap-1.5 pr-1.5">
                   {s}
                   <button
                     type="button"
                     aria-label={t("removeSkill", { skill: s })}
-                    onClick={() => setSkills(skills.filter(x => x !== s))}
+                    onClick={() => setSkills(skills.filter((x) => x !== s))}
                     className="rounded-full px-1 text-muted-foreground hover:bg-background"
                   >
                     ✕
@@ -142,15 +137,13 @@ function ProfileMatches({ profile }: { profile: Profile }) {
   const router = useRouter();
   const applicants = useQuery(api.applicants.list);
   const scored = (applicants ?? [])
-    .map(a => ({ applicant: a, matched: matchSkills(profile.skills, a) }))
-    .filter(x => x.matched.length > 0)
+    .map((a) => ({ applicant: a, matched: matchSkills(profile.skills, a) }))
+    .filter((x) => x.matched.length > 0)
     .sort((a, b) => b.matched.length - a.matched.length);
 
   if (!applicants) return null;
   if (scored.length === 0) {
-    return (
-      <p className="mt-3 text-sm text-muted-foreground">{t("noMatches")}</p>
-    );
+    return <p className="mt-3 text-sm text-muted-foreground">{t("noMatches")}</p>;
   }
 
   return (
@@ -161,15 +154,13 @@ function ProfileMatches({ profile }: { profile: Profile }) {
           type="button"
           onClick={() =>
             router.push(
-              `/applicants/${applicant._id}/uebersicht?highlight=${encodeURIComponent(matched.join(","))}`
+              `/applicants/${applicant._id}/uebersicht?highlight=${encodeURIComponent(matched.join(","))}`,
             )
           }
           className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left text-sm hover:bg-accent/40"
         >
           <AmpelDot rating={applicant.rating} />
-          <span className="min-w-0 flex-1 truncate font-medium">
-            {applicant.name}
-          </span>
+          <span className="min-w-0 flex-1 truncate font-medium">{applicant.name}</span>
           <span className="shrink-0 text-xs font-semibold text-success">
             {matched.length}/{profile.skills.length}
           </span>
@@ -190,8 +181,7 @@ export function SkillProfilePanel() {
   const confirm = useConfirm();
 
   const [editing, setEditing] = useState<ProfileFormState | null>(null);
-  const [matchesFor, setMatchesFor] =
-    useState<Id<"applicantSkillProfiles"> | null>(null);
+  const [matchesFor, setMatchesFor] = useState<Id<"applicantSkillProfiles"> | null>(null);
 
   async function handleDelete(profile: Profile) {
     const ok = await confirm({
@@ -239,13 +229,11 @@ export function SkillProfilePanel() {
       </div>
 
       {profiles && profiles.length === 0 && (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          {t("noProfiles")}
-        </p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("noProfiles")}</p>
       )}
 
       <div className="space-y-2">
-        {profiles?.map(profile => (
+        {profiles?.map((profile) => (
           <Card nested key={profile._id}>
             <CardContent className="p-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -253,11 +241,9 @@ export function SkillProfilePanel() {
                   <p className="font-medium">{profile.name}</p>
                   <div className="mt-1 flex flex-wrap gap-1">
                     {profile.skills.length === 0 ? (
-                      <span className="text-xs text-muted-foreground">
-                        {t("noSkillsYet")}
-                      </span>
+                      <span className="text-xs text-muted-foreground">{t("noSkillsYet")}</span>
                     ) : (
-                      profile.skills.map(s => (
+                      profile.skills.map((s) => (
                         <Badge key={s} variant="muted" className="text-[10px]">
                           {s}
                         </Badge>
@@ -271,11 +257,7 @@ export function SkillProfilePanel() {
                     size="sm"
                     aria-label={t("findMatches")}
                     disabled={profile.skills.length === 0}
-                    onClick={() =>
-                      setMatchesFor(
-                        matchesFor === profile._id ? null : profile._id
-                      )
-                    }
+                    onClick={() => setMatchesFor(matchesFor === profile._id ? null : profile._id)}
                   >
                     <Search className="size-4" />
                     <span className="hidden md:inline">{t("findMatches")}</span>
@@ -303,18 +285,13 @@ export function SkillProfilePanel() {
                   </Button>
                 </div>
               </div>
-              {matchesFor === profile._id && (
-                <ProfileMatches profile={profile} />
-              )}
+              {matchesFor === profile._id && <ProfileMatches profile={profile} />}
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Dialog
-        open={editing !== null}
-        onOpenChange={open => !open && setEditing(null)}
-      >
+      <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-w-md gap-0 p-0">
           {editing && (
             <ProfileForm

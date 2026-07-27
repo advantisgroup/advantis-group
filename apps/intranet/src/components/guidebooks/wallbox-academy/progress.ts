@@ -15,7 +15,7 @@ export function today(): string {
 /** Most recent attempt's score for a quiz chapter (falls back to the live one). */
 export function lastQuizResult(
   state: ChapterProgress | undefined,
-  quizLength: number
+  quizLength: number,
 ): { correct: number; total: number } {
   if (!state) return { correct: 0, total: 0 };
   if ((state.total ?? 0) >= quizLength) {
@@ -34,7 +34,7 @@ export function countResearchAnswered(research: Record<string, string>): {
 } {
   let answered = 0;
   let total = 0;
-  RESEARCH_TASKS.forEach(task => {
+  RESEARCH_TASKS.forEach((task) => {
     task.questions.forEach((_, i) => {
       total++;
       if ((research[`${task.id}_${i}`] ?? "").trim()) answered++;
@@ -43,10 +43,7 @@ export function countResearchAnswered(research: Record<string, string>): {
   return { answered, total };
 }
 
-export function isChapterDone(
-  progress: AcademyProgressData,
-  chapter: Chapter
-): boolean {
+export function isChapterDone(progress: AcademyProgressData, chapter: Chapter): boolean {
   if (chapter.sim) {
     return Object.keys(progress.calls).length > 0;
   }
@@ -57,18 +54,12 @@ export function isChapterDone(
     return !!progress.chapters[chapter.id]?.visited;
   }
   const state = progress.chapters[chapter.id];
-  return !!(
-    state &&
-    ((state.total ?? 0) >= chapter.quiz.length || state.history?.length)
-  );
+  return !!(state && ((state.total ?? 0) >= chapter.quiz.length || state.history?.length));
 }
 
 export type ChapterStatus = "done" | "started" | "open";
 
-export function chapterStatus(
-  progress: AcademyProgressData,
-  chapter: Chapter
-): ChapterStatus {
+export function chapterStatus(progress: AcademyProgressData, chapter: Chapter): ChapterStatus {
   if (isChapterDone(progress, chapter)) return "done";
   if (chapter.research) {
     const { answered } = countResearchAnswered(progress.research);
@@ -84,29 +75,20 @@ export function chapterStatus(
   return "open";
 }
 
-export function chapterResultLabel(
-  progress: AcademyProgressData,
-  chapter: Chapter
-): string {
+export function chapterResultLabel(progress: AcademyProgressData, chapter: Chapter): string {
   if (chapter.quiz) {
     const state = progress.chapters[chapter.id];
     if (!state) return "–";
     const { correct, total } = lastQuizResult(state, chapter.quiz.length);
     const attempts = state.attempts ?? 1;
-    const base = total
-      ? `${correct}/${chapter.quiz.length} richtig`
-      : `0/${chapter.quiz.length}`;
-    const attemptsSuffix =
-      attempts > 1 || state.history?.length ? ` · Versuch ${attempts}` : "";
+    const base = total ? `${correct}/${chapter.quiz.length} richtig` : `0/${chapter.quiz.length}`;
+    const attemptsSuffix = attempts > 1 || state.history?.length ? ` · Versuch ${attempts}` : "";
     return base + attemptsSuffix;
   }
   if (chapter.sim) {
     const n = Object.keys(progress.calls).length;
     if (!n) return "–";
-    const attempts = Object.values(progress.calls).reduce(
-      (sum, d) => sum + (d.attempts ?? 1),
-      0
-    );
+    const attempts = Object.values(progress.calls).reduce((sum, d) => sum + (d.attempts ?? 1), 0);
     return `${n}/${SCENARIOS.length} Szenarien · ${attempts} Versuch${attempts === 1 ? "" : "e"}`;
   }
   if (chapter.research) {
@@ -122,11 +104,11 @@ export function totalQuizScore(progress: AcademyProgressData): {
 } {
   let correct = 0;
   let total = 0;
-  CHAPTERS.forEach(chapter => {
+  CHAPTERS.forEach((chapter) => {
     if (!chapter.quiz) return;
     const { correct: c, total: t } = lastQuizResult(
       progress.chapters[chapter.id],
-      chapter.quiz.length
+      chapter.quiz.length,
     );
     correct += c;
     total += t;
@@ -140,22 +122,14 @@ interface SegmentStat {
   max: number;
 }
 
-export function segmentStats(
-  progress: AcademyProgressData
-): Record<SegmentKey, SegmentStat> {
+export function segmentStats(progress: AcademyProgressData): Record<SegmentKey, SegmentStat> {
   const out = Object.fromEntries(
-    (Object.keys(SEG) as SegmentKey[]).map(key => [
-      key,
-      { correct: 0, total: 0, max: 0 },
-    ])
+    (Object.keys(SEG) as SegmentKey[]).map((key) => [key, { correct: 0, total: 0, max: 0 }]),
   ) as Record<SegmentKey, SegmentStat>;
 
-  CHAPTERS.forEach(chapter => {
+  CHAPTERS.forEach((chapter) => {
     if (!chapter.quiz) return;
-    const { correct, total } = lastQuizResult(
-      progress.chapters[chapter.id],
-      chapter.quiz.length
-    );
+    const { correct, total } = lastQuizResult(progress.chapters[chapter.id], chapter.quiz.length);
     out[chapter.segment].correct += correct;
     out[chapter.segment].total += total;
     out[chapter.segment].max += chapter.quiz.length;
@@ -163,7 +137,7 @@ export function segmentStats(
 
   const callsMax = SCENARIOS.reduce((sum, s) => sum + s.steps.length * 2, 0);
   out.calls.max += callsMax;
-  SCENARIOS.forEach(scenario => {
+  SCENARIOS.forEach((scenario) => {
     const attempt: CallAttempt | undefined = progress.calls[scenario.id];
     if (attempt) {
       out.calls.correct += attempt.score;
@@ -181,13 +155,11 @@ export interface Recommendation {
 }
 
 /** Mirrors the original tool's per-participant "what still needs work" list. */
-export function recommendations(
-  progress: AcademyProgressData
-): Recommendation[] {
+export function recommendations(progress: AcademyProgressData): Recommendation[] {
   const stats = segmentStats(progress);
   const out: Recommendation[] = [];
 
-  (Object.keys(stats) as SegmentKey[]).forEach(key => {
+  (Object.keys(stats) as SegmentKey[]).forEach((key) => {
     const s = stats[key];
     if (!s.max) return;
     if (s.total === 0) {
@@ -229,9 +201,7 @@ export function recommendations(
   return out;
 }
 
-export function parseProgress(
-  raw: string | null | undefined
-): AcademyProgressData {
+export function parseProgress(raw: string | null | undefined): AcademyProgressData {
   if (!raw) return structuredClone(EMPTY_PROGRESS);
   try {
     const parsed = JSON.parse(raw) as Partial<AcademyProgressData>;

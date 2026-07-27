@@ -43,11 +43,7 @@ interface ParagraphRecord {
 
 /** pdf.js's own text-layer recipe: combine the viewport transform with the
  * item's transform to get its on-screen rect. */
-function itemRect(
-  item: PdfTextItem,
-  util: PdfjsUtil,
-  viewportTransform: number[]
-): Rect {
+function itemRect(item: PdfTextItem, util: PdfjsUtil, viewportTransform: number[]): Rect {
   const tx = util.transform(viewportTransform, item.transform);
   const fontHeight = Math.hypot(tx[2], tx[3]);
   const scaleX = Math.hypot(tx[0], tx[1]) || 1;
@@ -60,28 +56,27 @@ function itemRect(
 }
 
 function unionRect(rects: Rect[]): Rect {
-  const left = Math.min(...rects.map(r => r.left));
-  const top = Math.min(...rects.map(r => r.top));
-  const right = Math.max(...rects.map(r => r.left + r.width));
-  const bottom = Math.max(...rects.map(r => r.top + r.height));
+  const left = Math.min(...rects.map((r) => r.left));
+  const top = Math.min(...rects.map((r) => r.top));
+  const right = Math.max(...rects.map((r) => r.left + r.width));
+  const bottom = Math.max(...rects.map((r) => r.top + r.height));
   return { left, top, width: right - left, height: bottom - top };
 }
 
 function buildLines(
   items: PdfTextItem[],
   util: PdfjsUtil,
-  viewportTransform: number[]
+  viewportTransform: number[],
 ): LineRecord[] {
   const withRects = items
-    .filter(item => item.str.trim().length > 0)
-    .map(item => ({ item, rect: itemRect(item, util, viewportTransform) }));
+    .filter((item) => item.str.trim().length > 0)
+    .map((item) => ({ item, rect: itemRect(item, util, viewportTransform) }));
 
   const lines: { items: PdfTextItem[]; rects: Rect[] }[] = [];
   for (const { item, rect } of withRects) {
     const last = lines[lines.length - 1];
     const lastRect = last?.rects[last.rects.length - 1];
-    const sameLine =
-      lastRect && Math.abs(lastRect.top - rect.top) < rect.height * 0.5;
+    const sameLine = lastRect && Math.abs(lastRect.top - rect.top) < rect.height * 0.5;
     if (sameLine && last) {
       last.items.push(item);
       last.rects.push(rect);
@@ -90,7 +85,7 @@ function buildLines(
     }
   }
 
-  return lines.map(line => {
+  return lines.map((line) => {
     let text = "";
     const itemOffsets: number[] = [];
     for (const item of line.items) {
@@ -111,9 +106,7 @@ function buildParagraphs(lines: LineRecord[]): ParagraphRecord[] {
   for (const line of lines) {
     const last = paragraphs[paragraphs.length - 1];
     const lastLine = last?.[last.length - 1];
-    const gap = lastLine
-      ? line.rect.top - (lastLine.rect.top + lastLine.rect.height)
-      : 0;
+    const gap = lastLine ? line.rect.top - (lastLine.rect.top + lastLine.rect.height) : 0;
     const sameParagraph = lastLine && gap < lastLine.rect.height * 0.6;
     if (sameParagraph && last) {
       last.push(line);
@@ -121,10 +114,10 @@ function buildParagraphs(lines: LineRecord[]): ParagraphRecord[] {
       paragraphs.push([line]);
     }
   }
-  return paragraphs.map(group => ({
+  return paragraphs.map((group) => ({
     lines: group,
-    rect: unionRect(group.map(l => l.rect)),
-    text: group.map(l => l.text).join(" "),
+    rect: unionRect(group.map((l) => l.rect)),
+    text: group.map((l) => l.text).join(" "),
   }));
 }
 
@@ -132,7 +125,7 @@ function lineOffsetAtX(
   line: LineRecord,
   x: number,
   util: PdfjsUtil,
-  viewportTransform: number[]
+  viewportTransform: number[],
 ): number {
   for (let i = 0; i < line.items.length; i++) {
     const item = line.items[i];
@@ -170,7 +163,7 @@ export function PdfTextLayer({
 
   const lines = useMemo(
     () => buildLines(textContent.items, util, viewport.transform),
-    [textContent, util, viewport.transform]
+    [textContent, util, viewport.transform],
   );
   const paragraphs = useMemo(() => buildParagraphs(lines), [lines]);
 
@@ -182,35 +175,31 @@ export function PdfTextLayer({
   function lineAt(x: number, y: number): LineRecord | null {
     return (
       lines.find(
-        l =>
+        (l) =>
           x >= l.rect.left &&
           x <= l.rect.left + l.rect.width &&
           y >= l.rect.top &&
-          y <= l.rect.top + l.rect.height
+          y <= l.rect.top + l.rect.height,
       ) ?? null
     );
   }
 
   function paragraphContaining(line: LineRecord): ParagraphRecord | null {
-    return paragraphs.find(p => p.lines.includes(line)) ?? null;
+    return paragraphs.find((p) => p.lines.includes(line)) ?? null;
   }
 
   function handlePointerMove(e: React.PointerEvent) {
     const { x, y } = localPoint(e);
     if (dragStart.current) {
-      const moved = Math.hypot(
-        x - dragStart.current.x,
-        y - dragStart.current.y
-      );
+      const moved = Math.hypot(x - dragStart.current.x, y - dragStart.current.y);
       if (moved > 3) isDragging.current = true;
       if (isDragging.current) {
         const top = Math.min(dragStart.current.y, y);
         const bottom = Math.max(dragStart.current.y, y);
         const spanned = lines.filter(
-          l => l.rect.top + l.rect.height >= top && l.rect.top <= bottom
+          (l) => l.rect.top + l.rect.height >= top && l.rect.top <= bottom,
         );
-        if (spanned.length > 0)
-          setDragRect(unionRect(spanned.map(l => l.rect)));
+        if (spanned.length > 0) setDragRect(unionRect(spanned.map((l) => l.rect)));
       }
       return;
     }
@@ -237,7 +226,7 @@ export function PdfTextLayer({
     const top = Math.min(start.y, y);
     const bottom = Math.max(start.y, y);
     const spanned = lines
-      .filter(l => l.rect.top + l.rect.height >= top && l.rect.top <= bottom)
+      .filter((l) => l.rect.top + l.rect.height >= top && l.rect.top <= bottom)
       .sort((a, b) => a.rect.top - b.rect.top);
     if (spanned.length === 0) return;
 
@@ -245,18 +234,8 @@ export function PdfTextLayer({
     const toX = start.y <= y ? x : start.x;
     const parts = spanned.map((line, i) => {
       if (spanned.length === 1) {
-        const from = lineOffsetAtX(
-          line,
-          Math.min(fromX, toX),
-          util,
-          viewport.transform
-        );
-        const to = lineOffsetAtX(
-          line,
-          Math.max(fromX, toX),
-          util,
-          viewport.transform
-        );
+        const from = lineOffsetAtX(line, Math.min(fromX, toX), util, viewport.transform);
+        const to = lineOffsetAtX(line, Math.max(fromX, toX), util, viewport.transform);
         return line.text.slice(Math.min(from, to), Math.max(from, to));
       }
       if (i === 0) {

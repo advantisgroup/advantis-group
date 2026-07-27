@@ -28,7 +28,5 @@ export function logClockodoWebhookDelivery(args: {
       tokenLength: args.token?.length,
       resourceId: args.resourceId,
     })
-    .catch(err =>
-      console.error(`[${args.endpoint}] failed to log webhook delivery:`, err)
-    );
+    .catch((err) => console.error(`[${args.endpoint}] failed to log webhook delivery:`, err));
 }

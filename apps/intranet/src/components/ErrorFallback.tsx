@@ -36,7 +36,7 @@ export function ErrorFallback({
       className={cn(
         "flex items-center justify-center p-6",
         fullScreen ? "min-h-screen" : "min-h-[50vh]",
-        className
+        className,
       )}
     >
       <div className="flex max-w-sm flex-col items-center gap-4 text-center">
@@ -44,12 +44,8 @@ export function ErrorFallback({
           <AlertTriangle className="h-6 w-6" />
         </span>
         <div className="space-y-1">
-          <h2 className="text-lg font-semibold">
-            {title ?? t("boundaryTitle")}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {description ?? t("boundaryDescription")}
-          </p>
+          <h2 className="text-lg font-semibold">{title ?? t("boundaryTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{description ?? t("boundaryDescription")}</p>
         </div>
         {onRetry && (
           <Button onClick={onRetry} variant="outline">

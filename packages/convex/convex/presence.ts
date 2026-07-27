@@ -8,11 +8,11 @@ import { requireUser } from "./lib/auth";
  */
 export const heartbeat = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("presence")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const now = Date.now();
     if (existing) {

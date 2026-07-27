@@ -50,7 +50,7 @@ export function HighlightedSentence({
   lang: Lang;
   className?: string;
 }) {
-  const byName = new Map(values.map(v => [v.name, v]));
+  const byName = new Map(values.map((v) => [v.name, v]));
   const parts = template.split(/(\{\w+\})/g);
 
   return (
@@ -63,12 +63,7 @@ export function HighlightedSentence({
         if (!v) return <span key={i}>{part}</span>;
 
         return (
-          <span
-            key={i}
-            className={
-              v.tone ? `font-semibold ${TONE_CLASS[v.tone]}` : undefined
-            }
-          >
+          <span key={i} className={v.tone ? `font-semibold ${TONE_CLASS[v.tone]}` : undefined}>
             {formatValue(v, lang)}
           </span>
         );

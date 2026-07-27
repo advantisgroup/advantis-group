@@ -14,8 +14,7 @@ const serverKey = () => getConvexServerKey();
 
 const ALLOWED_EXTENSIONS = [".xlsx", ".xlsm", ".csv"];
 
-const XLSX_MIME =
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 // Matches performanceImport.ts's aggregated-template HEADER_ALIASES —
 // these exact labels round-trip cleanly back through that parser.
@@ -59,17 +58,9 @@ const EXPORT_HEADER = [
   "Unqualified Reasons",
 ];
 
-function xlsxResponse(
-  aoa: unknown[][],
-  sheetName: string,
-  filename: string
-): Response {
+function xlsxResponse(aoa: unknown[][], sheetName: string, filename: string): Response {
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(
-    workbook,
-    XLSX.utils.aoa_to_sheet(aoa),
-    sheetName
-  );
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(aoa), sheetName);
   const buffer = XLSX.write(workbook, {
     type: "buffer",
     bookType: "xlsx",
@@ -104,11 +95,9 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       const force = body.force === "true";
       const batchId = body.batchId;
       const lowerName = file.name.toLowerCase();
-      const extension = ALLOWED_EXTENSIONS.find(ext => lowerName.endsWith(ext));
+      const extension = ALLOWED_EXTENSIONS.find((ext) => lowerName.endsWith(ext));
       if (!extension) {
-        throw Errors.badRequest(
-          "Bitte eine .xlsx-, .xlsm- oder .csv-Datei auswählen."
-        );
+        throw Errors.badRequest("Bitte eine .xlsx-, .xlsm- oder .csv-Datei auswählen.");
       }
 
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -118,10 +107,8 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
         declaredMime: file.type,
       });
       if (report.verdict === "blocked") {
-        const reason = report.flags.find(f => f.severity === "danger");
-        throw Errors.badRequest(
-          reason?.detail ?? "Dieser Dateityp ist nicht zulässig."
-        );
+        const reason = report.flags.find((f) => f.severity === "danger");
+        throw Errors.badRequest(reason?.detail ?? "Dieser Dateityp ist nicht zulässig.");
       }
 
       // Content hash, not filename — catches a re-upload of the same
@@ -132,10 +119,11 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       const contentHash = Buffer.from(digest).toString("hex");
 
       if (!force) {
-        const priorUpload = await getConvex().query(
-          api.performanceImport.apiFindUploadByHash,
-          { serverKey: serverKey(), companyId: admin.companyId, contentHash }
-        );
+        const priorUpload = await getConvex().query(api.performanceImport.apiFindUploadByHash, {
+          serverKey: serverKey(),
+          companyId: admin.companyId,
+          contentHash,
+        });
         if (priorUpload) {
           return {
             status: "duplicate" as const,
@@ -145,12 +133,9 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
         }
       }
 
-      const uploadUrl = await getConvex().mutation(
-        api.performanceImport.apiGenerateUploadUrl,
-        {
-          serverKey: serverKey(),
-        }
-      );
+      const uploadUrl = await getConvex().mutation(api.performanceImport.apiGenerateUploadUrl, {
+        serverKey: serverKey(),
+      });
       const staged = await fetch(uploadUrl, {
         method: "POST",
         headers: { "content-type": file.type || "application/octet-stream" },
@@ -170,20 +155,17 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       // if shipped as a single argument. This route only stages the file
       // and hands off its storageId.
       try {
-        const result = await getConvex().action(
-          api.performanceUploadParse.apiImportReport,
-          {
-            serverKey: serverKey(),
-            companyId: admin.companyId,
-            filename: file.name,
-            storageId,
-            contentHash,
-            force,
-            fileSize: bytes.length,
-            batchId,
-            uploadedBy: admin.name || admin.email,
-          }
-        );
+        const result = await getConvex().action(api.performanceUploadParse.apiImportReport, {
+          serverKey: serverKey(),
+          companyId: admin.companyId,
+          filename: file.name,
+          storageId,
+          contentHash,
+          force,
+          fileSize: bytes.length,
+          batchId,
+          uploadedBy: admin.name || admin.email,
+        });
 
         if (result.status === "empty" || result.status === "duplicate") {
           // "empty": no activity that day (e.g. a weekend). "duplicate": a
@@ -206,18 +188,14 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
         force: t.Optional(t.String()),
         batchId: t.Optional(t.String()),
       }),
-    }
+    },
   )
 
   // Blank upload template with the aggregated-format's recognized headers
   // — no Convex round-trip, the headers are static.
   .get("/template", async ({ request }) => {
     await requirePerformanceAdmin(request);
-    return xlsxResponse(
-      [TEMPLATE_HEADER],
-      "Vorlage",
-      "performance-vorlage.xlsx"
-    );
+    return xlsxResponse([TEMPLATE_HEADER], "Vorlage", "performance-vorlage.xlsx");
   })
 
   // Per-employee KPI export for one month (port of the reference script's
@@ -226,17 +204,14 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
     "/export",
     async ({ request, query }) => {
       const admin = await requirePerformanceAdmin(request);
-      const rows = await getConvex().query(
-        api.performanceExport.apiExportTeam,
-        {
-          serverKey: serverKey(),
-          companyId: admin.companyId,
-          ym: query.ym,
-        }
-      );
+      const rows = await getConvex().query(api.performanceExport.apiExportTeam, {
+        serverKey: serverKey(),
+        companyId: admin.companyId,
+        ym: query.ym,
+      });
       const aoa = [
         EXPORT_HEADER,
-        ...rows.map(r => [
+        ...rows.map((r) => [
           r.name,
           r.leadsCreated,
           r.workableCreated,
@@ -259,5 +234,5 @@ export const performanceRoute = new Elysia({ prefix: "/performance" })
       ];
       return xlsxResponse(aoa, "Report", `performance-${query.ym}.xlsx`);
     },
-    { query: t.Object({ ym: t.String({ pattern: "^\\d{4}-\\d{2}$" }) }) }
+    { query: t.Object({ ym: t.String({ pattern: "^\\d{4}-\\d{2}$" }) }) },
   );

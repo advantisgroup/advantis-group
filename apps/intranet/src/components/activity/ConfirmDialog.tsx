@@ -26,31 +26,20 @@ interface Props {
  * `open`/`onConfirm`/`onCancel` props are kept so existing call sites are
  * unchanged.
  */
-export function ConfirmDialog({
-  open,
-  heading,
-  body,
-  confirmLabel,
-  onConfirm,
-  onCancel,
-}: Props) {
+export function ConfirmDialog({ open, heading, body, confirmLabel, onConfirm, onCancel }: Props) {
   const { t } = useI18n();
 
   return (
     <Dialog
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         if (!o) onCancel();
       }}
     >
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="px-6 pb-5 pt-6 pr-12">
           <DialogTitle className="leading-snug">{heading}</DialogTitle>
-          {body && (
-            <DialogDescription className="mt-2 leading-relaxed">
-              {body}
-            </DialogDescription>
-          )}
+          {body && <DialogDescription className="mt-2 leading-relaxed">{body}</DialogDescription>}
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button variant="ghost" onClick={onCancel}>

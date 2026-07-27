@@ -28,7 +28,7 @@ export function GreetingHeader() {
         day: "numeric",
         month: "long",
       }),
-    [locale]
+    [locale],
   );
 
   // Picked once per mount (a full page load), not re-rolled on every render.
@@ -37,24 +37,20 @@ export function GreetingHeader() {
   const nextAbsence = useMemo(
     () =>
       (myAbsences ?? [])
-        .filter(a => a.status === "approved" && a.endDate >= today)
+        .filter((a) => a.status === "approved" && a.endDate >= today)
         .sort((a, b) => a.startDate.localeCompare(b.startDate))[0],
-    [myAbsences, today]
+    [myAbsences, today],
   );
 
   const name = user.firstName ?? user.name;
 
   return (
     <div>
-      <p className="text-sm font-medium capitalize text-muted-foreground">
-        {todayLabel}
-      </p>
+      <p className="text-sm font-medium capitalize text-muted-foreground">{todayLabel}</p>
       <h1 className="mt-1 font-display text-3xl font-bold tracking-tight">
         {t(greeting.titleKey, { name })}
       </h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {t(greeting.subtitleKey, { name })}
-      </p>
+      <p className="mt-1 text-sm text-muted-foreground">{t(greeting.subtitleKey, { name })}</p>
       {nextAbsence && (
         <Link
           href="/absences"

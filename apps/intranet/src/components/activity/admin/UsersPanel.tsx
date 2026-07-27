@@ -5,13 +5,7 @@ import Link from "next/link";
 import { Users2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useI18n } from "@/lib/activity/i18n";
 
 /**
@@ -30,9 +24,7 @@ export function UsersPanel() {
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
             <Users2 className="h-4 w-4" />
           </span>
-          <CardTitle className="text-base">
-            {t("settings.users.heading")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("settings.users.heading")}</CardTitle>
         </div>
         <CardDescription>{t("settings.users.body")}</CardDescription>
       </CardHeader>

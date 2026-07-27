@@ -41,7 +41,7 @@ export function SettingsMenu({ className }: { className?: string }) {
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
-    () => false
+    () => false,
   );
 
   function choose(locale: Locale) {
@@ -55,12 +55,7 @@ export function SettingsMenu({ className }: { className?: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t("preferences")}
-          className={className}
-        >
+        <Button variant="ghost" size="icon" aria-label={t("preferences")} className={className}>
           <SlidersHorizontal className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
@@ -69,7 +64,7 @@ export function SettingsMenu({ className }: { className?: string }) {
           {t("language")}
         </p>
         <div className="grid grid-cols-2 gap-2">
-          {locales.map(locale => (
+          {locales.map((locale) => (
             <button
               key={locale}
               type="button"
@@ -79,7 +74,7 @@ export function SettingsMenu({ className }: { className?: string }) {
                 "flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60",
                 locale === current
                   ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               <LocaleFlag locale={locale} />
@@ -113,7 +108,7 @@ export function SettingsMenu({ className }: { className?: string }) {
                   "flex h-10 items-center justify-center rounded-lg border transition-colors",
                   active
                     ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                    : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
                 <Icon className="h-4 w-4" />

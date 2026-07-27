@@ -19,7 +19,7 @@ import {
 
 async function getEmployeeOrThrow(
   ctx: MutationCtx,
-  employeeId: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees">,
 ): Promise<Doc<"performanceEmployees">> {
   const employee = await ctx.db.get(employeeId);
   if (!employee) {
@@ -35,13 +35,13 @@ const TOPIC_STATUSES = ["offen", "erreicht", "nicht_erreicht"] as const;
 const statusValidator = v.union(
   v.literal("offen"),
   v.literal("erreicht"),
-  v.literal("nicht_erreicht")
+  v.literal("nicht_erreicht"),
 );
 
 async function getOwnTopic(
   ctx: MutationCtx,
   id: Id<"performanceTopics">,
-  employeeId: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees">,
 ): Promise<Doc<"performanceTopics">> {
   const topic = await ctx.db.get(id);
   if (!topic || topic.employeeId !== employeeId) {
@@ -76,10 +76,7 @@ export const saveTopic = mutation({
     }
     const todo = args.todo?.trim() || undefined;
     const endDate = args.endDate?.trim() || undefined;
-    const status =
-      args.status && TOPIC_STATUSES.includes(args.status)
-        ? args.status
-        : "offen";
+    const status = args.status && TOPIC_STATUSES.includes(args.status) ? args.status : "offen";
     const now = Date.now();
 
     if (args.id) {
@@ -133,10 +130,7 @@ export const setTopicStatus = mutation({
     id: v.id("performanceTopics"),
     status: statusValidator,
   },
-  handler: async (
-    ctx,
-    { token, employeeId, id, status }
-  ): Promise<{ ok: true }> => {
+  handler: async (ctx, { token, employeeId, id, status }): Promise<{ ok: true }> => {
     const login = await requireLogin(ctx, token);
     const employee = await getEmployeeOrThrow(ctx, employeeId);
     await requireCanView(ctx, login, employee);

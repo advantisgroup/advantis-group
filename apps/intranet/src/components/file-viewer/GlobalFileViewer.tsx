@@ -18,17 +18,8 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { downloadWithProgress } from "@/lib/download";
 import { formatDateTime } from "@/lib/format";
 import { formatFileSize } from "@/lib/upload";
@@ -66,8 +57,8 @@ function CodeOrTextPreview({
   useEffect(() => {
     let cancelled = false;
     void fetch(url)
-      .then(res => res.text())
-      .then(async raw => {
+      .then((res) => res.text())
+      .then(async (raw) => {
         if (cancelled) return;
         if (kind.kind === "text") {
           setText(raw);
@@ -111,15 +102,7 @@ function CodeOrTextPreview({
 }
 
 /** A single label/value line in the metadata popout, truncating long values with a title tooltip. */
-function MetadataRow({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: string;
-  href?: string;
-}) {
+function MetadataRow({ label, value, href }: { label: string; value: string; href?: string }) {
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
@@ -182,7 +165,7 @@ async function readExif(url: string): Promise<ExifSummary | null> {
         translateValues: true,
         reviveValues: true,
         mergeOutput: true,
-      })
+      }),
     )
     .catch(() => null);
   if (!rawTags) return null;
@@ -197,24 +180,18 @@ async function readExif(url: string): Promise<ExifSummary | null> {
   const summary: ExifSummary = {
     camera: camera || undefined,
     lens: typeof tags.LensModel === "string" ? tags.LensModel : undefined,
-    aperture:
-      typeof tags.FNumber === "number" ? `f/${tags.FNumber}` : undefined,
+    aperture: typeof tags.FNumber === "number" ? `f/${tags.FNumber}` : undefined,
     shutterSpeed:
-      typeof tags.ExposureTime === "number"
-        ? formatShutterSpeed(tags.ExposureTime)
-        : undefined,
+      typeof tags.ExposureTime === "number" ? formatShutterSpeed(tags.ExposureTime) : undefined,
     iso: typeof tags.ISO === "number" ? `ISO ${tags.ISO}` : undefined,
     focalLength:
-      typeof tags.FocalLength === "number"
-        ? `${Math.round(tags.FocalLength)}mm`
-        : undefined,
-    dateTaken:
-      tags.DateTimeOriginal instanceof Date ? tags.DateTimeOriginal : undefined,
+      typeof tags.FocalLength === "number" ? `${Math.round(tags.FocalLength)}mm` : undefined,
+    dateTaken: tags.DateTimeOriginal instanceof Date ? tags.DateTimeOriginal : undefined,
     latitude: typeof tags.latitude === "number" ? tags.latitude : undefined,
     longitude: typeof tags.longitude === "number" ? tags.longitude : undefined,
   };
 
-  const hasAnyField = Object.values(summary).some(v => v !== undefined);
+  const hasAnyField = Object.values(summary).some((v) => v !== undefined);
   return hasAnyField ? summary : null;
 }
 
@@ -236,9 +213,7 @@ function ArchiveDownloadConfirm({
           <DialogTitle className="leading-snug">
             {t("archiveTitle", { name: file.name })}
           </DialogTitle>
-          <DialogDescription className="mt-2 leading-relaxed">
-            {t("archiveDesc")}
-          </DialogDescription>
+          <DialogDescription className="mt-2 leading-relaxed">{t("archiveDesc")}</DialogDescription>
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -284,15 +259,10 @@ function FileViewerContent({
   } | null>(null);
 
   const dimensions =
-    naturalSize ??
-    (file.width && file.height
-      ? { width: file.width, height: file.height }
-      : null);
+    naturalSize ?? (file.width && file.height ? { width: file.width, height: file.height } : null);
 
   const [exif, setExif] = useState<ExifSummary | null>(null);
-  const [exifStatus, setExifStatus] = useState<"idle" | "loading" | "done">(
-    "idle"
-  );
+  const [exifStatus, setExifStatus] = useState<"idle" | "loading" | "done">("idle");
 
   // Deliberately excludes exifStatus from the deps below: this effect sets
   // it, so depending on it would re-trigger the effect (and cancel its own
@@ -303,7 +273,7 @@ function FileViewerContent({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setExifStatus("loading");
     void readExif(url)
-      .then(summary => {
+      .then((summary) => {
         if (cancelled) return;
         setExif(summary);
       })
@@ -341,24 +311,17 @@ function FileViewerContent({
         if (!url) return;
         const contentType = kind.kind === "image" ? "image" : "file";
         const publicUrl = `${process.env.NEXT_PUBLIC_MARKETING_URL}/content/${contentType}/${file.storageId}`;
-        void navigator.clipboard
-          .writeText(publicUrl)
-          .then(() => toast.success(t("linkCopied")));
+        void navigator.clipboard.writeText(publicUrl).then(() => toast.success(t("linkCopied")));
       },
     },
   ];
 
   return (
-    <div
-      className="flex h-full w-full flex-col"
-      onClick={e => e.stopPropagation()}
-    >
+    <div className="flex h-full w-full flex-col" onClick={(e) => e.stopPropagation()}>
       <TooltipProvider delayDuration={300}>
         <div className="flex shrink-0 items-center gap-1 px-4 py-3 text-white sm:px-6">
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">
-            {file.name}
-          </span>
-          {actions.map(action => (
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{file.name}</span>
+          {actions.map((action) => (
             <Tooltip key={action.key}>
               <TooltipTrigger asChild>
                 <Button
@@ -369,7 +332,7 @@ function FileViewerContent({
                   onClick={action.onSelect}
                   className={cn(
                     "shrink-0 text-white hover:bg-white/10 hover:text-white",
-                    action.active && "bg-white/10"
+                    action.active && "bg-white/10",
                   )}
                 >
                   {action.icon}
@@ -387,26 +350,18 @@ function FileViewerContent({
                 aria-pressed={metadataOpen}
                 className={cn(
                   "shrink-0 text-white hover:bg-white/10 hover:text-white",
-                  metadataOpen && "bg-white/10"
+                  metadataOpen && "bg-white/10",
                 )}
               >
                 <Info className="size-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              className="z-[110] w-80 text-foreground"
-            >
+            <PopoverContent align="end" className="z-[110] w-80 text-foreground">
               <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
                 <MetadataRow label={t("name")} value={file.name} />
-                {file.contentType && (
-                  <MetadataRow label={t("type")} value={file.contentType} />
-                )}
+                {file.contentType && <MetadataRow label={t("type")} value={file.contentType} />}
                 {typeof file.size === "number" && (
-                  <MetadataRow
-                    label={t("size")}
-                    value={formatFileSize(file.size)}
-                  />
+                  <MetadataRow label={t("size")} value={formatFileSize(file.size)} />
                 )}
                 {dimensions && (
                   <MetadataRow
@@ -435,47 +390,29 @@ function FileViewerContent({
                     {t("camera")}
                   </p>
                   <dl className="mt-1.5 grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
-                    {exif.camera && (
-                      <MetadataRow label={t("camera")} value={exif.camera} />
-                    )}
-                    {exif.lens && (
-                      <MetadataRow label={t("lens")} value={exif.lens} />
-                    )}
+                    {exif.camera && <MetadataRow label={t("camera")} value={exif.camera} />}
+                    {exif.lens && <MetadataRow label={t("lens")} value={exif.lens} />}
                     {exif.dateTaken && (
                       <MetadataRow
                         label={t("dateTaken")}
                         value={formatDateTime(exif.dateTaken.getTime(), locale)}
                       />
                     )}
-                    {exif.aperture && (
-                      <MetadataRow
-                        label={t("aperture")}
-                        value={exif.aperture}
-                      />
-                    )}
+                    {exif.aperture && <MetadataRow label={t("aperture")} value={exif.aperture} />}
                     {exif.shutterSpeed && (
-                      <MetadataRow
-                        label={t("shutterSpeed")}
-                        value={exif.shutterSpeed}
-                      />
+                      <MetadataRow label={t("shutterSpeed")} value={exif.shutterSpeed} />
                     )}
-                    {exif.iso && (
-                      <MetadataRow label={t("iso")} value={exif.iso} />
-                    )}
+                    {exif.iso && <MetadataRow label={t("iso")} value={exif.iso} />}
                     {exif.focalLength && (
+                      <MetadataRow label={t("focalLength")} value={exif.focalLength} />
+                    )}
+                    {typeof exif.latitude === "number" && typeof exif.longitude === "number" && (
                       <MetadataRow
-                        label={t("focalLength")}
-                        value={exif.focalLength}
+                        label={t("location")}
+                        value={`${exif.latitude.toFixed(5)}, ${exif.longitude.toFixed(5)}`}
+                        href={`https://www.google.com/maps?q=${exif.latitude},${exif.longitude}`}
                       />
                     )}
-                    {typeof exif.latitude === "number" &&
-                      typeof exif.longitude === "number" && (
-                        <MetadataRow
-                          label={t("location")}
-                          value={`${exif.latitude.toFixed(5)}, ${exif.longitude.toFixed(5)}`}
-                          href={`https://www.google.com/maps?q=${exif.latitude},${exif.longitude}`}
-                        />
-                      )}
                   </dl>
                 </>
               )}
@@ -505,7 +442,7 @@ function FileViewerContent({
           <img
             src={url}
             alt={file.name}
-            onLoad={e =>
+            onLoad={(e) =>
               setNaturalSize({
                 width: e.currentTarget.naturalWidth,
                 height: e.currentTarget.naturalHeight,
@@ -516,11 +453,7 @@ function FileViewerContent({
         ) : kind.kind === "pdf" ? (
           <PdfPreview url={url} />
         ) : kind.kind === "code" || kind.kind === "text" ? (
-          <CodeOrTextPreview
-            url={url}
-            kind={kind}
-            noPreviewLabel={t("noPreview")}
-          />
+          <CodeOrTextPreview url={url} kind={kind} noPreviewLabel={t("noPreview")} />
         ) : (
           <div className="flex flex-col items-center gap-3 text-white/80">
             <FileQuestion className="size-10" />
@@ -568,14 +501,11 @@ export function GlobalFileViewer({
     };
   }, [file, onClose]);
 
-  const kind = useMemo(
-    () => (file ? detectFileKind(file.name, file.contentType) : null),
-    [file]
-  );
+  const kind = useMemo(() => (file ? detectFileKind(file.name, file.contentType) : null), [file]);
 
   const resolvedUrl = useQuery(
     api.files.getUrl,
-    file && !file.url ? { storageId: file.storageId as Id<"_storage"> } : "skip"
+    file && !file.url ? { storageId: file.storageId as Id<"_storage"> } : "skip",
   );
   const url = file?.url ?? resolvedUrl ?? undefined;
 
@@ -586,7 +516,7 @@ export function GlobalFileViewer({
       <ArchiveDownloadConfirm
         file={file}
         url={url}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           if (!open) onClose();
         }}
       />
@@ -598,14 +528,8 @@ export function GlobalFileViewer({
       className="fixed inset-0 z-[100] flex flex-col bg-black/80 backdrop-blur-xl"
       onClick={onClose}
     >
-      <FileViewerContent
-        key={file.storageId}
-        file={file}
-        url={url}
-        kind={kind}
-        onClose={onClose}
-      />
+      <FileViewerContent key={file.storageId} file={file} url={url} kind={kind} onClose={onClose} />
     </div>,
-    document.body
+    document.body,
   );
 }

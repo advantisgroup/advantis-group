@@ -25,10 +25,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import {
-  fmtDuration,
-  MAX_PLAUSIBLE_DAY_SECONDS,
-} from "./performance/lib/callImport";
+import { fmtDuration, MAX_PLAUSIBLE_DAY_SECONDS } from "./performance/lib/callImport";
 import { monthBounds } from "./performance/lib/kpi";
 import { EXCLUDED_OWNERS } from "./performance/lib/salesforceImport";
 import {
@@ -91,14 +88,7 @@ export const apiDeleteStorage = mutation({
 // added in a later phase).
 
 const HEADER_ALIASES: Record<string, string[]> = {
-  employee: [
-    "mitarbeiter",
-    "employee",
-    "name",
-    "salesrep",
-    "vertriebler",
-    "mitarbeiterin",
-  ],
+  employee: ["mitarbeiter", "employee", "name", "salesrep", "vertriebler", "mitarbeiterin"],
   date: ["datum", "date", "reportdatum", "reportdate", "stichtag"],
   leadsCreated: [
     "leadserstelltmonat",
@@ -145,30 +135,11 @@ const HEADER_ALIASES: Record<string, string[]> = {
     "stagedetailspendingcreditoderpendingdocuments",
   ],
   wonMonth: ["wonmonat", "wonthismonth", "won", "gewonnenmonat"],
-  callsToday: [
-    "callsheute",
-    "callstoday",
-    "anzahlcallstoday",
-    "anzahlcallsheute",
-    "calls",
-  ],
-  overduesAnalysis: [
-    "overduesanalysis",
-    "overdueanalysis",
-    "analysis30",
-    "analysis30tage",
-  ],
-  overduesOpps: [
-    "overduesopportunities",
-    "overdueopportunities",
-    "overduesopps",
-  ],
+  callsToday: ["callsheute", "callstoday", "anzahlcallstoday", "anzahlcallsheute", "calls"],
+  overduesAnalysis: ["overduesanalysis", "overdueanalysis", "analysis30", "analysis30tage"],
+  overduesOpps: ["overduesopportunities", "overdueopportunities", "overduesopps"],
   oppsOver30: ["opportunities30tage", "opps30tage", "opportunity30", "opps30"],
-  leadsNoAction14: [
-    "leadslastactivity2wochen",
-    "leadslastaction2wochen",
-    "leadsinaktiv2wochen",
-  ],
+  leadsNoAction14: ["leadslastactivity2wochen", "leadslastaction2wochen", "leadsinaktiv2wochen"],
   oppsNoAction14: [
     "oppslastactivity2wochen",
     "opportunitieslastactivity2wochen",
@@ -203,19 +174,19 @@ function toIntLoose(v: CellValue): number {
 }
 
 const TEMPLATE_DATE_FORMATS: ((s: string) => Date | null)[] = [
-  s => {
+  (s) => {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
     return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
   },
-  s => {
+  (s) => {
     const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s);
     return m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])) : null;
   },
-  s => {
+  (s) => {
     const m = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(s);
     return m ? new Date(Date.UTC(2000 + +m[3], +m[2] - 1, +m[1])) : null;
   },
-  s => {
+  (s) => {
     const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s);
     return m ? new Date(Date.UTC(+m[3], +m[1] - 1, +m[2])) : null;
   },
@@ -238,9 +209,7 @@ function toDateOrToday(v: CellValue): string {
 /** Reads the first table of an aggregated-template report: one row per
  * employee, already-computed metrics. Throws when the file doesn't look
  * like a usable template at all. */
-export function parseAggregatedTemplate(
-  wsRows: SheetRow[]
-): EmployeeSnapshot[] {
+export function parseAggregatedTemplate(wsRows: SheetRow[]): EmployeeSnapshot[] {
   if (wsRows.length === 0) {
     throw new ConvexError({
       code: "validation",
@@ -249,10 +218,7 @@ export function parseAggregatedTemplate(
   }
   const header = wsRows[0];
   const colmap: Partial<
-    Record<
-      keyof MetricFields | "employee" | "date" | "unqualifiedReasons",
-      number
-    >
+    Record<keyof MetricFields | "employee" | "date" | "unqualifiedReasons", number>
   > = {};
   header.forEach((h, idx) => {
     const field = TEMPLATE_ALIAS_LOOKUP.get(normHeaderSimple(h));
@@ -261,20 +227,17 @@ export function parseAggregatedTemplate(
   if (colmap.employee === undefined) {
     throw new ConvexError({
       code: "validation",
-      message:
-        "Spalte 'Mitarbeiter' wurde nicht gefunden. Bitte die Vorlage verwenden.",
+      message: "Spalte 'Mitarbeiter' wurde nicht gefunden. Bitte die Vorlage verwenden.",
     });
   }
 
   const out: EmployeeSnapshot[] = [];
   for (const r of wsRows.slice(1)) {
-    if (!r || r.every(v => v === null || v === undefined || v === "")) continue;
+    if (!r || r.every((v) => v === null || v === undefined || v === "")) continue;
     const nameRaw = r[colmap.employee];
     if (nameRaw === null || nameRaw === undefined || nameRaw === "") continue;
     const employeeName = String(nameRaw).trim();
-    const reportDate = toDateOrToday(
-      colmap.date !== undefined ? r[colmap.date] : null
-    );
+    const reportDate = toDateOrToday(colmap.date !== undefined ? r[colmap.date] : null);
 
     const fields: SnapshotFields = {};
     for (const key of METRIC_KEYS) {
@@ -284,8 +247,7 @@ export function parseAggregatedTemplate(
     const reasonsIdx = colmap.unqualifiedReasons;
     if (reasonsIdx !== undefined) {
       const v = r[reasonsIdx];
-      fields.unqualifiedReasons =
-        v !== null && v !== undefined && v !== "" ? String(v).trim() : "";
+      fields.unqualifiedReasons = v !== null && v !== undefined && v !== "" ? String(v).trim() : "";
     } else {
       fields.unqualifiedReasons = "";
     }
@@ -312,20 +274,20 @@ type EmployeeCache = Map<string, Id<"performanceEmployees">>;
 
 async function loadEmployeeCache(
   ctx: MutationCtx,
-  companyId: Id<"companies">
+  companyId: Id<"companies">,
 ): Promise<EmployeeCache> {
   const all = await ctx.db
     .query("performanceEmployees")
-    .withIndex("by_company", q => q.eq("companyId", companyId))
+    .withIndex("by_company", (q) => q.eq("companyId", companyId))
     .collect();
-  return new Map(all.map(e => [e.name.toLowerCase(), e._id]));
+  return new Map(all.map((e) => [e.name.toLowerCase(), e._id]));
 }
 
 async function findOrCreateEmployee(
   ctx: MutationCtx,
   companyId: Id<"companies">,
   name: string,
-  cache: EmployeeCache
+  cache: EmployeeCache,
 ): Promise<Id<"performanceEmployees">> {
   const trimmed = name.trim();
   const lower = trimmed.toLowerCase();
@@ -351,14 +313,9 @@ async function upsertSnapshot(
   fields: SnapshotFields,
   sourceFile: string,
   uploadedAt: number,
-  cache: EmployeeCache
+  cache: EmployeeCache,
 ): Promise<void> {
-  const employeeId = await findOrCreateEmployee(
-    ctx,
-    companyId,
-    employeeName,
-    cache
-  );
+  const employeeId = await findOrCreateEmployee(ctx, companyId, employeeName, cache);
   // Convex indexes aren't unique constraints (see the schema comment on
   // by_employee_date), so more than one row can in principle match — e.g. a
   // raced concurrent upload. Merge into the first match and drop any extras
@@ -366,13 +323,13 @@ async function upsertSnapshot(
   // the entire import over a single duplicate row.
   const matches = await ctx.db
     .query("performanceReports")
-    .withIndex("by_employee_date", q =>
-      q.eq("employeeId", employeeId).eq("reportDate", reportDate)
+    .withIndex("by_employee_date", (q) =>
+      q.eq("employeeId", employeeId).eq("reportDate", reportDate),
     )
     .collect();
   const [existing, ...duplicates] = matches;
   if (duplicates.length > 0) {
-    await Promise.all(duplicates.map(d => ctx.db.delete(d._id)));
+    await Promise.all(duplicates.map((d) => ctx.db.delete(d._id)));
   }
   if (existing) {
     // A re-import (fixing a past bug, or an admin re-uploading the same
@@ -381,7 +338,7 @@ async function upsertSnapshot(
     // new data. Skipping a no-op write avoids burning a mutation on
     // every row of every file in a bulk re-import for nothing.
     const unchanged = (Object.keys(fields) as (keyof SnapshotFields)[]).every(
-      key => existing[key] === fields[key]
+      (key) => existing[key] === fields[key],
     );
     if (!unchanged) {
       await ctx.db.patch(existing._id, { ...fields, sourceFile, uploadedAt });
@@ -411,37 +368,33 @@ async function upsertSnapshot(
 async function purgeExcluded(ctx: MutationCtx): Promise<void> {
   if (EXCLUDED_OWNERS.size === 0) return;
   const employees = await ctx.db.query("performanceEmployees").collect();
-  const excluded = employees.filter(e =>
-    EXCLUDED_OWNERS.has(e.name.toLowerCase())
-  );
-  const excludedIds = new Set(excluded.map(e => e._id));
+  const excluded = employees.filter((e) => EXCLUDED_OWNERS.has(e.name.toLowerCase()));
+  const excludedIds = new Set(excluded.map((e) => e._id));
 
   if (excludedIds.size > 0) {
     const reports = await ctx.db.query("performanceReports").collect();
     await Promise.all(
-      reports
-        .filter(r => excludedIds.has(r.employeeId))
-        .map(r => ctx.db.delete(r._id))
+      reports.filter((r) => excludedIds.has(r.employeeId)).map((r) => ctx.db.delete(r._id)),
     );
-    await Promise.all(excluded.map(e => ctx.db.delete(e._id)));
+    await Promise.all(excluded.map((e) => ctx.db.delete(e._id)));
   }
   const rawLeads = await ctx.db.query("performanceRawLeads").collect();
   await Promise.all(
     rawLeads
-      .filter(r => EXCLUDED_OWNERS.has(r.owner.toLowerCase()))
-      .map(r => ctx.db.delete(r._id))
+      .filter((r) => EXCLUDED_OWNERS.has(r.owner.toLowerCase()))
+      .map((r) => ctx.db.delete(r._id)),
   );
   const rawOpps = await ctx.db.query("performanceRawOpps").collect();
   await Promise.all(
     rawOpps
-      .filter(r => EXCLUDED_OWNERS.has(r.owner.toLowerCase()))
-      .map(r => ctx.db.delete(r._id))
+      .filter((r) => EXCLUDED_OWNERS.has(r.owner.toLowerCase()))
+      .map((r) => ctx.db.delete(r._id)),
   );
   const wonOpps = await ctx.db.query("performanceWonOpps").collect();
   await Promise.all(
     wonOpps
-      .filter(r => EXCLUDED_OWNERS.has(r.owner.toLowerCase()))
-      .map(r => ctx.db.delete(r._id))
+      .filter((r) => EXCLUDED_OWNERS.has(r.owner.toLowerCase()))
+      .map((r) => ctx.db.delete(r._id)),
   );
 }
 
@@ -464,17 +417,17 @@ export const purgeExcludedOwners = internalMutation({
  * app's regular read path. */
 export const findImplausibleDurations = internalQuery({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
     const rows = await ctx.db.query("performanceReports").collect();
     return rows
       .filter(
-        r =>
+        (r) =>
           (r.loginSec ?? 0) > MAX_PLAUSIBLE_DAY_SECONDS ||
           (r.talkTotalSec ?? 0) > MAX_PLAUSIBLE_DAY_SECONDS ||
-          (r.talkAvgSec ?? 0) > MAX_PLAUSIBLE_DAY_SECONDS
+          (r.talkAvgSec ?? 0) > MAX_PLAUSIBLE_DAY_SECONDS,
       )
-      .map(r => ({
+      .map((r) => ({
         reportDate: r.reportDate,
         employeeId: r.employeeId,
         sourceFile: r.sourceFile,
@@ -490,11 +443,9 @@ export const getTeamEmployeeNames = internalQuery({
   handler: async (ctx, { companyId }): Promise<string[]> => {
     const employees = await ctx.db
       .query("performanceEmployees")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .collect();
-    return employees
-      .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
-      .map(e => e.name);
+    return employees.filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase())).map((e) => e.name);
   },
 });
 
@@ -505,15 +456,15 @@ export const getTeamEmployeesWithId = internalQuery({
   args: { companyId: v.id("companies") },
   handler: async (
     ctx,
-    { companyId }
+    { companyId },
   ): Promise<{ id: Id<"performanceEmployees">; name: string }[]> => {
     const employees = await ctx.db
       .query("performanceEmployees")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .collect();
     return employees
-      .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
-      .map(e => ({ id: e._id, name: e.name }));
+      .filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
+      .map((e) => ({ id: e._id, name: e.name }));
   },
 });
 
@@ -525,21 +476,18 @@ export const getActiveEmployeeIdsByMonth = internalQuery({
   args: { companyId: v.id("companies"), months: v.array(v.string()) },
   handler: async (
     ctx,
-    { companyId, months }
+    { companyId, months },
   ): Promise<Record<string, Id<"performanceEmployees">[]>> => {
     const out: Record<string, Id<"performanceEmployees">[]> = {};
     for (const ym of months) {
       const { start, end } = monthBounds(ym);
       const rows = await ctx.db
         .query("performanceReports")
-        .withIndex("by_company_reportDate", q =>
-          q
-            .eq("companyId", companyId)
-            .gte("reportDate", start)
-            .lte("reportDate", end)
+        .withIndex("by_company_reportDate", (q) =>
+          q.eq("companyId", companyId).gte("reportDate", start).lte("reportDate", end),
         )
         .collect();
-      out[ym] = [...new Set(rows.map(r => r.employeeId))];
+      out[ym] = [...new Set(rows.map((r) => r.employeeId))];
     }
     return out;
   },
@@ -604,13 +552,13 @@ const reportKindValidator = v.union(
   v.literal("lead"),
   v.literal("opp"),
   v.literal("call"),
-  v.literal("template")
+  v.literal("template"),
 );
 
 const flaggableFieldValidator = v.union(
   v.literal("talkTotalSec"),
   v.literal("talkAvgSec"),
-  v.literal("loginSec")
+  v.literal("loginSec"),
 );
 
 const flaggedRowInputValidator = v.object({
@@ -637,22 +585,19 @@ async function upsertFlaggedRowById(
   rawSeconds: number,
   rawText: string,
   sourceFile: string,
-  uploadedAt: number
+  uploadedAt: number,
 ): Promise<void> {
   // Same non-unique-index caveat as `upsertSnapshot` — merge into the first
   // match and drop any extras rather than `.unique()`.
   const matches = await ctx.db
     .query("performanceFlaggedRows")
-    .withIndex("by_employee_date_field", q =>
-      q
-        .eq("employeeId", employeeId)
-        .eq("reportDate", reportDate)
-        .eq("field", field)
+    .withIndex("by_employee_date_field", (q) =>
+      q.eq("employeeId", employeeId).eq("reportDate", reportDate).eq("field", field),
     )
     .collect();
   const [existing, ...duplicates] = matches;
   if (duplicates.length > 0) {
-    await Promise.all(duplicates.map(d => ctx.db.delete(d._id)));
+    await Promise.all(duplicates.map((d) => ctx.db.delete(d._id)));
   }
   if (existing) {
     if (existing.status !== "pending" && existing.rawSeconds === rawSeconds) {
@@ -694,14 +639,9 @@ async function upsertFlaggedRow(
   rawText: string,
   sourceFile: string,
   uploadedAt: number,
-  cache: EmployeeCache
+  cache: EmployeeCache,
 ): Promise<void> {
-  const employeeId = await findOrCreateEmployee(
-    ctx,
-    companyId,
-    employeeName,
-    cache
-  );
+  const employeeId = await findOrCreateEmployee(ctx, companyId, employeeName, cache);
   await upsertFlaggedRowById(
     ctx,
     companyId,
@@ -711,7 +651,7 @@ async function upsertFlaggedRow(
     rawSeconds,
     rawText,
     sourceFile,
-    uploadedAt
+    uploadedAt,
   );
 }
 
@@ -740,9 +680,7 @@ export const applyImport = internalMutation({
     // A re-import doesn't necessarily carry a fresh `uploadedBy` (the
     // original uploader isn't necessarily who clicked "re-import") — fall
     // back to whatever the row already had instead of blanking it out.
-    const existingLog = args.replaceLogId
-      ? await ctx.db.get(args.replaceLogId)
-      : null;
+    const existingLog = args.replaceLogId ? await ctx.db.get(args.replaceLogId) : null;
     const uploadedBy = args.uploadedBy ?? existingLog?.uploadedBy;
     const employeeCache = await loadEmployeeCache(ctx, args.companyId);
     for (const snap of args.snapshots) {
@@ -754,7 +692,7 @@ export const applyImport = internalMutation({
         snap.fields,
         args.sourceFile,
         now,
-        employeeCache
+        employeeCache,
       );
     }
     for (const flagged of args.flaggedRows ?? []) {
@@ -768,7 +706,7 @@ export const applyImport = internalMutation({
         flagged.rawText,
         args.sourceFile,
         now,
-        employeeCache
+        employeeCache,
       );
     }
     const logFields = {
@@ -798,12 +736,12 @@ export const applyImport = internalMutation({
 async function lookupUploadByHash(
   ctx: { db: QueryCtx["db"] },
   companyId: Id<"companies">,
-  contentHash: string
+  contentHash: string,
 ): Promise<{ filename: string; uploadedAt: number } | null> {
   const existing = await ctx.db
     .query("performanceUploadLog")
-    .withIndex("by_company_contentHash", q =>
-      q.eq("companyId", companyId).eq("contentHash", contentHash)
+    .withIndex("by_company_contentHash", (q) =>
+      q.eq("companyId", companyId).eq("contentHash", contentHash),
     )
     .first();
   if (!existing) return null;
@@ -866,9 +804,9 @@ export const clearRawLeads = internalMutation({
   handler: async (ctx, { companyId }): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query("performanceRawLeads")
-      .withIndex("by_company_createDate", q => q.eq("companyId", companyId))
+      .withIndex("by_company_createDate", (q) => q.eq("companyId", companyId))
       .take(CLEAR_BATCH_SIZE);
-    await Promise.all(batch.map(row => ctx.db.delete(row._id)));
+    await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
     return { more: batch.length === CLEAR_BATCH_SIZE };
   },
 });
@@ -877,9 +815,7 @@ export const insertRawLeadsChunk = internalMutation({
   args: { companyId: v.id("companies"), rows: v.array(rawLeadValidator) },
   handler: async (ctx, { companyId, rows }): Promise<void> => {
     await Promise.all(
-      rows.map(row =>
-        ctx.db.insert("performanceRawLeads", { ...row, companyId })
-      )
+      rows.map((row) => ctx.db.insert("performanceRawLeads", { ...row, companyId })),
     );
   },
 });
@@ -889,9 +825,9 @@ export const clearRawOpps = internalMutation({
   handler: async (ctx, { companyId }): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query("performanceRawOpps")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .take(CLEAR_BATCH_SIZE);
-    await Promise.all(batch.map(row => ctx.db.delete(row._id)));
+    await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
     return { more: batch.length === CLEAR_BATCH_SIZE };
   },
 });
@@ -900,9 +836,7 @@ export const insertRawOppsChunk = internalMutation({
   args: { companyId: v.id("companies"), rows: v.array(rawOppValidator) },
   handler: async (ctx, { companyId, rows }): Promise<void> => {
     await Promise.all(
-      rows.map(row =>
-        ctx.db.insert("performanceRawOpps", { ...row, companyId })
-      )
+      rows.map((row) => ctx.db.insert("performanceRawOpps", { ...row, companyId })),
     );
   },
 });
@@ -912,9 +846,9 @@ export const clearWonOpps = internalMutation({
   handler: async (ctx, { companyId }): Promise<{ more: boolean }> => {
     const batch = await ctx.db
       .query("performanceWonOpps")
-      .withIndex("by_company_closeDate", q => q.eq("companyId", companyId))
+      .withIndex("by_company_closeDate", (q) => q.eq("companyId", companyId))
       .take(CLEAR_BATCH_SIZE);
-    await Promise.all(batch.map(row => ctx.db.delete(row._id)));
+    await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
     return { more: batch.length === CLEAR_BATCH_SIZE };
   },
 });
@@ -923,9 +857,7 @@ export const insertWonOppsChunk = internalMutation({
   args: { companyId: v.id("companies"), rows: v.array(wonOppValidator) },
   handler: async (ctx, { companyId, rows }): Promise<void> => {
     await Promise.all(
-      rows.map(row =>
-        ctx.db.insert("performanceWonOpps", { ...row, companyId })
-      )
+      rows.map((row) => ctx.db.insert("performanceWonOpps", { ...row, companyId })),
     );
   },
 });
@@ -939,10 +871,10 @@ export const listUploadLog = query({
     await requirePermission(ctx, login, "upload_reports", companyId);
     const rows = await ctx.db
       .query("performanceUploadLog")
-      .withIndex("by_company_uploadedAt", q => q.eq("companyId", companyId))
+      .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
       .order("desc")
       .take(60);
-    return rows.map(r => ({
+    return rows.map((r) => ({
       _id: r._id,
       filename: r.filename,
       rowsImported: r.rowsImported,
@@ -976,19 +908,16 @@ export interface UnscannedCallUpload {
 
 export const listUnscannedCallUploads = query({
   args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (
-    ctx,
-    { token, companyId: companyIdArg }
-  ): Promise<UnscannedCallUpload[]> => {
+  handler: async (ctx, { token, companyId: companyIdArg }): Promise<UnscannedCallUpload[]> => {
     const login = await requireSessionLogin(ctx, token);
     const companyId = resolveCompanyId(login, companyIdArg);
     await requirePermission(ctx, login, "upload_reports", companyId);
     const rows = await ctx.db
       .query("performanceUploadLog")
-      .withIndex("by_company_uploadedAt", q => q.eq("companyId", companyId))
-      .filter(q => q.eq(q.field("reportKind"), "call"))
+      .withIndex("by_company_uploadedAt", (q) => q.eq("companyId", companyId))
+      .filter((q) => q.eq(q.field("reportKind"), "call"))
       .collect();
-    const unscanned = rows.filter(r => !r.scannedForFlags);
+    const unscanned = rows.filter((r) => !r.scannedForFlags);
     const withUrls = await Promise.all(
       unscanned.map(async (r): Promise<UnscannedCallUpload | null> => {
         const fileUrl = await ctx.storage.getUrl(r.storageId);
@@ -1001,7 +930,7 @@ export const listUnscannedCallUploads = query({
           uploadedAt: r.uploadedAt,
           batchId: r.batchId,
         };
-      })
+      }),
     );
     return withUrls.filter((r): r is UnscannedCallUpload => r !== null);
   },
@@ -1012,20 +941,15 @@ export const listUnscannedCallUploads = query({
  * exposed to a signed-in admin instead of `internal.*`-only. */
 export const listEmployeeNames = query({
   args: { token: v.string(), companyId: v.optional(v.id("companies")) },
-  handler: async (
-    ctx,
-    { token, companyId: companyIdArg }
-  ): Promise<string[]> => {
+  handler: async (ctx, { token, companyId: companyIdArg }): Promise<string[]> => {
     const login = await requireSessionLogin(ctx, token);
     const companyId = resolveCompanyId(login, companyIdArg);
     await requirePermission(ctx, login, "upload_reports", companyId);
     const employees = await ctx.db
       .query("performanceEmployees")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .collect();
-    return employees
-      .filter(e => !EXCLUDED_OWNERS.has(e.name.toLowerCase()))
-      .map(e => e.name);
+    return employees.filter((e) => !EXCLUDED_OWNERS.has(e.name.toLowerCase())).map((e) => e.name);
   },
 });
 
@@ -1041,10 +965,7 @@ export const recordScanResults = mutation({
     logId: v.id("performanceUploadLog"),
     flaggedRows: v.array(flaggedRowInputValidator),
   },
-  handler: async (
-    ctx,
-    { token, logId, flaggedRows }
-  ): Promise<{ flagged: number }> => {
+  handler: async (ctx, { token, logId, flaggedRows }): Promise<{ flagged: number }> => {
     const login = await requireSessionLogin(ctx, token);
     const log = await ctx.db.get(logId);
     if (!log || !log.companyId) {
@@ -1068,7 +989,7 @@ export const recordScanResults = mutation({
         flagged.rawText,
         log.filename,
         now,
-        employeeCache
+        employeeCache,
       );
     }
     await ctx.db.patch(logId, { scannedForFlags: true });
@@ -1087,17 +1008,15 @@ export const listFlaggedRows = query({
     await requirePermission(ctx, login, "view_flagged_rows", companyId);
     const rows = await ctx.db
       .query("performanceFlaggedRows")
-      .withIndex("by_company_status", q =>
-        q.eq("companyId", companyId).eq("status", "pending")
-      )
+      .withIndex("by_company_status", (q) => q.eq("companyId", companyId).eq("status", "pending"))
       .order("desc")
       .collect();
     const employees = await ctx.db
       .query("performanceEmployees")
-      .withIndex("by_company", q => q.eq("companyId", companyId))
+      .withIndex("by_company", (q) => q.eq("companyId", companyId))
       .collect();
-    const nameById = new Map(employees.map(e => [e._id, e.name]));
-    return rows.map(r => ({
+    const nameById = new Map(employees.map((e) => [e._id, e.name]));
+    return rows.map((r) => ({
       _id: r._id,
       employeeId: r.employeeId,
       employeeName: nameById.get(r.employeeId) ?? "?",
@@ -1152,8 +1071,8 @@ export const resolveFlaggedRow = mutation({
 
     const report = await ctx.db
       .query("performanceReports")
-      .withIndex("by_employee_date", q =>
-        q.eq("employeeId", row.employeeId).eq("reportDate", row.reportDate)
+      .withIndex("by_employee_date", (q) =>
+        q.eq("employeeId", row.employeeId).eq("reportDate", row.reportDate),
       )
       .first();
     const patch: Partial<Doc<"performanceReports">> = { [row.field]: applied };
@@ -1191,7 +1110,7 @@ export const requireAdminByToken = internalQuery({
   args: { token: v.string(), companyId: v.optional(v.id("companies")) },
   handler: async (
     ctx,
-    { token, companyId: companyIdArg }
+    { token, companyId: companyIdArg },
   ): Promise<{ companyId: Id<"companies"> }> => {
     const login = await requireSessionLogin(ctx, token);
     const companyId = resolveCompanyId(login, companyIdArg);
@@ -1210,7 +1129,7 @@ export const getUploadLogRowsByBatch = internalQuery({
   handler: async (ctx, { batchId }) =>
     await ctx.db
       .query("performanceUploadLog")
-      .withIndex("by_batchId", q => q.eq("batchId", batchId))
+      .withIndex("by_batchId", (q) => q.eq("batchId", batchId))
       .collect(),
 });
 
@@ -1245,12 +1164,12 @@ export const clearInteractionsForMonths = internalMutation({
       const { start, end } = monthBounds(ym);
       const batch = await ctx.db
         .query("performanceInteractions")
-        .withIndex("by_company_date", q =>
-          q.eq("companyId", companyId).gte("date", start).lte("date", end)
+        .withIndex("by_company_date", (q) =>
+          q.eq("companyId", companyId).gte("date", start).lte("date", end),
         )
         .take(remaining);
       if (batch.length > 0) {
-        await Promise.all(batch.map(row => ctx.db.delete(row._id)));
+        await Promise.all(batch.map((row) => ctx.db.delete(row._id)));
         deletedAny = true;
         remaining -= batch.length;
       }
@@ -1266,19 +1185,16 @@ export const insertInteractionsChunk = internalMutation({
     sourceFile: v.string(),
     uploadedAt: v.number(),
   },
-  handler: async (
-    ctx,
-    { companyId, rows, sourceFile, uploadedAt }
-  ): Promise<void> => {
+  handler: async (ctx, { companyId, rows, sourceFile, uploadedAt }): Promise<void> => {
     await Promise.all(
-      rows.map(row =>
+      rows.map((row) =>
         ctx.db.insert("performanceInteractions", {
           ...row,
           companyId,
           sourceFile,
           uploadedAt,
-        })
-      )
+        }),
+      ),
     );
   },
 });
@@ -1298,9 +1214,7 @@ export const logInteractionsImport = internalMutation({
     replaceLogId: v.optional(v.id("performanceUploadLog")),
   },
   handler: async (ctx, args): Promise<void> => {
-    const existingLog = args.replaceLogId
-      ? await ctx.db.get(args.replaceLogId)
-      : null;
+    const existingLog = args.replaceLogId ? await ctx.db.get(args.replaceLogId) : null;
     const logFields = {
       companyId: args.companyId,
       filename: args.sourceFile,

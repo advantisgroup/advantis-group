@@ -15,11 +15,7 @@ import { Termine } from "@/components/applicants/tabs/Termine";
  * /applicants/{id}/termine/{terminId} still renders this list underneath —
  * the nested route's page.tsx only adds the modal on top via `children`.
  */
-export default function ApplicantTermineLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function ApplicantTermineLayout({ children }: { children: ReactNode }) {
   const params = useParams<{ id: string }>();
   const applicantId = params.id as Id<"applicants">;
   const applicant = useQuery(api.applicants.get, { applicantId });

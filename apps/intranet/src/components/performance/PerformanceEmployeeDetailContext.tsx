@@ -5,9 +5,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { type api } from "@advantis/convex/api";
 import { type FunctionReturnType } from "convex/server";
 
-export type EmployeeDetailData = FunctionReturnType<
-  typeof api.performanceQueries.employeeDetail
->;
+export type EmployeeDetailData = FunctionReturnType<typeof api.performanceQueries.employeeDetail>;
 
 interface EmployeeDetailCtx {
   data: EmployeeDetailData | undefined;
@@ -28,18 +26,14 @@ export function PerformanceEmployeeDetailProvider({
   children: ReactNode;
 }) {
   return (
-    <EmployeeDetailContext.Provider value={{ data }}>
-      {children}
-    </EmployeeDetailContext.Provider>
+    <EmployeeDetailContext.Provider value={{ data }}>{children}</EmployeeDetailContext.Provider>
   );
 }
 
 export function useEmployeeDetailData(): EmployeeDetailData | undefined {
   const ctx = useContext(EmployeeDetailContext);
   if (!ctx) {
-    throw new Error(
-      "useEmployeeDetailData must be used within PerformanceEmployeeDetailProvider"
-    );
+    throw new Error("useEmployeeDetailData must be used within PerformanceEmployeeDetailProvider");
   }
   return ctx.data;
 }

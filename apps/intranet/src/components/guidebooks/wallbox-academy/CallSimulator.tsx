@@ -45,10 +45,10 @@ export function CallSimulator({
 
   function pick(optionIndex: number) {
     if (!sim) return;
-    const scenario = SCENARIOS.find(s => s.id === sim.scenarioId)!;
+    const scenario = SCENARIOS.find((s) => s.id === sim.scenarioId)!;
     const option = scenario.steps[sim.step].options[optionIndex];
     const nextData = [...sim.data];
-    (option.dataKeys ?? []).forEach(key => {
+    (option.dataKeys ?? []).forEach((key) => {
       if (!nextData.includes(key)) nextData.push(key);
     });
     setSim({
@@ -61,13 +61,13 @@ export function CallSimulator({
 
   function next() {
     if (!sim) return;
-    const scenario = SCENARIOS.find(s => s.id === sim.scenarioId)!;
+    const scenario = SCENARIOS.find((s) => s.id === sim.scenarioId)!;
     if (sim.step < scenario.steps.length - 1) {
       setSim({ ...sim, step: sim.step + 1, picked: null });
       return;
     }
     const max = scenario.steps.length * 2;
-    onMutate(p => recordCallAttempt(p, scenario, sim.score, sim.data));
+    onMutate((p) => recordCallAttempt(p, scenario, sim.score, sim.data));
     setLastResult({ scenario, score: sim.score, max, data: sim.data });
     setSim(null);
   }
@@ -77,9 +77,7 @@ export function CallSimulator({
     return (
       <div className="space-y-4">
         <div className="rounded-xl border border-success/50 bg-success/10 p-5">
-          <h3 className="font-semibold">
-            Call abgeschlossen: {lastResult.scenario.title}
-          </h3>
+          <h3 className="font-semibold">Call abgeschlossen: {lastResult.scenario.title}</h3>
           <p className="my-2">
             <Badge variant={pct >= 70 ? "success" : "warning"}>
               {lastResult.score}/{lastResult.max} Punkte ({pct} %)
@@ -87,7 +85,7 @@ export function CallSimulator({
           </p>
           <p className="mb-1 text-sm font-medium">Datenerfassung:</p>
           <ul className="mb-2 space-y-0.5 text-sm">
-            {lastResult.scenario.targets.map(key => (
+            {lastResult.scenario.targets.map((key) => (
               <li key={key}>
                 {lastResult.data.includes(key) ? "✓" : "✗ fehlt:"} {DLAB[key]}
               </li>
@@ -96,12 +94,7 @@ export function CallSimulator({
           <p className="text-sm">
             <b>Nächster Schritt im Prozess:</b> {lastResult.scenario.outcome}
           </p>
-          <Button
-            size="sm"
-            variant="outline"
-            className="mt-3"
-            onClick={() => setLastResult(null)}
-          >
+          <Button size="sm" variant="outline" className="mt-3" onClick={() => setLastResult(null)}>
             Schließen
           </Button>
         </div>
@@ -114,22 +107,21 @@ export function CallSimulator({
     return (
       <div className="space-y-4">
         <p className="text-sm">
-          Du bist Telesales im Warm-Lead-Call. Ziel: ein qualifizierter Lead mit
-          Wunsch nach Angebot oder Expertenberatung - oder ein sauber gepflegter
-          Account mit Follow-up. Achte auf offene Fragen, die Quittungsmethode,
-          Einwandbehandlung und vollständige Datenerfassung. Beste Antwort = 2
-          Punkte.
+          Du bist Telesales im Warm-Lead-Call. Ziel: ein qualifizierter Lead mit Wunsch nach Angebot
+          oder Expertenberatung - oder ein sauber gepflegter Account mit Follow-up. Achte auf offene
+          Fragen, die Quittungsmethode, Einwandbehandlung und vollständige Datenerfassung. Beste
+          Antwort = 2 Punkte.
         </p>
         <ScenarioList calls={calls} onStart={start} />
       </div>
     );
   }
 
-  const scenario = SCENARIOS.find(s => s.id === sim.scenarioId)!;
+  const scenario = SCENARIOS.find((s) => s.id === sim.scenarioId)!;
   const step = scenario.steps[sim.step];
   const bestIndex = step.options.reduce(
     (best, option, i) => (option.points > step.options[best].points ? i : best),
-    0
+    0,
   );
 
   return (
@@ -147,9 +139,7 @@ export function CallSimulator({
 
       {sim.picked === null ? (
         <>
-          <p className="mb-2 text-xs text-muted-foreground">
-            Wie reagierst du?
-          </p>
+          <p className="mb-2 text-xs text-muted-foreground">Wie reagierst du?</p>
           <div className="space-y-1.5">
             {step.options.map((option, i) => (
               <button
@@ -172,10 +162,8 @@ export function CallSimulator({
                 className={cn(
                   "rounded-md border px-3 py-2 text-sm",
                   i === bestIndex && "border-success/60 bg-success/10",
-                  i === sim.picked &&
-                    i !== bestIndex &&
-                    "border-destructive/60 bg-destructive/10",
-                  i !== bestIndex && i !== sim.picked && "border-border"
+                  i === sim.picked && i !== bestIndex && "border-destructive/60 bg-destructive/10",
+                  i !== bestIndex && i !== sim.picked && "border-border",
                 )}
               >
                 {option.text}
@@ -195,9 +183,7 @@ export function CallSimulator({
             {step.options[sim.picked].feedback}
           </p>
           <Button onClick={next}>
-            {sim.step < scenario.steps.length - 1
-              ? "Weiter im Gespräch"
-              : "Call abschließen"}
+            {sim.step < scenario.steps.length - 1 ? "Weiter im Gespräch" : "Call abschließen"}
           </Button>
         </>
       )}
@@ -220,40 +206,28 @@ function ScenarioList({
 }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {SCENARIOS.map(scenario => {
+      {SCENARIOS.map((scenario) => {
         const attempt = calls[scenario.id];
         return (
-          <div
-            key={scenario.id}
-            className="rounded-xl border border-border bg-card p-4"
-          >
+          <div key={scenario.id} className="rounded-xl border border-border bg-card p-4">
             <Badge variant="secondary">{scenario.combo}</Badge>
             <h3 className="mt-2 font-semibold">{scenario.title}</h3>
             <p className="text-xs text-muted-foreground">{scenario.persona}</p>
             {attempt ? (
               <p className="mt-2 text-xs">
-                <Badge
-                  variant={
-                    attempt.score / attempt.max >= 0.7 ? "success" : "warning"
-                  }
-                >
+                <Badge variant={attempt.score / attempt.max >= 0.7 ? "success" : "warning"}>
                   {attempt.score}/{attempt.max} Punkte
                 </Badge>{" "}
-                · Daten {attempt.data.length}/{scenario.targets.length} ·
-                Versuch {attempt.attempts ?? 1} · {attempt.date}
+                · Daten {attempt.data.length}/{scenario.targets.length} · Versuch{" "}
+                {attempt.attempts ?? 1} · {attempt.date}
                 {attempt.history?.length ? (
                   <span className="block text-muted-foreground">
-                    frühere Versuche:{" "}
-                    {attempt.history.map(h => `${h.score}/${h.max}`).join(", ")}
+                    frühere Versuche: {attempt.history.map((h) => `${h.score}/${h.max}`).join(", ")}
                   </span>
                 ) : null}
               </p>
             ) : null}
-            <Button
-              size="sm"
-              className="mt-2.5"
-              onClick={() => onStart(scenario.id)}
-            >
+            <Button size="sm" className="mt-2.5" onClick={() => onStart(scenario.id)}>
               {attempt ? "Erneut üben" : "Call starten"}
             </Button>
           </div>

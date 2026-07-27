@@ -13,7 +13,7 @@ import { attachmentValidator, audienceValidator } from "./schema";
 
 function aggregateReactions(
   rows: { emoji: string; userId: Id<"users"> }[],
-  meId: Id<"users">
+  meId: Id<"users">,
 ): { emoji: string; count: number; mine: boolean }[] {
   const map = new Map<string, { count: number; mine: boolean }>();
   for (const r of rows) {
@@ -31,13 +31,13 @@ function aggregateReactions(
 
 async function resolveAudienceUserIds(
   ctx: MutationCtx,
-  audience: Audience
+  audience: Audience,
 ): Promise<Id<"users">[]> {
   const all = await ctx.db
     .query("users")
-    .withIndex("by_status", q => q.eq("status", "active"))
+    .withIndex("by_status", (q) => q.eq("status", "active"))
     .collect();
-  return all.filter(u => userMatchesAudience(u, audience)).map(u => u._id);
+  return all.filter((u) => userMatchesAudience(u, audience)).map((u) => u._id);
 }
 
 export const create = mutation({
@@ -58,12 +58,8 @@ export const create = mutation({
     assertAttachmentSizeOk(args.attachments ?? []);
     const now = Date.now();
     // Keep the flat storage-id list in sync (used for cleanup on edit/delete).
-    const storageIds =
-      args.attachments?.map(a => a.storageId) ??
-      args.attachmentStorageIds ??
-      [];
-    const publishedAt =
-      args.publishAt && args.publishAt > now ? args.publishAt : now;
+    const storageIds = args.attachments?.map((a) => a.storageId) ?? args.attachmentStorageIds ?? [];
+    const publishedAt = args.publishAt && args.publishAt > now ? args.publishAt : now;
     const id = await ctx.db.insert("announcements", {
       title: args.title,
       body: args.body,
@@ -78,26 +74,24 @@ export const create = mutation({
       createdAt: now,
     });
     await Promise.all(
-      storageIds.map(storageId =>
+      storageIds.map((storageId) =>
         ctx.db.insert("attachmentOwners", {
           storageId,
           kind: "announcement",
           announcementId: id,
-        })
-      )
+        }),
+      ),
     );
 
     if (publishedAt > now) {
       // Scheduled: notify the audience when it actually goes live.
-      await ctx.scheduler.runAt(
-        publishedAt,
-        internal.announcements.notifyPublished,
-        { announcementId: id }
-      );
+      await ctx.scheduler.runAt(publishedAt, internal.announcements.notifyPublished, {
+        announcementId: id,
+      });
     } else {
-      const recipients = (
-        await resolveAudienceUserIds(ctx, args.audience)
-      ).filter(uid => uid !== author._id);
+      const recipients = (await resolveAudienceUserIds(ctx, args.audience)).filter(
+        (uid) => uid !== author._id,
+      );
       await notifyUsers(ctx, recipients, {
         type: "announcement",
         title: "New announcement",
@@ -118,9 +112,9 @@ export const notifyPublished = internalMutation({
     // Deleted, rescheduled further out, or already expired — nothing to send.
     if (!announcement || announcement.publishedAt > Date.now()) return;
     if (announcement.expiresAt && announcement.expiresAt <= Date.now()) return;
-    const recipients = (
-      await resolveAudienceUserIds(ctx, announcement.audience)
-    ).filter(uid => uid !== announcement.authorUserId);
+    const recipients = (await resolveAudienceUserIds(ctx, announcement.audience)).filter(
+      (uid) => uid !== announcement.authorUserId,
+    );
     await notifyUsers(ctx, recipients, {
       type: "announcement",
       title: "New announcement",
@@ -164,14 +158,14 @@ export const update = mutation({
       }
       await Promise.all(
         patch.attachmentStorageIds
-          .filter(id => !prev.has(id))
-          .map(storageId =>
+          .filter((id) => !prev.has(id))
+          .map((storageId) =>
             ctx.db.insert("attachmentOwners", {
               storageId,
               kind: "announcement",
               announcementId,
-            })
-          )
+            }),
+          ),
       );
     }
     await ctx.db.patch(announcementId, {
@@ -202,17 +196,15 @@ export const remove = mutation({
     // Remove read receipts.
     const reads = await ctx.db
       .query("announcementReads")
-      .withIndex("by_announcement_user", q =>
-        q.eq("announcementId", announcementId)
-      )
+      .withIndex("by_announcement_user", (q) => q.eq("announcementId", announcementId))
       .collect();
-    await Promise.all(reads.map(r => ctx.db.delete(r._id)));
+    await Promise.all(reads.map((r) => ctx.db.delete(r._id)));
     // Remove reactions.
     const reactions = await ctx.db
       .query("announcementReactions")
-      .withIndex("by_announcement", q => q.eq("announcementId", announcementId))
+      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
       .collect();
-    await Promise.all(reactions.map(r => ctx.db.delete(r._id)));
+    await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
     await ctx.db.delete(announcementId);
     return { ok: true };
   },
@@ -231,10 +223,9 @@ export const list = query({
 
     // Scheduled (future) and expired announcements stay visible to their
     // author and admins (flagged below) but disappear for everyone else.
-    const visible = announcements.filter(a => {
+    const visible = announcements.filter((a) => {
       if (!userMatchesAudience(user, a.audience)) return false;
-      const isAuthorOrAdmin =
-        a.authorUserId === user._id || user.role === "admin";
+      const isAuthorOrAdmin = a.authorUserId === user._id || user.role === "admin";
       if (a.publishedAt > now && !isAuthorOrAdmin) return false;
       if (a.expiresAt && a.expiresAt <= now && !isAuthorOrAdmin) return false;
       return true;
@@ -243,17 +234,17 @@ export const list = query({
     // For the author-facing read percentage: active users per audience.
     const activeUsers = await ctx.db
       .query("users")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
     const myReads = await ctx.db
       .query("announcementReads")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
-    const readSet = new Set(myReads.map(r => r.announcementId));
+    const readSet = new Set(myReads.map((r) => r.announcementId));
 
     const enriched = await Promise.all(
-      visible.map(async a => {
+      visible.map(async (a) => {
         const author = await ctx.db.get(a.authorUserId);
         const authorAvatar = author?.avatarStorageId
           ? await ctx.storage.getUrl(author.avatarStorageId)
@@ -263,7 +254,7 @@ export const list = query({
         const attachments =
           a.attachments && a.attachments.length > 0
             ? await Promise.all(
-                a.attachments.map(async att => ({
+                a.attachments.map(async (att) => ({
                   storageId: att.storageId,
                   kind: att.kind,
                   name: att.name,
@@ -272,10 +263,10 @@ export const list = query({
                   oneDriveItemId: att.oneDriveItemId ?? null,
                   oneDrivePath: att.oneDrivePath ?? null,
                   url: await ctx.storage.getUrl(att.storageId),
-                }))
+                })),
               )
             : await Promise.all(
-                a.attachmentStorageIds.map(async sid => {
+                a.attachmentStorageIds.map(async (sid) => {
                   const meta = await ctx.db.system.get(sid);
                   const contentType = meta?.contentType ?? null;
                   return {
@@ -290,15 +281,15 @@ export const list = query({
                     oneDrivePath: null,
                     url: await ctx.storage.getUrl(sid),
                   };
-                })
+                }),
               );
         const reactionRows = await ctx.db
           .query("announcementReactions")
-          .withIndex("by_announcement", q => q.eq("announcementId", a._id))
+          .withIndex("by_announcement", (q) => q.eq("announcementId", a._id))
           .collect();
         const reads = await ctx.db
           .query("announcementReads")
-          .withIndex("by_announcement", q => q.eq("announcementId", a._id))
+          .withIndex("by_announcement", (q) => q.eq("announcementId", a._id))
           .collect();
         return {
           _id: a._id,
@@ -314,15 +305,13 @@ export const list = query({
           authorAvatar,
           authorId: a.authorUserId,
           audience: a.audience,
-          audienceCount: activeUsers.filter(u =>
-            userMatchesAudience(u, a.audience)
-          ).length,
+          audienceCount: activeUsers.filter((u) => userMatchesAudience(u, a.audience)).length,
           attachments,
           reactions: aggregateReactions(reactionRows, user._id),
           viewCount: reads.length,
           read: readSet.has(a._id),
         };
-      })
+      }),
     );
 
     // Pinned first, then newest.
@@ -340,8 +329,8 @@ export const markRead = mutation({
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("announcementReads")
-      .withIndex("by_announcement_user", q =>
-        q.eq("announcementId", announcementId).eq("userId", user._id)
+      .withIndex("by_announcement_user", (q) =>
+        q.eq("announcementId", announcementId).eq("userId", user._id),
       )
       .first();
     if (!existing) {
@@ -357,7 +346,7 @@ export const markRead = mutation({
 
 export const unreadCount = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const now = Date.now();
     const announcements = await ctx.db
@@ -366,23 +355,23 @@ export const unreadCount = query({
       .order("desc")
       .take(100);
     const visible = announcements.filter(
-      a =>
+      (a) =>
         userMatchesAudience(user, a.audience) &&
         a.publishedAt <= now &&
-        (!a.expiresAt || a.expiresAt > now)
+        (!a.expiresAt || a.expiresAt > now),
     );
     const myReads = await ctx.db
       .query("announcementReads")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
-    const readSet = new Set(myReads.map(r => r.announcementId));
-    return visible.filter(a => !readSet.has(a._id)).length;
+    const readSet = new Set(myReads.map((r) => r.announcementId));
+    return visible.filter((a) => !readSet.has(a._id)).length;
   },
 });
 
 export const markAllRead = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const now = Date.now();
     const announcements = await ctx.db
@@ -392,23 +381,20 @@ export const markAllRead = mutation({
       .take(200);
     const myReads = await ctx.db
       .query("announcementReads")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
-    const readSet = new Set(myReads.map(r => r.announcementId));
+    const readSet = new Set(myReads.map((r) => r.announcementId));
     const unread = announcements.filter(
-      a =>
-        userMatchesAudience(user, a.audience) &&
-        a.publishedAt <= now &&
-        !readSet.has(a._id)
+      (a) => userMatchesAudience(user, a.audience) && a.publishedAt <= now && !readSet.has(a._id),
     );
     await Promise.all(
-      unread.map(a =>
+      unread.map((a) =>
         ctx.db.insert("announcementReads", {
           announcementId: a._id,
           userId: user._id,
           readAt: now,
-        })
-      )
+        }),
+      ),
     );
     return { marked: unread.length };
   },
@@ -421,9 +407,9 @@ export const audienceSize = query({
     await requireManager(ctx);
     const activeUsers = await ctx.db
       .query("users")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
-    return activeUsers.filter(u => userMatchesAudience(u, audience)).length;
+    return activeUsers.filter((u) => userMatchesAudience(u, audience)).length;
   },
 });
 
@@ -438,8 +424,8 @@ export const toggleReaction = mutation({
     // WhatsApp-style: one reaction per user per announcement.
     const existing = await ctx.db
       .query("announcementReactions")
-      .withIndex("by_announcement_user", q =>
-        q.eq("announcementId", announcementId).eq("userId", user._id)
+      .withIndex("by_announcement_user", (q) =>
+        q.eq("announcementId", announcementId).eq("userId", user._id),
       )
       .first();
     if (existing) {
@@ -471,11 +457,11 @@ export const viewers = query({
     }
     const reads = await ctx.db
       .query("announcementReads")
-      .withIndex("by_announcement", q => q.eq("announcementId", announcementId))
+      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
       .collect();
     reads.sort((a, b) => b.readAt - a.readAt);
     return Promise.all(
-      reads.map(async r => {
+      reads.map(async (r) => {
         const u = await ctx.db.get(r.userId);
         const avatar = u?.avatarStorageId
           ? await ctx.storage.getUrl(u.avatarStorageId)
@@ -486,7 +472,7 @@ export const viewers = query({
           avatar,
           readAt: r.readAt,
         };
-      })
+      }),
     );
   },
 });

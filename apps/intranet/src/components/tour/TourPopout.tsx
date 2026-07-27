@@ -53,7 +53,7 @@ function computePosition(
   preferred: Side,
   vw: number,
   vh: number,
-  size: { width: number; height: number }
+  size: { width: number; height: number },
 ): { top: number; left: number } {
   const { x, y, width, height } = targetRect;
   const GAP = 14;
@@ -82,8 +82,7 @@ function computePosition(
   ];
 
   const chosen =
-    order.find(fits) ??
-    (Object.keys(room) as Side[]).sort((a, b) => room[b] - room[a])[0];
+    order.find(fits) ?? (Object.keys(room) as Side[]).sort((a, b) => room[b] - room[a])[0];
 
   let top = 0;
   let left = 0;
@@ -150,10 +149,10 @@ export function TourPopout() {
     const el = cardRef.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    setSize(prev =>
+    setSize((prev) =>
       Math.abs(prev.height - r.height) > 1 || Math.abs(prev.width - r.width) > 1
         ? { width: r.width, height: r.height }
-        : prev
+        : prev,
     );
   }, [currentStep?.id, isMobile]);
 
@@ -170,13 +169,10 @@ export function TourPopout() {
 
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const checkpointIdx = visibleCheckpoints.findIndex(
-    c => c.id === currentCheckpoint.id
-  );
+  const checkpointIdx = visibleCheckpoints.findIndex((c) => c.id === currentCheckpoint.id);
   const stepDisplay = `${state.currentStepIndex + 1} / ${currentCheckpoint.steps.length}`;
   const isFirstStep = state.currentStepIndex === 0;
-  const isLastStep =
-    state.currentStepIndex >= currentCheckpoint.steps.length - 1;
+  const isLastStep = state.currentStepIndex >= currentCheckpoint.steps.length - 1;
   const isLastCheckpoint = checkpointIdx === visibleCheckpoints.length - 1;
 
   const { top, left } = isMobile
@@ -214,24 +210,16 @@ export function TourPopout() {
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-6 shrink-0"
-                >
+                <Button variant="ghost" size="icon-sm" className="size-6 shrink-0">
                   <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="text-sm">
-                <DropdownMenuItem onClick={skipStep}>
-                  {tt("skipStep")}
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={skipStep}>{tt("skipStep")}</DropdownMenuItem>
                 <DropdownMenuItem onClick={skipCheckpointDialog}>
                   {tt("skipCheckpoint")}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={snooze}>
-                  {tt("snooze")}
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={snooze}>{tt("snooze")}</DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={endTourDialog}
                   className="text-destructive focus:text-destructive"
@@ -253,12 +241,7 @@ export function TourPopout() {
           {/* Controls */}
           <div className="mt-4 flex items-center gap-2">
             {!isFirstStep && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={back}
-                className="shrink-0"
-              >
+              <Button variant="outline" size="sm" onClick={back} className="shrink-0">
                 <ChevronLeft />
                 {tt("back")}
               </Button>

@@ -14,10 +14,7 @@ export function formatDuration(totalSeconds: number, lang: Lang): string {
   const s = Math.max(0, Math.floor(totalSeconds));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
-  const u =
-    lang === "de"
-      ? { h: "Std.", m: "Min.", s: "Sek." }
-      : { h: "h", m: "m", s: "s" };
+  const u = lang === "de" ? { h: "Std.", m: "Min.", s: "Sek." } : { h: "h", m: "m", s: "s" };
   if (h > 0) return `${h} ${u.h} ${m} ${u.m}`;
   if (m > 0) return `${m} ${u.m}`;
   return `${s} ${u.s}`;
@@ -39,9 +36,7 @@ export function formatRelativeTime(ts: number, lang: Lang): string {
 
   if (d >= 1) {
     if (lang === "de")
-      return future
-        ? `in ${d} Tag${d > 1 ? "en" : ""}`
-        : `vor ${d} Tag${d > 1 ? "en" : ""}`;
+      return future ? `in ${d} Tag${d > 1 ? "en" : ""}` : `vor ${d} Tag${d > 1 ? "en" : ""}`;
     return future ? `in ${d}d` : `${d}d ago`;
   }
   if (h >= 1) {

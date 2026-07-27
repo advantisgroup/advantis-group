@@ -42,25 +42,18 @@ export function GuidebookSwitcher({ current }: { current: Guidebook }) {
         <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        {guidebooks.map(gb => {
+        {guidebooks.map((gb) => {
           const Icon = gb.icon;
           const isCurrent = gb.slug === current.slug;
           return (
             <DropdownMenuItem key={gb.slug} asChild>
               <Link
                 href={`/guidebooks/${gb.slug}`}
-                className={cn(
-                  "flex items-center gap-2.5",
-                  isCurrent && "bg-accent"
-                )}
+                className={cn("flex items-center gap-2.5", isCurrent && "bg-accent")}
               >
                 <Icon className="size-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate">
-                  {t(gb.titleKey)}
-                </span>
-                {isCurrent && (
-                  <Check className="size-4 shrink-0 text-muted-foreground" />
-                )}
+                <span className="min-w-0 flex-1 truncate">{t(gb.titleKey)}</span>
+                {isCurrent && <Check className="size-4 shrink-0 text-muted-foreground" />}
               </Link>
             </DropdownMenuItem>
           );
@@ -81,7 +74,7 @@ export function GuidebookPager({ current }: { current: Guidebook }) {
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
 
-  const index = guidebooks.findIndex(gb => gb.slug === current.slug);
+  const index = guidebooks.findIndex((gb) => gb.slug === current.slug);
   const prev = index > 0 ? guidebooks[index - 1] : undefined;
   const next = index >= 0 ? guidebooks[index + 1] : undefined;
 
@@ -98,9 +91,7 @@ export function GuidebookPager({ current }: { current: Guidebook }) {
             <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
             {t("switcher.previous")}
           </span>
-          <span className="truncate text-sm font-semibold">
-            {t(prev.titleKey)}
-          </span>
+          <span className="truncate text-sm font-semibold">{t(prev.titleKey)}</span>
         </Link>
       ) : (
         <span className="hidden sm:block" />
@@ -114,9 +105,7 @@ export function GuidebookPager({ current }: { current: Guidebook }) {
             {t("switcher.next")}
             <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
           </span>
-          <span className="max-w-full truncate text-sm font-semibold">
-            {t(next.titleKey)}
-          </span>
+          <span className="max-w-full truncate text-sm font-semibold">{t(next.titleKey)}</span>
         </Link>
       )}
     </nav>

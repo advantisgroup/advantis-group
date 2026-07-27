@@ -1,15 +1,6 @@
 import type { BundledLanguage } from "shiki";
 
-const ARCHIVE_EXTENSIONS = new Set([
-  "zip",
-  "rar",
-  "7z",
-  "tar",
-  "gz",
-  "tgz",
-  "bz2",
-  "xz",
-]);
+const ARCHIVE_EXTENSIONS = new Set(["zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "xz"]);
 
 const IMAGE_EXTENSIONS = new Set([
   "png",

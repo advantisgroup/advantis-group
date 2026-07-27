@@ -34,11 +34,7 @@ function slugify(text: string, index: number): string {
  * every guidebook without touching their content components; a
  * MutationObserver keeps it fresh for tab-based guidebooks that swap content.
  */
-export function GuidebookToc({
-  containerId = "guidebook-content",
-}: {
-  containerId?: string;
-}) {
+export function GuidebookToc({ containerId = "guidebook-content" }: { containerId?: string }) {
   const t = useTranslations("Guidebooks");
   const [entries, setEntries] = useState<TocEntry[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -48,14 +44,14 @@ export function GuidebookToc({
     if (!container) return;
 
     function scan() {
-      const headings = Array.from(
-        container!.querySelectorAll<HTMLElement>("h2, h3")
-      ).filter(h => h.textContent?.trim());
+      const headings = Array.from(container!.querySelectorAll<HTMLElement>("h2, h3")).filter((h) =>
+        h.textContent?.trim(),
+      );
       headings.forEach((h, i) => {
         if (!h.id) h.id = slugify(h.textContent ?? "", i);
       });
-      setEntries(prev => {
-        const next = headings.map(h => ({
+      setEntries((prev) => {
+        const next = headings.map((h) => ({
           id: h.id,
           text: h.textContent ?? "",
           level: h.tagName === "H3" ? 3 : 2,
@@ -73,31 +69,28 @@ export function GuidebookToc({
   useEffect(() => {
     if (entries.length === 0) return;
     const headings = entries
-      .map(e => document.getElementById(e.id))
+      .map((e) => document.getElementById(e.id))
       .filter((el): el is HTMLElement => el !== null);
     const io = new IntersectionObserver(
-      visible => {
-        const hit = visible.find(v => v.isIntersecting);
+      (visible) => {
+        const hit = visible.find((v) => v.isIntersecting);
         if (hit) setActiveId(hit.target.id);
       },
-      { rootMargin: "-20% 0px -70% 0px" }
+      { rootMargin: "-20% 0px -70% 0px" },
     );
-    headings.forEach(h => io.observe(h));
+    headings.forEach((h) => io.observe(h));
     return () => io.disconnect();
   }, [entries]);
 
   if (entries.length < 2) return null;
 
   return (
-    <nav
-      aria-label={t("toc")}
-      className="fixed right-6 top-36 hidden w-52 print:hidden xl:block"
-    >
+    <nav aria-label={t("toc")} className="fixed right-6 top-36 hidden w-52 print:hidden xl:block">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {t("toc")}
       </p>
       <ul className="space-y-1 border-l border-border text-sm">
-        {entries.map(e => (
+        {entries.map((e) => (
           <li key={e.id}>
             <button
               type="button"
@@ -111,7 +104,7 @@ export function GuidebookToc({
                 e.level === 3 ? "pl-6" : "pl-3",
                 activeId === e.id
                   ? "border-primary font-medium text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
               )}
             >
               {e.text}
@@ -167,9 +160,7 @@ export function FeedbackWidget({ slug }: { slug: string }) {
 
   return (
     <div className="mt-8 flex flex-wrap items-center gap-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 print:hidden">
-      <p className="text-sm font-medium">
-        {mine ? t("feedbackThanks") : t("feedbackQuestion")}
-      </p>
+      <p className="text-sm font-medium">{mine ? t("feedbackThanks") : t("feedbackQuestion")}</p>
       <div className="flex items-center gap-1.5">
         <Button
           variant={mine?.helpful === true ? "secondary" : "ghost"}
@@ -177,11 +168,7 @@ export function FeedbackWidget({ slug }: { slug: string }) {
           aria-label={t("feedbackYes")}
           onClick={() => void set({ slug, helpful: true })}
         >
-          <ThumbsUp
-            className={cn(
-              mine?.helpful === true && "fill-success/30 text-success"
-            )}
-          />
+          <ThumbsUp className={cn(mine?.helpful === true && "fill-success/30 text-success")} />
         </Button>
         <Button
           variant={mine?.helpful === false ? "secondary" : "ghost"}
@@ -190,9 +177,7 @@ export function FeedbackWidget({ slug }: { slug: string }) {
           onClick={() => void set({ slug, helpful: false })}
         >
           <ThumbsDown
-            className={cn(
-              mine?.helpful === false && "fill-destructive/20 text-destructive"
-            )}
+            className={cn(mine?.helpful === false && "fill-destructive/20 text-destructive")}
           />
         </Button>
       </div>
@@ -209,9 +194,7 @@ export function FeedbackWidget({ slug }: { slug: string }) {
 export function RelatedGuidebooks({ current }: { current: Guidebook }) {
   const t = useTranslations("Guidebooks");
   const user = useCurrentUser();
-  const others = accessibleGuidebooks(user).filter(
-    gb => gb.slug !== current.slug
-  );
+  const others = accessibleGuidebooks(user).filter((gb) => gb.slug !== current.slug);
   if (others.length === 0) return null;
   return (
     <div className="mt-6 print:hidden">
@@ -219,7 +202,7 @@ export function RelatedGuidebooks({ current }: { current: Guidebook }) {
         {t("related")}
       </p>
       <div className="flex flex-wrap gap-1.5">
-        {others.map(gb => {
+        {others.map((gb) => {
           const Icon = gb.icon;
           return (
             <Link

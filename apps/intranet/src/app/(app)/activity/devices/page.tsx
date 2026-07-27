@@ -119,16 +119,11 @@ export default function DevicesPage() {
   // Per-row pending guard: while a device's mutation is in flight we disable its
   // action buttons so a double-click can't fire two requests.
   const [busyId, setBusyId] = useState<GenericId<"devices"> | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<GenericId<"devices"> | null>(
-    null
-  );
+  const [deleteTarget, setDeleteTarget] = useState<GenericId<"devices"> | null>(null);
 
   // Wrap a row mutation so its buttons show a disabled/pending state while it
   // runs; useMutationWithToast already swallows errors and toasts them.
-  async function runWithBusy(
-    id: GenericId<"devices">,
-    fn: () => Promise<unknown>
-  ) {
+  async function runWithBusy(id: GenericId<"devices">, fn: () => Promise<unknown>) {
     setBusyId(id);
     try {
       await fn();
@@ -154,12 +149,12 @@ export default function DevicesPage() {
   // user's column sort (registration order when none is chosen).
   const visibleDevices = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const filtered = (devices ?? []).filter(d => {
+    const filtered = (devices ?? []).filter((d) => {
       if (statusFilter !== "all" && d.status !== statusFilter) return false;
       if (!q) return true;
       return [d.hostname, d.lastWindowsUser, d.personName]
         .filter(Boolean)
-        .some(s => String(s).toLowerCase().includes(q));
+        .some((s) => String(s).toLowerCase().includes(q));
     });
     if (!sort) return filtered;
     return filtered.sort((a, b) => {
@@ -176,10 +171,10 @@ export default function DevicesPage() {
   // First click sorts a column its natural way (last seen: newest first);
   // clicking the same column again flips the direction.
   function toggleSort(key: SortKey) {
-    setSort(s =>
+    setSort((s) =>
       s?.key === key
         ? { key, dir: s.dir === 1 ? -1 : 1 }
-        : { key, dir: key === "lastSeen" ? -1 : 1 }
+        : { key, dir: key === "lastSeen" ? -1 : 1 },
     );
   }
 
@@ -187,18 +182,14 @@ export default function DevicesPage() {
     const list = devices ?? [];
     return {
       total: list.length,
-      active: list.filter(d => d.status === "active").length,
-      pending: list.filter(d => d.status === "pending").length,
-      disabled: list.filter(d => d.status === "disabled").length,
+      active: list.filter((d) => d.status === "active").length,
+      pending: list.filter((d) => d.status === "pending").length,
+      disabled: list.filter((d) => d.status === "disabled").length,
     };
   }, [devices]);
 
   const header = (
-    <PageHeader
-      title={t("devices.heading")}
-      description={t("devices.sub")}
-      icon={<Monitor />}
-    />
+    <PageHeader title={t("devices.heading")} description={t("devices.sub")} icon={<Monitor />} />
   );
 
   if (devices === undefined || people === undefined) {
@@ -220,17 +211,13 @@ export default function DevicesPage() {
   // so the badge, the person-link select and the admin actions live in one
   // place and the two layouts can't drift apart in behaviour.
 
-  const timelineHref = (deviceId: string) =>
-    `/activity/timeline/${encodeURIComponent(deviceId)}`;
+  const timelineHref = (deviceId: string) => `/activity/timeline/${encodeURIComponent(deviceId)}`;
 
   const emptyMessage =
     devices.length === 0 ? (
       <>
         {t("devices.empty")}{" "}
-        <Link
-          href="/activity/help"
-          className="whitespace-nowrap text-signal hover:underline"
-        >
+        <Link href="/activity/help" className="whitespace-nowrap text-signal hover:underline">
           {t("devices.emptyCta")}
         </Link>
       </>
@@ -240,9 +227,7 @@ export default function DevicesPage() {
 
   const statusBadge = (d: (typeof visibleDevices)[number]) => (
     <InfoTip text={t(`help.deviceStatus.${d.status}`)}>
-      <Badge variant={DEVICE_VARIANT[d.status] ?? "muted"}>
-        {statusLabel[d.status]}
-      </Badge>
+      <Badge variant={DEVICE_VARIANT[d.status] ?? "muted"}>{statusLabel[d.status]}</Badge>
     </InfoTip>
   );
 
@@ -250,16 +235,13 @@ export default function DevicesPage() {
     isManager ? (
       <Select
         value={d.personId ?? "__none__"}
-        onValueChange={value =>
+        onValueChange={(value) =>
           void link(
             {
               deviceId: d._id,
-              personId:
-                value === "__none__"
-                  ? null
-                  : (value as (typeof people)[number]["_id"]),
+              personId: value === "__none__" ? null : (value as (typeof people)[number]["_id"]),
             },
-            { success: t("devices.linked") }
+            { success: t("devices.linked") },
           )
         }
       >
@@ -268,7 +250,7 @@ export default function DevicesPage() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="__none__">{t("devices.none")}</SelectItem>
-          {people.map(p => (
+          {people.map((p) => (
             <SelectItem key={p._id} value={p._id}>
               {p.name}
             </SelectItem>
@@ -276,9 +258,7 @@ export default function DevicesPage() {
         </SelectContent>
       </Select>
     ) : (
-      <span className="text-muted-foreground">
-        {d.personName ?? t("devices.none")}
-      </span>
+      <span className="text-muted-foreground">{d.personName ?? t("devices.none")}</span>
     );
 
   const adminActions = (d: (typeof visibleDevices)[number]) =>
@@ -292,7 +272,7 @@ export default function DevicesPage() {
             disabled={busyId === d._id}
             onClick={() =>
               void runWithBusy(d._id, () =>
-                approve({ deviceId: d._id }, { success: t("devices.approved") })
+                approve({ deviceId: d._id }, { success: t("devices.approved") }),
               )
             }
           >
@@ -307,7 +287,7 @@ export default function DevicesPage() {
             disabled={busyId === d._id}
             onClick={() =>
               void runWithBusy(d._id, () =>
-                disable({ deviceId: d._id }, { success: t("devices.disabled") })
+                disable({ deviceId: d._id }, { success: t("devices.disabled") }),
               )
             }
           >
@@ -337,11 +317,7 @@ export default function DevicesPage() {
           label={t("devices.all")}
           value={counts.total}
           tone="fg"
-          hint={
-            counts.total > 0
-              ? `${counts.active} ${t("status.active")}`
-              : undefined
-          }
+          hint={counts.total > 0 ? `${counts.active} ${t("status.active")}` : undefined}
           icon={<MonitorSmartphone className="h-4 w-4" />}
         />
         <StatCard
@@ -376,7 +352,7 @@ export default function DevicesPage() {
               placeholder={t("devices.filter.search")}
               aria-label={t("devices.filter.search")}
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="w-full sm:w-48"
             />
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -402,7 +378,7 @@ export default function DevicesPage() {
               </CardContent>
             </Card>
           ) : (
-            visibleDevices.map(d => (
+            visibleDevices.map((d) => (
               <Card key={d._id}>
                 <CardContent className="space-y-3 p-4">
                   <div className="flex items-start justify-between gap-3">
@@ -497,23 +473,18 @@ export default function DevicesPage() {
                     onToggle={toggleSort}
                   />
                 </TableHead>
-                {(isAdmin || isManager) && (
-                  <TableHead>{t("devices.actions")}</TableHead>
-                )}
+                {(isAdmin || isManager) && <TableHead>{t("devices.actions")}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {visibleDevices.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="py-8 text-center text-sm text-muted-foreground"
-                  >
+                  <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
                     {emptyMessage}
                   </TableCell>
                 </TableRow>
               ) : (
-                visibleDevices.map(d => (
+                visibleDevices.map((d) => (
                   <TableRow key={d._id}>
                     <TableCell className="font-medium text-fg">
                       <Link
@@ -534,9 +505,7 @@ export default function DevicesPage() {
                             .map((h, i) => (
                               <span key={`${h.user}-${h.changedAt}`}>
                                 {i > 0 && ", "}
-                                <span title={formatTime(h.changedAt, lang)}>
-                                  {h.user}
-                                </span>
+                                <span title={formatTime(h.changedAt, lang)}>{h.user}</span>
                               </span>
                             ))}
                         </span>
@@ -547,9 +516,7 @@ export default function DevicesPage() {
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {formatRelativeTime(d.lastSeen, lang)}
                     </TableCell>
-                    {(isAdmin || isManager) && (
-                      <TableCell>{adminActions(d)}</TableCell>
-                    )}
+                    {(isAdmin || isManager) && <TableCell>{adminActions(d)}</TableCell>}
                   </TableRow>
                 ))
               )}
@@ -568,7 +535,7 @@ export default function DevicesPage() {
           setDeleteTarget(null);
           if (id) {
             await runWithBusy(id, () =>
-              removeDevice({ deviceId: id }, { success: t("devices.deleted") })
+              removeDevice({ deviceId: id }, { success: t("devices.deleted") }),
             );
           }
         }}

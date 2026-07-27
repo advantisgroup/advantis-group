@@ -2,24 +2,9 @@
 
 import { useMemo, useState } from "react";
 
-import {
-  ArrowDown,
-  ArrowUp,
-  ArrowUpDown,
-  Clock,
-  Phone,
-  Timer,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Clock, Phone, Timer } from "lucide-react";
 import { useTranslations } from "next-intl";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
 import { type InteractionTotal } from "@/components/performance/InteractionsTable";
@@ -140,20 +125,20 @@ export function InteractionRecordsTable({
 
   const longestSec = useMemo(
     () => records.reduce((a, r) => Math.max(a, r.durationSec), 0),
-    [records]
+    [records],
   );
 
   const filtered = useMemo(() => {
     let rows = records;
     if (showEmployee && search.trim()) {
       const q = search.trim().toLowerCase();
-      rows = rows.filter(r => r.employeeName.toLowerCase().includes(q));
+      rows = rows.filter((r) => r.employeeName.toLowerCase().includes(q));
     }
     if (direction !== ALL) {
-      rows = rows.filter(r => (r.direction ?? "") === direction);
+      rows = rows.filter((r) => (r.direction ?? "") === direction);
     }
     if (durationFilter !== "all") {
-      rows = rows.filter(r => durationBucket(r.durationSec) === durationFilter);
+      rows = rows.filter((r) => durationBucket(r.durationSec) === durationFilter);
     }
     return rows;
   }, [records, search, direction, durationFilter, showEmployee]);
@@ -185,14 +170,11 @@ export function InteractionRecordsTable({
 
   const pageCount = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const page0 = Math.min(page, pageCount - 1);
-  const pageRows = sorted.slice(
-    page0 * PAGE_SIZE,
-    page0 * PAGE_SIZE + PAGE_SIZE
-  );
+  const pageRows = sorted.slice(page0 * PAGE_SIZE, page0 * PAGE_SIZE + PAGE_SIZE);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
-      setSortDir(d => (d === "asc" ? "desc" : "asc"));
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     } else {
       setSortKey(key);
       setSortDir("asc");
@@ -210,9 +192,7 @@ export function InteractionRecordsTable({
           <CardTitle className="text-base">{t("interactionsTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {t("interactionsEmpty")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("interactionsEmpty")}</p>
         </CardContent>
       </Card>
     );
@@ -221,11 +201,7 @@ export function InteractionRecordsTable({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <MetricTile
-          icon={Phone}
-          label={t("interactionsStatCount")}
-          value={fmtNum(total.count)}
-        />
+        <MetricTile icon={Phone} label={t("interactionsStatCount")} value={fmtNum(total.count)} />
         <MetricTile
           icon={Clock}
           label={t("colTotalDuration")}
@@ -245,16 +221,11 @@ export function InteractionRecordsTable({
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("interactionsHourlyTitle")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("interactionsHourlyTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart
-              data={hourly}
-              margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
-            >
+            <BarChart data={hourly} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid stroke={CHART.grid} vertical={false} />
               <XAxis
                 dataKey="hour"
@@ -291,7 +262,7 @@ export function InteractionRecordsTable({
             {showEmployee && (
               <Input
                 value={search}
-                onChange={e => {
+                onChange={(e) => {
                   setSearch(e.target.value);
                   resetPage();
                 }}
@@ -302,7 +273,7 @@ export function InteractionRecordsTable({
             {directions.length > 0 && (
               <Select
                 value={direction}
-                onValueChange={v => {
+                onValueChange={(v) => {
                   setDirection(v);
                   resetPage();
                 }}
@@ -311,10 +282,8 @@ export function InteractionRecordsTable({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL}>
-                    {t("interactionsFilterAllDirections")}
-                  </SelectItem>
-                  {directions.map(d => (
+                  <SelectItem value={ALL}>{t("interactionsFilterAllDirections")}</SelectItem>
+                  {directions.map((d) => (
                     <SelectItem key={d} value={d}>
                       {d}
                     </SelectItem>
@@ -324,7 +293,7 @@ export function InteractionRecordsTable({
             )}
             <Select
               value={durationFilter}
-              onValueChange={v => {
+              onValueChange={(v) => {
                 setDurationFilter(v as DurationFilter);
                 resetPage();
               }}
@@ -333,27 +302,17 @@ export function InteractionRecordsTable({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">
-                  {t("interactionsFilterDurationAll")}
-                </SelectItem>
-                <SelectItem value="short">
-                  {t("interactionsFilterDurationShort")}
-                </SelectItem>
-                <SelectItem value="medium">
-                  {t("interactionsFilterDurationMedium")}
-                </SelectItem>
-                <SelectItem value="long">
-                  {t("interactionsFilterDurationLong")}
-                </SelectItem>
+                <SelectItem value="all">{t("interactionsFilterDurationAll")}</SelectItem>
+                <SelectItem value="short">{t("interactionsFilterDurationShort")}</SelectItem>
+                <SelectItem value="medium">{t("interactionsFilterDurationMedium")}</SelectItem>
+                <SelectItem value="long">{t("interactionsFilterDurationLong")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardHeader>
         <CardContent className="overflow-x-auto">
           {sorted.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("interactionsNoMatch")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("interactionsNoMatch")}</p>
           ) : (
             <>
               <Table>
@@ -390,25 +349,19 @@ export function InteractionRecordsTable({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pageRows.map(r => (
+                  {pageRows.map((r) => (
                     <TableRow key={r.id}>
                       {showEmployee && (
-                        <TableCell className="font-medium">
-                          {r.employeeName}
-                        </TableCell>
+                        <TableCell className="font-medium">{r.employeeName}</TableCell>
                       )}
-                      <TableCell className="tabular-nums">
-                        {fmtTimeOfDay(r.startedAt)}
-                      </TableCell>
+                      <TableCell className="tabular-nums">{fmtTimeOfDay(r.startedAt)}</TableCell>
                       <TableCell className="tabular-nums">
                         {fmtTimeOfDay(r.startedAt + r.durationSec * 1000)}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">
                         {fmtDurationPrecise(r.durationSec)}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {r.direction ?? "–"}
-                      </TableCell>
+                      <TableCell className="text-muted-foreground">{r.direction ?? "–"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -426,7 +379,7 @@ export function InteractionRecordsTable({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPage(p => Math.max(0, p - 1))}
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
                       disabled={page0 === 0}
                     >
                       {t("paginationPrev")}
@@ -440,9 +393,7 @@ export function InteractionRecordsTable({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() =>
-                        setPage(p => Math.min(pageCount - 1, p + 1))
-                      }
+                      onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
                       disabled={page0 >= pageCount - 1}
                     >
                       {t("paginationNext")}

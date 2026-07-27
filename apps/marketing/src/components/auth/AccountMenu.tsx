@@ -2,21 +2,8 @@
 
 import { useMemo } from "react";
 
-import {
-  SignInButton,
-  SignOutButton,
-  SignUpButton,
-  useClerk,
-  useUser,
-} from "@clerk/nextjs";
-import {
-  ChevronRight,
-  LogIn,
-  LogOut,
-  ReceiptText,
-  Settings2,
-  UserRound,
-} from "lucide-react";
+import { SignInButton, SignOutButton, SignUpButton, useClerk, useUser } from "@clerk/nextjs";
+import { ChevronRight, LogIn, LogOut, ReceiptText, Settings2, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,7 +23,7 @@ const getInitials = (fullName: string, email?: string | null) => {
 
   return parts
     .slice(0, 2)
-    .map(part => part[0]?.toUpperCase())
+    .map((part) => part[0]?.toUpperCase())
     .join("");
 };
 
@@ -53,16 +40,9 @@ export const AccountMenu = ({
   const { user, isSignedIn } = useUser();
 
   const displayName = useMemo(() => {
-    const nameFromParts = [user?.firstName, user?.lastName]
-      .filter(Boolean)
-      .join(" ");
+    const nameFromParts = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
 
-    return (
-      user?.fullName ||
-      nameFromParts ||
-      user?.primaryEmailAddress?.emailAddress ||
-      t("guest")
-    );
+    return user?.fullName || nameFromParts || user?.primaryEmailAddress?.emailAddress || t("guest");
   }, [t, user]);
 
   const email = user?.primaryEmailAddress?.emailAddress;
@@ -77,12 +57,8 @@ export const AccountMenu = ({
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {displayName}
-            </p>
-            {email ? (
-              <p className="truncate text-sm text-muted-foreground">{email}</p>
-            ) : null}
+            <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+            {email ? <p className="truncate text-sm text-muted-foreground">{email}</p> : null}
           </div>
         </div>
 
@@ -102,11 +78,7 @@ export const AccountMenu = ({
             <ChevronRight className="h-4 w-4" />
           </Button>
           <Button asChild variant="outline" className="w-full justify-between">
-            <Link
-              href="/account/submissions"
-              locale={locale}
-              onClick={() => onMobileNavigate?.()}
-            >
+            <Link href="/account/submissions" locale={locale} onClick={() => onMobileNavigate?.()}>
               <span className="flex items-center gap-2">
                 <ReceiptText className="h-4 w-4" />
                 {t("submissionsCta")}
@@ -135,20 +107,14 @@ export const AccountMenu = ({
             </AvatarFallback>
           </Avatar>
           <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
-              {t("menuLabel")}
-            </p>
+            <p className="text-sm font-semibold text-foreground">{t("menuLabel")}</p>
             <p className="text-sm text-muted-foreground">{t("providerHint")}</p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
           <SignInButton>
-            <Button
-              type="button"
-              className="w-full"
-              onClick={() => onMobileNavigate?.()}
-            >
+            <Button type="button" className="w-full" onClick={() => onMobileNavigate?.()}>
               <LogIn className="h-4 w-4" />
               {t("signIn")}
             </Button>
@@ -179,9 +145,7 @@ export const AccountMenu = ({
         >
           <span className="absolute inset-0 rounded-full bg-advantis/10 opacity-0 blur-md transition-opacity duration-300 group-hover/account:opacity-100" />
           <Avatar className="relative z-10 h-8 w-8 border-border/80 bg-background transition-colors duration-200 group-hover/account:border-advantis/40">
-            {isSignedIn ? (
-              <AvatarImage src={user.imageUrl} alt={displayName} />
-            ) : null}
+            {isSignedIn ? <AvatarImage src={user.imageUrl} alt={displayName} /> : null}
             <AvatarFallback
               className={
                 isSignedIn
@@ -207,14 +171,8 @@ export const AccountMenu = ({
                 <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {displayName}
-                </p>
-                {email ? (
-                  <p className="truncate text-sm text-muted-foreground">
-                    {email}
-                  </p>
-                ) : null}
+                <p className="truncate text-sm font-semibold text-foreground">{displayName}</p>
+                {email ? <p className="truncate text-sm text-muted-foreground">{email}</p> : null}
               </div>
             </div>
 
@@ -247,12 +205,8 @@ export const AccountMenu = ({
         ) : (
           <div className="space-y-4 p-3">
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-foreground">
-                {t("menuLabel")}
-              </p>
-              <p className="text-sm leading-6 text-muted-foreground">
-                {t("providerHint")}
-              </p>
+              <p className="text-sm font-semibold text-foreground">{t("menuLabel")}</p>
+              <p className="text-sm leading-6 text-muted-foreground">{t("providerHint")}</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <SignInButton>
@@ -261,12 +215,7 @@ export const AccountMenu = ({
                 </Button>
               </SignInButton>
               <SignUpButton>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="w-full"
-                >
+                <Button type="button" size="sm" variant="outline" className="w-full">
                   {t("signUp")}
                 </Button>
               </SignUpButton>

@@ -29,11 +29,7 @@ import { TourPopout } from "@/components/tour/TourPopout";
 import { TourProgressChip } from "@/components/tour/TourProgressChip";
 import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UpdateBanner } from "@/components/updates/UpdateBanner";
 import { cn } from "@/lib/utils";
 
@@ -89,8 +85,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // dropped in favor of a slim logo-only header. The composer at
   // /updates/new keeps full chrome since it's an editing tool, not reading.
   const isUpdatesReading =
-    pathname === "/updates" ||
-    (pathname.startsWith("/updates/") && pathname !== "/updates/new");
+    pathname === "/updates" || (pathname.startsWith("/updates/") && pathname !== "/updates/new");
 
   // The detail page renders its own full-bleed art banner flush against
   // <main>'s edges, so <main> drops its own padding here and the page
@@ -98,8 +93,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // negative-margin "breakout" doesn't work: overflow-y-auto forces
   // overflow-x to compute to auto too, per the CSS overflow spec, so any
   // content pushed past <main>'s padding box gets clipped right back to it.)
-  const isUpdateDetail =
-    pathname.startsWith("/updates/") && pathname !== "/updates/new";
+  const isUpdateDetail = pathname.startsWith("/updates/") && pathname !== "/updates/new";
 
   // Keep presence fresh while the app is open so chat can show online state.
   // 60s leaves ample margin under the 5-minute online window
@@ -159,7 +153,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
             "min-h-0 flex-1 overflow-y-auto print:overflow-visible",
             !immersive && "md:pb-8",
             isUpdateDetail || immersive ? "" : "px-4 pt-6 md:px-8 md:pt-8",
-            immersive ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
+            immersive ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]",
           )}
         >
           {/* Isolate page crashes so the surrounding shell stays usable.

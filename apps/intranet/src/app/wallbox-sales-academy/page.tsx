@@ -13,12 +13,10 @@ export default function WallboxAcademyPublicHomePage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-lg font-semibold">Wallbox Sales Academy</h1>
-        <p className="text-sm text-muted-foreground">
-          B2B-Vertriebstraining Ladeinfrastruktur.
-        </p>
+        <p className="text-sm text-muted-foreground">B2B-Vertriebstraining Ladeinfrastruktur.</p>
       </div>
       <ParticipantLogin
-        onLogin={p => {
+        onLogin={(p) => {
           loginParticipant(p);
           router.push("/wallbox-sales-academy/training");
         }}

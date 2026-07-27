@@ -6,15 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type ScanReport, type ScanSeverity } from "@advantis/types";
 import { useQuery } from "convex/react";
-import {
-  AlertTriangle,
-  Check,
-  FileText,
-  Loader2,
-  ShieldAlert,
-  ShieldCheck,
-  X,
-} from "lucide-react";
+import { AlertTriangle, Check, FileText, Loader2, ShieldAlert, ShieldCheck, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -45,10 +37,8 @@ function parseReport(json: string): ScanReport | null {
 }
 
 function verdictBadge(verdict: ScanReport["verdict"]) {
-  if (verdict === "clean")
-    return { variant: "success" as const, icon: ShieldCheck };
-  if (verdict === "suspicious")
-    return { variant: "warning" as const, icon: AlertTriangle };
+  if (verdict === "clean") return { variant: "success" as const, icon: ShieldCheck };
+  if (verdict === "suspicious") return { variant: "warning" as const, icon: AlertTriangle };
   return { variant: "destructive" as const, icon: ShieldAlert };
 }
 
@@ -73,7 +63,7 @@ export function UploadApprovalQueue({
   const deepLinkUploadId = useDeepLinkId("upload");
   useEffect(() => {
     if (!deepLinkUploadId || !pending) return;
-    const match = pending.find(u => u._id === deepLinkUploadId);
+    const match = pending.find((u) => u._id === deepLinkUploadId);
     // One-shot sync from the deep-link id into local dialog state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (match) setSelected(match);
@@ -89,15 +79,13 @@ export function UploadApprovalQueue({
 
   if (pending.length === 0) {
     return (
-      <p className="py-12 text-center text-sm text-muted-foreground">
-        {t("noPendingUploads")}
-      </p>
+      <p className="py-12 text-center text-sm text-muted-foreground">{t("noPendingUploads")}</p>
     );
   }
 
   return (
     <div className="space-y-2">
-      {pending.map(upload => {
+      {pending.map((upload) => {
         const report = parseReport(upload.scanReport);
         const badge = report ? verdictBadge(report.verdict) : null;
         return (
@@ -124,11 +112,7 @@ export function UploadApprovalQueue({
         );
       })}
 
-      <InspectorDialog
-        upload={selected}
-        onClose={() => setSelected(null)}
-        readOnly={readOnly}
-      />
+      <InspectorDialog upload={selected} onClose={() => setSelected(null)} readOnly={readOnly} />
     </div>
   );
 }
@@ -147,10 +131,7 @@ function InspectorDialog({
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<"approve" | "deny" | null>(null);
 
-  const report = useMemo(
-    () => (upload ? parseReport(upload.scanReport) : null),
-    [upload]
-  );
+  const report = useMemo(() => (upload ? parseReport(upload.scanReport) : null), [upload]);
   const isImage = upload?.contentType.startsWith("image/") ?? false;
   const isPdf = upload?.contentType.includes("pdf") ?? false;
 
@@ -161,9 +142,7 @@ function InspectorDialog({
       const id = upload._id as Id<"onedriveUploads">;
       if (kind === "approve") await od.approve(id, note || undefined);
       else await od.deny(id, note || undefined);
-      toast.success(
-        kind === "approve" ? t("uploadApproved") : t("uploadDenied")
-      );
+      toast.success(kind === "approve" ? t("uploadApproved") : t("uploadDenied"));
       setNote("");
       onClose();
     } catch (e) {
@@ -174,13 +153,12 @@ function InspectorDialog({
   };
 
   return (
-    <Dialog open={upload !== null} onOpenChange={o => !o && onClose()}>
+    <Dialog open={upload !== null} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle className="truncate">{upload?.fileName}</DialogTitle>
           <DialogDescription>
-            {upload?.requesterName} →{" "}
-            {upload?.targetFolderPath || "Advantis Group"}
+            {upload?.requesterName} → {upload?.targetFolderPath || "Advantis Group"}
           </DialogDescription>
         </DialogHeader>
 
@@ -194,10 +172,7 @@ function InspectorDialog({
                 label={t("metaRequestedAt")}
                 value={new Date(upload.createdAt).toLocaleString()}
               />
-              <Meta
-                label={t("metaTarget")}
-                value={upload.targetFolderPath || "/"}
-              />
+              <Meta label={t("metaTarget")} value={upload.targetFolderPath || "/"} />
             </dl>
 
             {/* Scan report */}
@@ -210,9 +185,7 @@ function InspectorDialog({
                   </Badge>
                 </div>
                 {report.flags.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    {t("scanNoFlags")}
-                  </p>
+                  <p className="text-xs text-muted-foreground">{t("scanNoFlags")}</p>
                 ) : (
                   <ul className="space-y-1">
                     {report.flags.map((f, i) => (
@@ -238,11 +211,7 @@ function InspectorDialog({
                     className="max-h-72 w-full object-contain"
                   />
                 ) : (
-                  <iframe
-                    src={upload.previewUrl}
-                    title={upload.fileName}
-                    className="h-72 w-full"
-                  />
+                  <iframe src={upload.previewUrl} title={upload.fileName} className="h-72 w-full" />
                 )}
               </div>
             )}
@@ -252,7 +221,7 @@ function InspectorDialog({
                 {/* Decision */}
                 <Textarea
                   value={note}
-                  onChange={e => setNote(e.target.value)}
+                  onChange={(e) => setNote(e.target.value)}
                   placeholder={t("decisionNotePlaceholder")}
                   rows={2}
                 />
@@ -269,10 +238,7 @@ function InspectorDialog({
                     )}
                     {t("deny")}
                   </Button>
-                  <Button
-                    onClick={() => void decide("approve")}
-                    disabled={busy !== null}
-                  >
+                  <Button onClick={() => void decide("approve")} disabled={busy !== null}>
                     {busy === "approve" ? (
                       <Loader2 className="size-4 animate-spin" />
                     ) : (

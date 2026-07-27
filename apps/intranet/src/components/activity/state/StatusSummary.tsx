@@ -2,11 +2,7 @@
 
 import { formatDuration, nowMs } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
-import {
-  describeStatus,
-  type StatusInput,
-  type StatusTone,
-} from "@/lib/activity/status";
+import { describeStatus, type StatusInput, type StatusTone } from "@/lib/activity/status";
 import { cn } from "@/lib/utils";
 
 /**
@@ -74,29 +70,20 @@ export function StatusSummary({
     <div className={cn("flex items-center gap-2.5", className)}>
       {/* Static colour-coded dot — no pulse, intentionally calm. */}
       <span
-        className={cn(
-          "shrink-0 rounded-full",
-          lg ? "h-2.5 w-2.5" : "h-2 w-2",
-          TONE_DOT[tone]
-        )}
+        className={cn("shrink-0 rounded-full", lg ? "h-2.5 w-2.5" : "h-2 w-2", TONE_DOT[tone])}
       />
       <div className="min-w-0">
         <p
           className={cn(
             "truncate font-semibold leading-tight",
             lg ? "text-xl" : "text-sm",
-            TONE_TEXT[tone]
+            TONE_TEXT[tone],
           )}
         >
           {t(headlineKey)}
         </p>
         {subLine && (
-          <p
-            className={cn(
-              "truncate text-muted-foreground",
-              lg ? "text-sm" : "text-xs"
-            )}
-          >
+          <p className={cn("truncate text-muted-foreground", lg ? "text-sm" : "text-xs")}>
             {subLine}
           </p>
         )}
@@ -107,7 +94,7 @@ export function StatusSummary({
             title={t("state.assumedHint")}
             className={cn(
               "truncate italic text-muted-foreground/80 underline decoration-dotted underline-offset-2",
-              lg ? "text-xs" : "text-[11px]"
+              lg ? "text-xs" : "text-[11px]",
             )}
           >
             {t("state.assumed")}

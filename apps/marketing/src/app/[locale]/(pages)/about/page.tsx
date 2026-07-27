@@ -103,7 +103,7 @@ export default function UberUns() {
               className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-10"
             >
               {t.rich("hero.subtitle", {
-                brand: chunks => (
+                brand: (chunks) => (
                   <BrandText brand="advantis" className="font-semibold">
                     {chunks as string}
                   </BrandText>
@@ -137,9 +137,7 @@ export default function UberUns() {
                   <div className="inline-block px-3 py-1 rounded-md bg-primary/10 text-xs font-semibold tracking-wider uppercase text-primary mb-6">
                     {t("mission.badge")}
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                    {t("mission.title")}
-                  </h2>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6">{t("mission.title")}</h2>
                   <p className="text-lg text-muted-foreground leading-relaxed">
                     {t("mission.description")}
                   </p>
@@ -157,9 +155,7 @@ export default function UberUns() {
                   <div className="inline-block px-3 py-1 rounded-md bg-secondary/10 text-xs font-semibold tracking-wider uppercase text-secondary mb-6">
                     {t("vision.badge")}
                   </div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                    {t("vision.title")}
-                  </h2>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-6">{t("vision.title")}</h2>
                   <p className="text-lg text-muted-foreground leading-relaxed">
                     {t("vision.description")}
                   </p>
@@ -191,24 +187,18 @@ export default function UberUns() {
                   <div className="prose prose-lg dark:prose-invert max-w-none">
                     <p className="text-xl leading-relaxed font-medium text-foreground">
                       {t.rich("story.text1", {
-                        brand: chunks => (
-                          <BrandText brand="advantis">
-                            {chunks as string}
-                          </BrandText>
+                        brand: (chunks) => (
+                          <BrandText brand="advantis">{chunks as string}</BrandText>
                         ),
-                        founder: chunks => (
-                          <span className="font-bold text-foreground">
-                            {chunks}
-                          </span>
+                        founder: (chunks) => (
+                          <span className="font-bold text-foreground">{chunks}</span>
                         ),
                       })}
                     </p>
                     <p className="text-lg text-muted-foreground leading-relaxed">
                       {t.rich("story.text2", {
-                        brand: chunks => (
-                          <BrandText brand="advantis">
-                            {chunks as string}
-                          </BrandText>
+                        brand: (chunks) => (
+                          <BrandText brand="advantis">{chunks as string}</BrandText>
                         ),
                       })}
                     </p>
@@ -270,9 +260,7 @@ export default function UberUns() {
                 <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-[0.2em] mb-4">
                   {t("values.badge")}
                 </h2>
-                <h3 className="text-3xl md:text-4xl font-bold">
-                  What drives us
-                </h3>
+                <h3 className="text-3xl md:text-4xl font-bold">What drives us</h3>
               </div>
 
               <div className="grid md:grid-cols-3 gap-8">
@@ -291,17 +279,10 @@ export default function UberUns() {
                         <div
                           className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-background/80 mb-6 shadow-sm group-hover:scale-110 transition-transform duration-300`}
                         >
-                          <Icon
-                            className={`w-8 h-8 ${value.iconColor}`}
-                            strokeWidth={1.5}
-                          />
+                          <Icon className={`w-8 h-8 ${value.iconColor}`} strokeWidth={1.5} />
                         </div>
-                        <h3 className="text-xl font-bold mb-4">
-                          {value.title}
-                        </h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          {value.description}
-                        </p>
+                        <h3 className="text-xl font-bold mb-4">{value.title}</h3>
+                        <p className="text-muted-foreground leading-relaxed">{value.description}</p>
                       </div>
                     </div>
                   );
@@ -317,9 +298,7 @@ export default function UberUns() {
               <div className="absolute inset-0 bg-linear-to-br from-white/10 to-transparent" />
 
               <div className="relative z-10 max-w-3xl mx-auto space-y-8">
-                <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-                  {t("cta.title")}
-                </h2>
+                <h2 className="text-4xl md:text-5xl font-bold tracking-tight">{t("cta.title")}</h2>
                 <p className="text-xl text-primary-foreground/80 leading-relaxed font-medium">
                   {t("cta.description")}
                 </p>
@@ -329,10 +308,7 @@ export default function UberUns() {
                   variant="secondary"
                   className="h-14 px-8 text-lg rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-105"
                 >
-                  <Link
-                    href="/contact"
-                    className="inline-flex items-center gap-2"
-                  >
+                  <Link href="/contact" className="inline-flex items-center gap-2">
                     <span>{t("cta.button")}</span>
                     <ArrowRight className="w-5 h-5" />
                   </Link>

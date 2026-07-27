@@ -2,24 +2,13 @@
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import {
-  CalendarDays,
-  MapPin,
-  Megaphone,
-  PartyPopper,
-  Plane,
-} from "lucide-react";
+import { CalendarDays, MapPin, Megaphone, PartyPopper, Plane } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { htmlToText } from "@/components/ui/rich-text";
 import { isoToday } from "@/lib/absences";
-import {
-  formatDateTime,
-  formatIsoDate,
-  initials,
-  relativeTime,
-} from "@/lib/format";
+import { formatDateTime, formatIsoDate, initials, relativeTime } from "@/lib/format";
 
 import { DashCard, Empty, Row, RowSkeletons } from "./primitives";
 
@@ -35,11 +24,7 @@ export function EventsCard() {
   });
 
   return (
-    <DashCard
-      icon={<CalendarDays />}
-      title={t("upcomingEvents")}
-      count={events?.length}
-    >
+    <DashCard icon={<CalendarDays />} title={t("upcomingEvents")} count={events?.length}>
       {events === undefined ? (
         <RowSkeletons />
       ) : events.length === 0 ? (
@@ -49,7 +34,7 @@ export function EventsCard() {
       ) : (
         events
           .slice(0, 5)
-          .map(e => (
+          .map((e) => (
             <Row
               key={e._id}
               href={`/calendar?event=${e._id}`}
@@ -63,9 +48,7 @@ export function EventsCard() {
                 )
               }
               trailing={
-                <span className="whitespace-nowrap">
-                  {formatDateTime(e.start, locale)}
-                </span>
+                <span className="whitespace-nowrap">{formatDateTime(e.start, locale)}</span>
               }
             />
           ))
@@ -87,7 +70,7 @@ export function AnnouncementsCard() {
           {t("noAnnouncements")}
         </Empty>
       ) : (
-        announcements.slice(0, 5).map(a => (
+        announcements.slice(0, 5).map((a) => (
           <Row
             key={a._id}
             href={`/announcements?id=${a._id}`}
@@ -95,9 +78,7 @@ export function AnnouncementsCard() {
             subtitle={htmlToText(a.body) || undefined}
             leading={
               <Avatar className="size-8 shrink-0">
-                {a.authorAvatar && (
-                  <AvatarImage src={a.authorAvatar} alt={a.authorName} />
-                )}
+                {a.authorAvatar && <AvatarImage src={a.authorAvatar} alt={a.authorName} />}
                 <AvatarFallback className="bg-primary/10 text-[10px] font-semibold text-primary">
                   {initials(a.authorName, a.authorName)}
                 </AvatarFallback>
@@ -105,12 +86,8 @@ export function AnnouncementsCard() {
             }
             trailing={
               <>
-                <span className="whitespace-nowrap">
-                  {relativeTime(a.publishedAt)}
-                </span>
-                {!a.read && (
-                  <span className="h-2 w-2 rounded-full bg-primary" />
-                )}
+                <span className="whitespace-nowrap">{relativeTime(a.publishedAt)}</span>
+                {!a.read && <span className="h-2 w-2 rounded-full bg-primary" />}
               </>
             }
           />
@@ -131,11 +108,7 @@ export function WhosOutCard() {
   });
 
   return (
-    <DashCard
-      icon={<Plane />}
-      title={t("whosOutToday")}
-      count={outToday?.length || undefined}
-    >
+    <DashCard icon={<Plane />} title={t("whosOutToday")} count={outToday?.length || undefined}>
       {outToday === undefined ? (
         <RowSkeletons />
       ) : outToday.length === 0 ? (
@@ -143,7 +116,7 @@ export function WhosOutCard() {
           {t("nobodyOut")}
         </Empty>
       ) : (
-        outToday.slice(0, 5).map(a => (
+        outToday.slice(0, 5).map((a) => (
           <Row
             key={a._id}
             href={`/calendar?absence=${a._id}`}
@@ -180,7 +153,7 @@ export function CelebrationsCard() {
       ) : celebrations.length === 0 ? (
         <Empty>{t("celebrationsEmpty")}</Empty>
       ) : (
-        celebrations.map(c => (
+        celebrations.map((c) => (
           <Row
             key={`${c.userId}-${c.type}`}
             href={`/directory?user=${c.userId}`}

@@ -13,12 +13,7 @@ import { fmtDurationPrecise } from "@/components/performance/PerformanceFormat";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -56,10 +51,7 @@ function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
   const [hours, setHours] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
 
-  async function run(
-    action: "ignore" | "force" | "edit",
-    value?: number
-  ): Promise<void> {
+  async function run(action: "ignore" | "force" | "edit", value?: number): Promise<void> {
     setBusy(action);
     try {
       await resolve({
@@ -85,7 +77,7 @@ function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
         <Input
           autoFocus
           value={hours}
-          onChange={e => setHours(e.target.value)}
+          onChange={(e) => setHours(e.target.value)}
           placeholder={t("flaggedEditPlaceholder")}
           className="h-8 w-24 text-xs"
         />
@@ -95,11 +87,7 @@ function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
           disabled={!valid || busy !== null}
           onClick={() => void run("edit", Math.round(parsed * 3600))}
         >
-          {busy === "edit" ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            t("flaggedSave")
-          )}
+          {busy === "edit" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("flaggedSave")}
         </Button>
         <Button
           variant="ghost"
@@ -132,11 +120,7 @@ function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
         disabled={busy !== null}
         onClick={() => void run("ignore")}
       >
-        {busy === "ignore" ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          t("flaggedIgnore")
-        )}
+        {busy === "ignore" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : t("flaggedIgnore")}
       </Button>
       <Button
         variant="outline"
@@ -170,9 +154,7 @@ export function FlaggedRowsDialog({ token }: { token: string }) {
     <>
       <Alert variant="warning">
         <AlertTriangle />
-        <AlertTitle>
-          {t("flaggedBannerTitle", { count: rows.length })}
-        </AlertTitle>
+        <AlertTitle>{t("flaggedBannerTitle", { count: rows.length })}</AlertTitle>
         <AlertDescription className="flex items-center justify-between gap-3">
           <span>{t("flaggedBannerBody")}</span>
           <Button
@@ -207,23 +189,14 @@ export function FlaggedRowsDialog({ token }: { token: string }) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map(row => (
+                {rows.map((row) => (
                   <TableRow key={row._id} className="bg-warning/5">
-                    <TableCell className="font-medium">
-                      {row.employeeName}
-                    </TableCell>
+                    <TableCell className="font-medium">{row.employeeName}</TableCell>
+                    <TableCell>{formatIsoDate(row.reportDate, locale)}</TableCell>
                     <TableCell>
-                      {formatIsoDate(row.reportDate, locale)}
+                      <Badge variant="warning">{t(FIELD_LABEL_KEY[row.field] ?? row.field)}</Badge>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="warning">
-                        {t(FIELD_LABEL_KEY[row.field] ?? row.field)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell
-                      className="font-mono text-xs"
-                      title={row.rawText}
-                    >
+                    <TableCell className="font-mono text-xs" title={row.rawText}>
                       {fmtDurationPrecise(row.rawSeconds)}
                     </TableCell>
                     <TableCell

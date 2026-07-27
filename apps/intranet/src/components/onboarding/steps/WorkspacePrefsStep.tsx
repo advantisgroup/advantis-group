@@ -13,14 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const START_PAGES = [
-  "/",
-  "/calendar",
-  "/absences",
-  "/announcements",
-  "/chat",
-  "/files",
-] as const;
+const START_PAGES = ["/", "/calendar", "/absences", "/announcements", "/chat", "/files"] as const;
 
 export function WorkspacePrefsStep() {
   const t = useTranslations("Onboarding");
@@ -40,12 +33,8 @@ export function WorkspacePrefsStep() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-display text-lg font-semibold tracking-tight">
-          {t("workspaceTitle")}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("workspaceHint")}
-        </p>
+        <h2 className="font-display text-lg font-semibold tracking-tight">{t("workspaceTitle")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("workspaceHint")}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -53,7 +42,7 @@ export function WorkspacePrefsStep() {
           <Label>{ts("defaultCalendarView")}</Label>
           <Select
             value={prefs?.defaultCalendarView ?? "month"}
-            onValueChange={v =>
+            onValueChange={(v) =>
               void setPrefs({
                 defaultCalendarView: v as "month" | "week" | "list",
               })
@@ -73,13 +62,13 @@ export function WorkspacePrefsStep() {
           <Label>{ts("startPage")}</Label>
           <Select
             value={prefs?.startPage ?? "/"}
-            onValueChange={v => void setPrefs({ startPage: v })}
+            onValueChange={(v) => void setPrefs({ startPage: v })}
           >
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {START_PAGES.map(p => (
+              {START_PAGES.map((p) => (
                 <SelectItem key={p} value={p}>
                   {pageLabel[p]}
                 </SelectItem>
@@ -91,9 +80,7 @@ export function WorkspacePrefsStep() {
           <Label>{ts("weekStart")}</Label>
           <Select
             value={prefs?.weekStartsOn ?? "monday"}
-            onValueChange={v =>
-              void setPrefs({ weekStartsOn: v as "monday" | "sunday" })
-            }
+            onValueChange={(v) => void setPrefs({ weekStartsOn: v as "monday" | "sunday" })}
           >
             <SelectTrigger>
               <SelectValue />

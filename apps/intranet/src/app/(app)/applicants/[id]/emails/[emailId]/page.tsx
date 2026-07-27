@@ -14,7 +14,7 @@ export default function ApplicantEmailDetailPage() {
   const applicant = useQuery(api.applicants.get, { applicantId });
 
   if (!applicant) return null;
-  const email = applicant.emails.find(m => m._id === params.emailId);
+  const email = applicant.emails.find((m) => m._id === params.emailId);
   if (!email) return null;
 
   return <EmailDetailModal applicantId={applicantId} email={email} />;

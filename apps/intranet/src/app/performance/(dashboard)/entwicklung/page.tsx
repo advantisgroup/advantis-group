@@ -31,70 +31,66 @@ export default function DashboardDevelopmentPage() {
 
   const funnelChart = useMemo(
     () =>
-      (data?.monthly ?? []).map(m => ({
+      (data?.monthly ?? []).map((m) => ({
         label: fmtYm(m.ym, locale),
         leads: m.leadsCreated ?? 0,
         workable: m.workableCreated ?? 0,
         won: m.wonMonth ?? 0,
         unqualified: m.unqualifiedTotal,
       })),
-    [data?.monthly, locale]
+    [data?.monthly, locale],
   );
   const hitrateChart = useMemo(
     () =>
-      (data?.monthly ?? []).map(m => ({
+      (data?.monthly ?? []).map((m) => ({
         label: fmtYm(m.ym, locale),
         hitrate: m.hitrate ?? null,
       })),
-    [data?.monthly, locale]
+    [data?.monthly, locale],
   );
   const callsPerDayChart = useMemo(
     () =>
-      (data?.callsPerDay ?? []).map(d => ({
+      (data?.callsPerDay ?? []).map((d) => ({
         label: fmtDayShort(d.date, locale),
         calls: d.values.callsToday ?? 0,
       })),
-    [data?.callsPerDay, locale]
+    [data?.callsPerDay, locale],
   );
   const leadsAnalysisChart = useMemo(
     () =>
-      (data?.leadsAnalysisPerDay ?? []).map(d => ({
+      (data?.leadsAnalysisPerDay ?? []).map((d) => ({
         label: fmtDayShort(d.date, locale),
         value: d.value,
       })),
-    [data?.leadsAnalysisPerDay, locale]
+    [data?.leadsAnalysisPerDay, locale],
   );
   const leadsDetailsIdentChart = useMemo(
     () =>
-      (data?.leadsDetailsIdentPerDay ?? []).map(d => ({
+      (data?.leadsDetailsIdentPerDay ?? []).map((d) => ({
         label: fmtDayShort(d.date, locale),
         value: d.value,
       })),
-    [data?.leadsDetailsIdentPerDay, locale]
+    [data?.leadsDetailsIdentPerDay, locale],
   );
   const oppsOpenChart = useMemo(
     () =>
-      (data?.oppsOpenPerDay ?? []).map(d => ({
+      (data?.oppsOpenPerDay ?? []).map((d) => ({
         label: fmtDayShort(d.date, locale),
         value: d.value,
       })),
-    [data?.oppsOpenPerDay, locale]
+    [data?.oppsOpenPerDay, locale],
   );
 
   if (!data) return <PerformanceContentSkeleton />;
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {t("developmentSubtitle")}
-      </p>
+      <p className="text-sm text-muted-foreground">{t("developmentSubtitle")}</p>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              {t("developmentFunnelTitle")}
-            </CardTitle>
+            <CardTitle className="text-base">{t("developmentFunnelTitle")}</CardTitle>
           </CardHeader>
           <CardContent>
             <FilterableBarChart
@@ -127,10 +123,7 @@ export default function DashboardDevelopmentPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
-              <LineChart
-                data={hitrateChart}
-                margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
-              >
+              <LineChart data={hitrateChart} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
                 <CartesianGrid stroke={CHART.grid} vertical={false} />
                 <XAxis
                   dataKey="label"
@@ -163,23 +156,16 @@ export default function DashboardDevelopmentPage() {
         </Card>
       </div>
 
-      <ClosedWonTrendChart
-        days={data.closedWonPerDay}
-        avg={data.wonPerDayAvg}
-      />
+      <ClosedWonTrendChart days={data.closedWonPerDay} avg={data.wonPerDayAvg} />
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("developmentCallsPerDayTitle")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("developmentCallsPerDayTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <FilterableBarChart
             data={callsPerDayChart}
-            series={[
-              { key: "calls", name: t("callsTotalLabel"), color: CHART.active },
-            ]}
+            series={[{ key: "calls", name: t("callsTotalLabel"), color: CHART.active }]}
           />
         </CardContent>
       </Card>
@@ -203,17 +189,14 @@ export default function DashboardDevelopmentPage() {
               color: CHART.idle,
             },
           ] as const
-        ).map(panel => (
+        ).map((panel) => (
           <Card key={panel.title}>
             <CardHeader>
               <CardTitle className="text-base">{panel.title}</CardTitle>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={220}>
-                <LineChart
-                  data={panel.chart}
-                  margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
-                >
+                <LineChart data={panel.chart} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>
                   <CartesianGrid stroke={CHART.grid} vertical={false} />
                   <XAxis
                     dataKey="label"

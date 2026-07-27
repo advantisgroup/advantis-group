@@ -46,13 +46,11 @@ export function InterviewDetailModal({
       cancelLabel: tc("cancel"),
     });
     if (!ok) return;
-    removeInterview({ interviewId: interview._id })
-      .then(close)
-      .catch(handleError);
+    removeInterview({ interviewId: interview._id }).then(close).catch(handleError);
   }
 
   return (
-    <Dialog open onOpenChange={o => !o && close()}>
+    <Dialog open onOpenChange={(o) => !o && close()}>
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
           <DialogTitle>
@@ -61,9 +59,7 @@ export function InterviewDetailModal({
             })}
           </DialogTitle>
           {interview.interviewer && (
-            <DialogDescription className="mt-1">
-              {interview.interviewer}
-            </DialogDescription>
+            <DialogDescription className="mt-1">{interview.interviewer}</DialogDescription>
           )}
         </div>
         <div className="space-y-3 px-6 py-5">

@@ -24,44 +24,43 @@ import type { LucideIcon } from "lucide-react";
  * Every mutable notification type with its icon/tint. `access_request`
  * (system) is deliberately absent — admins must not mute access requests.
  */
-export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] =
-  [
-    {
-      type: "chat-message",
-      icon: MessageSquare,
-      tint: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
-    },
-    {
-      type: "chat-mention",
-      icon: AtSign,
-      tint: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
-    },
-    {
-      type: "absence_request",
-      icon: Plane,
-      tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-    },
-    {
-      type: "absence_decision",
-      icon: CalendarCheck,
-      tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-    },
-    {
-      type: "announcement",
-      icon: Megaphone,
-      tint: "bg-primary/10 text-primary",
-    },
-    {
-      type: "upload_request",
-      icon: UploadCloud,
-      tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-    },
-    {
-      type: "upload_decision",
-      icon: UploadCloud,
-      tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-    },
-  ];
+export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] = [
+  {
+    type: "chat-message",
+    icon: MessageSquare,
+    tint: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
+  },
+  {
+    type: "chat-mention",
+    icon: AtSign,
+    tint: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
+  },
+  {
+    type: "absence_request",
+    icon: Plane,
+    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
+  },
+  {
+    type: "absence_decision",
+    icon: CalendarCheck,
+    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
+  },
+  {
+    type: "announcement",
+    icon: Megaphone,
+    tint: "bg-primary/10 text-primary",
+  },
+  {
+    type: "upload_request",
+    icon: UploadCloud,
+    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+  },
+  {
+    type: "upload_decision",
+    icon: UploadCloud,
+    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+  },
+];
 
 export function Switch({
   checked,
@@ -81,13 +80,13 @@ export function Switch({
       onClick={onToggle}
       className={cn(
         "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-        checked ? "bg-primary" : "bg-muted"
+        checked ? "bg-primary" : "bg-muted",
       )}
     >
       <span
         className={cn(
           "absolute top-0.5 size-5 rounded-full bg-background shadow transition-all",
-          checked ? "left-[1.375rem]" : "left-0.5"
+          checked ? "left-[1.375rem]" : "left-0.5",
         )}
       />
     </button>
@@ -105,30 +104,23 @@ export function NotificationPreferences() {
   const setPreferences = useMutation(api.notifications.setPreferences);
   const userPrefs = useQuery(api.userPreferences.getMine);
   const setUserPrefs = useMutation(api.userPreferences.setMine);
-  const [permission, setPermission] = useState<NotificationPermission | null>(
-    null
-  );
+  const [permission, setPermission] = useState<NotificationPermission | null>(null);
 
   useEffect(() => {
     // The Notification global doesn't exist during SSR; this can only be
     // read post-mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPermission(
-      typeof Notification !== "undefined" ? Notification.permission : null
-    );
+    setPermission(typeof Notification !== "undefined" ? Notification.permission : null);
   }, []);
 
   const muted = prefs?.mutedTypes ?? [];
 
   function toggleType(type: string) {
-    const next = muted.includes(type)
-      ? muted.filter(m => m !== type)
-      : [...muted, type];
+    const next = muted.includes(type) ? muted.filter((m) => m !== type) : [...muted, type];
     void setPreferences({ mutedTypes: next });
   }
 
-  const browserEnabled =
-    (userPrefs?.browserPushEnabled ?? false) && permission === "granted";
+  const browserEnabled = (userPrefs?.browserPushEnabled ?? false) && permission === "granted";
 
   async function toggleBrowser() {
     if (browserEnabled) {
@@ -157,12 +149,8 @@ export function NotificationPreferences() {
               <BellRing className="size-[18px]" />
             </span>
             <span className="min-w-0">
-              <span className="block text-sm font-medium">
-                {t("browserTitle")}
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                {t("browserHint")}
-              </span>
+              <span className="block text-sm font-medium">{t("browserTitle")}</span>
+              <span className="block text-xs text-muted-foreground">{t("browserHint")}</span>
             </span>
           </div>
           <Switch
@@ -184,20 +172,13 @@ export function NotificationPreferences() {
         >
           <div className="flex items-center gap-3">
             <span
-              className={cn(
-                "flex size-9 shrink-0 items-center justify-center rounded-lg",
-                tint
-              )}
+              className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}
             >
               <Icon className="size-[18px]" />
             </span>
             <span className="min-w-0">
-              <span className="block text-sm font-medium">
-                {t(`type_${type}`)}
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                {t(`desc_${type}`)}
-              </span>
+              <span className="block text-sm font-medium">{t(`type_${type}`)}</span>
+              <span className="block text-xs text-muted-foreground">{t(`desc_${type}`)}</span>
             </span>
           </div>
           <Switch

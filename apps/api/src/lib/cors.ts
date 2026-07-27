@@ -5,8 +5,7 @@ import { getConvex } from "./convex.js";
 import { isAllowedOrigin } from "./env.js";
 
 const ALLOWED_METHODS = "GET, POST, PUT, DELETE, PATCH, OPTIONS";
-const ALLOWED_HEADERS =
-  "Content-Type, Authorization, Cookie, x-convex-server-key";
+const ALLOWED_HEADERS = "Content-Type, Authorization, Cookie, x-convex-server-key";
 
 /** Per-hostname cache for the Convex round-trip below — the same tenant
  * domain hits this repeatedly (every upload/export request from one
@@ -65,25 +64,23 @@ async function isOriginAllowed(origin: string): Promise<boolean> {
  * same two responsibilities the plugin did: tagging every response from an
  * allowed origin, and answering the browser's preflight `OPTIONS` directly. */
 export function dynamicCors() {
-  return new Elysia({ name: "dynamic-cors" }).onRequest(
-    async ({ request, set }) => {
-      const origin = request.headers.get("origin");
-      const allowed = origin ? await isOriginAllowed(origin) : false;
+  return new Elysia({ name: "dynamic-cors" }).onRequest(async ({ request, set }) => {
+    const origin = request.headers.get("origin");
+    const allowed = origin ? await isOriginAllowed(origin) : false;
 
-      if (allowed) {
-        set.headers["access-control-allow-origin"] = origin as string;
-        set.headers["vary"] = "Origin";
-        set.headers["access-control-allow-credentials"] = "true";
-      }
-
-      if (request.method === "OPTIONS") {
-        if (allowed) {
-          set.headers["access-control-allow-methods"] = ALLOWED_METHODS;
-          set.headers["access-control-allow-headers"] = ALLOWED_HEADERS;
-          set.headers["access-control-max-age"] = "5";
-        }
-        return new Response(null, { status: 204 });
-      }
+    if (allowed) {
+      set.headers["access-control-allow-origin"] = origin as string;
+      set.headers["vary"] = "Origin";
+      set.headers["access-control-allow-credentials"] = "true";
     }
-  );
+
+    if (request.method === "OPTIONS") {
+      if (allowed) {
+        set.headers["access-control-allow-methods"] = ALLOWED_METHODS;
+        set.headers["access-control-allow-headers"] = ALLOWED_HEADERS;
+        set.headers["access-control-max-age"] = "5";
+      }
+      return new Response(null, { status: 204 });
+    }
+  });
 }

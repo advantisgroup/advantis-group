@@ -3,13 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { useClerk } from "@clerk/nextjs";
-import {
-  Building2,
-  FileText,
-  LogOut,
-  Settings as SettingsIcon,
-  Shield,
-} from "lucide-react";
+import { Building2, FileText, LogOut, Settings as SettingsIcon, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -48,30 +42,19 @@ export function AccountMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className={cn("h-9 gap-2 px-1.5", triggerClassName)}
-        >
+        <Button variant="ghost" className={cn("h-9 gap-2 px-1.5", triggerClassName)}>
           <Avatar className="h-7 w-7 shrink-0">
             {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-            <AvatarFallback className="text-xs">
-              {initials(user.name, user.email)}
-            </AvatarFallback>
+            <AvatarFallback className="text-xs">{initials(user.name, user.email)}</AvatarFallback>
           </Avatar>
-          <span className="max-w-32 truncate text-sm font-medium">
-            {user.name}
-          </span>
+          <span className="max-w-32 truncate text-sm font-medium">{user.name}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="flex flex-col">
           <span className="truncate">{user.name}</span>
-          <span className="truncate text-xs font-normal text-muted-foreground">
-            {user.email}
-          </span>
-          <span className="mt-1 text-xs font-normal text-primary">
-            {roleLabel(user, tRoles)}
-          </span>
+          <span className="truncate text-xs font-normal text-muted-foreground">{user.email}</span>
+          <span className="mt-1 text-xs font-normal text-primary">{roleLabel(user, tRoles)}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem
@@ -112,9 +95,7 @@ export function AccountMenu({
           {tNav("imprint")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => void signOut({ redirectUrl: "/sign-in" })}
-        >
+        <DropdownMenuItem onClick={() => void signOut({ redirectUrl: "/sign-in" })}>
           <LogOut className="mr-2 h-4 w-4" />
           {tNav("signOut")}
         </DropdownMenuItem>

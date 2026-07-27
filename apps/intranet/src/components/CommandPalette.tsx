@@ -69,17 +69,11 @@ export function CommandPalette() {
 
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
 
-  const people = useQuery(
-    api.users.list,
-    open && query.trim() ? { search: query.trim() } : "skip"
-  );
-  const announcements = useQuery(
-    api.announcements.list,
-    open && query.trim() ? {} : "skip"
-  );
+  const people = useQuery(api.users.list, open && query.trim() ? { search: query.trim() } : "skip");
+  const announcements = useQuery(api.announcements.list, open && query.trim() ? {} : "skip");
   const applicants = useQuery(
     api.applicants.list,
-    open && hasApplicantAccess && query.trim() ? {} : "skip"
+    open && hasApplicantAccess && query.trim() ? {} : "skip",
   );
 
   // ⌘K / Ctrl-K toggles the palette from anywhere.
@@ -87,7 +81,7 @@ export function CommandPalette() {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen(o => !o);
+        setOpen((o) => !o);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -149,7 +143,7 @@ export function CommandPalette() {
       },
       { href: "/settings", label: tNav("settings"), icon: Settings },
     ];
-    return all.filter(p => !p.managerOnly || isManager).filter(p => !p.hidden);
+    return all.filter((p) => !p.managerOnly || isManager).filter((p) => !p.hidden);
   }, [tNav, isManager, guidebooks.length]);
 
   const items: Item[] = useMemo(() => {
@@ -177,7 +171,7 @@ export function CommandPalette() {
         icon: UploadCloud,
         href: "/files",
       },
-    ].filter(a => !a.managerOnly || isManager);
+    ].filter((a) => !a.managerOnly || isManager);
 
     if (!q) {
       return list;
@@ -244,10 +238,7 @@ export function CommandPalette() {
     }
     if (hasApplicantAccess) {
       for (const ap of applicants ?? []) {
-        const haystack = [ap.name, ap.email, ap.position]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+        const haystack = [ap.name, ap.email, ap.position].filter(Boolean).join(" ").toLowerCase();
         if (haystack.includes(q)) {
           list.push({
             id: `applicant:${ap._id}`,
@@ -263,17 +254,7 @@ export function CommandPalette() {
 
     return list;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    query,
-    people,
-    announcements,
-    applicants,
-    hasApplicantAccess,
-    pages,
-    guidebooks,
-    t,
-    tGuide,
-  ]);
+  }, [query, people, announcements, applicants, hasApplicantAccess, pages, guidebooks, t, tGuide]);
 
   useEffect(() => {
     setActive(0);
@@ -292,10 +273,10 @@ export function CommandPalette() {
   function onInputKey(e: ReactKeyboardEvent) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive(i => Math.min(i + 1, items.length - 1));
+      setActive((i) => Math.min(i + 1, items.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActive(i => Math.max(i - 1, 0));
+      setActive((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
       items[active]?.run();
@@ -322,15 +303,13 @@ export function CommandPalette() {
         <DialogPrimitive.Portal>
           <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
           <DialogPrimitive.Content className="fixed left-1/2 top-[12vh] z-50 w-[92vw] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border/70 bg-popover shadow-2xl shadow-black/30 duration-150 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-            <DialogPrimitive.Title className="sr-only">
-              {t("hint")}
-            </DialogPrimitive.Title>
+            <DialogPrimitive.Title className="sr-only">{t("hint")}</DialogPrimitive.Title>
             <div className="flex items-center gap-2.5 border-b border-border/70 px-4">
               <Search className="size-4 shrink-0 text-muted-foreground" />
               <input
                 ref={inputRef}
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onInputKey}
                 placeholder={t("placeholder")}
                 className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
@@ -351,7 +330,7 @@ export function CommandPalette() {
                     <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {group}
                     </p>
-                    {groupItems.map(it => {
+                    {groupItems.map((it) => {
                       flatIndex += 1;
                       const idx = flatIndex;
                       const Icon = it.icon;
@@ -364,16 +343,13 @@ export function CommandPalette() {
                             "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
                             active === idx
                               ? "bg-accent text-foreground"
-                              : "text-foreground/90 hover:bg-accent/60"
+                              : "text-foreground/90 hover:bg-accent/60",
                           )}
                         >
                           {it.avatar ? (
                             <Avatar className="size-7 shrink-0">
                               {it.avatar.src && (
-                                <AvatarImage
-                                  src={it.avatar.src}
-                                  alt={it.avatar.name}
-                                />
+                                <AvatarImage src={it.avatar.src} alt={it.avatar.name} />
                               )}
                               <AvatarFallback className="text-[10px]">
                                 {initials(it.avatar.name, it.avatar.email)}
@@ -385,9 +361,7 @@ export function CommandPalette() {
                             </span>
                           )}
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium">
-                              {it.label}
-                            </span>
+                            <span className="block truncate text-sm font-medium">{it.label}</span>
                             {it.sublabel && (
                               <span className="block truncate text-xs text-muted-foreground">
                                 {it.sublabel}

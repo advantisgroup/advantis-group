@@ -65,7 +65,7 @@ function AuditRow({
       ref={ref}
       className={cn(
         "flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-sm",
-        highlighted && "deeplink-hl"
+        highlighted && "deeplink-hl",
       )}
     >
       <div className="flex min-w-0 flex-wrap items-center gap-2">
@@ -76,9 +76,7 @@ function AuditRow({
         <Badge variant="muted" className="font-mono text-[10px]">
           {row.action}
         </Badge>
-        {row.target && (
-          <span className="truncate text-muted-foreground">{row.target}</span>
-        )}
+        {row.target && <span className="truncate text-muted-foreground">{row.target}</span>}
       </div>
       <span className="shrink-0 text-xs text-muted-foreground">
         {formatDateTime(row.at, locale)}
@@ -114,24 +112,15 @@ export default function AuditLogPage() {
         description={t("auditLog.description")}
         icon={<ScrollText />}
         action={
-          <Select
-            value={source}
-            onValueChange={v => setSource(v as Source | "all")}
-          >
+          <Select value={source} onValueChange={(v) => setSource(v as Source | "all")}>
             <SelectTrigger className="w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("auditLog.allSources")}</SelectItem>
-              <SelectItem value="activity">
-                {t("auditLog.source_activity")}
-              </SelectItem>
-              <SelectItem value="onedrive">
-                {t("auditLog.source_onedrive")}
-              </SelectItem>
-              <SelectItem value="integrations">
-                {t("auditLog.source_integrations")}
-              </SelectItem>
+              <SelectItem value="activity">{t("auditLog.source_activity")}</SelectItem>
+              <SelectItem value="onedrive">{t("auditLog.source_onedrive")}</SelectItem>
+              <SelectItem value="integrations">{t("auditLog.source_integrations")}</SelectItem>
             </SelectContent>
           </Select>
         }
@@ -140,12 +129,10 @@ export default function AuditLogPage() {
       {rows === undefined ? (
         <Skeleton className="h-64 w-full" />
       ) : rows.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">
-          {t("noAudit")}
-        </p>
+        <p className="py-12 text-center text-sm text-muted-foreground">{t("noAudit")}</p>
       ) : (
         <Card className="divide-y divide-border/60">
-          {rows.map(row => (
+          {rows.map((row) => (
             <AuditRow
               key={row._id}
               row={row}

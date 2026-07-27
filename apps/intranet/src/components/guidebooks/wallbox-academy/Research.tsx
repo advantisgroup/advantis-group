@@ -19,9 +19,7 @@ export function Research({
   progress: AcademyProgressData;
   onMutate: (fn: (p: AcademyProgressData) => AcademyProgressData) => void;
 }) {
-  const [values, setValues] = useState<Record<string, string>>(
-    progress.research
-  );
+  const [values, setValues] = useState<Record<string, string>>(progress.research);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -32,24 +30,21 @@ export function Research({
   }, []);
 
   function save() {
-    onMutate(p => saveResearchAnswers(p, values));
+    onMutate((p) => saveResearchAnswers(p, values));
     setSaved(true);
   }
 
   return (
     <div className="space-y-4">
       <p className="text-sm">
-        Diese Aufgaben löst du online. Öffne die Links, recherchiere und trage
-        deine Antworten ein - der Trainer sieht sie im Trainer-Bereich.{" "}
-        <b>Speichern nicht vergessen.</b>
+        Diese Aufgaben löst du online. Öffne die Links, recherchiere und trage deine Antworten ein -
+        der Trainer sieht sie im Trainer-Bereich. <b>Speichern nicht vergessen.</b>
       </p>
 
-      {RESEARCH_TASKS.map(task => (
+      {RESEARCH_TASKS.map((task) => (
         <div key={task.id} className="rounded-lg border border-border p-4">
           <h3 className="font-semibold">{task.title}</h3>
-          <p className="mb-2 mt-1 text-sm text-muted-foreground">
-            {task.intro}
-          </p>
+          <p className="mb-2 mt-1 text-sm text-muted-foreground">{task.intro}</p>
           <div className="mb-3 flex flex-wrap gap-1.5">
             {task.links.map(([label, url]) => (
               <a
@@ -69,18 +64,15 @@ export function Research({
               const key = `${task.id}_${i}`;
               return (
                 <div key={key}>
-                  <label
-                    htmlFor={key}
-                    className="mb-1 block text-sm font-medium"
-                  >
+                  <label htmlFor={key} className="mb-1 block text-sm font-medium">
                     {i + 1}. {question}
                   </label>
                   <Textarea
                     id={key}
                     value={values[key] ?? ""}
-                    onChange={e => {
+                    onChange={(e) => {
                       setSaved(false);
-                      setValues(v => ({ ...v, [key]: e.target.value }));
+                      setValues((v) => ({ ...v, [key]: e.target.value }));
                     }}
                     placeholder="Deine Antwort …"
                   />
@@ -93,9 +85,7 @@ export function Research({
 
       <div className="flex items-center gap-3">
         <Button onClick={save}>Antworten speichern</Button>
-        {saved ? (
-          <span className="text-xs text-muted-foreground">Gespeichert.</span>
-        ) : null}
+        {saved ? <span className="text-xs text-muted-foreground">Gespeichert.</span> : null}
       </div>
     </div>
   );

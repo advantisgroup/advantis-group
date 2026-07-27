@@ -15,12 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -73,11 +68,11 @@ export interface IntranetUserOption {
  * otherwise. */
 function suggestIntranetUser(
   users: IntranetUserOption[],
-  email: string
+  email: string,
 ): IntranetUserOption | null {
   const normalized = email.trim().toLowerCase();
   if (!normalized) return null;
-  return users.find(u => u.email.toLowerCase() === normalized) ?? null;
+  return users.find((u) => u.email.toLowerCase() === normalized) ?? null;
 }
 
 const NONE = "__none__";
@@ -100,7 +95,7 @@ function EmployeeSelect({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={NONE}>{placeholder}</SelectItem>
-        {employees.map(e => (
+        {employees.map((e) => (
           <SelectItem key={e.id} value={e.id}>
             {e.name}
           </SelectItem>
@@ -125,7 +120,7 @@ function RoleSelect({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        {roles.map(r => (
+        {roles.map((r) => (
           <SelectItem key={r.id} value={r.id}>
             {r.name}
           </SelectItem>
@@ -164,13 +159,13 @@ function IntranetUserPicker({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-  const selected = users.find(u => u.id === value) ?? null;
+  const selected = users.find((u) => u.id === value) ?? null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return users;
     return users.filter(
-      u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
     );
   }, [users, search]);
 
@@ -203,14 +198,12 @@ function IntranetUserPicker({
         role="combobox"
         aria-expanded={open}
         className="w-full justify-between gap-2 font-normal"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
       >
         {selected ? (
           <span className="flex min-w-0 items-center gap-2">
             <Avatar className="size-5 shrink-0">
-              {selected.avatarUrl && (
-                <AvatarImage src={selected.avatarUrl} alt={selected.name} />
-              )}
+              {selected.avatarUrl && <AvatarImage src={selected.avatarUrl} alt={selected.name} />}
               <AvatarFallback className="text-[9px]">
                 {initials(selected.name, selected.email)}
               </AvatarFallback>
@@ -228,7 +221,7 @@ function IntranetUserPicker({
             <Input
               autoFocus
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder={t("userIntranetAccountSearch")}
               className="h-8"
             />
@@ -249,7 +242,7 @@ function IntranetUserPicker({
                 {t("userIntranetAccountEmpty")}
               </p>
             ) : (
-              filtered.map(u => {
+              filtered.map((u) => {
                 const linkedElsewhere = u.linkedToLoginName && u.id !== value;
                 return (
                   <button
@@ -262,18 +255,14 @@ function IntranetUserPicker({
                     }}
                   >
                     <Avatar className="size-8 shrink-0">
-                      {u.avatarUrl && (
-                        <AvatarImage src={u.avatarUrl} alt={u.name} />
-                      )}
+                      {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.name} />}
                       <AvatarFallback className="text-xs">
                         {initials(u.name, u.email)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{u.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {u.email}
-                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                     </div>
                     {linkedElsewhere && (
                       <Badge variant="muted" className="shrink-0 text-[10px]">
@@ -329,11 +318,9 @@ export function CreateLoginDialog({
   // suggests until the admin has touched the picker themself.
   const suggested = useMemo(
     () => suggestIntranetUser(intranetUsers, email),
-    [intranetUsers, email]
+    [intranetUsers, email],
   );
-  const effectiveLinkedUserId = linkedUserTouched
-    ? linkedUserId
-    : (suggested?.id ?? null);
+  const effectiveLinkedUserId = linkedUserTouched ? linkedUserId : (suggested?.id ?? null);
 
   function reset() {
     setEmail("");
@@ -347,10 +334,7 @@ export function CreateLoginDialog({
 
   const needsPassword = !effectiveLinkedUserId;
   const canSave =
-    !!email.trim() &&
-    !!name.trim() &&
-    !!roleId &&
-    (!needsPassword || password.length >= 8);
+    !!email.trim() && !!name.trim() && !!roleId && (!needsPassword || password.length >= 8);
 
   async function handleSave() {
     if (!canSave) return;
@@ -362,10 +346,7 @@ export function CreateLoginDialog({
         name: name.trim(),
         password: needsPassword ? password : undefined,
         roleId: roleId as Id<"companyRoles">,
-        employeeId:
-          employeeId === NONE
-            ? undefined
-            : (employeeId as Id<"performanceEmployees">),
+        employeeId: employeeId === NONE ? undefined : (employeeId as Id<"performanceEmployees">),
         linkedUserId: effectiveLinkedUserId ?? undefined,
       });
       reset();
@@ -381,32 +362,22 @@ export function CreateLoginDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         if (!o) reset();
         onOpenChange(o);
       }}
     >
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">
-            {t("userNewTitle")}
-          </DialogTitle>
+          <DialogTitle className="leading-snug">{t("userNewTitle")}</DialogTitle>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("emailLabel")}
-            </label>
-            <Input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
+            <label className="text-xs font-medium text-muted-foreground">{t("emailLabel")}</label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("nameLabel")}
-            </label>
-            <Input value={name} onChange={e => setName(e.target.value)} />
+            <label className="text-xs font-medium text-muted-foreground">{t("nameLabel")}</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           {showIntranetLink && (
             <div className="space-y-1.5">
@@ -415,7 +386,7 @@ export function CreateLoginDialog({
               </label>
               <IntranetUserPicker
                 value={effectiveLinkedUserId}
-                onChange={v => {
+                onChange={(v) => {
                   setLinkedUserId(v);
                   setLinkedUserTouched(true);
                 }}
@@ -432,13 +403,11 @@ export function CreateLoginDialog({
               <Input
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">
-              {t("userPasswordNotNeeded")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("userPasswordNotNeeded")}</p>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -464,10 +433,7 @@ export function CreateLoginDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={saving || !canSave}
-          >
+          <Button onClick={() => void handleSave()} disabled={saving || !canSave}>
             {t("topicSave")}
           </Button>
         </DialogFooter>
@@ -503,7 +469,7 @@ export function EditLoginDialog({
   return (
     <Dialog
       open={login !== null}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         if (!o) onOpenChange(false);
       }}
     >
@@ -570,9 +536,7 @@ function EditLoginForm({
   const t = useTranslations("Performance");
   const showIntranetLink = usePerformanceCompanySlug() === "advantis";
   const [name, setName] = useState(login.name);
-  const [roleId, setRoleId] = useState<string>(
-    login.roleId ?? roles[0]?.id ?? ""
-  );
+  const [roleId, setRoleId] = useState<string>(login.roleId ?? roles[0]?.id ?? "");
   const [active, setActive] = useState(login.active);
   const [employeeId, setEmployeeId] = useState(login.employeeId ?? NONE);
   // Existing logins are never re-linked automatically: if this one is
@@ -580,9 +544,7 @@ function EditLoginForm({
   // stands. Only a login with no explicit choice yet falls back to a
   // matching-email suggestion — an admin can still override either way.
   const [linkedUserId, setLinkedUserId] = useState<Id<"users"> | null>(
-    login.linkedUserId ??
-      suggestIntranetUser(intranetUsers, login.email)?.id ??
-      null
+    login.linkedUserId ?? suggestIntranetUser(intranetUsers, login.email)?.id ?? null,
   );
   const [isSuperAdmin, setIsSuperAdmin] = useState(login.isSuperAdmin);
   const [saving, setSaving] = useState(false);
@@ -598,10 +560,7 @@ function EditLoginForm({
         name: name.trim() || login.name,
         roleId: isSuperAdmin ? undefined : (roleId as Id<"companyRoles">),
         active,
-        employeeId:
-          employeeId === NONE
-            ? null
-            : (employeeId as Id<"performanceEmployees">),
+        employeeId: employeeId === NONE ? null : (employeeId as Id<"performanceEmployees">),
         linkedUserId,
         isSuperAdmin,
       });
@@ -617,10 +576,8 @@ function EditLoginForm({
         <p className="text-sm text-muted-foreground">{login.email}</p>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("nameLabel")}
-          </label>
-          <Input value={name} onChange={e => setName(e.target.value)} />
+          <label className="text-xs font-medium text-muted-foreground">{t("nameLabel")}</label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         {showIntranetLink && (
           <div className="space-y-1.5">
@@ -641,9 +598,7 @@ function EditLoginForm({
               {t("userRoleLabel")}
             </label>
             {isSuperAdmin ? (
-              <p className="pt-2 text-sm text-muted-foreground">
-                {t("userRoleSuperAdmin")}
-              </p>
+              <p className="pt-2 text-sm text-muted-foreground">{t("userRoleSuperAdmin")}</p>
             ) : (
               <RoleSelect value={roleId} onChange={setRoleId} roles={roles} />
             )}
@@ -662,17 +617,14 @@ function EditLoginForm({
         </div>
         <div className="flex flex-wrap items-center gap-4 pt-1">
           <label className="flex w-fit items-center gap-2 text-sm">
-            <Checkbox
-              checked={active}
-              onCheckedChange={checked => setActive(checked === true)}
-            />
+            <Checkbox checked={active} onCheckedChange={(checked) => setActive(checked === true)} />
             {t("userActiveLabel")}
           </label>
           {canToggleSuperAdmin && (
             <label className="flex w-fit items-center gap-1.5 text-sm">
               <Checkbox
                 checked={isSuperAdmin}
-                onCheckedChange={checked => setIsSuperAdmin(checked === true)}
+                onCheckedChange={(checked) => setIsSuperAdmin(checked === true)}
               />
               {t("userSuperAdminToggleLabel")}
               <InfoTip text={t("userSuperAdminToggleInfo")} />
@@ -725,7 +677,7 @@ export function ResetPasswordDialog({
   return (
     <Dialog
       open={loginId !== null}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         if (!o) {
           setPassword("");
           onOpenChange(false);
@@ -734,28 +686,19 @@ export function ResetPasswordDialog({
     >
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">
-            {t("userResetPasswordTitle")}
-          </DialogTitle>
+          <DialogTitle className="leading-snug">{t("userResetPasswordTitle")}</DialogTitle>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
               {t("userNewPasswordLabel")}
             </label>
-            <Input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={saving || password.length < 8}
-          >
+          <Button onClick={() => void handleSave()} disabled={saving || password.length < 8}>
             {t("topicSave")}
           </Button>
         </DialogFooter>

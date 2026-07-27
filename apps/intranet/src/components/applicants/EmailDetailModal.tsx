@@ -50,7 +50,7 @@ export function EmailDetailModal({
   }
 
   return (
-    <Dialog open onOpenChange={o => !o && close()}>
+    <Dialog open onOpenChange={(o) => !o && close()}>
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
           <DialogTitle>{t(`emailKategorie.${email.kategorie}`)}</DialogTitle>

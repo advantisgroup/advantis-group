@@ -16,16 +16,7 @@ export type SegmentKey =
   | "calls";
 
 /** Keys of data points a call-simulator scenario can require ("DLAB"). */
-export type DataKey =
-  | "total"
-  | "mix"
-  | "us"
-  | "comp"
-  | "ready"
-  | "wb"
-  | "own"
-  | "need"
-  | "next";
+export type DataKey = "total" | "mix" | "us" | "comp" | "ready" | "wb" | "own" | "need" | "next";
 
 export type ChapterBlock =
   | { type: "heading"; text: string }

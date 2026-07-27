@@ -18,7 +18,7 @@ export const allowedOrigins = [
   process.env.SITE_URL ?? "https://advantisgroup.de",
   "http://localhost:3000",
   "http://localhost:3001",
-  ...(process.env.CORS_ORIGINS?.split(",").map(o => o.trim()) ?? []),
+  ...(process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()) ?? []),
 ].filter(Boolean);
 
 export const allowedOriginSuffixes = [".advantisgroup.de", ".vercel.app"];
@@ -28,7 +28,7 @@ export function isAllowedOrigin(origin: string): boolean {
   try {
     const { hostname } = new URL(origin);
     if (hostname === "localhost" || hostname === "127.0.0.1") return true;
-    return allowedOriginSuffixes.some(s => hostname.endsWith(s));
+    return allowedOriginSuffixes.some((s) => hostname.endsWith(s));
   } catch {
     return false;
   }

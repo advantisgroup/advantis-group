@@ -24,24 +24,18 @@ function sanitizeFilename(name: string): string {
 
 function debug(storageId: string, message: string, data?: unknown) {
   const timestamp = new Date().toISOString();
-  console.warn(
-    `[content-proxy] [${timestamp}] ${storageId} - ${message}`,
-    data ?? ""
-  );
+  console.warn(`[content-proxy] [${timestamp}] ${storageId} - ${message}`, data ?? "");
 }
 
 function logError(storageId: string, message: string, error?: unknown) {
   const timestamp = new Date().toISOString();
-  console.error(
-    `[content-proxy] [${timestamp}] ${storageId} - ERROR: ${message}`,
-    error ?? ""
-  );
+  console.error(`[content-proxy] [${timestamp}] ${storageId} - ERROR: ${message}`, error ?? "");
 }
 
 async function handle(
   req: NextRequest,
   { params }: { params: Promise<{ type: string; id: string }> },
-  includeBody: boolean
+  includeBody: boolean,
 ) {
   const { type, id: rawId } = await params;
   const requestId = `${type}/${rawId}`;
@@ -99,10 +93,7 @@ async function handle(
   }
 
   if (!accessResult.url) {
-    logError(
-      storageId,
-      "Convex returned no storage URL for an accessible file"
-    );
+    logError(storageId, "Convex returned no storage URL for an accessible file");
     return new NextResponse(null, { status: 404 });
   }
 
@@ -141,9 +132,7 @@ async function handle(
   headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
   if (config.disposition === "attachment") {
-    const filename = sanitizeFilename(
-      req.nextUrl.searchParams.get("name") ?? rawId
-    );
+    const filename = sanitizeFilename(req.nextUrl.searchParams.get("name") ?? rawId);
     headers.set("Content-Disposition", `attachment; filename="${filename}"`);
     debug(storageId, "Streaming as attachment", { filename });
   } else {
@@ -162,16 +151,10 @@ async function handle(
   });
 }
 
-export function GET(
-  req: NextRequest,
-  ctx: { params: Promise<{ type: string; id: string }> }
-) {
+export function GET(req: NextRequest, ctx: { params: Promise<{ type: string; id: string }> }) {
   return handle(req, ctx, true);
 }
 
-export function HEAD(
-  req: NextRequest,
-  ctx: { params: Promise<{ type: string; id: string }> }
-) {
+export function HEAD(req: NextRequest, ctx: { params: Promise<{ type: string; id: string }> }) {
   return handle(req, ctx, false);
 }

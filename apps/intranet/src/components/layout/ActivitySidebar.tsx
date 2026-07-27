@@ -91,19 +91,13 @@ export function ActivitySidebar() {
       <SidebarGroup>
         <SidebarGroupLabel>{t("nav.group")}</SidebarGroupLabel>
         <SidebarMenu>
-          {ACTIVITY_NAV.map(item => {
+          {ACTIVITY_NAV.map((item) => {
             const active =
-              item.href === "/activity"
-                ? pathname === "/activity"
-                : pathname.startsWith(item.href);
+              item.href === "/activity" ? pathname === "/activity" : pathname.startsWith(item.href);
             const Icon = item.icon;
             return (
               <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                  asChild
-                  active={active}
-                  tooltip={t(item.labelKey)}
-                >
+                <SidebarMenuButton asChild active={active} tooltip={t(item.labelKey)}>
                   <Link
                     href={item.href}
                     onClick={close}
@@ -111,11 +105,7 @@ export function ActivitySidebar() {
                     // The main sidebar slides off-screen inside the activity
                     // area, so the tour spotlights this Overview entry (the
                     // first item) instead of the now-hidden main-nav link.
-                    data-tour={
-                      item.href === "/activity"
-                        ? "tour-nav-activity"
-                        : undefined
-                    }
+                    data-tour={item.href === "/activity" ? "tour-nav-activity" : undefined}
                   >
                     <Icon />
                     <SidebarLabel>{t(item.labelKey)}</SidebarLabel>

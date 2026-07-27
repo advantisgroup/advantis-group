@@ -60,11 +60,8 @@ export function AuthShell({
           </h1>
           <p className="mt-4 text-base text-white/80">{subtitle}</p>
           <ul className="mt-8 space-y-3">
-            {highlights.map(item => (
-              <li
-                key={item}
-                className="flex items-start gap-3 text-sm text-white/90"
-              >
+            {highlights.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm text-white/90">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white" />
                 {item}
               </li>
@@ -91,18 +88,10 @@ export function AuthShell({
         </div>
         {children}
         <div className="mt-8 flex items-center gap-4 text-xs text-muted-foreground">
-          <Link
-            href="/privacy"
-            locale={locale}
-            className="hover:text-foreground"
-          >
+          <Link href="/privacy" locale={locale} className="hover:text-foreground">
             {tNav("privacy")}
           </Link>
-          <Link
-            href="/imprint"
-            locale={locale}
-            className="hover:text-foreground"
-          >
+          <Link href="/imprint" locale={locale} className="hover:text-foreground">
             {tNav("imprint")}
           </Link>
         </div>

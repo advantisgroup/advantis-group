@@ -7,11 +7,7 @@ import { HomeBrands } from "@/components/sections/home/HomeBrands";
 import { HomeCTA } from "@/components/sections/home/HomeCTA";
 import { HomeFeatures } from "@/components/sections/home/HomeFeatures";
 
-export default function Page({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params);
 
   useEffect(() => {

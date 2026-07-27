@@ -24,21 +24,18 @@ export const internalClockodoImportRoute = new Elysia().post(
     let skipped = 0;
     for (const absence of absences) {
       const email = await getUserEmail(absence.users_id);
-      const res = await convex.mutation(
-        api.clockodoSync.upsertAbsenceFromClockodo,
-        {
-          serverKey,
-          externalId: String(absence.id),
-          clockodoUserId: absence.users_id,
-          email,
-          dateSince: absence.date_since,
-          dateUntil: absence.date_until,
-          clockodoType: absence.type,
-          clockodoStatus: absence.status,
-          countDays: absence.count_days ?? undefined,
-          note: absence.note ?? undefined,
-        }
-      );
+      const res = await convex.mutation(api.clockodoSync.upsertAbsenceFromClockodo, {
+        serverKey,
+        externalId: String(absence.id),
+        clockodoUserId: absence.users_id,
+        email,
+        dateSince: absence.date_since,
+        dateUntil: absence.date_until,
+        clockodoType: absence.type,
+        clockodoStatus: absence.status,
+        countDays: absence.count_days ?? undefined,
+        note: absence.note ?? undefined,
+      });
       if (res.status === "skipped") skipped++;
       else mirrored++;
     }
@@ -54,5 +51,5 @@ export const internalClockodoImportRoute = new Elysia().post(
         skipped: t.Number(),
       }),
     },
-  }
+  },
 );

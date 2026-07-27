@@ -20,9 +20,7 @@ export function parseStatusFilter(raw: string | null): StatusFilter {
 }
 
 export function parseRatingFilter(raw: string | null): RatingFilter {
-  return raw === "rot" || raw === "blau" || raw === "gruen" || raw === "offen"
-    ? raw
-    : "alle";
+  return raw === "rot" || raw === "blau" || raw === "gruen" || raw === "offen" ? raw : "alle";
 }
 
 /**
@@ -33,23 +31,15 @@ export function parseRatingFilter(raw: string | null): RatingFilter {
  */
 export function filterApplicants(
   applicants: Applicant[],
-  { status, rating, search }: ApplicantFilter
+  { status, rating, search }: ApplicantFilter,
 ): Applicant[] {
   const q = search.trim().toLowerCase();
-  return applicants.filter(a => {
+  return applicants.filter((a) => {
     if (status !== "alle" && a.status !== status) return false;
     if (rating === "offen" && a.rating) return false;
-    if (rating !== "alle" && rating !== "offen" && a.rating !== rating)
-      return false;
+    if (rating !== "alle" && rating !== "offen" && a.rating !== rating) return false;
     if (!q) return true;
-    return [
-      a.name,
-      a.email,
-      a.position,
-      a.telefon,
-      a.adresse,
-      ...(a.skills ?? []),
-    ]
+    return [a.name, a.email, a.position, a.telefon, a.adresse, ...(a.skills ?? [])]
       .join(" ")
       .toLowerCase()
       .includes(q);

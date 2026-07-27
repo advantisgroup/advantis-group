@@ -44,7 +44,7 @@ export function isWorkingState(state: StateName): boolean {
 export function buildSegments(
   samples: StateSample[],
   windowStart: number,
-  windowEnd: number
+  windowEnd: number,
 ): StateSegment[] {
   const segments: StateSegment[] = [];
   if (samples.length === 0 || windowEnd <= windowStart) return segments;
@@ -67,10 +67,7 @@ export function buildSegments(
 
 /** A short ACTIVE-ish blip sandwiched in IDLE, or vice versa — the "flicker"
  * pattern ("switching between inactive and active a lot under 10 minutes"). */
-export function countQuickFlips(
-  segments: StateSegment[],
-  thresholdMs: number
-): number {
+export function countQuickFlips(segments: StateSegment[], thresholdMs: number): number {
   let count = 0;
   for (let i = 1; i < segments.length - 1; i++) {
     const seg = segments[i]!;
@@ -79,16 +76,12 @@ export function countQuickFlips(
     const prev = segments[i - 1]!;
     const next = segments[i + 1]!;
     const segWorking = isWorkingState(seg.state);
-    const flankingIsRelevant = (s: StateSegment) =>
-      s.state === "IDLE" || isWorkingState(s.state);
+    const flankingIsRelevant = (s: StateSegment) => s.state === "IDLE" || isWorkingState(s.state);
     if (!flankingIsRelevant(prev) || !flankingIsRelevant(next)) continue;
 
     const idleBlip =
-      seg.state === "IDLE" &&
-      isWorkingState(prev.state) &&
-      isWorkingState(next.state);
-    const activeBlip =
-      segWorking && prev.state === "IDLE" && next.state === "IDLE";
+      seg.state === "IDLE" && isWorkingState(prev.state) && isWorkingState(next.state);
+    const activeBlip = segWorking && prev.state === "IDLE" && next.state === "IDLE";
     if (idleBlip || activeBlip) count++;
   }
   return count;
@@ -105,7 +98,7 @@ const MS_PER_SECOND = 1000;
 
 export function computeWeekMetrics(
   segments: StateSegment[],
-  quickFlipThresholdMs: number
+  quickFlipThresholdMs: number,
 ): WeekMetrics {
   let activeMs = 0;
   let idleMs = 0;
@@ -189,14 +182,12 @@ function pctDelta(current: number, previous: number): number | null {
 export function buildFindings(
   personName: string,
   current: WeekMetrics,
-  previous: WeekMetrics | undefined
+  previous: WeekMetrics | undefined,
 ): Finding[] {
   const findings: Finding[] = [];
   const trackedSeconds = current.activeSeconds + current.idleSeconds;
   const activeSharePct =
-    trackedSeconds > 0
-      ? Math.round((current.activeSeconds / trackedSeconds) * 100)
-      : 0;
+    trackedSeconds > 0 ? Math.round((current.activeSeconds / trackedSeconds) * 100) : 0;
 
   findings.push({
     id: "overview",
@@ -242,10 +233,7 @@ export function buildFindings(
     });
   }
 
-  if (
-    current.longestIdleStreakSeconds * MS_PER_SECOND >=
-    PATTERN_THRESHOLDS.longIdleStreakMs
-  ) {
+  if (current.longestIdleStreakSeconds * MS_PER_SECOND >= PATTERN_THRESHOLDS.longIdleStreakMs) {
     findings.push({
       id: "longIdleStreak",
       severity: "bad",
@@ -272,15 +260,9 @@ export function buildFindings(
   }
 
   const idleDeltaPct = pctDelta(current.idleSeconds, previous.idleSeconds);
-  const activeDeltaPct = pctDelta(
-    current.activeSeconds,
-    previous.activeSeconds
-  );
+  const activeDeltaPct = pctDelta(current.activeSeconds, previous.activeSeconds);
 
-  if (
-    idleDeltaPct !== null &&
-    idleDeltaPct >= PATTERN_THRESHOLDS.notableDeltaPct
-  ) {
+  if (idleDeltaPct !== null && idleDeltaPct >= PATTERN_THRESHOLDS.notableDeltaPct) {
     findings.push({
       id: "inactivityIncrease",
       severity: "bad",
@@ -306,10 +288,7 @@ export function buildFindings(
         },
       ],
     });
-  } else if (
-    idleDeltaPct !== null &&
-    idleDeltaPct <= -PATTERN_THRESHOLDS.notableDeltaPct
-  ) {
+  } else if (idleDeltaPct !== null && idleDeltaPct <= -PATTERN_THRESHOLDS.notableDeltaPct) {
     findings.push({
       id: "inactivityDecrease",
       severity: "good",
@@ -337,10 +316,7 @@ export function buildFindings(
     });
   }
 
-  if (
-    activeDeltaPct !== null &&
-    activeDeltaPct >= PATTERN_THRESHOLDS.notableDeltaPct
-  ) {
+  if (activeDeltaPct !== null && activeDeltaPct >= PATTERN_THRESHOLDS.notableDeltaPct) {
     findings.push({
       id: "activeIncrease",
       severity: "good",
@@ -366,10 +342,7 @@ export function buildFindings(
         },
       ],
     });
-  } else if (
-    activeDeltaPct !== null &&
-    activeDeltaPct <= -PATTERN_THRESHOLDS.notableDeltaPct
-  ) {
+  } else if (activeDeltaPct !== null && activeDeltaPct <= -PATTERN_THRESHOLDS.notableDeltaPct) {
     findings.push({
       id: "activeDecrease",
       severity: "bad",

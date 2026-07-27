@@ -38,14 +38,7 @@ export function ProcessDiagram() {
           strokeWidth={1.5}
         />
         <circle cx={46} cy={54} r={13} fill="#d9f26b" />
-        <text
-          x={46}
-          y={59}
-          textAnchor="middle"
-          fontSize={13}
-          fontWeight={700}
-          fill="#3f4d0c"
-        >
+        <text x={46} y={59} textAnchor="middle" fontSize={13} fontWeight={700} fill="#3f4d0c">
           1
         </text>
         <text x={66} y={52} fontSize={13} fontWeight={600} fill="#152227">
@@ -79,14 +72,7 @@ export function ProcessDiagram() {
           strokeWidth={1.5}
         />
         <circle cx={284} cy={54} r={13} fill="#d9f26b" />
-        <text
-          x={284}
-          y={59}
-          textAnchor="middle"
-          fontSize={13}
-          fontWeight={700}
-          fill="#3f4d0c"
-        >
+        <text x={284} y={59} textAnchor="middle" fontSize={13} fontWeight={700} fill="#3f4d0c">
           2
         </text>
         <text x={304} y={52} fontSize={13} fontWeight={600} fill="#152227">
@@ -123,14 +109,7 @@ export function ProcessDiagram() {
           strokeWidth={1.5}
         />
         <circle cx={530} cy={54} r={13} fill="#d9f26b" />
-        <text
-          x={530}
-          y={59}
-          textAnchor="middle"
-          fontSize={13}
-          fontWeight={700}
-          fill="#3f4d0c"
-        >
+        <text x={530} y={59} textAnchor="middle" fontSize={13} fontWeight={700} fill="#3f4d0c">
           3
         </text>
         <text x={550} y={52} fontSize={13} fontWeight={600} fill="#152227">
@@ -143,22 +122,8 @@ export function ProcessDiagram() {
           Gespraechsleitfaden
         </text>
 
-        <line
-          x1={592}
-          y1={94}
-          x2={592}
-          y2={140}
-          stroke="#152227"
-          strokeWidth={1.5}
-        />
-        <line
-          x1={265}
-          y1={140}
-          x2={592}
-          y2={140}
-          stroke="#152227"
-          strokeWidth={1.5}
-        />
+        <line x1={592} y1={94} x2={592} y2={140} stroke="#152227" strokeWidth={1.5} />
+        <line x1={265} y1={140} x2={592} y2={140} stroke="#152227" strokeWidth={1.5} />
         <line
           x1={265}
           y1={140}
@@ -177,24 +142,10 @@ export function ProcessDiagram() {
           strokeWidth={1.5}
           markerEnd="url(#wsa-arrow)"
         />
-        <text
-          x={265}
-          y={166}
-          textAnchor="middle"
-          fontSize={11}
-          fontWeight={600}
-          fill="#0a5b4b"
-        >
+        <text x={265} y={166} textAnchor="middle" fontSize={11} fontWeight={600} fill="#0a5b4b">
           Opportunity vorhanden
         </text>
-        <text
-          x={555}
-          y={166}
-          textAnchor="middle"
-          fontSize={11}
-          fontWeight={600}
-          fill="#b45309"
-        >
+        <text x={555} y={166} textAnchor="middle" fontSize={11} fontWeight={600} fill="#b45309">
           keine Opportunity
         </text>
 

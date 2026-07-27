@@ -39,10 +39,7 @@ interface SettingsMenuProps {
   onMobileNavigate?: () => void;
 }
 
-export const SettingsMenu = ({
-  isMobile = false,
-  onMobileNavigate,
-}: SettingsMenuProps) => {
+export const SettingsMenu = ({ isMobile = false, onMobileNavigate }: SettingsMenuProps) => {
   const locale = useLocale();
   const t = useTranslations("nav.settingsMenu");
   const router = useRouter();
@@ -76,9 +73,7 @@ export const SettingsMenu = ({
                 <Settings2 className="h-4 w-4" />
               </span>
               <div className="space-y-0.5">
-                <p className="text-sm font-medium text-foreground">
-                  {t("label")}
-                </p>
+                <p className="text-sm font-medium text-foreground">{t("label")}</p>
                 <p className="text-xs text-muted-foreground">
                   {t("language")} & {t("appearance")}
                 </p>
@@ -106,7 +101,7 @@ export const SettingsMenu = ({
                 {t("language")}
               </span>
               <div className="grid grid-cols-2 gap-2">
-                {languages.map(language => (
+                {languages.map((language) => (
                   <DrawerClose asChild key={language.code}>
                     <button
                       onClick={() => switchLanguage(language.code)}
@@ -114,7 +109,7 @@ export const SettingsMenu = ({
                         "flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
                         language.code === locale
                           ? "border-advantis/40 bg-advantis/10 text-advantis"
-                          : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                          : "border-border bg-card/60 text-muted-foreground hover:text-foreground",
                       )}
                     >
                       <span className="text-base">{language.flag}</span>
@@ -135,9 +130,8 @@ export const SettingsMenu = ({
                 {t("appearance")}
               </span>
               <div className="grid grid-cols-1 gap-2">
-                {["light", "dark", "system"].map(mode => {
-                  const Icon =
-                    mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+                {["light", "dark", "system"].map((mode) => {
+                  const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
 
                   return (
                     <DrawerClose asChild key={mode}>
@@ -150,16 +144,12 @@ export const SettingsMenu = ({
                           "flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all duration-200",
                           mounted && theme === mode
                             ? "border-advantis/40 bg-advantis/10 text-advantis"
-                            : "border-border bg-card/60 text-muted-foreground hover:text-foreground"
+                            : "border-border bg-card/60 text-muted-foreground hover:text-foreground",
                         )}
                       >
                         <Icon className="h-4 w-4" />
                         <span className="capitalize">
-                          {mode === "light"
-                            ? t("light")
-                            : mode === "dark"
-                              ? t("dark")
-                              : t("auto")}
+                          {mode === "light" ? t("light") : mode === "dark" ? t("dark") : t("auto")}
                         </span>
                       </button>
                     </DrawerClose>
@@ -185,33 +175,26 @@ export const SettingsMenu = ({
           <div className="absolute inset-0 rounded-full bg-advantis/10 opacity-0 blur-md transition-opacity duration-300 group-hover/settings:opacity-100" />
 
           <div className="relative z-10 flex flex-col items-center justify-center gap-0.75">
-            {[0, 1, 2].map(row => (
+            {[0, 1, 2].map((row) => (
               <motion.div
                 key={row}
                 className="flex gap-0.75"
                 animate={
                   isOpen
                     ? {
-                        y:
-                          row === 0
-                            ? [-10, 0]
-                            : row === 1
-                              ? [0, 2, 0]
-                              : [0, 4, 0],
+                        y: row === 0 ? [-10, 0] : row === 1 ? [0, 2, 0] : [0, 4, 0],
                         scale: row === 2 ? [1, 0.8, 1] : 1,
                       }
                     : { y: 0, scale: 1 }
                 }
                 transition={{ duration: 0.25 }}
               >
-                {[0, 1, 2].map(dot => (
+                {[0, 1, 2].map((dot) => (
                   <motion.span
                     key={dot}
                     className={cn(
                       "block h-1 w-1 rounded-full bg-foreground",
-                      isOpen
-                        ? "bg-advantis"
-                        : "group-hover/settings:bg-advantis"
+                      isOpen ? "bg-advantis" : "group-hover/settings:bg-advantis",
                     )}
                     animate={{
                       x:
@@ -250,14 +233,14 @@ export const SettingsMenu = ({
           </DropdownMenuLabel>
 
           <div className="mb-2 mt-2 grid grid-cols-2 gap-2">
-            {languages.map(language => (
+            {languages.map((language) => (
               <DropdownMenuItem
                 key={language.code}
                 onClick={() => switchLanguage(language.code)}
                 className={cn(
                   "flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-transparent py-2",
                   language.code === locale &&
-                    "border-advantis/30 bg-advantis/10 font-medium text-advantis"
+                    "border-advantis/30 bg-advantis/10 font-medium text-advantis",
                 )}
               >
                 <span className="text-lg">{language.flag}</span>
@@ -273,15 +256,10 @@ export const SettingsMenu = ({
           </DropdownMenuLabel>
 
           <div className="mt-2 grid grid-cols-3 gap-2 rounded-2xl bg-muted/10 p-1">
-            {["light", "dark", "system"].map(mode => {
-              const Icon =
-                mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
+            {["light", "dark", "system"].map((mode) => {
+              const Icon = mode === "light" ? Sun : mode === "dark" ? Moon : Monitor;
               const label =
-                mode === "light"
-                  ? t("light")
-                  : mode === "dark"
-                    ? t("dark")
-                    : t("system");
+                mode === "light" ? t("light") : mode === "dark" ? t("dark") : t("system");
               const isActive = mounted && theme === mode;
 
               return (
@@ -295,7 +273,7 @@ export const SettingsMenu = ({
                     "flex h-11 items-center justify-center rounded-xl border text-muted-foreground transition-all duration-200",
                     isActive
                       ? "border-border bg-background text-foreground shadow-sm"
-                      : "border-transparent bg-transparent hover:border-border/60 hover:bg-background/60 hover:text-foreground"
+                      : "border-transparent bg-transparent hover:border-border/60 hover:bg-background/60 hover:text-foreground",
                   )}
                 >
                   <Icon className="h-4 w-4" />

@@ -29,28 +29,18 @@ function abbreviateName(name: string): string {
   return last ? `${first} ${last[0].toUpperCase()}.` : first;
 }
 
-function StatBlock({
-  label,
-  value,
-  size,
-}: {
-  label: string;
-  value: string;
-  size: "lg" | "md";
-}) {
+function StatBlock({ label, value, size }: { label: string; value: string; size: "lg" | "md" }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span
         className={cn(
           "tabular-nums",
-          size === "lg" ? "text-3xl font-bold" : "text-lg font-semibold"
+          size === "lg" ? "text-3xl font-bold" : "text-lg font-semibold",
         )}
       >
         {value}
       </span>
-      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-        {label}
-      </span>
+      <span className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</span>
     </div>
   );
 }
@@ -59,11 +49,7 @@ function EmployeeStats({ row }: { row: LastDayInteractionRow }) {
   const t = useTranslations("Performance");
   return (
     <>
-      <StatBlock
-        label={t("interactionsStatCount")}
-        value={fmtNum(row.count)}
-        size="lg"
-      />
+      <StatBlock label={t("interactionsStatCount")} value={fmtNum(row.count)} size="lg" />
       <div className="flex gap-6">
         <StatBlock
           label={t("callsAvgDurationLabel")}
@@ -101,13 +87,13 @@ export function LastDayInteractions({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeSlide, setActiveSlide] = useState(0);
 
-  const withData = days.filter(d => d.count > 0);
+  const withData = days.filter((d) => d.count > 0);
   const lastDate = withData.reduce(
     (max, d) => (d.date > max ? d.date : max),
-    withData[0]?.date ?? ""
+    withData[0]?.date ?? "",
   );
-  const rows = withData.filter(d => d.date === lastDate);
-  const isTeam = rows.some(r => r.employeeName !== undefined);
+  const rows = withData.filter((d) => d.date === lastDate);
+  const isTeam = rows.some((r) => r.employeeName !== undefined);
 
   const slides: LastDayInteractionRow[][] = [];
   for (let i = 0; i < rows.length; i += SLIDE_SIZE) {
@@ -166,14 +152,12 @@ export function LastDayInteractions({
                 gridTemplateColumns: `repeat(${slide.length}, minmax(0, 1fr))`,
               }}
             >
-              {slide.map(row => (
+              {slide.map((row) => (
                 <div
                   key={row.employeeId ?? row.employeeName}
                   className="flex flex-col gap-3 rounded-lg border border-border/60 p-4"
                 >
-                  <span className="text-sm font-medium">
-                    {row.employeeName}
-                  </span>
+                  <span className="text-sm font-medium">{row.employeeName}</span>
                   <EmployeeStats row={row} />
                 </div>
               ))}
@@ -195,7 +179,7 @@ export function LastDayInteractions({
                     "rounded-full px-2.5 py-1 text-xs transition-colors",
                     active
                       ? "bg-accent text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {abbreviateName(row.employeeName ?? "")}

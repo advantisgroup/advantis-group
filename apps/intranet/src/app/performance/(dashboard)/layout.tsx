@@ -53,10 +53,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatIsoDate } from "@/lib/format";
-import {
-  clearPerformanceToken,
-  downloadPerformanceFile,
-} from "@/lib/performanceAuth";
+import { clearPerformanceToken, downloadPerformanceFile } from "@/lib/performanceAuth";
 
 interface DashboardTopData {
   hasCalls: boolean;
@@ -91,9 +88,7 @@ function DashboardTopSection({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("dashboardCallActivity")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("dashboardCallActivity")}</CardTitle>
         </CardHeader>
         <CardContent>
           <FilterableBarChart
@@ -120,16 +115,14 @@ function DashboardTopSection({
     return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
   if (activeTab === "team") {
-    const chartData = data.loggedIn.map(d => ({
+    const chartData = data.loggedIn.map((d) => ({
       label: fmtDayShort(d.date, locale),
       count: d.count,
     }));
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("dashboardLoggedInTitle")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("dashboardLoggedInTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <FilterableBarChart
@@ -150,9 +143,7 @@ function DashboardTopSection({
   // (over its own trailing-3-month window) further down the page — no
   // top-of-page chart needed here too.
   if (activeTab === "entwicklung") return null;
-  return (
-    <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />
-  );
+  return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
 function DashboardChrome({
@@ -242,36 +233,27 @@ function DashboardChrome({
             },
           ]
         : []),
-    ...(viaClerk
-      ? []
-      : [
-          { href: "/performance/upload", label: t("uploadLink"), icon: Upload },
-        ]),
-    ...(viaClerk
-      ? []
-      : [{ href: "/performance/passwort", label: t("passwordLink") }]),
+    ...(viaClerk ? [] : [{ href: "/performance/upload", label: t("uploadLink"), icon: Upload }]),
+    ...(viaClerk ? [] : [{ href: "/performance/passwort", label: t("passwordLink") }]),
   ];
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={viaClerk ? undefined : onExit}
-      />
+      <PerformanceHeader navItems={navItems} onExit={viaClerk ? undefined : onExit} />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         {!viaClerk && <SelfLinkPrompt token={token} />}
         <div className="flex flex-wrap items-center gap-3">
           <Select
             value={ym ?? data?.ym ?? ""}
-            onValueChange={v => setYm(v)}
+            onValueChange={(v) => setYm(v)}
             disabled={!data || data.months.length === 0}
           >
             <SelectTrigger className="w-56">
               <SelectValue placeholder={t("dashboardMonthLabel")} />
             </SelectTrigger>
             <SelectContent>
-              {[...(data?.months ?? [])].reverse().map(m => (
+              {[...(data?.months ?? [])].reverse().map((m) => (
                 <SelectItem key={m} value={m}>
                   {fmtYm(m, locale)}
                 </SelectItem>
@@ -280,9 +262,7 @@ function DashboardChrome({
           </Select>
           {data && (
             <Badge variant={data.monthDone ? "muted" : "success"}>
-              {data.monthDone
-                ? t("dashboardMonthClosed")
-                : t("dashboardMonthOpen")}
+              {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
             </Badge>
           )}
           {data?.total.reportDate && (
@@ -300,7 +280,7 @@ function DashboardChrome({
                 void downloadPerformanceFile(
                   `/performance/export?ym=${data.ym}`,
                   token,
-                  `performance-${data.ym}.xlsx`
+                  `performance-${data.ym}.xlsx`,
                 )
               }
             >
@@ -326,23 +306,14 @@ function DashboardChrome({
           </div>
         </Card>
 
-        <PerformanceDashboardDataProvider data={data}>
-          {children}
-        </PerformanceDashboardDataProvider>
+        <PerformanceDashboardDataProvider data={data}>{children}</PerformanceDashboardDataProvider>
       </main>
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={viaClerk ? undefined : onExit}
-      />
+      <PerformanceBottomTabs navItems={navItems} onExit={viaClerk ? undefined : onExit} />
     </div>
   );
 }
 
-export default function PerformanceDashboardLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function PerformanceDashboardLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Performance");
   const router = useRouter();
   const { token, session } = usePerformanceSession();
@@ -366,8 +337,7 @@ export default function PerformanceDashboardLayout({
   // Employee logins have their own detail page — this layout is the admin
   // team view.
   useEffect(() => {
-    if (!session?.valid || session.permissions.includes("view_all_employees"))
-      return;
+    if (!session?.valid || session.permissions.includes("view_all_employees")) return;
     if (session.employeeId) {
       router.replace(`/performance/mitarbeiter/${session.employeeId}`);
     }

@@ -86,8 +86,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
     const mm = /^(-?\d+(?:\.\d+)?)(px|em|rem|%)?$/.exec(rootMargin || "");
     const mv = mm ? parseFloat(mm[1]) : 0;
     const mu = mm ? mm[2] || "px" : "px";
-    const sign =
-      mv === 0 ? "" : mv < 0 ? `-=${Math.abs(mv)}${mu}` : `+=${mv}${mu}`;
+    const sign = mv === 0 ? "" : mv < 0 ? `-=${Math.abs(mv)}${mu}` : `+=${mv}${mu}`;
     return `top ${startPct}%${sign}`;
   }, [threshold, rootMargin]);
 
@@ -108,10 +107,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
 
       const removeHover = () => {
         if (hoverHandlerRef.current && ref.current) {
-          ref.current.removeEventListener(
-            "mouseenter",
-            hoverHandlerRef.current
-          );
+          ref.current.removeEventListener("mouseenter", hoverHandlerRef.current);
           hoverHandlerRef.current = null;
         }
       };
@@ -122,13 +118,10 @@ const Shuffle: React.FC<ShuffleProps> = ({
           tlRef.current = null;
         }
         if (wrappersRef.current.length) {
-          wrappersRef.current.forEach(wrap => {
+          wrappersRef.current.forEach((wrap) => {
             const inner = wrap.firstElementChild as HTMLElement | null;
-            const orig = inner?.querySelector(
-              '[data-orig="1"]'
-            ) as HTMLElement | null;
-            if (orig && wrap.parentNode)
-              wrap.parentNode.replaceChild(orig, wrap);
+            const orig = inner?.querySelector('[data-orig="1"]') as HTMLElement | null;
+            if (orig && wrap.parentNode) wrap.parentNode.replaceChild(orig, wrap);
           });
           wrappersRef.current = [];
         }
@@ -159,10 +152,9 @@ const Shuffle: React.FC<ShuffleProps> = ({
         wrappersRef.current = [];
 
         const rolls = Math.max(1, Math.floor(shuffleTimes));
-        const rand = (set: string) =>
-          set.charAt(Math.floor(Math.random() * set.length)) || "";
+        const rand = (set: string) => set.charAt(Math.floor(Math.random() * set.length)) || "";
 
-        chars.forEach(ch => {
+        chars.forEach((ch) => {
           const parent = ch.parentElement;
           if (!parent) return;
 
@@ -170,8 +162,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
           if (!w) return;
 
           const wrap = document.createElement("span");
-          wrap.className =
-            "inline-block overflow-hidden align-baseline text-left";
+          wrap.className = "inline-block overflow-hidden align-baseline text-left";
           Object.assign(wrap.style, { width: w + "px" });
 
           const inner = document.createElement("span");
@@ -230,25 +221,24 @@ const Shuffle: React.FC<ShuffleProps> = ({
         });
       };
 
-      const inners = () =>
-        wrappersRef.current.map(w => w.firstElementChild as HTMLElement);
+      const inners = () => wrappersRef.current.map((w) => w.firstElementChild as HTMLElement);
 
       const randomizeScrambles = () => {
         if (!scrambleCharset) return;
-        wrappersRef.current.forEach(w => {
+        wrappersRef.current.forEach((w) => {
           const strip = w.firstElementChild as HTMLElement;
           if (!strip) return;
           const kids = Array.from(strip.children) as HTMLElement[];
           for (let i = 1; i < kids.length - 1; i++) {
             kids[i].textContent = scrambleCharset.charAt(
-              Math.floor(Math.random() * scrambleCharset.length)
+              Math.floor(Math.random() * scrambleCharset.length),
             );
           }
         });
       };
 
       const cleanupToStill = () => {
-        wrappersRef.current.forEach(w => {
+        wrappersRef.current.forEach((w) => {
           const strip = w.firstElementChild as HTMLElement;
           if (!strip) return;
           const real = strip.querySelector('[data-orig="1"]');
@@ -272,8 +262,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
           onRepeat: () => {
             if (scrambleCharset) randomizeScrambles();
             gsap.set(strips, {
-              x: (i, t: HTMLElement) =>
-                parseFloat(t.getAttribute("data-start-x") || "0"),
+              x: (i, t: HTMLElement) => parseFloat(t.getAttribute("data-start-x") || "0"),
             });
             onShuffleComplete?.();
           },
@@ -292,17 +281,15 @@ const Shuffle: React.FC<ShuffleProps> = ({
           tl.to(
             targets,
             {
-              x: (i, t: HTMLElement) =>
-                parseFloat(t.getAttribute("data-final-x") || "0"),
+              x: (i, t: HTMLElement) => parseFloat(t.getAttribute("data-final-x") || "0"),
               duration,
               ease,
               force3D: true,
               stagger: animationMode === "evenodd" ? stagger : 0,
             },
-            at
+            at,
           );
-          if (colorFrom && colorTo)
-            tl.to(targets, { color: colorTo, duration, ease }, at);
+          if (colorFrom && colorTo) tl.to(targets, { color: colorTo, duration, ease }, at);
         };
 
         if (animationMode === "evenodd") {
@@ -313,7 +300,7 @@ const Shuffle: React.FC<ShuffleProps> = ({
           if (odd.length) addTween(odd, 0);
           if (even.length) addTween(even, evenStart);
         } else {
-          strips.forEach(strip => {
+          strips.forEach((strip) => {
             const d = Math.random() * maxDelay;
             tl.to(
               strip,
@@ -323,15 +310,10 @@ const Shuffle: React.FC<ShuffleProps> = ({
                 ease,
                 force3D: true,
               },
-              d
+              d,
             );
             if (colorFrom && colorTo)
-              tl.fromTo(
-                strip,
-                { color: colorFrom },
-                { color: colorTo, duration, ease },
-                d
-              );
+              tl.fromTo(strip, { color: colorFrom }, { color: colorTo, duration, ease }, d);
           });
         }
 
@@ -396,19 +378,16 @@ const Shuffle: React.FC<ShuffleProps> = ({
         onShuffleComplete,
       ],
       scope: ref,
-    }
+    },
   );
 
   const baseTw =
     "inline-block whitespace-normal break-words will-change-transform uppercase text-2xl leading-none";
-  const userHasFont = useMemo(
-    () => className && /font[-[]/i.test(className),
-    [className]
-  );
+  const userHasFont = useMemo(() => className && /font[-[]/i.test(className), [className]);
 
   const fallbackFont = useMemo(
     () => (userHasFont ? {} : { fontFamily: `'Press Start 2P', sans-serif` }),
-    [userHasFont]
+    [userHasFont],
   );
 
   const commonStyle = useMemo(
@@ -417,19 +396,19 @@ const Shuffle: React.FC<ShuffleProps> = ({
       ...fallbackFont,
       ...style,
     }),
-    [textAlign, fallbackFont, style]
+    [textAlign, fallbackFont, style],
   );
 
   const classes = useMemo(
     () => `${baseTw} ${ready ? "visible" : "invisible"} ${className}`.trim(),
-    [baseTw, ready, className]
+    [baseTw, ready, className],
   );
   const Tag = (tag || "p") as keyof JSX.IntrinsicElements;
 
   return React.createElement(
     Tag,
     { ref: ref as any, className: classes, style: commonStyle },
-    text
+    text,
   );
 };
 

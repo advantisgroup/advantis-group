@@ -88,7 +88,7 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
 
   const enteredExternal = isExternalEmail(email.trim(), allowedDomains);
 
-  const pending = invites?.filter(i => i.status === "pending") ?? [];
+  const pending = invites?.filter((i) => i.status === "pending") ?? [];
 
   return (
     <div className="space-y-4">
@@ -99,20 +99,14 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
               type="email"
               placeholder={t("inviteEmail")}
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="sm:flex-1"
             />
             <div className="flex gap-2">
-              <RoleSelect
-                value={role}
-                onChange={setRole}
-                canElevate={isAdmin}
-              />
+              <RoleSelect value={role} onChange={setRole} canElevate={isAdmin} />
               <Button
                 onClick={send}
-                disabled={
-                  busy || !email.trim() || (enteredExternal && !isAdmin)
-                }
+                disabled={busy || !email.trim() || (enteredExternal && !isAdmin)}
                 className="flex-1 sm:flex-none"
               >
                 <Mail className="mr-2 h-4 w-4" />
@@ -129,12 +123,10 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
       </Card>
 
       {pending.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {t("noInvites")}
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("noInvites")}</p>
       ) : (
         <div className="space-y-2">
-          {pending.map(i => (
+          {pending.map((i) => (
             <Card nested key={i._id}>
               <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-2">

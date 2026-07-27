@@ -1,11 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 
 import { redirect } from "@/i18n/navigation";
-export default async function AccountPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function AccountPage({ params }: { params: Promise<{ locale: string }> }) {
   const [{ locale }, { userId }] = await Promise.all([params, auth()]);
 
   if (!userId) {

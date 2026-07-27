@@ -55,20 +55,16 @@ function BucketRow({
   const [mergeTarget, setMergeTarget] = useState<string>("");
 
   const mergedInto = bucket.mergedIntoId
-    ? buckets.find(b => b._id === bucket.mergedIntoId)
+    ? buckets.find((b) => b._id === bucket.mergedIntoId)
     : null;
-  const mergeCandidates = buckets.filter(
-    b => b._id !== bucket._id && !b.mergedIntoId
-  );
+  const mergeCandidates = buckets.filter((b) => b._id !== bucket._id && !b.mergedIntoId);
 
   if (mergedInto) {
     return (
       <Card className="opacity-60">
         <CardContent className="flex flex-wrap items-center justify-between gap-2 p-4">
           <div>
-            <p className="text-sm font-medium line-through">
-              {bucket.canonicalName}
-            </p>
+            <p className="text-sm font-medium line-through">{bucket.canonicalName}</p>
             <p className="text-xs text-muted-foreground">
               {t("dataCleanup.mergedInto", { name: mergedInto.canonicalName })}
             </p>
@@ -85,7 +81,7 @@ function BucketRow({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <Input
             value={name}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             onBlur={() => {
               if (name.trim() && name.trim() !== bucket.canonicalName) {
                 setCanonicalName({
@@ -111,9 +107,7 @@ function BucketRow({
               size="sm"
               variant="outline"
               onClick={() =>
-                setStatus({ bucketId: bucket._id, status: "approved" }).catch(
-                  handleError
-                )
+                setStatus({ bucketId: bucket._id, status: "approved" }).catch(handleError)
               }
             >
               {t("dataCleanup.approve")}
@@ -124,9 +118,7 @@ function BucketRow({
               size="sm"
               variant="outline"
               onClick={() =>
-                setStatus({ bucketId: bucket._id, status: "rejected" }).catch(
-                  handleError
-                )
+                setStatus({ bucketId: bucket._id, status: "rejected" }).catch(handleError)
               }
             >
               {t("dataCleanup.reject")}
@@ -136,12 +128,10 @@ function BucketRow({
             <div className="flex items-center gap-2">
               <Select value={mergeTarget} onValueChange={setMergeTarget}>
                 <SelectTrigger className="h-9 w-48">
-                  <SelectValue
-                    placeholder={t("dataCleanup.mergeIntoPlaceholder")}
-                  />
+                  <SelectValue placeholder={t("dataCleanup.mergeIntoPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {mergeCandidates.map(c => (
+                  {mergeCandidates.map((c) => (
                     <SelectItem key={c._id} value={c._id}>
                       {c.canonicalName}
                     </SelectItem>
@@ -184,10 +174,8 @@ function BucketSection({
   const buckets = useQuery(api.orgDataMigration.listReview, { kind });
 
   const pendingCount = useMemo(
-    () =>
-      (buckets ?? []).filter(b => b.status === "pending" && !b.mergedIntoId)
-        .length,
-    [buckets]
+    () => (buckets ?? []).filter((b) => b.status === "pending" && !b.mergedIntoId).length,
+    [buckets],
   );
 
   return (
@@ -198,22 +186,16 @@ function BucketSection({
         </span>
         <h2 className="font-display text-lg font-semibold">{title}</h2>
         {pendingCount > 0 && (
-          <Badge variant="warning">
-            {t("dataCleanup.pendingCount", { count: pendingCount })}
-          </Badge>
+          <Badge variant="warning">{t("dataCleanup.pendingCount", { count: pendingCount })}</Badge>
         )}
       </div>
       {buckets === undefined ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {t("dataCleanup.loading")}
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("dataCleanup.loading")}</p>
       ) : buckets.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {t("dataCleanup.empty")}
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("dataCleanup.empty")}</p>
       ) : (
         <div className="space-y-2">
-          {buckets.map(b => (
+          {buckets.map((b) => (
             <BucketRow key={b._id} bucket={b} buckets={buckets} t={t} />
           ))}
         </div>
@@ -243,7 +225,7 @@ export default function DataCleanupPage() {
         t("dataCleanup.populated", {
           created: result.created,
           updated: result.updated,
-        })
+        }),
       );
     } catch (e) {
       handleError(e);
@@ -261,7 +243,7 @@ export default function DataCleanupPage() {
           departments: result.departmentsCreated,
           teams: result.teamsCreated,
           users: result.usersUpdated,
-        })
+        }),
       );
     } catch (e) {
       handleError(e);
@@ -289,16 +271,8 @@ export default function DataCleanupPage() {
         }
       />
 
-      <BucketSection
-        kind="department"
-        icon={<Building2 />}
-        title={t("dataCleanup.departments")}
-      />
-      <BucketSection
-        kind="team"
-        icon={<Users2 />}
-        title={t("dataCleanup.teams")}
-      />
+      <BucketSection kind="department" icon={<Building2 />} title={t("dataCleanup.departments")} />
+      <BucketSection kind="team" icon={<Users2 />} title={t("dataCleanup.teams")} />
     </div>
   );
 }

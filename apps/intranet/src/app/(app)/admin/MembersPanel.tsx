@@ -32,11 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { TEAMS } from "@/lib/teams";
@@ -49,11 +45,8 @@ function TourProgressChip({ userId }: { userId: Id<"users"> }) {
   const total = TOUR_CHECKPOINTS.length;
   if (progress) {
     try {
-      const statuses = JSON.parse(progress.checkpointStatuses) as Record<
-        string,
-        string
-      >;
-      completed = Object.values(statuses).filter(s => s === "completed").length;
+      const statuses = JSON.parse(progress.checkpointStatuses) as Record<string, string>;
+      completed = Object.values(statuses).filter((s) => s === "completed").length;
     } catch {
       // ignore parse errors
     }
@@ -92,28 +85,20 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
   type Member = NonNullable<typeof members>[number];
 
   /** Short "what does this grant" summary for a custom role, for tooltips. */
-  function capabilitiesSummary(
-    role: NonNullable<typeof customRoles>[number]
-  ): string {
+  function capabilitiesSummary(role: NonNullable<typeof customRoles>[number]): string {
     if (role.capabilities.length === 0) return tCap("noCapabilities");
-    return role.capabilities.map(c => tCap(`capability_${c}`)).join(", ");
+    return role.capabilities.map((c) => tCap(`capability_${c}`)).join(", ");
   }
 
   /** Same summary, looked up by the id stored on a member — for tooltips. */
-  function memberCustomRoleSummary(m: {
-    customRoleId?: Id<"customRoles"> | null;
-  }): string {
-    const assigned = m.customRoleId
-      ? customRoles?.find(r => r._id === m.customRoleId)
-      : null;
+  function memberCustomRoleSummary(m: { customRoleId?: Id<"customRoles"> | null }): string {
+    const assigned = m.customRoleId ? customRoles?.find((r) => r._id === m.customRoleId) : null;
     return assigned ? capabilitiesSummary(assigned) : t("customRoleNone");
   }
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
-  const [statusFilter, setStatusFilter] = useState<
-    "all" | "active" | "suspended"
-  >("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "suspended">("all");
   const [teamFilter, setTeamFilter] = useState("all");
   const [selectedId, setSelectedId] = useState<Id<"users"> | null>(null);
 
@@ -122,14 +107,11 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
     const q = search.trim().toLowerCase();
     if (q)
       list = list.filter(
-        m =>
-          m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
+        (m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
       );
-    if (roleFilter !== "all") list = list.filter(m => m.role === roleFilter);
-    if (statusFilter !== "all")
-      list = list.filter(m => m.status === statusFilter);
-    if (teamFilter !== "all")
-      list = list.filter(m => m.teams.includes(teamFilter));
+    if (roleFilter !== "all") list = list.filter((m) => m.role === roleFilter);
+    if (statusFilter !== "all") list = list.filter((m) => m.status === statusFilter);
+    if (teamFilter !== "all") list = list.filter((m) => m.teams.includes(teamFilter));
     return list;
   }, [members, search, roleFilter, statusFilter, teamFilter]);
 
@@ -141,10 +123,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
   function onCustomRoleChange(m: Member, customRoleId: string) {
     assignCustomRole({
       userId: m._id as Id<"users">,
-      customRoleId:
-        customRoleId === "none"
-          ? undefined
-          : (customRoleId as Id<"customRoles">),
+      customRoleId: customRoleId === "none" ? undefined : (customRoleId as Id<"customRoles">),
     }).catch(handleError);
   }
 
@@ -174,11 +153,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
 
   function MemberRow(m: Member) {
     return (
-      <Card
-        nested
-        key={m._id}
-        className="transition-colors hover:border-border"
-      >
+      <Card nested key={m._id} className="transition-colors hover:border-border">
         <div className="flex items-center gap-3 p-3">
           <button
             type="button"
@@ -187,9 +162,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
           >
             <Avatar className="h-9 w-9 shrink-0">
               {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
-              <AvatarFallback className="text-xs">
-                {initials(m.name, m.email)}
-              </AvatarFallback>
+              <AvatarFallback className="text-xs">{initials(m.name, m.email)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -205,19 +178,14 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
                   </Badge>
                 )}
               </div>
-              <p className="truncate text-xs text-muted-foreground">
-                {m.email}
-              </p>
+              <p className="truncate text-xs text-muted-foreground">{m.email}</p>
             </div>
           </button>
           <div className="flex shrink-0 items-center gap-2">
             {m.gfAccess && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge
-                    variant="muted"
-                    className="hidden cursor-help text-[10px] sm:inline-flex"
-                  >
+                  <Badge variant="muted" className="hidden cursor-help text-[10px] sm:inline-flex">
                     GF
                   </Badge>
                 </TooltipTrigger>
@@ -229,10 +197,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
             {m.applicantAccessDelegate && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Badge
-                    variant="muted"
-                    className="hidden cursor-help text-[10px] sm:inline-flex"
-                  >
+                  <Badge variant="muted" className="hidden cursor-help text-[10px] sm:inline-flex">
                     BM
                   </Badge>
                 </TooltipTrigger>
@@ -250,7 +215,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
             {customRoles && customRoles.length > 0 && (
               <Select
                 value={m.customRoleId ?? "none"}
-                onValueChange={v => onCustomRoleChange(m, v)}
+                onValueChange={(v) => onCustomRoleChange(m, v)}
               >
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -267,12 +232,8 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
                 </Tooltip>
                 <SelectContent>
                   <SelectItem value="none">{t("customRoleNone")}</SelectItem>
-                  {customRoles.map(role => (
-                    <SelectItem
-                      key={role._id}
-                      value={role._id}
-                      title={capabilitiesSummary(role)}
-                    >
+                  {customRoles.map((role) => (
+                    <SelectItem key={role._id} value={role._id} title={capabilitiesSummary(role)}>
                       {role.name}
                     </SelectItem>
                   ))}
@@ -299,16 +260,13 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchMembers")}
             className="pl-8"
           />
         </div>
         <div className="grid grid-cols-3 gap-2 sm:flex">
-          <Select
-            value={roleFilter}
-            onValueChange={v => setRoleFilter(v as "all" | Role)}
-          >
+          <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as "all" | Role)}>
             <SelectTrigger className="w-full sm:w-32">
               <SelectValue />
             </SelectTrigger>
@@ -321,9 +279,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
           </Select>
           <Select
             value={statusFilter}
-            onValueChange={v =>
-              setStatusFilter(v as "all" | "active" | "suspended")
-            }
+            onValueChange={(v) => setStatusFilter(v as "all" | "active" | "suspended")}
           >
             <SelectTrigger className="w-full sm:w-32">
               <SelectValue />
@@ -340,7 +296,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allTeams")}</SelectItem>
-              {TEAMS.map(team => (
+              {TEAMS.map((team) => (
                 <SelectItem key={team.id} value={team.id}>
                   {tTeams(team.labelKey)}
                 </SelectItem>
@@ -351,13 +307,9 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
       </div>
 
       {members === undefined ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          {tc("loading")}
-        </p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{tc("loading")}</p>
       ) : filtered.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          {t("noMembers")}
-        </p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{t("noMembers")}</p>
       ) : (
         <div className="space-y-2" data-tour="tour-admin-members">
           {filtered.map(MemberRow)}
@@ -370,7 +322,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
       <UserProfile
         userId={selectedId}
         open={!!selectedId}
-        onOpenChange={o => {
+        onOpenChange={(o) => {
           if (!o) setSelectedId(null);
         }}
       />

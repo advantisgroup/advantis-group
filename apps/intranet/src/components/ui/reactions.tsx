@@ -49,7 +49,7 @@ export function ReactionPicker({
           sideOffset={6}
           className="z-50 flex items-center gap-0.5 rounded-full border border-border/70 bg-popover p-1 shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
         >
-          {REACTION_EMOJIS.map(emoji => (
+          {REACTION_EMOJIS.map((emoji) => (
             <button
               key={emoji}
               type="button"
@@ -81,7 +81,7 @@ export function ReactionChips({
   if (reactions.length === 0) return null;
   return (
     <div className={cn("flex flex-wrap items-center gap-1", className)}>
-      {reactions.map(r => (
+      {reactions.map((r) => (
         <button
           key={r.emoji}
           type="button"
@@ -90,7 +90,7 @@ export function ReactionChips({
             "flex h-6 items-center gap-1 rounded-full border px-1.5 text-xs tabular-nums transition-colors",
             r.mine
               ? "border-primary/40 bg-primary/10 text-primary"
-              : "border-border bg-card text-muted-foreground hover:bg-accent"
+              : "border-border bg-card text-muted-foreground hover:bg-accent",
           )}
         >
           <span className="text-sm leading-none">{r.emoji}</span>

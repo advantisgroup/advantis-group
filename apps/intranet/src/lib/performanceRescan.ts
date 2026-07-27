@@ -36,9 +36,11 @@ function readSheetRowsClientSide(bytes: Uint8Array): CallRow[] | null {
   const workbook = XLSX.read(bytes, { type: "array", cellDates: true });
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json<
-    (string | number | boolean | Date | null)[]
-  >(sheet, { header: 1, raw: true, defval: null });
+  const rows = XLSX.utils.sheet_to_json<(string | number | boolean | Date | null)[]>(sheet, {
+    header: 1,
+    raw: true,
+    defval: null,
+  });
   return readCallExport(rows)?.rows ?? null;
 }
 
@@ -53,7 +55,7 @@ function readSheetRowsClientSide(bytes: Uint8Array): CallRow[] | null {
 export async function rescanCallReport(
   filename: string,
   fileUrl: string,
-  knownEmployeeNames: string[]
+  knownEmployeeNames: string[],
 ): Promise<RescanResult> {
   const lower = filename.toLowerCase();
   const res = await fetch(fileUrl);

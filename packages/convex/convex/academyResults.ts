@@ -25,7 +25,7 @@ export const getMine = query({
   handler: async (ctx, { participantId }) => {
     const row = await ctx.db
       .query("academyResults")
-      .withIndex("by_participant", q => q.eq("participantId", participantId))
+      .withIndex("by_participant", (q) => q.eq("participantId", participantId))
       .unique();
     return row ? { data: row.data, updatedAt: row.updatedAt } : null;
   },
@@ -45,7 +45,7 @@ export const saveMine = mutation({
   handler: async (ctx, { academyId, participantId, data }) => {
     const existing = await ctx.db
       .query("academyResults")
-      .withIndex("by_participant", q => q.eq("participantId", participantId))
+      .withIndex("by_participant", (q) => q.eq("participantId", participantId))
       .unique();
     const now = Date.now();
     const justFinished = !isFinished(existing?.data) && isFinished(data);
@@ -66,16 +66,16 @@ export const saveMine = mutation({
       const [managers, admins] = await Promise.all([
         ctx.db
           .query("users")
-          .withIndex("by_role", q => q.eq("role", "manager"))
+          .withIndex("by_role", (q) => q.eq("role", "manager"))
           .collect(),
         ctx.db
           .query("users")
-          .withIndex("by_role", q => q.eq("role", "admin"))
+          .withIndex("by_role", (q) => q.eq("role", "admin"))
           .collect(),
       ]);
       await notifyUsers(
         ctx,
-        [...managers, ...admins].map(u => u._id),
+        [...managers, ...admins].map((u) => u._id),
         {
           type: "academy_finished",
           title: participant
@@ -83,7 +83,7 @@ export const saveMine = mutation({
             : "Ein Teilnehmer hat die Wallbox Sales Academy abgeschlossen",
           body: participant?.email,
           link: `/guidebooks/wallbox-sales-academy/admin/teilnehmer/${participantId}`,
-        }
+        },
       );
     }
   },
@@ -96,7 +96,7 @@ export const listAll = query({
     await requireUser(ctx);
     return ctx.db
       .query("academyResults")
-      .withIndex("by_academy", q => q.eq("academyId", academyId))
+      .withIndex("by_academy", (q) => q.eq("academyId", academyId))
       .collect();
   },
 });

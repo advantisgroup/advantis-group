@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable react-refresh/only-export-components --
-   Provider colocated with its `useFileViewer` hook, imported across the app. */
 import {
   createContext,
   useCallback,
@@ -54,13 +52,10 @@ export function FileViewerProvider({ children }: { children: ReactNode }) {
   const [file, setFile] = useState<ViewableFile | null>(null);
   const onCloseOverrideRef = useRef<(() => void) | null>(null);
 
-  const openFileViewer = useCallback(
-    (f: ViewableFile, options?: OpenFileViewerOptions) => {
-      onCloseOverrideRef.current = options?.onClose ?? null;
-      setFile(f);
-    },
-    []
-  );
+  const openFileViewer = useCallback((f: ViewableFile, options?: OpenFileViewerOptions) => {
+    onCloseOverrideRef.current = options?.onClose ?? null;
+    setFile(f);
+  }, []);
   const closeFileViewer = useCallback(() => {
     onCloseOverrideRef.current = null;
     setFile(null);
@@ -76,7 +71,7 @@ export function FileViewerProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(
     () => ({ openFileViewer, closeFileViewer }),
-    [openFileViewer, closeFileViewer]
+    [openFileViewer, closeFileViewer],
   );
 
   return (

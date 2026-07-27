@@ -106,9 +106,7 @@ export interface ClockodoTargetHour {
 }
 
 function toTargetHour(row: ClockodoTargetHourWire): ClockodoTargetHour {
-  const days = Object.fromEntries(
-    WEEKDAYS.map(day => [day, row[day] ?? 0])
-  ) as WeekHours;
+  const days = Object.fromEntries(WEEKDAYS.map((day) => [day, row[day] ?? 0])) as WeekHours;
   return {
     id: row.id,
     clockodoUserId: row.users_id,
@@ -139,9 +137,7 @@ export interface ClockodoHolidaysQuota {
   note?: string;
 }
 
-function toHolidaysQuota(
-  row: ClockodoHolidaysQuotaWire
-): ClockodoHolidaysQuota {
+function toHolidaysQuota(row: ClockodoHolidaysQuotaWire): ClockodoHolidaysQuota {
   return {
     id: row.id,
     clockodoUserId: row.users_id,
@@ -158,7 +154,7 @@ export const listClockodoUsers = action({
   handler: async (ctx): Promise<ClockodoUser[]> => {
     await requireManagerAction(ctx);
     const body = await clockodoFetch<{ data?: ClockodoUserWire[] }>(
-      "/api/v3/users?items_per_page=1000"
+      "/api/v3/users?items_per_page=1000",
     );
     return (body.data ?? []).map(toClockodoUser);
   },
@@ -169,7 +165,7 @@ export const getClockodoUserDetail = action({
   args: { clockodoUserId: v.number() },
   handler: async (
     ctx,
-    { clockodoUserId }
+    { clockodoUserId },
   ): Promise<{
     user: ClockodoUser;
     targetHours: ClockodoTargetHour[];
@@ -177,7 +173,7 @@ export const getClockodoUserDetail = action({
   }> => {
     await requireManagerAction(ctx);
     const userBody = await clockodoFetch<{ data: ClockodoUserWire }>(
-      `/api/v3/users/${clockodoUserId}`
+      `/api/v3/users/${clockodoUserId}`,
     );
 
     // Target-hours/holidays-quota are supplementary — a bad path here must
@@ -185,25 +181,19 @@ export const getClockodoUserDetail = action({
     // (rendered as "not set" in the UI) instead of failing the row.
     const [targetHours, holidaysQuota] = await Promise.all([
       clockodoFetch<{ targethours?: ClockodoTargetHourWire[] }>(
-        `/api/targethours?users_id=${clockodoUserId}`
+        `/api/targethours?users_id=${clockodoUserId}`,
       )
-        .then(body => (body.targethours ?? []).map(toTargetHour))
-        .catch(err => {
-          console.error(
-            `[clockodo] target-hours fetch failed for user ${clockodoUserId}:`,
-            err
-          );
+        .then((body) => (body.targethours ?? []).map(toTargetHour))
+        .catch((err) => {
+          console.error(`[clockodo] target-hours fetch failed for user ${clockodoUserId}:`, err);
           return [];
         }),
       clockodoFetch<{ data?: ClockodoHolidaysQuotaWire[] }>(
-        `/api/v2/holidaysQuota?users_id=${clockodoUserId}`
+        `/api/v2/holidaysQuota?users_id=${clockodoUserId}`,
       )
-        .then(body => (body.data ?? []).map(toHolidaysQuota))
-        .catch(err => {
-          console.error(
-            `[clockodo] holidays-quota fetch failed for user ${clockodoUserId}:`,
-            err
-          );
+        .then((body) => (body.data ?? []).map(toHolidaysQuota))
+        .catch((err) => {
+          console.error(`[clockodo] holidays-quota fetch failed for user ${clockodoUserId}:`, err);
           return [];
         }),
     ]);
@@ -239,25 +229,21 @@ export const createClockodoUser = action({
   },
   handler: async (ctx, args): Promise<{ clockodoUserId: number }> => {
     await requireManagerAction(ctx);
-    const created = await clockodoFetch<{ data: ClockodoUserWire }>(
-      "/api/v3/users",
-      {
-        method: "POST",
-        body: { name: args.name, email: args.email, number: args.number },
-      }
-    );
+    const created = await clockodoFetch<{ data: ClockodoUserWire }>("/api/v3/users", {
+      method: "POST",
+      body: { name: args.name, email: args.email, number: args.number },
+    });
     const clockodoUserId = created.data.id;
 
-    const hasTargetHours = WEEKDAYS.some(day => args[day] !== undefined);
+    const hasTargetHours = WEEKDAYS.some((day) => args[day] !== undefined);
     if (hasTargetHours) {
       await clockodoFetch("/api/targethours", {
         method: "POST",
         body: {
           users_id: clockodoUserId,
           type: "weekly",
-          date_since:
-            args.targetHoursDateSince ?? new Date().toISOString().slice(0, 10),
-          ...Object.fromEntries(WEEKDAYS.map(day => [day, args[day] ?? 0])),
+          date_since: args.targetHoursDateSince ?? new Date().toISOString().slice(0, 10),
+          ...Object.fromEntries(WEEKDAYS.map((day) => [day, args[day] ?? 0])),
         },
       });
     }
@@ -348,10 +334,7 @@ export const setTargetHours = action({
     saturday: v.number(),
     sunday: v.number(),
   },
-  handler: async (
-    ctx,
-    { clockodoUserId, dateSince, ...days }
-  ): Promise<void> => {
+  handler: async (ctx, { clockodoUserId, dateSince, ...days }): Promise<void> => {
     await requireManagerAction(ctx);
     await clockodoFetch("/api/targethours", {
       method: "POST",
@@ -372,10 +355,7 @@ export const setVacationEntitlement = action({
     daysPerYear: v.number(),
     yearSince: v.optional(v.number()),
   },
-  handler: async (
-    ctx,
-    { clockodoUserId, daysPerYear, yearSince }
-  ): Promise<void> => {
+  handler: async (ctx, { clockodoUserId, daysPerYear, yearSince }): Promise<void> => {
     await requireManagerAction(ctx);
     await clockodoFetch("/api/v2/holidaysQuota", {
       method: "POST",

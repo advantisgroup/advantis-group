@@ -35,7 +35,7 @@ export function AskTrainer({
   const ask = useMutation(api.academyQuestions.ask);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const forChapter = (mine ?? []).filter(q => q.chapterId === chapterId);
+  const forChapter = (mine ?? []).filter((q) => q.chapterId === chapterId);
 
   useEffect(() => {
     if (!focusQuestionId || !mine) return;
@@ -66,12 +66,12 @@ export function AskTrainer({
     <div className="rounded-xl border border-border bg-card p-5">
       <h3 className="font-semibold">Frage an den Trainer</h3>
       <p className="mb-2 mt-1 text-sm text-muted-foreground">
-        Etwas unklar in diesem Kapitel? Deine Frage wird gespeichert und im
-        Trainer-Bereich beantwortet.
+        Etwas unklar in diesem Kapitel? Deine Frage wird gespeichert und im Trainer-Bereich
+        beantwortet.
       </p>
       <Textarea
         value={text}
-        onChange={e => {
+        onChange={(e) => {
           setText(e.target.value);
           setJustSent(false);
         }}
@@ -87,20 +87,15 @@ export function AskTrainer({
       </div>
 
       {forChapter.length > 0 ? (
-        <div
-          ref={listRef}
-          className="mt-4 space-y-2 border-t border-border pt-3"
-        >
-          <p className="text-sm font-semibold">
-            Deine Fragen zu diesem Kapitel
-          </p>
-          {forChapter.map(q => (
+        <div ref={listRef} className="mt-4 space-y-2 border-t border-border pt-3">
+          <p className="text-sm font-semibold">Deine Fragen zu diesem Kapitel</p>
+          {forChapter.map((q) => (
             <div
               key={q._id}
               id={`ask-q-${q._id}`}
               className={cn(
                 "rounded-md bg-muted/40 p-3 text-sm transition-colors",
-                focusQuestionId === q._id && "ring-2 ring-primary"
+                focusQuestionId === q._id && "ring-2 ring-primary",
               )}
             >
               <div className="flex items-start justify-between gap-2">

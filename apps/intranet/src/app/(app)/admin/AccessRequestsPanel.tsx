@@ -53,22 +53,11 @@ function RequestRow({
         <div className="min-w-0">
           <p className="font-medium">{r.name ?? r.email}</p>
           <p className="text-xs text-muted-foreground">{r.email}</p>
-          {r.message && (
-            <p className="mt-1 text-xs text-muted-foreground">{r.message}</p>
-          )}
+          {r.message && <p className="mt-1 text-xs text-muted-foreground">{r.message}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <RoleSelect
-            value={role}
-            onChange={onRoleChange}
-            canElevate={isAdmin}
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 sm:flex-none"
-            onClick={onDeny}
-          >
+          <RoleSelect value={role} onChange={onRoleChange} canElevate={isAdmin} />
+          <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={onDeny}>
             {t("deny")}
           </Button>
           <Button size="sm" className="flex-1 sm:flex-none" onClick={onApprove}>
@@ -93,22 +82,18 @@ export function AccessRequestsPanel({ isAdmin }: { isAdmin: boolean }) {
   const highlightId = useDeepLinkId("request");
 
   if (requests && requests.length === 0) {
-    return (
-      <p className="py-8 text-center text-sm text-muted-foreground">
-        {t("noRequests")}
-      </p>
-    );
+    return <p className="py-8 text-center text-sm text-muted-foreground">{t("noRequests")}</p>;
   }
   return (
     <div className="space-y-2">
-      {requests?.map(r => (
+      {requests?.map((r) => (
         <RequestRow
           key={r._id}
           r={r}
           isAdmin={isAdmin}
           highlighted={r._id === highlightId}
           role={roles[r._id] ?? "employee"}
-          onRoleChange={role => setRoles(s => ({ ...s, [r._id]: role }))}
+          onRoleChange={(role) => setRoles((s) => ({ ...s, [r._id]: role }))}
           onDeny={() => deny({ requestId: r._id }).catch(handleError)}
           onApprove={() =>
             approve({ requestId: r._id, role: roles[r._id] ?? "employee" })

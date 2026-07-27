@@ -14,7 +14,10 @@
     {
       "id": "taxId",
       "title": "Umsatzsteuer-ID",
-      "paragraphs": ["Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:", "DE463759734"]
+      "paragraphs": [
+        "Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:",
+        "DE463759734"
+      ]
     },
     {
       "id": "register",

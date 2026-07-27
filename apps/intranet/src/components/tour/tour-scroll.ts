@@ -24,11 +24,8 @@ function getScrollTop(container: Element | Window): number {
 }
 
 /** Resolves once `container`'s scroll position settles (via `scrollend` or frame-stability), or on timeout. */
-export function waitForScrollSettle(
-  container: Element | Window,
-  timeoutMs = 600
-): Promise<void> {
-  return new Promise(resolve => {
+export function waitForScrollSettle(container: Element | Window, timeoutMs = 600): Promise<void> {
+  return new Promise((resolve) => {
     let settled = false;
     let rafId = 0;
     let lastTop = getScrollTop(container);

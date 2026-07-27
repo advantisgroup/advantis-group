@@ -38,9 +38,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials, relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Conversation = FunctionReturnType<
-  typeof api.chat.listConversations
->[number];
+type Conversation = FunctionReturnType<typeof api.chat.listConversations>[number];
 
 export function ChatClient() {
   const t = useTranslations("Chat");
@@ -65,9 +63,9 @@ export function ChatClient() {
     const match = (c: Conversation) => !q || c.title.toLowerCase().includes(q);
     const visible = (conversations ?? []).filter(match);
     return {
-      pinned: visible.filter(c => c.pinned && !c.archived),
-      active: visible.filter(c => !c.pinned && !c.archived),
-      archived: visible.filter(c => c.archived),
+      pinned: visible.filter((c) => c.pinned && !c.archived),
+      active: visible.filter((c) => !c.pinned && !c.archived),
+      archived: visible.filter((c) => c.archived),
     };
   }, [conversations, search]);
 
@@ -90,13 +88,11 @@ export function ChatClient() {
         data-tour="tour-chat-list"
         className={cn(
           "flex w-full flex-col border-r border-border/70 bg-card/40 md:w-80",
-          selected && "hidden md:flex"
+          selected && "hidden md:flex",
         )}
       >
         <div className="flex items-center justify-between gap-2 border-b border-border/70 px-4 py-3">
-          <h2 className="font-display text-lg font-semibold tracking-tight">
-            {t("title")}
-          </h2>
+          <h2 className="font-display text-lg font-semibold tracking-tight">{t("title")}</h2>
           <div className="flex items-center gap-1">
             {permission === "default" && (
               <Button
@@ -119,9 +115,7 @@ export function ChatClient() {
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-500">
               <UserPlus className="h-4 w-4" />
             </span>
-            <p className="min-w-0 flex-1 text-xs text-foreground">
-              {t("rejoinPrompt")}
-            </p>
+            <p className="min-w-0 flex-1 text-xs text-foreground">{t("rejoinPrompt")}</p>
             <Button size="sm" className="h-7 px-2.5" onClick={acceptRejoin}>
               {t("rejoin")}
             </Button>
@@ -142,7 +136,7 @@ export function ChatClient() {
               <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
                 placeholder={t("searchConversations")}
                 className="h-9 pl-8"
               />
@@ -157,12 +151,8 @@ export function ChatClient() {
                 <MessageSquare className="h-6 w-6" />
               </span>
               <div>
-                <p className="text-sm font-medium text-foreground">
-                  {t("noConversations")}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {t("noConversationsHint")}
-                </p>
+                <p className="text-sm font-medium text-foreground">{t("noConversations")}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{t("noConversationsHint")}</p>
               </div>
               <NewConversationDialog onCreated={select} triggerVariant="cta" />
             </div>
@@ -170,40 +160,30 @@ export function ChatClient() {
 
           <div className="p-2">
             {pinned.length > 0 && <SectionLabel>{t("pinned")}</SectionLabel>}
-            {pinned.map(c => (
-              <ConversationRow
-                key={c._id}
-                c={c}
-                selected={selected === c._id}
-                onSelect={select}
-              />
+            {pinned.map((c) => (
+              <ConversationRow key={c._id} c={c} selected={selected === c._id} onSelect={select} />
             ))}
 
-            {active.map(c => (
-              <ConversationRow
-                key={c._id}
-                c={c}
-                selected={selected === c._id}
-                onSelect={select}
-              />
+            {active.map((c) => (
+              <ConversationRow key={c._id} c={c} selected={selected === c._id} onSelect={select} />
             ))}
 
             {archived.length > 0 && (
               <>
                 <button
-                  onClick={() => setShowArchived(v => !v)}
+                  onClick={() => setShowArchived((v) => !v)}
                   className="mt-2 flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-accent"
                 >
                   <ChevronDown
                     className={cn(
                       "h-3.5 w-3.5 transition-transform",
-                      !showArchived && "-rotate-90"
+                      !showArchived && "-rotate-90",
                     )}
                   />
                   {t("archived")} · {archived.length}
                 </button>
                 {showArchived &&
-                  archived.map(c => (
+                  archived.map((c) => (
                     <ConversationRow
                       key={c._id}
                       c={c}
@@ -220,22 +200,15 @@ export function ChatClient() {
       {/* Thread */}
       <div className={cn("min-w-0 flex-1", !selected && "hidden md:flex")}>
         {selected ? (
-          <ConversationView
-            conversationId={selected}
-            onBack={() => router.push("/chat")}
-          />
+          <ConversationView conversationId={selected} onBack={() => router.push("/chat")} />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <span className="flex size-16 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-500">
               <MessageSquare className="h-8 w-8" />
             </span>
             <div className="max-w-xs">
-              <p className="text-base font-semibold text-foreground">
-                {t("selectConversation")}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("selectConversationHint")}
-              </p>
+              <p className="text-base font-semibold text-foreground">{t("selectConversation")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("selectConversationHint")}</p>
             </div>
             <NewConversationDialog onCreated={select} triggerVariant="cta" />
           </div>
@@ -276,7 +249,7 @@ function ConversationRow({
     <div
       className={cn(
         "group relative flex items-center gap-3 rounded-lg px-2.5 py-2.5 transition-colors hover:bg-accent",
-        selected && "bg-accent"
+        selected && "bg-accent",
       )}
     >
       <button
@@ -294,28 +267,19 @@ function ConversationRow({
         ) : (
           <Avatar className="size-10 shrink-0">
             {c.avatar && <AvatarImage src={c.avatar} alt={c.title} />}
-            <AvatarFallback className="text-xs">
-              {initials(c.title)}
-            </AvatarFallback>
+            <AvatarFallback className="text-xs">{initials(c.title)}</AvatarFallback>
           </Avatar>
         )}
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <span className="flex min-w-0 items-center gap-1.5">
-              {c.pinned && (
-                <Pin className="h-3 w-3 shrink-0 text-muted-foreground" />
-              )}
+              {c.pinned && <Pin className="h-3 w-3 shrink-0 text-muted-foreground" />}
               <span
-                className={cn(
-                  "truncate text-sm",
-                  c.unread > 0 ? "font-semibold" : "font-medium"
-                )}
+                className={cn("truncate text-sm", c.unread > 0 ? "font-semibold" : "font-medium")}
               >
                 {c.title}
               </span>
-              {c.muted && (
-                <BellOff className="h-3 w-3 shrink-0 text-muted-foreground" />
-              )}
+              {c.muted && <BellOff className="h-3 w-3 shrink-0 text-muted-foreground" />}
             </span>
             <span className="shrink-0 text-[10px] text-muted-foreground">
               {c.lastMessageAt ? relativeTime(c.lastMessageAt) : ""}
@@ -323,14 +287,12 @@ function ConversationRow({
           </div>
           <div className="flex items-center justify-between gap-2">
             {c.otherLeft ? (
-              <p className="truncate text-xs italic text-muted-foreground">
-                {t("otherLeftShort")}
-              </p>
+              <p className="truncate text-xs italic text-muted-foreground">{t("otherLeftShort")}</p>
             ) : (
               <p
                 className={cn(
                   "truncate text-xs",
-                  c.unread > 0 ? "text-foreground/80" : "text-muted-foreground"
+                  c.unread > 0 ? "text-foreground/80" : "text-muted-foreground",
                 )}
               >
                 {c.lastMessagePreview}

@@ -23,7 +23,7 @@ import { appError } from "./lib/errors";
 /** Mint a fresh token for a device, store its hash, return the raw token once. */
 export async function issueDeviceToken(
   ctx: MutationCtx,
-  deviceDocId: import("../_generated/dataModel").Id<"devices">
+  deviceDocId: import("../_generated/dataModel").Id<"devices">,
 ): Promise<string> {
   const token = randomToken();
   await ctx.db.patch(deviceDocId, {
@@ -36,7 +36,7 @@ export async function issueDeviceToken(
 /** Revoke a device's token (e.g. on disable/remove). */
 export async function invalidateDeviceToken(
   ctx: MutationCtx,
-  deviceDocId: import("../_generated/dataModel").Id<"devices">
+  deviceDocId: import("../_generated/dataModel").Id<"devices">,
 ): Promise<void> {
   await ctx.db.patch(deviceDocId, { tokenHash: undefined, tokenIssued: false });
 }
@@ -49,13 +49,13 @@ export async function invalidateDeviceToken(
  */
 export async function validateDeviceToken(
   ctx: QueryCtx,
-  token: string
+  token: string,
 ): Promise<{ deviceId: string } | null> {
   if (!token) return null;
   const tokenHash = await sha256hex(token);
   const device = await ctx.db
     .query("devices")
-    .withIndex("by_tokenHash", q => q.eq("tokenHash", tokenHash))
+    .withIndex("by_tokenHash", (q) => q.eq("tokenHash", tokenHash))
     .unique();
   if (!device || device.status === "disabled") return null;
   return { deviceId: device.deviceId };

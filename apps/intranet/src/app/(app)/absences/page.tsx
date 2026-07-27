@@ -16,10 +16,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  ProviderBadge,
-  ProviderInline,
-} from "@/components/branding/ProviderMark";
+import { ProviderBadge, ProviderInline } from "@/components/branding/ProviderMark";
 import { PageHeader } from "@/components/PageHeader";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
@@ -33,12 +30,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { addDaysIso, isoToday, workingDays } from "@/lib/absences";
 import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
@@ -96,9 +88,7 @@ function ClockodoBadge() {
             <ProviderBadge provider="clockodo" />
           </Badge>
         </TooltipTrigger>
-        <TooltipContent className="max-w-64">
-          {t("clockodoReadOnly")}
-        </TooltipContent>
+        <TooltipContent className="max-w-64">{t("clockodoReadOnly")}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -112,15 +102,12 @@ function StatsRow({ mine }: { mine: AbsenceRow[] | undefined }) {
     const rows = mine ?? [];
     const sum = (type: AbsenceType) =>
       rows
-        .filter(a => a.status === "approved" && a.type === type && inYear(a))
-        .reduce(
-          (acc, a) => acc + workingDays(a.startDate, a.endDate, a.halfDay),
-          0
-        );
+        .filter((a) => a.status === "approved" && a.type === type && inYear(a))
+        .reduce((acc, a) => acc + workingDays(a.startDate, a.endDate, a.halfDay), 0);
     return {
       vacation: sum("vacation"),
       sick: sum("sick"),
-      pending: rows.filter(a => a.status === "pending").length,
+      pending: rows.filter((a) => a.status === "pending").length,
     };
   }, [mine, year]);
 
@@ -130,10 +117,7 @@ function StatsRow({ mine }: { mine: AbsenceRow[] | undefined }) {
     { label: t("statsPending"), value: stats.pending, Icon: Clock },
   ];
   return (
-    <div
-      className="grid grid-cols-3 gap-2 sm:gap-3"
-      data-tour="tour-absences-stats"
-    >
+    <div className="grid grid-cols-3 gap-2 sm:gap-3" data-tour="tour-absences-stats">
       {items.map(({ label, value, Icon }) => (
         <Card key={label}>
           <CardContent className="flex flex-col gap-1 p-3 sm:p-4">
@@ -166,7 +150,7 @@ function Pill({
         "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
         active
           ? "border-transparent bg-foreground text-background"
-          : "border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+          : "border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground",
       )}
     >
       {children}
@@ -174,20 +158,8 @@ function Pill({
   );
 }
 
-const STATUS_FILTERS: ("all" | Status)[] = [
-  "all",
-  "pending",
-  "approved",
-  "denied",
-  "cancelled",
-];
-const TYPE_FILTERS: ("all" | AbsenceType)[] = [
-  "all",
-  "vacation",
-  "sick",
-  "personal",
-  "other",
-];
+const STATUS_FILTERS: ("all" | Status)[] = ["all", "pending", "approved", "denied", "cancelled"];
+const TYPE_FILTERS: ("all" | AbsenceType)[] = ["all", "vacation", "sick", "personal", "other"];
 
 function DetailDialog({
   absence,
@@ -200,9 +172,7 @@ function DetailDialog({
   const locale = useLocale();
   if (!absence) return null;
   const clockodoTypeKey =
-    absence.clockodoType !== undefined
-      ? CLOCKODO_TYPE_KEYS[absence.clockodoType]
-      : undefined;
+    absence.clockodoType !== undefined ? CLOCKODO_TYPE_KEYS[absence.clockodoType] : undefined;
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -212,15 +182,10 @@ function DetailDialog({
             {absence.source === "clockodo" && <ClockodoBadge />}
           </DialogTitle>
           <DialogDescription>
-            {formatIsoDate(absence.startDate, locale)} –{" "}
-            {formatIsoDate(absence.endDate, locale)}
+            {formatIsoDate(absence.startDate, locale)} – {formatIsoDate(absence.endDate, locale)}
             {absence.halfDay ? ` · ${t("halfDayShort")}` : ""} ·{" "}
             {t("workingDaysLabel", {
-              count: workingDays(
-                absence.startDate,
-                absence.endDate,
-                absence.halfDay
-              ),
+              count: workingDays(absence.startDate, absence.endDate, absence.halfDay),
             })}
           </DialogDescription>
         </DialogHeader>
@@ -250,14 +215,12 @@ function DetailDialog({
             </p>
             {absence.reviewedAt &&
               absence.reviewerName &&
-              (absence.status === "approved" ||
-                absence.status === "denied") && (
+              (absence.status === "approved" || absence.status === "denied") && (
                 <p className="flex items-center justify-between gap-2">
                   <span>
-                    {t(
-                      absence.status === "approved" ? "approvedBy" : "deniedBy",
-                      { name: absence.reviewerName }
-                    )}
+                    {t(absence.status === "approved" ? "approvedBy" : "deniedBy", {
+                      name: absence.reviewerName,
+                    })}
                   </span>
                   <span className="text-xs text-muted-foreground">
                     {formatDateTime(absence.reviewedAt, locale)}
@@ -285,9 +248,9 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
 
   const byYear = useMemo(() => {
     const rows = (mine ?? []).filter(
-      a =>
+      (a) =>
         (statusFilter === "all" || a.status === statusFilter) &&
-        (typeFilter === "all" || a.type === typeFilter)
+        (typeFilter === "all" || a.type === typeFilter),
     );
     const groups = new Map<string, AbsenceRow[]>();
     for (const a of rows) {
@@ -301,26 +264,15 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
 
   return (
     <div className="space-y-4">
-      <div
-        className="flex flex-wrap items-center gap-1.5"
-        data-tour="tour-absences-filters"
-      >
-        {STATUS_FILTERS.map(s => (
-          <Pill
-            key={s}
-            active={statusFilter === s}
-            onClick={() => setStatusFilter(s)}
-          >
+      <div className="flex flex-wrap items-center gap-1.5" data-tour="tour-absences-filters">
+        {STATUS_FILTERS.map((s) => (
+          <Pill key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
             {s === "all" ? t("filterAll") : t(s)}
           </Pill>
         ))}
         <span className="mx-1 hidden h-4 w-px bg-border sm:block" />
-        {TYPE_FILTERS.map(ty => (
-          <Pill
-            key={ty}
-            active={typeFilter === ty}
-            onClick={() => setTypeFilter(ty)}
-          >
+        {TYPE_FILTERS.map((ty) => (
+          <Pill key={ty} active={typeFilter === ty} onClick={() => setTypeFilter(ty)}>
             {ty === "all" ? t("filterAll") : t(ty)}
           </Pill>
         ))}
@@ -335,7 +287,7 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {year}
             </h2>
-            {rows.map(a => {
+            {rows.map((a) => {
               const Icon = TYPE_ICONS[a.type];
               return (
                 <Card
@@ -354,21 +306,17 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
                           {a.source === "clockodo" && <ClockodoBadge />}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {formatIsoDate(a.startDate, locale)} –{" "}
-                          {formatIsoDate(a.endDate, locale)} ·{" "}
+                          {formatIsoDate(a.startDate, locale)} – {formatIsoDate(a.endDate, locale)}{" "}
+                          ·{" "}
                           {t("workingDaysLabel", {
-                            count: workingDays(
-                              a.startDate,
-                              a.endDate,
-                              a.halfDay
-                            ),
+                            count: workingDays(a.startDate, a.endDate, a.halfDay),
                           })}
                         </p>
                       </div>
                     </div>
                     <div
                       className="flex shrink-0 items-center gap-2 self-end sm:self-auto"
-                      onClick={e => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <StatusBadge status={a.status} />
                     </div>
@@ -379,10 +327,7 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
           </div>
         ))}
       </div>
-      <DetailDialog
-        absence={detail}
-        onOpenChange={open => !open && setDetail(null)}
-      />
+      <DetailDialog absence={detail} onOpenChange={(open) => !open && setDetail(null)} />
     </div>
   );
 }
@@ -406,11 +351,10 @@ function WhosOut() {
         <p className="text-sm text-muted-foreground">{t("nobodyOut")}</p>
       ) : (
         <div className="flex flex-wrap gap-1.5">
-          {out?.map(a => (
+          {out?.map((a) => (
             <Badge key={a._id} variant="muted" className="gap-1.5 font-normal">
               <span className="font-medium">{a.userName}</span>
-              {formatIsoDate(a.startDate, locale)} –{" "}
-              {formatIsoDate(a.endDate, locale)}
+              {formatIsoDate(a.startDate, locale)} – {formatIsoDate(a.endDate, locale)}
             </Badge>
           ))}
         </div>
@@ -426,16 +370,16 @@ export default function AbsencesPage() {
   const syncStatus = useQuery(api.absences.clockodoSyncStatus);
 
   function exportIcs() {
-    const approved = (mine ?? []).filter(a => a.status === "approved");
+    const approved = (mine ?? []).filter((a) => a.status === "approved");
     const ics = buildIcs(
       t("title"),
-      approved.map(a => ({
+      approved.map((a) => ({
         uid: a._id,
         title: `${t(a.type)}${a.halfDay ? ` (${t("halfDayShort")})` : ""}`,
         startDate: a.startDate,
         endDate: a.endDate,
         description: a.reason,
-      }))
+      })),
     );
     downloadIcs("absences.ics", ics);
     toast.success(t("exported"));
@@ -465,7 +409,7 @@ export default function AbsencesPage() {
                   size="icon"
                   aria-label={t("exportIcs")}
                   onClick={exportIcs}
-                  disabled={!mine?.some(a => a.status === "approved")}
+                  disabled={!mine?.some((a) => a.status === "approved")}
                 >
                   <CalendarArrowDown />
                 </Button>

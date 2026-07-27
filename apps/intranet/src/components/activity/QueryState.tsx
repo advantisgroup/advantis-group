@@ -32,9 +32,7 @@ export function QueryState<T>({
   children: (data: T) => ReactNode;
 }) {
   if (data === undefined) return <>{loading}</>;
-  const blank = isEmpty
-    ? isEmpty(data)
-    : Array.isArray(data) && data.length === 0;
+  const blank = isEmpty ? isEmpty(data) : Array.isArray(data) && data.length === 0;
   if (blank) return <>{empty}</>;
   return <>{children(data)}</>;
 }

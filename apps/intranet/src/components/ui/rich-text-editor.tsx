@@ -96,11 +96,7 @@ export function RichTextEditor({
     for (const tool of TOOLS) {
       if (tool === "divider" || !("command" in tool)) continue;
       if (tool.command === "formatBlock") {
-        next[tool.label] = isInsideTag(
-          el,
-          sel.anchorNode,
-          (tool.value ?? "").toUpperCase()
-        );
+        next[tool.label] = isInsideTag(el, sel.anchorNode, (tool.value ?? "").toUpperCase());
       } else if (tool.command === "removeFormat") {
         next[tool.label] = false;
       } else {
@@ -151,17 +147,13 @@ export function RichTextEditor({
     <div
       className={cn(
         "overflow-hidden rounded-lg border border-border bg-background shadow-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40",
-        className
+        className,
       )}
     >
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border/70 bg-muted/40 px-1.5 py-1">
         {TOOLS.map((tool, i) =>
           tool === "divider" ? (
-            <span
-              key={`d${i}`}
-              className="mx-1 h-5 w-px bg-border/70"
-              aria-hidden
-            />
+            <span key={`d${i}`} className="mx-1 h-5 w-px bg-border/70" aria-hidden />
           ) : (
             <button
               key={tool.label}
@@ -169,18 +161,18 @@ export function RichTextEditor({
               title={tool.label}
               aria-label={tool.label}
               aria-pressed={!!active[tool.label]}
-              onMouseDown={e => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => run(tool)}
               className={cn(
                 "flex size-8 items-center justify-center rounded-md transition-colors [&_svg]:size-[17px]",
                 active[tool.label]
                   ? "bg-signal/15 text-signal"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               <tool.icon />
             </button>
-          )
+          ),
         )}
       </div>
       <div
@@ -201,7 +193,7 @@ export function RichTextEditor({
         aria-multiline="true"
         className={cn(
           "rich-text max-h-[28rem] overflow-y-auto px-3.5 py-3 outline-none",
-          minHeight ?? "min-h-[14rem]"
+          minHeight ?? "min-h-[14rem]",
         )}
       />
     </div>

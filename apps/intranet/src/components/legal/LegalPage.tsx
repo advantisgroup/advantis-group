@@ -46,22 +46,16 @@ function ContactBox({ full = false }: { full?: boolean }) {
       <address className="not-italic text-muted-foreground">
         {process.env.NEXT_PUBLIC_ADRESS}
       </address>
-      <p className="text-muted-foreground">
-        {process.env.NEXT_PUBLIC_EMAIL_ADRESS}
-      </p>
+      <p className="text-muted-foreground">{process.env.NEXT_PUBLIC_EMAIL_ADRESS}</p>
       {process.env.NEXT_PUBLIC_PHONE_NUMBER && (
-        <p className="text-muted-foreground">
-          {process.env.NEXT_PUBLIC_PHONE_NUMBER}
-        </p>
+        <p className="text-muted-foreground">{process.env.NEXT_PUBLIC_PHONE_NUMBER}</p>
       )}
       {full && (
         <div className="space-y-1 pt-1">
           <p className="text-muted-foreground">
             USt-IdNr.: <span className="tabular-nums">DE463759734</span>
           </p>
-          <p className="text-muted-foreground">
-            Amtsgericht Nürnberg, HRB 46148
-          </p>
+          <p className="text-muted-foreground">Amtsgericht Nürnberg, HRB 46148</p>
         </div>
       )}
     </div>
@@ -108,8 +102,7 @@ export function LegalPage({
     const handleScroll = () => {
       const scrollPosition = window.scrollY + 150;
 
-      const docHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       setScrollProgress(docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0);
       setShowBackToTop(window.scrollY > 600);
 
@@ -117,10 +110,7 @@ export function LegalPage({
         const element = document.getElementById(section.id);
         if (!element) continue;
         const { offsetTop, offsetHeight } = element;
-        if (
-          scrollPosition >= offsetTop &&
-          scrollPosition < offsetTop + offsetHeight
-        ) {
+        if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
           setActiveSection(section.id);
           break;
         }
@@ -145,7 +135,7 @@ export function LegalPage({
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               activeSection === section.id
                 ? "bg-primary/10 font-medium text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
             <span
@@ -154,7 +144,7 @@ export function LegalPage({
                 "flex size-6 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums",
                 activeSection === section.id
                   ? "bg-primary/15 text-primary"
-                  : "bg-muted text-muted-foreground"
+                  : "bg-muted text-muted-foreground",
               )}
             >
               {String(i + 1).padStart(2, "0")}
@@ -164,7 +154,7 @@ export function LegalPage({
         ))}
       </nav>
     ),
-    [sections, activeSection]
+    [sections, activeSection],
   );
 
   return (
@@ -195,7 +185,7 @@ export function LegalPage({
           <WordmarkLogo className="text-base" />
         </Link>
         <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
-          {crossPage?.map(link => (
+          {crossPage?.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -227,31 +217,19 @@ export function LegalPage({
 
       {isMobile && (
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetContent
-            side="bottom"
-            className="max-h-[75vh] overflow-y-auto rounded-t-2xl"
-          >
+          <SheetContent side="bottom" className="max-h-[75vh] overflow-y-auto rounded-t-2xl">
             <SheetTitle>{tocLabel}</SheetTitle>
             <div className="mt-4">{nav}</div>
           </SheetContent>
         </Sheet>
       )}
 
-      <main
-        id="legal-content"
-        className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:pt-20"
-      >
+      <main id="legal-content" className="mx-auto max-w-6xl px-4 pb-24 pt-16 sm:pt-20">
         <div className="space-y-3 pb-10 text-center">
-          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            {title}
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base">
-            {subtitle}
-          </p>
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
+          <p className="mx-auto max-w-2xl text-sm text-muted-foreground sm:text-base">{subtitle}</p>
           {updated && (
-            <p className="text-xs uppercase tracking-wider text-muted-foreground/70">
-              {updated}
-            </p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground/70">{updated}</p>
           )}
         </div>
 
@@ -273,7 +251,7 @@ export function LegalPage({
           )}
 
           <div className="min-w-0 flex-1 space-y-6">
-            {sections.map(section => (
+            {sections.map((section) => (
               <section
                 key={section.id}
                 id={section.id}
@@ -291,18 +269,14 @@ export function LegalPage({
                       <p key={i}>{p}</p>
                     ))}
                     {CONTACT_SECTION_IDS.has(section.id) && (
-                      <ContactBox
-                        full={FULL_LEGAL_SECTION_IDS.has(section.id)}
-                      />
+                      <ContactBox full={FULL_LEGAL_SECTION_IDS.has(section.id)} />
                     )}
                     {section.list && (
                       <ul className="list-disc space-y-2 pl-5">
                         {section.list.map((item, i) => (
                           <li key={i}>
                             {item.title && (
-                              <strong className="text-foreground">
-                                {item.title}:{" "}
-                              </strong>
+                              <strong className="text-foreground">{item.title}: </strong>
                             )}
                             {item.description}
                           </li>
@@ -310,9 +284,7 @@ export function LegalPage({
                       </ul>
                     )}
                     {section.note && (
-                      <p className="text-xs text-muted-foreground">
-                        {section.note}
-                      </p>
+                      <p className="text-xs text-muted-foreground">{section.note}</p>
                     )}
                   </CardContent>
                 </Card>
@@ -326,9 +298,7 @@ export function LegalPage({
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
                 className={cn(
                   "transition-opacity",
-                  showBackToTop
-                    ? "opacity-100"
-                    : "pointer-events-none opacity-0"
+                  showBackToTop ? "opacity-100" : "pointer-events-none opacity-0",
                 )}
               >
                 <ArrowUp className="h-4 w-4" aria-hidden="true" />

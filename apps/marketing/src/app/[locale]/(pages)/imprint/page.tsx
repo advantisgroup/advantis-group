@@ -19,9 +19,7 @@ export default function Impressum() {
             <BrandText brand="advantis">advantis GmbH</BrandText>
           </p>
           <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
-          <p className="text-muted-foreground">
-            {t("sections.company.country")}
-          </p>
+          <p className="text-muted-foreground">{t("sections.company.country")}</p>
         </div>
       ),
     },
@@ -63,7 +61,7 @@ export default function Impressum() {
           {/* Top Info Grid */}
           <div className="border border-border">
             <div className="grid md:grid-cols-3 divide-x divide-border">
-              {sections.map(section => {
+              {sections.map((section) => {
                 const Icon = section.icon;
                 return (
                   <Card key={section.title} className="border-0 rounded-none">
@@ -83,9 +81,7 @@ export default function Impressum() {
           {/* Register Section */}
           <Card className="border border-border">
             <CardHeader>
-              <CardTitle className="text-2xl">
-                {t("sections.register.title")}
-              </CardTitle>
+              <CardTitle className="text-2xl">{t("sections.register.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-muted-foreground">
               <p>{t("sections.register.intro")}</p>
@@ -97,9 +93,7 @@ export default function Impressum() {
           {/* Responsible Section */}
           <Card className="border border-border">
             <CardHeader>
-              <CardTitle className="text-2xl">
-                {t("sections.responsible.title")}
-              </CardTitle>
+              <CardTitle className="text-2xl">{t("sections.responsible.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-muted-foreground">
               <p>Andrea Reichl</p>

@@ -9,11 +9,7 @@ import { PerformanceAccountMenu } from "@/components/performance/PerformanceAcco
 import { PerformanceWordmark } from "@/components/performance/PerformanceBrandMark";
 import { usePerformanceCompany } from "@/components/performance/PerformanceCompanyProvider";
 import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface PerformanceHeaderNavItem {
   href: string;
@@ -69,7 +65,7 @@ export function PerformanceHeader({
           <>
             <div className="h-6 w-px bg-border" aria-hidden />
             <div className="flex items-center gap-0.5 rounded-lg bg-muted/50 p-1">
-              {navItems.map(item => (
+              {navItems.map((item) => (
                 <Link key={item.href} href={item.href}>
                   <Button variant="ghost" size="sm" className="h-8">
                     {item.icon && <item.icon className="mr-2 h-4 w-4" />}
@@ -89,12 +85,7 @@ export function PerformanceHeader({
           {onExit && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onExit}
-                  aria-label={t("exit")}
-                >
+                <Button variant="ghost" size="icon" onClick={onExit} aria-label={t("exit")}>
                   <LogOut className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>

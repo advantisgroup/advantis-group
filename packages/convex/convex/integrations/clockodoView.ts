@@ -11,28 +11,26 @@ import { toClockodoIdString } from "../lib/clockodoId";
  */
 export const listWithLinks = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireCapability(ctx, "access_integrations");
     const users = await ctx.db.query("users").collect();
-    const linked = users.filter(u => u.clockodoUserId !== undefined);
+    const linked = users.filter((u) => u.clockodoUserId !== undefined);
 
     return await Promise.all(
-      linked.map(async u => {
+      linked.map(async (u) => {
         const person = await ctx.db
           .query("people")
-          .withIndex("by_userId", q => q.eq("userId", u._id))
+          .withIndex("by_userId", (q) => q.eq("userId", u._id))
           .first();
         const device = person
           ? await ctx.db
               .query("devices")
-              .withIndex("by_personId", q => q.eq("personId", person._id))
+              .withIndex("by_personId", (q) => q.eq("personId", person._id))
               .first()
           : null;
         return {
           userId: u._id,
-          name:
-            [u.firstName, u.lastName].filter(Boolean).join(" ").trim() ||
-            u.email,
+          name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
           email: u.email,
           // Normalize legacy `number` rows (pending backfill) to `string`.
           clockodoUserId:
@@ -42,7 +40,7 @@ export const listWithLinks = query({
           personId: person?._id ?? null,
           deviceId: device?.deviceId ?? null,
         };
-      })
+      }),
     );
   },
 });

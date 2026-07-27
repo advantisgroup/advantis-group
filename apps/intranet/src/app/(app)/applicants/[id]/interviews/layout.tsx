@@ -10,11 +10,7 @@ import { useQuery } from "convex/react";
 
 import { Interviews } from "@/components/applicants/tabs/Interviews";
 
-export default function ApplicantInterviewsLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function ApplicantInterviewsLayout({ children }: { children: ReactNode }) {
   const params = useParams<{ id: string }>();
   const applicantId = params.id as Id<"applicants">;
   const applicant = useQuery(api.applicants.get, { applicantId });

@@ -27,13 +27,9 @@ export default function IntegrationsHubPage() {
 
   return (
     <section className="mx-auto max-w-5xl space-y-6">
-      <PageHeader
-        title={t("hubTitle")}
-        description={t("hubSubtitle")}
-        icon={<Plug />}
-      />
+      <PageHeader title={t("hubTitle")} description={t("hubSubtitle")} icon={<Plug />} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {INTEGRATIONS.map(integration => (
+        {INTEGRATIONS.map((integration) => (
           <Link key={integration.id} href={integration.href}>
             <Card className="h-full transition-colors hover:border-primary/40">
               <CardContent className="space-y-1.5 p-4">
@@ -41,9 +37,7 @@ export default function IntegrationsHubPage() {
                   <Mark provider={integration.provider} className="h-5 w-5" />
                   {t(integration.nameKey)}
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  {t(integration.descriptionKey)}
-                </p>
+                <p className="text-sm text-muted-foreground">{t(integration.descriptionKey)}</p>
               </CardContent>
             </Card>
           </Link>

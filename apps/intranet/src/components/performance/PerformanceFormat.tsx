@@ -6,9 +6,7 @@ import { cn } from "@/lib/utils";
  * "not measured". */
 export function fmtNum(v: number | undefined | null): string {
   if (v === undefined || v === null) return "–";
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(
-    v
-  );
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(v);
 }
 
 export function fmtPct(v: number | undefined | null): string {
@@ -27,9 +25,7 @@ export function fmtDuration(totalSeconds: number | undefined | null): string {
 /** Same as `fmtDuration`, but keeps seconds precision for values under a
  * minute — most individual interactions are shorter than that, and
  * "0m" would otherwise hide the actual duration. */
-export function fmtDurationPrecise(
-  totalSeconds: number | undefined | null
-): string {
+export function fmtDurationPrecise(totalSeconds: number | undefined | null): string {
   if (totalSeconds === undefined || totalSeconds === null) return "–";
   const total = Math.round(totalSeconds);
   const h = Math.floor(total / 3600);
@@ -68,9 +64,9 @@ export function buildCallActivityChartData(
     date: string;
     values: { callsAnswered?: number; callsOutbound?: number };
   }[],
-  locale: string
+  locale: string,
 ): CallActivityChartDay[] {
-  return days.map(d => ({
+  return days.map((d) => ({
     label: fmtDayShort(d.date, locale),
     answered: d.values.callsAnswered ?? 0,
     outbound: d.values.callsOutbound ?? 0,
@@ -115,7 +111,7 @@ export function DeltaBadge({
     <span
       className={cn(
         "inline-flex items-center gap-0.5 text-xs font-medium",
-        good ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"
+        good ? "text-emerald-600 dark:text-emerald-400" : "text-destructive",
       )}
     >
       <Icon className="h-3 w-3" />
@@ -126,13 +122,7 @@ export function DeltaBadge({
 
 /** "VM ↑X.X · VJ ↓Y.Y" pair — the standard month-over-month/year-over-year
  * comparison shown under most Performance KPI values. */
-export function DeltaPair({
-  dVm,
-  dVj,
-}: {
-  dVm: number | undefined;
-  dVj: number | undefined;
-}) {
+export function DeltaPair({ dVm, dVj }: { dVm: number | undefined; dVj: number | undefined }) {
   if (dVm === undefined && dVj === undefined) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
@@ -162,8 +152,7 @@ export function DeltaTriple({
   dVj: number | undefined;
   dTeam: number | undefined;
 }) {
-  if (dVm === undefined && dVj === undefined && dTeam === undefined)
-    return null;
+  if (dVm === undefined && dVj === undefined && dTeam === undefined) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
       {dVm !== undefined && (

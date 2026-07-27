@@ -14,7 +14,7 @@ export default function ApplicantDocumentDetailPage() {
   const applicant = useQuery(api.applicants.get, { applicantId });
 
   if (!applicant) return null;
-  const doc = applicant.documents.find(d => d._id === params.docId);
+  const doc = applicant.documents.find((d) => d._id === params.docId);
   if (!doc) return null;
 
   return (

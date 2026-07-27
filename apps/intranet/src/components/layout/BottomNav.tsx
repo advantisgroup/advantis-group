@@ -31,8 +31,7 @@ export function BottomNav() {
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
-  const chatUnread =
-    chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
+  const chatUnread = chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const unread = chatUnread + (announcementUnread ?? 0);
   const hasTabs = tabs !== null && tabs.length > 0;
 
@@ -41,7 +40,7 @@ export function BottomNav() {
       <div className="flex max-w-full items-center gap-1 overflow-x-auto rounded-full border border-border/70 bg-background/90 p-1 shadow-lg shadow-black/30 backdrop-blur-xl [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {hasTabs && (
           <>
-            {tabs?.map(tab => {
+            {tabs?.map((tab) => {
               const Icon = tab.icon;
               const active = tab.value === activeValue;
               return (
@@ -51,9 +50,7 @@ export function BottomNav() {
                   aria-label={tab.label}
                   className={cn(
                     "relative flex size-9 shrink-0 items-center justify-center rounded-full transition-colors",
-                    active
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                    active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {active && (
@@ -76,13 +73,11 @@ export function BottomNav() {
         )}
         <button
           type="button"
-          onClick={() =>
-            window.dispatchEvent(new Event("command-palette:open"))
-          }
+          onClick={() => window.dispatchEvent(new Event("command-palette:open"))}
           aria-label={tc("search")}
           className={cn(
             "flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground",
-            !hasTabs && "min-w-[10rem]"
+            !hasTabs && "min-w-[10rem]",
           )}
         >
           <Search className="size-4 shrink-0" />

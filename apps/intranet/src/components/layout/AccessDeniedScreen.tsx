@@ -54,8 +54,7 @@ export function AccessDeniedScreen() {
             <CardTitle className="font-display text-xl">{t("title")}</CardTitle>
             {email && (
               <p className="mt-1.5 text-sm text-muted-foreground">
-                {t("signedInAs")}{" "}
-                <span className="font-medium text-foreground">{email}</span>
+                {t("signedInAs")} <span className="font-medium text-foreground">{email}</span>
               </p>
             )}
           </div>

@@ -27,17 +27,10 @@ export function formatDuration(seconds: number | null | undefined): string {
   return `${total}s`;
 }
 
-export type BadgeVariant =
-  | "default"
-  | "destructive"
-  | "success"
-  | "warning"
-  | "muted";
+export type BadgeVariant = "default" | "destructive" | "success" | "warning" | "muted";
 
 /** Map a fused employee state to a semantic intranet badge variant. */
-export function stateBadgeVariant(
-  state: EmployeeState | null | undefined
-): BadgeVariant {
+export function stateBadgeVariant(state: EmployeeState | null | undefined): BadgeVariant {
   switch (state) {
     case "ACTIVE":
       return "success";

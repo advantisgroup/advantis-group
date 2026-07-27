@@ -7,10 +7,7 @@ const shimmerStyle = {
 
 export function Skeleton({ className = "" }: { className?: string }) {
   return (
-    <div
-      className={`rounded-md bg-panel-2 animate-shimmer ${className}`}
-      style={shimmerStyle}
-    />
+    <div className={`rounded-md bg-panel-2 animate-shimmer ${className}`} style={shimmerStyle} />
   );
 }
 

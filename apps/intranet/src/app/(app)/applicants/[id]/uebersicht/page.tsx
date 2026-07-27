@@ -22,9 +22,9 @@ export default function ApplicantUebersichtPage() {
     highlightParam
       ? highlightParam
           .split(",")
-          .map(s => s.trim())
+          .map((s) => s.trim())
           .filter(Boolean)
-      : []
+      : [],
   );
   useEffect(() => {
     if (highlightParam) {

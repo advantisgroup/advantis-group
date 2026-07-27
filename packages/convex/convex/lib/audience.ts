@@ -6,22 +6,18 @@ import { audienceValidator } from "../schema";
 export type Audience = Infer<typeof audienceValidator>;
 
 /** Does the given user fall within the target audience? */
-export function userMatchesAudience(
-  user: Doc<"users">,
-  audience: Audience
-): boolean {
+export function userMatchesAudience(user: Doc<"users">, audience: Audience): boolean {
   switch (audience.kind) {
     case "all":
       return true;
     case "department":
       return (
-        !!user.department &&
-        user.department.toLowerCase() === audience.department.toLowerCase()
+        !!user.department && user.department.toLowerCase() === audience.department.toLowerCase()
       );
     case "departmentId":
       return user.departmentId === audience.departmentId;
     case "users":
-      return audience.userIds.some(id => id === user._id);
+      return audience.userIds.some((id) => id === user._id);
   }
 }
 

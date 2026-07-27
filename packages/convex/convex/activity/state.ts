@@ -29,13 +29,13 @@ const ROUTING_STATUS = v.union(
   v.literal("IDLE"),
   v.literal("INTERACTING"),
   v.literal("OFF_QUEUE"),
-  v.literal("NOT_RESPONDING")
+  v.literal("NOT_RESPONDING"),
 );
 const PRESENCE = v.union(
   v.literal("AVAILABLE"),
   v.literal("BUSY"),
   v.literal("AWAY"),
-  v.literal("OFFLINE")
+  v.literal("OFFLINE"),
 );
 
 function signalsOf(row: Partial<Doc<"employeeStates">>): StateSignals {
@@ -66,13 +66,11 @@ function signalsOf(row: Partial<Doc<"employeeStates">>): StateSignals {
 async function collapseIntoClockedOut(
   ctx: MutationCtx,
   employeeId: string,
-  since: number
+  since: number,
 ): Promise<void> {
   const stray = await ctx.db
     .query("stateSamples")
-    .withIndex("by_employee_time", q =>
-      q.eq("employeeId", employeeId).gte("at", since)
-    )
+    .withIndex("by_employee_time", (q) => q.eq("employeeId", employeeId).gte("at", since))
     .take(1000);
   for (const s of stray) await ctx.db.delete(s._id);
   await ctx.db.insert("stateSamples", {
@@ -82,9 +80,7 @@ async function collapseIntoClockedOut(
   });
   console.log(
     `[activity:state] ${employeeId} CLOCKED_OUT anchored to ${new Date(since).toISOString()}` +
-      (stray.length > 0
-        ? ` — collapsed ${stray.length} stale sample(s) recorded after that`
-        : "")
+      (stray.length > 0 ? ` — collapsed ${stray.length} stale sample(s) recorded after that` : ""),
   );
 }
 
@@ -98,16 +94,11 @@ async function collapseIntoClockedOut(
  * assumption is left alone (ending the day and coming back tomorrow really
  * was a clock-out).
  */
-async function reclassifyClockedOutAsBreak(
-  ctx: MutationCtx,
-  employeeId: string
-): Promise<void> {
+async function reclassifyClockedOutAsBreak(ctx: MutationCtx, employeeId: string): Promise<void> {
   const dayStart = startOfBusinessDayUtcMs();
   const samples = await ctx.db
     .query("stateSamples")
-    .withIndex("by_employee_time", q =>
-      q.eq("employeeId", employeeId).gte("at", dayStart)
-    )
+    .withIndex("by_employee_time", (q) => q.eq("employeeId", employeeId).gte("at", dayStart))
     .order("asc")
     .take(1000);
 
@@ -128,7 +119,7 @@ async function reclassifyClockedOutAsBreak(
   }
   if (touched > 0) {
     console.log(
-      `[activity:state] ${employeeId} CLOCKED_OUT withdrawn — ${touched} sample(s) reclassified to BREAK (clocked back in today)`
+      `[activity:state] ${employeeId} CLOCKED_OUT withdrawn — ${touched} sample(s) reclassified to BREAK (clocked back in today)`,
     );
   }
 }
@@ -145,11 +136,7 @@ export interface StateSignalArgs {
   source: "agent" | "genesys" | "clockodo";
   deviceIdle?: boolean;
   idleSeconds?: number;
-  genesysRoutingStatus?:
-    | "IDLE"
-    | "INTERACTING"
-    | "OFF_QUEUE"
-    | "NOT_RESPONDING";
+  genesysRoutingStatus?: "IDLE" | "INTERACTING" | "OFF_QUEUE" | "NOT_RESPONDING";
   genesysPresence?: "AVAILABLE" | "BUSY" | "AWAY" | "OFFLINE";
   genesysWrapUp?: boolean;
   clockodoWorking?: boolean;
@@ -176,7 +163,7 @@ export interface StateSignalArgs {
  */
 export async function applyStateSignal(
   ctx: MutationCtx,
-  args: StateSignalArgs
+  args: StateSignalArgs,
 ): Promise<{
   employeeId: string;
   finalState: import("./lib/state").EmployeeState;
@@ -193,20 +180,14 @@ export async function applyStateSignal(
   } else if (args.source === "genesys") {
     if (args.genesysRoutingStatus !== undefined)
       patch.genesysRoutingStatus = args.genesysRoutingStatus;
-    if (args.genesysPresence !== undefined)
-      patch.genesysPresence = args.genesysPresence;
-    if (args.genesysWrapUp !== undefined)
-      patch.genesysWrapUp = args.genesysWrapUp;
+    if (args.genesysPresence !== undefined) patch.genesysPresence = args.genesysPresence;
+    if (args.genesysWrapUp !== undefined) patch.genesysWrapUp = args.genesysWrapUp;
     patch.genesysUpdatedAt = now;
   } else {
-    if (args.clockodoWorking !== undefined)
-      patch.clockodoWorking = args.clockodoWorking;
-    if (args.clockodoBreak !== undefined)
-      patch.clockodoBreak = args.clockodoBreak;
-    if (args.clockodoAbsent !== undefined)
-      patch.clockodoAbsent = args.clockodoAbsent;
-    if (args.clockodoClockedOut !== undefined)
-      patch.clockodoClockedOut = args.clockodoClockedOut;
+    if (args.clockodoWorking !== undefined) patch.clockodoWorking = args.clockodoWorking;
+    if (args.clockodoBreak !== undefined) patch.clockodoBreak = args.clockodoBreak;
+    if (args.clockodoAbsent !== undefined) patch.clockodoAbsent = args.clockodoAbsent;
+    if (args.clockodoClockedOut !== undefined) patch.clockodoClockedOut = args.clockodoClockedOut;
     if (args.clockodoClockedOutCertain !== undefined)
       patch.clockodoClockedOutCertain = args.clockodoClockedOutCertain;
     if (args.clockodoClockedOutSince !== undefined)
@@ -224,8 +205,7 @@ export async function applyStateSignal(
     args.source === "clockodo" &&
     args.clockodoClockedOut === false &&
     existing?.clockodoClockedOutCertain !== true &&
-    (existing?.clockodoClockedOut === true ||
-      existing?.finalState === "CLOCKED_OUT")
+    (existing?.clockodoClockedOut === true || existing?.finalState === "CLOCKED_OUT")
   ) {
     await reclassifyClockedOutAsBreak(ctx, args.employeeId);
   }
@@ -242,22 +222,17 @@ export async function applyStateSignal(
   // `discardedStateSamples` for the audit UI, the raw source fields are
   // still cached, and the previous fused state stays in force. CLOCKED_OUT /
   // ABSENT transitions always land — they assert the opposite of working.
-  if (
-    stateChanged &&
-    WORK_EVIDENCE_STATES.has(finalState) &&
-    !isWithinBusinessHours(now)
-  ) {
+  if (stateChanged && WORK_EVIDENCE_STATES.has(finalState) && !isWithinBusinessHours(now)) {
     // One quarantine row per suppressed candidate, not one per poll: skip
     // when the same candidate state was already logged since the last real
     // state change.
     const lastDiscarded = await ctx.db
       .query("discardedStateSamples")
-      .withIndex("by_employee_time", q => q.eq("employeeId", args.employeeId))
+      .withIndex("by_employee_time", (q) => q.eq("employeeId", args.employeeId))
       .order("desc")
       .first();
     const alreadyLogged =
-      lastDiscarded?.state === finalState &&
-      lastDiscarded.at >= (existing?.finalStateSince ?? 0);
+      lastDiscarded?.state === finalState && lastDiscarded.at >= (existing?.finalStateSince ?? 0);
     if (!alreadyLogged) {
       await ctx.db.insert("discardedStateSamples", {
         employeeId: args.employeeId,
@@ -267,7 +242,7 @@ export async function applyStateSignal(
         source: args.source,
       });
       console.log(
-        `[activity:state] ${args.employeeId} ${existing?.finalState ?? "(new)"} -> ${finalState} DISCARDED (outside business hours, source=${args.source})`
+        `[activity:state] ${args.employeeId} ${existing?.finalState ?? "(new)"} -> ${finalState} DISCARDED (outside business hours, source=${args.source})`,
       );
     }
     // Fall back to CLOCKED_OUT for a brand-new row — out of hours, "not
@@ -284,7 +259,7 @@ export async function applyStateSignal(
 
   if (stateChanged) {
     console.log(
-      `[activity:state] ${args.employeeId} ${existing?.finalState ?? "(new)"} -> ${finalState} (source=${args.source})`
+      `[activity:state] ${args.employeeId} ${existing?.finalState ?? "(new)"} -> ${finalState} (source=${args.source})`,
     );
     // Entering CLOCKED_OUT (assumed or certain) is a *reinterpretation* of
     // the not-clocked-in gap that started at the real clock-out — so anchor
@@ -296,9 +271,7 @@ export async function applyStateSignal(
     // for any other caller).
     const clockedOutSince =
       finalState === "CLOCKED_OUT"
-        ? (patch.clockodoClockedOutSince ??
-          existing?.clockodoClockedOutSince ??
-          null)
+        ? (patch.clockodoClockedOutSince ?? existing?.clockodoClockedOutSince ?? null)
         : null;
     if (finalState === "CLOCKED_OUT" && clockedOutSince != null) {
       await collapseIntoClockedOut(ctx, args.employeeId, clockedOutSince);
@@ -344,11 +317,7 @@ export const pushSignal = gatedMutation("activitytrack")({
   args: {
     secret: v.string(),
     employeeId: v.string(),
-    source: v.union(
-      v.literal("agent"),
-      v.literal("genesys"),
-      v.literal("clockodo")
-    ),
+    source: v.union(v.literal("agent"), v.literal("genesys"), v.literal("clockodo")),
     deviceIdle: v.optional(v.boolean()),
     idleSeconds: v.optional(v.number()),
     genesysRoutingStatus: v.optional(ROUTING_STATUS),
@@ -369,11 +338,11 @@ export const pushSignal = gatedMutation("activitytrack")({
 
 async function getStateRow(
   ctx: MutationCtx | QueryCtx,
-  employeeId: string
+  employeeId: string,
 ): Promise<Doc<"employeeStates"> | null> {
   return await ctx.db
     .query("employeeStates")
-    .withIndex("by_employeeId", q => q.eq("employeeId", employeeId))
+    .withIndex("by_employeeId", (q) => q.eq("employeeId", employeeId))
     .unique();
 }
 
@@ -390,17 +359,13 @@ export const resolveEmployeeId = query({
     if (genesysUserId) {
       person = await ctx.db
         .query("people")
-        .withIndex("by_genesysUserId", q =>
-          q.eq("genesysUserId", genesysUserId)
-        )
+        .withIndex("by_genesysUserId", (q) => q.eq("genesysUserId", genesysUserId))
         .unique();
     }
     if (!person && clockodoUserId) {
       person = await ctx.db
         .query("people")
-        .withIndex("by_clockodoUserId", q =>
-          q.eq("clockodoUserId", clockodoUserId)
-        )
+        .withIndex("by_clockodoUserId", (q) => q.eq("clockodoUserId", clockodoUserId))
         .unique();
     }
     return person?.employeeId ?? null;
@@ -412,11 +377,7 @@ export const reportHealth = gatedMutation("activitytrack")({
   args: {
     secret: v.string(),
     source: v.union(v.literal("genesys"), v.literal("clockodo")),
-    status: v.union(
-      v.literal("ok"),
-      v.literal("unavailable"),
-      v.literal("unconfigured")
-    ),
+    status: v.union(v.literal("ok"), v.literal("unavailable"), v.literal("unconfigured")),
     message: v.optional(v.string()),
   },
   handler: async (ctx, { secret, source, status, message }) => {
@@ -424,7 +385,7 @@ export const reportHealth = gatedMutation("activitytrack")({
     const now = Date.now();
     const existing = await ctx.db
       .query("integrationHealth")
-      .withIndex("by_source", q => q.eq("source", source))
+      .withIndex("by_source", (q) => q.eq("source", source))
       .unique();
     const patch = {
       source,
@@ -444,7 +405,7 @@ export const reportHealth = gatedMutation("activitytrack")({
 /** Reactive read of every integration's health, for the dashboard banner. */
 export const health = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     return await ctx.db.query("integrationHealth").collect();
   },
@@ -457,8 +418,8 @@ export const mappings = query({
     assertSignalSecret(secret);
     const people = await ctx.db.query("people").take(2000);
     return people
-      .filter(p => p.active && p.employeeId)
-      .map(p => ({
+      .filter((p) => p.active && p.employeeId)
+      .map((p) => ({
         employeeId: p.employeeId!,
         genesysUserId: p.genesysUserId ?? null,
         clockodoUserId: p.clockodoUserId ?? null,
@@ -474,17 +435,17 @@ export const mappings = query({
  */
 export const overview = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireCapability(ctx, "view_activity_admin");
 
     const rows = await ctx.db.query("employeeStates").take(2000);
 
     const people = await ctx.db.query("people").take(2000);
     const byEmployeeId = new Map(
-      people.flatMap(p => (p.employeeId ? [[p.employeeId, p] as const] : []))
+      people.flatMap((p) => (p.employeeId ? [[p.employeeId, p] as const] : [])),
     );
 
-    return rows.map(row => {
+    return rows.map((row) => {
       const person = byEmployeeId.get(row.employeeId) ?? null;
       return {
         employeeId: row.employeeId,
@@ -528,11 +489,11 @@ export const get = query({
  */
 export const myState = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const person = await ctx.db
       .query("people")
-      .withIndex("by_userId", q => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .first();
     if (!person?.employeeId) return null;
     const state = await getStateRow(ctx, person.employeeId);
@@ -562,19 +523,17 @@ export const historyBatch = query({
     await requireUser(ctx);
     const ids = [...new Set(employeeIds)].slice(0, 100);
     return await Promise.all(
-      ids.map(async employeeId => {
+      ids.map(async (employeeId) => {
         const rows = await ctx.db
           .query("stateSamples")
-          .withIndex("by_employee_time", q =>
-            q.eq("employeeId", employeeId).gte("at", since)
-          )
+          .withIndex("by_employee_time", (q) => q.eq("employeeId", employeeId).gte("at", since))
           .order("asc")
           .take(500);
         return {
           employeeId,
-          samples: rows.map(r => ({ state: r.state, at: r.at })),
+          samples: rows.map((r) => ({ state: r.state, at: r.at })),
         };
-      })
+      }),
     );
   },
 });
@@ -591,19 +550,17 @@ export const history = query({
     await requireUser(ctx);
     const rows = await ctx.db
       .query("stateSamples")
-      .withIndex("by_employee_time", q =>
+      .withIndex("by_employee_time", (q) =>
         until !== undefined
           ? q.eq("employeeId", employeeId).gte("at", since).lte("at", until)
-          : q.eq("employeeId", employeeId).gte("at", since)
+          : q.eq("employeeId", employeeId).gte("at", since),
       )
       .order("asc")
       .take(Math.min(limit ?? 5000, 10000));
 
     const prior = await ctx.db
       .query("stateSamples")
-      .withIndex("by_employee_time", q =>
-        q.eq("employeeId", employeeId).lt("at", since)
-      )
+      .withIndex("by_employee_time", (q) => q.eq("employeeId", employeeId).lt("at", since))
       .order("desc")
       .first();
 
@@ -628,14 +585,14 @@ export const discardedHistory = query({
     await requireUser(ctx);
     const rows = await ctx.db
       .query("discardedStateSamples")
-      .withIndex("by_employee_time", q =>
+      .withIndex("by_employee_time", (q) =>
         until !== undefined
           ? q.eq("employeeId", employeeId).gte("at", since).lte("at", until)
-          : q.eq("employeeId", employeeId).gte("at", since)
+          : q.eq("employeeId", employeeId).gte("at", since),
       )
       .order("asc")
       .take(Math.min(limit ?? 1000, 5000));
-    return rows.map(r => ({
+    return rows.map((r) => ({
       state: r.state,
       at: r.at,
       reason: r.reason,
@@ -662,12 +619,10 @@ export const discardedRecent = query({
 
     const people = await ctx.db.query("people").take(2000);
     const nameByEmployeeId = new Map(
-      people.flatMap(p =>
-        p.employeeId ? [[p.employeeId, p.name] as const] : []
-      )
+      people.flatMap((p) => (p.employeeId ? [[p.employeeId, p.name] as const] : [])),
     );
 
-    return rows.map(r => ({
+    return rows.map((r) => ({
       employeeId: r.employeeId,
       personName: nameByEmployeeId.get(r.employeeId) ?? null,
       state: r.state,

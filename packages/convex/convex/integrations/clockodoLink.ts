@@ -31,7 +31,7 @@ export const linkClockodoUser = mutation({
 
     const person = await ctx.db
       .query("people")
-      .withIndex("by_userId", q => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
     if (person) {
       await ctx.db.patch(person._id, {
@@ -39,13 +39,7 @@ export const linkClockodoUser = mutation({
       });
     }
 
-    await writeIntegrationsAudit(
-      ctx,
-      actor._id,
-      "clockodo",
-      "clockodo.link",
-      user.email
-    );
+    await writeIntegrationsAudit(ctx, actor._id, "clockodo", "clockodo.link", user.email);
   },
 });
 
@@ -60,18 +54,12 @@ export const unlinkClockodoUser = mutation({
 
     const person = await ctx.db
       .query("people")
-      .withIndex("by_userId", q => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
     if (person) {
       await ctx.db.patch(person._id, { clockodoUserId: undefined });
     }
 
-    await writeIntegrationsAudit(
-      ctx,
-      actor._id,
-      "clockodo",
-      "clockodo.unlink",
-      user.email
-    );
+    await writeIntegrationsAudit(ctx, actor._id, "clockodo", "clockodo.unlink", user.email);
   },
 });

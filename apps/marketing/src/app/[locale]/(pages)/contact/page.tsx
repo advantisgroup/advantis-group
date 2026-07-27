@@ -6,10 +6,7 @@ import { CheckCircle2, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { CallbackForm } from "@/components/contact/CallbackForm";
-import {
-  ContactInfoDesktop,
-  ContactInfoMobile,
-} from "@/components/contact/ContactInfo";
+import { ContactInfoDesktop, ContactInfoMobile } from "@/components/contact/ContactInfo";
 import { MessageForm } from "@/components/contact/MessageForm";
 import { NotifyModal } from "@/components/contact/NotifyModal";
 import { OtherForm } from "@/components/contact/OtherForm";
@@ -38,8 +35,7 @@ export default function Kontakt() {
   const formSectionRef = useRef<HTMLElement | null>(null);
 
   const submissionText =
-    SUBMISSION_TEXT_BY_LOCALE[locale] ??
-    process.env.NEXT_PUBLIC_SUBMISSION_TEXT;
+    SUBMISSION_TEXT_BY_LOCALE[locale] ?? process.env.NEXT_PUBLIC_SUBMISSION_TEXT;
 
   const [contactMode, setContactMode] = useState<ContactMode>("message");
   const [notifyOpen, setNotifyOpen] = useState(false);
@@ -169,9 +165,7 @@ export default function Kontakt() {
     <div className="min-h-screen">
       <main className="container mx-auto space-y-16 px-4 pb-24 pt-24 md:space-y-24">
         <section className="mx-auto max-w-4xl space-y-6 text-center md:space-y-8">
-          <h1 className="text-4xl font-bold md:text-5xl lg:text-7xl">
-            {t("title")}
-          </h1>
+          <h1 className="text-4xl font-bold md:text-5xl lg:text-7xl">{t("title")}</h1>
           <p className="mx-auto max-w-2xl text-lg text-muted-foreground md:text-xl">
             {t("subtitle")}
           </p>
@@ -186,20 +180,14 @@ export default function Kontakt() {
           </div>
 
           {!ALLOW_SUBMISSIONS && (
-            <SubmissionBanner
-              text={submissionText}
-              onNotifyClick={() => setNotifyOpen(true)}
-            />
+            <SubmissionBanner text={submissionText} onNotifyClick={() => setNotifyOpen(true)} />
           )}
 
           <section
             ref={formSectionRef}
             className="overflow-hidden rounded-4xl border border-border/70 bg-background/70 shadow-xl shadow-black/5"
           >
-            <TabNavigation
-              contactMode={contactMode}
-              onModeChange={setContactMode}
-            />
+            <TabNavigation contactMode={contactMode} onModeChange={setContactMode} />
 
             <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)]">
               <div className="space-y-6 p-6 md:p-8">
@@ -208,9 +196,7 @@ export default function Kontakt() {
                     {getFormTitle()}
                   </h2>
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <p className="text-base text-muted-foreground">
-                      {getFormDescription()}
-                    </p>
+                    <p className="text-base text-muted-foreground">{getFormDescription()}</p>
                     {ALLOW_SUBMISSIONS &&
                       (accountProfile ? (
                         <button
@@ -220,7 +206,7 @@ export default function Kontakt() {
                             "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                             accountPrefillState === "success"
                               ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                              : "border-advantis/25 bg-advantis/8 text-advantis hover:bg-advantis/15"
+                              : "border-advantis/25 bg-advantis/8 text-advantis hover:bg-advantis/15",
                           )}
                         >
                           {accountPrefillState === "success" ? (

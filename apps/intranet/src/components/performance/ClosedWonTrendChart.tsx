@@ -14,10 +14,7 @@ import {
 } from "recharts";
 
 import { CHART, tooltipStyle } from "@/components/activity/charts/theme";
-import {
-  fmtDayShort,
-  fmtNum,
-} from "@/components/performance/PerformanceFormat";
+import { fmtDayShort, fmtNum } from "@/components/performance/PerformanceFormat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 /** Renders the average reference line's label as a solid pill anchored to
@@ -83,7 +80,7 @@ export function ClosedWonTrendChart({
 
   if (days.length === 0) return null;
 
-  const data = days.map(d => ({
+  const data = days.map((d) => ({
     label: fmtDayShort(d.date, locale),
     won: d.won,
   }));
@@ -95,10 +92,7 @@ export function ClosedWonTrendChart({
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={220}>
-          <BarChart
-            data={data}
-            margin={{ top: 8, right: 8, bottom: 0, left: 0 }}
-          >
+          <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid stroke={CHART.grid} vertical={false} />
             <XAxis
               dataKey="label"
@@ -123,11 +117,8 @@ export function ClosedWonTrendChart({
               fill={CHART.active}
               radius={[3, 3, 0, 0]}
             >
-              {data.map(d => (
-                <Cell
-                  key={d.label}
-                  fill={d.won > avg ? CHART.active : "var(--destructive)"}
-                />
+              {data.map((d) => (
+                <Cell key={d.label} fill={d.won > avg ? CHART.active : "var(--destructive)"} />
               ))}
             </Bar>
             {/* Declared after Bar so it paints on top — SVG stacks by
@@ -138,15 +129,11 @@ export function ClosedWonTrendChart({
               stroke="var(--chart-fg)"
               strokeWidth={1.5}
               strokeDasharray="6 3"
-              label={makeAvgLabel(
-                t("wonTrendAvgLabel", { value: fmtNum(avg) })
-              )}
+              label={makeAvgLabel(t("wonTrendAvgLabel", { value: fmtNum(avg) }))}
             />
           </BarChart>
         </ResponsiveContainer>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {t("wonTrendFootnote")}
-        </p>
+        <p className="mt-2 text-xs text-muted-foreground">{t("wonTrendFootnote")}</p>
       </CardContent>
     </Card>
   );

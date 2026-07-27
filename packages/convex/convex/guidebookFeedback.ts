@@ -9,7 +9,7 @@ export const getMine = query({
     const user = await requireUser(ctx);
     const row = await ctx.db
       .query("guidebookFeedback")
-      .withIndex("by_user_slug", q => q.eq("userId", user._id).eq("slug", slug))
+      .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", slug))
       .unique();
     return row ? { helpful: row.helpful } : null;
   },
@@ -21,7 +21,7 @@ export const set = mutation({
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("guidebookFeedback")
-      .withIndex("by_user_slug", q => q.eq("userId", user._id).eq("slug", slug))
+      .withIndex("by_user_slug", (q) => q.eq("userId", user._id).eq("slug", slug))
       .unique();
     const now = Date.now();
     if (existing) {
@@ -46,10 +46,10 @@ export const stats = query({
     if (user.role === "employee") return null;
     const rows = await ctx.db
       .query("guidebookFeedback")
-      .withIndex("by_slug", q => q.eq("slug", slug))
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
       .collect();
     return {
-      helpful: rows.filter(r => r.helpful).length,
+      helpful: rows.filter((r) => r.helpful).length,
       total: rows.length,
     };
   },

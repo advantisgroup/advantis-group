@@ -55,8 +55,7 @@ export function AdminLogin({ onLogin }: { onLogin: () => void }) {
         ) : (
           <>
             <p className="mb-2.5 text-sm text-muted-foreground">
-              Teilnehmer anlegen, Einladungen erstellen, Ergebnisse und Fragen
-              einsehen.
+              Teilnehmer anlegen, Einladungen erstellen, Ergebnisse und Fragen einsehen.
             </p>
             <Label htmlFor="apin">Admin-PIN</Label>
             <div className="mt-1 flex gap-2">
@@ -66,19 +65,14 @@ export function AdminLogin({ onLogin }: { onLogin: () => void }) {
                 className="max-w-[220px]"
                 placeholder="PIN"
                 value={pin}
-                onChange={e => setPin(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && void submit()}
+                onChange={(e) => setPin(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void submit()}
               />
-              <Button
-                onClick={() => void submit()}
-                disabled={checking || !pin.trim()}
-              >
+              <Button onClick={() => void submit()} disabled={checking || !pin.trim()}>
                 Anmelden
               </Button>
             </div>
-            {pinError ? (
-              <p className="mt-1.5 text-sm text-destructive">{pinError}</p>
-            ) : null}
+            {pinError ? <p className="mt-1.5 text-sm text-destructive">{pinError}</p> : null}
             <p className="mt-2 text-sm text-muted-foreground">
               Standard-PIN: 1234 (im Admin-Bereich änderbar).
             </p>

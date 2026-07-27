@@ -5,10 +5,7 @@ import { type ReactNode } from "react";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import {
-  canAccessGuidebook,
-  getGuidebook,
-} from "@/components/guidebooks/registry";
+import { canAccessGuidebook, getGuidebook } from "@/components/guidebooks/registry";
 import { AcademySessionProvider } from "@/components/guidebooks/wallbox-academy/session";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
@@ -24,11 +21,7 @@ import { Card, CardContent } from "@/components/ui/card";
  * sharing. Next.js matches this static segment before the generic
  * `/guidebooks/[slug]` route, so `[slug]/page.tsx` never handles this slug.
  */
-export default function WallboxAcademyLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function WallboxAcademyLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Guidebooks");
   const user = useCurrentUser();
   const guidebook = getGuidebook("wallbox-sales-academy");
@@ -52,9 +45,7 @@ export default function WallboxAcademyLayout({
             <span className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
               <BookOpen className="size-6" />
             </span>
-            <p className="text-sm font-medium">
-              {guidebook ? t("noAccess") : t("notFound")}
-            </p>
+            <p className="text-sm font-medium">{guidebook ? t("noAccess") : t("notFound")}</p>
             <p className="text-xs text-muted-foreground">
               {guidebook ? t("noAccessHint") : t("notFoundHint")}
             </p>

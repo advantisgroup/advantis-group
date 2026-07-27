@@ -65,9 +65,7 @@ function parseExtraction(text: string): ExtractedApplicant {
     adresse: str(data.adresse),
     geburtsdatum: str(data.geburtsdatum),
     position: str(data.position),
-    skills: Array.isArray(data.skills)
-      ? data.skills.filter(s => typeof s === "string")
-      : [],
+    skills: Array.isArray(data.skills) ? data.skills.filter((s) => typeof s === "string") : [],
     ausbildung: str(data.ausbildung),
     berufserfahrung: str(data.berufserfahrung),
     zusammenfassung: str(data.zusammenfassung),
@@ -84,9 +82,7 @@ function validatePdf(file: { type: string; size: number }): void {
 }
 
 /** Runs the PDF through Claude and returns the parsed fields — no persistence. */
-async function runExtraction(
-  bytes: Uint8Array<ArrayBuffer>
-): Promise<ExtractedApplicant> {
+async function runExtraction(bytes: Uint8Array<ArrayBuffer>): Promise<ExtractedApplicant> {
   const base64 = Buffer.from(bytes).toString("base64");
   const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
   const response = await client.messages.create({
@@ -109,9 +105,7 @@ async function runExtraction(
       },
     ],
   });
-  const text = response.content
-    .map(block => ("text" in block ? block.text : ""))
-    .join("\n");
+  const text = response.content.map((block) => ("text" in block ? block.text : "")).join("\n");
   const extracted = parseExtraction(text);
   if (!extracted.name) {
     throw Errors.upstream("Im PDF konnte kein Name gefunden werden");
@@ -120,15 +114,10 @@ async function runExtraction(
 }
 
 /** Stages raw PDF bytes into Convex file storage, returning the storageId. */
-async function stageBytes(
-  bytes: Uint8Array<ArrayBuffer>
-): Promise<Id<"_storage">> {
-  const uploadUrl = await getConvex().mutation(
-    api.applicants.apiGenerateStagingUrl,
-    {
-      serverKey: getConvexServerKey(),
-    }
-  );
+async function stageBytes(bytes: Uint8Array<ArrayBuffer>): Promise<Id<"_storage">> {
+  const uploadUrl = await getConvex().mutation(api.applicants.apiGenerateStagingUrl, {
+    serverKey: getConvexServerKey(),
+  });
   const staged = await fetch(uploadUrl, {
     method: "POST",
     headers: { "content-type": "application/pdf" },
@@ -143,14 +132,14 @@ async function stageBytes(
 }
 
 async function resolveProfilId(
-  position: string
+  position: string,
 ): Promise<Id<"applicantSkillProfiles"> | undefined> {
   const profiles = await getConvex().query(api.applicants.apiListProfiles, {
     serverKey: getConvexServerKey(),
   });
   const profilId = autoProfil(
-    profiles.map(p => ({ id: p._id, name: p.name, skills: p.skills })),
-    position
+    profiles.map((p) => ({ id: p._id, name: p.name, skills: p.skills })),
+    position,
   );
   return profilId ? (profilId as Id<"applicantSkillProfiles">) : undefined;
 }
@@ -173,14 +162,11 @@ export const applicantsRoute = new Elysia()
       const extracted = await runExtraction(bytes);
 
       if (!forceCreate) {
-        const duplicate = await getConvex().query(
-          api.applicants.apiFindDuplicateByContact,
-          {
-            serverKey: getConvexServerKey(),
-            email: extracted.email || undefined,
-            telefon: extracted.telefon || undefined,
-          }
-        );
+        const duplicate = await getConvex().query(api.applicants.apiFindDuplicateByContact, {
+          serverKey: getConvexServerKey(),
+          email: extracted.email || undefined,
+          telefon: extracted.telefon || undefined,
+        });
         if (duplicate) {
           const pendingStorageId = await stageBytes(bytes);
           return {
@@ -194,26 +180,23 @@ export const applicantsRoute = new Elysia()
 
       const profilId = await resolveProfilId(extracted.position);
       const storageId = await stageBytes(bytes);
-      const { applicantId } = await getConvex().mutation(
-        api.applicants.apiCreateFromExtraction,
-        {
-          serverKey: getConvexServerKey(),
-          createdByUserId: access.userId,
-          name: extracted.name,
-          email: extracted.email || undefined,
-          telefon: extracted.telefon || undefined,
-          adresse: extracted.adresse || undefined,
-          geburtsdatum: extracted.geburtsdatum || undefined,
-          position: extracted.position || undefined,
-          skills: extracted.skills,
-          ausbildung: extracted.ausbildung || undefined,
-          berufserfahrung: extracted.berufserfahrung || undefined,
-          zusammenfassung: extracted.zusammenfassung || undefined,
-          profilId,
-          storageId,
-          fileName: file.name,
-        }
-      );
+      const { applicantId } = await getConvex().mutation(api.applicants.apiCreateFromExtraction, {
+        serverKey: getConvexServerKey(),
+        createdByUserId: access.userId,
+        name: extracted.name,
+        email: extracted.email || undefined,
+        telefon: extracted.telefon || undefined,
+        adresse: extracted.adresse || undefined,
+        geburtsdatum: extracted.geburtsdatum || undefined,
+        position: extracted.position || undefined,
+        skills: extracted.skills,
+        ausbildung: extracted.ausbildung || undefined,
+        berufserfahrung: extracted.berufserfahrung || undefined,
+        zusammenfassung: extracted.zusammenfassung || undefined,
+        profilId,
+        storageId,
+        fileName: file.name,
+      });
 
       return { kind: "created" as const, applicantId };
     },
@@ -222,7 +205,7 @@ export const applicantsRoute = new Elysia()
         file: t.File(),
         forceCreate: t.Optional(t.Boolean()),
       }),
-    }
+    },
   )
   /**
    * Re-runs extraction against a CV for an EXISTING applicant, without
@@ -254,5 +237,5 @@ export const applicantsRoute = new Elysia()
       body: t.Object({
         file: t.File(),
       }),
-    }
+    },
   );

@@ -1,12 +1,7 @@
 import { v } from "convex/values";
 
 import { internal } from "../_generated/api";
-import {
-  query,
-  mutation,
-  internalMutation,
-  internalQuery,
-} from "../_generated/server";
+import { query, mutation, internalMutation, internalQuery } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { requireManager, requireAdmin } from "../lib/auth";
 import { appError } from "./lib/errors";
@@ -46,7 +41,7 @@ export type MigrationTable = (typeof MIGRATION_TABLES)[number];
 /** The most recent migration run with its per-table steps. Manager+. */
 export const latest = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireManager(ctx);
     const migration = await ctx.db
       .query("activityMigrations")
@@ -56,13 +51,13 @@ export const latest = query({
     if (!migration) return null;
     const steps = await ctx.db
       .query("activityMigrationSteps")
-      .withIndex("by_migration", q => q.eq("migrationId", migration._id))
+      .withIndex("by_migration", (q) => q.eq("migrationId", migration._id))
       .collect();
     // Stable display order matching MIGRATION_TABLES.
     steps.sort(
       (a, b) =>
         MIGRATION_TABLES.indexOf(a.table as MigrationTable) -
-        MIGRATION_TABLES.indexOf(b.table as MigrationTable)
+        MIGRATION_TABLES.indexOf(b.table as MigrationTable),
     );
     return { migration, steps };
   },
@@ -76,7 +71,7 @@ export const start = mutation({
     if (!process.env.ACTIVITYTRACK_OLD_CONVEX_URL) {
       throw appError(
         "migration.unconfigured",
-        "ACTIVITYTRACK_OLD_CONVEX_URL is not set on the Convex deployment"
+        "ACTIVITYTRACK_OLD_CONVEX_URL is not set on the Convex deployment",
       );
     }
     const now = Date.now();
@@ -119,7 +114,7 @@ export const resume = mutation({
     // Reset any failed step back to pending (keeping its cursor) so it retries.
     const steps = await ctx.db
       .query("activityMigrationSteps")
-      .withIndex("by_migration", q => q.eq("migrationId", migrationId))
+      .withIndex("by_migration", (q) => q.eq("migrationId", migrationId))
       .collect();
     for (const step of steps) {
       if (step.status === "failed" || step.status === "paused") {
@@ -167,12 +162,12 @@ export const getRun = internalQuery({
     if (!migration) return null;
     const steps = await ctx.db
       .query("activityMigrationSteps")
-      .withIndex("by_migration", q => q.eq("migrationId", migrationId))
+      .withIndex("by_migration", (q) => q.eq("migrationId", migrationId))
       .collect();
     steps.sort(
       (a, b) =>
         MIGRATION_TABLES.indexOf(a.table as MigrationTable) -
-        MIGRATION_TABLES.indexOf(b.table as MigrationTable)
+        MIGRATION_TABLES.indexOf(b.table as MigrationTable),
     );
     return { migration, steps };
   },
@@ -199,10 +194,7 @@ export const advanceStep = internalMutation({
     warningsDelta: v.number(),
     done: v.boolean(),
   },
-  handler: async (
-    ctx,
-    { stepId, cursor, processedDelta, warningsDelta, done }
-  ) => {
+  handler: async (ctx, { stepId, cursor, processedDelta, warningsDelta, done }) => {
     const step = await ctx.db.get(stepId);
     if (!step) return;
     await ctx.db.patch(stepId, {
@@ -220,9 +212,7 @@ export const failStep = internalMutation({
   handler: async (ctx, { stepId, error }) => {
     const step = await ctx.db.get(stepId);
     if (!step) return;
-    console.error(
-      `[migration:failStep] table="${step.table}" error="${error}"`
-    );
+    console.error(`[migration:failStep] table="${step.table}" error="${error}"`);
     await ctx.db.patch(stepId, {
       status: "failed",
       failed: step.failed + 1,
@@ -250,15 +240,12 @@ async function recordIdMap(
   migrationId: Id<"activityMigrations">,
   sourceTable: string,
   sourceId: string,
-  targetId: string
+  targetId: string,
 ): Promise<void> {
   const existing = await ctx.db
     .query("activityMigrationIdMap")
-    .withIndex("by_migration_source", q =>
-      q
-        .eq("migrationId", migrationId)
-        .eq("sourceTable", sourceTable)
-        .eq("sourceId", sourceId)
+    .withIndex("by_migration_source", (q) =>
+      q.eq("migrationId", migrationId).eq("sourceTable", sourceTable).eq("sourceId", sourceId),
     )
     .unique();
   if (existing) {
@@ -282,8 +269,7 @@ export const upsertPeople = internalMutation({
     for (const row of rows) {
       const employeeId: string | undefined = row.employeeId ?? undefined;
       const email: string | undefined = row.email ?? undefined;
-      const clockodoUserId: string | undefined =
-        row.clockodoUserId ?? undefined;
+      const clockodoUserId: string | undefined = row.clockodoUserId ?? undefined;
 
       // Resolve the intranet user link.
       let userId: Id<"users"> | undefined;
@@ -292,7 +278,7 @@ export const upsertPeople = internalMutation({
         if (Number.isFinite(n)) {
           const u = await ctx.db
             .query("users")
-            .withIndex("by_clockodoUserId", q => q.eq("clockodoUserId", n))
+            .withIndex("by_clockodoUserId", (q) => q.eq("clockodoUserId", n))
             .unique();
           if (u) userId = u._id;
         }
@@ -300,13 +286,13 @@ export const upsertPeople = internalMutation({
       if (!userId && email) {
         const u = await ctx.db
           .query("users")
-          .withIndex("by_email", q => q.eq("email", email.toLowerCase()))
+          .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
           .unique();
         if (u) userId = u._id;
       }
       if (!userId) {
         console.warn(
-          `[migration:upsertPeople] no userId match for row — name="${row.name}" email="${email}" clockodoUserId="${clockodoUserId}"`
+          `[migration:upsertPeople] no userId match for row — name="${row.name}" email="${email}" clockodoUserId="${clockodoUserId}"`,
         );
         warnings++;
       }
@@ -326,14 +312,14 @@ export const upsertPeople = internalMutation({
       if (employeeId) {
         const e = await ctx.db
           .query("people")
-          .withIndex("by_employeeId", q => q.eq("employeeId", employeeId))
+          .withIndex("by_employeeId", (q) => q.eq("employeeId", employeeId))
           .unique();
         existingId = e?._id ?? null;
       }
       if (!existingId && email) {
         const e = await ctx.db
           .query("people")
-          .withIndex("by_email", q => q.eq("email", email))
+          .withIndex("by_email", (q) => q.eq("email", email))
           .unique();
         existingId = e?._id ?? null;
       }
@@ -346,13 +332,7 @@ export const upsertPeople = internalMutation({
         targetId = await ctx.db.insert("people", fields);
       }
       if (row._id) {
-        await recordIdMap(
-          ctx,
-          migrationId,
-          "people",
-          String(row._id),
-          targetId
-        );
+        await recordIdMap(ctx, migrationId, "people", String(row._id), targetId);
       }
     }
     return { warnings };
@@ -372,11 +352,11 @@ export const upsertDevices = internalMutation({
       if (row.personId) {
         const map = await ctx.db
           .query("activityMigrationIdMap")
-          .withIndex("by_migration_source", q =>
+          .withIndex("by_migration_source", (q) =>
             q
               .eq("migrationId", migrationId)
               .eq("sourceTable", "people")
-              .eq("sourceId", String(row.personId))
+              .eq("sourceId", String(row.personId)),
           )
           .unique();
         if (map) personId = map.targetId as Id<"people">;
@@ -400,7 +380,7 @@ export const upsertDevices = internalMutation({
 
       const existing = await ctx.db
         .query("devices")
-        .withIndex("by_deviceId", q => q.eq("deviceId", deviceId))
+        .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
         .unique();
       if (existing) {
         await ctx.db.patch(existing._id, fields);
@@ -419,8 +399,8 @@ export const upsertSamples = internalMutation({
     for (const row of rows) {
       const dup = await ctx.db
         .query("activitySamples")
-        .withIndex("by_device_time", q =>
-          q.eq("deviceId", row.deviceId).eq("capturedAt", row.capturedAt)
+        .withIndex("by_device_time", (q) =>
+          q.eq("deviceId", row.deviceId).eq("capturedAt", row.capturedAt),
         )
         .first();
       if (dup) continue;
@@ -448,9 +428,7 @@ export const upsertStateSamples = internalMutation({
     for (const row of rows) {
       const dup = await ctx.db
         .query("stateSamples")
-        .withIndex("by_employee_time", q =>
-          q.eq("employeeId", row.employeeId).eq("at", row.at)
-        )
+        .withIndex("by_employee_time", (q) => q.eq("employeeId", row.employeeId).eq("at", row.at))
         .first();
       if (dup) continue;
       await ctx.db.insert("stateSamples", {
@@ -478,9 +456,7 @@ export const upsertDailyStats = internalMutation({
       };
       const existing = await ctx.db
         .query("dailyStats")
-        .withIndex("by_device_day", q =>
-          q.eq("deviceId", row.deviceId).eq("day", row.day)
-        )
+        .withIndex("by_device_day", (q) => q.eq("deviceId", row.deviceId).eq("day", row.day))
         .unique();
       if (existing) await ctx.db.patch(existing._id, fields);
       else await ctx.db.insert("dailyStats", fields);
@@ -500,7 +476,7 @@ export const upsertEmployeeStates = internalMutation({
       void orgId;
       const existing = await ctx.db
         .query("employeeStates")
-        .withIndex("by_employeeId", q => q.eq("employeeId", row.employeeId))
+        .withIndex("by_employeeId", (q) => q.eq("employeeId", row.employeeId))
         .unique();
       if (existing) await ctx.db.patch(existing._id, rest);
       else await ctx.db.insert("employeeStates", rest);
@@ -524,7 +500,7 @@ export const upsertIntegrationHealth = internalMutation({
       };
       const existing = await ctx.db
         .query("integrationHealth")
-        .withIndex("by_source", q => q.eq("source", row.source))
+        .withIndex("by_source", (q) => q.eq("source", row.source))
         .unique();
       if (existing) await ctx.db.patch(existing._id, fields);
       else await ctx.db.insert("integrationHealth", fields);
@@ -545,7 +521,7 @@ export const upsertSettings = internalMutation({
       };
       const existing = await ctx.db
         .query("activitySettings")
-        .withIndex("by_key", q => q.eq("key", row.key))
+        .withIndex("by_key", (q) => q.eq("key", row.key))
         .unique();
       if (existing) await ctx.db.patch(existing._id, fields);
       else await ctx.db.insert("activitySettings", fields);

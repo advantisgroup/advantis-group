@@ -27,7 +27,7 @@ function normalize(raw: string): string {
 /** Scan `users` and (re-)populate the review queue from current raw values. */
 export const populateReview = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireAdmin(ctx);
     const users = await ctx.db.query("users").collect();
 
@@ -59,8 +59,8 @@ export const populateReview = mutation({
     for (const bucket of buckets.values()) {
       const existing = await ctx.db
         .query("orgDataMigrationReview")
-        .withIndex("by_kind_normalized", q =>
-          q.eq("kind", bucket.kind).eq("normalized", bucket.normalized)
+        .withIndex("by_kind_normalized", (q) =>
+          q.eq("kind", bucket.kind).eq("normalized", bucket.normalized),
         )
         .unique();
       const rawValues = [...bucket.raw].sort();
@@ -99,7 +99,7 @@ export const listReview = query({
     await requireAdmin(ctx);
     const rows = await ctx.db
       .query("orgDataMigrationReview")
-      .withIndex("by_kind_normalized", q => q.eq("kind", kind))
+      .withIndex("by_kind_normalized", (q) => q.eq("kind", kind))
       .collect();
     return rows.sort((a, b) => a.canonicalName.localeCompare(b.canonicalName));
   },
@@ -126,11 +126,7 @@ export const setCanonicalName = mutation({
 export const setStatus = mutation({
   args: {
     bucketId: v.id("orgDataMigrationReview"),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("rejected")
-    ),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
   },
   handler: async (ctx, { bucketId, status }) => {
     await requireAdmin(ctx);
@@ -152,10 +148,7 @@ export const mergeBucket = mutation({
         message: "Cannot merge a bucket into itself",
       });
     }
-    const [source, target] = await Promise.all([
-      ctx.db.get(sourceId),
-      ctx.db.get(targetId),
-    ]);
+    const [source, target] = await Promise.all([ctx.db.get(sourceId), ctx.db.get(targetId)]);
     if (!source || !target) {
       throw new ConvexError({ code: "not_found", message: "Bucket not found" });
     }
@@ -181,12 +174,12 @@ export const mergeBucket = mutation({
 /** Every raw value that should resolve to `bucket` — its own plus any merged into it. */
 async function rawValuesForBackfill(
   ctx: MutationCtx,
-  bucket: Doc<"orgDataMigrationReview">
+  bucket: Doc<"orgDataMigrationReview">,
 ): Promise<Set<string>> {
   const merged = await ctx.db
     .query("orgDataMigrationReview")
-    .withIndex("by_kind_normalized", q => q.eq("kind", bucket.kind))
-    .filter(q => q.eq(q.field("mergedIntoId"), bucket._id))
+    .withIndex("by_kind_normalized", (q) => q.eq("kind", bucket.kind))
+    .filter((q) => q.eq(q.field("mergedIntoId"), bucket._id))
     .collect();
   const values = new Set(bucket.rawValues.map(normalize));
   for (const m of merged) {
@@ -204,16 +197,16 @@ async function rawValuesForBackfill(
  */
 export const runBackfill = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const admin = await requireAdmin(ctx);
     const approved = await ctx.db
       .query("orgDataMigrationReview")
-      .withIndex("by_status", q => q.eq("status", "approved"))
+      .withIndex("by_status", (q) => q.eq("status", "approved"))
       .collect();
-    const toMaterialize = approved.filter(b => b.mergedIntoId === undefined);
+    const toMaterialize = approved.filter((b) => b.mergedIntoId === undefined);
     const pendingUnreviewed = await ctx.db
       .query("orgDataMigrationReview")
-      .withIndex("by_status", q => q.eq("status", "pending"))
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
       .collect();
     if (pendingUnreviewed.length > 0) {
       throw new ConvexError({
@@ -244,11 +237,7 @@ export const runBackfill = mutation({
         }
         const raw = await rawValuesForBackfill(ctx, bucket);
         for (const u of users) {
-          if (
-            u.department &&
-            raw.has(normalize(u.department)) &&
-            u.departmentId !== departmentId
-          ) {
+          if (u.department && raw.has(normalize(u.department)) && u.departmentId !== departmentId) {
             await ctx.db.patch(u._id, { departmentId });
             usersUpdated++;
           }
@@ -270,11 +259,11 @@ export const runBackfill = mutation({
         }
         const raw = await rawValuesForBackfill(ctx, bucket);
         for (const u of users) {
-          if (!(u.teams ?? []).some(t => raw.has(normalize(t)))) continue;
+          if (!(u.teams ?? []).some((t) => raw.has(normalize(t)))) continue;
           const existingLink = await ctx.db
             .query("userTeams")
-            .withIndex("by_user_team", q =>
-              q.eq("userId", u._id).eq("teamId", teamId as Id<"teams">)
+            .withIndex("by_user_team", (q) =>
+              q.eq("userId", u._id).eq("teamId", teamId as Id<"teams">),
             )
             .unique();
           if (!existingLink) {
@@ -305,7 +294,7 @@ export const runBackfill = mutation({
  */
 export const backfillClockodoUserIdStrings = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireAdmin(ctx);
     const users = await ctx.db.query("users").collect();
     let updated = 0;
@@ -316,7 +305,7 @@ export const backfillClockodoUserIdStrings = mutation({
       }
     }
     const remainingNumberRows = (await ctx.db.query("users").collect()).filter(
-      u => typeof u.clockodoUserId === "number"
+      (u) => typeof u.clockodoUserId === "number",
     ).length;
     return { updated, remainingNumberRows };
   },

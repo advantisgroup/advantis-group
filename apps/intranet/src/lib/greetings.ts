@@ -5,13 +5,7 @@
  * the actual copy (kept there, not here, so it stays translatable).
  */
 
-type TimeBucket =
-  | "lateNight"
-  | "earlyMorning"
-  | "lateMorning"
-  | "afternoon"
-  | "evening"
-  | "night";
+type TimeBucket = "lateNight" | "earlyMorning" | "lateMorning" | "afternoon" | "evening" | "night";
 
 type DayPool = "friday" | "monday" | "weekend";
 

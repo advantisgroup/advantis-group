@@ -49,9 +49,7 @@ function isComplete(v: CellValue): boolean {
 function parseTimestamp(v: CellValue): Date | null {
   if (v instanceof Date) return v;
   if (v === null || v === undefined || v === "") return null;
-  const m = /^(\d{2})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})$/.exec(
-    String(v).trim()
-  );
+  const m = /^(\d{2})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2})$/.exec(String(v).trim());
   if (!m) return null;
   const [, d, mo, y, h, mi] = m;
   return new Date(Date.UTC(2000 + +y, +mo - 1, +d, +h, +mi));
@@ -74,10 +72,7 @@ export interface InteractionRow {
  * employee/date/duration columns this format requires) — as opposed to
  * recognized-but-empty, which returns an empty array. */
 export function readInteractionsCsv(text: string): InteractionRow[] | null {
-  const firstLine = text.slice(
-    0,
-    text.indexOf("\n") === -1 ? undefined : text.indexOf("\n")
-  );
+  const firstLine = text.slice(0, text.indexOf("\n") === -1 ? undefined : text.indexOf("\n"));
   const delimiter = sniffDelimiter(firstLine);
   const table = parseCsvText(text, delimiter);
   if (table.length === 0) return null;
@@ -88,17 +83,13 @@ export function readInteractionsCsv(text: string): InteractionRow[] | null {
     const f = ALIAS_LOOKUP.get(normHeader(h));
     if (f && !(f in colmap)) colmap[f] = idx;
   });
-  if (
-    !("employee" in colmap) ||
-    !("date" in colmap) ||
-    !("duration" in colmap)
-  ) {
+  if (!("employee" in colmap) || !("date" in colmap) || !("duration" in colmap)) {
     return null;
   }
 
   const rows: InteractionRow[] = [];
   for (const r of table.slice(1)) {
-    if (r.every(v => v === null || v === undefined || v === "")) continue;
+    if (r.every((v) => v === null || v === undefined || v === "")) continue;
 
     if ("complete" in colmap && !isComplete(r[colmap.complete] ?? "")) continue;
 
@@ -113,8 +104,8 @@ export function readInteractionsCsv(text: string): InteractionRow[] | null {
 
     const names = namesRaw
       .split(";")
-      .map(n => cleanAgentName(n))
-      .filter(n => n.length > 0);
+      .map((n) => cleanAgentName(n))
+      .filter((n) => n.length > 0);
     if (names.length === 0) continue;
 
     rows.push({
@@ -122,8 +113,7 @@ export function readInteractionsCsv(text: string): InteractionRow[] | null {
       startedAt: started.getTime(),
       date: toISODate(started),
       durationSec,
-      direction:
-        "direction" in colmap ? r[colmap.direction] || undefined : undefined,
+      direction: "direction" in colmap ? r[colmap.direction] || undefined : undefined,
     });
   }
   return rows;

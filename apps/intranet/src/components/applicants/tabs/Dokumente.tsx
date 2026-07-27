@@ -7,14 +7,7 @@ import Link from "next/link";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
-import {
-  Download,
-  Eye,
-  FileText,
-  RefreshCw,
-  Trash2,
-  UploadCloud,
-} from "lucide-react";
+import { Download, Eye, FileText, RefreshCw, Trash2, UploadCloud } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -24,19 +17,14 @@ import {
   RICH_CV_FIELDS,
   textToHtml,
 } from "@/components/applicants/applicant-types";
-import {
-  CvFallbackModal,
-  type CvFallbackFormState,
-} from "@/components/applicants/CvFallbackModal";
+import { CvFallbackModal, type CvFallbackFormState } from "@/components/applicants/CvFallbackModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useApplicantsApi } from "@/lib/applicants-api";
 
-export function applicantToFormState(
-  applicant: ApplicantDetail
-): CvFallbackFormState {
+export function applicantToFormState(applicant: ApplicantDetail): CvFallbackFormState {
   return {
     name: applicant.name,
     email: applicant.email ?? "",
@@ -63,14 +51,9 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
   const rescanInputRef = useRef<HTMLInputElement>(null);
 
   const [rescanFile, setRescanFile] = useState<File | null>(null);
-  const [rescanInitialValues, setRescanInitialValues] =
-    useState<CvFallbackFormState | null>(null);
-  const [rescanFromPdfFields, setRescanFromPdfFields] = useState<
-    (keyof CvFallbackFormState)[]
-  >([]);
-  const [rescanStorageId, setRescanStorageId] = useState<
-    Id<"_storage"> | undefined
-  >(undefined);
+  const [rescanInitialValues, setRescanInitialValues] = useState<CvFallbackFormState | null>(null);
+  const [rescanFromPdfFields, setRescanFromPdfFields] = useState<(keyof CvFallbackFormState)[]>([]);
+  const [rescanStorageId, setRescanStorageId] = useState<Id<"_storage"> | undefined>(undefined);
 
   async function handleRescan(files: FileList | null) {
     const file = files?.[0];
@@ -140,10 +123,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
     }
   }
 
-  async function handleRemove(
-    documentId: Id<"applicantDocuments">,
-    name: string
-  ) {
+  async function handleRemove(documentId: Id<"applicantDocuments">, name: string) {
     const ok = await confirm({
       title: t("deleteDocument"),
       description: t("deleteDocumentConfirm", { name }),
@@ -159,9 +139,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
       <div className="flex items-center justify-between gap-3 border-b border-border/70 p-4">
         <p className="text-sm font-semibold">
           {t("documentsInFile")}
-          <span className="ml-1.5 text-muted-foreground">
-            ({applicant.documents.length})
-          </span>
+          <span className="ml-1.5 text-muted-foreground">({applicant.documents.length})</span>
         </p>
         <Button
           variant="outline"
@@ -177,7 +155,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
           type="file"
           accept="application/pdf"
           className="hidden"
-          onChange={e => {
+          onChange={(e) => {
             void handleRescan(e.target.files);
             e.target.value = "";
           }}
@@ -185,7 +163,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
       </div>
       <CardContent className="space-y-3 p-4">
         <div className="grid gap-2.5 sm:grid-cols-2">
-          {applicant.documents.map(d => (
+          {applicant.documents.map((d) => (
             <div
               key={d._id}
               className="flex flex-col gap-3 rounded-lg border border-border/70 p-3.5"
@@ -204,26 +182,14 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  aria-label={t("view")}
-                >
-                  <Link
-                    href={`/applicants/${applicant._id}/dokumente/${d._id}`}
-                  >
+                <Button variant="outline" size="sm" asChild aria-label={t("view")}>
+                  <Link href={`/applicants/${applicant._id}/dokumente/${d._id}`}>
                     <Eye className="size-4" />
                     <span className="hidden md:inline">{t("view")}</span>
                   </Link>
                 </Button>
                 {d.url && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    aria-label={t("download")}
-                  >
+                  <Button variant="outline" size="sm" asChild aria-label={t("download")}>
                     <a href={d.url} download={d.fileName}>
                       <Download className="size-4" />
                       <span className="hidden md:inline">{t("download")}</span>
@@ -250,7 +216,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
               type="file"
               accept="application/pdf"
               className="hidden"
-              onChange={e => {
+              onChange={(e) => {
                 void handleUpload(e.target.files);
                 e.target.value = "";
               }}
@@ -262,7 +228,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
       {rescanFile && rescanInitialValues && (
         <CvFallbackModal
           open
-          onOpenChange={open => {
+          onOpenChange={(open) => {
             if (!open) {
               setRescanFile(null);
               setRescanInitialValues(null);

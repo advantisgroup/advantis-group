@@ -267,13 +267,13 @@ export function canAccessGuidebook(user: AccessUser, gb: Guidebook): boolean {
   // No team restriction → available to everyone signed in.
   if (gb.teams.length === 0) return true;
   const mine = user.teams ?? [];
-  return gb.teams.some(t => mine.includes(t));
+  return gb.teams.some((t) => mine.includes(t));
 }
 
 export function accessibleGuidebooks(user: AccessUser): Guidebook[] {
-  return GUIDEBOOKS.filter(gb => canAccessGuidebook(user, gb));
+  return GUIDEBOOKS.filter((gb) => canAccessGuidebook(user, gb));
 }
 
 export function getGuidebook(slug: string): Guidebook | undefined {
-  return GUIDEBOOKS.find(gb => gb.slug === slug);
+  return GUIDEBOOKS.find((gb) => gb.slug === slug);
 }

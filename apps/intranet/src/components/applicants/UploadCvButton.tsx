@@ -10,10 +10,7 @@ import { PenLine, UploadCloud } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  blankCvFallbackForm,
-  CvFallbackModal,
-} from "@/components/applicants/CvFallbackModal";
+import { blankCvFallbackForm, CvFallbackModal } from "@/components/applicants/CvFallbackModal";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { useApplicantsApi } from "@/lib/applicants-api";
@@ -31,9 +28,7 @@ export function UploadCvButton() {
   const [fallbackFile, setFallbackFile] = useState<File | null>(null);
 
   async function handleFiles(files: FileList | null) {
-    const pdfs = Array.from(files ?? []).filter(
-      f => f.type === "application/pdf"
-    );
+    const pdfs = Array.from(files ?? []).filter((f) => f.type === "application/pdf");
     if (!pdfs.length) {
       toast.error(t("uploadPdfOnly"));
       return;
@@ -65,9 +60,7 @@ export function UploadCvButton() {
             storageId: result.pendingStorageId,
             fileName: file.name,
           });
-          toast.success(
-            t("duplicateAttached", { name: result.duplicate.name })
-          );
+          toast.success(t("duplicateAttached", { name: result.duplicate.name }));
           router.push(`/applicants/${result.duplicate.applicantId}/uebersicht`);
         } else {
           const forced = await applicantsApi.extract(file, true);
@@ -103,15 +96,9 @@ export function UploadCvButton() {
           aria-label={uploading ? t("uploading") : t("uploadCv")}
         >
           <UploadCloud className="size-4" />
-          <span className="hidden md:inline">
-            {uploading ? t("uploading") : t("uploadCv")}
-          </span>
+          <span className="hidden md:inline">{uploading ? t("uploading") : t("uploadCv")}</span>
         </Button>
-        <Button
-          variant="outline"
-          onClick={openManualEntry}
-          aria-label={t("fillManually")}
-        >
+        <Button variant="outline" onClick={openManualEntry} aria-label={t("fillManually")}>
           <PenLine className="size-4" />
           <span className="hidden md:inline">{t("fillManually")}</span>
         </Button>
@@ -122,7 +109,7 @@ export function UploadCvButton() {
         accept="application/pdf"
         multiple
         className="hidden"
-        onChange={e => {
+        onChange={(e) => {
           void handleFiles(e.target.files);
           e.target.value = "";
         }}
@@ -132,7 +119,7 @@ export function UploadCvButton() {
         type="file"
         accept="application/pdf"
         className="hidden"
-        onChange={e => {
+        onChange={(e) => {
           const file = e.target.files?.[0];
           e.target.value = "";
           if (file) setFallbackFile(file);
@@ -141,13 +128,13 @@ export function UploadCvButton() {
       {fallbackFile && (
         <CvFallbackModal
           open
-          onOpenChange={open => {
+          onOpenChange={(open) => {
             if (!open) setFallbackFile(null);
           }}
           mode="create"
           file={fallbackFile}
           initialValues={blankCvFallbackForm()}
-          onSaved={applicantId => {
+          onSaved={(applicantId) => {
             setFallbackFile(null);
             router.push(`/applicants/${applicantId}/uebersicht`);
           }}

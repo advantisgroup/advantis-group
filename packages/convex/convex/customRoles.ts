@@ -15,7 +15,7 @@ import { requireManager } from "./lib/auth";
 
 export const list = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireManager(ctx);
     return ctx.db.query("customRoles").collect();
   },

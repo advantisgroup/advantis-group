@@ -28,8 +28,7 @@ import { appError } from "./lib/errors";
  * scheduled orchestrator in `integrations.ts` calls `pollClockodo`.
  */
 
-const CLOCKODO_BASE = () =>
-  process.env.CLOCKODO_BASE_URL ?? "https://my.clockodo.com";
+const CLOCKODO_BASE = () => process.env.CLOCKODO_BASE_URL ?? "https://my.clockodo.com";
 
 function clockodoHeaders(): Record<string, string> {
   const apiUser = process.env.CLOCKODO_API_USER;
@@ -64,26 +63,20 @@ interface Absence {
 
 async function fetchAbsences(year: number): Promise<Absence[]> {
   const qs = `year=${year}&filter[scope]=viewableAbsences`;
-  const body = await clockodoGet<{ data?: Absence[] }>(
-    `/api/v4/absences?${qs}`
-  );
+  const body = await clockodoGet<{ data?: Absence[] }>(`/api/v4/absences?${qs}`);
   return body.data ?? [];
 }
 
-function isAbsentOn(
-  absences: Absence[],
-  clockodoUserId: string,
-  day: string
-): boolean {
+function isAbsentOn(absences: Absence[], clockodoUserId: string, day: string): boolean {
   const uid = Number(clockodoUserId);
   return absences.some(
-    a =>
+    (a) =>
       a.users_id === uid &&
       a.status === 1 &&
       !!a.date_since &&
       !!a.date_until &&
       a.date_since <= day &&
-      day <= a.date_until
+      day <= a.date_until,
   );
 }
 
@@ -104,30 +97,22 @@ interface ClockodoEntry {
 async function fetchEntriesForDay(
   clockodoUserId: string,
   sinceMs: number,
-  untilMs: number
+  untilMs: number,
 ): Promise<ClockodoEntry[]> {
   const qs = [
     `time_since=${encodeURIComponent(clockodoDate(new Date(sinceMs)))}`,
     `time_until=${encodeURIComponent(clockodoDate(new Date(untilMs)))}`,
     `filter[users_id]=${encodeURIComponent(clockodoUserId)}`,
   ].join("&");
-  const body = await clockodoGet<{ entries?: ClockodoEntry[] }>(
-    `/api/v2/entries?${qs}`
-  );
+  const body = await clockodoGet<{ entries?: ClockodoEntry[] }>(`/api/v2/entries?${qs}`);
   return body.entries ?? [];
 }
 
-async function fetchTodayEntries(
-  clockodoUserId: string
-): Promise<ClockodoEntry[]> {
+async function fetchTodayEntries(clockodoUserId: string): Promise<ClockodoEntry[]> {
   // "Today" starts at *business-timezone* midnight, expressed as the UTC
   // instant the API expects — not at `<date>T00:00:00Z`, which is 1-2h into
   // the local day and would miss entries around local midnight.
-  return fetchEntriesForDay(
-    clockodoUserId,
-    startOfBusinessDayUtcMs(),
-    Date.now()
-  );
+  return fetchEntriesForDay(clockodoUserId, startOfBusinessDayUtcMs(), Date.now());
 }
 
 /**
@@ -170,7 +155,7 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
   // flag is NOT that — it marks entries recorded via the stopwatch and stays
   // true after clock-out, so using it here kept people "working" all day once
   // they had clocked in a single time.
-  const running = entries.some(e => e.time_until == null);
+  const running = entries.some((e) => e.time_until == null);
   if (entries.length === 0) {
     // No entries *today* means the day hasn't started — the person is still
     // clocked out from before. This must be asserted, not left blank: an
@@ -241,7 +226,7 @@ async function fetchClockodoWork(clockodoUserId: string): Promise<{
 }
 
 async function fetchClockodoEntry(
-  id: string
+  id: string,
 ): Promise<{ usersId: string | null; running: boolean | null }> {
   const res = await fetch(`${CLOCKODO_BASE()}/api/v2/entries/${id}`, {
     headers: clockodoHeaders(),
@@ -267,9 +252,9 @@ async function fetchClockodoEntry(
 export async function pollClockodo(
   ctx: ActionCtx,
   secret: string,
-  mappings: Mapping[]
+  mappings: Mapping[],
 ): Promise<void> {
-  const clockodoPeople = mappings.filter(p => p.clockodoUserId);
+  const clockodoPeople = mappings.filter((p) => p.clockodoUserId);
   if (clockodoPeople.length === 0) return;
   const tally = { working: 0, onBreak: 0, clockedOut: 0, absent: 0 };
   try {
@@ -295,12 +280,12 @@ export async function pollClockodo(
       });
     }
     console.log(
-      `[clockodo:poll] ${clockodoPeople.length} people — working=${tally.working} onBreak=${tally.onBreak} clockedOut=${tally.clockedOut} absent=${tally.absent}`
+      `[clockodo:poll] ${clockodoPeople.length} people — working=${tally.working} onBreak=${tally.onBreak} clockedOut=${tally.clockedOut} absent=${tally.absent}`,
     );
     await reportHealth(ctx, "clockodo", "ok");
   } catch (err) {
     console.error(
-      `[clockodo:poll] failed after processing ${tally.working + tally.onBreak + tally.clockedOut} people: ${errMessage(err)}`
+      `[clockodo:poll] failed after processing ${tally.working + tally.onBreak + tally.clockedOut} people: ${errMessage(err)}`,
     );
     await reportHealth(ctx, "clockodo", healthStatusOf(err), errMessage(err));
   }
@@ -336,14 +321,12 @@ export const refreshClockodo = gatedAction("activitytrack")({
         clockodoAbsent: absent,
       });
       console.log(
-        `[clockodo:refresh] ${employeeId} — working=${work.working} onBreak=${work.onBreak} clockedOut=${work.clockedOut}${work.clockedOutCertain ? " (certain)" : ""} absent=${absent}`
+        `[clockodo:refresh] ${employeeId} — working=${work.working} onBreak=${work.onBreak} clockedOut=${work.clockedOut}${work.clockedOutCertain ? " (certain)" : ""} absent=${absent}`,
       );
       await reportHealth(ctx, "clockodo", "ok");
       return { ok: true as const };
     } catch (err) {
-      console.error(
-        `[clockodo:refresh] ${employeeId} failed: ${errMessage(err)}`
-      );
+      console.error(`[clockodo:refresh] ${employeeId} failed: ${errMessage(err)}`);
       await reportHealth(ctx, "clockodo", healthStatusOf(err), errMessage(err));
       return { ok: false, error: "clockodo_unavailable" as const };
     }
@@ -377,31 +360,26 @@ export const refreshClockodoByEntry = gatedAction("activitytrack")({
     if (secret !== process.env.ACTIVITYTRACK_SIGNAL_SECRET) {
       return { ok: false, error: "forbidden" as const };
     }
-    console.log(
-      `[clockodo:webhook] received event="${eventName ?? "unknown"}" entry=${entryId}`
-    );
+    console.log(`[clockodo:webhook] received event="${eventName ?? "unknown"}" entry=${entryId}`);
     try {
       const entry = await fetchClockodoEntry(entryId);
       const clockodoUserId = entry.usersId ?? usersId ?? null;
 
       if (!clockodoUserId) {
         console.log(
-          `[clockodo:webhook] entry=${entryId} has no resolvable user (404 and no usersId in payload) — ignored`
+          `[clockodo:webhook] entry=${entryId} has no resolvable user (404 and no usersId in payload) — ignored`,
         );
         await reportHealth(ctx, "clockodo", "ok");
         return { ok: true as const, ignored: true as const };
       }
 
-      const employeeId = await ctx.runQuery(
-        api.activity.state.resolveEmployeeId,
-        {
-          secret,
-          clockodoUserId,
-        }
-      );
+      const employeeId = await ctx.runQuery(api.activity.state.resolveEmployeeId, {
+        secret,
+        clockodoUserId,
+      });
       if (!employeeId) {
         console.log(
-          `[clockodo:webhook] clockodoUserId=${clockodoUserId} is not mapped to any person — ignored`
+          `[clockodo:webhook] clockodoUserId=${clockodoUserId} is not mapped to any person — ignored`,
         );
         await reportHealth(ctx, "clockodo", "ok");
         return { ok: true as const, unmapped: true as const };
@@ -447,7 +425,7 @@ export const refreshClockodoByEntry = gatedAction("activitytrack")({
       return { ok: true as const };
     } catch (err) {
       console.error(
-        `[clockodo:webhook] entry=${entryId} event="${eventName ?? "unknown"}" failed: ${errMessage(err)}`
+        `[clockodo:webhook] entry=${entryId} event="${eventName ?? "unknown"}" failed: ${errMessage(err)}`,
       );
       await reportHealth(ctx, "clockodo", healthStatusOf(err), errMessage(err));
       return { ok: false, error: "clockodo_unavailable" as const };
@@ -479,13 +457,12 @@ export const troubleshootSanitizeDay = action({
     const dayStartMs = startOfBusinessDayUtcMs(targetDay);
     const dayEndMs = dayStartMs + 24 * 60 * 60 * 1000;
     const capMs = Math.min(dayEndMs, Date.now());
-    const isPastDayEnd =
-      capMs >= dayEndMs || businessHourOf(capMs) >= BUSINESS_DAY_END_HOUR;
+    const isPastDayEnd = capMs >= dayEndMs || businessHourOf(capMs) >= BUSINESS_DAY_END_HOUR;
 
     const mappings = await ctx.runQuery(api.activity.state.mappings, {
       secret,
     });
-    const clockodoPeople = mappings.filter(p => p.clockodoUserId);
+    const clockodoPeople = mappings.filter((p) => p.clockodoUserId);
     if (clockodoPeople.length === 0) {
       return { peopleProcessed: 0, inserted: 0, deleted: 0, quarantined: 0 };
     }
@@ -498,19 +475,13 @@ export const troubleshootSanitizeDay = action({
     let quarantined = 0;
 
     for (const p of clockodoPeople) {
-      const raw = await fetchEntriesForDay(
-        p.clockodoUserId!,
-        dayStartMs,
-        capMs
-      );
+      const raw = await fetchEntriesForDay(p.clockodoUserId!, dayStartMs, capMs);
       const entries = raw
-        .map(e => ({
+        .map((e) => ({
           start: e.time_since ? Date.parse(e.time_since) : NaN,
           end: e.time_until ? Date.parse(e.time_until) : null,
         }))
-        .filter((e): e is { start: number; end: number | null } =>
-          Number.isFinite(e.start)
-        )
+        .filter((e): e is { start: number; end: number | null } => Number.isFinite(e.start))
         .sort((a, b) => a.start - b.start);
 
       const segments = deriveClockodoDaySegments({
@@ -524,7 +495,7 @@ export const troubleshootSanitizeDay = action({
 
       const res = await ctx.runMutation(
         internal.activity.maintenance.reconcileClockodoDayForEmployee,
-        { employeeId: p.employeeId, dayStartMs, capMs, segments }
+        { employeeId: p.employeeId, dayStartMs, capMs, segments },
       );
       inserted += res.inserted;
       deleted += res.deleted;
@@ -533,7 +504,7 @@ export const troubleshootSanitizeDay = action({
     }
 
     console.log(
-      `[clockodo:sanitize] day=${targetDay} people=${peopleProcessed} inserted=${inserted} deleted=${deleted} quarantined=${quarantined}`
+      `[clockodo:sanitize] day=${targetDay} people=${peopleProcessed} inserted=${inserted} deleted=${deleted} quarantined=${quarantined}`,
     );
     return { peopleProcessed, inserted, deleted, quarantined };
   },

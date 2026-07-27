@@ -39,53 +39,48 @@ export function useAttachmentUpload() {
   const [entries, setEntries] = useState<AttachmentEntry[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  const totalSize = useMemo(
-    () => entries.reduce((sum, e) => sum + e.file.size, 0),
-    [entries]
-  );
+  const totalSize = useMemo(() => entries.reduce((sum, e) => sum + e.file.size, 0), [entries]);
 
   /** Returns false (and adds nothing) if the combined size would exceed the cap. */
   const add = useCallback(
     (files: File[]): boolean => {
       const next = [...entries];
       for (const f of files) {
-        if (!next.some(e => e.file.name === f.name && e.file.size === f.size)) {
+        if (!next.some((e) => e.file.name === f.name && e.file.size === f.size)) {
           next.push({ file: f, progress: 0 });
         }
       }
-      if (
-        next.reduce((sum, e) => sum + e.file.size, 0) > MAX_ATTACHMENT_BYTES
-      ) {
+      if (next.reduce((sum, e) => sum + e.file.size, 0) > MAX_ATTACHMENT_BYTES) {
         return false;
       }
       setEntries(next);
       return true;
     },
-    [entries]
+    [entries],
   );
 
   const addOneDriveFile = useCallback(
     (file: File, item: OneDriveItem): boolean => {
       const added = add([file]);
       if (added) {
-        setEntries(prev =>
-          prev.map(e =>
+        setEntries((prev) =>
+          prev.map((e) =>
             e.file === file
               ? {
                   ...e,
                   oneDriveSource: { driveItemId: item.id, path: item.path },
                 }
-              : e
-          )
+              : e,
+          ),
         );
       }
       return added;
     },
-    [add]
+    [add],
   );
 
   const remove = useCallback((index: number) => {
-    setEntries(prev => prev.filter((_, i) => i !== index));
+    setEntries((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
   const reset = useCallback(() => setEntries([]), []);
@@ -93,9 +88,8 @@ export function useAttachmentUpload() {
   /** Best-effort delete of already-uploaded attachments, e.g. after the
    *  follow-up `sendMessage`/`create` call rejects. */
   const rollback = useCallback(
-    (attachments: UploadedAttachment[]) =>
-      deleteUploadedAttachments(deleteFile, attachments),
-    [deleteFile]
+    (attachments: UploadedAttachment[]) => deleteUploadedAttachments(deleteFile, attachments),
+    [deleteFile],
   );
 
   /**
@@ -108,16 +102,14 @@ export function useAttachmentUpload() {
     setUploading(true);
     try {
       const results = await Promise.allSettled(
-        entries.map(entry =>
+        entries.map((entry) =>
           uploadToConvex(
             () => generateUploadUrl({}),
             entry.file,
-            fraction =>
-              setEntries(prev =>
-                prev.map(e =>
-                  e.file === entry.file ? { ...e, progress: fraction } : e
-                )
-              )
+            (fraction) =>
+              setEntries((prev) =>
+                prev.map((e) => (e.file === entry.file ? { ...e, progress: fraction } : e)),
+              ),
           ).then(
             (storageId): UploadedAttachment => ({
               storageId,
@@ -127,19 +119,16 @@ export function useAttachmentUpload() {
               contentType: entry.file.type || undefined,
               oneDriveItemId: entry.oneDriveSource?.driveItemId,
               oneDrivePath: entry.oneDriveSource?.path,
-            })
-          )
-        )
+            }),
+          ),
+        ),
       );
 
       const succeeded = results
-        .filter(
-          (r): r is PromiseFulfilledResult<UploadedAttachment> =>
-            r.status === "fulfilled"
-        )
-        .map(r => r.value);
+        .filter((r): r is PromiseFulfilledResult<UploadedAttachment> => r.status === "fulfilled")
+        .map((r) => r.value);
 
-      if (results.some(r => r.status === "rejected")) {
+      if (results.some((r) => r.status === "rejected")) {
         await rollback(succeeded);
         throw new Error("One or more attachments failed to upload");
       }

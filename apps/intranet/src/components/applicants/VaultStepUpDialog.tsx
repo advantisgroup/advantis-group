@@ -7,12 +7,7 @@ import { useAction } from "convex/react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
 /**
@@ -62,7 +57,7 @@ export function VaultStepUpDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         onOpenChange(o);
         if (!o) reset();
       }}
@@ -70,18 +65,16 @@ export function VaultStepUpDialog({
       <DialogContent className="max-w-sm gap-0 p-0">
         <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
           <DialogTitle>{t("vaultStepUpTitle")}</DialogTitle>
-          <DialogDescription className="mt-1">
-            {t("vaultStepUpDescription")}
-          </DialogDescription>
+          <DialogDescription className="mt-1">{t("vaultStepUpDescription")}</DialogDescription>
         </div>
         <div className="space-y-2 px-6 py-5">
           <Input
             type="password"
             autoFocus
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder={t("vaultPasswordPlaceholder")}
-            onKeyDown={e => {
+            onKeyDown={(e) => {
               if (e.key === "Enter") void submit();
             }}
           />
@@ -91,10 +84,7 @@ export function VaultStepUpDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
-          <Button
-            disabled={submitting || !password.trim()}
-            onClick={() => void submit()}
-          >
+          <Button disabled={submitting || !password.trim()} onClick={() => void submit()}>
             {t("vaultUnlock")}
           </Button>
         </div>

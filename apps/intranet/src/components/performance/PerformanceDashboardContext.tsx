@@ -28,19 +28,13 @@ export function PerformanceDashboardDataProvider({
   data: TeamDashboardData | undefined;
   children: ReactNode;
 }) {
-  return (
-    <DashboardDataContext.Provider value={{ data }}>
-      {children}
-    </DashboardDataContext.Provider>
-  );
+  return <DashboardDataContext.Provider value={{ data }}>{children}</DashboardDataContext.Provider>;
 }
 
 export function useDashboardData(): TeamDashboardData | undefined {
   const ctx = useContext(DashboardDataContext);
   if (!ctx) {
-    throw new Error(
-      "useDashboardData must be used within PerformanceDashboardDataProvider"
-    );
+    throw new Error("useDashboardData must be used within PerformanceDashboardDataProvider");
   }
   return ctx.data;
 }

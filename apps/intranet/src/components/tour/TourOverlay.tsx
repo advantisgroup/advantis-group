@@ -57,18 +57,12 @@ export function TourOverlay({ targetRect, visible }: Props) {
       onMouseDown={block}
       onClick={block}
     >
-      <svg
-        className="absolute inset-0 w-full h-full"
-        style={{ width: "100vw", height: "100vh" }}
-      >
+      <svg className="absolute inset-0 w-full h-full" style={{ width: "100vw", height: "100vh" }}>
         <defs>
           <mask id="tour-mask">
             {/* White = dim painted. Black = spotlight cutout (target stays clear). */}
             <rect x="0" y="0" width="100%" height="100%" fill="white" />
-            <motion.rect
-              style={{ x, y, width: w, height: h, rx }}
-              fill="black"
-            />
+            <motion.rect style={{ x, y, width: w, height: h, rx }} fill="black" />
           </mask>
         </defs>
         {/* The dim layer; the mask punches a transparent hole over the target. */}

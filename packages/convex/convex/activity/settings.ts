@@ -1,13 +1,7 @@
 import { v } from "convex/values";
 
 import { api, internal } from "../_generated/api";
-import {
-  query,
-  mutation,
-  internalMutation,
-  internalQuery,
-  action,
-} from "../_generated/server";
+import { query, mutation, internalMutation, internalQuery, action } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
 import { writeAudit } from "./audit";
@@ -49,17 +43,12 @@ const CONFIG_BOUNDS: Record<keyof AppConfig, { min: number; max: number }> = {
 };
 
 /** Read the merged operational config (defaults + any stored overrides). */
-export async function readConfig(
-  ctx: QueryCtx | MutationCtx
-): Promise<AppConfig> {
+export async function readConfig(ctx: QueryCtx | MutationCtx): Promise<AppConfig> {
   const out: AppConfig = { ...CONFIG_DEFAULTS };
-  for (const [field, key] of Object.entries(CONFIG_KEYS) as [
-    keyof AppConfig,
-    string,
-  ][]) {
+  for (const [field, key] of Object.entries(CONFIG_KEYS) as [keyof AppConfig, string][]) {
     const row = await ctx.db
       .query("activitySettings")
-      .withIndex("by_key", q => q.eq("key", key))
+      .withIndex("by_key", (q) => q.eq("key", key))
       .unique();
     if (row) {
       const n = Number(row.value);
@@ -72,7 +61,7 @@ export async function readConfig(
 /** Reactive read of the operational config for the Settings form. */
 export const getConfig = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     return await readConfig(ctx);
   },
@@ -93,15 +82,12 @@ export const setConfig = mutation({
       if (value === undefined) continue;
       const { min, max } = CONFIG_BOUNDS[field];
       if (!Number.isFinite(value) || value < min || value > max) {
-        throw appError(
-          "validation.out_of_range",
-          `${field} must be between ${min} and ${max}`
-        );
+        throw appError("validation.out_of_range", `${field} must be between ${min} and ${max}`);
       }
       const key = CONFIG_KEYS[field];
       const existing = await ctx.db
         .query("activitySettings")
-        .withIndex("by_key", q => q.eq("key", key))
+        .withIndex("by_key", (q) => q.eq("key", key))
         .unique();
       if (existing) {
         await ctx.db.patch(existing._id, {
@@ -126,7 +112,7 @@ export const getByKey = internalQuery({
   handler: async (ctx, { key }) => {
     return await ctx.db
       .query("activitySettings")
-      .withIndex("by_key", q => q.eq("key", key))
+      .withIndex("by_key", (q) => q.eq("key", key))
       .unique();
   },
 });
@@ -134,11 +120,11 @@ export const getByKey = internalQuery({
 /** Whether the tray-app debug password has been configured. Admin. */
 export const debugPasswordIsSet = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireAdmin(ctx);
     const row = await ctx.db
       .query("activitySettings")
-      .withIndex("by_key", q => q.eq("key", DEBUG_PASSWORD_KEY))
+      .withIndex("by_key", (q) => q.eq("key", DEBUG_PASSWORD_KEY))
       .unique();
     return !!row;
   },
@@ -155,7 +141,7 @@ export const store = internalMutation({
   handler: async (ctx, { actorUserId, key, value, auditLabel }) => {
     const existing = await ctx.db
       .query("activitySettings")
-      .withIndex("by_key", q => q.eq("key", key))
+      .withIndex("by_key", (q) => q.eq("key", key))
       .unique();
     if (existing) {
       await ctx.db.patch(existing._id, { value, updatedAt: Date.now() });
@@ -182,10 +168,7 @@ export const setDebugPassword = action({
       throw appError("auth.forbidden", "Forbidden: requires admin role");
     }
     if (password.length < 6) {
-      throw appError(
-        "validation.password_short",
-        "Password must be at least 6 characters"
-      );
+      throw appError("validation.password_short", "Password must be at least 6 characters");
     }
     const hash = await hashPassword(password);
     await ctx.runMutation(internal.activity.settings.store, {

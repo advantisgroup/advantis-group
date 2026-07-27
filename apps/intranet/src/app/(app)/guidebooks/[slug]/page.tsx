@@ -15,14 +15,8 @@ import {
   ReadingProgress,
   RelatedGuidebooks,
 } from "@/components/guidebooks/extras";
-import {
-  canAccessGuidebook,
-  getGuidebook,
-} from "@/components/guidebooks/registry";
-import {
-  GuidebookPager,
-  GuidebookSwitcher,
-} from "@/components/guidebooks/switcher";
+import { canAccessGuidebook, getGuidebook } from "@/components/guidebooks/registry";
+import { GuidebookPager, GuidebookSwitcher } from "@/components/guidebooks/switcher";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -79,9 +73,7 @@ export default function GuidebookPage() {
             <span className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
               <BookOpen className="size-6" />
             </span>
-            <p className="text-sm font-medium">
-              {guidebook ? t("noAccess") : t("notFound")}
-            </p>
+            <p className="text-sm font-medium">{guidebook ? t("noAccess") : t("notFound")}</p>
             <p className="text-xs text-muted-foreground">
               {guidebook ? t("noAccessHint") : t("notFoundHint")}
             </p>

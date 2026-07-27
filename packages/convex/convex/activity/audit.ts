@@ -30,7 +30,7 @@ export async function writeAudit(
   ctx: MutationCtx,
   actorUserId: Id<"users">,
   action: ActivityAuditAction,
-  target?: string
+  target?: string,
 ): Promise<void> {
   const at = Date.now();
   await ctx.db.insert("activityAuditLog", {
@@ -60,14 +60,14 @@ export const list = query({
       .take(Math.min(limit ?? 100, 500));
 
     // Hydrate actor names for display — batch-load distinct actors once.
-    const actorIds = [...new Set(rows.map(r => r.actorUserId))];
+    const actorIds = [...new Set(rows.map((r) => r.actorUserId))];
     const actorsById = new Map(
-      (await Promise.all(actorIds.map(id => ctx.db.get(id)))).flatMap(u =>
-        u ? [[u._id, u] as const] : []
-      )
+      (await Promise.all(actorIds.map((id) => ctx.db.get(id)))).flatMap((u) =>
+        u ? [[u._id, u] as const] : [],
+      ),
     );
 
-    return rows.map(row => {
+    return rows.map((row) => {
       const actor = actorsById.get(row.actorUserId);
       return {
         ...row,

@@ -2,13 +2,7 @@
 
 import { useState } from "react";
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  ZoomIn,
-  ZoomOut,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, ZoomIn, ZoomOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Document, Page, pdfjs } from "react-pdf";
 
@@ -19,7 +13,7 @@ import { Button } from "@/components/ui/button";
 // rather than importing `pdfjs-dist` directly.
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
+  import.meta.url,
 ).toString();
 
 const MIN_SCALE = 0.6;
@@ -37,11 +31,7 @@ export function PdfPreview({ url }: { url: string }) {
   const [scale, setScale] = useState(1);
 
   if (loadError) {
-    return (
-      <p className="max-w-sm py-8 text-center text-sm text-white/70">
-        {t("pdfLoadFailed")}
-      </p>
-    );
+    return <p className="max-w-sm py-8 text-center text-sm text-white/70">{t("pdfLoadFailed")}</p>;
   }
 
   return (
@@ -50,7 +40,7 @@ export function PdfPreview({ url }: { url: string }) {
         <Document
           file={url}
           loading={<Loader2 className="size-6 animate-spin text-white/70" />}
-          onLoadSuccess={pdf => {
+          onLoadSuccess={(pdf) => {
             setNumPages(pdf.numPages);
             setCurrentPage(1);
           }}
@@ -73,7 +63,7 @@ export function PdfPreview({ url }: { url: string }) {
           size="icon-sm"
           aria-label={t("prevPage")}
           disabled={currentPage <= 1}
-          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           className="text-white hover:bg-white/10 hover:text-white"
         >
           <ChevronLeft className="size-4" />
@@ -86,7 +76,7 @@ export function PdfPreview({ url }: { url: string }) {
           size="icon-sm"
           aria-label={t("nextPage")}
           disabled={currentPage >= numPages}
-          onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
+          onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
           className="text-white hover:bg-white/10 hover:text-white"
         >
           <ChevronRight className="size-4" />
@@ -97,9 +87,7 @@ export function PdfPreview({ url }: { url: string }) {
           size="icon-sm"
           aria-label={t("zoomOut")}
           disabled={scale <= MIN_SCALE}
-          onClick={() =>
-            setScale(s => Math.max(MIN_SCALE, +(s - SCALE_STEP).toFixed(2)))
-          }
+          onClick={() => setScale((s) => Math.max(MIN_SCALE, +(s - SCALE_STEP).toFixed(2)))}
           className="text-white hover:bg-white/10 hover:text-white"
         >
           <ZoomOut className="size-4" />
@@ -109,9 +97,7 @@ export function PdfPreview({ url }: { url: string }) {
           size="icon-sm"
           aria-label={t("zoomIn")}
           disabled={scale >= MAX_SCALE}
-          onClick={() =>
-            setScale(s => Math.min(MAX_SCALE, +(s + SCALE_STEP).toFixed(2)))
-          }
+          onClick={() => setScale((s) => Math.min(MAX_SCALE, +(s + SCALE_STEP).toFixed(2)))}
           className="text-white hover:bg-white/10 hover:text-white"
         >
           <ZoomIn className="size-4" />

@@ -23,7 +23,7 @@ export function useAcademyProgress(participantId: Id<"academyParticipants">) {
   const mutate = useCallback(
     async (fn: (current: AcademyProgressData) => AcademyProgressData) => {
       let next = fn(progress);
-      const allDone = CHAPTERS.every(chapter => isChapterDone(next, chapter));
+      const allDone = CHAPTERS.every((chapter) => isChapterDone(next, chapter));
       if (allDone && !next.finished) {
         next = { ...next, finished: today() };
       }
@@ -33,7 +33,7 @@ export function useAcademyProgress(participantId: Id<"academyParticipants">) {
         data: JSON.stringify(next),
       });
     },
-    [progress, save, participantId]
+    [progress, save, participantId],
   );
 
   return { progress, loading, mutate };

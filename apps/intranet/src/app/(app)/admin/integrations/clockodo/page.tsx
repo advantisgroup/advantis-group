@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -134,7 +128,7 @@ function EditableNumber({
       type="number"
       value={value}
       placeholder={placeholder}
-      onChange={e => setValue(e.target.value)}
+      onChange={(e) => setValue(e.target.value)}
       onBlur={() => {
         const parsed = Number(value);
         if (value.trim() !== "" && Number.isFinite(parsed)) {
@@ -143,7 +137,7 @@ function EditableNumber({
           setValue(initial === null ? "" : String(initial));
         }
       }}
-      onKeyDown={e => {
+      onKeyDown={(e) => {
         if (e.key === "Enter") (e.target as HTMLInputElement).blur();
       }}
       className={`h-8 text-xs ${className}`}
@@ -173,11 +167,7 @@ function SortableHead({
       >
         {label}
         {active &&
-          (sort.dir === 1 ? (
-            <ArrowUp className="h-3 w-3" />
-          ) : (
-            <ArrowDown className="h-3 w-3" />
-          ))}
+          (sort.dir === 1 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
       </button>
     </TableHead>
   );
@@ -241,9 +231,7 @@ function Field({
 }) {
   return (
     <div className={span2 ? "col-span-2" : undefined}>
-      <label className="mb-1 block text-xs text-muted-foreground">
-        {label}
-      </label>
+      <label className="mb-1 block text-xs text-muted-foreground">{label}</label>
       {children}
     </div>
   );
@@ -262,11 +250,8 @@ function HistoryList<T extends { id: number }>({
   }
   return (
     <ul className="space-y-1">
-      {entries.map(entry => (
-        <li
-          key={entry.id}
-          className="rounded-md bg-panel-2 px-2 py-1.5 text-xs"
-        >
+      {entries.map((entry) => (
+        <li key={entry.id} className="rounded-md bg-panel-2 px-2 py-1.5 text-xs">
           {render(entry)}
         </li>
       ))}
@@ -291,26 +276,20 @@ function TargetHoursForm({
 }) {
   const t = useTranslations("Integrations");
   const latest = row.targetHoursHistory.at(-1);
-  const [dateSince, setDateSince] = useState(
-    new Date().toISOString().slice(0, 10)
-  );
+  const [dateSince, setDateSince] = useState(new Date().toISOString().slice(0, 10));
   const [days, setDays] = useState<WeekHours>(latest?.days ?? EMPTY_WEEK);
   const total = WEEKDAYS.reduce((sum, day) => sum + (days[day] || 0), 0);
 
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
-        {WEEKDAYS.map(day => (
+        {WEEKDAYS.map((day) => (
           <div key={day}>
-            <label className="block text-center text-[10px] text-muted-foreground">
-              {t(day)}
-            </label>
+            <label className="block text-center text-[10px] text-muted-foreground">{t(day)}</label>
             <Input
               type="number"
               value={days[day]}
-              onChange={e =>
-                setDays(d => ({ ...d, [day]: Number(e.target.value) || 0 }))
-              }
+              onChange={(e) => setDays((d) => ({ ...d, [day]: Number(e.target.value) || 0 }))}
               className="h-8 px-1 text-center text-xs"
             />
           </div>
@@ -320,18 +299,14 @@ function TargetHoursForm({
         <Input
           type="date"
           value={dateSince}
-          onChange={e => setDateSince(e.target.value)}
+          onChange={(e) => setDateSince(e.target.value)}
           className="h-8 flex-1 text-xs"
         />
         <span className="shrink-0 text-xs text-muted-foreground">
           {t("weeklyTotal")}: <strong className="text-fg">{total}h</strong>
         </span>
       </div>
-      <Button
-        size="sm"
-        className="w-full"
-        onClick={() => onSave({ dateSince, ...days })}
-      >
+      <Button size="sm" className="w-full" onClick={() => onSave({ dateSince, ...days })}>
         {t("saveNewPeriod")}
       </Button>
     </div>
@@ -359,23 +334,16 @@ function ClockodoUserDetailBody({
 }) {
   const t = useTranslations("Integrations");
   const targetHoursDesc = [...row.targetHoursHistory].reverse();
-  const vacationDesc = [...row.holidaysQuotaHistory].sort(
-    (a, b) => b.yearSince - a.yearSince
-  );
+  const vacationDesc = [...row.holidaysQuotaHistory].sort((a, b) => b.yearSince - a.yearSince);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-start justify-between gap-3 border-b border-border/70 p-5">
         <div className="min-w-0">
-          <p className="truncate text-lg font-semibold leading-tight">
-            {row.name}
-          </p>
+          <p className="truncate text-lg font-semibold leading-tight">{row.name}</p>
           <p className="truncate text-sm text-muted-foreground">{row.email}</p>
         </div>
-        <Badge
-          variant={row.active === false ? "muted" : "success"}
-          className="shrink-0"
-        >
+        <Badge variant={row.active === false ? "muted" : "success"} className="shrink-0">
           {row.active === false ? t("inactive") : t("active")}
         </Badge>
       </div>
@@ -385,14 +353,14 @@ function ClockodoUserDetailBody({
           <div className="flex items-center gap-2">
             <Select
               value={row.linkedUserId ?? "none"}
-              onValueChange={v => (v === "none" ? onUnlink() : onLink(v))}
+              onValueChange={(v) => (v === "none" ? onUnlink() : onLink(v))}
             >
               <SelectTrigger className="h-9 flex-1 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">{t("notLinked")}</SelectItem>
-                {users.map(u => (
+                {users.map((u) => (
                   <SelectItem key={u._id} value={u._id}>
                     {u.name}
                   </SelectItem>
@@ -419,10 +387,7 @@ function ClockodoUserDetailBody({
         <Section label={t("employment")}>
           <div className="grid grid-cols-2 gap-2">
             <Field label={t("role")} span2>
-              <Select
-                value={row.role ?? "worker"}
-                onValueChange={v => onUpdateUser({ role: v })}
-              >
+              <Select value={row.role ?? "worker"} onValueChange={(v) => onUpdateUser({ role: v })}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
@@ -436,7 +401,7 @@ function ClockodoUserDetailBody({
               <Input
                 type="date"
                 value={row.startDate ?? ""}
-                onChange={e => onUpdateUser({ startDate: e.target.value })}
+                onChange={(e) => onUpdateUser({ startDate: e.target.value })}
                 className="h-9 text-sm"
               />
             </Field>
@@ -444,18 +409,14 @@ function ClockodoUserDetailBody({
               <Input
                 type="date"
                 value={row.exitDate ?? ""}
-                onChange={e =>
-                  onUpdateUser({ exitDate: e.target.value || null })
-                }
+                onChange={(e) => onUpdateUser({ exitDate: e.target.value || null })}
                 className="h-9 text-sm"
               />
             </Field>
             <Field label={t("reportsTo")} span2>
               <Select
                 value={row.boss !== null ? String(row.boss) : "none"}
-                onValueChange={v =>
-                  onUpdateUser({ boss: v === "none" ? null : Number(v) })
-                }
+                onValueChange={(v) => onUpdateUser({ boss: v === "none" ? null : Number(v) })}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
@@ -463,8 +424,8 @@ function ClockodoUserDetailBody({
                 <SelectContent>
                   <SelectItem value="none">{t("noManager")}</SelectItem>
                   {managers
-                    .filter(m => m.id !== row.id)
-                    .map(m => (
+                    .filter((m) => m.id !== row.id)
+                    .map((m) => (
                       <SelectItem key={m.id} value={String(m.id)}>
                         {m.name}
                       </SelectItem>
@@ -475,7 +436,7 @@ function ClockodoUserDetailBody({
             <Field label={t("language")} span2>
               <Select
                 value={row.language ?? "de"}
-                onValueChange={v => onUpdateUser({ language: v })}
+                onValueChange={(v) => onUpdateUser({ language: v })}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
@@ -491,24 +452,20 @@ function ClockodoUserDetailBody({
 
         <Section label={t("permissions")}>
           <div className="space-y-2">
-            {PERMISSION_ITEMS.map(item => (
+            {PERMISSION_ITEMS.map((item) => (
               <label
                 key={item.field}
                 className="flex cursor-pointer items-start justify-between gap-3 rounded-lg border border-border/70 bg-panel-2 px-3.5 py-3 text-sm transition-colors active:bg-panel-2/70"
               >
                 <span className="min-w-0">
-                  <span className="block font-medium text-fg">
-                    {t(item.labelKey)}
-                  </span>
+                  <span className="block font-medium text-fg">{t(item.labelKey)}</span>
                   <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
                     {t(item.descKey)}
                   </span>
                 </span>
                 <Checkbox
                   checked={row[item.field] ?? false}
-                  onCheckedChange={c =>
-                    onUpdateUser({ [item.field]: c === true })
-                  }
+                  onCheckedChange={(c) => onUpdateUser({ [item.field]: c === true })}
                   className="mt-0.5 h-5 w-5 shrink-0"
                 />
               </label>
@@ -520,19 +477,17 @@ function ClockodoUserDetailBody({
           <TargetHoursForm key={row.id} row={row} onSave={onSetTargetHours} />
           <HistoryList
             entries={targetHoursDesc}
-            render={e => (
+            render={(e) => (
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">
                     {t("since")} {e.dateSince}
-                    {e.dateUntil
-                      ? ` · ${t("until")} ${e.dateUntil}`
-                      : ` · ${t("ongoing")}`}
+                    {e.dateUntil ? ` · ${t("until")} ${e.dateUntil}` : ` · ${t("ongoing")}`}
                   </span>
                   <span className="font-medium text-fg">{e.weeklyTotal}h</span>
                 </div>
                 <span className="text-[10px] text-muted-foreground">
-                  {WEEKDAYS.map(day => `${t(day)} ${e.days[day]}`).join(" · ")}
+                  {WEEKDAYS.map((day) => `${t(day)} ${e.days[day]}`).join(" · ")}
                 </span>
               </div>
             )}
@@ -548,13 +503,11 @@ function ClockodoUserDetailBody({
           />
           <HistoryList
             entries={vacationDesc}
-            render={e => (
+            render={(e) => (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
                   {t("year")} {e.yearSince}
-                  {e.yearUntil && e.yearUntil !== e.yearSince
-                    ? `–${e.yearUntil}`
-                    : ""}
+                  {e.yearUntil && e.yearUntil !== e.yearSince ? `–${e.yearUntil}` : ""}
                 </span>
                 <span className="font-medium text-fg">
                   {e.daysPerYear} {t("days")}
@@ -626,9 +579,7 @@ function ClockodoUserDetail({
             <div className="flex shrink-0 cursor-grab items-center justify-center pb-1 pt-3 active:cursor-grabbing">
               <span className="h-1.5 w-10 rounded-full bg-border" />
             </div>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {body}
-            </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{body}</div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
@@ -649,30 +600,14 @@ export default function ClockodoIntegrationPage() {
   const t = useTranslations("Integrations");
   const handleError = useErrorHandler();
 
-  const listClockodoUsers = useAction(
-    api.integrations.clockodo.users.listClockodoUsers
-  );
-  const getClockodoUserDetail = useAction(
-    api.integrations.clockodo.users.getClockodoUserDetail
-  );
-  const createClockodoUser = useAction(
-    api.integrations.clockodo.users.createClockodoUser
-  );
-  const updateClockodoUser = useAction(
-    api.integrations.clockodo.users.updateClockodoUser
-  );
-  const setTargetHours = useAction(
-    api.integrations.clockodo.users.setTargetHours
-  );
-  const setVacationEntitlement = useAction(
-    api.integrations.clockodo.users.setVacationEntitlement
-  );
-  const linkClockodoUser = useMutation(
-    api.integrations.clockodoLink.linkClockodoUser
-  );
-  const unlinkClockodoUser = useMutation(
-    api.integrations.clockodoLink.unlinkClockodoUser
-  );
+  const listClockodoUsers = useAction(api.integrations.clockodo.users.listClockodoUsers);
+  const getClockodoUserDetail = useAction(api.integrations.clockodo.users.getClockodoUserDetail);
+  const createClockodoUser = useAction(api.integrations.clockodo.users.createClockodoUser);
+  const updateClockodoUser = useAction(api.integrations.clockodo.users.updateClockodoUser);
+  const setTargetHours = useAction(api.integrations.clockodo.users.setTargetHours);
+  const setVacationEntitlement = useAction(api.integrations.clockodo.users.setVacationEntitlement);
+  const linkClockodoUser = useMutation(api.integrations.clockodoLink.linkClockodoUser);
+  const unlinkClockodoUser = useMutation(api.integrations.clockodoLink.unlinkClockodoUser);
 
   const links = useQuery(api.integrations.clockodoView.listWithLinks);
   const intranetUsers = useQuery(api.users.list, {});
@@ -703,15 +638,12 @@ export default function ClockodoIntegrationPage() {
       // rejects) shouldn't blank the whole table — fall back to "not set"
       // for that row instead of aborting the load.
       const details = await Promise.all(
-        users.map(u =>
-          getClockodoUserDetail({ clockodoUserId: u.id }).catch(err => {
-            console.error(
-              `[clockodo] detail fetch failed for user ${u.id}:`,
-              err
-            );
+        users.map((u) =>
+          getClockodoUserDetail({ clockodoUserId: u.id }).catch((err) => {
+            console.error(`[clockodo] detail fetch failed for user ${u.id}:`, err);
             return { user: u, targetHours: [], holidaysQuota: [] };
-          })
-        )
+          }),
+        ),
       );
       setRows(
         users.map((u, i) => {
@@ -728,7 +660,7 @@ export default function ClockodoIntegrationPage() {
             linkedUserName: null,
             deviceId: null,
           };
-        })
+        }),
       );
       setLoadError(false);
     } catch (err) {
@@ -743,8 +675,8 @@ export default function ClockodoIntegrationPage() {
 
   // Merge the reactive intranet-side link data into the (non-reactive) live
   // Clockodo list once both are available.
-  const merged = (rows ?? []).map(row => {
-    const link = links?.find(l => l.clockodoUserId === String(row.id));
+  const merged = (rows ?? []).map((row) => {
+    const link = links?.find((l) => l.clockodoUserId === String(row.id));
     return {
       ...row,
       linkedUserId: link?.userId ?? null,
@@ -755,12 +687,8 @@ export default function ClockodoIntegrationPage() {
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const filtered = merged.filter(row => {
-      if (
-        q &&
-        !row.name.toLowerCase().includes(q) &&
-        !row.email.toLowerCase().includes(q)
-      ) {
+    const filtered = merged.filter((row) => {
+      if (q && !row.name.toLowerCase().includes(q) && !row.email.toLowerCase().includes(q)) {
         return false;
       }
       if (filterUnlinked && row.linkedUserId) return false;
@@ -781,30 +709,19 @@ export default function ClockodoIntegrationPage() {
       }
       return ((av as number) - (bv as number)) * sort.dir;
     });
-  }, [
-    merged,
-    search,
-    filterUnlinked,
-    filterMissingHours,
-    filterMissingVacation,
-    sort,
-  ]);
+  }, [merged, search, filterUnlinked, filterMissingHours, filterMissingVacation, sort]);
 
-  const linkableUsers = (intranetUsers ?? []).map(u => ({
+  const linkableUsers = (intranetUsers ?? []).map((u) => ({
     _id: u._id as string,
     name: [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email,
   }));
 
-  const managers = merged.map(r => ({ id: r.id, name: r.name }));
+  const managers = merged.map((r) => ({ id: r.id, name: r.name }));
 
-  const selectedRow = selectedId
-    ? (merged.find(r => r.id === selectedId) ?? null)
-    : null;
+  const selectedRow = selectedId ? (merged.find((r) => r.id === selectedId) ?? null) : null;
 
   function toggleSort(key: SortKey) {
-    setSort(s =>
-      s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }
-    );
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: 1 }));
   }
 
   async function onCreate() {
@@ -814,9 +731,7 @@ export default function ClockodoIntegrationPage() {
       await createClockodoUser({
         name: name.trim(),
         email: email.trim(),
-        vacationDaysPerYear: vacationDaysPerYear.trim()
-          ? Number(vacationDaysPerYear)
-          : undefined,
+        vacationDaysPerYear: vacationDaysPerYear.trim() ? Number(vacationDaysPerYear) : undefined,
       });
       toast.success(t("created"));
       setName("");
@@ -831,10 +746,7 @@ export default function ClockodoIntegrationPage() {
     }
   }
 
-  async function onUpdateUser(
-    clockodoUserId: number,
-    patch: Record<string, unknown>
-  ) {
+  async function onUpdateUser(clockodoUserId: number, patch: Record<string, unknown>) {
     try {
       await updateClockodoUser({ clockodoUserId, ...patch });
       toast.success(t("updated"));
@@ -846,7 +758,7 @@ export default function ClockodoIntegrationPage() {
 
   async function onSetTargetHours(
     clockodoUserId: number,
-    input: { dateSince: string } & WeekHours
+    input: { dateSince: string } & WeekHours,
   ) {
     try {
       await setTargetHours({ clockodoUserId, ...input });
@@ -896,7 +808,7 @@ export default function ClockodoIntegrationPage() {
         description={t("clockodoSubtitle")}
         icon={<Mark provider="clockodo" className="h-6 w-6" />}
         action={
-          <Button onClick={() => setShowCreate(s => !s)}>
+          <Button onClick={() => setShowCreate((s) => !s)}>
             <Plus className="h-4 w-4" />
             {t("createUser")}
           </Button>
@@ -906,21 +818,17 @@ export default function ClockodoIntegrationPage() {
       {showCreate && (
         <Card>
           <CardContent className="grid gap-2 p-4 sm:grid-cols-2">
-            <Input
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder={t("name")}
-            />
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("name")} />
             <Input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               placeholder={t("email")}
             />
             <Input
               type="number"
               value={vacationDaysPerYear}
-              onChange={e => setVacationDaysPerYear(e.target.value)}
+              onChange={(e) => setVacationDaysPerYear(e.target.value)}
               placeholder={t("vacationDaysPerYear")}
               className="sm:col-span-2"
             />
@@ -942,7 +850,7 @@ export default function ClockodoIntegrationPage() {
             <Input
               ref={searchRef}
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder={t("searchPlaceholder")}
               className="pl-9"
             />
@@ -951,21 +859,21 @@ export default function ClockodoIntegrationPage() {
             <Button
               size="sm"
               variant={filterUnlinked ? "default" : "outline"}
-              onClick={() => setFilterUnlinked(v => !v)}
+              onClick={() => setFilterUnlinked((v) => !v)}
             >
               {t("filterUnlinked")}
             </Button>
             <Button
               size="sm"
               variant={filterMissingHours ? "default" : "outline"}
-              onClick={() => setFilterMissingHours(v => !v)}
+              onClick={() => setFilterMissingHours((v) => !v)}
             >
               {t("filterMissingHours")}
             </Button>
             <Button
               size="sm"
               variant={filterMissingVacation ? "default" : "outline"}
-              onClick={() => setFilterMissingVacation(v => !v)}
+              onClick={() => setFilterMissingVacation((v) => !v)}
             >
               {t("filterMissingVacation")}
             </Button>
@@ -996,12 +904,7 @@ export default function ClockodoIntegrationPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortableHead
-                  label={t("name")}
-                  sortKey="name"
-                  sort={sort}
-                  onSort={toggleSort}
-                />
+                <SortableHead label={t("name")} sortKey="name" sort={sort} onSort={toggleSort} />
                 <TableHead>{t("email")}</TableHead>
                 <SortableHead
                   label={t("weeklyHours")}
@@ -1029,7 +932,7 @@ export default function ClockodoIntegrationPage() {
                   </TableCell>
                 </TableRow>
               )}
-              {visible.map(row => (
+              {visible.map((row) => (
                 <TableRow
                   key={row.id}
                   className="cursor-pointer"
@@ -1046,12 +949,8 @@ export default function ClockodoIntegrationPage() {
                       </Badge>
                     </div>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {row.email}
-                  </TableCell>
-                  <TableCell>
-                    {row.weeklyHours !== null ? `${row.weeklyHours}h` : "—"}
-                  </TableCell>
+                  <TableCell className="text-muted-foreground">{row.email}</TableCell>
+                  <TableCell>{row.weeklyHours !== null ? `${row.weeklyHours}h` : "—"}</TableCell>
                   <TableCell>
                     {row.vacationDaysPerYear !== null
                       ? `${row.vacationDaysPerYear} ${t("days")}`
@@ -1072,19 +971,19 @@ export default function ClockodoIntegrationPage() {
         users={linkableUsers}
         managers={managers}
         open={selectedRow !== null}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           if (!open) setSelectedId(null);
         }}
-        onUpdateUser={patch => {
+        onUpdateUser={(patch) => {
           if (selectedRow) void onUpdateUser(selectedRow.id, patch);
         }}
-        onSetTargetHours={input => {
+        onSetTargetHours={(input) => {
           if (selectedRow) void onSetTargetHours(selectedRow.id, input);
         }}
-        onSetVacation={days => {
+        onSetVacation={(days) => {
           if (selectedRow) void onSetVacation(selectedRow.id, days);
         }}
-        onLink={userId => {
+        onLink={(userId) => {
           if (selectedRow) void onLink(selectedRow.id, userId);
         }}
         onUnlink={() => {

@@ -22,10 +22,7 @@ interface ErrorBoundaryState {
  * takes down the whole app (the Next.js application-error screen). Wrap page
  * content with this to keep the surrounding shell — nav, sidebar — usable.
  */
-export class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
-  ErrorBoundaryState
-> {
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { error: null };
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {

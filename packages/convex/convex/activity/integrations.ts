@@ -21,10 +21,10 @@ async function runPollAll(ctx: ActionCtx): Promise<void> {
   const mappings = await ctx.runQuery(api.activity.state.mappings, {
     secret,
   });
-  const genesysCount = mappings.filter(p => p.genesysUserId).length;
-  const clockodoCount = mappings.filter(p => p.clockodoUserId).length;
+  const genesysCount = mappings.filter((p) => p.genesysUserId).length;
+  const clockodoCount = mappings.filter((p) => p.clockodoUserId).length;
   console.log(
-    `[activity:poll] starting — ${mappings.length} mapped people (genesys=${genesysCount}, clockodo=${clockodoCount})`
+    `[activity:poll] starting — ${mappings.length} mapped people (genesys=${genesysCount}, clockodo=${clockodoCount})`,
   );
   await pollGenesys(ctx, mappings);
   await pollClockodo(ctx, secret, mappings);
@@ -34,7 +34,7 @@ async function runPollAll(ctx: ActionCtx): Promise<void> {
 /** Scheduled cron entry point. Gated — the cron itself keeps firing, but does nothing while disabled. */
 export const pollAll = gatedInternalAction("activitytrack")({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await runPollAll(ctx);
   },
 });
@@ -47,7 +47,7 @@ export const pollAll = gatedInternalAction("activitytrack")({
  */
 export const troubleshootSyncNow = action({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const me = await ctx.runQuery(api.users.me, {});
     if (!me || (me.role !== "admin" && me.role !== "manager")) {
       throw appError("auth.forbidden", "Forbidden: requires manager role");

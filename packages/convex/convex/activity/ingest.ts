@@ -56,8 +56,7 @@ export const recordSamples = gatedInternalMutation("activitytrack")({
   },
   handler: async (ctx, { samples }) => {
     const receivedAt = Date.now();
-    const inactivityMs =
-      (await readConfig(ctx)).inactivityThresholdSeconds * 1000;
+    const inactivityMs = (await readConfig(ctx)).inactivityThresholdSeconds * 1000;
 
     const byDevice = new Map<string, typeof samples>();
     for (const s of samples) {
@@ -91,19 +90,19 @@ export const recordSamples = gatedInternalMutation("activitytrack")({
       // from every idle device pays for a read that can't affect the outcome.
       const oldest = deviceSamples[0]!;
       const newest = deviceSamples[deviceSamples.length - 1]!;
-      const allKeepalive = deviceSamples.every(s => s.kind === "keepalive");
+      const allKeepalive = deviceSamples.every((s) => s.kind === "keepalive");
       const existing = allKeepalive
         ? []
         : await ctx.db
             .query("activitySamples")
-            .withIndex("by_device_time", q =>
+            .withIndex("by_device_time", (q) =>
               q
                 .eq("deviceId", deviceId)
                 .gte("capturedAt", oldest.capturedAt)
-                .lte("capturedAt", newest.capturedAt)
+                .lte("capturedAt", newest.capturedAt),
             )
             .collect();
-      const seen = new Set(existing.map(doc => doc.capturedAt));
+      const seen = new Set(existing.map((doc) => doc.capturedAt));
 
       const dayTotals = new Map<string, DayTotals>();
       let prevCapturedAt = device?.lastSeen;
@@ -143,9 +142,7 @@ export const recordSamples = gatedInternalMutation("activitytrack")({
         }
 
         const rawGap =
-          prevCapturedAt === undefined
-            ? NOMINAL_FIRST_MS
-            : s.capturedAt - prevCapturedAt;
+          prevCapturedAt === undefined ? NOMINAL_FIRST_MS : s.capturedAt - prevCapturedAt;
         const gapMs = Math.max(0, Math.min(rawGap, MAX_ATTRIBUTION_MS));
         prevCapturedAt = s.capturedAt;
 
@@ -175,8 +172,7 @@ export const recordSamples = gatedInternalMutation("activitytrack")({
       };
       if (device) {
         const userChanged =
-          !!device.lastWindowsUser &&
-          newest.windowsUser !== device.lastWindowsUser;
+          !!device.lastWindowsUser && newest.windowsUser !== device.lastWindowsUser;
         const userHistory = userChanged
           ? [
               ...(device.userHistory ?? []),
@@ -233,13 +229,10 @@ export const recordSamples = gatedInternalMutation("activitytrack")({
   },
 });
 
-async function getDevice(
-  ctx: MutationCtx,
-  deviceId: string
-): Promise<Doc<"devices"> | null> {
+async function getDevice(ctx: MutationCtx, deviceId: string): Promise<Doc<"devices"> | null> {
   return await ctx.db
     .query("devices")
-    .withIndex("by_deviceId", q => q.eq("deviceId", deviceId))
+    .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
     .unique();
 }
 
@@ -258,7 +251,7 @@ function accrueDaily(
   dayTotals: Map<string, DayTotals>,
   sample: { idleMs: number; capturedAt: number; tzOffsetMinutes: number },
   gapMs: number,
-  inactivityMs: number
+  inactivityMs: number,
 ): void {
   const isActive = sample.idleMs < inactivityMs;
   const tz = sample.tzOffsetMinutes;
@@ -296,11 +289,11 @@ async function flushDay(
   ctx: MutationCtx,
   deviceId: string,
   day: string,
-  { activeDelta, idleDelta, firstSeen, lastSeen }: DayTotals
+  { activeDelta, idleDelta, firstSeen, lastSeen }: DayTotals,
 ): Promise<{ activeSeconds: number; idleSeconds: number }> {
   const existing = await ctx.db
     .query("dailyStats")
-    .withIndex("by_device_day", q => q.eq("deviceId", deviceId).eq("day", day))
+    .withIndex("by_device_day", (q) => q.eq("deviceId", deviceId).eq("day", day))
     .unique();
 
   if (existing) {

@@ -54,7 +54,7 @@ export function folderConfig(): FolderConfig {
 export function normalizePath(path: string): string {
   return path
     .split("/")
-    .map(seg => seg.trim())
+    .map((seg) => seg.trim())
     .filter(Boolean)
     .join("/");
 }
@@ -75,17 +75,13 @@ export function zoneOf(relPath: string): Zone {
   return "other";
 }
 
-const isManagerRole = (role: Role): boolean =>
-  role === "admin" || role === "manager";
+const isManagerRole = (role: Role): boolean => role === "admin" || role === "manager";
 
 /**
  * Effective permissions for `user` on the AG-relative `relPath`. The single
  * decision point — routes must call this and never trust client-supplied flags.
  */
-export function classifyAccess(
-  user: AccessUser,
-  relPath: string
-): AccessResult {
+export function classifyAccess(user: AccessUser, relPath: string): AccessResult {
   const zone = zoneOf(relPath);
   const manager = isManagerRole(user.role);
   const uploadAllowed = user.uploadRequestsEnabled !== false;

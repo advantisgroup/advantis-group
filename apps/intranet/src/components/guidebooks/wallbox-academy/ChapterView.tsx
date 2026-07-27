@@ -43,7 +43,7 @@ export function ChapterView({
 
   useEffect(() => {
     if (!chapter.quiz && !chapter.research && !chapter.sim) {
-      onMutate(p => markChapterVisited(p, chapter.id));
+      onMutate((p) => markChapterVisited(p, chapter.id));
     }
     // Only mark-visited when the chapter itself changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -115,9 +115,7 @@ export function ChapterView({
                         <summary className="cursor-pointer text-sm font-medium">
                           „{objection}“
                         </summary>
-                        <p className="mt-1.5 text-sm text-muted-foreground">
-                          {response}
-                        </p>
+                        <p className="mt-1.5 text-sm text-muted-foreground">{response}</p>
                       </details>
                     ))}
                   </div>
@@ -127,19 +125,13 @@ export function ChapterView({
             })}
 
             {chapter.glossary ? <Glossary terms={chapter.glossary} /> : null}
-            {chapter.research ? (
-              <Research progress={progress} onMutate={onMutate} />
-            ) : null}
-            {chapter.sim ? (
-              <CallSimulator progress={progress} onMutate={onMutate} />
-            ) : null}
+            {chapter.research ? <Research progress={progress} onMutate={onMutate} /> : null}
+            {chapter.sim ? <CallSimulator progress={progress} onMutate={onMutate} /> : null}
           </div>
         </CardContent>
       </Card>
 
-      {chapter.quiz ? (
-        <Quiz chapter={chapter} progress={progress} onMutate={onMutate} />
-      ) : null}
+      {chapter.quiz ? <Quiz chapter={chapter} progress={progress} onMutate={onMutate} /> : null}
 
       <AskTrainer
         participantId={participantId}
@@ -153,11 +145,7 @@ export function ChapterView({
           <ArrowLeft className="size-4" />
           Zurück
         </Button>
-        <Button
-          variant="ghost"
-          disabled={index === CHAPTERS.length - 1}
-          onClick={onNext}
-        >
+        <Button variant="ghost" disabled={index === CHAPTERS.length - 1} onClick={onNext}>
           Weiter
           <ArrowRight className="size-4" />
         </Button>

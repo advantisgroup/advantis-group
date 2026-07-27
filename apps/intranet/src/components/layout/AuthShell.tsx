@@ -53,11 +53,8 @@ export function AuthShell({ children }: { children: ReactNode }) {
             Dein Arbeitsplatz für alles, was im Team passiert.
           </p>
           <ul className="mt-8 space-y-3">
-            {HIGHLIGHTS.map(item => (
-              <li
-                key={item}
-                className="flex items-start gap-3 text-sm text-white/90"
-              >
+            {HIGHLIGHTS.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm text-white/90">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white" />
                 {item}
               </li>

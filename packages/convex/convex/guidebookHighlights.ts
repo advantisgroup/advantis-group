@@ -6,13 +6,10 @@ import { requireManager, requireUser } from "./lib/auth";
 /** Currently highlighted guidebook slugs, most recently featured first. */
 export const list = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
-    const rows = await ctx.db
-      .query("guidebookHighlights")
-      .order("desc")
-      .collect();
-    return rows.map(r => r.slug);
+    const rows = await ctx.db.query("guidebookHighlights").order("desc").collect();
+    return rows.map((r) => r.slug);
   },
 });
 
@@ -23,7 +20,7 @@ export const toggle = mutation({
     const user = await requireManager(ctx);
     const existing = await ctx.db
       .query("guidebookHighlights")
-      .withIndex("by_slug", q => q.eq("slug", slug))
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique();
     if (existing) {
       await ctx.db.delete(existing._id);

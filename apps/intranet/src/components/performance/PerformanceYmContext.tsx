@@ -2,10 +2,7 @@
 
 import { createContext, useContext, useState, type ReactNode } from "react";
 
-import {
-  getLastPerformanceYm,
-  setLastPerformanceYm,
-} from "@/lib/performanceAuth";
+import { getLastPerformanceYm, setLastPerformanceYm } from "@/lib/performanceAuth";
 
 type YmState = [ym: string | undefined, setYm: (ym: string) => void];
 
@@ -17,24 +14,18 @@ const YmContext = createContext<YmState | null>(null);
  * Falls back to the last month persisted via `getLastPerformanceYm` so a
  * direct link to one tab still shows the same month as the others. */
 export function PerformanceYmProvider({ children }: { children: ReactNode }) {
-  const [ym, setYmState] = useState<string | undefined>(() =>
-    getLastPerformanceYm()
-  );
+  const [ym, setYmState] = useState<string | undefined>(() => getLastPerformanceYm());
   function setYm(v: string) {
     setYmState(v);
     setLastPerformanceYm(v);
   }
-  return (
-    <YmContext.Provider value={[ym, setYm]}>{children}</YmContext.Provider>
-  );
+  return <YmContext.Provider value={[ym, setYm]}>{children}</YmContext.Provider>;
 }
 
 export function usePerformanceYm(): YmState {
   const ctx = useContext(YmContext);
   if (!ctx) {
-    throw new Error(
-      "usePerformanceYm must be used within PerformanceYmProvider"
-    );
+    throw new Error("usePerformanceYm must be used within PerformanceYmProvider");
   }
   return ctx;
 }

@@ -1,22 +1,11 @@
 "use client";
 
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import {
-  type DriveQuota,
-  type OneDriveItem,
-  type OneDriveListing,
-} from "@advantis/types";
+import { type DriveQuota, type OneDriveItem, type OneDriveListing } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
 import {
   ArrowDown,
@@ -63,12 +52,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { shouldEagerPrefetch } from "@/lib/network-heuristics";
 import { useOneDriveApi } from "@/lib/onedrive-api";
@@ -87,23 +71,12 @@ import { pathToUrl } from "@/lib/onedrive-path";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
-import {
-  NewFolderDialog,
-  RenameDialog,
-  ShareDialog,
-  VersionsDialog,
-} from "./FileDialogs";
+import { NewFolderDialog, RenameDialog, ShareDialog, VersionsDialog } from "./FileDialogs";
 import { FilePreviewDialog } from "./FilePreviewDialog";
 import { UploadDropOverlay } from "./UploadDropOverlay";
 
 /** Wraps every case-insensitive occurrence of `query` in `text` with a mark. */
-export function HighlightMatch({
-  text,
-  query,
-}: {
-  text: string;
-  query: string;
-}) {
+export function HighlightMatch({ text, query }: { text: string; query: string }) {
   const q = query.trim();
   if (!q) return <>{text}</>;
   const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -113,49 +86,34 @@ export function HighlightMatch({
     <>
       {parts.map((part, i) =>
         part.toLowerCase() === q.toLowerCase() ? (
-          <mark
-            key={i}
-            className="rounded-sm bg-yellow-300/80 text-inherit dark:bg-yellow-400/40"
-          >
+          <mark key={i} className="rounded-sm bg-yellow-300/80 text-inherit dark:bg-yellow-400/40">
             {part}
           </mark>
         ) : (
           <Fragment key={i}>{part}</Fragment>
-        )
+        ),
       )}
     </>
   );
 }
 
 /** File-type icon. Each branch renders a concrete (static) lucide component. */
-export function ItemIcon({
-  item,
-  className,
-}: {
-  item: OneDriveItem;
-  className?: string;
-}) {
-  const cls = cn(
-    className,
-    item.type === "folder" ? "text-blue-500" : "text-muted-foreground"
-  );
+export function ItemIcon({ item, className }: { item: OneDriveItem; className?: string }) {
+  const cls = cn(className, item.type === "folder" ? "text-blue-500" : "text-muted-foreground");
   if (item.type === "folder") return <Folder className={cls} />;
   const m = item.mimeType ?? "";
   if (m.startsWith("image/")) return <FileImage className={cls} />;
   if (m.includes("pdf")) return <FileText className={cls} />;
   if (m.includes("sheet") || m.includes("excel") || item.name.endsWith(".csv"))
     return <FileSpreadsheet className={cls} />;
-  if (m.includes("zip") || m.includes("compressed"))
-    return <FileArchive className={cls} />;
-  if (m.includes("word") || m.includes("document"))
-    return <FileText className={cls} />;
+  if (m.includes("zip") || m.includes("compressed")) return <FileArchive className={cls} />;
+  if (m.includes("word") || m.includes("document")) return <FileText className={cls} />;
   return <FileIcon className={cls} />;
 }
 
 function QuotaBar({ quota }: { quota: DriveQuota }) {
   const t = useTranslations("Files");
-  const pct =
-    quota.total > 0 ? Math.min(100, (quota.used / quota.total) * 100) : 0;
+  const pct = quota.total > 0 ? Math.min(100, (quota.used / quota.total) * 100) : 0;
   const pctLabel = pct > 0 && pct < 1 ? "<1%" : `${Math.round(pct)}%`;
   return (
     <TooltipProvider delayDuration={150}>
@@ -166,7 +124,7 @@ function QuotaBar({ quota }: { quota: DriveQuota }) {
               <div
                 className={cn(
                   "h-full rounded-full transition-[width]",
-                  pct > 90 ? "bg-destructive" : "bg-primary"
+                  pct > 90 ? "bg-destructive" : "bg-primary",
                 )}
                 style={{ width: `${pct}%` }}
               />
@@ -276,23 +234,19 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
           router.replace(url);
         }
       } catch (e) {
-        if (!cached)
-          toast.error(e instanceof Error ? e.message : t("genericError"));
+        if (!cached) toast.error(e instanceof Error ? e.message : t("genericError"));
       } finally {
         setLoading(false);
       }
     },
-    [od, t, router]
+    [od, t, router],
   );
 
   // Pushes the target folder into the URL immediately; the effect below
   // (reacting to the resulting `initialPath` change) does the actual fetch.
   // This keeps navigation to a single load instead of loading the old
   // folder first and only updating the URL once that fetch finishes.
-  const navigate = useCallback(
-    (next: string) => router.push(pathToUrl(next)),
-    [router]
-  );
+  const navigate = useCallback((next: string) => router.push(pathToUrl(next)), [router]);
 
   // Resolve whether OneDrive is configured before firing any Graph-backed
   // calls. `configured` essentially never flips mid-session, so apply any
@@ -305,7 +259,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     if (cached !== undefined) setConfigured(cached);
     void od
       .status()
-      .then(s => {
+      .then((s) => {
         setConfigured(s.configured);
         setCachedConfigured(s.configured);
       })
@@ -328,7 +282,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     if (cached && isQuotaFresh()) return;
     void od
       .quota()
-      .then(q => {
+      .then((q) => {
         setQuota(q);
         setCachedQuota(q);
       })
@@ -354,21 +308,21 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       if (isListingFresh(target)) return;
       void od
         .list(target)
-        .then(data => {
+        .then((data) => {
           setCachedListing(target, data);
           if (!shouldEagerPrefetch()) return;
           for (const item of data.items) {
             if (item.type === "folder" && !isListingFresh(item.path)) {
               void od
                 .list(item.path)
-                .then(nested => setCachedListing(item.path, nested))
+                .then((nested) => setCachedListing(item.path, nested))
                 .catch(() => {});
             }
           }
         })
         .catch(() => {});
     },
-    [od]
+    [od],
   );
 
   // Debounced search.
@@ -381,7 +335,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     const id = window.setTimeout(() => {
       void od
         .search(q)
-        .then(r => setResults(r.items))
+        .then((r) => setResults(r.items))
         .catch(() => setResults([]));
     }, 300);
     return () => window.clearTimeout(id);
@@ -393,34 +347,34 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       const total = files.length;
       try {
         for (let i = 0; i < total; i++) {
-          await od.upload(files[i], path, f => onProgress((i + f) / total));
+          await od.upload(files[i], path, (f) => onProgress((i + f) / total));
         }
         refresh();
         toast.success(
           listing.canWrite
             ? t("uploadedCount", { count: total })
-            : t("requestedCount", { count: total })
+            : t("requestedCount", { count: total }),
         );
       } catch (e) {
         toast.error(e instanceof Error ? e.message : t("genericError"));
         throw e;
       }
     },
-    [listing, od, path, refresh, t]
+    [listing, od, path, refresh, t],
   );
 
   /** One queue entry at a time; failures stay in the panel with a retry. */
   const runQueueEntry = useCallback(
     async (entry: QueueEntry, targetPath: string) => {
       const patch = (p: Partial<QueueEntry>) =>
-        setQueue(q => q.map(e => (e.id === entry.id ? { ...e, ...p } : e)));
+        setQueue((q) => q.map((e) => (e.id === entry.id ? { ...e, ...p } : e)));
       patch({ status: "uploading", progress: 0 });
       try {
         // The client→server transfer can hit 100% well before the server's
         // scan + Graph upload + Convex record finish — show "Finalizing…"
         // for that gap instead of leaving the bar looking stuck at 100%.
-        await od.upload(entry.file, targetPath, f =>
-          patch({ progress: f, status: f >= 1 ? "finalizing" : "uploading" })
+        await od.upload(entry.file, targetPath, (f) =>
+          patch({ progress: f, status: f >= 1 ? "finalizing" : "uploading" }),
         );
         patch({ status: "done", progress: 1 });
         refresh();
@@ -428,25 +382,25 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         patch({ status: "error" });
       }
     },
-    [od, refresh]
+    [od, refresh],
   );
 
   const enqueueFiles = useCallback(
     (files: File[]) => {
-      const entries: QueueEntry[] = files.map(file => ({
+      const entries: QueueEntry[] = files.map((file) => ({
         id: ++queueIdRef.current,
         file,
         status: "pending",
         progress: 0,
       }));
-      setQueue(q => [...q, ...entries]);
+      setQueue((q) => [...q, ...entries]);
       void (async () => {
         for (const entry of entries) {
           await runQueueEntry(entry, path);
         }
       })();
     },
-    [path, runQueueEntry]
+    [path, runQueueEntry],
   );
 
   const onPickFiles = (files: FileList | null) => {
@@ -486,8 +440,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     const compare = (a: OneDriveItem, b: OneDriveItem) => {
       if (a.type !== b.type) return a.type === "folder" ? -1 : 1;
       let cmp = 0;
-      if (sortKey === "modified")
-        cmp = (a.lastModified ?? "").localeCompare(b.lastModified ?? "");
+      if (sortKey === "modified") cmp = (a.lastModified ?? "").localeCompare(b.lastModified ?? "");
       else if (sortKey === "size") cmp = a.size - b.size;
       else cmp = a.name.localeCompare(b.name, undefined, { numeric: true });
       return cmp * sortDir;
@@ -498,7 +451,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   const canDrop = Boolean(listing && (listing.canWrite || listing.canRequest));
 
   function toggleSort(key: SortKey) {
-    if (sortKey === key) setSortDir(d => (d === 1 ? -1 : 1));
+    if (sortKey === key) setSortDir((d) => (d === 1 ? -1 : 1));
     else {
       setSortKey(key);
       setSortDir(1);
@@ -517,20 +470,13 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     function onKey(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
       if (target?.closest("input, textarea, select, [contenteditable]")) return;
-      if (
-        previewItem ||
-        renameItem ||
-        shareItem ||
-        versionsItem ||
-        newFolderOpen
-      )
-        return;
+      if (previewItem || renameItem || shareItem || versionsItem || newFolderOpen) return;
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setFocusIdx(i => Math.min(items.length - 1, i + 1));
+        setFocusIdx((i) => Math.min(items.length - 1, i + 1));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setFocusIdx(i => Math.max(0, i - 1));
+        setFocusIdx((i) => Math.max(0, i - 1));
       } else if (e.key === "Enter" && focusIdx >= 0 && items[focusIdx]) {
         e.preventDefault();
         open(items[focusIdx]);
@@ -558,20 +504,18 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   const isFavorite = (p: string) => favoriteFolders.includes(p);
   function toggleFavorite(item: OneDriveItem) {
     const next = isFavorite(item.path)
-      ? favoriteFolders.filter(f => f !== item.path)
+      ? favoriteFolders.filter((f) => f !== item.path)
       : [...favoriteFolders, item.path];
     void setPrefs({ favoriteFolders: next });
   }
 
   function copyLink(item: OneDriveItem) {
-    void navigator.clipboard.writeText(
-      `${window.location.origin}${pathToUrl(item.path)}`
-    );
+    void navigator.clipboard.writeText(`${window.location.origin}${pathToUrl(item.path)}`);
     toast.success(t("linkCopied"));
   }
 
   function toggleSelected(id: string) {
-    setSelected(prev => {
+    setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -579,17 +523,17 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
     });
   }
 
-  const selectedItems = items.filter(i => selected.has(i.id));
+  const selectedItems = items.filter((i) => selected.has(i.id));
 
   async function bulkDownload() {
-    for (const item of selectedItems.filter(i => i.type === "file")) {
+    for (const item of selectedItems.filter((i) => i.type === "file")) {
       await od.download(item.id, item.name);
     }
     setSelected(new Set());
   }
 
   async function bulkDelete() {
-    const deletable = selectedItems.filter(i => i.canWrite);
+    const deletable = selectedItems.filter((i) => i.canWrite);
     if (deletable.length === 0) return;
     const ok = await confirm({
       title: t("bulkDeleteTitle", { count: deletable.length }),
@@ -615,9 +559,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   // search — deeper in it would just repeat the folder contents.
   const recentUploads =
     path === "" && results === null
-      ? (myUploads ?? [])
-          .filter(u => u.status === "approved" && u.driveItemId)
-          .slice(0, 5)
+      ? (myUploads ?? []).filter((u) => u.status === "approved" && u.driveItemId).slice(0, 5)
       : [];
 
   // OneDrive credentials aren't set — dim the whole tab with a plain-text notice.
@@ -626,9 +568,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center opacity-60">
         <Frown className="size-10 text-muted-foreground" />
         <p className="font-medium">{t("notConfiguredTitle")}</p>
-        <p className="max-w-xs text-sm text-muted-foreground">
-          {t("notConfiguredBody")}
-        </p>
+        <p className="max-w-xs text-sm text-muted-foreground">{t("notConfiguredBody")}</p>
       </div>
     );
   }
@@ -636,11 +576,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   return (
     <div className="flex flex-col gap-4">
       {canDrop && (
-        <UploadDropOverlay
-          enabled={canDrop}
-          requiresApproval={!canWrite}
-          onUpload={handleUpload}
-        />
+        <UploadDropOverlay enabled={canDrop} requiresApproval={!canWrite} onUpload={handleUpload} />
       )}
 
       {/* Header: title + quota */}
@@ -656,7 +592,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       >
         <Breadcrumbs
           listing={listing}
-          onNavigate={p => {
+          onNavigate={(p) => {
             setQuery("");
             navigate(p);
           }}
@@ -666,7 +602,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
             <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
-              onChange={e => setQuery(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               placeholder={t("searchPlaceholder")}
               className="pl-8"
             />
@@ -718,7 +654,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
             type="file"
             multiple
             className="hidden"
-            onChange={e => {
+            onChange={(e) => {
               onPickFiles(e.target.files);
               e.target.value = "";
             }}
@@ -727,47 +663,46 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       </div>
 
       {/* Quick access: pinned folders + recent uploads (root only) */}
-      {results === null &&
-        (favoriteFolders.length > 0 || recentUploads.length > 0) && (
-          <div className="space-y-2">
-            {favoriteFolders.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Star className="size-3.5 text-amber-500" />
-                {favoriteFolders.map(f => (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => navigate(f)}
-                    onMouseEnter={() => prefetch(f)}
-                    onFocus={() => prefetch(f)}
-                    className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  >
-                    <Folder className="size-3 text-blue-500" />
-                    {f.split("/").pop() || t("title")}
-                  </button>
-                ))}
-              </div>
-            )}
-            {recentUploads.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Clock className="size-3.5 text-muted-foreground" />
-                {recentUploads.map(u => (
-                  <button
-                    key={u._id}
-                    type="button"
-                    title={u.targetFolderPath || "/"}
-                    onClick={() => navigate(u.targetFolderPath)}
-                    onMouseEnter={() => prefetch(u.targetFolderPath)}
-                    onFocus={() => prefetch(u.targetFolderPath)}
-                    className="max-w-52 truncate rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                  >
-                    {u.fileName}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+      {results === null && (favoriteFolders.length > 0 || recentUploads.length > 0) && (
+        <div className="space-y-2">
+          {favoriteFolders.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Star className="size-3.5 text-amber-500" />
+              {favoriteFolders.map((f) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => navigate(f)}
+                  onMouseEnter={() => prefetch(f)}
+                  onFocus={() => prefetch(f)}
+                  className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <Folder className="size-3 text-blue-500" />
+                  {f.split("/").pop() || t("title")}
+                </button>
+              ))}
+            </div>
+          )}
+          {recentUploads.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Clock className="size-3.5 text-muted-foreground" />
+              {recentUploads.map((u) => (
+                <button
+                  key={u._id}
+                  type="button"
+                  title={u.targetFolderPath || "/"}
+                  onClick={() => navigate(u.targetFolderPath)}
+                  onMouseEnter={() => prefetch(u.targetFolderPath)}
+                  onFocus={() => prefetch(u.targetFolderPath)}
+                  className="max-w-52 truncate rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  {u.fileName}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Bulk selection bar */}
       {selected.size > 0 && (
@@ -775,17 +710,13 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
           <span className="font-medium tabular-nums">
             {t("selectedCount", { count: selected.size })}
           </span>
-          {selectedItems.some(i => i.type === "file") && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => void bulkDownload()}
-            >
+          {selectedItems.some((i) => i.type === "file") && (
+            <Button variant="outline" size="sm" onClick={() => void bulkDownload()}>
               <Download className="size-3.5" />
               {t("download")}
             </Button>
           )}
-          {selectedItems.some(i => i.canWrite) && (
+          {selectedItems.some((i) => i.canWrite) && (
             <Button
               variant="outline"
               size="sm"
@@ -809,10 +740,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       )}
 
       {/* Listing */}
-      <div
-        data-tour="tour-files-browser"
-        className="rounded-xl border border-border/70 bg-card"
-      >
+      <div data-tour="tour-files-browser" className="rounded-xl border border-border/70 bg-card">
         {loading ? (
           <div className="space-y-2 p-4">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -823,13 +751,13 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
           <EmptyState searching={results !== null} />
         ) : isMobile ? (
           <ul className="divide-y divide-border/60">
-            {items.map(item => (
+            {items.map((item) => (
               <FileCard
                 key={item.id}
                 item={item}
                 highlightQuery={results !== null ? query.trim() : ""}
                 onOpen={open}
-                onAction={action => onRowAction(action, item)}
+                onAction={(action) => onRowAction(action, item)}
               />
             ))}
           </ul>
@@ -842,8 +770,8 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                 focused={idx === focusIdx}
                 favorite={item.type === "folder" && isFavorite(item.path)}
                 onOpen={open}
-                onAction={action => onRowAction(action, item)}
-                onHoverIntent={i => i.type === "folder" && prefetch(i.path)}
+                onAction={(action) => onRowAction(action, item)}
+                onHoverIntent={(i) => i.type === "folder" && prefetch(i.path)}
               />
             ))}
           </div>
@@ -854,13 +782,9 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                 <th className="w-8 pl-3">
                   <Checkbox
                     aria-label={t("selectAll")}
-                    checked={
-                      selected.size > 0 && selected.size === items.length
-                    }
-                    onCheckedChange={checked =>
-                      setSelected(
-                        checked ? new Set(items.map(i => i.id)) : new Set()
-                      )
+                    checked={selected.size > 0 && selected.size === items.length}
+                    onCheckedChange={(checked) =>
+                      setSelected(checked ? new Set(items.map((i) => i.id)) : new Set())
                     }
                   />
                 </th>
@@ -870,9 +794,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                   dir={sortDir}
                   onClick={() => toggleSort("name")}
                 />
-                <th className="px-4 py-2.5 font-medium">
-                  {t("colUploadedBy")}
-                </th>
+                <th className="px-4 py-2.5 font-medium">{t("colUploadedBy")}</th>
                 <SortHeader
                   label={t("colModified")}
                   active={sortKey === "modified"}
@@ -900,8 +822,8 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                   onSelect={() => toggleSelected(item.id)}
                   favorite={item.type === "folder" && isFavorite(item.path)}
                   onOpen={open}
-                  onAction={action => onRowAction(action, item)}
-                  onHoverIntent={i => i.type === "folder" && prefetch(i.path)}
+                  onAction={(action) => onRowAction(action, item)}
+                  onHoverIntent={(i) => i.type === "folder" && prefetch(i.path)}
                 />
               ))}
             </tbody>
@@ -916,7 +838,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {t("uploadQueue")}
             </p>
-            {queue.every(e => e.status === "done" || e.status === "error") && (
+            {queue.every((e) => e.status === "done" || e.status === "error") && (
               <Button
                 variant="ghost"
                 size="icon-sm"
@@ -928,7 +850,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
             )}
           </div>
           <div className="max-h-48 space-y-2 overflow-y-auto">
-            {queue.map(entry => (
+            {queue.map((entry) => (
               <div key={entry.id} className="flex items-center gap-2 text-xs">
                 {entry.status === "done" ? (
                   <CheckCircle2 className="size-3.5 shrink-0 text-success" />
@@ -937,18 +859,14 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
                 ) : (
                   <Loader2 className="size-3.5 shrink-0 animate-spin text-muted-foreground" />
                 )}
-                <span className="min-w-0 flex-1 truncate">
-                  {entry.file.name}
-                </span>
+                <span className="min-w-0 flex-1 truncate">{entry.file.name}</span>
                 {entry.status === "uploading" && (
                   <span className="shrink-0 tabular-nums text-muted-foreground">
                     {Math.round(entry.progress * 100)}%
                   </span>
                 )}
                 {entry.status === "finalizing" && (
-                  <span className="shrink-0 text-muted-foreground">
-                    {t("finalizing")}
-                  </span>
+                  <span className="shrink-0 text-muted-foreground">{t("finalizing")}</span>
                 )}
                 {entry.status === "error" && (
                   <Button
@@ -972,11 +890,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         path={path}
         onDone={refresh}
       />
-      <RenameDialog
-        item={renameItem}
-        onOpenChange={() => setRenameItem(null)}
-        onDone={refresh}
-      />
+      <RenameDialog item={renameItem} onOpenChange={() => setRenameItem(null)} onDone={refresh} />
       <ShareDialog item={shareItem} onOpenChange={() => setShareItem(null)} />
       <VersionsDialog
         item={versionsItem}
@@ -984,10 +898,7 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         onOpenChange={() => setVersionsItem(null)}
         onDone={refresh}
       />
-      <FilePreviewDialog
-        item={previewItem}
-        onOpenChange={() => setPreviewItem(null)}
-      />
+      <FilePreviewDialog item={previewItem} onOpenChange={() => setPreviewItem(null)} />
     </div>
   );
 
@@ -1035,27 +946,17 @@ function SortHeader({
   align?: "right";
 }) {
   return (
-    <th
-      className={cn(
-        "px-4 py-2.5 font-medium",
-        align === "right" && "text-right"
-      )}
-    >
+    <th className={cn("px-4 py-2.5 font-medium", align === "right" && "text-right")}>
       <button
         type="button"
         onClick={onClick}
         className={cn(
           "inline-flex items-center gap-1 uppercase tracking-wide hover:text-foreground",
-          active && "text-foreground"
+          active && "text-foreground",
         )}
       >
         {label}
-        {active &&
-          (dir === 1 ? (
-            <ArrowUp className="size-3" />
-          ) : (
-            <ArrowDown className="size-3" />
-          ))}
+        {active && (dir === 1 ? <ArrowUp className="size-3" /> : <ArrowDown className="size-3" />)}
       </button>
     </th>
   );
@@ -1070,24 +971,18 @@ function Breadcrumbs({
   listing: OneDriveListing | null;
   onNavigate: (path: string) => void;
 }) {
-  const crumbs = listing?.breadcrumbs ?? [
-    { id: "", name: "Advantis Group", path: "" },
-  ];
+  const crumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis Group", path: "" }];
   return (
     <nav className="flex min-w-0 items-center gap-1 overflow-x-auto text-sm">
       {crumbs.map((c, i) => (
         <span key={c.path} className="flex items-center gap-1">
-          {i > 0 && (
-            <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
-          )}
+          {i > 0 && <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />}
           <button
             type="button"
             onClick={() => onNavigate(c.path)}
             className={cn(
               "shrink-0 rounded px-1.5 py-0.5 hover:bg-accent",
-              i === crumbs.length - 1
-                ? "font-medium text-foreground"
-                : "text-muted-foreground"
+              i === crumbs.length - 1 ? "font-medium text-foreground" : "text-muted-foreground",
             )}
           >
             {c.name}
@@ -1151,12 +1046,7 @@ function RowMenu({
         </DropdownMenuItem>
         {item.type === "folder" && (
           <DropdownMenuItem onClick={() => onAction("favorite")}>
-            <Star
-              className={cn(
-                "size-4",
-                favorite && "fill-amber-400 text-amber-500"
-              )}
-            />
+            <Star className={cn("size-4", favorite && "fill-amber-400 text-amber-500")} />
             {favorite ? t("removeFavorite") : t("addFavorite")}
           </DropdownMenuItem>
         )}
@@ -1211,7 +1101,7 @@ function FileRow({
       className={cn(
         "group border-b border-border/40 last:border-0 hover:bg-accent/40",
         focused && "bg-accent/60",
-        selected && "bg-primary/5"
+        selected && "bg-primary/5",
       )}
     >
       <td className="pl-3">
@@ -1233,18 +1123,12 @@ function FileRow({
           <span className="truncate font-medium">
             <HighlightMatch text={item.name} query={highlightQuery} />
           </span>
-          {favorite && (
-            <Star className="size-3 shrink-0 fill-amber-400 text-amber-500" />
-          )}
+          {favorite && <Star className="size-3 shrink-0 fill-amber-400 text-amber-500" />}
         </button>
       </td>
+      <td className="px-4 py-2.5 text-muted-foreground">{item.uploadedByName ?? "—"}</td>
       <td className="px-4 py-2.5 text-muted-foreground">
-        {item.uploadedByName ?? "—"}
-      </td>
-      <td className="px-4 py-2.5 text-muted-foreground">
-        {item.lastModified
-          ? new Date(item.lastModified).toLocaleDateString()
-          : "—"}
+        {item.lastModified ? new Date(item.lastModified).toLocaleDateString() : "—"}
       </td>
       <td className="px-4 py-2.5 text-right text-muted-foreground">
         {item.type === "file" ? formatFileSize(item.size) : "—"}
@@ -1276,7 +1160,7 @@ function GridTile({
     <div
       className={cn(
         "group relative rounded-lg border border-border/60 transition-colors hover:border-border hover:bg-accent/40",
-        focused && "border-primary/50 bg-accent/60"
+        focused && "border-primary/50 bg-accent/60",
       )}
     >
       <button
@@ -1288,22 +1172,14 @@ function GridTile({
       >
         <span className="flex h-24 items-center justify-center overflow-hidden rounded-t-lg bg-muted/40">
           {item.thumbnailUrl ? (
-            <img
-              src={item.thumbnailUrl}
-              alt={item.name}
-              className="h-full w-full object-cover"
-            />
+            <img src={item.thumbnailUrl} alt={item.name} className="h-full w-full object-cover" />
           ) : (
             <ItemIcon item={item} className="size-9" />
           )}
         </span>
         <span className="flex items-center gap-1.5 px-2.5 py-2">
-          <span className="min-w-0 flex-1 truncate text-xs font-medium">
-            {item.name}
-          </span>
-          {favorite && (
-            <Star className="size-3 shrink-0 fill-amber-400 text-amber-500" />
-          )}
+          <span className="min-w-0 flex-1 truncate text-xs font-medium">{item.name}</span>
+          {favorite && <Star className="size-3 shrink-0 fill-amber-400 text-amber-500" />}
         </span>
       </button>
       <div className="absolute right-1 top-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">

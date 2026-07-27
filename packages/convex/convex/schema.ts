@@ -6,7 +6,7 @@ import { v } from "convex/values";
 export const roleValidator = v.union(
   v.literal("admin"),
   v.literal("manager"),
-  v.literal("employee")
+  v.literal("employee"),
 );
 
 /**
@@ -18,36 +18,32 @@ export const capabilityValidator = v.union(
   v.literal("manage_members"),
   v.literal("access_integrations"),
   v.literal("manage_uploads"),
-  v.literal("view_activity_admin")
+  v.literal("view_activity_admin"),
 );
 
 // --- Applicant Management (Bewerbermanagement) validators -------------------
 
-export const ampelValidator = v.union(
-  v.literal("rot"),
-  v.literal("blau"),
-  v.literal("gruen")
-);
+export const ampelValidator = v.union(v.literal("rot"), v.literal("blau"), v.literal("gruen"));
 
 export const kontaktArtValidator = v.union(
   v.literal("telefon"),
   v.literal("email"),
   v.literal("persoenlich"),
   v.literal("video"),
-  v.literal("sonstiges")
+  v.literal("sonstiges"),
 );
 
 export const emailKategorieValidator = v.union(
   v.literal("telefonisch_nicht_erreicht"),
   v.literal("einladung"),
   v.literal("absage"),
-  v.literal("sonstiges")
+  v.literal("sonstiges"),
 );
 
 export const terminArtValidator = v.union(
   v.literal("telefon"),
   v.literal("teams"),
-  v.literal("vor_ort")
+  v.literal("vor_ort"),
 );
 
 export const terminTypValidator = v.union(
@@ -55,7 +51,7 @@ export const terminTypValidator = v.union(
   v.literal("gespraech"),
   v.literal("probetag"),
   v.literal("wiedervorlage"),
-  v.literal("sonstiges")
+  v.literal("sonstiges"),
 );
 
 /** Who an event/announcement targets. */
@@ -66,7 +62,7 @@ export const audienceValidator = v.union(
     kind: v.literal("departmentId"),
     departmentId: v.id("departments"),
   }),
-  v.object({ kind: v.literal("users"), userIds: v.array(v.id("users")) })
+  v.object({ kind: v.literal("users"), userIds: v.array(v.id("users")) }),
 );
 
 export const attachmentValidator = v.object({
@@ -106,11 +102,7 @@ export default defineSchema({
     subject: v.string(),
     message: v.string(),
     company: v.optional(v.string()),
-    submissionType: v.union(
-      v.literal("message"),
-      v.literal("callback"),
-      v.literal("other")
-    ),
+    submissionType: v.union(v.literal("message"), v.literal("callback"), v.literal("other")),
     topic: v.optional(v.string()),
     desiredDateTime: v.optional(v.string()),
     notes: v.optional(v.string()),
@@ -306,11 +298,7 @@ export default defineSchema({
     rawValues: v.array(v.string()),
     /** Editable canonical label; defaults to the first raw value seen. */
     canonicalName: v.string(),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("rejected")
-    ),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
     /** Set when this bucket was merged into another; excluded from backfill
      *  on its own — the target bucket's row covers its users too. */
     mergedIntoId: v.optional(v.id("orgDataMigrationReview")),
@@ -342,7 +330,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("accepted"),
       v.literal("revoked"),
-      v.literal("expired")
+      v.literal("expired"),
     ),
     expiresAt: v.number(),
     createdAt: v.number(),
@@ -357,11 +345,7 @@ export default defineSchema({
     clerkUserId: v.string(),
     name: v.optional(v.string()),
     message: v.optional(v.string()),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("approved"),
-      v.literal("denied")
-    ),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("denied")),
     reviewedByUserId: v.optional(v.id("users")),
     reviewedAt: v.optional(v.number()),
     createdAt: v.number(),
@@ -377,7 +361,7 @@ export default defineSchema({
       v.literal("vacation"),
       v.literal("sick"),
       v.literal("personal"),
-      v.literal("other")
+      v.literal("other"),
     ),
     startDate: v.string(), // ISO date (YYYY-MM-DD)
     endDate: v.string(),
@@ -387,7 +371,7 @@ export default defineSchema({
       v.literal("pending"),
       v.literal("approved"),
       v.literal("denied"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
     ),
     reviewedByUserId: v.optional(v.id("users")),
     reviewedAt: v.optional(v.number()),
@@ -461,11 +445,7 @@ export default defineSchema({
 
   // --- Updates (incidents / maintenance / changelog) ------------------------
   updates: defineTable({
-    type: v.union(
-      v.literal("incident"),
-      v.literal("maintenance"),
-      v.literal("changelog")
-    ),
+    type: v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
     /** Set by the markdown publish pipeline for idempotent upsert-by-slug. */
     slug: v.optional(v.string()),
     title: v.string(),
@@ -491,8 +471,8 @@ export default defineSchema({
         v.literal("scheduled"),
         v.literal("in_progress"),
         v.literal("completed"),
-        v.literal("cancelled")
-      )
+        v.literal("cancelled"),
+      ),
     ),
     timeline: v.optional(
       v.array(
@@ -501,8 +481,8 @@ export default defineSchema({
           status: v.optional(v.string()),
           message: v.string(),
           authorUserId: v.id("users"),
-        })
-      )
+        }),
+      ),
     ),
     /** Incident/maintenance start, or the changelog's release date. */
     startedAt: v.number(),
@@ -515,11 +495,7 @@ export default defineSchema({
     emailRequested: v.boolean(),
     emailSentAt: v.optional(v.number()),
     /** "system" = auto-published by a backend action (e.g. a feature-flag toggle), not an admin authoring a post. */
-    source: v.union(
-      v.literal("ui"),
-      v.literal("markdown"),
-      v.literal("system")
-    ),
+    source: v.union(v.literal("ui"), v.literal("markdown"), v.literal("system")),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   })
@@ -556,7 +532,7 @@ export default defineSchema({
       v.literal("clicked"),
       v.literal("bounced"),
       v.literal("complained"),
-      v.literal("failed")
+      v.literal("failed"),
     ),
     sentAt: v.optional(v.number()),
     deliveredAt: v.optional(v.number()),
@@ -748,7 +724,7 @@ export default defineSchema({
       v.literal("pending_dns"), // added to Vercel, waiting on the owner's ownership-verification DNS record
       v.literal("pending_routing"), // ownership verified, but no A/CNAME actually routes traffic to Vercel yet
       v.literal("active"), // ownership verified AND traffic correctly routed — actually live
-      v.literal("failed") // a real error (not just "not verified yet")
+      v.literal("failed"), // a real error (not just "not verified yet")
     ),
     // Per-company replacement for the old global `PERFORMANCE_ADMIN_EMAILS`
     // env var — the emails that can self-claim this company's built-in Admin
@@ -759,18 +735,14 @@ export default defineSchema({
     // exactly what to add. Proves domain ownership; does NOT by itself mean
     // traffic actually reaches Vercel (see `dnsRouting`).
     dnsVerification: v.optional(
-      v.array(
-        v.object({ type: v.string(), domain: v.string(), value: v.string() })
-      )
+      v.array(v.object({ type: v.string(), domain: v.string(), value: v.string() })),
     ),
     // The A/CNAME record Vercel's domain-config check recommends — the
     // second, separate step after ownership verification: without this,
     // the domain can show `verified: true` while still not resolving to
     // Vercel at all (`misconfigured: true`), which is a real, observed
     // failure mode this field exists to fix, not a redundant check.
-    dnsRouting: v.optional(
-      v.array(v.object({ type: v.string(), value: v.string() }))
-    ),
+    dnsRouting: v.optional(v.array(v.object({ type: v.string(), value: v.string() }))),
     // Best-effort hint (nameserver-based, not authoritative) for which DNS
     // provider actually manages this domain's records — shown as "add it at
     // <provider>" plus a docs link so whoever owns the domain doesn't have
@@ -778,9 +750,7 @@ export default defineSchema({
     // `active` (re-detected on every `createCompany`/`checkDomainVerification`
     // call, so it can still go stale between calls, but never disappears
     // just because the domain finished verifying).
-    dnsProvider: v.optional(
-      v.object({ name: v.string(), docsUrl: v.string() })
-    ),
+    dnsProvider: v.optional(v.object({ name: v.string(), docsUrl: v.string() })),
     vercelVerified: v.optional(v.boolean()),
     provisioningError: v.optional(v.string()),
     createdAt: v.number(),
@@ -880,10 +850,7 @@ export default defineSchema({
   performanceBadgeCache: defineTable({
     companyId: v.optional(v.id("companies")),
     ym: v.string(),
-    badges: v.record(
-      v.string(),
-      v.object({ value: v.number(), winners: v.array(v.string()) })
-    ),
+    badges: v.record(v.string(), v.object({ value: v.number(), winners: v.array(v.string()) })),
     computedAt: v.number(),
   })
     .index("by_ym", ["ym"])
@@ -1015,11 +982,7 @@ export default defineSchema({
     topic: v.string(),
     todo: v.optional(v.string()),
     endDate: v.optional(v.string()),
-    status: v.union(
-      v.literal("offen"),
-      v.literal("erreicht"),
-      v.literal("nicht_erreicht")
-    ),
+    status: v.union(v.literal("offen"), v.literal("erreicht"), v.literal("nicht_erreicht")),
     createdBy: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1046,8 +1009,8 @@ export default defineSchema({
         v.literal("opp"),
         v.literal("call"),
         v.literal("template"),
-        v.literal("interactions")
-      )
+        v.literal("interactions"),
+      ),
     ),
     // The report's own date (YYYY-MM-DD), as detected from its content —
     // not the upload time. Undefined for the aggregated template, which
@@ -1102,20 +1065,12 @@ export default defineSchema({
     employeeId: v.id("performanceEmployees"),
     companyId: v.optional(v.id("companies")),
     reportDate: v.string(),
-    field: v.union(
-      v.literal("talkTotalSec"),
-      v.literal("talkAvgSec"),
-      v.literal("loginSec")
-    ),
+    field: v.union(v.literal("talkTotalSec"), v.literal("talkAvgSec"), v.literal("loginSec")),
     rawSeconds: v.number(),
     rawText: v.string(),
     sourceFile: v.string(),
     uploadedAt: v.number(),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("ignored"),
-      v.literal("resolved")
-    ),
+    status: v.union(v.literal("pending"), v.literal("ignored"), v.literal("resolved")),
     resolvedAt: v.optional(v.number()),
     resolvedValue: v.optional(v.number()),
   })
@@ -1142,14 +1097,8 @@ export default defineSchema({
     lastWindowsUser: v.string(),
     // Previous account usernames seen on this device, oldest-first, capped to
     // the last 10. Appended on ingest when `lastWindowsUser` changes.
-    userHistory: v.optional(
-      v.array(v.object({ user: v.string(), changedAt: v.number() }))
-    ),
-    status: v.union(
-      v.literal("pending"),
-      v.literal("active"),
-      v.literal("disabled")
-    ),
+    userHistory: v.optional(v.array(v.object({ user: v.string(), changedAt: v.number() }))),
+    status: v.union(v.literal("pending"), v.literal("active"), v.literal("disabled")),
     personId: v.optional(v.id("people")),
     lastSeen: v.number(),
     agentVersion: v.optional(v.string()),
@@ -1173,7 +1122,7 @@ export default defineSchema({
         idleMs: v.number(),
         active: v.boolean(),
         tzOffsetMinutes: v.number(),
-      })
+      }),
     ),
     // Running total for the device's current local day, maintained alongside
     // `dailyStats` by the same ingest patch so teamOverview (reactive, read by
@@ -1186,7 +1135,7 @@ export default defineSchema({
         day: v.string(),
         activeSeconds: v.number(),
         idleSeconds: v.number(),
-      })
+      }),
     ),
   })
     .index("by_deviceId", ["deviceId"])
@@ -1262,16 +1211,11 @@ export default defineSchema({
         v.literal("IDLE"),
         v.literal("INTERACTING"),
         v.literal("OFF_QUEUE"),
-        v.literal("NOT_RESPONDING")
-      )
+        v.literal("NOT_RESPONDING"),
+      ),
     ),
     genesysPresence: v.optional(
-      v.union(
-        v.literal("AVAILABLE"),
-        v.literal("BUSY"),
-        v.literal("AWAY"),
-        v.literal("OFFLINE")
-      )
+      v.union(v.literal("AVAILABLE"), v.literal("BUSY"), v.literal("AWAY"), v.literal("OFFLINE")),
     ),
     genesysWrapUp: v.optional(v.boolean()),
     genesysUpdatedAt: v.optional(v.number()),
@@ -1300,7 +1244,7 @@ export default defineSchema({
       v.literal("IN_CALL"),
       v.literal("WRAP_UP"),
       v.literal("ACTIVE"),
-      v.literal("IDLE")
+      v.literal("IDLE"),
     ),
     // When `finalState` last *changed* (not merely re-confirmed) — powers the
     // "inactive since 13:42" line on the dashboard.
@@ -1321,7 +1265,7 @@ export default defineSchema({
       v.literal("IN_CALL"),
       v.literal("WRAP_UP"),
       v.literal("ACTIVE"),
-      v.literal("IDLE")
+      v.literal("IDLE"),
     ),
     at: v.number(),
   })
@@ -1342,7 +1286,7 @@ export default defineSchema({
       v.literal("IN_CALL"),
       v.literal("WRAP_UP"),
       v.literal("ACTIVE"),
-      v.literal("IDLE")
+      v.literal("IDLE"),
     ),
     /** When the rejected transition would have taken effect (epoch ms). */
     at: v.number(),
@@ -1350,9 +1294,7 @@ export default defineSchema({
     reason: v.string(),
     /** Signal source that triggered the rejected transition; unset for rows
      * quarantined retroactively by the backfill repair. */
-    source: v.optional(
-      v.union(v.literal("agent"), v.literal("genesys"), v.literal("clockodo"))
-    ),
+    source: v.optional(v.union(v.literal("agent"), v.literal("genesys"), v.literal("clockodo"))),
   })
     .index("by_employee_time", ["employeeId", "at"])
     .index("by_at", ["at"]),
@@ -1360,11 +1302,7 @@ export default defineSchema({
   // Integration health, one row per external source.
   integrationHealth: defineTable({
     source: v.union(v.literal("genesys"), v.literal("clockodo")),
-    status: v.union(
-      v.literal("ok"),
-      v.literal("unavailable"),
-      v.literal("unconfigured")
-    ),
+    status: v.union(v.literal("ok"), v.literal("unavailable"), v.literal("unconfigured")),
     message: v.optional(v.string()),
     lastOkAt: v.optional(v.number()),
     lastErrorAt: v.optional(v.number()),
@@ -1402,7 +1340,7 @@ export default defineSchema({
           activeSeconds: v.number(),
           idleSeconds: v.number(),
           quickFlipCount: v.number(),
-        })
+        }),
       ),
     }),
     // One row per day of the week, for the charts below the narrative.
@@ -1412,16 +1350,12 @@ export default defineSchema({
         activeSeconds: v.number(),
         idleSeconds: v.number(),
         quickFlips: v.number(),
-      })
+      }),
     ),
     findings: v.array(
       v.object({
         id: v.string(),
-        severity: v.union(
-          v.literal("good"),
-          v.literal("bad"),
-          v.literal("neutral")
-        ),
+        severity: v.union(v.literal("good"), v.literal("bad"), v.literal("neutral")),
         // Locale key for the sentence template, e.g. "pattern.quickFlips" —
         // resolved client-side so the report renders in the viewer's language.
         key: v.string(),
@@ -1431,11 +1365,7 @@ export default defineSchema({
             name: v.string(),
             value: v.union(v.string(), v.number()),
             format: v.optional(
-              v.union(
-                v.literal("duration"),
-                v.literal("percent"),
-                v.literal("count")
-              )
+              v.union(v.literal("duration"), v.literal("percent"), v.literal("count")),
             ),
             tone: v.optional(
               v.union(
@@ -1443,12 +1373,12 @@ export default defineSchema({
                 v.literal("warn"),
                 v.literal("info"),
                 v.literal("muted"),
-                v.literal("fg")
-              )
+                v.literal("fg"),
+              ),
             ),
-          })
+          }),
         ),
-      })
+      }),
     ),
   }).index("by_employee_week", ["employeeId", "weekStart"]),
 
@@ -1467,7 +1397,7 @@ export default defineSchema({
       v.literal("device.remove"),
       v.literal("device.link"),
       v.literal("maintenance.quarantineOutOfHours"),
-      v.literal("maintenance.pruneNow")
+      v.literal("maintenance.pruneNow"),
     ),
     target: v.optional(v.string()),
     at: v.number(),
@@ -1479,14 +1409,10 @@ export default defineSchema({
       v.literal("info"),
       v.literal("warning"),
       v.literal("error"),
-      v.literal("critical")
+      v.literal("critical"),
     ),
     code: v.string(),
-    source: v.union(
-      v.literal("backend"),
-      v.literal("tracker"),
-      v.literal("dashboard")
-    ),
+    source: v.union(v.literal("backend"), v.literal("tracker"), v.literal("dashboard")),
     message: v.string(),
     deviceId: v.optional(v.string()),
     hostname: v.optional(v.string()),
@@ -1518,7 +1444,7 @@ export default defineSchema({
       v.literal("running"),
       v.literal("completed"),
       v.literal("failed"),
-      v.literal("paused")
+      v.literal("paused"),
     ),
     startedByUserId: v.optional(v.id("users")),
     note: v.optional(v.string()),
@@ -1533,7 +1459,7 @@ export default defineSchema({
       v.literal("running"),
       v.literal("completed"),
       v.literal("failed"),
-      v.literal("paused")
+      v.literal("paused"),
     ),
     // Convex pagination cursor for resume (null once exhausted).
     cursor: v.optional(v.union(v.string(), v.null())),
@@ -1663,7 +1589,7 @@ export default defineSchema({
     userId: v.id("users"),
     hiddenDashboardCards: v.optional(v.array(v.string())),
     defaultCalendarView: v.optional(
-      v.union(v.literal("month"), v.literal("week"), v.literal("list"))
+      v.union(v.literal("month"), v.literal("week"), v.literal("list")),
     ),
     /** App route to land on after sign-in (e.g. "/calendar"). */
     startPage: v.optional(v.string()),
@@ -1711,7 +1637,7 @@ export default defineSchema({
       v.literal("denied"),
       v.literal("uploading"),
       v.literal("failed"),
-      v.literal("cancelled")
+      v.literal("cancelled"),
     ),
     /** Graph driveItem id, set once the bytes land in OneDrive. */
     driveItemId: v.optional(v.string()),
@@ -1749,7 +1675,7 @@ export default defineSchema({
       v.literal("enable_uploads"),
       v.literal("disable_uploads"),
       v.literal("teamAccessGrant"),
-      v.literal("teamAccessRevoke")
+      v.literal("teamAccessRevoke"),
     ),
     target: v.optional(v.string()),
     at: v.number(),
@@ -1790,7 +1716,7 @@ export default defineSchema({
       v.literal("activity"),
       v.literal("onedrive"),
       v.literal("integrations"),
-      v.literal("applicant")
+      v.literal("applicant"),
     ),
     actorUserId: v.id("users"),
     action: v.string(),
@@ -1825,10 +1751,7 @@ export default defineSchema({
    * it's noticed, not just in the moment it happens. Pruned after 30 days.
    */
   clockodoWebhookLog: defineTable({
-    endpoint: v.union(
-      v.literal("webhooks/clockodo"),
-      v.literal("integrations/clockodo/webhook")
-    ),
+    endpoint: v.union(v.literal("webhooks/clockodo"), v.literal("integrations/clockodo/webhook")),
     eventName: v.optional(v.string()),
     ok: v.boolean(),
     reason: v.string(),

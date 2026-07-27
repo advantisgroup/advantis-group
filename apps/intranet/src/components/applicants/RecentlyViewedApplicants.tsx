@@ -8,23 +8,12 @@ import { History } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  getRecentlyViewed,
-  type RecentApplicant,
-} from "@/lib/applicant-recent";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { getRecentlyViewed, type RecentApplicant } from "@/lib/applicant-recent";
 
 /** Small popover listing the last few applicants viewed on this browser
  * (localStorage only — not synced across devices or users). */
-export function RecentlyViewedApplicants({
-  excludeId,
-}: {
-  excludeId?: string;
-}) {
+export function RecentlyViewedApplicants({ excludeId }: { excludeId?: string }) {
   const t = useTranslations("Applicants");
   const router = useRouter();
   const [recent, setRecent] = useState<RecentApplicant[]>([]);
@@ -35,7 +24,7 @@ export function RecentlyViewedApplicants({
     if (next) setRecent(getRecentlyViewed());
   }
 
-  const visible = recent.filter(r => r.id !== excludeId);
+  const visible = recent.filter((r) => r.id !== excludeId);
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -47,12 +36,10 @@ export function RecentlyViewedApplicants({
       </PopoverTrigger>
       <PopoverContent align="start">
         {visible.length === 0 ? (
-          <p className="px-1 py-2 text-sm text-muted-foreground">
-            {t("recentlyViewedEmpty")}
-          </p>
+          <p className="px-1 py-2 text-sm text-muted-foreground">{t("recentlyViewedEmpty")}</p>
         ) : (
           <div className="space-y-0.5">
-            {visible.map(r => (
+            {visible.map((r) => (
               <button
                 key={r.id}
                 type="button"

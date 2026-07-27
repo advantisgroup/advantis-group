@@ -14,7 +14,10 @@
     {
       "id": "taxId",
       "title": "VAT ID",
-      "paragraphs": ["VAT identification number according to § 27 a of the German Value Added Tax Act:", "DE463759734"]
+      "paragraphs": [
+        "VAT identification number according to § 27 a of the German Value Added Tax Act:",
+        "DE463759734"
+      ]
     },
     {
       "id": "register",

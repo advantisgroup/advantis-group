@@ -67,11 +67,7 @@ function dayLabel(day: string): string {
  * re-opening the tab shows the last generated one instantly; "Regenerate"
  * recomputes from the latest raw data.
  */
-export function PatternReportTab({
-  employeeId,
-}: {
-  employeeId: string | null;
-}) {
+export function PatternReportTab({ employeeId }: { employeeId: string | null }) {
   const { t, lang } = useI18n();
   const today = todayLocalDay();
   const [week, setWeek] = useState<WeekChoice>("thisWeek");
@@ -82,7 +78,7 @@ export function PatternReportTab({
 
   const report = useQuery(
     api.activity.patternReports.get,
-    employeeId ? { employeeId, weekStart } : "skip"
+    employeeId ? { employeeId, weekStart } : "skip",
   );
   const generateReport = useMutation(api.activity.patternReports.generate);
   const [generating, setGenerating] = useState(false);
@@ -99,20 +95,20 @@ export function PatternReportTab({
 
   const dailyChart = useMemo(
     () =>
-      (report?.daily ?? []).map(d => ({
+      (report?.daily ?? []).map((d) => ({
         label: dayLabel(d.day),
         activeHours: +(d.activeSeconds / 3600).toFixed(2),
         idleHours: +(d.idleSeconds / 3600).toFixed(2),
       })),
-    [report]
+    [report],
   );
   const switchesChart = useMemo(
     () =>
-      (report?.daily ?? []).map(d => ({
+      (report?.daily ?? []).map((d) => ({
         label: dayLabel(d.day),
         quickFlips: d.quickFlips,
       })),
-    [report]
+    [report],
   );
 
   if (!employeeId) {
@@ -129,34 +125,21 @@ export function PatternReportTab({
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-base">
-                {t("pattern.heading")}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {t("pattern.subtitle")}
-              </p>
+              <CardTitle className="text-base">{t("pattern.heading")}</CardTitle>
+              <p className="text-sm text-muted-foreground">{t("pattern.subtitle")}</p>
             </div>
             <div className="flex items-center gap-2">
-              <Select
-                value={week}
-                onValueChange={v => setWeek(v as WeekChoice)}
-              >
+              <Select value={week} onValueChange={(v) => setWeek(v as WeekChoice)}>
                 <SelectTrigger className="w-36">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="thisWeek">
-                    {t("pattern.week.thisWeek")}
-                  </SelectItem>
-                  <SelectItem value="lastWeek">
-                    {t("pattern.week.lastWeek")}
-                  </SelectItem>
+                  <SelectItem value="thisWeek">{t("pattern.week.thisWeek")}</SelectItem>
+                  <SelectItem value="lastWeek">{t("pattern.week.lastWeek")}</SelectItem>
                 </SelectContent>
               </Select>
               <Button onClick={handleGenerate} disabled={generating}>
-                <RefreshCw
-                  className={cn("h-4 w-4", generating && "animate-spin")}
-                />
+                <RefreshCw className={cn("h-4 w-4", generating && "animate-spin")} />
                 {report ? t("pattern.regenerate") : t("pattern.generate")}
               </Button>
             </div>
@@ -179,9 +162,7 @@ export function PatternReportTab({
           )}
 
           {!generating && report === null && (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              {t("pattern.empty")}
-            </p>
+            <p className="py-6 text-center text-sm text-muted-foreground">{t("pattern.empty")}</p>
           )}
 
           {!generating && report && (
@@ -195,7 +176,7 @@ export function PatternReportTab({
                         <Icon
                           className={cn(
                             "mt-0.5 h-4 w-4 shrink-0",
-                            SEVERITY_CLASS[finding.severity]
+                            SEVERITY_CLASS[finding.severity],
                           )}
                         />
                         <HighlightedSentence
@@ -223,9 +204,7 @@ export function PatternReportTab({
         <div className="grid gap-4 lg:grid-cols-2">
           <Card className="animate-fade-up">
             <CardHeader>
-              <CardTitle className="text-base">
-                {t("pattern.chart.daily.heading")}
-              </CardTitle>
+              <CardTitle className="text-base">{t("pattern.chart.daily.heading")}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0 sm:pt-0">
               <DailyTrendChart
@@ -237,12 +216,8 @@ export function PatternReportTab({
           </Card>
           <Card className="animate-fade-up">
             <CardHeader>
-              <CardTitle className="text-base">
-                {t("pattern.chart.switches.heading")}
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {t("pattern.chart.switches.sub")}
-              </p>
+              <CardTitle className="text-base">{t("pattern.chart.switches.heading")}</CardTitle>
+              <p className="text-sm text-muted-foreground">{t("pattern.chart.switches.sub")}</p>
             </CardHeader>
             <CardContent className="pt-0 sm:pt-0">
               <WeekSwitchesChart

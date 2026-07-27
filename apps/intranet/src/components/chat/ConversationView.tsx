@@ -13,11 +13,7 @@ import {
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import {
-  type LinkPreview,
-  type MessageAttachment,
-  type UnfurlResult,
-} from "@advantis/types";
+import { type LinkPreview, type MessageAttachment, type UnfurlResult } from "@advantis/types";
 import { useAuth } from "@clerk/nextjs";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
@@ -60,11 +56,7 @@ import { GroupAvatar } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -75,9 +67,7 @@ import { formatFileSize, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 const URL_RE = /https?:\/\/[^\s]+/i;
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
-  "http://localhost:3002";
+const API_URL = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 const GROUP_WINDOW_MS = 5 * 60 * 1000;
 /** Touch-and-hold duration before the mobile message action sheet opens. */
 const LONG_PRESS_MS = 450;
@@ -137,21 +127,17 @@ export function ConversationView({
   const conversationQuery = useQuery(api.chat.getConversation, {
     conversationId,
   });
-  const conversation =
-    conversationQuery?.status === "ok" ? conversationQuery : undefined;
+  const conversation = conversationQuery?.status === "ok" ? conversationQuery : undefined;
   const unavailable =
-    conversationQuery && conversationQuery.status !== "ok"
-      ? conversationQuery.status
-      : null;
+    conversationQuery && conversationQuery.status !== "ok" ? conversationQuery.status : null;
 
   const { results, status, loadMore } = usePaginatedQuery(
     api.chat.getMessages,
     unavailable ? "skip" : { conversationId },
-    { initialNumItems: 30 }
+    { initialNumItems: 30 },
   );
   const typingNames =
-    useQuery(api.chat.whoIsTyping, unavailable ? "skip" : { conversationId }) ??
-    [];
+    useQuery(api.chat.whoIsTyping, unavailable ? "skip" : { conversationId }) ?? [];
   const sendMessage = useMutation(api.chat.sendMessage);
   const editMessage = useMutation(api.chat.editMessage);
   const deleteMessage = useMutation(api.chat.deleteMessage);
@@ -169,14 +155,10 @@ export function ConversationView({
   // useOneDriveApi().importAttachment) and arrive already uploaded, so they
   // ride separately from `attachmentUpload`'s local-file entries instead of
   // round-tripping through the browser as a File to re-upload.
-  const [importedAttachments, setImportedAttachments] = useState<
-    MessageAttachment[]
-  >([]);
+  const [importedAttachments, setImportedAttachments] = useState<MessageAttachment[]>([]);
   // Attachments already on the message being edited; edited alongside any
   // newly-picked local files / `importedAttachments` and merged back on save.
-  const [editingAttachments, setEditingAttachments] = useState<
-    Message["attachments"]
-  >([]);
+  const [editingAttachments, setEditingAttachments] = useState<Message["attachments"]>([]);
   const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState<Id<"users"> | null>(null);
@@ -188,9 +170,7 @@ export function ConversationView({
   const [showJump, setShowJump] = useState(false);
   const [mention, setMention] = useState<{ query: string } | null>(null);
   // Mobile: message the long-press action sheet is currently open for.
-  const [actionSheetMessage, setActionSheetMessage] = useState<Message | null>(
-    null
-  );
+  const [actionSheetMessage, setActionSheetMessage] = useState<Message | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -205,24 +185,21 @@ export function ConversationView({
   const messages = useMemo(() => [...results].reverse(), [results]);
 
   const other =
-    conversation?.type === "dm"
-      ? conversation.members.find(m => m._id !== me._id)
-      : undefined;
-  const online =
-    !!other?.lastActiveAt && Date.now() - other.lastActiveAt < 90_000;
+    conversation?.type === "dm" ? conversation.members.find((m) => m._id !== me._id) : undefined;
+  const online = !!other?.lastActiveAt && Date.now() - other.lastActiveAt < 90_000;
 
   const mentionableMembers = useMemo(() => {
     if (!conversation || conversation.type !== "group" || !mention) return [];
     const q = mention.query.toLowerCase();
     return conversation.members
-      .filter(m => m._id !== me._id && m.name.toLowerCase().includes(q))
+      .filter((m) => m._id !== me._id && m.name.toLowerCase().includes(q))
       .slice(0, 6);
   }, [conversation, mention, me._id]);
 
   // Names to highlight (@mentions) — resolved from ids returned per message.
   const memberNameById = useMemo(() => {
     const map = new Map<string, string>();
-    conversation?.members.forEach(m => map.set(m._id, m.name));
+    conversation?.members.forEach((m) => map.set(m._id, m.name));
     return map;
   }, [conversation]);
 
@@ -234,9 +211,7 @@ export function ConversationView({
   }
   const firstUnreadId = useMemo(() => {
     const cursor = initialReadRef.current?.at ?? 0;
-    const first = messages.find(
-      m => m.createdAt > cursor && m.senderId !== me._id
-    );
+    const first = messages.find((m) => m.createdAt > cursor && m.senderId !== me._id);
     return first?._id ?? null;
   }, [messages, me._id]);
 
@@ -310,9 +285,7 @@ export function ConversationView({
   function pickMention(member: { _id: Id<"users">; name: string }) {
     const el = textareaRef.current;
     const caret = el?.selectionStart ?? body.length;
-    const before = body
-      .slice(0, caret)
-      .replace(/@([\w]*)$/, `@${member.name} `);
+    const before = body.slice(0, caret).replace(/@([\w]*)$/, `@${member.name} `);
     const after = body.slice(caret);
     mentionedRef.current.set(member.name, member._id);
     setBody(before + after);
@@ -332,10 +305,9 @@ export function ConversationView({
     if (!match) return [];
     try {
       const token = await getToken();
-      const res = await fetch(
-        `${API_URL}/unfurl?url=${encodeURIComponent(match[0])}`,
-        { headers: token ? { authorization: `Bearer ${token}` } : {} }
-      );
+      const res = await fetch(`${API_URL}/unfurl?url=${encodeURIComponent(match[0])}`, {
+        headers: token ? { authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) return [];
       const data = (await res.json()) as UnfurlResult;
       if (!data.title && !data.image) return [];
@@ -385,11 +357,11 @@ export function ConversationView({
   }
 
   function removeEditingAttachment(storageId: string) {
-    setEditingAttachments(prev => prev.filter(a => a.storageId !== storageId));
+    setEditingAttachments((prev) => prev.filter((a) => a.storageId !== storageId));
   }
 
   function removeImportedAttachment(storageId: string) {
-    setImportedAttachments(prev => prev.filter(a => a.storageId !== storageId));
+    setImportedAttachments((prev) => prev.filter((a) => a.storageId !== storageId));
   }
 
   // OneDrive picks import straight into Convex server-side (see
@@ -404,7 +376,7 @@ export function ConversationView({
       toast.error(t("attachTooLarge"));
       return;
     }
-    setImportedAttachments(prev => [...prev, attachment]);
+    setImportedAttachments((prev) => [...prev, attachment]);
   }
 
   async function copyMessage(text: string) {
@@ -416,9 +388,7 @@ export function ConversationView({
     }
   }
 
-  function stripAttachmentUrl(
-    a: Message["attachments"][number]
-  ): MessageAttachment {
+  function stripAttachmentUrl(a: Message["attachments"][number]): MessageAttachment {
     const { url: _url, ...rest } = a;
     return rest;
   }
@@ -449,10 +419,7 @@ export function ConversationView({
             attachments: attachments as never,
           });
         } catch (e) {
-          await attachmentUpload.rollback([
-            ...uploaded,
-            ...importedAttachments,
-          ] as never);
+          await attachmentUpload.rollback([...uploaded, ...importedAttachments] as never);
           throw e;
         }
         cancelCompose();
@@ -464,11 +431,7 @@ export function ConversationView({
       return;
     }
 
-    if (
-      !text &&
-      attachmentUpload.entries.length === 0 &&
-      importedAttachments.length === 0
-    ) {
+    if (!text && attachmentUpload.entries.length === 0 && importedAttachments.length === 0) {
       return;
     }
     setSending(true);
@@ -577,22 +540,20 @@ export function ConversationView({
 
   function highlightBody(text: string, mentionIds: string[]): ReactNode {
     if (mentionIds.length === 0) return text;
-    const names = mentionIds
-      .map(id => memberNameById.get(id))
-      .filter((n): n is string => !!n);
+    const names = mentionIds.map((id) => memberNameById.get(id)).filter((n): n is string => !!n);
     if (names.length === 0) return text;
     const pattern = new RegExp(
-      `(@(?:${names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}))`,
-      "g"
+      `(@(?:${names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")}))`,
+      "g",
     );
     return text.split(pattern).map((part, i) =>
-      names.some(n => part === `@${n}`) ? (
+      names.some((n) => part === `@${n}`) ? (
         <span key={i} className="font-semibold text-blue-500">
           {part}
         </span>
       ) : (
         <Fragment key={i}>{part}</Fragment>
-      )
+      ),
     );
   }
 
@@ -604,19 +565,13 @@ export function ConversationView({
     >
       <GroupAvatar
         src={conversation.groupAvatar}
-        memberAvatars={conversation.members
-          .filter(m => m._id !== me._id)
-          .map(m => m.avatar)}
-        memberNames={conversation.members
-          .filter(m => m._id !== me._id)
-          .map(m => m.name)}
+        memberAvatars={conversation.members.filter((m) => m._id !== me._id).map((m) => m.avatar)}
+        memberNames={conversation.members.filter((m) => m._id !== me._id).map((m) => m.name)}
         name={conversation.title}
         className="size-9"
       />
       <div className="min-w-0">
-        <p className="truncate font-semibold leading-tight">
-          {conversation.title}
-        </p>
+        <p className="truncate font-semibold leading-tight">{conversation.title}</p>
         <p className="text-xs text-muted-foreground">
           {conversation.members.length} {t("members")}
         </p>
@@ -626,7 +581,7 @@ export function ConversationView({
 
   const membersList = conversation?.type === "group" && (
     <>
-      {conversation.members.map(m => (
+      {conversation.members.map((m) => (
         <button
           key={m._id}
           type="button"
@@ -639,19 +594,13 @@ export function ConversationView({
         >
           <Avatar className="size-7 shrink-0">
             {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
-            <AvatarFallback className="text-[10px]">
-              {initials(m.name)}
-            </AvatarFallback>
+            <AvatarFallback className="text-[10px]">{initials(m.name)}</AvatarFallback>
           </Avatar>
           <span className="min-w-0 flex-1 truncate text-sm font-medium">
             {m.name}
             {m._id === me._id ? ` (${t("you")})` : ""}
           </span>
-          {m.isCreator && (
-            <span className="text-[10px] text-muted-foreground">
-              {t("creator")}
-            </span>
-          )}
+          {m.isCreator && <span className="text-[10px] text-muted-foreground">{t("creator")}</span>}
         </button>
       ))}
     </>
@@ -662,14 +611,12 @@ export function ConversationView({
         {
           key: "mute",
           label: conversation.muted ? t("unmute") : t("mute"),
-          onSelect: () =>
-            void toggleMute({ conversationId }).catch(handleError),
+          onSelect: () => void toggleMute({ conversationId }).catch(handleError),
         },
         { key: "sep", separator: true },
         {
           key: "leave",
-          label:
-            conversation.type === "group" ? t("leaveGroup") : t("leaveChat"),
+          label: conversation.type === "group" ? t("leaveGroup") : t("leaveChat"),
           icon: <LogOut />,
           destructive: true,
           onSelect: () => void onLeave(),
@@ -680,13 +627,13 @@ export function ConversationView({
   return (
     <div
       className="relative flex h-full flex-col"
-      onDragOver={e => {
+      onDragOver={(e) => {
         if (e.dataTransfer.types.includes("Files")) {
           e.preventDefault();
           setDragging(true);
         }
       }}
-      onDragLeave={e => {
+      onDragLeave={(e) => {
         if (e.currentTarget === e.target) setDragging(false);
       }}
       onDrop={onDrop}
@@ -712,9 +659,7 @@ export function ConversationView({
                 <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {conversation.members.length} {t("members")}
                 </p>
-                <div className="max-h-72 space-y-0.5 overflow-y-auto">
-                  {membersList}
-                </div>
+                <div className="max-h-72 space-y-0.5 overflow-y-auto">{membersList}</div>
               </PopoverContent>
             </Popover>
           )
@@ -728,10 +673,7 @@ export function ConversationView({
             <div className="relative shrink-0">
               <Avatar className="size-9">
                 {conversation?.avatar && (
-                  <AvatarImage
-                    src={conversation.avatar}
-                    alt={conversation.title}
-                  />
+                  <AvatarImage src={conversation.avatar} alt={conversation.title} />
                 )}
                 <AvatarFallback className="text-xs">
                   {initials(conversation?.title ?? "")}
@@ -742,17 +684,13 @@ export function ConversationView({
               )}
             </div>
             <div className="min-w-0">
-              <p className="truncate font-semibold leading-tight">
-                {conversation?.title}
-              </p>
+              <p className="truncate font-semibold leading-tight">{conversation?.title}</p>
               {conversation?.dmOtherLeft ? (
                 <p className="truncate text-xs italic text-muted-foreground">
                   {t("leftChatShort")}
                 </p>
               ) : online ? (
-                <p className="flex items-center gap-1 text-xs text-success">
-                  {t("online")}
-                </p>
+                <p className="flex items-center gap-1 text-xs text-success">{t("online")}</p>
               ) : other?.lastActiveAt ? (
                 <p className="truncate text-xs text-muted-foreground">
                   {t("lastSeen", { time: relativeTime(other.lastActiveAt) })}
@@ -781,11 +719,7 @@ export function ConversationView({
               ariaLabel={t("conversationOptions")}
               items={conversationOptionsItems}
               trigger={
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t("conversationOptions")}
-                >
+                <Button variant="ghost" size="icon" aria-label={t("conversationOptions")}>
                   <MoreVertical className="h-5 w-5" />
                 </Button>
               }
@@ -820,20 +754,14 @@ export function ConversationView({
       )}
 
       {/* Messages */}
-      <div
-        ref={scrollRef}
-        onScroll={onScroll}
-        className="flex-1 overflow-y-auto p-4"
-      >
+      <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto p-4">
         {conversation && messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <span className="flex size-14 items-center justify-center rounded-2xl bg-blue-500/10 text-2xl">
               👋
             </span>
             <div>
-              <p className="text-sm font-semibold text-foreground">
-                {t("noMessages")}
-              </p>
+              <p className="text-sm font-semibold text-foreground">{t("noMessages")}</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {conversation.type === "group"
                   ? t("noMessagesGroupHint", { name: conversation.title })
@@ -866,8 +794,7 @@ export function ConversationView({
                   prev.senderId === m.senderId &&
                   !prev.deleted &&
                   m.createdAt - prev.createdAt < GROUP_WINDOW_MS &&
-                  new Date(prev.createdAt).toDateString() ===
-                    new Date(m.createdAt).toDateString();
+                  new Date(prev.createdAt).toDateString() === new Date(m.createdAt).toDateString();
                 const seen = mine && m.seenBy.length > 0;
                 const showDay =
                   i === 0 ||
@@ -896,7 +823,7 @@ export function ConversationView({
                       className={cn(
                         "group flex gap-2 scroll-mt-4",
                         mine && "flex-row-reverse",
-                        grouped ? "mt-0.5" : "mt-3"
+                        grouped ? "mt-0.5" : "mt-3",
                       )}
                     >
                       {!mine &&
@@ -905,10 +832,7 @@ export function ConversationView({
                         ) : (
                           <Avatar className="mt-auto h-7 w-7 shrink-0">
                             {m.senderAvatar ? (
-                              <AvatarImage
-                                src={m.senderAvatar}
-                                alt={m.senderName}
-                              />
+                              <AvatarImage src={m.senderAvatar} alt={m.senderName} />
                             ) : null}
                             <AvatarFallback className="text-[10px]">
                               {initials(m.senderName)}
@@ -918,22 +842,17 @@ export function ConversationView({
                       <div
                         className={cn(
                           "flex min-w-0 max-w-[78%] flex-col gap-1",
-                          mine ? "items-end" : "items-start"
+                          mine ? "items-end" : "items-start",
                         )}
                       >
                         <motion.div
-                          className={cn(
-                            "flex items-center gap-1",
-                            mine && "flex-row-reverse"
-                          )}
+                          className={cn("flex items-center gap-1", mine && "flex-row-reverse")}
                           drag={isMobile && !m.deleted ? "x" : false}
                           dragConstraints={{ left: 0, right: 0 }}
                           dragElastic={0.5}
                           dragMomentum={false}
                           onDragEnd={(_e, info: PanInfo) => {
-                            if (
-                              Math.abs(info.offset.x) > SWIPE_REPLY_THRESHOLD
-                            ) {
+                            if (Math.abs(info.offset.x) > SWIPE_REPLY_THRESHOLD) {
                               swipeToReply(m);
                             }
                           }}
@@ -943,29 +862,23 @@ export function ConversationView({
                               "min-w-0 rounded-2xl px-3 py-2 text-sm",
                               mine
                                 ? "rounded-br-md bg-blue-500/15 text-foreground"
-                                : "rounded-bl-md bg-muted"
+                                : "rounded-bl-md bg-muted",
                             )}
-                            {...(isMobile && !m.deleted
-                              ? longPressHandlers(m)
-                              : {})}
+                            {...(isMobile && !m.deleted ? longPressHandlers(m) : {})}
                           >
-                            {!mine &&
-                              conversation?.type === "group" &&
-                              !grouped && (
-                                <p className="mb-0.5 text-xs font-semibold text-blue-500">
-                                  {m.senderName}
-                                </p>
-                              )}
+                            {!mine && conversation?.type === "group" && !grouped && (
+                              <p className="mb-0.5 text-xs font-semibold text-blue-500">
+                                {m.senderName}
+                              </p>
+                            )}
                             {m.replyTo && (
                               <button
                                 type="button"
                                 onClick={() =>
-                                  document
-                                    .getElementById(`msg-${m.replyTo!._id}`)
-                                    ?.scrollIntoView({
-                                      behavior: "smooth",
-                                      block: "center",
-                                    })
+                                  document.getElementById(`msg-${m.replyTo!._id}`)?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "center",
+                                  })
                                 }
                                 className="mb-1 flex w-full flex-col rounded-md border-l-2 border-blue-500/60 bg-background/60 px-2 py-1 text-left text-xs"
                               >
@@ -980,9 +893,7 @@ export function ConversationView({
                               </button>
                             )}
                             {m.deleted ? (
-                              <p className="italic opacity-70">
-                                {t("deleted")}
-                              </p>
+                              <p className="italic opacity-70">{t("deleted")}</p>
                             ) : (
                               <>
                                 {m.body && (
@@ -990,7 +901,7 @@ export function ConversationView({
                                     {highlightBody(m.body, m.mentions)}
                                   </p>
                                 )}
-                                {m.attachments.map(a => {
+                                {m.attachments.map((a) => {
                                   const fromOneDrive = Boolean(a.oneDrivePath);
                                   if (a.kind === "image" && a.url) {
                                     return (
@@ -999,9 +910,7 @@ export function ConversationView({
                                         key={a.storageId}
                                         onClick={() =>
                                           fromOneDrive
-                                            ? (window.location.href = pathToUrl(
-                                                a.oneDrivePath!
-                                              ))
+                                            ? (window.location.href = pathToUrl(a.oneDrivePath!))
                                             : openFileViewer({
                                                 storageId: a.storageId,
                                                 name: a.name,
@@ -1068,7 +977,7 @@ export function ConversationView({
                                     </button>
                                   );
                                 })}
-                                {m.linkPreviews.map(lp => (
+                                {m.linkPreviews.map((lp) => (
                                   <a
                                     key={lp.url}
                                     href={lp.url}
@@ -1100,13 +1009,11 @@ export function ConversationView({
                             <div
                               className={cn(
                                 "mt-0.5 flex items-center gap-1 text-[10px] opacity-60",
-                                mine && "justify-end"
+                                mine && "justify-end",
                               )}
                             >
                               <span>{formatTime(m.createdAt, locale)}</span>
-                              {m.edited && !m.deleted && (
-                                <span>· {t("edited")}</span>
-                              )}
+                              {m.edited && !m.deleted && <span>· {t("edited")}</span>}
                               {mine &&
                                 !m.deleted &&
                                 (seen ? (
@@ -1125,7 +1032,7 @@ export function ConversationView({
                           {!m.deleted && (
                             <div className="flex items-center gap-0.5 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
                               <ReactionPicker
-                                onPick={emoji =>
+                                onPick={(emoji) =>
                                   void toggleReaction({
                                     messageId: m._id,
                                     emoji,
@@ -1139,10 +1046,7 @@ export function ConversationView({
                                   icon is easy to mis-tap on a touch screen. */}
                               {!isMobile && (
                                 <MessageMenu
-                                  canEdit={
-                                    mine &&
-                                    (!!m.body || m.attachments.length > 0)
-                                  }
+                                  canEdit={mine && (!!m.body || m.attachments.length > 0)}
                                   canDelete={mine}
                                   onReply={() => {
                                     setEditing(null);
@@ -1170,14 +1074,9 @@ export function ConversationView({
                           conversation?.type === "group" &&
                           m.seenByUsers.length > 0 && (
                             <div className="flex -space-x-1.5 pr-1">
-                              {m.seenByUsers.slice(0, 4).map(u => (
-                                <Avatar
-                                  key={u._id}
-                                  className="size-4 border border-card"
-                                >
-                                  {u.avatar && (
-                                    <AvatarImage src={u.avatar} alt={u.name} />
-                                  )}
+                              {m.seenByUsers.slice(0, 4).map((u) => (
+                                <Avatar key={u._id} className="size-4 border border-card">
+                                  {u.avatar && <AvatarImage src={u.avatar} alt={u.name} />}
                                   <AvatarFallback className="text-[7px]">
                                     {initials(u.name)}
                                   </AvatarFallback>
@@ -1189,9 +1088,7 @@ export function ConversationView({
                         {!m.deleted && m.reactions.length > 0 && (
                           <ReactionChips
                             reactions={m.reactions}
-                            onToggle={emoji =>
-                              void toggleReaction({ messageId: m._id, emoji })
-                            }
+                            onToggle={(emoji) => void toggleReaction({ messageId: m._id, emoji })}
                           />
                         )}
                       </div>
@@ -1220,9 +1117,7 @@ export function ConversationView({
       {/* Typing */}
       {typingNames.length > 0 && (
         <p className="px-4 pb-1 text-xs text-muted-foreground">
-          {typingNames.length === 1
-            ? t("typing", { name: typingNames[0] })
-            : t("typingMany")}
+          {typingNames.length === 1 ? t("typing", { name: typingNames[0] }) : t("typingMany")}
         </p>
       )}
 
@@ -1247,9 +1142,7 @@ export function ConversationView({
                     })}
               </p>
               {replyTo && (
-                <p className="truncate text-muted-foreground">
-                  {replyTo.body || t("attachment")}
-                </p>
+                <p className="truncate text-muted-foreground">{replyTo.body || t("attachment")}</p>
               )}
             </div>
             <button
@@ -1264,7 +1157,7 @@ export function ConversationView({
 
         {(editingAttachments.length > 0 || importedAttachments.length > 0) && (
           <div className="mb-2 flex flex-wrap gap-1.5">
-            {editingAttachments.map(a => (
+            {editingAttachments.map((a) => (
               <AttachmentChip
                 key={a.storageId}
                 name={a.name}
@@ -1276,7 +1169,7 @@ export function ConversationView({
                 removeLabel={tc("delete")}
               />
             ))}
-            {importedAttachments.map(a => (
+            {importedAttachments.map((a) => (
               <AttachmentChip
                 key={a.storageId}
                 name={a.name}
@@ -1305,7 +1198,7 @@ export function ConversationView({
           {/* @mention autocomplete */}
           {mention && mentionableMembers.length > 0 && (
             <div className="absolute bottom-full left-0 mb-2 w-64 overflow-hidden rounded-lg border border-border bg-popover shadow-lg">
-              {mentionableMembers.map(m => (
+              {mentionableMembers.map((m) => (
                 <button
                   key={m._id}
                   type="button"
@@ -1314,9 +1207,7 @@ export function ConversationView({
                 >
                   <Avatar className="size-6">
                     {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
-                    <AvatarFallback className="text-[9px]">
-                      {initials(m.name)}
-                    </AvatarFallback>
+                    <AvatarFallback className="text-[9px]">{initials(m.name)}</AvatarFallback>
                   </Avatar>
                   <span className="truncate text-sm">{m.name}</span>
                 </button>
@@ -1330,7 +1221,7 @@ export function ConversationView({
               type="file"
               multiple
               className="hidden"
-              onChange={e => {
+              onChange={(e) => {
                 addLocalFiles(Array.from(e.target.files ?? []));
                 e.target.value = "";
               }}
@@ -1359,7 +1250,7 @@ export function ConversationView({
             </PopoverTrigger>
             <PopoverContent align="start" side="top" className="w-64 p-2">
               <div className="grid grid-cols-8 gap-0.5">
-                {COMPOSER_EMOJIS.map(emoji => (
+                {COMPOSER_EMOJIS.map((emoji) => (
                   <button
                     key={emoji}
                     type="button"
@@ -1377,12 +1268,12 @@ export function ConversationView({
             <Textarea
               ref={textareaRef}
               value={body}
-              onChange={e => onType(e.target.value)}
+              onChange={(e) => onType(e.target.value)}
               placeholder={t("messagePlaceholder")}
               rows={1}
               className="min-h-9 resize-none overflow-y-auto border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
               style={{ maxHeight: COMPOSER_MAX_HEIGHT }}
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !mention) {
                   e.preventDefault();
                   void send();
@@ -1412,9 +1303,7 @@ export function ConversationView({
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-background/70 p-6 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-blue-400 bg-blue-500/5 px-12 py-10 text-center">
             <UploadCloud className="size-10 text-blue-400" />
-            <p className="text-sm font-medium text-foreground">
-              {t("dropToSend")}
-            </p>
+            <p className="text-sm font-medium text-foreground">{t("dropToSend")}</p>
           </div>
         </div>
       )}
@@ -1437,7 +1326,7 @@ export function ConversationView({
       {isMobile && (
         <MobileDrawer
           open={!!actionSheetMessage}
-          onOpenChange={o => {
+          onOpenChange={(o) => {
             if (!o) setActionSheetMessage(null);
           }}
           ariaLabel={t("reply")}
@@ -1462,8 +1351,7 @@ export function ConversationView({
                 }}
               />
               {actionSheetMessage.senderId === me._id &&
-                (!!actionSheetMessage.body ||
-                  actionSheetMessage.attachments.length > 0) && (
+                (!!actionSheetMessage.body || actionSheetMessage.attachments.length > 0) && (
                   <ActionSheetItem
                     icon={<Pencil className="size-4" />}
                     label={tc("edit")}
@@ -1503,7 +1391,7 @@ export function ConversationView({
       <UserProfile
         userId={profileId}
         open={!!profileId}
-        onOpenChange={o => {
+        onOpenChange={(o) => {
           if (!o) setProfileId(null);
         }}
       />
@@ -1532,32 +1420,20 @@ function ConversationUnavailable({
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-border/70 px-4 py-3 md:hidden">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="-ml-1"
-          onClick={onBack}
-          aria-label="Back"
-        >
+        <Button variant="ghost" size="icon" className="-ml-1" onClick={onBack} aria-label="Back">
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </div>
       <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
         <span className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-          {deleted ? (
-            <Trash2 className="h-7 w-7" />
-          ) : (
-            <LogOut className="h-7 w-7" />
-          )}
+          {deleted ? <Trash2 className="h-7 w-7" /> : <LogOut className="h-7 w-7" />}
         </span>
         <div className="max-w-xs">
           <p className="text-base font-semibold text-foreground">
             {deleted ? t("conversationDeleted") : t("conversationNotFound")}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {deleted
-              ? t("conversationDeletedHint")
-              : t("conversationNotFoundHint")}
+            {deleted ? t("conversationDeletedHint") : t("conversationNotFoundHint")}
           </p>
         </div>
         <Button onClick={onBack}>{t("backToChats")}</Button>
@@ -1643,7 +1519,7 @@ function ActionSheetItem({
       onClick={onClick}
       className={cn(
         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-accent",
-        destructive && "text-destructive"
+        destructive && "text-destructive",
       )}
     >
       {icon}
@@ -1676,7 +1552,7 @@ function AttachmentChip({
 }) {
   const objectUrl = useMemo(
     () => (file && isImageKind ? URL.createObjectURL(file) : null),
-    [file, isImageKind]
+    [file, isImageKind],
   );
   useEffect(() => {
     return () => {
@@ -1689,25 +1565,15 @@ function AttachmentChip({
   return (
     <div className="flex max-w-56 items-center gap-2 rounded-lg border border-border/60 bg-background py-1 pl-1 pr-2 text-xs">
       {isImageKind && src ? (
-        <img
-          src={src}
-          alt=""
-          className="size-8 shrink-0 rounded object-cover"
-        />
+        <img src={src} alt="" className="size-8 shrink-0 rounded object-cover" />
       ) : (
         <span className="flex size-8 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
-          {fromOneDrive ? (
-            <Cloud className="size-3.5" />
-          ) : (
-            <Paperclip className="size-3.5" />
-          )}
+          {fromOneDrive ? <Cloud className="size-3.5" /> : <Paperclip className="size-3.5" />}
         </span>
       )}
       <span className="min-w-0 flex-1 truncate">{name}</span>
       {size != null && (
-        <span className="shrink-0 tabular-nums text-muted-foreground">
-          {formatFileSize(size)}
-        </span>
+        <span className="shrink-0 tabular-nums text-muted-foreground">{formatFileSize(size)}</span>
       )}
       <button
         type="button"

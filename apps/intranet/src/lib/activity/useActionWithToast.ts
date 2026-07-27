@@ -8,11 +8,7 @@ import { errorMessage } from "./errors";
 import { useI18n } from "./i18n";
 import { useToast } from "./useToast";
 
-import type {
-  FunctionReference,
-  FunctionArgs,
-  FunctionReturnType,
-} from "convex/server";
+import type { FunctionReference, FunctionArgs, FunctionReturnType } from "convex/server";
 
 /**
  * The action counterpart of `useMutationWithToast`: a Convex action wrapped so
@@ -24,9 +20,7 @@ import type {
  * branch on the result without a try/catch and we never emit an unhandled
  * rejection.
  */
-export function useActionWithToast<Action extends FunctionReference<"action">>(
-  actionRef: Action
-) {
+export function useActionWithToast<Action extends FunctionReference<"action">>(actionRef: Action) {
   const run = useAction(actionRef);
   const toast = useToast();
   const { t } = useI18n();
@@ -34,7 +28,7 @@ export function useActionWithToast<Action extends FunctionReference<"action">>(
   return useCallback(
     async (
       args: FunctionArgs<Action>,
-      opts?: { success?: string }
+      opts?: { success?: string },
     ): Promise<FunctionReturnType<Action> | undefined> => {
       try {
         const result = (await run(args)) as FunctionReturnType<Action>;
@@ -48,6 +42,6 @@ export function useActionWithToast<Action extends FunctionReference<"action">>(
         return undefined;
       }
     },
-    [run, toast, t]
+    [run, toast, t],
   );
 }

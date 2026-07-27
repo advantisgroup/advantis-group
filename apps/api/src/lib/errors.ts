@@ -23,15 +23,11 @@ export class ApiError extends Error {
 }
 
 export const Errors = {
-  unauthorized: (msg = "Not authenticated") =>
-    new ApiError(401, "unauthorized", msg),
+  unauthorized: (msg = "Not authenticated") => new ApiError(401, "unauthorized", msg),
   forbidden: (msg = "Forbidden") => new ApiError(403, "forbidden", msg),
   badRequest: (msg = "Bad request") => new ApiError(400, "bad_request", msg),
   notFound: (msg = "Not found") => new ApiError(404, "not_found", msg),
-  rateLimited: (msg = "Too many requests") =>
-    new ApiError(429, "rate_limited", msg),
-  upstream: (msg = "Upstream service error") =>
-    new ApiError(502, "upstream", msg),
-  internal: (msg = "Something went wrong") =>
-    new ApiError(500, "internal", msg),
+  rateLimited: (msg = "Too many requests") => new ApiError(429, "rate_limited", msg),
+  upstream: (msg = "Upstream service error") => new ApiError(502, "upstream", msg),
+  internal: (msg = "Something went wrong") => new ApiError(500, "internal", msg),
 };

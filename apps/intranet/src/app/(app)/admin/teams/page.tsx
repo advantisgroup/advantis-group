@@ -36,14 +36,12 @@ export default function TeamsPage() {
         entities={teams}
         showMemberCount
         createPlaceholder={t("orgEntity.teamNamePlaceholder")}
-        onCreate={name => createTeam({ name }).then(() => {})}
+        onCreate={(name) => createTeam({ name }).then(() => {})}
         onRename={(teamId, name) =>
           renameTeam({ teamId: teamId as Id<"teams">, name }).then(() => {})
         }
         onArchiveToggle={(teamId, archived) =>
-          archiveTeam({ teamId: teamId as Id<"teams">, archived }).then(
-            () => {}
-          )
+          archiveTeam({ teamId: teamId as Id<"teams">, archived }).then(() => {})
         }
       />
     </div>

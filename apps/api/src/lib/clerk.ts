@@ -9,7 +9,7 @@ export function getClerkClient(): ClerkClient {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   if (!secretKey || !publishableKey) {
     throw new Error(
-      "CLERK_SECRET_KEY and NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY must be set to verify requests"
+      "CLERK_SECRET_KEY and NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY must be set to verify requests",
     );
   }
   clerkClient = createClerkClient({ secretKey, publishableKey });
@@ -25,9 +25,7 @@ export interface AuthedUser {
  * Verify the incoming request against the intranet Clerk instance (cookie or
  * `Authorization: Bearer`). Returns null when unauthenticated.
  */
-export async function authenticate(
-  request: Request
-): Promise<AuthedUser | null> {
+export async function authenticate(request: Request): Promise<AuthedUser | null> {
   const clerk = getClerkClient();
   // Clerk re-clones the request body; hand it a headers-only copy so already
   // consumed POST bodies don't throw "body disturbed or locked".

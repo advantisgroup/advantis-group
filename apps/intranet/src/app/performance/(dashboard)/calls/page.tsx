@@ -48,12 +48,12 @@ export default function DashboardCallsPage() {
   // DashboardTopSection for this tab, so it isn't shown twice.
   const timeChart = useMemo(
     () =>
-      (data?.days ?? []).map(d => ({
+      (data?.days ?? []).map((d) => ({
         label: fmtDayShort(d.date, locale),
         talk: d.values.talkTotalSec ?? 0,
         login: d.values.loginSec ?? 0,
       })),
-    [data?.days, locale]
+    [data?.days, locale],
   );
 
   if (!data) return <PerformanceContentSkeleton />;
@@ -68,9 +68,7 @@ export default function DashboardCallsPage() {
     );
   }
 
-  const daysWithData = data.days.filter(
-    d => d.values.callsToday !== undefined
-  ).length;
+  const daysWithData = data.days.filter((d) => d.values.callsToday !== undefined).length;
   const loginPerDay = daysWithData
     ? Math.round((data.total.loginSec ?? 0) / daysWithData)
     : undefined;
@@ -114,10 +112,7 @@ export default function DashboardCallsPage() {
           dVm={data.dVm.loginSec}
           dVj={data.dVj.loginSec}
         />
-        <CallStatCard
-          label={t("callsLoginPerDayLabel")}
-          value={fmtDuration(loginPerDay)}
-        />
+        <CallStatCard label={t("callsLoginPerDayLabel")} value={fmtDuration(loginPerDay)} />
       </div>
 
       <Card>

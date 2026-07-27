@@ -43,27 +43,18 @@ export function ExportTab({
         startDay: exportStart,
         endDay: exportEnd,
       });
-      const base = `${fileLabel}_${exportStart}_${exportEnd}`.replace(
-        /[^\w.-]+/g,
-        "-"
-      );
+      const base = `${fileLabel}_${exportStart}_${exportEnd}`.replace(/[^\w.-]+/g, "-");
       if (format === "json") {
         downloadFile(`${base}.json`, "application/json", toJson(data));
       } else {
-        const rows = data.samples.map(s => ({
+        const rows = data.samples.map((s) => ({
           capturedAt: new Date(s.capturedAt).toISOString(),
           active: s.active,
           idleMs: s.idleMs,
           windowsUser: s.windowsUser,
           hostname: s.hostname,
         }));
-        const csv = toCsv(rows, [
-          "capturedAt",
-          "active",
-          "idleMs",
-          "windowsUser",
-          "hostname",
-        ]);
+        const csv = toCsv(rows, ["capturedAt", "active", "idleMs", "windowsUser", "hostname"]);
         downloadFile(`${base}.csv`, "text/csv;charset=utf-8", csv);
       }
       toast(t("timeline.export.done"), "ok");
@@ -80,12 +71,8 @@ export function ExportTab({
   return (
     <Card className="animate-fade-up max-w-xl">
       <CardHeader>
-        <CardTitle className="text-base">
-          {t("timeline.export.heading")}
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          {t("timeline.export.sub")}
-        </p>
+        <CardTitle className="text-base">{t("timeline.export.heading")}</CardTitle>
+        <p className="text-sm text-muted-foreground">{t("timeline.export.sub")}</p>
       </CardHeader>
       <CardContent className="space-y-4 pt-0 sm:pt-0">
         <div className="flex flex-wrap items-end gap-3">
@@ -95,7 +82,7 @@ export function ExportTab({
               type="date"
               value={exportStart}
               max={exportEnd}
-              onChange={e => setExportStart(e.target.value)}
+              onChange={(e) => setExportStart(e.target.value)}
               className="w-full sm:w-40"
             />
           </label>
@@ -106,7 +93,7 @@ export function ExportTab({
               value={exportEnd}
               min={exportStart}
               max={today}
-              onChange={e => setExportEnd(e.target.value)}
+              onChange={(e) => setExportEnd(e.target.value)}
               className="w-full sm:w-40"
             />
           </label>
@@ -116,11 +103,7 @@ export function ExportTab({
             <Download className="h-4 w-4" />
             {t("timeline.export.csv")}
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => void runExport("json")}
-            disabled={exporting}
-          >
+          <Button variant="secondary" onClick={() => void runExport("json")} disabled={exporting}>
             <Download className="h-4 w-4" />
             {t("timeline.export.json")}
           </Button>

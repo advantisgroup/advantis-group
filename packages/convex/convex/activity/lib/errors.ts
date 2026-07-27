@@ -10,7 +10,7 @@ import { ConvexError } from "convex/values";
  */
 export function appError(
   code: string,
-  message: string
+  message: string,
 ): ConvexError<{ code: string; message: string }> {
   return new ConvexError({ code, message });
 }

@@ -24,30 +24,24 @@ export default function HelpPage() {
   const searchRef = useSlashFocus<HTMLInputElement>();
   const needle = query.trim().toLowerCase();
 
-  const sections = FAQ_SECTIONS.map(s => ({
+  const sections = FAQ_SECTIONS.map((s) => ({
     id: s.id,
-    entries: s.entries.filter(e => {
+    entries: s.entries.filter((e) => {
       if (!needle) return true;
-      return `${t(`faq.q.${e.id}`)} ${t(`faq.a.${e.id}`)}`
-        .toLowerCase()
-        .includes(needle);
+      return `${t(`faq.q.${e.id}`)} ${t(`faq.a.${e.id}`)}`.toLowerCase().includes(needle);
     }),
-  })).filter(s => s.entries.length > 0);
+  })).filter((s) => s.entries.length > 0);
 
   return (
     <section className="space-y-6">
-      <PageHeader
-        title={t("help.title")}
-        description={t("help.subtitle")}
-        icon={<HelpCircle />}
-      />
+      <PageHeader title={t("help.title")} description={t("help.subtitle")} icon={<HelpCircle />} />
 
       <div className="relative max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           ref={searchRef}
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder={t("help.search")}
           className="pl-9"
         />
@@ -55,18 +49,16 @@ export default function HelpPage() {
 
       {sections.length === 0 ? (
         <Card className="border-dashed">
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            {t("help.noResults")}
-          </p>
+          <p className="py-10 text-center text-sm text-muted-foreground">{t("help.noResults")}</p>
         </Card>
       ) : (
-        sections.map(s => (
+        sections.map((s) => (
           <div key={s.id} className="space-y-2">
             <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {t(`faq.section.${s.id}`)}
             </h3>
             <div className="space-y-2">
-              {s.entries.map(e => (
+              {s.entries.map((e) => (
                 <Card key={e.id} className="overflow-hidden">
                   <details className="group">
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 text-sm font-medium text-fg transition-colors hover:bg-panel-2">

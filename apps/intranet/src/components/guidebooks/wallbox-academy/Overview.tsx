@@ -32,10 +32,7 @@ const STATUS_LABEL: Record<"done" | "started" | "open", string> = {
   open: "offen",
 };
 
-const STATUS_VARIANT: Record<
-  "done" | "started" | "open",
-  "success" | "secondary" | "warning"
-> = {
+const STATUS_VARIANT: Record<"done" | "started" | "open", "success" | "secondary" | "warning"> = {
   done: "success",
   started: "secondary",
   open: "warning",
@@ -48,7 +45,7 @@ export function Overview({
   progress: AcademyProgressData;
   onOpenChapter: (index: number) => void;
 }) {
-  const done = CHAPTERS.filter(c => isChapterDone(progress, c)).length;
+  const done = CHAPTERS.filter((c) => isChapterDone(progress, c)).length;
   const open = CHAPTERS.length - done;
   const pct = Math.round((done / CHAPTERS.length) * 100);
   const quizScore = totalQuizScore(progress);
@@ -62,10 +59,9 @@ export function Overview({
         <div>
           <h2 className="text-lg font-semibold">Deine Lernübersicht</h2>
           <p className="text-sm text-muted-foreground">
-            Dein Fortschritt wird automatisch mit deinem Intranet-Konto
-            gespeichert — du kannst jederzeit unterbrechen und später
-            weitermachen. Wiederholungen sind beliebig möglich; alle Versuche
-            bleiben für den Trainer sichtbar.
+            Dein Fortschritt wird automatisch mit deinem Intranet-Konto gespeichert — du kannst
+            jederzeit unterbrechen und später weitermachen. Wiederholungen sind beliebig möglich;
+            alle Versuche bleiben für den Trainer sichtbar.
           </p>
         </div>
         <Button onClick={() => onOpenChapter(nextChapter)}>
@@ -82,17 +78,11 @@ export function Overview({
             />
           </div>
         </StatCard>
-        <StatCard
-          label="Kapitel"
-          value={`${done} erledigt`}
-          hint={`${open} offen`}
-        />
+        <StatCard label="Kapitel" value={`${done} erledigt`} hint={`${open} offen`} />
         <StatCard
           label="Wissens-Check"
           value={
-            quizScore.total
-              ? `${Math.round((quizScore.correct / quizScore.total) * 100)} %`
-              : "–"
+            quizScore.total ? `${Math.round((quizScore.correct / quizScore.total) * 100)} %` : "–"
           }
           hint={`${quizScore.correct}/${quizScore.total || 0} richtig`}
         />
@@ -134,9 +124,7 @@ export function Overview({
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={STATUS_VARIANT[status]}>
-                        {STATUS_LABEL[status]}
-                      </Badge>
+                      <Badge variant={STATUS_VARIANT[status]}>{STATUS_LABEL[status]}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {chapterResultLabel(progress, chapter)}

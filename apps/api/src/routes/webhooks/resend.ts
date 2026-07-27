@@ -31,11 +31,8 @@ const TRACKED_EVENT_TYPES = new Set([
   "email.delivery_delayed",
 ]);
 
-function tagValue(
-  tags: ResendTag[] | undefined,
-  name: string
-): string | undefined {
-  return tags?.find(t => t.name === name)?.value;
+function tagValue(tags: ResendTag[] | undefined, name: string): string | undefined {
+  return tags?.find((t) => t.name === name)?.value;
 }
 
 /**
@@ -82,5 +79,5 @@ export const resendWebhookRoute = new Elysia().post(
     });
 
     return { ok: true };
-  }
+  },
 );

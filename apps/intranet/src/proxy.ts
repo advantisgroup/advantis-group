@@ -1,8 +1,4 @@
-import {
-  NextResponse,
-  type NextFetchEvent,
-  type NextRequest,
-} from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
 import { api } from "@advantis/convex/api";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
@@ -57,9 +53,7 @@ function hostWithoutPort(host: string): string {
  * never from a client-supplied header. A spoofed header can at worst render
  * the wrong tenant's login copy.
  */
-async function resolveTenantRewrite(
-  req: NextRequest
-): Promise<NextResponse | null> {
+async function resolveTenantRewrite(req: NextRequest): Promise<NextResponse | null> {
   const host = hostWithoutPort(req.headers.get("host") ?? "");
   if (!host || host === "localhost" || host === INTRANET_HOST) return null;
 
@@ -119,10 +113,7 @@ const clerkHandler = clerkMiddleware(async (auth, req) => {
  * before our tenant rewrite below ever gets a chance to run. Resolving the
  * tenant here, outside `clerkMiddleware` entirely, means a registered
  * company domain never enters Clerk's code path at all. */
-export default async function middleware(
-  req: NextRequest,
-  event: NextFetchEvent
-) {
+export default async function middleware(req: NextRequest, event: NextFetchEvent) {
   const tenantRewrite = await resolveTenantRewrite(req);
   if (tenantRewrite) return tenantRewrite;
   return clerkHandler(req, event);

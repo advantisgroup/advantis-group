@@ -62,8 +62,8 @@ export default function PerformanceLoginPage() {
               type="email"
               autoComplete="username"
               value={email}
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") void submit();
               }}
             />
@@ -75,8 +75,8 @@ export default function PerformanceLoginPage() {
               type="password"
               autoComplete="current-password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") void submit();
               }}
             />
@@ -90,10 +90,7 @@ export default function PerformanceLoginPage() {
             {t("loginSubmit")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            <Link
-              href="/performance/setup"
-              className="underline underline-offset-4"
-            >
+            <Link href="/performance/setup" className="underline underline-offset-4">
               {t("setupLink")}
             </Link>
           </p>

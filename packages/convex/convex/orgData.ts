@@ -24,7 +24,7 @@ async function assertUniqueName(
   ctx: MutationCtx,
   table: "departments" | "teams",
   name: string,
-  excludeId?: Id<"departments"> | Id<"teams">
+  excludeId?: Id<"departments"> | Id<"teams">,
 ): Promise<void> {
   const target = normalize(name);
   const rows =
@@ -32,10 +32,7 @@ async function assertUniqueName(
       ? await ctx.db.query("departments").collect()
       : await ctx.db.query("teams").collect();
   const clash = rows.find(
-    r =>
-      r._id !== excludeId &&
-      r.archivedAt === undefined &&
-      normalize(r.name) === target
+    (r) => r._id !== excludeId && r.archivedAt === undefined && normalize(r.name) === target,
   );
   if (clash) {
     throw new ConvexError({
@@ -51,7 +48,7 @@ export const listDepartments = query({
     await requireUser(ctx);
     const rows = await ctx.db.query("departments").collect();
     return rows
-      .filter(r => includeArchived || r.archivedAt === undefined)
+      .filter((r) => includeArchived || r.archivedAt === undefined)
       .sort((a, b) => a.name.localeCompare(b.name));
   },
 });
@@ -108,16 +105,14 @@ export const listTeams = query({
   handler: async (ctx, { includeArchived }) => {
     await requireUser(ctx);
     const rows = await ctx.db.query("teams").collect();
-    const filtered = rows.filter(
-      r => includeArchived || r.archivedAt === undefined
-    );
+    const filtered = rows.filter((r) => includeArchived || r.archivedAt === undefined);
     const memberships = await ctx.db.query("userTeams").collect();
     const countByTeam = new Map<string, number>();
     for (const m of memberships) {
       countByTeam.set(m.teamId, (countByTeam.get(m.teamId) ?? 0) + 1);
     }
     return filtered
-      .map(r => ({ ...r, memberCount: countByTeam.get(r._id) ?? 0 }))
+      .map((r) => ({ ...r, memberCount: countByTeam.get(r._id) ?? 0 }))
       .sort((a, b) => a.name.localeCompare(b.name));
   },
 });

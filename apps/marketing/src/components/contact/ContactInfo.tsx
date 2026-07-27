@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 export function ContactInfoMobile({ items }: { items: ContactInfoItem[] }) {
   return (
     <div className="space-y-4">
-      {items.map(info => {
+      {items.map((info) => {
         const Icon = info.icon;
         return (
           <Link
@@ -18,12 +18,8 @@ export function ContactInfoMobile({ items }: { items: ContactInfoItem[] }) {
               <Icon className="w-5 h-5 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-muted-foreground">
-                {info.label}
-              </p>
-              <p className="text-base text-foreground wrap-break-word">
-                {info.value}
-              </p>
+              <p className="text-sm font-medium text-muted-foreground">{info.label}</p>
+              <p className="text-base text-foreground wrap-break-word">{info.value}</p>
             </div>
           </Link>
         );
@@ -36,7 +32,7 @@ export function ContactInfoDesktop({ items }: { items: ContactInfoItem[] }) {
   return (
     <div className="border border-border overflow-hidden rounded-t-lg">
       <div className="grid md:grid-cols-3 divide-x divide-border">
-        {items.map(info => {
+        {items.map((info) => {
           const Icon = info.icon;
           return (
             <Card key={info.label} className="border-0 rounded-none">

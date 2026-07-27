@@ -10,7 +10,7 @@ export async function writeIntegrationsAudit(
   actorUserId: Id<"users">,
   integration: Integration,
   action: IntegrationsAuditAction,
-  target?: string
+  target?: string,
 ): Promise<void> {
   const at = Date.now();
   await ctx.db.insert("integrationsAuditLog", {

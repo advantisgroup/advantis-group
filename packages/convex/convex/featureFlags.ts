@@ -42,16 +42,16 @@ export const FEATURE_FLAG_REGISTRY: Record<
 
 const featureKeyValidator = v.union(
   v.literal(FEATURE_FLAG_KEYS[0]),
-  ...FEATURE_FLAG_KEYS.slice(1).map(key => v.literal(key))
+  ...FEATURE_FLAG_KEYS.slice(1).map((key) => v.literal(key)),
 );
 
 async function getFlagRow(
   ctx: QueryCtx | MutationCtx,
-  key: FeatureFlagKey
+  key: FeatureFlagKey,
 ): Promise<Doc<"featureFlags"> | null> {
   return await ctx.db
     .query("featureFlags")
-    .withIndex("by_key", q => q.eq("key", key))
+    .withIndex("by_key", (q) => q.eq("key", key))
     .unique();
 }
 
@@ -61,7 +61,7 @@ async function getFlagRow(
  */
 export async function isFeatureEnabled(
   ctx: QueryCtx | MutationCtx,
-  key: FeatureFlagKey
+  key: FeatureFlagKey,
 ): Promise<boolean> {
   const row = await getFlagRow(ctx, key);
   return row?.enabled ?? true;
@@ -70,18 +70,17 @@ export async function isFeatureEnabled(
 /** Actions can't touch `ctx.db` directly — this is what `gatedAction`/`gatedInternalAction` call via `ctx.runQuery`. */
 export const isEnabledInternal = internalQuery({
   args: { key: featureKeyValidator },
-  handler: async (ctx, args) =>
-    isFeatureEnabled(ctx, args.key as FeatureFlagKey),
+  handler: async (ctx, args) => isFeatureEnabled(ctx, args.key as FeatureFlagKey),
 });
 
 /** Reactive read for UI gating (FeatureGate) and the admin toggle panel. */
 export const list = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     const rows = await ctx.db.query("featureFlags").collect();
-    const byKey = new Map(rows.map(row => [row.key, row]));
-    return FEATURE_FLAG_KEYS.map(key => {
+    const byKey = new Map(rows.map((row) => [row.key, row]));
+    return FEATURE_FLAG_KEYS.map((key) => {
       const row = byKey.get(key);
       const enabled = row?.enabled ?? true;
       return {

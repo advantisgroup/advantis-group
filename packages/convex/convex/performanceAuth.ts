@@ -11,11 +11,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import {
-  hashPassword,
-  randomToken,
-  verifyPassword,
-} from "./activity/lib/crypto";
+import { hashPassword, randomToken, verifyPassword } from "./activity/lib/crypto";
 import { getCurrentUser } from "./lib/auth";
 import { PERMISSIONS, type Permission } from "./performance/lib/permissions";
 
@@ -25,8 +21,8 @@ function parseEmailList(value: string | undefined): string[] {
   if (!value) return [];
   return value
     .split(/[,;\s]+/)
-    .map(entry => entry.trim().toLowerCase())
-    .filter(entry => entry.length > 0);
+    .map((entry) => entry.trim().toLowerCase())
+    .filter((entry) => entry.length > 0);
 }
 
 /** Emails allowed to be bootstrapped as a Performance admin via the old,
@@ -47,10 +43,7 @@ export function getSuperAdminEmails(): string[] {
   return parseEmailList(process.env.PERFORMANCE_SUPER_ADMIN_EMAILS);
 }
 
-function isEligibleBootstrapEmail(
-  company: Doc<"companies">,
-  email: string
-): boolean {
+function isEligibleBootstrapEmail(company: Doc<"companies">, email: string): boolean {
   if (company.adminBootstrapEmails.includes(email)) return true;
   return company.slug === "advantis" && getSeedAdminEmails().includes(email);
 }
@@ -59,15 +52,10 @@ function isEligibleBootstrapEmail(
 
 export const getLoginByCompanyEmail = internalQuery({
   args: { companyId: v.id("companies"), email: v.string() },
-  handler: async (
-    ctx,
-    { companyId, email }
-  ): Promise<Doc<"performanceLogins"> | null> =>
+  handler: async (ctx, { companyId, email }): Promise<Doc<"performanceLogins"> | null> =>
     await ctx.db
       .query("performanceLogins")
-      .withIndex("by_company_email", q =>
-        q.eq("companyId", companyId).eq("email", email)
-      )
+      .withIndex("by_company_email", (q) => q.eq("companyId", companyId).eq("email", email))
       .unique(),
 });
 
@@ -81,9 +69,9 @@ export const getSuperAdminLoginByEmail = internalQuery({
   handler: async (ctx, { email }): Promise<Doc<"performanceLogins"> | null> => {
     const candidates = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_email", q => q.eq("email", email))
+      .withIndex("by_email", (q) => q.eq("email", email))
       .collect();
-    return candidates.find(c => c.isSuperAdmin === true) ?? null;
+    return candidates.find((c) => c.isSuperAdmin === true) ?? null;
   },
 });
 
@@ -97,13 +85,11 @@ export const createLoginIfMissing = internalMutation({
   },
   handler: async (
     ctx,
-    { email, name, passwordHash, companyId, roleId }
+    { email, name, passwordHash, companyId, roleId },
   ): Promise<{ created: boolean }> => {
     const existing = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_company_email", q =>
-        q.eq("companyId", companyId).eq("email", email)
-      )
+      .withIndex("by_company_email", (q) => q.eq("companyId", companyId).eq("email", email))
       .unique();
     if (existing) return { created: false };
     await ctx.db.insert("performanceLogins", {
@@ -121,16 +107,12 @@ export const createLoginIfMissing = internalMutation({
 
 export const createSuperAdminLoginIfMissing = internalMutation({
   args: { email: v.string(), name: v.string(), passwordHash: v.string() },
-  handler: async (
-    ctx,
-    { email, name, passwordHash }
-  ): Promise<{ created: boolean }> => {
+  handler: async (ctx, { email, name, passwordHash }): Promise<{ created: boolean }> => {
     const candidates = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_email", q => q.eq("email", email))
+      .withIndex("by_email", (q) => q.eq("email", email))
       .collect();
-    if (candidates.some(c => c.isSuperAdmin === true))
-      return { created: false };
+    if (candidates.some((c) => c.isSuperAdmin === true)) return { created: false };
     await ctx.db.insert("performanceLogins", {
       email,
       name,
@@ -151,15 +133,15 @@ export const canSetUpAccount = query({
   handler: async (ctx, { slug, email }): Promise<boolean> => {
     const company = await ctx.db
       .query("companies")
-      .withIndex("by_slug", q => q.eq("slug", slug))
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
       .unique();
     if (!company || company.status !== "active") return false;
     const normalizedEmail = email.trim().toLowerCase();
     if (!isEligibleBootstrapEmail(company, normalizedEmail)) return false;
     const existing = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_company_email", q =>
-        q.eq("companyId", company._id).eq("email", normalizedEmail)
+      .withIndex("by_company_email", (q) =>
+        q.eq("companyId", company._id).eq("email", normalizedEmail),
       )
       .unique();
     return !existing;
@@ -184,7 +166,7 @@ export const setupAccount = action({
   },
   handler: async (
     ctx,
-    { slug, email, name, password }
+    { slug, email, name, password },
   ): Promise<{
     token: string;
     expiresAt: number;
@@ -220,28 +202,24 @@ export const setupAccount = action({
     if (!adminRole) throw notAllowed();
 
     const passwordHash = await hashPassword(password);
-    const { created } = await ctx.runMutation(
-      internal.performanceAuth.createLoginIfMissing,
-      {
-        email: normalizedEmail,
-        name: name.trim(),
-        passwordHash,
-        companyId: company._id,
-        roleId: adminRole._id,
-      }
-    );
+    const { created } = await ctx.runMutation(internal.performanceAuth.createLoginIfMissing, {
+      email: normalizedEmail,
+      name: name.trim(),
+      passwordHash,
+      companyId: company._id,
+      roleId: adminRole._id,
+    });
     if (!created) throw notAllowed(); // already claimed
 
-    const loginRow = await ctx.runQuery(
-      internal.performanceAuth.getLoginByCompanyEmail,
-      { companyId: company._id, email: normalizedEmail }
-    );
+    const loginRow = await ctx.runQuery(internal.performanceAuth.getLoginByCompanyEmail, {
+      companyId: company._id,
+      email: normalizedEmail,
+    });
     if (!loginRow) throw notAllowed(); // shouldn't happen; defensive
 
-    const session = await ctx.runMutation(
-      internal.performanceAuth.createSession,
-      { loginId: loginRow._id }
-    );
+    const session = await ctx.runMutation(internal.performanceAuth.createSession, {
+      loginId: loginRow._id,
+    });
     return {
       token: session.token,
       expiresAt: session.expiresAt,
@@ -263,9 +241,9 @@ export const canSetUpSuperAdmin = query({
     if (!getSuperAdminEmails().includes(normalizedEmail)) return false;
     const candidates = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_email", q => q.eq("email", normalizedEmail))
+      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
       .collect();
-    return !candidates.some(c => c.isSuperAdmin === true);
+    return !candidates.some((c) => c.isSuperAdmin === true);
   },
 });
 
@@ -273,7 +251,7 @@ export const setupSuperAdminAccount = action({
   args: { email: v.string(), name: v.string(), password: v.string() },
   handler: async (
     ctx,
-    { email, name, password }
+    { email, name, password },
   ): Promise<{ token: string; expiresAt: number; name: string }> => {
     const normalizedEmail = email.trim().toLowerCase();
     const notAllowed = () =>
@@ -291,20 +269,18 @@ export const setupSuperAdminAccount = action({
     const passwordHash = await hashPassword(password);
     const { created } = await ctx.runMutation(
       internal.performanceAuth.createSuperAdminLoginIfMissing,
-      { email: normalizedEmail, name: name.trim(), passwordHash }
+      { email: normalizedEmail, name: name.trim(), passwordHash },
     );
     if (!created) throw notAllowed();
 
-    const loginRow = await ctx.runQuery(
-      internal.performanceAuth.getSuperAdminLoginByEmail,
-      { email: normalizedEmail }
-    );
+    const loginRow = await ctx.runQuery(internal.performanceAuth.getSuperAdminLoginByEmail, {
+      email: normalizedEmail,
+    });
     if (!loginRow) throw notAllowed();
 
-    const session = await ctx.runMutation(
-      internal.performanceAuth.createSession,
-      { loginId: loginRow._id }
-    );
+    const session = await ctx.runMutation(internal.performanceAuth.createSession, {
+      loginId: loginRow._id,
+    });
     return {
       token: session.token,
       expiresAt: session.expiresAt,
@@ -315,10 +291,7 @@ export const setupSuperAdminAccount = action({
 
 export const createSession = internalMutation({
   args: { loginId: v.id("performanceLogins") },
-  handler: async (
-    ctx,
-    { loginId }
-  ): Promise<{ token: string; expiresAt: number }> => {
+  handler: async (ctx, { loginId }): Promise<{ token: string; expiresAt: number }> => {
     const now = Date.now();
     const token = randomToken();
     const login = await ctx.db.get(loginId);
@@ -346,7 +319,7 @@ export const login = action({
   },
   handler: async (
     ctx,
-    { slug, email, password }
+    { slug, email, password },
   ): Promise<{
     token: string;
     expiresAt: number;
@@ -367,25 +340,23 @@ export const login = action({
         slug,
       });
       if (!company || company.status !== "active") throw invalid();
-      loginRow = await ctx.runQuery(
-        internal.performanceAuth.getLoginByCompanyEmail,
-        { companyId: company._id, email: normalizedEmail }
-      );
+      loginRow = await ctx.runQuery(internal.performanceAuth.getLoginByCompanyEmail, {
+        companyId: company._id,
+        email: normalizedEmail,
+      });
     } else {
-      loginRow = await ctx.runQuery(
-        internal.performanceAuth.getSuperAdminLoginByEmail,
-        { email: normalizedEmail }
-      );
+      loginRow = await ctx.runQuery(internal.performanceAuth.getSuperAdminLoginByEmail, {
+        email: normalizedEmail,
+      });
     }
     if (!loginRow || !loginRow.active) throw invalid();
 
     const ok = await verifyPassword(password, loginRow.passwordHash);
     if (!ok) throw invalid();
 
-    const session = await ctx.runMutation(
-      internal.performanceAuth.createSession,
-      { loginId: loginRow._id }
-    );
+    const session = await ctx.runMutation(internal.performanceAuth.createSession, {
+      loginId: loginRow._id,
+    });
     return {
       token: session.token,
       expiresAt: session.expiresAt,
@@ -408,13 +379,13 @@ export const login = action({
  * practice it only has eligible link targets for companies whose staff
  * have an intranet Clerk `users` row, which today is Advantis only. */
 async function resolveClerkLinkedLogin(
-  ctx: QueryCtx | MutationCtx
+  ctx: QueryCtx | MutationCtx,
 ): Promise<{ session: null; login: Doc<"performanceLogins"> } | null> {
   const user = await getCurrentUser(ctx);
   if (!user) return null;
   const login = await ctx.db
     .query("performanceLogins")
-    .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+    .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
     .first();
   if (!login || !login.active) return null;
   return { session: null, login };
@@ -422,7 +393,7 @@ async function resolveClerkLinkedLogin(
 
 export async function resolveActiveSession(
   ctx: QueryCtx | MutationCtx,
-  token: string
+  token: string,
 ): Promise<{
   session: Doc<"performanceSessions"> | null;
   login: Doc<"performanceLogins">;
@@ -430,7 +401,7 @@ export async function resolveActiveSession(
   if (token) {
     const session = await ctx.db
       .query("performanceSessions")
-      .withIndex("by_token", q => q.eq("token", token))
+      .withIndex("by_token", (q) => q.eq("token", token))
       .unique();
     if (session && session.expiresAt >= Date.now()) {
       const login = await ctx.db.get(session.loginId);
@@ -449,7 +420,7 @@ export async function resolveActiveSession(
 export async function hasPermission(
   ctx: QueryCtx | MutationCtx,
   login: Doc<"performanceLogins">,
-  permission: Permission
+  permission: Permission,
 ): Promise<boolean> {
   if (login.isSuperAdmin) return true;
   if (!login.roleId) return false;
@@ -466,7 +437,7 @@ export async function requirePermission(
   ctx: QueryCtx | MutationCtx,
   login: Doc<"performanceLogins">,
   permission: Permission,
-  companyId?: Id<"companies">
+  companyId?: Id<"companies">,
 ): Promise<void> {
   if (login.isSuperAdmin) return;
   if (companyId !== undefined && login.companyId !== companyId) {
@@ -490,7 +461,7 @@ export async function requirePermission(
  * `assertAdminSession`). */
 export async function requireAdminLogin(
   ctx: QueryCtx | MutationCtx,
-  token: string
+  token: string,
 ): Promise<Doc<"performanceLogins">> {
   const resolved = await resolveActiveSession(ctx, token);
   if (!resolved) {
@@ -508,7 +479,7 @@ export async function requireAdminLogin(
  * per-company permission at all. */
 export async function requireSuperAdminLogin(
   ctx: QueryCtx | MutationCtx,
-  token: string
+  token: string,
 ): Promise<Doc<"performanceLogins">> {
   const resolved = await resolveActiveSession(ctx, token);
   if (!resolved || !resolved.login.isSuperAdmin) {
@@ -526,7 +497,7 @@ export async function requireSuperAdminLogin(
  */
 export async function requireSessionLogin(
   ctx: QueryCtx | MutationCtx,
-  token: string
+  token: string,
 ): Promise<Doc<"performanceLogins">> {
   const resolved = await resolveActiveSession(ctx, token);
   if (!resolved) {
@@ -546,7 +517,7 @@ export async function requireSessionLogin(
 export async function requireCanViewEmployee(
   ctx: QueryCtx | MutationCtx,
   login: Doc<"performanceLogins">,
-  employee: Doc<"performanceEmployees">
+  employee: Doc<"performanceEmployees">,
 ): Promise<void> {
   if (login.isSuperAdmin) return;
   if (login.employeeId === employee._id) return;
@@ -564,7 +535,7 @@ export async function requireCanViewEmployee(
  * `companyId` arg for this reason. */
 export function resolveCompanyId(
   login: Doc<"performanceLogins">,
-  companyIdArg: Id<"companies"> | undefined
+  companyIdArg: Id<"companies"> | undefined,
 ): Id<"companies"> {
   if (companyIdArg) return companyIdArg;
   if (login.companyId) return login.companyId;
@@ -585,9 +556,7 @@ export const validateSession = query({
   handler: async (ctx, { token }) => {
     const resolved = await resolveActiveSession(ctx, token);
     if (!resolved) return { valid: false as const };
-    const role = resolved.login.roleId
-      ? await ctx.db.get(resolved.login.roleId)
-      : null;
+    const role = resolved.login.roleId ? await ctx.db.get(resolved.login.roleId) : null;
     return {
       valid: true as const,
       loginId: resolved.login._id,
@@ -595,9 +564,7 @@ export const validateSession = query({
       name: resolved.login.name,
       companyId: resolved.login.companyId ?? null,
       isSuperAdmin: resolved.login.isSuperAdmin ?? false,
-      permissions: resolved.login.isSuperAdmin
-        ? [...PERMISSIONS]
-        : (role?.permissions ?? []),
+      permissions: resolved.login.isSuperAdmin ? [...PERMISSIONS] : (role?.permissions ?? []),
       employeeId: resolved.login.employeeId ?? null,
       // True when this session came from the caller's linked Clerk
       // identity rather than the password-session token — the client uses
@@ -612,8 +579,7 @@ export const touchSession = mutation({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
     const resolved = await resolveActiveSession(ctx, token);
-    if (resolved?.session)
-      await ctx.db.patch(resolved.session._id, { lastUsedAt: Date.now() });
+    if (resolved?.session) await ctx.db.patch(resolved.session._id, { lastUsedAt: Date.now() });
     return { ok: true };
   },
 });
@@ -623,7 +589,7 @@ export const logout = mutation({
   handler: async (ctx, { token }) => {
     const session = await ctx.db
       .query("performanceSessions")
-      .withIndex("by_token", q => q.eq("token", token))
+      .withIndex("by_token", (q) => q.eq("token", token))
       .unique();
     if (session) await ctx.db.delete(session._id);
     return { ok: true };
@@ -694,7 +660,7 @@ export const getLoginLinkedTo = internalQuery({
   handler: async (ctx, { userId }): Promise<Doc<"performanceLogins"> | null> =>
     await ctx.db
       .query("performanceLogins")
-      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", userId))
+      .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", userId))
       .first(),
 });
 
@@ -716,42 +682,33 @@ export const listLogins = query({
       ? await ctx.db.query("performanceLogins").collect()
       : await ctx.db
           .query("performanceLogins")
-          .withIndex("by_company_email", q =>
-            q.eq("companyId", admin.companyId!)
-          )
+          .withIndex("by_company_email", (q) => q.eq("companyId", admin.companyId!))
           .collect();
 
     const roleIds = [
       ...new Set(
-        logins
-          .map(l => l.roleId)
-          .filter((id): id is Id<"companyRoles"> => id !== undefined)
+        logins.map((l) => l.roleId).filter((id): id is Id<"companyRoles"> => id !== undefined),
       ),
     ];
-    const roles = await Promise.all(roleIds.map(id => ctx.db.get(id)));
+    const roles = await Promise.all(roleIds.map((id) => ctx.db.get(id)));
     const roleName = new Map(
-      roles
-        .filter((r): r is Doc<"companyRoles"> => r !== null)
-        .map(r => [r._id, r.name])
+      roles.filter((r): r is Doc<"companyRoles"> => r !== null).map((r) => [r._id, r.name]),
     );
 
     const employees = admin.isSuperAdmin
       ? await ctx.db.query("performanceEmployees").collect()
       : await ctx.db
           .query("performanceEmployees")
-          .withIndex("by_company", q => q.eq("companyId", admin.companyId))
+          .withIndex("by_company", (q) => q.eq("companyId", admin.companyId))
           .collect();
     const users = await ctx.db.query("users").collect();
-    const employeeName = new Map(employees.map(e => [e._id, e.name]));
+    const employeeName = new Map(employees.map((e) => [e._id, e.name]));
     const userName = new Map(
-      users.map(u => [
-        u._id,
-        [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
-      ])
+      users.map((u) => [u._id, [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email]),
     );
 
     return logins
-      .map(l => ({
+      .map((l) => ({
         id: l._id,
         email: l.email,
         name: l.name,
@@ -764,13 +721,9 @@ export const listLogins = query({
         isSuperAdmin: l.isSuperAdmin ?? false,
         active: l.active,
         employeeId: l.employeeId ?? null,
-        employeeName: l.employeeId
-          ? (employeeName.get(l.employeeId) ?? null)
-          : null,
+        employeeName: l.employeeId ? (employeeName.get(l.employeeId) ?? null) : null,
         linkedUserId: l.linkedUserId ?? null,
-        linkedUserName: l.linkedUserId
-          ? (userName.get(l.linkedUserId) ?? null)
-          : null,
+        linkedUserName: l.linkedUserId ? (userName.get(l.linkedUserId) ?? null) : null,
         createdAt: l.createdAt,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -790,10 +743,10 @@ export const listEmployeesForLink = query({
       ? await ctx.db.query("performanceEmployees").collect()
       : await ctx.db
           .query("performanceEmployees")
-          .withIndex("by_company", q => q.eq("companyId", admin.companyId))
+          .withIndex("by_company", (q) => q.eq("companyId", admin.companyId))
           .collect();
     return employees
-      .map(e => ({ id: e._id, name: e.name, active: e.active }))
+      .map((e) => ({ id: e._id, name: e.name, active: e.active }))
       .sort((a, b) => a.name.localeCompare(b.name));
   },
 });
@@ -819,13 +772,11 @@ export const listIntranetUsersForLink = query({
       ctx.db.query("performanceLogins").collect(),
     ]);
     const linkedToLoginName = new Map(
-      logins
-        .filter(l => l.linkedUserId)
-        .map(l => [l.linkedUserId!, l.name] as const)
+      logins.filter((l) => l.linkedUserId).map((l) => [l.linkedUserId!, l.name] as const),
     );
     return users
-      .filter(u => u.status === "active")
-      .map(u => ({
+      .filter((u) => u.status === "active")
+      .map((u) => ({
         id: u._id,
         name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
         email: u.email,
@@ -850,7 +801,7 @@ export const myLinkableClerkIdentity = query({
   args: { token: v.string() },
   handler: async (
     ctx,
-    { token }
+    { token },
   ): Promise<
     | { eligible: false }
     | {
@@ -875,15 +826,14 @@ export const myLinkableClerkIdentity = query({
 
     const conflict = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+      .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
       .first();
     if (conflict) return { eligible: false };
 
     return {
       eligible: true,
       loginId: resolved.login._id,
-      name:
-        [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email,
+      name: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email,
       email: user.email,
     };
   },
@@ -926,7 +876,7 @@ export const linkMyAccount = mutation({
 
     const conflict = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+      .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
       .first();
     if (conflict) throw alreadyLinked();
 
@@ -952,8 +902,7 @@ function passwordTooShort(): ConvexError<{ code: string; message: string }> {
 function alreadyLinked(): ConvexError<{ code: string; message: string }> {
   return new ConvexError({
     code: "already_linked",
-    message:
-      "This intranet account is already linked to another Performance login.",
+    message: "This intranet account is already linked to another Performance login.",
   });
 }
 
@@ -982,23 +931,11 @@ export const createLogin = action({
   },
   handler: async (
     ctx,
-    {
-      token,
-      email,
-      name,
-      password,
-      roleId,
-      employeeId,
-      linkedUserId,
-      companyId,
-    }
+    { token, email, name, password, roleId, employeeId, linkedUserId, companyId },
   ): Promise<{ id: Id<"performanceLogins"> }> => {
-    const admin = await ctx.runQuery(
-      internal.performanceAuth.assertAdminSession,
-      {
-        token,
-      }
-    );
+    const admin = await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
+      token,
+    });
     const targetCompanyId = companyId ?? admin.companyId;
     if (!targetCompanyId) {
       throw new ConvexError({
@@ -1018,10 +955,9 @@ export const createLogin = action({
     }
 
     if (linkedUserId) {
-      const conflict = await ctx.runQuery(
-        internal.performanceAuth.getLoginLinkedTo,
-        { userId: linkedUserId }
-      );
+      const conflict = await ctx.runQuery(internal.performanceAuth.getLoginLinkedTo, {
+        userId: linkedUserId,
+      });
       if (conflict) throw alreadyLinked();
     } else if (!password || password.length < 8) {
       throw passwordTooShort();
@@ -1030,7 +966,7 @@ export const createLogin = action({
     const normalizedEmail = email.trim().toLowerCase();
     const existing: Doc<"performanceLogins"> | null = await ctx.runQuery(
       internal.performanceAuth.getLoginByCompanyEmail,
-      { companyId: targetCompanyId, email: normalizedEmail }
+      { companyId: targetCompanyId, email: normalizedEmail },
     );
     if (existing) throw emailTaken();
 
@@ -1045,7 +981,7 @@ export const createLogin = action({
         roleId,
         employeeId,
         linkedUserId,
-      }
+      },
     );
     return { id };
   },
@@ -1068,7 +1004,7 @@ export const updateLogin = mutation({
   },
   handler: async (
     ctx,
-    { token, loginId, name, roleId, active, employeeId, linkedUserId }
+    { token, loginId, name, roleId, active, employeeId, linkedUserId },
   ): Promise<{ ok: true }> => {
     const admin = await requireAdminLogin(ctx, token);
     const target = await ctx.db.get(loginId);
@@ -1112,9 +1048,7 @@ export const updateLogin = mutation({
     if (losingManageLogins) {
       const companyLogins = await ctx.db
         .query("performanceLogins")
-        .withIndex("by_company_email", q =>
-          q.eq("companyId", target.companyId!)
-        )
+        .withIndex("by_company_email", (q) => q.eq("companyId", target.companyId!))
         .collect();
       let remainingManagers = 0;
       for (const l of companyLogins) {
@@ -1133,12 +1067,8 @@ export const updateLogin = mutation({
       ...(name !== undefined ? { name: name.trim() } : {}),
       ...(roleId !== undefined ? { roleId } : {}),
       ...(active !== undefined ? { active } : {}),
-      ...(employeeId !== undefined
-        ? { employeeId: employeeId ?? undefined }
-        : {}),
-      ...(linkedUserId !== undefined
-        ? { linkedUserId: linkedUserId ?? undefined }
-        : {}),
+      ...(employeeId !== undefined ? { employeeId: employeeId ?? undefined } : {}),
+      ...(linkedUserId !== undefined ? { linkedUserId: linkedUserId ?? undefined } : {}),
     });
     return { ok: true };
   },
@@ -1157,10 +1087,7 @@ export const setSuperAdmin = mutation({
     loginId: v.id("performanceLogins"),
     isSuperAdmin: v.boolean(),
   },
-  handler: async (
-    ctx,
-    { token, loginId, isSuperAdmin }
-  ): Promise<{ ok: true }> => {
+  handler: async (ctx, { token, loginId, isSuperAdmin }): Promise<{ ok: true }> => {
     const admin = await requireSuperAdminLogin(ctx, token);
     if (admin._id === loginId) {
       throw new ConvexError({
@@ -1186,12 +1113,9 @@ export const resetLoginPassword = action({
     password: v.string(),
   },
   handler: async (ctx, { token, loginId, password }): Promise<{ ok: true }> => {
-    const admin = await ctx.runQuery(
-      internal.performanceAuth.assertAdminSession,
-      {
-        token,
-      }
-    );
+    const admin = await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
+      token,
+    });
     // An admin resets a colleague's password without needing their current
     // one — that's exactly the escape hatch `changeOwnPassword` deliberately
     // doesn't offer. Keeping the two paths mutually exclusive (rather than
@@ -1201,8 +1125,7 @@ export const resetLoginPassword = action({
     if (admin._id === loginId) {
       throw new ConvexError({
         code: "use_change_own_password",
-        message:
-          "Use „My password“ to change your own password (it verifies your current one).",
+        message: "Use „My password“ to change your own password (it verifies your current one).",
       });
     }
     const target = await ctx.runQuery(internal.performanceAuth.getLoginById, {
@@ -1234,13 +1157,10 @@ export const changeOwnPassword = action({
     currentPassword: v.string(),
     newPassword: v.string(),
   },
-  handler: async (
-    ctx,
-    { token, currentPassword, newPassword }
-  ): Promise<{ ok: true }> => {
+  handler: async (ctx, { token, currentPassword, newPassword }): Promise<{ ok: true }> => {
     const login: Doc<"performanceLogins"> | null = await ctx.runQuery(
       internal.performanceAuth.sessionLoginDoc,
-      { token }
+      { token },
     );
     if (!login) {
       throw new ConvexError({

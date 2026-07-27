@@ -28,15 +28,13 @@ function assertServerKey(serverKey: string): void {
 async function approverIds(ctx: MutationCtx): Promise<Id<"users">[]> {
   const admins = await ctx.db
     .query("users")
-    .withIndex("by_role", q => q.eq("role", "admin"))
+    .withIndex("by_role", (q) => q.eq("role", "admin"))
     .collect();
   const managers = await ctx.db
     .query("users")
-    .withIndex("by_role", q => q.eq("role", "manager"))
+    .withIndex("by_role", (q) => q.eq("role", "manager"))
     .collect();
-  return [...admins, ...managers]
-    .filter(u => u.status === "active")
-    .map(u => u._id);
+  return [...admins, ...managers].filter((u) => u.status === "active").map((u) => u._id);
 }
 
 type OnedriveAuditAction =
@@ -61,7 +59,7 @@ async function writeAudit(
   ctx: MutationCtx,
   actorUserId: Id<"users">,
   action: OnedriveAuditAction,
-  target?: string
+  target?: string,
 ): Promise<void> {
   const at = Date.now();
   await ctx.db.insert("onedriveAudit", {
@@ -210,7 +208,7 @@ async function notifyDecision(
   ctx: MutationCtx,
   upload: Doc<"onedriveUploads">,
   decision: "approved" | "denied",
-  note: string | undefined
+  note: string | undefined,
 ): Promise<void> {
   const requester = await ctx.db.get(upload.requesterUserId);
   if (!requester) return;
@@ -321,7 +319,7 @@ export const apiRecordAction = mutation({
       v.literal("rename"),
       v.literal("delete"),
       v.literal("restore"),
-      v.literal("share")
+      v.literal("share"),
     ),
     target: v.optional(v.string()),
   },
@@ -372,7 +370,7 @@ export const apiUploadersByItemIds = query({
     for (const itemId of itemIds) {
       const row = await ctx.db
         .query("onedriveUploads")
-        .withIndex("by_driveItemId", q => q.eq("driveItemId", itemId))
+        .withIndex("by_driveItemId", (q) => q.eq("driveItemId", itemId))
         .first();
       if (!row) continue;
       const u = await ctx.db.get(row.requesterUserId);
@@ -390,10 +388,10 @@ export const apiTeamAccessRoster = query({
     assertServerKey(serverKey);
     const users = await ctx.db
       .query("users")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
     return users
-      .map(u => ({
+      .map((u) => ({
         userId: u._id,
         name: displayName(u),
         email: u.email,
@@ -411,19 +409,11 @@ export const apiSetTeamAccess = mutation({
     targetUserId: v.id("users"),
     permissionId: v.string(),
   },
-  handler: async (
-    ctx,
-    { serverKey, actorUserId, targetUserId, permissionId }
-  ) => {
+  handler: async (ctx, { serverKey, actorUserId, targetUserId, permissionId }) => {
     assertServerKey(serverKey);
     const target = await ctx.db.get(targetUserId);
     await ctx.db.patch(targetUserId, { oneDrivePermissionId: permissionId });
-    await writeAudit(
-      ctx,
-      actorUserId,
-      "teamAccessGrant",
-      target ? displayName(target) : undefined
-    );
+    await writeAudit(ctx, actorUserId, "teamAccessGrant", target ? displayName(target) : undefined);
     return { ok: true };
   },
 });
@@ -443,7 +433,7 @@ export const apiClearTeamAccess = mutation({
       ctx,
       actorUserId,
       "teamAccessRevoke",
-      target ? displayName(target) : undefined
+      target ? displayName(target) : undefined,
     );
     return { ok: true };
   },
@@ -459,15 +449,15 @@ export const apiClearTeamAccess = mutation({
  */
 export const listPending = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireCapability(ctx, "manage_uploads");
     const rows = await ctx.db
       .query("onedriveUploads")
-      .withIndex("by_status", q => q.eq("status", "pending"))
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
       .order("desc")
       .take(200);
     return Promise.all(
-      rows.map(async row => {
+      rows.map(async (row) => {
         const requester = await ctx.db.get(row.requesterUserId);
         const previewUrl = row.stagingStorageId
           ? await ctx.storage.getUrl(row.stagingStorageId)
@@ -477,7 +467,7 @@ export const listPending = query({
           requesterName: requester ? displayName(requester) : "unknown",
           previewUrl,
         };
-      })
+      }),
     );
   },
 });
@@ -485,11 +475,11 @@ export const listPending = query({
 /** The signed-in user's own upload history / request statuses. */
 export const myUploads = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     return ctx.db
       .query("onedriveUploads")
-      .withIndex("by_user", q => q.eq("requesterUserId", user._id))
+      .withIndex("by_user", (q) => q.eq("requesterUserId", user._id))
       .order("desc")
       .take(100);
   },
@@ -510,9 +500,9 @@ export const auditFeed = query({
       .take(Math.min(limit ?? 100, 500));
     const byId = await batchUserSummaries(
       ctx,
-      rows.map(r => r.actorUserId)
+      rows.map((r) => r.actorUserId),
     );
-    return rows.map(row => ({
+    return rows.map((row) => ({
       ...row,
       user: byId.get(row.actorUserId) ?? null,
     }));
@@ -563,9 +553,7 @@ export const renewSubscription = internalAction({
     const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
     const serverKey = process.env.CONVEX_SERVER_KEY;
     if (!baseUrl || !serverKey) {
-      console.warn(
-        "[onedrive] subscription renewal skipped — API not configured"
-      );
+      console.warn("[onedrive] subscription renewal skipped — API not configured");
       return { ok: false };
     }
     try {

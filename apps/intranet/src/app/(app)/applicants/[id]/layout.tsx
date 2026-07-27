@@ -2,12 +2,7 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
-import {
-  useParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -54,11 +49,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import {
-  filterApplicants,
-  parseRatingFilter,
-  parseStatusFilter,
-} from "@/lib/applicant-list-order";
+import { filterApplicants, parseRatingFilter, parseStatusFilter } from "@/lib/applicant-list-order";
 import { recordRecentlyViewed } from "@/lib/applicant-recent";
 import { formatIsoDate, initials } from "@/lib/format";
 
@@ -77,19 +68,19 @@ const TAB_LABEL_KEYS: Record<string, string> = {
 function resolveItemLabel(
   tab: string,
   itemId: string,
-  applicant: NonNullable<ReturnType<typeof useApplicantQuery>>
+  applicant: NonNullable<ReturnType<typeof useApplicantQuery>>,
 ): string | null {
   switch (tab) {
     case "dokumente":
-      return applicant.documents.find(d => d._id === itemId)?.fileName ?? null;
+      return applicant.documents.find((d) => d._id === itemId)?.fileName ?? null;
     case "termine":
-      return applicant.termine.find(t => t._id === itemId)?.datum ?? null;
+      return applicant.termine.find((t) => t._id === itemId)?.datum ?? null;
     case "kontakte":
-      return applicant.kontakte.find(k => k._id === itemId)?.datum ?? null;
+      return applicant.kontakte.find((k) => k._id === itemId)?.datum ?? null;
     case "emails":
-      return applicant.emails.find(e => e._id === itemId)?.datum ?? null;
+      return applicant.emails.find((e) => e._id === itemId)?.datum ?? null;
     case "interviews":
-      return applicant.interviews.find(iv => iv._id === itemId)?.datum ?? null;
+      return applicant.interviews.find((iv) => iv._id === itemId)?.datum ?? null;
     default:
       return null;
   }
@@ -99,11 +90,7 @@ function useApplicantQuery(applicantId: Id<"applicants">) {
   return useQuery(api.applicants.get, { applicantId });
 }
 
-export default function ApplicantDetailLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function ApplicantDetailLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Applicants");
   const tc = useTranslations("Common");
   const params = useParams<{ id: string }>();
@@ -116,9 +103,9 @@ export default function ApplicantDetailLayout({
   const remove = useMutation(api.applicants.remove);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
-  const [quickAdd, setQuickAdd] = useState<
-    "termin" | "kontakt" | "email" | "interview" | null
-  >(null);
+  const [quickAdd, setQuickAdd] = useState<"termin" | "kontakt" | "email" | "interview" | null>(
+    null,
+  );
 
   const segments = pathname.split("/").filter(Boolean); // ["applicants", id, tab?, itemId?]
   const activeTab = segments[2] ?? "uebersicht";
@@ -131,10 +118,7 @@ export default function ApplicantDetailLayout({
   const fromStatus = parseStatusFilter(searchParams.get("status"));
   const fromRating = parseRatingFilter(searchParams.get("rating"));
   const fromSearch = searchParams.get("search") ?? "";
-  const allApplicants = useQuery(
-    api.applicants.list,
-    cameFromList ? {} : "skip"
-  );
+  const allApplicants = useQuery(api.applicants.list, cameFromList ? {} : "skip");
   const adjacent = useMemo(() => {
     if (!allApplicants || !cameFromList) return null;
     const sequence = filterApplicants(allApplicants, {
@@ -142,20 +126,13 @@ export default function ApplicantDetailLayout({
       rating: fromRating,
       search: fromSearch,
     });
-    const index = sequence.findIndex(a => a._id === applicantId);
+    const index = sequence.findIndex((a) => a._id === applicantId);
     if (index === -1) return null;
     return {
       prev: sequence[index - 1] ?? null,
       next: sequence[index + 1] ?? null,
     };
-  }, [
-    allApplicants,
-    cameFromList,
-    fromStatus,
-    fromRating,
-    fromSearch,
-    applicantId,
-  ]);
+  }, [allApplicants, cameFromList, fromStatus, fromRating, fromSearch, applicantId]);
 
   function adjacentHref(targetId: Id<"applicants">) {
     const p = new URLSearchParams({ from: "list" });
@@ -195,9 +172,7 @@ export default function ApplicantDetailLayout({
   if (applicant === undefined) return null;
   if (applicant === null) {
     return (
-      <p className="py-20 text-center text-sm text-muted-foreground">
-        {t("applicantNotFound")}
-      </p>
+      <p className="py-20 text-center text-sm text-muted-foreground">{t("applicantNotFound")}</p>
     );
   }
 
@@ -213,7 +188,7 @@ export default function ApplicantDetailLayout({
       href: `/applicants/${applicantId}/termine`,
       label: t("tabTermine"),
       icon: CalendarClock,
-      count: applicant.termine.filter(tm => !tm.uebernommen).length,
+      count: applicant.termine.filter((tm) => !tm.uebernommen).length,
     },
     {
       value: "dokumente",
@@ -250,9 +225,7 @@ export default function ApplicantDetailLayout({
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/applicants/list">
-              {t("pageTitle")}
-            </BreadcrumbLink>
+            <BreadcrumbLink href="/applicants/list">{t("pageTitle")}</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -269,15 +242,11 @@ export default function ApplicantDetailLayout({
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 {itemId ? (
-                  <BreadcrumbLink
-                    href={`/applicants/${applicantId}/${activeTab}`}
-                  >
+                  <BreadcrumbLink href={`/applicants/${applicantId}/${activeTab}`}>
                     {t(TAB_LABEL_KEYS[activeTab] ?? "tabOverview")}
                   </BreadcrumbLink>
                 ) : (
-                  <BreadcrumbPage>
-                    {t(TAB_LABEL_KEYS[activeTab] ?? "tabOverview")}
-                  </BreadcrumbPage>
+                  <BreadcrumbPage>{t(TAB_LABEL_KEYS[activeTab] ?? "tabOverview")}</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
             </>
@@ -286,9 +255,7 @@ export default function ApplicantDetailLayout({
             <>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>
-                  {itemLabel ?? formatIsoDate(itemId, locale)}
-                </BreadcrumbPage>
+                <BreadcrumbPage>{itemLabel ?? formatIsoDate(itemId, locale)}</BreadcrumbPage>
               </BreadcrumbItem>
             </>
           )}
@@ -301,9 +268,7 @@ export default function ApplicantDetailLayout({
             variant="outline"
             size="sm"
             aria-label={t("switchApplicant")}
-            onClick={() =>
-              window.dispatchEvent(new Event("command-palette:open"))
-            }
+            onClick={() => window.dispatchEvent(new Event("command-palette:open"))}
           >
             <Search className="size-4" />
             <span className="hidden md:inline">{t("switchApplicant")}</span>
@@ -317,9 +282,7 @@ export default function ApplicantDetailLayout({
               size="sm"
               aria-label={t("prevApplicant")}
               disabled={!adjacent.prev}
-              onClick={() =>
-                adjacent.prev && router.push(adjacentHref(adjacent.prev._id))
-              }
+              onClick={() => adjacent.prev && router.push(adjacentHref(adjacent.prev._id))}
             >
               <ChevronLeft className="size-4" />
               <span className="hidden md:inline">{t("prevApplicant")}</span>
@@ -329,9 +292,7 @@ export default function ApplicantDetailLayout({
               size="sm"
               aria-label={t("nextApplicant")}
               disabled={!adjacent.next}
-              onClick={() =>
-                adjacent.next && router.push(adjacentHref(adjacent.next._id))
-              }
+              onClick={() => adjacent.next && router.push(adjacentHref(adjacent.next._id))}
             >
               <span className="hidden md:inline">{t("nextApplicant")}</span>
               <ChevronRight className="size-4" />
@@ -350,15 +311,9 @@ export default function ApplicantDetailLayout({
             </Avatar>
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="font-display text-2xl font-bold tracking-tight">
-                  {applicant.name}
-                </h1>
-                <Badge
-                  variant={applicant.status === "neu" ? "default" : "muted"}
-                >
-                  {applicant.status === "neu"
-                    ? t("statusNeu")
-                    : t("statusPool")}
+                <h1 className="font-display text-2xl font-bold tracking-tight">{applicant.name}</h1>
+                <Badge variant={applicant.status === "neu" ? "default" : "muted"}>
+                  {applicant.status === "neu" ? t("statusNeu") : t("statusPool")}
                 </Badge>
               </div>
               <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -371,7 +326,7 @@ export default function ApplicantDetailLayout({
                   {t("receivedOn", {
                     date: formatIsoDate(
                       new Date(applicant.createdAt).toISOString().slice(0, 10),
-                      locale
+                      locale,
                     ),
                   })}
                 </span>
@@ -431,31 +386,28 @@ export default function ApplicantDetailLayout({
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">{children}</div>
-        <ApplicantSidebar
-          applicant={applicant}
-          className="lg:sticky lg:top-20 lg:self-start"
-        />
+        <ApplicantSidebar applicant={applicant} className="lg:sticky lg:top-20 lg:self-start" />
       </div>
 
       <TerminDialog
         open={quickAdd === "termin"}
-        onOpenChange={open => !open && setQuickAdd(null)}
+        onOpenChange={(open) => !open && setQuickAdd(null)}
         fixedApplicantId={applicantId}
       />
       <KontaktDialog
         open={quickAdd === "kontakt"}
-        onOpenChange={open => !open && setQuickAdd(null)}
+        onOpenChange={(open) => !open && setQuickAdd(null)}
         applicantId={applicantId}
         showFirstContactHint={applicant.status === "neu"}
       />
       <EmailDialog
         open={quickAdd === "email"}
-        onOpenChange={open => !open && setQuickAdd(null)}
+        onOpenChange={(open) => !open && setQuickAdd(null)}
         applicantId={applicantId}
       />
       <InterviewDialog
         open={quickAdd === "interview"}
-        onOpenChange={open => !open && setQuickAdd(null)}
+        onOpenChange={(open) => !open && setQuickAdd(null)}
         applicantId={applicantId}
       />
     </div>

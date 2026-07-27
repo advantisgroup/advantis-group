@@ -2,22 +2,10 @@
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import {
-  Award,
-  Coffee,
-  Lock,
-  Plane,
-  ScrollText,
-  TrendingUp,
-  Users2,
-  Wifi,
-} from "lucide-react";
+import { Award, Coffee, Lock, Plane, ScrollText, TrendingUp, Users2, Wifi } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import {
-  useCurrentUser,
-  useIsAdmin,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
 import { relativeTime } from "@/lib/format";
 
 import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
@@ -115,15 +103,11 @@ export function AdminStatsCard() {
   const user = useCurrentUser();
   const isAdmin = useIsAdmin();
   const pending = useQuery(api.absences.pendingForApproval);
-  const hasApplicantAccess =
-    isAdmin || user.applicantAccess || user.applicantAccessDelegate;
-  const vaultStatus = useQuery(
-    api.applicantVault.status,
-    hasApplicantAccess ? {} : "skip"
-  );
+  const hasApplicantAccess = isAdmin || user.applicantAccess || user.applicantAccessDelegate;
+  const vaultStatus = useQuery(api.applicantVault.status, hasApplicantAccess ? {} : "skip");
   const pipeline = useQuery(
     api.applicants.pipelineCount,
-    hasApplicantAccess && vaultStatus?.unlocked ? {} : "skip"
+    hasApplicantAccess && vaultStatus?.unlocked ? {} : "skip",
   );
 
   return (
@@ -141,12 +125,7 @@ export function AdminStatsCard() {
         )}
         {hasApplicantAccess &&
           (vaultStatus === undefined ? null : !vaultStatus.unlocked ? (
-            <StatLine
-              icon={<Lock />}
-              label={t("vaultLockedHint")}
-              value=""
-              href="/applicants"
-            />
+            <StatLine icon={<Lock />} label={t("vaultLockedHint")} value="" href="/applicants" />
           ) : pipeline !== undefined ? (
             <StatLine
               icon={<Users2 />}
@@ -175,15 +154,13 @@ export function RecentActivityCard() {
           {t("noRecentActivity")}
         </Empty>
       ) : (
-        rows.map(r => (
+        rows.map((r) => (
           <Row
             key={r._id}
             href={`/admin/audit?entry=${r._id}`}
             title={`${r.user?.name ?? "unknown"} · ${r.action}`}
             subtitle={r.target ?? undefined}
-            trailing={
-              <span className="whitespace-nowrap">{relativeTime(r.at)}</span>
-            }
+            trailing={<span className="whitespace-nowrap">{relativeTime(r.at)}</span>}
           />
         ))
       )}

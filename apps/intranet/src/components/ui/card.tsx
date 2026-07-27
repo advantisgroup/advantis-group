@@ -17,7 +17,7 @@ function Card({ className, nested = false, ...props }: CardProps) {
         nested
           ? "shadow-none"
           : "shadow-[0_1px_2px_0_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.10)]",
-        className
+        className,
       )}
       {...props}
     />
@@ -33,7 +33,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
         // pushed CardDescription to the right of the title.) For a right-aligned
         // action, give the header a custom row layout at the call site.
         "flex flex-col gap-1.5 p-5 [.border-b]:pb-4",
-        className
+        className,
       )}
       {...props}
     />
@@ -64,23 +64,14 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-action"
-      className={cn(
-        "col-start-2 row-span-2 row-start-1 self-start justify-self-end",
-        className
-      )}
+      className={cn("col-start-2 row-span-2 row-start-1 self-start justify-self-end", className)}
       {...props}
     />
   );
 }
 
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
-  return (
-    <div
-      data-slot="card-content"
-      className={cn("p-5 pt-0", className)}
-      {...props}
-    />
-  );
+  return <div data-slot="card-content" className={cn("p-5 pt-0", className)} {...props} />;
 }
 
 function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
@@ -93,12 +84,4 @@ function CardFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-export {
-  Card,
-  CardHeader,
-  CardFooter,
-  CardTitle,
-  CardAction,
-  CardDescription,
-  CardContent,
-};
+export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent };

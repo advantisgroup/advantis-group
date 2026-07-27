@@ -18,7 +18,7 @@ export const sendBulk = internalAction({
     const serverKey = process.env.CONVEX_SERVER_KEY;
     if (!baseUrl || !serverKey) {
       console.log(
-        `[updatesEmail] skipping bulk send for ${updateId} — API_URL/CONVEX_SERVER_KEY not set`
+        `[updatesEmail] skipping bulk send for ${updateId} — API_URL/CONVEX_SERVER_KEY not set`,
       );
       return { sent: false, reason: "skipping cause unset keys" };
     }
@@ -28,21 +28,16 @@ export const sendBulk = internalAction({
     });
     if (!update) return { sent: false, reason: "no update found" };
 
-    const users = await ctx.runQuery(
-      internal.updatesInternal.listActiveUsers,
-      {}
-    );
+    const users = await ctx.runQuery(internal.updatesInternal.listActiveUsers, {});
     const recipients = users
-      .filter(u => userMatchesAudience(u, update.audience as Audience))
+      .filter((u) => userMatchesAudience(u, update.audience as Audience))
       // Externals must explicitly opt in to Updates emails (default off);
       // internal employees are always eligible.
-      .filter(u => !u.external || u.updatesEmailConsent === true)
-      .map(u => ({ userId: u._id, email: u.email }));
-    if (recipients.length === 0)
-      return { sent: false, reason: "recicpient length is 0" };
+      .filter((u) => !u.external || u.updatesEmailConsent === true)
+      .map((u) => ({ userId: u._id, email: u.email }));
+    if (recipients.length === 0) return { sent: false, reason: "recicpient length is 0" };
 
-    const internalUrl =
-      process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
+    const internalUrl = process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
     try {
       const res = await fetch(`${baseUrl}/internal/updates/broadcast`, {
         method: "POST",
@@ -60,9 +55,7 @@ export const sendBulk = internalAction({
         }),
       });
       if (!res.ok) {
-        console.error(
-          `[updatesEmail] broadcast failed: ${res.status} ${await res.text()}`
-        );
+        console.error(`[updatesEmail] broadcast failed: ${res.status} ${await res.text()}`);
         return { sent: false, reason: `Not ok` };
       }
       const body = await res.text();
@@ -77,7 +70,7 @@ export const sendBulk = internalAction({
       };
       await ctx.runMutation(internal.updates.recordEmailSendResults, {
         updateId,
-        results: results.map(r => ({
+        results: results.map((r) => ({
           userId: r.userId as Id<"users">,
           email: r.email,
           resendEmailId: r.resendEmailId,

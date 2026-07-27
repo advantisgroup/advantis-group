@@ -79,7 +79,7 @@ export const listAll = query({
     await requireUser(ctx);
     return ctx.db
       .query("academyParticipants")
-      .withIndex("by_academy", q => q.eq("academyId", academyId))
+      .withIndex("by_academy", (q) => q.eq("academyId", academyId))
       .collect();
   },
 });
@@ -95,8 +95,8 @@ export const findByCode = query({
   handler: async (ctx, { academyId, code }) => {
     const participant = await ctx.db
       .query("academyParticipants")
-      .withIndex("by_academy_code", q =>
-        q.eq("academyId", academyId).eq("code", code.trim().toUpperCase())
+      .withIndex("by_academy_code", (q) =>
+        q.eq("academyId", academyId).eq("code", code.trim().toUpperCase()),
       )
       .unique();
     return participant ? { id: participant._id, name: participant.name } : null;
@@ -109,14 +109,14 @@ export const remove = mutation({
     await requireUser(ctx);
     const results = await ctx.db
       .query("academyResults")
-      .withIndex("by_participant", q => q.eq("participantId", participantId))
+      .withIndex("by_participant", (q) => q.eq("participantId", participantId))
       .collect();
-    await Promise.all(results.map(r => ctx.db.delete(r._id)));
+    await Promise.all(results.map((r) => ctx.db.delete(r._id)));
     const questions = await ctx.db
       .query("academyQuestions")
-      .withIndex("by_participant", q => q.eq("participantId", participantId))
+      .withIndex("by_participant", (q) => q.eq("participantId", participantId))
       .collect();
-    await Promise.all(questions.map(q => ctx.db.delete(q._id)));
+    await Promise.all(questions.map((q) => ctx.db.delete(q._id)));
     await ctx.db.delete(participantId);
   },
 });

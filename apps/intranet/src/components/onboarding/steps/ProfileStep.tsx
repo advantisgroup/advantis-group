@@ -45,9 +45,7 @@ export function ProfileStep() {
   function scheduleSave() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      updateProfile({ firstName, lastName, jobTitle, phone }).catch(
-        handleError
-      );
+      updateProfile({ firstName, lastName, jobTitle, phone }).catch(handleError);
     }, SAVE_DEBOUNCE_MS);
   }
 
@@ -62,7 +60,7 @@ export function ProfileStep() {
       setAvatarUrl(previewUrl);
       const avatarStorageId = await uploadToConvex(
         () => generateUploadUrl({}),
-        new File([cropped], "avatar.jpg", { type: "image/jpeg" })
+        new File([cropped], "avatar.jpg", { type: "image/jpeg" }),
       );
       await updateProfile({ avatarStorageId });
     } catch (err) {
@@ -75,9 +73,7 @@ export function ProfileStep() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-display text-lg font-semibold tracking-tight">
-          {t("profileTitle")}
-        </h2>
+        <h2 className="font-display text-lg font-semibold tracking-tight">{t("profileTitle")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("profileHint")}</p>
       </div>
 
@@ -100,9 +96,7 @@ export function ProfileStep() {
             onChange={onAvatar}
           />
         </label>
-        <p className="text-xs text-muted-foreground">
-          {t("profileAvatarHint")}
-        </p>
+        <p className="text-xs text-muted-foreground">{t("profileAvatarHint")}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -110,7 +104,7 @@ export function ProfileStep() {
           <Label>{ts("firstName")}</Label>
           <Input
             value={firstName}
-            onChange={e => setFirstName(e.target.value)}
+            onChange={(e) => setFirstName(e.target.value)}
             onBlur={scheduleSave}
           />
         </div>
@@ -118,7 +112,7 @@ export function ProfileStep() {
           <Label>{ts("lastName")}</Label>
           <Input
             value={lastName}
-            onChange={e => setLastName(e.target.value)}
+            onChange={(e) => setLastName(e.target.value)}
             onBlur={scheduleSave}
           />
         </div>
@@ -127,17 +121,13 @@ export function ProfileStep() {
         <Label>{ts("jobTitle")}</Label>
         <Input
           value={jobTitle}
-          onChange={e => setJobTitle(e.target.value)}
+          onChange={(e) => setJobTitle(e.target.value)}
           onBlur={scheduleSave}
         />
       </div>
       <div className="space-y-1.5">
         <Label>{ts("phone")}</Label>
-        <Input
-          value={phone}
-          onChange={e => setPhone(e.target.value)}
-          onBlur={scheduleSave}
-        />
+        <Input value={phone} onChange={(e) => setPhone(e.target.value)} onBlur={scheduleSave} />
       </div>
     </div>
   );

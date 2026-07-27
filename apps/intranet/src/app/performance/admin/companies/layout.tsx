@@ -26,11 +26,7 @@ const ROLES_PATH = "/performance/admin/companies/roles";
  * tabs under a single `/performance/admin/companies` nav entry instead of
  * competing for space in the dashboard header.
  */
-export default function CompaniesAdminLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function CompaniesAdminLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Performance");
   const router = useRouter();
   const pathname = usePathname();
@@ -38,8 +34,7 @@ export default function CompaniesAdminLayout({
 
   // A super-admin always has every permission (see performanceAuth.ts's
   // validateSession), so this alone already covers both audiences.
-  const canManageRoles =
-    session?.valid && session.permissions.includes("manage_roles");
+  const canManageRoles = session?.valid && session.permissions.includes("manage_roles");
 
   useEffect(() => {
     if (!session) return;
@@ -97,20 +92,14 @@ export default function CompaniesAdminLayout({
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+      <PerformanceHeader navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
       {tabs.length > 1 && (
         <div className="mx-auto max-w-7xl px-4 md:px-6">
           <RouteTabs tabs={tabs} activeValue={activeTab} />
         </div>
       )}
       {children}
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+      <PerformanceBottomTabs navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
     </div>
   );
 }

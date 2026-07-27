@@ -9,10 +9,7 @@ import { ConvexError } from "convex/values";
  * `Error`s (network drops, client bugs) get the generic message — but they are
  * never swallowed: callers also log them to the console.
  */
-type Translate = (
-  key: string,
-  vars?: Record<string, string | number>
-) => string;
+type Translate = (key: string, vars?: Record<string, string | number>) => string;
 
 interface AppErrorData {
   code?: unknown;

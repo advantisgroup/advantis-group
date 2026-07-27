@@ -48,10 +48,8 @@ function writeSessionStorage(key: string, value: unknown): void {
 
 const listingCache = new Map<string, Entry<OneDriveListing>>(
   Object.entries(
-    readSessionStorage<Record<string, Entry<OneDriveListing>>>(
-      LISTING_STORAGE_KEY
-    ) ?? {}
-  )
+    readSessionStorage<Record<string, Entry<OneDriveListing>>>(LISTING_STORAGE_KEY) ?? {},
+  ),
 );
 let quotaCache: Entry<DriveQuota> | null =
   readSessionStorage<Entry<DriveQuota>>(QUOTA_STORAGE_KEY) ?? null;
@@ -73,10 +71,7 @@ export function isListingFresh(path: string): boolean {
   return Boolean(entry && Date.now() - entry.timestamp < LISTING_TTL_MS);
 }
 
-export function setCachedListing(
-  requestedPath: string,
-  data: OneDriveListing
-): void {
+export function setCachedListing(requestedPath: string, data: OneDriveListing): void {
   const entry: Entry<OneDriveListing> = { data, timestamp: Date.now() };
   listingCache.set(keyFor(requestedPath), entry);
   // The server may resolve the path differently (e.g. trailing slash) — key
@@ -96,9 +91,7 @@ export function getCachedQuota(): DriveQuota | undefined {
 }
 
 export function isQuotaFresh(): boolean {
-  return Boolean(
-    quotaCache && Date.now() - quotaCache.timestamp < QUOTA_TTL_MS
-  );
+  return Boolean(quotaCache && Date.now() - quotaCache.timestamp < QUOTA_TTL_MS);
 }
 
 export function setCachedQuota(data: DriveQuota): void {

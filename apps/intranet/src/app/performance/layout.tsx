@@ -12,11 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 // (mounted in AppShell). Every page under here — not just the RouteTabs
 // ones — needs both, so they're provided once at the root instead of
 // per-page.
-export default async function PerformanceLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default async function PerformanceLayout({ children }: { children: ReactNode }) {
   // Set by proxy.ts's tenant-domain rewrite; absent on the main intranet
   // host, where PerformanceCompanyProvider falls back to Advantis's slug.
   const headerList = await headers();
@@ -27,9 +23,7 @@ export default async function PerformanceLayout({
   return (
     <TooltipProvider delayDuration={150}>
       <BottomNavTabsProvider>
-        <PerformanceCompanyProvider company={company}>
-          {children}
-        </PerformanceCompanyProvider>
+        <PerformanceCompanyProvider company={company}>{children}</PerformanceCompanyProvider>
       </BottomNavTabsProvider>
     </TooltipProvider>
   );

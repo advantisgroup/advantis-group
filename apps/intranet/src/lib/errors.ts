@@ -10,12 +10,7 @@
 import { ConvexError } from "convex/values";
 
 /** Error codes thrown by the Convex backend. Keep in sync with the backend. */
-export type ErrorCode =
-  | "unauthenticated"
-  | "forbidden"
-  | "not_found"
-  | "bad_request"
-  | "conflict";
+export type ErrorCode = "unauthenticated" | "forbidden" | "not_found" | "bad_request" | "conflict";
 
 const KNOWN_CODES: readonly ErrorCode[] = [
   "unauthenticated",
@@ -41,10 +36,7 @@ interface ConvexErrorData {
 }
 
 function isErrorCode(value: unknown): value is ErrorCode {
-  return (
-    typeof value === "string" &&
-    (KNOWN_CODES as readonly string[]).includes(value)
-  );
+  return typeof value === "string" && (KNOWN_CODES as readonly string[]).includes(value);
 }
 
 /**
@@ -85,12 +77,10 @@ export function parseError(error: unknown): ParsedError {
  */
 export function getErrorMessage(
   error: unknown,
-  fallbacks: Partial<Record<ErrorCode | "generic", string>> = {}
+  fallbacks: Partial<Record<ErrorCode | "generic", string>> = {},
 ): string {
   const { code, message } = parseError(error);
   if (message) return message;
   const byCode = code ? fallbacks[code] : undefined;
-  return (
-    byCode ?? fallbacks.generic ?? "Something went wrong. Please try again."
-  );
+  return byCode ?? fallbacks.generic ?? "Something went wrong. Please try again.";
 }

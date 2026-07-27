@@ -36,10 +36,10 @@ export function ApplicantAccessPanel() {
   const [pickerId, setPickerId] = useState("");
   const [stepUpAction, setStepUpAction] = useState<(() => void) | null>(null);
 
-  const granted = (eligible ?? []).filter(u => u.applicantAccess);
-  const grantable = (eligible ?? []).filter(u => !u.applicantAccess);
+  const granted = (eligible ?? []).filter((u) => u.applicantAccess);
+  const grantable = (eligible ?? []).filter((u) => !u.applicantAccess);
   const passwordIsSetByUser = new Map(
-    (passwordStatuses ?? []).map(s => [s.userId, s.passwordIsSet])
+    (passwordStatuses ?? []).map((s) => [s.userId, s.passwordIsSet]),
   );
 
   function doGrant(userId: Id<"users">, name: string) {
@@ -113,9 +113,7 @@ export function ApplicantAccessPanel() {
             <InfoTip text={t("accessDescription")} />
           </div>
           {grantable.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("noEligibleUsers")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("noEligibleUsers")}</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               <Select value={pickerId} onValueChange={setPickerId}>
@@ -123,7 +121,7 @@ export function ApplicantAccessPanel() {
                   <SelectValue placeholder={t("chooseUser")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {grantable.map(u => (
+                  {grantable.map((u) => (
                     <SelectItem key={u._id} value={u._id}>
                       {u.name} · {u.email}
                     </SelectItem>
@@ -134,20 +132,16 @@ export function ApplicantAccessPanel() {
                 disabled={!pickerId}
                 aria-label={t("grantAccessConfirm")}
                 onClick={() => {
-                  const user = grantable.find(u => u._id === pickerId);
+                  const user = grantable.find((u) => u._id === pickerId);
                   if (user) void grant(user._id, user.name);
                 }}
               >
                 <ShieldCheck className="size-4" />
-                <span className="hidden md:inline">
-                  {t("grantAccessConfirm")}
-                </span>
+                <span className="hidden md:inline">{t("grantAccessConfirm")}</span>
               </Button>
             </div>
           )}
-          <p className="text-xs text-muted-foreground">
-            {t("eligibilityHint")}
-          </p>
+          <p className="text-xs text-muted-foreground">{t("eligibilityHint")}</p>
         </CardContent>
       </Card>
 
@@ -158,22 +152,16 @@ export function ApplicantAccessPanel() {
         {granted.length === 0 ? (
           <p className="text-sm text-muted-foreground">{t("noOneHasAccess")}</p>
         ) : (
-          granted.map(u => (
+          granted.map((u) => (
             <Card nested key={u._id}>
               <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{u.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {u.email}
-                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Badge variant="muted">{tRoles(u.role)}</Badge>
-                  <Badge
-                    variant={
-                      passwordIsSetByUser.get(u._id) ? "muted" : "outline"
-                    }
-                  >
+                  <Badge variant={passwordIsSetByUser.get(u._id) ? "muted" : "outline"}>
                     {passwordIsSetByUser.get(u._id)
                       ? t("resetPasswordSet")
                       : t("resetPasswordNotSet")}
@@ -186,9 +174,7 @@ export function ApplicantAccessPanel() {
                       onClick={() => void resetPasswordFor(u._id, u.name)}
                     >
                       <KeyRound className="size-4" />
-                      <span className="hidden md:inline">
-                        {t("resetPassword")}
-                      </span>
+                      <span className="hidden md:inline">{t("resetPassword")}</span>
                     </Button>
                   )}
                   <Button
@@ -199,9 +185,7 @@ export function ApplicantAccessPanel() {
                     onClick={() => void revoke(u._id, u.name)}
                   >
                     <UserMinus className="size-4" />
-                    <span className="hidden md:inline">
-                      {t("revokeAccessConfirm")}
-                    </span>
+                    <span className="hidden md:inline">{t("revokeAccessConfirm")}</span>
                   </Button>
                 </div>
               </CardContent>
@@ -212,7 +196,7 @@ export function ApplicantAccessPanel() {
 
       <VaultStepUpDialog
         open={!!stepUpAction}
-        onOpenChange={o => !o && setStepUpAction(null)}
+        onOpenChange={(o) => !o && setStepUpAction(null)}
         onVerified={() => {
           stepUpAction?.();
           setStepUpAction(null);

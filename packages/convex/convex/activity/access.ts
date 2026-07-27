@@ -18,21 +18,18 @@ import { getAdminEmails, getAllowedDomains, requireUser } from "../lib/auth";
  */
 export const getAccessControl = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
 
     // Permanent admins are seeded from the env var; additionally surface anyone
     // currently holding the `admin` role so the list reflects live state.
     const roleAdmins = await ctx.db
       .query("users")
-      .withIndex("by_role", q => q.eq("role", "admin"))
+      .withIndex("by_role", (q) => q.eq("role", "admin"))
       .collect();
 
     const adminEmails = [
-      ...new Set([
-        ...getAdminEmails(),
-        ...roleAdmins.map(u => u.email.toLowerCase()),
-      ]),
+      ...new Set([...getAdminEmails(), ...roleAdmins.map((u) => u.email.toLowerCase())]),
     ].sort();
 
     return {

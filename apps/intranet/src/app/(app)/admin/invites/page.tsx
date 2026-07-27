@@ -6,10 +6,7 @@ import { useTranslations } from "next-intl";
 import { InvitesPanel } from "@/app/(app)/admin/InvitesPanel";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeader } from "@/components/PageHeader";
-import {
-  useCurrentUser,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 
 export default function AdminInvitesPage() {
   const t = useTranslations("Admin");

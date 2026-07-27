@@ -20,10 +20,7 @@ import { ACADEMY_ID } from "./use-academy-progress";
 export function ParticipantLogin({
   onLogin,
 }: {
-  onLogin: (participant: {
-    id: Id<"academyParticipants">;
-    name: string;
-  }) => void;
+  onLogin: (participant: { id: Id<"academyParticipants">; name: string }) => void;
 }) {
   const convex = useConvex();
 
@@ -43,13 +40,10 @@ export function ParticipantLogin({
     setChecking(true);
     setCodeError("");
     try {
-      const participant = await convex.query(
-        api.academyParticipants.findByCode,
-        {
-          academyId: ACADEMY_ID,
-          code,
-        }
-      );
+      const participant = await convex.query(api.academyParticipants.findByCode, {
+        academyId: ACADEMY_ID,
+        code,
+      });
       if (!participant) {
         setCodeError("Code nicht gefunden. Bitte beim Absender nachfragen.");
         return;
@@ -77,19 +71,14 @@ export function ParticipantLogin({
             placeholder="z. B. K7M2QX"
             maxLength={10}
             value={code}
-            onChange={e => setCode(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && void submit()}
+            onChange={(e) => setCode(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && void submit()}
           />
-          <Button
-            onClick={() => void submit()}
-            disabled={checking || !code.trim()}
-          >
+          <Button onClick={() => void submit()} disabled={checking || !code.trim()}>
             Training starten
           </Button>
         </div>
-        {codeError ? (
-          <p className="mt-1.5 text-sm text-destructive">{codeError}</p>
-        ) : null}
+        {codeError ? <p className="mt-1.5 text-sm text-destructive">{codeError}</p> : null}
       </CardContent>
     </Card>
   );

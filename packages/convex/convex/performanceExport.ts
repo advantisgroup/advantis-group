@@ -46,7 +46,7 @@ export const apiExportTeam = query({
   handler: async (ctx, { serverKey, companyId, ym }): Promise<ExportRow[]> => {
     assertServerKey(serverKey);
     const { snaps } = await teamTotals(ctx, companyId, ym);
-    return snaps.map(s => ({
+    return snaps.map((s) => ({
       name: s.name,
       leadsCreated: s.leadsCreated ?? 0,
       workableCreated: s.workableCreated ?? 0,

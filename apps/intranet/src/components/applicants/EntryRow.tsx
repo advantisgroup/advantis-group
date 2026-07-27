@@ -40,7 +40,7 @@ export function EntryRow({
       <span
         className={cn(
           "mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground",
-          iconClassName
+          iconClassName,
         )}
       >
         <Icon className="size-4" />
@@ -49,9 +49,7 @@ export function EntryRow({
         <p className="text-sm font-medium leading-snug">{title}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">{meta}</p>
         {note && (
-          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-            {note}
-          </p>
+          <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{note}</p>
         )}
       </div>
       <div className="flex shrink-0 items-center gap-1 self-center">
@@ -59,7 +57,7 @@ export function EntryRow({
           <button
             type="button"
             aria-label={deleteLabel}
-            onClick={e => {
+            onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               onDelete();

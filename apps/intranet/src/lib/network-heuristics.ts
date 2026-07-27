@@ -14,19 +14,13 @@ interface NetworkInformation {
 export function shouldEagerPrefetch(): boolean {
   if (typeof navigator === "undefined") return false;
 
-  const connection = (
-    navigator as Navigator & { connection?: NetworkInformation }
-  ).connection;
+  const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection;
   if (connection?.saveData) return false;
-  if (
-    connection?.effectiveType &&
-    ["slow-2g", "2g", "3g"].includes(connection.effectiveType)
-  ) {
+  if (connection?.effectiveType && ["slow-2g", "2g", "3g"].includes(connection.effectiveType)) {
     return false;
   }
 
-  const deviceMemory = (navigator as Navigator & { deviceMemory?: number })
-    .deviceMemory;
+  const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
   if (typeof deviceMemory === "number" && deviceMemory < 4) return false;
 
   return true;

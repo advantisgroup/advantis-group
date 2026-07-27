@@ -12,8 +12,8 @@ function parseList(value: string | undefined): string[] {
   if (!value) return [];
   return value
     .split(/[,;\s]+/)
-    .map(entry => entry.trim().toLowerCase())
-    .filter(entry => entry.length > 0);
+    .map((entry) => entry.trim().toLowerCase())
+    .filter((entry) => entry.length > 0);
 }
 
 /** Admin emails seeded via the `ADMIN_EMAILS` Convex env var. */
@@ -45,11 +45,11 @@ export function isAdminEmail(email: string): boolean {
 
 export async function getUserByClerkId(
   ctx: QueryCtx | MutationCtx,
-  clerkUserId: string
+  clerkUserId: string,
 ): Promise<Doc<"users"> | null> {
   return ctx.db
     .query("users")
-    .withIndex("by_clerkUserId", q => q.eq("clerkUserId", clerkUserId))
+    .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", clerkUserId))
     .unique();
 }
 
@@ -64,9 +64,7 @@ export async function getUserByClerkId(
  * marketing and the intranet were still on separate Clerk instances with
  * different `subject`s for the same person.
  */
-export async function getCurrentUser(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users"> | null> {
+export async function getCurrentUser(ctx: QueryCtx | MutationCtx): Promise<Doc<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;
 
@@ -77,14 +75,12 @@ export async function getCurrentUser(
   if (!email) return null;
   return ctx.db
     .query("users")
-    .withIndex("by_email", q => q.eq("email", email))
+    .withIndex("by_email", (q) => q.eq("email", email))
     .unique();
 }
 
 /** Like getCurrentUser but throws when there is no active intranet account. */
-export async function requireUser(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
+export async function requireUser(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   const user = await getCurrentUser(ctx);
   if (!user) {
     throw new ConvexError({
@@ -101,7 +97,7 @@ export async function requireUser(
 /** Require the current user to hold one of the given roles. */
 export async function requireRole(
   ctx: QueryCtx | MutationCtx,
-  roles: readonly Role[]
+  roles: readonly Role[],
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
   if (!roles.includes(user.role)) {
@@ -115,15 +111,11 @@ export async function requireRole(
 
 export const MANAGER_ROLES: readonly Role[] = ["admin", "manager"];
 
-export async function requireManager(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
+export async function requireManager(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   return requireRole(ctx, MANAGER_ROLES);
 }
 
-export async function requireAdmin(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
+export async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   return requireRole(ctx, ["admin"]);
 }
 
@@ -135,14 +127,12 @@ export async function requireAdmin(
  */
 export async function requireCapability(
   ctx: QueryCtx | MutationCtx,
-  capability: Capability
+  capability: Capability,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
   if (MANAGER_ROLES.includes(user.role)) return user;
 
-  const customRole = user.customRoleId
-    ? await ctx.db.get(user.customRoleId)
-    : null;
+  const customRole = user.customRoleId ? await ctx.db.get(user.customRoleId) : null;
   if (!customRole?.capabilities.includes(capability)) {
     throw new ConvexError({
       code: "forbidden",
@@ -161,7 +151,7 @@ export async function requireCapability(
  */
 export function isApplicantEligible(
   user: Doc<"users">,
-  customRole: Doc<"customRoles"> | null
+  customRole: Doc<"customRoles"> | null,
 ): boolean {
   return (
     MANAGER_ROLES.includes(user.role) ||
@@ -180,11 +170,11 @@ export function isApplicantEligible(
  */
 export async function requireVaultUnlocked(
   ctx: QueryCtx | MutationCtx,
-  userId: Doc<"users">["_id"]
+  userId: Doc<"users">["_id"],
 ): Promise<void> {
   const unlock = await ctx.db
     .query("applicantVaultUnlocks")
-    .withIndex("by_user", q => q.eq("userId", userId))
+    .withIndex("by_user", (q) => q.eq("userId", userId))
     .unique();
   if (!unlock || unlock.expiresAt <= Date.now()) {
     throw new ConvexError({
@@ -196,9 +186,7 @@ export async function requireVaultUnlocked(
 
 /** Require the current user to have Applicant Management access (admin bypasses
  * the role/delegate check, but not the vault). */
-export async function requireApplicantAccess(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
+export async function requireApplicantAccess(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
   if (user.role !== "admin" && !user.applicantAccess) {
     throw new ConvexError({
@@ -215,7 +203,7 @@ export async function requireApplicantAccess(
  * access for others: an admin, or a user designated as a delegate.
  */
 export async function requireApplicantDelegateOrAdmin(
-  ctx: QueryCtx | MutationCtx
+  ctx: QueryCtx | MutationCtx,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
   if (user.role !== "admin" && !user.applicantAccessDelegate) {
@@ -232,14 +220,10 @@ export async function requireApplicantDelegateOrAdmin(
  * check — used only by the vault's own bootstrap functions (checking status,
  * unlocking), which must work precisely when the vault is still locked. */
 export async function requireApplicantAreaMember(
-  ctx: QueryCtx | MutationCtx
+  ctx: QueryCtx | MutationCtx,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (
-    user.role === "admin" ||
-    user.applicantAccess ||
-    user.applicantAccessDelegate
-  ) {
+  if (user.role === "admin" || user.applicantAccess || user.applicantAccessDelegate) {
     return user;
   }
   throw new ConvexError({
@@ -315,8 +299,8 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
   if (email) {
     const invite = await ctx.db
       .query("invites")
-      .withIndex("by_email", q => q.eq("email", email))
-      .filter(q => q.eq(q.field("status"), "pending"))
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .filter((q) => q.eq(q.field("status"), "pending"))
       .first();
 
     if (invite && invite.expiresAt > now) {

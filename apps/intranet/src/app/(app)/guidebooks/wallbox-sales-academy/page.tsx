@@ -19,8 +19,7 @@ export default function WallboxAcademyAdminHomePage() {
         }}
       />
       <p className="text-center text-sm text-muted-foreground">
-        Möchtest du das Training selbst absolvieren? Nutze deinen Zugangscode
-        auf der{" "}
+        Möchtest du das Training selbst absolvieren? Nutze deinen Zugangscode auf der{" "}
         <Link href="/wallbox-sales-academy" className="underline">
           öffentlichen Teilnehmerseite
         </Link>

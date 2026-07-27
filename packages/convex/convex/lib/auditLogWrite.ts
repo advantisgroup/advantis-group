@@ -18,7 +18,7 @@ export async function recordUnifiedAudit(
     integration?: string;
     target?: string;
     at: number;
-  }
+  },
 ): Promise<void> {
   await ctx.db.insert("auditLog", entry);
 }

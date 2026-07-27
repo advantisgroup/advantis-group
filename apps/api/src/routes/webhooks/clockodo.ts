@@ -41,23 +41,17 @@ export const clockodoWebhookRoute = new Elysia().post(
     // URL-ownership handshake: Clockodo POSTs a confirmation secret with no
     // event_name when (re)registering. Log it and ack so setup can proceed.
     if (!payload.event_name) {
-      console.warn(
-        "[clockodo/webhook] handshake received:",
-        JSON.stringify(payload)
-      );
+      console.warn("[clockodo/webhook] handshake received:", JSON.stringify(payload));
       logDelivery({ ok: true, reason: "handshake", token: payload.token });
       return { ok: true, handshake: true };
     }
 
     const hasToken = expectedToken || altToken;
-    const tokenValid =
-      !hasToken ||
-      payload.token === expectedToken ||
-      payload.token === altToken;
+    const tokenValid = !hasToken || payload.token === expectedToken || payload.token === altToken;
 
     if (!tokenValid) {
       console.warn(
-        `[clockodo/webhook] 401 token mismatch — event: ${payload.event_name}, received token present: ${!!payload.token}`
+        `[clockodo/webhook] 401 token mismatch — event: ${payload.event_name}, received token present: ${!!payload.token}`,
       );
       logDelivery({
         eventName: payload.event_name,
@@ -73,9 +67,7 @@ export const clockodoWebhookRoute = new Elysia().post(
     // single webhook is registered in Clockodo for all events. Acknowledge them
     // without attempting to parse an absence payload.
     if (!payload.event_name.startsWith("absence.")) {
-      console.log(
-        `[clockodo/webhook] 200 ignored non-absence event: ${payload.event_name}`
-      );
+      console.log(`[clockodo/webhook] 200 ignored non-absence event: ${payload.event_name}`);
       logDelivery({
         eventName: payload.event_name,
         ok: true,
@@ -88,7 +80,7 @@ export const clockodoWebhookRoute = new Elysia().post(
     const absenceId = payload.payload?.absence?.id;
     if (typeof absenceId !== "number") {
       console.warn(
-        `[clockodo/webhook] 400 missing absence id — event: ${payload.event_name}, payload: ${JSON.stringify(payload.payload)}`
+        `[clockodo/webhook] 400 missing absence id — event: ${payload.event_name}, payload: ${JSON.stringify(payload.payload)}`,
       );
       logDelivery({
         eventName: payload.event_name,
@@ -104,9 +96,7 @@ export const clockodoWebhookRoute = new Elysia().post(
     const serverKey = getConvexServerKey();
 
     if (payload.event_name === "absence.deleted") {
-      console.log(
-        `[clockodo/webhook] 200 deleting absence externalId=${absenceId}`
-      );
+      console.log(`[clockodo/webhook] 200 deleting absence externalId=${absenceId}`);
       logDelivery({
         eventName: payload.event_name,
         ok: true,
@@ -123,7 +113,7 @@ export const clockodoWebhookRoute = new Elysia().post(
 
     // created / updated / approved → fetch + mirror.
     console.log(
-      `[clockodo/webhook] 200 upserting absence externalId=${absenceId} event=${payload.event_name}`
+      `[clockodo/webhook] 200 upserting absence externalId=${absenceId} event=${payload.event_name}`,
     );
     logDelivery({
       eventName: payload.event_name,
@@ -150,5 +140,5 @@ export const clockodoWebhookRoute = new Elysia().post(
   },
   {
     body: t.Any(),
-  }
+  },
 );

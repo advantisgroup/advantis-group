@@ -2,11 +2,7 @@ import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import {
-  type OtherFormData,
-  type InquiryTopic,
-  type FormProps,
-} from "@/types/contact";
+import { type OtherFormData, type InquiryTopic, type FormProps } from "@/types/contact";
 
 import { BrandText } from "../effects/BrandText";
 import { AnimatedButton } from "../ui/AnimatedButton";
@@ -39,29 +35,21 @@ export function OtherForm({
             type="text"
             id="firstName"
             value={formData.firstName}
-            onChange={e =>
-              onFormDataChange({ ...formData, firstName: e.target.value })
-            }
+            onChange={(e) => onFormDataChange({ ...formData, firstName: e.target.value })}
             className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           />
-          {errors.firstName && (
-            <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>
-          )}
+          {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName[0]}</p>}
         </div>
         <div className="w-full md:w-1/2">
           <label htmlFor="lastName" className="block text-sm font-medium mb-2">
             {t("lastName")}{" "}
-            <span className="text-muted-foreground text-xs">
-              ({tOther("optional")})
-            </span>
+            <span className="text-muted-foreground text-xs">({tOther("optional")})</span>
           </label>
           <input
             type="text"
             id="lastName"
             value={formData.lastName || ""}
-            onChange={e =>
-              onFormDataChange({ ...formData, lastName: e.target.value })
-            }
+            onChange={(e) => onFormDataChange({ ...formData, lastName: e.target.value })}
             className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
           />
         </div>
@@ -75,30 +63,21 @@ export function OtherForm({
           type="email"
           id="email"
           value={formData.email}
-          onChange={e =>
-            onFormDataChange({ ...formData, email: e.target.value })
-          }
+          onChange={(e) => onFormDataChange({ ...formData, email: e.target.value })}
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
-        {errors.email && (
-          <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>
-        )}
+        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email[0]}</p>}
       </div>
 
       <div>
         <label htmlFor="phone" className="block text-sm font-medium mb-2">
-          {t("phone")}{" "}
-          <span className="text-muted-foreground text-xs">
-            ({tOther("optional")})
-          </span>
+          {t("phone")} <span className="text-muted-foreground text-xs">({tOther("optional")})</span>
         </label>
         <input
           type="tel"
           id="phone"
           value={formData.phone || ""}
-          onChange={e =>
-            onFormDataChange({ ...formData, phone: e.target.value })
-          }
+          onChange={(e) => onFormDataChange({ ...formData, phone: e.target.value })}
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
       </div>
@@ -110,7 +89,7 @@ export function OtherForm({
         <select
           id="topic"
           value={formData.topic || ""}
-          onChange={e =>
+          onChange={(e) =>
             onFormDataChange({
               ...formData,
               topic: e.target.value as InquiryTopic,
@@ -119,15 +98,13 @@ export function OtherForm({
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         >
           <option value="">{tOther("selectTopic")}</option>
-          {topics.map(topic => (
+          {topics.map((topic) => (
             <option key={topic.value} value={topic.value}>
               {topic.label}
             </option>
           ))}
         </select>
-        {errors.topic && (
-          <p className="text-red-500 text-sm mt-1">{errors.topic[0]}</p>
-        )}
+        {errors.topic && <p className="text-red-500 text-sm mt-1">{errors.topic[0]}</p>}
       </div>
 
       <div>
@@ -138,15 +115,11 @@ export function OtherForm({
           type="text"
           id="subject"
           value={formData.subject}
-          onChange={e =>
-            onFormDataChange({ ...formData, subject: e.target.value })
-          }
+          onChange={(e) => onFormDataChange({ ...formData, subject: e.target.value })}
           placeholder={tOther("subjectPlaceholder")}
           className="w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring text-base"
         />
-        {errors.subject && (
-          <p className="text-red-500 text-sm mt-1">{errors.subject[0]}</p>
-        )}
+        {errors.subject && <p className="text-red-500 text-sm mt-1">{errors.subject[0]}</p>}
       </div>
 
       <div>
@@ -156,22 +129,17 @@ export function OtherForm({
         <textarea
           id="message"
           value={formData.message}
-          onChange={e =>
-            onFormDataChange({ ...formData, message: e.target.value })
-          }
+          onChange={(e) => onFormDataChange({ ...formData, message: e.target.value })}
           rows={6}
           className="min-h-28 md:min-h-40 w-full px-4 py-2 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-ring resize-none text-base"
         />
-        {errors.message && (
-          <p className="text-red-500 text-sm mt-1">{errors.message[0]}</p>
-        )}
+        {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message[0]}</p>}
       </div>
 
       <div className="space-y-3">
         <p className="text-xs text-muted-foreground">
           <strong>{t("privacyNoteLabel")}</strong> {t("privacyPrefix")}{" "}
-          <BrandText brand="advantis">advantis GmbH</BrandText>{" "}
-          {t("privacySuffix")}{" "}
+          <BrandText brand="advantis">advantis GmbH</BrandText> {t("privacySuffix")}{" "}
           <Link href="/privacy" className="underline hover:text-foreground">
             {t("privacyLink")}
           </Link>

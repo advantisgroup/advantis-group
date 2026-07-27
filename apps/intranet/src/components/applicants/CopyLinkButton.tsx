@@ -7,13 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 /** Copies an absolute, shareable URL for `href` to the clipboard. */
-export function CopyLinkButton({
-  href,
-  className,
-}: {
-  href: string;
-  className?: string;
-}) {
+export function CopyLinkButton({ href, className }: { href: string; className?: string }) {
   const t = useTranslations("Applicants");
 
   async function copy() {

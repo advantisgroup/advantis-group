@@ -24,7 +24,7 @@ import { Errors } from "./errors.js";
  * downstream Convex call to the right tenant.
  */
 export async function requirePerformanceAdmin(
-  request: Request
+  request: Request,
 ): Promise<{ name: string; email: string; companyId: Id<"companies"> }> {
   const auth = request.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;

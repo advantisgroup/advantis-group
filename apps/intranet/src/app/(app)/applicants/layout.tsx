@@ -4,19 +4,10 @@ import type { ReactNode } from "react";
 
 import { usePathname } from "next/navigation";
 
-import {
-  CalendarClock,
-  ShieldCheck,
-  Sparkles,
-  UserSearch,
-  Users,
-} from "lucide-react";
+import { CalendarClock, ShieldCheck, Sparkles, UserSearch, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import {
-  ApplicantVaultGate,
-  LockVaultButton,
-} from "@/components/applicants/ApplicantVaultGate";
+import { ApplicantVaultGate, LockVaultButton } from "@/components/applicants/ApplicantVaultGate";
 import { RouteTabs } from "@/components/applicants/RouteTabs";
 import { UploadCvButton } from "@/components/applicants/UploadCvButton";
 import { PageHeader } from "@/components/PageHeader";
@@ -45,20 +36,14 @@ const LIST_TABS = ["list", "termine", "neu", "pool", "profile", "access"];
  * `/applicants/{id}/...`, so it renders that chrome only for the list tabs
  * and otherwise steps aside for the detail layout's own breadcrumb/header.
  */
-export default function ApplicantsLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function ApplicantsLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Applicants");
   const hasAccess = useHasApplicantAccess();
   const canManageAccess = useCanManageApplicantAccess();
   const pathname = usePathname();
 
   if (!hasAccess) {
-    return (
-      <p className="py-20 text-center text-sm text-muted-foreground">403</p>
-    );
+    return <p className="py-20 text-center text-sm text-muted-foreground">403</p>;
   }
 
   const segment = pathname.split("/")[2];

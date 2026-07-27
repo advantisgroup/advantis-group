@@ -39,18 +39,12 @@ export function WhyAdvantisSidebar({ contactMode }: WhyAdvantisSidebarProps) {
         <h3 className="text-xl font-semibold text-foreground md:text-2xl">
           {t("title")} <BrandText brand="advantis">Advantis Group</BrandText>?
         </h3>
-        <p className="text-base leading-7 text-muted-foreground">
-          {t("description1")}
-        </p>
-        <p className="text-base leading-7 text-muted-foreground">
-          {getDescription()}
-        </p>
+        <p className="text-base leading-7 text-muted-foreground">{t("description1")}</p>
+        <p className="text-base leading-7 text-muted-foreground">{getDescription()}</p>
       </div>
 
       <div className="mt-8 border-t border-border/70 pt-5">
-        <p className="text-sm leading-6 text-muted-foreground">
-          {getClosing()}
-        </p>
+        <p className="text-sm leading-6 text-muted-foreground">{getClosing()}</p>
       </div>
     </aside>
   );

@@ -50,9 +50,7 @@ export default function NewUpdatePage() {
   const [type, setType] = useState<UpdateType>("incident");
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
-  const [bodyFormat, setBodyFormat] = useState<"richtext" | "markdown">(
-    "richtext"
-  );
+  const [bodyFormat, setBodyFormat] = useState<"richtext" | "markdown">("richtext");
   const [body, setBody] = useState("");
   const [systems, setSystems] = useState<string[]>([]);
   const [customSystem, setCustomSystem] = useState("");
@@ -68,24 +66,24 @@ export default function NewUpdatePage() {
       audience === "all"
         ? ({ kind: "all" } as const)
         : ({ kind: "department", department: audience } as const),
-    [audience]
+    [audience],
   );
   const emailPreview = useQuery(
     api.updates.previewEmailRecipients,
-    emailRequested ? { audience: audienceValue } : "skip"
+    emailRequested ? { audience: audienceValue } : "skip",
   );
 
   if (!isAdmin) return <ForbiddenScreen />;
 
   function toggleSystem(system: string) {
-    setSystems(prev =>
-      prev.includes(system) ? prev.filter(s => s !== system) : [...prev, system]
+    setSystems((prev) =>
+      prev.includes(system) ? prev.filter((s) => s !== system) : [...prev, system],
     );
   }
 
   function addCustomSystem() {
     const value = customSystem.trim();
-    if (value && !systems.includes(value)) setSystems(prev => [...prev, value]);
+    if (value && !systems.includes(value)) setSystems((prev) => [...prev, value]);
     setCustomSystem("");
   }
 
@@ -119,17 +117,14 @@ export default function NewUpdatePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader
-        title={t("newUpdate")}
-        description={t("newUpdateDescription")}
-      />
+      <PageHeader title={t("newUpdate")} description={t("newUpdateDescription")} />
 
       <div className="space-y-6">
         <div>
           <Label className="mb-2 block text-sm">{t("typeLabel")}</Label>
-          <Tabs value={type} onValueChange={v => setType(v as UpdateType)}>
+          <Tabs value={type} onValueChange={(v) => setType(v as UpdateType)}>
             <TabsList>
-              {(["incident", "maintenance", "changelog"] as const).map(v => {
+              {(["incident", "maintenance", "changelog"] as const).map((v) => {
                 const Icon = TYPE_ICON[v];
                 return (
                   <TabsTrigger key={v} value={v} className="gap-1.5">
@@ -149,7 +144,7 @@ export default function NewUpdatePage() {
           <Input
             id="update-title"
             value={title}
-            onChange={e => setTitle(e.target.value)}
+            onChange={(e) => setTitle(e.target.value)}
             placeholder={t("titlePlaceholder")}
           />
         </div>
@@ -161,13 +156,11 @@ export default function NewUpdatePage() {
           <Textarea
             id="update-summary"
             value={summary}
-            onChange={e => setSummary(e.target.value.slice(0, 140))}
+            onChange={(e) => setSummary(e.target.value.slice(0, 140))}
             placeholder={t("summaryPlaceholder")}
             rows={2}
           />
-          <p className="mt-1 text-right text-xs text-muted-foreground">
-            {summary.length}/140
-          </p>
+          <p className="mt-1 text-right text-xs text-muted-foreground">{summary.length}/140</p>
         </div>
 
         <div>
@@ -175,14 +168,10 @@ export default function NewUpdatePage() {
             <Label className="text-sm">{t("bodyLabel")}</Label>
             <button
               type="button"
-              onClick={() =>
-                setBodyFormat(f => (f === "richtext" ? "markdown" : "richtext"))
-              }
+              onClick={() => setBodyFormat((f) => (f === "richtext" ? "markdown" : "richtext"))}
               className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
             >
-              {bodyFormat === "richtext"
-                ? t("switchToMarkdown")
-                : t("switchToRichText")}
+              {bodyFormat === "richtext" ? t("switchToMarkdown") : t("switchToRichText")}
             </button>
           </div>
           {bodyFormat === "richtext" ? (
@@ -190,7 +179,7 @@ export default function NewUpdatePage() {
           ) : (
             <Textarea
               value={body}
-              onChange={e => setBody(e.target.value)}
+              onChange={(e) => setBody(e.target.value)}
               placeholder={t("markdownPlaceholder")}
               rows={10}
               className="font-mono text-sm"
@@ -200,26 +189,16 @@ export default function NewUpdatePage() {
 
         {type !== "changelog" && (
           <div>
-            <Label className="mb-2 block text-sm">
-              {t("affectedSystemsLabel")}
-            </Label>
+            <Label className="mb-2 block text-sm">{t("affectedSystemsLabel")}</Label>
             <div className="flex flex-wrap gap-2">
-              {KNOWN_SYSTEMS.map(system => (
-                <button
-                  key={system}
-                  type="button"
-                  onClick={() => toggleSystem(system)}
-                >
-                  <Badge
-                    variant={systems.includes(system) ? "default" : "outline"}
-                  >
-                    {system}
-                  </Badge>
+              {KNOWN_SYSTEMS.map((system) => (
+                <button key={system} type="button" onClick={() => toggleSystem(system)}>
+                  <Badge variant={systems.includes(system) ? "default" : "outline"}>{system}</Badge>
                 </button>
               ))}
               {systems
-                .filter(s => !(KNOWN_SYSTEMS as readonly string[]).includes(s))
-                .map(system => (
+                .filter((s) => !(KNOWN_SYSTEMS as readonly string[]).includes(s))
+                .map((system) => (
                   <Badge key={system} variant="default" className="gap-1">
                     {system}
                     <button type="button" onClick={() => toggleSystem(system)}>
@@ -231,8 +210,8 @@ export default function NewUpdatePage() {
             <div className="mt-2 flex gap-2">
               <Input
                 value={customSystem}
-                onChange={e => setCustomSystem(e.target.value)}
-                onKeyDown={e => {
+                onChange={(e) => setCustomSystem(e.target.value)}
+                onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     addCustomSystem();
@@ -241,12 +220,7 @@ export default function NewUpdatePage() {
                 placeholder={t("customSystemPlaceholder")}
                 className="h-8 max-w-56 text-sm"
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addCustomSystem}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={addCustomSystem}>
                 {t("addSystem")}
               </Button>
             </div>
@@ -261,7 +235,7 @@ export default function NewUpdatePage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("everyone")}</SelectItem>
-              {departments.map(d => (
+              {departments.map((d) => (
                 <SelectItem key={d} value={d}>
                   {d}
                 </SelectItem>
@@ -273,24 +247,20 @@ export default function NewUpdatePage() {
         <div className="grid gap-4 sm:grid-cols-2">
           {type === "maintenance" && (
             <div>
-              <Label className="mb-1.5 block text-sm">
-                {t("startedAtLabel")}
-              </Label>
+              <Label className="mb-1.5 block text-sm">{t("startedAtLabel")}</Label>
               <Input
                 type="datetime-local"
                 value={startedAt}
-                onChange={e => setStartedAt(e.target.value)}
+                onChange={(e) => setStartedAt(e.target.value)}
               />
             </div>
           )}
           <div>
-            <Label className="mb-1.5 block text-sm">
-              {t("publishAtLabel")}
-            </Label>
+            <Label className="mb-1.5 block text-sm">{t("publishAtLabel")}</Label>
             <Input
               type="datetime-local"
               value={publishAt}
-              onChange={e => setPublishAt(e.target.value)}
+              onChange={(e) => setPublishAt(e.target.value)}
             />
           </div>
         </div>
@@ -299,7 +269,7 @@ export default function NewUpdatePage() {
           <label className="flex items-center gap-2 text-sm">
             <Checkbox
               checked={emailRequested}
-              onCheckedChange={c => setEmailRequested(c === true)}
+              onCheckedChange={(c) => setEmailRequested(c === true)}
             />
             {t("emailEveryoneLabel")}
           </label>
@@ -312,7 +282,7 @@ export default function NewUpdatePage() {
                 <>
                   <button
                     type="button"
-                    onClick={() => setShowRecipients(s => !s)}
+                    onClick={() => setShowRecipients((s) => !s)}
                     className="flex w-full items-center justify-between gap-2 text-left text-sm"
                   >
                     <span>
@@ -339,7 +309,7 @@ export default function NewUpdatePage() {
                   )}
                   {showRecipients && emailPreview.recipients.length > 0 && (
                     <ul className="mt-2 max-h-52 space-y-1 overflow-y-auto border-t border-border/60 pt-2">
-                      {emailPreview.recipients.map(r => (
+                      {emailPreview.recipients.map((r) => (
                         <li
                           key={r.userId}
                           className="flex items-center justify-between gap-2 text-sm"
@@ -363,9 +333,7 @@ export default function NewUpdatePage() {
             {tc("cancel")}
           </Button>
           <Button onClick={onSubmit} disabled={submitting}>
-            {publishAt && new Date(publishAt).getTime() > Date.now()
-              ? t("schedule")
-              : t("publish")}
+            {publishAt && new Date(publishAt).getTime() > Date.now() ? t("schedule") : t("publish")}
           </Button>
         </div>
       </div>

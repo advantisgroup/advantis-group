@@ -22,19 +22,10 @@ import { usePerformanceSession } from "@/components/performance/usePerformanceSe
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -50,12 +41,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 // so this page (unlike the rest of Performance) is isSuperAdmin-only, not
 // gated on a per-company permission.
 
-type CompanyStatus =
-  | "provisioning"
-  | "pending_dns"
-  | "pending_routing"
-  | "active"
-  | "failed";
+type CompanyStatus = "provisioning" | "pending_dns" | "pending_routing" | "active" | "failed";
 
 interface DnsRecord {
   type: string;
@@ -104,12 +90,7 @@ function ProviderFavicon({ provider }: { provider: DnsProvider }) {
   const [failed, setFailed] = useState(!src);
   if (failed || !src) return null;
   return (
-    <img
-      src={src}
-      alt=""
-      className="h-4 w-4 shrink-0 rounded-sm"
-      onError={() => setFailed(true)}
-    />
+    <img src={src} alt="" className="h-4 w-4 shrink-0 rounded-sm" onError={() => setFailed(true)} />
   );
 }
 
@@ -156,9 +137,7 @@ function CopyableField({ label, value }: { label: string; value: string }) {
 
   return (
     <div className="flex items-start gap-2">
-      <span className="min-w-0 flex-1 break-all font-mono text-xs">
-        {value}
-      </span>
+      <span className="min-w-0 flex-1 break-all font-mono text-xs">{value}</span>
       <Button
         type="button"
         variant="ghost"
@@ -186,13 +165,7 @@ function CopyableField({ label, value }: { label: string; value: string }) {
  * the near-universal registrar shorthand for "the domain itself, no
  * subdomain" — spelling that out is what was missing before, since a CNAME
  * is meaningless without knowing which host it's being added *to*. */
-function DnsRecordField({
-  record,
-  companyDomain,
-}: {
-  record: DnsRecord;
-  companyDomain: string;
-}) {
+function DnsRecordField({ record, companyDomain }: { record: DnsRecord; companyDomain: string }) {
   const t = useTranslations("Performance");
   const host = record.domain && record.domain.length > 0 ? record.domain : "@";
   return (
@@ -236,9 +209,7 @@ function DnsInstructions({
   if (records.length === 0) return null;
   return (
     <div className="space-y-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-xs">
-      <p className="font-medium leading-relaxed text-amber-700 dark:text-amber-400">
-        {title}
-      </p>
+      <p className="font-medium leading-relaxed text-amber-700 dark:text-amber-400">{title}</p>
       <div className="space-y-3">
         {records.map((r, i) => (
           <DnsRecordField key={i} record={r} companyDomain={domain} />
@@ -252,9 +223,7 @@ function DnsInstructions({
           className="flex items-start gap-1.5 leading-relaxed text-amber-700 underline underline-offset-2 dark:text-amber-400"
         >
           <ProviderFavicon provider={provider} />
-          <span>
-            {t("companyDnsProviderHint", { provider: provider.name })}
-          </span>
+          <span>{t("companyDnsProviderHint", { provider: provider.name })}</span>
           <ExternalLink className="h-3 w-3 shrink-0" />
         </a>
       )}
@@ -304,12 +273,11 @@ function CompanyDnsStatus({
 }
 
 function statusBadgeVariant(
-  status: CompanyStatus
+  status: CompanyStatus,
 ): "success" | "destructive" | "warning" | "muted" {
   if (status === "active") return "success";
   if (status === "failed") return "destructive";
-  if (status === "pending_dns" || status === "pending_routing")
-    return "warning";
+  if (status === "pending_dns" || status === "pending_routing") return "warning";
   return "muted";
 }
 
@@ -453,7 +421,7 @@ function CreateCompanyDialog({
         domain: domain.trim(),
         adminBootstrapEmails: emails
           .split(/[,;\s]+/)
-          .map(e => e.trim())
+          .map((e) => e.trim())
           .filter(Boolean),
       });
       onOpenChange(false);
@@ -468,14 +436,12 @@ function CreateCompanyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">
-            {t("companyNewTitle")}
-          </DialogTitle>
+          <DialogTitle className="leading-snug">{t("companyNewTitle")}</DialogTitle>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
               {t("companyNameLabel")}
             </label>
-            <Input value={name} onChange={e => setName(e.target.value)} />
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
@@ -483,12 +449,10 @@ function CreateCompanyDialog({
             </label>
             <Input
               value={domain}
-              onChange={e => setDomain(e.target.value.trim().toLowerCase())}
+              onChange={(e) => setDomain(e.target.value.trim().toLowerCase())}
               placeholder="salespirates.de"
             />
-            <p className="text-xs text-muted-foreground">
-              {t("companyDomainHint")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("companyDomainHint")}</p>
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
@@ -496,22 +460,17 @@ function CreateCompanyDialog({
             </label>
             <Input
               value={emails}
-              onChange={e => setEmails(e.target.value)}
+              onChange={(e) => setEmails(e.target.value)}
               placeholder="admin@salespirates.de, lead@salespirates.de"
             />
-            <p className="text-xs text-muted-foreground">
-              {t("companyAdminEmailsHint")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("companyAdminEmailsHint")}</p>
           </div>
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={saving || !canSave}
-          >
+          <Button onClick={() => void handleSave()} disabled={saving || !canSave}>
             {t("companyCreateSubmit")}
           </Button>
         </DialogFooter>
@@ -557,7 +516,7 @@ function EditCompanyDialog({
         name: name.trim(),
         adminBootstrapEmails: emails
           .split(/[,;\s]+/)
-          .map(e => e.trim())
+          .map((e) => e.trim())
           .filter(Boolean),
       });
       onOpenChange(false);
@@ -572,33 +531,26 @@ function EditCompanyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">
-            {t("companyEditTitle")}
-          </DialogTitle>
+          <DialogTitle className="leading-snug">{t("companyEditTitle")}</DialogTitle>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
               {t("companyNameLabel")}
             </label>
-            <Input value={name} onChange={e => setName(e.target.value)} />
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
               {t("companyAdminEmailsLabel")}
             </label>
-            <Input value={emails} onChange={e => setEmails(e.target.value)} />
-            <p className="text-xs text-muted-foreground">
-              {t("companyAdminEmailsHint")}
-            </p>
+            <Input value={emails} onChange={(e) => setEmails(e.target.value)} />
+            <p className="text-xs text-muted-foreground">{t("companyAdminEmailsHint")}</p>
           </div>
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={saving || !canSave}
-          >
+          <Button onClick={() => void handleSave()} disabled={saving || !canSave}>
             {t("companySaveChanges")}
           </Button>
         </DialogFooter>
@@ -640,9 +592,7 @@ function DeleteCompanyDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="space-y-3 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">
-            {t("companyDeleteTitle")}
-          </DialogTitle>
+          <DialogTitle className="leading-snug">{t("companyDeleteTitle")}</DialogTitle>
           <p className="text-sm text-muted-foreground">
             {t("companyDeleteWarning", { name: company?.name ?? "" })}
           </p>
@@ -651,11 +601,7 @@ function DeleteCompanyDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button
-            variant="destructive"
-            onClick={() => void handleDelete()}
-            disabled={deleting}
-          >
+          <Button variant="destructive" onClick={() => void handleDelete()} disabled={deleting}>
             <Trash2 className="mr-2 h-3.5 w-3.5" />
             {t("companyDeleteConfirm")}
           </Button>
@@ -689,8 +635,7 @@ function CompanyActions({
           {t("companyRetry")}
         </Button>
       )}
-      {(company.status === "pending_dns" ||
-        company.status === "pending_routing") && (
+      {(company.status === "pending_dns" || company.status === "pending_routing") && (
         <Button variant="ghost" size="sm" disabled={checking} onClick={onCheck}>
           <RotateCw className="mr-2 h-3.5 w-3.5" />
           {t("companyCheckVerification")}
@@ -719,9 +664,7 @@ export default function PerformanceCompaniesAdminPage() {
   const t = useTranslations("Performance");
   const { token, session } = usePerformanceSession();
   const handleError = useErrorHandler();
-  const checkDomainVerification = useAction(
-    api.companies.checkDomainVerification
-  );
+  const checkDomainVerification = useAction(api.companies.checkDomainVerification);
   const [creating, setCreating] = useState(false);
   const [retrying, setRetrying] = useState<{
     name: string;
@@ -729,17 +672,12 @@ export default function PerformanceCompaniesAdminPage() {
   } | null>(null);
   const [checking, setChecking] = useState<Id<"companies"> | null>(null);
   const [editing, setEditing] = useState<CompanyRow | null>(null);
-  const [deletingCompany, setDeletingCompany] = useState<CompanyRow | null>(
-    null
-  );
+  const [deletingCompany, setDeletingCompany] = useState<CompanyRow | null>(null);
 
   // Gated on isSuperAdmin by the parent layout — always true by the time
   // this page is mounted.
   const isSuperAdmin = session?.valid && session.isSuperAdmin;
-  const companies = useQuery(
-    api.companies.listCompanies,
-    isSuperAdmin ? { token } : "skip"
-  );
+  const companies = useQuery(api.companies.listCompanies, isSuperAdmin ? { token } : "skip");
 
   async function handleCheck(companyId: Id<"companies">) {
     setChecking(companyId);
@@ -762,9 +700,7 @@ export default function PerformanceCompaniesAdminPage() {
                 <Building2 className="h-4 w-4" />
                 {t("companiesTitle")}
               </CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("companiesIntro")}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("companiesIntro")}</p>
             </div>
             <Button
               size="sm"
@@ -781,27 +717,21 @@ export default function PerformanceCompaniesAdminPage() {
             {companies === undefined ? (
               <p className="text-sm text-muted-foreground">{t("loading")}</p>
             ) : companies.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("companiesEmpty")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("companiesEmpty")}</p>
             ) : (
               <>
                 {/* Mobile: one card per company — a 4-column table with DNS
                     instructions crammed into one cell doesn't fit a phone
                     (columns overlapped/cut off in practice). */}
                 <div className="space-y-3 md:hidden">
-                  {companies.map(c => (
+                  {companies.map((c) => (
                     <Card key={c.id}>
                       <CardContent className="space-y-3 p-4">
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="truncate font-medium">{c.name}</p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {c.domain}
-                            </p>
-                            {c.dnsProvider && (
-                              <DnsProviderNote provider={c.dnsProvider} />
-                            )}
+                            <p className="truncate text-xs text-muted-foreground">{c.domain}</p>
+                            {c.dnsProvider && <DnsProviderNote provider={c.dnsProvider} />}
                           </div>
                           <div className="shrink-0">
                             <CompanyStatusBadge
@@ -814,9 +744,7 @@ export default function PerformanceCompaniesAdminPage() {
                           </div>
                         </div>
                         {c.status === "failed" && c.provisioningError && (
-                          <p className="text-xs text-destructive">
-                            {c.provisioningError}
-                          </p>
+                          <p className="text-xs text-destructive">{c.provisioningError}</p>
                         )}
                         <div className="border-t border-border-soft pt-3">
                           <CompanyActions
@@ -847,11 +775,9 @@ export default function PerformanceCompaniesAdminPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {companies.map(c => (
+                      {companies.map((c) => (
                         <TableRow key={c.id}>
-                          <TableCell className="font-medium">
-                            {c.name}
-                          </TableCell>
+                          <TableCell className="font-medium">{c.name}</TableCell>
                           <TableCell className="text-muted-foreground">
                             {c.domain}
                             {c.dnsProvider && (
@@ -908,7 +834,7 @@ export default function PerformanceCompaniesAdminPage() {
       />
       <EditCompanyDialog
         open={editing !== null}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           if (!open) setEditing(null);
         }}
         token={token}
@@ -916,7 +842,7 @@ export default function PerformanceCompaniesAdminPage() {
       />
       <DeleteCompanyDialog
         open={deletingCompany !== null}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           if (!open) setDeletingCompany(null);
         }}
         token={token}

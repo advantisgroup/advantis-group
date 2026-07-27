@@ -22,11 +22,7 @@ import {
 
 /** "Workable": leads that turned out to be valid/actionable (everything
  * except Unqualified and untouched Open leads). */
-export const WORKABLE_STATUS = new Set([
-  "analysis",
-  "converted",
-  "not interested",
-]);
+export const WORKABLE_STATUS = new Set(["analysis", "converted", "not interested"]);
 
 /** Leads actively being worked (basis for the inactivity check). */
 export const ACTIVE_LEAD_STATUS = new Set(["open", "analysis"]);
@@ -64,9 +60,7 @@ const CUSTOMER_NO_HEADERS = [
 // ---------------------------------------------------------------- helpers
 
 function norm(v: CellValue): string {
-  return v === null || v === undefined || v === ""
-    ? ""
-    : String(v).trim().toLowerCase();
+  return v === null || v === undefined || v === "" ? "" : String(v).trim().toLowerCase();
 }
 
 function isPerson(owner: CellValue): boolean {
@@ -78,19 +72,19 @@ function isPerson(owner: CellValue): boolean {
 type DateParser = (s: string) => Date | null;
 
 const DATE_FORMATS: DateParser[] = [
-  s => {
+  (s) => {
     const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(s); // dd.mm.yyyy
     return m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])) : null;
   },
-  s => {
+  (s) => {
     const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); // yyyy-mm-dd
     return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
   },
-  s => {
+  (s) => {
     const m = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(s); // dd.mm.yy
     return m ? new Date(Date.UTC(2000 + +m[3], +m[2] - 1, +m[1])) : null;
   },
-  s => {
+  (s) => {
     const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s); // m/d/yyyy
     return m ? new Date(Date.UTC(+m[3], +m[1] - 1, +m[2])) : null;
   },
@@ -102,9 +96,7 @@ const DATE_FORMATS: DateParser[] = [
  * script accepts. */
 export function toDate(v: CellValue): Date | null {
   if (v instanceof Date) {
-    return new Date(
-      Date.UTC(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate())
-    );
+    return new Date(Date.UTC(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate()));
   }
   if (v === null || v === undefined || v === "") return null;
   const s = String(v).trim();
@@ -155,7 +147,7 @@ function customerNumber(row: Record<string, CellValue>): string | undefined {
 function bump<K extends keyof MetricFields>(
   map: Map<string, Partial<MetricFields>>,
   key: string,
-  field: K
+  field: K,
 ): void {
   const cur = map.get(key) ?? {};
   cur[field] = (cur[field] ?? 0) + 1;
@@ -174,25 +166,20 @@ const AS_OF_RE = /As of (\d{4}-\d{2}-\d{2})/;
 
 /** Finds the "As of" date and header row of a Salesforce export. Returns
  * null when the sheet doesn't look like a Salesforce export at all. */
-export function readSalesforceExport(
-  wsRows: SheetRow[]
-): SalesforceExport | null {
+export function readSalesforceExport(wsRows: SheetRow[]): SalesforceExport | null {
   let reportDate: Date | null = null;
   let headerIdx: number | null = null;
   let header: SheetRow | null = null;
 
   for (let i = 0; i < Math.min(wsRows.length, 30); i++) {
     const row = wsRows[i];
-    const cells = row.filter(c => c !== null && c !== undefined && c !== "");
+    const cells = row.filter((c) => c !== null && c !== undefined && c !== "");
     for (const c of cells) {
       const m = AS_OF_RE.exec(String(c));
       if (m) reportDate = toDate(m[1]);
     }
     const vals = new Set(cells.map(norm));
-    if (
-      vals.has("lead status") ||
-      (vals.has("stage") && vals.has("opportunity owner"))
-    ) {
+    if (vals.has("lead status") || (vals.has("stage") && vals.has("opportunity owner"))) {
       headerIdx = i;
       header = row;
       break;
@@ -203,7 +190,7 @@ export function readSalesforceExport(
 
   const rows: Record<string, CellValue>[] = [];
   for (const r of wsRows.slice(headerIdx + 1)) {
-    if (!r || r.every(v => v === null || v === undefined || v === "")) continue;
+    if (!r || r.every((v) => v === null || v === undefined || v === "")) continue;
     const rec: Record<string, CellValue> = {};
     for (let j = 0; j < header.length; j++) {
       const h = header[j];
@@ -214,7 +201,7 @@ export function readSalesforceExport(
     rows.push(rec);
   }
   const kind: "lead" | "opp" = header.some(
-    h => h !== null && h !== undefined && h !== "" && norm(h) === "lead status"
+    (h) => h !== null && h !== undefined && h !== "" && norm(h) === "lead status",
   )
     ? "lead"
     : "opp";
@@ -245,7 +232,7 @@ const LEAD_STATE_FIELDS: (keyof MetricFields)[] = [
 
 export function aggregateLeadReport(
   rows: Record<string, CellValue>[],
-  reportDate: Date
+  reportDate: Date,
 ): { snapshots: EmployeeSnapshot[]; raw: RawLead[] } {
   const curYm = ym(reportDate);
   const reportDateIso = toISODate(reportDate);
@@ -278,11 +265,9 @@ export function aggregateLeadReport(
         bump(state, owner, "overduesAnalysis");
       }
     }
-    if (details === "identification running")
-      bump(state, owner, "leadsDetailsIdent");
+    if (details === "identification running") bump(state, owner, "leadsDetailsIdent");
     if (ACTIVE_LEAD_STATUS.has(status)) {
-      if (inactive(last, created, reportDate))
-        bump(state, owner, "leadsNoAction14");
+      if (inactive(last, created, reportDate)) bump(state, owner, "leadsNoAction14");
       raw.push({
         reportDate: reportDateIso,
         owner,
@@ -294,8 +279,7 @@ export function aggregateLeadReport(
     }
 
     if (status === "unqualified" && created && ym(created) === curYm) {
-      const reasonKey =
-        (r["Status Details"] as string | undefined) || "Ohne Angabe";
+      const reasonKey = (r["Status Details"] as string | undefined) || "Ohne Angabe";
       const ownerReasons = reasons.get(owner) ?? new Map<string, number>();
       ownerReasons.set(reasonKey, (ownerReasons.get(reasonKey) ?? 0) + 1);
       reasons.set(owner, ownerReasons);
@@ -306,15 +290,14 @@ export function aggregateLeadReport(
   // deltas stay correct for an owner with monthly creation data but no
   // current "state" (e.g. zero open Analysis leads today).
   const allStateOwners = new Set<string>([
-    ...[...monthlyOwnerYm.values()].map(v => v.owner),
+    ...[...monthlyOwnerYm.values()].map((v) => v.owner),
     ...state.keys(),
   ]);
 
   const snapshots = new SnapshotMap();
   for (const [key, vals] of monthly) {
     const { owner, ym: ownerYm } = monthlyOwnerYm.get(key)!;
-    const snapDateIso =
-      ownerYm === curYm ? reportDateIso : toISODate(monthEnd(ownerYm));
+    const snapDateIso = ownerYm === curYm ? reportDateIso : toISODate(monthEnd(ownerYm));
     snapshots.merge(owner, snapDateIso, vals);
   }
   for (const owner of allStateOwners) {
@@ -362,7 +345,7 @@ export interface WonOpp {
 
 export function aggregateOppReport(
   rows: Record<string, CellValue>[],
-  reportDate: Date
+  reportDate: Date,
 ): { snapshots: EmployeeSnapshot[]; raw: RawOpp[]; wonOpps: WonOpp[] } {
   const curYm = ym(reportDate);
   const reportDateIso = toISODate(reportDate);
@@ -382,13 +365,8 @@ export function aggregateOppReport(
     const last = toDate(r["Last Activity"]);
     const details = norm(r["Stage Details"]);
     const ageRaw = r["Age"];
-    const ageNum =
-      ageRaw !== null && ageRaw !== undefined && ageRaw !== ""
-        ? Number(ageRaw)
-        : NaN;
-    const age = Number.isFinite(ageNum)
-      ? Math.trunc(ageNum)
-      : daysSince(created, reportDate);
+    const ageNum = ageRaw !== null && ageRaw !== undefined && ageRaw !== "" ? Number(ageRaw) : NaN;
+    const age = Number.isFinite(ageNum) ? Math.trunc(ageNum) : daysSince(created, reportDate);
 
     if (stage === "closed won" && close) {
       const closeYm = ym(close);
@@ -411,10 +389,8 @@ export function aggregateOppReport(
         bump(state, owner, "overduesOpps");
       }
       if (age !== null && age > OPP_AGE_DAYS) bump(state, owner, "oppsOver30");
-      if (inactive(last, created, reportDate))
-        bump(state, owner, "oppsNoAction14");
-      if (PENDING_DETAILS.some(p => details.includes(p)))
-        bump(state, owner, "oppsPending");
+      if (inactive(last, created, reportDate)) bump(state, owner, "oppsNoAction14");
+      if (PENDING_DETAILS.some((p) => details.includes(p))) bump(state, owner, "oppsPending");
       raw.push({
         reportDate: reportDateIso,
         owner,
@@ -430,15 +406,14 @@ export function aggregateOppReport(
   }
 
   const allStateOwners = new Set<string>([
-    ...[...monthlyOwnerYm.values()].map(v => v.owner),
+    ...[...monthlyOwnerYm.values()].map((v) => v.owner),
     ...state.keys(),
   ]);
 
   const snapshots = new SnapshotMap();
   for (const [key, vals] of monthly) {
     const { owner, ym: ownerYm } = monthlyOwnerYm.get(key)!;
-    const snapDateIso =
-      ownerYm === curYm ? reportDateIso : toISODate(monthEnd(ownerYm));
+    const snapDateIso = ownerYm === curYm ? reportDateIso : toISODate(monthEnd(ownerYm));
     snapshots.merge(owner, snapDateIso, vals);
   }
   for (const owner of allStateOwners) {

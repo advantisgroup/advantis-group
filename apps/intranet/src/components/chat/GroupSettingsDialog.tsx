@@ -61,8 +61,7 @@ export function GroupSettingsDialog({
   const conversationQuery = useQuery(api.chat.getConversation, {
     conversationId,
   });
-  const conversation =
-    conversationQuery?.status === "ok" ? conversationQuery : undefined;
+  const conversation = conversationQuery?.status === "ok" ? conversationQuery : undefined;
   const renameGroup = useMutation(api.chat.renameGroup);
   const setGroupAvatar = useMutation(api.chat.setGroupAvatar);
   const addGroupMembers = useMutation(api.chat.addGroupMembers);
@@ -102,10 +101,7 @@ export function GroupSettingsDialog({
     }
     setUploading(true);
     try {
-      const avatarStorageId = await uploadToConvex(
-        () => generateUploadUrl({}),
-        file
-      );
+      const avatarStorageId = await uploadToConvex(() => generateUploadUrl({}), file);
       await setGroupAvatar({ conversationId, avatarStorageId });
       toast.success(t("saved"));
     } catch (e) {
@@ -207,11 +203,11 @@ export function GroupSettingsDialog({
                 <GroupAvatar
                   src={conversation?.groupAvatar}
                   memberAvatars={(conversation?.members ?? [])
-                    .filter(m => m._id !== me._id)
-                    .map(m => m.avatar)}
+                    .filter((m) => m._id !== me._id)
+                    .map((m) => m.avatar)}
                   memberNames={(conversation?.members ?? [])
-                    .filter(m => m._id !== me._id)
-                    .map(m => m.name)}
+                    .filter((m) => m._id !== me._id)
+                    .map((m) => m.name)}
                   name={conversation?.title ?? "Group"}
                   className="size-20"
                 />
@@ -232,7 +228,7 @@ export function GroupSettingsDialog({
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={e => {
+                  onChange={(e) => {
                     const f = e.target.files?.[0];
                     if (f) void onUploadPhoto(f);
                     e.target.value = "";
@@ -259,15 +255,13 @@ export function GroupSettingsDialog({
               <div className="flex gap-2">
                 <Input
                   value={nameValue}
-                  onChange={e => setName(e.target.value)}
+                  onChange={(e) => setName(e.target.value)}
                   placeholder={t("groupName")}
                 />
                 <Button
                   onClick={onSaveName}
                   disabled={
-                    savingName ||
-                    !nameValue.trim() ||
-                    nameValue.trim() === conversation?.title
+                    savingName || !nameValue.trim() || nameValue.trim() === conversation?.title
                   }
                 >
                   {savingName ? (
@@ -281,11 +275,7 @@ export function GroupSettingsDialog({
 
             {/* Danger zone */}
             <div className="space-y-2 rounded-lg border border-border p-3">
-              <Button
-                variant="outline"
-                className="w-full justify-start"
-                onClick={onLeave}
-              >
+              <Button variant="outline" className="w-full justify-start" onClick={onLeave}>
                 <LogOut className="mr-2 h-4 w-4" />
                 {t("leaveGroup")}
               </Button>
@@ -306,12 +296,10 @@ export function GroupSettingsDialog({
           <TabsContent value="members" className="pt-2">
             {adding ? (
               <AddMembersPanel
-                existingIds={
-                  new Set((conversation?.members ?? []).map(m => m._id))
-                }
+                existingIds={new Set((conversation?.members ?? []).map((m) => m._id))}
                 selected={selected}
-                onToggle={id =>
-                  setSelected(s => {
+                onToggle={(id) =>
+                  setSelected((s) => {
                     const next = new Set(s);
                     if (next.has(id)) next.delete(id);
                     else next.add(id);
@@ -341,27 +329,21 @@ export function GroupSettingsDialog({
                   {t("addMembers")}
                 </Button>
                 <ScrollArea className="h-64 rounded-lg border border-border">
-                  {(conversation?.members ?? []).map(m => (
+                  {(conversation?.members ?? []).map((m) => (
                     <div
                       key={m._id}
                       className="flex items-center gap-2.5 border-b border-border/60 px-3 py-2 last:border-b-0"
                     >
                       <Avatar className="size-8">
-                        {m.avatar && (
-                          <AvatarImage src={m.avatar} alt={m.name} />
-                        )}
-                        <AvatarFallback className="text-xs">
-                          {initials(m.name)}
-                        </AvatarFallback>
+                        {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
+                        <AvatarFallback className="text-xs">{initials(m.name)}</AvatarFallback>
                       </Avatar>
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {m.name}
                         {m._id === me._id ? ` (${t("you")})` : ""}
                       </span>
                       {m.isCreator ? (
-                        <span className="text-[10px] text-muted-foreground">
-                          {t("creator")}
-                        </span>
+                        <span className="text-[10px] text-muted-foreground">{t("creator")}</span>
                       ) : isCreator && m._id !== me._id ? (
                         <button
                           aria-label={t("removeMember")}
@@ -380,10 +362,7 @@ export function GroupSettingsDialog({
 
           {/* Shared media */}
           <TabsContent value="media" className="pt-2">
-            <SharedMedia
-              conversationId={conversationId}
-              emptyLabel={t("noMedia")}
-            />
+            <SharedMedia conversationId={conversationId} emptyLabel={t("noMedia")} />
           </TabsContent>
         </Tabs>
       </DialogContent>
@@ -407,17 +386,15 @@ function AddMembersPanel({
   labels: { add: string; cancel: string; empty: string };
 }) {
   const people = useQuery(api.users.list, {});
-  const candidates = (people ?? []).filter(p => !existingIds.has(p._id));
+  const candidates = (people ?? []).filter((p) => !existingIds.has(p._id));
 
   return (
     <div>
       <ScrollArea className="h-56 rounded-lg border border-border">
         {candidates.length === 0 ? (
-          <p className="p-6 text-center text-sm text-muted-foreground">
-            {labels.empty}
-          </p>
+          <p className="p-6 text-center text-sm text-muted-foreground">{labels.empty}</p>
         ) : (
-          candidates.map(p => (
+          candidates.map((p) => (
             <button
               key={p._id}
               onClick={() => onToggle(p._id)}
@@ -426,13 +403,9 @@ function AddMembersPanel({
               <Checkbox checked={selected.has(p._id)} />
               <Avatar className="size-8">
                 {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                <AvatarFallback className="text-xs">
-                  {initials(p.name, p.email)}
-                </AvatarFallback>
+                <AvatarFallback className="text-xs">{initials(p.name, p.email)}</AvatarFallback>
               </Avatar>
-              <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                {p.name}
-              </span>
+              <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
             </button>
           ))
         )}
@@ -463,21 +436,17 @@ function SharedMedia({
   const { results, status, loadMore } = usePaginatedQuery(
     api.chat.listSharedMedia,
     { conversationId },
-    { initialNumItems: 18 }
+    { initialNumItems: 18 },
   );
 
   if (results.length === 0 && status !== "LoadingFirstPage") {
-    return (
-      <p className="py-12 text-center text-sm text-muted-foreground">
-        {emptyLabel}
-      </p>
-    );
+    return <p className="py-12 text-center text-sm text-muted-foreground">{emptyLabel}</p>;
   }
 
   return (
     <div>
       <div className="grid grid-cols-3 gap-1.5">
-        {results.map(a =>
+        {results.map((a) =>
           a.kind === "image" && a.url ? (
             <a
               key={`${a.messageId}-${a.storageId}`}
@@ -486,11 +455,7 @@ function SharedMedia({
               rel="noreferrer"
               className="aspect-square overflow-hidden rounded-md border border-border"
             >
-              <img
-                src={a.url}
-                alt={a.name}
-                className="h-full w-full object-cover"
-              />
+              <img src={a.url} alt={a.name} className="h-full w-full object-cover" />
             </a>
           ) : a.url ? (
             <a
@@ -502,7 +467,7 @@ function SharedMedia({
             >
               <span className="truncate">{a.name}</span>
             </a>
-          ) : null
+          ) : null,
         )}
       </div>
       {status === "CanLoadMore" && (

@@ -24,11 +24,7 @@ export function RoleSelect({
 }) {
   const t = useTranslations("Roles");
   return (
-    <Select
-      value={value}
-      onValueChange={v => onChange(v as Role)}
-      disabled={disabled}
-    >
+    <Select value={value} onValueChange={(v) => onChange(v as Role)} disabled={disabled}>
       <SelectTrigger className="h-8 w-36">
         <SelectValue />
       </SelectTrigger>

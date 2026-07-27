@@ -22,7 +22,7 @@ import { type PdfTextContent, PdfTextLayer } from "./PdfTextLayer";
  */
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
+  import.meta.url,
 ).toString();
 
 const MIN_SCALE = 0.6;
@@ -34,8 +34,7 @@ const MIN_TEXT_LENGTH = 3;
 /** Stable reference (module scope, not per-render) so PdfTextLayer's
  * useMemo of the text-item geometry doesn't recompute on every render. */
 const pdfUtil = {
-  transform: (m1: number[], m2: number[]) =>
-    pdfjs.Util.transform(m1, m2) as number[],
+  transform: (m1: number[], m2: number[]) => pdfjs.Util.transform(m1, m2) as number[],
 };
 
 interface Viewport {
@@ -71,10 +70,7 @@ export function PdfViewer({
       const vp = page.getViewport({ scale });
       const raw = await page.getTextContent();
       const items = raw.items.filter((item): item is TextItem => "str" in item);
-      const joinedLength = items.reduce(
-        (sum, i) => sum + i.str.trim().length,
-        0
-      );
+      const joinedLength = items.reduce((sum, i) => sum + i.str.trim().length, 0);
       onPageHasNoText(joinedLength < MIN_TEXT_LENGTH);
       setViewport(vp);
       setTextContent({ items });
@@ -93,7 +89,7 @@ export function PdfViewer({
             size="icon-sm"
             aria-label={t("prevPage")}
             disabled={currentPage <= 1}
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -105,7 +101,7 @@ export function PdfViewer({
             size="icon-sm"
             aria-label={t("nextPage")}
             disabled={currentPage >= numPages}
-            onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
+            onClick={() => setCurrentPage((p) => Math.min(numPages, p + 1))}
           >
             <ChevronRight className="size-4" />
           </Button>
@@ -116,9 +112,7 @@ export function PdfViewer({
             size="icon-sm"
             aria-label={t("zoomOut")}
             disabled={scale <= MIN_SCALE}
-            onClick={() =>
-              setScale(s => Math.max(MIN_SCALE, +(s - SCALE_STEP).toFixed(2)))
-            }
+            onClick={() => setScale((s) => Math.max(MIN_SCALE, +(s - SCALE_STEP).toFixed(2)))}
           >
             <ZoomOut className="size-4" />
           </Button>
@@ -127,9 +121,7 @@ export function PdfViewer({
             size="icon-sm"
             aria-label={t("zoomIn")}
             disabled={scale >= MAX_SCALE}
-            onClick={() =>
-              setScale(s => Math.min(MAX_SCALE, +(s + SCALE_STEP).toFixed(2)))
-            }
+            onClick={() => setScale((s) => Math.min(MAX_SCALE, +(s + SCALE_STEP).toFixed(2)))}
           >
             <ZoomIn className="size-4" />
           </Button>
@@ -144,11 +136,11 @@ export function PdfViewer({
           <Document
             file={file}
             loading={null}
-            onLoadSuccess={pdf => {
+            onLoadSuccess={(pdf) => {
               setNumPages(pdf.numPages);
               setCurrentPage(1);
             }}
-            onLoadError={e => {
+            onLoadError={(e) => {
               console.error("[PdfViewer] Document onLoadError:", e);
               setLoadError(true);
               handleError(e, t("pdfLoadFailed"));
@@ -164,8 +156,8 @@ export function PdfViewer({
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
                 loading={null}
-                onRenderSuccess={page => void handlePageRenderSuccess(page)}
-                onLoadError={e => {
+                onRenderSuccess={(page) => void handlePageRenderSuccess(page)}
+                onLoadError={(e) => {
                   console.error("[PdfViewer] Page onLoadError:", e);
                   setLoadError(true);
                 }}

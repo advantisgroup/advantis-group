@@ -80,12 +80,8 @@ export function Signal({
         {label}
       </span>
       <span className="flex items-center gap-2">
-        {known && dotClass && (
-          <span className={cn("h-2 w-2 rounded-full", dotClass)} />
-        )}
-        <span className={cn("text-sm font-bold tabular-nums", valueClass)}>
-          {value ?? "—"}
-        </span>
+        {known && dotClass && <span className={cn("h-2 w-2 rounded-full", dotClass)} />}
+        <span className={cn("text-sm font-bold tabular-nums", valueClass)}>{value ?? "—"}</span>
       </span>
     </div>
   );
@@ -132,13 +128,7 @@ export function SourceSignals({
     <div>
       <Signal
         label={t("state.source.agent")}
-        tone={
-          !deviceOnline || deviceIdle == null
-            ? "neutral"
-            : deviceIdle
-              ? "warn"
-              : "ok"
-        }
+        tone={!deviceOnline || deviceIdle == null ? "neutral" : deviceIdle ? "warn" : "ok"}
         value={
           !deviceOnline
             ? t("timeline.offline")
@@ -149,20 +139,10 @@ export function SourceSignals({
                 : t("common.active")
         }
       />
-      <Signal
-        label={<ProviderBadge provider="genesys" />}
-        tone={genesysTone}
-        value={genesys}
-      />
+      <Signal label={<ProviderBadge provider="genesys" />} tone={genesysTone} value={genesys} />
       <Signal
         label={<ProviderBadge provider="clockodo" />}
-        tone={
-          clockodoAbsent || clockodoBreak
-            ? "warn"
-            : clockodoWorking
-              ? "ok"
-              : "neutral"
-        }
+        tone={clockodoAbsent || clockodoBreak ? "warn" : clockodoWorking ? "ok" : "neutral"}
         value={
           clockodoAbsent
             ? t("empstate.ABSENT")
@@ -189,12 +169,12 @@ export function SourceSignals({
 export function HealthBanner() {
   const { t } = useI18n();
   const health = useQuery(api.activity.state.health);
-  const degraded = (health ?? []).filter(h => h.status !== "ok");
+  const degraded = (health ?? []).filter((h) => h.status !== "ok");
   if (degraded.length === 0) return null;
 
   return (
     <div className="space-y-2">
-      {degraded.map(h => {
+      {degraded.map((h) => {
         const source = t(`state.source.${h.source}`);
         const text =
           h.status === "unconfigured"
@@ -213,9 +193,7 @@ export function HealthBanner() {
               <p className="text-sm text-fg">
                 <BrandedText text={text} />
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("state.health.degraded")}
-              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("state.health.degraded")}</p>
             </div>
           </div>
         );

@@ -16,8 +16,7 @@ export function useSlashFocus<T extends HTMLInputElement>() {
       const active = document.activeElement;
       if (
         active instanceof HTMLElement &&
-        (active.isContentEditable ||
-          ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName))
+        (active.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName))
       ) {
         return;
       }

@@ -15,11 +15,7 @@ import { batchUserSummaries } from "./lib/users";
  */
 
 const sourceArg = v.optional(
-  v.union(
-    v.literal("activity"),
-    v.literal("onedrive"),
-    v.literal("integrations")
-  )
+  v.union(v.literal("activity"), v.literal("onedrive"), v.literal("integrations")),
 );
 
 export const list = query({
@@ -30,42 +26,30 @@ export const list = query({
 
     const [activityRows, onedriveRows, integrationsRows] = await Promise.all([
       !source || source === "activity"
-        ? ctx.db
-            .query("activityAuditLog")
-            .withIndex("by_at")
-            .order("desc")
-            .take(take)
+        ? ctx.db.query("activityAuditLog").withIndex("by_at").order("desc").take(take)
         : [],
       !source || source === "onedrive"
-        ? ctx.db
-            .query("onedriveAudit")
-            .withIndex("by_at")
-            .order("desc")
-            .take(take)
+        ? ctx.db.query("onedriveAudit").withIndex("by_at").order("desc").take(take)
         : [],
       !source || source === "integrations"
-        ? ctx.db
-            .query("integrationsAuditLog")
-            .withIndex("by_at")
-            .order("desc")
-            .take(take)
+        ? ctx.db.query("integrationsAuditLog").withIndex("by_at").order("desc").take(take)
         : [],
     ]);
 
     const merged = [
-      ...activityRows.map(r => ({ ...r, source: "activity" as const })),
-      ...onedriveRows.map(r => ({ ...r, source: "onedrive" as const })),
-      ...integrationsRows.map(r => ({ ...r, source: "integrations" as const })),
+      ...activityRows.map((r) => ({ ...r, source: "activity" as const })),
+      ...onedriveRows.map((r) => ({ ...r, source: "onedrive" as const })),
+      ...integrationsRows.map((r) => ({ ...r, source: "integrations" as const })),
     ]
       .sort((a, b) => b.at - a.at)
       .slice(0, take);
 
     const actorsById = await batchUserSummaries(
       ctx,
-      merged.map(r => r.actorUserId)
+      merged.map((r) => r.actorUserId),
     );
 
-    return merged.map(row => ({
+    return merged.map((row) => ({
       ...row,
       user: actorsById.get(row.actorUserId) ?? null,
     }));

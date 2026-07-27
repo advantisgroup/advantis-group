@@ -21,7 +21,7 @@ function localDay(at: number, tzOffsetMinutes: number): string {
 async function latestSample(ctx: QueryCtx, deviceId: string) {
   return await ctx.db
     .query("activitySamples")
-    .withIndex("by_device_time", q => q.eq("deviceId", deviceId))
+    .withIndex("by_device_time", (q) => q.eq("deviceId", deviceId))
     .order("desc")
     .first();
 }
@@ -32,7 +32,7 @@ async function latestSample(ctx: QueryCtx, deviceId: string) {
  */
 export const teamOverview = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireCapability(ctx, "view_activity_admin");
     const now = Date.now();
     const config = await readConfig(ctx);
@@ -41,49 +41,40 @@ export const teamOverview = query({
 
     const devices = await ctx.db
       .query("devices")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
-    const personIds = [
-      ...new Set(devices.flatMap(d => (d.personId ? [d.personId] : []))),
-    ];
+    const personIds = [...new Set(devices.flatMap((d) => (d.personId ? [d.personId] : [])))];
     const peopleById = new Map(
-      (await Promise.all(personIds.map(id => ctx.db.get(id)))).flatMap(p =>
-        p ? [[p._id, p] as const] : []
-      )
+      (await Promise.all(personIds.map((id) => ctx.db.get(id)))).flatMap((p) =>
+        p ? [[p._id, p] as const] : [],
+      ),
     );
 
     const employeeIds = [
-      ...new Set(
-        [...peopleById.values()].flatMap(p =>
-          p.employeeId ? [p.employeeId] : []
-        )
-      ),
+      ...new Set([...peopleById.values()].flatMap((p) => (p.employeeId ? [p.employeeId] : []))),
     ];
     const stateByEmployee = new Map(
       (
         await Promise.all(
-          employeeIds.map(id =>
+          employeeIds.map((id) =>
             ctx.db
               .query("employeeStates")
-              .withIndex("by_employeeId", q => q.eq("employeeId", id))
-              .unique()
-          )
+              .withIndex("by_employeeId", (q) => q.eq("employeeId", id))
+              .unique(),
+          ),
         )
-      ).flatMap(s => (s ? [[s.employeeId, s] as const] : []))
+      ).flatMap((s) => (s ? [[s.employeeId, s] as const] : [])),
     );
 
     return Promise.all(
-      devices.map(async device => {
-        const person = device.personId
-          ? (peopleById.get(device.personId) ?? null)
-          : null;
+      devices.map(async (device) => {
+        const person = device.personId ? (peopleById.get(device.personId) ?? null) : null;
         // The ingest patch keeps a `lastSample` summary on the device row, so
         // this query normally never reads `activitySamples`. The fallback
         // covers devices that haven't ingested since the field was
         // introduced; it self-heals on their next heartbeat.
-        const latest =
-          device.lastSample ?? (await latestSample(ctx, device.deviceId));
+        const latest = device.lastSample ?? (await latestSample(ctx, device.deviceId));
         const tzOffset = latest?.tzOffsetMinutes ?? 0;
         const day = localDay(now, tzOffset);
 
@@ -97,17 +88,13 @@ export const teamOverview = query({
             ? device.todayStats
             : await ctx.db
                 .query("dailyStats")
-                .withIndex("by_device_day", q =>
-                  q.eq("deviceId", device.deviceId).eq("day", day)
-                )
+                .withIndex("by_device_day", (q) => q.eq("deviceId", device.deviceId).eq("day", day))
                 .unique();
 
         const online = now - device.lastSeen < onlineThresholdMs;
         const active = online && latest != null && latest.idleMs < inactivityMs;
         const employeeId = person?.employeeId ?? null;
-        const st = employeeId
-          ? (stateByEmployee.get(employeeId) ?? null)
-          : null;
+        const st = employeeId ? (stateByEmployee.get(employeeId) ?? null) : null;
 
         return {
           deviceDocId: device._id,
@@ -138,7 +125,7 @@ export const teamOverview = query({
           clockodoClockedOutCertain: st?.clockodoClockedOutCertain ?? null,
           stateUpdatedAt: st?.updatedAt ?? null,
         };
-      })
+      }),
     );
   },
 });
@@ -150,7 +137,7 @@ export const teamOverview = query({
  */
 export const dashboardSummary = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireCapability(ctx, "view_activity_admin");
     const now = Date.now();
     const config = await readConfig(ctx);
@@ -159,7 +146,7 @@ export const dashboardSummary = query({
 
     const devices = await ctx.db
       .query("devices")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
     let online = 0;
@@ -167,8 +154,7 @@ export const dashboardSummary = query({
     let onBreak = 0;
     let absent = 0;
     for (const device of devices) {
-      const latest =
-        device.lastSample ?? (await latestSample(ctx, device.deviceId));
+      const latest = device.lastSample ?? (await latestSample(ctx, device.deviceId));
       const isOnline = now - device.lastSeen < onlineThresholdMs;
       if (isOnline) online++;
       if (isOnline && latest != null && latest.idleMs < inactivityMs) active++;
@@ -178,7 +164,7 @@ export const dashboardSummary = query({
         const st = employeeId
           ? await ctx.db
               .query("employeeStates")
-              .withIndex("by_employeeId", q => q.eq("employeeId", employeeId))
+              .withIndex("by_employeeId", (q) => q.eq("employeeId", employeeId))
               .unique()
           : null;
         if (st?.clockodoBreak) onBreak++;
@@ -201,8 +187,8 @@ export const dailyRange = query({
     await requireUser(ctx);
     return await ctx.db
       .query("dailyStats")
-      .withIndex("by_device_day", q =>
-        q.eq("deviceId", deviceId).gte("day", startDay).lte("day", endDay)
+      .withIndex("by_device_day", (q) =>
+        q.eq("deviceId", deviceId).gte("day", startDay).lte("day", endDay),
       )
       .collect();
   },
@@ -218,7 +204,7 @@ export const recentSamples = query({
     await requireUser(ctx);
     return await ctx.db
       .query("activitySamples")
-      .withIndex("by_device_time", q => q.eq("deviceId", deviceId))
+      .withIndex("by_device_time", (q) => q.eq("deviceId", deviceId))
       .order("desc")
       .take(Math.min(limit ?? 200, 1000));
   },
@@ -240,11 +226,8 @@ export const samplesForDay = query({
     await requireUser(ctx);
     return await ctx.db
       .query("activitySamples")
-      .withIndex("by_device_time", q =>
-        q
-          .eq("deviceId", deviceId)
-          .gte("capturedAt", startMs)
-          .lt("capturedAt", endMs)
+      .withIndex("by_device_time", (q) =>
+        q.eq("deviceId", deviceId).gte("capturedAt", startMs).lt("capturedAt", endMs),
       )
       // 24h at the nominal 15s cadence is 5760 rows; cap with headroom.
       .take(6000);
@@ -264,8 +247,8 @@ export const exportDevice = query({
 
     const daily = await ctx.db
       .query("dailyStats")
-      .withIndex("by_device_day", q =>
-        q.eq("deviceId", deviceId).gte("day", startDay).lte("day", endDay)
+      .withIndex("by_device_day", (q) =>
+        q.eq("deviceId", deviceId).gte("day", startDay).lte("day", endDay),
       )
       .collect();
 
@@ -273,11 +256,8 @@ export const exportDevice = query({
     const endMs = new Date(`${endDay}T23:59:59.999Z`).getTime();
     const rows = await ctx.db
       .query("activitySamples")
-      .withIndex("by_device_time", q =>
-        q
-          .eq("deviceId", deviceId)
-          .gte("capturedAt", startMs)
-          .lte("capturedAt", endMs)
+      .withIndex("by_device_time", (q) =>
+        q.eq("deviceId", deviceId).gte("capturedAt", startMs).lte("capturedAt", endMs),
       )
       .order("desc")
       .take(Math.min(sampleLimit ?? 10000, 20000));
@@ -287,9 +267,9 @@ export const exportDevice = query({
     // written before the slimming keep their own (exact) values.
     const device = await ctx.db
       .query("devices")
-      .withIndex("by_deviceId", q => q.eq("deviceId", deviceId))
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
       .unique();
-    const samples = rows.map(s => ({
+    const samples = rows.map((s) => ({
       ...s,
       windowsUser: s.windowsUser ?? device?.lastWindowsUser ?? "",
       hostname: s.hostname ?? device?.hostname ?? "",

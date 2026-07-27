@@ -4,11 +4,7 @@ import * as React from "react";
 
 import { Info } from "lucide-react";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -32,16 +28,14 @@ export function InfoTip({
     <Tooltip>
       <TooltipTrigger asChild>
         {children ? (
-          <span className={cn("inline-flex cursor-help", className)}>
-            {children}
-          </span>
+          <span className={cn("inline-flex cursor-help", className)}>{children}</span>
         ) : (
           <button
             type="button"
             aria-label={text}
             className={cn(
               "inline-flex text-muted-foreground transition-colors hover:text-fg focus-visible:text-fg focus:outline-none",
-              className
+              className,
             )}
           >
             <Info className="h-3.5 w-3.5" />

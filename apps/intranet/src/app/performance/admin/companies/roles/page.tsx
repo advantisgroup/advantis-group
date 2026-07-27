@@ -14,12 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -56,12 +51,7 @@ const PERMISSION_GROUPS: {
 }[] = [
   {
     key: "read",
-    permissions: [
-      "view_own_dashboard",
-      "view_all_employees",
-      "view_flagged_rows",
-      "export_data",
-    ],
+    permissions: ["view_own_dashboard", "view_all_employees", "view_flagged_rows", "export_data"],
   },
   {
     key: "write",
@@ -104,9 +94,7 @@ function RoleDialog({
   const createRole = useMutation(api.companyRoles.create);
   const updateRole = useMutation(api.companyRoles.update);
   const [name, setName] = useState(role?.name ?? "");
-  const [permissions, setPermissions] = useState<Set<string>>(
-    new Set(role?.permissions ?? [])
-  );
+  const [permissions, setPermissions] = useState<Set<string>>(new Set(role?.permissions ?? []));
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -117,7 +105,7 @@ function RoleDialog({
   }, [open, role]);
 
   function togglePermission(p: string) {
-    setPermissions(prev => {
+    setPermissions((prev) => {
       const next = new Set(prev);
       if (next.has(p)) next.delete(p);
       else next.add(p);
@@ -164,15 +152,15 @@ function RoleDialog({
             <label className="text-xs font-medium text-muted-foreground">
               {t("roleNameLabel")}
             </label>
-            <Input value={name} onChange={e => setName(e.target.value)} />
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="space-y-4">
-            {PERMISSION_GROUPS.map(group => (
+            {PERMISSION_GROUPS.map((group) => (
               <div key={group.key} className="space-y-1">
                 <p className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t(`permissionGroup_${group.key}`)}
                 </p>
-                {group.permissions.map(p => (
+                {group.permissions.map((p) => (
                   <label
                     key={p}
                     className="flex items-center gap-2 rounded-md border border-transparent px-1 py-1 text-sm hover:border-border/60"
@@ -192,10 +180,7 @@ function RoleDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={saving || !name.trim()}
-          >
+          <Button onClick={() => void handleSave()} disabled={saving || !name.trim()}>
             {t("roleSave")}
           </Button>
         </DialogFooter>
@@ -222,13 +207,10 @@ export default function PerformanceRolesAdminPage() {
   // A super-admin has no companyId of their own (`companyRoles.list`
   // requires one explicitly in that case) — everyone else's own company is
   // resolved server-side from their session, so no company arg is passed.
-  const companies = useQuery(
-    api.companies.listCompanies,
-    isSuperAdmin ? { token } : "skip"
-  );
+  const companies = useQuery(api.companies.listCompanies, isSuperAdmin ? { token } : "skip");
   const roles = useQuery(
     api.companyRoles.list,
-    isSuperAdmin ? (companyId ? { token, companyId } : "skip") : { token }
+    isSuperAdmin ? (companyId ? { token, companyId } : "skip") : { token },
   );
 
   async function handleDelete(roleId: Id<"companyRoles">) {
@@ -252,15 +234,9 @@ export default function PerformanceRolesAdminPage() {
                 <ShieldCheck className="h-4 w-4" />
                 {t("rolesTitle")}
               </CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("rolesIntro")}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("rolesIntro")}</p>
             </div>
-            <Button
-              size="sm"
-              onClick={() => setEditing("new")}
-              disabled={!canCreate}
-            >
+            <Button size="sm" onClick={() => setEditing("new")} disabled={!canCreate}>
               <Plus className="mr-2 h-4 w-4" />
               {t("roleNew")}
             </Button>
@@ -269,13 +245,13 @@ export default function PerformanceRolesAdminPage() {
             {isSuperAdmin && (
               <Select
                 value={companyId ?? undefined}
-                onValueChange={v => setCompanyId(v as Id<"companies">)}
+                onValueChange={(v) => setCompanyId(v as Id<"companies">)}
               >
                 <SelectTrigger className="w-full sm:w-72">
                   <SelectValue placeholder={t("rolesCompanyPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {companies?.map(c => (
+                  {companies?.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.name} · {c.domain}
                     </SelectItem>
@@ -284,15 +260,13 @@ export default function PerformanceRolesAdminPage() {
               </Select>
             )}
             {isSuperAdmin && !companyId ? (
-              <p className="text-sm text-muted-foreground">
-                {t("rolesCompanyEmpty")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("rolesCompanyEmpty")}</p>
             ) : roles === undefined ? (
               <p className="text-sm text-muted-foreground">{t("loading")}</p>
             ) : roles.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("rolesEmpty")}</p>
             ) : (
-              roles.map(role => (
+              roles.map((role) => (
                 <div
                   key={role.id}
                   className="flex items-center justify-between gap-3 rounded-lg border border-border/60 p-3"
@@ -307,8 +281,7 @@ export default function PerformanceRolesAdminPage() {
                       )}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {role.permissions.length} / {PERMISSIONS.length}{" "}
-                      {t("rolesTitle")}
+                      {role.permissions.length} / {PERMISSIONS.length} {t("rolesTitle")}
                     </p>
                   </div>
                   <div className="flex gap-1">
@@ -339,7 +312,7 @@ export default function PerformanceRolesAdminPage() {
       </main>
       <RoleDialog
         open={editing !== null}
-        onOpenChange={o => {
+        onOpenChange={(o) => {
           if (!o) setEditing(null);
         }}
         token={token}

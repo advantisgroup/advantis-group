@@ -37,7 +37,7 @@ export const listMine = query({
   handler: async (ctx, { participantId }) => {
     const rows = await ctx.db
       .query("academyQuestions")
-      .withIndex("by_participant", q => q.eq("participantId", participantId))
+      .withIndex("by_participant", (q) => q.eq("participantId", participantId))
       .collect();
     return rows.sort((a, b) => b.createdAt - a.createdAt);
   },
@@ -50,13 +50,13 @@ export const listAll = query({
     await requireUser(ctx);
     const rows = await ctx.db
       .query("academyQuestions")
-      .withIndex("by_academy", q => q.eq("academyId", academyId))
+      .withIndex("by_academy", (q) => q.eq("academyId", academyId))
       .collect();
     const withNames = await Promise.all(
-      rows.map(async row => {
+      rows.map(async (row) => {
         const participant = await ctx.db.get(row.participantId);
         return { ...row, participantName: participant?.name ?? "—" };
-      })
+      }),
     );
     return withNames.sort((a, b) => b.createdAt - a.createdAt);
   },
@@ -77,9 +77,7 @@ export const answer = mutation({
     // an unlinked, code-only participant has no `userId` to notify.
     if (trimmed.length > 0) {
       const question = await ctx.db.get(questionId);
-      const participant = question
-        ? await ctx.db.get(question.participantId)
-        : null;
+      const participant = question ? await ctx.db.get(question.participantId) : null;
       if (question && participant?.linkedUserId) {
         await createNotification(ctx, {
           userId: participant.linkedUserId,

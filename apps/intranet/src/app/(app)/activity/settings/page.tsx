@@ -40,9 +40,7 @@ export default function SettingsPage() {
               the tab is open — it is reached via the "Discarded data" button
               under Configuration (or a deep link), not browsed into. */}
           {tab === "discarded" && (
-            <TabsTrigger value="discarded">
-              {t("settings.tabs.discarded")}
-            </TabsTrigger>
+            <TabsTrigger value="discarded">{t("settings.tabs.discarded")}</TabsTrigger>
           )}
         </TabsList>
 

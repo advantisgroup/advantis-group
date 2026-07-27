@@ -75,7 +75,7 @@ export function TourConfetti() {
         ctx.fillStyle = p.color;
         ctx.globalAlpha = Math.max(
           0,
-          1 - Math.max(0, p.y - canvas.height * 0.8) / (canvas.height * 0.2)
+          1 - Math.max(0, p.y - canvas.height * 0.8) / (canvas.height * 0.2),
         );
 
         if (p.shape === "rect") {

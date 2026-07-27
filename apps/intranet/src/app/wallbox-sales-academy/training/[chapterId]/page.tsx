@@ -30,7 +30,7 @@ export default function TrainingChapterPage() {
 
   if (!participant) return null;
 
-  const index = CHAPTERS.findIndex(c => c.id === params.chapterId);
+  const index = CHAPTERS.findIndex((c) => c.id === params.chapterId);
   if (index < 0) {
     return (
       <Card>
@@ -69,13 +69,11 @@ function ChapterPage({
   const { progress, loading, mutate } = useAcademyProgress(participantId);
 
   if (loading) {
-    return (
-      <p className="text-sm text-muted-foreground">Lade Trainingsstand …</p>
-    );
+    return <p className="text-sm text-muted-foreground">Lade Trainingsstand …</p>;
   }
 
   function goToChapter(i: number) {
-    void mutate(p => setLastChapter(p, i));
+    void mutate((p) => setLastChapter(p, i));
     router.push(`${HOME}/training/${CHAPTERS[i].id}`);
   }
 
@@ -98,7 +96,7 @@ function ChapterPage({
         index={index}
         participantId={participantId}
         progress={progress}
-        onMutate={fn => void mutate(fn)}
+        onMutate={(fn) => void mutate(fn)}
         onPrev={() => goToChapter(Math.max(0, index - 1))}
         onNext={() => goToChapter(Math.min(CHAPTERS.length - 1, index + 1))}
         focusQuestionId={focusQuestionId}

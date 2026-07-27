@@ -42,12 +42,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import { CHAPTERS, SCENARIOS, SEG } from "./data";
-import {
-  chapterResultLabel,
-  DLAB,
-  parseProgress,
-  recommendations,
-} from "./progress";
+import { chapterResultLabel, DLAB, parseProgress, recommendations } from "./progress";
 import { ACADEMY_ID } from "./use-academy-progress";
 
 import type { AcademyProgressData } from "./types";
@@ -69,12 +64,8 @@ function sendMailtoInvite(name: string, email: string, code: string) {
   const body = `Hallo ${name},%0D%0A%0D%0Adu bist zur Wallbox Sales Academy eingeladen - unserem Onboarding-Training für den B2B-Vertrieb von Ladeinfrastruktur. Kein Konto nötig, der Zugangscode reicht.%0D%0A%0D%0ASo startest du:%0D%0A1. Öffne diesen Link (Zugangscode ist schon ausgefüllt): ${trainingUrl}%0D%0A2. Klicke auf "Training starten"%0D%0A%0D%0AFalls der Link nicht klappt: Öffne ${window.location.origin}/wallbox-sales-academy und gib den Code ${code} manuell ein.%0D%0A%0D%0ADas Training umfasst mehrere Kapitel inkl. Wissens-Checks, Rechercheaufgaben und Call-Simulator. Deine Fragen kannst du direkt in der App stellen.%0D%0A%0D%0AViel Erfolg!`;
   const mailto = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent("Einladung: Wallbox Sales Academy - dein Zugangscode")}&body=${body}`;
   window.open(mailto, "_self");
-  void navigator.clipboard
-    ?.writeText(`Zugangscode für ${name}: ${code}`)
-    .catch(() => {});
-  toast.success(
-    `Zugangscode für ${name} kopiert (${code}). Mailprogramm wurde geöffnet.`
-  );
+  void navigator.clipboard?.writeText(`Zugangscode für ${name}: ${code}`).catch(() => {});
+  toast.success(`Zugangscode für ${name} kopiert (${code}). Mailprogramm wurde geöffnet.`);
 }
 
 function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
@@ -88,9 +79,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
 
   const matchedUser =
     mode === "email" && email.trim()
-      ? (users ?? []).find(
-          u => u.email.toLowerCase() === email.trim().toLowerCase()
-        )
+      ? (users ?? []).find((u) => u.email.toLowerCase() === email.trim().toLowerCase())
       : null;
 
   function reset() {
@@ -109,9 +98,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
         email: "",
         linkUserId: selectedUserId as Id<"users">,
       });
-      toast.success(
-        "Einladung gesendet - Benachrichtigung und E-Mail wurden verschickt."
-      );
+      toast.success("Einladung gesendet - Benachrichtigung und E-Mail wurden verschickt.");
     } else {
       if (!name.trim() || !email.trim()) return;
       const result = await create({ academyId: ACADEMY_ID, name, email });
@@ -125,7 +112,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
   return (
     <Dialog
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         setOpen(o);
         if (!o) reset();
       }}
@@ -167,7 +154,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
                 className="mt-1"
                 placeholder="Vorname Nachname"
                 value={name}
-                onChange={e => setName(e.target.value)}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div>
@@ -178,14 +165,13 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
                 className="mt-1"
                 placeholder="name@firma.de"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             {matchedUser ? (
               <div className="flex items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
                 <span>
-                  Diese E-Mail gehört zum Intranet-Konto{" "}
-                  <b>{userDisplayName(matchedUser)}</b>.
+                  Diese E-Mail gehört zum Intranet-Konto <b>{userDisplayName(matchedUser)}</b>.
                 </span>
                 <Button
                   size="sm"
@@ -200,9 +186,8 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
               </div>
             ) : null}
             <p className="text-xs text-muted-foreground">
-              Die App versendet die E-Mail nicht selbst: Der Button öffnet dein
-              Mailprogramm mit fertigem Text (Zugangscode + Link), den du
-              absendest.
+              Die App versendet die E-Mail nicht selbst: Der Button öffnet dein Mailprogramm mit
+              fertigem Text (Zugangscode + Link), den du absendest.
             </p>
           </div>
         ) : (
@@ -213,7 +198,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
                 <SelectValue placeholder="Konto auswählen" />
               </SelectTrigger>
               <SelectContent>
-                {(users ?? []).map(u => (
+                {(users ?? []).map((u) => (
                   <SelectItem key={u._id} value={u._id}>
                     {userDisplayName(u)} · {u.email}
                   </SelectItem>
@@ -221,9 +206,9 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Der Zugangscode geht sofort als In-App-Benachrichtigung und als
-              E-Mail an dieses Konto. Zugriff auf die Academy läuft weiterhin
-              über den Code, nicht automatisch über das Konto.
+              Der Zugangscode geht sofort als In-App-Benachrichtigung und als E-Mail an dieses
+              Konto. Zugriff auf die Academy läuft weiterhin über den Code, nicht automatisch über
+              das Konto.
             </p>
           </div>
         )}
@@ -234,9 +219,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
           </Button>
           <Button
             onClick={() => void submit()}
-            disabled={
-              mode === "email" ? !name.trim() || !email.trim() : !selectedUserId
-            }
+            disabled={mode === "email" ? !name.trim() || !email.trim() : !selectedUserId}
           >
             Anlegen & Einladung erstellen
           </Button>
@@ -252,11 +235,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
  * an actual, bookmarkable/shareable URL instead of leaving you stuck on the
  * list URL with hidden UI state.
  */
-export function ParticipantsTab({
-  focusParticipantId,
-}: {
-  focusParticipantId?: string | null;
-}) {
+export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: string | null }) {
   const router = useRouter();
   const participants = useQuery(api.academyParticipants.listAll, {
     academyId: ACADEMY_ID,
@@ -278,7 +257,7 @@ export function ParticipantsTab({
     return <p className="text-sm text-muted-foreground">Lade Teilnehmer …</p>;
   }
 
-  const resultsByParticipant = new Map(results.map(r => [r.participantId, r]));
+  const resultsByParticipant = new Map(results.map((r) => [r.participantId, r]));
 
   function copyParticipantLink(participantId: string) {
     const url = `${window.location.origin}${ADMIN_BASE}/teilnehmer/${participantId}`;
@@ -295,9 +274,7 @@ export function ParticipantsTab({
         </div>
 
         {participants.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            Noch keine Teilnehmer angelegt.
-          </p>
+          <p className="text-sm text-muted-foreground">Noch keine Teilnehmer angelegt.</p>
         ) : (
           <Table>
             <TableHeader>
@@ -310,10 +287,10 @@ export function ParticipantsTab({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {participants.map(p => {
+              {participants.map((p) => {
                 const resultRow = resultsByParticipant.get(p._id);
                 const progress = parseProgress(resultRow?.data);
-                const quiz = CHAPTERS.filter(c => c.quiz).reduce(
+                const quiz = CHAPTERS.filter((c) => c.quiz).reduce(
                   (acc, c) => {
                     const state = progress.chapters[c.id];
                     return {
@@ -321,7 +298,7 @@ export function ParticipantsTab({
                       total: acc.total + (state?.total ?? 0),
                     };
                   },
-                  { correct: 0, total: 0 }
+                  { correct: 0, total: 0 },
                 );
                 const status = progress.finished
                   ? "abgeschlossen"
@@ -331,31 +308,19 @@ export function ParticipantsTab({
                 const open = focusParticipantId === p._id;
                 return (
                   <Fragment key={p._id}>
-                    <TableRow
-                      ref={
-                        open && focusParticipantId === p._id
-                          ? rowRef
-                          : undefined
-                      }
-                    >
+                    <TableRow ref={open && focusParticipantId === p._id ? rowRef : undefined}>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
                           <span className="font-medium">{p.name}</span>
-                          {p.linkedUserId ? (
-                            <Badge variant="secondary">verknüpft</Badge>
-                          ) : null}
+                          {p.linkedUserId ? <Badge variant="secondary">verknüpft</Badge> : null}
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {p.email}
-                        </div>
+                        <div className="text-xs text-muted-foreground">{p.email}</div>
                       </TableCell>
                       <TableCell>
                         <code className="text-xs">{p.code}</code>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={progress.finished ? "success" : "secondary"}
-                        >
+                        <Badge variant={progress.finished ? "success" : "secondary"}>
                           {status}
                         </Badge>
                       </TableCell>
@@ -377,9 +342,7 @@ export function ParticipantsTab({
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() =>
-                              sendMailtoInvite(p.name, p.email, p.code)
-                            }
+                            onClick={() => sendMailtoInvite(p.name, p.email, p.code)}
                           >
                             Einladung
                           </Button>
@@ -390,7 +353,7 @@ export function ParticipantsTab({
                               router.push(
                                 open
                                   ? `${ADMIN_BASE}/teilnehmer`
-                                  : `${ADMIN_BASE}/teilnehmer/${p._id}`
+                                  : `${ADMIN_BASE}/teilnehmer/${p._id}`,
                               )
                             }
                           >
@@ -416,10 +379,7 @@ export function ParticipantsTab({
                     {open ? (
                       <TableRow>
                         <TableCell colSpan={5} className="bg-muted/30">
-                          <ParticipantDetail
-                            participant={p}
-                            progress={progress}
-                          />
+                          <ParticipantDetail participant={p} progress={progress} />
                         </TableCell>
                       </TableRow>
                     ) : null}
@@ -434,11 +394,7 @@ export function ParticipantsTab({
   );
 }
 
-function LinkAccountControl({
-  participant,
-}: {
-  participant: Doc<"academyParticipants">;
-}) {
+function LinkAccountControl({ participant }: { participant: Doc<"academyParticipants"> }) {
   const users = useQuery(api.users.list, {});
   const linkToAccount = useMutation(api.academyParticipants.linkToAccount);
   const unlinkAccount = useMutation(api.academyParticipants.unlinkAccount);
@@ -446,9 +402,8 @@ function LinkAccountControl({
   return (
     <Select
       value={participant.linkedUserId ?? "none"}
-      onValueChange={v => {
-        if (v === "none")
-          void unlinkAccount({ participantId: participant._id });
+      onValueChange={(v) => {
+        if (v === "none") void unlinkAccount({ participantId: participant._id });
         else
           void linkToAccount({
             participantId: participant._id,
@@ -461,7 +416,7 @@ function LinkAccountControl({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="none">Kein Konto verknüpft</SelectItem>
-        {(users ?? []).map(u => (
+        {(users ?? []).map((u) => (
           <SelectItem key={u._id} value={u._id}>
             {userDisplayName(u)} · {u.email}
           </SelectItem>
@@ -483,18 +438,15 @@ function ParticipantDetail({
   return (
     <div className="space-y-4 py-2">
       <p className="text-xs text-muted-foreground">
-        Gestartet: {progress.started ?? "–"} · Abgeschlossen:{" "}
-        {progress.finished ?? "–"}
+        Gestartet: {progress.started ?? "–"} · Abgeschlossen: {progress.finished ?? "–"}
       </p>
 
       {progress.finished ? (
         <div>
-          <h4 className="mb-1.5 text-sm font-semibold">
-            Mit Intranet-Konto verknüpfen
-          </h4>
+          <h4 className="mb-1.5 text-sm font-semibold">Mit Intranet-Konto verknüpfen</h4>
           <p className="mb-2 text-xs text-muted-foreground">
-            Verknüpft die abgeschlossenen Ergebnisse mit einem echten
-            Intranet-Konto, z. B. für die Personalakte.
+            Verknüpft die abgeschlossenen Ergebnisse mit einem echten Intranet-Konto, z. B. für die
+            Personalakte.
           </p>
           <LinkAccountControl participant={participant} />
         </div>
@@ -526,9 +478,7 @@ function ParticipantDetail({
       </Table>
 
       <div>
-        <h4 className="mb-1.5 text-sm font-semibold">
-          Empfehlung weiterer Schulungsbedarf
-        </h4>
+        <h4 className="mb-1.5 text-sm font-semibold">Empfehlung weiterer Schulungsbedarf</h4>
         {rec.length ? (
           <div className="space-y-1">
             {rec.map((r, i) => (
@@ -551,11 +501,9 @@ function ParticipantDetail({
       </div>
 
       <div>
-        <h4 className="mb-1.5 text-sm font-semibold">
-          Call-Simulator (Warm Leads)
-        </h4>
+        <h4 className="mb-1.5 text-sm font-semibold">Call-Simulator (Warm Leads)</h4>
         <div className="space-y-1">
-          {SCENARIOS.map(s => {
+          {SCENARIOS.map((s) => {
             const d = progress.calls[s.id];
             if (!d) {
               return (
@@ -565,9 +513,7 @@ function ParticipantDetail({
                 </p>
               );
             }
-            const missing = s.targets
-              .filter(t => !d.data.includes(t))
-              .map(t => DLAB[t]);
+            const missing = s.targets.filter((t) => !d.data.includes(t)).map((t) => DLAB[t]);
             return (
               <p key={s.id} className="text-sm">
                 <Badge variant={d.score / d.max >= 0.7 ? "success" : "warning"}>
@@ -577,10 +523,8 @@ function ParticipantDetail({
                 <br />
                 <span className="text-xs text-muted-foreground">
                   Datenerfassung {d.data.length}/{s.targets.length}
-                  {missing.length
-                    ? ` - fehlend: ${missing.join(", ")}`
-                    : " - vollständig"}{" "}
-                  · Versuch(e): {d.attempts ?? 1} · {d.date}
+                  {missing.length ? ` - fehlend: ${missing.join(", ")}` : " - vollständig"} ·
+                  Versuch(e): {d.attempts ?? 1} · {d.date}
                 </span>
               </p>
             );
@@ -588,9 +532,7 @@ function ParticipantDetail({
         </div>
       </div>
 
-      {Object.keys(progress.research).some(k =>
-        progress.research[k]?.trim()
-      ) ? (
+      {Object.keys(progress.research).some((k) => progress.research[k]?.trim()) ? (
         <div>
           <h4 className="mb-1.5 text-sm font-semibold">Recherche-Antworten</h4>
           <div className="space-y-1.5">
@@ -611,11 +553,7 @@ function ParticipantDetail({
 
 // ─── Fragen ──────────────────────────────────────────────────────────────
 
-export function QuestionsTab({
-  focusQuestionId,
-}: {
-  focusQuestionId?: string | null;
-}) {
+export function QuestionsTab({ focusQuestionId }: { focusQuestionId?: string | null }) {
   const questions = useQuery(api.academyQuestions.listAll, {
     academyId: ACADEMY_ID,
   });
@@ -652,18 +590,14 @@ export function QuestionsTab({
   return (
     <Card>
       <CardContent className="space-y-3 p-5">
-        <h3 className="font-semibold">
-          Fragen der Teilnehmer ({questions.length})
-        </h3>
-        {questions.map(q => (
+        <h3 className="font-semibold">Fragen der Teilnehmer ({questions.length})</h3>
+        {questions.map((q) => (
           <div
             key={q._id}
             id={`admin-q-${q._id}`}
             className={
               "rounded-lg border p-3.5 " +
-              (focusQuestionId === q._id
-                ? "border-primary ring-2 ring-primary"
-                : "border-border")
+              (focusQuestionId === q._id ? "border-primary ring-2 ring-primary" : "border-border")
             }
           >
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -672,8 +606,7 @@ export function QuestionsTab({
               </Badge>
               <b>{q.participantName}</b>
               <span className="text-xs text-muted-foreground">
-                · {q.chapterTitle} ·{" "}
-                {new Date(q.createdAt).toLocaleDateString("de-DE")}
+                · {q.chapterTitle} · {new Date(q.createdAt).toLocaleDateString("de-DE")}
               </span>
               <Button
                 size="icon-sm"
@@ -691,9 +624,7 @@ export function QuestionsTab({
             </Label>
             <Textarea
               value={drafts[q._id] ?? q.answer ?? ""}
-              onChange={e =>
-                setDrafts(d => ({ ...d, [q._id]: e.target.value }))
-              }
+              onChange={(e) => setDrafts((d) => ({ ...d, [q._id]: e.target.value }))}
             />
             <div className="mt-2 flex gap-2">
               <Button
@@ -746,7 +677,7 @@ export function SettingsTab() {
               className="max-w-[200px]"
               placeholder="Neue PIN"
               value={pin}
-              onChange={e => {
+              onChange={(e) => {
                 setPinValue(e.target.value);
                 setSaved(false);
               }}
@@ -763,11 +694,7 @@ export function SettingsTab() {
             >
               Speichern
             </Button>
-            {saved ? (
-              <span className="text-xs text-muted-foreground">
-                Gespeichert.
-              </span>
-            ) : null}
+            {saved ? <span className="text-xs text-muted-foreground">Gespeichert.</span> : null}
           </div>
         </CardContent>
       </Card>
@@ -776,8 +703,7 @@ export function SettingsTab() {
         <CardContent className="p-5">
           <h3 className="mb-2 font-semibold">Daten</h3>
           <p className="mb-3 text-sm text-muted-foreground">
-            Löscht alle Teilnehmer, Ergebnisse, Fragen und die PIN dieser
-            Academy unwiderruflich.
+            Löscht alle Teilnehmer, Ergebnisse, Fragen und die PIN dieser Academy unwiderruflich.
           </p>
           <Button
             variant="destructive"

@@ -4,14 +4,7 @@ import { useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import {
-  AlertTriangle,
-  Plus,
-  Rss,
-  Search,
-  Sparkles,
-  Wrench,
-} from "lucide-react";
+import { AlertTriangle, Plus, Rss, Search, Sparkles, Wrench } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
@@ -30,12 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateTime, relativeTime } from "@/lib/format";
-import {
-  formatDuration,
-  KNOWN_SYSTEMS,
-  statusesForType,
-  type UpdateType,
-} from "@/lib/updates";
+import { formatDuration, KNOWN_SYSTEMS, statusesForType, type UpdateType } from "@/lib/updates";
 
 const TYPE_ICON = {
   incident: AlertTriangle,
@@ -88,7 +76,7 @@ export default function UpdatesPage() {
 
       <Tabs
         value={type}
-        onValueChange={v => {
+        onValueChange={(v) => {
           setType(v as UpdateType | "all");
           setStatus("all");
         }}
@@ -107,7 +95,7 @@ export default function UpdatesPage() {
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder={t("searchPlaceholder")}
             className="pl-8"
           />
@@ -119,7 +107,7 @@ export default function UpdatesPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allStatuses")}</SelectItem>
-              {statusOptions.map(s => (
+              {statusOptions.map((s) => (
                 <SelectItem key={s} value={s}>
                   {t(`status.${s}`)}
                 </SelectItem>
@@ -133,7 +121,7 @@ export default function UpdatesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("allSystems")}</SelectItem>
-            {KNOWN_SYSTEMS.map(s => (
+            {KNOWN_SYSTEMS.map((s) => (
               <SelectItem key={s} value={s}>
                 {s}
               </SelectItem>
@@ -144,22 +132,15 @@ export default function UpdatesPage() {
 
       {items === undefined ? (
         <div className="space-y-3">
-          {[0, 1, 2].map(i => (
-            <div
-              key={i}
-              className="h-20 animate-pulse rounded-xl bg-muted/50"
-            />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-20 animate-pulse rounded-xl bg-muted/50" />
           ))}
         </div>
       ) : items.length === 0 ? (
-        <EmptyState
-          icon={<Rss />}
-          title={t("emptyTitle")}
-          description={t("emptyDescription")}
-        />
+        <EmptyState icon={<Rss />} title={t("emptyTitle")} description={t("emptyDescription")} />
       ) : (
         <div className="space-y-2">
-          {items.map(item => {
+          {items.map((item) => {
             const Icon = TYPE_ICON[item.type];
             return (
               <Link
@@ -180,25 +161,19 @@ export default function UpdatesPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={TYPE_BADGE_VARIANT[item.type]}>
-                      {t(`type.${item.type}`)}
-                    </Badge>
+                    <Badge variant={TYPE_BADGE_VARIANT[item.type]}>{t(`type.${item.type}`)}</Badge>
                     {item.status && (
                       <Badge variant={item.ongoing ? "warning" : "muted"}>
                         {t(`status.${item.status}`)}
                       </Badge>
                     )}
-                    {item.scheduled && (
-                      <Badge variant="outline">{t("scheduled")}</Badge>
-                    )}
+                    {item.scheduled && <Badge variant="outline">{t("scheduled")}</Badge>}
                     <span className="text-xs text-muted-foreground">
                       {relativeTime(item.publishedAt)}
                     </span>
                   </div>
                   <p className="mt-1 truncate font-medium">{item.title}</p>
-                  <p className="truncate text-sm text-muted-foreground">
-                    {item.summary}
-                  </p>
+                  <p className="truncate text-sm text-muted-foreground">{item.summary}</p>
                   {item.durationMs !== null && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       {item.ongoing
@@ -209,10 +184,7 @@ export default function UpdatesPage() {
                             duration: formatDuration(item.durationMs),
                           })}
                       {" · "}
-                      {formatDateTime(
-                        item.startedAt ?? item.publishedAt,
-                        locale
-                      )}
+                      {formatDateTime(item.startedAt ?? item.publishedAt, locale)}
                     </p>
                   )}
                 </div>

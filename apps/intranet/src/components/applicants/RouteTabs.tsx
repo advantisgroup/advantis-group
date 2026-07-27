@@ -28,13 +28,7 @@ export interface RouteTab {
  * floating pill — the bottom nav becomes the tab switcher rather than a
  * separate dropdown.
  */
-export function RouteTabs({
-  tabs,
-  activeValue,
-}: {
-  tabs: RouteTab[];
-  activeValue: string;
-}) {
+export function RouteTabs({ tabs, activeValue }: { tabs: RouteTab[]; activeValue: string }) {
   const isMobile = useIsMobile();
   const { setTabs } = useBottomNavTabs();
 
@@ -43,10 +37,9 @@ export function RouteTabs({
     // BottomNav only ever reads `label` as an aria-label (it renders icons
     // only), so folding the count into it here keeps that contract exactly
     // as it was before tabs could carry a separate `count` field.
-    const mobileTabs = tabs.map(tab => ({
+    const mobileTabs = tabs.map((tab) => ({
       ...tab,
-      label:
-        tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label,
+      label: tab.count !== undefined ? `${tab.label} (${tab.count})` : tab.label,
     }));
     setTabs(mobileTabs, activeValue);
     return () => setTabs(null, null);
@@ -59,7 +52,7 @@ export function RouteTabs({
 
   return (
     <div className="flex items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border/70 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [touch-action:pan-x] [&::-webkit-scrollbar]:hidden">
-      {tabs.map(tab => {
+      {tabs.map((tab) => {
         const active = tab.value === activeValue;
         return (
           <Link
@@ -67,9 +60,7 @@ export function RouteTabs({
             href={tab.href}
             className={cn(
               "relative flex shrink-0 select-none items-center gap-2 whitespace-nowrap px-3.5 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none",
-              active
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+              active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
             )}
           >
             <tab.icon className="size-4" />
@@ -78,9 +69,7 @@ export function RouteTabs({
               <span
                 className={cn(
                   "rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none tabular-nums",
-                  active
-                    ? "bg-primary/10 text-primary"
-                    : "bg-muted text-muted-foreground"
+                  active ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
                 )}
               >
                 {tab.count}
@@ -89,7 +78,7 @@ export function RouteTabs({
             <span
               className={cn(
                 "absolute inset-x-3 -bottom-px h-0.5 rounded-full transition-colors",
-                active ? "bg-primary" : "bg-transparent"
+                active ? "bg-primary" : "bg-transparent",
               )}
             />
           </Link>

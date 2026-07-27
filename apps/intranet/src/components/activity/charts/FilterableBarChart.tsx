@@ -2,15 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { cn } from "@/lib/utils";
 
@@ -68,7 +60,7 @@ export function FilterableBarChart({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
 
   function toggle(key: string) {
-    setHidden(prev => {
+    setHidden((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
@@ -77,12 +69,12 @@ export function FilterableBarChart({
     });
   }
 
-  const visible = series.filter(s => !hidden.has(s.key));
-  const hasRightAxis = series.some(s => s.axis === "right");
+  const visible = series.filter((s) => !hidden.has(s.key));
+  const hasRightAxis = series.some((s) => s.axis === "right");
 
   const chartData = useMemo(() => {
     if (yScale !== "log") return data;
-    return data.map(row => {
+    return data.map((row) => {
       const next: Record<string, string | number> = { ...row };
       for (const s of series) {
         const v = row[s.key];
@@ -98,7 +90,7 @@ export function FilterableBarChart({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-1.5">
-        {series.map(s => {
+        {series.map((s) => {
           const isHidden = hidden.has(s.key);
           return (
             <button
@@ -108,7 +100,7 @@ export function FilterableBarChart({
               aria-pressed={!isHidden}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full border border-transparent bg-muted px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted/70",
-                isHidden && "text-muted-foreground/50"
+                isHidden && "text-muted-foreground/50",
               )}
             >
               <span
@@ -173,25 +165,21 @@ export function FilterableBarChart({
                 ? (
                     value: number,
                     _name: string,
-                    item: { dataKey?: string | number; payload?: unknown }
+                    item: { dataKey?: string | number; payload?: unknown },
                   ) => {
                     const raw =
                       yScale === "log" &&
                       typeof item.dataKey === "string" &&
                       item.payload &&
                       typeof item.payload === "object"
-                        ? (item.payload as Record<string, unknown>)[
-                            `${item.dataKey}${RAW_SUFFIX}`
-                          ]
+                        ? (item.payload as Record<string, unknown>)[`${item.dataKey}${RAW_SUFFIX}`]
                         : undefined;
-                    return tooltipFormatter(
-                      typeof raw === "number" ? raw : value
-                    );
+                    return tooltipFormatter(typeof raw === "number" ? raw : value);
                   }
                 : undefined
             }
           />
-          {visible.map(s => (
+          {visible.map((s) => (
             <Bar
               key={s.key}
               yAxisId={s.axis === "right" ? "right" : "left"}

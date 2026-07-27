@@ -9,14 +9,14 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
 
 import { InteractionsTable } from "@/components/performance/InteractionsTable";
-import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { PeriodFilter } from "@/components/performance/PeriodFilter";
 import {
   computePeriodRange,
   shiftAnchor,
   todayIso,
   type PeriodGranularity,
-} from "@/components/performance/periodFilter";
+} from "@/components/performance/lib";
+import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { PeriodFilter } from "@/components/performance/PeriodFilter";
 import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeInteractionsPage() {
@@ -41,16 +41,14 @@ export default function EmployeeInteractionsPage() {
       <PeriodFilter
         granularity={granularity}
         anchor={anchor}
-        onGranularityChange={g => setGranularity(g)}
-        onShift={dir => setAnchor(a => shiftAnchor(a, granularity, dir))}
+        onGranularityChange={(g) => setGranularity(g)}
+        onShift={(dir) => setAnchor((a) => shiftAnchor(a, granularity, dir))}
       />
 
       <InteractionsTable
         days={data.days}
         total={data.total}
-        hrefForRow={row =>
-          `/performance/mitarbeiter/${employeeId}/interaktionen/${row.date}`
-        }
+        hrefForRow={(row) => `/performance/mitarbeiter/${employeeId}/interaktionen/${row.date}`}
       />
     </div>
   );

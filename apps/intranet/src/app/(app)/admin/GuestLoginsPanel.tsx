@@ -76,14 +76,14 @@ export function GuestLoginsPanel() {
           <Input
             placeholder={t("guestLabel")}
             value={label}
-            onChange={e => setLabel(e.target.value)}
+            onChange={(e) => setLabel(e.target.value)}
             className="sm:flex-1"
           />
           <Input
             type="email"
             placeholder={t("guestEmail")}
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             className="sm:w-48"
           />
           <div className="flex gap-2">
@@ -91,15 +91,11 @@ export function GuestLoginsPanel() {
               type="number"
               min={1}
               value={hours}
-              onChange={e => setHours(e.target.value)}
+              onChange={(e) => setHours(e.target.value)}
               className="w-20 shrink-0"
               aria-label={t("guestHours")}
             />
-            <Button
-              onClick={make}
-              disabled={busy || !label.trim()}
-              className="flex-1 sm:flex-none"
-            >
+            <Button onClick={make} disabled={busy || !label.trim()} className="flex-1 sm:flex-none">
               <KeyRound className="mr-2 h-4 w-4" />
               {t("createGuest")}
             </Button>
@@ -108,20 +104,17 @@ export function GuestLoginsPanel() {
       </Card>
 
       {logins && logins.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {t("noGuests")}
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("noGuests")}</p>
       ) : (
         <div className="space-y-2">
-          {logins?.map(g => (
+          {logins?.map((g) => (
             <Card nested key={g._id}>
               <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-2">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{g.label}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {g.email ?? "—"} · {t("expires")}{" "}
-                      {formatDateTime(g.expiresAt, locale)}
+                      {g.email ?? "—"} · {t("expires")} {formatDateTime(g.expiresAt, locale)}
                     </p>
                   </div>
                   <Badge variant={statusVariant(g.status)} className="shrink-0">

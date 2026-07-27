@@ -116,7 +116,9 @@
     {
       "id": "rights",
       "title": "Your rights",
-      "paragraphs": ["Authorized users have the following rights regarding their personal data at any time:"],
+      "paragraphs": [
+        "Authorized users have the following rights regarding their personal data at any time:"
+      ],
       "list": [
         {
           "title": "Access",

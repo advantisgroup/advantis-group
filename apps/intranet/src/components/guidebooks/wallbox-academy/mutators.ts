@@ -1,12 +1,6 @@
 import { today } from "./progress";
 
-import type {
-  AcademyProgressData,
-  CallAttempt,
-  Chapter,
-  DataKey,
-  Scenario,
-} from "./types";
+import type { AcademyProgressData, CallAttempt, Chapter, DataKey, Scenario } from "./types";
 
 function ensureStarted(p: AcademyProgressData): AcademyProgressData {
   return p.started ? p : { ...p, started: today() };
@@ -14,7 +8,7 @@ function ensureStarted(p: AcademyProgressData): AcademyProgressData {
 
 export function markChapterVisited(
   progress: AcademyProgressData,
-  chapterId: string
+  chapterId: string,
 ): AcademyProgressData {
   if (progress.chapters[chapterId]?.visited) return progress;
   return ensureStarted({
@@ -30,7 +24,7 @@ export function answerQuizQuestion(
   progress: AcademyProgressData,
   chapter: Chapter,
   questionIndex: number,
-  optionIndex: number
+  optionIndex: number,
 ): AcademyProgressData {
   if (!chapter.quiz) return progress;
   const existing = progress.chapters[chapter.id] ?? {
@@ -45,7 +39,7 @@ export function answerQuizQuestion(
   const answers = { ...(existing.answers ?? {}), [questionIndex]: optionIndex };
   const correct = chapter.quiz.reduce(
     (sum, q, i) => sum + (answers[i] === q.correctIndex ? 1 : 0),
-    0
+    0,
   );
   const state = {
     ...existing,
@@ -60,10 +54,7 @@ export function answerQuizQuestion(
   });
 }
 
-export function retryQuiz(
-  progress: AcademyProgressData,
-  chapterId: string
-): AcademyProgressData {
+export function retryQuiz(progress: AcademyProgressData, chapterId: string): AcademyProgressData {
   const state = progress.chapters[chapterId];
   if (!state) return progress;
   const history = [
@@ -88,7 +79,7 @@ export function retryQuiz(
 
 export function saveResearchAnswers(
   progress: AcademyProgressData,
-  values: Record<string, string>
+  values: Record<string, string>,
 ): AcademyProgressData {
   return ensureStarted({
     ...progress,
@@ -100,7 +91,7 @@ export function recordCallAttempt(
   progress: AcademyProgressData,
   scenario: Scenario,
   score: number,
-  dataKeys: DataKey[]
+  dataKeys: DataKey[],
 ): AcademyProgressData {
   const max = scenario.steps.length * 2;
   const prev = progress.calls[scenario.id];
@@ -111,10 +102,7 @@ export function recordCallAttempt(
     date: today(),
     attempts: prev ? (prev.attempts ?? 1) + 1 : 1,
     history: prev
-      ? [
-          ...(prev.history ?? []),
-          { score: prev.score, max: prev.max, date: prev.date },
-        ]
+      ? [...(prev.history ?? []), { score: prev.score, max: prev.max, date: prev.date }]
       : [],
   };
   return ensureStarted({
@@ -123,9 +111,6 @@ export function recordCallAttempt(
   });
 }
 
-export function setLastChapter(
-  progress: AcademyProgressData,
-  index: number
-): AcademyProgressData {
+export function setLastChapter(progress: AcademyProgressData, index: number): AcademyProgressData {
   return { ...progress, lastCh: index };
 }

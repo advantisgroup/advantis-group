@@ -65,7 +65,7 @@ function mapStatus(clockodoStatus: number): AbsenceStatus {
 async function resolveUser(
   ctx: MutationCtx,
   clockodoUserId: number,
-  email: string | undefined
+  email: string | undefined,
 ): Promise<Doc<"users"> | null> {
   const clockodoUserIdStr = toClockodoIdString(clockodoUserId);
   // `by_clockodoUserId` may still contain legacy `number` rows pending
@@ -73,22 +73,18 @@ async function resolveUser(
   const byClockodo =
     (await ctx.db
       .query("users")
-      .withIndex("by_clockodoUserId", q =>
-        q.eq("clockodoUserId", clockodoUserIdStr)
-      )
+      .withIndex("by_clockodoUserId", (q) => q.eq("clockodoUserId", clockodoUserIdStr))
       .first()) ??
     (await ctx.db
       .query("users")
-      .withIndex("by_clockodoUserId", q =>
-        q.eq("clockodoUserId", clockodoUserId)
-      )
+      .withIndex("by_clockodoUserId", (q) => q.eq("clockodoUserId", clockodoUserId))
       .first());
   if (byClockodo) return byClockodo;
 
   if (email) {
     const byEmail = await ctx.db
       .query("users")
-      .withIndex("by_email", q => q.eq("email", email.toLowerCase()))
+      .withIndex("by_email", (q) => q.eq("email", email.toLowerCase()))
       .first();
     if (byEmail) {
       // Backfill the Clockodo link for next time.
@@ -105,8 +101,8 @@ async function resolveUser(
   // wins — the roster is only consulted when the intranet knows nothing.
   const person = await ctx.db
     .query("people")
-    .withIndex("by_clockodoUserId", q =>
-      q.eq("clockodoUserId", toClockodoIdString(clockodoUserId))
+    .withIndex("by_clockodoUserId", (q) =>
+      q.eq("clockodoUserId", toClockodoIdString(clockodoUserId)),
     )
     .first();
   if (person?.userId) {
@@ -162,7 +158,7 @@ async function upsertAbsence(ctx: MutationCtx, args: AbsencePayload) {
 
   const existing = await ctx.db
     .query("absences")
-    .withIndex("by_externalId", q => q.eq("externalId", args.externalId))
+    .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
     .first();
 
   if (existing) {
@@ -179,7 +175,7 @@ async function upsertAbsence(ctx: MutationCtx, args: AbsencePayload) {
 async function recordSyncRun(ctx: MutationCtx) {
   const existing = await ctx.db
     .query("activitySettings")
-    .withIndex("by_key", q => q.eq("key", "absenceSync.lastRunAt"))
+    .withIndex("by_key", (q) => q.eq("key", "absenceSync.lastRunAt"))
     .unique();
   const now = Date.now();
   if (existing) {
@@ -207,7 +203,7 @@ export const deleteAbsenceByExternalId = mutation({
     assertServerKey(args.serverKey);
     const existing = await ctx.db
       .query("absences")
-      .withIndex("by_externalId", q => q.eq("externalId", args.externalId))
+      .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
       .first();
     if (!existing) return { deleted: false };
     await ctx.db.delete(existing._id);
@@ -243,16 +239,12 @@ export const applySyncBatch = internalMutation({
     let deleted = 0;
     const inYear = await ctx.db
       .query("absences")
-      .withIndex("by_startDate", q =>
-        q.gte("startDate", `${year}-01-01`).lte("startDate", `${year}-12-31`)
+      .withIndex("by_startDate", (q) =>
+        q.gte("startDate", `${year}-01-01`).lte("startDate", `${year}-12-31`),
       )
       .collect();
     for (const mirror of inYear) {
-      if (
-        mirror.source === "clockodo" &&
-        mirror.externalId &&
-        !seen.has(mirror.externalId)
-      ) {
+      if (mirror.source === "clockodo" && mirror.externalId && !seen.has(mirror.externalId)) {
         await ctx.db.delete(mirror._id);
         deleted++;
       }
@@ -274,7 +266,7 @@ export const linkClockodoUserByEmail = mutation({
     assertServerKey(args.serverKey);
     const user = await ctx.db
       .query("users")
-      .withIndex("by_email", q => q.eq("email", args.email.toLowerCase()))
+      .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
       .first();
     if (!user) return { linked: false };
     await ctx.db.patch(user._id, { clockodoUserId: args.clockodoUserId });

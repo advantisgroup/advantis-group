@@ -7,12 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import {
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  MonitorSmartphone,
-} from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, MonitorSmartphone } from "lucide-react";
 
 import { StateStripLegend } from "@/components/activity/charts/StateStrip";
 import { StateTimelineChart } from "@/components/activity/charts/StateTimelineChart";
@@ -41,12 +36,7 @@ import {
   type Sample,
   type StateName,
 } from "@/lib/activity/activity";
-import {
-  formatDuration,
-  formatRelativeTime,
-  localDay,
-  todayLocalDay,
-} from "@/lib/activity/fmt";
+import { formatDuration, formatRelativeTime, localDay, todayLocalDay } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import { useDayParam } from "@/lib/activity/useDayParam";
 import { useNow } from "@/lib/activity/useNow";
@@ -64,11 +54,7 @@ function hhmm(ms: number, lang: string): string {
   });
 }
 
-export default function TimelinePage({
-  params,
-}: {
-  params: Promise<{ deviceId: string }>;
-}) {
+export default function TimelinePage({ params }: { params: Promise<{ deviceId: string }> }) {
   const { deviceId: rawDeviceId } = use(params);
   const { t, lang } = useI18n();
   const router = useRouter();
@@ -77,9 +63,7 @@ export default function TimelinePage({
   const [showAllChanges, setShowAllChanges] = useState(false);
   // Clicking a "state changes" list entry highlights the matching segment on
   // the timeline above — clicking it again clears the highlight.
-  const [highlightedChangeAt, setHighlightedChangeAt] = useState<number | null>(
-    null
-  );
+  const [highlightedChangeAt, setHighlightedChangeAt] = useState<number | null>(null);
   // 30s tick so "last seen"/"since" labels and the now-marker stay fresh even
   // while Convex has no data change to push.
   const now = useNow();
@@ -108,7 +92,7 @@ export default function TimelinePage({
   // only subscribes while its tab is actually open.
   const rawSamples = useQuery(
     api.activity.stats.recentSamples,
-    tab === "raw" ? { deviceId, limit: 200 } : "skip"
+    tab === "raw" ? { deviceId, limit: 200 } : "skip",
   );
 
   const startDay = useMemo(() => {
@@ -123,8 +107,8 @@ export default function TimelinePage({
   });
   const team = useQuery(api.activity.stats.teamOverview);
 
-  const device = team?.find(d => d.deviceId === deviceId) ?? null;
-  const dayStats = daily?.find(d => d.day === selectedDay);
+  const device = team?.find((d) => d.deviceId === deviceId) ?? null;
+  const dayStats = daily?.find((d) => d.day === selectedDay);
   const employeeId = device?.personEmployeeId ?? null;
 
   // Prev/next person switcher: the whole team in stable name order, so a
@@ -132,16 +116,14 @@ export default function TimelinePage({
   const switcher = useMemo(() => {
     if (!team || team.length < 2) return null;
     const ordered = [...team].sort((a, b) =>
-      (a.personName ?? a.hostname).localeCompare(b.personName ?? b.hostname)
+      (a.personName ?? a.hostname).localeCompare(b.personName ?? b.hostname),
     );
-    const index = ordered.findIndex(d => d.deviceId === deviceId);
+    const index = ordered.findIndex((d) => d.deviceId === deviceId);
     return index === -1 ? null : { ordered, index };
   }, [team, deviceId]);
   // Keeps ?day/?tab so switching people compares the same view.
   const openPerson = (id: string) => {
-    router.push(
-      `/activity/timeline/${encodeURIComponent(id)}${window.location.search}`
-    );
+    router.push(`/activity/timeline/${encodeURIComponent(id)}${window.location.search}`);
   };
 
   // ← / → step through days (unless focus is in a field, tab list, menu…).
@@ -154,7 +136,7 @@ export default function TimelinePage({
         el instanceof HTMLElement &&
         (el.isContentEditable ||
           el.closest(
-            "input, textarea, select, button, a, [role='tab'], [role='listbox'], [role='menu'], [role='dialog']"
+            "input, textarea, select, button, a, [role='tab'], [role='listbox'], [role='menu'], [role='dialog']",
           ))
       ) {
         return;
@@ -178,71 +160,57 @@ export default function TimelinePage({
 
   // Fused state for the linked employee + the selected day's state-change
   // history (open-ended for today so it runs up to "now").
-  const liveState = useQuery(
-    api.activity.state.get,
-    employeeId ? { employeeId } : "skip"
-  );
+  const liveState = useQuery(api.activity.state.get, employeeId ? { employeeId } : "skip");
   const stateHistory = useQuery(
     api.activity.state.history,
-    employeeId
-      ? { employeeId, since: dayStartMs, until: isToday ? undefined : dayEndMs }
-      : "skip"
+    employeeId ? { employeeId, since: dayStartMs, until: isToday ? undefined : dayEndMs } : "skip",
   );
 
   // Newest local day with any sample, from the device row's last-seen
   // heartbeat — no raw-sample read needed. Powers the "rewind" affordance.
-  const lastActive = device
-    ? localDay(device.lastSeen, new Date().getTimezoneOffset())
-    : null;
+  const lastActive = device ? localDay(device.lastSeen, new Date().getTimezoneOffset()) : null;
 
   // Aggregations (memoised; samples hold one day, up to ~6k rows).
-  const { trend, heatmap, intraday, hourlyStates, daySegments, stateChanges } =
-    useMemo(() => {
-      const tzOffset = new Date().getTimezoneOffset();
-      const s: Sample[] = samples ?? [];
-      const { heatmap, intraday } = timelineCharts(s, selectedDay, tzOffset);
-      // For *today* strip the prepended prior-day row (it would credit
-      // yesterday's state to hours 00-NN before work started). For a past day
-      // we keep it so the strip fills from that day's midnight.
-      const dayHistory = (stateHistory ?? []).filter(
-        x => !isToday || x.at >= dayStartMs
-      );
-      const windowEnd = isToday ? now : dayEndMs;
-      return {
-        trend: dailyTrend(daily ?? [], startDay, today),
-        heatmap,
-        intraday,
-        hourlyStates: hourlyStateBreakdown(
-          dayHistory,
-          dayStartMs,
-          windowEnd,
-          tzOffset
-        ),
-        daySegments: dayStateSegments(dayHistory, dayStartMs, windowEnd),
-        // Newest first — the "what changed, when" feed in plain words. The
-        // render caps it at RECENT_CHANGES until the user expands it.
-        stateChanges: dayHistory.filter(x => x.at >= dayStartMs).reverse(),
-      };
-    }, [
-      samples,
-      daily,
-      startDay,
-      today,
-      selectedDay,
-      isToday,
-      stateHistory,
-      dayStartMs,
-      dayEndMs,
-      now,
-    ]);
+  const { trend, heatmap, intraday, hourlyStates, daySegments, stateChanges } = useMemo(() => {
+    const tzOffset = new Date().getTimezoneOffset();
+    const s: Sample[] = samples ?? [];
+    const { heatmap, intraday } = timelineCharts(s, selectedDay, tzOffset);
+    // For *today* strip the prepended prior-day row (it would credit
+    // yesterday's state to hours 00-NN before work started). For a past day
+    // we keep it so the strip fills from that day's midnight.
+    const dayHistory = (stateHistory ?? []).filter((x) => !isToday || x.at >= dayStartMs);
+    const windowEnd = isToday ? now : dayEndMs;
+    return {
+      trend: dailyTrend(daily ?? [], startDay, today),
+      heatmap,
+      intraday,
+      hourlyStates: hourlyStateBreakdown(dayHistory, dayStartMs, windowEnd, tzOffset),
+      daySegments: dayStateSegments(dayHistory, dayStartMs, windowEnd),
+      // Newest first — the "what changed, when" feed in plain words. The
+      // render caps it at RECENT_CHANGES until the user expands it.
+      stateChanges: dayHistory.filter((x) => x.at >= dayStartMs).reverse(),
+    };
+  }, [
+    samples,
+    daily,
+    startDay,
+    today,
+    selectedDay,
+    isToday,
+    stateHistory,
+    dayStartMs,
+    dayEndMs,
+    now,
+  ]);
 
   // Localised state labels for the hourly chart legend/tooltip.
   const stateLabels = useMemo(
     () =>
-      Object.fromEntries(
-        STATE_NAMES.map(s => [s, t(`empstate.${s}`)])
-      ) as Record<StateName, string>,
-    [t]
+      Object.fromEntries(STATE_NAMES.map((s) => [s, t(`empstate.${s}`)])) as Record<
+        StateName,
+        string
+      >,
+    [t],
   );
 
   if (samples === undefined) {
@@ -263,10 +231,10 @@ export default function TimelinePage({
   const fileLabel = device?.personName ?? device?.hostname ?? deviceId;
   // Short label for the selected day, e.g. "26.06." / "06/26" — appended to the
   // state-timeline heading when the user has rewound to a past day.
-  const shortDate = new Date(`${selectedDay}T00:00:00`).toLocaleDateString(
-    lang,
-    { day: "2-digit", month: "2-digit" }
-  );
+  const shortDate = new Date(`${selectedDay}T00:00:00`).toLocaleDateString(lang, {
+    day: "2-digit",
+    month: "2-digit",
+  });
   // Whether the selected day has anything to show (raw samples or a daily row).
   const hasDataToday = intraday.length > 0 || dayStats != null;
 
@@ -276,39 +244,24 @@ export default function TimelinePage({
   const idleSeconds = dayStats?.idleSeconds ?? 0;
   const trackedSeconds = activeSeconds + idleSeconds;
   const activeShare =
-    trackedSeconds > 0
-      ? Math.round((activeSeconds / trackedSeconds) * 100)
-      : null;
+    trackedSeconds > 0 ? Math.round((activeSeconds / trackedSeconds) * 100) : null;
   // Only legend the states that actually occur in the day, ordered canonically.
-  const presentStates = STATE_NAMES.filter(s =>
-    daySegments.some(seg => seg.state === s)
-  );
+  const presentStates = STATE_NAMES.filter((s) => daySegments.some((seg) => seg.state === s));
   const stateLabel = (s: StateName) => t(`empstate.${s}`);
   // "Since when" for the hero verdict: last heartbeat when offline, otherwise
   // the moment the fused state last changed.
-  const since = device
-    ? !device.online
-      ? device.lastSeen
-      : device.finalStateSince
-    : null;
+  const since = device ? (!device.online ? device.lastSeen : device.finalStateSince) : null;
 
   return (
     <section className="space-y-6">
-      <Link
-        href="/activity"
-        className="group inline-flex items-center gap-1 text-sm text-signal"
-      >
+      <Link href="/activity" className="group inline-flex items-center gap-1 text-sm text-signal">
         <ArrowLeft className="h-4 w-4 transition-transform duration-150 group-hover:-translate-x-0.5" />
         {t("timeline.back")}
       </Link>
 
       <PageHeader
         title={title}
-        description={
-          device
-            ? `${device.hostname} · ${device.windowsUser} · ${deviceId}`
-            : deviceId
-        }
+        description={device ? `${device.hostname} · ${device.windowsUser} · ${deviceId}` : deviceId}
         icon={<MonitorSmartphone />}
         action={
           switcher ? (
@@ -352,9 +305,7 @@ export default function TimelinePage({
       {device && (
         <Card className="animate-fade-up">
           <CardHeader>
-            <CardTitle className="text-base">
-              {t("timeline.now.heading")}
-            </CardTitle>
+            <CardTitle className="text-base">{t("timeline.now.heading")}</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 sm:pt-0">
             <div className="grid gap-5 lg:grid-cols-2">
@@ -368,9 +319,7 @@ export default function TimelinePage({
                     deviceIdle: device.deviceIdle,
                     idleSeconds:
                       device.stateIdleSeconds ??
-                      (device.idleMs != null
-                        ? Math.round(device.idleMs / 1000)
-                        : null),
+                      (device.idleMs != null ? Math.round(device.idleMs / 1000) : null),
                     genesysRoutingStatus: device.genesysRoutingStatus,
                     genesysWrapUp: device.genesysWrapUp,
                     clockodoWorking: device.clockodoWorking,
@@ -385,14 +334,10 @@ export default function TimelinePage({
                 <p className="text-xs text-muted-foreground">
                   <span
                     className={
-                      device.online
-                        ? "font-medium text-ok"
-                        : "font-medium text-muted-foreground"
+                      device.online ? "font-medium text-ok" : "font-medium text-muted-foreground"
                     }
                   >
-                    {device.online
-                      ? t("timeline.online")
-                      : t("timeline.offline")}
+                    {device.online ? t("timeline.online") : t("timeline.offline")}
                   </span>
                   {" · "}
                   {t("overview.lastSeen")}{" "}
@@ -414,16 +359,12 @@ export default function TimelinePage({
                         <SourceSignals
                           deviceIdle={liveState.deviceIdle ?? null}
                           deviceOnline={device.online}
-                          genesysRoutingStatus={
-                            liveState.genesysRoutingStatus ?? null
-                          }
+                          genesysRoutingStatus={liveState.genesysRoutingStatus ?? null}
                           genesysPresence={liveState.genesysPresence ?? null}
                           clockodoWorking={liveState.clockodoWorking ?? null}
                           clockodoBreak={liveState.clockodoBreak ?? null}
                           clockodoAbsent={liveState.clockodoAbsent ?? null}
-                          clockodoClockedOut={
-                            liveState.clockodoClockedOut ?? null
-                          }
+                          clockodoClockedOut={liveState.clockodoClockedOut ?? null}
                         />
                         <p className="mt-3 border-t border-border-soft pt-2.5 font-mono text-[11px] text-muted-foreground">
                           {t("state.updated")}{" "}
@@ -458,9 +399,7 @@ export default function TimelinePage({
                   ) : stateHistory === undefined ? (
                     <Skeleton className="h-12 w-full" />
                   ) : daySegments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      {t("timeline.day.empty")}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t("timeline.day.empty")}</p>
                   ) : (
                     <div className="space-y-2.5">
                       <StateTimelineChart
@@ -468,10 +407,7 @@ export default function TimelinePage({
                         label={stateLabel}
                         highlightAt={highlightedChangeAt}
                       />
-                      <StateStripLegend
-                        states={presentStates}
-                        label={stateLabel}
-                      />
+                      <StateStripLegend states={presentStates} label={stateLabel} />
                     </div>
                   )}
                 </div>
@@ -493,24 +429,22 @@ export default function TimelinePage({
                         <ul
                           className={cn(
                             "space-y-1.5",
-                            showAllChanges && "max-h-64 overflow-y-auto pr-1"
+                            showAllChanges && "max-h-64 overflow-y-auto pr-1",
                           )}
                         >
                           {(showAllChanges
                             ? stateChanges
                             : stateChanges.slice(0, RECENT_CHANGES)
-                          ).map(r => (
+                          ).map((r) => (
                             <li key={r.at}>
                               <button
                                 type="button"
                                 onClick={() =>
-                                  setHighlightedChangeAt(at =>
-                                    at === r.at ? null : r.at
-                                  )
+                                  setHighlightedChangeAt((at) => (at === r.at ? null : r.at))
                                 }
                                 className={cn(
                                   "flex w-full items-center gap-2.5 rounded-md px-1.5 py-0.5 text-sm transition-colors hover:bg-panel-2",
-                                  highlightedChangeAt === r.at && "bg-panel-2"
+                                  highlightedChangeAt === r.at && "bg-panel-2",
                                 )}
                               >
                                 <span
@@ -531,7 +465,7 @@ export default function TimelinePage({
                         {stateChanges.length > RECENT_CHANGES && (
                           <button
                             type="button"
-                            onClick={() => setShowAllChanges(v => !v)}
+                            onClick={() => setShowAllChanges((v) => !v)}
                             className="mt-2 text-xs font-medium text-signal hover:underline"
                           >
                             {showAllChanges
@@ -609,24 +543,16 @@ export default function TimelinePage({
       <Tabs value={tab} onValueChange={setTab}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <TabsList>
-            <TabsTrigger value="charts">
-              {t("timeline.tabs.charts")}
-            </TabsTrigger>
+            <TabsTrigger value="charts">{t("timeline.tabs.charts")}</TabsTrigger>
             <TabsTrigger value="day">{t("timeline.tabs.day")}</TabsTrigger>
-            <TabsTrigger value="pattern">
-              {t("timeline.tabs.pattern")}
-            </TabsTrigger>
+            <TabsTrigger value="pattern">{t("timeline.tabs.pattern")}</TabsTrigger>
             <TabsTrigger value="raw">{t("timeline.tabs.raw")}</TabsTrigger>
-            <TabsTrigger value="export">
-              {t("timeline.tabs.export")}
-            </TabsTrigger>
+            <TabsTrigger value="export">{t("timeline.tabs.export")}</TabsTrigger>
             {/* Deliberately not a permanent tab — quarantined data is an
                 audit surface reached via the "Missing data?" hint or
                 Settings → Discarded data. Shown only while open. */}
             {tab === "discarded" && (
-              <TabsTrigger value="discarded">
-                {t("timeline.tabs.discarded")}
-              </TabsTrigger>
+              <TabsTrigger value="discarded">{t("timeline.tabs.discarded")}</TabsTrigger>
             )}
           </TabsList>
           {tab !== "discarded" && (
@@ -668,11 +594,7 @@ export default function TimelinePage({
         </TabsContent>
 
         <TabsContent value="discarded">
-          <DiscardedTab
-            employeeId={employeeId}
-            day={selectedDay}
-            today={today}
-          />
+          <DiscardedTab employeeId={employeeId} day={selectedDay} today={today} />
         </TabsContent>
 
         <TabsContent value="raw">
@@ -684,12 +606,7 @@ export default function TimelinePage({
         </TabsContent>
 
         <TabsContent value="export">
-          <ExportTab
-            deviceId={deviceId}
-            fileLabel={fileLabel}
-            startDay={startDay}
-            today={today}
-          />
+          <ExportTab deviceId={deviceId} fileLabel={fileLabel} startDay={startDay} today={today} />
         </TabsContent>
       </Tabs>
     </section>

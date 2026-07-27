@@ -14,7 +14,7 @@ export default function ApplicantKontaktDetailPage() {
   const applicant = useQuery(api.applicants.get, { applicantId });
 
   if (!applicant) return null;
-  const kontakt = applicant.kontakte.find(k => k._id === params.kontaktId);
+  const kontakt = applicant.kontakte.find((k) => k._id === params.kontaktId);
   if (!kontakt) return null;
 
   return <KontaktDetailModal applicantId={applicantId} kontakt={kontakt} />;

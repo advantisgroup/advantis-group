@@ -68,9 +68,7 @@ export const inviteInfo = internalMutation({
     return {
       email: target.email,
       role: target.role,
-      invitedByName:
-        [admin.firstName, admin.lastName].filter(Boolean).join(" ") ||
-        admin.email,
+      invitedByName: [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.email,
     };
   },
 });

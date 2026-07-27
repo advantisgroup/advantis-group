@@ -43,17 +43,17 @@ export function useI18n(): {
       const raw = DICTS[lang][key] ?? DICTS.en[key] ?? key;
       if (!vars) return raw;
       return raw.replace(/\{(\w+)\}/g, (_, name: string) =>
-        name in vars ? String(vars[name]) : `{${name}}`
+        name in vars ? String(vars[name]) : `{${name}}`,
       );
     },
-    [lang]
+    [lang],
   );
 
   const setLang = useCallback(
     (next: Lang) => {
       void setLocale(next).then(() => router.refresh());
     },
-    [router]
+    [router],
   );
 
   return { lang, setLang, t };

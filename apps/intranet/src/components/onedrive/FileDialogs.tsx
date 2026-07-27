@@ -76,8 +76,8 @@ export function NewFolderDialog({
           autoFocus
           value={name}
           placeholder={t("folderName")}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && void submit()}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && void submit()}
         />
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -143,8 +143,8 @@ export function RenameDialog({
         <Input
           autoFocus
           value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && void submit()}
+          onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && void submit()}
         />
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -216,21 +216,16 @@ export function ShareDialog({
         {!url ? (
           <>
             <div className="space-y-2">
-              <span className="text-sm text-muted-foreground">
-                {t("expiresIn")}
-              </span>
+              <span className="text-sm text-muted-foreground">{t("expiresIn")}</span>
               <RadioGroup
                 value={String(days)}
-                onValueChange={v => setDays(Number(v))}
+                onValueChange={(v) => setDays(Number(v))}
                 className="flex gap-4"
               >
-                {DAY_OPTIONS.map(d => (
+                {DAY_OPTIONS.map((d) => (
                   <div key={d} className="flex items-center gap-1.5">
                     <RadioGroupItem value={String(d)} id={`days-${d}`} />
-                    <Label
-                      htmlFor={`days-${d}`}
-                      className="cursor-pointer text-sm font-normal"
-                    >
+                    <Label htmlFor={`days-${d}`} className="cursor-pointer text-sm font-normal">
                       {t("nDays", { count: d })}
                     </Label>
                   </div>
@@ -248,11 +243,7 @@ export function ShareDialog({
           <div className="flex items-center gap-2">
             <Input readOnly value={url} className="flex-1" />
             <Button size="icon" variant="outline" onClick={() => void copy()}>
-              {copied ? (
-                <Check className="size-4 text-green-500" />
-              ) : (
-                <Copy className="size-4" />
-              )}
+              {copied ? <Check className="size-4 text-green-500" /> : <Copy className="size-4" />}
             </Button>
           </div>
         )}
@@ -284,7 +275,7 @@ export function VersionsDialog({
     setVersions(null);
     void od
       .versions(item.id)
-      .then(r => setVersions(r.versions))
+      .then((r) => setVersions(r.versions))
       .catch(() => setVersions([]));
   }, [item, od]);
 
@@ -314,9 +305,7 @@ export function VersionsDialog({
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : versions.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
-            {t("noVersions")}
-          </p>
+          <p className="py-6 text-center text-sm text-muted-foreground">{t("noVersions")}</p>
         ) : (
           <ul className="max-h-80 space-y-1 overflow-y-auto">
             {versions.map((v, i) => (
@@ -326,13 +315,9 @@ export function VersionsDialog({
               >
                 <div>
                   <p className="font-medium">
-                    {v.lastModified
-                      ? new Date(v.lastModified).toLocaleString()
-                      : v.id}
+                    {v.lastModified ? new Date(v.lastModified).toLocaleString() : v.id}
                     {i === 0 && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {t("current")}
-                      </span>
+                      <span className="ml-2 text-xs text-muted-foreground">{t("current")}</span>
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground">

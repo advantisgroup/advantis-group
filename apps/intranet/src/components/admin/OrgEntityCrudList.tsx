@@ -40,7 +40,7 @@ function EntityRow({
           <Input
             value={name}
             disabled={archived}
-            onChange={e => setName(e.target.value)}
+            onChange={(e) => setName(e.target.value)}
             onBlur={() => {
               if (name.trim() && name.trim() !== entity.name) {
                 onRename(entity._id, name.trim()).catch(handleError);
@@ -58,9 +58,7 @@ function EntityRow({
         <Button
           size="sm"
           variant="outline"
-          onClick={() =>
-            onArchiveToggle(entity._id, !archived).catch(handleError)
-          }
+          onClick={() => onArchiveToggle(entity._id, !archived).catch(handleError)}
         >
           {archived ? t("orgEntity.restore") : t("orgEntity.archive")}
         </Button>
@@ -108,8 +106,8 @@ export function OrgEntityCrudList({
       <div className="flex gap-2">
         <Input
           value={newName}
-          onChange={e => setNewName(e.target.value)}
-          onKeyDown={e => {
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => {
             if (e.key === "Enter") void handleCreate();
           }}
           placeholder={createPlaceholder}
@@ -121,16 +119,12 @@ export function OrgEntityCrudList({
       </div>
 
       {entities === undefined ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {t("dataCleanup.loading")}
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("dataCleanup.loading")}</p>
       ) : entities.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {t("orgEntity.empty")}
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("orgEntity.empty")}</p>
       ) : (
         <div className="space-y-2">
-          {entities.map(entity => (
+          {entities.map((entity) => (
             <EntityRow
               key={entity._id}
               entity={entity}

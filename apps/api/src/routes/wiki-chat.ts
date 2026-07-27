@@ -69,7 +69,7 @@ export const wikiChatRoute = new Elysia()
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
         system: WIKI_SYSTEM,
-        messages: body.messages.map(m => ({
+        messages: body.messages.map((m) => ({
           role: m.role,
           content: m.content,
         })),
@@ -80,10 +80,7 @@ export const wikiChatRoute = new Elysia()
           const encoder = new TextEncoder();
           try {
             for await (const event of stream) {
-              if (
-                event.type === "content_block_delta" &&
-                event.delta.type === "text_delta"
-              ) {
+              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
                 controller.enqueue(encoder.encode(event.delta.text));
               }
             }
@@ -104,7 +101,7 @@ export const wikiChatRoute = new Elysia()
       body: t.Object({
         messages: t.Array(messageSchema, { minItems: 1 }),
       }),
-    }
+    },
   )
   // --- Encrypted chat history (per user) ---------------------------------
   .get("/wiki-chat/chats", async ({ request }) => {
@@ -146,7 +143,7 @@ export const wikiChatRoute = new Elysia()
         title: t.String(),
         messages: t.Array(storedMessageSchema),
       }),
-    }
+    },
   )
   .patch(
     "/wiki-chat/chats/:id",
@@ -168,7 +165,7 @@ export const wikiChatRoute = new Elysia()
         title: t.Optional(t.String()),
         messages: t.Optional(t.Array(storedMessageSchema)),
       }),
-    }
+    },
   )
   .delete("/wiki-chat/chats/:id", async ({ request, params }) => {
     const { clerkUserId } = await requireAuth(request);

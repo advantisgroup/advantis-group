@@ -37,11 +37,7 @@ export function FeatureDisabledScreen({
       description={t("disabledScreen.description")}
       action={
         <div className="flex flex-col items-center gap-3">
-          {reason && (
-            <p className="max-w-xs text-xs text-muted-foreground/80">
-              {reason}
-            </p>
-          )}
+          {reason && <p className="max-w-xs text-xs text-muted-foreground/80">{reason}</p>}
           <Button asChild variant="outline">
             <Link href="/">{t("disabledScreen.backToDashboard")}</Link>
           </Button>

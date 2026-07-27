@@ -13,11 +13,7 @@ import { WordmarkLogo } from "@/components/Logo";
  * stays under `(app)/guidebooks/wallbox-sales-academy/admin`, gated by both
  * an intranet account and the PIN.
  */
-export default function PublicAcademyLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function PublicAcademyLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border px-4 py-3">

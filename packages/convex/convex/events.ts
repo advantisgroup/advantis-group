@@ -8,9 +8,7 @@ import { userMatchesAudience } from "./lib/audience";
 
 function displayName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
-  return (
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
-  );
+  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
 }
 
 export const create = mutation({
@@ -96,13 +94,11 @@ export const listForRange = query({
     const user = await requireUser(ctx);
     const events = await ctx.db
       .query("events")
-      .withIndex("by_start", q => q.lte("start", end))
+      .withIndex("by_start", (q) => q.lte("start", end))
       .collect();
-    const visible = events.filter(
-      e => e.end >= start && userMatchesAudience(user, e.audience)
-    );
+    const visible = events.filter((e) => e.end >= start && userMatchesAudience(user, e.audience));
     return Promise.all(
-      visible.map(async e => ({
+      visible.map(async (e) => ({
         _id: e._id,
         title: e.title,
         description: e.description ?? null,
@@ -115,7 +111,7 @@ export const listForRange = query({
         guestVisible: e.guestVisible ?? false,
         createdByUserId: e.createdByUserId,
         createdByName: displayName(await ctx.db.get(e.createdByUserId)),
-      }))
+      })),
     );
   },
 });

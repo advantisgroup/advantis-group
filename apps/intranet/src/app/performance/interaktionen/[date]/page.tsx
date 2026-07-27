@@ -33,8 +33,7 @@ export default function DashboardInteractionDayPage() {
 
   useEffect(() => {
     // Team-wide day detail is admin-only, same gate as PerformanceDashboardLayout.
-    if (!session?.valid || session.permissions.includes("view_all_employees"))
-      return;
+    if (!session?.valid || session.permissions.includes("view_all_employees")) return;
     if (session.employeeId) {
       router.replace(`/performance/mitarbeiter/${session.employeeId}`);
     }
@@ -44,37 +43,27 @@ export default function DashboardInteractionDayPage() {
     api.performanceQueries.interactionsDayDetail,
     session?.valid && session.permissions.includes("view_all_employees")
       ? { token, date: params.date }
-      : "skip"
+      : "skip",
   );
 
   if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || !session.permissions.includes("view_all_employees"))
-    return null;
+  if (!session.valid || !session.permissions.includes("view_all_employees")) return null;
 
   function exit() {
     clearPerformanceToken();
     router.replace("/performance/login");
   }
 
-  const navItems = [
-    { href: "/performance/interaktionen", label: t("backToDashboard") },
-  ];
+  const navItems = [{ href: "/performance/interaktionen", label: t("backToDashboard") }];
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+      <PerformanceHeader navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
 
       <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div>
-          <h1 className="text-xl font-semibold">
-            {formatIsoDate(params.date, locale)}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("interactionsTitle")}
-          </p>
+          <h1 className="text-xl font-semibold">{formatIsoDate(params.date, locale)}</h1>
+          <p className="text-sm text-muted-foreground">{t("interactionsTitle")}</p>
         </div>
 
         {!data ? (
@@ -85,17 +74,10 @@ export default function DashboardInteractionDayPage() {
             </CardContent>
           </Card>
         ) : (
-          <InteractionRecordsTable
-            records={data.records}
-            total={data.total}
-            showEmployee
-          />
+          <InteractionRecordsTable records={data.records} total={data.total} showEmployee />
         )}
       </main>
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+      <PerformanceBottomTabs navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
     </div>
   );
 }

@@ -4,12 +4,7 @@ import React, { isValidElement } from "react";
 import { cn } from "@/lib/utils";
 
 interface BrandTextProps {
-  brand?:
-    | "salespirates"
-    | "advantis"
-    | "rodeo"
-    | "oldschool-train"
-    | "sales-ai-germany";
+  brand?: "salespirates" | "advantis" | "rodeo" | "oldschool-train" | "sales-ai-germany";
   children: React.ReactNode;
   className?: string;
   hoverable?: boolean;
@@ -124,18 +119,13 @@ export const BrandText = ({
   }
 
   return (
-    <span
-      className={cn(
-        className,
-        hoverable && "group cursor-pointer inline-block"
-      )}
-    >
+    <span className={cn(className, hoverable && "group cursor-pointer inline-block")}>
       <span
         className={cn(
           className,
           "transition-colors duration-300",
           color,
-          hoverable ? cn(hoverColor) : ""
+          hoverable ? cn(hoverColor) : "",
         )}
       >
         {firstPart}
@@ -144,12 +134,8 @@ export const BrandText = ({
         <span
           className={cn(
             "transition-colors duration-300",
-            hoverable
-              ? keepRestColor
-                ? ""
-                : "group-hover:text-foreground"
-              : "",
-            groupHover ? "group-hover:text-foreground" : ""
+            hoverable ? (keepRestColor ? "" : "group-hover:text-foreground") : "",
+            groupHover ? "group-hover:text-foreground" : "",
           )}
         >
           {rest}

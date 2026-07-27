@@ -44,7 +44,7 @@ const REMOVE = new Set([
 ]);
 
 function cleanInto(node: Node, out: Node, doc: Document) {
-  node.childNodes.forEach(child => {
+  node.childNodes.forEach((child) => {
     if (child.nodeType === 3 /* text */) {
       out.appendChild(doc.createTextNode(child.textContent ?? ""));
       return;
@@ -103,25 +103,10 @@ export function htmlToText(html: string): string {
 }
 
 /** Renders sanitized rich-text HTML. Falls back to plain text for safety. */
-export function RichText({
-  html,
-  className,
-}: {
-  html: string;
-  className?: string;
-}) {
+export function RichText({ html, className }: { html: string; className?: string }) {
   const clean = useMemo(() => sanitizeHtml(html), [html]);
   if (!clean) {
-    return (
-      <div className={cn("rich-text whitespace-pre-wrap", className)}>
-        {htmlToText(html)}
-      </div>
-    );
+    return <div className={cn("rich-text whitespace-pre-wrap", className)}>{htmlToText(html)}</div>;
   }
-  return (
-    <div
-      className={cn("rich-text", className)}
-      dangerouslySetInnerHTML={{ __html: clean }}
-    />
-  );
+  return <div className={cn("rich-text", className)} dangerouslySetInnerHTML={{ __html: clean }} />;
 }

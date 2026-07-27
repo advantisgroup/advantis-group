@@ -20,9 +20,7 @@ interface PerformanceCompany {
   slug: string;
 }
 
-const PerformanceCompanyContext = createContext<PerformanceCompany | null>(
-  null
-);
+const PerformanceCompanyContext = createContext<PerformanceCompany | null>(null);
 
 export function PerformanceCompanyProvider({
   company,

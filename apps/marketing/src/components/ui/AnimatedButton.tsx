@@ -1,4 +1,4 @@
-import { AnimatedButtonProps } from "@/types/contact";
+import { type AnimatedButtonProps } from "@/types/contact";
 import { Check, Loader2, X } from "lucide-react";
 import { Button } from "./button";
 
@@ -10,16 +10,10 @@ export function AnimatedButton({
   disabled = false,
 }: AnimatedButtonProps) {
   return (
-    <Button
-      type={type}
-      disabled={disabled}
-      className="w-full relative overflow-hidden"
-    >
+    <Button type={type} disabled={disabled} className="w-full relative overflow-hidden">
       <span
         className={`flex items-center justify-center gap-2 transition-all duration-500 ${
-          buttonState === "idle"
-            ? "translate-x-0 opacity-100"
-            : "translate-x-12 opacity-0"
+          buttonState === "idle" ? "translate-x-0 opacity-100" : "translate-x-12 opacity-0"
         }`}
       >
         {idleText}

@@ -14,12 +14,8 @@ export default function ApplicantInterviewDetailPage() {
   const applicant = useQuery(api.applicants.get, { applicantId });
 
   if (!applicant) return null;
-  const interview = applicant.interviews.find(
-    iv => iv._id === params.interviewId
-  );
+  const interview = applicant.interviews.find((iv) => iv._id === params.interviewId);
   if (!interview) return null;
 
-  return (
-    <InterviewDetailModal applicantId={applicantId} interview={interview} />
-  );
+  return <InterviewDetailModal applicantId={applicantId} interview={interview} />;
 }

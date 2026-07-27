@@ -23,11 +23,7 @@ function parseIso(iso: string): Date {
 
 export function todayIso(): string {
   const now = new Date();
-  return toIso(
-    new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-    )
-  );
+  return toIso(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())));
 }
 
 /** Monday of the week containing `d`. */
@@ -39,10 +35,7 @@ function startOfWeek(d: Date): Date {
 
 /** Resolves an anchor date + granularity into the inclusive date range it
  * covers — a single day, its Mon–Sun week, or its calendar month. */
-export function computePeriodRange(
-  anchorIso: string,
-  granularity: PeriodGranularity
-): PeriodRange {
+export function computePeriodRange(anchorIso: string, granularity: PeriodGranularity): PeriodRange {
   const anchor = parseIso(anchorIso);
   if (granularity === "day") {
     return { start: anchorIso, end: anchorIso };
@@ -52,12 +45,8 @@ export function computePeriodRange(
     const end = new Date(start.getTime() + 6 * 86_400_000);
     return { start: toIso(start), end: toIso(end) };
   }
-  const start = new Date(
-    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1)
-  );
-  const end = new Date(
-    Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0)
-  );
+  const start = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0));
   return { start: toIso(start), end: toIso(end) };
 }
 
@@ -65,7 +54,7 @@ export function computePeriodRange(
 export function shiftAnchor(
   anchorIso: string,
   granularity: PeriodGranularity,
-  direction: 1 | -1
+  direction: 1 | -1,
 ): string {
   const anchor = parseIso(anchorIso);
   if (granularity === "day") {
@@ -74,9 +63,5 @@ export function shiftAnchor(
   if (granularity === "week") {
     return toIso(new Date(anchor.getTime() + direction * 7 * 86_400_000));
   }
-  return toIso(
-    new Date(
-      Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + direction, 1)
-    )
-  );
+  return toIso(new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + direction, 1)));
 }

@@ -12,10 +12,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { PageHeader } from "@/components/PageHeader";
 import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
-import {
-  ONLINE_WINDOW_MS,
-  UserProfile,
-} from "@/components/profile/UserProfile";
+import { ONLINE_WINDOW_MS, UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -84,17 +81,11 @@ export default function DirectoryPage() {
 
   const filtered = useMemo(() => {
     let rows = people ?? [];
-    if (role !== "all") rows = rows.filter(p => p.role === role);
-    if (team !== "all") rows = rows.filter(p => p.teams.includes(team));
+    if (role !== "all") rows = rows.filter((p) => p.role === role);
+    if (team !== "all") rows = rows.filter((p) => p.teams.includes(team));
     const key = (p: Person) =>
-      sort === "department"
-        ? (p.department ?? "￿")
-        : sort === "role"
-          ? p.role
-          : p.name;
-    return [...rows].sort(
-      (a, b) => key(a).localeCompare(key(b)) || a.name.localeCompare(b.name)
-    );
+      sort === "department" ? (p.department ?? "￿") : sort === "role" ? p.role : p.name;
+    return [...rows].sort((a, b) => key(a).localeCompare(key(b)) || a.name.localeCompare(b.name));
   }, [people, role, team, sort]);
 
   // Alphabet quick-jump: the first person per initial letter carries an anchor.
@@ -129,8 +120,7 @@ export default function DirectoryPage() {
   }, [filtered, grouped, t]);
 
   const personCard = (p: Person) => {
-    const online =
-      p.lastActiveAt != null && now - p.lastActiveAt < ONLINE_WINDOW_MS;
+    const online = p.lastActiveAt != null && now - p.lastActiveAt < ONLINE_WINDOW_MS;
     return (
       <Card
         key={p._id}
@@ -162,9 +152,7 @@ export default function DirectoryPage() {
                   {roleLabel(p, tRoles)}
                 </Badge>
               </div>
-              <p className="truncate text-xs text-muted-foreground">
-                {p.jobTitle || p.email}
-              </p>
+              <p className="truncate text-xs text-muted-foreground">{p.jobTitle || p.email}</p>
               <PersonIdentityBadges
                 role={p.role}
                 department={p.department}
@@ -208,7 +196,7 @@ export default function DirectoryPage() {
             <Input
               placeholder={t("searchPlaceholder")}
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-9"
             />
           </div>
@@ -218,14 +206,14 @@ export default function DirectoryPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{tCommon("all")}</SelectItem>
-              {departments.map(d => (
+              {departments.map((d) => (
                 <SelectItem key={d} value={d}>
                   {d}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Select value={sort} onValueChange={v => setSort(v as SortKey)}>
+          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
             <SelectTrigger className="sm:w-40">
               <SelectValue />
             </SelectTrigger>
@@ -237,7 +225,7 @@ export default function DirectoryPage() {
           </Select>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          {(["all", "admin", "manager", "employee"] as const).map(r => (
+          {(["all", "admin", "manager", "employee"] as const).map((r) => (
             <button
               key={r}
               type="button"
@@ -246,14 +234,14 @@ export default function DirectoryPage() {
                 "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 role === r
                   ? "border-transparent bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:bg-accent"
+                  : "border-border text-muted-foreground hover:bg-accent",
               )}
             >
               {r === "all" ? tCommon("all") : tRoles(r)}
             </button>
           ))}
           <span className="mx-1 h-4 w-px bg-border" />
-          {TEAMS.map(tm => (
+          {TEAMS.map((tm) => (
             <button
               key={tm.id}
               type="button"
@@ -262,7 +250,7 @@ export default function DirectoryPage() {
                 "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
                 team === tm.id
                   ? "border-transparent bg-foreground text-background"
-                  : "border-border text-muted-foreground hover:bg-accent"
+                  : "border-border text-muted-foreground hover:bg-accent",
               )}
             >
               <span className={cn("size-1.5 rounded-full", teamColor(tm.id))} />
@@ -271,12 +259,12 @@ export default function DirectoryPage() {
           ))}
           <button
             type="button"
-            onClick={() => setGrouped(v => !v)}
+            onClick={() => setGrouped((v) => !v)}
             className={cn(
               "ml-auto rounded-full border px-3 py-1 text-xs font-medium transition-colors",
               grouped
                 ? "border-transparent bg-foreground text-background"
-                : "border-border text-muted-foreground hover:bg-accent"
+                : "border-border text-muted-foreground hover:bg-accent",
             )}
           >
             {t("groupByDept")}
@@ -284,7 +272,7 @@ export default function DirectoryPage() {
         </div>
         {letterAnchors.size > 3 && (
           <div className="hidden flex-wrap gap-0.5 md:flex">
-            {[...letterAnchors.keys()].map(letter => (
+            {[...letterAnchors.keys()].map((letter) => (
               <button
                 key={letter}
                 type="button"
@@ -306,10 +294,7 @@ export default function DirectoryPage() {
             {sections.map(([dept, rows]) => (
               <section key={dept}>
                 <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {dept}{" "}
-                  <span className="font-normal normal-case">
-                    ({rows.length})
-                  </span>
+                  {dept} <span className="font-normal normal-case">({rows.length})</span>
                 </h2>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {rows.map(personCard)}
@@ -318,16 +303,14 @@ export default function DirectoryPage() {
             ))}
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map(personCard)}
-          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{filtered.map(personCard)}</div>
         )}
       </div>
 
       <UserProfile
         userId={profileId}
         open={!!profileId}
-        onOpenChange={o => {
+        onOpenChange={(o) => {
           if (!o) setProfileId(null);
         }}
       />
