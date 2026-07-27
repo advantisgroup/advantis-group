@@ -57,7 +57,7 @@ export function AskTrainer({
   }
 
   function copyLink(questionId: string) {
-    const url = `${window.location.origin}${pathname}?ch=${encodeURIComponent(chapterId)}&q=${encodeURIComponent(questionId)}`;
+    const url = `${window.location.origin}${pathname}?q=${encodeURIComponent(questionId)}`;
     void navigator.clipboard.writeText(url);
     toast.success("Link kopiert");
   }

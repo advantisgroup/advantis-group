@@ -35,7 +35,6 @@ import { ProblembehandlungenGuidebook } from "./docs/problembehandlungen";
 import { ProfilKontoGuidebook } from "./docs/profil-konto";
 import { UploadsGenehmigenGuidebook } from "./docs/uploads-genehmigen";
 import { VerwaltungMitgliederGuidebook } from "./docs/verwaltung-mitglieder";
-import { WallboxSalesAcademyGuidebook } from "./wallbox-academy/WallboxAcademy";
 
 /**
  * "interactive" = a live tool (search, lookup, chat) rather than a fixed
@@ -84,7 +83,16 @@ export interface Guidebook {
   /** Widen the page's content column past the default `max-w-4xl` — for
    * tools with tables/dashboards that feel cramped at article width. */
   wide?: boolean;
-  Component: ComponentType;
+  /**
+   * Rendered by `/guidebooks/[slug]/page.tsx`. Omit when this guidebook owns
+   * a dedicated static route tree instead (e.g.
+   * `app/(app)/guidebooks/<slug>/**`) — Next.js matches that static segment
+   * before the `[slug]` dynamic route, so `[slug]/page.tsx` never actually
+   * receives this slug and `Component` would never be rendered anyway. The
+   * registry entry still exists for the guidebooks list card and sidebar
+   * visibility/access checks.
+   */
+  Component?: ComponentType;
 }
 
 /**
@@ -108,9 +116,7 @@ export const GUIDEBOOKS: Guidebook[] = [
     icon: Zap,
     category: "interactive",
     teams: [],
-    minimalChrome: true,
-    wide: true,
-    Component: WallboxSalesAcademyGuidebook,
+    // Owns its own route tree — see app/(app)/guidebooks/wallbox-sales-academy/.
   },
   {
     slug: "problembehandlungen",

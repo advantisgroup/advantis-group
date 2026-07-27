@@ -83,7 +83,7 @@ export const answer = mutation({
           type: "academy_answer",
           title: "Deine Frage wurde beantwortet",
           body: question.text,
-          link: `/guidebooks/wallbox-sales-academy?ch=${question.chapterId}&q=${questionId}`,
+          link: `/guidebooks/wallbox-sales-academy/training/${question.chapterId}?q=${questionId}`,
         });
       }
     }

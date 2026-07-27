@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef, useState } from "react";
 
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Doc, type Id } from "@advantis/convex/dataModel";
@@ -39,7 +39,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 import { CHAPTERS, SCENARIOS, SEG } from "./data";
@@ -53,43 +52,14 @@ import { ACADEMY_ID } from "./use-academy-progress";
 
 import type { AcademyProgressData } from "./types";
 
+export const ADMIN_BASE = "/guidebooks/wallbox-sales-academy/admin";
+
 function userDisplayName(u: {
   firstName?: string | null;
   lastName?: string | null;
   email: string;
 }) {
   return [u.firstName, u.lastName].filter(Boolean).join(" ").trim() || u.email;
-}
-
-export function TrainerView({
-  focusParticipantId,
-  focusQuestionId,
-}: {
-  focusParticipantId?: string | null;
-  focusQuestionId?: string | null;
-}) {
-  const [tab, setTab] = useState<"teiln" | "fragen" | "set">(
-    focusQuestionId ? "fragen" : "teiln"
-  );
-
-  return (
-    <Tabs value={tab} onValueChange={v => setTab(v as typeof tab)}>
-      <TabsList>
-        <TabsTrigger value="teiln">Teilnehmer & Ergebnisse</TabsTrigger>
-        <TabsTrigger value="fragen">Fragen</TabsTrigger>
-        <TabsTrigger value="set">Einstellungen</TabsTrigger>
-      </TabsList>
-      <TabsContent value="teiln">
-        <ParticipantsTab focusParticipantId={focusParticipantId} />
-      </TabsContent>
-      <TabsContent value="fragen">
-        <QuestionsTab focusQuestionId={focusQuestionId} />
-      </TabsContent>
-      <TabsContent value="set">
-        <SettingsTab />
-      </TabsContent>
-    </Tabs>
-  );
 }
 
 // ─── Teilnehmer & Ergebnisse ───────────────────────────────────────────────
@@ -275,11 +245,18 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
   );
 }
 
-function ParticipantsTab({
+/**
+ * Detail expand/collapse is real navigation (`/admin/teilnehmer` <->
+ * `/admin/teilnehmer/<id>`), not local component state — so "Details" opens
+ * an actual, bookmarkable/shareable URL instead of leaving you stuck on the
+ * list URL with hidden UI state.
+ */
+export function ParticipantsTab({
   focusParticipantId,
 }: {
   focusParticipantId?: string | null;
 }) {
+  const router = useRouter();
   const participants = useQuery(api.academyParticipants.listAll, {
     academyId: ACADEMY_ID,
   });
@@ -288,10 +265,6 @@ function ParticipantsTab({
   });
   const remove = useMutation(api.academyParticipants.remove);
   const confirm = useConfirm();
-  const pathname = usePathname();
-  const [openId, setOpenId] = useState<string | null>(
-    focusParticipantId ?? null
-  );
   const rowRef = useRef<HTMLTableRowElement | null>(null);
 
   useEffect(() => {
@@ -307,7 +280,7 @@ function ParticipantsTab({
   const resultsByParticipant = new Map(results.map(r => [r.participantId, r]));
 
   function copyParticipantLink(participantId: string) {
-    const url = `${window.location.origin}${pathname}?participant=${encodeURIComponent(participantId)}`;
+    const url = `${window.location.origin}${ADMIN_BASE}/teilnehmer/${participantId}`;
     void navigator.clipboard.writeText(url);
     toast.success("Link kopiert");
   }
@@ -354,7 +327,7 @@ function ParticipantsTab({
                   : progress.started
                     ? "in Bearbeitung"
                     : "eingeladen";
-                const open = openId === p._id;
+                const open = focusParticipantId === p._id;
                 return (
                   <Fragment key={p._id}>
                     <TableRow
@@ -412,7 +385,13 @@ function ParticipantsTab({
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => setOpenId(open ? null : p._id)}
+                            onClick={() =>
+                              router.push(
+                                open
+                                  ? `${ADMIN_BASE}/teilnehmer`
+                                  : `${ADMIN_BASE}/teilnehmer/${p._id}`
+                              )
+                            }
                           >
                             {open ? "Schließen" : "Details"}
                           </Button>
@@ -631,7 +610,7 @@ function ParticipantDetail({
 
 // ─── Fragen ──────────────────────────────────────────────────────────────
 
-function QuestionsTab({
+export function QuestionsTab({
   focusQuestionId,
 }: {
   focusQuestionId?: string | null;
@@ -641,7 +620,6 @@ function QuestionsTab({
   });
   const answer = useMutation(api.academyQuestions.answer);
   const reopen = useMutation(api.academyQuestions.reopen);
-  const pathname = usePathname();
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -664,8 +642,8 @@ function QuestionsTab({
     );
   }
 
-  function copyQuestionLink(chapterId: string, questionId: string) {
-    const url = `${window.location.origin}${pathname}?ch=${encodeURIComponent(chapterId)}&q=${encodeURIComponent(questionId)}`;
+  function copyQuestionLink(questionId: string) {
+    const url = `${window.location.origin}${ADMIN_BASE}/fragen?q=${encodeURIComponent(questionId)}`;
     void navigator.clipboard.writeText(url);
     toast.success("Link kopiert");
   }
@@ -701,7 +679,7 @@ function QuestionsTab({
                 variant="ghost"
                 className="ml-auto"
                 aria-label="Link kopieren"
-                onClick={() => copyQuestionLink(q.chapterId, q._id)}
+                onClick={() => copyQuestionLink(q._id)}
               >
                 <Link2 className="size-3.5" />
               </Button>
@@ -747,7 +725,7 @@ function QuestionsTab({
 
 // ─── Einstellungen ─────────────────────────────────────────────────────────
 
-function SettingsTab() {
+export function SettingsTab() {
   const setPinMutation = useMutation(api.academySettings.setPin);
   const resetAll = useMutation(api.academySettings.resetAll);
   const confirm = useConfirm();

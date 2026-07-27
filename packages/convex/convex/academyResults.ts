@@ -77,7 +77,7 @@ export const saveMine = mutation({
             ? `${participant.name} hat die Wallbox Sales Academy abgeschlossen`
             : "Ein Teilnehmer hat die Wallbox Sales Academy abgeschlossen",
           body: participant?.email,
-          link: `/guidebooks/wallbox-sales-academy?participant=${participantId}`,
+          link: `/guidebooks/wallbox-sales-academy/admin/teilnehmer/${participantId}`,
         }
       );
     }

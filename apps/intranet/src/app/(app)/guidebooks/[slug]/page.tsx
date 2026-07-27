@@ -36,6 +36,7 @@ export default function GuidebookPage() {
   const user = useCurrentUser();
   const guidebook = getGuidebook(params.slug);
   const allowed = guidebook ? canAccessGuidebook(user, guidebook) : false;
+  const Component = guidebook?.Component;
   const setPrefs = useMutation(api.userPreferences.setMine);
 
   // Remember the last opened guidebook for the list page's "continue" banner.
@@ -72,7 +73,7 @@ export default function GuidebookPage() {
         )}
       </div>
 
-      {!guidebook || !allowed ? (
+      {!guidebook || !allowed || !Component ? (
         <Card>
           <CardContent className="flex flex-col items-center gap-2 py-16 text-center">
             <span className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
@@ -94,7 +95,7 @@ export default function GuidebookPage() {
             description={t(guidebook.descriptionKey)}
           />
           <div id="guidebook-content">
-            <guidebook.Component />
+            <Component />
           </div>
           {!guidebook.minimalChrome && (
             <>
