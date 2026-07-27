@@ -18,7 +18,9 @@ export function Glossary({ terms }: { terms: [string, string][] }) {
 
   return (
     <div>
-      <p className="mb-2 text-sm text-muted-foreground">Tippe auf einen Begriff.</p>
+      <p className="mb-2 text-sm text-muted-foreground">
+        Tippe auf einen Begriff.
+      </p>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {terms.map(([term, definition]) => (
           <button

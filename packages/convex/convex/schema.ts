@@ -1589,25 +1589,48 @@ export default defineSchema({
   }).index("by_slug", ["slug"]),
 
   // --- Wallbox Sales Academy (interactive guidebook) -------------------------
-  // Training progress lives per intranet account — no separate participant
-  // codes or admin PIN. `academyId` scopes the row to a specific interactive
-  // training module (only "wallbox-sales" exists today) so a future module
-  // can reuse the same two tables. `data` mirrors the original tool's
-  // per-participant result shape (chapters/research/calls/lastCh/started/
-  // finished), JSON-encoded like `tourProgress.checkpointStatuses`.
-  academyProgress: defineTable({
-    userId: v.id("users"),
+  // Ported from a standalone training tool that gated access with a
+  // participant access code and a shared admin PIN (not Clerk roles) — kept
+  // as-is here rather than replaced with account-based auth, since every
+  // visitor is already a signed-in intranet employee anyway and the
+  // code/PIN gate is what the trainer workflow (create participant, email
+  // the code, review results, answer questions) is built around.
+  // `academyId` scopes rows to a specific training module (only
+  // "wallbox-sales" exists today).
+  //
+  // `linkedUserId` is the one piece of real account integration: once a
+  // participant finishes, an admin in the Trainer area can link their
+  // results to an actual intranet account (e.g. for the person's record),
+  // set via `academyParticipants.linkToAccount`.
+  academyParticipants: defineTable({
+    academyId: v.string(),
+    name: v.string(),
+    email: v.string(),
+    code: v.string(),
+    createdAt: v.number(),
+    linkedUserId: v.optional(v.id("users")),
+    linkedAt: v.optional(v.number()),
+    linkedByUserId: v.optional(v.id("users")),
+  })
+    .index("by_academy_code", ["academyId", "code"])
+    .index("by_academy", ["academyId"])
+    .index("by_linkedUserId", ["linkedUserId"]),
+
+  // One row per participant, JSON-encoded like `tourProgress.checkpointStatuses`
+  // (chapters/research/calls/lastCh/started/finished).
+  academyResults: defineTable({
+    participantId: v.id("academyParticipants"),
     academyId: v.string(),
     data: v.string(),
     updatedAt: v.number(),
   })
-    .index("by_user_academy", ["userId", "academyId"])
+    .index("by_participant", ["participantId"])
     .index("by_academy", ["academyId"]),
 
   // Free-text "ask the trainer" questions raised from a chapter, answered by
-  // a manager in the academy's Trainer tab.
+  // whoever is in the academy's Trainer area (PIN-gated, see above).
   academyQuestions: defineTable({
-    userId: v.id("users"),
+    participantId: v.id("academyParticipants"),
     academyId: v.string(),
     chapterId: v.string(),
     chapterTitle: v.string(),
@@ -1617,8 +1640,19 @@ export default defineSchema({
     createdAt: v.number(),
     answeredAt: v.optional(v.number()),
   })
-    .index("by_user_academy", ["userId", "academyId"])
+    .index("by_participant", ["participantId"])
     .index("by_academy", ["academyId"]),
+
+  // One row per academy holding the shared admin PIN (default "1234" when
+  // no row exists yet, mirroring the original tool). The PIN itself is only
+  // ever compared server-side (`academySettings.checkPin`) — never returned
+  // to the client — even though gaining "admin" is otherwise the same
+  // client-side trust model as the original standalone tool.
+  academySettings: defineTable({
+    academyId: v.string(),
+    pin: v.string(),
+    updatedAt: v.number(),
+  }).index("by_academyId", ["academyId"]),
 
   // --- Per-user app preferences ---------------------------------------------
   // One row per user; every field optional so features can add preferences

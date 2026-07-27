@@ -1,0 +1,97 @@
+import { v } from "convex/values";
+
+import { mutation, query } from "./_generated/server";
+import { requireUser } from "./lib/auth";
+import { notifyUsers } from "./lib/notify";
+
+function isFinished(raw: string | undefined): boolean {
+  if (!raw) return false;
+  try {
+    return Boolean((JSON.parse(raw) as { finished?: unknown }).finished);
+  } catch {
+    return false;
+  }
+}
+
+export const getMine = query({
+  args: { participantId: v.id("academyParticipants") },
+  handler: async (ctx, { participantId }) => {
+    await requireUser(ctx);
+    const row = await ctx.db
+      .query("academyResults")
+      .withIndex("by_participant", q => q.eq("participantId", participantId))
+      .unique();
+    return row ? { data: row.data, updatedAt: row.updatedAt } : null;
+  },
+});
+
+/** Saves the participant's progress; when this save is the one that flips
+ * `finished` from unset to set, notifies every manager/admin (the academy
+ * has no fixed "trainer" account list — PIN access, not a role, is what
+ * makes someone a trainer — so managers/admins are the closest stand-in
+ * audience for "new results came in"). */
+export const saveMine = mutation({
+  args: {
+    academyId: v.string(),
+    participantId: v.id("academyParticipants"),
+    data: v.string(),
+  },
+  handler: async (ctx, { academyId, participantId, data }) => {
+    await requireUser(ctx);
+    const existing = await ctx.db
+      .query("academyResults")
+      .withIndex("by_participant", q => q.eq("participantId", participantId))
+      .unique();
+    const now = Date.now();
+    const justFinished = !isFinished(existing?.data) && isFinished(data);
+
+    if (existing) {
+      await ctx.db.patch(existing._id, { data, updatedAt: now });
+    } else {
+      await ctx.db.insert("academyResults", {
+        academyId,
+        participantId,
+        data,
+        updatedAt: now,
+      });
+    }
+
+    if (justFinished) {
+      const participant = await ctx.db.get(participantId);
+      const [managers, admins] = await Promise.all([
+        ctx.db
+          .query("users")
+          .withIndex("by_role", q => q.eq("role", "manager"))
+          .collect(),
+        ctx.db
+          .query("users")
+          .withIndex("by_role", q => q.eq("role", "admin"))
+          .collect(),
+      ]);
+      await notifyUsers(
+        ctx,
+        [...managers, ...admins].map(u => u._id),
+        {
+          type: "academy_finished",
+          title: participant
+            ? `${participant.name} hat die Wallbox Sales Academy abgeschlossen`
+            : "Ein Teilnehmer hat die Wallbox Sales Academy abgeschlossen",
+          body: participant?.email,
+          link: `/guidebooks/wallbox-sales-academy?participant=${participantId}`,
+        }
+      );
+    }
+  },
+});
+
+/** Admin (Trainer area): every participant's results for the academy. */
+export const listAll = query({
+  args: { academyId: v.string() },
+  handler: async (ctx, { academyId }) => {
+    await requireUser(ctx);
+    return ctx.db
+      .query("academyResults")
+      .withIndex("by_academy", q => q.eq("academyId", academyId))
+      .collect();
+  },
+});

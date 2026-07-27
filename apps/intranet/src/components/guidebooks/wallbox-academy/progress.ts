@@ -28,9 +28,10 @@ export function lastQuizResult(
   return { correct: state.correct ?? 0, total: state.total ?? 0 };
 }
 
-export function countResearchAnswered(
-  research: Record<string, string>
-): { answered: number; total: number } {
+export function countResearchAnswered(research: Record<string, string>): {
+  answered: number;
+  total: number;
+} {
   let answered = 0;
   let total = 0;
   RESEARCH_TASKS.forEach(task => {
@@ -92,7 +93,9 @@ export function chapterResultLabel(
     if (!state) return "–";
     const { correct, total } = lastQuizResult(state, chapter.quiz.length);
     const attempts = state.attempts ?? 1;
-    const base = total ? `${correct}/${chapter.quiz.length} richtig` : `0/${chapter.quiz.length}`;
+    const base = total
+      ? `${correct}/${chapter.quiz.length} richtig`
+      : `0/${chapter.quiz.length}`;
     const attemptsSuffix =
       attempts > 1 || state.history?.length ? ` · Versuch ${attempts}` : "";
     return base + attemptsSuffix;
@@ -226,7 +229,9 @@ export function recommendations(
   return out;
 }
 
-export function parseProgress(raw: string | null | undefined): AcademyProgressData {
+export function parseProgress(
+  raw: string | null | undefined
+): AcademyProgressData {
   if (!raw) return structuredClone(EMPTY_PROGRESS);
   try {
     const parsed = JSON.parse(raw) as Partial<AcademyProgressData>;

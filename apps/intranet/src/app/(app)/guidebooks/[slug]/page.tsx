@@ -28,6 +28,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export default function GuidebookPage() {
   const t = useTranslations("Guidebooks");
@@ -45,7 +46,7 @@ export default function GuidebookPage() {
   }, [guidebook, allowed, setPrefs]);
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className={cn("mx-auto max-w-4xl", guidebook?.wide && "max-w-6xl")}>
       {guidebook && allowed && <ReadingProgress />}
       <div className="mb-4 flex items-center justify-between gap-3 print:hidden">
         <Link
@@ -95,12 +96,16 @@ export default function GuidebookPage() {
           <div id="guidebook-content">
             <guidebook.Component />
           </div>
-          <GuidebookToc />
-          <FeedbackWidget slug={guidebook.slug} />
-          <RelatedGuidebooks current={guidebook} />
-          <div className="print:hidden">
-            <GuidebookPager current={guidebook} />
-          </div>
+          {!guidebook.minimalChrome && (
+            <>
+              <GuidebookToc />
+              <FeedbackWidget slug={guidebook.slug} />
+              <RelatedGuidebooks current={guidebook} />
+              <div className="print:hidden">
+                <GuidebookPager current={guidebook} />
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

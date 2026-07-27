@@ -1,21 +1,23 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { requireManager, requireUser } from "./lib/auth";
+import { requireUser } from "./lib/auth";
+import { createNotification } from "./lib/notify";
 
 export const ask = mutation({
   args: {
     academyId: v.string(),
+    participantId: v.id("academyParticipants"),
     chapterId: v.string(),
     chapterTitle: v.string(),
     text: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
+    await requireUser(ctx);
     const text = args.text.trim();
-    if (!text) return;
-    await ctx.db.insert("academyQuestions", {
-      userId: user._id,
+    if (!text) return null;
+    return ctx.db.insert("academyQuestions", {
+      participantId: args.participantId,
       academyId: args.academyId,
       chapterId: args.chapterId,
       chapterTitle: args.chapterTitle,
@@ -27,38 +29,30 @@ export const ask = mutation({
 });
 
 export const listMine = query({
-  args: { academyId: v.string() },
-  handler: async (ctx, { academyId }) => {
-    const user = await requireUser(ctx);
+  args: { participantId: v.id("academyParticipants") },
+  handler: async (ctx, { participantId }) => {
+    await requireUser(ctx);
     const rows = await ctx.db
       .query("academyQuestions")
-      .withIndex("by_user_academy", q =>
-        q.eq("userId", user._id).eq("academyId", academyId)
-      )
+      .withIndex("by_participant", q => q.eq("participantId", participantId))
       .collect();
     return rows.sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 
-/** Trainer dashboard: every question for an academy, across all participants. */
+/** Trainer area: every question for the academy, across all participants. */
 export const listAll = query({
   args: { academyId: v.string() },
   handler: async (ctx, { academyId }) => {
-    await requireManager(ctx);
+    await requireUser(ctx);
     const rows = await ctx.db
       .query("academyQuestions")
       .withIndex("by_academy", q => q.eq("academyId", academyId))
       .collect();
     const withNames = await Promise.all(
       rows.map(async row => {
-        const user = await ctx.db.get(row.userId);
-        return {
-          ...row,
-          participantName: user
-            ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() ||
-              user.email
-            : "—",
-        };
+        const participant = await ctx.db.get(row.participantId);
+        return { ...row, participantName: participant?.name ?? "—" };
       })
     );
     return withNames.sort((a, b) => b.createdAt - a.createdAt);
@@ -68,20 +62,38 @@ export const listAll = query({
 export const answer = mutation({
   args: { questionId: v.id("academyQuestions"), answer: v.string() },
   handler: async (ctx, { questionId, answer }) => {
-    await requireManager(ctx);
+    await requireUser(ctx);
     const trimmed = answer.trim();
     await ctx.db.patch(questionId, {
       answer: trimmed,
       answered: trimmed.length > 0,
       answeredAt: Date.now(),
     });
+
+    // Only reachable if the participant was linked to an intranet account —
+    // an unlinked, code-only participant has no `userId` to notify.
+    if (trimmed.length > 0) {
+      const question = await ctx.db.get(questionId);
+      const participant = question
+        ? await ctx.db.get(question.participantId)
+        : null;
+      if (question && participant?.linkedUserId) {
+        await createNotification(ctx, {
+          userId: participant.linkedUserId,
+          type: "academy_answer",
+          title: "Deine Frage wurde beantwortet",
+          body: question.text,
+          link: `/guidebooks/wallbox-sales-academy?ch=${question.chapterId}&q=${questionId}`,
+        });
+      }
+    }
   },
 });
 
 export const reopen = mutation({
   args: { questionId: v.id("academyQuestions") },
   handler: async (ctx, { questionId }) => {
-    await requireManager(ctx);
+    await requireUser(ctx);
     await ctx.db.patch(questionId, { answered: false });
   },
 });

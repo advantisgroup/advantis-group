@@ -10,8 +10,10 @@
 
 import type * as absenceSync from "../absenceSync.js";
 import type * as absences from "../absences.js";
-import type * as academyProgress from "../academyProgress.js";
+import type * as academyParticipants from "../academyParticipants.js";
 import type * as academyQuestions from "../academyQuestions.js";
+import type * as academyResults from "../academyResults.js";
+import type * as academySettings from "../academySettings.js";
 import type * as accessRequests from "../accessRequests.js";
 import type * as activity_access from "../activity/access.js";
 import type * as activity_agentVersion from "../activity/agentVersion.js";
@@ -113,8 +115,10 @@ import type {
 declare const fullApi: ApiFromModules<{
   absenceSync: typeof absenceSync;
   absences: typeof absences;
-  academyProgress: typeof academyProgress;
+  academyParticipants: typeof academyParticipants;
   academyQuestions: typeof academyQuestions;
+  academyResults: typeof academyResults;
+  academySettings: typeof academySettings;
   accessRequests: typeof accessRequests;
   "activity/access": typeof activity_access;
   "activity/agentVersion": typeof activity_agentVersion;

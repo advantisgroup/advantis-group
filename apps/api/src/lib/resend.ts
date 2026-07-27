@@ -153,6 +153,23 @@ function render(
           `<p style="margin:0;line-height:1.6">${str(data, "summary") || "Here's what's new on the intranet."}</p>`
         ),
       };
+    case "academy-invite": {
+      const academyName =
+        str(data, "academyName") || "the Wallbox Sales Academy";
+      const code = str(data, "code");
+      const by = str(data, "invitedByName");
+      const url = `${INTERNAL_URL}${str(data, "path") || "/guidebooks/wallbox-sales-academy"}`;
+      return {
+        subject: `You've been invited to ${academyName}`,
+        html: layout(
+          "You've been invited to a training",
+          `<p style="margin:0 0 16px;line-height:1.6">${by ? `${by} invited you` : "You've been invited"} to ${academyName} on the intranet.</p>
+           <p style="margin:0 0 8px;line-height:1.6">Your access code:</p>
+           <p style="margin:0 0 24px;font-size:22px;font-weight:700;letter-spacing:0.08em">${code}</p>
+           ${button(url, "Open the training")}`
+        ),
+      };
+    }
   }
 }
 

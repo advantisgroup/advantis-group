@@ -39,9 +39,7 @@ export function ChapterNav({
             key={chapter.id}
             size="sm"
             variant={active ? "default" : "outline"}
-            className={cn(
-              !active && done && "border-success/50 text-success"
-            )}
+            className={cn(!active && done && "border-success/50 text-success")}
             onClick={() => onSelect(index)}
           >
             {index + 1}. {shortTitle(chapter.title)}

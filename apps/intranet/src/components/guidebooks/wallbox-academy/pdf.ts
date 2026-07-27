@@ -58,13 +58,17 @@ export async function downloadChapterPdf(chapter: Chapter, index: number) {
   });
 
   if (chapter.glossary) {
-    chapter.glossary.forEach(([term, def]) => line(`${term}: ${def}`, 11, false, 0.5));
+    chapter.glossary.forEach(([term, def]) =>
+      line(`${term}: ${def}`, 11, false, 0.5)
+    );
   }
 
   if (chapter.quiz) {
     y += 3;
     line("Wissens-Check (Fragen)", 12, true, 1);
-    chapter.quiz.forEach((q, k) => line(`${k + 1}. ${q.question}`, 11, false, 1));
+    chapter.quiz.forEach((q, k) =>
+      line(`${k + 1}. ${q.question}`, 11, false, 1)
+    );
   }
 
   if (chapter.sim) {
@@ -92,7 +96,9 @@ export async function downloadChapterPdf(chapter: Chapter, index: number) {
     RESEARCH_TASKS.forEach(t => {
       line(t.title, 12, true, 1);
       line(t.intro, 11, false, 1);
-      t.links.forEach(([label, url]) => line(`Link: ${label} - ${url}`, 10, false, 0.5));
+      t.links.forEach(([label, url]) =>
+        line(`Link: ${label} - ${url}`, 10, false, 0.5)
+      );
       t.questions.forEach((q, k) => line(`${k + 1}. ${q}`, 11, false, 1));
       y += 2;
     });

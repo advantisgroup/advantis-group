@@ -3,6 +3,7 @@
 import { useCallback, useMemo } from "react";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 
 import { CHAPTERS } from "./data";
@@ -12,17 +13,12 @@ import type { AcademyProgressData } from "./types";
 
 export const ACADEMY_ID = "wallbox-sales";
 
-export function useAcademyProgress() {
-  const remote = useQuery(api.academyProgress.getMine, {
-    academyId: ACADEMY_ID,
-  });
-  const save = useMutation(api.academyProgress.saveMine);
+export function useAcademyProgress(participantId: Id<"academyParticipants">) {
+  const remote = useQuery(api.academyResults.getMine, { participantId });
+  const save = useMutation(api.academyResults.saveMine);
 
   const loading = remote === undefined;
-  const progress = useMemo(
-    () => parseProgress(remote?.data ?? null),
-    [remote]
-  );
+  const progress = useMemo(() => parseProgress(remote?.data ?? null), [remote]);
 
   const mutate = useCallback(
     async (fn: (current: AcademyProgressData) => AcademyProgressData) => {
@@ -31,9 +27,13 @@ export function useAcademyProgress() {
       if (allDone && !next.finished) {
         next = { ...next, finished: today() };
       }
-      await save({ academyId: ACADEMY_ID, data: JSON.stringify(next) });
+      await save({
+        academyId: ACADEMY_ID,
+        participantId,
+        data: JSON.stringify(next),
+      });
     },
-    [progress, save]
+    [progress, save, participantId]
   );
 
   return { progress, loading, mutate };

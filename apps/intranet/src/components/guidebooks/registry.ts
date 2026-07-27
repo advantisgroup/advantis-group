@@ -73,6 +73,17 @@ export interface Guidebook {
   minRole?: "manager" | "admin";
   /** Teams allowed to open this guidebook. Empty = everyone signed in. */
   teams: TeamId[];
+  /**
+   * Skip the reading-doc furniture (table of contents, "was this helpful"
+   * feedback, related-guidebooks chips, prev/next pager) around the
+   * component. For a self-contained tool with its own internal navigation
+   * (tabs, screens, its own chapter switcher) rather than a single article,
+   * that furniture is just clutter competing with the tool's own UI.
+   */
+  minimalChrome?: boolean;
+  /** Widen the page's content column past the default `max-w-4xl` — for
+   * tools with tables/dashboards that feel cramped at article width. */
+  wide?: boolean;
   Component: ComponentType;
 }
 
@@ -97,6 +108,8 @@ export const GUIDEBOOKS: Guidebook[] = [
     icon: Zap,
     category: "interactive",
     teams: [],
+    minimalChrome: true,
+    wide: true,
     Component: WallboxSalesAcademyGuidebook,
   },
   {

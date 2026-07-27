@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { type Id } from "@advantis/convex/dataModel";
 import { ArrowLeft, ArrowRight, Download } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,16 +23,20 @@ import type { AcademyProgressData } from "./types";
 
 export function ChapterView({
   index,
+  participantId,
   progress,
   onMutate,
   onPrev,
   onNext,
+  focusQuestionId,
 }: {
   index: number;
+  participantId: Id<"academyParticipants">;
   progress: AcademyProgressData;
   onMutate: (fn: (p: AcademyProgressData) => AcademyProgressData) => void;
   onPrev: () => void;
   onNext: () => void;
+  focusQuestionId?: string | null;
 }) {
   const chapter = CHAPTERS[index];
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -136,14 +141,23 @@ export function ChapterView({
         <Quiz chapter={chapter} progress={progress} onMutate={onMutate} />
       ) : null}
 
-      <AskTrainer chapterId={chapter.id} chapterTitle={chapter.title} />
+      <AskTrainer
+        participantId={participantId}
+        chapterId={chapter.id}
+        chapterTitle={chapter.title}
+        focusQuestionId={focusQuestionId}
+      />
 
       <div className="flex items-center justify-between">
         <Button variant="ghost" disabled={index === 0} onClick={onPrev}>
           <ArrowLeft className="size-4" />
           Zurück
         </Button>
-        <Button variant="ghost" disabled={index === CHAPTERS.length - 1} onClick={onNext}>
+        <Button
+          variant="ghost"
+          disabled={index === CHAPTERS.length - 1}
+          onClick={onNext}
+        >
           Weiter
           <ArrowRight className="size-4" />
         </Button>

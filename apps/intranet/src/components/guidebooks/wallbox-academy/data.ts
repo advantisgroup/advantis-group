@@ -521,7 +521,10 @@ export const CHAPTERS: Chapter[] = [
           "Wallboxen mit Fremdanbieter-Management: Wettbewerber erfragen und mit Battlecard argumentieren - Ziel ist die Ablösung des Wallbox-Managements (Hardware bleibt, Software und Abrechnung wechseln zu uns)",
         ],
       },
-      { type: "heading", text: "Acquisition-Playbook (nur Road oder gar nichts)" },
+      {
+        type: "heading",
+        text: "Acquisition-Playbook (nur Road oder gar nichts)",
+      },
       {
         type: "paragraph",
         text: "Work & Home als Ergänzung verkaufen. Übungsannahme für dieses Training: Unsere Ladelösung besteht aus der Spirii-Software (Backend, App, Abrechnung) und Beratung/Installation über The Mobility House München - beide behandeln wir so, als wären sie Teil unserer Firma. Argumente einfach halten: günstiger laden als öffentlich, alles auf einer Rechnung, ein Ansprechpartner.",
@@ -627,7 +630,10 @@ export const CHAPTERS: Chapter[] = [
       ["CCS", "Combined Charging System - Standard für DC-Schnellladen"],
       ["CHAdeMO", "Älterer DC-Ladestandard, v. a. asiatische Modelle"],
       ["OCPP", "Offenes Protokoll zwischen Wallbox und Backend"],
-      ["OCPI", "Protokoll zwischen Betreibern und Fahrstromanbietern (Roaming)"],
+      [
+        "OCPI",
+        "Protokoll zwischen Betreibern und Fahrstromanbietern (Roaming)",
+      ],
       ["Backend", "Software für Verwaltung, Abrechnung und Fernwartung"],
       ["RFID", "Karte/Chip zur Nutzeridentifikation an der Wallbox"],
       ["Lastmanagement", "Intelligente Verteilung der verfügbaren Leistung"],
@@ -659,7 +665,10 @@ export const RESEARCH_TASKS: ResearchTask[] = [
     intro:
       "UTA Edenred und DKV Mobility sind zwei große Mobilitätsdienstleister, die Flotten komplette Ladelösungen für unterwegs, am Arbeitsplatz und zuhause anbieten. Recherchiere auf den verlinkten Seiten und beantworte die Fragen. Alle Antworten sind online auffindbar.",
     links: [
-      ["UTA: Elektromobilität (Übersicht)", "https://web.uta.com/elektromobilitaet"],
+      [
+        "UTA: Elektromobilität (Übersicht)",
+        "https://web.uta.com/elektromobilitaet",
+      ],
       ["UTA: Laden unterwegs", "https://web.uta.com/laden/unterwegs"],
       ["UTA: Laden zu Hause", "https://web.uta.com/laden/zu-hause"],
       [
@@ -725,7 +734,10 @@ export const RESEARCH_TASKS: ResearchTask[] = [
     intro:
       "The Mobility House ist ein Technologieunternehmen für Ladelösungen und Energiemanagement - in unserem Training die Übungsannahme für Beratung und Installation. Recherchiere auf der Website.",
     links: [
-      ["The Mobility House: Startseite", "https://www.mobilityhouse.com/de_de/"],
+      [
+        "The Mobility House: Startseite",
+        "https://www.mobilityhouse.com/de_de/",
+      ],
       [
         "The Mobility House Solutions: Ladelösungen für Unternehmen",
         "https://www.mobilityhouse.com/de_de/b2b",
@@ -755,7 +767,8 @@ export const SCENARIOS: Scenario[] = [
       "Opportunity anlegen (4a): EV-Buddy als 'Opportunity Owner', Sales Manager als 'Acquired by'. Expertenberatung Work Charging ist terminiert.",
     steps: [
       {
-        customerSay: "Ja, mit den Karten sind wir zufrieden. Worum geht's denn?",
+        customerSay:
+          "Ja, mit den Karten sind wir zufrieden. Worum geht's denn?",
         options: [
           {
             text: "Das freut mich! Wie sieht es bei Ihnen aktuell mit Elektromobilität aus - planen Sie, Teile der Flotte umzustellen?",
@@ -805,7 +818,8 @@ export const SCENARIOS: Scenario[] = [
         ],
       },
       {
-        customerSay: "Genau. Öffentlich laden ist aber ehrlich gesagt ziemlich teuer.",
+        customerSay:
+          "Genau. Öffentlich laden ist aber ehrlich gesagt ziemlich teuer.",
         options: [
           {
             text: "Das höre ich oft - und genau da setzen wir an: Mit eigenen Wallboxen laden Sie deutlich günstiger, alles auf einer Rechnung. Wie laden Ihre Fahrer denn heute nach Feierabend?",
@@ -828,7 +842,8 @@ export const SCENARIOS: Scenario[] = [
         ],
       },
       {
-        customerSay: "Die Transporter stehen nachts auf unserem Hof. Der gehört uns übrigens.",
+        customerSay:
+          "Die Transporter stehen nachts auf unserem Hof. Der gehört uns übrigens.",
         options: [
           {
             text: "Perfekt: eigener Hof, Fahrzeuge stehen nachts dort - ideal für Work Charging. Wallboxen, Installation über unser Team von The Mobility House, Verwaltung und Abrechnung über unsere Spirii-Software, zusammen mit Ihren Karten. Wann sollen denn weitere E-Fahrzeuge dazukommen?",
@@ -841,7 +856,8 @@ export const SCENARIOS: Scenario[] = [
           {
             text: "Gut, ich schicke Ihnen mal ein paar Infos zu.",
             points: 1,
-            feedback: "Infos statt Gespräch - so entsteht kein qualifizierter Lead.",
+            feedback:
+              "Infos statt Gespräch - so entsteht kein qualifizierter Lead.",
           },
           {
             text: "Dann brauchen Sie mindestens zehn Wallboxen mit 22 kW und Lastmanagement Typ B.",
@@ -866,7 +882,8 @@ export const SCENARIOS: Scenario[] = [
           {
             text: "Das ist gar nicht kompliziert, das machen wir ständig.",
             points: 1,
-            feedback: "Widerspruch ohne Quittung - der Kunde fühlt sich nicht ernst genommen.",
+            feedback:
+              "Widerspruch ohne Quittung - der Kunde fühlt sich nicht ernst genommen.",
           },
           {
             text: "Dann warten wir besser noch ein Jahr.",
@@ -895,7 +912,8 @@ export const SCENARIOS: Scenario[] = [
           {
             text: "Ich lege direkt eine Bestellung über zehn Wallboxen an.",
             points: 0,
-            feedback: "Es gibt noch kein Angebot und keine Begehung - Prozess einhalten.",
+            feedback:
+              "Es gibt noch kein Angebot und keine Begehung - Prozess einhalten.",
           },
         ],
       },
@@ -912,7 +930,8 @@ export const SCENARIOS: Scenario[] = [
       "Opportunity anlegen (4a): Migration/Abloesung des Wallbox-Managements. Bestandsaufnahme durch den Experten ist terminiert.",
     steps: [
       {
-        customerSay: "Die Karten laufen. Aber Ladesäulen haben wir schon - da brauchen wir nichts.",
+        customerSay:
+          "Die Karten laufen. Aber Ladesäulen haben wir schon - da brauchen wir nichts.",
         options: [
           {
             text: "Dann sind Sie ja ganz vorne dabei - gut, dass Sie das gleich sagen! Das heißt, Sie kennen sich schon aus: Welchen Anbieter nutzen Sie denn aktuell für Verwaltung und Abrechnung der Ladepunkte?",
@@ -944,7 +963,8 @@ export const SCENARIOS: Scenario[] = [
             points: 2,
             skill: "Quittung + offene Frage",
             dataKeys: ["comp", "wb"],
-            feedback: "Wettbewerber notiert (Battlecard!), Schmerzpunkt quittiert, offene Frage vertieft.",
+            feedback:
+              "Wettbewerber notiert (Battlecard!), Schmerzpunkt quittiert, offene Frage vertieft.",
           },
           {
             text: "Und wie viele Wallboxen sind es insgesamt?",
@@ -956,7 +976,8 @@ export const SCENARIOS: Scenario[] = [
           {
             text: "ChargePro? Die sind nicht so gut, hört man.",
             points: 0,
-            feedback: "Nie schlecht über Wettbewerber reden - Fakten statt Lästern.",
+            feedback:
+              "Nie schlecht über Wettbewerber reden - Fakten statt Lästern.",
           },
         ],
       },
@@ -968,17 +989,20 @@ export const SCENARIOS: Scenario[] = [
             text: "Also manuelle Erfassung für 12 Fahrer, Monat für Monat - das kostet Zeit und Genauigkeit. Genau das automatisieren wir: geeichte Messung, automatische Erstattung, alles auf Ihrer bestehenden Rechnung bei uns. Wie viele Ihrer 40 Fahrzeuge sollen denn in den nächsten Jahren noch elektrisch werden?",
             points: 2,
             skill: "Quittung + offene Frage",
-            feedback: "Schmerz quittiert, Nutzen ohne Technik, offene Frage zur Transformation.",
+            feedback:
+              "Schmerz quittiert, Nutzen ohne Technik, offene Frage zur Transformation.",
           },
           {
             text: "Das können wir auch, und besser.",
             points: 1,
-            feedback: "Behauptung ohne Nutzenbild - was genau wird für den Kunden besser?",
+            feedback:
+              "Behauptung ohne Nutzenbild - was genau wird für den Kunden besser?",
           },
           {
             text: "Zählerfotos? Das ist ja Steinzeit.",
             points: 0,
-            feedback: "Du machst die heutige Lösung des Kunden lächerlich - er hat sie ausgewählt.",
+            feedback:
+              "Du machst die heutige Lösung des Kunden lächerlich - er hat sie ausgewählt.",
           },
         ],
       },
@@ -1007,19 +1031,22 @@ export const SCENARIOS: Scenario[] = [
         ],
       },
       {
-        customerSay: "Eine Rechnung für alles wäre tatsächlich gut. Das Gebäude gehört übrigens unserer Muttergesellschaft.",
+        customerSay:
+          "Eine Rechnung für alles wäre tatsächlich gut. Das Gebäude gehört übrigens unserer Muttergesellschaft.",
         options: [
           {
             text: "Notiert: Gebäude gehört zur Muttergesellschaft - das klären wir in der Beratung gleich mit. Und der wichtigste Punkt für Sie ist die eine Rechnung für Tanken, Road und Wallboxen. Habe ich das richtig zusammengefasst?",
             points: 2,
             skill: "Quittung",
             dataKeys: ["own"],
-            feedback: "Eigentümerfrage erfasst, Hauptmotiv quittiert und bestätigen lassen.",
+            feedback:
+              "Eigentümerfrage erfasst, Hauptmotiv quittiert und bestätigen lassen.",
           },
           {
             text: "Mietverhältnisse machen es immer kompliziert.",
             points: 1,
-            feedback: "Problem betont statt Lösung - die Beratung klärt das doch.",
+            feedback:
+              "Problem betont statt Lösung - die Beratung klärt das doch.",
           },
           {
             text: "Okay.",
@@ -1036,7 +1063,8 @@ export const SCENARIOS: Scenario[] = [
             points: 2,
             skill: "Abschluss",
             dataKeys: ["next"],
-            feedback: "Konkreter nächster Schritt mit Terminfrage - qualifizierter Migrations-Lead.",
+            feedback:
+              "Konkreter nächster Schritt mit Terminfrage - qualifizierter Migrations-Lead.",
           },
           {
             text: "Ich schicke Ihnen eine Broschüre.",
@@ -1071,7 +1099,8 @@ export const SCENARIOS: Scenario[] = [
             points: 2,
             skill: "Quittung + offene Frage",
             dataKeys: ["mix", "ready"],
-            feedback: "'Perfect Spot' erkannt und quittiert, offene Frage klärt Home vs. Work.",
+            feedback:
+              "'Perfect Spot' erkannt und quittiert, offene Frage klärt Home vs. Work.",
           },
           {
             text: "Dann sollten Sie schnell Wallboxen kaufen.",
@@ -1081,7 +1110,8 @@ export const SCENARIOS: Scenario[] = [
           {
             text: "Acht Wochen? Das wird zeitlich eng.",
             points: 0,
-            feedback: "Angst erzeugen ist kein Verkaufen - Timing ist machbar und du bist die Lösung.",
+            feedback:
+              "Angst erzeugen ist kein Verkaufen - Timing ist machbar und du bist die Lösung.",
           },
         ],
       },
@@ -1105,7 +1135,8 @@ export const SCENARIOS: Scenario[] = [
           {
             text: "Gemietet? Dann geht am Standort leider nichts.",
             points: 0,
-            feedback: "Falsch - mit Vermieterzustimmung geht sehr wohl etwas. Nie vorschnell Türen schließen.",
+            feedback:
+              "Falsch - mit Vermieterzustimmung geht sehr wohl etwas. Nie vorschnell Türen schließen.",
           },
         ],
       },
@@ -1118,40 +1149,47 @@ export const SCENARIOS: Scenario[] = [
             points: 2,
             skill: "Offene Frage",
             dataKeys: ["total"],
-            feedback: "Flottengröße erfasst, Preisfrage seriös zum Experten geführt, offene Frage öffnet das Beratungsthema.",
+            feedback:
+              "Flottengröße erfasst, Preisfrage seriös zum Experten geführt, offene Frage öffnet das Beratungsthema.",
           },
           {
             text: "Mit Installation meist zwischen 1.500 und 2.500 Euro, je nach Kabelweg.",
             points: 1,
             dataKeys: ["total"],
-            feedback: "Ehrliche Spanne ist okay - aber die Anschlussfrage fehlt, das Gespräch stockt.",
+            feedback:
+              "Ehrliche Spanne ist okay - aber die Anschlussfrage fehlt, das Gespräch stockt.",
           },
           {
             text: "Das kann ich Ihnen nicht sagen.",
             points: 0,
-            feedback: "Hilflos statt souverän - Spanne oder Experten-Check anbieten.",
+            feedback:
+              "Hilflos statt souverän - Spanne oder Experten-Check anbieten.",
           },
         ],
       },
       {
-        customerSay: "Steuern? Da haben wir ehrlich gesagt keine Ahnung, da bräuchten wir wohl Hilfe.",
+        customerSay:
+          "Steuern? Da haben wir ehrlich gesagt keine Ahnung, da bräuchten wir wohl Hilfe.",
         options: [
           {
             text: "Verstehe - Beratungsbedarf bei Steuern und Recht nehme ich mit auf, genau dafür haben wir Experten. Ich fasse zusammen: neun Fahrzeuge, vier E-Autos in acht Wochen, Laden vor allem zuhause, Standort gemietet, Beratungsbedarf bei Steuern. Passt das so?",
             points: 2,
             skill: "Quittung",
             dataKeys: ["need"],
-            feedback: "Bedarf erfasst und komplette Abschluss-Quittung - Datenqualität gesichert.",
+            feedback:
+              "Bedarf erfasst und komplette Abschluss-Quittung - Datenqualität gesichert.",
           },
           {
             text: "Okay, habe ich notiert.",
             points: 1,
-            feedback: "Notiert ist gut, quittiert ist besser - Zusammenfassung bestätigen lassen.",
+            feedback:
+              "Notiert ist gut, quittiert ist besser - Zusammenfassung bestätigen lassen.",
           },
           {
             text: "Steuern macht doch Ihr Steuerberater.",
             points: 0,
-            feedback: "Du schickst den Bedarf zur Konkurrenz statt zur eigenen Beratung.",
+            feedback:
+              "Du schickst den Bedarf zur Konkurrenz statt zur eigenen Beratung.",
           },
         ],
       },
@@ -1163,17 +1201,20 @@ export const SCENARIOS: Scenario[] = [
             points: 2,
             skill: "Abschluss",
             dataKeys: ["next"],
-            feedback: "Alternativfrage zum Termin, Dringlichkeit positiv begründet - Lead qualifiziert.",
+            feedback:
+              "Alternativfrage zum Termin, Dringlichkeit positiv begründet - Lead qualifiziert.",
           },
           {
             text: "Ich schicke Ihnen ein Standard-Angebot.",
             points: 1,
-            feedback: "Ohne Begehung kein seriöses Angebot - der Prozess sieht die Beratung vor.",
+            feedback:
+              "Ohne Begehung kein seriöses Angebot - der Prozess sieht die Beratung vor.",
           },
           {
             text: "Rufen Sie doch wieder an, wenn die Autos da sind.",
             points: 0,
-            feedback: "In acht Wochen ist es zu spät - die Lösung muss vor den Autos stehen.",
+            feedback:
+              "In acht Wochen ist es zu spät - die Lösung muss vor den Autos stehen.",
           },
         ],
       },
@@ -1196,51 +1237,60 @@ export const SCENARIOS: Scenario[] = [
             text: "Verstehe - für Ihre Einsätze sehen Sie aktuell keinen Platz für E-Fahrzeuge. Aus Interesse: Wie setzt sich Ihre Flotte denn heute zusammen?",
             points: 2,
             skill: "Quittung + offene Frage",
-            feedback: "Einwand quittiert statt widersprochen, offene Frage hält das Gespräch am Laufen.",
+            feedback:
+              "Einwand quittiert statt widersprochen, offene Frage hält das Gespräch am Laufen.",
           },
           {
             text: "Auch nicht bei den PKW der Bauleiter?",
             points: 1,
-            feedback: "Guter Gedanke, aber geschlossen gefragt und ohne Quittung.",
+            feedback:
+              "Guter Gedanke, aber geschlossen gefragt und ohne Quittung.",
           },
           {
             text: "Doch, E-Transporter sind heute super!",
             points: 0,
-            feedback: "Direkter Widerspruch ohne Quittung - der Kunde macht zu.",
+            feedback:
+              "Direkter Widerspruch ohne Quittung - der Kunde macht zu.",
           },
         ],
       },
       {
-        customerSay: "22 Fahrzeuge: acht PKW für die Bauleiter, zehn Transporter, vier LKW. Alles Diesel.",
+        customerSay:
+          "22 Fahrzeuge: acht PKW für die Bauleiter, zehn Transporter, vier LKW. Alles Diesel.",
         options: [
           {
             text: "Danke - 22 Fahrzeuge: acht PKW, zehn Transporter, vier LKW, alle Diesel. Viele Betriebe starten übrigens bei den Bauleiter-PKW, wegen der günstigen Dienstwagenbesteuerung. Gibt es bei Ihnen schon Überlegungen oder eine Zeitplanung Richtung E-Fahrzeuge?",
             points: 2,
             skill: "Quittung + offene Frage",
             dataKeys: ["total", "mix"],
-            feedback: "Vollständige Quittung der Flottendaten, einfacher Impuls, offene Frage zur Planung.",
+            feedback:
+              "Vollständige Quittung der Flottendaten, einfacher Impuls, offene Frage zur Planung.",
           },
           {
             text: "Und wie alt sind die Fahrzeuge im Schnitt?",
             points: 1,
-            feedback: "Auch interessant, aber die Transformationsfrage ist jetzt wichtiger.",
+            feedback:
+              "Auch interessant, aber die Transformationsfrage ist jetzt wichtiger.",
           },
           {
             text: "Diesel wird sowieso bald verboten.",
             points: 0,
-            feedback: "Drohkulisse statt Beratung - unseriös und inhaltlich wacklig.",
+            feedback:
+              "Drohkulisse statt Beratung - unseriös und inhaltlich wacklig.",
           },
         ],
       },
       {
-        customerSay: "Die Geschäftsführung hat mal drüber gesprochen, aber konkret ist nichts. Frühestens in zwei Jahren.",
+        customerSay:
+          "Die Geschäftsführung hat mal drüber gesprochen, aber konkret ist nichts. Frühestens in zwei Jahren.",
         options: [
           {
             text: "Alles klar: heute kein Thema, Horizont etwa zwei Jahre. Dann halte ich das genau so fest und melde mich rechtzeitig vor Ihren nächsten Fahrzeugentscheidungen. Wäre ein kurzes Update in sechs Monaten für Sie in Ordnung?",
             points: 2,
             skill: "Quittung + Abschluss",
             dataKeys: ["ready"],
-            feedback: "Kein Druck: Zeithorizont quittiert, Follow-up vorgeschlagen - genau Schritt 4b.",
+            feedback:
+              "Kein Druck: Zeithorizont quittiert, Follow-up vorgeschlagen - genau Schritt 4b.",
           },
           {
             text: "Soll ich Ihnen trotzdem schon ein Angebot schicken?",
@@ -1250,7 +1300,8 @@ export const SCENARIOS: Scenario[] = [
           {
             text: "In zwei Jahren anzufangen ist definitiv zu spät.",
             points: 0,
-            feedback: "Belehrung erzeugt Widerstand - der Kunde bestimmt sein Tempo.",
+            feedback:
+              "Belehrung erzeugt Widerstand - der Kunde bestimmt sein Tempo.",
           },
         ],
       },
@@ -1262,7 +1313,8 @@ export const SCENARIOS: Scenario[] = [
             points: 2,
             skill: "Offene Datenfrage",
             dataKeys: ["next"],
-            feedback: "Follow-up gesichert und die Datenerfassung komplettiert - Wettbewerbsinfo ist Gold wert.",
+            feedback:
+              "Follow-up gesichert und die Datenerfassung komplettiert - Wettbewerbsinfo ist Gold wert.",
           },
           {
             text: "Gut, dann tschüss!",
@@ -1272,7 +1324,8 @@ export const SCENARIOS: Scenario[] = [
           {
             text: "Ich rufe sicherheitshalber nächste Woche nochmal an.",
             points: 0,
-            feedback: "Vereinbarung ignoriert - das nervt und verbrennt den Lead.",
+            feedback:
+              "Vereinbarung ignoriert - das nervt und verbrennt den Lead.",
           },
         ],
       },
@@ -1284,12 +1337,14 @@ export const SCENARIOS: Scenario[] = [
             points: 2,
             skill: "Prozess (4b)",
             dataKeys: ["us"],
-            feedback: "Genau richtig: kein Bedarf heute heißt Account pflegen statt Opportunity anlegen.",
+            feedback:
+              "Genau richtig: kein Bedarf heute heißt Account pflegen statt Opportunity anlegen.",
           },
           {
             text: "Die Daten trage ich später ein, wenn ich Zeit habe.",
             points: 1,
-            feedback: "Später heißt oft nie - Datenpflege gehört direkt nach den Call.",
+            feedback:
+              "Später heißt oft nie - Datenpflege gehört direkt nach den Call.",
           },
           {
             text: "Ich lege sicherheitshalber trotzdem eine Opportunity an.",

@@ -25,6 +25,7 @@ export const internalNotificationsRoute = new Elysia().post(
         t.Literal("guest-invite"),
         t.Literal("chat-reinvite"),
         t.Literal("digest"),
+        t.Literal("academy-invite"),
       ]),
       to: t.String(),
       data: t.Optional(t.Record(t.String(), t.Unknown())),
