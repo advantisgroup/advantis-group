@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "img.clerk.com" },
     ],
   },
+  experimental: {
+    useTypeScriptCli: true
+  },
   async redirects() {
     return [
       // ActivityTrack moved out from under /admin — keep old bookmarks/links working.
