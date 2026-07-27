@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import {
   Popover,
   PopoverContent,
@@ -43,6 +44,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Platform-level: creating a company is inherently a cross-company action,
 // so this page (unlike the rest of Performance) is isSuperAdmin-only, not
@@ -194,8 +196,8 @@ function DnsRecordField({
   const t = useTranslations("Performance");
   const host = record.domain && record.domain.length > 0 ? record.domain : "@";
   return (
-    <div className="space-y-1.5 rounded border border-amber-500/20 bg-background/40 p-2">
-      <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+    <div className="space-y-2.5 rounded border border-amber-500/20 bg-background/40 p-3">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
         <dt className="text-muted-foreground">{t("companyDnsFieldType")}</dt>
         <dd className="font-mono">{record.type}</dd>
         <dt className="text-muted-foreground">{t("companyDnsFieldHost")}</dt>
@@ -205,7 +207,7 @@ function DnsRecordField({
       </dl>
       <CopyableField label={`${record.type} ${host}`} value={record.value} />
       {host === "@" && (
-        <p className="text-muted-foreground">
+        <p className="leading-relaxed text-muted-foreground">
           {t("companyDnsRootHint", { domain: companyDomain })}
         </p>
       )}
@@ -233,20 +235,26 @@ function DnsInstructions({
   const t = useTranslations("Performance");
   if (records.length === 0) return null;
   return (
-    <div className="space-y-3 rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs">
-      <p className="font-medium text-amber-700 dark:text-amber-400">{title}</p>
-      {records.map((r, i) => (
-        <DnsRecordField key={i} record={r} companyDomain={domain} />
-      ))}
+    <div className="space-y-4 rounded-md border border-amber-500/30 bg-amber-500/10 p-4 text-xs">
+      <p className="font-medium leading-relaxed text-amber-700 dark:text-amber-400">
+        {title}
+      </p>
+      <div className="space-y-3">
+        {records.map((r, i) => (
+          <DnsRecordField key={i} record={r} companyDomain={domain} />
+        ))}
+      </div>
       {provider && (
         <a
           href={provider.docsUrl}
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-1.5 text-amber-700 underline underline-offset-2 dark:text-amber-400"
+          className="flex items-start gap-1.5 leading-relaxed text-amber-700 underline underline-offset-2 dark:text-amber-400"
         >
           <ProviderFavicon provider={provider} />
-          {t("companyDnsProviderHint", { provider: provider.name })}
+          <span>
+            {t("companyDnsProviderHint", { provider: provider.name })}
+          </span>
           <ExternalLink className="h-3 w-3 shrink-0" />
         </a>
       )}
@@ -327,6 +335,8 @@ function CompanyStatusBadge({
   dnsProvider: DnsProvider | null;
 }) {
   const t = useTranslations("Performance");
+  const isMobile = useIsMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const hasDetails =
     (status === "pending_dns" && !!dnsVerification?.length) ||
     (status === "pending_routing" && !!dnsRouting?.length);
@@ -339,6 +349,40 @@ function CompanyStatusBadge({
   );
 
   if (!hasDetails) return badge;
+
+  // Mobile: a fixed-width popover has nowhere good to anchor next to a
+  // table row and ends up clipped/overlapping neighboring rows (a floating
+  // panel pinned near the tap target rather than a proper sheet). The
+  // existing bottom-sheet drawer used for the sidebar gives the same
+  // content room to breathe full-width instead.
+  if (isMobile) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {badge}
+        </button>
+        <MobileDrawer
+          open={drawerOpen}
+          onOpenChange={setDrawerOpen}
+          ariaLabel={t(`companyStatus_${status}`)}
+        >
+          <div className="p-4">
+            <CompanyDnsStatus
+              domain={domain}
+              status={status}
+              dnsVerification={dnsVerification}
+              dnsRouting={dnsRouting}
+              dnsProvider={dnsProvider}
+            />
+          </div>
+        </MobileDrawer>
+      </>
+    );
+  }
 
   return (
     <Popover>
