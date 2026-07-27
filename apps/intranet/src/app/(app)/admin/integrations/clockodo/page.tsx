@@ -588,7 +588,7 @@ function ClockodoUserDetail({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[85vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
+      <DialogContent className="flex max-h-[85vh] max-w-3xl flex-col gap-0 overflow-hidden p-0">
         <DialogTitle className="sr-only">{row.name}</DialogTitle>
         {body}
       </DialogContent>
@@ -802,7 +802,7 @@ export default function ClockodoIntegrationPage() {
   }
 
   return (
-    <section className="mx-auto max-w-5xl space-y-6">
+    <section className="mx-auto max-w-7xl space-y-6">
       <PageHeader
         title={t("clockodoTitle")}
         description={t("clockodoSubtitle")}
@@ -846,7 +846,7 @@ export default function ClockodoIntegrationPage() {
       {rows !== null && !loadError && rows.length > 0 && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-8 -translate-y-1/2 text-muted-foreground" />
             <Input
               ref={searchRef}
               value={search}
