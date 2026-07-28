@@ -10,9 +10,13 @@ export function roleLabel(
   return user.roleLabel?.trim() || tRoles(user.role);
 }
 
-/** Two-letter initials for an avatar fallback. */
+/** Two-letter initials for an avatar fallback. Upstream data (e.g. Clockodo's
+ * API) has been observed returning non-string shapes for name/email fields
+ * on some records — guard so a malformed value degrades to "?" instead of
+ * crashing `.split()`. */
 export function initials(name: string | null | undefined, email?: string): string {
-  const source = (name && name.trim()) || email || "?";
+  const source = (typeof name === "string" && name.trim()) || email || "?";
+  if (typeof source !== "string") return "?";
   const parts = source.split(/\s+/).filter(Boolean);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return source.slice(0, 2).toUpperCase();
@@ -20,6 +24,7 @@ export function initials(name: string | null | undefined, email?: string): strin
 
 /** Locale-aware short date from an ISO date string (YYYY-MM-DD). */
 export function formatIsoDate(iso: string, locale: string): string {
+  if (typeof iso !== "string") return "";
   const [y, m, d] = iso.split("-").map(Number);
   if (!y || !m || !d) return iso;
   return new Date(y, m - 1, d).toLocaleDateString(locale, {
@@ -31,6 +36,7 @@ export function formatIsoDate(iso: string, locale: string): string {
 
 /** Locale-aware date+time from epoch ms. */
 export function formatDateTime(ms: number, locale: string): string {
+  if (!Number.isFinite(ms)) return "";
   return new Date(ms).toLocaleString(locale, {
     day: "2-digit",
     month: "short",
@@ -40,6 +46,7 @@ export function formatDateTime(ms: number, locale: string): string {
 }
 
 export function formatTime(ms: number, locale: Intl.LocalesArgument): string {
+  if (!Number.isFinite(ms)) return "";
   return new Date(ms).toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
