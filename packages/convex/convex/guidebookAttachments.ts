@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireManager, requireUser } from "./lib/auth";
 import { attachmentValidator } from "./schema";
 
 /** Files attached to a guidebook page, newest first. */
@@ -55,7 +55,7 @@ export const remove = mutation({
     const user = await requireManager(ctx);
     const row = await ctx.db.get(attachmentId);
     if (!row) return { ok: false };
-    if (row.uploadedByUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, row.uploadedByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the uploader or an admin can remove this",

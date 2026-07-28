@@ -6,7 +6,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireUser } from "./lib/auth";
 import { gatedMutation } from "./lib/featureGate";
 import { createNotification } from "./lib/notify";
 import { attachmentValidator } from "./schema";
@@ -823,7 +823,7 @@ export const deleteMessage = mutation({
     const user = await requireUser(ctx);
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) return { ok: false };
-    if (message.senderUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, message.senderUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You can only delete your own messages",

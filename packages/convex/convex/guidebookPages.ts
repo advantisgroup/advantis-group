@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireManager, requireUser } from "./lib/auth";
 
 const pageFields = {
   title: v.string(),
@@ -88,7 +88,7 @@ export const update = mutation({
     const user = await requireManager(ctx);
     const page = await ctx.db.get(pageId);
     if (!page) throw new ConvexError({ code: "not_found", message: "Not found" });
-    if (page.authorUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, page.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can edit this",
@@ -111,7 +111,7 @@ export const remove = mutation({
     const user = await requireManager(ctx);
     const page = await ctx.db.get(pageId);
     if (!page) return { ok: false };
-    if (page.authorUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, page.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can delete this",

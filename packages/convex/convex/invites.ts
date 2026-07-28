@@ -3,7 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { roleValidator } from "./schema";
-import { getAllowedDomains, isEmailDomainAllowed, requireManager } from "./lib/auth";
+import { canGrantRole, getAllowedDomains, isEmailDomainAllowed, requireManager } from "./lib/auth";
 import { createClerkInvitation, revokeClerkInvitations } from "./lib/clerk";
 
 const roleArg = roleValidator;
@@ -29,7 +29,7 @@ export const createInviteRecord = internalMutation({
       throw new ConvexError({ code: "bad_request", message: "Invalid email" });
     }
     // Only admins may grant admin/manager; managers can only invite employees.
-    if (args.role !== "employee" && inviter.role !== "admin") {
+    if (!canGrantRole(inviter, args.role)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only admins can invite admins or managers",

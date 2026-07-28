@@ -5,7 +5,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
@@ -31,9 +31,7 @@ function aggregateReactions(
 
 /** The author and admins can always see an announcement, regardless of audience. */
 function isVisibleToUser(user: Doc<"users">, a: Doc<"announcements">): boolean {
-  return (
-    a.authorUserId === user._id || user.role === "admin" || userMatchesAudience(user, a.audience)
-  );
+  return isOwnerOrAdmin(user, a.authorUserId) || userMatchesAudience(user, a.audience);
 }
 
 /** Read-only: works from both query and mutation handlers (MutationCtx is a QueryCtx plus write access). */
@@ -153,7 +151,7 @@ export const update = mutation({
     if (!announcement) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
-    if (announcement.authorUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, announcement.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can edit",
@@ -198,7 +196,7 @@ export const remove = mutation({
     const user = await requireManager(ctx);
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return { ok: false };
-    if (announcement.authorUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, announcement.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can delete",
@@ -238,7 +236,7 @@ export const list = query({
     // Scheduled (future) and expired announcements stay visible to their
     // author and admins (flagged below) but disappear for everyone else.
     const visible = announcements.filter((a) => {
-      const isAuthorOrAdmin = a.authorUserId === user._id || user.role === "admin";
+      const isAuthorOrAdmin = isOwnerOrAdmin(user, a.authorUserId);
       // The author/an admin must always see it regardless of audience — a
       // manager targeting a "specific people" audience that excludes
       // themselves would otherwise lose the announcement (and the edit/delete
@@ -513,7 +511,7 @@ export const nonReaders = query({
     const user = await requireUser(ctx);
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return [];
-    if (announcement.authorUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, announcement.authorUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the author or an admin can see who hasn't read this",
