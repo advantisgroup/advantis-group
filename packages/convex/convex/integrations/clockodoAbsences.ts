@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { query } from "../_generated/server";
+import { MANAGER_ROLES } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
 
 /**
@@ -35,7 +36,7 @@ export const resolveCaller = query({
       userId: user._id,
       name: user.firstName ?? user.email,
       clockodoUserId,
-      isManager: user.role === "admin" || user.role === "manager",
+      isManager: MANAGER_ROLES.includes(user.role),
     };
   },
 });

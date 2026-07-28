@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 
-import { api, internal } from "../_generated/api";
+import { internal } from "../_generated/api";
 import { query, mutation, internalMutation, internalQuery, action } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { requireUser, requireManager, requireAdmin } from "../lib/auth";
+import { requireAdminAction } from "../integrations/lib/auth";
 import { writeAudit } from "./audit";
 import { hashPassword } from "./lib/crypto";
 import { appError } from "./lib/errors";
@@ -158,15 +159,12 @@ export const store = internalMutation({
 
 /**
  * Set the tray-app debug login password. Runs as an action so it can use Web
- * Crypto to hash; admin-gated by resolving the caller via api.users.me.
+ * Crypto to hash; admin-gated via `requireAdminAction`.
  */
 export const setDebugPassword = action({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
-    const me = await ctx.runQuery(api.users.me, {});
-    if (!me || me.role !== "admin") {
-      throw appError("auth.forbidden", "Forbidden: requires admin role");
-    }
+    const me = await requireAdminAction(ctx);
     if (password.length < 6) {
       throw appError("validation.password_short", "Password must be at least 6 characters");
     }
