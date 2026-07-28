@@ -105,7 +105,9 @@ export function GuidebookPager({ current }: { current: Guidebook }) {
             {t("switcher.next")}
             <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
           </span>
-          <span className="max-w-full truncate text-sm font-semibold">{guidebookTitle(next, t)}</span>
+          <span className="max-w-full truncate text-sm font-semibold">
+            {guidebookTitle(next, t)}
+          </span>
         </Link>
       )}
     </nav>

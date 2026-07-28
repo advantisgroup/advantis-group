@@ -43,7 +43,11 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     }
     setBusy(true);
     try {
-      const storageId = await uploadToConvex(() => generateUploadUrl({}), file, () => {});
+      const storageId = await uploadToConvex(
+        () => generateUploadUrl({}),
+        file,
+        () => {},
+      );
       await addAttachment({
         slug,
         attachment: {
