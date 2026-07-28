@@ -92,7 +92,8 @@ function StatsRow({ mine }: { mine: AbsenceRow[] | undefined }) {
   const t = useTranslations("Absences");
   const year = new Date().getFullYear();
   const stats = useMemo(() => {
-    const inYear = (a: AbsenceRow) => a.startDate.startsWith(String(year));
+    const inYear = (a: AbsenceRow) =>
+      typeof a.startDate === "string" && a.startDate.startsWith(String(year));
     const rows = mine ?? [];
     const sum = (type: AbsenceType) =>
       rows
@@ -220,7 +221,10 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
     );
     const groups = new Map<string, AbsenceRow[]>();
     for (const a of rows) {
-      const year = a.startDate.slice(0, 4);
+      const year =
+        typeof a.startDate === "string" && a.startDate.length >= 4
+          ? a.startDate.slice(0, 4)
+          : "—";
       const list = groups.get(year) ?? [];
       list.push(a);
       groups.set(year, list);

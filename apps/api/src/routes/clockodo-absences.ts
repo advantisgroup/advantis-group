@@ -31,14 +31,24 @@ interface AbsenceDTO {
   status: "pending" | "approved" | "denied" | "cancelled";
 }
 
+/** Coerce a Clockodo date field to `YYYY-MM-DD`. The `/v4/absences` API has
+ * been observed returning a non-string shape (e.g. an array) for
+ * date_since/date_until on some records, despite the documented contract —
+ * fall back to "" rather than propagate a shape the client's string-only
+ * date math (startsWith/slice) can't handle. */
+function toIsoDate(value: unknown): string {
+  const raw = Array.isArray(value) ? value[0] : value;
+  return typeof raw === "string" ? raw.slice(0, 10) : "";
+}
+
 function toDto(a: Awaited<ReturnType<typeof listCurrentAbsences>>[number]): AbsenceDTO {
   return {
     id: String(a.id),
     clockodoUserId: String(a.users_id),
     clockodoType: a.type,
     type: mapAbsenceType(a.type),
-    startDate: a.date_since.slice(0, 10),
-    endDate: a.date_until.slice(0, 10),
+    startDate: toIsoDate(a.date_since),
+    endDate: toIsoDate(a.date_until),
     halfDay: a.count_days === 0.5,
     reason: a.note,
     status: mapAbsenceStatus(a.status),
