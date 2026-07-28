@@ -50,11 +50,25 @@ export async function getAbsence(id: number): Promise<ClockodoAbsence> {
   return data.data;
 }
 
+interface ClockodoPaging {
+  current_page: number;
+  count_pages: number;
+}
+
+/** /v4/absences paginates — a company with more absences than one page would
+ * otherwise silently lose records past page 1. */
 export async function listAbsences(year: number): Promise<ClockodoAbsence[]> {
-  const data = await clockodoGet<{ data: ClockodoAbsence[] }>(
-    `/v4/absences?filter[year]=${year}&scope=viewableAbsences`,
-  );
-  return data.data ?? [];
+  const results: ClockodoAbsence[] = [];
+  let page = 1;
+  for (;;) {
+    const res = await clockodoGet<{ data: ClockodoAbsence[]; paging: ClockodoPaging }>(
+      `/v4/absences?filter[year]=${year}&scope=viewableAbsences&page=${page}`,
+    );
+    results.push(...(res.data ?? []));
+    if (page >= res.paging.count_pages) break;
+    page++;
+  }
+  return results;
 }
 
 /**
