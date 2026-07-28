@@ -7,6 +7,7 @@ import { internal } from "./_generated/api";
 import { roleValidator } from "./schema";
 import { clearVaultPasswordForUser } from "./applicantVault";
 import {
+  effectiveCustomRoleIds,
   ensureUser,
   getCurrentUser,
   isApplicantEligible,
@@ -33,7 +34,10 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
   const avatar = user.avatarStorageId
     ? await ctx.storage.getUrl(user.avatarStorageId)
     : (user.avatarUrl ?? null);
-  const customRole = user.customRoleId ? await ctx.db.get(user.customRoleId) : null;
+  const customRoleDocs = await Promise.all(
+    effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)),
+  );
+  const customRoles = customRoleDocs.filter((role): role is Doc<"customRoles"> => role !== null);
   return {
     _id: user._id,
     clerkUserId: user.clerkUserId,
@@ -54,9 +58,15 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
     /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
     permissions: listUserPermissions(user),
-    customRoleId: user.customRoleId ?? null,
-    customRoleName: customRole?.name ?? null,
-    capabilities: customRole?.capabilities ?? [],
+    customRoleIds: customRoles.map((role) => role._id),
+    // Per-role breakdown (name + that role's own capabilities), for UI that
+    // needs to explain each grant individually rather than a flattened union.
+    customRoles: customRoles.map((role) => ({
+      _id: role._id,
+      name: role.name,
+      capabilities: role.capabilities,
+    })),
+    capabilities: [...new Set(customRoles.flatMap((role) => role.capabilities))],
     applicantAccessDelegate: user.applicantAccessDelegate ?? false,
     applicantAccess: user.applicantAccess ?? false,
     roleLabel: user.roleLabel ?? null,
@@ -347,25 +357,26 @@ export const setRole = mutation({
   },
 });
 
-/** Assign or clear a member's custom role. Manager+. */
-export const assignCustomRole = mutation({
+/** Replace a member's full set of custom roles. Manager+. Same full-array-
+ * replace convention as `setTeams` below. */
+export const setCustomRoles = mutation({
   args: {
     userId: v.id("users"),
-    customRoleId: v.optional(v.id("customRoles")),
+    customRoleIds: v.array(v.id("customRoles")),
   },
-  handler: async (ctx, { userId, customRoleId }) => {
+  handler: async (ctx, { userId, customRoleIds }) => {
     await requireManager(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
-    if (customRoleId) {
-      const role = await ctx.db.get(customRoleId);
-      if (!role) {
-        throw new ConvexError({ code: "not_found", message: "Role not found" });
-      }
+    const roles = await Promise.all(customRoleIds.map((id) => ctx.db.get(id)));
+    if (roles.some((role) => !role)) {
+      throw new ConvexError({ code: "not_found", message: "Role not found" });
     }
-    await ctx.db.patch(userId, { customRoleId });
+    // Clears the legacy singular field too — an explicit assignment is as
+    // good a migration point as any for that holder.
+    await ctx.db.patch(userId, { customRoleIds, customRoleId: undefined });
     return { ok: true };
   },
 });
@@ -675,8 +686,10 @@ export const setApplicantAccess = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     if (access) {
-      const customRole = target.customRoleId ? await ctx.db.get(target.customRoleId) : null;
-      if (!isApplicantEligible(target, customRole)) {
+      const customRoles = await Promise.all(
+        effectiveCustomRoleIds(target).map((id) => ctx.db.get(id)),
+      );
+      if (!isApplicantEligible(target, customRoles)) {
         throw new ConvexError({
           code: "forbidden",
           message:
@@ -725,7 +738,7 @@ export const eligibleForApplicantAccess = query({
       .filter((u) =>
         isApplicantEligible(
           u,
-          u.customRoleId ? (customRoleById.get(u.customRoleId) ?? null) : null,
+          effectiveCustomRoleIds(u).map((id) => customRoleById.get(id) ?? null),
         ),
       )
       .map((u) => ({

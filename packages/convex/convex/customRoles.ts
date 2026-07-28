@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { capabilityValidator } from "./schema";
 import { mutation, query } from "./_generated/server";
-import { requireManager } from "./lib/auth";
+import { effectiveCustomRoleIds, requireManager } from "./lib/auth";
 
 /**
  * Manager-defined roles (e.g. "Team Lead") that grant a scoped set of
@@ -72,12 +72,16 @@ export const remove = mutation({
       throw new ConvexError({ code: "not_found", message: "Role not found" });
     }
     // Unassign from anyone currently holding it before deleting the role
-    // itself, so `users.customRoleId` never dangles. No index on this field —
-    // a full scan is fine for an infrequent admin action.
+    // itself, so `users.customRoleIds` never dangles. No index on this
+    // field — a full scan is fine for an infrequent admin action.
     const allUsers = await ctx.db.query("users").collect();
     for (const holder of allUsers) {
-      if (holder.customRoleId === customRoleId) {
-        await ctx.db.patch(holder._id, { customRoleId: undefined });
+      const ids = effectiveCustomRoleIds(holder);
+      if (ids.includes(customRoleId)) {
+        await ctx.db.patch(holder._id, {
+          customRoleIds: ids.filter((id) => id !== customRoleId),
+          customRoleId: undefined,
+        });
       }
     }
     await ctx.db.delete(customRoleId);

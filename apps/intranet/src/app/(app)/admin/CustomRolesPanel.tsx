@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { CAPABILITY_ICONS } from "@/lib/permission-icons";
 import { cn } from "@/lib/utils";
 
 const CAPABILITIES = [
@@ -80,6 +81,7 @@ function RoleForm({
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {CAPABILITIES.map((cap) => {
               const checked = capabilities.includes(cap);
+              const Icon = CAPABILITY_ICONS[cap];
               return (
                 <button
                   key={cap}
@@ -103,6 +105,7 @@ function RoleForm({
                   >
                     {checked && <Check className="size-3" />}
                   </div>
+                  <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium leading-snug">{t(`capability_${cap}`)}</p>
                     <Tooltip>
@@ -150,12 +153,15 @@ export function CustomRolesPanel() {
   const [editing, setEditing] = useState<CustomRoleFormState | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<Id<"users"> | null>(null);
 
+  // A member can hold more than one custom role now, so they can appear in
+  // more than one group's avatar stack below.
   const membersByRole = new Map<string, NonNullable<typeof members>>();
   for (const m of members ?? []) {
-    if (!m.customRoleId) continue;
-    const list = membersByRole.get(m.customRoleId) ?? [];
-    list.push(m);
-    membersByRole.set(m.customRoleId, list);
+    for (const roleId of m.customRoleIds ?? []) {
+      const list = membersByRole.get(roleId) ?? [];
+      list.push(m);
+      membersByRole.set(roleId, list);
+    }
   }
 
   async function handleDelete(role: { _id: Id<"customRoles">; name: string }) {
@@ -228,11 +234,15 @@ export function CustomRolesPanel() {
                   {role.capabilities.length === 0 ? (
                     <span className="text-xs text-muted-foreground">{t("noCapabilities")}</span>
                   ) : (
-                    role.capabilities.map((cap) => (
-                      <Badge key={cap} variant="muted" className="text-[10px]">
-                        {t(`capability_${cap}`)}
-                      </Badge>
-                    ))
+                    role.capabilities.map((cap) => {
+                      const Icon = CAPABILITY_ICONS[cap];
+                      return (
+                        <Badge key={cap} variant="muted" className="gap-1 text-[10px]">
+                          <Icon className="size-3" />
+                          {t(`capability_${cap}`)}
+                        </Badge>
+                      );
+                    })
                   )}
                 </div>
                 <AvatarStack

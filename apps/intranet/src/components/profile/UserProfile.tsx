@@ -444,29 +444,30 @@ function AdminControls({
     setStepUpOpen(true);
   }
 
-  const hasCustomRole = Boolean(user.customRoleName);
+  const hasCustomRoles = user.customRoles.length > 0;
   const hasNamedPermissions =
     user.gfAccess || user.applicantAccessDelegate || !user.uploadRequestsEnabled;
 
   return (
     <Section label={t("title")}>
-      {(hasCustomRole || hasNamedPermissions) && (
+      {(hasCustomRoles || hasNamedPermissions) && (
         <div className="mb-3 flex flex-wrap items-center gap-1.5">
           <span className="text-sm text-muted-foreground">{t("permissions")}</span>
-          {hasCustomRole && (
-            <Tooltip>
+          {user.customRoles.map((role) => (
+            <Tooltip key={role._id}>
               <TooltipTrigger asChild>
-                <Badge variant="muted" className="cursor-help">
-                  {user.customRoleName}
+                <Badge variant="muted" className="cursor-help gap-1">
+                  <ShieldCheck className="size-3" />
+                  {role.name}
                 </Badge>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                {user.capabilities.length > 0
-                  ? user.capabilities.map((cap) => tCustomRoles(`capability_${cap}`)).join(", ")
+                {role.capabilities.length > 0
+                  ? role.capabilities.map((cap) => tCustomRoles(`capability_${cap}`)).join(", ")
                   : tCustomRoles("noCapabilities")}
               </TooltipContent>
             </Tooltip>
-          )}
+          ))}
           {user.gfAccess && (
             <Tooltip>
               <TooltipTrigger asChild>

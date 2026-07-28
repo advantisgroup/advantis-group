@@ -29,7 +29,8 @@ export interface CurrentUser {
   updatesEmailConsent: boolean;
   gfAccess: boolean;
   uploadRequestsEnabled: boolean;
-  customRoleId: string | null;
+  customRoleIds: string[];
+  customRoles: { _id: string; name: string; capabilities: Capability[] }[];
   capabilities: Capability[];
   applicantAccessDelegate: boolean;
   applicantAccess: boolean;

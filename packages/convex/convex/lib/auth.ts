@@ -1,10 +1,23 @@
 import { ConvexError } from "convex/values";
 
-import { type Doc } from "../_generated/dataModel";
+import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 
 export type Role = Doc<"users">["role"];
 export type Capability = Doc<"customRoles">["capabilities"][number];
+
+/**
+ * A user's effective custom-role ids: the new `customRoleIds` array, falling
+ * back to the legacy singular `customRoleId` for rows `migrations/
+ * backfillCustomRoleIds.ts` hasn't reached yet. Every reader of custom roles
+ * goes through this so the fallback lives in exactly one place.
+ */
+export function effectiveCustomRoleIds(
+  user: Pick<Doc<"users">, "customRoleIds" | "customRoleId">,
+): Id<"customRoles">[] {
+  if (user.customRoleIds && user.customRoleIds.length > 0) return user.customRoleIds;
+  return user.customRoleId ? [user.customRoleId] : [];
+}
 
 // --- Env helpers -------------------------------------------------------------
 
@@ -142,9 +155,9 @@ export function canGrantRole(actor: Doc<"users">, role: Role): boolean {
 
 /**
  * Require the current user to hold `capability` — satisfied automatically by
- * the manager/admin tiers, or by an employee whose assigned `customRoleId`
- * grants it. Capabilities are additive: they never take away what the base
- * role tier already allows.
+ * the manager/admin tiers, or by any one of the employee's assigned custom
+ * roles granting it. Capabilities are additive: they never take away what
+ * the base role tier already allows.
  */
 export async function requireCapability(
   ctx: QueryCtx | MutationCtx,
@@ -153,8 +166,9 @@ export async function requireCapability(
   const user = await requireUser(ctx);
   if (MANAGER_ROLES.includes(user.role)) return user;
 
-  const customRole = user.customRoleId ? await ctx.db.get(user.customRoleId) : null;
-  if (!customRole?.capabilities.includes(capability)) {
+  const customRoles = await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
+  const granted = customRoles.some((role) => role?.capabilities.includes(capability));
+  if (!granted) {
     throw new ConvexError({
       code: "forbidden",
       message: "You do not have permission to do that",
@@ -165,18 +179,18 @@ export async function requireCapability(
 
 /**
  * True when `user` qualifies to be granted Applicant Management access: at
- * least Manager (admins qualify too), or an employee whose custom role
- * carries `manage_members`. This is a data-sensitivity gate on the *target*
- * of a grant, independent of who's doing the granting — it applies even when
- * an admin is the one granting.
+ * least Manager (admins qualify too), or an employee holding any custom role
+ * that carries `manage_members`. This is a data-sensitivity gate on the
+ * *target* of a grant, independent of who's doing the granting — it applies
+ * even when an admin is the one granting.
  */
 export function isApplicantEligible(
   user: Doc<"users">,
-  customRole: Doc<"customRoles"> | null,
+  customRoles: (Doc<"customRoles"> | null)[],
 ): boolean {
   return (
     MANAGER_ROLES.includes(user.role) ||
-    (customRole?.capabilities.includes("manage_members") ?? false)
+    customRoles.some((role) => role?.capabilities.includes("manage_members") ?? false)
   );
 }
 

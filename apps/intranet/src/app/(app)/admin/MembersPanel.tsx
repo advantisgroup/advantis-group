@@ -6,7 +6,7 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { type Role } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
-import { Copy, MoreHorizontal, Search, Users2 } from "lucide-react";
+import { Check, Copy, MoreHorizontal, Search, Users2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -32,10 +33,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
+import { CAPABILITY_ICONS } from "@/lib/permission-icons";
 import { TEAMS } from "@/lib/teams";
+import { cn } from "@/lib/utils";
 
 function TourProgressChip({ userId }: { userId: Id<"users"> }) {
   const progress = useQuery(api.tourProgress.getMemberProgress, { userId });
@@ -79,22 +81,10 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
   const tCap = useTranslations("CustomRoles");
   const members = useQuery(api.users.list, { includeSuspended: true });
   const customRoles = useQuery(api.customRoles.list);
-  const assignCustomRole = useMutation(api.users.assignCustomRole);
+  const setCustomRoles = useMutation(api.users.setCustomRoles);
   const handleError = useErrorHandler();
 
   type Member = NonNullable<typeof members>[number];
-
-  /** Short "what does this grant" summary for a custom role, for tooltips. */
-  function capabilitiesSummary(role: NonNullable<typeof customRoles>[number]): string {
-    if (role.capabilities.length === 0) return tCap("noCapabilities");
-    return role.capabilities.map((c) => tCap(`capability_${c}`)).join(", ");
-  }
-
-  /** Same summary, looked up by the id stored on a member — for tooltips. */
-  function memberCustomRoleSummary(m: { customRoleId?: Id<"customRoles"> | null }): string {
-    const assigned = m.customRoleId ? customRoles?.find((r) => r._id === m.customRoleId) : null;
-    return assigned ? capabilitiesSummary(assigned) : t("customRoleNone");
-  }
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | Role>("all");
@@ -120,11 +110,15 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
     toast.success(t("emailCopied"));
   }
 
-  function onCustomRoleChange(m: Member, customRoleId: string) {
-    assignCustomRole({
-      userId: m._id as Id<"users">,
-      customRoleId: customRoleId === "none" ? undefined : (customRoleId as Id<"customRoles">),
-    }).catch(handleError);
+  /** Toggles a single custom role in/out of a member's set — someone can
+   * hold more than one at once, so this is additive rather than replacing
+   * the whole selection. */
+  function toggleCustomRole(m: Member, customRoleId: Id<"customRoles">) {
+    const current = m.customRoleIds ?? [];
+    const next = current.includes(customRoleId)
+      ? current.filter((id) => id !== customRoleId)
+      : [...current, customRoleId];
+    setCustomRoles({ userId: m._id as Id<"users">, customRoleIds: next }).catch(handleError);
   }
 
   // Quick actions only — everything that manages the account (roles,
@@ -148,6 +142,124 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+    );
+  }
+
+  /**
+   * One consolidated "what extra access does this person have" control,
+   * replacing what used to be three separate elements in the row (a GF
+   * badge, a BM badge, and a bare custom-role `<Select>`) with a single
+   * trigger. The custom-role list is a checkbox grid — someone can hold more
+   * than one — with an icon per capability so the grant reads at a glance,
+   * matching CustomRolesPanel's own editor instead of a native dropdown.
+   */
+  function MemberAccessControl({ m }: { m: Member }) {
+    const hasCustomRoles = (customRoles?.length ?? 0) > 0;
+    if (!hasCustomRoles && !m.gfAccess && !m.applicantAccessDelegate) return null;
+
+    const assignedRoles = (m.customRoleIds ?? [])
+      .map((id) => customRoles?.find((r) => r._id === id))
+      .filter((r): r is NonNullable<typeof r> => !!r);
+    const extras = [m.gfAccess && "GF", m.applicantAccessDelegate && "BM"].filter(
+      (v): v is string => !!v,
+    );
+    const roleLabel =
+      assignedRoles.length > 0 ? assignedRoles.map((r) => r.name).join(", ") : t("customRoleNone");
+    const label = extras.length > 0 ? `${roleLabel} · ${extras.join(" · ")}` : roleLabel;
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={t("customRole")}
+            className="hidden h-7 max-w-40 truncate px-2 text-xs sm:inline-flex"
+          >
+            {label}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 space-y-3" align="end">
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {t("customRole")}
+            </p>
+            {hasCustomRoles ? (
+              <div className="space-y-1">
+                {customRoles?.map((role) => {
+                  const checked = (m.customRoleIds ?? []).includes(role._id);
+                  return (
+                    <button
+                      key={role._id}
+                      type="button"
+                      aria-pressed={checked}
+                      onClick={() => toggleCustomRole(m, role._id)}
+                      className={cn(
+                        "flex w-full items-start gap-2 rounded-md border px-2.5 py-1.5 text-left text-sm transition-colors",
+                        checked
+                          ? "border-primary bg-primary/5"
+                          : "border-border/70 hover:border-border",
+                      )}
+                    >
+                      <div
+                        className={cn(
+                          "mt-0.5 flex size-3.5 shrink-0 items-center justify-center rounded-sm border",
+                          checked
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted-foreground/40",
+                        )}
+                      >
+                        {checked && <Check className="size-3" />}
+                      </div>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">{role.name}</span>
+                        <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                          {role.capabilities.length === 0 ? (
+                            <span className="text-xs text-muted-foreground">
+                              {tCap("noCapabilities")}
+                            </span>
+                          ) : (
+                            role.capabilities.map((cap) => {
+                              const Icon = CAPABILITY_ICONS[cap];
+                              return (
+                                <span
+                                  key={cap}
+                                  className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"
+                                >
+                                  <Icon className="size-3" />
+                                  {tCap(`capability_${cap}`)}
+                                </span>
+                              );
+                            })
+                          )}
+                        </span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">{tCap("empty")}</p>
+            )}
+          </div>
+          {(m.gfAccess || m.applicantAccessDelegate) && (
+            <div className="space-y-1.5 border-t border-border/70 pt-2.5">
+              {m.gfAccess && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-fg">{t("gfBadge")}</span> —{" "}
+                  {t("gfAccessTooltip")}
+                </p>
+              )}
+              {m.applicantAccessDelegate && (
+                <p className="text-xs text-muted-foreground">
+                  <span className="font-medium text-fg">{t("applicantDelegateBadge")}</span> —{" "}
+                  {t("applicantDelegateBadgeTitle")}
+                </p>
+              )}
+            </div>
+          )}
+        </PopoverContent>
+      </Popover>
     );
   }
 
@@ -182,64 +294,13 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
             </div>
           </button>
           <div className="flex shrink-0 items-center gap-2">
-            {m.gfAccess && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="muted" className="hidden cursor-help text-[10px] sm:inline-flex">
-                    GF
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  {t("gfAccessTooltip")}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {m.applicantAccessDelegate && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Badge variant="muted" className="hidden cursor-help text-[10px] sm:inline-flex">
-                    BM
-                  </Badge>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  {t("applicantDelegateBadgeTitle")}
-                </TooltipContent>
-              </Tooltip>
-            )}
             <PersonIdentityBadges
               role={m.role}
               department={m.department}
               teams={m.teams}
               className="hidden flex-wrap items-center gap-1 sm:flex"
             />
-            {customRoles && customRoles.length > 0 && (
-              <Select
-                value={m.customRoleId ?? "none"}
-                onValueChange={(v) => onCustomRoleChange(m, v)}
-              >
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SelectTrigger
-                      className="hidden h-7 w-auto min-w-28 text-xs sm:inline-flex"
-                      aria-label={t("customRole")}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent side="top" className="max-w-xs">
-                    {memberCustomRoleSummary(m)}
-                  </TooltipContent>
-                </Tooltip>
-                <SelectContent>
-                  <SelectItem value="none">{t("customRoleNone")}</SelectItem>
-                  {customRoles.map((role) => (
-                    <SelectItem key={role._id} value={role._id} title={capabilitiesSummary(role)}>
-                      {role.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+            <MemberAccessControl m={m} />
             <TourProgressChip userId={m._id as Id<"users">} />
             <MemberMenu m={m} />
           </div>

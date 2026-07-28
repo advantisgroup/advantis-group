@@ -188,10 +188,17 @@ export default defineSchema({
      */
     oneDrivePermissionId: v.optional(v.string()),
     /**
-     * Optional manager-defined role (e.g. "Team Lead") granting extra
-     * capabilities on top of `role` — see `customRoles`. Additive, not a
-     * replacement for the admin/manager/employee tier.
+     * Manager-defined roles (e.g. "Team Lead", "Integrations Access") granting
+     * extra capabilities on top of `role` — see `customRoles`. Additive, not a
+     * replacement for the admin/manager/employee tier. A user can hold more
+     * than one at once; an empty/missing array means none. All reads go
+     * through `lib/auth.ts`'s `effectiveCustomRoleIds`, which falls back to
+     * the legacy `customRoleId` below for rows `migrations/
+     * backfillCustomRoleIds.ts` hasn't reached yet.
      */
+    customRoleIds: v.optional(v.array(v.id("customRoles"))),
+    /** @deprecated superseded by `customRoleIds` (plural). Kept only so
+     * not-yet-migrated rows keep validating; new writes never set this. */
     customRoleId: v.optional(v.id("customRoles")),
     /**
      * Applicant Management: admin-only allowlist flag letting this user grant
