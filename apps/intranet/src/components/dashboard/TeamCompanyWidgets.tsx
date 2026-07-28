@@ -8,6 +8,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { htmlToText } from "@/components/ui/rich-text";
 import { isoToday } from "@/lib/absences";
+import { useAbsencesCalendar } from "@/lib/absences-api";
 import { formatDateTime, formatIsoDate, initials, relativeTime } from "@/lib/format";
 
 import { DashCard, Empty, Row, RowSkeletons } from "./primitives";
@@ -102,10 +103,7 @@ export function WhosOutCard() {
   const tAbs = useTranslations("Absences");
   const locale = useLocale();
   const today = isoToday();
-  const outToday = useQuery(api.absences.listForCalendar, {
-    start: today,
-    end: today,
-  });
+  const outToday = useAbsencesCalendar(today, today);
 
   return (
     <DashCard icon={<Plane />} title={t("whosOutToday")} count={outToday?.length || undefined}>
@@ -118,8 +116,8 @@ export function WhosOutCard() {
       ) : (
         outToday.slice(0, 5).map((a) => (
           <Row
-            key={a._id}
-            href={`/calendar?absence=${a._id}`}
+            key={a.id}
+            href={`/calendar?absence=${a.id}`}
             title={a.userName}
             subtitle={tAbs(a.type)}
             leading={

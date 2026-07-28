@@ -2,21 +2,11 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import { api } from "@advantis/convex/api";
-import { type AbsenceType } from "@advantis/types";
-import { useQuery } from "convex/react";
-import {
-  CalendarArrowDown,
-  CircleDashed,
-  Clock,
-  Plane,
-  Thermometer,
-  UserRound,
-} from "lucide-react";
+import { CalendarArrowDown, CircleDashed, Clock, Plane, Thermometer, UserRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { ProviderBadge, ProviderInline } from "@/components/branding/ProviderMark";
+import { ProviderBadge } from "@/components/branding/ProviderMark";
 import { PageHeader } from "@/components/PageHeader";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
@@ -32,14 +22,18 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { addDaysIso, isoToday, workingDays } from "@/lib/absences";
-import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
+import {
+  type AbsenceType,
+  useAbsencesCalendar,
+  useMyAbsences,
+  type MyAbsence,
+} from "@/lib/absences-api";
+import { formatIsoDate } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { cn } from "@/lib/utils";
 
-import type { FunctionReturnType } from "convex/server";
-
 type Status = "pending" | "approved" | "denied" | "cancelled";
-type AbsenceRow = FunctionReturnType<typeof api.absences.myAbsences>[number];
+type AbsenceRow = MyAbsence;
 
 const TYPE_ICONS: Record<AbsenceType, typeof Plane> = {
   vacation: Plane,
@@ -171,15 +165,14 @@ function DetailDialog({
   const t = useTranslations("Absences");
   const locale = useLocale();
   if (!absence) return null;
-  const clockodoTypeKey =
-    absence.clockodoType !== undefined ? CLOCKODO_TYPE_KEYS[absence.clockodoType] : undefined;
+  const clockodoTypeKey = CLOCKODO_TYPE_KEYS[absence.clockodoType];
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {t(absence.type)}
-            {absence.source === "clockodo" && <ClockodoBadge />}
+            <ClockodoBadge />
           </DialogTitle>
           <DialogDescription>
             {formatIsoDate(absence.startDate, locale)} – {formatIsoDate(absence.endDate, locale)}
@@ -206,33 +199,6 @@ function DetailDialog({
               <p>{absence.reason}</p>
             </div>
           )}
-          <div className="space-y-2 rounded-lg border border-border/70 bg-muted/30 p-3">
-            <p className="flex items-center justify-between gap-2">
-              <span>{t("requested")}</span>
-              <span className="text-xs text-muted-foreground">
-                {formatDateTime(absence.createdAt, locale)}
-              </span>
-            </p>
-            {absence.reviewedAt &&
-              absence.reviewerName &&
-              (absence.status === "approved" || absence.status === "denied") && (
-                <p className="flex items-center justify-between gap-2">
-                  <span>
-                    {t(absence.status === "approved" ? "approvedBy" : "deniedBy", {
-                      name: absence.reviewerName,
-                    })}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatDateTime(absence.reviewedAt, locale)}
-                  </span>
-                </p>
-              )}
-            {absence.decisionNote && (
-              <p className="text-xs text-muted-foreground">
-                {t("decisionNoteLabel")}: {absence.decisionNote}
-              </p>
-            )}
-          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -291,7 +257,7 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
               const Icon = TYPE_ICONS[a.type];
               return (
                 <Card
-                  key={a._id}
+                  key={a.id}
                   className="cursor-pointer transition-colors hover:border-border"
                   onClick={() => setDetail(a)}
                 >
@@ -303,7 +269,7 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-medium">{t(a.type)}</span>
-                          {a.source === "clockodo" && <ClockodoBadge />}
+                          <ClockodoBadge />
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {formatIsoDate(a.startDate, locale)} – {formatIsoDate(a.endDate, locale)}{" "}
@@ -337,10 +303,7 @@ function WhosOut() {
   const t = useTranslations("Absences");
   const locale = useLocale();
   const today = isoToday();
-  const out = useQuery(api.absences.listForCalendar, {
-    start: today,
-    end: addDaysIso(today, 14),
-  });
+  const out = useAbsencesCalendar(today, addDaysIso(today, 14));
 
   return (
     <div className="rounded-xl border border-border/70 bg-muted/30 p-4">
@@ -352,7 +315,7 @@ function WhosOut() {
       ) : (
         <div className="flex flex-wrap gap-1.5">
           {out?.map((a) => (
-            <Badge key={a._id} variant="muted" className="gap-1.5 font-normal">
+            <Badge key={a.id} variant="muted" className="gap-1.5 font-normal">
               <span className="font-medium">{a.userName}</span>
               {formatIsoDate(a.startDate, locale)} – {formatIsoDate(a.endDate, locale)}
             </Badge>
@@ -366,33 +329,23 @@ function WhosOut() {
 export default function AbsencesPage() {
   const t = useTranslations("Absences");
   const isManager = useIsManager();
-  const mine = useQuery(api.absences.myAbsences);
-  const syncStatus = useQuery(api.absences.clockodoSyncStatus);
+  const { absences: mine } = useMyAbsences();
 
   function exportIcs() {
     const approved = (mine ?? []).filter((a) => a.status === "approved");
     const ics = buildIcs(
       t("title"),
       approved.map((a) => ({
-        uid: a._id,
+        uid: a.id,
         title: `${t(a.type)}${a.halfDay ? ` (${t("halfDayShort")})` : ""}`,
         startDate: a.startDate,
         endDate: a.endDate,
-        description: a.reason,
+        description: a.reason ?? undefined,
       })),
     );
     downloadIcs("absences.ics", ics);
     toast.success(t("exported"));
   }
-
-  const syncLine = syncStatus?.lastRunAt ? (
-    <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-      <ProviderInline provider="clockodo" />
-      {relativeTime(syncStatus.lastRunAt) === "now"
-        ? t("syncedJustNow")
-        : t("lastSynced", { time: relativeTime(syncStatus.lastRunAt) })}
-    </p>
-  ) : null;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -423,7 +376,6 @@ export default function AbsencesPage() {
         {isManager && <WhosOut />}
         <StatsRow mine={mine} />
         <MyAbsences mine={mine} />
-        {syncLine}
       </div>
     </div>
   );

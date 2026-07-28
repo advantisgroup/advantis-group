@@ -53,6 +53,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { addDaysIso, isoToday } from "@/lib/absences";
+import { useAbsencesCalendar } from "@/lib/absences-api";
 import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials, roleLabel } from "@/lib/format";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
@@ -302,7 +304,14 @@ function UpcomingAbsences({ userId }: { userId: Id<"users"> }) {
   const t = useTranslations("Profile");
   const tAbs = useTranslations("Absences");
   const locale = useLocale();
-  const absences = useQuery(api.absences.upcomingForUser, { userId });
+  const today = isoToday();
+  // No fixed end date for "upcoming" — a wide-enough window covers any
+  // realistically pre-planned absence without needing an open-ended query.
+  const calendar = useAbsencesCalendar(today, addDaysIso(today, 180));
+  const absences = calendar
+    ?.filter((a) => a.userId === userId && a.endDate >= today)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))
+    .slice(0, 5);
 
   if (!absences || absences.length === 0) return null;
 
@@ -316,7 +325,7 @@ function UpcomingAbsences({ userId }: { userId: Id<"users"> }) {
               : `${formatIsoDate(a.startDate, locale)} – ${formatIsoDate(a.endDate, locale)}`;
           return (
             <div
-              key={a._id}
+              key={a.id}
               className="flex items-center gap-2.5 rounded-lg border border-border/70 px-2.5 py-2 text-sm"
             >
               <CalendarClock className="size-4 shrink-0 text-muted-foreground" />

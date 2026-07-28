@@ -66,6 +66,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useAbsencesCalendar } from "@/lib/absences-api";
 import { formatIsoDate, formatTime } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { cn } from "@/lib/utils";
@@ -293,7 +294,7 @@ function EventDialog({
 type DetailState =
   | { kind: "day"; day: string }
   | { kind: "event"; id: Id<"events"> }
-  | { kind: "absence"; id: Id<"absences"> }
+  | { kind: "absence"; id: string }
   | null;
 
 type CalendarView = "month" | "week" | "list";
@@ -360,7 +361,7 @@ export default function CalendarPage() {
   }, [deepLinkEventId]);
   useEffect(() => {
     if (deepLinkAbsenceId) {
-      setDetail({ kind: "absence", id: deepLinkAbsenceId as Id<"absences"> });
+      setDetail({ kind: "absence", id: deepLinkAbsenceId });
     }
   }, [deepLinkAbsenceId]);
 
@@ -385,10 +386,7 @@ export default function CalendarPage() {
     start: rangeStart.getTime(),
     end: rangeEnd.getTime(),
   });
-  const absences = useQuery(api.absences.listForCalendar, {
-    start: isoDay(rangeStart),
-    end: isoDay(rangeEnd),
-  });
+  const absences = useAbsencesCalendar(isoDay(rangeStart), isoDay(rangeEnd));
 
   const goPrev = useCallback(() => {
     setCursor((c) => (view === "week" ? subWeeks(c, 1) : subMonths(c, 1)));
@@ -449,7 +447,7 @@ export default function CalendarPage() {
   const detailEvent =
     detail?.kind === "event" ? events?.find((e) => e._id === detail.id) : undefined;
   const detailAbsence =
-    detail?.kind === "absence" ? absences?.find((a) => a._id === detail.id) : undefined;
+    detail?.kind === "absence" ? absences?.find((a) => a.id === detail.id) : undefined;
   const detailDay = detail?.kind === "day" ? detail.day : null;
   const dayEntries = detailDay
     ? {
@@ -538,7 +536,7 @@ export default function CalendarPage() {
         location: e.location ?? undefined,
       })),
       ...(filteredAbsences ?? []).map((a) => ({
-        uid: a._id,
+        uid: a.id,
         title: `${a.userName} · ${tAbs(a.type)}`,
         startDate: a.startDate,
         endDate: a.endDate,
@@ -627,12 +625,12 @@ export default function CalendarPage() {
         tabIndex={0}
         onClick={(ev) => {
           ev.stopPropagation();
-          setDetail({ kind: "absence", id: a._id });
+          setDetail({ kind: "absence", id: a.id });
         }}
         onKeyDown={(ev) => {
           if (ev.key === "Enter") {
             ev.stopPropagation();
-            setDetail({ kind: "absence", id: a._id });
+            setDetail({ kind: "absence", id: a.id });
           }
         }}
         className={cn(
@@ -877,7 +875,7 @@ export default function CalendarPage() {
                       {t("outCount", { count: dayAbsences.length })}
                     </div>
                   ) : (
-                    dayAbsences.slice(0, absenceSlots).map((a) => <AbsenceChip key={a._id} a={a} />)
+                    dayAbsences.slice(0, absenceSlots).map((a) => <AbsenceChip key={a.id} a={a} />)
                   )}
                   {eventOverflow > 0 && (
                     <div className="px-1 text-[10px] font-medium text-muted-foreground">
@@ -934,7 +932,7 @@ export default function CalendarPage() {
                         <EventChip key={e._id} e={e} day={day} />
                       ))}
                       {dayAbsences.map((a) => (
-                        <AbsenceChip key={a._id} a={a} />
+                        <AbsenceChip key={a.id} a={a} />
                       ))}
                     </>
                   )}
@@ -991,8 +989,8 @@ export default function CalendarPage() {
                   ))}
                   {dayAbsences.map((a) => (
                     <button
-                      key={a._id}
-                      onClick={() => setDetail({ kind: "absence", id: a._id })}
+                      key={a.id}
+                      onClick={() => setDetail({ kind: "absence", id: a.id })}
                       className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
                     >
                       <span
@@ -1067,8 +1065,8 @@ export default function CalendarPage() {
                         </p>
                         {dayEntries.absences.map((a) => (
                           <button
-                            key={a._id}
-                            onClick={() => setDetail({ kind: "absence", id: a._id })}
+                            key={a.id}
+                            onClick={() => setDetail({ kind: "absence", id: a.id })}
                             className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left transition-colors hover:bg-accent"
                           >
                             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">

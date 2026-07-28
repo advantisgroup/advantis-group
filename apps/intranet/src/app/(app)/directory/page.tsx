@@ -28,6 +28,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
+import { isoToday } from "@/lib/absences";
+import { useAbsencesCalendar } from "@/lib/absences-api";
 import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials, roleLabel } from "@/lib/format";
 import { TEAMS, teamColor } from "@/lib/teams";
@@ -73,6 +75,20 @@ export default function DirectoryPage() {
     department: department === "all" ? undefined : department,
   });
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
+
+  // "Out today" is Clockodo-derived and fetched live (see AGENTS.md's
+  // Clockodo section) — Convex has no HTTP access, so directoryList itself
+  // can no longer join this in; the page joins it client-side instead.
+  const today = isoToday();
+  const outToday = useAbsencesCalendar(today, today);
+  const outUntilByUser = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const a of outToday ?? []) {
+      const prev = map.get(a.userId);
+      if (!prev || a.endDate > prev) map.set(a.userId, a.endDate);
+    }
+    return map;
+  }, [outToday]);
 
   async function message(userId: Id<"users">) {
     const { conversationId } = await getOrCreateDm({ otherUserId: userId });
@@ -159,11 +175,11 @@ export default function DirectoryPage() {
                 teams={p.teams}
                 className="mt-1 flex flex-wrap items-center gap-1"
               />
-              {p.outUntil && (
+              {outUntilByUser.get(p._id) && (
                 <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-sky-600 dark:text-sky-400">
                   <Plane className="size-3 shrink-0" />
                   {t("outUntil", {
-                    date: formatIsoDate(p.outUntil, locale),
+                    date: formatIsoDate(outUntilByUser.get(p._id)!, locale),
                   })}
                 </p>
               )}
