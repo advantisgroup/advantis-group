@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function RoleSelect({
   value,
@@ -25,9 +26,16 @@ export function RoleSelect({
   const t = useTranslations("Roles");
   return (
     <Select value={value} onValueChange={(v) => onChange(v as Role)} disabled={disabled}>
-      <SelectTrigger className="h-8 w-36">
-        <SelectValue />
-      </SelectTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <SelectTrigger className="h-8 w-36">
+            <SelectValue />
+          </SelectTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-xs">
+          {t(`${value}_desc`)}
+        </TooltipContent>
+      </Tooltip>
       <SelectContent>
         <SelectItem value="employee">{t("employee")}</SelectItem>
         {canElevate && <SelectItem value="manager">{t("manager")}</SelectItem>}
