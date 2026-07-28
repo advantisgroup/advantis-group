@@ -13,7 +13,7 @@ import { GuidebookEditor, type GuidebookFormData } from "@/components/guidebooks
 import { type GuidebookTopic } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser } from "@/components/providers/current-user";
+import { isOwnerOrAdmin, useCurrentUser } from "@/components/providers/current-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { imageStorageIdsOf, parseBlocks, serializeBlocks } from "@/lib/guidebook-blocks";
 
@@ -26,7 +26,7 @@ export default function EditGuidebookPage() {
   const page = useQuery(api.guidebookPages.get, { slug: params.slug });
   const updatePage = useMutation(api.guidebookPages.update);
 
-  const canEdit = !!page && (page.authorUserId === user._id || user.role === "admin");
+  const canEdit = !!page && isOwnerOrAdmin(user, page.authorUserId);
 
   async function handleSave(data: GuidebookFormData) {
     if (!page) return;

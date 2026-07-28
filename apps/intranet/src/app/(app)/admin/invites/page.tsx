@@ -6,12 +6,12 @@ import { useTranslations } from "next-intl";
 import { InvitesPanel } from "@/app/(app)/admin/InvitesPanel";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 
 export default function AdminInvitesPage() {
   const t = useTranslations("Admin");
   const isManager = useIsManager();
-  const isAdmin = useCurrentUser().role === "admin";
+  const isAdmin = useIsAdmin();
 
   if (!isManager) {
     return <ForbiddenScreen />;

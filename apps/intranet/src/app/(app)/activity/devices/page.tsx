@@ -22,6 +22,7 @@ import { ConfirmDialog } from "@/components/activity/ConfirmDialog";
 import { InfoTip } from "@/components/activity/InfoTip";
 import { StatCard } from "@/components/activity/StatCard";
 import { PageHeader } from "@/components/PageHeader";
+import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -103,7 +104,8 @@ function SortHeader({
 
 export default function DevicesPage() {
   const { t, lang } = useI18n();
-  const me = useQuery(api.users.me);
+  const isAdmin = useIsAdmin();
+  const isManager = useIsManager();
   const devices = useQuery(api.activity.devices.list);
   const people = useQuery(api.activity.people.list);
 
@@ -131,12 +133,6 @@ export default function DevicesPage() {
       setBusyId(null);
     }
   }
-
-  // Intranet role model: admin ⊃ manager ⊃ employee. Admin == ActivityTrack's
-  // IT-admin (destructive ops); manager+ may approve/link devices.
-  const role = me?.role;
-  const isAdmin = role === "admin";
-  const isManager = role === "admin" || role === "manager";
 
   const statusLabel: Record<string, string> = {
     pending: t("status.pending"),

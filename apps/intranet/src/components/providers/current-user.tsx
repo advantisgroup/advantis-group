@@ -71,6 +71,16 @@ export function useIsAdmin(): boolean {
   return useCurrentUser().role === "admin";
 }
 
+/** True when `user` is either `ownerId` themselves or an admin — the
+ * "author/creator or admin" rule for editing/managing something someone
+ * else made. Mirrors the server-side `isOwnerOrAdmin` in
+ * `packages/convex/convex/lib/auth.ts`. A pure function (not a hook) since
+ * callers already have `useCurrentUser()`'s value and just need the
+ * comparison against a specific owner id. */
+export function isOwnerOrAdmin(user: CurrentUser, ownerId: string): boolean {
+  return ownerId === user._id || user.role === "admin";
+}
+
 /**
  * True when the current user has `capability` — either directly (manager+
  * already implies every capability) or via their assigned custom role.

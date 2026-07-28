@@ -13,6 +13,7 @@ import { BrandedText } from "@/components/branding/ProviderMark";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
+import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -59,7 +60,7 @@ function Field({ label, children }: { label: ReactNode; children: ReactNode }) {
 
 export default function PeoplePage() {
   const { t } = useI18n();
-  const me = useQuery(api.users.me);
+  const canEdit = useIsManager();
   const people = useQuery(api.activity.people.list);
   const intranetUsers = useQuery(api.users.list, {});
   const create = useMutationWithToast(api.activity.people.create);
@@ -72,8 +73,6 @@ export default function PeoplePage() {
   const searchRef = useSlashFocus<HTMLInputElement>();
   const [deleteTarget, setDeleteTarget] = useState<GenericId<"people"> | null>(null);
   const [editTarget, setEditTarget] = useState<GenericId<"people"> | null>(null);
-
-  const canEdit = me?.role === "admin" || me?.role === "manager";
 
   // Client-side roster filter — name / email / any integration id. Cheap, and
   // keeps the table usable as the headcount grows past the first handful.

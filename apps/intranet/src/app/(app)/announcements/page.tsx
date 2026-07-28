@@ -35,7 +35,7 @@ import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -261,7 +261,9 @@ function EditorDialog({
     const q = peopleSearch.trim().toLowerCase();
     const mine = (people ?? []).filter((p) => p._id !== me._id);
     if (!q) return mine;
-    return mine.filter((p) => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q));
+    return mine.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q),
+    );
   }, [people, peopleSearch, me._id]);
 
   function toggleAudienceUser(userId: string) {
@@ -510,7 +512,11 @@ function EditorDialog({
                     else if (v === USERS_AUDIENCE_VALUE)
                       setDraft((d) => ({ ...d, audienceKind: "users" }));
                     else
-                      setDraft((d) => ({ ...d, audienceKind: "department", audienceDepartment: v }));
+                      setDraft((d) => ({
+                        ...d,
+                        audienceKind: "department",
+                        audienceDepartment: v,
+                      }));
                   }}
                 >
                   <SelectTrigger>
@@ -916,7 +922,7 @@ function AnnouncementCard({
   const me = useCurrentUser();
   const markRead = useMutation(api.announcements.markRead);
   const toggleReaction = useMutation(api.announcements.toggleReaction);
-  const canManage = a.authorId === me._id || me.role === "admin";
+  const canManage = isOwnerOrAdmin(me, a.authorId);
   const articleRef = useRef<HTMLElement>(null);
 
   // Deep link from a notification: scroll the matching card into view and

@@ -28,7 +28,7 @@ import {
 import { GuidebookPager, GuidebookSwitcher } from "@/components/guidebooks/switcher";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
@@ -74,8 +74,7 @@ export default function GuidebookPage() {
   const guidebook = staticGuidebook ?? custom;
   const allowed = guidebook ? canAccessGuidebook(user, guidebook) : false;
   const Component = staticGuidebook?.Component;
-  const canManagePage =
-    !!customPage && (customPage.authorUserId === user._id || user.role === "admin");
+  const canManagePage = !!customPage && isOwnerOrAdmin(user, customPage.authorUserId);
 
   // Remember the last opened guidebook for the list page's "continue" banner.
   useEffect(() => {

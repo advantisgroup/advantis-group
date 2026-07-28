@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser } from "@/components/providers/current-user";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +45,7 @@ function statusVariant(status: string): BadgeVariant {
 
 export default function ActivityMigrationPage() {
   const t = useTranslations("Activity");
-  const isAdmin = useCurrentUser().role === "admin";
+  const isAdmin = useIsAdmin();
   const handleError = useErrorHandler();
 
   const data = useQuery(api.activity.migration.latest, {});
