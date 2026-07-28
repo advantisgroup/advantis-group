@@ -56,16 +56,19 @@ interface ClockodoPaging {
 }
 
 /** /v4/absences paginates — a company with more absences than one page would
- * otherwise silently lose records past page 1. */
+ * otherwise silently lose records past page 1. Clockodo doesn't always
+ * include `paging` in the response (e.g. it's been observed missing when
+ * there are no matching absences), so treat an absent/malformed `paging` as
+ * "no further pages" rather than crashing the whole request. */
 export async function listAbsences(year: number): Promise<ClockodoAbsence[]> {
   const results: ClockodoAbsence[] = [];
   let page = 1;
   for (;;) {
-    const res = await clockodoGet<{ data: ClockodoAbsence[]; paging: ClockodoPaging }>(
+    const res = await clockodoGet<{ data: ClockodoAbsence[]; paging?: ClockodoPaging }>(
       `/v4/absences?filter[year]=${year}&scope=viewableAbsences&page=${page}`,
     );
     results.push(...(res.data ?? []));
-    if (page >= res.paging.count_pages) break;
+    if (!res.paging || page >= res.paging.count_pages) break;
     page++;
   }
   return results;
