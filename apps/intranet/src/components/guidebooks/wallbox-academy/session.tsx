@@ -15,8 +15,14 @@ interface AcademySessionValue {
   hydrated: boolean;
   participant: ParticipantSession | null;
   isAdminSession: boolean;
+  /** The PIN that unlocked this admin session — sent back to the server on
+   * every Trainer-area mutation, which re-verifies it (or the real-admin
+   * bypass) itself rather than trusting this boolean alone. Empty for a real
+   * intranet admin's bypass login, since the server checks their role first
+   * and never reads this value in that case. */
+  academyPin: string;
   loginParticipant: (p: ParticipantSession) => void;
-  loginAdmin: () => void;
+  loginAdmin: (pin?: string) => void;
   logout: () => void;
 }
 
@@ -26,6 +32,7 @@ const AcademySessionContext = createContext<AcademySessionValue | null>(null);
 interface StoredSession {
   participant: ParticipantSession | null;
   isAdminSession: boolean;
+  academyPin: string;
 }
 
 /**
@@ -38,6 +45,7 @@ interface StoredSession {
 export function AcademySessionProvider({ children }: { children: ReactNode }) {
   const [participant, setParticipant] = useState<ParticipantSession | null>(null);
   const [isAdminSession, setIsAdminSession] = useState(false);
+  const [academyPin, setAcademyPin] = useState("");
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -50,6 +58,7 @@ export function AcademySessionProvider({ children }: { children: ReactNode }) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         if (parsed.participant) setParticipant(parsed.participant);
         if (parsed.isAdminSession) setIsAdminSession(true);
+        if (parsed.academyPin) setAcademyPin(parsed.academyPin);
       }
     } catch {
       // ignore malformed/inaccessible storage
@@ -64,18 +73,21 @@ export function AcademySessionProvider({ children }: { children: ReactNode }) {
   function loginParticipant(p: ParticipantSession) {
     setParticipant(p);
     setIsAdminSession(false);
-    persist({ participant: p, isAdminSession: false });
+    setAcademyPin("");
+    persist({ participant: p, isAdminSession: false, academyPin: "" });
   }
 
-  function loginAdmin() {
+  function loginAdmin(pin = "") {
     setIsAdminSession(true);
     setParticipant(null);
-    persist({ participant: null, isAdminSession: true });
+    setAcademyPin(pin);
+    persist({ participant: null, isAdminSession: true, academyPin: pin });
   }
 
   function logout() {
     setParticipant(null);
     setIsAdminSession(false);
+    setAcademyPin("");
     sessionStorage.removeItem(STORAGE_KEY);
   }
 
@@ -85,6 +97,7 @@ export function AcademySessionProvider({ children }: { children: ReactNode }) {
         hydrated,
         participant,
         isAdminSession,
+        academyPin,
         loginParticipant,
         loginAdmin,
         logout,

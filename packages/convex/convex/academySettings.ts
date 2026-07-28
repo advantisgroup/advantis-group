@@ -1,9 +1,18 @@
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { type Doc } from "./_generated/dataModel";
+import { type MutationCtx, type QueryCtx, mutation, query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 
 const DEFAULT_PIN = "1234";
+
+async function resolveCurrentPin(ctx: QueryCtx | MutationCtx, academyId: string): Promise<string> {
+  const row = await ctx.db
+    .query("academySettings")
+    .withIndex("by_academyId", (q) => q.eq("academyId", academyId))
+    .unique();
+  return row?.pin ?? DEFAULT_PIN;
+}
 
 /** Whether `pin` unlocks the academy's Trainer area — same client-side trust
  * model as the ported tool (knowing the PIN is the whole gate), except the
@@ -12,20 +21,40 @@ export const checkPin = query({
   args: { academyId: v.string(), pin: v.string() },
   handler: async (ctx, { academyId, pin }) => {
     await requireUser(ctx);
-    const row = await ctx.db
-      .query("academySettings")
-      .withIndex("by_academyId", (q) => q.eq("academyId", academyId))
-      .unique();
-    const current = row?.pin ?? DEFAULT_PIN;
+    const current = await resolveCurrentPin(ctx, academyId);
     return current === pin.trim();
   },
 });
 
+/**
+ * Gate for every Trainer-area mutation: a real intranet admin bypasses the
+ * PIN entirely (same rule the client's `AdminLogin`/`admin/layout` already
+ * apply); everyone else must supply the academy's current PIN. Without this,
+ * the PIN was only ever checked client-side (via `checkPin`) — any signed-in
+ * employee could call the mutations below directly and skip it.
+ */
+export async function requireAcademyAdmin(
+  ctx: QueryCtx | MutationCtx,
+  academyId: string,
+  pin: string,
+): Promise<Doc<"users">> {
+  const user = await requireUser(ctx);
+  if (user.role === "admin") return user;
+  const current = await resolveCurrentPin(ctx, academyId);
+  if (current !== pin.trim()) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "Falsche PIN.",
+    });
+  }
+  return user;
+}
+
 export const setPin = mutation({
-  args: { academyId: v.string(), pin: v.string() },
-  handler: async (ctx, { academyId, pin }) => {
-    await requireUser(ctx);
-    const trimmed = pin.trim();
+  args: { academyId: v.string(), authPin: v.string(), newPin: v.string() },
+  handler: async (ctx, { academyId, authPin, newPin }) => {
+    await requireAcademyAdmin(ctx, academyId, authPin);
+    const trimmed = newPin.trim();
     if (trimmed.length < 4) return;
     const row = await ctx.db
       .query("academySettings")
@@ -48,9 +77,9 @@ export const setPin = mutation({
  * the PIN back to the default — mirrors the original tool's "reset all
  * data" admin action. */
 export const resetAll = mutation({
-  args: { academyId: v.string() },
-  handler: async (ctx, { academyId }) => {
-    await requireUser(ctx);
+  args: { academyId: v.string(), pin: v.string() },
+  handler: async (ctx, { academyId, pin }) => {
+    await requireAcademyAdmin(ctx, academyId, pin);
 
     const participants = await ctx.db
       .query("academyParticipants")

@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { type Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { requireUser } from "./lib/auth";
+import { requireAcademyAdmin } from "./academySettings";
 import { createNotification } from "./lib/notify";
 
 function generateCode(): string {
@@ -31,9 +31,10 @@ export const create = mutation({
     name: v.string(),
     email: v.string(),
     linkUserId: v.optional(v.id("users")),
+    pin: v.string(),
   },
-  handler: async (ctx, { academyId, name, email, linkUserId }) => {
-    const admin = await requireUser(ctx);
+  handler: async (ctx, { academyId, name, email, linkUserId, pin }) => {
+    const admin = await requireAcademyAdmin(ctx, academyId, pin);
     const code = generateCode();
     const linkedUser = linkUserId ? await ctx.db.get(linkUserId) : null;
     const now = Date.now();
@@ -74,9 +75,9 @@ export const create = mutation({
 
 /** Admin: every participant for the academy (Trainer area participant list). */
 export const listAll = query({
-  args: { academyId: v.string() },
-  handler: async (ctx, { academyId }) => {
-    await requireUser(ctx);
+  args: { academyId: v.string(), pin: v.string() },
+  handler: async (ctx, { academyId, pin }) => {
+    await requireAcademyAdmin(ctx, academyId, pin);
     return ctx.db
       .query("academyParticipants")
       .withIndex("by_academy", (q) => q.eq("academyId", academyId))
@@ -104,9 +105,11 @@ export const findByCode = query({
 });
 
 export const remove = mutation({
-  args: { participantId: v.id("academyParticipants") },
-  handler: async (ctx, { participantId }) => {
-    await requireUser(ctx);
+  args: { participantId: v.id("academyParticipants"), pin: v.string() },
+  handler: async (ctx, { participantId, pin }) => {
+    const participant = await ctx.db.get(participantId);
+    if (!participant) return;
+    await requireAcademyAdmin(ctx, participant.academyId, pin);
     const results = await ctx.db
       .query("academyResults")
       .withIndex("by_participant", (q) => q.eq("participantId", participantId))
@@ -124,9 +127,11 @@ export const remove = mutation({
 /** Admin (Trainer area): link a finished participant's results to a real
  * intranet account. */
 export const linkToAccount = mutation({
-  args: { participantId: v.id("academyParticipants"), userId: v.id("users") },
-  handler: async (ctx, { participantId, userId }) => {
-    const admin = await requireUser(ctx);
+  args: { participantId: v.id("academyParticipants"), userId: v.id("users"), pin: v.string() },
+  handler: async (ctx, { participantId, userId, pin }) => {
+    const participant = await ctx.db.get(participantId);
+    if (!participant) return;
+    const admin = await requireAcademyAdmin(ctx, participant.academyId, pin);
     await ctx.db.patch(participantId, {
       linkedUserId: userId,
       linkedAt: Date.now(),
@@ -136,9 +141,11 @@ export const linkToAccount = mutation({
 });
 
 export const unlinkAccount = mutation({
-  args: { participantId: v.id("academyParticipants") },
-  handler: async (ctx, { participantId }) => {
-    await requireUser(ctx);
+  args: { participantId: v.id("academyParticipants"), pin: v.string() },
+  handler: async (ctx, { participantId, pin }) => {
+    const participant = await ctx.db.get(participantId);
+    if (!participant) return;
+    await requireAcademyAdmin(ctx, participant.academyId, pin);
     await ctx.db.patch(participantId, {
       linkedUserId: undefined,
       linkedAt: undefined,

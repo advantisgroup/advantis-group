@@ -13,8 +13,8 @@ export default function WallboxAcademyAdminHomePage() {
   return (
     <div className="space-y-4">
       <AdminLogin
-        onLogin={() => {
-          loginAdmin();
+        onLogin={(pin) => {
+          loginAdmin(pin);
           router.push("/guidebooks/wallbox-sales-academy/admin/teilnehmer");
         }}
       />

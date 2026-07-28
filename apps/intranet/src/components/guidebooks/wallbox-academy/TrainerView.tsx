@@ -43,6 +43,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { CHAPTERS, SCENARIOS, SEG } from "./data";
 import { chapterResultLabel, DLAB, parseProgress, recommendations } from "./progress";
+import { useAcademySession } from "./session";
 import { ACADEMY_ID } from "./use-academy-progress";
 
 import type { AcademyProgressData } from "./types";
@@ -76,6 +77,7 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
   const [selectedUserId, setSelectedUserId] = useState<string | undefined>();
   const users = useQuery(api.users.list, {});
   const create = useMutation(api.academyParticipants.create);
+  const { academyPin } = useAcademySession();
 
   const matchedUser =
     mode === "email" && email.trim()
@@ -97,11 +99,17 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
         name: "",
         email: "",
         linkUserId: selectedUserId as Id<"users">,
+        pin: academyPin,
       });
       toast.success("Einladung gesendet - Benachrichtigung und E-Mail wurden verschickt.");
     } else {
       if (!name.trim() || !email.trim()) return;
-      const result = await create({ academyId: ACADEMY_ID, name, email });
+      const result = await create({
+        academyId: ACADEMY_ID,
+        name,
+        email,
+        pin: academyPin,
+      });
       sendMailtoInvite(name, email, result.code);
     }
     setOpen(false);
@@ -237,11 +245,14 @@ function CreateParticipantDialog({ onCreated }: { onCreated: () => void }) {
  */
 export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: string | null }) {
   const router = useRouter();
+  const { academyPin } = useAcademySession();
   const participants = useQuery(api.academyParticipants.listAll, {
     academyId: ACADEMY_ID,
+    pin: academyPin,
   });
   const results = useQuery(api.academyResults.listAll, {
     academyId: ACADEMY_ID,
+    pin: academyPin,
   });
   const remove = useMutation(api.academyParticipants.remove);
   const confirm = useConfirm();
@@ -368,7 +379,11 @@ export function ParticipantsTab({ focusParticipantId }: { focusParticipantId?: s
                                 description: `${p.name} samt Ergebnissen und Fragen wird endgültig gelöscht.`,
                                 confirmLabel: "Löschen",
                               });
-                              if (ok) await remove({ participantId: p._id });
+                              if (ok)
+                                await remove({
+                                  participantId: p._id,
+                                  pin: academyPin,
+                                });
                             }}
                           >
                             Löschen
@@ -398,16 +413,22 @@ function LinkAccountControl({ participant }: { participant: Doc<"academyParticip
   const users = useQuery(api.users.list, {});
   const linkToAccount = useMutation(api.academyParticipants.linkToAccount);
   const unlinkAccount = useMutation(api.academyParticipants.unlinkAccount);
+  const { academyPin } = useAcademySession();
 
   return (
     <Select
       value={participant.linkedUserId ?? "none"}
       onValueChange={(v) => {
-        if (v === "none") void unlinkAccount({ participantId: participant._id });
+        if (v === "none")
+          void unlinkAccount({
+            participantId: participant._id,
+            pin: academyPin,
+          });
         else
           void linkToAccount({
             participantId: participant._id,
             userId: v as Id<"users">,
+            pin: academyPin,
           });
       }}
     >
@@ -554,8 +575,10 @@ function ParticipantDetail({
 // ─── Fragen ──────────────────────────────────────────────────────────────
 
 export function QuestionsTab({ focusQuestionId }: { focusQuestionId?: string | null }) {
+  const { academyPin } = useAcademySession();
   const questions = useQuery(api.academyQuestions.listAll, {
     academyId: ACADEMY_ID,
+    pin: academyPin,
   });
   const answer = useMutation(api.academyQuestions.answer);
   const reopen = useMutation(api.academyQuestions.reopen);
@@ -633,6 +656,7 @@ export function QuestionsTab({ focusQuestionId }: { focusQuestionId?: string | n
                   void answer({
                     questionId: q._id,
                     answer: drafts[q._id] ?? q.answer ?? "",
+                    pin: academyPin,
                   })
                 }
               >
@@ -642,7 +666,7 @@ export function QuestionsTab({ focusQuestionId }: { focusQuestionId?: string | n
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => void reopen({ questionId: q._id })}
+                  onClick={() => void reopen({ questionId: q._id, pin: academyPin })}
                 >
                   Wieder öffnen
                 </Button>
@@ -658,9 +682,11 @@ export function QuestionsTab({ focusQuestionId }: { focusQuestionId?: string | n
 // ─── Einstellungen ─────────────────────────────────────────────────────────
 
 export function SettingsTab() {
+  const router = useRouter();
   const setPinMutation = useMutation(api.academySettings.setPin);
   const resetAll = useMutation(api.academySettings.resetAll);
   const confirm = useConfirm();
+  const { academyPin, loginAdmin, logout } = useAcademySession();
   const [pin, setPinValue] = useState("");
   const [saved, setSaved] = useState(false);
 
@@ -688,7 +714,15 @@ export function SettingsTab() {
                   toast.error("PIN mit mindestens 4 Zeichen wählen.");
                   return;
                 }
-                await setPinMutation({ academyId: ACADEMY_ID, pin });
+                await setPinMutation({
+                  academyId: ACADEMY_ID,
+                  authPin: academyPin,
+                  newPin: pin,
+                });
+                // Keep this tab's session in step with the PIN it just set —
+                // otherwise the next mutation call would fail auth against
+                // the now-stale old PIN still held in sessionStorage.
+                loginAdmin(pin);
                 setSaved(true);
               }}
             >
@@ -715,8 +749,13 @@ export function SettingsTab() {
                 confirmLabel: "Alles löschen",
               });
               if (ok) {
-                await resetAll({ academyId: ACADEMY_ID });
+                await resetAll({ academyId: ACADEMY_ID, pin: academyPin });
                 toast.success("Alle Daten wurden zurückgesetzt.");
+                // The PIN was reset to the default along with everything
+                // else — log out so re-entry uses it instead of the stale
+                // PIN this tab still holds.
+                logout();
+                router.push("/guidebooks/wallbox-sales-academy");
               }
             }}
           >
