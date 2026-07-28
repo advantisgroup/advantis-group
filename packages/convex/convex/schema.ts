@@ -355,6 +355,13 @@ export default defineSchema({
     .index("by_email", ["email"]),
 
   // --- Calendar: absences & events ----------------------------------------
+  /**
+   * Deprecated: absences are no longer mirrored here. Clockodo is fetched
+   * live via apps/api on every read instead (see AGENTS.md's Clockodo
+   * section) — nothing writes to this table anymore. Left declared rather
+   * than dropped so old rows aren't orphaned from the schema; safe to
+   * actually remove once confirmed nothing needs the historical rows.
+   */
   absences: defineTable({
     userId: v.id("users"),
     type: v.union(

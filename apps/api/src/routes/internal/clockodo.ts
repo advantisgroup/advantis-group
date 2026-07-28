@@ -1,55 +1,32 @@
 import { Elysia, t } from "elysia";
 
-import { api } from "@advantis/convex/api";
-
-import { getUserEmail, listAbsences } from "../../lib/clockodo.js";
-import { getConvex, getConvexServerKey } from "../../lib/convex.js";
+import { listAbsences, listCurrentAbsences } from "../../lib/clockodo.js";
 import { requireServerKey } from "../../lib/middleware.js";
 
 /**
- * POST /internal/clockodo/import — server-key gated backfill. Pulls a year of
- * absences from Clockodo and mirrors them into Convex. Useful for initial sync
- * and reconciliation.
+ * Server-to-server only — called by Convex's ActivityTrack poller
+ * (`activity/clockodo.ts`) so the raw Clockodo absences fetch lives in one
+ * place (this app) instead of being duplicated in Convex's Node runtime too.
+ * Unfiltered/unmapped: the caller (an internal poller, not a browser) needs
+ * the raw `status`/`users_id`/date fields, not the coarse type/status this
+ * app maps for the org calendar's own public endpoints.
  */
-export const internalClockodoImportRoute = new Elysia().post(
-  "/internal/clockodo/import",
-  async ({ request, body }) => {
+export const internalClockodoRoute = new Elysia().get(
+  "/internal/clockodo/absences",
+  async ({ request, query }) => {
     requireServerKey(request);
-    const year = body.year ?? new Date().getFullYear();
-    const convex = getConvex();
-    const serverKey = getConvexServerKey();
-
-    const absences = await listAbsences(year);
-    let mirrored = 0;
-    let skipped = 0;
-    for (const absence of absences) {
-      const email = await getUserEmail(absence.users_id);
-      const res = await convex.mutation(api.clockodoSync.upsertAbsenceFromClockodo, {
-        serverKey,
-        externalId: String(absence.id),
-        clockodoUserId: absence.users_id,
-        email,
-        dateSince: absence.date_since,
-        dateUntil: absence.date_until,
-        clockodoType: absence.type,
-        clockodoStatus: absence.status,
-        countDays: absence.count_days ?? undefined,
-        note: absence.note ?? undefined,
-      });
-      if (res.status === "skipped") skipped++;
-      else mirrored++;
-    }
-    return { year, total: absences.length, mirrored, skipped };
+    // Omit `year` for "current" (this year, plus last year's tail in
+    // January); pass it for a specific historical day — the admin "Deep
+    // sanitize" troubleshooting tool can target any past day.
+    const absences = query.year ? await listAbsences(Number(query.year)) : await listCurrentAbsences();
+    return {
+      absences: absences.map((a) => ({
+        users_id: a.users_id,
+        status: a.status,
+        date_since: a.date_since,
+        date_until: a.date_until,
+      })),
+    };
   },
-  {
-    body: t.Object({ year: t.Optional(t.Number()) }),
-    response: {
-      200: t.Object({
-        year: t.Number(),
-        total: t.Number(),
-        mirrored: t.Number(),
-        skipped: t.Number(),
-      }),
-    },
-  },
+  { query: t.Object({ year: t.Optional(t.String()) }) },
 );

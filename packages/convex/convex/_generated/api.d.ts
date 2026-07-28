@@ -8,8 +8,6 @@
  * @module
  */
 
-import type * as absenceSync from "../absenceSync.js";
-import type * as absences from "../absences.js";
 import type * as academyParticipants from "../academyParticipants.js";
 import type * as academyQuestions from "../academyQuestions.js";
 import type * as academyResults from "../academyResults.js";
@@ -50,7 +48,6 @@ import type * as applicants from "../applicants.js";
 import type * as auditLog from "../auditLog.js";
 import type * as chat from "../chat.js";
 import type * as clerkSync from "../clerkSync.js";
-import type * as clockodoSync from "../clockodoSync.js";
 import type * as clockodoWebhookLog from "../clockodoWebhookLog.js";
 import type * as companies from "../companies.js";
 import type * as companyRoles from "../companyRoles.js";
@@ -65,6 +62,7 @@ import type * as guidebookFeedback from "../guidebookFeedback.js";
 import type * as guidebookHighlights from "../guidebookHighlights.js";
 import type * as http from "../http.js";
 import type * as integrations_audit from "../integrations/audit.js";
+import type * as integrations_clockodoAbsences from "../integrations/clockodoAbsences.js";
 import type * as integrations_clockodo_client from "../integrations/clockodo/client.js";
 import type * as integrations_clockodo_users from "../integrations/clockodo/users.js";
 import type * as integrations_clockodoLink from "../integrations/clockodoLink.js";
@@ -119,8 +117,6 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  absenceSync: typeof absenceSync;
-  absences: typeof absences;
   academyParticipants: typeof academyParticipants;
   academyQuestions: typeof academyQuestions;
   academyResults: typeof academyResults;
@@ -161,7 +157,6 @@ declare const fullApi: ApiFromModules<{
   auditLog: typeof auditLog;
   chat: typeof chat;
   clerkSync: typeof clerkSync;
-  clockodoSync: typeof clockodoSync;
   clockodoWebhookLog: typeof clockodoWebhookLog;
   companies: typeof companies;
   companyRoles: typeof companyRoles;
@@ -176,6 +171,7 @@ declare const fullApi: ApiFromModules<{
   guidebookHighlights: typeof guidebookHighlights;
   http: typeof http;
   "integrations/audit": typeof integrations_audit;
+  "integrations/clockodoAbsences": typeof integrations_clockodoAbsences;
   "integrations/clockodo/client": typeof integrations_clockodo_client;
   "integrations/clockodo/users": typeof integrations_clockodo_users;
   "integrations/clockodoLink": typeof integrations_clockodoLink;

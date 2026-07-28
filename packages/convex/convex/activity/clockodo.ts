@@ -61,10 +61,29 @@ interface Absence {
   status?: number;
 }
 
-async function fetchAbsences(year: number): Promise<Absence[]> {
-  const qs = `year=${year}&filter[scope]=viewableAbsences`;
-  const body = await clockodoGet<{ data?: Absence[] }>(`/api/v4/absences?${qs}`);
-  return body.data ?? [];
+/**
+ * The raw Clockodo absences fetch lives in apps/api (`lib/clockodo.ts`) so
+ * it isn't duplicated here too — this just calls that internal,
+ * server-key-gated endpoint instead of hitting Clockodo directly. Omit
+ * `year` for "current" (this year, plus last year's tail in January, same
+ * scope the old inline fetch used); pass it to reconcile a specific past day
+ * (see `troubleshootSanitizeDay`).
+ */
+async function fetchAbsences(year?: number): Promise<Absence[]> {
+  const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
+  const serverKey = process.env.CONVEX_SERVER_KEY;
+  if (!baseUrl || !serverKey) {
+    throw new Error("API_URL/CONVEX_SERVER_KEY not configured");
+  }
+  const qs = year ? `?year=${year}` : "";
+  const res = await fetch(`${baseUrl}/internal/clockodo/absences${qs}`, {
+    headers: { "x-convex-server-key": serverKey },
+  });
+  if (!res.ok) {
+    throw new Error(`apps/api GET /internal/clockodo/absences failed: ${res.status}`);
+  }
+  const body = (await res.json()) as { absences?: Absence[] };
+  return body.absences ?? [];
 }
 
 function isAbsentOn(absences: Absence[], clockodoUserId: string, day: string): boolean {
@@ -258,7 +277,7 @@ export async function pollClockodo(
   if (clockodoPeople.length === 0) return;
   const tally = { working: 0, onBreak: 0, clockedOut: 0, absent: 0 };
   try {
-    const absences = await fetchAbsences(new Date().getFullYear());
+    const absences = await fetchAbsences();
     const day = today();
     for (const p of clockodoPeople) {
       const work = await fetchClockodoWork(p.clockodoUserId!);
@@ -306,7 +325,7 @@ export const refreshClockodo = gatedAction("activitytrack")({
       const day = today();
       const [work, absences] = await Promise.all([
         fetchClockodoWork(clockodoUserId),
-        fetchAbsences(new Date().getFullYear()),
+        fetchAbsences(),
       ]);
       const absent = isAbsentOn(absences, clockodoUserId, day);
       await ctx.runMutation(api.activity.state.pushSignal, {
@@ -387,7 +406,7 @@ export const refreshClockodoByEntry = gatedAction("activitytrack")({
 
       const [work, absences] = await Promise.all([
         fetchClockodoWork(clockodoUserId),
-        fetchAbsences(new Date().getFullYear()),
+        fetchAbsences(),
       ]);
       const absent = isAbsentOn(absences, clockodoUserId, today());
 

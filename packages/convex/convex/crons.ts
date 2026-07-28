@@ -34,16 +34,6 @@ crons.cron(
   {},
 );
 
-// Reconcile Clockodo absences into the intranet mirror (absences tab +
-// calendar). The apps/api webhook is the fast path; this hourly pass catches
-// missed webhooks, deletions, and employees who got linked after the fact.
-crons.hourly(
-  "absences: sync Clockodo mirror",
-  { minuteUTC: 35 },
-  internal.absenceSync.syncClockodoAbsences,
-  {},
-);
-
 // Mirrors the latest published desktop-agent version so the overview can
 // flag devices that haven't updated yet.
 crons.hourly(
