@@ -24,7 +24,9 @@ import {
   Pin,
   Plus,
   Search,
+  Tag,
   Trash2,
+  Users,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -37,6 +39,7 @@ import { useCurrentUser, useIsManager } from "@/components/providers/current-use
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -49,9 +52,11 @@ import {
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { htmlToText, RichText } from "@/components/ui/rich-text";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -70,17 +75,26 @@ import type { FunctionReturnType } from "convex/server";
 import { CopyButton } from "@/components/activity/CopyButton";
 
 type Announcement = FunctionReturnType<typeof api.announcements.list>[number];
-type Audience = { kind: "all" } | { kind: "department"; department: string };
+type Audience =
+  | { kind: "all" }
+  | { kind: "department"; department: string }
+  | { kind: "users"; userIds: Id<"users">[] };
 
 const ALWAYS_PREVIEW_KEY = "announcements:alwaysPreview";
 const DRAFT_KEY = "announcements:draft";
+
+/** Sentinel value for the audience Select's "Specific people" option. */
+const USERS_AUDIENCE_VALUE = "__users__";
 
 interface Draft {
   title: string;
   body: string;
   pinned: boolean;
   guestVisible: boolean;
-  audience: string;
+  category: string;
+  audienceKind: "all" | "department" | "users";
+  audienceDepartment: string;
+  audienceUserIds: string[];
   publishAt: string;
   expiresAt: string;
 }
@@ -90,7 +104,10 @@ const EMPTY_DRAFT: Draft = {
   body: "",
   pinned: false,
   guestVisible: false,
-  audience: "all",
+  category: "",
+  audienceKind: "all",
+  audienceDepartment: "",
+  audienceUserIds: [],
   publishAt: "",
   expiresAt: "",
 };
@@ -105,10 +122,13 @@ function EditorDialog({
   open,
   onOpenChange,
   editing,
+  existingCategories,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editing: Announcement | null;
+  /** Previously-used category values (across the currently loaded feed), offered as suggestions. */
+  existingCategories: string[];
 }) {
   const t = useTranslations("Announcements");
   const tc = useTranslations("Common");
@@ -118,6 +138,7 @@ function EditorDialog({
   const update = useMutation(api.announcements.update);
   const handleError = useErrorHandler();
   const departments = useQuery(api.users.departments) ?? [];
+  const people = useQuery(api.users.list, open ? {} : "skip");
   const attachmentUpload = useAttachmentUpload();
 
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -125,6 +146,7 @@ function EditorDialog({
   const [previewing, setPreviewing] = useState(false);
   const [alwaysPreview, setAlwaysPreview] = useState(false);
   const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
+  const [peopleSearch, setPeopleSearch] = useState("");
 
   // Restore the "always preview" preference.
   useEffect(() => {
@@ -143,7 +165,17 @@ function EditorDialog({
         body: editing.body,
         pinned: editing.pinned,
         guestVisible: false,
-        audience: audience.kind === "all" ? "all" : audience.department,
+        category: editing.category ?? "",
+        // "departmentId" audiences predate the per-user picker and aren't
+        // editable here yet — fall back to "all" rather than crash.
+        audienceKind:
+          audience.kind === "users"
+            ? "users"
+            : audience.kind === "department"
+              ? "department"
+              : "all",
+        audienceDepartment: audience.kind === "department" ? audience.department : "",
+        audienceUserIds: audience.kind === "users" ? audience.userIds : [],
         publishAt: "",
         expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
       });
@@ -171,11 +203,34 @@ function EditorDialog({
     setDraft((d) => ({ ...d, [key]: value }));
 
   const audienceValue: Audience =
-    draft.audience === "all" ? { kind: "all" } : { kind: "department", department: draft.audience };
+    draft.audienceKind === "department"
+      ? { kind: "department", department: draft.audienceDepartment }
+      : draft.audienceKind === "users"
+        ? { kind: "users", userIds: draft.audienceUserIds as Id<"users">[] }
+        : { kind: "all" };
+  // A "users" audience with nothing picked yet reaches nobody — skip the
+  // (misleading) "reaches 0" preview until at least one person is selected.
   const audienceCount = useQuery(
     api.announcements.audienceSize,
-    open ? { audience: audienceValue } : "skip",
+    open && (draft.audienceKind !== "users" || draft.audienceUserIds.length > 0)
+      ? { audience: audienceValue }
+      : "skip",
   );
+  const filteredPeople = useMemo(() => {
+    const q = peopleSearch.trim().toLowerCase();
+    const mine = (people ?? []).filter((p) => p._id !== me._id);
+    if (!q) return mine;
+    return mine.filter((p) => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q));
+  }, [people, peopleSearch, me._id]);
+
+  function toggleAudienceUser(userId: string) {
+    setDraft((d) => ({
+      ...d,
+      audienceUserIds: d.audienceUserIds.includes(userId)
+        ? d.audienceUserIds.filter((id) => id !== userId)
+        : [...d.audienceUserIds, userId],
+    }));
+  }
 
   function toggleAlwaysPreview(v: boolean) {
     setAlwaysPreview(v);
@@ -183,7 +238,10 @@ function EditorDialog({
   }
 
   const hasBody = htmlToText(draft.body).trim().length > 0;
-  const canSend = draft.title.trim().length > 0 && hasBody;
+  const canSend =
+    draft.title.trim().length > 0 &&
+    hasBody &&
+    (draft.audienceKind !== "users" || draft.audienceUserIds.length > 0);
   const files = useMemo(
     () => attachmentUpload.entries.map((e) => e.file),
     [attachmentUpload.entries],
@@ -233,6 +291,7 @@ function EditorDialog({
           body: draft.body.trim(),
           pinned: draft.pinned,
           audience: audienceValue,
+          category: draft.category.trim(),
           expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
         });
         toast.success(t("updated"));
@@ -246,6 +305,7 @@ function EditorDialog({
             body: draft.body.trim(),
             pinned: draft.pinned,
             audience: audienceValue,
+            category: draft.category.trim() || undefined,
             attachments,
             guestVisible: draft.guestVisible,
             publishAt: draft.publishAt ? new Date(draft.publishAt).getTime() : undefined,
@@ -366,10 +426,41 @@ function EditorDialog({
             </div>
 
             <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("category")}
+                </Label>
+                <Input
+                  list="announcement-category-suggestions"
+                  placeholder={t("categoryPlaceholder")}
+                  value={draft.category}
+                  onChange={(e) => set("category", e.target.value)}
+                />
+                <datalist id="announcement-category-suggestions">
+                  {existingCategories.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
+
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("audience")}
               </p>
-              <Select value={draft.audience} onValueChange={(v) => set("audience", v)}>
+              <Select
+                value={
+                  draft.audienceKind === "department"
+                    ? draft.audienceDepartment
+                    : draft.audienceKind === "users"
+                      ? USERS_AUDIENCE_VALUE
+                      : "all"
+                }
+                onValueChange={(v) => {
+                  if (v === "all") setDraft((d) => ({ ...d, audienceKind: "all" }));
+                  else if (v === USERS_AUDIENCE_VALUE)
+                    setDraft((d) => ({ ...d, audienceKind: "users" }));
+                  else setDraft((d) => ({ ...d, audienceKind: "department", audienceDepartment: v }));
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -380,8 +471,56 @@ function EditorDialog({
                       {t("department")}: {d}
                     </SelectItem>
                   ))}
+                  <SelectItem value={USERS_AUDIENCE_VALUE}>{t("specificPeople")}</SelectItem>
                 </SelectContent>
               </Select>
+              {draft.audienceKind === "users" && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start gap-2 font-normal">
+                      <Users className="size-4" />
+                      {draft.audienceUserIds.length > 0
+                        ? t("peopleSelected", { count: draft.audienceUserIds.length })
+                        : t("selectPeople")}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-80 p-0">
+                    <div className="border-b border-border/60 p-2">
+                      <Input
+                        autoFocus
+                        placeholder={tc("search")}
+                        value={peopleSearch}
+                        onChange={(e) => setPeopleSearch(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    <ScrollArea className="h-64">
+                      {filteredPeople.length === 0 ? (
+                        <p className="p-3 text-xs text-muted-foreground">{tc("noResults")}</p>
+                      ) : (
+                        filteredPeople.map((p) => (
+                          <label
+                            key={p._id}
+                            className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-accent"
+                          >
+                            <Checkbox
+                              checked={draft.audienceUserIds.includes(p._id)}
+                              onCheckedChange={() => toggleAudienceUser(p._id)}
+                            />
+                            <Avatar className="size-6">
+                              {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+                              <AvatarFallback className="text-[10px]">
+                                {initials(p.name, p.email)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="min-w-0 flex-1 truncate text-sm">{p.name}</span>
+                          </label>
+                        ))
+                      )}
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
+              )}
               {audienceCount !== undefined && (
                 <p className="text-xs text-muted-foreground">
                   {t("willReach", { count: audienceCount })}
@@ -709,6 +848,12 @@ function AnnouncementCard({
             <h2 className="truncate font-display text-base font-semibold leading-tight">
               {a.title}
             </h2>
+            {a.category && (
+              <Badge variant="muted" className="shrink-0 gap-1 font-normal">
+                <Tag className="size-3" />
+                {a.category}
+              </Badge>
+            )}
             {!a.read && !a.scheduled && (
               <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
             )}
@@ -908,6 +1053,7 @@ export default function AnnouncementsPage() {
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [sort, setSort] = useState<Sort>("newest");
   const [lightbox, setLightbox] = useState<{
     url: string;
@@ -949,6 +1095,12 @@ export default function AnnouncementsPage() {
 
   const unreadCount = (announcements ?? []).filter((a) => !a.read && !a.scheduled).length;
 
+  const existingCategories = useMemo(() => {
+    const set = new Set<string>();
+    for (const a of announcements ?? []) if (a.category) set.add(a.category);
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [announcements]);
+
   const filtered = useMemo(() => {
     let rows = announcements ?? [];
     const q = search.trim().toLowerCase();
@@ -961,12 +1113,13 @@ export default function AnnouncementsPage() {
     }
     if (filter === "unread") rows = rows.filter((a) => !a.read && !a.scheduled);
     if (filter === "pinned") rows = rows.filter((a) => a.pinned);
+    if (categoryFilter !== "all") rows = rows.filter((a) => a.category === categoryFilter);
     if (sort === "reactions") {
       const score = (a: Announcement) => a.reactions.reduce((sum, r) => sum + r.count, 0);
       rows = [...rows].sort((a, b) => score(b) - score(a));
     }
     return rows;
-  }, [announcements, search, filter, sort]);
+  }, [announcements, search, filter, categoryFilter, sort]);
 
   const pinnedRows = filtered.filter((a) => a.pinned);
   const otherRows = filtered.filter((a) => !a.pinned);
@@ -1036,6 +1189,21 @@ export default function AnnouncementsPage() {
             {f === "unread" && unreadCount > 0 ? ` (${unreadCount})` : ""}
           </button>
         ))}
+        {existingCategories.length > 0 && (
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("allCategories")}</SelectItem>
+              {existingCategories.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
           <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
             <SelectValue />
@@ -1106,6 +1274,7 @@ export default function AnnouncementsPage() {
           if (!open) setEditing(null);
         }}
         editing={editing}
+        existingCategories={existingCategories}
       />
     </div>
   );
