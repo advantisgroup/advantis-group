@@ -12,7 +12,7 @@ import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-import { accessibleGuidebooks, type Guidebook } from "./registry";
+import { accessibleGuidebooks, guidebookTitle, type Guidebook } from "./registry";
 
 interface TocEntry {
   id: string;
@@ -211,7 +211,7 @@ export function RelatedGuidebooks({ current }: { current: Guidebook }) {
               className="flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
             >
               <Icon className="size-3 text-primary" />
-              {t(gb.titleKey)}
+              {guidebookTitle(gb, t)}
             </Link>
           );
         })}

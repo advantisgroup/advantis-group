@@ -3,6 +3,7 @@
 import {
   Bold,
   Italic,
+  Keyboard,
   Link2,
   List,
   ListOrdered,
@@ -17,13 +18,15 @@ import { cn } from "@/lib/utils";
 
 type Cmd =
   | { icon: typeof Bold; label: string; command: string; value?: string }
-  | { icon: typeof Link2; label: string; action: "link" };
+  | { icon: typeof Link2; label: string; action: "link" }
+  | { icon: typeof Keyboard; label: string; action: "kbd" };
 
 const TOOLS: (Cmd | "divider")[] = [
   { icon: Bold, label: "Bold", command: "bold" },
   { icon: Italic, label: "Italic", command: "italic" },
   { icon: Underline, label: "Underline", command: "underline" },
   { icon: Strikethrough, label: "Strikethrough", command: "strikeThrough" },
+  { icon: Keyboard, label: "Keyboard key", action: "kbd" },
   "divider",
   { icon: List, label: "Bulleted list", command: "insertUnorderedList" },
   { icon: ListOrdered, label: "Numbered list", command: "insertOrderedList" },
@@ -108,6 +111,7 @@ export function RichTextEditor({
       }
     }
     next["Insert link"] = isInsideTag(el, sel.anchorNode, "A");
+    next["Keyboard key"] = isInsideTag(el, sel.anchorNode, "KBD");
     setActive(next);
   }, []);
 
@@ -132,6 +136,26 @@ export function RichTextEditor({
     refreshActive();
   }
 
+  /** `execCommand` has no "wrap selection in an arbitrary tag" primitive —
+   *  Range.surroundContents does, but only when the selection doesn't
+   *  straddle a partial element boundary (fine for a few words of plain text). */
+  function wrapSelectionInKbd() {
+    const el = ref.current;
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.commonAncestorContainer)) return;
+    try {
+      const kbd = document.createElement("kbd");
+      range.surroundContents(kbd);
+      sel.removeAllRanges();
+    } catch {
+      // Selection spans multiple block elements — not a supported case here.
+    }
+    emit();
+    refreshActive();
+  }
+
   function run(tool: Cmd) {
     if ("command" in tool) {
       exec(tool.command, tool.value);
@@ -140,6 +164,9 @@ export function RichTextEditor({
     if (tool.action === "link") {
       const url = window.prompt("Link URL", "https://");
       if (url && url !== "https://") exec("createLink", url);
+    } else if (tool.action === "kbd") {
+      ref.current?.focus();
+      wrapSelectionInKbd();
     }
   }
 

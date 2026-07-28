@@ -58,9 +58,17 @@ export type GuidebookTopic =
 export interface Guidebook {
   /** URL slug: /guidebooks/<slug> */
   slug: string;
-  /** i18n key inside the "Guidebooks" namespace (supports nesting). */
-  titleKey: string;
-  descriptionKey: string;
+  /** i18n key inside the "Guidebooks" namespace (supports nesting). Omit for
+   *  a `custom` (DB-backed) entry, which carries a literal `title` instead —
+   *  authored content can't live in a static translation file. */
+  titleKey?: string;
+  descriptionKey?: string;
+  /** Literal title/description for `custom` entries — ignored otherwise. */
+  title?: string;
+  description?: string;
+  /** True for a manager-authored page from `/guidebooks/new` (rendered from
+   *  stored blocks, see GuidebookPageView) rather than a registered Component. */
+  custom?: boolean;
   icon: LucideIcon;
   category: GuidebookCategory;
   /** Subject grouping, required for "guide" entries (see GuidebookTopic). */
@@ -276,4 +284,21 @@ export function accessibleGuidebooks(user: AccessUser): Guidebook[] {
 
 export function getGuidebook(slug: string): Guidebook | undefined {
   return GUIDEBOOKS.find((gb) => gb.slug === slug);
+}
+
+/** Resolves a translated title for a static entry, or the literal `title`
+ *  a custom (DB-backed) one carries instead. */
+export function guidebookTitle(gb: Guidebook, t: (key: string) => string): string {
+  return gb.titleKey ? t(gb.titleKey) : (gb.title ?? "");
+}
+
+export function guidebookDescription(gb: Guidebook, t: (key: string) => string): string {
+  return gb.descriptionKey ? t(gb.descriptionKey) : (gb.description ?? "");
+}
+
+/** All slugs already taken by a hardcoded guidebook — the create-page flow
+ *  must not let a custom page's slug collide with one of these (Convex has
+ *  no visibility into this static list to check it itself). */
+export function staticGuidebookSlugs(): string[] {
+  return GUIDEBOOKS.map((gb) => gb.slug);
 }

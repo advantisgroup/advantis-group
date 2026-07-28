@@ -5,7 +5,12 @@ import { type ReactNode } from "react";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { canAccessGuidebook, getGuidebook } from "@/components/guidebooks/registry";
+import {
+  canAccessGuidebook,
+  getGuidebook,
+  guidebookDescription,
+  guidebookTitle,
+} from "@/components/guidebooks/registry";
 import { AcademySessionProvider } from "@/components/guidebooks/wallbox-academy/session";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
@@ -55,8 +60,8 @@ export default function WallboxAcademyLayout({ children }: { children: ReactNode
         <>
           <PageHeader
             eyebrow={t("eyebrow")}
-            title={t(guidebook.titleKey)}
-            description={t(guidebook.descriptionKey)}
+            title={guidebookTitle(guidebook, t)}
+            description={guidebookDescription(guidebook, t)}
           />
           <AcademySessionProvider>{children}</AcademySessionProvider>
         </>
