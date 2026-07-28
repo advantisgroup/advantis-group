@@ -46,13 +46,15 @@ async function clockodoGet<T>(path: string): Promise<T> {
 }
 
 export async function getAbsence(id: number): Promise<ClockodoAbsence> {
-  const data = await clockodoGet<{ absence: ClockodoAbsence }>(`/absences/${id}`);
-  return data.absence;
+  const data = await clockodoGet<{ data: ClockodoAbsence }>(`/v4/absences/${id}`);
+  return data.data;
 }
 
 export async function listAbsences(year: number): Promise<ClockodoAbsence[]> {
-  const data = await clockodoGet<{ absences: ClockodoAbsence[] }>(`/absences?year=${year}`);
-  return data.absences ?? [];
+  const data = await clockodoGet<{ data: ClockodoAbsence[] }>(
+    `/v4/absences?filter[year]=${year}&scope=viewableAbsences`,
+  );
+  return data.data ?? [];
 }
 
 /**
