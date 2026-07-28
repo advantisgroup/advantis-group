@@ -29,6 +29,13 @@ function aggregateReactions(
   }));
 }
 
+/** The author and admins can always see an announcement, regardless of audience. */
+function isVisibleToUser(user: Doc<"users">, a: Doc<"announcements">): boolean {
+  return (
+    a.authorUserId === user._id || user.role === "admin" || userMatchesAudience(user, a.audience)
+  );
+}
+
 async function resolveAudienceUserIds(
   ctx: MutationCtx,
   audience: Audience,
@@ -230,8 +237,13 @@ export const list = query({
     // Scheduled (future) and expired announcements stay visible to their
     // author and admins (flagged below) but disappear for everyone else.
     const visible = announcements.filter((a) => {
-      if (!userMatchesAudience(user, a.audience)) return false;
       const isAuthorOrAdmin = a.authorUserId === user._id || user.role === "admin";
+      // The author/an admin must always see it regardless of audience — a
+      // manager targeting a "specific people" audience that excludes
+      // themselves would otherwise lose the announcement (and the edit/delete
+      // controls that only render for authorId === me._id) the moment they
+      // create it.
+      if (!isAuthorOrAdmin && !userMatchesAudience(user, a.audience)) return false;
       if (a.publishedAt > now && !isAuthorOrAdmin) return false;
       if (a.expiresAt && a.expiresAt <= now && !isAuthorOrAdmin) return false;
       return true;
@@ -362,10 +374,7 @@ export const unreadCount = query({
       .order("desc")
       .take(100);
     const visible = announcements.filter(
-      (a) =>
-        userMatchesAudience(user, a.audience) &&
-        a.publishedAt <= now &&
-        (!a.expiresAt || a.expiresAt > now),
+      (a) => isVisibleToUser(user, a) && a.publishedAt <= now && (!a.expiresAt || a.expiresAt > now),
     );
     const myReads = await ctx.db
       .query("announcementReads")
@@ -392,7 +401,7 @@ export const markAllRead = mutation({
       .collect();
     const readSet = new Set(myReads.map((r) => r.announcementId));
     const unread = announcements.filter(
-      (a) => userMatchesAudience(user, a.audience) && a.publishedAt <= now && !readSet.has(a._id),
+      (a) => isVisibleToUser(user, a) && a.publishedAt <= now && !readSet.has(a._id),
     );
     await Promise.all(
       unread.map((a) =>
@@ -425,7 +434,7 @@ export const toggleReaction = mutation({
   handler: async (ctx, { announcementId, emoji }) => {
     const user = await requireUser(ctx);
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !userMatchesAudience(user, announcement.audience)) {
+    if (!announcement || !isVisibleToUser(user, announcement)) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
     // WhatsApp-style: one reaction per user per announcement.
