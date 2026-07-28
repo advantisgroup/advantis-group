@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser } from "@/components/providers/current-user";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -206,7 +206,7 @@ function BucketSection({
 
 export default function DataCleanupPage() {
   const t = useTranslations("Admin");
-  const isAdmin = useCurrentUser().role === "admin";
+  const isAdmin = useIsAdmin();
   const handleError = useErrorHandler();
 
   const populateReview = useMutation(api.orgDataMigration.populateReview);

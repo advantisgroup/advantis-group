@@ -120,6 +120,27 @@ export async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<Doc<"us
 }
 
 /**
+ * True when `user` is either `ownerId` themselves or an admin — the
+ * "author/creator or admin can edit/delete" rule repeated across
+ * announcements, events, chat messages and guidebook pages/attachments.
+ * A pure predicate (not throwing) so it works both for gating a mutation
+ * and for filtering a list to what's visible.
+ */
+export function isOwnerOrAdmin(user: Doc<"users">, ownerId: Doc<"users">["_id"]): boolean {
+  return ownerId === user._id || user.role === "admin";
+}
+
+/**
+ * True when `actor` may grant `role` to someone else: anyone can grant
+ * "employee", but only an admin can grant manager/admin. Shared by invites
+ * and access-request approval, which both enforce this same escalation
+ * rule independently.
+ */
+export function canGrantRole(actor: Doc<"users">, role: Role): boolean {
+  return role === "employee" || actor.role === "admin";
+}
+
+/**
  * Require the current user to hold `capability` — satisfied automatically by
  * the manager/admin tiers, or by an employee whose assigned `customRoleId`
  * grants it. Capabilities are additive: they never take away what the base
@@ -184,11 +205,22 @@ export async function requireVaultUnlocked(
   }
 }
 
+/** True when `user` has Applicant Management access: an admin, or granted
+ * `applicantAccess` directly. Used both to gate the caller (via
+ * `requireApplicantAccess`) and to resolve a *target* user's eligibility
+ * elsewhere (e.g. the API's own `apiCheckAccess`). Takes just the fields it
+ * needs so it also accepts the curated `users.me` shape, not only a raw
+ * `Doc<"users">` — both `setPassword`/`unlock` (actions, round-tripping
+ * through `api.users.me`) and direct-db callers can share it. */
+export function hasApplicantAccess(user: Pick<Doc<"users">, "role" | "applicantAccess">): boolean {
+  return user.role === "admin" || user.applicantAccess === true;
+}
+
 /** Require the current user to have Applicant Management access (admin bypasses
  * the role/delegate check, but not the vault). */
 export async function requireApplicantAccess(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (user.role !== "admin" && !user.applicantAccess) {
+  if (!hasApplicantAccess(user)) {
     throw new ConvexError({
       code: "forbidden",
       message: "You do not have permission to do that",
@@ -216,6 +248,21 @@ export async function requireApplicantDelegateOrAdmin(
   return user;
 }
 
+/** True when `user` belongs to the Applicant Management area at all: an
+ * admin, or granted either `applicantAccess` or `applicantAccessDelegate`.
+ * Same narrow-field shape as `hasApplicantAccess`, for the same reason —
+ * shared by direct-db callers and the action call sites round-tripping
+ * through `api.users.me`. */
+export function isApplicantAreaMember(
+  user: Pick<Doc<"users">, "role" | "applicantAccess" | "applicantAccessDelegate">,
+): boolean {
+  return (
+    user.role === "admin" ||
+    user.applicantAccess === true ||
+    user.applicantAccessDelegate === true
+  );
+}
+
 /** Require Applicant Management access OR delegate rights, without the vault
  * check — used only by the vault's own bootstrap functions (checking status,
  * unlocking), which must work precisely when the vault is still locked. */
@@ -223,9 +270,7 @@ export async function requireApplicantAreaMember(
   ctx: QueryCtx | MutationCtx,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (user.role === "admin" || user.applicantAccess || user.applicantAccessDelegate) {
-    return user;
-  }
+  if (isApplicantAreaMember(user)) return user;
   throw new ConvexError({
     code: "forbidden",
     message: "You do not have permission to do that",

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { requireUser } from "./lib/auth";
+import { requireAcademyAdmin } from "./academySettings";
 import { notifyUsers } from "./lib/notify";
 
 function isFinished(raw: string | undefined): boolean {
@@ -91,9 +91,9 @@ export const saveMine = mutation({
 
 /** Admin (Trainer area): every participant's results for the academy. */
 export const listAll = query({
-  args: { academyId: v.string() },
-  handler: async (ctx, { academyId }) => {
-    await requireUser(ctx);
+  args: { academyId: v.string(), pin: v.string() },
+  handler: async (ctx, { academyId, pin }) => {
+    await requireAcademyAdmin(ctx, academyId, pin);
     return ctx.db
       .query("academyResults")
       .withIndex("by_academy", (q) => q.eq("academyId", academyId))

@@ -6,6 +6,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { CheckCircle2, ChevronRight, Circle } from "lucide-react";
 
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/lib/activity/i18n";
 import { cn } from "@/lib/utils";
@@ -19,8 +20,7 @@ import { cn } from "@/lib/utils";
  */
 export function SetupChecklist() {
   const { t } = useI18n();
-  const me = useQuery(api.users.me);
-  const isAdmin = me?.role === "admin";
+  const isAdmin = useIsAdmin();
 
   // Admin-only queries: skip them entirely for non-admins.
   const args = isAdmin ? {} : "skip";
@@ -28,7 +28,7 @@ export function SetupChecklist() {
   const people = useQuery(api.activity.people.list, args);
   const debugPwSet = useQuery(api.activity.settings.debugPasswordIsSet, args);
 
-  if (!me || !isAdmin) return null;
+  if (!isAdmin) return null;
   if (devices === undefined || people === undefined || debugPwSet === undefined) {
     return null;
   }

@@ -21,6 +21,7 @@ import {
 } from "./lib/businessHours";
 import { deriveClockodoDaySegments } from "./lib/clockodoDay";
 import { appError } from "./lib/errors";
+import { requireAdminAction } from "../integrations/lib/auth";
 
 /**
  * Clockodo time-tracking client, running inside Convex's Node runtime. An open
@@ -466,10 +467,7 @@ export const refreshClockodoByEntry = gatedAction("activitytrack")({
 export const troubleshootSanitizeDay = action({
   args: { day: v.optional(v.string()) },
   handler: async (ctx, { day }) => {
-    const me = await ctx.runQuery(api.users.me, {});
-    if (!me || me.role !== "admin") {
-      throw appError("auth.forbidden", "Forbidden: requires admin role");
-    }
+    await requireAdminAction(ctx);
 
     const secret = signalSecret();
     const targetDay = day ?? today();

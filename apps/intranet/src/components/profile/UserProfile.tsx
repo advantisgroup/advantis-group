@@ -27,6 +27,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 
+import { RoleSelect } from "@/app/(app)/admin/RoleSelect";
 import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
 import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -43,13 +44,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -85,22 +79,6 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
       </p>
       {children}
     </div>
-  );
-}
-
-function RoleSelect({ value, onChange }: { value: Role; onChange: (r: Role) => void }) {
-  const t = useTranslations("Roles");
-  return (
-    <Select value={value} onValueChange={(v) => onChange(v as Role)}>
-      <SelectTrigger className="h-8 w-36">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="employee">{t("employee")}</SelectItem>
-        <SelectItem value="manager">{t("manager")}</SelectItem>
-        <SelectItem value="admin">{t("admin")}</SelectItem>
-      </SelectContent>
-    </Select>
   );
 }
 
@@ -520,7 +498,7 @@ function AdminControls({
         {isAdmin && !isSelf && (
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm text-muted-foreground">{t("role")}</span>
-            <RoleSelect value={user.role} onChange={changeRole} />
+            <RoleSelect value={user.role} onChange={changeRole} canElevate />
           </div>
         )}
         {isAdmin && (

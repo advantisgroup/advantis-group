@@ -1,5 +1,7 @@
 import type { ComponentType } from "react";
 
+import { type Role } from "@advantis/types";
+
 import {
   CalendarCheck,
   CalendarDays,
@@ -263,7 +265,7 @@ export const GUIDEBOOKS: Guidebook[] = [
 ];
 
 interface AccessUser {
-  role: string;
+  role: Role;
   teams?: string[];
 }
 

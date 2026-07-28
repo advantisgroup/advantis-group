@@ -10,7 +10,7 @@ import {
   terminArtValidator,
   terminTypValidator,
 } from "./schema";
-import { getUserByClerkId, requireApplicantAccess } from "./lib/auth";
+import { getUserByClerkId, hasApplicantAccess, requireApplicantAccess } from "./lib/auth";
 import { batchUserSummaries, toUserSummary } from "./lib/users";
 
 /**
@@ -595,8 +595,7 @@ export const apiCheckAccess = query({
     assertServerKey(serverKey);
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status !== "active") return null;
-    const roleOk = user.role === "admin" || user.applicantAccess === true;
-    if (!roleOk) return { userId: user._id, hasAccess: false };
+    if (!hasApplicantAccess(user)) return { userId: user._id, hasAccess: false };
     const unlock = await ctx.db
       .query("applicantVaultUnlocks")
       .withIndex("by_user", (q) => q.eq("userId", user._id))

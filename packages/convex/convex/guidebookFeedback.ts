@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { requireUser } from "./lib/auth";
+import { MANAGER_ROLES, requireUser } from "./lib/auth";
 
 export const getMine = query({
   args: { slug: v.string() },
@@ -43,7 +43,7 @@ export const stats = query({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
     const user = await requireUser(ctx);
-    if (user.role === "employee") return null;
+    if (!MANAGER_ROLES.includes(user.role)) return null;
     const rows = await ctx.db
       .query("guidebookFeedback")
       .withIndex("by_slug", (q) => q.eq("slug", slug))

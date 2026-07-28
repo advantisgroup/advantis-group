@@ -12,7 +12,12 @@ import {
 } from "./_generated/server";
 import { hashPassword, verifyPassword } from "./activity/lib/crypto";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
-import { requireAdmin, requireApplicantAreaMember, requireUser } from "./lib/auth";
+import {
+  isApplicantAreaMember,
+  requireAdmin,
+  requireApplicantAreaMember,
+  requireUser,
+} from "./lib/auth";
 
 /** How long a vault unlock lasts before the password must be re-entered. */
 export const UNLOCK_DURATION_MS = 30 * 60 * 1000;
@@ -121,7 +126,7 @@ export const setPassword = action({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
     const me = await ctx.runQuery(api.users.me, {});
-    if (!me || (me.role !== "admin" && !me.applicantAccess && !me.applicantAccessDelegate)) {
+    if (!me || !isApplicantAreaMember(me)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -179,7 +184,7 @@ export const unlock = action({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
     const me = await ctx.runQuery(api.users.me, {});
-    if (!me || (me.role !== "admin" && !me.applicantAccess && !me.applicantAccessDelegate)) {
+    if (!me || !isApplicantAreaMember(me)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -272,9 +277,7 @@ export const memberPasswordStatuses = query({
   args: {},
   handler: async (ctx) => {
     await requireApplicantAreaMember(ctx);
-    const members = (await ctx.db.query("users").collect()).filter(
-      (u) => u.role === "admin" || u.applicantAccess || u.applicantAccessDelegate,
-    );
+    const members = (await ctx.db.query("users").collect()).filter(isApplicantAreaMember);
     const rows = await ctx.db.query("applicantVaultPasswords").collect();
     const setByUser = new Set(rows.map((r) => r.userId));
     return members.map((u) => ({

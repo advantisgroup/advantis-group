@@ -41,7 +41,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -1107,9 +1107,7 @@ export default function CalendarPage() {
             <EventDetail
               event={detailEvent}
               when={eventWhen(detailEvent)}
-              canManage={
-                isManager && (detailEvent.createdByUserId === me._id || me.role === "admin")
-              }
+              canManage={isManager && isOwnerOrAdmin(me, detailEvent.createdByUserId)}
               onEdit={() => {
                 setDetail(null);
                 setEventDraft(draftFromEvent(detailEvent));

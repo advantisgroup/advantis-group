@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { requireUser } from "./lib/auth";
+import { requireAcademyAdmin } from "./academySettings";
 import { createNotification } from "./lib/notify";
 
 // ask/listMine are deliberately public (no `requireUser`) — same reasoning
@@ -45,9 +45,9 @@ export const listMine = query({
 
 /** Trainer area: every question for the academy, across all participants. */
 export const listAll = query({
-  args: { academyId: v.string() },
-  handler: async (ctx, { academyId }) => {
-    await requireUser(ctx);
+  args: { academyId: v.string(), pin: v.string() },
+  handler: async (ctx, { academyId, pin }) => {
+    await requireAcademyAdmin(ctx, academyId, pin);
     const rows = await ctx.db
       .query("academyQuestions")
       .withIndex("by_academy", (q) => q.eq("academyId", academyId))
@@ -63,9 +63,11 @@ export const listAll = query({
 });
 
 export const answer = mutation({
-  args: { questionId: v.id("academyQuestions"), answer: v.string() },
-  handler: async (ctx, { questionId, answer }) => {
-    await requireUser(ctx);
+  args: { questionId: v.id("academyQuestions"), answer: v.string(), pin: v.string() },
+  handler: async (ctx, { questionId, answer, pin }) => {
+    const question = await ctx.db.get(questionId);
+    if (!question) return;
+    await requireAcademyAdmin(ctx, question.academyId, pin);
     const trimmed = answer.trim();
     await ctx.db.patch(questionId, {
       answer: trimmed,
@@ -76,9 +78,8 @@ export const answer = mutation({
     // Only reachable if the participant was linked to an intranet account —
     // an unlinked, code-only participant has no `userId` to notify.
     if (trimmed.length > 0) {
-      const question = await ctx.db.get(questionId);
-      const participant = question ? await ctx.db.get(question.participantId) : null;
-      if (question && participant?.linkedUserId) {
+      const participant = await ctx.db.get(question.participantId);
+      if (participant?.linkedUserId) {
         await createNotification(ctx, {
           userId: participant.linkedUserId,
           type: "academy_answer",
@@ -92,9 +93,11 @@ export const answer = mutation({
 });
 
 export const reopen = mutation({
-  args: { questionId: v.id("academyQuestions") },
-  handler: async (ctx, { questionId }) => {
-    await requireUser(ctx);
+  args: { questionId: v.id("academyQuestions"), pin: v.string() },
+  handler: async (ctx, { questionId, pin }) => {
+    const question = await ctx.db.get(questionId);
+    if (!question) return;
+    await requireAcademyAdmin(ctx, question.academyId, pin);
     await ctx.db.patch(questionId, { answered: false });
   },
 });

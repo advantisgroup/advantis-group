@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireManager, requireUser } from "./lib/auth";
 import { audienceValidator } from "./schema";
 import { userMatchesAudience } from "./lib/audience";
 
@@ -59,7 +59,7 @@ export const update = mutation({
     if (!event) {
       throw new ConvexError({ code: "not_found", message: "Event not found" });
     }
-    if (event.createdByUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, event.createdByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the creator or an admin can edit this event",
@@ -76,7 +76,7 @@ export const remove = mutation({
     const user = await requireManager(ctx);
     const event = await ctx.db.get(eventId);
     if (!event) return { ok: false };
-    if (event.createdByUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, event.createdByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the creator or an admin can delete this event",

@@ -4,8 +4,8 @@ import { action } from "../_generated/server";
 import type { ActionCtx } from "../_generated/server";
 import { api } from "../_generated/api";
 import { gatedInternalAction } from "../lib/featureGate";
+import { requireManagerAction } from "../integrations/lib/auth";
 import { signalSecret } from "./lib/integrationsShared";
-import { appError } from "./lib/errors";
 import { pollGenesys } from "./genesys";
 import { pollClockodo } from "./clockodo";
 
@@ -42,16 +42,13 @@ export const pollAll = gatedInternalAction("activitytrack")({
 /**
  * Settings → Troubleshooting: run the full Genesys + Clockodo poll right now
  * instead of waiting for the next scheduled one — the first thing to reach for
- * when a live state looks stuck or stale. Manager+, gated by resolving the
- * caller via `api.users.me` (actions have no direct db access).
+ * when a live state looks stuck or stale. Manager+, via `requireManagerAction`
+ * (actions have no direct db access).
  */
 export const troubleshootSyncNow = action({
   args: {},
   handler: async (ctx) => {
-    const me = await ctx.runQuery(api.users.me, {});
-    if (!me || (me.role !== "admin" && me.role !== "manager")) {
-      throw appError("auth.forbidden", "Forbidden: requires manager role");
-    }
+    await requireManagerAction(ctx);
     await runPollAll(ctx);
     return { ok: true as const };
   },

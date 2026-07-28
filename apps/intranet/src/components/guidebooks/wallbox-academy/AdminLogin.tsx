@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 
 import { ACADEMY_ID } from "./use-academy-progress";
 
-export function AdminLogin({ onLogin }: { onLogin: () => void }) {
+export function AdminLogin({ onLogin }: { onLogin: (pin?: string) => void }) {
   const isAdmin = useIsAdmin();
   const convex = useConvex();
 
@@ -33,7 +33,7 @@ export function AdminLogin({ onLogin }: { onLogin: () => void }) {
         setPinError("Falsche PIN.");
         return;
       }
-      onLogin();
+      onLogin(pin);
     } finally {
       setChecking(false);
     }
@@ -50,7 +50,7 @@ export function AdminLogin({ onLogin }: { onLogin: () => void }) {
             <p className="mb-2.5 text-sm text-muted-foreground">
               Du bist Intranet-Admin und hast automatisch Zugriff, ohne PIN.
             </p>
-            <Button onClick={onLogin}>Trainer-Bereich öffnen</Button>
+            <Button onClick={() => onLogin()}>Trainer-Bereich öffnen</Button>
           </>
         ) : (
           <>

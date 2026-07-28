@@ -5,7 +5,7 @@ import { type Doc } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { roleValidator } from "./schema";
-import { getUserByClerkId, isEmailDomainAllowed, requireManager } from "./lib/auth";
+import { canGrantRole, getUserByClerkId, isEmailDomainAllowed, requireManager } from "./lib/auth";
 import { deleteClerkUser } from "./lib/clerk";
 import { notifyUsers } from "./lib/notify";
 
@@ -174,7 +174,7 @@ export const approve = mutation({
       });
     }
     const grantedRole = role ?? "employee";
-    if (grantedRole !== "employee" && reviewer.role !== "admin") {
+    if (!canGrantRole(reviewer, grantedRole)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only admins can grant manager/admin roles",
