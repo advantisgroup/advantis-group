@@ -131,7 +131,11 @@ export function BlockEditor({
     const block = blocks[index];
     if (block.type !== "image") return;
     try {
-      const storageId = await uploadToConvex(() => generateUploadUrl({}), file, () => {});
+      const storageId = await uploadToConvex(
+        () => generateUploadUrl({}),
+        file,
+        () => {},
+      );
       update(index, { ...block, storageId, url: URL.createObjectURL(file) });
     } catch {
       toast.error(t("uploadFailed"));

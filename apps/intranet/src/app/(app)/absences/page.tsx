@@ -2,7 +2,14 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import { CalendarArrowDown, CircleDashed, Clock, Plane, Thermometer, UserRound } from "lucide-react";
+import {
+  CalendarArrowDown,
+  CircleDashed,
+  Clock,
+  Plane,
+  Thermometer,
+  UserRound,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -222,9 +229,7 @@ function MyAbsences({ mine }: { mine: AbsenceRow[] | undefined }) {
     const groups = new Map<string, AbsenceRow[]>();
     for (const a of rows) {
       const year =
-        typeof a.startDate === "string" && a.startDate.length >= 4
-          ? a.startDate.slice(0, 4)
-          : "—";
+        typeof a.startDate === "string" && a.startDate.length >= 4 ? a.startDate.slice(0, 4) : "—";
       const list = groups.get(year) ?? [];
       list.push(a);
       groups.set(year, list);
