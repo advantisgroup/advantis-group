@@ -773,7 +773,7 @@ function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => v
   const hasContact = Boolean(user.email || user.phone || user.department);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-start gap-3 border-b border-border/70 p-5">
         <div className="relative shrink-0">
