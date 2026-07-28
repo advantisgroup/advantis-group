@@ -497,7 +497,7 @@ function AdminControls({
       )}
       <div className="space-y-3 rounded-lg border border-border/70 p-3">
         {isAdmin && !isSelf && (
-          <div className="flex items-center justify-between gap-2">
+          <div className="space-y-1.5">
             <span className="text-sm text-muted-foreground">{t("role")}</span>
             <RoleSelect value={user.role} onChange={changeRole} canElevate />
           </div>

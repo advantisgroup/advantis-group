@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -8,23 +8,18 @@ import { useMutation, useQuery } from "convex/react";
 import { Check, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Drawer } from "vaul";
 
 import { UserProfile } from "@/components/profile/UserProfile";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { CAPABILITY_ICONS } from "@/lib/permission-icons";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +28,8 @@ const CAPABILITIES = [
   "access_integrations",
   "manage_uploads",
   "view_activity_admin",
+  "manage_announcements",
+  "manage_guidebooks",
 ] as const;
 type Capability = (typeof CAPABILITIES)[number];
 
@@ -63,10 +60,12 @@ function RoleForm({
 
   return (
     <>
-      <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
+      <div className="space-y-4 px-6 pb-5 pt-6 sm:pr-12">
         <div className="space-y-1">
-          <DialogTitle className="leading-snug">{role._id ? t("edit") : t("newRole")}</DialogTitle>
-          <DialogDescription>{t("descriptionDetail")}</DialogDescription>
+          <h2 className="font-display text-lg font-semibold leading-snug tracking-tight">
+            {role._id ? t("edit") : t("newRole")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t("descriptionDetail")}</p>
         </div>
         <div className="space-y-1.5">
           <label className="text-xs font-medium text-muted-foreground">{t("name")}</label>
@@ -78,7 +77,7 @@ function RoleForm({
         </div>
         <div className="space-y-2">
           <p className="text-xs font-medium text-muted-foreground">{t("capabilities")}</p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="grid max-h-80 grid-cols-1 gap-2 overflow-y-auto pr-1">
             {CAPABILITIES.map((cap) => {
               const checked = capabilities.includes(cap);
               const Icon = CAPABILITY_ICONS[cap];
@@ -108,16 +107,9 @@ function RoleForm({
                   <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium leading-snug">{t(`capability_${cap}`)}</p>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {t(`capability_${cap}_desc`)}
-                        </p>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" className="max-w-xs leading-relaxed">
-                        {t(`capability_${cap}_desc`)}
-                      </TooltipContent>
-                    </Tooltip>
+                    <p className="text-xs leading-snug text-muted-foreground">
+                      {t(`capability_${cap}_desc`)}
+                    </p>
                   </div>
                 </button>
               );
@@ -125,7 +117,7 @@ function RoleForm({
           </div>
         </div>
       </div>
-      <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
+      <div className="flex flex-col-reverse gap-2 border-t border-border/70 px-6 py-4 sm:flex-row sm:items-center sm:justify-end">
         <Button variant="ghost" onClick={onCancel}>
           {t("cancel")}
         </Button>
@@ -135,8 +127,56 @@ function RoleForm({
         >
           {role._id ? t("save") : t("create")}
         </Button>
-      </DialogFooter>
+      </div>
     </>
+  );
+}
+
+/** Same Drawer(mobile)/Dialog(desktop) shell as UserProfile — a bottom
+ * sheet on small screens instead of a shrunken centered modal. RoleForm's
+ * own title/description/footer are plain markup (not Radix DialogTitle
+ * etc.) so they work unchanged inside either shell; each shell supplies its
+ * own screen-reader-only title as required by its own primitive. */
+function RoleEditorShell({
+  open,
+  onOpenChange,
+  title,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  children: ReactNode;
+}) {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <Drawer.Root open={open} onOpenChange={onOpenChange}>
+        <Drawer.Portal>
+          <Drawer.Overlay className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" />
+          <Drawer.Content
+            aria-describedby={undefined}
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-2xl border-t border-border bg-background text-foreground shadow-2xl shadow-black/40 outline-none"
+          >
+            <Drawer.Title className="sr-only">{title}</Drawer.Title>
+            <div className="flex shrink-0 cursor-grab items-center justify-center pb-1 pt-3 active:cursor-grabbing">
+              <span className="h-1.5 w-10 rounded-full bg-border" />
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">{children}</div>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg gap-0 p-0">
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        {children}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -293,18 +333,20 @@ export function CustomRolesPanel() {
         }}
       />
 
-      <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent className="max-w-lg gap-0 p-0">
-          {editing && (
-            <RoleForm
-              key={editing._id ?? "new"}
-              role={editing}
-              onCancel={() => setEditing(null)}
-              onSave={handleSave}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <RoleEditorShell
+        open={editing !== null}
+        onOpenChange={(open) => !open && setEditing(null)}
+        title={editing?._id ? t("edit") : t("newRole")}
+      >
+        {editing && (
+          <RoleForm
+            key={editing._id ?? "new"}
+            role={editing}
+            onCancel={() => setEditing(null)}
+            onSave={handleSave}
+          />
+        )}
+      </RoleEditorShell>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { requireManager, requireUser } from "./lib/auth";
+import { requireCapability, requireUser } from "./lib/auth";
 
 /** Currently highlighted guidebook slugs, most recently featured first. */
 export const list = query({
@@ -13,11 +13,11 @@ export const list = query({
   },
 });
 
-/** Manager+ toggles a guidebook's highlighted state. */
+/** Requires the manage_guidebooks capability — toggles a guidebook's highlighted state. */
 export const toggle = mutation({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_guidebooks");
     const existing = await ctx.db
       .query("guidebookHighlights")
       .withIndex("by_slug", (q) => q.eq("slug", slug))

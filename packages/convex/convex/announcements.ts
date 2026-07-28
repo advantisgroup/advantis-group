@@ -5,7 +5,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { isOwnerOrAdmin, requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
@@ -61,7 +61,7 @@ export const create = mutation({
     expiresAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const author = await requireManager(ctx);
+    const author = await requireCapability(ctx, "manage_announcements");
     assertAttachmentSizeOk(args.attachments ?? []);
     const now = Date.now();
     // Keep the flat storage-id list in sync (used for cleanup on edit/delete).
@@ -146,7 +146,7 @@ export const update = mutation({
     expiresAt: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, { announcementId, expiresAt, category, ...patch }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_announcements");
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
@@ -193,7 +193,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_announcements");
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return { ok: false };
     if (!isOwnerOrAdmin(user, announcement.authorUserId)) {
@@ -427,7 +427,7 @@ export const markAllRead = mutation({
 export const audienceSize = query({
   args: { audience: audienceValidator },
   handler: async (ctx, { audience }) => {
-    await requireManager(ctx);
+    await requireCapability(ctx, "manage_announcements");
     const activeUsers = await ctx.db
       .query("users")
       .withIndex("by_status", (q) => q.eq("status", "active"))

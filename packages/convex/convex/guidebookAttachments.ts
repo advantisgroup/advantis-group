@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { isOwnerOrAdmin, requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 import { attachmentValidator } from "./schema";
 
 /** Files attached to a guidebook page, newest first. */
@@ -30,11 +30,11 @@ export const list = query({
   },
 });
 
-/** Manager+ only — attach an already-uploaded file to a guidebook page. */
+/** Requires the manage_guidebooks capability — attach an already-uploaded file to a guidebook page. */
 export const add = mutation({
   args: { slug: v.string(), attachment: attachmentValidator },
   handler: async (ctx, { slug, attachment }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_guidebooks");
     const id = await ctx.db.insert("guidebookAttachments", {
       slug,
       storageId: attachment.storageId,
@@ -52,7 +52,7 @@ export const add = mutation({
 export const remove = mutation({
   args: { attachmentId: v.id("guidebookAttachments") },
   handler: async (ctx, { attachmentId }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_guidebooks");
     const row = await ctx.db.get(attachmentId);
     if (!row) return { ok: false };
     if (!isOwnerOrAdmin(user, row.uploadedByUserId)) {

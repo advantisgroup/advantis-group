@@ -17,7 +17,7 @@ import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { CAPABILITY_ICONS } from "@/lib/permission-icons";
@@ -174,7 +182,7 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
             variant="outline"
             size="sm"
             aria-label={t("customRole")}
-            className="hidden h-7 max-w-40 truncate px-2 text-xs sm:inline-flex"
+            className="h-7 max-w-40 truncate px-2 text-xs"
           >
             {label}
           </Button>
@@ -263,49 +271,94 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
     );
   }
 
-  function MemberRow(m: Member) {
+  /** Name + status/external badges + email — the one bit both layouts share. */
+  function MemberIdentity({ m }: { m: Member }) {
     return (
-      <Card nested key={m._id} className="transition-colors hover:border-border">
-        <div className="flex items-center gap-3 p-3">
-          <button
-            type="button"
-            onClick={() => setSelectedId(m._id as Id<"users">)}
-            className="flex min-w-0 flex-1 items-center gap-3 text-left"
-          >
-            <Avatar className="h-9 w-9 shrink-0">
-              {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
-              <AvatarFallback className="text-xs">{initials(m.name, m.email)}</AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="truncate font-medium">{m.name}</p>
-                {m.status === "suspended" && (
-                  <Badge variant="destructive" className="text-[10px]">
-                    {t("suspended")}
-                  </Badge>
-                )}
-                {m.external && (
-                  <Badge variant="warning" className="text-[10px]">
-                    {t("external")}
-                  </Badge>
-                )}
-              </div>
-              <p className="truncate text-xs text-muted-foreground">{m.email}</p>
-            </div>
-          </button>
-          <div className="flex shrink-0 items-center gap-2">
+      <button
+        type="button"
+        onClick={() => setSelectedId(m._id as Id<"users">)}
+        className="flex min-w-0 flex-1 items-center gap-3 text-left"
+      >
+        <Avatar className="h-9 w-9 shrink-0">
+          {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
+          <AvatarFallback className="text-xs">{initials(m.name, m.email)}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="truncate font-medium">{m.name}</p>
+            {m.status === "suspended" && (
+              <Badge variant="destructive" className="text-[10px]">
+                {t("suspended")}
+              </Badge>
+            )}
+            {m.external && (
+              <Badge variant="warning" className="text-[10px]">
+                {t("external")}
+              </Badge>
+            )}
+          </div>
+          <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+        </div>
+      </button>
+    );
+  }
+
+  /** Mobile: a card per member, grouped into labeled sections (identity /
+   * role & org / access) instead of one dense row of same-looking badges. */
+  function MemberCard(m: Member) {
+    return (
+      <Card key={m._id} className="transition-colors hover:border-border">
+        <CardContent className="space-y-3 p-3">
+          <div className="flex items-center gap-3">
+            <MemberIdentity m={m} />
+            <MemberMenu m={m} />
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5 border-t border-border/70 pt-2.5">
             <PersonIdentityBadges
               role={m.role}
               department={m.department}
               teams={m.teams}
-              className="hidden flex-wrap items-center gap-1 sm:flex"
+              className="flex flex-wrap items-center gap-1"
             />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <MemberAccessControl m={m} />
             <TourProgressChip userId={m._id as Id<"users">} />
-            <MemberMenu m={m} />
           </div>
-        </div>
+        </CardContent>
       </Card>
+    );
+  }
+
+  /** Desktop: a proper table — role, department/teams, access and setup
+   * each get their own column instead of competing for space in one row. */
+  function MemberTableRow(m: Member) {
+    return (
+      <TableRow key={m._id}>
+        <TableCell>
+          <MemberIdentity m={m} />
+        </TableCell>
+        <TableCell>
+          <PersonIdentityBadges role={m.role} className="flex flex-wrap items-center gap-1" />
+        </TableCell>
+        <TableCell>
+          <PersonIdentityBadges
+            department={m.department}
+            teams={m.teams}
+            maxTags={3}
+            className="flex flex-wrap items-center gap-1"
+          />
+        </TableCell>
+        <TableCell>
+          <MemberAccessControl m={m} />
+        </TableCell>
+        <TableCell>
+          <TourProgressChip userId={m._id as Id<"users">} />
+        </TableCell>
+        <TableCell className="text-right">
+          <MemberMenu m={m} />
+        </TableCell>
+      </TableRow>
     );
   }
 
@@ -372,8 +425,26 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
       ) : filtered.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">{t("noMembers")}</p>
       ) : (
-        <div className="space-y-2" data-tour="tour-admin-members">
-          {filtered.map(MemberRow)}
+        <div data-tour="tour-admin-members">
+          {/* Below sm: a card per member. sm and up: a proper table, so
+              role/department/access/setup each get their own column instead
+              of competing for space in one row. */}
+          <div className="space-y-2 sm:hidden">{filtered.map(MemberCard)}</div>
+          <Card className="hidden sm:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("member")}</TableHead>
+                  <TableHead>{t("role")}</TableHead>
+                  <TableHead>{t("departmentAndTeams")}</TableHead>
+                  <TableHead>{t("access")}</TableHead>
+                  <TableHead>{t("setup")}</TableHead>
+                  <TableHead className="text-right">{t("actions")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>{filtered.map(MemberTableRow)}</TableBody>
+            </Table>
+          </Card>
         </div>
       )}
 

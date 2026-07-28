@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { isOwnerOrAdmin, requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 import { audienceValidator } from "./schema";
 import { userMatchesAudience } from "./lib/audience";
 
@@ -24,7 +24,7 @@ export const create = mutation({
     guestVisible: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_announcements");
     if (args.end < args.start) {
       throw new ConvexError({
         code: "bad_request",
@@ -54,7 +54,7 @@ export const update = mutation({
     guestVisible: v.optional(v.boolean()),
   },
   handler: async (ctx, { eventId, ...patch }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_announcements");
     const event = await ctx.db.get(eventId);
     if (!event) {
       throw new ConvexError({ code: "not_found", message: "Event not found" });
@@ -73,7 +73,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { eventId: v.id("events") },
   handler: async (ctx, { eventId }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_announcements");
     const event = await ctx.db.get(eventId);
     if (!event) return { ok: false };
     if (!isOwnerOrAdmin(user, event.createdByUserId)) {

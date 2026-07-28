@@ -19,6 +19,8 @@ export const capabilityValidator = v.union(
   v.literal("access_integrations"),
   v.literal("manage_uploads"),
   v.literal("view_activity_admin"),
+  v.literal("manage_announcements"),
+  v.literal("manage_guidebooks"),
 );
 
 // --- Applicant Management (Bewerbermanagement) validators -------------------

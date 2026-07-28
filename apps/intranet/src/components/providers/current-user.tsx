@@ -9,7 +9,9 @@ export type Capability =
   | "manage_members"
   | "access_integrations"
   | "manage_uploads"
-  | "view_activity_admin";
+  | "view_activity_admin"
+  | "manage_announcements"
+  | "manage_guidebooks";
 
 export interface CurrentUser {
   _id: string;

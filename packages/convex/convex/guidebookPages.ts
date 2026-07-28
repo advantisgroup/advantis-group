@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { isOwnerOrAdmin, requireManager, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
 
 const pageFields = {
   title: v.string(),
@@ -59,13 +59,13 @@ export const get = query({
   },
 });
 
-/** Manager+ — the frontend computes a unique slug (checked against both this
+/** Requires the manage_guidebooks capability — the frontend computes a unique slug (checked against both this
  * table and the static registry, which Convex doesn't know about) before
  * calling this; the uniqueness check here is just a defensive race guard. */
 export const create = mutation({
   args: { slug: v.string(), ...pageFields },
   handler: async (ctx, args) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_guidebooks");
     const existing = await ctx.db
       .query("guidebookPages")
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
@@ -85,7 +85,7 @@ export const create = mutation({
 export const update = mutation({
   args: { pageId: v.id("guidebookPages"), ...pageFields },
   handler: async (ctx, { pageId, ...patch }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_guidebooks");
     const page = await ctx.db.get(pageId);
     if (!page) throw new ConvexError({ code: "not_found", message: "Not found" });
     if (!isOwnerOrAdmin(user, page.authorUserId)) {
@@ -108,7 +108,7 @@ export const update = mutation({
 export const remove = mutation({
   args: { pageId: v.id("guidebookPages") },
   handler: async (ctx, { pageId }) => {
-    const user = await requireManager(ctx);
+    const user = await requireCapability(ctx, "manage_guidebooks");
     const page = await ctx.db.get(pageId);
     if (!page) return { ok: false };
     if (!isOwnerOrAdmin(user, page.authorUserId)) {

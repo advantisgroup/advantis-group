@@ -1,6 +1,8 @@
 import { type Role } from "@advantis/types";
 import {
   Activity,
+  BookOpen,
+  Megaphone,
   Plug,
   ShieldCheck,
   UploadCloud,
@@ -27,4 +29,6 @@ export const CAPABILITY_ICONS: Record<Capability, LucideIcon> = {
   access_integrations: Plug,
   manage_uploads: UploadCloud,
   view_activity_admin: Activity,
+  manage_announcements: Megaphone,
+  manage_guidebooks: BookOpen,
 };

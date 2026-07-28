@@ -57,7 +57,7 @@ export function RoleSelect({
           );
         })}
       </div>
-      <p className="max-w-52 text-[11px] leading-tight text-muted-foreground">
+      <p className="max-w-xs text-[11px] leading-tight text-muted-foreground">
         {t(`${value}_desc`)}
       </p>
     </div>
