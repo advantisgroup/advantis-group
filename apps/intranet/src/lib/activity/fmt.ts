@@ -1,14 +1,5 @@
 import type { Lang } from "./locales/types";
 
-export type Role = "it_admin" | "manager" | "viewer";
-
-const RANK: Record<Role, number> = { viewer: 0, manager: 1, it_admin: 2 };
-
-export function roleAtLeast(role: Role | undefined, min: Role): boolean {
-  if (!role) return false;
-  return RANK[role] >= RANK[min];
-}
-
 /** "3h 42m" / "3 Std. 42 Min." style duration from seconds. */
 export function formatDuration(totalSeconds: number, lang: Lang): string {
   const s = Math.max(0, Math.floor(totalSeconds));

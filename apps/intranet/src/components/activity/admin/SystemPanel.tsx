@@ -8,6 +8,7 @@ import { AlertTriangle, CheckCircle2, WifiOff } from "lucide-react";
 
 import { InfoTip } from "@/components/activity/InfoTip";
 import { SkeletonCard } from "@/components/activity/Skeleton";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,13 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  formatDuration,
-  formatRelativeTime,
-  formatTime,
-  roleAtLeast,
-  type Role,
-} from "@/lib/activity/fmt";
+import { formatDuration, formatRelativeTime, formatTime } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import { SEVERITY_DOT_CLASS as SEV_DOT, type Severity } from "@/lib/activity/ui";
 import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
@@ -61,9 +56,8 @@ function fixFor(
 /** System health: device connectivity + reported issues. Settings hub tab. */
 export function SystemPanel() {
   const { t, lang } = useI18n();
-  const me = useQuery(api.users.me);
   const health = useQuery(api.activity.events.health);
-  const isAdmin = roleAtLeast((me?.role ?? "viewer") as Role, "it_admin");
+  const isAdmin = useIsAdmin();
 
   const [onlyOpen, setOnlyOpen] = useState(true);
   const events = useQuery(api.activity.events.listEvents, isAdmin ? { onlyOpen } : "skip");
