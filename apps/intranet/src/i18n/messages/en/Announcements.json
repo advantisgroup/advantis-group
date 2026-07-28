@@ -31,6 +31,8 @@
   "empty": "No announcements yet",
   "viewedBy": "{count, plural, =0 {Not seen yet} one {# view} other {# views}}",
   "noViews": "No one has seen this yet",
+  "notReadYet": "Not read yet",
+  "everyoneRead": "Everyone in the audience has read this",
   "edit": "Edit announcement",
   "updated": "Announcement updated",
   "edited": "edited",

@@ -31,6 +31,8 @@
   "empty": "Noch keine Ankündigungen",
   "viewedBy": "{count, plural, =0 {Noch nicht gesehen} one {# Aufruf} other {# Aufrufe}}",
   "noViews": "Noch niemand hat das gesehen",
+  "notReadYet": "Noch nicht gelesen",
+  "everyoneRead": "Alle in der Zielgruppe haben es gelesen",
   "edit": "Ankündigung bearbeiten",
   "updated": "Ankündigung aktualisiert",
   "edited": "bearbeitet",

@@ -87,9 +87,15 @@ const DRAFT_KEY = "announcements:draft";
 const USERS_AUDIENCE_VALUE = "__users__";
 /** Sentinel for the feed toolbar's category filter — distinct from any
  * category value an admin could actually type (including one literally
- * named "all"). */
+ * named "all"). Reserved: `sanitizeCategory` strips it back out if someone
+ * types this exact string, so it can never collide with real data. */
 const ALL_CATEGORIES_VALUE = "__all_categories__";
 const CATEGORY_MAX_LENGTH = 40;
+
+function sanitizeCategory(raw: string): string {
+  const trimmed = raw.trim();
+  return trimmed === ALL_CATEGORIES_VALUE ? "" : trimmed;
+}
 
 interface Draft {
   title: string;
@@ -333,7 +339,7 @@ function EditorDialog({
           body: draft.body.trim(),
           pinned: draft.pinned,
           ...(keepOriginalAudience ? {} : { audience: audienceValue }),
-          category: draft.category.trim(),
+          category: sanitizeCategory(draft.category),
           expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
         });
         toast.success(t("updated"));
@@ -347,7 +353,7 @@ function EditorDialog({
             body: draft.body.trim(),
             pinned: draft.pinned,
             audience: audienceValue,
-            category: draft.category.trim() || undefined,
+            category: sanitizeCategory(draft.category) || undefined,
             attachments,
             guestVisible: draft.guestVisible,
             publishAt: draft.publishAt ? new Date(draft.publishAt).getTime() : undefined,
@@ -468,7 +474,6 @@ function EditorDialog({
             </div>
 
             <div className="space-y-5 rounded-lg border border-border/70 bg-muted/30 p-4">
-              {/* Category */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {t("category")}
@@ -487,7 +492,6 @@ function EditorDialog({
                 </datalist>
               </div>
 
-              {/* Audience */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {t("audience")}
@@ -581,7 +585,6 @@ function EditorDialog({
                 )}
               </div>
 
-              {/* Options */}
               <div className="space-y-2 border-t border-border/60 pt-4">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {t("options")}
@@ -606,7 +609,6 @@ function EditorDialog({
                 </div>
               </div>
 
-              {/* Attachments */}
               {!editing && (
                 <div className="space-y-2 border-t border-border/60 pt-4">
                   <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -729,19 +731,36 @@ function ViewersPopover({
   announcementId,
   count,
   total,
+  canManage,
 }: {
   announcementId: Id<"announcements">;
   count: number;
   /** Audience size — shown as "x / y" to the author/admins only. */
   total?: number;
+  /** Author/admin gets a second tab listing who hasn't read it yet. */
+  canManage: boolean;
 }) {
   const t = useTranslations("Announcements");
   const locale = useLocale();
   const [open, setOpen] = useState(false);
-  const viewers = useQuery(api.announcements.viewers, open ? { announcementId } : "skip");
+  const [tab, setTab] = useState<"read" | "unread">("read");
+  const viewers = useQuery(
+    api.announcements.viewers,
+    open && tab === "read" ? { announcementId } : "skip",
+  );
+  const nonReaders = useQuery(
+    api.announcements.nonReaders,
+    open && canManage && tab === "unread" ? { announcementId } : "skip",
+  );
 
   return (
-    <PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+    <PopoverPrimitive.Root
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) setTab("read");
+      }}
+    >
       <PopoverPrimitive.Trigger asChild>
         <button
           type="button"
@@ -757,26 +776,72 @@ function ViewersPopover({
         <PopoverPrimitive.Content
           align="end"
           sideOffset={6}
-          className="z-50 max-h-72 w-60 overflow-y-auto rounded-lg border border-border/70 bg-popover p-1.5 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
+          className="z-50 max-h-80 w-64 overflow-y-auto rounded-lg border border-border/70 bg-popover p-1.5 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
         >
-          <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("viewedBy", { count })}
-          </p>
-          {viewers === undefined ? (
+          {canManage && (
+            <div className="mb-1 grid grid-cols-2 gap-1 px-0.5 pb-1">
+              <button
+                type="button"
+                onClick={() => setTab("read")}
+                className={cn(
+                  "rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                  tab === "read"
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent/60",
+                )}
+              >
+                {t("viewedBy", { count })}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("unread")}
+                className={cn(
+                  "rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                  tab === "unread"
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:bg-accent/60",
+                )}
+              >
+                {t("notReadYet")}
+              </button>
+            </div>
+          )}
+          {!canManage && (
+            <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("viewedBy", { count })}
+            </p>
+          )}
+          {tab === "read" ? (
+            viewers === undefined ? (
+              <p className="px-2 py-2 text-xs text-muted-foreground">…</p>
+            ) : viewers.length === 0 ? (
+              <p className="px-2 py-2 text-xs text-muted-foreground">{t("noViews")}</p>
+            ) : (
+              viewers.map((v) => (
+                <div key={v.userId} className="flex items-center gap-2 rounded-md px-2 py-1.5">
+                  <Avatar className="size-6">
+                    {v.avatar && <AvatarImage src={v.avatar} alt={v.name} />}
+                    <AvatarFallback className="text-[9px]">{initials(v.name)}</AvatarFallback>
+                  </Avatar>
+                  <span className="flex-1 truncate text-sm">{v.name}</span>
+                  <span className="shrink-0 text-[10px] text-muted-foreground">
+                    {formatDateTime(v.readAt, locale)}
+                  </span>
+                </div>
+              ))
+            )
+          ) : nonReaders === undefined ? (
             <p className="px-2 py-2 text-xs text-muted-foreground">…</p>
-          ) : viewers.length === 0 ? (
-            <p className="px-2 py-2 text-xs text-muted-foreground">{t("noViews")}</p>
+          ) : nonReaders.length === 0 ? (
+            <p className="px-2 py-2 text-xs text-muted-foreground">{t("everyoneRead")}</p>
           ) : (
-            viewers.map((v) => (
+            nonReaders.map((v) => (
               <div key={v.userId} className="flex items-center gap-2 rounded-md px-2 py-1.5">
                 <Avatar className="size-6">
                   {v.avatar && <AvatarImage src={v.avatar} alt={v.name} />}
                   <AvatarFallback className="text-[9px]">{initials(v.name)}</AvatarFallback>
                 </Avatar>
                 <span className="flex-1 truncate text-sm">{v.name}</span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
-                  {formatDateTime(v.readAt, locale)}
-                </span>
               </div>
             ))
           )}
@@ -1099,6 +1164,7 @@ function AnnouncementCard({
             announcementId={a._id}
             count={a.viewCount}
             total={canManage ? a.audienceCount : undefined}
+            canManage={canManage}
           />
         </div>
       </div>
@@ -1167,7 +1233,9 @@ export default function AnnouncementsPage() {
 
   const existingCategories = useMemo(() => {
     const set = new Set<string>();
-    for (const a of announcements ?? []) if (a.category) set.add(a.category);
+    for (const a of announcements ?? []) {
+      if (a.category && a.category !== ALL_CATEGORIES_VALUE) set.add(a.category);
+    }
     return [...set].sort((a, b) => a.localeCompare(b));
   }, [announcements]);
 
