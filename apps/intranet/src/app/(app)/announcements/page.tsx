@@ -85,6 +85,11 @@ const DRAFT_KEY = "announcements:draft";
 
 /** Sentinel value for the audience Select's "Specific people" option. */
 const USERS_AUDIENCE_VALUE = "__users__";
+/** Sentinel for the feed toolbar's category filter — distinct from any
+ * category value an admin could actually type (including one literally
+ * named "all"). */
+const ALL_CATEGORIES_VALUE = "__all_categories__";
+const CATEGORY_MAX_LENGTH = 40;
 
 interface Draft {
   title: string;
@@ -118,6 +123,26 @@ function msToLocalInput(ms: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/**
+ * Autosaved drafts from before the audience picker gained "audienceKind" /
+ * "audienceDepartment" stored a single `audience` string ("all" or a
+ * department name) instead. Translate that old shape so a still-pending
+ * draft doesn't silently lose its department targeting on restore.
+ */
+function migrateStoredDraft(raw: unknown): Partial<Draft> {
+  if (!raw || typeof raw !== "object") return {};
+  const parsed = raw as Partial<Draft> & { audience?: string };
+  if (parsed.audienceKind !== undefined || typeof parsed.audience !== "string") {
+    return parsed;
+  }
+  const { audience, ...rest } = parsed;
+  return {
+    ...rest,
+    audienceKind: audience === "all" ? "all" : "department",
+    audienceDepartment: audience === "all" ? "" : audience,
+  };
+}
+
 function EditorDialog({
   open,
   onOpenChange,
@@ -147,6 +172,12 @@ function EditorDialog({
   const [alwaysPreview, setAlwaysPreview] = useState(false);
   const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
   const [peopleSearch, setPeopleSearch] = useState("");
+  // Whether the audience control was actually touched this session. An
+  // existing "departmentId" audience (pre-dates this editor's picker, so it
+  // can't be represented/re-selected here) must otherwise be left untouched —
+  // saving an unrelated field change would silently replace it with `all`.
+  const [audienceTouched, setAudienceTouched] = useState(false);
+  const originalAudienceRef = useRef<Announcement["audience"] | null>(null);
 
   // Restore the "always preview" preference.
   useEffect(() => {
@@ -158,8 +189,10 @@ function EditorDialog({
   useEffect(() => {
     if (!open) return;
     setPreviewing(false);
+    setAudienceTouched(false);
     if (editing) {
-      const audience = editing.audience as Audience;
+      const audience = editing.audience;
+      originalAudienceRef.current = audience;
       setDraft({
         title: editing.title,
         body: editing.body,
@@ -167,7 +200,8 @@ function EditorDialog({
         guestVisible: false,
         category: editing.category ?? "",
         // "departmentId" audiences predate the per-user picker and aren't
-        // editable here yet — fall back to "all" rather than crash.
+        // editable here yet — fall back to "all" for display only; submit()
+        // leaves the real audience alone unless the user touches this control.
         audienceKind:
           audience.kind === "users"
             ? "users"
@@ -180,9 +214,10 @@ function EditorDialog({
         expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
       });
     } else {
+      originalAudienceRef.current = null;
       try {
         const raw = localStorage.getItem(DRAFT_KEY);
-        setDraft(raw ? { ...EMPTY_DRAFT, ...(JSON.parse(raw) as Partial<Draft>) } : EMPTY_DRAFT);
+        setDraft(raw ? { ...EMPTY_DRAFT, ...migrateStoredDraft(JSON.parse(raw)) } : EMPTY_DRAFT);
       } catch {
         setDraft(EMPTY_DRAFT);
       }
@@ -224,6 +259,7 @@ function EditorDialog({
   }, [people, peopleSearch, me._id]);
 
   function toggleAudienceUser(userId: string) {
+    setAudienceTouched(true);
     setDraft((d) => ({
       ...d,
       audienceUserIds: d.audienceUserIds.includes(userId)
@@ -285,12 +321,18 @@ function EditorDialog({
     setBusy(true);
     try {
       if (editing) {
+        // A "departmentId" audience predates this picker and can't be
+        // re-selected here — leave it alone unless the user actually changed
+        // the audience control, so an unrelated edit (title, category, expiry)
+        // doesn't silently widen it to "everyone".
+        const keepOriginalAudience =
+          originalAudienceRef.current?.kind === "departmentId" && !audienceTouched;
         await update({
           announcementId: editing._id,
           title: draft.title.trim(),
           body: draft.body.trim(),
           pinned: draft.pinned,
-          audience: audienceValue,
+          ...(keepOriginalAudience ? {} : { audience: audienceValue }),
           category: draft.category.trim(),
           expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
         });
@@ -425,7 +467,8 @@ function EditorDialog({
               />
             </div>
 
-            <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+            <div className="space-y-5 rounded-lg border border-border/70 bg-muted/30 p-4">
+              {/* Category */}
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {t("category")}
@@ -435,6 +478,7 @@ function EditorDialog({
                   placeholder={t("categoryPlaceholder")}
                   value={draft.category}
                   onChange={(e) => set("category", e.target.value)}
+                  maxLength={CATEGORY_MAX_LENGTH}
                 />
                 <datalist id="announcement-category-suggestions">
                   {existingCategories.map((c) => (
@@ -443,115 +487,135 @@ function EditorDialog({
                 </datalist>
               </div>
 
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t("audience")}
-              </p>
-              <Select
-                value={
-                  draft.audienceKind === "department"
-                    ? draft.audienceDepartment
-                    : draft.audienceKind === "users"
-                      ? USERS_AUDIENCE_VALUE
-                      : "all"
-                }
-                onValueChange={(v) => {
-                  if (v === "all") setDraft((d) => ({ ...d, audienceKind: "all" }));
-                  else if (v === USERS_AUDIENCE_VALUE)
-                    setDraft((d) => ({ ...d, audienceKind: "users" }));
-                  else setDraft((d) => ({ ...d, audienceKind: "department", audienceDepartment: v }));
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("everyone")}</SelectItem>
-                  {departments.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {t("department")}: {d}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={USERS_AUDIENCE_VALUE}>{t("specificPeople")}</SelectItem>
-                </SelectContent>
-              </Select>
-              {draft.audienceKind === "users" && (
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-start gap-2 font-normal">
-                      <Users className="size-4" />
-                      {draft.audienceUserIds.length > 0
-                        ? t("peopleSelected", { count: draft.audienceUserIds.length })
-                        : t("selectPeople")}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent align="start" className="w-80 p-0">
-                    <div className="border-b border-border/60 p-2">
-                      <Input
-                        autoFocus
-                        placeholder={tc("search")}
-                        value={peopleSearch}
-                        onChange={(e) => setPeopleSearch(e.target.value)}
-                        className="h-8"
-                      />
-                    </div>
-                    <ScrollArea className="h-64">
-                      {filteredPeople.length === 0 ? (
-                        <p className="p-3 text-xs text-muted-foreground">{tc("noResults")}</p>
-                      ) : (
-                        filteredPeople.map((p) => (
-                          <label
-                            key={p._id}
-                            className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-accent"
-                          >
-                            <Checkbox
-                              checked={draft.audienceUserIds.includes(p._id)}
-                              onCheckedChange={() => toggleAudienceUser(p._id)}
-                            />
-                            <Avatar className="size-6">
-                              {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                              <AvatarFallback className="text-[10px]">
-                                {initials(p.name, p.email)}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="min-w-0 flex-1 truncate text-sm">{p.name}</span>
-                          </label>
-                        ))
-                      )}
-                    </ScrollArea>
-                  </PopoverContent>
-                </Popover>
-              )}
-              {audienceCount !== undefined && (
-                <p className="text-xs text-muted-foreground">
-                  {t("willReach", { count: audienceCount })}
-                </p>
-              )}
-              <div className="flex flex-wrap items-center gap-4 pt-1">
-                <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                  <input
-                    type="checkbox"
-                    className="size-4 accent-[var(--primary)]"
-                    checked={draft.pinned}
-                    onChange={(e) => set("pinned", e.target.checked)}
-                  />
-                  {t("pin")}
-                </label>
-                {!editing && (
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                    <input
-                      type="checkbox"
-                      className="size-4 accent-[var(--primary)]"
-                      checked={draft.guestVisible}
-                      onChange={(e) => set("guestVisible", e.target.checked)}
-                    />
-                    {t("guestVisible")}
-                  </label>
+              {/* Audience */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("audience")}
+                </Label>
+                <Select
+                  value={
+                    draft.audienceKind === "department"
+                      ? draft.audienceDepartment
+                      : draft.audienceKind === "users"
+                        ? USERS_AUDIENCE_VALUE
+                        : "all"
+                  }
+                  onValueChange={(v) => {
+                    setAudienceTouched(true);
+                    if (v === "all") setDraft((d) => ({ ...d, audienceKind: "all" }));
+                    else if (v === USERS_AUDIENCE_VALUE)
+                      setDraft((d) => ({ ...d, audienceKind: "users" }));
+                    else
+                      setDraft((d) => ({ ...d, audienceKind: "department", audienceDepartment: v }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("everyone")}</SelectItem>
+                    {departments.map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {t("department")}: {d}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value={USERS_AUDIENCE_VALUE}>{t("specificPeople")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                {draft.audienceKind === "users" && (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start gap-2 font-normal">
+                        <Users className="size-4" />
+                        {draft.audienceUserIds.length > 0
+                          ? t("peopleSelected", { count: draft.audienceUserIds.length })
+                          : t("selectPeople")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-80 p-0">
+                      <div className="border-b border-border/60 p-2">
+                        <Input
+                          autoFocus
+                          placeholder={tc("search")}
+                          value={peopleSearch}
+                          onChange={(e) => setPeopleSearch(e.target.value)}
+                          className="h-8"
+                        />
+                      </div>
+                      <ScrollArea className="h-64">
+                        {filteredPeople.length === 0 ? (
+                          <p className="p-3 text-xs text-muted-foreground">{tc("noResults")}</p>
+                        ) : (
+                          filteredPeople.map((p) => (
+                            <label
+                              key={p._id}
+                              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-accent"
+                            >
+                              <Checkbox
+                                checked={draft.audienceUserIds.includes(p._id)}
+                                onCheckedChange={() => toggleAudienceUser(p._id)}
+                              />
+                              <Avatar className="size-6 shrink-0">
+                                {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+                                <AvatarFallback className="text-[10px]">
+                                  {initials(p.name, p.email)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-sm">{p.name}</span>
+                                <span className="block truncate text-xs text-muted-foreground">
+                                  {p.email}
+                                </span>
+                              </span>
+                            </label>
+                          ))
+                        )}
+                      </ScrollArea>
+                    </PopoverContent>
+                  </Popover>
                 )}
-                {!editing && (
-                  <>
-                    <label className="ml-auto flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                {audienceCount !== undefined && (
+                  <p className="text-xs text-muted-foreground">
+                    {t("willReach", { count: audienceCount })}
+                  </p>
+                )}
+              </div>
+
+              {/* Options */}
+              <div className="space-y-2 border-t border-border/60 pt-4">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("options")}
+                </Label>
+                <div className="flex flex-wrap items-center gap-4">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                    <Checkbox
+                      checked={draft.pinned}
+                      onCheckedChange={(v) => set("pinned", v === true)}
+                    />
+                    {t("pin")}
+                  </label>
+                  {!editing && (
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+                      <Checkbox
+                        checked={draft.guestVisible}
+                        onCheckedChange={(v) => set("guestVisible", v === true)}
+                      />
+                      {t("guestVisible")}
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Attachments */}
+              {!editing && (
+                <div className="space-y-2 border-t border-border/60 pt-4">
+                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t("attachments")}
+                  </Label>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
                       <Paperclip className="h-4 w-4" />
-                      {t("attachments")}
+                      {t("attachFile")}
                       <input
                         type="file"
                         multiple
@@ -570,53 +634,55 @@ function EditorDialog({
                       <Cloud className="h-4 w-4" />
                       {tc("fromOneDrive")}
                     </button>
-                  </>
-                )}
-              </div>
-
-              {!editing && attachmentUpload.entries.length > 0 && (
-                <div className="space-y-1.5">
-                  <AttachmentList
-                    entries={attachmentUpload.entries}
-                    uploading={attachmentUpload.uploading}
-                    onRemove={attachmentUpload.remove}
-                    removeLabel={tc("delete")}
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    {formatFileSize(attachmentUpload.totalSize)} /{" "}
-                    {formatFileSize(MAX_ATTACHMENT_BYTES)}
-                  </p>
+                  </div>
+                  {attachmentUpload.entries.length > 0 && (
+                    <div className="space-y-1.5">
+                      <AttachmentList
+                        entries={attachmentUpload.entries}
+                        uploading={attachmentUpload.uploading}
+                        onRemove={attachmentUpload.remove}
+                        removeLabel={tc("delete")}
+                      />
+                      <p className="text-[11px] text-muted-foreground">
+                        {formatFileSize(attachmentUpload.totalSize)} /{" "}
+                        {formatFileSize(MAX_ATTACHMENT_BYTES)}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Scheduling: publish later and/or auto-expire. */}
-              <div className="grid grid-cols-1 gap-3 border-t border-border/60 pt-3 sm:grid-cols-2">
-                {!editing && (
+              <div className="space-y-2 border-t border-border/60 pt-4">
+                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t("scheduling")}
+                </Label>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {!editing && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground">{t("publishAtLabel")}</Label>
+                      <Input
+                        type="datetime-local"
+                        value={draft.publishAt}
+                        onChange={(e) => set("publishAt", e.target.value)}
+                      />
+                    </div>
+                  )}
                   <div className="space-y-1.5">
-                    <Label className="text-xs">{t("publishAtLabel")}</Label>
+                    <Label className="text-xs text-muted-foreground">{t("expiresAtLabel")}</Label>
                     <Input
                       type="datetime-local"
-                      value={draft.publishAt}
-                      onChange={(e) => set("publishAt", e.target.value)}
+                      value={draft.expiresAt}
+                      onChange={(e) => set("expiresAt", e.target.value)}
                     />
                   </div>
-                )}
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{t("expiresAtLabel")}</Label>
-                  <Input
-                    type="datetime-local"
-                    value={draft.expiresAt}
-                    onChange={(e) => set("expiresAt", e.target.value)}
-                  />
                 </div>
               </div>
 
-              <label className="flex cursor-pointer items-center gap-2 border-t border-border/60 pt-3 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-[var(--primary)]"
+              <label className="flex cursor-pointer items-center gap-2 border-t border-border/60 pt-4 text-sm font-medium">
+                <Checkbox
                   checked={alwaysPreview}
-                  onChange={(e) => toggleAlwaysPreview(e.target.checked)}
+                  onCheckedChange={(v) => toggleAlwaysPreview(v === true)}
                 />
                 {t("alwaysPreview")}
               </label>
@@ -849,9 +915,13 @@ function AnnouncementCard({
               {a.title}
             </h2>
             {a.category && (
-              <Badge variant="muted" className="shrink-0 gap-1 font-normal">
-                <Tag className="size-3" />
-                {a.category}
+              <Badge
+                variant="muted"
+                className="min-w-0 shrink gap-1 font-normal"
+                title={a.category}
+              >
+                <Tag className="size-3 shrink-0" />
+                <span className="truncate">{a.category}</span>
               </Badge>
             )}
             {!a.read && !a.scheduled && (
@@ -1053,7 +1123,7 @@ export default function AnnouncementsPage() {
   const [editing, setEditing] = useState<Announcement | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES_VALUE);
   const [sort, setSort] = useState<Sort>("newest");
   const [lightbox, setLightbox] = useState<{
     url: string;
@@ -1113,7 +1183,8 @@ export default function AnnouncementsPage() {
     }
     if (filter === "unread") rows = rows.filter((a) => !a.read && !a.scheduled);
     if (filter === "pinned") rows = rows.filter((a) => a.pinned);
-    if (categoryFilter !== "all") rows = rows.filter((a) => a.category === categoryFilter);
+    if (categoryFilter !== ALL_CATEGORIES_VALUE)
+      rows = rows.filter((a) => a.category === categoryFilter);
     if (sort === "reactions") {
       const score = (a: Announcement) => a.reactions.reduce((sum, r) => sum + r.count, 0);
       rows = [...rows].sort((a, b) => score(b) - score(a));
@@ -1195,7 +1266,7 @@ export default function AnnouncementsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{t("allCategories")}</SelectItem>
+              <SelectItem value={ALL_CATEGORIES_VALUE}>{t("allCategories")}</SelectItem>
               {existingCategories.map((c) => (
                 <SelectItem key={c} value={c}>
                   {c}
