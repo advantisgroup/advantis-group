@@ -411,6 +411,9 @@ export default defineSchema({
     authorUserId: v.id("users"),
     pinned: v.boolean(),
     audience: audienceValidator,
+    /** Free-text topic tag (e.g. "Onboarding", "Customer Care") for grouping
+     * the feed — admins type or pick from previously-used values, no fixed enum. */
+    category: v.optional(v.string()),
     /** Flat storage ids — kept for cleanup + older rows without rich metadata. */
     attachmentStorageIds: v.array(v.id("_storage")),
     /** Rich attachments (name, kind, type) for newer announcements. */

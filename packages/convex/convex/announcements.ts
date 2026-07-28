@@ -46,6 +46,7 @@ export const create = mutation({
     body: v.string(),
     pinned: v.optional(v.boolean()),
     audience: audienceValidator,
+    category: v.optional(v.string()),
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(v.array(attachmentValidator)),
     guestVisible: v.optional(v.boolean()),
@@ -60,12 +61,14 @@ export const create = mutation({
     // Keep the flat storage-id list in sync (used for cleanup on edit/delete).
     const storageIds = args.attachments?.map((a) => a.storageId) ?? args.attachmentStorageIds ?? [];
     const publishedAt = args.publishAt && args.publishAt > now ? args.publishAt : now;
+    const category = args.category?.trim() || undefined;
     const id = await ctx.db.insert("announcements", {
       title: args.title,
       body: args.body,
       authorUserId: author._id,
       pinned: args.pinned ?? false,
       audience: args.audience,
+      category,
       attachmentStorageIds: storageIds,
       attachments: args.attachments,
       guestVisible: args.guestVisible ?? false,
@@ -131,11 +134,12 @@ export const update = mutation({
     body: v.optional(v.string()),
     pinned: v.optional(v.boolean()),
     audience: v.optional(audienceValidator),
+    category: v.optional(v.string()),
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
     guestVisible: v.optional(v.boolean()),
     expiresAt: v.optional(v.union(v.number(), v.null())),
   },
-  handler: async (ctx, { announcementId, expiresAt, ...patch }) => {
+  handler: async (ctx, { announcementId, expiresAt, category, ...patch }) => {
     const user = await requireManager(ctx);
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) {
@@ -172,6 +176,8 @@ export const update = mutation({
       ...patch,
       // null clears the expiry (patching undefined would leave it untouched).
       ...(expiresAt !== undefined ? { expiresAt: expiresAt ?? undefined } : {}),
+      // Empty string clears the category the same way null clears the expiry.
+      ...(category !== undefined ? { category: category.trim() || undefined } : {}),
       updatedAt: Date.now(),
     });
     return { ok: true };
@@ -296,6 +302,7 @@ export const list = query({
           title: a.title,
           body: a.body,
           pinned: a.pinned,
+          category: a.category ?? null,
           publishedAt: a.publishedAt,
           expiresAt: a.expiresAt ?? null,
           scheduled: a.publishedAt > now,
