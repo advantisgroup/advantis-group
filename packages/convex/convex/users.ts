@@ -151,10 +151,13 @@ export const list = query({
 });
 
 /**
- * Directory page only: `list` plus live presence and "out today" absence
- * status. Isolated from `list` so the sitewide presence heartbeat only
- * invalidates the one page that actually renders online status, not every
- * command palette / admin panel that merely lists users.
+ * Directory page only: `list` plus live presence. Isolated from `list` so the
+ * sitewide presence heartbeat only invalidates the one page that actually
+ * renders online status, not every command palette / admin panel that merely
+ * lists users. "Out today" absence status is fetched separately by the page
+ * itself from apps/api's live Clockodo endpoint (this query can't — Convex
+ * queries have no HTTP access, and absences aren't mirrored into Convex
+ * anymore; see AGENTS.md's Clockodo section).
  */
 export const directoryList = query({
   args: listArgs,
@@ -164,24 +167,11 @@ export const directoryList = query({
 
     const presenceRows = await ctx.db.query("presence").collect();
     const lastActiveByUser = new Map(presenceRows.map((p) => [p.userId, p.lastActiveAt]));
-    const today = new Date().toISOString().slice(0, 10);
-    const approved = await ctx.db
-      .query("absences")
-      .withIndex("by_status", (q) => q.eq("status", "approved"))
-      .collect();
-    const outByUser = new Map<string, string>();
-    for (const a of approved) {
-      if (a.startDate <= today && today <= a.endDate) {
-        const prev = outByUser.get(a.userId);
-        if (!prev || a.endDate > prev) outByUser.set(a.userId, a.endDate);
-      }
-    }
 
     return Promise.all(
       users.map(async (u) => ({
         ...(await withAvatar(ctx, u)),
         lastActiveAt: lastActiveByUser.get(u._id) ?? null,
-        outUntil: outByUser.get(u._id) ?? null,
         managerName: u.managerId ? (nameById.get(u.managerId as string) ?? null) : null,
       })),
     );

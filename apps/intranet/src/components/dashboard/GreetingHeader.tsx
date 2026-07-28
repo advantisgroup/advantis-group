@@ -2,14 +2,13 @@
 
 import { useMemo } from "react";
 
-import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
 import { Plane } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { isoToday } from "@/lib/absences";
+import { useMyAbsences } from "@/lib/absences-api";
 import { formatIsoDate } from "@/lib/format";
 import { pickGreeting } from "@/lib/greetings";
 
@@ -18,7 +17,7 @@ export function GreetingHeader() {
   const tAbs = useTranslations("Absences");
   const locale = useLocale();
   const user = useCurrentUser();
-  const myAbsences = useQuery(api.absences.myAbsences);
+  const { absences: myAbsences } = useMyAbsences();
   const today = isoToday();
 
   const todayLabel = useMemo(

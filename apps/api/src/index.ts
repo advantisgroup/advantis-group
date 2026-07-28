@@ -5,17 +5,17 @@ import { PORT } from "./lib/env.js";
 import { ApiError } from "./lib/errors.js";
 import { activityRoute } from "./routes/activity.js";
 import { applicantsRoute } from "./routes/applicants.js";
+import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
 import { onedriveRoute } from "./routes/onedrive.js";
 import { performanceRoute } from "./routes/performance.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
-import { internalClockodoImportRoute } from "./routes/internal/clockodo.js";
+import { internalClockodoRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
 import { internalOnedriveRoute } from "./routes/internal/onedrive.js";
 import { internalUpdatesRoute } from "./routes/internal/updates.js";
 import { meRoute } from "./routes/me.js";
 import { unfurlRoute } from "./routes/unfurl.js";
 import { clerkWebhookRoute } from "./routes/webhooks/clerk.js";
-import { clockodoWebhookRoute } from "./routes/webhooks/clockodo.js";
 import { onedriveWebhookRoute } from "./routes/webhooks/onedrive.js";
 import { resendWebhookRoute } from "./routes/webhooks/resend.js";
 
@@ -40,14 +40,14 @@ export const app = new Elysia()
   .use(meRoute)
   .use(unfurlRoute)
   .use(clerkWebhookRoute)
-  .use(clockodoWebhookRoute)
   .use(onedriveWebhookRoute)
   .use(resendWebhookRoute)
   .use(internalNotificationsRoute)
-  .use(internalClockodoImportRoute)
+  .use(internalClockodoRoute)
   .use(internalOnedriveRoute)
   .use(internalUpdatesRoute)
   .use(activityRoute)
+  .use(clockodoAbsencesRoute)
   .use(onedriveRoute)
   .use(performanceRoute)
   .use(wikiChatRoute)

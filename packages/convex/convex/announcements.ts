@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type MutationCtx } from "./_generated/server";
+import { type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
 import { requireManager, requireUser } from "./lib/auth";
@@ -29,8 +29,16 @@ function aggregateReactions(
   }));
 }
 
+/** The author and admins can always see an announcement, regardless of audience. */
+function isVisibleToUser(user: Doc<"users">, a: Doc<"announcements">): boolean {
+  return (
+    a.authorUserId === user._id || user.role === "admin" || userMatchesAudience(user, a.audience)
+  );
+}
+
+/** Read-only: works from both query and mutation handlers (MutationCtx is a QueryCtx plus write access). */
 async function resolveAudienceUserIds(
-  ctx: MutationCtx,
+  ctx: QueryCtx,
   audience: Audience,
 ): Promise<Id<"users">[]> {
   const all = await ctx.db
@@ -230,8 +238,13 @@ export const list = query({
     // Scheduled (future) and expired announcements stay visible to their
     // author and admins (flagged below) but disappear for everyone else.
     const visible = announcements.filter((a) => {
-      if (!userMatchesAudience(user, a.audience)) return false;
       const isAuthorOrAdmin = a.authorUserId === user._id || user.role === "admin";
+      // The author/an admin must always see it regardless of audience — a
+      // manager targeting a "specific people" audience that excludes
+      // themselves would otherwise lose the announcement (and the edit/delete
+      // controls that only render for authorId === me._id) the moment they
+      // create it.
+      if (!isAuthorOrAdmin && !userMatchesAudience(user, a.audience)) return false;
       if (a.publishedAt > now && !isAuthorOrAdmin) return false;
       if (a.expiresAt && a.expiresAt <= now && !isAuthorOrAdmin) return false;
       return true;
@@ -334,6 +347,14 @@ export const markRead = mutation({
   args: { announcementId: v.id("announcements") },
   handler: async (ctx, { announcementId }) => {
     const user = await requireUser(ctx);
+    const announcement = await ctx.db.get(announcementId);
+    // An author/admin can view an announcement outside its own audience (see
+    // isVisibleToUser in `list`) — that's a management view, not audience
+    // engagement, so it must not count toward read receipts/view stats
+    // (which would otherwise let a "2 / 1 read" impossible stat happen).
+    if (!announcement || !userMatchesAudience(user, announcement.audience)) {
+      return { ok: true };
+    }
     const existing = await ctx.db
       .query("announcementReads")
       .withIndex("by_announcement_user", (q) =>
@@ -362,10 +383,7 @@ export const unreadCount = query({
       .order("desc")
       .take(100);
     const visible = announcements.filter(
-      (a) =>
-        userMatchesAudience(user, a.audience) &&
-        a.publishedAt <= now &&
-        (!a.expiresAt || a.expiresAt > now),
+      (a) => isVisibleToUser(user, a) && a.publishedAt <= now && (!a.expiresAt || a.expiresAt > now),
     );
     const myReads = await ctx.db
       .query("announcementReads")
@@ -392,7 +410,7 @@ export const markAllRead = mutation({
       .collect();
     const readSet = new Set(myReads.map((r) => r.announcementId));
     const unread = announcements.filter(
-      (a) => userMatchesAudience(user, a.audience) && a.publishedAt <= now && !readSet.has(a._id),
+      (a) => isVisibleToUser(user, a) && a.publishedAt <= now && !readSet.has(a._id),
     );
     await Promise.all(
       unread.map((a) =>
@@ -425,7 +443,7 @@ export const toggleReaction = mutation({
   handler: async (ctx, { announcementId, emoji }) => {
     const user = await requireUser(ctx);
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !userMatchesAudience(user, announcement.audience)) {
+    if (!announcement || !isVisibleToUser(user, announcement)) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
     // WhatsApp-style: one reaction per user per announcement.
@@ -459,7 +477,7 @@ export const viewers = query({
   handler: async (ctx, { announcementId }) => {
     const user = await requireUser(ctx);
     const announcement = await ctx.db.get(announcementId);
-    if (!announcement || !userMatchesAudience(user, announcement.audience)) {
+    if (!announcement || !isVisibleToUser(user, announcement)) {
       return [];
     }
     const reads = await ctx.db
@@ -480,6 +498,46 @@ export const viewers = query({
           readAt: r.readAt,
         };
       }),
+    );
+  },
+});
+
+/**
+ * Audience members who haven't read an announcement yet — author/admin only
+ * (unlike `viewers`, this is a nudge-to-follow-up tool, not something every
+ * reader should see about their colleagues).
+ */
+export const nonReaders = query({
+  args: { announcementId: v.id("announcements") },
+  handler: async (ctx, { announcementId }) => {
+    const user = await requireUser(ctx);
+    const announcement = await ctx.db.get(announcementId);
+    if (!announcement) return [];
+    if (announcement.authorUserId !== user._id && user.role !== "admin") {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "Only the author or an admin can see who hasn't read this",
+      });
+    }
+    const audienceIds = await resolveAudienceUserIds(ctx, announcement.audience);
+    const reads = await ctx.db
+      .query("announcementReads")
+      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
+      .collect();
+    const readSet = new Set(reads.map((r) => r.userId));
+    const nonReaderIds = audienceIds.filter(
+      (id) => id !== announcement.authorUserId && !readSet.has(id),
+    );
+    const users = await Promise.all(nonReaderIds.map((id) => ctx.db.get(id)));
+    return Promise.all(
+      users
+        .filter((u): u is Doc<"users"> => u !== null)
+        .map(async (u) => {
+          const avatar = u.avatarStorageId
+            ? await ctx.storage.getUrl(u.avatarStorageId)
+            : (u.avatarUrl ?? null);
+          return { userId: u._id, name: displayName(u), avatar };
+        }),
     );
   },
 });

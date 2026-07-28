@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { accessibleGuidebooks } from "@/components/guidebooks/registry";
+import { accessibleGuidebooks, guidebookTitle } from "@/components/guidebooks/registry";
 import {
   useCurrentUser,
   useHasApplicantAccess,
@@ -202,7 +202,7 @@ export function CommandPalette() {
     }
 
     for (const gb of guidebooks) {
-      const title = tGuide(gb.titleKey);
+      const title = guidebookTitle(gb, tGuide);
       if (title.toLowerCase().includes(q)) {
         list.push({
           id: `gb:${gb.slug}`,

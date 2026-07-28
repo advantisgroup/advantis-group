@@ -6,6 +6,7 @@ import { Award, Coffee, Lock, Plane, ScrollText, TrendingUp, Users2, Wifi } from
 import { useTranslations } from "next-intl";
 
 import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
+import { usePendingAbsenceCount } from "@/lib/absences-api";
 import { relativeTime } from "@/lib/format";
 
 import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
@@ -102,7 +103,7 @@ export function AdminStatsCard() {
   const t = useTranslations("Dashboard");
   const user = useCurrentUser();
   const isAdmin = useIsAdmin();
-  const pending = useQuery(api.absences.pendingForApproval);
+  const pendingCount = usePendingAbsenceCount(true);
   const hasApplicantAccess = isAdmin || user.applicantAccess || user.applicantAccessDelegate;
   const vaultStatus = useQuery(api.applicantVault.status, hasApplicantAccess ? {} : "skip");
   const pipeline = useQuery(
@@ -113,13 +114,13 @@ export function AdminStatsCard() {
   return (
     <DashCard icon={<ScrollText />} title={t("adminStatsTitle")}>
       <div className="space-y-1">
-        {pending === undefined ? (
+        {pendingCount === undefined ? (
           <RowSkeletons />
         ) : (
           <StatLine
             icon={<Plane />}
             label={t("pendingApprovals")}
-            value={pending.count}
+            value={pendingCount}
             href="/absences"
           />
         )}

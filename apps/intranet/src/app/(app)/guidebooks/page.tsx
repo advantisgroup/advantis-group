@@ -10,8 +10,10 @@ import {
   ChevronRight,
   Clock,
   MessageSquare,
+  NotebookPen,
   Pin,
   PinOff,
+  Plus,
   Search,
   ShieldCheck,
   Sparkles,
@@ -23,6 +25,9 @@ import { toast } from "sonner";
 
 import {
   accessibleGuidebooks,
+  canAccessGuidebook,
+  guidebookDescription,
+  guidebookTitle,
   type Guidebook,
   type GuidebookTopic,
 } from "@/components/guidebooks/registry";
@@ -30,6 +35,7 @@ import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
@@ -130,14 +136,14 @@ function GuidebookCardItem({
           </span>
           <div className="min-w-0 flex-1">
             <p className="flex flex-wrap items-center gap-1.5 font-display font-semibold tracking-tight">
-              {t(gb.titleKey)}
+              {guidebookTitle(gb, t)}
               {gb.minRole && (
                 <Badge variant="muted" className="font-normal">
                   {t("managerBadge")}
                 </Badge>
               )}
             </p>
-            <p className="mt-0.5 text-sm text-muted-foreground">{t(gb.descriptionKey)}</p>
+            <p className="mt-0.5 text-sm text-muted-foreground">{guidebookDescription(gb, t)}</p>
           </div>
           <ChevronRight className="mt-6 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </CardContent>
@@ -215,13 +221,40 @@ export default function GuidebooksPage() {
   const user = useCurrentUser();
   const isManager = useIsManager();
   const handleError = useErrorHandler();
-  const guidebooks = accessibleGuidebooks(user);
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState<"all" | GroupKey>("all");
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
   const highlightedSlugs = useQuery(api.guidebookHighlights.list) ?? [];
   const toggleHighlightMutation = useMutation(api.guidebookHighlights.toggle);
+  const customPages = useQuery(api.guidebookPages.list);
+
+  // Manager-authored pages (see /guidebooks/new) rendered from stored blocks
+  // rather than a registered Component — merged into the same list/search/
+  // grouping as the hardcoded guidebooks below.
+  const customGuidebooks: Guidebook[] = useMemo(
+    () =>
+      (customPages ?? []).map((p) => ({
+        slug: p.slug,
+        title: p.title,
+        description: p.description,
+        custom: true,
+        icon: NotebookPen,
+        category: "guide" as const,
+        topic: p.topic as GuidebookTopic,
+        minRole: p.minRole ?? undefined,
+        teams: p.teams as Guidebook["teams"],
+      })),
+    [customPages],
+  );
+
+  const guidebooks = useMemo(
+    () => [
+      ...accessibleGuidebooks(user),
+      ...customGuidebooks.filter((gb) => canAccessGuidebook(user, gb)),
+    ],
+    [user, customGuidebooks],
+  );
 
   const favorites = useMemo(() => prefs?.favoriteGuidebooks ?? [], [prefs]);
 
@@ -238,7 +271,9 @@ export default function GuidebooksPage() {
   const query = search.trim().toLowerCase();
   const searched = query
     ? guidebooks.filter((gb) =>
-        [t(gb.titleKey), t(gb.descriptionKey)].some((text) => text.toLowerCase().includes(query)),
+        [guidebookTitle(gb, t), guidebookDescription(gb, t)].some((text) =>
+          text.toLowerCase().includes(query),
+        ),
       )
     : guidebooks;
 
@@ -277,6 +312,16 @@ export default function GuidebooksPage() {
         title={t("title")}
         description={t("subtitle")}
         tourCheckpoint="guidebooks"
+        action={
+          isManager ? (
+            <Link href="/guidebooks/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("createPage")}
+              </Button>
+            </Link>
+          ) : undefined
+        }
       />
 
       {guidebooks.length === 0 ? (
@@ -355,7 +400,7 @@ export default function GuidebooksPage() {
               <lastVisited.icon className="size-4 shrink-0 text-primary" />
               <span className="min-w-0 flex-1 text-sm">
                 <span className="text-muted-foreground">{t("continueReading")} </span>
-                <span className="font-medium">{t(lastVisited.titleKey)}</span>
+                <span className="font-medium">{guidebookTitle(lastVisited, t)}</span>
               </span>
               <ArrowRight className="size-4 shrink-0 text-primary" />
             </Link>

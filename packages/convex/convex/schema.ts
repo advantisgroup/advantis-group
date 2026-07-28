@@ -355,6 +355,13 @@ export default defineSchema({
     .index("by_email", ["email"]),
 
   // --- Calendar: absences & events ----------------------------------------
+  /**
+   * Deprecated: absences are no longer mirrored here. Clockodo is fetched
+   * live via apps/api on every read instead (see AGENTS.md's Clockodo
+   * section) — nothing writes to this table anymore. Left declared rather
+   * than dropped so old rows aren't orphaned from the schema; safe to
+   * actually remove once confirmed nothing needs the historical rows.
+   */
   absences: defineTable({
     userId: v.id("users"),
     type: v.union(
@@ -1515,6 +1522,45 @@ export default defineSchema({
     slug: v.string(),
     highlightedByUserId: v.id("users"),
     highlightedAt: v.number(),
+  }).index("by_slug", ["slug"]),
+
+  // --- Guidebook attachments --------------------------------------------------
+  // Admin-uploaded files (PDFs, docs, ...) attached to a guidebook page,
+  // alongside its fixed article content — guidebooks are static components,
+  // not a CMS, so this is the one piece of per-guidebook content that's
+  // actually data-driven.
+  guidebookAttachments: defineTable({
+    slug: v.string(),
+    storageId: v.id("_storage"),
+    name: v.string(),
+    kind: v.union(v.literal("image"), v.literal("file")),
+    size: v.optional(v.number()),
+    contentType: v.optional(v.string()),
+    uploadedByUserId: v.id("users"),
+    createdAt: v.number(),
+  }).index("by_slug", ["slug"]),
+
+  // --- Guidebook pages (custom, manager-authored) ----------------------------
+  // Unlike the hardcoded guidebooks in `registry.ts` (a React component per
+  // guide), these are built entirely through the block-based editor
+  // (`/guidebooks/new`) and rendered from stored data — the "write a wiki
+  // page like a Word doc" flow. `blocks` is JSON-encoded (see
+  // `apps/intranet/src/lib/guidebook-blocks.ts` for the shape) rather than a
+  // modeled union, so new block types don't need a schema migration.
+  // `imageStorageIds` denormalizes every image block's storage id purely for
+  // cleanup on delete/edit — the JSON blob itself is opaque to Convex.
+  guidebookPages: defineTable({
+    slug: v.string(),
+    title: v.string(),
+    description: v.string(),
+    topic: v.string(),
+    teams: v.array(v.string()),
+    minRole: v.optional(v.union(v.literal("manager"), v.literal("admin"))),
+    blocks: v.string(),
+    imageStorageIds: v.array(v.id("_storage")),
+    authorUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
   }).index("by_slug", ["slug"]),
 
   // --- Wallbox Sales Academy (interactive guidebook) -------------------------

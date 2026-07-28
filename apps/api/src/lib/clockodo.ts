@@ -55,6 +55,62 @@ export async function listAbsences(year: number): Promise<ClockodoAbsence[]> {
   return data.absences ?? [];
 }
 
+/**
+ * Absences for "this year, live" — the years an absence spanning the
+ * new-year boundary could fall in. Early in the year, late corrections to
+ * last year's absences can still land in last year's list.
+ */
+export async function listCurrentAbsences(): Promise<ClockodoAbsence[]> {
+  const now = new Date();
+  const years = [now.getFullYear()];
+  if (now.getMonth() === 0) years.push(now.getFullYear() - 1);
+  const byYear = await Promise.all(years.map((y) => listAbsences(y)));
+  return byYear.flat();
+}
+
+export type CoarseAbsenceType = "vacation" | "sick" | "personal" | "other";
+export type CoarseAbsenceStatus = "pending" | "approved" | "denied" | "cancelled";
+
+/** Map a Clockodo absence type id to our coarse category. */
+export function mapAbsenceType(clockodoType: number): CoarseAbsenceType {
+  switch (clockodoType) {
+    case 1: // regular holiday
+      return "vacation";
+    case 4: // sick day
+    case 5: // sick day of a child
+    case 11: // sick day (unpaid)
+    case 12: // sick day of child (unpaid)
+    case 13: // quarantine
+    case 15: // sick day (sickness benefit)
+      return "sick";
+    case 2: // special leaves
+    case 6: // school / further education
+    case 7: // maternity protection
+    case 10: // special leaves (unpaid)
+    case 14: // military / alternative service
+      return "personal";
+    default: // 3 overtime reduction, 8 home office, 9 work out of office, ...
+      return "other";
+  }
+}
+
+/** Map a Clockodo status code to our status. */
+export function mapAbsenceStatus(clockodoStatus: number): CoarseAbsenceStatus {
+  switch (clockodoStatus) {
+    case 0:
+      return "pending";
+    case 1:
+      return "approved";
+    case 2:
+      return "denied";
+    case 3:
+    case 4:
+      return "cancelled";
+    default:
+      return "pending";
+  }
+}
+
 // Short-lived cache of coworker id → email so a burst of absence webhooks
 // doesn't hammer the users endpoint.
 let userCache: { map: Map<number, string>; expiresAt: number } | null = null;

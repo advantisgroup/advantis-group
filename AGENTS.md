@@ -89,6 +89,41 @@ Business-hours / out-of-hours quarantine logic:
 of truth for "when does a workday plausibly happen" — don't duplicate that
 decision elsewhere.
 
+## Clockodo absences (`/absences`, `/calendar`, directory "out today")
+
+Distinct from ActivityTrack's Clockodo *entry* polling above — this is the
+vacation/sick/personal absence data shown on the absences page, calendar, and
+directory "out today" badges. There is **no Convex mirror**: absences change
+rarely and don't need to be reactive, so every read fetches Clockodo fresh
+through `apps/api` instead of syncing a stored copy via webhook + cron (the
+old approach — `clockodoSync.ts`/`absenceSync.ts`/the `/webhooks/clockodo`
+route — has been removed).
+
+- `apps/api/src/lib/clockodo.ts` — the one place that calls Clockodo's
+  `/absences` endpoint and maps its raw type/status codes to the app's coarse
+  `vacation | sick | personal | other` / `pending | approved | denied |
+  cancelled`.
+- `apps/api/src/routes/clockodo-absences.ts` — Clerk-authed public endpoints
+  (`GET /clockodo/absences/me`, `/calendar`, `/pending-count`) the intranet
+  frontend calls via `useEdenApi()` (`apps/intranet/src/lib/eden.ts`).
+  **Privacy**: the calendar endpoint only surfaces `vacation`-type absences
+  for people other than the caller — sick/personal/other absences are visible
+  to that person alone (their own `/me` list still shows everything).
+- `apps/api/src/routes/internal/clockodo.ts` — server-key-gated, called by
+  Convex's ActivityTrack poller (`activity/clockodo.ts`'s `fetchAbsences`) so
+  the raw Clockodo fetch isn't duplicated in Convex's Node runtime too.
+- `packages/convex/convex/integrations/clockodoAbsences.ts` — server-key
+  gated lookups (`resolveCaller`, `roster`) apps/api uses to join a Clockodo
+  user id against the intranet roster, since Clockodo doesn't know intranet
+  identities.
+- `apps/intranet/src/lib/absences-api.ts` — the `useMyAbsences` /
+  `useAbsencesCalendar` / `usePendingAbsenceCount` hooks every consumer page
+  uses. Not reactive like a Convex `useQuery` — each fetches once per
+  mount/param change, which is fine given how rarely absences change.
+- The `absences` Convex table (`schema.ts`) is left declared but unused/dead
+  — nothing reads or writes it anymore. Safe to drop once confirmed nothing
+  needs the historical mirrored rows.
+
 ## Third-party product mentions (Genesys, Clockodo)
 
 Genesys and Clockodo are third-party trademarks referenced throughout the
