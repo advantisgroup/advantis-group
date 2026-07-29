@@ -149,7 +149,14 @@ function capExplicitDuration(
  * `capMillisToSeconds` — a confirmed vendor quirk, not surfaced as a
  * rejection, checked against `msThresholdSeconds` since a bare number's
  * plausible ceiling depends on what the value represents — see that
- * param). */
+ * param). `onBareNumber`, if given, is called with the raw (unconverted,
+ * assume-seconds) reading whenever a bare number is the path taken — a
+ * per-row magnitude check alone still misreads a genuinely short
+ * millisecond value (e.g. 2500ms, comfortably under any sane per-row
+ * ceiling) as that many literal seconds, so a caller needing full
+ * accuracy (interactionImport.ts) uses this to decide the unit once for
+ * every bare number in the file, from the strongest evidence across all
+ * of them, rather than trusting each row's own magnitude. */
 export function parseDuration(
   v: CellValue,
   onImplausible?: (rawSeconds: number) => void,
@@ -158,6 +165,7 @@ export function parseDuration(
    * interactionImport.ts passes a much tighter one since a single
    * interaction can't plausibly run anywhere near that long. */
   msThresholdSeconds: number = MAX_PLAUSIBLE_DAY_SECONDS,
+  onBareNumber?: (rawSeconds: number) => void,
 ): number | null {
   if (v === null || v === undefined || v === "") return null;
   if (v instanceof Date) {
@@ -166,7 +174,9 @@ export function parseDuration(
   if (typeof v === "number") {
     // Excel stores times as a day fraction (0.25 = 6 hours).
     if (v > 0 && v < 1) return Math.round(v * 86_400);
-    return capMillisToSeconds(Math.round(v), msThresholdSeconds);
+    const raw = Math.round(v);
+    onBareNumber?.(raw);
+    return capMillisToSeconds(raw, msThresholdSeconds);
   }
   const s = String(v).trim();
   if (!s || s === "-" || s === "–") return null;
@@ -186,7 +196,10 @@ export function parseDuration(
   }
 
   const f = parseFloat(s.replace(",", "."));
-  return Number.isFinite(f) ? capMillisToSeconds(Math.round(f), msThresholdSeconds) : null;
+  if (!Number.isFinite(f)) return null;
+  const raw = Math.round(f);
+  onBareNumber?.(raw);
+  return capMillisToSeconds(raw, msThresholdSeconds);
 }
 
 export type FlaggableDurationField = "talkTotalSec" | "talkAvgSec" | "loginSec";
