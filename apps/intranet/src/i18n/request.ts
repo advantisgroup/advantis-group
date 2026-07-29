@@ -21,6 +21,7 @@ import deCommon from "./messages/de/Common.json";
 import deCustomRoles from "./messages/de/CustomRoles.json";
 import deDashboard from "./messages/de/Dashboard.json";
 import deDirectory from "./messages/de/Directory.json";
+import deErrorManagement from "./messages/de/ErrorManagement.json";
 import deErrors from "./messages/de/Errors.json";
 import deErrorsCatalog from "./messages/de/ErrorsCatalog.json";
 import deFeatureFlags from "./messages/de/FeatureFlags.json";
@@ -60,6 +61,7 @@ import enCommon from "./messages/en/Common.json";
 import enCustomRoles from "./messages/en/CustomRoles.json";
 import enDashboard from "./messages/en/Dashboard.json";
 import enDirectory from "./messages/en/Directory.json";
+import enErrorManagement from "./messages/en/ErrorManagement.json";
 import enErrors from "./messages/en/Errors.json";
 import enErrorsCatalog from "./messages/en/ErrorsCatalog.json";
 import enFeatureFlags from "./messages/en/FeatureFlags.json";
@@ -119,6 +121,7 @@ const messagesByLocale = {
     Performance: enPerformance,
     Guest: enGuest,
     Errors: enErrors,
+    ErrorManagement: enErrorManagement,
     Activity: enActivity,
     Files: enFiles,
     FileViewer: enFileViewer,
@@ -160,6 +163,7 @@ const messagesByLocale = {
     Performance: dePerformance,
     Guest: deGuest,
     Errors: deErrors,
+    ErrorManagement: deErrorManagement,
     Activity: deActivity,
     Files: deFiles,
     FileViewer: deFileViewer,
