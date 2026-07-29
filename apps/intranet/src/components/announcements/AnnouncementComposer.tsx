@@ -482,9 +482,13 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
   const hasBody = htmlToText(draft.body).trim().length > 0;
   const hasDraftContent = draft.title.trim().length > 0 || hasBody;
 
-  // Autosave create-mode drafts.
+  // Autosave create-mode drafts. Always persists the full draft (not just
+  // while title/body are non-empty) — otherwise clearing the body would skip
+  // the write and leave a stale, already-deleted copy in storage, and an
+  // audience/category/scheduling choice made before any text is typed would
+  // never get saved at all.
   useEffect(() => {
-    if (editing || !hasDraftContent) return;
+    if (editing) return;
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
       const now = Date.now();

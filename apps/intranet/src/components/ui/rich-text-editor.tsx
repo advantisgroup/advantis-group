@@ -70,22 +70,37 @@ export function useRichTextController({
   value: string;
   onChange: (html: string) => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const elRef = useRef<HTMLDivElement | null>(null);
   // Which toolbar styles apply to the current selection/caret — drives the
   // active highlight so the user can see what's on without guessing.
   const [active, setActive] = useState<Record<string, boolean>>({});
 
-  // Keep the DOM in sync when the value is changed externally (e.g. reset).
-  useEffect(() => {
-    const el = ref.current;
+  const syncValue = useCallback(() => {
+    const el = elRef.current;
     if (el && el.innerHTML !== value) {
       el.innerHTML = value;
       el.setAttribute("data-empty", el.textContent ? "false" : "true");
     }
   }, [value]);
 
+  // A callback ref (rather than a plain useRef) so the DOM is kept in sync
+  // both when `value` changes externally (e.g. reset) *and* whenever a fresh
+  // surface attaches — React re-invokes a callback ref whenever its identity
+  // changes (which happens every time `value`, and therefore `syncValue`,
+  // changes) and also on every mount. Without this, a surface that gets
+  // unmounted and remounted while `value` stays the same — e.g. the mobile
+  // write/preview toggle — would attach to a brand new, empty
+  // contentEditable and silently drop the existing body on the next keystroke.
+  const ref = useCallback(
+    (el: HTMLDivElement | null) => {
+      elRef.current = el;
+      syncValue();
+    },
+    [syncValue],
+  );
+
   const refreshActive = useCallback(() => {
-    const el = ref.current;
+    const el = elRef.current;
     if (!el) return;
     const sel = window.getSelection();
     // Only reflect state when the caret/selection is actually inside the editor.
@@ -118,14 +133,14 @@ export function useRichTextController({
   }, [refreshActive]);
 
   function emit() {
-    const el = ref.current;
+    const el = elRef.current;
     if (!el) return;
     el.setAttribute("data-empty", el.textContent ? "false" : "true");
     onChange(el.innerHTML);
   }
 
   function exec(command: string, val?: string) {
-    ref.current?.focus();
+    elRef.current?.focus();
     document.execCommand(command, false, val);
     emit();
     refreshActive();
@@ -135,7 +150,7 @@ export function useRichTextController({
    *  Range.surroundContents does, but only when the selection doesn't
    *  straddle a partial element boundary (fine for a few words of plain text). */
   function wrapSelectionInKbd() {
-    const el = ref.current;
+    const el = elRef.current;
     const sel = window.getSelection();
     if (!el || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
     const range = sel.getRangeAt(0);
@@ -160,7 +175,7 @@ export function useRichTextController({
       const url = window.prompt("Link URL", "https://");
       if (url && url !== "https://") exec("createLink", url);
     } else if (tool.action === "kbd") {
-      ref.current?.focus();
+      elRef.current?.focus();
       wrapSelectionInKbd();
     }
   }
