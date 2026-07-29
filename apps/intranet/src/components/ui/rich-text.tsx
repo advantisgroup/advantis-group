@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { type MouseEvent, useMemo } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,16 @@ function cleanInto(node: Node, out: Node, doc: Document) {
           safe.setAttribute("rel", "noreferrer noopener");
         }
       }
+      // @mention chip written by the rich-text editor — only this exact
+      // attribute survives sanitization, and only as a plain numeric/opaque
+      // id string (never arbitrary attributes/classes from pasted HTML).
+      if (tag === "SPAN") {
+        const mentionUserId = el.getAttribute("data-mention-user-id");
+        if (mentionUserId) {
+          safe.setAttribute("data-mention-user-id", mentionUserId);
+          safe.setAttribute("class", "mention");
+        }
+      }
       cleanInto(el, safe, doc);
       out.appendChild(safe);
     } else {
@@ -102,11 +112,42 @@ export function htmlToText(html: string): string {
     .trim();
 }
 
-/** Renders sanitized rich-text HTML. Falls back to plain text for safety. */
-export function RichText({ html, className }: { html: string; className?: string }) {
+/**
+ * Renders sanitized rich-text HTML. Falls back to plain text for safety.
+ *
+ * `onMentionClick` is intentionally the only way this ui-layer component
+ * knows about @mentions — it has no Convex/profile awareness of its own.
+ * `dangerouslySetInnerHTML` content can't take a React onClick per node, so
+ * clicks are caught via delegation on the wrapper and matched against
+ * `[data-mention-user-id]`; the actual mention-click UI lives in
+ * `components/profile/MentionRichText`, which wraps this component.
+ */
+export function RichText({
+  html,
+  className,
+  onMentionClick,
+}: {
+  html: string;
+  className?: string;
+  onMentionClick?: (userId: string, target: HTMLElement) => void;
+}) {
   const clean = useMemo(() => sanitizeHtml(html), [html]);
+
+  function handleClick(e: MouseEvent<HTMLDivElement>) {
+    if (!onMentionClick) return;
+    const target = (e.target as HTMLElement).closest<HTMLElement>("[data-mention-user-id]");
+    const userId = target?.getAttribute("data-mention-user-id");
+    if (target && userId) onMentionClick(userId, target);
+  }
+
   if (!clean) {
     return <div className={cn("rich-text whitespace-pre-wrap", className)}>{htmlToText(html)}</div>;
   }
-  return <div className={cn("rich-text", className)} dangerouslySetInnerHTML={{ __html: clean }} />;
+  return (
+    <div
+      className={cn("rich-text", className)}
+      onClick={onMentionClick ? handleClick : undefined}
+      dangerouslySetInnerHTML={{ __html: clean }}
+    />
+  );
 }

@@ -9,5 +9,6 @@
   "organisation": "Organization",
   "manager": "Manager",
   "reports": "{count, plural, one {Direct report} other {Direct reports}}",
-  "online": "Online"
+  "online": "Online",
+  "viewFullProfile": "View full profile"
 }
