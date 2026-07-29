@@ -65,6 +65,14 @@ export const audienceValidator = v.union(
     departmentId: v.id("departments"),
   }),
   v.object({ kind: v.literal("users"), userIds: v.array(v.id("users")) }),
+  /** Additive: reaches anyone in *any* of `departments` plus anyone listed
+   *  individually in `userIds` — lets an author combine "Sales" with a couple
+   *  of specific people from other departments in one audience. */
+  v.object({
+    kind: v.literal("mixed"),
+    departments: v.array(v.string()),
+    userIds: v.array(v.id("users")),
+  }),
 );
 
 export const attachmentValidator = v.object({

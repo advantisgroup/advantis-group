@@ -85,10 +85,11 @@ function userCanViewAnnouncement(
   user: { _id: Id<"users">; departmentId?: Id<"departments"> },
   userDept: { name: string } | null,
   audience: {
-    kind: "all" | "departmentId" | "department" | "users";
+    kind: "all" | "departmentId" | "department" | "users" | "mixed";
     departmentId?: Id<"departments"> | null;
     department?: string;
     userIds?: Id<"users">[];
+    departments?: string[];
   },
 ): boolean {
   if (audience.kind === "all") return true;
@@ -96,6 +97,12 @@ function userCanViewAnnouncement(
   if (audience.kind === "department")
     return userDept ? userDept.name === audience.department : false;
   if (audience.kind === "users") return (audience.userIds ?? []).includes(user._id);
+  if (audience.kind === "mixed") {
+    if ((audience.userIds ?? []).includes(user._id)) return true;
+    return userDept
+      ? (audience.departments ?? []).some((d) => d.toLowerCase() === userDept.name.toLowerCase())
+      : false;
+  }
   return false;
 }
 
@@ -178,7 +185,10 @@ export const canAccessFile = query({
         if (owner.kind === "announcement" && owner.announcementId) {
           const ann = await ctx.db.get(owner.announcementId);
           if (!ann) continue;
-          if (ann.audience.kind === "department" && userDept === null) {
+          if (
+            (ann.audience.kind === "department" || ann.audience.kind === "mixed") &&
+            userDept === null
+          ) {
             userDept = user.departmentId ? await ctx.db.get(user.departmentId) : null;
           }
           if (userCanViewAnnouncement(user, userDept, ann.audience)) {
