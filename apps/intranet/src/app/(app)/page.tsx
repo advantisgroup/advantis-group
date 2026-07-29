@@ -223,7 +223,7 @@ export default function DashboardPage() {
               </Link>
             </Button>
             <Button variant="outline" size="sm" asChild>
-              <Link href="/announcements?new=1">
+              <Link href="/announcements/new">
                 <Megaphone className="mr-1.5 size-3.5" />
                 {t("actionNewAnnouncement")}
               </Link>

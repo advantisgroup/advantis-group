@@ -162,7 +162,7 @@ export function CommandPalette() {
         id: "new-announcement",
         label: t("actionNewAnnouncement"),
         icon: Plus,
-        href: "/announcements?new=1",
+        href: "/announcements/new",
         managerOnly: true,
       },
       {
