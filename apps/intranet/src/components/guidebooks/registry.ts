@@ -271,7 +271,10 @@ interface AccessUser {
   teams?: string[];
 }
 
-export function canAccessGuidebook(user: AccessUser, gb: Guidebook): boolean {
+export function canAccessGuidebook(
+  user: AccessUser,
+  gb: Pick<Guidebook, "minRole" | "teams">,
+): boolean {
   // Admins can always open guidebooks (for review/management).
   if (user.role === "admin") return true;
   if (gb.minRole === "admin") return false; // admin already handled above

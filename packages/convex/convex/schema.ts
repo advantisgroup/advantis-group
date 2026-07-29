@@ -1678,6 +1678,55 @@ export default defineSchema({
     .index("by_user_slug", ["userId", "slug"])
     .index("by_user", ["userId"]),
 
+  // --- Wiki v2 (categories + entries) ------------------------------------------
+  // The wiki overhaul: manageable colour-coded categories, entries with a
+  // validity window (renewal reminders + an "expired" archive), version
+  // numbers, tags and pinning — ported from a design prototype. Replaces
+  // `guidebookPages` as the primary "write a wiki page" flow going forward;
+  // existing `guidebookPages` rows are one-time migrated into `wikiEntries`
+  // via `wikiMigration.run` (see that file) rather than read directly by the
+  // list page once migration has happened. The hardcoded registry guidebooks
+  // (`registry.ts`) are untouched — they're interactive tools/components,
+  // not content, so there's nothing to migrate for those.
+  wikiCategories: defineTable({
+    name: v.string(),
+    color: v.string(),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+  }),
+
+  wikiEntries: defineTable({
+    slug: v.string(),
+    categoryId: v.optional(v.id("wikiCategories")),
+    // Snapshot of the category name/color, kept once the category is
+    // deleted — the entry moves into the "expired" archive view instead of
+    // pointing at nothing (mirrors errorReports.categoryName).
+    categoryName: v.optional(v.string()),
+    thema: v.string(),
+    erklaerung: v.string(),
+    tags: v.array(v.string()),
+    link: v.optional(v.string()),
+    validFrom: v.number(),
+    validUntil: v.number(),
+    version: v.number(),
+    pinned: v.boolean(),
+    authorUserId: v.id("users"),
+    authorName: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_category", ["categoryId"]),
+
+  // Singleton marker — presence of a row means the one-time migration from
+  // `guidebookPages` into `wikiEntries` has run. The wiki list page shows a
+  // full-screen "migrate now" gate (manager-triggered) until this exists.
+  wikiMigrationStatus: defineTable({
+    migratedAt: v.number(),
+    migratedByUserId: v.id("users"),
+    migratedCount: v.number(),
+  }),
+
   // --- Wallbox Sales Academy (interactive guidebook) -------------------------
   // Ported from a standalone training tool that gated access with a
   // participant access code and a shared admin PIN (not Clerk roles) — kept
