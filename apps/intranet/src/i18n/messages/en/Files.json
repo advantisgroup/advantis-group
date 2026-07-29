@@ -1,5 +1,9 @@
 {
   "title": "Files",
+  "wikiNoticeTitle": "New documents now live in the wiki",
+  "wikiNoticeBody": "Flyers, credit rules and other reference documents belong in the wiki now, where they can be found alongside the article that explains them. Files stays around for existing documents until it's phased out.",
+  "wikiNoticeCta": "Open the wiki",
+  "wikiNoticeDismiss": "Dismiss",
   "quota": "{used} of {total} used",
   "searchPlaceholder": "Search files…",
   "newFolder": "New folder",

@@ -1,5 +1,9 @@
 {
   "title": "Dateien",
+  "wikiNoticeTitle": "Neue Dokumente gehören jetzt ins Wiki",
+  "wikiNoticeBody": "Flyer, Kreditrichtlinien und andere Referenzdokumente gehören jetzt ins Wiki, direkt neben dem Artikel, der sie erklärt. Dateien bleibt für bestehende Dokumente bestehen, bis es ausläuft.",
+  "wikiNoticeCta": "Wiki öffnen",
+  "wikiNoticeDismiss": "Schließen",
   "quota": "{used} von {total} belegt",
   "searchPlaceholder": "Dateien suchen…",
   "newFolder": "Neuer Ordner",

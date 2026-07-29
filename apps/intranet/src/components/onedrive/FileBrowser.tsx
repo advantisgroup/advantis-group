@@ -27,6 +27,7 @@ import {
   Link2,
   Loader2,
   MoreVertical,
+  NotebookPen,
   Pencil,
   RotateCcw,
   Rows3,
@@ -40,6 +41,7 @@ import {
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/dialog";
@@ -74,6 +76,11 @@ import { cn } from "@/lib/utils";
 import { NewFolderDialog, RenameDialog, ShareDialog, VersionsDialog } from "./FileDialogs";
 import { FilePreviewDialog } from "./FilePreviewDialog";
 import { UploadDropOverlay } from "./UploadDropOverlay";
+
+/** localStorage key for dismissing the root-level "new docs go in the wiki
+ * now" notice — cosmetic and per-device, so it doesn't need a userPreferences
+ * round trip. */
+const WIKI_NOTICE_KEY = "files-wiki-notice-dismissed";
 
 /** Wraps every case-insensitive occurrence of `query` in `text` with a mark. */
 export function HighlightMatch({ text, query }: { text: string; query: string }) {
@@ -161,6 +168,9 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   const isMobile = useIsMobile();
   const router = useRouter();
 
+  const [wikiNoticeDismissed, setWikiNoticeDismissed] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem(WIKI_NOTICE_KEY) === "1",
+  );
   const [configured, setConfigured] = useState<boolean | undefined>(undefined);
   const [path, setPath] = useState(initialPath);
   const [listing, setListing] = useState<OneDriveListing | null>(null);
@@ -584,6 +594,33 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         <h1 className="text-lg font-semibold md:text-xl">{t("title")}</h1>
         {quota && <QuotaBar quota={quota} />}
       </div>
+
+      {path === "" && !wikiNoticeDismissed && (
+        <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+          <NotebookPen className="mt-0.5 size-4 shrink-0 text-primary" />
+          <div className="min-w-0 flex-1 text-sm">
+            <p className="font-medium">{t("wikiNoticeTitle")}</p>
+            <p className="mt-0.5 text-muted-foreground">{t("wikiNoticeBody")}</p>
+            <Link
+              href="/guidebooks"
+              className="mt-1.5 inline-block font-medium text-primary hover:underline"
+            >
+              {t("wikiNoticeCta")}
+            </Link>
+          </div>
+          <button
+            type="button"
+            aria-label={t("wikiNoticeDismiss")}
+            onClick={() => {
+              localStorage.setItem(WIKI_NOTICE_KEY, "1");
+              setWikiNoticeDismissed(true);
+            }}
+            className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <X className="size-4" />
+          </button>
+        </div>
+      )}
 
       {/* Toolbar */}
       <div
