@@ -22,7 +22,7 @@ const DOC: DocContent = {
           items: [
             {
               label: "Neue Ankündigung öffnen (Editor startet direkt)",
-              href: "/announcements?new",
+              href: "/announcements/new",
             },
           ],
         },

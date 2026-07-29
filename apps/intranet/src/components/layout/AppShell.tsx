@@ -75,9 +75,13 @@ function AppShellInner({ children }: { children: ReactNode }) {
     mainRef.current?.scrollTo({ top: 0 });
   }, [pathname]);
 
-  // Chat is a full-screen, self-managing view on mobile (its own header and
-  // sticky composer), so it opts out of the bottom nav and its clearance.
-  const immersive = pathname.startsWith("/chat");
+  // Chat and the announcement composer are full-screen, self-managing views
+  // (their own header and sticky composer/toolbar), so they opt out of the
+  // bottom nav and its clearance.
+  const isAnnouncementComposer =
+    pathname === "/announcements/new" ||
+    (pathname.startsWith("/announcements/") && pathname.endsWith("/edit"));
+  const immersive = pathname.startsWith("/chat") || isAnnouncementComposer;
 
   // The Updates section reads like a blog (Anthropic/GitHub-changelog style)
   // rather than an app surface — the nav sidebar, bottom nav and the sitewide

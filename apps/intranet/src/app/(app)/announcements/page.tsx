@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { type OneDriveItem } from "@advantis/types";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { useMutation, useQuery } from "convex/react";
 import {
@@ -17,46 +16,28 @@ import {
   ExternalLink,
   Eye,
   FileText,
-  Link,
+  Link as LinkIcon,
   Megaphone,
-  Paperclip,
   Pencil,
   Pin,
   Plus,
   Search,
   Tag,
   Trash2,
-  Users,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { toast } from "sonner";
 
-import { AttachmentList } from "@/components/attachments/AttachmentList";
-import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
-import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
+import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { htmlToText, RichText } from "@/components/ui/rich-text";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -68,670 +49,11 @@ import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatTime, initials } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
-import { formatFileSize, isImage, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
+import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
-import type { FunctionReturnType } from "convex/server";
+import { ALL_CATEGORIES_VALUE, type Announcement } from "@/lib/announcements";
 import { CopyButton } from "@/components/activity/CopyButton";
-
-type Announcement = FunctionReturnType<typeof api.announcements.list>[number];
-type Audience =
-  | { kind: "all" }
-  | { kind: "department"; department: string }
-  | { kind: "users"; userIds: Id<"users">[] };
-
-const ALWAYS_PREVIEW_KEY = "announcements:alwaysPreview";
-const DRAFT_KEY = "announcements:draft";
-
-/** Sentinel value for the audience Select's "Specific people" option. */
-const USERS_AUDIENCE_VALUE = "__users__";
-/** Sentinel for the feed toolbar's category filter — distinct from any
- * category value an admin could actually type (including one literally
- * named "all"). Reserved: `sanitizeCategory` strips it back out if someone
- * types this exact string, so it can never collide with real data. */
-const ALL_CATEGORIES_VALUE = "__all_categories__";
-const CATEGORY_MAX_LENGTH = 40;
-
-function sanitizeCategory(raw: string): string {
-  const trimmed = raw.trim();
-  return trimmed === ALL_CATEGORIES_VALUE ? "" : trimmed;
-}
-
-interface Draft {
-  title: string;
-  body: string;
-  pinned: boolean;
-  guestVisible: boolean;
-  category: string;
-  audienceKind: "all" | "department" | "users";
-  audienceDepartment: string;
-  audienceUserIds: string[];
-  publishAt: string;
-  expiresAt: string;
-}
-
-const EMPTY_DRAFT: Draft = {
-  title: "",
-  body: "",
-  pinned: false,
-  guestVisible: false,
-  category: "",
-  audienceKind: "all",
-  audienceDepartment: "",
-  audienceUserIds: [],
-  publishAt: "",
-  expiresAt: "",
-};
-
-function msToLocalInput(ms: number): string {
-  const d = new Date(ms);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-/**
- * Autosaved drafts from before the audience picker gained "audienceKind" /
- * "audienceDepartment" stored a single `audience` string ("all" or a
- * department name) instead. Translate that old shape so a still-pending
- * draft doesn't silently lose its department targeting on restore.
- */
-function migrateStoredDraft(raw: unknown): Partial<Draft> {
-  if (!raw || typeof raw !== "object") return {};
-  const parsed = raw as Partial<Draft> & { audience?: string };
-  if (parsed.audienceKind !== undefined || typeof parsed.audience !== "string") {
-    return parsed;
-  }
-  const { audience, ...rest } = parsed;
-  return {
-    ...rest,
-    audienceKind: audience === "all" ? "all" : "department",
-    audienceDepartment: audience === "all" ? "" : audience,
-  };
-}
-
-function EditorDialog({
-  open,
-  onOpenChange,
-  editing,
-  existingCategories,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  editing: Announcement | null;
-  /** Previously-used category values (across the currently loaded feed), offered as suggestions. */
-  existingCategories: string[];
-}) {
-  const t = useTranslations("Announcements");
-  const tc = useTranslations("Common");
-  const locale = useLocale();
-  const me = useCurrentUser();
-  const create = useMutation(api.announcements.create);
-  const update = useMutation(api.announcements.update);
-  const handleError = useErrorHandler();
-  const departments = useQuery(api.users.departments) ?? [];
-  const people = useQuery(api.users.list, open ? {} : "skip");
-  const attachmentUpload = useAttachmentUpload();
-
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [busy, setBusy] = useState(false);
-  const [previewing, setPreviewing] = useState(false);
-  const [alwaysPreview, setAlwaysPreview] = useState(false);
-  const [oneDrivePickerOpen, setOneDrivePickerOpen] = useState(false);
-  const [peopleSearch, setPeopleSearch] = useState("");
-  // Whether the audience control was actually touched this session. An
-  // existing "departmentId" audience (pre-dates this editor's picker, so it
-  // can't be represented/re-selected here) must otherwise be left untouched —
-  // saving an unrelated field change would silently replace it with `all`.
-  const [audienceTouched, setAudienceTouched] = useState(false);
-  const originalAudienceRef = useRef<Announcement["audience"] | null>(null);
-
-  // Restore the "always preview" preference.
-  useEffect(() => {
-    setAlwaysPreview(localStorage.getItem(ALWAYS_PREVIEW_KEY) === "1");
-  }, []);
-
-  // Hydrate on open: edit mode from the announcement, create mode from the
-  // autosaved draft so a closed dialog doesn't lose work.
-  useEffect(() => {
-    if (!open) return;
-    setPreviewing(false);
-    setAudienceTouched(false);
-    if (editing) {
-      const audience = editing.audience;
-      originalAudienceRef.current = audience;
-      setDraft({
-        title: editing.title,
-        body: editing.body,
-        pinned: editing.pinned,
-        guestVisible: false,
-        category: editing.category ?? "",
-        // "departmentId" audiences predate the per-user picker and aren't
-        // editable here yet — fall back to "all" for display only; submit()
-        // leaves the real audience alone unless the user touches this control.
-        audienceKind:
-          audience.kind === "users"
-            ? "users"
-            : audience.kind === "department"
-              ? "department"
-              : "all",
-        audienceDepartment: audience.kind === "department" ? audience.department : "",
-        audienceUserIds: audience.kind === "users" ? audience.userIds : [],
-        publishAt: "",
-        expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
-      });
-    } else {
-      originalAudienceRef.current = null;
-      try {
-        const raw = localStorage.getItem(DRAFT_KEY);
-        setDraft(raw ? { ...EMPTY_DRAFT, ...migrateStoredDraft(JSON.parse(raw)) } : EMPTY_DRAFT);
-      } catch {
-        setDraft(EMPTY_DRAFT);
-      }
-    }
-  }, [open, editing]);
-
-  // Autosave create-mode drafts.
-  useEffect(() => {
-    if (!open || editing) return;
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
-    } catch {
-      // Storage full/unavailable — the draft just isn't kept.
-    }
-  }, [draft, open, editing]);
-
-  const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
-    setDraft((d) => ({ ...d, [key]: value }));
-
-  const audienceValue: Audience =
-    draft.audienceKind === "department"
-      ? { kind: "department", department: draft.audienceDepartment }
-      : draft.audienceKind === "users"
-        ? { kind: "users", userIds: draft.audienceUserIds as Id<"users">[] }
-        : { kind: "all" };
-  // A "users" audience with nothing picked yet reaches nobody — skip the
-  // (misleading) "reaches 0" preview until at least one person is selected.
-  const audienceCount = useQuery(
-    api.announcements.audienceSize,
-    open && (draft.audienceKind !== "users" || draft.audienceUserIds.length > 0)
-      ? { audience: audienceValue }
-      : "skip",
-  );
-  const filteredPeople = useMemo(() => {
-    const q = peopleSearch.trim().toLowerCase();
-    const mine = (people ?? []).filter((p) => p._id !== me._id);
-    if (!q) return mine;
-    return mine.filter(
-      (p) => p.name.toLowerCase().includes(q) || p.email.toLowerCase().includes(q),
-    );
-  }, [people, peopleSearch, me._id]);
-
-  function toggleAudienceUser(userId: string) {
-    setAudienceTouched(true);
-    setDraft((d) => ({
-      ...d,
-      audienceUserIds: d.audienceUserIds.includes(userId)
-        ? d.audienceUserIds.filter((id) => id !== userId)
-        : [...d.audienceUserIds, userId],
-    }));
-  }
-
-  function toggleAlwaysPreview(v: boolean) {
-    setAlwaysPreview(v);
-    localStorage.setItem(ALWAYS_PREVIEW_KEY, v ? "1" : "0");
-  }
-
-  const hasBody = htmlToText(draft.body).trim().length > 0;
-  const canSend =
-    draft.title.trim().length > 0 &&
-    hasBody &&
-    (draft.audienceKind !== "users" || draft.audienceUserIds.length > 0);
-  const files = useMemo(
-    () => attachmentUpload.entries.map((e) => e.file),
-    [attachmentUpload.entries],
-  );
-
-  // Object URLs for image previews; revoked when the file set changes.
-  const previews = useMemo(
-    () =>
-      files.map((file) => ({
-        file,
-        url: isImage(file) ? URL.createObjectURL(file) : null,
-      })),
-    [files],
-  );
-  useEffect(() => () => previews.forEach((p) => p.url && URL.revokeObjectURL(p.url)), [previews]);
-
-  function addFiles(selected: File[]): boolean {
-    const added = attachmentUpload.add(selected);
-    if (!added) toast.error(t("attachTooLarge"));
-    return added;
-  }
-
-  function addOneDriveFile(file: File, item: OneDriveItem) {
-    if (!attachmentUpload.addOneDriveFile(file, item)) {
-      toast.error(t("attachTooLarge"));
-    }
-  }
-
-  /** Send button: divert to preview first when the user opted into it. */
-  function handleSendClick() {
-    if (!canSend) return;
-    if (alwaysPreview && !previewing) {
-      setPreviewing(true);
-      return;
-    }
-    void submit();
-  }
-
-  async function submit() {
-    if (!canSend) return;
-    setBusy(true);
-    try {
-      if (editing) {
-        // A "departmentId" audience predates this picker and can't be
-        // re-selected here — leave it alone unless the user actually changed
-        // the audience control, so an unrelated edit (title, category, expiry)
-        // doesn't silently widen it to "everyone".
-        const keepOriginalAudience =
-          originalAudienceRef.current?.kind === "departmentId" && !audienceTouched;
-        await update({
-          announcementId: editing._id,
-          title: draft.title.trim(),
-          body: draft.body.trim(),
-          pinned: draft.pinned,
-          ...(keepOriginalAudience ? {} : { audience: audienceValue }),
-          category: sanitizeCategory(draft.category),
-          expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
-        });
-        toast.success(t("updated"));
-      } else {
-        // Uploads run in parallel with live per-file progress; a failure
-        // here already rolls back whatever succeeded (see useAttachmentUpload).
-        const attachments = await attachmentUpload.uploadAll();
-        try {
-          await create({
-            title: draft.title.trim(),
-            body: draft.body.trim(),
-            pinned: draft.pinned,
-            audience: audienceValue,
-            category: sanitizeCategory(draft.category) || undefined,
-            attachments,
-            guestVisible: draft.guestVisible,
-            publishAt: draft.publishAt ? new Date(draft.publishAt).getTime() : undefined,
-            expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : undefined,
-          });
-        } catch (e) {
-          // The upload succeeded but `create` itself failed — clean up so
-          // the attachments don't sit orphaned in storage.
-          await attachmentUpload.rollback(attachments);
-          throw e;
-        }
-        toast.success(
-          draft.publishAt && new Date(draft.publishAt).getTime() > Date.now()
-            ? t("scheduledToast")
-            : t("new"),
-        );
-        localStorage.removeItem(DRAFT_KEY);
-      }
-      onOpenChange(false);
-      setPreviewing(false);
-      setDraft(EMPTY_DRAFT);
-      attachmentUpload.reset();
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{previewing ? t("preview") : editing ? t("edit") : t("new")}</DialogTitle>
-          <DialogDescription>{t("newHint")}</DialogDescription>
-        </DialogHeader>
-
-        {previewing ? (
-          /* Preview — how the announcement will look to readers. */
-          <div className="rounded-xl border border-border/70 bg-card">
-            <header className="flex items-center gap-3 border-b border-border/60 px-5 py-3">
-              <Avatar className="h-9 w-9">
-                {me.avatar && <AvatarImage src={me.avatar} alt={me.name} />}
-                <AvatarFallback className="text-xs">{initials(me.name, "")}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  {draft.pinned && <Pin className="size-3.5 text-primary" />}
-                  <p className="truncate font-semibold">
-                    {draft.title.trim() || t("titlePlaceholder")}
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {me.name} · {formatDateTime(Date.now(), locale)}
-                </p>
-              </div>
-            </header>
-            <div className="px-5 py-4">
-              <RichText html={draft.body} />
-              {previews.length > 0 && (
-                <div className="mt-4 space-y-3">
-                  {previews.some((p) => p.url) && (
-                    <div className="flex flex-wrap gap-2">
-                      {previews
-                        .filter((p) => p.url)
-                        .map((p) => (
-                          <img
-                            key={p.file.name}
-                            src={p.url ?? ""}
-                            alt={p.file.name}
-                            className="max-h-60 w-auto max-w-full rounded-lg border border-border object-cover"
-                          />
-                        ))}
-                    </div>
-                  )}
-                  {previews.some((p) => !p.url) && (
-                    <div className="flex flex-wrap gap-2">
-                      {previews
-                        .filter((p) => !p.url)
-                        .map((p) => (
-                          <span
-                            key={p.file.name}
-                            className="flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2"
-                          >
-                            <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
-                              <FileText className="size-4" />
-                            </span>
-                            <span className="min-w-0">
-                              <span className="block max-w-[14rem] truncate text-sm font-medium">
-                                {p.file.name}
-                              </span>
-                              <span className="block text-xs text-muted-foreground">
-                                {formatFileSize(p.file.size)}
-                              </span>
-                            </span>
-                          </span>
-                        ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            <div className="space-y-3">
-              <Input
-                placeholder={t("titlePlaceholder")}
-                value={draft.title}
-                onChange={(e) => set("title", e.target.value)}
-                className="h-11 text-base font-medium"
-              />
-              <RichTextEditor
-                value={draft.body}
-                onChange={(v) => set("body", v)}
-                placeholder={t("bodyLabel")}
-              />
-            </div>
-
-            <div className="space-y-5 rounded-lg border border-border/70 bg-muted/30 p-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t("category")}
-                </Label>
-                <Input
-                  list="announcement-category-suggestions"
-                  placeholder={t("categoryPlaceholder")}
-                  value={draft.category}
-                  onChange={(e) => set("category", e.target.value)}
-                  maxLength={CATEGORY_MAX_LENGTH}
-                />
-                <datalist id="announcement-category-suggestions">
-                  {existingCategories.map((c) => (
-                    <option key={c} value={c} />
-                  ))}
-                </datalist>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t("audience")}
-                </Label>
-                <Select
-                  value={
-                    draft.audienceKind === "department"
-                      ? draft.audienceDepartment
-                      : draft.audienceKind === "users"
-                        ? USERS_AUDIENCE_VALUE
-                        : "all"
-                  }
-                  onValueChange={(v) => {
-                    setAudienceTouched(true);
-                    if (v === "all") setDraft((d) => ({ ...d, audienceKind: "all" }));
-                    else if (v === USERS_AUDIENCE_VALUE)
-                      setDraft((d) => ({ ...d, audienceKind: "users" }));
-                    else
-                      setDraft((d) => ({
-                        ...d,
-                        audienceKind: "department",
-                        audienceDepartment: v,
-                      }));
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("everyone")}</SelectItem>
-                    {departments.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {t("department")}: {d}
-                      </SelectItem>
-                    ))}
-                    <SelectItem value={USERS_AUDIENCE_VALUE}>{t("specificPeople")}</SelectItem>
-                  </SelectContent>
-                </Select>
-                {draft.audienceKind === "users" && (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-start gap-2 font-normal">
-                        <Users className="size-4" />
-                        {draft.audienceUserIds.length > 0
-                          ? t("peopleSelected", { count: draft.audienceUserIds.length })
-                          : t("selectPeople")}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent align="start" className="w-80 p-0">
-                      <div className="border-b border-border/60 p-2">
-                        <Input
-                          autoFocus
-                          placeholder={tc("search")}
-                          value={peopleSearch}
-                          onChange={(e) => setPeopleSearch(e.target.value)}
-                          className="h-8"
-                        />
-                      </div>
-                      <ScrollArea className="h-64">
-                        {filteredPeople.length === 0 ? (
-                          <p className="p-3 text-xs text-muted-foreground">{tc("noResults")}</p>
-                        ) : (
-                          filteredPeople.map((p) => (
-                            <label
-                              key={p._id}
-                              className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-accent"
-                            >
-                              <Checkbox
-                                checked={draft.audienceUserIds.includes(p._id)}
-                                onCheckedChange={() => toggleAudienceUser(p._id)}
-                              />
-                              <Avatar className="size-6 shrink-0">
-                                {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                                <AvatarFallback className="text-[10px]">
-                                  {initials(p.name, p.email)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="min-w-0 flex-1">
-                                <span className="block truncate text-sm">{p.name}</span>
-                                <span className="block truncate text-xs text-muted-foreground">
-                                  {p.email}
-                                </span>
-                              </span>
-                            </label>
-                          ))
-                        )}
-                      </ScrollArea>
-                    </PopoverContent>
-                  </Popover>
-                )}
-                {audienceCount !== undefined && (
-                  <p className="text-xs text-muted-foreground">
-                    {t("willReach", { count: audienceCount })}
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2 border-t border-border/60 pt-4">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t("options")}
-                </Label>
-                <div className="flex flex-wrap items-center gap-4">
-                  <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                    <Checkbox
-                      checked={draft.pinned}
-                      onCheckedChange={(v) => set("pinned", v === true)}
-                    />
-                    {t("pin")}
-                  </label>
-                  {!editing && (
-                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                      <Checkbox
-                        checked={draft.guestVisible}
-                        onCheckedChange={(v) => set("guestVisible", v === true)}
-                      />
-                      {t("guestVisible")}
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              {!editing && (
-                <div className="space-y-2 border-t border-border/60 pt-4">
-                  <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {t("attachments")}
-                  </Label>
-                  <div className="flex flex-wrap items-center gap-4">
-                    <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-                      <Paperclip className="h-4 w-4" />
-                      {t("attachFile")}
-                      <input
-                        type="file"
-                        multiple
-                        className="hidden"
-                        onChange={(e) => {
-                          addFiles(Array.from(e.target.files ?? []));
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setOneDrivePickerOpen(true)}
-                      className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <Cloud className="h-4 w-4" />
-                      {tc("fromOneDrive")}
-                    </button>
-                  </div>
-                  {attachmentUpload.entries.length > 0 && (
-                    <div className="space-y-1.5">
-                      <AttachmentList
-                        entries={attachmentUpload.entries}
-                        uploading={attachmentUpload.uploading}
-                        onRemove={attachmentUpload.remove}
-                        removeLabel={tc("delete")}
-                      />
-                      <p className="text-[11px] text-muted-foreground">
-                        {formatFileSize(attachmentUpload.totalSize)} /{" "}
-                        {formatFileSize(MAX_ATTACHMENT_BYTES)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Scheduling: publish later and/or auto-expire. */}
-              <div className="space-y-2 border-t border-border/60 pt-4">
-                <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t("scheduling")}
-                </Label>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {!editing && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs text-muted-foreground">{t("publishAtLabel")}</Label>
-                      <Input
-                        type="datetime-local"
-                        value={draft.publishAt}
-                        onChange={(e) => set("publishAt", e.target.value)}
-                      />
-                    </div>
-                  )}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">{t("expiresAtLabel")}</Label>
-                    <Input
-                      type="datetime-local"
-                      value={draft.expiresAt}
-                      onChange={(e) => set("expiresAt", e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <label className="flex cursor-pointer items-center gap-2 border-t border-border/60 pt-4 text-sm font-medium">
-                <Checkbox
-                  checked={alwaysPreview}
-                  onCheckedChange={(v) => toggleAlwaysPreview(v === true)}
-                />
-                {t("alwaysPreview")}
-              </label>
-            </div>
-          </div>
-        )}
-
-        <DialogFooter>
-          {previewing ? (
-            <>
-              <Button variant="ghost" onClick={() => setPreviewing(false)}>
-                {t("backToEdit")}
-              </Button>
-              <Button onClick={() => void submit()} disabled={busy || !canSend}>
-                {tc("send")}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="ghost" onClick={() => onOpenChange(false)}>
-                {tc("cancel")}
-              </Button>
-              <Button variant="outline" onClick={() => setPreviewing(true)} disabled={!canSend}>
-                <Eye className="size-4" />
-                {t("preview")}
-              </Button>
-              <Button onClick={handleSendClick} disabled={busy || !canSend}>
-                {editing ? tc("save") : tc("create")}
-              </Button>
-            </>
-          )}
-        </DialogFooter>
-      </DialogContent>
-      <OneDrivePickerDialog
-        open={oneDrivePickerOpen}
-        onOpenChange={setOneDrivePickerOpen}
-        onSelect={addOneDriveFile}
-      />
-    </Dialog>
-  );
-}
 
 function ViewersPopover({
   announcementId,
@@ -906,13 +228,11 @@ function CollapsibleBody({ html }: { html: string }) {
 function AnnouncementCard({
   a,
   highlighted,
-  onEdit,
   onDelete,
   onOpenImage,
 }: {
   a: Announcement;
   highlighted: boolean;
-  onEdit: () => void;
   onDelete: () => void;
   onOpenImage: (url: string, name: string) => void;
 }) {
@@ -1023,7 +343,7 @@ function AnnouncementCard({
               size="icon"
               className="size-8 text-muted-foreground opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
             >
-              <Link className="h-4 w-4" />
+              <LinkIcon className="h-4 w-4" />
             </Button>
           </CopyButton>
           {canManage && (
@@ -1033,9 +353,11 @@ function AnnouncementCard({
                 size="icon"
                 aria-label={t("edit")}
                 className="size-8 text-muted-foreground opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                onClick={onEdit}
+                asChild
               >
-                <Pencil className="h-4 w-4" />
+                <Link href={`/announcements/${a._id}/edit`}>
+                  <Pencil className="h-4 w-4" />
+                </Link>
               </Button>
               <Button
                 variant="ghost"
@@ -1191,8 +513,6 @@ export default function AnnouncementsPage() {
   const markAllRead = useMutation(api.announcements.markAllRead);
   const handleError = useErrorHandler();
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<Announcement | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [categoryFilter, setCategoryFilter] = useState(ALL_CATEGORIES_VALUE);
@@ -1205,19 +525,6 @@ export default function AnnouncementsPage() {
   // Deep link from a notification: /announcements?id=<id> highlights the
   // matching card once the list has loaded.
   const highlightId = useDeepLinkId("id");
-
-  // Deep link from the dashboard quick action: /announcements?new=1.
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("new") !== null) {
-      // window.location is only available post-mount; this is a one-time
-      // sync from URL state, not a case of deriving state from props.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setEditing(null);
-      setDialogOpen(true);
-      window.history.replaceState(null, "", "/announcements");
-    }
-  }, []);
 
   async function onDelete(id: Id<"announcements">) {
     const ok = await confirm({
@@ -1274,10 +581,6 @@ export default function AnnouncementsPage() {
       key={a._id}
       a={a}
       highlighted={a._id === highlightId}
-      onEdit={() => {
-        setEditing(a);
-        setDialogOpen(true);
-      }}
       onDelete={() => void onDelete(a._id)}
       onOpenImage={(url, name) => setLightbox({ url, name })}
     />
@@ -1290,15 +593,11 @@ export default function AnnouncementsPage() {
         tourCheckpoint="announcements"
         action={
           isManager ? (
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setDialogOpen(true);
-              }}
-              data-tour="tour-announcements-new"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              {t("new")}
+            <Button asChild data-tour="tour-announcements-new">
+              <Link href="/announcements/new">
+                <Plus className="mr-2 h-4 w-4" />
+                {t("new")}
+              </Link>
             </Button>
           ) : undefined
         }
@@ -1411,16 +710,6 @@ export default function AnnouncementsPage() {
           )}
         </DialogContent>
       </Dialog>
-
-      <EditorDialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setEditing(null);
-        }}
-        editing={editing}
-        existingCategories={existingCategories}
-      />
     </div>
   );
 }
