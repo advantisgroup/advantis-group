@@ -23,8 +23,14 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-/** Flattens the block-editor JSON blob into plain text for `erklaerung` —
- * the new entry form is a single textarea, not a rich block editor. */
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/** Flattens the block-editor JSON blob into HTML paragraphs for
+ * `erklaerung` — the new entry form uses a rich-text editor (HTML string),
+ * not a plain textarea, so plain-text output must be escaped and
+ * paragraph-wrapped rather than handed over as-is. */
 function extractPlainText(blocksJson: string): string {
   try {
     const blocks = JSON.parse(blocksJson) as Array<{
@@ -34,14 +40,14 @@ function extractPlainText(blocksJson: string): string {
       caption?: string;
     }>;
     if (!Array.isArray(blocks)) return "";
-    return blocks
+    const paragraphs = blocks
       .map((b) => {
         if (b.type === "code") return b.code ?? "";
         if (b.type === "image") return b.caption ?? "";
         return b.html ? stripHtml(b.html) : "";
       })
-      .filter(Boolean)
-      .join("\n\n");
+      .filter(Boolean);
+    return paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("");
   } catch {
     return "";
   }
@@ -117,7 +123,7 @@ export const run = mutation({
         slug: page.slug,
         categoryId,
         thema: page.title,
-        erklaerung: extractPlainText(page.blocks) || page.description,
+        erklaerung: extractPlainText(page.blocks) || `<p>${escapeHtml(page.description)}</p>`,
         tags: [],
         validFrom: page.createdAt,
         validUntil: page.createdAt + YEAR_MS,

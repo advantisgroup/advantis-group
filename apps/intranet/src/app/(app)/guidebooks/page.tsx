@@ -2,12 +2,16 @@
 
 import { useMemo, useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
   Archive,
+  ChevronDown,
   ChevronRight,
-  Lock,
+  FileText,
   Pencil,
   Pin,
   PinOff,
@@ -32,69 +36,129 @@ import {
   isOwnerOrAdmin,
   useCurrentUser,
   useHasCapability,
-  useIsManager,
 } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { htmlToText } from "@/components/ui/rich-text";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
-import { addMonths, daysUntil, inArchive, msToDateInput, needsReview } from "@/lib/wiki";
+import {
+  addMonths,
+  daysUntil,
+  inArchive,
+  legacyTopicColor,
+  legacyTopicLabel,
+  msToDateInput,
+  needsReview,
+} from "@/lib/wiki";
 import { cn } from "@/lib/utils";
 
-type Entry = WikiEntry;
-type Category = NonNullable<ReturnType<typeof useQuery<typeof api.wikiCategories.list>>>[number];
+const EMPTY_CATEGORIES: NonNullable<ReturnType<typeof useQuery<typeof api.wikiCategories.list>>> = [];
 
-// --- Migration lock screen ---------------------------------------------------
+/** Unified shape for both wiki-v2 entries and legacy (block-editor)
+ * guidebook pages, so the grid, filters, search and sort treat them the
+ * same — only edit/delete/pin dispatch differently underneath. */
+interface GridItem {
+  kind: "wiki" | "legacy";
+  key: string;
+  slug: string;
+  title: string;
+  snippet: string;
+  tags: string[];
+  categoryKey: string;
+  categoryLabel: string;
+  categoryColor: string;
+  categoryDeleted: boolean;
+  pinned: boolean;
+  version: number | null;
+  archived: boolean;
+  reviewDue: boolean;
+  validUntil: number | null;
+  authorUserId: string;
+  updatedAt: number;
+  wikiEntry: WikiEntry | null;
+}
 
-function MigrationGate() {
-  const t = useTranslations("Guidebooks");
-  const isManager = useIsManager();
-  const handleError = useErrorHandler();
-  const run = useMutation(api.wikiMigration.run);
-  const [busy, setBusy] = useState(false);
+function useGridItems() {
+  const entries = useQuery(api.wikiEntries.list);
+  const legacyPages = useQuery(api.guidebookPages.list);
+  const highlightedSlugs = useQuery(api.guidebookHighlights.list);
 
-  async function onMigrate() {
-    setBusy(true);
-    try {
-      const res = await run({});
-      toast.success(t("migrationDone", { count: res.migratedCount }));
-    } catch (e) {
-      handleError(e);
-    } finally {
-      setBusy(false);
+  return useMemo(() => {
+    if (entries === undefined || legacyPages === undefined || highlightedSlugs === undefined) {
+      return undefined;
     }
-  }
+    const migratedSlugs = new Set(entries.map((e) => e.slug));
+    const highlighted = new Set(highlightedSlugs);
 
-  return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-24 text-center">
-      <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-        <Lock className="size-6" />
-      </span>
-      <h1 className="font-display text-xl font-bold tracking-tight">{t("migrationTitle")}</h1>
-      <p className="text-sm text-muted-foreground">{t("migrationBody")}</p>
-      {isManager ? (
-        <Button className="mt-2" onClick={() => void onMigrate()} disabled={busy}>
-          {t("migrationCta")}
-        </Button>
-      ) : (
-        <p className="mt-2 text-xs text-muted-foreground">{t("migrationWaitingBody")}</p>
-      )}
-    </div>
-  );
+    const wikiItems: GridItem[] = entries.map((e) => ({
+      kind: "wiki",
+      key: e._id,
+      slug: e.slug,
+      title: e.thema,
+      snippet: htmlToText(e.erklaerung),
+      tags: e.tags,
+      categoryKey: e.categoryId ? `cat:${e.categoryId}` : "none",
+      categoryLabel: e.categoryName ?? "",
+      categoryColor: e.categoryColor ?? "#77808A",
+      categoryDeleted: e.categoryDeleted,
+      pinned: e.pinned,
+      version: e.version,
+      archived: inArchive(e),
+      reviewDue: !inArchive(e) && needsReview(e),
+      validUntil: e.validUntil,
+      authorUserId: e.authorUserId,
+      updatedAt: e.updatedAt,
+      wikiEntry: e,
+    }));
+
+    // Pages already migrated (a wikiEntries row shares their slug) are
+    // superseded — showing both would just be a duplicate.
+    const legacyItems: GridItem[] = legacyPages
+      .filter((p) => !migratedSlugs.has(p.slug))
+      .map((p) => ({
+        kind: "legacy",
+        key: p._id,
+        slug: p.slug,
+        title: p.title,
+        snippet: p.description,
+        tags: [],
+        categoryKey: `topic:${p.topic}`,
+        categoryLabel: legacyTopicLabel(p.topic),
+        categoryColor: legacyTopicColor(p.topic),
+        categoryDeleted: false,
+        pinned: highlighted.has(p.slug),
+        version: null,
+        archived: false,
+        reviewDue: false,
+        validUntil: null,
+        authorUserId: p.authorUserId,
+        updatedAt: p.updatedAt,
+        wikiEntry: null,
+      }));
+
+    return [...wikiItems, ...legacyItems];
+  }, [entries, legacyPages, highlightedSlugs]);
 }
 
 // --- Entry card -----------------------------------------------------------
 
 function EntryCard({
-  entry,
+  item,
   canManage,
   onEdit,
 }: {
-  entry: Entry;
+  item: GridItem;
   canManage: boolean;
   onEdit: () => void;
 }) {
@@ -104,18 +168,26 @@ function EntryCard({
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const togglePin = useMutation(api.wikiEntries.togglePin);
-  const remove = useMutation(api.wikiEntries.remove);
-  const archived = inArchive(entry);
-  const review = !archived && needsReview(entry);
-  const color = archived ? "#77808A" : (entry.categoryColor ?? "#77808A");
+  const toggleHighlight = useMutation(api.guidebookHighlights.toggle);
+  const removeEntry = useMutation(api.wikiEntries.remove);
+  const removePage = useMutation(api.guidebookPages.remove);
+  const color = item.archived ? "#77808A" : item.categoryColor;
   // Pinning is manager-curated (no ownership check, mirrors the server's
-  // `togglePin`); edit/delete require owning the entry (or being admin),
-  // mirroring `update`/`remove` — showing those buttons more broadly would
-  // just surface an action that fails server-side.
-  const canEditThis = canManage && isOwnerOrAdmin(user, entry.authorUserId);
+  // `togglePin`/`guidebookHighlights.toggle`); edit/delete require owning the
+  // entry (or being admin) — showing those buttons more broadly would just
+  // surface an action that fails server-side.
+  const canEditThis = canManage && isOwnerOrAdmin(user, item.authorUserId);
 
-  async function onDelete(e: React.MouseEvent) {
-    e.stopPropagation();
+  async function onTogglePin() {
+    try {
+      if (item.kind === "wiki") await togglePin({ entryId: item.wikiEntry!._id });
+      else await toggleHighlight({ slug: item.slug });
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
+  async function onDelete() {
     const ok = await confirm({
       title: t("deleteEntryConfirm"),
       confirmLabel: tc("delete"),
@@ -124,7 +196,8 @@ function EntryCard({
     });
     if (!ok) return;
     try {
-      await remove({ entryId: entry._id });
+      if (item.kind === "wiki") await removeEntry({ entryId: item.wikiEntry!._id });
+      else await removePage({ pageId: item.key as Id<"guidebookPages"> });
     } catch (err) {
       handleError(err);
     }
@@ -135,50 +208,51 @@ function EntryCard({
       className="group relative h-full overflow-hidden transition-shadow hover:shadow-md"
       style={{ borderLeft: `4px solid ${color}` }}
     >
-      <Link href={`/guidebooks/${entry.slug}`} className="block h-full">
+      <Link href={`/guidebooks/${item.slug}`} className="block h-full">
         <CardContent className="space-y-2 p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold uppercase tracking-wider" style={{ color }}>
-                {archived ? t("archiveChip") : (entry.categoryName ?? "")}
-                {archived && entry.categoryName && (
+              <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider" style={{ color }}>
+                {item.kind === "legacy" && <FileText className="size-3" />}
+                {item.archived ? t("archiveChip") : item.categoryLabel}
+                {item.archived && item.categoryLabel && (
                   <span className="ml-1 font-normal normal-case text-muted-foreground">
-                    · {t("wasCategory", { name: entry.categoryName })}
+                    · {t("wasCategory", { name: item.categoryLabel })}
                   </span>
                 )}
               </p>
-              <p className="font-display font-semibold tracking-tight">{entry.thema}</p>
+              <p className="font-display font-semibold tracking-tight">{item.title}</p>
             </div>
           </div>
-          <p className="line-clamp-2 text-sm text-muted-foreground">{entry.erklaerung}</p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">{item.snippet}</p>
           <div className="flex flex-wrap items-center gap-1.5">
-            {entry.tags.map((tag) => (
+            {item.tags.map((tag) => (
               <Badge key={tag} variant="muted" className="font-normal">
                 #{tag}
               </Badge>
             ))}
-            {review && !archived && <Badge variant="warning">{t("reviewDueBadge")}</Badge>}
-            {archived && !entry.categoryDeleted && (
+            {item.reviewDue && !item.archived && <Badge variant="warning">{t("reviewDueBadge")}</Badge>}
+            {item.archived && !item.categoryDeleted && (
               <Badge variant="muted">{t("expiredBadge")}</Badge>
             )}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {t("versionMeta", { version: entry.version })}
-          </p>
+          {item.version !== null && (
+            <p className="text-xs text-muted-foreground">{t("versionMeta", { version: item.version })}</p>
+          )}
         </CardContent>
       </Link>
       <div className="absolute right-2 top-2 flex items-center gap-0.5">
-        {canManage && !archived && (
+        {canManage && !item.archived && (
           <button
             type="button"
-            onClick={() => void togglePin({ entryId: entry._id }).catch(handleError)}
-            aria-label={entry.pinned ? t("unpinAction") : t("pinAction")}
+            onClick={() => void onTogglePin()}
+            aria-label={item.pinned ? t("unpinAction") : t("pinAction")}
             className={cn(
               "rounded-full p-1.5 transition-colors hover:bg-accent",
-              entry.pinned ? "text-primary" : "text-muted-foreground/50",
+              item.pinned ? "text-primary" : "text-muted-foreground/50",
             )}
           >
-            {entry.pinned ? <Pin className="size-4" /> : <PinOff className="size-4" />}
+            {item.pinned ? <Pin className="size-4" /> : <PinOff className="size-4" />}
           </button>
         )}
         {canEditThis && (
@@ -193,7 +267,7 @@ function EntryCard({
             </button>
             <button
               type="button"
-              onClick={(e) => void onDelete(e)}
+              onClick={() => void onDelete()}
               aria-label={tc("delete")}
               className="rounded-full p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-destructive group-hover:opacity-100"
             >
@@ -206,77 +280,85 @@ function EntryCard({
   );
 }
 
-// --- Main page ------------------------------------------------------------
-
 export default function GuidebooksPage() {
   const t = useTranslations("Guidebooks");
   const locale = useLocale();
+  const router = useRouter();
   const user = useCurrentUser();
   const canManage = useHasCapability("manage_guidebooks");
   const handleError = useErrorHandler();
 
-  const migrationStatus = useQuery(api.wikiMigration.status);
-  const entries = useQuery(api.wikiEntries.list);
-  const categories = useQuery(api.wikiCategories.list) ?? [];
+  const items = useGridItems();
+  const wikiCategories = useQuery(api.wikiCategories.list) ?? EMPTY_CATEGORIES;
   const extend = useMutation(api.wikiEntries.update);
 
   const [search, setSearch] = useState("");
-  const [activeCategories, setActiveCategories] = useState<Set<string>>(new Set());
+  const [activeCategoryKeys, setActiveCategoryKeys] = useState<Set<string>>(new Set());
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [showArchive, setShowArchive] = useState(false);
-  const [editing, setEditing] = useState<Entry | "new" | null>(null);
+  const [editing, setEditing] = useState<WikiEntry | "new" | null>(null);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
 
   const interactiveTools = useMemo(() => accessibleGuidebooks(user), [user]);
 
+  // Every filterable category/topic in play: manageable wikiCategories plus
+  // whichever legacy topics still have unmigrated pages — always visible,
+  // not gated on migration.
+  const categoryChips = useMemo(() => {
+    const chips = wikiCategories.map((c) => ({ key: `cat:${c._id}`, label: c.name, color: c.color }));
+    const legacyTopics = new Set(
+      (items ?? []).filter((i) => i.kind === "legacy").map((i) => i.categoryKey),
+    );
+    for (const key of legacyTopics) {
+      const topic = key.slice("topic:".length);
+      chips.push({ key, label: legacyTopicLabel(topic), color: legacyTopicColor(topic) });
+    }
+    return chips;
+  }, [wikiCategories, items]);
+
   const reviewDue = useMemo(
     () =>
-      (entries ?? [])
-        .filter((e) => needsReview(e) && !e.categoryDeleted)
-        .sort((a, b) => a.validUntil - b.validUntil),
-    [entries],
+      (items ?? [])
+        .filter((i) => i.kind === "wiki" && i.reviewDue)
+        .sort((a, b) => (a.validUntil ?? 0) - (b.validUntil ?? 0)),
+    [items],
   );
 
   const filtered = useMemo(() => {
-    if (!entries) return [];
+    if (!items) return [];
     const query = search.trim().toLowerCase();
-    return entries.filter((e) => {
-      const archived = inArchive(e);
+    return items.filter((i) => {
       if (showArchive) {
-        if (!archived) return false;
+        if (!i.archived) return false;
       } else {
-        if (archived) return false;
-        if (activeCategories.size && !(e.categoryId && activeCategories.has(e.categoryId)))
-          return false;
+        if (i.archived) return false;
+        if (activeCategoryKeys.size && !activeCategoryKeys.has(i.categoryKey)) return false;
       }
-      if (activeTags.size && ![...activeTags].every((tag) => e.tags.includes(tag))) return false;
+      if (activeTags.size && ![...activeTags].every((tag) => i.tags.includes(tag))) return false;
       if (query) {
-        const haystack =
-          `${e.thema} ${e.erklaerung} ${e.tags.join(" ")} ${e.categoryName ?? ""}`.toLowerCase();
+        const haystack = `${i.title} ${i.snippet} ${i.tags.join(" ")} ${i.categoryLabel}`.toLowerCase();
         if (!haystack.includes(query)) return false;
       }
       return true;
     });
-  }, [entries, showArchive, activeCategories, activeTags, search]);
+  }, [items, showArchive, activeCategoryKeys, activeTags, search]);
 
   const sorted = useMemo(
-    () =>
-      [...filtered].sort(
-        (a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt,
-      ),
+    () => [...filtered].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt),
     [filtered],
   );
 
   const availableTags = useMemo(() => {
-    const pool = (entries ?? []).filter((e) => (showArchive ? inArchive(e) : !inArchive(e)));
-    return [...new Set(pool.flatMap((e) => e.tags))].sort((a, b) => a.localeCompare(b, "de"));
-  }, [entries, showArchive]);
+    const pool = (items ?? []).filter((i) => (showArchive ? i.archived : !i.archived));
+    return [...new Set(pool.flatMap((i) => i.tags))].sort((a, b) => a.localeCompare(b, "de"));
+  }, [items, showArchive]);
 
-  function toggleCategory(id: string) {
-    setActiveCategories((prev) => {
+  function toggleCategory(key: string) {
+    setActiveCategoryKeys((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }
@@ -289,16 +371,17 @@ export default function GuidebooksPage() {
     });
   }
 
-  async function onExtend(entry: Entry) {
+  async function onExtend(item: GridItem) {
+    if (!item.wikiEntry) return;
     try {
       await extend({
-        entryId: entry._id,
-        categoryId: entry.categoryId ?? undefined,
-        thema: entry.thema,
-        erklaerung: entry.erklaerung,
-        tags: entry.tags,
-        link: entry.link ?? undefined,
-        validFrom: entry.validFrom,
+        entryId: item.wikiEntry._id,
+        categoryId: item.wikiEntry.categoryId ?? undefined,
+        thema: item.wikiEntry.thema,
+        erklaerung: item.wikiEntry.erklaerung,
+        tags: item.wikiEntry.tags,
+        link: item.wikiEntry.link ?? undefined,
+        validFrom: item.wikiEntry.validFrom,
         validUntil: addMonths(Date.now(), 3),
       });
       toast.success(t("extended"));
@@ -306,9 +389,6 @@ export default function GuidebooksPage() {
       handleError(e);
     }
   }
-
-  if (migrationStatus === undefined) return null;
-  if (migrationStatus === null) return <MigrationGate />;
 
   return (
     <div className="mx-auto max-w-5xl" data-tour="tour-guidebooks-list">
@@ -323,22 +403,38 @@ export default function GuidebooksPage() {
               <Button variant="outline" size="icon" onClick={() => setCategoryManagerOpen(true)}>
                 <Settings2 className="size-4" />
               </Button>
-              <Button onClick={() => setEditing("new")}>
-                <Plus className="mr-2 size-4" />
-                {t("newEntry")}
-              </Button>
+              <div className="flex">
+                <Button className="rounded-r-none" onClick={() => setEditing("new")}>
+                  <Plus className="mr-2 size-4" />
+                  {t("newEntry")}
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="rounded-l-none border-l border-l-primary-foreground/20 px-2">
+                      <ChevronDown className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/guidebooks/new">{t("newEntryAdvanced")}</Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           ) : undefined
         }
       />
 
       {interactiveTools.length > 0 && (
-        <div className="mb-6">
-          <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <details className="group mb-6" open={toolsOpen} onToggle={(e) => setToolsOpen(e.currentTarget.open)}>
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
             <Sparkles className="size-3.5" />
             {t("interactiveToolsTitle")}
-          </div>
-          <div className="grid gap-2 sm:grid-cols-2">
+            <span className="tabular-nums">· {interactiveTools.length}</span>
+          </summary>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {interactiveTools.map((gb) => (
               <Link
                 key={gb.slug}
@@ -353,7 +449,7 @@ export default function GuidebooksPage() {
               </Link>
             ))}
           </div>
-        </div>
+        </details>
       )}
 
       <div className="space-y-4">
@@ -368,26 +464,26 @@ export default function GuidebooksPage() {
             />
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
-            {categories.map((c: Category) => (
+            {categoryChips.map((c) => (
               <button
-                key={c._id}
+                key={c.key}
                 type="button"
                 disabled={showArchive}
-                onClick={() => toggleCategory(c._id)}
+                onClick={() => toggleCategory(c.key)}
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40",
-                  activeCategories.has(c._id) && !showArchive
+                  activeCategoryKeys.has(c.key) && !showArchive
                     ? "border-transparent text-white"
                     : "border-border text-muted-foreground hover:bg-accent",
                 )}
                 style={
-                  activeCategories.has(c._id) && !showArchive
+                  activeCategoryKeys.has(c.key) && !showArchive
                     ? { backgroundColor: c.color }
                     : undefined
                 }
               >
                 <span className="size-2 rounded-full" style={{ backgroundColor: c.color }} />
-                {c.name}
+                {c.label}
               </button>
             ))}
             <button
@@ -432,23 +528,23 @@ export default function GuidebooksPage() {
             </p>
             <p className="mb-3 text-xs text-muted-foreground">{t("reviewPanelBody")}</p>
             <div className="space-y-2">
-              {reviewDue.map((e) => {
-                const days = daysUntil(e.validUntil);
+              {reviewDue.map((i) => {
+                const days = daysUntil(i.validUntil ?? 0);
                 return (
                   <div
-                    key={e._id}
+                    key={i.key}
                     className="flex flex-wrap items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm"
                   >
-                    <span className="min-w-0 flex-1 truncate font-medium">{e.thema}</span>
+                    <span className="min-w-0 flex-1 truncate font-medium">{i.title}</span>
                     <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
                       {days < 0
                         ? t("expiredSince", {
-                            date: formatIsoDate(msToDateInput(e.validUntil), locale),
+                            date: formatIsoDate(msToDateInput(i.validUntil ?? 0), locale),
                           })
                         : t("expiresInDays", { count: days })}
                     </span>
                     {canManage && (
-                      <Button size="sm" variant="outline" onClick={() => void onExtend(e)}>
+                      <Button size="sm" variant="outline" onClick={() => void onExtend(i)}>
                         {t("extendBy3Months")}
                       </Button>
                     )}
@@ -459,15 +555,23 @@ export default function GuidebooksPage() {
           </div>
         )}
 
-        {entries === undefined ? null : sorted.length === 0 ? (
+        {items === undefined ? null : sorted.length === 0 ? (
           <EmptyState
             icon={showArchive ? <Archive /> : <Sparkles />}
             title={showArchive ? t("archiveEmpty") : t("noResults")}
           />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
-            {sorted.map((e) => (
-              <EntryCard key={e._id} entry={e} canManage={canManage} onEdit={() => setEditing(e)} />
+            {sorted.map((i) => (
+              <EntryCard
+                key={i.key}
+                item={i}
+                canManage={canManage}
+                onEdit={() => {
+                  if (i.kind === "wiki" && i.wikiEntry) setEditing(i.wikiEntry);
+                  else router.push(`/guidebooks/${i.slug}/edit`);
+                }}
+              />
             ))}
           </div>
         )}

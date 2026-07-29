@@ -29,6 +29,8 @@ export const list = query({
       teams: p.teams,
       minRole: p.minRole ?? null,
       createdAt: p.createdAt,
+      updatedAt: p.updatedAt ?? p.createdAt,
+      authorUserId: p.authorUserId,
     }));
   },
 });

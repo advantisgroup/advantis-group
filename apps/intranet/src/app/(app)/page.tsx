@@ -33,7 +33,7 @@ import {
   EventsCard,
   WhosOutCard,
 } from "@/components/dashboard/TeamCompanyWidgets";
-import { NewWikiCard, useNewWikiPages } from "@/components/dashboard/WikiWidgets";
+import { LatestWikiCard, useLatestWikiPages } from "@/components/dashboard/WikiWidgets";
 import { Link } from "@/components/Link";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { useHasCapability, useIsAdmin, useIsManager } from "@/components/providers/current-user";
@@ -116,7 +116,7 @@ export default function DashboardPage() {
     start: startOfToday,
     end: now + 30 * 24 * 60 * 60 * 1000,
   });
-  const newWikiPages = useNewWikiPages();
+  const newWikiPages = useLatestWikiPages();
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
 
@@ -165,7 +165,7 @@ export default function DashboardPage() {
   ].filter((w) => showCard(w.id));
 
   const hasNewWiki = (newWikiPages?.length ?? 0) > 0;
-  const newWikiWidgets: Widget[] = (hasNewWiki ? [widget("newwiki", <NewWikiCard />)] : []).filter(
+  const newWikiWidgets: Widget[] = (hasNewWiki ? [widget("newwiki", <LatestWikiCard />)] : []).filter(
     (w) => showCard(w.id),
   );
 

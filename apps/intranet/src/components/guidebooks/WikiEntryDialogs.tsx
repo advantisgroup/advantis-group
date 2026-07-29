@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { addMonths, msToDateInput, slugify } from "@/lib/wiki";
 
@@ -324,11 +324,11 @@ export function EntryDialog({
             <label className="mb-1 block text-xs font-medium text-muted-foreground">
               {t("fieldErklaerung")}
             </label>
-            <Textarea
+            <RichTextEditor
               value={erklaerung}
-              onChange={(e) => setErklaerung(e.target.value)}
+              onChange={setErklaerung}
               placeholder={t("fieldErklaerungPlaceholder")}
-              className="min-h-32"
+              minHeight="8rem"
             />
           </div>
           <div>

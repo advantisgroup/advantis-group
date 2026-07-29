@@ -6,7 +6,15 @@ import { useParams, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, BookOpen, Megaphone, Pencil, Printer, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Check,
+  Megaphone,
+  Pencil,
+  Printer,
+  Trash2,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -17,11 +25,13 @@ import {
   RelatedGuidebooks,
 } from "@/components/guidebooks/extras";
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
+import { GuidebookPageView } from "@/components/guidebooks/GuidebookPageView";
 import {
   canAccessGuidebook,
   getGuidebook,
   guidebookDescription,
   guidebookTitle,
+  type Guidebook,
 } from "@/components/guidebooks/registry";
 import { GuidebookPager, GuidebookSwitcher } from "@/components/guidebooks/switcher";
 import { EntryDialog } from "@/components/guidebooks/WikiEntryDialogs";
@@ -37,9 +47,58 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
+import { RichText } from "@/components/ui/rich-text";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { parseBlocks } from "@/lib/guidebook-blocks";
 import { formatIsoDate } from "@/lib/format";
 import { msToDateInput } from "@/lib/wiki";
+
+const EMPTY_SLUGS: string[] = [];
+
+/**
+ * Wikis double as "read this, something's changed" notices (a new flyer, new
+ * credit rules, …), so opening the page shouldn't be the only signal —
+ * this gives a visible, user-initiated confirmation alongside the silent
+ * auto-mark-on-view.
+ */
+function ReadConfirmation({ slug }: { slug: string }) {
+  const t = useTranslations("Guidebooks");
+  const readSlugs = useQuery(api.guidebookReads.listMine) ?? EMPTY_SLUGS;
+  const markRead = useMutation(api.guidebookReads.markRead);
+  const [justConfirmed, setJustConfirmed] = useState(false);
+  const isRead = readSlugs.includes(slug) || justConfirmed;
+
+  async function onConfirm() {
+    setJustConfirmed(true);
+    try {
+      await markRead({ slug });
+      toast.success(t("readConfirmedToast"));
+    } catch {
+      // The auto-mark-on-view already fires on every visit, so a failure
+      // here just means the visible confirmation didn't record — no need to
+      // roll back the optimistic checkmark over it.
+    }
+  }
+
+  return (
+    <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 print:hidden">
+      <p className="text-sm text-muted-foreground">
+        {isRead ? t("readConfirmedBody") : t("readConfirmBody")}
+      </p>
+      {isRead ? (
+        <Badge variant="success">
+          <Check className="mr-1 size-3.5" />
+          {t("readConfirmedBadge")}
+        </Badge>
+      ) : (
+        <Button size="sm" onClick={() => void onConfirm()}>
+          <Check className="mr-1.5 size-3.5" />
+          {t("readConfirmCta")}
+        </Button>
+      )}
+    </div>
+  );
+}
 
 export default function GuidebookPage() {
   const t = useTranslations("Guidebooks");
@@ -55,28 +114,46 @@ export default function GuidebookPage() {
   const [editing, setEditing] = useState(false);
 
   const staticGuidebook = getGuidebook(params.slug);
-  // Only look up a wiki entry when the slug isn't one of the hardcoded
-  // registry ones — the static registry always wins on a collision.
+  // Only look up wiki/legacy content when the slug isn't one of the
+  // hardcoded registry ones — the static registry always wins on a collision.
   const entry = useQuery(api.wikiEntries.get, staticGuidebook ? "skip" : { slug: params.slug });
+  // A wiki entry with this slug supersedes any legacy page of the same slug
+  // (post-migration) — only look up the legacy page once we know there's no
+  // wiki entry.
+  const legacyPage = useQuery(
+    api.guidebookPages.get,
+    staticGuidebook || entry ? "skip" : { slug: params.slug },
+  );
   const removeEntry = useMutation(api.wikiEntries.remove);
+  const removePage = useMutation(api.guidebookPages.remove);
   const createAnnouncement = useMutation(api.announcements.create);
   const setPrefs = useMutation(api.userPreferences.setMine);
   const markRead = useMutation(api.guidebookReads.markRead);
 
-  const loading = !staticGuidebook && entry === undefined;
+  const loading = !staticGuidebook && entry === undefined && legacyPage === undefined;
   const guidebook = staticGuidebook
     ? { slug: staticGuidebook.slug, teams: staticGuidebook.teams, minRole: staticGuidebook.minRole }
     : entry
       ? { slug: entry.slug, teams: [], minRole: undefined }
-      : null;
+      : legacyPage
+        ? {
+            slug: legacyPage.slug,
+            teams: legacyPage.teams as Guidebook["teams"],
+            minRole: legacyPage.minRole ?? undefined,
+          }
+        : null;
   const allowed = guidebook ? canAccessGuidebook(user, guidebook) : false;
   const Component = staticGuidebook?.Component;
   const canManageEntry = !!entry && canManageWiki && isOwnerOrAdmin(user, entry.authorUserId);
+  const canManagePage =
+    !!legacyPage && canManageWiki && isOwnerOrAdmin(user, legacyPage.authorUserId);
 
-  const title = staticGuidebook ? guidebookTitle(staticGuidebook, t) : (entry?.thema ?? "");
+  const title = staticGuidebook
+    ? guidebookTitle(staticGuidebook, t)
+    : (entry?.thema ?? legacyPage?.title ?? "");
   const description = staticGuidebook
     ? guidebookDescription(staticGuidebook, t)
-    : (entry?.categoryName ?? "");
+    : (entry?.categoryName ?? legacyPage?.description ?? "");
 
   // Remember the last opened guidebook for the list page's "continue" banner,
   // and record a read receipt for the unread checkmark/dashboard section.
@@ -99,6 +176,24 @@ export default function GuidebookPage() {
     if (!ok) return;
     try {
       await removeEntry({ entryId: entry._id });
+      toast.success(tc("delete"));
+      router.push("/guidebooks");
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
+  async function onDeletePage() {
+    if (!legacyPage) return;
+    const ok = await confirm({
+      title: t("deletePageConfirm"),
+      description: tc("deleteWarning"),
+      confirmLabel: tc("delete"),
+      cancelLabel: tc("cancel"),
+    });
+    if (!ok) return;
+    try {
+      await removePage({ pageId: legacyPage._id });
       toast.success(tc("delete"));
       router.push("/guidebooks");
     } catch (e) {
@@ -174,6 +269,29 @@ export default function GuidebookPage() {
                 </Button>
               </>
             )}
+            {canManagePage && (
+              <>
+                <Link href={`/guidebooks/${legacyPage!.slug}/edit`}>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    aria-label={tc("edit")}
+                    className="text-muted-foreground"
+                  >
+                    <Pencil />
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={tc("delete")}
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => void onDeletePage()}
+                >
+                  <Trash2 />
+                </Button>
+              </>
+            )}
             <Button
               variant="ghost"
               size="icon-sm"
@@ -215,9 +333,7 @@ export default function GuidebookPage() {
                     </Badge>
                   ))}
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                  {entry.erklaerung || <i className="text-muted-foreground">{t("emptyEntry")}</i>}
-                </p>
+                <RichText html={entry.erklaerung} className="text-sm leading-relaxed" />
                 {entry.link && (
                   <a
                     href={entry.link}
@@ -240,6 +356,8 @@ export default function GuidebookPage() {
                   <dd className="font-medium">{entry.authorName}</dd>
                 </dl>
               </div>
+            ) : legacyPage ? (
+              <GuidebookPageView blocks={parseBlocks(legacyPage.blocks)} />
             ) : null}
           </div>
           {staticGuidebook ? (
@@ -257,14 +375,13 @@ export default function GuidebookPage() {
           ) : (
             <>
               <GuidebookAttachments slug={guidebook.slug} />
+              <ReadConfirmation slug={guidebook.slug} />
               <FeedbackWidget slug={guidebook.slug} />
             </>
           )}
         </>
       )}
-      {entry && (
-        <EntryDialog entry={editing ? entry : null} onOpenChange={() => setEditing(false)} />
-      )}
+      {entry && <EntryDialog entry={editing ? entry : null} onOpenChange={() => setEditing(false)} />}
     </div>
   );
 }

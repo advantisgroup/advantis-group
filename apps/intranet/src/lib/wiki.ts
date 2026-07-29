@@ -48,6 +48,30 @@ export function addMonths(ms: number, months: number): number {
   return d.getTime();
 }
 
+/**
+ * Legacy (block-editor) guidebook pages carry a fixed `topic` string instead
+ * of a manageable `wikiCategories` row. Rather than requiring migration
+ * before they're even filterable, the wiki list treats these as read-only
+ * pseudo-categories alongside the real ones — always visible as long as a
+ * legacy page uses that topic, not gated on the one-time migration having
+ * run. Colors mirror the old GROUP_META tints from the pre-overhaul list page.
+ */
+export const LEGACY_TOPIC_META: Record<string, { label: string; color: string }> = {
+  onboarding: { label: "Onboarding", color: "#4A5AB8" },
+  collaboration: { label: "Zusammenarbeit", color: "#2F7FA6" },
+  "time-account": { label: "Zeit & Konto", color: "#C77E1A" },
+  "it-workplace": { label: "IT & Arbeitsplatz", color: "#4E8A3C" },
+  management: { label: "Management", color: "#B2496E" },
+};
+
+export function legacyTopicLabel(topic: string): string {
+  return LEGACY_TOPIC_META[topic]?.label ?? topic;
+}
+
+export function legacyTopicColor(topic: string): string {
+  return LEGACY_TOPIC_META[topic]?.color ?? "#77808A";
+}
+
 /** `<input type="date">` uses local calendar dates — format by local Y/M/D
  * components rather than `toISOString()` (UTC), which would shift the
  * displayed date by a day for anyone east of UTC. */
