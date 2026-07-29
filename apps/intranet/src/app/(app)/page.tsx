@@ -11,6 +11,7 @@ import {
   Command,
   Heart,
   Megaphone,
+  NotebookPen,
   ShieldCheck,
   Settings2,
   Upload,
@@ -32,6 +33,7 @@ import {
   EventsCard,
   WhosOutCard,
 } from "@/components/dashboard/TeamCompanyWidgets";
+import { NewWikiCard, useNewWikiPages } from "@/components/dashboard/WikiWidgets";
 import { Link } from "@/components/Link";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { useHasCapability, useIsAdmin, useIsManager } from "@/components/providers/current-user";
@@ -53,6 +55,7 @@ const CARD_IDS = [
   "chats",
   "myday",
   "myperformance",
+  "newwiki",
   "events",
   "announcements",
   "whosout",
@@ -113,6 +116,7 @@ export default function DashboardPage() {
     start: startOfToday,
     end: now + 30 * 24 * 60 * 60 * 1000,
   });
+  const newWikiPages = useNewWikiPages();
   const prefs = useQuery(api.userPreferences.getMine);
   const setPrefs = useMutation(api.userPreferences.setMine);
 
@@ -143,6 +147,7 @@ export default function DashboardPage() {
     chats: t("unreadChats"),
     myday: t("yourDayTitle"),
     myperformance: t("myPerformanceTitle"),
+    newwiki: t("newWikiTitle"),
     events: t("upcomingEvents"),
     announcements: t("latestAnnouncements"),
     whosout: t("whosOutToday"),
@@ -158,6 +163,11 @@ export default function DashboardPage() {
     widget("myday", <MyDayCard />),
     ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
   ].filter((w) => showCard(w.id));
+
+  const hasNewWiki = (newWikiPages?.length ?? 0) > 0;
+  const newWikiWidgets: Widget[] = (hasNewWiki ? [widget("newwiki", <NewWikiCard />)] : []).filter(
+    (w) => showCard(w.id),
+  );
 
   const teamCompanyWidgets: Widget[] = [
     widget("events", <EventsCard />),
@@ -175,6 +185,7 @@ export default function DashboardPage() {
 
   const availableCardIds = CARD_IDS.filter((id) => {
     if (id === "myperformance") return hasMyPerformance;
+    if (id === "newwiki") return hasNewWiki;
     if (id === "teamstatus") return hasActivityCapability;
     if (id === "teamperformance") return hasTeamPerformance;
     if (id === "adminstats" || id === "adminactivity") return isManager;
@@ -273,6 +284,17 @@ export default function DashboardPage() {
         <section className="mb-8">
           <SectionHeading icon={<Heart />} title={t("sectionForYou")} />
           <WidgetGrid widgets={forYouWidgets} />
+        </section>
+      )}
+
+      {newWikiWidgets.length > 0 && (
+        <section className="mb-8">
+          <SectionHeading
+            icon={<NotebookPen />}
+            title={t("sectionNewWiki")}
+            tint="bg-violet-500/10 text-violet-600 dark:text-violet-300"
+          />
+          <WidgetGrid widgets={newWikiWidgets} />
         </section>
       )}
 

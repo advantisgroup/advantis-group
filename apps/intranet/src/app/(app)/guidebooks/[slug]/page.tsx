@@ -56,6 +56,7 @@ export default function GuidebookPage() {
   const removePage = useMutation(api.guidebookPages.remove);
   const createAnnouncement = useMutation(api.announcements.create);
   const setPrefs = useMutation(api.userPreferences.setMine);
+  const markRead = useMutation(api.guidebookReads.markRead);
 
   const loading = !staticGuidebook && customPage === undefined;
   const custom: Guidebook | null = customPage
@@ -76,12 +77,14 @@ export default function GuidebookPage() {
   const Component = staticGuidebook?.Component;
   const canManagePage = !!customPage && isOwnerOrAdmin(user, customPage.authorUserId);
 
-  // Remember the last opened guidebook for the list page's "continue" banner.
+  // Remember the last opened guidebook for the list page's "continue" banner,
+  // and record a read receipt for the unread checkmark/dashboard section.
   useEffect(() => {
     if (guidebook && allowed) {
       void setPrefs({ lastGuidebookSlug: guidebook.slug });
+      void markRead({ slug: guidebook.slug });
     }
-  }, [guidebook, allowed, setPrefs]);
+  }, [guidebook, allowed, setPrefs, markRead]);
 
   async function onDeletePage() {
     if (!customPage) return;

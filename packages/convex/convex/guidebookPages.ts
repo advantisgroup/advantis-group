@@ -28,6 +28,7 @@ export const list = query({
       topic: p.topic,
       teams: p.teams,
       minRole: p.minRole ?? null,
+      createdAt: p.createdAt,
     }));
   },
 });

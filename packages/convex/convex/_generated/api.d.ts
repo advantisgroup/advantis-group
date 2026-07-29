@@ -62,6 +62,7 @@ import type * as guidebookAttachments from "../guidebookAttachments.js";
 import type * as guidebookFeedback from "../guidebookFeedback.js";
 import type * as guidebookHighlights from "../guidebookHighlights.js";
 import type * as guidebookPages from "../guidebookPages.js";
+import type * as guidebookReads from "../guidebookReads.js";
 import type * as http from "../http.js";
 import type * as integrations_audit from "../integrations/audit.js";
 import type * as integrations_clockodoAbsences from "../integrations/clockodoAbsences.js";
@@ -173,6 +174,7 @@ declare const fullApi: ApiFromModules<{
   guidebookFeedback: typeof guidebookFeedback;
   guidebookHighlights: typeof guidebookHighlights;
   guidebookPages: typeof guidebookPages;
+  guidebookReads: typeof guidebookReads;
   http: typeof http;
   "integrations/audit": typeof integrations_audit;
   "integrations/clockodoAbsences": typeof integrations_clockodoAbsences;
