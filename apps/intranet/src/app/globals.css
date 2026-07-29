@@ -735,6 +735,20 @@ html.lenis body {
     margin: 0.75rem 0;
   }
 
+  .rich-text .mention {
+    display: inline;
+    font-weight: 600;
+    color: var(--primary);
+    background: color-mix(in oklch, var(--primary) 12%, transparent);
+    border-radius: 0.3rem;
+    padding: 0.05rem 0.3rem;
+    cursor: pointer;
+  }
+
+  .rich-text .mention:hover {
+    background: color-mix(in oklch, var(--primary) 20%, transparent);
+  }
+
   /* Rich-text editor placeholder */
   [data-rte]:empty::before,
   [data-rte][data-empty="true"]::before {

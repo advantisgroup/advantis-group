@@ -12,9 +12,19 @@ import {
   Strikethrough,
   Underline,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+/** A mentionable person — supplied by the consumer, e.g. from `api.users.list`. */
+export interface MentionCandidate {
+  id: string;
+  name: string;
+  email?: string;
+  avatar?: string | null;
+}
 
 type Cmd =
   | { icon: typeof Bold; label: string; command: string; value?: string }
@@ -46,13 +56,65 @@ const TOOLS: (Cmd | "divider")[] = [
 ];
 
 /** Walk up from `node` (staying inside `root`) looking for a matching tag. */
-function isInsideTag(root: HTMLElement, node: Node | null, tag: string) {
+function closestAncestorTag(root: HTMLElement, node: Node | null, tag: string): HTMLElement | null {
   let cur: Node | null = node;
   while (cur && cur !== root) {
-    if (cur.nodeType === 1 && (cur as HTMLElement).tagName === tag) return true;
+    if (cur.nodeType === 1 && (cur as HTMLElement).tagName === tag) return cur as HTMLElement;
     cur = cur.parentNode;
   }
-  return false;
+  return null;
+}
+
+function isInsideTag(root: HTMLElement, node: Node | null, tag: string): boolean {
+  return !!closestAncestorTag(root, node, tag);
+}
+
+/** Inline formatting wrappers a caret can end up "trapped" inside after a command runs. */
+const INLINE_FORMAT_TAGS = new Set(["B", "STRONG", "I", "EM", "U", "STRIKE", "S", "A", "KBD"]);
+/** Commands whose result is an inline wrapper (as opposed to a block-level or stripping change). */
+const INLINE_ESCAPE_COMMANDS = new Set([
+  "bold",
+  "italic",
+  "underline",
+  "strikeThrough",
+  "createLink",
+]);
+
+function isInlineFormatEl(node: Node | null): node is HTMLElement {
+  return !!node && node.nodeType === 1 && INLINE_FORMAT_TAGS.has((node as HTMLElement).tagName);
+}
+
+/**
+ * After applying inline formatting to a selection, drop an invisible,
+ * unformatted anchor character right after the formatted run and park the
+ * caret there. Without this, the caret is left sitting *inside* the
+ * formatting element — a well-known contentEditable quirk — so both typing
+ * and pressing the right arrow key stay trapped in the same style instead of
+ * escaping it. A zero-width space (rather than a visible one) avoids
+ * introducing a stray double space when the formatted text sits mid-sentence.
+ */
+function placeEscapeAnchor(el: HTMLElement) {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return;
+  const range = sel.getRangeAt(0);
+  let node: Node | null =
+    range.endContainer.nodeType === Node.TEXT_NODE
+      ? range.endContainer.parentNode
+      : range.endContainer;
+  if (!isInlineFormatEl(node)) return;
+  // Climb through nested wrappers (e.g. bold-and-italic) to the outermost one
+  // so the anchor lands clear of all of them, not just the innermost.
+  while (node && node !== el && isInlineFormatEl(node.parentNode)) {
+    node = node.parentNode;
+  }
+  if (!node || !node.parentNode) return;
+  const anchor = document.createTextNode("\u200B");
+  node.parentNode.insertBefore(anchor, node.nextSibling);
+  const newRange = document.createRange();
+  newRange.setStart(anchor, 1);
+  newRange.collapse(true);
+  sel.removeAllRanges();
+  sel.addRange(newRange);
 }
 
 /**
@@ -66,14 +128,19 @@ function isInsideTag(root: HTMLElement, node: Node | null, tag: string) {
 export function useRichTextController({
   value,
   onChange,
+  mentionCandidates = [],
 }: {
   value: string;
   onChange: (html: string) => void;
+  /** Enables "@name" autocomplete when non-empty; omit to leave mentions off. */
+  mentionCandidates?: MentionCandidate[];
 }) {
   const elRef = useRef<HTMLDivElement | null>(null);
   // Which toolbar styles apply to the current selection/caret — drives the
   // active highlight so the user can see what's on without guessing.
   const [active, setActive] = useState<Record<string, boolean>>({});
+  const [mention, setMention] = useState<{ query: string; rect: DOMRect } | null>(null);
+  const [mentionActiveIndex, setMentionActiveIndex] = useState(0);
 
   const syncValue = useCallback(() => {
     const el = elRef.current;
@@ -137,11 +204,117 @@ export function useRichTextController({
     if (!el) return;
     el.setAttribute("data-empty", el.textContent ? "false" : "true");
     onChange(el.innerHTML);
+    detectMention();
+  }
+
+  /** Looks at the text right before the caret for an in-progress "@query" and
+   *  opens/updates/closes the mention dropdown accordingly. No-ops entirely
+   *  when the consumer didn't opt in via `mentionCandidates`. */
+  function detectMention() {
+    if (mentionCandidates.length === 0) return;
+    const el = elRef.current;
+    const sel = window.getSelection();
+    if (!el || !sel || sel.rangeCount === 0 || !sel.isCollapsed) {
+      setMention(null);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    if (!el.contains(range.startContainer) || range.startContainer.nodeType !== Node.TEXT_NODE) {
+      setMention(null);
+      return;
+    }
+    const before = (range.startContainer.textContent ?? "").slice(0, range.startOffset);
+    const match = /(?:^|\s)@([^\s@]{0,32})$/.exec(before);
+    if (!match) {
+      setMention(null);
+      return;
+    }
+    setMentionActiveIndex(0);
+    setMention({ query: match[1], rect: range.getBoundingClientRect() });
+  }
+
+  const mentionMatches = useMemo(() => {
+    if (!mention) return [];
+    const q = mention.query.trim().toLowerCase();
+    const pool = q
+      ? mentionCandidates.filter((c) => c.name.toLowerCase().includes(q))
+      : mentionCandidates;
+    return pool.slice(0, 6);
+  }, [mention, mentionCandidates]);
+
+  /** Replaces the in-progress "@query" text with an atomic, non-editable
+   *  mention chip plus a trailing space, and parks the caret right after it. */
+  function insertMention(candidate: MentionCandidate) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    const range = sel.getRangeAt(0);
+    const container = range.startContainer;
+    if (container.nodeType !== Node.TEXT_NODE) return;
+    const text = container.textContent ?? "";
+    const before = text.slice(0, range.startOffset);
+    const atIndex = before.lastIndexOf("@");
+    if (atIndex === -1) return;
+    const parent = container.parentNode;
+    if (!parent) return;
+
+    const nodeBefore = document.createTextNode(text.slice(0, atIndex));
+    const mentionSpan = document.createElement("span");
+    mentionSpan.className = "mention";
+    mentionSpan.setAttribute("contenteditable", "false");
+    mentionSpan.setAttribute("data-mention-user-id", candidate.id);
+    mentionSpan.textContent = `@${candidate.name}`;
+    const spaceNode = document.createTextNode(" ");
+    const nodeAfter = document.createTextNode(text.slice(range.startOffset));
+
+    parent.insertBefore(nodeBefore, container);
+    parent.insertBefore(mentionSpan, container);
+    parent.insertBefore(spaceNode, container);
+    parent.insertBefore(nodeAfter, container);
+    parent.removeChild(container);
+
+    const newRange = document.createRange();
+    newRange.setStart(spaceNode, 1);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+
+    setMention(null);
+    emit();
+  }
+
+  /** Returns true when it handled the keystroke (so the caller should
+   *  preventDefault instead of letting it reach the contentEditable). */
+  function handleMentionKeyDown(key: string): boolean {
+    if (!mention || mentionMatches.length === 0) return false;
+    if (key === "ArrowDown") {
+      setMentionActiveIndex((i) => (i + 1) % mentionMatches.length);
+      return true;
+    }
+    if (key === "ArrowUp") {
+      setMentionActiveIndex((i) => (i - 1 + mentionMatches.length) % mentionMatches.length);
+      return true;
+    }
+    if (key === "Enter" || key === "Tab") {
+      insertMention(mentionMatches[mentionActiveIndex]);
+      return true;
+    }
+    if (key === "Escape") {
+      setMention(null);
+      return true;
+    }
+    return false;
   }
 
   function exec(command: string, val?: string) {
-    elRef.current?.focus();
+    const el = elRef.current;
+    el?.focus();
+    const sel = window.getSelection();
+    const hadRange = !!sel && sel.rangeCount > 0 && !sel.isCollapsed;
     document.execCommand(command, false, val);
+    // Only park an escape anchor when a selection was actually (re)formatted —
+    // not for a bare toggle-for-next-keystroke click on a collapsed caret,
+    // which should keep behaving like every other editor's "type in bold now".
+    if (hadRange && el && INLINE_ESCAPE_COMMANDS.has(command)) placeEscapeAnchor(el);
     emit();
     refreshActive();
   }
@@ -155,12 +328,25 @@ export function useRichTextController({
     if (!el || !sel || sel.rangeCount === 0 || sel.isCollapsed) return;
     const range = sel.getRangeAt(0);
     if (!el.contains(range.commonAncestorContainer)) return;
-    try {
-      const kbd = document.createElement("kbd");
-      range.surroundContents(kbd);
+    // Toggle off instead of nesting another <kbd> inside an existing one —
+    // clicking the button again on already-kbd'd text used to stack an
+    // unbounded number of wrappers around it.
+    const existingKbd = closestAncestorTag(el, range.commonAncestorContainer, "KBD");
+    if (existingKbd) {
+      const parent = existingKbd.parentNode;
+      if (parent) {
+        while (existingKbd.firstChild) parent.insertBefore(existingKbd.firstChild, existingKbd);
+        parent.removeChild(existingKbd);
+      }
       sel.removeAllRanges();
-    } catch {
-      // Selection spans multiple block elements — not a supported case here.
+    } else {
+      try {
+        const kbd = document.createElement("kbd");
+        range.surroundContents(kbd);
+        placeEscapeAnchor(el);
+      } catch {
+        // Selection spans multiple block elements — not a supported case here.
+      }
     }
     emit();
     refreshActive();
@@ -180,7 +366,18 @@ export function useRichTextController({
     }
   }
 
-  return { ref, active, run, refreshActive, emit };
+  return {
+    ref,
+    active,
+    run,
+    refreshActive,
+    emit,
+    mention,
+    mentionMatches,
+    mentionActiveIndex,
+    insertMention,
+    handleMentionKeyDown,
+  };
 }
 
 export type RichTextController = ReturnType<typeof useRichTextController>;
@@ -237,24 +434,61 @@ export function RichTextSurface({
   className?: string;
 }) {
   return (
-    <div
-      ref={controller.ref}
-      data-rte
-      data-placeholder={placeholder}
-      contentEditable
-      suppressContentEditableWarning
-      onInput={controller.emit}
-      onFocus={onFocus}
-      onBlur={() => {
-        controller.emit();
-        onBlur?.();
-      }}
-      onKeyUp={controller.refreshActive}
-      onMouseUp={controller.refreshActive}
-      role="textbox"
-      aria-multiline="true"
-      className={cn("rich-text px-3.5 py-3 outline-none", className)}
-    />
+    <>
+      <div
+        ref={controller.ref}
+        data-rte
+        data-placeholder={placeholder}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={controller.emit}
+        onFocus={onFocus}
+        onBlur={() => {
+          controller.emit();
+          onBlur?.();
+        }}
+        onKeyDown={(e) => {
+          if (controller.handleMentionKeyDown(e.key)) e.preventDefault();
+        }}
+        onKeyUp={controller.refreshActive}
+        onMouseUp={controller.refreshActive}
+        role="textbox"
+        aria-multiline="true"
+        className={cn("rich-text px-3.5 py-3 outline-none", className)}
+      />
+      {controller.mention && controller.mentionMatches.length > 0 && (
+        <div
+          role="listbox"
+          className="fixed z-50 w-64 overflow-hidden rounded-lg border border-border/70 bg-popover py-1 shadow-overlay"
+          style={{ top: controller.mention.rect.bottom + 6, left: controller.mention.rect.left }}
+        >
+          {controller.mentionMatches.map((c, i) => (
+            <button
+              key={c.id}
+              type="button"
+              role="option"
+              aria-selected={i === controller.mentionActiveIndex}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                controller.insertMention(c);
+              }}
+              className={cn(
+                "flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-sm",
+                i === controller.mentionActiveIndex ? "bg-accent" : "hover:bg-accent/60",
+              )}
+            >
+              <Avatar className="size-6 shrink-0">
+                {c.avatar && <AvatarImage src={c.avatar} alt={c.name} />}
+                <AvatarFallback className="text-[10px]">
+                  {initials(c.name, c.email ?? "")}
+                </AvatarFallback>
+              </Avatar>
+              <span className="min-w-0 flex-1 truncate">{c.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
@@ -266,6 +500,7 @@ export function RichTextEditor({
   placeholder,
   className,
   minHeight,
+  mentionCandidates,
 }: {
   value: string;
   onChange: (html: string) => void;
@@ -277,8 +512,10 @@ export function RichTextEditor({
   className?: string;
   /** Overrides the default `min-h-[14rem]` — smaller editors (e.g. a single CV field) don't need that much room. */
   minHeight?: string;
+  /** Enables "@name" autocomplete when provided. */
+  mentionCandidates?: MentionCandidate[];
 }) {
-  const controller = useRichTextController({ value, onChange });
+  const controller = useRichTextController({ value, onChange, mentionCandidates });
 
   return (
     <div
