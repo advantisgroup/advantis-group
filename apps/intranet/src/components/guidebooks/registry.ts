@@ -71,6 +71,8 @@ export interface Guidebook {
   /** True for a manager-authored page from `/guidebooks/new` (rendered from
    *  stored blocks, see GuidebookPageView) rather than a registered Component. */
   custom?: boolean;
+  /** `custom` entries only — drives the "new" badge on the guidebooks list. */
+  createdAt?: number;
   icon: LucideIcon;
   category: GuidebookCategory;
   /** Subject grouping, required for "guide" entries (see GuidebookTopic). */

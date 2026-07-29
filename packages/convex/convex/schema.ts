@@ -1610,10 +1610,18 @@ export default defineSchema({
   // Admin-uploaded files (PDFs, docs, ...) attached to a guidebook page,
   // alongside its fixed article content — guidebooks are static components,
   // not a CMS, so this is the one piece of per-guidebook content that's
-  // actually data-driven.
+  // actually data-driven. OneDrive-backed rather than Convex storage: the
+  // bytes live under Team/Wiki/<slug>/ (apps/api's POST
+  // /onedrive/wiki/:slug/attach provisions that folder and uploads there),
+  // so every active user's existing Team-zone read access doubles as a
+  // backup copy with no extra permission grant. Convex only ever stores the
+  // Graph item id + path reference; the actual file is fetched on demand
+  // through apps/api's GET /onedrive/download/:id (never a Graph preview
+  // link), so it stays reactive — a changed reference just refetches.
   guidebookAttachments: defineTable({
     slug: v.string(),
-    storageId: v.id("_storage"),
+    oneDriveItemId: v.string(),
+    oneDrivePath: v.string(),
     name: v.string(),
     kind: v.union(v.literal("image"), v.literal("file")),
     size: v.optional(v.number()),
@@ -1644,6 +1652,18 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   }).index("by_slug", ["slug"]),
+
+  // --- Guidebook read receipts -------------------------------------------------
+  // One row per user per slug, written the first time they open a guidebook.
+  // Drives the "read" checkmark on guidebooks list cards and the "new in the
+  // wiki" dashboard section (unread = no row here yet). Never deleted.
+  guidebookReads: defineTable({
+    userId: v.id("users"),
+    slug: v.string(),
+    readAt: v.number(),
+  })
+    .index("by_user_slug", ["userId", "slug"])
+    .index("by_user", ["userId"]),
 
   // --- Wallbox Sales Academy (interactive guidebook) -------------------------
   // Ported from a standalone training tool that gated access with a
@@ -2031,4 +2051,85 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_user", ["clerkUserId"]),
+
+  // --- Fehlermanagement (QVM error/quality management, Sales) -----------------
+  // A standalone quality-error tracking tool ported from a prototype built
+  // around the 8D/PDCA methodology — entirely separate from the
+  // guidebooks/wiki system (its own tab, its own data). Errors are logged,
+  // escalated (derived from severity/due date — see
+  // `apps/intranet/src/lib/error-management.ts`, not stored) and closed once
+  // a linked corrective measure's effectiveness has been checked.
+  errorCategories: defineTable({
+    name: v.string(),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+  }),
+
+  errorReports: defineTable({
+    categoryId: v.optional(v.id("errorCategories")),
+    // Snapshot of the category name, kept if the category is later deleted
+    // (mirrors how deleted guidebook-topic labels are preserved elsewhere).
+    categoryName: v.optional(v.string()),
+    description: v.string(),
+    severity: v.union(
+      v.literal("niedrig"),
+      v.literal("mittel"),
+      v.literal("hoch"),
+      v.literal("kritisch"),
+    ),
+    status: v.union(v.literal("neu"), v.literal("in_bearbeitung"), v.literal("geschlossen")),
+    customerOrProject: v.optional(v.string()),
+    responsibleName: v.optional(v.string()),
+    dueAt: v.optional(v.number()),
+    customerInformedAt: v.optional(v.number()),
+    customerRespondedAt: v.optional(v.number()),
+    prevention: v.optional(v.string()),
+    customerFeedback: v.optional(
+      v.union(v.literal("positiv"), v.literal("neutral"), v.literal("negativ")),
+    ),
+    effectivenessChecked: v.boolean(),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    closedAt: v.optional(v.number()),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_category", ["categoryId"])
+    .index("by_createdAt", ["createdAt"]),
+
+  // 8D-PDCA corrective measures linked to an error report. `phase` walks
+  // through the standard 8D steps: immediate containment (D3) → root cause
+  // (D4) → corrective action (D5/D6) → effectiveness check (D7) →
+  // prevention (D8).
+  errorMeasures: defineTable({
+    errorReportId: v.id("errorReports"),
+    description: v.string(),
+    phase: v.union(
+      v.literal("d3_sofort"),
+      v.literal("d4_ursache"),
+      v.literal("d5_d6_abstellung"),
+      v.literal("d7_wirksamkeit"),
+      v.literal("d8_vorbeugung"),
+    ),
+    status: v.union(v.literal("offen"), v.literal("erledigt")),
+    responsibleName: v.optional(v.string()),
+    dueAt: v.optional(v.number()),
+    effectivenessChecked: v.boolean(),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+  })
+    .index("by_error", ["errorReportId"])
+    .index("by_status", ["status"]),
+
+  // Singleton row (Stammdaten thresholds) — created lazily with defaults on
+  // first read if it doesn't exist yet.
+  errorSettings: defineTable({
+    targetResponseDays: v.number(),
+    warnResponseDays: v.number(),
+    defaultDueDays: v.number(),
+    defaultMeasureDueDays: v.number(),
+    updatedByUserId: v.id("users"),
+    updatedAt: v.number(),
+  }),
 });

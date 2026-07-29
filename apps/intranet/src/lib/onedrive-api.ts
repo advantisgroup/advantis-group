@@ -172,6 +172,35 @@ export function useOneDriveApi() {
           })();
         }),
 
+      /**
+       * Upload a guidebook (wiki) attachment straight to OneDrive
+       * (Team/Wiki/<slug>/…, auto-provisioned server-side). Returns the
+       * reference Convex stores — never the bytes — so the file's single
+       * source of truth is OneDrive and everyone with wiki access already
+       * has Team-zone read access to it as a backup.
+       */
+      attachToWiki: async (
+        slug: string,
+        file: File,
+      ): Promise<{
+        oneDriveItemId: string;
+        oneDrivePath: string;
+        name: string;
+        size: number;
+        contentType: string;
+        kind: "image" | "file";
+      }> => {
+        const form = new FormData();
+        form.append("file", file);
+        return parse(
+          await fetch(`${API}/onedrive/wiki/${encodeURIComponent(slug)}/attach`, {
+            method: "POST",
+            headers: await authHeaders(),
+            body: form,
+          }),
+        );
+      },
+
       approve: (uploadId: string, note?: string) =>
         send<{ ok: true }>(
           "POST",

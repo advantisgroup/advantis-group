@@ -7,6 +7,7 @@ import { useMutation, useQuery } from "convex/react";
 import {
   ArrowRight,
   BookOpen,
+  CheckCircle2,
   ChevronRight,
   Clock,
   MessageSquare,
@@ -102,6 +103,13 @@ function groupOf(gb: Guidebook): GroupKey {
   return gb.category === "interactive" ? "interactive" : (gb.topic ?? "it-workplace");
 }
 
+/** A custom (DB-backed) guidebook counts as "new" for this long after creation. */
+const NEW_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
+export function isRecentlyCreatedGuidebook(gb: Guidebook): boolean {
+  return !!gb.custom && !!gb.createdAt && Date.now() - gb.createdAt < NEW_WINDOW_MS;
+}
+
 function GuidebookCardItem({
   gb,
   favorite,
@@ -109,6 +117,8 @@ function GuidebookCardItem({
   highlighted,
   canHighlight,
   onToggleHighlight,
+  read,
+  isNew,
 }: {
   gb: Guidebook;
   favorite: boolean;
@@ -116,6 +126,8 @@ function GuidebookCardItem({
   highlighted: boolean;
   canHighlight: boolean;
   onToggleHighlight: () => void;
+  read: boolean;
+  isNew: boolean;
 }) {
   const t = useTranslations("Guidebooks");
   const Icon = gb.icon;
@@ -141,6 +153,17 @@ function GuidebookCardItem({
                 <Badge variant="muted" className="font-normal">
                   {t("managerBadge")}
                 </Badge>
+              )}
+              {isNew && !read && (
+                <Badge className="bg-primary/15 font-normal text-primary hover:bg-primary/15">
+                  {t("newBadge")}
+                </Badge>
+              )}
+              {read && (
+                <CheckCircle2
+                  aria-label={t("readAria")}
+                  className="size-3.5 shrink-0 text-muted-foreground/60"
+                />
               )}
             </p>
             <p className="mt-0.5 text-sm text-muted-foreground">{guidebookDescription(gb, t)}</p>
@@ -191,6 +214,7 @@ function GuidebookGrid({
   highlightedSlugs,
   canHighlight,
   onToggleHighlight,
+  readSlugs,
 }: {
   items: Guidebook[];
   favorites: string[];
@@ -198,6 +222,7 @@ function GuidebookGrid({
   highlightedSlugs: string[];
   canHighlight: boolean;
   onToggleHighlight: (slug: string) => void;
+  readSlugs: string[];
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
@@ -210,6 +235,8 @@ function GuidebookGrid({
           highlighted={highlightedSlugs.includes(gb.slug)}
           canHighlight={canHighlight}
           onToggleHighlight={() => onToggleHighlight(gb.slug)}
+          read={readSlugs.includes(gb.slug)}
+          isNew={isRecentlyCreatedGuidebook(gb)}
         />
       ))}
     </div>
@@ -228,6 +255,7 @@ export default function GuidebooksPage() {
   const highlightedSlugs = useQuery(api.guidebookHighlights.list) ?? [];
   const toggleHighlightMutation = useMutation(api.guidebookHighlights.toggle);
   const customPages = useQuery(api.guidebookPages.list);
+  const readSlugs = useQuery(api.guidebookReads.listMine) ?? [];
 
   // Manager-authored pages (see /guidebooks/new) rendered from stored blocks
   // rather than a registered Component — merged into the same list/search/
@@ -244,6 +272,7 @@ export default function GuidebooksPage() {
         topic: p.topic as GuidebookTopic,
         minRole: p.minRole ?? undefined,
         teams: p.teams as Guidebook["teams"],
+        createdAt: p.createdAt,
       })),
     [customPages],
   );
@@ -342,6 +371,7 @@ export default function GuidebooksPage() {
                 highlightedSlugs={highlightedSlugs}
                 canHighlight={isManager}
                 onToggleHighlight={toggleHighlight}
+                readSlugs={readSlugs}
               />
             </div>
           )}
@@ -429,6 +459,7 @@ export default function GuidebooksPage() {
                     highlightedSlugs={highlightedSlugs}
                     canHighlight={isManager}
                     onToggleHighlight={toggleHighlight}
+                    readSlugs={readSlugs}
                   />
                 </section>
               ))}
@@ -441,6 +472,7 @@ export default function GuidebooksPage() {
               highlightedSlugs={highlightedSlugs}
               canHighlight={isManager}
               onToggleHighlight={toggleHighlight}
+              readSlugs={readSlugs}
             />
           )}
         </div>

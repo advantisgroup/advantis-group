@@ -13,7 +13,8 @@ import { useConfirm } from "@/components/ui/dialog";
 import { useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatFileSize, isImage, MAX_ATTACHMENT_BYTES, uploadToConvex } from "@/lib/upload";
+import { useOneDriveApi } from "@/lib/onedrive-api";
+import { formatFileSize, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 
 /**
  * Admin-uploaded files attached to a hardcoded (registry) guidebook page —
@@ -30,7 +31,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
   const attachments = useQuery(api.guidebookAttachments.list, { slug });
   const addAttachment = useMutation(api.guidebookAttachments.add);
   const removeAttachment = useMutation(api.guidebookAttachments.remove);
-  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const oneDriveApi = useOneDriveApi();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
 
@@ -43,21 +44,8 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     }
     setBusy(true);
     try {
-      const storageId = await uploadToConvex(
-        () => generateUploadUrl({}),
-        file,
-        () => {},
-      );
-      await addAttachment({
-        slug,
-        attachment: {
-          storageId,
-          kind: isImage(file) ? "image" : "file",
-          name: file.name,
-          size: file.size,
-          contentType: file.type || undefined,
-        },
-      });
+      const uploaded = await oneDriveApi.attachToWiki(slug, file);
+      await addAttachment({ slug, attachment: uploaded });
     } catch (e) {
       handleError(e);
     } finally {
@@ -65,7 +53,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     }
   }
 
-  async function onDelete(attachmentId: Id<"guidebookAttachments">) {
+  async function onDelete(attachmentId: Id<"guidebookAttachments">, oneDriveItemId: string) {
     const ok = await confirm({
       title: t("deleteAttachmentConfirm"),
       description: tc("deleteWarning"),
@@ -74,6 +62,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     });
     if (!ok) return;
     try {
+      await oneDriveApi.remove(oneDriveItemId);
       await removeAttachment({ attachmentId });
     } catch (e) {
       handleError(e);
@@ -124,23 +113,21 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
               <span className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
                 <FileText className="size-4" />
               </span>
-              <a
-                href={a.url ?? undefined}
-                target="_blank"
-                rel="noreferrer"
-                download={a.name}
-                className="min-w-0"
+              <button
+                type="button"
+                onClick={() => void oneDriveApi.download(a.oneDriveItemId, a.name)}
+                className="min-w-0 text-left"
               >
                 <span className="block max-w-[14rem] truncate font-medium">{a.name}</span>
                 <span className="block text-xs text-muted-foreground">
                   {a.size != null ? formatFileSize(a.size) : ""}
                 </span>
-              </a>
+              </button>
               <Download className="size-3.5 shrink-0 text-muted-foreground" />
               {isManager && (
                 <button
                   type="button"
-                  onClick={() => void onDelete(a._id)}
+                  onClick={() => void onDelete(a._id, a.oneDriveItemId)}
                   aria-label={tc("delete")}
                   className="ml-1 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                 >

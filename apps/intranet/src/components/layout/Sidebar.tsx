@@ -7,6 +7,7 @@ import { type FeatureFlagKey } from "@advantis/types";
 import { useQuery } from "convex/react";
 import {
   Activity,
+  AlertTriangle,
   BookOpen,
   Calendar,
   Cloud,
@@ -183,6 +184,11 @@ export function Sidebar() {
           labelKey: "files",
           icon: Cloud,
           tourAttr: "tour-nav-files",
+        },
+        {
+          href: "/fehlermanagement",
+          labelKey: "errorManagement",
+          icon: AlertTriangle,
         },
         {
           href: "/directory",

@@ -43,6 +43,7 @@ import {
   uploadFile,
 } from "../lib/onedrive/graph.js";
 import { scanFile } from "../lib/onedrive/scan.js";
+import { ensureFolderPath } from "../lib/onedrive/wikiFolder.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 // --- helpers ----------------------------------------------------------------
@@ -455,6 +456,47 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       return { id: created.id, name: created.name };
     },
     { body: t.Object({ path: t.Optional(t.String()), name: t.String() }) },
+  )
+
+  // Upload a guidebook (wiki) attachment (manager+, same write rule as any
+  // other Team-zone write). Lazily provisions Team/Wiki/<slug> — Convex only
+  // ever stores the returned driveItemId/path as a reference, never the
+  // bytes, so the file lives in OneDrive as its single source of truth.
+  .post(
+    "/wiki/:slug/attach",
+    async ({ request, params, body }) => {
+      const user = await resolveOneDriveUser(request);
+      requireManagerUser(user);
+      await rateLimit("od.wikiAttach", user.clerkUserId, 20, "1 h");
+
+      const targetRel = `${folderConfig().team}/Wiki/${params.slug}`;
+      assertCanWrite(user, targetRel);
+
+      const file = body.file;
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const [report, folder] = await Promise.all([
+        scanFile({ bytes, fileName: file.name, declaredMime: file.type }),
+        ensureFolderPath(targetRel),
+      ]);
+      if (report.verdict === "blocked") {
+        const reason = report.flags.find((f) => f.severity === "danger");
+        throw Errors.badRequest(reason?.detail ?? "This file type is not allowed");
+      }
+      const created = await uploadFile(folder.id, file.name, bytes, file.type);
+      await invalidateAll();
+      return {
+        oneDriveItemId: created.id,
+        oneDrivePath: `${targetRel}/${file.name}`,
+        name: file.name,
+        size: bytes.byteLength,
+        contentType: file.type || "application/octet-stream",
+        kind: (file.type || "").startsWith("image/") ? ("image" as const) : ("file" as const),
+      };
+    },
+    {
+      params: t.Object({ slug: t.String() }),
+      body: t.Object({ file: t.File() }),
+    },
   )
 
   // Rename and/or move an item (manager+).
