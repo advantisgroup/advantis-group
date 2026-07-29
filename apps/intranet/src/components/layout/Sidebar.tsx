@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   UserSearch,
   Users,
+  Wrench,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -155,6 +156,12 @@ export function Sidebar() {
           badge: chatUnread,
           featureKey: "chat",
           tourAttr: "tour-nav-chat",
+        },
+        {
+          href: "/it-tickets",
+          labelKey: "itTickets",
+          icon: Wrench,
+          tourAttr: "tour-nav-it-tickets",
         },
       ],
     },

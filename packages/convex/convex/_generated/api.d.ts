@@ -72,6 +72,7 @@ import type * as integrations_clockodoView from "../integrations/clockodoView.js
 import type * as integrations_debug from "../integrations/debug.js";
 import type * as integrations_lib_auth from "../integrations/lib/auth.js";
 import type * as invites from "../invites.js";
+import type * as itTickets from "../itTickets.js";
 import type * as lib_attachments from "../lib/attachments.js";
 import type * as lib_audience from "../lib/audience.js";
 import type * as lib_auditLogWrite from "../lib/auditLogWrite.js";
@@ -185,6 +186,7 @@ declare const fullApi: ApiFromModules<{
   "integrations/debug": typeof integrations_debug;
   "integrations/lib/auth": typeof integrations_lib_auth;
   invites: typeof invites;
+  itTickets: typeof itTickets;
   "lib/attachments": typeof lib_attachments;
   "lib/audience": typeof lib_audience;
   "lib/auditLogWrite": typeof lib_auditLogWrite;

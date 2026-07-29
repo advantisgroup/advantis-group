@@ -31,6 +31,7 @@ import deGuest from "./messages/de/Guest.json";
 import deGuidebooks from "./messages/de/Guidebooks.json";
 import deImprint from "./messages/de/imprint.json";
 import deIntegrations from "./messages/de/Integrations.json";
+import deItTickets from "./messages/de/ItTickets.json";
 import deNav from "./messages/de/Nav.json";
 import deNotFound from "./messages/de/NotFound.json";
 import deNotifications from "./messages/de/Notifications.json";
@@ -71,6 +72,7 @@ import enGuest from "./messages/en/Guest.json";
 import enGuidebooks from "./messages/en/Guidebooks.json";
 import enImprint from "./messages/en/imprint.json";
 import enIntegrations from "./messages/en/Integrations.json";
+import enItTickets from "./messages/en/ItTickets.json";
 import enNav from "./messages/en/Nav.json";
 import enNotFound from "./messages/en/NotFound.json";
 import enNotifications from "./messages/en/Notifications.json";
@@ -135,6 +137,7 @@ const messagesByLocale = {
     Applicants: enApplicants,
     FeatureFlags: enFeatureFlags,
     Suggestions: enSuggestions,
+    ItTickets: enItTickets,
   },
   de: {
     App: deApp,
@@ -177,6 +180,7 @@ const messagesByLocale = {
     Applicants: deApplicants,
     FeatureFlags: deFeatureFlags,
     Suggestions: deSuggestions,
+    ItTickets: deItTickets,
   },
 } satisfies Record<Locale, Record<string, unknown>>;
 

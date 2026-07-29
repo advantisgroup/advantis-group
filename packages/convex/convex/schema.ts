@@ -341,6 +341,37 @@ export default defineSchema({
     createdAt: v.number(),
   }),
 
+  // --- IT Ticket System (IT-Meldesystem) -----------------------------------
+  // Shared, org-wide IT issue log — every active intranet user can file,
+  // edit, and close any ticket (mirrors the original single-tenant tool this
+  // replaced, where every entry was visible/editable by everyone with access).
+  itTicketCategories: defineTable({
+    name: v.string(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+  }),
+
+  itTickets: defineTable({
+    /** Sequential per-workspace ticket number ("#003"), not a Convex id. */
+    nr: v.number(),
+    /** References an `itTicketCategories.name` by value, not by id — a
+     * deleted category still reads back correctly on old tickets. */
+    category: v.string(),
+    date: v.string(), // ISO date (YYYY-MM-DD)
+    /** Free-text "Angelegt von" name, as in the original tool — not
+     * necessarily `createdByUserId`'s own display name. */
+    createdByName: v.string(),
+    createdByUserId: v.id("users"),
+    status: v.union(v.literal("offen"), v.literal("bearbeitung"), v.literal("closed")),
+    /** Only meaningful for the "SF" category — extra fields the form reveals. */
+    topic: v.optional(v.string()),
+    camId: v.optional(v.string()),
+    custNo: v.optional(v.string()),
+    info: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }).index("by_nr", ["nr"]),
+
   invites: defineTable({
     email: v.string(),
     role: roleValidator,
