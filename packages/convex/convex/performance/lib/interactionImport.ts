@@ -41,6 +41,17 @@ function isComplete(v: CellValue): boolean {
   return s === "ja" || s === "yes";
 }
 
+// callImport.ts's `parseDuration` defaults its bare-number ms-vs-seconds
+// ceiling to a full day, sized for that module's day/aggregate fields. A
+// single interaction here is one call or chat, which never plausibly runs
+// anywhere near that long — so a millisecond-encoded short interaction
+// (e.g. an unanswered/quickly-dropped outbound dial, ~18780ms) never
+// crossed the day-sized threshold and was stored as that many literal
+// seconds (5h13m) instead of being recognized as milliseconds. One hour is
+// generous for any real single interaction while comfortably catching
+// these bare-ms values.
+const MAX_PLAUSIBLE_INTERACTION_SECONDS = 3_600;
+
 /** '01.07.26 07:40' -> a Date carrying that wall-clock value directly as
  * UTC fields. The source has no timezone of its own; treating the literal
  * digits as UTC (rather than guessing a zone) keeps day/ordering
@@ -99,7 +110,11 @@ export function readInteractionsCsv(text: string): InteractionRow[] | null {
     const started = parseTimestamp(r[colmap.date] ?? "");
     if (!started) continue;
 
-    const durationSec = parseDuration(r[colmap.duration] ?? "");
+    const durationSec = parseDuration(
+      r[colmap.duration] ?? "",
+      undefined,
+      MAX_PLAUSIBLE_INTERACTION_SECONDS,
+    );
     if (durationSec === null) continue;
 
     const names = namesRaw

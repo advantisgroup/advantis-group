@@ -106,8 +106,15 @@ const SUMMARY_NAMES = new Set(["summe", "total", "gesamt", "durchschnitt", "aver
 // an impossible day-count of seconds.
 export const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
 
-function capMillisToSeconds(seconds: number): number {
-  return seconds > MAX_PLAUSIBLE_DAY_SECONDS ? Math.round(seconds / 1000) : seconds;
+// The ms-vs-seconds ceiling is a separate knob from `MAX_PLAUSIBLE_DAY_SECONDS`
+// below: callers reading a single value that can't plausibly exceed a full
+// day (this module's day/aggregate fields) pass the default, but a caller
+// whose value is a single, much-shorter thing (e.g. interactionImport.ts's
+// one-interaction duration) passes a tighter ceiling — otherwise a
+// millisecond-encoded short value never crosses the day-sized threshold and
+// is stored as that many literal (and wildly implausible) seconds instead.
+function capMillisToSeconds(seconds: number, msThresholdSeconds: number): number {
+  return seconds > msThresholdSeconds ? Math.round(seconds / 1000) : seconds;
 }
 
 // Unlike a bare number, HH:MM:SS/MM:SS/"1h 20m 15s" text already states its
@@ -136,12 +143,21 @@ function capExplicitDuration(
  * `CellValue` for the UTC contract. Any parsed result past
  * `MAX_PLAUSIBLE_DAY_SECONDS` becomes null (explicit-unit formats, via
  * `capExplicitDuration` — `onImplausible` is called with the rejected
- * value first) or gets reinterpreted as milliseconds (bare numbers, via
+ * value first, always checked against the fixed day ceiling since an
+ * explicit format states its own unit and this is only a corrupt-data
+ * catch-all) or gets reinterpreted as milliseconds (bare numbers, via
  * `capMillisToSeconds` — a confirmed vendor quirk, not surfaced as a
- * rejection). */
+ * rejection, checked against `msThresholdSeconds` since a bare number's
+ * plausible ceiling depends on what the value represents — see that
+ * param). */
 export function parseDuration(
   v: CellValue,
   onImplausible?: (rawSeconds: number) => void,
+  /** Ceiling used only for the bare-number ms-vs-seconds heuristic.
+   * Defaults to a full day for this module's day/aggregate fields;
+   * interactionImport.ts passes a much tighter one since a single
+   * interaction can't plausibly run anywhere near that long. */
+  msThresholdSeconds: number = MAX_PLAUSIBLE_DAY_SECONDS,
 ): number | null {
   if (v === null || v === undefined || v === "") return null;
   if (v instanceof Date) {
@@ -150,7 +166,7 @@ export function parseDuration(
   if (typeof v === "number") {
     // Excel stores times as a day fraction (0.25 = 6 hours).
     if (v > 0 && v < 1) return Math.round(v * 86_400);
-    return capMillisToSeconds(Math.round(v));
+    return capMillisToSeconds(Math.round(v), msThresholdSeconds);
   }
   const s = String(v).trim();
   if (!s || s === "-" || s === "–") return null;
@@ -170,7 +186,7 @@ export function parseDuration(
   }
 
   const f = parseFloat(s.replace(",", "."));
-  return Number.isFinite(f) ? capMillisToSeconds(Math.round(f)) : null;
+  return Number.isFinite(f) ? capMillisToSeconds(Math.round(f), msThresholdSeconds) : null;
 }
 
 export type FlaggableDurationField = "talkTotalSec" | "talkAvgSec" | "loginSec";
