@@ -40,6 +40,7 @@ import deprivacy from "./messages/de/privacy.json";
 import deProfile from "./messages/de/Profile.json";
 import deRoles from "./messages/de/Roles.json";
 import deSettings from "./messages/de/Settings.json";
+import deSuggestions from "./messages/de/Suggestions.json";
 import deTeams from "./messages/de/Teams.json";
 import determs from "./messages/de/terms.json";
 import deTour from "./messages/de/Tour.json";
@@ -79,6 +80,7 @@ import enprivacy from "./messages/en/privacy.json";
 import enProfile from "./messages/en/Profile.json";
 import enRoles from "./messages/en/Roles.json";
 import enSettings from "./messages/en/Settings.json";
+import enSuggestions from "./messages/en/Suggestions.json";
 import enTeams from "./messages/en/Teams.json";
 import enterms from "./messages/en/terms.json";
 import enTour from "./messages/en/Tour.json";
@@ -132,6 +134,7 @@ const messagesByLocale = {
     imprint: enImprint,
     Applicants: enApplicants,
     FeatureFlags: enFeatureFlags,
+    Suggestions: enSuggestions,
   },
   de: {
     App: deApp,
@@ -173,6 +176,7 @@ const messagesByLocale = {
     imprint: deImprint,
     Applicants: deApplicants,
     FeatureFlags: deFeatureFlags,
+    Suggestions: deSuggestions,
   },
 } satisfies Record<Locale, Record<string, unknown>>;
 

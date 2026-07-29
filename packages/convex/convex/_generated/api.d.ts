@@ -104,6 +104,8 @@ import type * as performanceQueries from "../performanceQueries.js";
 import type * as performanceTopics from "../performanceTopics.js";
 import type * as performanceUploadParse from "../performanceUploadParse.js";
 import type * as presence from "../presence.js";
+import type * as suggestionCategories from "../suggestionCategories.js";
+import type * as suggestions from "../suggestions.js";
 import type * as tourProgress from "../tourProgress.js";
 import type * as updates from "../updates.js";
 import type * as updatesEmail from "../updatesEmail.js";
@@ -215,6 +217,8 @@ declare const fullApi: ApiFromModules<{
   performanceTopics: typeof performanceTopics;
   performanceUploadParse: typeof performanceUploadParse;
   presence: typeof presence;
+  suggestionCategories: typeof suggestionCategories;
+  suggestions: typeof suggestions;
   tourProgress: typeof tourProgress;
   updates: typeof updates;
   updatesEmail: typeof updatesEmail;

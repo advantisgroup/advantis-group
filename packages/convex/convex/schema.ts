@@ -85,6 +85,19 @@ export const attachmentValidator = v.object({
   oneDrivePath: v.optional(v.string()),
 });
 
+export const suggestionStatusValidator = v.union(
+  v.literal("open"),
+  v.literal("in_discussion"),
+  v.literal("implementing"),
+  v.literal("closed"),
+);
+
+export const suggestionOutcomeValidator = v.union(
+  v.literal("withdrawn"),
+  v.literal("not_possible"),
+  v.literal("implemented"),
+);
+
 const linkPreviewValidator = v.object({
   url: v.string(),
   title: v.optional(v.string()),
@@ -462,6 +475,34 @@ export default defineSchema({
     .index("by_announcement", ["announcementId"])
     .index("by_announcement_user", ["announcementId", "userId"]),
 
+  // --- Improvement suggestions (Verbesserungsvorschläge) -------------------
+  /**
+   * Admin-managed taxonomy suggestions are filed under (e.g. "Büro",
+   * "Prozess advantis"). Archive, never delete — mirrors `departments`/`teams`
+   * so a category referenced by existing `suggestions` rows stays resolvable.
+   */
+  suggestionCategories: defineTable({
+    name: v.string(),
+    archivedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    createdBy: v.id("users"),
+  }),
+
+  suggestions: defineTable({
+    authorUserId: v.id("users"),
+    categoryId: v.id("suggestionCategories"),
+    title: v.string(),
+    explanation: v.optional(v.string()),
+    link: v.optional(v.string()),
+    attachments: v.optional(v.array(attachmentValidator)),
+    status: suggestionStatusValidator,
+    outcome: v.optional(suggestionOutcomeValidator),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_outcome", ["outcome"]),
+
   // --- Updates (incidents / maintenance / changelog) ------------------------
   updates: defineTable({
     type: v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
@@ -656,9 +697,10 @@ export default defineSchema({
    */
   attachmentOwners: defineTable({
     storageId: v.id("_storage"),
-    kind: v.union(v.literal("message"), v.literal("announcement")),
+    kind: v.union(v.literal("message"), v.literal("announcement"), v.literal("suggestion")),
     conversationId: v.optional(v.id("conversations")),
     announcementId: v.optional(v.id("announcements")),
+    suggestionId: v.optional(v.id("suggestions")),
   }).index("by_storageId", ["storageId"]),
 
   messageReactions: defineTable({

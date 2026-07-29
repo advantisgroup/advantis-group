@@ -12,6 +12,7 @@ import {
   Cloud,
   ExternalLink,
   LayoutDashboard,
+  Lightbulb,
   LineChart,
   Megaphone,
   MessageSquare,
@@ -140,6 +141,12 @@ export function Sidebar() {
           icon: Megaphone,
           badge: announcementUnread,
           tourAttr: "tour-nav-announcements",
+        },
+        {
+          href: "/suggestions",
+          labelKey: "suggestions",
+          icon: Lightbulb,
+          tourAttr: "tour-nav-suggestions",
         },
         {
           href: "/chat",
