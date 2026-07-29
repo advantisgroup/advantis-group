@@ -1,13 +1,23 @@
 "use client";
 
-import { type RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type OneDriveItem } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Check, Cloud, Paperclip, Settings, Users } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  Check,
+  Cloud,
+  Paperclip,
+  Search,
+  Settings,
+  Users,
+  X,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -29,14 +39,6 @@ import {
   RichTextToolbar,
   useRichTextController,
 } from "@/components/ui/rich-text-editor";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -51,7 +53,6 @@ import {
   migrateStoredDraft,
   msToLocalInput,
   sanitizeCategory,
-  USERS_AUDIENCE_VALUE,
 } from "@/lib/announcements";
 import { formatFileSize, isImage, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
@@ -155,6 +156,19 @@ function QuickSendFields({
   );
 }
 
+/** A section wrapper giving the Options panel visual structure instead of a
+ *  flat run of bare fields — a subtle card per group with its own heading. */
+function OptionsSection({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="space-y-2.5 rounded-lg border border-border/60 bg-muted/20 p-3">
+      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
 function ComposerOptionsFields({
   draft,
   set,
@@ -163,7 +177,9 @@ function ComposerOptionsFields({
   peopleSearch,
   setPeopleSearch,
   filteredPeople,
+  selectedPeople,
   toggleAudienceUser,
+  toggleAudienceDepartment,
   audienceCount,
   existingCategories,
   attachmentUpload,
@@ -177,7 +193,9 @@ function ComposerOptionsFields({
   peopleSearch: string;
   setPeopleSearch: (v: string) => void;
   filteredPeople: { _id: string; name: string; email: string; avatar?: string | null }[];
+  selectedPeople: { _id: string; name: string; email: string; avatar?: string | null }[];
   toggleAudienceUser: (userId: string) => void;
+  toggleAudienceDepartment: (department: string) => void;
   audienceCount: number | undefined;
   existingCategories: string[];
   attachmentUpload: ReturnType<typeof useAttachmentUpload>;
@@ -187,88 +205,130 @@ function ComposerOptionsFields({
   const t = useTranslations("Announcements");
   const tc = useTranslations("Common");
 
+  const matchingCategories = existingCategories.filter((c) => {
+    const q = draft.category.trim().toLowerCase();
+    return !q || (c.toLowerCase().includes(q) && c.toLowerCase() !== q);
+  });
+
   return (
-    <div className="space-y-5">
-      <div className="space-y-1.5">
-        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("category")}
-        </Label>
+    <div className="space-y-4">
+      <OptionsSection label={t("category")}>
         <Input
-          list="announcement-category-suggestions"
           placeholder={t("categoryPlaceholder")}
           value={draft.category}
           onChange={(e) => set("category", e.target.value)}
           maxLength={CATEGORY_MAX_LENGTH}
         />
-        <datalist id="announcement-category-suggestions">
-          {existingCategories.map((c) => (
-            <option key={c} value={c} />
-          ))}
-        </datalist>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("audience")}
-        </Label>
-        <Select
-          value={
-            draft.audienceKind === "department"
-              ? draft.audienceDepartment
-              : draft.audienceKind === "users"
-                ? USERS_AUDIENCE_VALUE
-                : "all"
-          }
-          onValueChange={(v) => {
-            if (v === "all") set("audienceKind", "all");
-            else if (v === USERS_AUDIENCE_VALUE) set("audienceKind", "users");
-            else {
-              set("audienceKind", "department");
-              set("audienceDepartment", v);
-            }
-          }}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("everyone")}</SelectItem>
-            {departments.map((d) => (
-              <SelectItem key={d} value={d}>
-                {t("department")}: {d}
-              </SelectItem>
+        {matchingCategories.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-0.5">
+            {matchingCategories.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => set("category", c)}
+                className="rounded-full border border-border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-ring/60 hover:bg-accent hover:text-foreground"
+              >
+                {c}
+              </button>
             ))}
-            <SelectItem value={USERS_AUDIENCE_VALUE}>{t("specificPeople")}</SelectItem>
-          </SelectContent>
-        </Select>
-        {draft.audienceKind === "users" && (
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="w-full justify-start gap-2 font-normal">
-                <Users className="size-4" />
-                {draft.audienceUserIds.length > 0
-                  ? t("peopleSelected", { count: draft.audienceUserIds.length })
-                  : t("selectPeople")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-80 p-0">
-              <div className="border-b border-border/60 p-2">
+          </div>
+        )}
+      </OptionsSection>
+
+      <OptionsSection label={t("audience")}>
+        <label className="flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border/70 bg-background px-3 py-2.5">
+          <span className="flex items-center gap-2 text-sm font-medium">
+            <Users className="size-4 text-muted-foreground" />
+            {t("everyone")}
+          </span>
+          <Checkbox
+            checked={draft.audienceKind === "all"}
+            onCheckedChange={(v) => set("audienceKind", v === true ? "all" : "mixed")}
+          />
+        </label>
+
+        {draft.audienceKind === "mixed" && (
+          <div className="space-y-3 rounded-md border border-border/70 bg-background p-3">
+            {departments.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">{t("departmentsLabel")}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {departments.map((d) => {
+                    const active = draft.audienceDepartments.includes(d);
+                    return (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => toggleAudienceDepartment(d)}
+                        aria-pressed={active}
+                        className={cn(
+                          "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                          active
+                            ? "border-transparent bg-foreground text-background"
+                            : "border-border text-muted-foreground hover:bg-accent",
+                        )}
+                      >
+                        <Building2 className="size-3" />
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div
+              className={cn(
+                "space-y-1.5",
+                departments.length > 0 && "border-t border-border/60 pt-3",
+              )}
+            >
+              <p className="text-xs font-medium text-muted-foreground">{t("specificPeople")}</p>
+
+              {selectedPeople.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedPeople.map((p) => (
+                    <span
+                      key={p._id}
+                      className="flex items-center gap-1.5 rounded-full border border-border bg-accent/60 py-0.5 pl-1 pr-1.5 text-xs font-medium"
+                    >
+                      <Avatar className="size-4">
+                        {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
+                        <AvatarFallback className="text-[8px]">
+                          {initials(p.name, p.email)}
+                        </AvatarFallback>
+                      </Avatar>
+                      {p.name}
+                      <button
+                        type="button"
+                        aria-label={tc("delete")}
+                        onClick={() => toggleAudienceUser(p._id)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  autoFocus
                   placeholder={tc("search")}
                   value={peopleSearch}
                   onChange={(e) => setPeopleSearch(e.target.value)}
-                  className="h-8"
+                  className="h-8 pl-8 text-sm"
                 />
               </div>
-              <ScrollArea className="h-64">
+              <div className="max-h-40 overflow-y-auto rounded-md border border-border/60">
                 {filteredPeople.length === 0 ? (
                   <p className="p-3 text-xs text-muted-foreground">{tc("noResults")}</p>
                 ) : (
                   filteredPeople.map((p) => (
                     <label
                       key={p._id}
-                      className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-accent"
+                      className="flex cursor-pointer items-center gap-2.5 px-2.5 py-1.5 hover:bg-accent"
                     >
                       <Checkbox
                         checked={draft.audienceUserIds.includes(p._id)}
@@ -289,21 +349,19 @@ function ComposerOptionsFields({
                     </label>
                   ))
                 )}
-              </ScrollArea>
-            </PopoverContent>
-          </Popover>
+              </div>
+            </div>
+          </div>
         )}
+
         {audienceCount !== undefined && (
           <p className="text-xs text-muted-foreground">
             {t("willReach", { count: audienceCount })}
           </p>
         )}
-      </div>
+      </OptionsSection>
 
-      <div className="space-y-2 border-t border-border/60 pt-4">
-        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("options")}
-        </Label>
+      <OptionsSection label={t("options")}>
         <div className="flex flex-wrap items-center gap-4">
           <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
             <Checkbox checked={draft.pinned} onCheckedChange={(v) => set("pinned", v === true)} />
@@ -319,13 +377,10 @@ function ComposerOptionsFields({
             </label>
           )}
         </div>
-      </div>
+      </OptionsSection>
 
       {!editing && (
-        <div className="space-y-2 border-t border-border/60 pt-4">
-          <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("attachments")}
-          </Label>
+        <OptionsSection label={t("attachments")}>
           <div className="flex flex-wrap items-center gap-4">
             <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
               <Paperclip className="h-4 w-4" />
@@ -363,13 +418,10 @@ function ComposerOptionsFields({
               </p>
             </div>
           )}
-        </div>
+        </OptionsSection>
       )}
 
-      <div className="space-y-2 border-t border-border/60 pt-4">
-        <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("scheduling")}
-        </Label>
+      <OptionsSection label={t("scheduling")}>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {!editing && (
             <div className="space-y-1.5">
@@ -390,7 +442,7 @@ function ComposerOptionsFields({
             />
           </div>
         </div>
-      </div>
+      </OptionsSection>
     </div>
   );
 }
@@ -443,22 +495,30 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
   // route (a new id means a fresh navigation, which remounts this component).
   useEffect(() => {
     if (editing) {
-      originalAudienceRef.current = editing.audience;
+      const audience = editing.audience;
+      originalAudienceRef.current = audience;
+      // Every legacy exclusive kind (single department, or a plain user
+      // list) folds into the additive "mixed" model — saving the draft
+      // afterwards naturally migrates the announcement to the new shape.
       setDraft({
         title: editing.title,
         body: editing.body,
         pinned: editing.pinned,
         guestVisible: false,
         category: editing.category ?? "",
-        audienceKind:
-          editing.audience.kind === "users"
-            ? "users"
-            : editing.audience.kind === "department"
-              ? "department"
-              : "all",
-        audienceDepartment:
-          editing.audience.kind === "department" ? editing.audience.department : "",
-        audienceUserIds: editing.audience.kind === "users" ? editing.audience.userIds : [],
+        audienceKind: audience.kind === "all" ? "all" : "mixed",
+        audienceDepartments:
+          audience.kind === "department"
+            ? [audience.department]
+            : audience.kind === "mixed"
+              ? audience.departments
+              : [],
+        audienceUserIds:
+          audience.kind === "users"
+            ? audience.userIds
+            : audience.kind === "mixed"
+              ? audience.userIds
+              : [],
         publishAt: "",
         expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
       });
@@ -509,7 +569,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
   }, [editing]);
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
-    if (key === "audienceKind" || key === "audienceDepartment" || key === "audienceUserIds") {
+    if (key === "audienceKind" || key === "audienceDepartments" || key === "audienceUserIds") {
       setAudienceTouched(true);
     }
     setDraft((d) => ({ ...d, [key]: value }));
@@ -536,19 +596,34 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     }
   }
 
+  const mentionCandidates = useMemo(
+    () =>
+      (peopleQuery ?? []).map((p) => ({
+        id: p._id,
+        name: p.name,
+        email: p.email,
+        avatar: p.avatar,
+      })),
+    [peopleQuery],
+  );
   const controller = useRichTextController({
     value: draft.body,
     onChange: (v) => set("body", v),
+    mentionCandidates,
   });
 
   const audienceValue = useMemo(() => audienceValueOf(draft), [draft]);
   // A "users" audience with nothing picked yet reaches nobody — skip the
   // (misleading) "reaches 0" preview until at least one person is selected.
+  // A "mixed" audience with nothing picked yet (no department, no person)
+  // reaches nobody — treat it the same as "all" being unset.
+  const audienceHasTarget =
+    draft.audienceKind === "all" ||
+    draft.audienceDepartments.length > 0 ||
+    draft.audienceUserIds.length > 0;
   const audienceCount = useQuery(
     api.announcements.audienceSize,
-    draft.audienceKind !== "users" || draft.audienceUserIds.length > 0
-      ? { audience: audienceValue }
-      : "skip",
+    audienceHasTarget ? { audience: audienceValue } : "skip",
   );
 
   const filteredPeople = useMemo(() => {
@@ -560,6 +635,16 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     );
   }, [peopleQuery, peopleSearch, me._id]);
 
+  // Selected people shown as removable chips regardless of the current
+  // search text, so a pick made earlier doesn't visually disappear the
+  // moment the search box filters it out of the list below.
+  const selectedPeople = useMemo(() => {
+    const all = peopleQuery ?? [];
+    return draft.audienceUserIds
+      .map((id) => all.find((p) => p._id === id))
+      .filter((p): p is NonNullable<typeof p> => !!p);
+  }, [peopleQuery, draft.audienceUserIds]);
+
   function toggleAudienceUser(userId: string) {
     setAudienceTouched(true);
     setDraft((d) => ({
@@ -570,10 +655,17 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     }));
   }
 
-  const canSend =
-    draft.title.trim().length > 0 &&
-    hasBody &&
-    (draft.audienceKind !== "users" || draft.audienceUserIds.length > 0);
+  function toggleAudienceDepartment(department: string) {
+    setAudienceTouched(true);
+    setDraft((d) => ({
+      ...d,
+      audienceDepartments: d.audienceDepartments.includes(department)
+        ? d.audienceDepartments.filter((dep) => dep !== department)
+        : [...d.audienceDepartments, department],
+    }));
+  }
+
+  const canSend = draft.title.trim().length > 0 && hasBody && audienceHasTarget;
 
   const files = useMemo(
     () => attachmentUpload.entries.map((e) => e.file),
@@ -673,7 +765,9 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
       peopleSearch={peopleSearch}
       setPeopleSearch={setPeopleSearch}
       filteredPeople={filteredPeople}
+      selectedPeople={selectedPeople}
       toggleAudienceUser={toggleAudienceUser}
+      toggleAudienceDepartment={toggleAudienceDepartment}
       audienceCount={audienceCount}
       existingCategories={existingCategories}
       attachmentUpload={attachmentUpload}

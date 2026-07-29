@@ -3,8 +3,8 @@
 import { FileText, Pin } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { MentionRichText } from "@/components/profile/MentionRichText";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RichText } from "@/components/ui/rich-text";
 import { formatDateTime, initials } from "@/lib/format";
 import { formatFileSize } from "@/lib/upload";
 
@@ -55,7 +55,7 @@ export function AnnouncementPreview({
         </div>
       </header>
       <div className="px-5 py-4">
-        <RichText html={body} />
+        <MentionRichText html={body} />
         {previews.length > 0 && (
           <div className="mt-4 space-y-3">
             {previews.some((p) => p.url) && (

@@ -29,6 +29,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
+import { MentionRichText } from "@/components/profile/MentionRichText";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +38,7 @@ import { Dialog, DialogContent, useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
-import { htmlToText, RichText } from "@/components/ui/rich-text";
+import { htmlToText } from "@/components/ui/rich-text";
 import {
   Select,
   SelectContent,
@@ -197,7 +198,7 @@ function CollapsibleBody({ html }: { html: string }) {
         ref={ref}
         className={cn("relative overflow-hidden", overflowing && !expanded && "max-h-80")}
       >
-        <RichText html={html} />
+        <MentionRichText html={html} />
         {overflowing && !expanded && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
         )}

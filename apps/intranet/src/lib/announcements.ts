@@ -5,13 +5,13 @@ import type { FunctionReturnType } from "convex/server";
 
 export type Announcement = FunctionReturnType<typeof api.announcements.list>[number];
 
+/** Additive: reaches anyone in any of `departments` plus anyone individually
+ *  listed in `userIds` — a department pick and a people pick combine rather
+ *  than being mutually exclusive choices. */
 export type Audience =
   | { kind: "all" }
-  | { kind: "department"; department: string }
-  | { kind: "users"; userIds: Id<"users">[] };
+  | { kind: "mixed"; departments: string[]; userIds: Id<"users">[] };
 
-/** Sentinel value for the audience picker's "Specific people" option. */
-export const USERS_AUDIENCE_VALUE = "__users__";
 /** Sentinel for the feed toolbar's category filter — distinct from any
  * category value an admin could actually type (including one literally
  * named "all"). Reserved: `sanitizeCategory` strips it back out if someone
@@ -30,8 +30,8 @@ export interface Draft {
   pinned: boolean;
   guestVisible: boolean;
   category: string;
-  audienceKind: "all" | "department" | "users";
-  audienceDepartment: string;
+  audienceKind: "all" | "mixed";
+  audienceDepartments: string[];
   audienceUserIds: string[];
   publishAt: string;
   expiresAt: string;
@@ -44,7 +44,7 @@ export const EMPTY_DRAFT: Draft = {
   guestVisible: false,
   category: "",
   audienceKind: "all",
-  audienceDepartment: "",
+  audienceDepartments: [],
   audienceUserIds: [],
   publishAt: "",
   expiresAt: "",
@@ -58,32 +58,61 @@ export function msToLocalInput(ms: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+/** Shape of a draft as it may have been saved to localStorage by an earlier
+ *  version of the composer, before the audience picker became additive.
+ *  Loosely typed on purpose — this only ever describes untrusted
+ *  localStorage JSON, not the current `Draft` shape. */
+interface LegacyDraftShape {
+  audience?: string;
+  audienceKind?: string;
+  audienceDepartment?: string;
+  audienceDepartments?: string[];
+  audienceUserIds?: string[];
+  [key: string]: unknown;
+}
+
 /**
- * Autosaved drafts from before the audience picker gained "audienceKind" /
- * "audienceDepartment" stored a single `audience` string ("all" or a
- * department name) instead. Translate that old shape so a still-pending
- * draft doesn't silently lose its department targeting on restore.
+ * Autosaved drafts from earlier versions of the composer stored the audience
+ * differently:
+ * - oldest: a single `audience` string ("all" or a department name)
+ * - pre-additive: an exclusive `audienceKind` of "department" | "users" with
+ *   a singular `audienceDepartment`
+ * Translate either shape into the current additive one so a still-pending
+ * draft doesn't silently lose its targeting on restore.
  */
 export function migrateStoredDraft(raw: unknown): Partial<Draft> {
   if (!raw || typeof raw !== "object") return {};
-  const parsed = raw as Partial<Draft> & { audience?: string };
-  if (parsed.audienceKind !== undefined || typeof parsed.audience !== "string") {
-    return parsed;
+  const parsed = raw as LegacyDraftShape;
+
+  if (parsed.audienceKind === undefined && typeof parsed.audience === "string") {
+    const { audience, ...rest } = parsed;
+    return {
+      ...(rest as Partial<Draft>),
+      audienceKind: audience === "all" ? "all" : "mixed",
+      audienceDepartments: audience === "all" ? [] : [audience],
+    };
   }
-  const { audience, ...rest } = parsed;
-  return {
-    ...rest,
-    audienceKind: audience === "all" ? "all" : "department",
-    audienceDepartment: audience === "all" ? "" : audience,
-  };
+
+  if (parsed.audienceKind === "department" || parsed.audienceKind === "users") {
+    const { audienceDepartment, audienceKind: _oldKind, ...rest } = parsed;
+    return {
+      ...(rest as Partial<Draft>),
+      audienceKind: "mixed",
+      audienceDepartments: audienceDepartment ? [audienceDepartment] : [],
+      audienceUserIds: rest.audienceUserIds ?? [],
+    };
+  }
+
+  return parsed as Partial<Draft>;
 }
 
 export function audienceValueOf(draft: Draft): Audience {
-  if (draft.audienceKind === "department") {
-    return { kind: "department", department: draft.audienceDepartment };
-  }
-  if (draft.audienceKind === "users") {
-    return { kind: "users", userIds: draft.audienceUserIds as Id<"users">[] };
+  if (draft.audienceKind === "mixed") {
+    return {
+      kind: "mixed",
+      departments: draft.audienceDepartments,
+      userIds: draft.audienceUserIds as Id<"users">[],
+    };
   }
   return { kind: "all" };
 }
