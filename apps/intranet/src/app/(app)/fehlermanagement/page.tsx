@@ -36,11 +36,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import {
   CUSTOMER_FEEDBACKS,
+  dateInputToMs,
   ESCALATION_TINT,
   escalationLevel,
   isOverdue,
+  msToDateInput,
   REPORT_STATUSES,
   type ReportStatus,
+  responseAmpel,
   SEVERITIES,
   SEVERITY_TINT,
   type Severity,
@@ -51,13 +54,6 @@ import { cn } from "@/lib/utils";
 
 type Report = NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>>[number];
 type Scope = "offen" | "alle" | "geschlossen";
-
-function msToDateInput(ms: number | null): string {
-  return ms ? new Date(ms).toISOString().slice(0, 10) : "";
-}
-function dateInputToMs(value: string): number | undefined {
-  return value ? new Date(`${value}T00:00:00`).getTime() : undefined;
-}
 
 function CategorySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const t = useTranslations("ErrorManagement");
@@ -486,7 +482,17 @@ function ErrorDetailDialog({
   );
 }
 
-function ReportCard({ report, onOpen }: { report: Report; onOpen: () => void }) {
+type Settings = NonNullable<ReturnType<typeof useQuery<typeof api.errorSettings.get>>>;
+
+function ReportCard({
+  report,
+  settings,
+  onOpen,
+}: {
+  report: Report;
+  settings: Settings | undefined;
+  onOpen: () => void;
+}) {
   const t = useTranslations("ErrorManagement");
   const locale = useLocale();
   const level = escalationLevel({
@@ -499,6 +505,16 @@ function ReportCard({ report, onOpen }: { report: Report; onOpen: () => void }) 
     status: report.status,
     dueAt: report.dueAt,
   });
+  // Only surfaced for customer-facing, still-open errors the customer hasn't
+  // been informed about yet — green (within target) is the expected state
+  // and not worth a badge, so only amber/red actually render.
+  const ampel =
+    settings &&
+    report.customerOrProject &&
+    !report.customerInformedAt &&
+    report.status !== "geschlossen"
+      ? responseAmpel(Math.floor((Date.now() - report.createdAt) / 86400000), settings)
+      : null;
 
   return (
     <Card className="cursor-pointer transition-shadow hover:shadow-md" onClick={onOpen}>
@@ -516,6 +532,11 @@ function ReportCard({ report, onOpen }: { report: Report; onOpen: () => void }) 
           </Badge>
           {report.categoryName && <Badge variant="muted">{report.categoryName}</Badge>}
           {overdue && <Badge variant="destructive">{t("overdueBadge")}</Badge>}
+          {ampel && ampel !== "gruen" && (
+            <Badge variant={ampel === "rot" ? "destructive" : "warning"}>
+              {t("customerNotInformedBadge")}
+            </Badge>
+          )}
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           {report.customerOrProject && <span>{report.customerOrProject}</span>}
@@ -530,6 +551,7 @@ function ReportCard({ report, onOpen }: { report: Report; onOpen: () => void }) 
 export default function FehlermanagementPage() {
   const t = useTranslations("ErrorManagement");
   const reports = useQuery(api.errorReports.list);
+  const settings = useQuery(api.errorSettings.get);
   const [scope, setScope] = useState<Scope>("offen");
   const [search, setSearch] = useState("");
   const [newOpen, setNewOpen] = useState(false);
@@ -597,7 +619,7 @@ export default function FehlermanagementPage() {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           {filtered.map((r) => (
-            <ReportCard key={r._id} report={r} onOpen={() => setSelected(r)} />
+            <ReportCard key={r._id} report={r} settings={settings} onOpen={() => setSelected(r)} />
           ))}
         </div>
       )}

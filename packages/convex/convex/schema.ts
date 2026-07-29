@@ -1618,18 +1618,23 @@ export default defineSchema({
   // Admin-uploaded files (PDFs, docs, ...) attached to a guidebook page,
   // alongside its fixed article content — guidebooks are static components,
   // not a CMS, so this is the one piece of per-guidebook content that's
-  // actually data-driven. OneDrive-backed rather than Convex storage: the
-  // bytes live under Team/Wiki/<slug>/ (apps/api's POST
-  // /onedrive/wiki/:slug/attach provisions that folder and uploads there),
-  // so every active user's existing Team-zone read access doubles as a
-  // backup copy with no extra permission grant. Convex only ever stores the
-  // Graph item id + path reference; the actual file is fetched on demand
-  // through apps/api's GET /onedrive/download/:id (never a Graph preview
-  // link), so it stays reactive — a changed reference just refetches.
+  // actually data-driven. Newly uploaded attachments are OneDrive-backed
+  // rather than Convex storage: the bytes live under Team/Wiki/<slug>/
+  // (apps/api's POST /onedrive/wiki/:slug/attach provisions that folder and
+  // uploads there), so every active user's existing Team-zone read access
+  // doubles as a backup copy with no extra permission grant. Convex only
+  // ever stores the Graph item id + path reference; the actual file is
+  // fetched on demand through apps/api's GET /onedrive/download/:id (never
+  // a Graph preview link), so it stays reactive — a changed reference just
+  // refetches. `storageId` and the OneDrive fields are both optional so
+  // pre-existing rows from before this change (Convex-storage-backed, no
+  // OneDrive reference yet) keep validating against this schema without a
+  // migration — `guidebookAttachments.ts` branches on whichever is present.
   guidebookAttachments: defineTable({
     slug: v.string(),
-    oneDriveItemId: v.string(),
-    oneDrivePath: v.string(),
+    storageId: v.optional(v.id("_storage")),
+    oneDriveItemId: v.optional(v.string()),
+    oneDrivePath: v.optional(v.string()),
     name: v.string(),
     kind: v.union(v.literal("image"), v.literal("file")),
     size: v.optional(v.number()),

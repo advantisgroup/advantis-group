@@ -7,7 +7,13 @@ import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { escalationLevel, isOverdue, REPORT_STATUSES, SEVERITIES } from "@/lib/error-management";
+import {
+  escalationLevel,
+  isOverdue,
+  msToDateInput,
+  REPORT_STATUSES,
+  SEVERITIES,
+} from "@/lib/error-management";
 
 function StatTile({ label, value }: { label: string; value: number }) {
   return (
@@ -64,7 +70,7 @@ export default function ErrorDashboardPage() {
       byCategory.set(cat, (byCategory.get(cat) ?? 0) + 1);
       byStatus.set(r.status, (byStatus.get(r.status) ?? 0) + 1);
       bySeverity.set(r.severity, (bySeverity.get(r.severity) ?? 0) + 1);
-      const monthKey = new Date(r.createdAt).toISOString().slice(0, 7);
+      const monthKey = msToDateInput(r.createdAt).slice(0, 7);
       const entry = byMonth.get(monthKey) ?? { total: 0, closed: 0 };
       entry.total += 1;
       if (r.status === "geschlossen") entry.closed += 1;

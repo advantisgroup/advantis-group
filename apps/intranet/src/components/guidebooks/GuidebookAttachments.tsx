@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { Download, FileText, Paperclip, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -53,7 +52,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     }
   }
 
-  async function onDelete(attachmentId: Id<"guidebookAttachments">, oneDriveItemId: string) {
+  async function onDelete(attachment: NonNullable<typeof attachments>[number]) {
     const ok = await confirm({
       title: t("deleteAttachmentConfirm"),
       description: tc("deleteWarning"),
@@ -62,8 +61,16 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     });
     if (!ok) return;
     try {
-      await oneDriveApi.remove(oneDriveItemId);
-      await removeAttachment({ attachmentId });
+      // Authorize + drop the reference first — only delete the actual
+      // OneDrive file once that's confirmed, so a rejected or failed call
+      // never leaves a live file with its reference already gone (or a
+      // dangling reference to a file someone else just deleted).
+      const result = await removeAttachment({ attachmentId: attachment._id });
+      if (result.oneDriveItemId) {
+        await oneDriveApi.remove(result.oneDriveItemId).catch((e) => {
+          console.error("[guidebook-attachments] OneDrive cleanup failed:", e);
+        });
+      }
     } catch (e) {
       handleError(e);
     }
@@ -115,7 +122,11 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
               </span>
               <button
                 type="button"
-                onClick={() => void oneDriveApi.download(a.oneDriveItemId, a.name)}
+                onClick={() =>
+                  void (a.oneDriveItemId
+                    ? oneDriveApi.download(a.oneDriveItemId, a.name)
+                    : a.legacyUrl && window.open(a.legacyUrl, "_blank"))
+                }
                 className="min-w-0 text-left"
               >
                 <span className="block max-w-[14rem] truncate font-medium">{a.name}</span>
@@ -127,7 +138,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
               {isManager && (
                 <button
                   type="button"
-                  onClick={() => void onDelete(a._id, a.oneDriveItemId)}
+                  onClick={() => void onDelete(a)}
                   aria-label={tc("delete")}
                   className="ml-1 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                 >

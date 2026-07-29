@@ -53,6 +53,7 @@
   "noResults": "Keine Fehler entsprechen deinen Filtern",
   "empty": "Noch keine Fehler erfasst",
   "overdueBadge": "Überfällig",
+  "customerNotInformedBadge": "Kunde noch nicht informiert",
   "closeNeedsEffectivenessCheck": "Die Wirksamkeit der Maßnahmen wurde noch nicht geprüft — trotzdem schließen?",
   "addMeasure": "Maßnahme hinzufügen",
   "deleteErrorConfirm": "Diesen Fehler und seine Maßnahmen löschen?",

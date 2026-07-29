@@ -53,6 +53,7 @@
   "noResults": "No errors match your filters",
   "empty": "No errors logged yet",
   "overdueBadge": "Overdue",
+  "customerNotInformedBadge": "Customer not yet informed",
   "closeNeedsEffectivenessCheck": "This error's measures haven't had their effectiveness checked yet — close anyway?",
   "addMeasure": "Add measure",
   "deleteErrorConfirm": "Delete this error and its measures?",

@@ -74,6 +74,26 @@ export const ESCALATION_TINT: Record<EscalationLevel, string> = {
  * within the target, amber up to the warn threshold, red beyond it. */
 export type ResponseAmpel = "gruen" | "gelb" | "rot";
 
+/** `<input type="date">` uses local calendar dates, so this must format by
+ * local Y/M/D components — `toISOString()` converts to UTC first, which
+ * shifts the displayed date by a day for anyone east of UTC (including the
+ * German audience this tool is for) once the stored instant crosses local
+ * midnight. */
+export function msToDateInput(ms: number | null): string {
+  if (!ms) return "";
+  const d = new Date(ms);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Inverse of `msToDateInput` — parsed without a "Z" suffix, so this is
+ * already local midnight. */
+export function dateInputToMs(value: string): number | undefined {
+  return value ? new Date(`${value}T00:00:00`).getTime() : undefined;
+}
+
 export function responseAmpel(
   daysSinceCreated: number,
   settings: { targetResponseDays: number; warnResponseDays: number },

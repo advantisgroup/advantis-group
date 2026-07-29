@@ -33,7 +33,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { MEASURE_PHASES, type MeasurePhase, type MeasureStatus } from "@/lib/error-management";
+import {
+  MEASURE_PHASES,
+  type MeasurePhase,
+  type MeasureStatus,
+  msToDateInput,
+} from "@/lib/error-management";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -41,10 +46,6 @@ type Measure = NonNullable<ReturnType<typeof useQuery<typeof api.errorMeasures.l
 type Scope = "offen" | "alle" | "erledigt";
 
 const EMPTY_REPORTS: NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>> = [];
-
-function msToDateInput(ms: number | null): string {
-  return ms ? new Date(ms).toISOString().slice(0, 10) : "";
-}
 
 function NewMeasureDialog({
   open,
