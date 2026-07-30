@@ -166,6 +166,22 @@ function createClockodoClient(options: ClockodoClientOptions) {
     return requestJson<T>(path);
   }
 
+  /** Clockodo's v3/v4 list endpoints all paginate the same "data" + "paging" shape. */
+  async function getAllPages<T>(basePath: string, query: string): Promise<T[]> {
+    const results: T[] = [];
+    let page = 1;
+    const prefix = query ? `${query}&` : "";
+    for (;;) {
+      const response = await get<{ data: T[]; paging?: ClockodoPaging }>(
+        `${basePath}?${prefix}page=${page}`
+      );
+      results.push(...(response.data ?? []));
+      if (!response.paging || page >= response.paging.count_pages)
+        return results;
+      page += 1;
+    }
+  }
+
   return {
     async getAbsence(id: number): Promise<ClockodoAbsence> {
       const response = await get<{ data: ClockodoAbsence }>(
@@ -173,25 +189,14 @@ function createClockodoClient(options: ClockodoClientOptions) {
       );
       return response.data;
     },
-    async listAbsences(year: number): Promise<ClockodoAbsence[]> {
-      const results: ClockodoAbsence[] = [];
-      let page = 1;
-      for (;;) {
-        const response = await get<{
-          data: ClockodoAbsence[];
-          paging?: ClockodoPaging;
-        }>(
-          `/v4/absences?filter[year]=${year}&scope=viewableAbsences&page=${page}`
-        );
-        results.push(...(response.data ?? []));
-        if (!response.paging || page >= response.paging.count_pages)
-          return results;
-        page += 1;
-      }
+    listAbsences(year: number): Promise<ClockodoAbsence[]> {
+      return getAllPages<ClockodoAbsence>(
+        "/v4/absences",
+        `filter[year]=${year}&scope=viewableAbsences`
+      );
     },
-    async listUsers(): Promise<ClockodoUser[]> {
-      const response = await get<{ users: ClockodoUser[] }>("/v2/users");
-      return response.users ?? [];
+    listUsers(): Promise<ClockodoUser[]> {
+      return getAllPages<ClockodoUser>("/v3/users", "");
     },
     async listEntries({
       userId,
@@ -212,17 +217,17 @@ function createClockodoClient(options: ClockodoClientOptions) {
       );
       return response.entries ?? [];
     },
-    async listCustomers(): Promise<ClockodoCustomer[]> {
-      const response = await get<{ customers: ClockodoCustomer[] }>(
-        "/v2/customers?filter[active]=true"
+    listCustomers(): Promise<ClockodoCustomer[]> {
+      return getAllPages<ClockodoCustomer>(
+        "/v3/customers",
+        "filter[active]=true"
       );
-      return response.customers ?? [];
     },
-    async listServices(): Promise<ClockodoService[]> {
-      const response = await get<{ services: ClockodoService[] }>(
-        "/v2/services?filter[active]=true"
+    listServices(): Promise<ClockodoService[]> {
+      return getAllPages<ClockodoService>(
+        "/v4/services",
+        "filter[active]=true"
       );
-      return response.services ?? [];
     },
     async getRunningClock(): Promise<ClockodoEntry | null> {
       const response = await get<{ running: ClockodoEntry | null }>(
