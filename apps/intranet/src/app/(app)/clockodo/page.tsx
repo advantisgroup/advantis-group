@@ -470,6 +470,7 @@ function Dashboard({
           absence =>
             absence.status === "approved" &&
             absence.type === type &&
+            typeof absence.startDate === "string" &&
             absence.startDate.startsWith(String(year))
         )
         .reduce(
@@ -482,9 +483,16 @@ function Dashboard({
   }, [mine, year]);
   const upcoming = (mine ?? [])
     .filter(
-      absence => absence.endDate >= isoToday() && absence.status !== "cancelled"
+      absence =>
+        typeof absence.endDate === "string" &&
+        absence.endDate >= isoToday() &&
+        absence.status !== "cancelled"
     )
-    .sort((a, b) => a.startDate.localeCompare(b.startDate))
+    .sort((a, b) => {
+      const aDate = typeof a.startDate === "string" ? a.startDate : "";
+      const bDate = typeof b.startDate === "string" ? b.startDate : "";
+      return aDate.localeCompare(bDate);
+    })
     .slice(0, 5);
 
   return (
