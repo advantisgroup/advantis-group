@@ -18,7 +18,6 @@
     "lint": "echo \"@advantis/api: no lint\""
   },
   "dependencies": {
-    "@advantis/clockodo": "workspace:*",
     "@advantis/convex": "workspace:*",
     "@anthropic-ai/sdk": "^0.106.0",
     "@clerk/backend": "^2.18.0",

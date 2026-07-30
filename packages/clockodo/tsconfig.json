@@ -1,8 +1,0 @@
-{
-  "extends": "@advantis/config/tsconfig.base.json",
-  "compilerOptions": {
-    "noEmit": true
-  },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
-}
