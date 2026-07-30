@@ -13,6 +13,7 @@ import {
 } from "./lib/businessHours";
 import { appError } from "./lib/errors";
 import { safeEqual } from "./lib/crypto";
+import { getActivitySubprofile } from "./people";
 
 /**
  * The fused employee-state engine — the single source of truth combining the
@@ -37,6 +38,26 @@ const PRESENCE = v.union(
   v.literal("AWAY"),
   v.literal("OFFLINE"),
 );
+const FINAL_STATE = v.union(
+  v.literal("ABSENT"),
+  v.literal("CLOCKED_OUT"),
+  v.literal("BREAK"),
+  v.literal("IN_CALL"),
+  v.literal("WRAP_UP"),
+  v.literal("ACTIVE"),
+  v.literal("IDLE"),
+);
+
+/** The Clockodo-derived signal fields repeated (with different provenance —
+ *  live cache vs. historical samples) across `myState`/`stateBatch`'s return
+ *  shapes. Named once so both stay in sync. */
+const CLOCKODO_STATE_FIELDS = {
+  clockodoWorking: v.union(v.boolean(), v.null()),
+  clockodoBreak: v.union(v.boolean(), v.null()),
+  clockodoAbsent: v.union(v.boolean(), v.null()),
+  clockodoClockedOut: v.union(v.boolean(), v.null()),
+  clockodoClockedOutCertain: v.union(v.boolean(), v.null()),
+};
 
 function signalsOf(row: Partial<Doc<"employeeStates">>): StateSignals {
   return {
@@ -489,14 +510,20 @@ export const get = query({
  */
 export const myState = query({
   args: {},
+  returns: v.union(
+    v.null(),
+    v.object({
+      finalState: FINAL_STATE,
+      finalStateSince: v.union(v.number(), v.null()),
+      ...CLOCKODO_STATE_FIELDS,
+      updatedAt: v.number(),
+    }),
+  ),
   handler: async (ctx) => {
     const user = await requireUser(ctx);
-    const person = await ctx.db
-      .query("people")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .first();
-    if (!person?.employeeId) return null;
-    const state = await getStateRow(ctx, person.employeeId);
+    const subprofile = await getActivitySubprofile(ctx, user._id);
+    if (!subprofile.employeeId) return null;
+    const state = await getStateRow(ctx, subprofile.employeeId);
     if (!state) return null;
     return {
       finalState: state.finalState,
@@ -516,16 +543,27 @@ export const stateBatch = query({
     employeeIds: v.optional(v.array(v.string())),
     since: v.number(),
   },
+  returns: v.array(
+    v.object({
+      employeeId: v.string(),
+      state: v.union(
+        v.null(),
+        v.object({
+          finalState: FINAL_STATE,
+          finalStateSince: v.number(),
+          ...CLOCKODO_STATE_FIELDS,
+          updatedAt: v.number(),
+        }),
+      ),
+    }),
+  ),
   handler: async (ctx, { employeeIds = [], since }) => {
     const user = await requireUser(ctx);
 
-    const person = await ctx.db
-      .query("people")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .first();
+    const subprofile = await getActivitySubprofile(ctx, user._id);
 
     const ids = [
-      ...new Set([...employeeIds, ...(person?.employeeId ? [person.employeeId] : [])]),
+      ...new Set([...employeeIds, ...(subprofile.employeeId ? [subprofile.employeeId] : [])]),
     ].slice(0, 100);
 
     return await Promise.all(
@@ -582,17 +620,20 @@ export const stateBatch = query({
  */
 export const historyBatch = query({
   args: { employeeIds: v.optional(v.array(v.string())), since: v.number() },
+  returns: v.array(
+    v.object({
+      employeeId: v.string(),
+      samples: v.array(v.object({ state: FINAL_STATE, at: v.number() })),
+    }),
+  ),
   handler: async (ctx, { employeeIds, since }) => {
     const user = await requireUser(ctx);
-    const person = await ctx.db
-      .query("people")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
-      .first();
+    const subprofile = await getActivitySubprofile(ctx, user._id);
 
-    const ids = [...new Set(employeeIds), ...(person?.employeeId ? [person.employeeId] : [])].slice(
-      0,
-      100,
-    );
+    const ids = [
+      ...new Set(employeeIds),
+      ...(subprofile.employeeId ? [subprofile.employeeId] : []),
+    ].slice(0, 100);
 
     return await Promise.all(
       ids.map(async (employeeId) => {
