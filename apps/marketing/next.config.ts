@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   typedRoutes: false,
   experimental: {
     globalNotFound: true,
+    useTypeScriptCli: true
   },
   async rewrites() {
     return [
