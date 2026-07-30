@@ -99,6 +99,10 @@
   "clockStarted": "Zeit gestartet",
   "clockStopped": "Zeit gestoppt",
   "clockActionFailed": "Die Zeiterfassung konnte nicht aktualisiert werden",
+  "clockUnavailable": "Zeiterfassungsstatus nicht verfügbar",
+  "presenceUnavailable": "Anwesenheiten heute nicht verfügbar",
+  "upcomingUnavailable": "Anstehende Abwesenheiten nicht verfügbar",
+  "sectionUnavailable": "Diese Ansicht konnte nicht geladen werden",
   "absenceTypeGroups": {
     "timeOff": "Freistellung",
     "specialLeave": "Sonderfreistellung",

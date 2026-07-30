@@ -99,6 +99,10 @@
   "clockStarted": "Clock started",
   "clockStopped": "Clock stopped",
   "clockActionFailed": "Clock action could not be completed",
+  "clockUnavailable": "Clock status unavailable",
+  "presenceUnavailable": "Presence today unavailable",
+  "upcomingUnavailable": "Upcoming absences unavailable",
+  "sectionUnavailable": "This view could not be loaded",
   "absenceTypeGroups": {
     "timeOff": "Time off",
     "specialLeave": "Special leave",
