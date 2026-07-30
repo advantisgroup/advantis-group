@@ -204,7 +204,7 @@ export const clockodoAbsencesRoute = new Elysia()
       ) {
         throw Errors.forbidden();
       }
-      const running = await getRunningClock();
+      const running = await getRunningClock(caller.clockodoUserId);
       if (running?.users_id === caller.clockodoUserId) {
         throw Errors.badRequest("Clockodo timer is already running");
       }
@@ -212,7 +212,6 @@ export const clockodoAbsencesRoute = new Elysia()
         userId: caller.clockodoUserId,
         customerId: body.customerId,
         serviceId: body.serviceId,
-        text: body.text,
       });
       return { entry };
     },
@@ -220,7 +219,6 @@ export const clockodoAbsencesRoute = new Elysia()
       body: t.Object({
         customerId: t.Integer(),
         serviceId: t.Integer(),
-        text: t.Optional(t.String()),
       }),
     }
   )
@@ -231,7 +229,7 @@ export const clockodoAbsencesRoute = new Elysia()
       const entryId = Number(params.entryId);
       if (!Number.isSafeInteger(entryId))
         throw Errors.badRequest("Invalid Clockodo entry id");
-      const running = await getRunningClock();
+      const running = await getRunningClock(caller.clockodoUserId);
       if (
         !running ||
         running.id !== entryId ||

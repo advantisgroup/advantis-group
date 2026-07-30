@@ -229,9 +229,13 @@ function createClockodoClient(options: ClockodoClientOptions) {
         "filter[active]=true"
       );
     },
-    async getRunningClock(): Promise<ClockodoEntry | null> {
+    async getRunningClock(userId: number): Promise<ClockodoEntry | null> {
+      // Without users_id this reads the API service account's own clock
+      // (always idle, since no employee clocks in as that account) instead
+      // of the employee's — always resolving to "nothing is running" and
+      // making every stop-clock request fail its ownership check.
       const response = await get<{ running: ClockodoEntry | null }>(
-        "/v2/clock"
+        `/v2/clock?users_id=${userId}`
       );
       return response.running ?? null;
     },
@@ -251,7 +255,6 @@ function createClockodoClient(options: ClockodoClientOptions) {
       userId: number;
       customerId: number;
       serviceId: number;
-      text?: string;
     }): Promise<ClockodoEntry> {
       const response = await requestJson<{ running: ClockodoEntry }>(
         "/v2/clock",
@@ -261,7 +264,6 @@ function createClockodoClient(options: ClockodoClientOptions) {
             users_id: input.userId,
             customers_id: input.customerId,
             services_id: input.serviceId,
-            text: input.text || undefined,
           }),
         }
       );
@@ -371,8 +373,8 @@ export function listServices(): Promise<ClockodoService[]> {
   return upstream(client().listServices());
 }
 
-export function getRunningClock(): Promise<ClockodoEntry | null> {
-  return upstream(client().getRunningClock());
+export function getRunningClock(userId: number): Promise<ClockodoEntry | null> {
+  return upstream(client().getRunningClock(userId));
 }
 
 export function getClockOptionsRights(userId: number): Promise<{
@@ -386,7 +388,6 @@ export function startClock(input: {
   userId: number;
   customerId: number;
   serviceId: number;
-  text?: string;
 }): Promise<ClockodoEntry> {
   return upstream(client().startClock(input));
 }

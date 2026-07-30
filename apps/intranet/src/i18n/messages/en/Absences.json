@@ -95,7 +95,6 @@
   "stopClock": "Stop clock",
   "clockCustomer": "Customer",
   "clockService": "Service",
-  "clockDescription": "Description (optional)",
   "clockStarted": "Clock started",
   "clockStopped": "Clock stopped",
   "clockActionFailed": "Clock action could not be completed",

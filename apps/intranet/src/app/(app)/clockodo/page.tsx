@@ -285,7 +285,6 @@ function ClockControl() {
   const [startOpen, setStartOpen] = useState(false);
   const [customerId, setCustomerId] = useState("");
   const [serviceId, setServiceId] = useState("");
-  const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -299,25 +298,15 @@ function ClockControl() {
     return () => window.clearInterval(id);
   }, [refresh]);
 
-  useEffect(() => {
-    if (!startOpen || options) return;
-    void eden.clockodo.clock.options.get().then(({ data }) => {
-      if (data) setOptions(data);
-    });
-  }, [eden, options, startOpen]);
-
-  async function start() {
-    if (!customerId || !serviceId) return;
+  async function start(customer: number, service: number) {
     setBusy(true);
     try {
       const { error } = await eden.clockodo.clock.me.post({
-        customerId: Number(customerId),
-        serviceId: Number(serviceId),
-        text: text.trim() || undefined,
+        customerId: customer,
+        serviceId: service,
       });
       if (error) throw error;
       setStartOpen(false);
-      setText("");
       await refresh();
       toast.success(t("clockStarted"));
     } catch {
@@ -325,6 +314,32 @@ function ClockControl() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function openStart() {
+    setBusy(true);
+    let opts = options;
+    if (!opts) {
+      const { data } = await eden.clockodo.clock.options.get();
+      if (!data) {
+        setBusy(false);
+        return;
+      }
+      opts = data;
+      setOptions(data);
+    }
+    setBusy(false);
+    // Nothing to choose between — just start the clock instead of making
+    // the person pick from single-item dropdowns.
+    if (opts.customers.length === 1 && opts.services.length === 1) {
+      await start(opts.customers[0].id, opts.services[0].id);
+      return;
+    }
+    setCustomerId(
+      opts.customers.length === 1 ? String(opts.customers[0].id) : ""
+    );
+    setServiceId(opts.services.length === 1 ? String(opts.services[0].id) : "");
+    setStartOpen(true);
   }
 
   async function stop() {
@@ -386,10 +401,7 @@ function ClockControl() {
               {t("stopClock")}
             </Button>
           ) : (
-            <Button
-              onClick={() => setStartOpen(true)}
-              disabled={!clock || busy}
-            >
+            <Button onClick={() => void openStart()} disabled={!clock || busy}>
               <Play className="size-4" />
               {t("startClock")}
             </Button>
@@ -426,18 +438,13 @@ function ClockControl() {
                 ))}
               </SelectContent>
             </Select>
-            <Textarea
-              value={text}
-              onChange={event => setText(event.target.value)}
-              placeholder={t("clockDescription")}
-            />
           </div>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setStartOpen(false)}>
               {t("cancel")}
             </Button>
             <Button
-              onClick={() => void start()}
+              onClick={() => void start(Number(customerId), Number(serviceId))}
               disabled={!customerId || !serviceId || busy}
             >
               {t("startClock")}

@@ -95,7 +95,6 @@
   "stopClock": "Zeit stoppen",
   "clockCustomer": "Kunde",
   "clockService": "Leistung",
-  "clockDescription": "Beschreibung (optional)",
   "clockStarted": "Zeit gestartet",
   "clockStopped": "Zeit gestoppt",
   "clockActionFailed": "Die Zeiterfassung konnte nicht aktualisiert werden",
