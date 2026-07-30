@@ -12,6 +12,7 @@ import { useConfirm } from "@/components/ui/dialog";
 import { useIsManager } from "@/components/providers/current-user";
 import { AttachmentDropZone } from "@/components/attachments/AttachmentDropZone";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
+import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
@@ -33,6 +34,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
   const addAttachment = useMutation(api.guidebookAttachments.add);
   const removeAttachment = useMutation(api.guidebookAttachments.remove);
   const oneDriveApi = useOneDriveApi();
+  const { openFileViewer } = useFileViewer();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [inFlight, setInFlight] = useState<{ file: File; progress: number }[]>([]);
@@ -152,11 +154,19 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
               </span>
               <button
                 type="button"
-                onClick={() =>
-                  void (a.oneDriveItemId
-                    ? oneDriveApi.download(a.oneDriveItemId, a.name)
-                    : a.legacyUrl && window.open(a.legacyUrl, "_blank"))
-                }
+                onClick={() => {
+                  if (a.oneDriveItemId) {
+                    void oneDriveApi.download(a.oneDriveItemId, a.name);
+                  } else if (a.legacyUrl) {
+                    openFileViewer({
+                      storageId: a._id,
+                      name: a.name,
+                      contentType: a.contentType ?? undefined,
+                      size: a.size ?? undefined,
+                      url: a.legacyUrl,
+                    });
+                  }
+                }}
                 className="min-w-0 text-left"
               >
                 <span className="block max-w-[14rem] truncate font-medium">{a.name}</span>
