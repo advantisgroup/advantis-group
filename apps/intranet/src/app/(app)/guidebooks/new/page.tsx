@@ -11,13 +11,17 @@ import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { GuidebookEditor, type GuidebookFormData } from "@/components/guidebooks/GuidebookEditor";
+import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { useIsManager } from "@/components/providers/current-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { imageStorageIdsOf, serializeBlocks, slugify } from "@/lib/guidebook-blocks";
+import { useOneDriveApi } from "@/lib/onedrive-api";
+import { attachPendingFiles } from "@/lib/wiki-attachments";
 
 export default function NewGuidebookPage() {
   const t = useTranslations("Guidebooks");
@@ -26,6 +30,9 @@ export default function NewGuidebookPage() {
   const isManager = useIsManager();
   const customPages = useQuery(api.guidebookPages.list);
   const createPage = useMutation(api.guidebookPages.create);
+  const addAttachment = useMutation(api.guidebookAttachments.add);
+  const oneDriveApi = useOneDriveApi();
+  const attachmentUpload = useAttachmentUpload();
 
   const takenSlugs = useMemo(
     () => new Set([...staticGuidebookSlugs(), ...(customPages ?? []).map((p) => p.slug)]),
@@ -52,6 +59,20 @@ export default function NewGuidebookPage() {
       blocks: serializeBlocks(data.blocks),
       imageStorageIds: imageStorageIdsOf(data.blocks) as Id<"_storage">[],
     });
+    if (attachmentUpload.entries.length > 0) {
+      attachmentUpload.setUploading(true);
+      try {
+        await attachPendingFiles(
+          createdSlug,
+          attachmentUpload.entries.map((e) => e.file),
+          oneDriveApi.attachToWiki,
+          addAttachment,
+          attachmentUpload.setFileProgress,
+        );
+      } finally {
+        attachmentUpload.setUploading(false);
+      }
+    }
     toast.success(t("pageCreated"));
     router.push(`/guidebooks/${createdSlug}`);
   }
@@ -78,7 +99,12 @@ export default function NewGuidebookPage() {
         {t("title")}
       </Link>
       <PageHeader eyebrow={t("eyebrow")} title={t("createPage")} />
-      <GuidebookEditor onSave={handleSave} saving={false} submitLabel={tc("create")} />
+      <GuidebookEditor
+        onSave={handleSave}
+        saving={false}
+        submitLabel={tc("create")}
+        attachmentsSlot={<PendingWikiAttachments attachmentUpload={attachmentUpload} />}
+      />
     </div>
   );
 }

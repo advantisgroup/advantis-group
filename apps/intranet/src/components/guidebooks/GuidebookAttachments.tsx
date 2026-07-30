@@ -10,6 +10,8 @@ import { toast } from "sonner";
 
 import { useConfirm } from "@/components/ui/dialog";
 import { useIsManager } from "@/components/providers/current-user";
+import { AttachmentDropZone } from "@/components/attachments/AttachmentDropZone";
+import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
@@ -33,22 +35,35 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
   const oneDriveApi = useOneDriveApi();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [inFlight, setInFlight] = useState<{ file: File; progress: number }[]>([]);
 
   if (!isManager && attachments !== undefined && attachments.length === 0) return null;
 
-  async function onFileSelected(file: File) {
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      toast.error(t("attachTooLarge"));
-      return;
-    }
+  function setFileProgress(file: File, progress: number) {
+    setInFlight((prev) => prev.map((f) => (f.file === file ? { ...f, progress } : f)));
+  }
+
+  async function onFilesSelected(files: File[]) {
+    const valid = files.filter((f) => f.size <= MAX_ATTACHMENT_BYTES);
+    if (valid.length < files.length) toast.error(t("attachTooLarge"));
+    if (valid.length === 0) return;
     setBusy(true);
+    setInFlight(valid.map((file) => ({ file, progress: 0 })));
     try {
-      const uploaded = await oneDriveApi.attachToWiki(slug, file);
-      await addAttachment({ slug, attachment: uploaded });
+      await Promise.all(
+        valid.map(async (file) => {
+          const uploaded = await oneDriveApi.attachToWiki(slug, file, (fraction) =>
+            setFileProgress(file, fraction),
+          );
+          await addAttachment({ slug, attachment: uploaded });
+          setInFlight((prev) => prev.filter((f) => f.file !== file));
+        }),
+      );
     } catch (e) {
       handleError(e);
     } finally {
       setBusy(false);
+      setInFlight([]);
     }
   }
 
@@ -77,7 +92,12 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="mt-6 space-y-2 border-t border-border/60 pt-6 print:hidden">
+    <AttachmentDropZone
+      onFiles={(files) => void onFilesSelected(files)}
+      hint={t("dropHint")}
+      disabled={!isManager || busy}
+      className="mt-6 space-y-2 rounded-lg border-t border-border/60 pt-6 print:hidden"
+    >
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("attachmentsTitle")}
@@ -87,10 +107,10 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
             <input
               ref={inputRef}
               type="file"
+              multiple
               className="hidden"
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void onFileSelected(file);
+                void onFilesSelected(Array.from(e.target.files ?? []));
                 e.target.value = "";
               }}
             />
@@ -106,6 +126,14 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
           </>
         )}
       </div>
+      {inFlight.length > 0 && (
+        <AttachmentList
+          entries={inFlight}
+          uploading
+          onRemove={() => {}}
+          removeLabel={tc("delete")}
+        />
+      )}
       {attachments === undefined ? null : attachments.length === 0 ? (
         isManager ? (
           <p className="text-xs text-muted-foreground">{t("noAttachments")}</p>
@@ -149,6 +177,6 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
           ))}
         </div>
       )}
-    </div>
+    </AttachmentDropZone>
   );
 }

@@ -85,6 +85,12 @@ export function useAttachmentUpload() {
 
   const reset = useCallback(() => setEntries([]), []);
 
+  /** Live progress for a non-Convex upload path (e.g. OneDrive) driving this
+   *  same staged list — `uploadAll` below only covers Convex storage. */
+  const setFileProgress = useCallback((file: File, fraction: number) => {
+    setEntries((prev) => prev.map((e) => (e.file === file ? { ...e, progress: fraction } : e)));
+  }, []);
+
   /** Best-effort delete of already-uploaded attachments, e.g. after the
    *  follow-up `sendMessage`/`create` call rejects. */
   const rollback = useCallback(
@@ -148,6 +154,8 @@ export function useAttachmentUpload() {
     reset,
     uploadAll,
     rollback,
+    setFileProgress,
+    setUploading,
   };
 }
 

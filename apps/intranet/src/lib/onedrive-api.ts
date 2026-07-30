@@ -56,6 +56,15 @@ export interface TeamAccessRow {
   permissionId: string | null;
 }
 
+export interface WikiAttachmentUpload {
+  oneDriveItemId: string;
+  oneDrivePath: string;
+  name: string;
+  size: number;
+  contentType: string;
+  kind: "image" | "file";
+}
+
 export function useOneDriveApi() {
   const { getToken } = useAuth();
   const t = useTranslations("Files");
@@ -177,29 +186,44 @@ export function useOneDriveApi() {
        * (Team/Wiki/<slug>/…, auto-provisioned server-side). Returns the
        * reference Convex stores — never the bytes — so the file's single
        * source of truth is OneDrive and everyone with wiki access already
-       * has Team-zone read access to it as a backup.
+       * has Team-zone read access to it as a backup. XHR (not fetch) so
+       * `onProgress` can track real upload progress, same as `upload()` above.
        */
-      attachToWiki: async (
+      attachToWiki: (
         slug: string,
         file: File,
-      ): Promise<{
-        oneDriveItemId: string;
-        oneDrivePath: string;
-        name: string;
-        size: number;
-        contentType: string;
-        kind: "image" | "file";
-      }> => {
-        const form = new FormData();
-        form.append("file", file);
-        return parse(
-          await fetch(`${API}/onedrive/wiki/${encodeURIComponent(slug)}/attach`, {
-            method: "POST",
-            headers: await authHeaders(),
-            body: form,
-          }),
-        );
-      },
+        onProgress?: (fraction: number) => void,
+      ): Promise<WikiAttachmentUpload> =>
+        new Promise<WikiAttachmentUpload>((resolve, reject) => {
+          void (async () => {
+            const token = await getToken();
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", `${API}/onedrive/wiki/${encodeURIComponent(slug)}/attach`);
+            if (token) xhr.setRequestHeader("authorization", `Bearer ${token}`);
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable && onProgress) {
+                onProgress(e.loaded / e.total);
+              }
+            };
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(JSON.parse(xhr.responseText) as WikiAttachmentUpload);
+              } else {
+                let message = "Upload failed";
+                try {
+                  message = (JSON.parse(xhr.responseText) as { error?: string }).error ?? message;
+                } catch {
+                  // keep generic
+                }
+                reject(new Error(message));
+              }
+            };
+            xhr.onerror = () => reject(new Error("Upload failed"));
+            const form = new FormData();
+            form.append("file", file);
+            xhr.send(form);
+          })();
+        }),
 
       approve: (uploadId: string, note?: string) =>
         send<{ ok: true }>(

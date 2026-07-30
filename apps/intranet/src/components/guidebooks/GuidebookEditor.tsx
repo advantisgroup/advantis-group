@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -55,11 +55,16 @@ export function GuidebookEditor({
   onSave,
   saving,
   submitLabel,
+  attachmentsSlot,
 }: {
   initial?: GuidebookFormData;
   onSave: (data: GuidebookFormData) => Promise<void>;
   saving: boolean;
   submitLabel: string;
+  /** Rendered between the content editor and the submit button — the "new
+   *  page" flow slots in drag-and-drop attachment staging here, since a
+   *  brand-new page has no slug yet to attach files to directly. */
+  attachmentsSlot?: ReactNode;
 }) {
   const t = useTranslations("Guidebooks");
   const tTeams = useTranslations("Teams");
@@ -193,6 +198,8 @@ export function GuidebookEditor({
           onDragIndexChange={setDragIndex}
         />
       </div>
+
+      {attachmentsSlot}
 
       <div className="flex justify-end">
         <Button onClick={() => void submit()} disabled={!canSave || saving}>
