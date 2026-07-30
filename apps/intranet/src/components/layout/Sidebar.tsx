@@ -313,7 +313,6 @@ export function Sidebar() {
               type="button"
               onClick={() => {
                 setMode("workspace");
-                close();
                 router.push("/");
               }}
               className={cn(
@@ -330,7 +329,6 @@ export function Sidebar() {
               type="button"
               onClick={() => {
                 setMode("organization");
-                close();
                 router.push("/admin");
               }}
               className={cn(
