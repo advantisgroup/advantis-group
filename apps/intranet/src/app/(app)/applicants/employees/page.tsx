@@ -317,8 +317,8 @@ export default function EmployeesPage() {
                     <TableCell>{profile.jobTitle || "–"}</TableCell>
                     <TableCell>{profile.department || "–"}</TableCell>
                     <TableCell>
-                      {profile.linkedUserName ? (
-                        <Badge variant="success">{profile.linkedUserName}</Badge>
+                      {profile.linkedProfile ? (
+                        <Badge variant="success">{profile.linkedProfile.name}</Badge>
                       ) : (
                         <span className="text-sm text-muted-foreground">
                           {t("employeeNotLinked")}

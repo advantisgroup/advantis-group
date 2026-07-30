@@ -8,6 +8,7 @@ import {
   query,
 } from "./_generated/server";
 import { requireApplicantAccess } from "./lib/auth";
+import { partialProfileValidator, profileDisplayName, toPartialProfileOrNull } from "./lib/profile";
 
 const employeeDocumentCategoryValidator = v.union(
   v.literal("documents"),
@@ -16,6 +17,30 @@ const employeeDocumentCategoryValidator = v.union(
   v.literal("contract"),
   v.literal("other")
 );
+
+/**
+ * `employeeProfiles` is HumanResources' subprofile: a feature-owned record
+ * representing "this person, as an HR employee record," optionally linked
+ * to an intranet `users` row via `userId`. See
+ * `docs/architecture/profiles.md` for the Profile/Subprofile vocabulary.
+ */
+const employeeProfileValidator = v.object({
+  _id: v.id("employeeProfiles"),
+  _creationTime: v.number(),
+  userId: v.optional(v.id("users")),
+  sourceApplicantId: v.optional(v.id("applicants")),
+  name: v.string(),
+  email: v.optional(v.string()),
+  phone: v.optional(v.string()),
+  jobTitle: v.optional(v.string()),
+  department: v.optional(v.string()),
+  status: v.union(v.literal("active"), v.literal("archived")),
+  notes: v.optional(v.string()),
+  createdByUserId: v.id("users"),
+  createdAt: v.number(),
+  updatedAt: v.number(),
+  archivedAt: v.optional(v.number()),
+});
 
 async function requireProfile(
   ctx: QueryCtx | MutationCtx,
@@ -36,15 +61,14 @@ function compact(value: string | undefined): string | undefined {
   return trimmed ? trimmed : undefined;
 }
 
-async function displayName(ctx: QueryCtx | MutationCtx, userId: Id<"users">) {
-  const user = await ctx.db.get(userId);
-  return user
-    ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
-    : null;
-}
-
 export const listProfiles = query({
   args: { includeArchived: v.optional(v.boolean()) },
+  returns: v.array(
+    employeeProfileValidator.extend({
+      linkedProfile: v.union(partialProfileValidator, v.null()),
+      documentsCount: v.number(),
+    })
+  ),
   handler: async (ctx, { includeArchived }) => {
     await requireApplicantAccess(ctx);
     const profiles = includeArchived
@@ -68,10 +92,7 @@ export const listProfiles = query({
         const user = profile.userId ? await ctx.db.get(profile.userId) : null;
         return {
           ...profile,
-          linkedUserName: user
-            ? [user.firstName, user.lastName].filter(Boolean).join(" ") ||
-              user.email
-            : null,
+          linkedProfile: await toPartialProfileOrNull(ctx, user),
           documentsCount: documents.length,
         };
       })
@@ -81,6 +102,17 @@ export const listProfiles = query({
 
 export const getProfile = query({
   args: { employeeProfileId: v.id("employeeProfiles") },
+  returns: employeeProfileValidator.extend({
+    linkedProfile: v.union(partialProfileValidator, v.null()),
+    sourceApplicant: v.union(
+      v.object({
+        _id: v.id("applicants"),
+        name: v.string(),
+        archivedAt: v.union(v.number(), v.null()),
+      }),
+      v.null()
+    ),
+  }),
   handler: async (ctx, { employeeProfileId }) => {
     await requireApplicantAccess(ctx);
     const profile = await requireProfile(ctx, employeeProfileId);
@@ -90,11 +122,7 @@ export const getProfile = query({
       : null;
     return {
       ...profile,
-      linkedUserName: linkedUser
-        ? [linkedUser.firstName, linkedUser.lastName]
-            .filter(Boolean)
-            .join(" ") || linkedUser.email
-        : null,
+      linkedProfile: await toPartialProfileOrNull(ctx, linkedUser),
       sourceApplicant: sourceApplicant
         ? {
             _id: sourceApplicant._id,
@@ -288,11 +316,14 @@ export const listDocuments = query({
     return Promise.all(
       documents
         .sort((a, b) => b.createdAt - a.createdAt)
-        .map(async document => ({
-          ...document,
-          uploadedByName: await displayName(ctx, document.uploadedByUserId),
-          url: await ctx.storage.getUrl(document.storageId),
-        }))
+        .map(async document => {
+          const uploader = await ctx.db.get(document.uploadedByUserId);
+          return {
+            ...document,
+            uploadedByName: uploader ? profileDisplayName(uploader) : null,
+            url: await ctx.storage.getUrl(document.storageId),
+          };
+        })
     );
   },
 });
