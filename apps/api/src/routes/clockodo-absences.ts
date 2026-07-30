@@ -43,25 +43,26 @@ interface AbsenceDTO {
 }
 
 /** Coerce a Clockodo date field to `YYYY-MM-DD`. The `/v4/absences` API has
- * been observed returning a non-string shape (e.g. an array) for
+ * been observed returning a non-string, missing, or blank shape for
  * date_since/date_until on some records, despite the documented contract —
  * fall back to "" rather than propagate a shape the client's string-only
- * date math (startsWith/slice) can't handle. Logged whenever this actually
- * fires so a malformed Clockodo record is visible instead of silently
- * turning into a blank date somewhere downstream. */
+ * date math (startsWith/slice) can't handle. Logs the *entire* raw record
+ * (not just the one field) whenever this fires, since a wrong/missing date
+ * field is also the easiest way to notice the whole record shape drifted
+ * (e.g. a field getting renamed upstream). */
 function toIsoDate(
   value: unknown,
-  context: { absenceId: number; field: string }
+  context: { absenceId: number; field: string; raw: unknown }
 ): string {
-  const raw = Array.isArray(value) ? value[0] : value;
-  if (typeof raw !== "string") {
+  const candidate = Array.isArray(value) ? value[0] : value;
+  if (typeof candidate !== "string" || candidate.trim() === "") {
     console.error(
-      `[clockodo] absence ${context.absenceId} has a non-string ${context.field}:`,
-      JSON.stringify(value)
+      `[clockodo] absence ${context.absenceId} has a bad ${context.field}; full record:`,
+      JSON.stringify(context.raw)
     );
     return "";
   }
-  return raw.slice(0, 10);
+  return candidate.slice(0, 10);
 }
 
 function toDto(
@@ -75,8 +76,13 @@ function toDto(
     startDate: toIsoDate(a.date_since, {
       absenceId: a.id,
       field: "date_since",
+      raw: a,
     }),
-    endDate: toIsoDate(a.date_until, { absenceId: a.id, field: "date_until" }),
+    endDate: toIsoDate(a.date_until, {
+      absenceId: a.id,
+      field: "date_until",
+      raw: a,
+    }),
     halfDay: a.count_days === 0.5,
     reason: a.note,
     status: mapAbsenceStatus(a.status),
