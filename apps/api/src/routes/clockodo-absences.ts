@@ -107,8 +107,11 @@ async function resolveClockodoCaller(request: Request) {
       clerkUserId,
     }
   );
-  const clockodoUserId = Number(caller?.clockodoUserId);
-  if (!caller?.clockodoUserId || !Number.isSafeInteger(clockodoUserId)) {
+  if (caller.status !== "linked") {
+    throw Errors.forbidden("Clockodo account is not linked");
+  }
+  const clockodoUserId = Number(caller.clockodoUserId);
+  if (!Number.isSafeInteger(clockodoUserId)) {
     throw Errors.forbidden("Clockodo account is not linked");
   }
   return { ...caller, clockodoUserId };
@@ -251,7 +254,7 @@ export const clockodoAbsencesRoute = new Elysia()
         clerkUserId,
       }
     );
-    if (!caller?.clockodoUserId) return { absences: [] };
+    if (caller.status !== "linked") return { absences: [] };
 
     const all = await listCurrentAbsences();
     const mine = all
@@ -274,7 +277,7 @@ export const clockodoAbsencesRoute = new Elysia()
         }),
       ]);
       const rosterByClockodoId = new Map(
-        roster.map(r => [r.clockodoUserId, r])
+        roster.filter(r => r.linked).map(r => [r.clockodoUserId, r])
       );
 
       const all = await listCurrentAbsences();
@@ -291,7 +294,7 @@ export const clockodoAbsencesRoute = new Elysia()
         .map(a => {
           const person = rosterByClockodoId.get(a.clockodoUserId);
           if (!person) return null;
-          const isSelf = caller?.clockodoUserId === a.clockodoUserId;
+          const isSelf = caller.status === "linked" && caller.clockodoUserId === a.clockodoUserId;
           // Privacy: colleagues only see that someone is on vacation, not why
           // — sick/personal/other absences stay visible to that person alone
           // on the shared org calendar (their own "my absences" list still
@@ -326,7 +329,7 @@ export const clockodoAbsencesRoute = new Elysia()
         clerkUserId,
       }
     );
-    if (!caller?.isManager) throw Errors.forbidden();
+    if (caller.status === "no_account" || !caller.isManager) throw Errors.forbidden();
 
     const all = await listCurrentAbsences();
     const count = all.filter(
