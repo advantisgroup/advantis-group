@@ -50,7 +50,9 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     setBusy(true);
     setInFlight(valid.map((file) => ({ file, progress: 0 })));
     try {
-      await Promise.all(
+      // allSettled (not all) — one failing file must not clear the shared
+      // busy/inFlight state while its siblings' XHRs are still in flight.
+      const results = await Promise.allSettled(
         valid.map(async (file) => {
           const uploaded = await oneDriveApi.attachToWiki(slug, file, (fraction) =>
             setFileProgress(file, fraction),
@@ -59,8 +61,8 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
           setInFlight((prev) => prev.filter((f) => f.file !== file));
         }),
       );
-    } catch (e) {
-      handleError(e);
+      const failed = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
+      if (failed) handleError(failed.reason);
     } finally {
       setBusy(false);
       setInFlight([]);

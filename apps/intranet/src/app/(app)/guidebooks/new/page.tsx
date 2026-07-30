@@ -30,6 +30,7 @@ export default function NewGuidebookPage() {
   const isManager = useIsManager();
   const customPages = useQuery(api.guidebookPages.list);
   const createPage = useMutation(api.guidebookPages.create);
+  const rollbackPage = useMutation(api.guidebookPages.remove);
   const addAttachment = useMutation(api.guidebookAttachments.add);
   const oneDriveApi = useOneDriveApi();
   const attachmentUpload = useAttachmentUpload();
@@ -49,7 +50,7 @@ export default function NewGuidebookPage() {
 
   async function handleSave(data: GuidebookFormData) {
     const slug = uniqueSlug(data.title);
-    const { slug: createdSlug } = await createPage({
+    const { id: createdId, slug: createdSlug } = await createPage({
       slug,
       title: data.title,
       description: data.description,
@@ -69,6 +70,13 @@ export default function NewGuidebookPage() {
           addAttachment,
           attachmentUpload.setFileProgress,
         );
+      } catch (attachError) {
+        // The page is already committed under `createdSlug` — leaving it in
+        // place would make a retry either collide on that slug or (once the
+        // page list refetches) mint a second, suffixed-slug page. Roll it
+        // back so the form can safely be resubmitted as-is.
+        await rollbackPage({ pageId: createdId }).catch(() => {});
+        throw attachError;
       } finally {
         attachmentUpload.setUploading(false);
       }

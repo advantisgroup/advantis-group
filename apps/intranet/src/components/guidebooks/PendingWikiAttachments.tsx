@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AttachmentDropZone } from "@/components/attachments/AttachmentDropZone";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { type UseAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { cn } from "@/lib/utils";
 
 /**
  * Drag-and-drop file staging for a wiki entry/page that doesn't have a slug
@@ -23,6 +24,7 @@ export function PendingWikiAttachments({
 }) {
   const t = useTranslations("Guidebooks");
   const tc = useTranslations("Common");
+  const disabled = !!busy || attachmentUpload.uploading;
 
   function addFiles(files: File[]) {
     if (!attachmentUpload.add(files)) toast.error(t("attachTooLarge"));
@@ -33,13 +35,19 @@ export function PendingWikiAttachments({
       <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {t("attachmentsTitle")}
       </label>
-      <AttachmentDropZone onFiles={addFiles} hint={t("dropHint")}>
-        <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border py-6 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+      <AttachmentDropZone onFiles={addFiles} hint={t("dropHint")} disabled={disabled}>
+        <label
+          className={cn(
+            "flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border py-6 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground",
+            disabled && "pointer-events-none opacity-60",
+          )}
+        >
           <Paperclip className="size-4" />
           {t("attachHint")}
           <input
             type="file"
             multiple
+            disabled={disabled}
             className="hidden"
             onChange={(e) => {
               addFiles(Array.from(e.target.files ?? []));
@@ -50,7 +58,7 @@ export function PendingWikiAttachments({
       </AttachmentDropZone>
       <AttachmentList
         entries={attachmentUpload.entries}
-        uploading={!!busy || attachmentUpload.uploading}
+        uploading={disabled}
         onRemove={attachmentUpload.remove}
         removeLabel={tc("delete")}
       />

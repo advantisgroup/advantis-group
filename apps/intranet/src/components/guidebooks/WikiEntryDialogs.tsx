@@ -218,6 +218,7 @@ export function EntryDialog({
   const entries = useQuery(api.wikiEntries.list) ?? [];
   const create = useMutation(api.wikiEntries.create);
   const update = useMutation(api.wikiEntries.update);
+  const rollbackEntry = useMutation(api.wikiEntries.remove);
   const addAttachment = useMutation(api.guidebookAttachments.add);
   const oneDriveApi = useOneDriveApi();
   const attachmentUpload = useAttachmentUpload();
@@ -280,7 +281,7 @@ export function EntryDialog({
           slug = `${slugify(thema)}-${suffix}`;
           suffix++;
         }
-        await create({ slug, ...patch });
+        const created = await create({ slug, ...patch });
         if (attachmentUpload.entries.length > 0) {
           attachmentUpload.setUploading(true);
           try {
@@ -291,6 +292,13 @@ export function EntryDialog({
               addAttachment,
               attachmentUpload.setFileProgress,
             );
+          } catch (attachError) {
+            // The entry is already committed under `slug` — leaving it in
+            // place would make a retry either collide on that slug or (once
+            // the entries list refetches) mint a second, suffixed-slug entry.
+            // Roll it back so the form can safely be resubmitted as-is.
+            await rollbackEntry({ entryId: created.id }).catch(() => {});
+            throw attachError;
           } finally {
             attachmentUpload.setUploading(false);
           }
