@@ -91,8 +91,13 @@ function SectionBoundary({
 }) {
   return (
     <ErrorBoundary
-      fallback={({ reset }) => (
-        <ErrorFallback title={title} className="min-h-0 py-6" onRetry={reset} />
+      fallback={({ error, reset }) => (
+        <ErrorFallback
+          title={title}
+          description={error.message}
+          className="min-h-0 py-6"
+          onRetry={reset}
+        />
       )}
     >
       {children}
@@ -1174,8 +1179,12 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
   return (
     <ErrorBoundary
       key={section}
-      fallback={({ reset }) => (
-        <ErrorFallback title={t("sectionUnavailable")} onRetry={reset} />
+      fallback={({ error, reset }) => (
+        <ErrorFallback
+          title={t("sectionUnavailable")}
+          description={error.message}
+          onRetry={reset}
+        />
       )}
     >
       {section === "dashboard" && (

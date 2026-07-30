@@ -21,5 +21,7 @@ export default function AppError({
     console.error("App route error:", error);
   }, [error]);
 
-  return <ErrorFallback fullScreen onRetry={reset} />;
+  return (
+    <ErrorFallback fullScreen description={error.message} onRetry={reset} />
+  );
 }
