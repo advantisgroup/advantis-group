@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { type Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { getCurrentUser, requireUser } from "./lib/auth";
+import { getCurrentUser, hasApplicantAccess, requireUser, requireVaultUnlocked } from "./lib/auth";
 
 /**
  * Issue a short-lived upload URL for chat attachments, avatars and
@@ -42,7 +42,19 @@ export const apiGenerateUploadUrl = mutation({
 export const getUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
-    await requireUser(ctx);
+    const user = await requireUser(ctx);
+    const applicantDocument = await ctx.db
+      .query("applicantDocuments")
+      .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+      .first();
+    const employeeDocument = await ctx.db
+      .query("employeeDocuments")
+      .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+      .first();
+    if (applicantDocument || employeeDocument) {
+      if (!hasApplicantAccess(user)) return null;
+      await requireVaultUnlocked(ctx, user._id);
+    }
     return ctx.storage.getUrl(storageId);
   },
 });

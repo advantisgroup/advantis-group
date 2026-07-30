@@ -20,6 +20,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import {
   AdminStatsCard,
+  OpenMeasuresCard,
   RecentActivityCard,
   TeamPerformanceCard,
   TeamStatusCard,
@@ -62,6 +63,7 @@ const CARD_IDS = [
   "celebrations",
   "teamstatus",
   "teamperformance",
+  "errormeasures",
   "adminstats",
   "adminactivity",
 ] as const;
@@ -154,6 +156,7 @@ export default function DashboardPage() {
     celebrations: t("celebrationsTitle"),
     teamstatus: t("teamStatusTitle"),
     teamperformance: t("teamPerformanceTitle"),
+    errormeasures: t("errorMeasuresTitle"),
     adminstats: t("adminStatsTitle"),
     adminactivity: t("recentActivityTitle"),
   };
@@ -179,6 +182,7 @@ export default function DashboardPage() {
   const adminWidgets: Widget[] = [
     ...(hasActivityCapability ? [widget("teamstatus", <TeamStatusCard />)] : []),
     ...(hasTeamPerformance ? [widget("teamperformance", <TeamPerformanceCard />)] : []),
+    widget("errormeasures", <OpenMeasuresCard />),
     widget("adminstats", <AdminStatsCard />),
     ...(isAdmin ? [widget("adminactivity", <RecentActivityCard />)] : []),
   ].filter((w) => showCard(w.id));
@@ -188,7 +192,9 @@ export default function DashboardPage() {
     if (id === "newwiki") return hasNewWiki;
     if (id === "teamstatus") return hasActivityCapability;
     if (id === "teamperformance") return hasTeamPerformance;
-    if (id === "adminstats" || id === "adminactivity") return isManager;
+    if (id === "errormeasures" || id === "adminstats" || id === "adminactivity") {
+      return isManager;
+    }
     return true;
   });
 

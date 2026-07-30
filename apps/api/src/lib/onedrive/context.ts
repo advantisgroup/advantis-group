@@ -14,6 +14,7 @@ export interface OneDriveUser extends AccessUser {
   name: string;
   email: string;
   role: Role;
+  canAccessFiles: boolean;
 }
 
 /**
@@ -36,7 +37,14 @@ export async function resolveOneDriveUser(request: Request): Promise<OneDriveUse
     role: ctx.role,
     gfAccess: ctx.gfAccess,
     uploadRequestsEnabled: ctx.uploadRequestsEnabled,
+    canAccessFiles: ctx.canAccessFiles,
   };
+}
+
+export function requireFileBrowserAccess(user: OneDriveUser): void {
+  if (!user.canAccessFiles) {
+    throw Errors.forbidden("Files access required");
+  }
 }
 
 export function requireManagerUser(user: OneDriveUser): void {

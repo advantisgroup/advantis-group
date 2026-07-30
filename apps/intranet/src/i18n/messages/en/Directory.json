@@ -1,5 +1,5 @@
 {
-  "title": "Directory",
+  "title": "Team",
   "searchPlaceholder": "Search people…",
   "department": "Department",
   "role": "Role",
@@ -12,5 +12,6 @@
   "groupByDept": "Group by department",
   "noDepartment": "No department",
   "online": "Online",
-  "outUntil": "Out until {date}"
+  "outUntil": "Out until {date}",
+  "inOffice": "In office"
 }

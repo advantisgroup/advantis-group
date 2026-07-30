@@ -1,5 +1,5 @@
 {
-  "title": "Mitarbeiter",
+  "title": "Team",
   "searchPlaceholder": "Personen suchen…",
   "department": "Abteilung",
   "role": "Rolle",
@@ -12,5 +12,6 @@
   "groupByDept": "Nach Abteilung gruppieren",
   "noDepartment": "Keine Abteilung",
   "online": "Online",
-  "outUntil": "Abwesend bis {date}"
+  "outUntil": "Abwesend bis {date}",
+  "inOffice": "Im Büro"
 }

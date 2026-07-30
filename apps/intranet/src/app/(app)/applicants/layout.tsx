@@ -4,12 +4,11 @@ import type { ReactNode } from "react";
 
 import { usePathname } from "next/navigation";
 
-import { CalendarClock, ShieldCheck, Sparkles, UserSearch, Users } from "lucide-react";
+import { CalendarClock, ShieldCheck, Sparkles, UserRoundSearch, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { ApplicantVaultGate, LockVaultButton } from "@/components/applicants/ApplicantVaultGate";
+import { ApplicantVaultGate } from "@/components/applicants/ApplicantVaultGate";
 import { RouteTabs } from "@/components/applicants/RouteTabs";
-import { UploadCvButton } from "@/components/applicants/UploadCvButton";
 import { PageHeader } from "@/components/PageHeader";
 import {
   useCanManageApplicantAccess,
@@ -20,7 +19,7 @@ import {
 // applicant id, i.e. a detail route that owns its own chrome entirely
 // (see `[id]/layout.tsx`) and must not also get this layout's header/tabs.
 // `neu` and `pool` are legacy routes that redirect into `list` filters.
-const LIST_TABS = ["list", "termine", "neu", "pool", "profile", "access"];
+const LIST_TABS = ["list", "employees", "termine", "neu", "pool", "profile", "access"];
 
 /**
  * Access scope for Bewerbermanagement. Gated behind `useHasApplicantAccess()`
@@ -47,7 +46,9 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
   }
 
   const segment = pathname.split("/")[2];
-  const isListRoute = segment === undefined || LIST_TABS.includes(segment);
+  const isEmployeeDetail =
+    segment === "employees" && pathname.split("/").filter(Boolean).length > 2;
+  const isListRoute = !isEmployeeDetail && (segment === undefined || LIST_TABS.includes(segment));
 
   // The detail layout (`[id]/layout.tsx`) applies its own centered
   // max-w-6xl wrapper, so this just steps out of the way.
@@ -57,20 +58,26 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
 
   const tabs = [
     {
-      value: "list",
-      href: "/applicants/list",
-      label: t("tabList"),
+      value: "employees",
+      href: "/hr/employees",
+      label: t("tabEmployees"),
       icon: Users,
     },
     {
+      value: "list",
+      href: "/hr/list",
+      label: t("tabList"),
+      icon: UserRoundSearch,
+    },
+    {
       value: "termine",
-      href: "/applicants/termine",
+      href: "/hr/termine",
       label: t("tabTermine"),
       icon: CalendarClock,
     },
     {
       value: "profile",
-      href: "/applicants/profile",
+      href: "/hr/profile",
       label: t("tabProfile"),
       icon: Sparkles,
     },
@@ -78,7 +85,7 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
       ? [
           {
             value: "access",
-            href: "/applicants/access",
+            href: "/hr/access",
             label: t("tabAccess"),
             icon: ShieldCheck,
           },
@@ -90,15 +97,10 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
     <ApplicantVaultGate>
       <div className="mx-auto max-w-6xl space-y-6">
         <PageHeader
+          eyebrow={t("hrEyebrow")}
           title={t("pageTitle")}
           description={t("pageDescription")}
-          icon={<UserSearch />}
-          action={
-            <div className="flex items-center gap-2">
-              <LockVaultButton />
-              <UploadCvButton />
-            </div>
-          }
+          icon={<Users />}
         />
         <RouteTabs tabs={tabs} activeValue={segment} />
         <div className="mt-4">{children}</div>

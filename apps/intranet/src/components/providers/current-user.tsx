@@ -8,6 +8,7 @@ import { type Role } from "@advantis/types";
 export type Capability =
   | "manage_members"
   | "access_integrations"
+  | "access_files"
   | "manage_uploads"
   | "view_activity_admin"
   | "manage_announcements"
@@ -29,6 +30,7 @@ export interface CurrentUser {
   managerId: string | null;
   status: "active" | "suspended";
   external: boolean;
+  clockodoUserId: string | number | null;
   updatesEmailConsent: boolean;
   gfAccess: boolean;
   uploadRequestsEnabled: boolean;

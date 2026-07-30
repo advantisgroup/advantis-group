@@ -10,6 +10,8 @@
   "capability_manage_members_desc": "Einladen, sperren, Rollen ändern",
   "capability_access_integrations": "Zugriff auf Integrationen",
   "capability_access_integrations_desc": "Genesys und Clockodo",
+  "capability_access_files": "Zugriff auf alte Dateien",
+  "capability_access_files_desc": "Den auslaufenden Dateien-Bereich durchsuchen und verwalten",
   "capability_manage_uploads": "OneDrive-Uploads verwalten",
   "capability_manage_uploads_desc": "Ausstehende Uploads und Audit-Log einsehen",
   "capability_view_activity_admin": "ActivityTrack-Admin einsehen",

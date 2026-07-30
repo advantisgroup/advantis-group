@@ -12,6 +12,7 @@ import {
   Circle,
   ExternalLink,
   Link2,
+  Loader2,
   RotateCcw,
   RotateCw,
   ShieldCheck,
@@ -153,6 +154,8 @@ function AppPreferencesCard() {
 function ConnectionsCard() {
   const t = useTranslations("Settings");
   const connections = useQuery(api.users.myConnections);
+  const migrateLegacyLink = useMutation(api.integrations.clockodoLink.migrateLegacyClockodoLink);
+  const [migrating, setMigrating] = useState(false);
   if (!connections) return null;
 
   const clockodoLinked =
@@ -177,10 +180,29 @@ function ConnectionsCard() {
                   : t("clockodoUnlinkedHint")}
               </span>
             </div>
-            <Badge variant={clockodoLinked ? "success" : "muted"} className="shrink-0 gap-1">
-              {clockodoLinked ? <Link2 className="size-3" /> : <Unlink className="size-3" />}
-              {clockodoLinked ? t("linked") : t("notLinked")}
-            </Badge>
+            <div className="flex shrink-0 items-center gap-2">
+              {!connections.clockodoDirect && connections.personHasClockodo && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={migrating}
+                  onClick={() => {
+                    setMigrating(true);
+                    void migrateLegacyLink({})
+                      .then(() => toast.success(t("clockodoMigrationSuccess")))
+                      .catch(() => toast.error(t("clockodoMigrationError")))
+                      .finally(() => setMigrating(false));
+                  }}
+                >
+                  {migrating && <Loader2 className="size-3.5 animate-spin" />}
+                  {t("clockodoMigrate")}
+                </Button>
+              )}
+              <Badge variant={clockodoLinked ? "success" : "muted"} className="gap-1">
+                {clockodoLinked ? <Link2 className="size-3" /> : <Unlink className="size-3" />}
+                {clockodoLinked ? t("linked") : t("notLinked")}
+              </Badge>
+            </div>
           </div>
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border/70 px-3 py-2.5">
             <div className="flex min-w-0 items-center gap-2.5">

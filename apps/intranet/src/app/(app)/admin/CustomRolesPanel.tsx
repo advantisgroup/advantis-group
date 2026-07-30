@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 const CAPABILITIES = [
   "manage_members",
   "access_integrations",
+  "access_files",
   "manage_uploads",
   "view_activity_admin",
   "manage_announcements",

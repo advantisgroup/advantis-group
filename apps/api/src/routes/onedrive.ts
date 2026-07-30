@@ -5,7 +5,6 @@ import { Elysia, t } from "elysia";
 
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { Errors } from "../lib/errors.js";
-import { requireAuth } from "../lib/middleware.js";
 import {
   assertCanRead,
   assertCanWrite,
@@ -16,6 +15,7 @@ import {
 import { getCachedListing, invalidateAll, setCachedListing } from "../lib/onedrive/cache.js";
 import {
   type OneDriveUser,
+  requireFileBrowserAccess,
   requireManagerUser,
   resolveOneDriveUser,
 } from "../lib/onedrive/context.js";
@@ -161,7 +161,8 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
   // Whether OneDrive credentials are configured — lets the UI show a friendly
   // "not set up yet" state instead of failing every call. No Graph call.
   .get("/status", async ({ request }) => {
-    await requireAuth(request);
+    const user = await resolveOneDriveUser(request);
+    requireFileBrowserAccess(user);
     return { configured: await isConfigured() };
   })
 
@@ -170,6 +171,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/items",
     async ({ request, query }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       await rateLimit("od.list", user.clerkUserId, 60, "1 m");
       return buildListing(user, query.path ?? "");
     },
@@ -179,6 +181,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
   // Drive storage usage — powers the 1 TB quota bar.
   .get("/quota", async ({ request }) => {
     const user = await resolveOneDriveUser(request);
+    requireFileBrowserAccess(user);
     await rateLimit("od.quota", user.clerkUserId, 30, "1 m");
     return getQuota();
   })
@@ -188,6 +191,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/search",
     async ({ request, query }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       await rateLimit("od.search", user.clerkUserId, 30, "1 m");
       const q = query.q.trim();
       if (q.length < 1) return { items: [] };
@@ -244,6 +248,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/import/:id",
     async ({ request, params }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       await rateLimit("od.import", user.clerkUserId, 30, "1 m");
       const { item, rel } = await readableItem(user, params.id);
 
@@ -280,6 +285,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/uploads",
     async ({ request, body }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       await rateLimit("od.upload", user.clerkUserId, 20, "1 h");
 
       const file = body.file;
@@ -447,6 +453,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/folders",
     async ({ request, body }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       const targetRel = normalizePath(body.path ?? "");
       assertCanWrite(user, targetRel);
       const parent = await getItemByPath(targetRel);
@@ -504,6 +511,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/items/:id",
     async ({ request, params, body }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       const { rel } = await readableItem(user, params.id);
       assertCanWrite(user, rel);
       const patch: { name?: string; parentId?: string } = {};
@@ -536,6 +544,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/items/:id",
     async ({ request, params }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       const { rel } = await readableItem(user, params.id);
       assertCanWrite(user, rel);
       await deleteById(params.id);
@@ -551,6 +560,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/items/:id/versions",
     async ({ request, params }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       await readableItem(user, params.id);
       const versions = await listVersions(params.id);
       return {
@@ -570,6 +580,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/items/:id/versions/:versionId/restore",
     async ({ request, params }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       const { rel } = await readableItem(user, params.id);
       assertCanWrite(user, rel);
       await restoreVersion(params.id, params.versionId);
@@ -585,6 +596,7 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     "/items/:id/share",
     async ({ request, params, body }) => {
       const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
       const { rel } = await readableItem(user, params.id);
       assertCanWrite(user, rel);
       const days = body?.expiresInDays ?? 7;

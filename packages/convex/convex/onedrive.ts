@@ -4,7 +4,13 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalAction, mutation, query } from "./_generated/server";
-import { getUserByClerkId, requireCapability, requireUser } from "./lib/auth";
+import {
+  effectiveCustomRoleIds,
+  getUserByClerkId,
+  MANAGER_ROLES,
+  requireCapability,
+  requireUser,
+} from "./lib/auth";
 import { createNotification, notifyUsers } from "./lib/notify";
 import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import { batchUserSummaries, displayName } from "./lib/users";
@@ -88,6 +94,9 @@ export const apiUserContext = query({
     assertServerKey(serverKey);
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status !== "active") return null;
+    const customRoles = await Promise.all(
+      effectiveCustomRoleIds(user).map((customRoleId) => ctx.db.get(customRoleId)),
+    );
     return {
       userId: user._id,
       role: user.role,
@@ -95,6 +104,9 @@ export const apiUserContext = query({
       email: user.email,
       gfAccess: user.gfAccess ?? false,
       uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
+      canAccessFiles:
+        MANAGER_ROLES.includes(user.role) ||
+        customRoles.some((customRole) => customRole?.capabilities.includes("access_files")),
     };
   },
 });

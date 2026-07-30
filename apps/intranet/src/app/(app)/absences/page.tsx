@@ -6,6 +6,7 @@ import {
   CalendarArrowDown,
   CircleDashed,
   Clock,
+  Settings,
   Plane,
   Thermometer,
   UserRound,
@@ -14,8 +15,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ProviderBadge } from "@/components/branding/ProviderMark";
+import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
-import { useIsManager } from "@/components/providers/current-user";
+import { useHasCapability, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -338,6 +340,7 @@ function WhosOut() {
 export default function AbsencesPage() {
   const t = useTranslations("Absences");
   const isManager = useIsManager();
+  const canManageClockodo = useHasCapability("access_integrations");
   const { absences: mine } = useMyAbsences();
 
   function exportIcs() {
@@ -363,22 +366,32 @@ export default function AbsencesPage() {
         description={t("subtitle")}
         tourCheckpoint="absences"
         action={
-          <TooltipProvider delayDuration={150}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  aria-label={t("exportIcs")}
-                  onClick={exportIcs}
-                  disabled={!mine?.some((a) => a.status === "approved")}
-                >
-                  <CalendarArrowDown />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>{t("exportIcs")}</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center gap-2">
+            {canManageClockodo && (
+              <Button asChild variant="outline">
+                <Link href="/clockodo/manage">
+                  <Settings className="size-4" />
+                  {t("manageClockodo")}
+                </Link>
+              </Button>
+            )}
+            <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label={t("exportIcs")}
+                    onClick={exportIcs}
+                    disabled={!mine?.some((a) => a.status === "approved")}
+                  >
+                    <CalendarArrowDown />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t("exportIcs")}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
         }
       />
       <div className="space-y-4">

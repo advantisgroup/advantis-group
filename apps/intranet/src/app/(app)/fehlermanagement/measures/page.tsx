@@ -5,13 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { ClipboardList, Plus, Trash2 } from "lucide-react";
+import { ClipboardList, FileText, Plus, Trash2, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -35,17 +36,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import {
   MEASURE_PHASES,
+  dateInputToMs,
   type MeasurePhase,
   type MeasureStatus,
   msToDateInput,
 } from "@/lib/error-management";
-import { formatIsoDate } from "@/lib/format";
+import { formatDateTime, formatIsoDate } from "@/lib/format";
+import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 type Measure = NonNullable<ReturnType<typeof useQuery<typeof api.errorMeasures.list>>>[number];
 type Scope = "offen" | "alle" | "erledigt";
 
 const EMPTY_REPORTS: NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>> = [];
+
+function nextPhase(phase: MeasurePhase): MeasurePhase | null {
+  const index = MEASURE_PHASES.indexOf(phase);
+  return index >= 0 ? (MEASURE_PHASES[index + 1] ?? null) : null;
+}
 
 function NewMeasureDialog({
   open,
@@ -66,6 +74,7 @@ function NewMeasureDialog({
   const [description, setDescription] = useState("");
   const [phase, setPhase] = useState<MeasurePhase>("d3_sofort");
   const [responsible, setResponsible] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -81,10 +90,12 @@ function NewMeasureDialog({
         description,
         phase,
         responsibleName: responsible || undefined,
+        dueAt: dateInputToMs(dueDate),
       });
       toast.success(t("created"));
       setDescription("");
       setResponsible("");
+      setDueDate("");
       onOpenChange(false);
     } catch (e) {
       handleError(e);
@@ -157,6 +168,12 @@ function NewMeasureDialog({
               />
             </div>
           </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("fieldDueAt")}
+            </label>
+            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+          </div>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
@@ -181,8 +198,14 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
   const isManager = useIsManager();
   const confirm = useConfirm();
   const handleError = useErrorHandler();
+  const { openFileViewer } = useFileViewer();
   const update = useMutation(api.errorMeasures.update);
   const remove = useMutation(api.errorMeasures.remove);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const addDocument = useMutation(api.errorMeasures.addDocument);
+  const removeDocument = useMutation(api.errorMeasures.removeDocument);
+  const documents = useQuery(api.errorMeasures.listDocuments, { measureId: measure._id });
+  const [uploading, setUploading] = useState(false);
 
   async function onDelete() {
     const ok = await confirm({
@@ -197,6 +220,59 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
       toast.success(t("deleted"));
     } catch (e) {
       handleError(e);
+    }
+  }
+
+  async function onStatusChange(status: MeasureStatus) {
+    if (status === "erledigt") {
+      const next = nextPhase(measure.phase);
+      if (next) {
+        const shouldMove = await confirm({
+          title: t("measureAdvanceTitle"),
+          description: t("measureAdvanceDescription", {
+            current: t(`phase.${measure.phase}`),
+            next: t(`phase.${next}`),
+          }),
+          confirmLabel: t("measureAdvanceConfirm"),
+          cancelLabel: tc("cancel"),
+          destructive: false,
+        });
+        if (!shouldMove) return;
+        await update({
+          measureId: measure._id,
+          patch: { phase: next, status: "offen", effectivenessChecked: false },
+        });
+        toast.success(t("updated"));
+        return;
+      }
+    }
+    await update({ measureId: measure._id, patch: { status } });
+    toast.success(t("updated"));
+  }
+
+  async function uploadDocument(file: File) {
+    setUploading(true);
+    try {
+      const uploadUrl = await generateUploadUrl({});
+      const uploaded = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type || "application/octet-stream" },
+        body: file,
+      });
+      if (!uploaded.ok) throw new Error(t("documentUploadFailed"));
+      const { storageId } = (await uploaded.json()) as { storageId: Id<"_storage"> };
+      await addDocument({
+        measureId: measure._id,
+        storageId,
+        fileName: file.name,
+        contentType: file.type || undefined,
+        size: file.size,
+      });
+      toast.success(t("documentAdded"));
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -226,9 +302,7 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
         <div className="flex items-center justify-between gap-2 pt-1">
           <Select
             value={measure.status}
-            onValueChange={(v) =>
-              void update({ measureId: measure._id, patch: { status: v as MeasureStatus } })
-            }
+            onValueChange={(v) => void onStatusChange(v as MeasureStatus)}
           >
             <SelectTrigger className="h-8 w-32 text-xs">
               <SelectValue />
@@ -247,6 +321,74 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
             />
             {t("fieldEffectivenessChecked")}
           </label>
+        </div>
+        <div className="space-y-2 border-t border-border/70 pt-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-muted-foreground">{t("measureDocuments")}</p>
+            <label
+              className={buttonVariants({
+                variant: "ghost",
+                size: "sm",
+                className: uploading ? "pointer-events-none opacity-50" : undefined,
+              })}
+            >
+              <Upload className="size-3.5" />
+              {t("measureAddFile")}
+              <input
+                type="file"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void uploadDocument(file);
+                }}
+              />
+            </label>
+          </div>
+          {documents === undefined || documents.length === 0 ? null : (
+            <div className="space-y-1">
+              {documents.map((document) => (
+                <div
+                  key={document._id}
+                  className="flex items-center justify-between gap-2 rounded-md bg-muted/45 px-2 py-1.5"
+                >
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() =>
+                      openFileViewer({
+                        storageId: document.storageId,
+                        name: document.fileName,
+                        contentType: document.contentType ?? undefined,
+                        size: document.size ?? undefined,
+                        modifiedAt: document.createdAt,
+                        url: document.url ?? undefined,
+                      })
+                    }
+                  >
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
+                      <FileText className="size-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{document.fileName}</span>
+                    </span>
+                    <span className="block truncate pl-5 text-[11px] text-muted-foreground">
+                      {document.size ? formatFileSize(document.size) : "—"} ·{" "}
+                      {formatDateTime(document.createdAt, locale)}
+                    </span>
+                  </button>
+                  {isManager && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={tc("delete")}
+                      onClick={() => void removeDocument({ documentId: document._id })}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

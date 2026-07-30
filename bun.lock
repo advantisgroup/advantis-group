@@ -22,6 +22,7 @@
       "name": "@advantis/api",
       "version": "0.0.0",
       "dependencies": {
+        "@advantis/clockodo": "workspace:*",
         "@advantis/convex": "workspace:*",
         "@anthropic-ai/sdk": "^0.106.0",
         "@clerk/backend": "^2.18.0",
@@ -170,6 +171,14 @@
         "typescript-eslint": "^8.65.0",
       },
     },
+    "packages/clockodo": {
+      "name": "@advantis/clockodo",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@advantis/config": "workspace:*",
+        "typescript": "^5.9.3",
+      },
+    },
     "packages/config": {
       "name": "@advantis/config",
       "version": "0.0.0",
@@ -218,6 +227,8 @@
   ],
   "packages": {
     "@advantis/api": ["@advantis/api@workspace:apps/api"],
+
+    "@advantis/clockodo": ["@advantis/clockodo@workspace:packages/clockodo"],
 
     "@advantis/config": ["@advantis/config@workspace:packages/config"],
 
@@ -2160,6 +2171,8 @@
     "zwitch": ["zwitch@2.0.4", "", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
 
     "@advantis/api/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@advantis/clockodo/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@advantis/convex/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/theme/theme-provider";
 
 // Returns the path to the logo, preferred for the current theme
 export function useBrandLogo(): string {

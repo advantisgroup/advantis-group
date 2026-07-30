@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 
 import { Monitor, Moon, SlidersHorizontal, Sun } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 
 import { LocaleFlag } from "@/components/icons/flags";
+import { useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

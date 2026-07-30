@@ -35,16 +35,19 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     ? await ctx.storage.getUrl(user.avatarStorageId)
     : (user.avatarUrl ?? null);
   const customRoleDocs = await Promise.all(
-    effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)),
+    effectiveCustomRoleIds(user).map(id => ctx.db.get(id))
   );
-  const customRoles = customRoleDocs.filter((role): role is Doc<"customRoles"> => role !== null);
+  const customRoles = customRoleDocs.filter(
+    (role): role is Doc<"customRoles"> => role !== null
+  );
   return {
     _id: user._id,
     clerkUserId: user.clerkUserId,
     email: user.email,
     firstName: user.firstName ?? null,
     lastName: user.lastName ?? null,
-    name: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email,
+    name:
+      [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email,
     role: user.role,
     department: user.department ?? null,
     jobTitle: user.jobTitle ?? null,
@@ -53,20 +56,21 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     managerId: user.managerId ?? null,
     status: user.status,
     external: user.external ?? false,
+    clockodoUserId: user.clockodoUserId ?? null,
     updatesEmailConsent: user.updatesEmailConsent ?? false,
     gfAccess: user.gfAccess ?? false,
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
     /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
     permissions: listUserPermissions(user),
-    customRoleIds: customRoles.map((role) => role._id),
+    customRoleIds: customRoles.map(role => role._id),
     // Per-role breakdown (name + that role's own capabilities), for UI that
     // needs to explain each grant individually rather than a flattened union.
-    customRoles: customRoles.map((role) => ({
+    customRoles: customRoles.map(role => ({
       _id: role._id,
       name: role.name,
       capabilities: role.capabilities,
     })),
-    capabilities: [...new Set(customRoles.flatMap((role) => role.capabilities))],
+    capabilities: [...new Set(customRoles.flatMap(role => role.capabilities))],
     applicantAccessDelegate: user.applicantAccessDelegate ?? false,
     applicantAccess: user.applicantAccess ?? false,
     roleLabel: user.roleLabel ?? null,
@@ -81,7 +85,7 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
 
 export const me = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const user = await getCurrentUser(ctx);
     if (!user) return null;
     return withAvatar(ctx, user);
@@ -91,7 +95,7 @@ export const me = query({
 /** Provision the signed-in identity. Called by the intranet on app load. */
 export const ensureCurrentUser = mutation({
   args: {},
-  handler: async (ctx) => ensureUser(ctx),
+  handler: async ctx => ensureUser(ctx),
 });
 
 const listArgs = {
@@ -102,7 +106,7 @@ const listArgs = {
 
 async function queryUsers(
   ctx: QueryCtx,
-  args: { search?: string; department?: string; includeSuspended?: boolean },
+  args: { search?: string; department?: string; includeSuspended?: boolean }
 ) {
   // Most callers only want active users — use the `by_status` index to skip
   // suspended rows at the DB layer rather than fetching everyone and
@@ -111,27 +115,38 @@ async function queryUsers(
     ? await ctx.db.query("users").collect()
     : await ctx.db
         .query("users")
-        .withIndex("by_status", (q) => q.eq("status", "active"))
+        .withIndex("by_status", q => q.eq("status", "active"))
         .collect();
   if (args.department) {
-    users = users.filter((u) => u.department?.toLowerCase() === args.department!.toLowerCase());
+    users = users.filter(
+      u => u.department?.toLowerCase() === args.department!.toLowerCase()
+    );
   }
   if (args.search) {
     const q = args.search.toLowerCase();
-    users = users.filter((u) =>
-      [u.firstName, u.lastName, u.email, u.jobTitle, u.department, ...(u.teams ?? [])]
+    users = users.filter(u =>
+      [
+        u.firstName,
+        u.lastName,
+        u.email,
+        u.jobTitle,
+        u.department,
+        ...(u.teams ?? []),
+      ]
         .filter(Boolean)
-        .some((field) => field!.toLowerCase().includes(q)),
+        .some(field => field!.toLowerCase().includes(q))
     );
   }
 
-  users.sort((a, b) => (a.firstName ?? a.email).localeCompare(b.firstName ?? b.email));
+  users.sort((a, b) =>
+    (a.firstName ?? a.email).localeCompare(b.firstName ?? b.email)
+  );
 
   const nameById = new Map(
-    users.map((u) => [
+    users.map(u => [
       u._id as string,
       [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
-    ]),
+    ])
   );
 
   return { users, nameById };
@@ -152,10 +167,12 @@ export const list = query({
     await requireUser(ctx);
     const { users, nameById } = await queryUsers(ctx, args);
     return Promise.all(
-      users.map(async (u) => ({
+      users.map(async u => ({
         ...(await withAvatar(ctx, u)),
-        managerName: u.managerId ? (nameById.get(u.managerId as string) ?? null) : null,
-      })),
+        managerName: u.managerId
+          ? (nameById.get(u.managerId as string) ?? null)
+          : null,
+      }))
     );
   },
 });
@@ -176,14 +193,18 @@ export const directoryList = query({
     const { users, nameById } = await queryUsers(ctx, args);
 
     const presenceRows = await ctx.db.query("presence").collect();
-    const lastActiveByUser = new Map(presenceRows.map((p) => [p.userId, p.lastActiveAt]));
+    const lastActiveByUser = new Map(
+      presenceRows.map(p => [p.userId, p.lastActiveAt])
+    );
 
     return Promise.all(
-      users.map(async (u) => ({
+      users.map(async u => ({
         ...(await withAvatar(ctx, u)),
         lastActiveAt: lastActiveByUser.get(u._id) ?? null,
-        managerName: u.managerId ? (nameById.get(u.managerId as string) ?? null) : null,
-      })),
+        managerName: u.managerId
+          ? (nameById.get(u.managerId as string) ?? null)
+          : null,
+      }))
     );
   },
 });
@@ -196,7 +217,7 @@ export const get = query({
     if (!user) return null;
     const presence = await ctx.db
       .query("presence")
-      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .withIndex("by_user", q => q.eq("userId", userId))
       .unique();
     return {
       ...(await withAvatar(ctx, user)),
@@ -212,11 +233,11 @@ export const get = query({
  */
 export const myConnections = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     const user = await requireUser(ctx);
     const person = await ctx.db
       .query("people")
-      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", q => q.eq("userId", user._id))
       .first();
     return {
       clockodoDirect: user.clockodoUserId != null,
@@ -238,9 +259,9 @@ export const orgContext = query({
     const reports = (
       await ctx.db
         .query("users")
-        .withIndex("by_managerId", (q) => q.eq("managerId", userId))
+        .withIndex("by_managerId", q => q.eq("managerId", userId))
         .collect()
-    ).filter((u) => u.status === "active");
+    ).filter(u => u.status === "active");
     const brief = async (u: Doc<"users">) => {
       const full = await withAvatar(ctx, u);
       return {
@@ -251,7 +272,8 @@ export const orgContext = query({
       };
     };
     return {
-      manager: manager && manager.status === "active" ? await brief(manager) : null,
+      manager:
+        manager && manager.status === "active" ? await brief(manager) : null,
       reports: await Promise.all(reports.map(brief)),
     };
   },
@@ -285,13 +307,19 @@ export const applyProfileUpdate = internalMutation({
       ...(args.jobTitle !== undefined ? { jobTitle: args.jobTitle } : {}),
       ...(args.department !== undefined ? { department: args.department } : {}),
       ...(args.phone !== undefined ? { phone: args.phone } : {}),
-      ...(args.avatarStorageId ? { avatarStorageId: args.avatarStorageId } : {}),
-      ...(args.dateOfBirth !== undefined ? { dateOfBirth: args.dateOfBirth } : {}),
+      ...(args.avatarStorageId
+        ? { avatarStorageId: args.avatarStorageId }
+        : {}),
+      ...(args.dateOfBirth !== undefined
+        ? { dateOfBirth: args.dateOfBirth }
+        : {}),
       ...(args.showBirthdayPublicly !== undefined
         ? { showBirthdayPublicly: args.showBirthdayPublicly }
         : {}),
     });
-    const avatarUrl = args.avatarStorageId ? await ctx.storage.getUrl(args.avatarStorageId) : null;
+    const avatarUrl = args.avatarStorageId
+      ? await ctx.storage.getUrl(args.avatarStorageId)
+      : null;
     return { clerkUserId: user.clerkUserId, avatarUrl };
   },
 });
@@ -301,7 +329,7 @@ export const updateProfile = action({
   handler: async (ctx, args): Promise<{ ok: true }> => {
     const { clerkUserId, avatarUrl } = await ctx.runMutation(
       internal.users.applyProfileUpdate,
-      args,
+      args
     );
     if (clerkUserId) {
       if (args.firstName !== undefined || args.lastName !== undefined) {
@@ -370,8 +398,8 @@ export const setCustomRoles = mutation({
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
-    const roles = await Promise.all(customRoleIds.map((id) => ctx.db.get(id)));
-    if (roles.some((role) => !role)) {
+    const roles = await Promise.all(customRoleIds.map(id => ctx.db.get(id)));
+    if (roles.some(role => !role)) {
       throw new ConvexError({ code: "not_found", message: "Role not found" });
     }
     // Clears the legacy singular field too — an explicit assignment is as
@@ -390,7 +418,7 @@ export const setTeams = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     // De-dupe and drop blanks.
-    const clean = [...new Set(teams.map((t) => t.trim()).filter(Boolean))];
+    const clean = [...new Set(teams.map(t => t.trim()).filter(Boolean))];
     await ctx.db.patch(userId, { teams: clean });
     return { ok: true };
   },
@@ -505,7 +533,10 @@ export const applyGfAccess = internalMutation({
 export const setGfAccess = action({
   args: { userId: v.id("users"), gfAccess: v.boolean() },
   handler: async (ctx, args): Promise<{ ok: true }> => {
-    const { clerkUserId, gfAccess } = await ctx.runMutation(internal.users.applyGfAccess, args);
+    const { clerkUserId, gfAccess } = await ctx.runMutation(
+      internal.users.applyGfAccess,
+      args
+    );
     if (clerkUserId) {
       await updateClerkPublicMetadata(clerkUserId, { gfAccess });
     }
@@ -546,7 +577,7 @@ export const setUploadPermission = action({
   handler: async (ctx, args): Promise<{ ok: true }> => {
     const { clerkUserId, enabled } = await ctx.runMutation(
       internal.users.applyUploadPermission,
-      args,
+      args
     );
     if (clerkUserId) {
       await updateClerkPublicMetadata(clerkUserId, {
@@ -565,7 +596,7 @@ export const setUploadPermission = action({
  */
 export const todaysCelebrations = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     await requireUser(ctx);
     const now = new Date();
     const todayMonthDay = now.toISOString().slice(5, 10);
@@ -573,7 +604,7 @@ export const todaysCelebrations = query({
 
     const users = await ctx.db
       .query("users")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .withIndex("by_status", q => q.eq("status", "active"))
       .collect();
 
     const celebrations: Array<{
@@ -585,12 +616,16 @@ export const todaysCelebrations = query({
     }> = [];
 
     for (const u of users) {
-      const name = [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
+      const name =
+        [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
       const avatar = u.avatarStorageId
         ? await ctx.storage.getUrl(u.avatarStorageId)
         : (u.avatarUrl ?? null);
 
-      if (u.showBirthdayPublicly && u.dateOfBirth?.slice(5, 10) === todayMonthDay) {
+      if (
+        u.showBirthdayPublicly &&
+        u.dateOfBirth?.slice(5, 10) === todayMonthDay
+      ) {
         celebrations.push({
           userId: u._id,
           name,
@@ -621,11 +656,11 @@ export const todaysCelebrations = query({
 /** Distinct department names for filters. */
 export const departments = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     await requireUser(ctx);
     const users = await ctx.db
       .query("users")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .withIndex("by_status", q => q.eq("status", "active"))
       .collect();
     const set = new Set<string>();
     for (const u of users) if (u.department) set.add(u.department);
@@ -687,7 +722,7 @@ export const setApplicantAccess = mutation({
     }
     if (access) {
       const customRoles = await Promise.all(
-        effectiveCustomRoleIds(target).map((id) => ctx.db.get(id)),
+        effectiveCustomRoleIds(target).map(id => ctx.db.get(id))
       );
       if (!isApplicantEligible(target, customRoles)) {
         throw new ConvexError({
@@ -726,22 +761,22 @@ export const setApplicantAccess = mutation({
 /** Users eligible to be granted Applicant Management access, for the picker. */
 export const eligibleForApplicantAccess = query({
   args: {},
-  handler: async (ctx) => {
+  handler: async ctx => {
     await requireApplicantDelegateOrAdmin(ctx);
     const users = await ctx.db
       .query("users")
-      .withIndex("by_status", (q) => q.eq("status", "active"))
+      .withIndex("by_status", q => q.eq("status", "active"))
       .collect();
     const customRoles = await ctx.db.query("customRoles").collect();
-    const customRoleById = new Map(customRoles.map((r) => [r._id, r]));
+    const customRoleById = new Map(customRoles.map(r => [r._id, r]));
     return users
-      .filter((u) =>
+      .filter(u =>
         isApplicantEligible(
           u,
-          effectiveCustomRoleIds(u).map((id) => customRoleById.get(id) ?? null),
-        ),
+          effectiveCustomRoleIds(u).map(id => customRoleById.get(id) ?? null)
+        )
       )
-      .map((u) => ({
+      .map(u => ({
         _id: u._id,
         name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
         email: u.email,

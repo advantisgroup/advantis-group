@@ -150,10 +150,21 @@ export default function AdminPage() {
     "/admin/uploads": uploadCount,
     "/admin/guests": guestCount,
   };
+  const priorities = [
+    { href: "/admin/requests", icon: Clock, label: t("overviewRequests"), count: reqCount },
+    { href: "/admin/invites", icon: Mail, label: t("overviewInvites"), count: invCount },
+    { href: "/admin/uploads", icon: ShieldCheck, label: t("pendingUploads"), count: uploadCount },
+  ];
+  const priorityHrefs = new Set(priorities.map((item) => item.href));
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <PageHeader title={t("title")} description={t("subtitle")} icon={<ShieldCheck />} />
+      <PageHeader
+        eyebrow={t("title")}
+        title={t("organizationTitle")}
+        description={t("organizationSubtitle")}
+        icon={<ShieldCheck />}
+      />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (
@@ -161,14 +172,25 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* Every admin section lives at its own route and shows up in the
-          sidebar — this mirrors that same categorization (`ADMIN_NAV_GROUPS`)
-          as a set of quick-access cards rather than duplicating each
-          section's content here as tabs. */}
+      <section>
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 className="text-sm font-semibold">{t("organizationPriorities")}</h2>
+          <p className="text-xs text-muted-foreground">{t("organizationPrioritiesHint")}</p>
+        </div>
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          {priorities.map((item) => (
+            <QuickLinkCard key={item.href} {...item} />
+          ))}
+        </div>
+      </section>
+
       <div className="space-y-6">
         {ADMIN_NAV_GROUPS.filter((group) => group.labelKey !== "nav.groupGeneral").map((group) => {
           const items = group.items.filter(
-            (item) => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin),
+            (item) =>
+              (!item.managerOnly || isManager) &&
+              (!item.adminOnly || isAdmin) &&
+              !priorityHrefs.has(item.href),
           );
           if (items.length === 0) return null;
           return (

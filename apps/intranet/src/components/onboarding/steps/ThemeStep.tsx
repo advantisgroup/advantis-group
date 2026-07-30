@@ -5,8 +5,8 @@ import { useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useTheme } from "next-themes";
 
+import { useTheme } from "@/components/theme/theme-provider";
 import { cn } from "@/lib/utils";
 
 const PREVIEW_COLORS = {

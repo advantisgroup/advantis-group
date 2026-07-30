@@ -17,6 +17,7 @@ export const roleValidator = v.union(
 export const capabilityValidator = v.union(
   v.literal("manage_members"),
   v.literal("access_integrations"),
+  v.literal("access_files"),
   v.literal("manage_uploads"),
   v.literal("view_activity_admin"),
   v.literal("manage_announcements"),
@@ -2053,6 +2054,8 @@ export default defineSchema({
     rating: v.optional(ampelValidator),
     profilId: v.optional(v.id("applicantSkillProfiles")),
     notizen: v.optional(v.string()),
+    archivedAt: v.optional(v.number()),
+    convertedEmployeeProfileId: v.optional(v.id("employeeProfiles")),
     createdByUserId: v.id("users"),
     createdAt: v.number(),
   })
@@ -2060,13 +2063,54 @@ export default defineSchema({
     .index("by_profil", ["profilId"])
     .index("by_email", ["email"]),
 
+  employeeProfiles: defineTable({
+    userId: v.optional(v.id("users")),
+    sourceApplicantId: v.optional(v.id("applicants")),
+    name: v.string(),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    jobTitle: v.optional(v.string()),
+    department: v.optional(v.string()),
+    status: v.union(v.literal("active"), v.literal("archived")),
+    notes: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    archivedAt: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_user", ["userId"])
+    .index("by_sourceApplicant", ["sourceApplicantId"])
+    .index("by_createdAt", ["createdAt"]),
+
+  employeeDocuments: defineTable({
+    employeeProfileId: v.id("employeeProfiles"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    contentType: v.optional(v.string()),
+    size: v.optional(v.number()),
+    category: v.union(
+      v.literal("documents"),
+      v.literal("legal"),
+      v.literal("payroll"),
+      v.literal("contract"),
+      v.literal("other"),
+    ),
+    uploadedByUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_employee", ["employeeProfileId"])
+    .index("by_storageId", ["storageId"]),
+
   /** Uploaded CV PDFs, stored in Convex file storage. */
   applicantDocuments: defineTable({
     applicantId: v.id("applicants"),
     storageId: v.id("_storage"),
     fileName: v.string(),
     createdAt: v.number(),
-  }).index("by_applicant", ["applicantId"]),
+  })
+    .index("by_applicant", ["applicantId"])
+    .index("by_storageId", ["storageId"]),
 
   /**
    * Kontakte (contact log). An applicant with zero rows here is "Neue
@@ -2228,6 +2272,18 @@ export default defineSchema({
   })
     .index("by_error", ["errorReportId"])
     .index("by_status", ["status"]),
+
+  errorMeasureDocuments: defineTable({
+    measureId: v.id("errorMeasures"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    contentType: v.optional(v.string()),
+    size: v.optional(v.number()),
+    uploadedByUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_measure", ["measureId"])
+    .index("by_storageId", ["storageId"]),
 
   // Singleton row (Stammdaten thresholds) — created lazily with defaults on
   // first read if it doesn't exist yet.

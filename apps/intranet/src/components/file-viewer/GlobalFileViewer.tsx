@@ -2,6 +2,8 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
+import dynamic from "next/dynamic";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
@@ -26,9 +28,13 @@ import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import { detectFileKind, type FileKind } from "./file-kind";
-import { PdfPreview } from "./PdfPreview";
 
 import type { ViewableFile } from "./FileViewerProvider";
+
+const PdfPreview = dynamic(() => import("./PdfPreview").then((mod) => mod.PdfPreview), {
+  ssr: false,
+  loading: () => <Loader2 className="size-6 animate-spin text-white/70" />,
+});
 
 async function downloadUrl(url: string, name: string, label: string) {
   try {

@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
-import { mutation, query } from "./_generated/server";
+import { type Id } from "./_generated/dataModel";
+import { type QueryCtx, mutation, query } from "./_generated/server";
 import { DEFAULT_THRESHOLDS } from "./errorSettings";
 import { requireManager, requireUser } from "./lib/auth";
 
@@ -12,6 +13,11 @@ const phaseValidator = v.union(
   v.literal("d8_vorbeugung"),
 );
 const statusValidator = v.union(v.literal("offen"), v.literal("erledigt"));
+
+async function userName(ctx: QueryCtx, userId: Id<"users">) {
+  const user = await ctx.db.get(userId);
+  return user ? [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email : null;
+}
 
 /** All 8D-PDCA measures, newest first. `errorReportId` narrows to one error. */
 export const list = query({
@@ -48,11 +54,13 @@ export const create = mutation({
     description: v.string(),
     phase: phaseValidator,
     responsibleName: v.optional(v.string()),
+    dueAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
     const description = args.description.trim();
-    if (!description) throw new ConvexError({ code: "bad_request", message: "Description required" });
+    if (!description)
+      throw new ConvexError({ code: "bad_request", message: "Description required" });
     const report = await ctx.db.get(args.errorReportId);
     if (!report) throw new ConvexError({ code: "not_found", message: "Error report not found" });
     const settings = await ctx.db.query("errorSettings").first();
@@ -64,7 +72,7 @@ export const create = mutation({
       phase: args.phase,
       status: "offen",
       responsibleName: args.responsibleName?.trim() || undefined,
-      dueAt: now + dueDays * 24 * 60 * 60 * 1000,
+      dueAt: args.dueAt ?? now + dueDays * 24 * 60 * 60 * 1000,
       effectivenessChecked: false,
       createdByUserId: user._id,
       createdAt: now,
@@ -105,6 +113,64 @@ export const remove = mutation({
   handler: async (ctx, { measureId }) => {
     await requireManager(ctx);
     await ctx.db.delete(measureId);
+    return { ok: true };
+  },
+});
+
+export const addDocument = mutation({
+  args: {
+    measureId: v.id("errorMeasures"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    contentType: v.optional(v.string()),
+    size: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireUser(ctx);
+    const measure = await ctx.db.get(args.measureId);
+    if (!measure) throw new ConvexError({ code: "not_found", message: "Measure not found" });
+    return ctx.db.insert("errorMeasureDocuments", {
+      measureId: args.measureId,
+      storageId: args.storageId,
+      fileName: args.fileName,
+      contentType: args.contentType,
+      size: args.size,
+      uploadedByUserId: user._id,
+      createdAt: Date.now(),
+    });
+  },
+});
+
+export const listDocuments = query({
+  args: { measureId: v.id("errorMeasures") },
+  handler: async (ctx, { measureId }) => {
+    await requireUser(ctx);
+    const measure = await ctx.db.get(measureId);
+    if (!measure) throw new ConvexError({ code: "not_found", message: "Measure not found" });
+    const documents = await ctx.db
+      .query("errorMeasureDocuments")
+      .withIndex("by_measure", (q) => q.eq("measureId", measureId))
+      .collect();
+    return Promise.all(
+      documents
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .map(async (document) => ({
+          ...document,
+          uploadedByName: await userName(ctx, document.uploadedByUserId),
+          url: await ctx.storage.getUrl(document.storageId),
+        })),
+    );
+  },
+});
+
+export const removeDocument = mutation({
+  args: { documentId: v.id("errorMeasureDocuments") },
+  handler: async (ctx, { documentId }) => {
+    await requireManager(ctx);
+    const document = await ctx.db.get(documentId);
+    if (!document) return { ok: true };
+    await ctx.storage.delete(document.storageId);
+    await ctx.db.delete(documentId);
     return { ok: true };
   },
 });

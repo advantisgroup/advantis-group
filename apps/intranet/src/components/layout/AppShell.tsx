@@ -14,6 +14,7 @@ import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider"
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ClockodoHeaderControl } from "@/components/layout/ClockodoHeaderControl";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -139,6 +140,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
               <CommandPalette />
             </div>
           </div>
+          {!isUpdatesReading && <ClockodoHeaderControl />}
           {/* Tour progress — compact checkmark chip; self-hides when finished. */}
           {!isUpdatesReading && <TourProgressChip />}
           {!isUpdatesReading && <OnboardingTrigger />}

@@ -18,6 +18,8 @@ const BADGE_ICONS: Record<string, string> = {
   calls: "📞",
 };
 
+const BADGE_ORDER = ["hitrate", "won", "calls"];
+
 function PrimaryKpiCard({
   accent,
   label,
@@ -233,16 +235,26 @@ export default function EmployeeOverviewPage() {
             {t("badgeCount", { count: data.nBadges })}
           </span>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {Object.keys(data.monthBadges).length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("badgesEmpty")}</p>
-          ) : (
-            Object.entries(data.monthBadges).map(([key, info]) => (
-              <Badge key={key} variant="success" title={t(`badgeLabel.${key}`)}>
-                {BADGE_ICONS[key] ?? ""} {t(`badgeLabel.${key}`)} · {fmtNum(info.value)}
-              </Badge>
-            ))
-          )}
+        <CardContent className="grid gap-2 sm:grid-cols-3">
+          {BADGE_ORDER.map((key) => {
+            const count = data.myBadges[key] ?? 0;
+            return (
+              <div
+                key={key}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border/70 p-3"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    {BADGE_ICONS[key]}
+                  </span>
+                  <span className="truncate text-sm font-medium">
+                    {t(`badgeTotalLabel.${key}`)}
+                  </span>
+                </div>
+                <Badge variant={count > 0 ? "success" : "muted"}>{fmtNum(count)}</Badge>
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 

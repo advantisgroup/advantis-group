@@ -6,6 +6,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   escalationLevel,
@@ -15,14 +16,16 @@ import {
   SEVERITIES,
 } from "@/lib/error-management";
 
-function StatTile({ label, value }: { label: string; value: number }) {
+function StatTile({ label, value, href }: { label: string; value: number; href: string }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <p className="text-2xl font-semibold tabular-nums">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
-      </CardContent>
-    </Card>
+    <Link href={href} className="block">
+      <Card className="transition-colors hover:bg-accent/40">
+        <CardContent className="p-4">
+          <p className="text-2xl font-semibold tabular-nums">{value}</p>
+          <p className="text-xs text-muted-foreground">{label}</p>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
@@ -95,10 +98,26 @@ export default function ErrorDashboardPage() {
   return (
     <div className="space-y-6" data-tour="tour-fehlermanagement-dashboard">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatTile label={t("kpiOpen")} value={stats.openCount} />
-        <StatTile label={t("kpiCritical")} value={stats.criticalCount} />
-        <StatTile label={t("kpiOverdue")} value={stats.overdueCount} />
-        <StatTile label={t("kpiClosedThisMonth")} value={stats.closedThisMonthCount} />
+        <StatTile
+          label={t("kpiOpen")}
+          value={stats.openCount}
+          href="/fehlermanagement?scope=offen"
+        />
+        <StatTile
+          label={t("kpiCritical")}
+          value={stats.criticalCount}
+          href="/fehlermanagement?kpi=critical"
+        />
+        <StatTile
+          label={t("kpiOverdue")}
+          value={stats.overdueCount}
+          href="/fehlermanagement?kpi=overdue"
+        />
+        <StatTile
+          label={t("kpiClosedThisMonth")}
+          value={stats.closedThisMonthCount}
+          href="/fehlermanagement?scope=geschlossen&kpi=closed-month"
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

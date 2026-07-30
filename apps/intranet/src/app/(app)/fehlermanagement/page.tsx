@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import { useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -54,6 +56,15 @@ import { cn } from "@/lib/utils";
 
 type Report = NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>>[number];
 type Scope = "offen" | "alle" | "geschlossen";
+type KpiFilter = "critical" | "overdue" | "closed-month";
+
+function parseScope(value: string | null): Scope {
+  return value === "alle" || value === "geschlossen" ? value : "offen";
+}
+
+function parseKpiFilter(value: string | null): KpiFilter | null {
+  return value === "critical" || value === "overdue" || value === "closed-month" ? value : null;
+}
 
 function CategorySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const t = useTranslations("ErrorManagement");
@@ -550,19 +561,45 @@ function ReportCard({
 
 export default function FehlermanagementPage() {
   const t = useTranslations("ErrorManagement");
+  const searchParams = useSearchParams();
   const reports = useQuery(api.errorReports.list);
   const settings = useQuery(api.errorSettings.get);
-  const [scope, setScope] = useState<Scope>("offen");
+  const [scope, setScope] = useState<Scope>(() => parseScope(searchParams.get("scope")));
+  const [kpiFilter, setKpiFilter] = useState<KpiFilter | null>(() =>
+    parseKpiFilter(searchParams.get("kpi")),
+  );
   const [search, setSearch] = useState("");
   const [newOpen, setNewOpen] = useState(false);
   const [selected, setSelected] = useState<Report | null>(null);
 
+  useEffect(() => {
+    setScope(parseScope(searchParams.get("scope")));
+    setKpiFilter(parseKpiFilter(searchParams.get("kpi")));
+  }, [searchParams]);
+
   const filtered = useMemo(() => {
     if (!reports) return [];
     const query = search.trim().toLowerCase();
+    const now = Date.now();
+    const startOfMonth = new Date(new Date().setDate(1)).setHours(0, 0, 0, 0);
     return reports.filter((r) => {
       if (scope === "offen" && r.status === "geschlossen") return false;
       if (scope === "geschlossen" && r.status !== "geschlossen") return false;
+      if (
+        kpiFilter === "critical" &&
+        escalationLevel({ severity: r.severity, status: r.status, dueAt: r.dueAt }, now) !== 3
+      ) {
+        return false;
+      }
+      if (
+        kpiFilter === "overdue" &&
+        !isOverdue({ severity: r.severity, status: r.status, dueAt: r.dueAt }, now)
+      ) {
+        return false;
+      }
+      if (kpiFilter === "closed-month" && (!r.closedAt || r.closedAt < startOfMonth)) {
+        return false;
+      }
       if (
         query &&
         !`${r.description} ${r.customerOrProject ?? ""} ${r.categoryName ?? ""}`
@@ -573,7 +610,7 @@ export default function FehlermanagementPage() {
       }
       return true;
     });
-  }, [reports, scope, search]);
+  }, [reports, scope, search, kpiFilter]);
 
   return (
     <div className="space-y-4" data-tour="tour-fehlermanagement-list">
@@ -598,7 +635,10 @@ export default function FehlermanagementPage() {
           <button
             key={s}
             type="button"
-            onClick={() => setScope(s)}
+            onClick={() => {
+              setScope(s);
+              setKpiFilter(null);
+            }}
             className={cn(
               "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
               scope === s

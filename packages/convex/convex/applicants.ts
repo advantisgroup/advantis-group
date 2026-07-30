@@ -137,8 +137,9 @@ export const pipelineCount = query({
     const applicants = await ctx.db.query("applicants").collect();
     const contacts = await ctx.db.query("applicantContacts").collect();
     const contactedIds = new Set(contacts.map((c) => c.applicantId));
-    const open = applicants.filter((a) => !contactedIds.has(a._id)).length;
-    return { open, total: applicants.length };
+    const active = applicants.filter((a) => !a.archivedAt);
+    const open = active.filter((a) => !contactedIds.has(a._id)).length;
+    return { open, total: active.length };
   },
 });
 
@@ -164,7 +165,8 @@ export const list = query({
 
     // Batch-fetch each child table once instead of firing 5 indexed queries
     // per applicant (was 5*N round trips for N applicants).
-    const applicantIds = new Set(applicants.map((a) => a._id));
+    const activeApplicants = applicants.filter((a) => !a.archivedAt);
+    const applicantIds = new Set(activeApplicants.map((a) => a._id));
     const [allKontakte, allEmails, allInterviews, allTermine, allDocuments] = await Promise.all([
       ctx.db.query("applicantContacts").collect(),
       ctx.db.query("applicantEmails").collect(),
@@ -191,10 +193,10 @@ export const list = query({
     const documentsByApplicant = groupByApplicant(allDocuments);
     const creatorsById = await batchUserSummaries(
       ctx,
-      applicants.map((a) => a.createdByUserId),
+      activeApplicants.map((a) => a.createdByUserId),
     );
 
-    return applicants.map((a) => {
+    return activeApplicants.map((a) => {
       const kontakte = kontakteByApplicant.get(a._id) ?? [];
       const emails = emailsByApplicant.get(a._id) ?? [];
       const interviews = interviewsByApplicant.get(a._id) ?? [];
@@ -635,7 +637,7 @@ export const apiFindDuplicateByContact = query({
       : null;
 
     if (!match && (mailNeu || telNeu.length >= 6)) {
-      const applicants = await ctx.db.query("applicants").take(5000);
+      const applicants = (await ctx.db.query("applicants").take(5000)).filter((a) => !a.archivedAt);
       match =
         applicants.find((a) => {
           const mailMatch = mailNeu && (a.email ?? "").trim().toLowerCase() === mailNeu;

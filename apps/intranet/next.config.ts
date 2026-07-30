@@ -23,7 +23,19 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    useTypeScriptCli: true
+    useTypeScriptCli: true,
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/hr/:path*",
+        destination: "/applicants/:path*",
+      },
+      {
+        source: "/clockodo/manage/:path*",
+        destination: "/admin/integrations/clockodo/:path*",
+      },
+    ];
   },
   async redirects() {
     return [
@@ -31,6 +43,21 @@ const nextConfig: NextConfig = {
       {
         source: "/admin/activity/:path*",
         destination: "/activity/:path*",
+        permanent: true,
+      },
+      {
+        source: "/absences/:path*",
+        destination: "/clockodo/:path*",
+        permanent: true,
+      },
+      {
+        source: "/applicants/:path*",
+        destination: "/hr/:path*",
+        permanent: true,
+      },
+      {
+        source: "/admin/integrations/clockodo/:path*",
+        destination: "/clockodo/manage/:path*",
         permanent: true,
       },
     ];

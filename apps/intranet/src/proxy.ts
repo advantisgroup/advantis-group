@@ -1,11 +1,11 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
 import { api } from "@advantis/convex/api";
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 import { fetchQuery } from "convex/nextjs";
 
 // Public routes that don't require an authenticated session.
-const isPublicRoute = createRouteMatcher([
+const PUBLIC_ROUTE_PREFIXES = [
   "/sign-in(.*)",
   "/sign-up(.*)",
   // Temporary guest tour — token-gated, no Clerk session.
@@ -17,7 +17,14 @@ const isPublicRoute = createRouteMatcher([
   "/privacy(.*)",
   "/terms(.*)",
   "/imprint(.*)",
-]);
+].map((pattern) => pattern.replace("(.*)", ""));
+
+function isPublicRoute(req: NextRequest): boolean {
+  const pathname = req.nextUrl.pathname;
+  return PUBLIC_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}
 
 // The intranet's own hostname — every request here is excluded from the
 // tenant-company lookup below (skips a Convex round-trip on completely

@@ -2,6 +2,7 @@ import { type Role } from "@advantis/types";
 import {
   Activity,
   BookOpen,
+  FolderLock,
   Megaphone,
   MessageSquare,
   Plug,
@@ -28,6 +29,7 @@ export const ROLE_ICONS: Record<Role, LucideIcon> = {
 export const CAPABILITY_ICONS: Record<Capability, LucideIcon> = {
   manage_members: Users2,
   access_integrations: Plug,
+  access_files: FolderLock,
   manage_uploads: UploadCloud,
   view_activity_admin: Activity,
   manage_announcements: Megaphone,

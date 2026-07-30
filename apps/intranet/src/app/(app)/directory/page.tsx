@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { MessageSquare, Plane, Search, Users } from "lucide-react";
+import { Building2, MessageSquare, Plane, Search, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { PageHeader } from "@/components/PageHeader";
@@ -137,6 +137,7 @@ export default function DirectoryPage() {
 
   const personCard = (p: Person) => {
     const online = p.lastActiveAt != null && now - p.lastActiveAt < ONLINE_WINDOW_MS;
+    const outUntil = outUntilByUser.get(p._id);
     return (
       <Card
         key={p._id}
@@ -175,14 +176,19 @@ export default function DirectoryPage() {
                 teams={p.teams}
                 className="mt-1 flex flex-wrap items-center gap-1"
               />
-              {outUntilByUser.get(p._id) && (
+              {outUntil ? (
                 <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-sky-600 dark:text-sky-400">
                   <Plane className="size-3 shrink-0" />
                   {t("outUntil", {
-                    date: formatIsoDate(outUntilByUser.get(p._id)!, locale),
+                    date: formatIsoDate(outUntil, locale),
                   })}
                 </p>
-              )}
+              ) : online ? (
+                <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  <Building2 className="size-3 shrink-0" />
+                  {t("inOffice")}
+                </p>
+              ) : null}
             </div>
           </button>
           {p._id !== me._id && (

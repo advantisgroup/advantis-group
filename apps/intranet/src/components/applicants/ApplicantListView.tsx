@@ -6,14 +6,26 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { matchSkills } from "@advantis/types";
-import { useQuery } from "convex/react";
-import { Briefcase, CalendarClock, FileText, UserRoundSearch } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import {
+  Archive,
+  Briefcase,
+  CalendarClock,
+  FileText,
+  UserCheck,
+  UserRoundSearch,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { AmpelDot, type Ampel } from "@/components/applicants/AmpelBadge";
 import { today } from "@/components/applicants/applicant-types";
+import { UploadCvButton } from "@/components/applicants/UploadCvButton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,6 +52,7 @@ import {
 } from "@/lib/applicant-list-order";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { useErrorHandler } from "@/hooks/use-error-handler";
 
 import type { FunctionReturnType } from "convex/server";
 
@@ -128,12 +141,17 @@ function NextTerminCell({ applicant }: { applicant: Applicant }) {
  */
 export function ApplicantListView() {
   const t = useTranslations("Applicants");
+  const tc = useTranslations("Common");
   const locale = useLocale();
   const router = useRouter();
+  const confirm = useConfirm();
+  const handleError = useErrorHandler();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const applicants = useQuery(api.applicants.list);
   const profiles = useQuery(api.applicants.listProfiles);
+  const convertApplicant = useMutation(api.humanResources.convertApplicant);
+  const archiveApplicant = useMutation(api.humanResources.archiveApplicant);
 
   const status = parseStatusFilter(searchParams.get("status"));
   const rating = parseRatingFilter(searchParams.get("rating"));
@@ -186,7 +204,32 @@ export function ApplicantListView() {
     if (status !== "alle") p.set("status", status);
     if (rating !== "alle") p.set("rating", rating);
     if (search.trim()) p.set("search", search.trim());
-    return `/applicants/${a._id}/uebersicht?${p.toString()}`;
+    return `/hr/${a._id}/uebersicht?${p.toString()}`;
+  }
+
+  async function onConvert(applicantId: Id<"applicants">) {
+    try {
+      await convertApplicant({ applicantId });
+      toast.success(t("applicantConverted"));
+    } catch (error) {
+      handleError(error);
+    }
+  }
+
+  async function onArchive(applicant: Applicant) {
+    const ok = await confirm({
+      title: t("archiveApplicantConfirm", { name: applicant.name }),
+      confirmLabel: t("archiveApplicant"),
+      cancelLabel: tc("cancel"),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await archiveApplicant({ applicantId: applicant._id });
+      toast.success(t("applicantArchived"));
+    } catch (error) {
+      handleError(error);
+    }
   }
 
   if (applicants === undefined) return null;
@@ -205,6 +248,14 @@ export function ApplicantListView() {
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold">{t("recruitingTitle")}</h2>
+          <p className="text-sm text-muted-foreground">{t("recruitingDescription")}</p>
+        </div>
+        <UploadCvButton />
+      </div>
+
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatTile
           label={t("statTotal")}
@@ -278,6 +329,7 @@ export function ApplicantListView() {
                   <TableHead>{t("nextTermin")}</TableHead>
                   <TableHead>{t("lastActivity")}</TableHead>
                   <TableHead>{t("received")}</TableHead>
+                  <TableHead className="text-right">{t("actions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -338,6 +390,32 @@ export function ApplicantListView() {
                     <TableCell className="text-xs text-muted-foreground">
                       {formatIsoDate(new Date(a.createdAt).toISOString().slice(0, 10), locale)}
                     </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          title={t("makeEmployee")}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void onConvert(a._id);
+                          }}
+                        >
+                          <UserCheck className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          title={t("archiveApplicant")}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            void onArchive(a);
+                          }}
+                        >
+                          <Archive className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -347,43 +425,54 @@ export function ApplicantListView() {
           {/* Mobile: compact cards with the same key facts. */}
           <div className="grid gap-2 md:hidden">
             {list.map((a) => (
-              <Link
+              <div
                 key={a._id}
-                href={detailHref(a)}
-                className="space-y-1.5 rounded-lg border border-border/70 bg-card p-3.5 transition-colors hover:bg-accent/40"
+                className="space-y-2 rounded-lg border border-border/70 bg-card p-3.5 transition-colors hover:bg-accent/40"
               >
-                <div className="flex items-center gap-2.5">
-                  <AmpelDot rating={a.rating} />
-                  <p className="min-w-0 flex-1 truncate font-medium">{a.name}</p>
-                  <Badge variant={a.status === "neu" ? "default" : "muted"}>
-                    {a.status === "neu" ? t("filterNeu") : t("filterPool")}
-                  </Badge>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                  <span className="inline-flex min-w-0 items-center gap-1">
-                    <Briefcase className="size-3 shrink-0" />
-                    <span className="truncate">{a.position || t("positionUnknown")}</span>
-                  </span>
-                  {a.documentsCount > 0 && (
-                    <span className="inline-flex items-center gap-1">
-                      <FileText className="size-3 shrink-0" />
-                      {a.documentsCount}
+                <Link href={detailHref(a)} className="block space-y-1.5">
+                  <div className="flex items-center gap-2.5">
+                    <AmpelDot rating={a.rating} />
+                    <p className="min-w-0 flex-1 truncate font-medium">{a.name}</p>
+                    <Badge variant={a.status === "neu" ? "default" : "muted"}>
+                      {a.status === "neu" ? t("filterNeu") : t("filterPool")}
+                    </Badge>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                    <span className="inline-flex min-w-0 items-center gap-1">
+                      <Briefcase className="size-3 shrink-0" />
+                      <span className="truncate">{a.position || t("positionUnknown")}</span>
                     </span>
-                  )}
-                  {a.nextOpenTermin && (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1",
-                        a.nextOpenTermin.datum < today() && "text-destructive",
-                      )}
-                    >
-                      <CalendarClock className="size-3 shrink-0" />
-                      {formatIsoDate(a.nextOpenTermin.datum, locale)}
-                      {a.nextOpenTermin.uhrzeit ? ` · ${a.nextOpenTermin.uhrzeit}` : ""}
-                    </span>
-                  )}
+                    {a.documentsCount > 0 && (
+                      <span className="inline-flex items-center gap-1">
+                        <FileText className="size-3 shrink-0" />
+                        {a.documentsCount}
+                      </span>
+                    )}
+                    {a.nextOpenTermin && (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1",
+                          a.nextOpenTermin.datum < today() && "text-destructive",
+                        )}
+                      >
+                        <CalendarClock className="size-3 shrink-0" />
+                        {formatIsoDate(a.nextOpenTermin.datum, locale)}
+                        {a.nextOpenTermin.uhrzeit ? ` · ${a.nextOpenTermin.uhrzeit}` : ""}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="sm" onClick={() => void onConvert(a._id)}>
+                    <UserCheck className="size-3.5" />
+                    {t("makeEmployee")}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => void onArchive(a)}>
+                    <Archive className="size-3.5" />
+                    {t("archiveApplicant")}
+                  </Button>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </>

@@ -2,6 +2,8 @@
 
 import { type UIEvent, useRef, useState } from "react";
 
+import dynamic from "next/dynamic";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
@@ -10,7 +12,6 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { RICH_CV_FIELDS, textToHtml } from "@/components/applicants/applicant-types";
-import { PdfViewer } from "@/components/applicants/pdf/PdfViewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +23,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { type ExtractedApplicantFields, useApplicantsApi } from "@/lib/applicants-api";
 import { uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
+
+const PdfViewer = dynamic(
+  () => import("@/components/applicants/pdf/PdfViewer").then((mod) => mod.PdfViewer),
+  { ssr: false },
+);
 
 type FieldKey =
   | "name"

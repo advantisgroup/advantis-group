@@ -2,7 +2,18 @@
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Award, Coffee, Lock, Plane, ScrollText, TrendingUp, Users2, Wifi } from "lucide-react";
+import {
+  AlertTriangle,
+  Award,
+  ClipboardCheck,
+  Coffee,
+  Lock,
+  Plane,
+  ScrollText,
+  TrendingUp,
+  Users2,
+  Wifi,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
@@ -90,6 +101,40 @@ export function TeamPerformanceCard() {
               href="/performance"
             />
           )}
+        </div>
+      )}
+    </DashCard>
+  );
+}
+
+export function OpenMeasuresCard() {
+  const t = useTranslations("Dashboard");
+  const measures = useQuery(api.errorMeasures.list, {});
+  const open = measures?.filter((measure) => measure.status === "offen") ?? [];
+  const overdue = open.filter((measure) => measure.dueAt && measure.dueAt < Date.now());
+
+  return (
+    <DashCard icon={<ClipboardCheck />} title={t("errorMeasuresTitle")} count={open.length}>
+      {measures === undefined ? (
+        <RowSkeletons />
+      ) : open.length === 0 ? (
+        <Empty href="/fehlermanagement/measures" linkLabel={t("openErrorMeasures")}>
+          {t("noOpenMeasures")}
+        </Empty>
+      ) : (
+        <div className="space-y-1">
+          <StatLine
+            icon={<ClipboardCheck />}
+            label={t("openMeasures")}
+            value={open.length}
+            href="/fehlermanagement/measures"
+          />
+          <StatLine
+            icon={<AlertTriangle />}
+            label={t("overdueMeasures")}
+            value={overdue.length}
+            href="/fehlermanagement/measures"
+          />
         </div>
       )}
     </DashCard>

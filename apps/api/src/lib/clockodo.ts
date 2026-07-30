@@ -1,146 +1,159 @@
+import {
+  ClockodoApiError,
+  createClockodoClient,
+  mapAbsenceStatus,
+  mapAbsenceType,
+  type ClockodoAbsence,
+  type ClockodoAbsenceInput,
+  type ClockodoCustomer,
+  type ClockodoEntry,
+  type ClockodoService,
+  type ClockodoUser,
+  type CoarseAbsenceStatus,
+  type CoarseAbsenceType,
+} from "@advantis/clockodo";
+
 import { Errors } from "./errors.js";
 
-const BASE_URL = process.env.CLOCKODO_API_URL ?? "https://my.clockodo.com/api";
+export type {
+  ClockodoAbsence,
+  ClockodoAbsenceInput,
+  ClockodoCustomer,
+  ClockodoEntry,
+  ClockodoService,
+  ClockodoUser,
+  CoarseAbsenceStatus,
+  CoarseAbsenceType,
+};
+export { mapAbsenceStatus, mapAbsenceType };
 
-export interface ClockodoAbsence {
-  id: number;
-  users_id: number;
-  date_since: string;
-  date_until: string;
-  status: number;
-  type: number;
-  note: string | null;
-  count_days: number | null;
-  count_hours: number | null;
-  sick_note: boolean | null;
-}
-
-interface ClockodoUser {
-  id: number;
-  name: string;
-  email: string;
-}
-
-function headers(): Record<string, string> {
-  const user = process.env.CLOCKODO_API_USER;
-  const key = process.env.CLOCKODO_API_KEY;
-  if (!user || !key) {
-    throw Errors.internal("CLOCKODO_API_USER / CLOCKODO_API_KEY not configured");
-  }
-  return {
-    "X-ClockodoApiUser": user,
-    "X-ClockodoApiKey": key,
-    "X-Clockodo-External-Application":
-      process.env.CLOCKODO_EXTERNAL_APP ?? "AdvantisIntranet;it@advantisgroup.de",
-    "Content-Type": "application/json",
-  };
-}
-
-async function clockodoGet<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`, { headers: headers() });
-  if (res.status === 429) throw Errors.rateLimited("Clockodo rate limit");
-  if (!res.ok) {
-    throw Errors.upstream(`Clockodo GET ${path} failed: ${res.status}`);
-  }
-  return (await res.json()) as T;
-}
-
-export async function getAbsence(id: number): Promise<ClockodoAbsence> {
-  const data = await clockodoGet<{ data: ClockodoAbsence }>(`/v4/absences/${id}`);
-  return data.data;
-}
-
-interface ClockodoPaging {
-  current_page: number;
-  count_pages: number;
-}
-
-/** /v4/absences paginates — a company with more absences than one page would
- * otherwise silently lose records past page 1. Clockodo doesn't always
- * include `paging` in the response (e.g. it's been observed missing when
- * there are no matching absences), so treat an absent/malformed `paging` as
- * "no further pages" rather than crashing the whole request. */
-export async function listAbsences(year: number): Promise<ClockodoAbsence[]> {
-  const results: ClockodoAbsence[] = [];
-  let page = 1;
-  for (;;) {
-    const res = await clockodoGet<{ data: ClockodoAbsence[]; paging?: ClockodoPaging }>(
-      `/v4/absences?filter[year]=${year}&scope=viewableAbsences&page=${page}`,
+function client() {
+  const apiUser = process.env.CLOCKODO_API_USER;
+  const apiKey = process.env.CLOCKODO_API_KEY;
+  if (!apiUser || !apiKey) {
+    throw Errors.internal(
+      "CLOCKODO_API_USER / CLOCKODO_API_KEY not configured"
     );
-    results.push(...(res.data ?? []));
-    if (!res.paging || page >= res.paging.count_pages) break;
-    page++;
   }
-  return results;
+  return createClockodoClient({
+    apiUser,
+    apiKey,
+    baseUrl: process.env.CLOCKODO_API_URL,
+    externalApplication:
+      process.env.CLOCKODO_EXTERNAL_APP ??
+      "AdvantisIntranet;it@advantisgroup.de",
+  });
 }
 
-/**
- * Absences for "this year, live" — the years an absence spanning the
- * new-year boundary could fall in. Early in the year, late corrections to
- * last year's absences can still land in last year's list.
- */
+async function upstream<T>(operation: Promise<T>): Promise<T> {
+  try {
+    return await operation;
+  } catch (error) {
+    if (error instanceof ClockodoApiError) {
+      if (error.status === 429) throw Errors.rateLimited("Clockodo rate limit");
+      throw Errors.upstream(error.message);
+    }
+    throw error;
+  }
+}
+
+export function getAbsence(id: number): Promise<ClockodoAbsence> {
+  return upstream(client().getAbsence(id));
+}
+
+export function listAbsences(year: number): Promise<ClockodoAbsence[]> {
+  return upstream(client().listAbsences(year));
+}
+
+export function createAbsence(
+  input: ClockodoAbsenceInput
+): Promise<ClockodoAbsence> {
+  return upstream(client().createAbsence(input));
+}
+
+export function updateAbsence(
+  id: number,
+  input: Omit<ClockodoAbsenceInput, "users_id" | "status">
+): Promise<ClockodoAbsence> {
+  return upstream(client().updateAbsence(id, input));
+}
+
+export function listEntries(input: {
+  userId: number;
+  timeSince: string;
+  timeUntil: string;
+}): Promise<ClockodoEntry[]> {
+  return upstream(client().listEntries(input));
+}
+
+export function listCustomers(): Promise<ClockodoCustomer[]> {
+  return upstream(client().listCustomers());
+}
+
+export function listServices(): Promise<ClockodoService[]> {
+  return upstream(client().listServices());
+}
+
+export function getRunningClock(): Promise<ClockodoEntry | null> {
+  return upstream(client().getRunningClock());
+}
+
+export function getClockOptionsRights(userId: number): Promise<{
+  customers: boolean | Record<string, unknown>;
+  services: boolean | Record<string, unknown>;
+}> {
+  return upstream(client().getClockOptionsRights(userId));
+}
+
+export function startClock(input: {
+  userId: number;
+  customerId: number;
+  serviceId: number;
+  text?: string;
+}): Promise<ClockodoEntry> {
+  return upstream(client().startClock(input));
+}
+
+export function stopClock(
+  entryId: number,
+  userId: number
+): Promise<ClockodoEntry | null> {
+  return upstream(client().stopClock(entryId, userId));
+}
+
 export async function listCurrentAbsences(): Promise<ClockodoAbsence[]> {
   const now = new Date();
   const years = [now.getFullYear()];
   if (now.getMonth() === 0) years.push(now.getFullYear() - 1);
-  const byYear = await Promise.all(years.map((y) => listAbsences(y)));
-  return byYear.flat();
+  return (await Promise.all(years.map(year => listAbsences(year)))).flat();
 }
 
-export type CoarseAbsenceType = "vacation" | "sick" | "personal" | "other";
-export type CoarseAbsenceStatus = "pending" | "approved" | "denied" | "cancelled";
-
-/** Map a Clockodo absence type id to our coarse category. */
-export function mapAbsenceType(clockodoType: number): CoarseAbsenceType {
-  switch (clockodoType) {
-    case 1: // regular holiday
-      return "vacation";
-    case 4: // sick day
-    case 5: // sick day of a child
-    case 11: // sick day (unpaid)
-    case 12: // sick day of child (unpaid)
-    case 13: // quarantine
-    case 15: // sick day (sickness benefit)
-      return "sick";
-    case 2: // special leaves
-    case 6: // school / further education
-    case 7: // maternity protection
-    case 10: // special leaves (unpaid)
-    case 14: // military / alternative service
-      return "personal";
-    default: // 3 overtime reduction, 8 home office, 9 work out of office, ...
-      return "other";
-  }
-}
-
-/** Map a Clockodo status code to our status. */
-export function mapAbsenceStatus(clockodoStatus: number): CoarseAbsenceStatus {
-  switch (clockodoStatus) {
-    case 0:
-      return "pending";
-    case 1:
-      return "approved";
-    case 2:
-      return "denied";
-    case 3:
-    case 4:
-      return "cancelled";
-    default:
-      return "pending";
-  }
-}
-
-// Short-lived cache of coworker id → email so a burst of absence webhooks
-// doesn't hammer the users endpoint.
-let userCache: { map: Map<number, string>; expiresAt: number } | null = null;
+let userCache: { map: Map<number, ClockodoUser>; expiresAt: number } | null =
+  null;
 const USER_CACHE_TTL_MS = 5 * 60 * 1000;
 
-export async function getUserEmail(usersId: number): Promise<string | undefined> {
+export async function getUserEmail(
+  usersId: number
+): Promise<string | undefined> {
   if (!userCache || userCache.expiresAt < Date.now()) {
-    const data = await clockodoGet<{ users: ClockodoUser[] }>(`/v2/users`);
-    const map = new Map<number, string>();
-    for (const u of data.users ?? []) map.set(u.id, u.email);
-    userCache = { map, expiresAt: Date.now() + USER_CACHE_TTL_MS };
+    const users = await upstream(client().listUsers());
+    userCache = {
+      map: new Map(users.map(user => [user.id, user])),
+      expiresAt: Date.now() + USER_CACHE_TTL_MS,
+    };
+  }
+  return userCache.map.get(usersId)?.email;
+}
+
+export async function getClockodoUser(
+  usersId: number
+): Promise<ClockodoUser | undefined> {
+  if (!userCache || userCache.expiresAt < Date.now()) {
+    const users = await upstream(client().listUsers());
+    userCache = {
+      map: new Map(users.map(user => [user.id, user])),
+      expiresAt: Date.now() + USER_CACHE_TTL_MS,
+    };
   }
   return userCache.map.get(usersId);
 }

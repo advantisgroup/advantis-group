@@ -596,7 +596,7 @@ function ClockodoUserDetail({
   );
 }
 
-export default function ClockodoIntegrationPage() {
+export default function ClockodoIntegrationPage({ embedded = false }: { embedded?: boolean }) {
   const t = useTranslations("Integrations");
   const handleError = useErrorHandler();
 
@@ -803,17 +803,32 @@ export default function ClockodoIntegrationPage() {
 
   return (
     <section className="mx-auto max-w-7xl space-y-6">
-      <PageHeader
-        title={t("clockodoTitle")}
-        description={t("clockodoSubtitle")}
-        icon={<Mark provider="clockodo" className="h-6 w-6" />}
-        action={
+      {!embedded && (
+        <PageHeader
+          title={t("clockodoTitle")}
+          description={t("clockodoSubtitle")}
+          icon={<Mark provider="clockodo" className="h-6 w-6" />}
+          action={
+            <Button onClick={() => setShowCreate((s) => !s)}>
+              <Plus className="h-4 w-4" />
+              {t("createUser")}
+            </Button>
+          }
+        />
+      )}
+
+      {embedded && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/70 pb-5">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">{t("clockodoTitle")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("clockodoSubtitle")}</p>
+          </div>
           <Button onClick={() => setShowCreate((s) => !s)}>
             <Plus className="h-4 w-4" />
             {t("createUser")}
           </Button>
-        }
-      />
+        </div>
+      )}
 
       {showCreate && (
         <Card>
