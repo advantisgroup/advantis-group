@@ -55,6 +55,18 @@ through one giant diff. If grouping vs. separating conflicts with another
 instruction in a given task (e.g. the user explicitly asks for a single
 commit), ask the user how they want it handled rather than guessing.
 
+## Profile / Subprofile architecture
+
+`users` is the one canonical intranet identity ("Profile"); every
+feature-owned identity-linked record (the Clockodo link, ActivityTrack's
+`people`, HumanResources' `employeeProfiles`, Chat's `conversationMembers`)
+is a "Subprofile." See [`docs/architecture/profiles.md`](./docs/architecture/profiles.md)
+for the full vocabulary, the slim "Partial profile" projection
+(`packages/convex/convex/lib/profile.ts`), and the enrichment convention a
+subprofile-fetching query should follow (always the same shape; a
+`linked`/`status` discriminant instead of a bare `null` or a silently
+filtered-out row).
+
 ## ActivityTrack (`/activity`)
 
 The highest-complexity area of the codebase. A fused "is this person working

@@ -174,7 +174,9 @@ export default function EmployeeOverviewPage() {
                 <UserRound className="size-4 text-muted-foreground" />
               </span>
               <div className="min-w-0">
-                <p className="font-medium">{profile.linkedUserName ?? t("employeeNoAccount")}</p>
+                <p className="font-medium">
+                  {profile.linkedProfile?.name ?? t("employeeNoAccount")}
+                </p>
                 <p className="text-xs text-muted-foreground">{t("employeeAccountHint")}</p>
               </div>
             </div>

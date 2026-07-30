@@ -126,7 +126,7 @@ export default function EmployeeDetailLayout({ children }: { children: ReactNode
             </div>
           </div>
           <Badge variant={profile.userId ? "success" : "outline"}>
-            {profile.linkedUserName || t("employeeNoAccount")}
+            {profile.linkedProfile?.name || t("employeeNoAccount")}
           </Badge>
         </CardContent>
         <div className="border-t border-border/70 px-2">
