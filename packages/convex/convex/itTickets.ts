@@ -1,6 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
+import { autoLockThreadOnTicketClosed } from "./itTicketThreads";
 import { requireUser } from "./lib/auth";
 
 /**
@@ -126,7 +127,7 @@ export const create = mutation({
 export const update = mutation({
   args: { ticketId: v.id("itTickets"), ...ticketFields },
   handler: async (ctx, { ticketId, ...args }) => {
-    await requireUser(ctx);
+    const user = await requireUser(ctx);
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) {
       throw new ConvexError({ code: "not_found", message: "Ticket not found" });
@@ -142,6 +143,9 @@ export const update = mutation({
       info: args.info?.trim() || undefined,
       updatedAt: Date.now(),
     });
+    if (args.status === "closed" && ticket.status !== "closed") {
+      await autoLockThreadOnTicketClosed(ctx, ticketId, user._id);
+    }
     return { ok: true };
   },
 });
@@ -150,12 +154,15 @@ export const update = mutation({
 export const setStatus = mutation({
   args: { ticketId: v.id("itTickets"), status: statusValidator },
   handler: async (ctx, { ticketId, status }) => {
-    await requireUser(ctx);
+    const user = await requireUser(ctx);
     const ticket = await ctx.db.get(ticketId);
     if (!ticket) {
       throw new ConvexError({ code: "not_found", message: "Ticket not found" });
     }
     await ctx.db.patch(ticketId, { status, updatedAt: Date.now() });
+    if (status === "closed" && ticket.status !== "closed") {
+      await autoLockThreadOnTicketClosed(ctx, ticketId, user._id);
+    }
     return { ok: true };
   },
 });

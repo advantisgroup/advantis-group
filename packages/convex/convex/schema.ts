@@ -21,6 +21,7 @@ export const capabilityValidator = v.union(
   v.literal("view_activity_admin"),
   v.literal("manage_announcements"),
   v.literal("manage_guidebooks"),
+  v.literal("manage_it_ticket_threads"),
 );
 
 // --- Applicant Management (Bewerbermanagement) validators -------------------
@@ -379,6 +380,50 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   }).index("by_nr", ["nr"]),
+
+  // Per-ticket chat thread — opt-in (a ticket has one iff someone with the
+  // `manage_it_ticket_threads` capability, or a manager+, started it) rather
+  // than every ticket getting one automatically. Everyone can read a thread
+  // once it exists (mirrors the ticket log itself being org-wide-visible);
+  // only capability holders can start one, post in it, or lock/unlock it.
+  // Auto-locked when its ticket's status becomes "closed" (see
+  // `itTickets.setStatus`); reopening the ticket does not auto-unlock —
+  // that's a deliberate manual action.
+  itTicketThreads: defineTable({
+    ticketId: v.id("itTickets"),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    // Denormalized for cheap "tickets with an active thread" quick-nav
+    // sorting, same reasoning as conversations.lastMessageAt in chat.
+    lastMessageAt: v.number(),
+    lockedAt: v.optional(v.number()),
+    lockedByUserId: v.optional(v.id("users")),
+    lockReason: v.optional(v.union(v.literal("manual"), v.literal("ticket_closed"))),
+  }).index("by_ticket", ["ticketId"]),
+
+  // A real message or an inline system event (thread locked/unlocked),
+  // interleaved by `createdAt` in the thread view — the system rows render
+  // as a centered WhatsApp-style pill ("Locked by X") rather than a bubble.
+  itTicketMessages: defineTable(
+    v.union(
+      v.object({
+        kind: v.literal("message"),
+        threadId: v.id("itTicketThreads"),
+        senderUserId: v.id("users"),
+        body: v.string(),
+        editedAt: v.optional(v.number()),
+        deletedAt: v.optional(v.number()),
+        createdAt: v.number(),
+      }),
+      v.object({
+        kind: v.literal("system"),
+        threadId: v.id("itTicketThreads"),
+        event: v.union(v.literal("locked"), v.literal("unlocked")),
+        actorUserId: v.id("users"),
+        createdAt: v.number(),
+      }),
+    ),
+  ).index("by_thread", ["threadId"]),
 
   invites: defineTable({
     email: v.string(),

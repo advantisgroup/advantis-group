@@ -18,6 +18,8 @@
   "capability_manage_announcements_desc": "Ankündigungen und Kalendertermine erstellen, anheften, bearbeiten und löschen",
   "capability_manage_guidebooks": "Guidebooks verwalten",
   "capability_manage_guidebooks_desc": "Guidebook-Seiten, Anhänge und Highlights erstellen und bearbeiten",
+  "capability_manage_it_ticket_threads": "IT-Ticket-Threads verwalten",
+  "capability_manage_it_ticket_threads_desc": "Chat-Threads zu IT-Tickets starten, darin schreiben und sperren/entsperren — das Anlegen und Bearbeiten der Tickets selbst bleibt für alle offen",
   "create": "Rolle erstellen",
   "save": "Speichern",
   "cancel": "Abbrechen",
