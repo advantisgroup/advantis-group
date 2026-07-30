@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, type RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -40,6 +40,7 @@ import {
   useRichTextController,
 } from "@/components/ui/rich-text-editor";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { SplitDivider } from "@/components/ui/split-divider";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { initials, relativeTime } from "@/lib/format";
@@ -61,60 +62,6 @@ import { AnnouncementPreview } from "./AnnouncementPreview";
 
 const DRAFT_SAVED_AT_KEY = "announcements:draftSavedAt";
 const SPLIT_KEY = "announcements:composerSplit";
-
-function clampSplit(pct: number): number {
-  return Math.min(75, Math.max(25, pct));
-}
-
-/** Drag handle between the editor and preview panes — desktop only. */
-function SplitDivider({
-  containerRef,
-  onResize,
-  onReset,
-}: {
-  containerRef: RefObject<HTMLDivElement | null>;
-  onResize: (pct: number) => void;
-  onReset: () => void;
-}) {
-  const draggingRef = useRef(false);
-
-  useEffect(() => {
-    function move(e: PointerEvent) {
-      if (!draggingRef.current || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      onResize(clampSplit(((e.clientX - rect.left) / rect.width) * 100));
-    }
-    function up() {
-      draggingRef.current = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    }
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-    return () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-    };
-  }, [containerRef, onResize]);
-
-  return (
-    <div
-      role="separator"
-      aria-orientation="vertical"
-      aria-label="Resize editor and preview"
-      onPointerDown={(e) => {
-        e.preventDefault();
-        draggingRef.current = true;
-        document.body.style.cursor = "col-resize";
-        document.body.style.userSelect = "none";
-      }}
-      onDoubleClick={onReset}
-      className="group relative hidden w-2 shrink-0 cursor-col-resize md:block"
-    >
-      <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border transition-colors group-hover:bg-primary/60" />
-    </div>
-  );
-}
 
 /** Pin + audience readout shown right before an announcement actually goes out. */
 function QuickSendFields({
@@ -928,6 +875,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
             containerRef={splitRef}
             onResize={persistSplit}
             onReset={() => persistSplit(50)}
+            ariaLabel="Resize editor and preview"
           />
         )}
         {!isMobile && (
