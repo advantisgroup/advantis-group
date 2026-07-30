@@ -30,6 +30,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import posthog from "posthog-js";
 
 import { useFeatureFlags } from "@/components/feature-flags/FeatureGate";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
@@ -312,6 +313,7 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => {
+                posthog.capture("sidebar_mode_switched", { mode: "workspace" });
                 setMode("workspace");
                 router.push("/");
               }}
@@ -328,6 +330,7 @@ export function Sidebar() {
             <button
               type="button"
               onClick={() => {
+                posthog.capture("sidebar_mode_switched", { mode: "organization" });
                 setMode("organization");
                 router.push("/admin");
               }}

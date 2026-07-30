@@ -35,8 +35,22 @@ const nextConfig: NextConfig = {
         source: "/clockodo/manage/:path*",
         destination: "/admin/integrations/clockodo/:path*",
       },
+      // PostHog ingest proxy (mirrors apps/marketing) — same-origin so
+      // ad-blockers don't strip analytics for signed-in employees either.
+      {
+        source: "/ingest/static/:path*",
+        destination: "https://eu-assets.i.posthog.com/static/:path*",
+        locale: false,
+      },
+      {
+        source: "/ingest/:path*",
+        destination: "https://eu.i.posthog.com/:path*",
+        locale: false,
+      },
     ];
   },
+  // Required to support PostHog trailing slash API requests.
+  skipTrailingSlashRedirect: true,
   async redirects() {
     return [
       // ActivityTrack moved out from under /admin — keep old bookmarks/links working.
