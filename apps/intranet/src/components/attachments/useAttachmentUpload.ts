@@ -59,6 +59,38 @@ export function useAttachmentUpload() {
     [entries],
   );
 
+  /**
+   * Like `add`, but checks each file against `maxBytesPerFile` individually
+   * instead of capping the combined batch — for callers whose upload path
+   * (e.g. OneDrive, one request per file) validates each file independently
+   * server-side rather than treating the whole selection as one payload.
+   * Returns the files that didn't pass so the caller can report exactly
+   * which ones were skipped.
+   */
+  const addPerFile = useCallback((files: File[], maxBytesPerFile: number): File[] => {
+    const rejected: File[] = [];
+    const accepted: File[] = [];
+    for (const f of files) {
+      if (f.size > maxBytesPerFile) {
+        rejected.push(f);
+      } else {
+        accepted.push(f);
+      }
+    }
+    if (accepted.length > 0) {
+      setEntries((prev) => {
+        const next = [...prev];
+        for (const f of accepted) {
+          if (!next.some((e) => e.file.name === f.name && e.file.size === f.size)) {
+            next.push({ file: f, progress: 0 });
+          }
+        }
+        return next;
+      });
+    }
+    return rejected;
+  }, []);
+
   const addOneDriveFile = useCallback(
     (file: File, item: OneDriveItem): boolean => {
       const added = add([file]);
@@ -156,6 +188,7 @@ export function useAttachmentUpload() {
     totalSize,
     uploading,
     add,
+    addPerFile,
     addOneDriveFile,
     remove,
     removeByFile,

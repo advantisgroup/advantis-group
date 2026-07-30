@@ -16,7 +16,9 @@ import { Button } from "@/components/ui/button";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Thread = FunctionReturnType<typeof api.itTicketThreads.getForTicket>;
+// `| undefined` on top of the query's own `| null` — undefined while the
+// query is still loading, null once it's confirmed there's no thread yet.
+type Thread = FunctionReturnType<typeof api.itTicketThreads.getForTicket> | undefined;
 
 export interface OtherThreadTicket {
   ticketId: Id<"itTickets">;
@@ -118,13 +120,13 @@ export function TicketDetailView({
             {tc("delete")}
           </Button>
         </div>
-        {!thread && canManageThreads && (
+        {thread === null && canManageThreads && (
           <Button size="sm" className="w-full" onClick={onStartChat}>
             <MessageSquarePlus className="mr-1.5 size-3.5" />
             {t("thread.startChat")}
           </Button>
         )}
-        {!thread && !canManageThreads && (
+        {thread === null && !canManageThreads && (
           <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
             {t("thread.noThread")}
           </p>

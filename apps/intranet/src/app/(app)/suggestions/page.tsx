@@ -25,10 +25,29 @@ import {
 } from "@/components/ui/select";
 import { SplitDivider } from "@/components/ui/split-divider";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 const SPLIT_KEY = "suggestions:split";
+// Wider than the shared mobile/desktop breakpoint (768px) — SuggestionRow's
+// 12-column layout needs real room per pane, and at 768px the expanded
+// sidebar + shell padding leave each side only ~220px, badly truncating
+// dates/titles/badges. Side-by-side only kicks in once there's actually
+// space for it.
+const SPLIT_MIN_WIDTH = 1280;
+
+function useCanSplit(): boolean {
+  const [canSplit, setCanSplit] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia(`(min-width: ${SPLIT_MIN_WIDTH}px)`);
+    const onChange = () => setCanSplit(window.innerWidth >= SPLIT_MIN_WIDTH);
+    mql.addEventListener("change", onChange);
+    setCanSplit(window.innerWidth >= SPLIT_MIN_WIDTH);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
+  return canSplit;
+}
 
 function monthKey(ms: number): string {
   return new Date(ms).toISOString().slice(0, 7);
@@ -46,7 +65,7 @@ export default function SuggestionsPage() {
   const locale = useLocale();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
-  const isMobile = useIsMobile();
+  const canSplit = useCanSplit();
   const handleError = useErrorHandler();
   const splitRef = useRef<HTMLDivElement>(null);
 
@@ -164,7 +183,7 @@ export default function SuggestionsPage() {
   );
 
   return (
-    <div className={cn("mx-auto space-y-6", isMobile ? "max-w-4xl" : "max-w-7xl")}>
+    <div className={cn("mx-auto space-y-6", canSplit ? "max-w-7xl" : "max-w-4xl")}>
       <PageHeader
         eyebrow={t("eyebrow")}
         title={t("title")}
@@ -186,24 +205,25 @@ export default function SuggestionsPage() {
         }
       />
 
-      {isMobile ? (
-        <div className="space-y-6">
-          {submittedSection}
-          {implementedSection}
-        </div>
-      ) : (
+      {canSplit ? (
         <div ref={splitRef} className="flex items-start">
           <div className="min-w-0" style={{ width: `${splitPct}%` }}>
             {submittedSection}
           </div>
           <SplitDivider
             containerRef={splitRef}
+            value={splitPct}
             onResize={persistSplit}
             onReset={() => persistSplit(50)}
           />
           <div className="min-w-0" style={{ width: `${100 - splitPct}%` }}>
             {implementedSection}
           </div>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {submittedSection}
+          {implementedSection}
         </div>
       )}
 

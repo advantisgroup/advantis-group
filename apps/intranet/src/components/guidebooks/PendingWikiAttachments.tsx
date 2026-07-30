@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AttachmentDropZone } from "@/components/attachments/AttachmentDropZone";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { type UseAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 /**
@@ -27,7 +28,11 @@ export function PendingWikiAttachments({
   const disabled = !!busy || attachmentUpload.uploading;
 
   function addFiles(files: File[]) {
-    if (!attachmentUpload.add(files)) toast.error(t("attachTooLarge"));
+    // Each file uploads to OneDrive as its own request (attachPendingFiles),
+    // same as the post-create GuidebookAttachments flow — so the cap applies
+    // per file, not to the combined batch.
+    const rejected = attachmentUpload.addPerFile(files, MAX_ATTACHMENT_BYTES);
+    if (rejected.length > 0) toast.error(t("attachTooLarge"));
   }
 
   return (

@@ -873,6 +873,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
         {!isMobile && (
           <SplitDivider
             containerRef={splitRef}
+            value={splitPct}
             onResize={persistSplit}
             onReset={() => persistSplit(50)}
             ariaLabel="Resize editor and preview"

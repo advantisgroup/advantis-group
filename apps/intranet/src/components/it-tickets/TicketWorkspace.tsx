@@ -5,7 +5,7 @@ import { useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Info } from "lucide-react";
+import { ArrowLeft, Info, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { type OtherThreadTicket, TicketDetailView } from "@/components/it-tickets/TicketDetailView";
@@ -45,6 +45,10 @@ export function TicketWorkspace({
   const t = useTranslations("ItTickets");
   const isMobile = useIsMobile();
   const handleError = useErrorHandler();
+  // undefined = still loading, null = confirmed no thread, object = exists.
+  // Coercing undefined to null here would flash a "Start chat" button (and
+  // let it be clicked into a conflict error) for tickets that already have
+  // one, and flash the detail-only mobile layout before switching to chat.
   const thread = useQuery(api.itTicketThreads.getForTicket, { ticketId: ticket._id });
   const startThread = useMutation(api.itTicketThreads.start);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -56,7 +60,7 @@ export function TicketWorkspace({
   const detail = (
     <TicketDetailView
       ticket={ticket}
-      thread={thread ?? null}
+      thread={thread}
       otherThreads={otherThreads}
       canManageThreads={canManageThreads}
       onBack={onBack}
@@ -67,21 +71,41 @@ export function TicketWorkspace({
     />
   );
 
-  const chat = thread ? (
-    <TicketThreadView thread={thread} ticketCreatorUserId={ticket.createdByUserId} />
-  ) : (
-    <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-      <p className="text-sm font-medium">{t("thread.noThread")}</p>
-      <p className="text-xs text-muted-foreground">{t("thread.noThreadHint")}</p>
+  const loadingPane = (
+    <div className="flex h-full items-center justify-center">
+      <Loader2 className="size-5 animate-spin text-muted-foreground" />
     </div>
   );
 
+  const chat =
+    thread === undefined ? (
+      loadingPane
+    ) : thread ? (
+      <TicketThreadView thread={thread} ticketCreatorUserId={ticket.createdByUserId} />
+    ) : (
+      <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+        <p className="text-sm font-medium">{t("thread.noThread")}</p>
+        <p className="text-xs text-muted-foreground">{t("thread.noThreadHint")}</p>
+      </div>
+    );
+
   if (isMobile) {
+    if (thread === undefined) {
+      return <div className="flex h-full flex-col overflow-hidden">{loadingPane}</div>;
+    }
     return (
       <div className="flex h-full flex-col overflow-hidden">
         {thread ? (
           <>
             <div className="flex shrink-0 items-center gap-2 border-b border-border/70 px-3 py-2">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={t("thread.backToList")}
+                onClick={onBack}
+              >
+                <ArrowLeft className="size-4" />
+              </Button>
               <span className="font-mono text-xs font-bold text-primary">
                 #{String(ticket.nr).padStart(3, "0")}
               </span>

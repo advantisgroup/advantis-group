@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -38,6 +38,7 @@ export default function NewGuidebookPage() {
   // attachment phase then updates this same page instead of creating a
   // second one under a suffixed slug.
   const createdRef = useRef<{ id: Id<"guidebookPages">; slug: string } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const takenSlugs = useMemo(
     () => new Set([...staticGuidebookSlugs(), ...(customPages ?? []).map((p) => p.slug)]),
@@ -53,45 +54,50 @@ export default function NewGuidebookPage() {
   }
 
   async function handleSave(data: GuidebookFormData) {
-    const pageFields = {
-      title: data.title,
-      description: data.description,
-      topic: data.topic,
-      teams: data.teams,
-      minRole: data.minRole ?? undefined,
-      blocks: serializeBlocks(data.blocks),
-      imageStorageIds: imageStorageIdsOf(data.blocks) as Id<"_storage">[],
-    };
-    let slug: string;
-    if (createdRef.current) {
-      // A previous attempt already created this page and only the
-      // attachment phase failed — apply any field edits since then instead
-      // of creating a second page.
-      slug = createdRef.current.slug;
-      await updatePage({ pageId: createdRef.current.id, ...pageFields });
-    } else {
-      slug = uniqueSlug(data.title);
-      const { id, slug: createdSlug } = await createPage({ slug, ...pageFields });
-      createdRef.current = { id, slug: createdSlug };
-      slug = createdSlug;
-    }
-    if (attachmentUpload.entries.length > 0) {
-      attachmentUpload.setUploading(true);
-      try {
-        await attachPendingFiles(
-          slug,
-          attachmentUpload.entries.map((e) => e.file),
-          oneDriveApi.attachToWiki,
-          addAttachment,
-          attachmentUpload.setFileProgress,
-          attachmentUpload.removeByFile,
-        );
-      } finally {
-        attachmentUpload.setUploading(false);
+    setSubmitting(true);
+    try {
+      const pageFields = {
+        title: data.title,
+        description: data.description,
+        topic: data.topic,
+        teams: data.teams,
+        minRole: data.minRole ?? undefined,
+        blocks: serializeBlocks(data.blocks),
+        imageStorageIds: imageStorageIdsOf(data.blocks) as Id<"_storage">[],
+      };
+      let slug: string;
+      if (createdRef.current) {
+        // A previous attempt already created this page and only the
+        // attachment phase failed — apply any field edits since then instead
+        // of creating a second page.
+        slug = createdRef.current.slug;
+        await updatePage({ pageId: createdRef.current.id, ...pageFields });
+      } else {
+        slug = uniqueSlug(data.title);
+        const { id, slug: createdSlug } = await createPage({ slug, ...pageFields });
+        createdRef.current = { id, slug: createdSlug };
+        slug = createdSlug;
       }
+      if (attachmentUpload.entries.length > 0) {
+        attachmentUpload.setUploading(true);
+        try {
+          await attachPendingFiles(
+            slug,
+            attachmentUpload.entries.map((e) => e.file),
+            oneDriveApi.attachToWiki,
+            addAttachment,
+            attachmentUpload.setFileProgress,
+            attachmentUpload.removeByFile,
+          );
+        } finally {
+          attachmentUpload.setUploading(false);
+        }
+      }
+      toast.success(t("pageCreated"));
+      router.push(`/guidebooks/${slug}`);
+    } finally {
+      setSubmitting(false);
     }
-    toast.success(t("pageCreated"));
-    router.push(`/guidebooks/${slug}`);
   }
 
   if (!isManager) {
@@ -118,9 +124,11 @@ export default function NewGuidebookPage() {
       <PageHeader eyebrow={t("eyebrow")} title={t("createPage")} />
       <GuidebookEditor
         onSave={handleSave}
-        saving={false}
+        saving={submitting}
         submitLabel={tc("create")}
-        attachmentsSlot={<PendingWikiAttachments attachmentUpload={attachmentUpload} />}
+        attachmentsSlot={
+          <PendingWikiAttachments attachmentUpload={attachmentUpload} busy={submitting} />
+        }
       />
     </div>
   );
