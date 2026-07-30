@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useClerk } from "@clerk/nextjs";
 import { Building2, FileText, LogOut, Settings as SettingsIcon, Shield } from "lucide-react";
 import { useTranslations } from "next-intl";
+import posthog from "posthog-js";
 
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -95,7 +96,12 @@ export function AccountMenu({
           {tNav("imprint")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => void signOut({ redirectUrl: "/sign-in" })}>
+        <DropdownMenuItem
+          onClick={() => {
+            posthog.reset();
+            void signOut({ redirectUrl: "/sign-in" });
+          }}
+        >
           <LogOut className="mr-2 h-4 w-4" />
           {tNav("signOut")}
         </DropdownMenuItem>

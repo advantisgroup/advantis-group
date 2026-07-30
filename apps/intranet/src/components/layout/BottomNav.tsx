@@ -7,6 +7,7 @@ import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { Menu, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
+import posthog from "posthog-js";
 
 import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -73,7 +74,10 @@ export function BottomNav() {
         )}
         <button
           type="button"
-          onClick={() => window.dispatchEvent(new Event("command-palette:open"))}
+          onClick={() => {
+            posthog.capture("bottom_nav_search_opened");
+            window.dispatchEvent(new Event("command-palette:open"));
+          }}
           aria-label={tc("search")}
           className={cn(
             "flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground",
@@ -86,7 +90,10 @@ export function BottomNav() {
         <span className="h-5 w-px shrink-0 bg-border/70" aria-hidden />
         <button
           type="button"
-          onClick={() => setOpenMobile(true)}
+          onClick={() => {
+            posthog.capture("bottom_nav_menu_opened");
+            setOpenMobile(true);
+          }}
           aria-label={t("more")}
           className="relative flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent"
         >
