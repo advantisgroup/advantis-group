@@ -9,6 +9,7 @@ import { assertAttachmentSizeOk } from "./lib/attachments";
 import { isOwnerOrAdmin, requireUser } from "./lib/auth";
 import { gatedMutation } from "./lib/featureGate";
 import { createNotification } from "./lib/notify";
+import { profileAvatarUrl, profileDisplayName } from "./lib/profile";
 import { attachmentValidator } from "./schema";
 
 const TYPING_WINDOW_MS = 6000;
@@ -23,9 +24,13 @@ const linkPreviewArg = v.object({
   siteName: v.optional(v.string()),
 });
 
+/** Chat's own return shapes use `_id`/`avatar` field names throughout (not
+ *  `PartialProfile`'s `userId`/`avatarUrl`) to stay consistent with the rest
+ *  of this file's conventions — but the actual name/avatar resolution
+ *  delegates to the one canonical implementation in `lib/profile.ts` instead
+ *  of maintaining its own copy. */
 function memberDisplay(user: Doc<"users"> | null): string {
-  if (!user) return "Unknown";
-  return [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email;
+  return user ? profileDisplayName(user) : "Unknown";
 }
 
 async function getMembership(
@@ -71,10 +76,7 @@ async function attachmentUrls(ctx: QueryCtx, attachments: Doc<"messages">["attac
 
 /** Resolve a user's display avatar (uploaded image first, else external URL). */
 async function userAvatar(ctx: QueryCtx, user: Doc<"users"> | null): Promise<string | null> {
-  if (!user) return null;
-  return user.avatarStorageId
-    ? await ctx.storage.getUrl(user.avatarStorageId)
-    : (user.avatarUrl ?? null);
+  return user ? profileAvatarUrl(ctx, user) : null;
 }
 
 /** The other participant of a DM, derived from its immutable `dmKey`. Works
