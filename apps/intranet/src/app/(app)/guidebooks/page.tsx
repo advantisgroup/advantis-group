@@ -63,7 +63,8 @@ import {
 } from "@/lib/wiki";
 import { cn } from "@/lib/utils";
 
-const EMPTY_CATEGORIES: NonNullable<ReturnType<typeof useQuery<typeof api.wikiCategories.list>>> = [];
+const EMPTY_CATEGORIES: NonNullable<ReturnType<typeof useQuery<typeof api.wikiCategories.list>>> =
+  [];
 
 /** Unified shape for both wiki-v2 entries and legacy (block-editor)
  * guidebook pages, so the grid, filters, search and sort treat them the
@@ -212,7 +213,10 @@ function EntryCard({
         <CardContent className="space-y-2 p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <p className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider" style={{ color }}>
+              <p
+                className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider"
+                style={{ color }}
+              >
                 {item.kind === "legacy" && <FileText className="size-3" />}
                 {item.archived ? t("archiveChip") : item.categoryLabel}
                 {item.archived && item.categoryLabel && (
@@ -231,13 +235,17 @@ function EntryCard({
                 #{tag}
               </Badge>
             ))}
-            {item.reviewDue && !item.archived && <Badge variant="warning">{t("reviewDueBadge")}</Badge>}
+            {item.reviewDue && !item.archived && (
+              <Badge variant="warning">{t("reviewDueBadge")}</Badge>
+            )}
             {item.archived && !item.categoryDeleted && (
               <Badge variant="muted">{t("expiredBadge")}</Badge>
             )}
           </div>
           {item.version !== null && (
-            <p className="text-xs text-muted-foreground">{t("versionMeta", { version: item.version })}</p>
+            <p className="text-xs text-muted-foreground">
+              {t("versionMeta", { version: item.version })}
+            </p>
           )}
         </CardContent>
       </Link>
@@ -306,7 +314,11 @@ export default function GuidebooksPage() {
   // whichever legacy topics still have unmigrated pages — always visible,
   // not gated on migration.
   const categoryChips = useMemo(() => {
-    const chips = wikiCategories.map((c) => ({ key: `cat:${c._id}`, label: c.name, color: c.color }));
+    const chips = wikiCategories.map((c) => ({
+      key: `cat:${c._id}`,
+      label: c.name,
+      color: c.color,
+    }));
     const legacyTopics = new Set(
       (items ?? []).filter((i) => i.kind === "legacy").map((i) => i.categoryKey),
     );
@@ -337,7 +349,8 @@ export default function GuidebooksPage() {
       }
       if (activeTags.size && ![...activeTags].every((tag) => i.tags.includes(tag))) return false;
       if (query) {
-        const haystack = `${i.title} ${i.snippet} ${i.tags.join(" ")} ${i.categoryLabel}`.toLowerCase();
+        const haystack =
+          `${i.title} ${i.snippet} ${i.tags.join(" ")} ${i.categoryLabel}`.toLowerCase();
         if (!haystack.includes(query)) return false;
       }
       return true;
@@ -345,7 +358,10 @@ export default function GuidebooksPage() {
   }, [items, showArchive, activeCategoryKeys, activeTags, search]);
 
   const sorted = useMemo(
-    () => [...filtered].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt),
+    () =>
+      [...filtered].sort(
+        (a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt,
+      ),
     [filtered],
   );
 
@@ -427,7 +443,11 @@ export default function GuidebooksPage() {
       />
 
       {interactiveTools.length > 0 && (
-        <details className="group mb-6" open={toolsOpen} onToggle={(e) => setToolsOpen(e.currentTarget.open)}>
+        <details
+          className="group mb-6"
+          open={toolsOpen}
+          onToggle={(e) => setToolsOpen(e.currentTarget.open)}
+        >
           <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
             <Sparkles className="size-3.5" />
