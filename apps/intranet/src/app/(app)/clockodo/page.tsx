@@ -1080,7 +1080,11 @@ function Reports({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
       { department: string | null; days: number; periods: number }
     >();
     for (const absence of calendar ?? []) {
-      if (!absence.startDate.startsWith(year)) continue;
+      if (
+        typeof absence.startDate !== "string" ||
+        !absence.startDate.startsWith(year)
+      )
+        continue;
       const existing = summary.get(absence.userName) ?? {
         department: absence.userDepartment,
         days: 0,
