@@ -99,11 +99,20 @@ async function requireOwnAbsence(id: number, clockodoUserId: number) {
   return absence;
 }
 
+/** Clockodo's time_since/time_until params reject the fractional seconds
+ * Date#toISOString() includes ("Wrong format") — they need exactly
+ * YYYY-MM-DDTHH:MM:SSZ. */
+function toClockodoTimestamp(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
 function recentWindow() {
   const now = new Date();
   return {
-    timeSince: new Date(now.getTime() - 18 * 60 * 60 * 1000).toISOString(),
-    timeUntil: now.toISOString(),
+    timeSince: toClockodoTimestamp(
+      new Date(now.getTime() - 18 * 60 * 60 * 1000)
+    ),
+    timeUntil: toClockodoTimestamp(now),
   };
 }
 
