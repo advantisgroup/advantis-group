@@ -11,6 +11,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
+import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import {
   Select,
   SelectContent,
@@ -86,6 +87,7 @@ export function SuggestionRow({
   const update = useMutation(api.suggestions.update);
   const handleError = useErrorHandler();
   const confirm = useConfirm();
+  const { openFileViewer } = useFileViewer();
   const tc = useTranslations("Common");
 
   async function onDeleteClick() {
@@ -156,12 +158,18 @@ export function SuggestionRow({
           {suggestion.attachments.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {suggestion.attachments.map((a) => (
-                <a
+                <button
                   key={a.storageId}
-                  href={a.url ?? undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                  download={a.name}
+                  type="button"
+                  onClick={() =>
+                    openFileViewer({
+                      storageId: a.storageId,
+                      name: a.name,
+                      contentType: a.contentType ?? undefined,
+                      size: a.size ?? undefined,
+                      url: a.url ?? undefined,
+                    })
+                  }
                   className="flex items-center gap-1.5 rounded border border-border bg-background px-2 py-1 text-xs hover:border-primary"
                 >
                   <Download className="size-3" />
@@ -169,7 +177,7 @@ export function SuggestionRow({
                   {a.size != null && (
                     <span className="text-muted-foreground">· {formatFileSize(a.size)}</span>
                   )}
-                </a>
+                </button>
               ))}
             </div>
           )}

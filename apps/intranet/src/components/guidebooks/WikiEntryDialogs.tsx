@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -9,6 +9,9 @@ import { Archive, Plus, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
+import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +32,9 @@ import {
 } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useOneDriveApi } from "@/lib/onedrive-api";
 import { addMonths, msToDateInput, slugify } from "@/lib/wiki";
+import { attachPendingFiles } from "@/lib/wiki-attachments";
 
 export type WikiEntry = NonNullable<
   ReturnType<typeof useQuery<typeof api.wikiEntries.list>>
@@ -213,6 +218,9 @@ export function EntryDialog({
   const entries = useQuery(api.wikiEntries.list) ?? [];
   const create = useMutation(api.wikiEntries.create);
   const update = useMutation(api.wikiEntries.update);
+  const addAttachment = useMutation(api.guidebookAttachments.add);
+  const oneDriveApi = useOneDriveApi();
+  const attachmentUpload = useAttachmentUpload();
   const isEditing = entry !== "new" && entry !== null;
   const open = entry !== null;
 
@@ -229,6 +237,11 @@ export function EntryDialog({
   );
   const [busy, setBusy] = useState(false);
 
+  // Set once a "new" submission's create call succeeds; a retry after a
+  // failed attachment phase then updates this same entry instead of
+  // creating a second one under a suffixed slug.
+  const createdRef = useRef<{ id: Id<"wikiEntries">; slug: string } | null>(null);
+
   // Re-seed the form whenever a different entry (or "new") opens.
   const [seededFor, setSeededFor] = useState(entry);
   if (entry !== seededFor) {
@@ -242,6 +255,8 @@ export function EntryDialog({
     setValidUntil(
       isEditing ? msToDateInput(entry.validUntil) : msToDateInput(addMonths(Date.now(), 3)),
     );
+    attachmentUpload.reset();
+    createdRef.current = null;
   }
 
   async function onSubmit() {
@@ -264,14 +279,39 @@ export function EntryDialog({
         await update({ entryId: entry._id, ...patch });
         toast.success(t("entryUpdated"));
       } else {
-        const taken = new Set([...entries.map((e) => e.slug), ...staticGuidebookSlugs()]);
-        let slug = slugify(thema);
-        let suffix = 2;
-        while (taken.has(slug)) {
-          slug = `${slugify(thema)}-${suffix}`;
-          suffix++;
+        let slug: string;
+        if (createdRef.current) {
+          // A previous attempt already created this entry and only the
+          // attachment phase failed — apply any field edits since then
+          // instead of creating a second entry.
+          slug = createdRef.current.slug;
+          await update({ entryId: createdRef.current.id, ...patch });
+        } else {
+          const taken = new Set([...entries.map((e) => e.slug), ...staticGuidebookSlugs()]);
+          slug = slugify(thema);
+          let suffix = 2;
+          while (taken.has(slug)) {
+            slug = `${slugify(thema)}-${suffix}`;
+            suffix++;
+          }
+          const created = await create({ slug, ...patch });
+          createdRef.current = { id: created.id, slug };
         }
-        await create({ slug, ...patch });
+        if (attachmentUpload.entries.length > 0) {
+          attachmentUpload.setUploading(true);
+          try {
+            await attachPendingFiles(
+              slug,
+              attachmentUpload.entries.map((e) => e.file),
+              oneDriveApi.attachToWiki,
+              addAttachment,
+              attachmentUpload.setFileProgress,
+              attachmentUpload.removeByFile,
+            );
+          } finally {
+            attachmentUpload.setUploading(false);
+          }
+        }
         toast.success(t("entryCreated"));
       }
       onOpenChange(false);
@@ -378,6 +418,11 @@ export function EntryDialog({
               </div>
             </div>
           </div>
+          {isEditing ? (
+            <GuidebookAttachments slug={entry.slug} />
+          ) : (
+            <PendingWikiAttachments attachmentUpload={attachmentUpload} busy={busy} />
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>

@@ -30,6 +30,7 @@ const CAPABILITIES = [
   "view_activity_admin",
   "manage_announcements",
   "manage_guidebooks",
+  "manage_it_ticket_threads",
 ] as const;
 type Capability = (typeof CAPABILITIES)[number];
 

@@ -9,6 +9,7 @@ import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { GuidebookEditor, type GuidebookFormData } from "@/components/guidebooks/GuidebookEditor";
 import { type GuidebookTopic } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
@@ -81,6 +82,7 @@ export default function EditGuidebookPage() {
         saving={false}
         submitLabel={tc("save")}
       />
+      <GuidebookAttachments slug={page.slug} />
     </div>
   );
 }

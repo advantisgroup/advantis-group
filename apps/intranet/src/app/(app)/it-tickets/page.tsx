@@ -1,18 +1,27 @@
 "use client";
 
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, Suspense, useEffect, useMemo, useState } from "react";
+
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { type Doc } from "@advantis/convex/dataModel";
+import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { Settings2, Wrench } from "lucide-react";
+import { MessageSquare, MessageSquarePlus, Settings2, Wrench } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/PageHeader";
 import { CategoriesDialog } from "@/components/it-tickets/CategoriesDialog";
+import {
+  STATUS_BORDER,
+  StatusBadge,
+  type Status,
+  type Ticket,
+} from "@/components/it-tickets/shared";
 import { TicketDialog } from "@/components/it-tickets/TicketDialog";
-import { Badge } from "@/components/ui/badge";
+import { TicketWorkspace } from "@/components/it-tickets/TicketWorkspace";
+import { useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,40 +39,20 @@ import { isoToday } from "@/lib/absences";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-type Ticket = Doc<"itTickets">;
-type Status = Ticket["status"];
-
 const STATUS_FILTERS: ("alle" | Status)[] = ["alle", "offen", "bearbeitung", "closed"];
 const STATUS_LABEL_KEY: Record<Status, "statusOffen" | "statusBearbeitung" | "statusClosed"> = {
   offen: "statusOffen",
   bearbeitung: "statusBearbeitung",
   closed: "statusClosed",
 };
-const STATUS_BORDER: Record<Status, string> = {
-  offen: "border-l-amber-500",
-  bearbeitung: "border-l-blue-600",
-  closed: "border-l-emerald-600",
-};
 
 function currentMonth(): string {
   return isoToday().slice(0, 7);
 }
 
-function StatusBadge({ status }: { status: Status }) {
-  const t = useTranslations("ItTickets");
-  if (status === "bearbeitung") {
-    return (
-      <Badge className="border-transparent bg-blue-500/15 text-blue-600 dark:text-blue-400">
-        {t(STATUS_LABEL_KEY[status])}
-      </Badge>
-    );
-  }
-  return (
-    <Badge variant={status === "offen" ? "warning" : "success"}>
-      {t(STATUS_LABEL_KEY[status])}
-    </Badge>
-  );
-}
+const EMPTY_THREADS: NonNullable<
+  ReturnType<typeof useQuery<typeof api.itTicketThreads.listStarted>>
+> = [];
 
 function Pill({
   active,
@@ -159,10 +148,16 @@ function TicketCard({
   ticket,
   onEdit,
   onDelete,
+  onOpenChat,
+  hasThread,
+  canManageThreads,
 }: {
   ticket: Ticket;
   onEdit: () => void;
   onDelete: () => void;
+  onOpenChat: () => void;
+  hasThread: boolean;
+  canManageThreads: boolean;
 }) {
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
@@ -222,6 +217,21 @@ function TicketCard({
             >
               {tc("delete")}
             </Button>
+            {(hasThread || canManageThreads) && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={hasThread ? t("thread.openChat") : t("thread.startChat")}
+                title={hasThread ? t("thread.openChat") : t("thread.startChat")}
+                onClick={onOpenChat}
+              >
+                {hasThread ? (
+                  <MessageSquare className="size-4" />
+                ) : (
+                  <MessageSquarePlus className="size-4" />
+                )}
+              </Button>
+            )}
           </div>
         </div>
         {hasSfDetails && (
@@ -252,14 +262,18 @@ function TicketCard({
   );
 }
 
-export default function ItTicketsPage() {
+function ItTicketsPageContent() {
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
   const confirm = useConfirm();
   const handleError = useErrorHandler();
+  const router = useRouter();
+  const params = useSearchParams();
+  const canManageThreads = useHasCapability("manage_it_ticket_threads");
 
   const tickets = useQuery(api.itTickets.list);
   const categories = useQuery(api.itTickets.listCategories);
+  const startedThreads = useQuery(api.itTicketThreads.listStarted) ?? EMPTY_THREADS;
   const ensureDefaultCategories = useMutation(api.itTickets.ensureDefaultCategories);
   const removeTicket = useMutation(api.itTickets.remove);
 
@@ -275,6 +289,12 @@ export default function ItTicketsPage() {
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<Ticket | undefined>(undefined);
   const [categoriesDialogOpen, setCategoriesDialogOpen] = useState(false);
+
+  const selectedTicketId = params.get("ticket") as Id<"itTickets"> | null;
+  const threadTicketIds = useMemo(
+    () => new Set(startedThreads.map((th) => th.ticketId)),
+    [startedThreads],
+  );
 
   const filtered = useMemo(() => {
     const rows = tickets ?? [];
@@ -302,8 +322,60 @@ export default function ItTicketsPage() {
     });
     if (!confirmed) return;
     removeTicket({ ticketId: ticket._id })
-      .then(() => toast.success(t("ticketDeleted", { nr: ticket.nr })))
+      .then(() => {
+        toast.success(t("ticketDeleted", { nr: ticket.nr }));
+        if (selectedTicketId === ticket._id) router.push("/it-tickets");
+      })
       .catch(handleError);
+  }
+
+  function openChat(ticketId: Id<"itTickets">) {
+    router.push(`/it-tickets?ticket=${ticketId}`);
+  }
+
+  function backToList() {
+    router.push("/it-tickets");
+  }
+
+  if (selectedTicketId) {
+    const selectedTicket = tickets?.find((tk) => tk._id === selectedTicketId);
+    if (tickets !== undefined && !selectedTicket) {
+      return (
+        <div className="mx-auto max-w-md space-y-4 py-16 text-center">
+          <p className="text-sm text-muted-foreground">{t("notFoundFallback")}</p>
+          <Button variant="outline" onClick={backToList}>
+            {t("thread.backToList")}
+          </Button>
+        </div>
+      );
+    }
+    if (!selectedTicket) return null;
+
+    const otherThreadTickets = startedThreads
+      .filter((th) => th.ticketId !== selectedTicketId)
+      .map((th) => tickets?.find((tk) => tk._id === th.ticketId))
+      .filter((tk): tk is Ticket => !!tk)
+      .map((tk) => ({ ticketId: tk._id, nr: tk.nr, category: tk.category, status: tk.status }));
+
+    return (
+      <div className="h-full">
+        <TicketWorkspace
+          ticket={selectedTicket}
+          otherThreads={otherThreadTickets}
+          canManageThreads={canManageThreads}
+          onBack={backToList}
+          onEdit={() => openEdit(selectedTicket)}
+          onDelete={() => void deleteTicket(selectedTicket)}
+          onSelectTicket={openChat}
+        />
+        <TicketDialog
+          open={ticketDialogOpen}
+          onOpenChange={setTicketDialogOpen}
+          categories={categories ?? []}
+          ticket={editingTicket}
+        />
+      </div>
+    );
   }
 
   return (
@@ -361,6 +433,9 @@ export default function ItTicketsPage() {
                 ticket={ticket}
                 onEdit={() => openEdit(ticket)}
                 onDelete={() => deleteTicket(ticket)}
+                onOpenChat={() => openChat(ticket._id)}
+                hasThread={threadTicketIds.has(ticket._id)}
+                canManageThreads={canManageThreads}
               />
             ))}
           </div>
@@ -382,5 +457,13 @@ export default function ItTicketsPage() {
         tickets={tickets}
       />
     </div>
+  );
+}
+
+export default function ItTicketsPage() {
+  return (
+    <Suspense fallback={null}>
+      <ItTicketsPageContent />
+    </Suspense>
   );
 }

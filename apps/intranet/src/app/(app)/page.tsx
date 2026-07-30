@@ -165,9 +165,9 @@ export default function DashboardPage() {
   ].filter((w) => showCard(w.id));
 
   const hasNewWiki = (newWikiPages?.length ?? 0) > 0;
-  const newWikiWidgets: Widget[] = (hasNewWiki ? [widget("newwiki", <LatestWikiCard />)] : []).filter(
-    (w) => showCard(w.id),
-  );
+  const newWikiWidgets: Widget[] = (
+    hasNewWiki ? [widget("newwiki", <LatestWikiCard />)] : []
+  ).filter((w) => showCard(w.id));
 
   const teamCompanyWidgets: Widget[] = [
     widget("events", <EventsCard />),

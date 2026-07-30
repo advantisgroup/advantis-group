@@ -10,6 +10,9 @@ import { toast } from "sonner";
 
 import { useConfirm } from "@/components/ui/dialog";
 import { useIsManager } from "@/components/providers/current-user";
+import { AttachmentDropZone } from "@/components/attachments/AttachmentDropZone";
+import { AttachmentList } from "@/components/attachments/AttachmentList";
+import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
@@ -31,24 +34,40 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
   const addAttachment = useMutation(api.guidebookAttachments.add);
   const removeAttachment = useMutation(api.guidebookAttachments.remove);
   const oneDriveApi = useOneDriveApi();
+  const { openFileViewer } = useFileViewer();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [inFlight, setInFlight] = useState<{ file: File; progress: number }[]>([]);
 
   if (!isManager && attachments !== undefined && attachments.length === 0) return null;
 
-  async function onFileSelected(file: File) {
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      toast.error(t("attachTooLarge"));
-      return;
-    }
+  function setFileProgress(file: File, progress: number) {
+    setInFlight((prev) => prev.map((f) => (f.file === file ? { ...f, progress } : f)));
+  }
+
+  async function onFilesSelected(files: File[]) {
+    const valid = files.filter((f) => f.size <= MAX_ATTACHMENT_BYTES);
+    if (valid.length < files.length) toast.error(t("attachTooLarge"));
+    if (valid.length === 0) return;
     setBusy(true);
+    setInFlight(valid.map((file) => ({ file, progress: 0 })));
     try {
-      const uploaded = await oneDriveApi.attachToWiki(slug, file);
-      await addAttachment({ slug, attachment: uploaded });
-    } catch (e) {
-      handleError(e);
+      // allSettled (not all) — one failing file must not clear the shared
+      // busy/inFlight state while its siblings' XHRs are still in flight.
+      const results = await Promise.allSettled(
+        valid.map(async (file) => {
+          const uploaded = await oneDriveApi.attachToWiki(slug, file, (fraction) =>
+            setFileProgress(file, fraction),
+          );
+          await addAttachment({ slug, attachment: uploaded });
+          setInFlight((prev) => prev.filter((f) => f.file !== file));
+        }),
+      );
+      const failed = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
+      if (failed) handleError(failed.reason);
     } finally {
       setBusy(false);
+      setInFlight([]);
     }
   }
 
@@ -77,7 +96,12 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="mt-6 space-y-2 border-t border-border/60 pt-6 print:hidden">
+    <AttachmentDropZone
+      onFiles={(files) => void onFilesSelected(files)}
+      hint={t("dropHint")}
+      disabled={!isManager || busy}
+      className="mt-6 space-y-2 rounded-lg border-t border-border/60 pt-6 print:hidden"
+    >
       <div className="flex items-center justify-between">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("attachmentsTitle")}
@@ -87,10 +111,10 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
             <input
               ref={inputRef}
               type="file"
+              multiple
               className="hidden"
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) void onFileSelected(file);
+                void onFilesSelected(Array.from(e.target.files ?? []));
                 e.target.value = "";
               }}
             />
@@ -106,6 +130,14 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
           </>
         )}
       </div>
+      {inFlight.length > 0 && (
+        <AttachmentList
+          entries={inFlight}
+          uploading
+          onRemove={() => {}}
+          removeLabel={tc("delete")}
+        />
+      )}
       {attachments === undefined ? null : attachments.length === 0 ? (
         isManager ? (
           <p className="text-xs text-muted-foreground">{t("noAttachments")}</p>
@@ -122,11 +154,19 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
               </span>
               <button
                 type="button"
-                onClick={() =>
-                  void (a.oneDriveItemId
-                    ? oneDriveApi.download(a.oneDriveItemId, a.name)
-                    : a.legacyUrl && window.open(a.legacyUrl, "_blank"))
-                }
+                onClick={() => {
+                  if (a.oneDriveItemId) {
+                    void oneDriveApi.download(a.oneDriveItemId, a.name);
+                  } else if (a.legacyUrl) {
+                    openFileViewer({
+                      storageId: a._id,
+                      name: a.name,
+                      contentType: a.contentType ?? undefined,
+                      size: a.size ?? undefined,
+                      url: a.legacyUrl,
+                    });
+                  }
+                }}
                 className="min-w-0 text-left"
               >
                 <span className="block max-w-[14rem] truncate font-medium">{a.name}</span>
@@ -149,6 +189,6 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
           ))}
         </div>
       )}
-    </div>
+    </AttachmentDropZone>
   );
 }

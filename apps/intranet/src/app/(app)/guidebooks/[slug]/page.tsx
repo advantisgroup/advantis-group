@@ -6,15 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-  ArrowLeft,
-  BookOpen,
-  Check,
-  Megaphone,
-  Pencil,
-  Printer,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, BookOpen, Check, Megaphone, Pencil, Printer, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -381,7 +373,9 @@ export default function GuidebookPage() {
           )}
         </>
       )}
-      {entry && <EntryDialog entry={editing ? entry : null} onOpenChange={() => setEditing(false)} />}
+      {entry && (
+        <EntryDialog entry={editing ? entry : null} onOpenChange={() => setEditing(false)} />
+      )}
     </div>
   );
 }

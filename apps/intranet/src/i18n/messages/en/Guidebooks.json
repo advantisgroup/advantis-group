@@ -63,6 +63,8 @@
   "addAttachment": "Add file",
   "noAttachments": "No files attached yet",
   "attachTooLarge": "Attachments exceed the 5 MB limit",
+  "dropHint": "Drop to attach",
+  "attachHint": "Drag files here or click to attach",
   "deleteAttachmentConfirm": "Remove this attachment?",
   "shareAsAnnouncement": "Announce this guide",
   "shareConfirmTitle": "Announce this guide?",

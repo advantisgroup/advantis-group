@@ -11,7 +11,8 @@ export type Capability =
   | "manage_uploads"
   | "view_activity_admin"
   | "manage_announcements"
-  | "manage_guidebooks";
+  | "manage_guidebooks"
+  | "manage_it_ticket_threads";
 
 export interface CurrentUser {
   _id: string;

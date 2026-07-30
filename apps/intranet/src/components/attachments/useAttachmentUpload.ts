@@ -59,6 +59,38 @@ export function useAttachmentUpload() {
     [entries],
   );
 
+  /**
+   * Like `add`, but checks each file against `maxBytesPerFile` individually
+   * instead of capping the combined batch — for callers whose upload path
+   * (e.g. OneDrive, one request per file) validates each file independently
+   * server-side rather than treating the whole selection as one payload.
+   * Returns the files that didn't pass so the caller can report exactly
+   * which ones were skipped.
+   */
+  const addPerFile = useCallback((files: File[], maxBytesPerFile: number): File[] => {
+    const rejected: File[] = [];
+    const accepted: File[] = [];
+    for (const f of files) {
+      if (f.size > maxBytesPerFile) {
+        rejected.push(f);
+      } else {
+        accepted.push(f);
+      }
+    }
+    if (accepted.length > 0) {
+      setEntries((prev) => {
+        const next = [...prev];
+        for (const f of accepted) {
+          if (!next.some((e) => e.file.name === f.name && e.file.size === f.size)) {
+            next.push({ file: f, progress: 0 });
+          }
+        }
+        return next;
+      });
+    }
+    return rejected;
+  }, []);
+
   const addOneDriveFile = useCallback(
     (file: File, item: OneDriveItem): boolean => {
       const added = add([file]);
@@ -83,7 +115,20 @@ export function useAttachmentUpload() {
     setEntries((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  /** Drop one entry by file reference rather than index — for a caller that
+   *  finishes entries one at a time out of order (e.g. a parallel non-Convex
+   *  upload batch) and can't track a stable index into the live array. */
+  const removeByFile = useCallback((file: File) => {
+    setEntries((prev) => prev.filter((e) => e.file !== file));
+  }, []);
+
   const reset = useCallback(() => setEntries([]), []);
+
+  /** Live progress for a non-Convex upload path (e.g. OneDrive) driving this
+   *  same staged list — `uploadAll` below only covers Convex storage. */
+  const setFileProgress = useCallback((file: File, fraction: number) => {
+    setEntries((prev) => prev.map((e) => (e.file === file ? { ...e, progress: fraction } : e)));
+  }, []);
 
   /** Best-effort delete of already-uploaded attachments, e.g. after the
    *  follow-up `sendMessage`/`create` call rejects. */
@@ -143,11 +188,15 @@ export function useAttachmentUpload() {
     totalSize,
     uploading,
     add,
+    addPerFile,
     addOneDriveFile,
     remove,
+    removeByFile,
     reset,
     uploadAll,
     rollback,
+    setFileProgress,
+    setUploading,
   };
 }
 

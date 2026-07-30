@@ -63,6 +63,8 @@
   "addAttachment": "Datei hinzufügen",
   "noAttachments": "Noch keine Dateien angehängt",
   "attachTooLarge": "Anhänge überschreiten das 5-MB-Limit",
+  "dropHint": "Zum Anhängen hier ablegen",
+  "attachHint": "Dateien hierher ziehen oder klicken zum Anhängen",
   "deleteAttachmentConfirm": "Diesen Anhang entfernen?",
   "shareAsAnnouncement": "Diesen Wiki-Eintrag ankündigen",
   "shareConfirmTitle": "Diesen Wiki-Eintrag ankündigen?",
