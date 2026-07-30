@@ -153,8 +153,9 @@ function createClockodoClient(options: ClockodoClientOptions) {
       },
     });
     if (!response.ok) {
+      const body = await response.text().catch(() => "");
       throw new ClockodoApiError(
-        `Clockodo GET ${path} failed: ${response.status}`,
+        `Clockodo ${init?.method ?? "GET"} ${path} failed: ${response.status}${body ? ` — ${body.slice(0, 500)}` : ""}`,
         response.status
       );
     }
@@ -320,6 +321,7 @@ async function upstream<T>(operation: Promise<T>): Promise<T> {
     return await operation;
   } catch (error) {
     if (error instanceof ClockodoApiError) {
+      console.error(`[clockodo] upstream ${error.status}: ${error.message}`);
       if (error.status === 429) throw Errors.rateLimited("Clockodo rate limit");
       throw Errors.upstream(error.message);
     }
