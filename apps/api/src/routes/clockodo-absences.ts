@@ -46,10 +46,22 @@ interface AbsenceDTO {
  * been observed returning a non-string shape (e.g. an array) for
  * date_since/date_until on some records, despite the documented contract —
  * fall back to "" rather than propagate a shape the client's string-only
- * date math (startsWith/slice) can't handle. */
-function toIsoDate(value: unknown): string {
+ * date math (startsWith/slice) can't handle. Logged whenever this actually
+ * fires so a malformed Clockodo record is visible instead of silently
+ * turning into a blank date somewhere downstream. */
+function toIsoDate(
+  value: unknown,
+  context: { absenceId: number; field: string }
+): string {
   const raw = Array.isArray(value) ? value[0] : value;
-  return typeof raw === "string" ? raw.slice(0, 10) : "";
+  if (typeof raw !== "string") {
+    console.error(
+      `[clockodo] absence ${context.absenceId} has a non-string ${context.field}:`,
+      JSON.stringify(value)
+    );
+    return "";
+  }
+  return raw.slice(0, 10);
 }
 
 function toDto(
@@ -60,8 +72,11 @@ function toDto(
     clockodoUserId: String(a.users_id),
     clockodoType: a.type,
     type: mapAbsenceType(a.type),
-    startDate: toIsoDate(a.date_since),
-    endDate: toIsoDate(a.date_until),
+    startDate: toIsoDate(a.date_since, {
+      absenceId: a.id,
+      field: "date_since",
+    }),
+    endDate: toIsoDate(a.date_until, { absenceId: a.id, field: "date_until" }),
     halfDay: a.count_days === 0.5,
     reason: a.note,
     status: mapAbsenceStatus(a.status),
