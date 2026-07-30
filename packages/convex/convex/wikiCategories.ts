@@ -18,6 +18,20 @@ export const PALETTE = [
   "#B8862B",
 ];
 
+/** The default categories baked into the ported prototype (DEFAULT_CATS) —
+ * seeded once via `ensureDefaults` the first time the wiki has no
+ * categories yet, exactly like the prototype's own `if(!cats.length) cats =
+ * [...DEFAULT_CATS]` bootstrap. Not re-applied afterward: once a manager
+ * has edited/deleted any of these, that's the source of truth. */
+const DEFAULT_CATEGORIES = [
+  { name: "Advantis intern", color: "#4A5AB8" },
+  { name: "Uta Prozesse", color: "#0E8A83" },
+  { name: "Sales", color: "#C77E1A" },
+  { name: "Onboarding", color: "#4E8A3C" },
+  { name: "Customer Care", color: "#B2496E" },
+  { name: "Listen", color: "#7A5FBF" },
+];
+
 /** Wiki categories (Kategorien), alphabetical. */
 export const list = query({
   args: {},
@@ -27,6 +41,28 @@ export const list = query({
     return rows
       .map((c) => ({ _id: c._id, name: c.name, color: c.color }))
       .sort((a, b) => a.name.localeCompare(b.name, "de"));
+  },
+});
+
+/** Idempotent — only inserts the defaults when the table is empty (i.e.
+ * nobody has created or migrated any category yet). Safe to call from any
+ * signed-in session on load; a no-op otherwise. */
+export const ensureDefaults = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    const existing = await ctx.db.query("wikiCategories").first();
+    if (existing) return { seeded: false };
+    const now = Date.now();
+    for (const c of DEFAULT_CATEGORIES) {
+      await ctx.db.insert("wikiCategories", {
+        name: c.name,
+        color: c.color,
+        createdByUserId: user._id,
+        createdAt: now,
+      });
+    }
+    return { seeded: true };
   },
 });
 

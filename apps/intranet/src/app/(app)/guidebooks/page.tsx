@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -289,8 +289,17 @@ export default function GuidebooksPage() {
   const handleError = useErrorHandler();
 
   const items = useGridItems();
-  const wikiCategories = useQuery(api.wikiCategories.list) ?? EMPTY_CATEGORIES;
+  const wikiCategoriesRaw = useQuery(api.wikiCategories.list);
+  const wikiCategories = wikiCategoriesRaw ?? EMPTY_CATEGORIES;
   const extend = useMutation(api.wikiEntries.update);
+  const ensureDefaultCategories = useMutation(api.wikiCategories.ensureDefaults);
+
+  // Seed the prototype's default categories the first time anyone loads the
+  // wiki with none yet — mirrors the original app's own lazy bootstrap
+  // rather than requiring a manager to notice and create them by hand.
+  useEffect(() => {
+    if (wikiCategoriesRaw?.length === 0) void ensureDefaultCategories({});
+  }, [wikiCategoriesRaw, ensureDefaultCategories]);
 
   const [search, setSearch] = useState("");
   const [activeCategoryKeys, setActiveCategoryKeys] = useState<Set<string>>(new Set());
