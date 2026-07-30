@@ -5,11 +5,15 @@
   "announcements": "Announcements",
   "guidebooks": "Guidebooks",
   "applicants": "Applicants",
+  "recent": "Recent",
   "noResults": "No results found",
-  "emptyState": "Start typing to search pages, people, and announcements",
   "hint": "Search",
   "actions": "Actions",
   "actionNewEvent": "New event",
   "actionNewAnnouncement": "New announcement",
-  "actionUpload": "Upload file"
+  "actionUpload": "Upload file",
+  "clearSearch": "Clear search",
+  "navigate": "Navigate",
+  "select": "Select",
+  "close": "Close"
 }
