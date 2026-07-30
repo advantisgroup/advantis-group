@@ -196,32 +196,36 @@ export function useOneDriveApi() {
       ): Promise<WikiAttachmentUpload> =>
         new Promise<WikiAttachmentUpload>((resolve, reject) => {
           void (async () => {
-            const token = await getToken();
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", `${API}/onedrive/wiki/${encodeURIComponent(slug)}/attach`);
-            if (token) xhr.setRequestHeader("authorization", `Bearer ${token}`);
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable && onProgress) {
-                onProgress(e.loaded / e.total);
-              }
-            };
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                resolve(JSON.parse(xhr.responseText) as WikiAttachmentUpload);
-              } else {
-                let message = "Upload failed";
-                try {
-                  message = (JSON.parse(xhr.responseText) as { error?: string }).error ?? message;
-                } catch {
-                  // keep generic
+            try {
+              const token = await getToken();
+              const xhr = new XMLHttpRequest();
+              xhr.open("POST", `${API}/onedrive/wiki/${encodeURIComponent(slug)}/attach`);
+              if (token) xhr.setRequestHeader("authorization", `Bearer ${token}`);
+              xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable && onProgress) {
+                  onProgress(e.loaded / e.total);
                 }
-                reject(new Error(message));
-              }
-            };
-            xhr.onerror = () => reject(new Error("Upload failed"));
-            const form = new FormData();
-            form.append("file", file);
-            xhr.send(form);
+              };
+              xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                  resolve(JSON.parse(xhr.responseText) as WikiAttachmentUpload);
+                } else {
+                  let message = "Upload failed";
+                  try {
+                    message = (JSON.parse(xhr.responseText) as { error?: string }).error ?? message;
+                  } catch {
+                    // keep generic
+                  }
+                  reject(new Error(message));
+                }
+              };
+              xhr.onerror = () => reject(new Error("Upload failed"));
+              const form = new FormData();
+              form.append("file", file);
+              xhr.send(form);
+            } catch (error) {
+              reject(error instanceof Error ? error : new Error("Upload failed"));
+            }
           })();
         }),
 

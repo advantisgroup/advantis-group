@@ -31,17 +31,21 @@ export function AttachmentDropZone({
     <div
       className={cn("relative", className)}
       onDragOver={(e) => {
-        if (disabled || !e.dataTransfer.types.includes("Files")) return;
+        // Always suppress the browser's default (navigating to the dropped
+        // file) for a file drag — even when disabled, only the highlight
+        // and onFiles below are conditional, not the preventDefault.
+        if (!e.dataTransfer.types.includes("Files")) return;
         e.preventDefault();
-        setDragging(true);
+        if (!disabled) setDragging(true);
       }}
       onDragLeave={(e) => {
         if (e.currentTarget === e.target) setDragging(false);
       }}
       onDrop={(e) => {
-        if (disabled) return;
+        if (!e.dataTransfer.types.includes("Files")) return;
         e.preventDefault();
         setDragging(false);
+        if (disabled) return;
         const files = Array.from(e.dataTransfer.files ?? []);
         if (files.length > 0) onFiles(files);
       }}

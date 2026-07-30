@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -218,7 +218,6 @@ export function EntryDialog({
   const entries = useQuery(api.wikiEntries.list) ?? [];
   const create = useMutation(api.wikiEntries.create);
   const update = useMutation(api.wikiEntries.update);
-  const rollbackEntry = useMutation(api.wikiEntries.remove);
   const addAttachment = useMutation(api.guidebookAttachments.add);
   const oneDriveApi = useOneDriveApi();
   const attachmentUpload = useAttachmentUpload();
@@ -238,6 +237,11 @@ export function EntryDialog({
   );
   const [busy, setBusy] = useState(false);
 
+  // Set once a "new" submission's create call succeeds; a retry after a
+  // failed attachment phase then updates this same entry instead of
+  // creating a second one under a suffixed slug.
+  const createdRef = useRef<{ id: Id<"wikiEntries">; slug: string } | null>(null);
+
   // Re-seed the form whenever a different entry (or "new") opens.
   const [seededFor, setSeededFor] = useState(entry);
   if (entry !== seededFor) {
@@ -252,6 +256,7 @@ export function EntryDialog({
       isEditing ? msToDateInput(entry.validUntil) : msToDateInput(addMonths(Date.now(), 3)),
     );
     attachmentUpload.reset();
+    createdRef.current = null;
   }
 
   async function onSubmit() {
@@ -274,14 +279,24 @@ export function EntryDialog({
         await update({ entryId: entry._id, ...patch });
         toast.success(t("entryUpdated"));
       } else {
-        const taken = new Set([...entries.map((e) => e.slug), ...staticGuidebookSlugs()]);
-        let slug = slugify(thema);
-        let suffix = 2;
-        while (taken.has(slug)) {
-          slug = `${slugify(thema)}-${suffix}`;
-          suffix++;
+        let slug: string;
+        if (createdRef.current) {
+          // A previous attempt already created this entry and only the
+          // attachment phase failed — apply any field edits since then
+          // instead of creating a second entry.
+          slug = createdRef.current.slug;
+          await update({ entryId: createdRef.current.id, ...patch });
+        } else {
+          const taken = new Set([...entries.map((e) => e.slug), ...staticGuidebookSlugs()]);
+          slug = slugify(thema);
+          let suffix = 2;
+          while (taken.has(slug)) {
+            slug = `${slugify(thema)}-${suffix}`;
+            suffix++;
+          }
+          const created = await create({ slug, ...patch });
+          createdRef.current = { id: created.id, slug };
         }
-        const created = await create({ slug, ...patch });
         if (attachmentUpload.entries.length > 0) {
           attachmentUpload.setUploading(true);
           try {
@@ -291,14 +306,8 @@ export function EntryDialog({
               oneDriveApi.attachToWiki,
               addAttachment,
               attachmentUpload.setFileProgress,
+              attachmentUpload.removeByFile,
             );
-          } catch (attachError) {
-            // The entry is already committed under `slug` — leaving it in
-            // place would make a retry either collide on that slug or (once
-            // the entries list refetches) mint a second, suffixed-slug entry.
-            // Roll it back so the form can safely be resubmitted as-is.
-            await rollbackEntry({ entryId: created.id }).catch(() => {});
-            throw attachError;
           } finally {
             attachmentUpload.setUploading(false);
           }

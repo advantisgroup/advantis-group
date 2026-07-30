@@ -83,6 +83,13 @@ export function useAttachmentUpload() {
     setEntries((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  /** Drop one entry by file reference rather than index — for a caller that
+   *  finishes entries one at a time out of order (e.g. a parallel non-Convex
+   *  upload batch) and can't track a stable index into the live array. */
+  const removeByFile = useCallback((file: File) => {
+    setEntries((prev) => prev.filter((e) => e.file !== file));
+  }, []);
+
   const reset = useCallback(() => setEntries([]), []);
 
   /** Live progress for a non-Convex upload path (e.g. OneDrive) driving this
@@ -151,6 +158,7 @@ export function useAttachmentUpload() {
     add,
     addOneDriveFile,
     remove,
+    removeByFile,
     reset,
     uploadAll,
     rollback,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -30,10 +30,14 @@ export default function NewGuidebookPage() {
   const isManager = useIsManager();
   const customPages = useQuery(api.guidebookPages.list);
   const createPage = useMutation(api.guidebookPages.create);
-  const rollbackPage = useMutation(api.guidebookPages.remove);
+  const updatePage = useMutation(api.guidebookPages.update);
   const addAttachment = useMutation(api.guidebookAttachments.add);
   const oneDriveApi = useOneDriveApi();
   const attachmentUpload = useAttachmentUpload();
+  // Set once a submission's create call succeeds; a retry after a failed
+  // attachment phase then updates this same page instead of creating a
+  // second one under a suffixed slug.
+  const createdRef = useRef<{ id: Id<"guidebookPages">; slug: string } | null>(null);
 
   const takenSlugs = useMemo(
     () => new Set([...staticGuidebookSlugs(), ...(customPages ?? []).map((p) => p.slug)]),
@@ -49,9 +53,7 @@ export default function NewGuidebookPage() {
   }
 
   async function handleSave(data: GuidebookFormData) {
-    const slug = uniqueSlug(data.title);
-    const { id: createdId, slug: createdSlug } = await createPage({
-      slug,
+    const pageFields = {
       title: data.title,
       description: data.description,
       topic: data.topic,
@@ -59,30 +61,37 @@ export default function NewGuidebookPage() {
       minRole: data.minRole ?? undefined,
       blocks: serializeBlocks(data.blocks),
       imageStorageIds: imageStorageIdsOf(data.blocks) as Id<"_storage">[],
-    });
+    };
+    let slug: string;
+    if (createdRef.current) {
+      // A previous attempt already created this page and only the
+      // attachment phase failed — apply any field edits since then instead
+      // of creating a second page.
+      slug = createdRef.current.slug;
+      await updatePage({ pageId: createdRef.current.id, ...pageFields });
+    } else {
+      slug = uniqueSlug(data.title);
+      const { id, slug: createdSlug } = await createPage({ slug, ...pageFields });
+      createdRef.current = { id, slug: createdSlug };
+      slug = createdSlug;
+    }
     if (attachmentUpload.entries.length > 0) {
       attachmentUpload.setUploading(true);
       try {
         await attachPendingFiles(
-          createdSlug,
+          slug,
           attachmentUpload.entries.map((e) => e.file),
           oneDriveApi.attachToWiki,
           addAttachment,
           attachmentUpload.setFileProgress,
+          attachmentUpload.removeByFile,
         );
-      } catch (attachError) {
-        // The page is already committed under `createdSlug` — leaving it in
-        // place would make a retry either collide on that slug or (once the
-        // page list refetches) mint a second, suffixed-slug page. Roll it
-        // back so the form can safely be resubmitted as-is.
-        await rollbackPage({ pageId: createdId }).catch(() => {});
-        throw attachError;
       } finally {
         attachmentUpload.setUploading(false);
       }
     }
     toast.success(t("pageCreated"));
-    router.push(`/guidebooks/${createdSlug}`);
+    router.push(`/guidebooks/${slug}`);
   }
 
   if (!isManager) {
