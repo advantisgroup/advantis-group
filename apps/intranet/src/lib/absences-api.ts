@@ -5,6 +5,17 @@ import { useEffect, useState } from "react";
 import { useEdenApi } from "@/lib/eden";
 
 /**
+ * Temporary: mirrors a client-side debug log into Vercel's server-side
+ * runtime logs (via POST /clockodo/debug-log) so it's visible without
+ * devtools — e.g. from a phone. Fire-and-forget; never let a logging call
+ * break the actual feature. Remove once the absence date-parsing bug is
+ * diagnosed.
+ */
+function remoteDebugLog(eden: ReturnType<typeof useEdenApi>, tag: string, payload: unknown) {
+  void eden.clockodo["debug-log"].post({ tag, payload }).catch(() => {});
+}
+
+/**
  * Live Clockodo absence reads via apps/api — no Convex mirror, no
  * reactivity. Absences change rarely and don't need to be reactive (unlike
  * ActivityTrack's working/break/clocked-out signal), so every call here hits
@@ -52,14 +63,17 @@ export function useMyAbsences(): { absences: MyAbsence[] | undefined; refresh: (
       // as live objects, not JSON.stringify'd, so a Date-vs-string mismatch
       // is visible in devtools instead of being coerced away).
       console.log("[absences] GET /clockodo/absences/me ->", { data, error });
+      remoteDebugLog(eden, "absences/me response", { data, error });
       if (data?.absences?.[0]) {
         const sample = data.absences[0];
-        console.log("[absences] sample record field types:", {
+        const fieldTypes = {
           startDate: sample.startDate,
           startDateType: typeof sample.startDate,
           endDate: sample.endDate,
           endDateType: typeof sample.endDate,
-        });
+        };
+        console.log("[absences] sample record field types:", fieldTypes);
+        remoteDebugLog(eden, "absences/me sample field types", fieldTypes);
       }
       if (!cancelled) setAbsences(data?.absences ?? []);
     })();
@@ -86,14 +100,17 @@ export function useAbsencesCalendar(start: string, end: string): CalendarAbsence
     void (async () => {
       const { data, error } = await eden.clockodo.absences.calendar.get({ query: { start, end } });
       console.log("[absences] GET /clockodo/absences/calendar ->", { data, error });
+      remoteDebugLog(eden, "absences/calendar response", { data, error });
       if (data?.absences?.[0]) {
         const sample = data.absences[0];
-        console.log("[absences] calendar sample record field types:", {
+        const fieldTypes = {
           startDate: sample.startDate,
           startDateType: typeof sample.startDate,
           endDate: sample.endDate,
           endDateType: typeof sample.endDate,
-        });
+        };
+        console.log("[absences] calendar sample record field types:", fieldTypes);
+        remoteDebugLog(eden, "absences/calendar sample field types", fieldTypes);
       }
       if (!cancelled) setAbsences(data?.absences ?? []);
     })();
