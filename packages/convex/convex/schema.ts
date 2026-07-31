@@ -2322,4 +2322,77 @@ export default defineSchema({
     updatedByUserId: v.id("users"),
     updatedAt: v.number(),
   }),
+
+  // --- Sales Cockpit (Telefonieren / Projekte / Lexikon) -------------------
+  // Ported from a standalone prototype (window.storage-backed) into real
+  // Convex-persisted data. A "Projekt" is a calling campaign: an opening
+  // line, general benefits/goals, Salesforce input notes and attached
+  // documents; each project's conversation routes ("Wege") live in the
+  // separate `salesCockpitWege` table below rather than as a nested array,
+  // so a Weg's objection list can grow without rewriting the whole project.
+  salesCockpitProjects: defineTable({
+    titel: v.string(),
+    start: v.optional(v.string()), // ISO date (YYYY-MM-DD)
+    einstiegssatz: v.optional(v.string()),
+    benefits: v.array(v.string()),
+    ziele: v.array(v.string()),
+    sfInput: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  }).index("by_createdAt", ["createdAt"]),
+
+  // One row per conversation route ("Weg") within a project. `einwaende` is
+  // a small, bounded list of {einwand, antwort} pairs authored inline in the
+  // project form, so keeping it as a nested array here (rather than yet
+  // another table) is simplest — it never needs its own index or partial
+  // update.
+  salesCockpitWege: defineTable({
+    projectId: v.id("salesCockpitProjects"),
+    name: v.string(),
+    einwaende: v.array(v.object({ einwand: v.string(), antwort: v.string() })),
+    benefit: v.optional(v.string()),
+    ziele: v.optional(v.string()),
+    order: v.number(),
+  }).index("by_project", ["projectId"]),
+
+  // Files attached to a project, grouped by category (Projektplan / Script /
+  // sonstige Datei) — mirrors the prototype's `files.plan/scripte/dateien`
+  // buckets but as rows referencing real Convex storage instead of
+  // base64/localStorage blobs.
+  salesCockpitFiles: defineTable({
+    projectId: v.id("salesCockpitProjects"),
+    category: v.union(v.literal("plan"), v.literal("scripte"), v.literal("dateien")),
+    storageId: v.id("_storage"),
+    name: v.string(),
+    size: v.number(),
+    uploadedByUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_project", ["projectId"])
+    .index("by_storageId", ["storageId"]),
+
+  // Knowledge-base ("Lexikon") entries: an uploaded document with a title
+  // and tags, searchable by keyword. `content` holds the extracted text for
+  // text-ish files (txt/csv/md/html/json/log/xml) so search can match inside
+  // the file body, not just the title/tags — mirrors the prototype's
+  // client-side full-text search, now server-side. The entry count is small
+  // (a company knowledge base, not a document store), so `search` just
+  // `.collect()`s and does a case-insensitive substring match in JS rather
+  // than a Convex search index — simpler, and matches the prototype's exact
+  // substring/highlight behaviour instead of token-based search relevance.
+  salesCockpitLexikon: defineTable({
+    titel: v.string(),
+    tags: v.array(v.string()),
+    fileName: v.string(),
+    storageId: v.id("_storage"),
+    size: v.number(),
+    isText: v.boolean(),
+    /** Extracted text content for text files; undefined for binary files. */
+    content: v.optional(v.string()),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_storageId", ["storageId"]),
 });

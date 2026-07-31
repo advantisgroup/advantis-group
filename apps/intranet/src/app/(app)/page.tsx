@@ -12,6 +12,7 @@ import {
   Heart,
   Megaphone,
   NotebookPen,
+  PhoneCall,
   ShieldCheck,
   Settings2,
   Upload,
@@ -249,6 +250,12 @@ export default function DashboardPage() {
           <Link href="/files">
             <Upload className="mr-1.5 size-3.5" />
             {t("actionUpload")}
+          </Link>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/sales-cockpit">
+            <PhoneCall className="mr-1.5 size-3.5" />
+            {t("actionSalesCockpit")}
           </Link>
         </Button>
         <button

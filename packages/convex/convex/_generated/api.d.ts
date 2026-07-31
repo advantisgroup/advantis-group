@@ -113,6 +113,7 @@ import type * as performanceQueries from "../performanceQueries.js";
 import type * as performanceTopics from "../performanceTopics.js";
 import type * as performanceUploadParse from "../performanceUploadParse.js";
 import type * as presence from "../presence.js";
+import type * as salesCockpit from "../salesCockpit.js";
 import type * as suggestionCategories from "../suggestionCategories.js";
 import type * as suggestions from "../suggestions.js";
 import type * as tourProgress from "../tourProgress.js";
@@ -238,6 +239,7 @@ declare const fullApi: ApiFromModules<{
   performanceTopics: typeof performanceTopics;
   performanceUploadParse: typeof performanceUploadParse;
   presence: typeof presence;
+  salesCockpit: typeof salesCockpit;
   suggestionCategories: typeof suggestionCategories;
   suggestions: typeof suggestions;
   tourProgress: typeof tourProgress;

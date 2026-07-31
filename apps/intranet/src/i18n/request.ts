@@ -41,6 +41,7 @@ import dePerformance from "./messages/de/Performance.json";
 import deprivacy from "./messages/de/privacy.json";
 import deProfile from "./messages/de/Profile.json";
 import deRoles from "./messages/de/Roles.json";
+import deSalesCockpit from "./messages/de/SalesCockpit.json";
 import deSettings from "./messages/de/Settings.json";
 import deSuggestions from "./messages/de/Suggestions.json";
 import deTeams from "./messages/de/Teams.json";
@@ -83,6 +84,7 @@ import enPerformance from "./messages/en/Performance.json";
 import enprivacy from "./messages/en/privacy.json";
 import enProfile from "./messages/en/Profile.json";
 import enRoles from "./messages/en/Roles.json";
+import enSalesCockpit from "./messages/en/SalesCockpit.json";
 import enSettings from "./messages/en/Settings.json";
 import enSuggestions from "./messages/en/Suggestions.json";
 import enTeams from "./messages/en/Teams.json";
@@ -141,6 +143,7 @@ const messagesByLocale = {
     FeatureFlags: enFeatureFlags,
     Suggestions: enSuggestions,
     ItTickets: enItTickets,
+    SalesCockpit: enSalesCockpit,
   },
   de: {
     App: deApp,
@@ -185,6 +188,7 @@ const messagesByLocale = {
     FeatureFlags: deFeatureFlags,
     Suggestions: deSuggestions,
     ItTickets: deItTickets,
+    SalesCockpit: deSalesCockpit,
   },
 } satisfies Record<Locale, Record<string, unknown>>;
 
