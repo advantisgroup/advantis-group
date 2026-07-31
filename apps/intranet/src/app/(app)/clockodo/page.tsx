@@ -30,6 +30,7 @@ import { toast } from "sonner";
 
 import { ClockodoAdminPanel } from "@/components/clockodo/ClockodoAdminPanel";
 import { ClockStartPicker } from "@/components/clockodo/ClockStartPicker";
+import { ClockStatusGradient } from "@/components/clockodo/ClockStatusGradient";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ErrorFallback } from "@/components/ErrorFallback";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
@@ -321,8 +322,9 @@ function ClockControl() {
 
   return (
     <>
-      <Card className="border-border/70 shadow-none">
-        <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+      <Card className="relative overflow-hidden border-border/70 shadow-none">
+        <ClockStatusGradient status={clock?.status ?? null} />
+        <CardContent className="relative z-10 flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span
               className={cn(

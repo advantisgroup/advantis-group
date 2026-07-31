@@ -4,6 +4,7 @@ import { Clock3, Coffee, Play, Square } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { ClockStartPicker } from "@/components/clockodo/ClockStartPicker";
+import { ClockStatusGradient } from "@/components/clockodo/ClockStatusGradient";
 import { Link } from "@/components/Link";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
@@ -43,12 +44,13 @@ export function ClockodoHeaderControl() {
       <PopoverTrigger asChild>
         <button
           type="button"
-          className="hidden min-w-0 items-center gap-2 rounded-md border border-border/70 bg-card px-2.5 py-1.5 text-left transition-colors hover:bg-accent lg:flex"
+          className="relative hidden min-w-0 items-center gap-2 overflow-hidden rounded-md border border-border/70 bg-card px-2.5 py-1.5 text-left transition-colors hover:bg-accent lg:flex"
           aria-label={t("openClockodo")}
         >
+          <ClockStatusGradient status={state.status} />
           <span
             className={cn(
-              "relative grid size-6 shrink-0 place-items-center rounded-full",
+              "relative z-10 grid size-6 shrink-0 place-items-center rounded-full",
               clockStatusClassName(state.status),
             )}
           >
@@ -57,7 +59,7 @@ export function ClockodoHeaderControl() {
               <span className="absolute right-0 top-0 size-1.5 animate-pulse rounded-full bg-emerald-500" />
             )}
           </span>
-          <span className="min-w-0 leading-tight">
+          <span className="relative z-10 min-w-0 leading-tight">
             <span className="block max-w-28 truncate text-[11px] font-medium">
               {state.accountName}
             </span>
