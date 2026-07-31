@@ -83,7 +83,8 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const isAnnouncementComposer =
     pathname === "/announcements/new" ||
     (pathname.startsWith("/announcements/") && pathname.endsWith("/edit"));
-  const immersive = pathname.startsWith("/chat") || isAnnouncementComposer;
+  const immersive =
+    pathname.startsWith("/chat") || pathname.startsWith("/wiki-chat") || isAnnouncementComposer;
 
   // The Updates section reads like a blog (Anthropic/GitHub-changelog style)
   // rather than an app surface — the nav sidebar, bottom nav and the sitewide

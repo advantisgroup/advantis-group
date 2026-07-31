@@ -109,7 +109,7 @@ function makeChat(title: string): Chat {
   };
 }
 
-export function WikiChat() {
+export function WikiChat({ className }: { className?: string } = {}) {
   const t = useTranslations("Guidebooks");
   const locale = useLocale();
   const loadingQuotes = locale === "de" ? LOADING_QUOTES_DE : LOADING_QUOTES_EN;
@@ -124,6 +124,8 @@ export function WikiChat() {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const atBottomRef = useRef(true);
 
   // Cross-origin requests to the API can't rely on the Clerk cookie, so send
   // the session token as a Bearer header (matches ConversationView).
@@ -162,9 +164,21 @@ export function WikiChat() {
   const activeChat = useMemo(() => chats.find((c) => c.id === activeId) ?? null, [chats, activeId]);
   const messages = useMemo(() => activeChat?.messages ?? [], [activeChat]);
 
+  // Only auto-scroll when a message is added or a reply starts/stops —
+  // not on every streamed chunk — and only if the reader is already near
+  // the bottom, so it doesn't yank the viewport on mobile mid-conversation.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    if (atBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages.length, loading]);
+
+  function onScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = el.scrollHeight - el.scrollTop - el.clientHeight;
+    atBottomRef.current = distance < 120;
+  }
 
   // --- Cycle loading quotes + elapsed timer -------------------------------
   useEffect(() => {
@@ -268,6 +282,7 @@ export function WikiChat() {
     const text = input.trim();
     if (!text || loading) return;
     setInput("");
+    atBottomRef.current = true;
 
     // Ensure an active chat exists.
     let chatId = activeId;
@@ -351,7 +366,12 @@ export function WikiChat() {
 
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="flex h-full min-h-0 overflow-hidden rounded-xl border border-border bg-background">
+      <div
+        className={cn(
+          "flex h-full min-h-0 overflow-hidden rounded-xl border border-border bg-background",
+          className,
+        )}
+      >
         {/* Sidebar — chat history */}
         <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-muted/30 sm:flex">
           <div className="flex items-center justify-between gap-2 px-3 pt-3 pb-1.5">
@@ -458,7 +478,7 @@ export function WikiChat() {
             </button>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
+          <div ref={scrollRef} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
             {messages.length === 0 && !loading && (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
                 <div className="text-4xl">💬</div>
@@ -475,7 +495,7 @@ export function WikiChat() {
                 >
                   <div
                     className={cn(
-                      "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                      "max-w-[90%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed sm:max-w-[75%]",
                       m.role === "user"
                         ? "rounded-br-sm bg-primary text-primary-foreground"
                         : m.error
@@ -533,7 +553,7 @@ export function WikiChat() {
           </div>
 
           {/* Composer */}
-          <div className="flex gap-2 border-t border-border p-3">
+          <div className="flex gap-2 border-t border-border p-3 sm:p-4">
             <textarea
               rows={1}
               value={input}

@@ -221,6 +221,8 @@
     "privacyAria": "Datenschutz-Hinweis",
     "privacyHint": "Deine Chats sind verschlüsselt und nur für dich sichtbar.",
     "emptyPrompt": "Stell mir eine Frage zu UTA-Produkten,\nTarifen, Mautboxen oder Abläufen.",
-    "placeholder": "Frage eingeben… (Enter zum Senden)"
+    "placeholder": "Frage eingeben… (Enter zum Senden)",
+    "openFull": "Chat in voller Ansicht öffnen",
+    "openFullHint": "Mehr Platz zum Atmen — eigene Seite, wie ein echter Chat."
   }
 }

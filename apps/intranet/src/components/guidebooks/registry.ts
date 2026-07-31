@@ -120,6 +120,8 @@ export const GUIDEBOOKS: Guidebook[] = [
     category: "interactive",
     teams: ["customer-care"],
     Component: CaseSearchGuidebook,
+    minimalChrome: true,
+    wide: true,
   },
   {
     slug: "wallbox-sales-academy",

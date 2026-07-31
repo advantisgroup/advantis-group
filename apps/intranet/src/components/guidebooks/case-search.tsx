@@ -5,13 +5,13 @@ import { type ReactNode, useMemo, useState } from "react";
 import { Check, List, Map, MessageSquare, RotateCcw, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import { SOPPanel } from "./sop-panel";
 import { StationsFinder } from "./stations-finder";
-import { WikiChat } from "./wiki-chat";
 
 interface CaseRow {
   recordType: string;
@@ -2693,6 +2693,7 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
 ];
 
 export function CaseSearchGuidebook() {
+  const t = useTranslations("Guidebooks");
   const [activeTab, setActiveTab] = useState<Tab>("sop");
 
   return (
@@ -2721,8 +2722,18 @@ export function CaseSearchGuidebook() {
         {activeTab === "sop" && <SOPPanel />}
         {activeTab === "search" && <CaseSearchTab />}
         {activeTab === "wiki" && (
-          <div className="h-[600px]">
-            <WikiChat />
+          <div className="flex h-[calc(100dvh-16rem)] min-h-[420px] flex-col items-center justify-center gap-4 rounded-xl border border-border bg-muted/20 p-8 text-center">
+            <MessageSquare className="h-10 w-10 text-muted-foreground" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{t("wikiChat.title")}</p>
+              <p className="max-w-sm text-sm text-muted-foreground">{t("wikiChat.openFullHint")}</p>
+            </div>
+            <Link
+              href="/wiki-chat"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {t("wikiChat.openFull")}
+            </Link>
           </div>
         )}
         {activeTab === "stations" && <StationsFinder />}

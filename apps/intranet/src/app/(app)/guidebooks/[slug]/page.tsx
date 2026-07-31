@@ -43,6 +43,7 @@ import { RichText } from "@/components/ui/rich-text";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { parseBlocks } from "@/lib/guidebook-blocks";
 import { formatDateTime, formatIsoDate } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import { msToDateInput } from "@/lib/wiki";
 
 const EMPTY_SLUGS: string[] = [];
@@ -247,7 +248,7 @@ export default function GuidebookPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className={cn("mx-auto", staticGuidebook?.wide ? "max-w-6xl" : "max-w-4xl")}>
       {guidebook && allowed && <ReadingProgress />}
       <div className="mb-4 flex items-center justify-between gap-3 print:hidden">
         <Link
