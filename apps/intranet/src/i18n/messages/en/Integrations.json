@@ -66,5 +66,41 @@
   "thursday": "Thu",
   "friday": "Fri",
   "saturday": "Sat",
-  "sunday": "Sun"
+  "sunday": "Sun",
+  "backToRoster": "Back to roster",
+  "edit": "Edit",
+  "doneEditing": "Done",
+  "cancel": "Cancel",
+  "apply": "Apply",
+  "notSet": "Not set",
+  "tabHistory": "History",
+  "unknownActor": "Unknown",
+  "selectAll": "Select all",
+  "selectedCount": "{count, plural, one {# selected} other {# selected}}",
+  "statusColumn": "Status",
+  "hoursThisWeekColumn": "Hours this week",
+  "hoursThisWeek": "{hours}h this week",
+  "exportCsv": "Export CSV",
+  "gapUnlinked": "Not linked to an intranet account",
+  "gapMissingHours": "Missing weekly target hours",
+  "gapMissingVacation": "Missing vacation entitlement",
+  "bulkSetVacationAction": "Set vacation days…",
+  "bulkSetHoursAction": "Set weekly hours…",
+  "bulkSetVacation": "Set vacation days for {count, plural, one {# employee} other {# employees}}",
+  "bulkSetHours": "Set weekly hours for {count, plural, one {# employee} other {# employees}}",
+  "bulkUpdated": "Updated {count, plural, one {# employee} other {# employees}}.",
+  "liveStatus": {
+    "working": "Working",
+    "break": "On break",
+    "clockedOut": "Clocked out"
+  },
+  "auditAction": {
+    "clockodo": {
+      "link": "Linked to intranet account",
+      "unlink": "Unlinked from intranet account",
+      "updateUser": "Updated profile",
+      "setTargetHours": "Set weekly hours",
+      "setVacation": "Set vacation entitlement"
+    }
+  }
 }

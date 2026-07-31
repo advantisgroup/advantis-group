@@ -2,6 +2,7 @@
 
 import { v } from "convex/values";
 
+import { internal } from "../../_generated/api";
 import { action } from "../../_generated/server";
 import { requireClockodoManagerAction } from "../lib/auth";
 import { clockodoFetch } from "./client";
@@ -262,6 +263,40 @@ export const createClockodoUser = action({
   },
 });
 
+const FIELD_LABELS: Record<string, string> = {
+  name: "name",
+  email: "email",
+  number: "number",
+  active: "active",
+  role: "role",
+  startDate: "start date",
+  exitDate: "exit date",
+  boss: "reports to",
+  language: "language",
+  canGenerallySeeAbsences: "can see absences",
+  canGenerallyManageAbsences: "can manage absences",
+  canAddCustomers: "can add customers",
+  exemptFromFlextime: "exempt from flextime",
+};
+
+/** Builds the History tab's "role: worker -> owner, ..." line — only for
+ * fields actually present in the patch, comparing against the fetched
+ * pre-patch value so the log reads as a real diff, not just "field set". */
+function describeUserChanges(
+  before: ClockodoUser,
+  patch: Record<string, unknown>,
+): string {
+  const parts: string[] = [];
+  for (const [field, label] of Object.entries(FIELD_LABELS)) {
+    if (!(field in patch)) continue;
+    const prev = (before as unknown as Record<string, unknown>)[field];
+    const next = patch[field];
+    if (prev === next) continue;
+    parts.push(`${label}: ${prev ?? "none"} → ${next ?? "none"}`);
+  }
+  return parts.join(", ");
+}
+
 /**
  * Edit a Clockodo user's profile, employment, and permission fields.
  * Manager+. Only the fields provided are sent (a PUT with a partial body),
@@ -285,7 +320,7 @@ export const updateClockodoUser = action({
     exemptFromFlextime: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<void> => {
-    await requireClockodoManagerAction(ctx);
+    const actor = await requireClockodoManagerAction(ctx);
     const { clockodoUserId, ...patch } = args;
     const body: Record<string, unknown> = {};
     if (patch.name !== undefined) body.name = patch.name;
@@ -309,10 +344,26 @@ export const updateClockodoUser = action({
     if (patch.exemptFromFlextime !== undefined) {
       body.exempt_from_flextime = patch.exemptFromFlextime;
     }
+
+    const beforeBody = await clockodoFetch<{ data: ClockodoUserWire }>(
+      `/api/v3/users/${clockodoUserId}`,
+    );
+    const before = toClockodoUser(beforeBody.data);
+
     await clockodoFetch(`/api/v3/users/${clockodoUserId}`, {
       method: "PUT",
       body,
     });
+
+    const detail = describeUserChanges(before, patch);
+    if (detail) {
+      await ctx.runMutation(internal.integrations.audit.recordClockodoAudit, {
+        actorUserId: actor._id,
+        action: "clockodo.updateUser",
+        target: String(clockodoUserId),
+        detail,
+      });
+    }
   },
 });
 
@@ -335,15 +386,23 @@ export const setTargetHours = action({
     sunday: v.number(),
   },
   handler: async (ctx, { clockodoUserId, dateSince, ...days }): Promise<void> => {
-    await requireClockodoManagerAction(ctx);
+    const actor = await requireClockodoManagerAction(ctx);
+    const effectiveDate = dateSince ?? new Date().toISOString().slice(0, 10);
     await clockodoFetch("/api/targethours", {
       method: "POST",
       body: {
         users_id: clockodoUserId,
         type: "weekly",
-        date_since: dateSince ?? new Date().toISOString().slice(0, 10),
+        date_since: effectiveDate,
         ...days,
       },
+    });
+    const total = WEEKDAYS.reduce((sum, day) => sum + (days[day] ?? 0), 0);
+    await ctx.runMutation(internal.integrations.audit.recordClockodoAudit, {
+      actorUserId: actor._id,
+      action: "clockodo.setTargetHours",
+      target: String(clockodoUserId),
+      detail: `${total}h/week from ${effectiveDate}`,
     });
   },
 });
@@ -356,14 +415,82 @@ export const setVacationEntitlement = action({
     yearSince: v.optional(v.number()),
   },
   handler: async (ctx, { clockodoUserId, daysPerYear, yearSince }): Promise<void> => {
-    await requireClockodoManagerAction(ctx);
+    const actor = await requireClockodoManagerAction(ctx);
+    const effectiveYear = yearSince ?? new Date().getFullYear();
     await clockodoFetch("/api/v2/holidaysQuota", {
       method: "POST",
       body: {
         users_id: clockodoUserId,
-        year_since: yearSince ?? new Date().getFullYear(),
+        year_since: effectiveYear,
         count: daysPerYear,
       },
     });
+    await ctx.runMutation(internal.integrations.audit.recordClockodoAudit, {
+      actorUserId: actor._id,
+      action: "clockodo.setVacation",
+      target: String(clockodoUserId),
+      detail: `${daysPerYear} days/year from ${effectiveYear}`,
+    });
+  },
+});
+
+interface ClockodoEntryWire {
+  time_since?: string | null;
+  time_until?: string | null;
+}
+
+/** Clockodo's time_since/time_until reject the fractional seconds
+ * Date#toISOString() includes — same fix as apps/api's clockodo.ts. */
+function toClockodoTimestamp(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+function mondayOfWeek(date: Date): Date {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const day = d.getUTCDay(); // 0=Sun..6=Sat
+  d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day));
+  return d;
+}
+
+/**
+ * Hours worked this week (Monday through now) for a batch of Clockodo
+ * users — one live entries fetch per user, for the admin roster's
+ * "Hours this week" column. Not cached: Clockodo is the only source of
+ * truth here and the roster is a manager-only, occasionally-viewed page,
+ * not a hot path worth adding cache-invalidation complexity for.
+ */
+export const getClockodoRosterHours = action({
+  args: { clockodoUserIds: v.array(v.number()) },
+  handler: async (
+    ctx,
+    { clockodoUserIds },
+  ): Promise<{ clockodoUserId: number; hoursThisWeek: number }[]> => {
+    await requireClockodoManagerAction(ctx);
+    const ids = clockodoUserIds.slice(0, 200);
+    const since = toClockodoTimestamp(mondayOfWeek(new Date()));
+    const until = toClockodoTimestamp(new Date());
+    return await Promise.all(
+      ids.map(async (clockodoUserId) => {
+        const qs = new URLSearchParams({
+          time_since: since,
+          time_until: until,
+          "filter[users_id]": String(clockodoUserId),
+        });
+        const body = await clockodoFetch<{ entries?: ClockodoEntryWire[] }>(
+          `/api/v2/entries?${qs}`,
+        ).catch((err) => {
+          console.error(`[clockodo] roster hours fetch failed for user ${clockodoUserId}:`, err);
+          return { entries: [] as ClockodoEntryWire[] };
+        });
+        const ms = (body.entries ?? []).reduce((sum, entry) => {
+          if (!entry.time_since) return sum;
+          const start = Date.parse(entry.time_since);
+          const end = entry.time_until ? Date.parse(entry.time_until) : Date.now();
+          if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return sum;
+          return sum + (end - start);
+        }, 0);
+        return { clockodoUserId, hoursThisWeek: Math.round((ms / 3_600_000) * 100) / 100 };
+      }),
+    );
   },
 });

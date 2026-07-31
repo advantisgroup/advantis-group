@@ -1951,10 +1951,22 @@ export default defineSchema({
   integrationsAuditLog: defineTable({
     actorUserId: v.id("users"),
     integration: v.union(v.literal("clockodo")),
-    action: v.union(v.literal("clockodo.link"), v.literal("clockodo.unlink")),
+    action: v.union(
+      v.literal("clockodo.link"),
+      v.literal("clockodo.unlink"),
+      v.literal("clockodo.updateUser"),
+      v.literal("clockodo.setTargetHours"),
+      v.literal("clockodo.setVacation"),
+    ),
     target: v.optional(v.string()),
+    // Human-readable summary of what changed (e.g. "role: worker -> owner")
+    // — the employee detail page's History tab reads this directly rather
+    // than reconstructing a diff from `action` + `target` alone.
+    detail: v.optional(v.string()),
     at: v.number(),
-  }).index("by_at", ["at"]),
+  })
+    .index("by_at", ["at"])
+    .index("by_integration_target", ["integration", "target"]),
 
   /**
    * Unified audit log (Group 10 of the backend QoL backlog) — a single
@@ -1988,6 +2000,7 @@ export default defineSchema({
     /** Only meaningful for `domain: "integrations"` (e.g. "clockodo"). */
     integration: v.optional(v.string()),
     target: v.optional(v.string()),
+    detail: v.optional(v.string()),
     at: v.number(),
   })
     .index("by_at", ["at"])

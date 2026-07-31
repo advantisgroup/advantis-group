@@ -17,6 +17,7 @@ export async function recordUnifiedAudit(
     action: string;
     integration?: string;
     target?: string;
+    detail?: string;
     at: number;
   },
 ): Promise<void> {

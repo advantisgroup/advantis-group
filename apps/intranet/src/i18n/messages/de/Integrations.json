@@ -66,5 +66,41 @@
   "thursday": "Do",
   "friday": "Fr",
   "saturday": "Sa",
-  "sunday": "So"
+  "sunday": "So",
+  "backToRoster": "Zurück zur Übersicht",
+  "edit": "Bearbeiten",
+  "doneEditing": "Fertig",
+  "cancel": "Abbrechen",
+  "apply": "Übernehmen",
+  "notSet": "Nicht festgelegt",
+  "tabHistory": "Verlauf",
+  "unknownActor": "Unbekannt",
+  "selectAll": "Alle auswählen",
+  "selectedCount": "{count} ausgewählt",
+  "statusColumn": "Status",
+  "hoursThisWeekColumn": "Stunden diese Woche",
+  "hoursThisWeek": "{hours}h diese Woche",
+  "exportCsv": "CSV exportieren",
+  "gapUnlinked": "Nicht mit einem Intranet-Konto verknüpft",
+  "gapMissingHours": "Keine Sollstunden festgelegt",
+  "gapMissingVacation": "Kein Urlaubsanspruch festgelegt",
+  "bulkSetVacationAction": "Urlaubstage festlegen…",
+  "bulkSetHoursAction": "Sollstunden festlegen…",
+  "bulkSetVacation": "Urlaubstage für {count} Mitarbeiter festlegen",
+  "bulkSetHours": "Sollstunden für {count} Mitarbeiter festlegen",
+  "bulkUpdated": "{count} Mitarbeiter aktualisiert.",
+  "liveStatus": {
+    "working": "Arbeitet",
+    "break": "Pause",
+    "clockedOut": "Ausgestempelt"
+  },
+  "auditAction": {
+    "clockodo": {
+      "link": "Mit Intranet-Konto verknüpft",
+      "unlink": "Verknüpfung mit Intranet-Konto aufgehoben",
+      "updateUser": "Profil aktualisiert",
+      "setTargetHours": "Sollstunden festgelegt",
+      "setVacation": "Urlaubsanspruch festgelegt"
+    }
+  }
 }

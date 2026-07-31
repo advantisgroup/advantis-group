@@ -650,6 +650,53 @@ export const inOfficeForUsers = query({
 });
 
 /**
+ * Pure-Clockodo clock status for the admin roster table — reads the
+ * cached `employeeStates` fields directly rather than the fused
+ * `finalState` (which also factors in Genesys/desktop activity), since
+ * this is specifically "what does Clockodo say", not the full
+ * ActivityTrack presence picture. Only covers Clockodo users who also
+ * happen to be in the `people` roster (ActivityTrack-tracked); anyone
+ * else resolves to `null` so the table can show a plain "—" instead of a
+ * wrong guess. Takes raw numeric Clockodo ids (`people.clockodoUserId` is
+ * stored as a string — converted internally) so the admin panel doesn't
+ * need its own copy of that conversion.
+ */
+export const clockodoStatusForRoster = query({
+  args: { clockodoUserIds: v.array(v.number()) },
+  returns: v.array(
+    v.object({
+      clockodoUserId: v.number(),
+      status: v.union(
+        v.literal("working"),
+        v.literal("break"),
+        v.literal("clockedOut"),
+        v.null(),
+      ),
+    }),
+  ),
+  handler: async (ctx, { clockodoUserIds }) => {
+    await requireCapability(ctx, "view_clockodo_team");
+    const ids = clockodoUserIds.slice(0, 500);
+    return await Promise.all(
+      ids.map(async (clockodoUserId) => {
+        const person = await ctx.db
+          .query("people")
+          .withIndex("by_clockodoUserId", (q) => q.eq("clockodoUserId", String(clockodoUserId)))
+          .unique();
+        if (!person?.employeeId) return { clockodoUserId, status: null };
+        const state = await getStateRow(ctx, person.employeeId);
+        if (!state || state.clockodoWorking === undefined) {
+          return { clockodoUserId, status: null };
+        }
+        if (state.clockodoWorking) return { clockodoUserId, status: "working" as const };
+        if (state.clockodoBreak) return { clockodoUserId, status: "break" as const };
+        return { clockodoUserId, status: "clockedOut" as const };
+      }),
+    );
+  },
+});
+
+/**
  * Batched state history for the overview's per-card day strips: today's state
  * changes for many employees in one reactive query, so the overview grid does
  * not open one subscription per card. No prior-day row is prepended — the

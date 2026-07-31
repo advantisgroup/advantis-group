@@ -1486,7 +1486,7 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
           ))}
       </div>
       {section === "admin" &&
-        (canManageClockodo ? <ClockodoAdminPanel embedded /> : <ForbiddenScreen />)}
+        (canManageClockodo ? <ClockodoAdminPanel /> : <ForbiddenScreen />)}
     </ErrorBoundary>
   );
 }
