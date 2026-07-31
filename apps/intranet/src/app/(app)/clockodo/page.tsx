@@ -2,7 +2,6 @@
 
 import {
   type ReactNode,
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -10,10 +9,12 @@ import {
 
 import {
   CalendarArrowDown,
+  Check,
   ChevronLeft,
   ChevronRight,
   CircleDashed,
   Clock3,
+  Link2Off,
   Plane,
   Plus,
   Play,
@@ -21,18 +22,18 @@ import {
   Square,
   Thermometer,
   Users,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import ClockodoIntegrationPage from "../admin/integrations/clockodo/page";
+import { ClockodoAdminPanel } from "@/components/clockodo/ClockodoAdminPanel";
+import { ClockStartPicker } from "@/components/clockodo/ClockStartPicker";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ErrorFallback } from "@/components/ErrorFallback";
-import {
-  useHasCapability,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
+import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,17 +66,32 @@ import {
   type AbsenceType,
   type CalendarAbsence,
   type MyAbsence,
+  type PendingApproval,
+  setAbsenceApprovalStatus,
   useAbsencesCalendar,
   useMyAbsences,
   usePendingAbsenceCount,
+  usePendingApprovals,
 } from "@/lib/absences-api";
+import {
+  clockStatusClassName,
+  elapsedSince,
+  useClockodoActions,
+  useClockodoClock,
+} from "@/lib/clockodo-clock";
 import { formatIsoDate } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { useEdenApi } from "@/lib/eden";
 import { cn } from "@/lib/utils";
 
 type ClockodoSection =
-  "dashboard" | "timetable" | "reports" | "planner" | "requests" | "admin";
+  | "dashboard"
+  | "timetable"
+  | "reports"
+  | "planner"
+  | "requests"
+  | "approvals"
+  | "admin";
 
 /**
  * Isolates one independently-fetched widget so its own crash shows a small
@@ -103,18 +119,6 @@ function SectionBoundary({
       {children}
     </ErrorBoundary>
   );
-}
-
-interface ClockControlState {
-  accountName: string;
-  status: "working" | "break" | "clockedOut";
-  since: string | null;
-  entryId: number | null;
-}
-
-interface ClockOption {
-  id: number;
-  name: string;
 }
 
 const TYPE_STYLE: Record<
@@ -274,92 +278,47 @@ function AbsencePill({ absence }: { absence: MyAbsence }) {
   );
 }
 
+/** Shown in place of a personal-account widget (the clock, the timetable
+ * grid) for someone who reached /clockodo via team access (manager or
+ * view_clockodo_team) rather than their own linked Clockodo account —
+ * otherwise the clock button spins forever waiting on a 403, and the
+ * timetable grid renders a confusingly-empty week that looks like "nothing
+ * scheduled" rather than "no personal account to show". */
+function NoPersonalClockodoAccount({ hint }: { hint: string }) {
+  const t = useTranslations("Absences");
+  return (
+    <Card className="border-border/70 shadow-none">
+      <CardContent className="flex flex-col items-center gap-2 p-8 text-center">
+        <span className="grid size-10 place-items-center rounded-md bg-muted text-muted-foreground">
+          <Link2Off className="size-5" />
+        </span>
+        <p className="font-medium">{t("noPersonalAccountTitle")}</p>
+        <p className="max-w-sm text-sm text-muted-foreground">{hint}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function ClockControl() {
   const t = useTranslations("Absences");
-  const eden = useEdenApi();
-  const [clock, setClock] = useState<ClockControlState | null>(null);
-  const [options, setOptions] = useState<{
-    customers: ClockOption[];
-    services: ClockOption[];
-  } | null>(null);
-  const [startOpen, setStartOpen] = useState(false);
-  const [customerId, setCustomerId] = useState("");
-  const [serviceId, setServiceId] = useState("");
-  const [busy, setBusy] = useState(false);
+  const user = useCurrentUser();
+  const { state: clock, now, refresh } = useClockodoClock(!!user.clockodoUserId);
+  const actions = useClockodoActions(clock, refresh);
 
-  const refresh = useCallback(async () => {
-    const { data } = await eden.clockodo.clock.me.get();
-    if (data) setClock(data);
-  }, [eden]);
-
-  useEffect(() => {
-    void refresh();
-    const id = window.setInterval(() => void refresh(), 60_000);
-    return () => window.clearInterval(id);
-  }, [refresh]);
-
-  async function start(customer: number, service: number) {
-    setBusy(true);
-    try {
-      const { error } = await eden.clockodo.clock.me.post({
-        customerId: customer,
-        serviceId: service,
-      });
-      if (error) throw error;
-      setStartOpen(false);
-      await refresh();
-      toast.success(t("clockStarted"));
-    } catch {
-      toast.error(t("clockActionFailed"));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function openStart() {
-    setBusy(true);
-    let opts = options;
-    if (!opts) {
-      const { data } = await eden.clockodo.clock.options.get();
-      if (!data) {
-        setBusy(false);
-        return;
-      }
-      opts = data;
-      setOptions(data);
-    }
-    setBusy(false);
-    // Nothing to choose between — just start the clock instead of making
-    // the person pick from single-item dropdowns.
-    if (opts.customers.length === 1 && opts.services.length === 1) {
-      await start(opts.customers[0].id, opts.services[0].id);
-      return;
-    }
-    setCustomerId(
-      opts.customers.length === 1 ? String(opts.customers[0].id) : ""
-    );
-    setServiceId(opts.services.length === 1 ? String(opts.services[0].id) : "");
-    setStartOpen(true);
-  }
-
-  async function stop() {
-    if (!clock?.entryId) return;
-    setBusy(true);
-    try {
-      const { error } = await eden.clockodo.clock
-        .me({ entryId: String(clock.entryId) })
-        .delete();
-      if (error) throw error;
-      await refresh();
-      toast.success(t("clockStopped"));
-    } catch {
-      toast.error(t("clockActionFailed"));
-    } finally {
-      setBusy(false);
-    }
+  if (!user.clockodoUserId) {
+    return <NoPersonalClockodoAccount hint={t("noPersonalAccountClockHint")} />;
   }
 
   const working = clock?.status === "working";
+  const duration = clock ? elapsedSince(clock.since, now) : null;
+  const detail = !clock
+    ? t("clockReady")
+    : clock.status === "working"
+      ? t("clockStatus.working", { duration: duration ?? "" })
+      : clock.status === "break"
+        ? t("clockStatus.break", { duration: duration ?? "" })
+        : t("clockStatus.clockedOut");
+
   return (
     <>
       <Card className="border-border/70 shadow-none">
@@ -367,87 +326,56 @@ function ClockControl() {
           <div className="flex items-center gap-3">
             <span
               className={cn(
-                "grid size-10 place-items-center rounded-md",
-                working
-                  ? "bg-emerald-500/15 text-emerald-700"
-                  : "bg-muted text-muted-foreground"
+                "relative grid size-10 place-items-center rounded-md",
+                clock ? clockStatusClassName(clock.status) : "bg-muted text-muted-foreground"
               )}
             >
               <Clock3 className="size-5" />
+              {working && (
+                <span className="absolute right-0.5 top-0.5 size-2 animate-pulse rounded-full bg-emerald-500" />
+              )}
             </span>
             <div>
               <p className="font-medium">
                 {clock?.accountName ?? t("clockLoading")}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {working && clock?.since
-                  ? t("clockRunningSince", {
-                      time: new Date(clock.since).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }),
-                    })
-                  : t("clockReady")}
-              </p>
+              <p className="text-sm text-muted-foreground">{detail}</p>
             </div>
           </div>
           {working ? (
             <Button
               variant="outline"
-              onClick={() => void stop()}
-              disabled={busy}
+              onClick={() => void actions.stop()}
+              disabled={actions.busy}
             >
               <Square className="size-4" />
               {t("stopClock")}
             </Button>
           ) : (
-            <Button onClick={() => void openStart()} disabled={!clock || busy}>
+            <Button onClick={() => void actions.openStart()} disabled={!clock || actions.busy}>
               <Play className="size-4" />
               {t("startClock")}
             </Button>
           )}
         </CardContent>
       </Card>
-      <Dialog open={startOpen} onOpenChange={setStartOpen}>
+      <Dialog open={actions.pickerOpen} onOpenChange={actions.setPickerOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("startClock")}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            <Select value={customerId} onValueChange={setCustomerId}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("clockCustomer")} />
-              </SelectTrigger>
-              <SelectContent>
-                {options?.customers.map(customer => (
-                  <SelectItem key={customer.id} value={String(customer.id)}>
-                    {customer.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={serviceId} onValueChange={setServiceId}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("clockService")} />
-              </SelectTrigger>
-              <SelectContent>
-                {options?.services.map(service => (
-                  <SelectItem key={service.id} value={String(service.id)}>
-                    {service.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <ClockStartPicker
+            options={actions.options}
+            customerId={actions.customerId}
+            onCustomerChange={actions.setCustomerId}
+            serviceId={actions.serviceId}
+            onServiceChange={actions.setServiceId}
+            busy={actions.busy}
+            onStart={() => void actions.start(Number(actions.customerId), Number(actions.serviceId))}
+          />
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setStartOpen(false)}>
+            <Button variant="ghost" onClick={() => actions.setPickerOpen(false)}>
               {t("cancel")}
-            </Button>
-            <Button
-              onClick={() => void start(Number(customerId), Number(serviceId))}
-              disabled={!customerId || !serviceId || busy}
-            >
-              {t("startClock")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -630,12 +558,18 @@ function Dashboard({
 
 function Timetable({ mine }: { mine: MyAbsence[] | undefined }) {
   const t = useTranslations("Absences");
+  const user = useCurrentUser();
   const locale = useLocale();
   const [offset, setOffset] = useState(0);
   const start = addDaysIso(isoToday(), offset * 7);
   const dates = Array.from({ length: 7 }, (_, index) =>
     addDaysIso(start, index)
   );
+
+  if (!user.clockodoUserId) {
+    return <NoPersonalClockodoAccount hint={t("noPersonalAccountTimetableHint")} />;
+  }
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex-row items-center justify-between border-b border-border/70">
@@ -987,6 +921,111 @@ function Requests({
   );
 }
 
+function Approvals({
+  approvals,
+  onDecided,
+}: {
+  approvals: PendingApproval[] | undefined;
+  onDecided: () => void;
+}) {
+  const t = useTranslations("Absences");
+  const locale = useLocale();
+  const eden = useEdenApi();
+  const [actingOn, setActingOn] = useState<string | null>(null);
+
+  async function decide(approval: PendingApproval, status: "approved" | "denied") {
+    setActingOn(approval.id);
+    try {
+      await setAbsenceApprovalStatus(eden, approval.id, status);
+      toast.success(status === "approved" ? t("approved") : t("denied"));
+      onDecided();
+    } catch {
+      toast.error(t("approvalActionFailed"));
+    } finally {
+      setActingOn(null);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader className="border-b border-border/70">
+        <CardTitle className="text-base">{t("pendingApprovals")}</CardTitle>
+        <p className="mt-1 text-sm text-muted-foreground">{t("pendingApprovalsHint")}</p>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border/70">
+          {approvals?.map(approval => {
+            const style = TYPE_STYLE[approval.type];
+            const Icon = style.icon;
+            return (
+              <div
+                key={approval.id}
+                className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    className={cn(
+                      "grid size-9 shrink-0 place-items-center rounded-md",
+                      style.className
+                    )}
+                  >
+                    <Icon className="size-4" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-medium">
+                      {approval.userName} · {t(approval.type)}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {formatIsoDate(approval.startDate, locale)} -{" "}
+                      {formatIsoDate(approval.endDate, locale)} ·{" "}
+                      {t("workingDaysLabel", {
+                        count: workingDays(
+                          approval.startDate,
+                          approval.endDate,
+                          approval.halfDay
+                        ),
+                      })}
+                    </p>
+                    {approval.reason && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {approval.reason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={actingOn === approval.id}
+                    onClick={() => void decide(approval, "denied")}
+                  >
+                    <X />
+                    {t("deny")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={actingOn === approval.id}
+                    onClick={() => void decide(approval, "approved")}
+                  >
+                    <Check />
+                    {t("approve")}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          {approvals !== undefined && approvals.length === 0 && (
+            <p className="px-5 py-12 text-center text-sm text-muted-foreground">
+              {t("noApprovals")}
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
   const t = useTranslations("Absences");
   const locale = useLocale();
@@ -1157,13 +1196,14 @@ function Reports({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
 export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
   const t = useTranslations("Absences");
   const router = useRouter();
-  const isManager = useIsManager();
-  const canManageClockodo = useHasCapability("access_integrations");
+  const hasTeamAccess = useHasCapability("view_clockodo_team");
+  const canManageClockodo = useHasCapability("manage_clockodo_team");
   const { absences: mine, refresh } = useMyAbsences();
   const calendarStart = addDaysIso(isoToday(), -31);
   const calendarEnd = addDaysIso(isoToday(), 90);
   const calendar = useAbsencesCalendar(calendarStart, calendarEnd);
-  const pending = usePendingAbsenceCount(isManager);
+  const pending = usePendingAbsenceCount(hasTeamAccess);
+  const { approvals, refresh: refreshApprovals } = usePendingApprovals(canManageClockodo);
 
   function exportIcs() {
     const approved = (mine ?? []).filter(
@@ -1189,6 +1229,7 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
       timetable: "/clockodo/timetable",
       requests: "/clockodo/requests",
       planner: "/clockodo/planner",
+      approvals: "/clockodo/approvals",
       reports: "/clockodo/reports",
       admin: "/clockodo/admin",
     };
@@ -1219,10 +1260,16 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
         <Requests mine={mine} onExport={exportIcs} onSaved={refresh} />
       )}
       {section === "planner" && <Planner calendar={calendar} />}
-      {section === "reports" && isManager && <Reports calendar={calendar} />}
-      {section === "admin" && canManageClockodo && (
-        <ClockodoIntegrationPage embedded />
-      )}
+      {section === "approvals" &&
+        (canManageClockodo ? (
+          <Approvals approvals={approvals} onDecided={refreshApprovals} />
+        ) : (
+          <ForbiddenScreen />
+        ))}
+      {section === "reports" &&
+        (hasTeamAccess ? <Reports calendar={calendar} /> : <ForbiddenScreen />)}
+      {section === "admin" &&
+        (canManageClockodo ? <ClockodoAdminPanel embedded /> : <ForbiddenScreen />)}
     </ErrorBoundary>
   );
 }

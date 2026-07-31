@@ -30,7 +30,7 @@ export const listWithLinks = query({
     }),
   ),
   handler: async (ctx) => {
-    await requireCapability(ctx, "access_integrations");
+    await requireCapability(ctx, "manage_clockodo_team");
     const users = await ctx.db.query("users").collect();
 
     return await Promise.all(

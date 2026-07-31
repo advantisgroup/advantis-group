@@ -114,6 +114,7 @@ export function Sidebar() {
   const user = useCurrentUser();
   const hasFilesAccess = useHasCapability("access_files");
   const hasApplicantAccess = useHasApplicantAccess();
+  const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
   const { setOpenMobile, state } = useSidebar();
   const featureFlags = useFeatureFlags();
   const disabledFeatures = new Set(
@@ -161,7 +162,7 @@ export function Sidebar() {
           icon: Calendar,
           tourAttr: "tour-nav-calendar",
         },
-        ...(user.clockodoUserId
+        ...(user.clockodoUserId || hasClockodoTeamAccess
           ? [
               {
                 href: "/clockodo",

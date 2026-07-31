@@ -76,6 +76,18 @@ export default function DirectoryPage() {
   });
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
 
+  // Device-active + clocked-in via Clockodo — a much more meaningful signal
+  // than the old "has an open intranet tab" heuristic, but not everyone is
+  // on the ActivityTrack roster, so `null` means "no data" rather than
+  // "not in office" and the render below falls back to the tab heuristic.
+  const userIds = useMemo(() => (people ?? []).map((p) => p._id), [people]);
+  const officePresence = useQuery(api.activity.state.inOfficeForUsers, { userIds });
+  const inOfficeByUserId = useMemo(() => {
+    const map = new Map<string, boolean | null>();
+    for (const row of officePresence ?? []) map.set(row.userId, row.inOffice);
+    return map;
+  }, [officePresence]);
+
   // "Out today" is Clockodo-derived and fetched live (see AGENTS.md's
   // Clockodo section) — Convex has no HTTP access, so directoryList itself
   // can no longer join this in; the page joins it client-side instead.
@@ -137,6 +149,8 @@ export default function DirectoryPage() {
 
   const personCard = (p: Person) => {
     const online = p.lastActiveAt != null && now - p.lastActiveAt < ONLINE_WINDOW_MS;
+    const officeSignal = inOfficeByUserId.get(p._id) ?? null;
+    const inOffice = officeSignal === null ? online : officeSignal;
     const outUntil = outUntilByUser.get(p._id);
     return (
       <Card
@@ -183,7 +197,7 @@ export default function DirectoryPage() {
                     date: formatIsoDate(outUntil, locale),
                   })}
                 </p>
-              ) : online ? (
+              ) : inOffice ? (
                 <p className="mt-0.5 flex items-center gap-1 truncate text-xs font-medium text-emerald-600 dark:text-emerald-400">
                   <Building2 className="size-3 shrink-0" />
                   {t("inOffice")}

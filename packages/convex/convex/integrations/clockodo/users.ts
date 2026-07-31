@@ -3,7 +3,7 @@
 import { v } from "convex/values";
 
 import { action } from "../../_generated/server";
-import { requireManagerAction } from "../lib/auth";
+import { requireClockodoManagerAction } from "../lib/auth";
 import { clockodoFetch } from "./client";
 
 /**
@@ -152,7 +152,7 @@ function toHolidaysQuota(row: ClockodoHolidaysQuotaWire): ClockodoHolidaysQuota 
 export const listClockodoUsers = action({
   args: {},
   handler: async (ctx): Promise<ClockodoUser[]> => {
-    await requireManagerAction(ctx);
+    await requireClockodoManagerAction(ctx);
     const body = await clockodoFetch<{ data?: ClockodoUserWire[] }>(
       "/api/v3/users?items_per_page=1000",
     );
@@ -171,7 +171,7 @@ export const getClockodoUserDetail = action({
     targetHours: ClockodoTargetHour[];
     holidaysQuota: ClockodoHolidaysQuota[];
   }> => {
-    await requireManagerAction(ctx);
+    await requireClockodoManagerAction(ctx);
     const userBody = await clockodoFetch<{ data: ClockodoUserWire }>(
       `/api/v3/users/${clockodoUserId}`,
     );
@@ -228,7 +228,7 @@ export const createClockodoUser = action({
     vacationDaysPerYear: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<{ clockodoUserId: number }> => {
-    await requireManagerAction(ctx);
+    await requireClockodoManagerAction(ctx);
     const created = await clockodoFetch<{ data: ClockodoUserWire }>("/api/v3/users", {
       method: "POST",
       body: { name: args.name, email: args.email, number: args.number },
@@ -285,7 +285,7 @@ export const updateClockodoUser = action({
     exemptFromFlextime: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<void> => {
-    await requireManagerAction(ctx);
+    await requireClockodoManagerAction(ctx);
     const { clockodoUserId, ...patch } = args;
     const body: Record<string, unknown> = {};
     if (patch.name !== undefined) body.name = patch.name;
@@ -335,7 +335,7 @@ export const setTargetHours = action({
     sunday: v.number(),
   },
   handler: async (ctx, { clockodoUserId, dateSince, ...days }): Promise<void> => {
-    await requireManagerAction(ctx);
+    await requireClockodoManagerAction(ctx);
     await clockodoFetch("/api/targethours", {
       method: "POST",
       body: {
@@ -356,7 +356,7 @@ export const setVacationEntitlement = action({
     yearSince: v.optional(v.number()),
   },
   handler: async (ctx, { clockodoUserId, daysPerYear, yearSince }): Promise<void> => {
-    await requireManagerAction(ctx);
+    await requireClockodoManagerAction(ctx);
     await clockodoFetch("/api/v2/holidaysQuota", {
       method: "POST",
       body: {

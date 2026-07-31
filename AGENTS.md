@@ -55,6 +55,16 @@ through one giant diff. If grouping vs. separating conflicts with another
 instruction in a given task (e.g. the user explicitly asks for a single
 commit), ask the user how they want it handled rather than guessing.
 
+## Merging without a PR
+
+When the user hasn't asked for a PR, the default is to squash-commit/merge
+finished work directly into `main` rather than opening one anyway. But
+pushing to `main` triggers an immediate Vercel production deploy — so for a
+task still spread across multiple commits/phases, keep committing and
+pushing to the working branch only, and merge into `main` once at a real
+stopping point (the whole task done, or a checkpoint the user explicitly
+asks for), not after every intermediate commit.
+
 ## Profile / Subprofile architecture
 
 `users` is the one canonical intranet identity ("Profile"); every

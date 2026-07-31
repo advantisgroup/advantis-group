@@ -10,6 +10,7 @@ import { useMutation } from "convex/react";
 import {
   BarChart3,
   CalendarDays,
+  CheckSquare,
   Clock3,
   LayoutDashboard,
   Link2Off,
@@ -21,19 +22,15 @@ import { RouteTabs } from "@/components/applicants/RouteTabs";
 import { StatusScreen } from "@/components/layout/StatusScreen";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
-import {
-  useCurrentUser,
-  useHasCapability,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 
 export default function ClockodoLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Absences");
   const pathname = usePathname();
   const user = useCurrentUser();
-  const isManager = useIsManager();
-  const canManageClockodo = useHasCapability("access_integrations");
+  const hasTeamAccess = useHasCapability("view_clockodo_team");
+  const canManageClockodo = useHasCapability("manage_clockodo_team");
   const migrateLegacyLink = useMutation(api.integrations.clockodoLink.migrateLegacyClockodoLink);
   const migrationStarted = useRef(false);
   const [migrationPending, setMigrationPending] = useState(!user.clockodoUserId);
@@ -47,13 +44,23 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
       icon: CalendarDays,
     },
     { value: "requests", href: "/clockodo/requests", label: t("section.requests"), icon: Clock3 },
+    ...(canManageClockodo
+      ? [
+          {
+            value: "approvals",
+            href: "/clockodo/approvals",
+            label: t("section.approvals"),
+            icon: CheckSquare,
+          },
+        ]
+      : []),
     {
       value: "planner",
       href: "/clockodo/planner",
       label: t("section.planner"),
       icon: CalendarDays,
     },
-    ...(isManager
+    ...(hasTeamAccess
       ? [
           {
             value: "reports",
@@ -93,7 +100,7 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user.clockodoUserId) {
+  if (!user.clockodoUserId && !hasTeamAccess) {
     return (
       <StatusScreen
         icon={Link2Off}

@@ -22,7 +22,7 @@ export const linkClockodoUser = mutation({
     clockodoUserId: v.number(),
   },
   handler: async (ctx, { userId, clockodoUserId }) => {
-    const actor = await requireCapability(ctx, "access_integrations");
+    const actor = await requireCapability(ctx, "manage_clockodo_team");
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 
@@ -46,7 +46,7 @@ export const linkClockodoUser = mutation({
 export const unlinkClockodoUser = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const actor = await requireCapability(ctx, "access_integrations");
+    const actor = await requireCapability(ctx, "manage_clockodo_team");
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 

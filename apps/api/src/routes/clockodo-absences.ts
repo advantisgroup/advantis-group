@@ -14,6 +14,7 @@ import {
   listCurrentAbsences,
   mapAbsenceStatus,
   mapAbsenceType,
+  setAbsenceStatus,
   startClock,
   stopClock,
   updateAbsence,
@@ -40,6 +41,16 @@ interface AbsenceDTO {
   halfDay: boolean;
   reason: string | null;
   status: "pending" | "approved" | "denied" | "cancelled";
+}
+
+/** A pending absence plus who it belongs to, for the approvals queue —
+ * unlike `/calendar` (privacy-filtered for everyone but the person
+ * themselves), this is the manager's own action surface, so it carries the
+ * full `AbsenceDTO` including `reason`. */
+interface PendingApprovalDTO extends AbsenceDTO {
+  userId: string;
+  userName: string;
+  userDepartment: string | null;
 }
 
 /** Coerce a Clockodo date field to `YYYY-MM-DD`. The `/v4/absences` API has
@@ -295,11 +306,14 @@ export const clockodoAbsencesRoute = new Elysia()
           const person = rosterByClockodoId.get(a.clockodoUserId);
           if (!person) return null;
           const isSelf = caller.status === "linked" && caller.clockodoUserId === a.clockodoUserId;
+          const canViewTeam = caller.status !== "no_account" && caller.canViewTeam;
           // Privacy: colleagues only see that someone is on vacation, not why
           // — sick/personal/other absences stay visible to that person alone
-          // on the shared org calendar (their own "my absences" list still
-          // shows everything, via /clockodo/absences/me).
-          if (!isSelf && a.type !== "vacation") return null;
+          // and to view_clockodo_team holders/managers, never the note/reason
+          // itself (this DTO never includes `reason` to begin with) — their
+          // own "my absences" list still shows everything, via
+          // /clockodo/absences/me.
+          if (!isSelf && !canViewTeam && a.type !== "vacation") return null;
           return {
             id: a.id,
             userId: person.userId,
@@ -329,7 +343,7 @@ export const clockodoAbsencesRoute = new Elysia()
         clerkUserId,
       }
     );
-    if (caller.status === "no_account" || !caller.isManager) throw Errors.forbidden();
+    if (caller.status === "no_account" || !caller.canViewTeam) throw Errors.forbidden();
 
     const all = await listCurrentAbsences();
     const count = all.filter(
@@ -337,6 +351,83 @@ export const clockodoAbsencesRoute = new Elysia()
     ).length;
     return { count };
   })
+  /** Manager+/canManageTeam-only queue of pending requests to approve or
+   *  deny — org-wide, unlike /me. */
+  .get("/clockodo/absences/pending", async ({ request }) => {
+    const { clerkUserId } = await requireAuth(request);
+    const [caller, roster] = await Promise.all([
+      getConvex().query(api.integrations.clockodoAbsences.resolveCaller, {
+        serverKey: getConvexServerKey(),
+        clerkUserId,
+      }),
+      getConvex().query(api.integrations.clockodoAbsences.roster, {
+        serverKey: getConvexServerKey(),
+      }),
+    ]);
+    if (caller.status === "no_account" || !caller.canManageTeam) {
+      throw Errors.forbidden();
+    }
+
+    const rosterByClockodoId = new Map(
+      roster.filter(r => r.linked).map(r => [r.clockodoUserId, r])
+    );
+    const all = await listCurrentAbsences();
+    const pending = all
+      .filter(a => mapAbsenceStatus(a.status) === "pending")
+      .map(toDto)
+      .map((dto): PendingApprovalDTO | null => {
+        const person = rosterByClockodoId.get(dto.clockodoUserId);
+        if (!person) return null;
+        return {
+          ...dto,
+          userId: String(person.userId),
+          userName: person.name,
+          userDepartment: person.department,
+        };
+      })
+      .filter((a): a is PendingApprovalDTO => a !== null)
+      .sort((a, b) => a.startDate.localeCompare(b.startDate));
+    return { absences: pending };
+  })
+  .put(
+    "/clockodo/absences/:id/status",
+    async ({ request, params, body }) => {
+      const { clerkUserId } = await requireAuth(request);
+      const caller = await getConvex().query(
+        api.integrations.clockodoAbsences.resolveCaller,
+        { serverKey: getConvexServerKey(), clerkUserId }
+      );
+      if (caller.status === "no_account" || !caller.canManageTeam) {
+        throw Errors.forbidden();
+      }
+
+      const id = Number(params.id);
+      if (!Number.isSafeInteger(id))
+        throw Errors.badRequest("Invalid absence id");
+
+      const absence = await getAbsence(id);
+      // Self-approval safeguard: an approver can't action their own request
+      // — someone else with the permission has to.
+      if (
+        caller.status === "linked" &&
+        String(absence.users_id) === caller.clockodoUserId
+      ) {
+        throw Errors.forbidden("Cannot approve or deny your own absence request");
+      }
+
+      const updated = await setAbsenceStatus(
+        id,
+        body.status === "approved" ? 1 : 2
+      );
+      return { absence: toDto(updated) };
+    },
+    {
+      params: t.Object({ id: t.String() }),
+      body: t.Object({
+        status: t.Union([t.Literal("approved"), t.Literal("denied")]),
+      }),
+    }
+  )
   .post(
     "/clockodo/absences/me",
     async ({ request, body }) => {

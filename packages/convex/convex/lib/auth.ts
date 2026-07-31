@@ -178,6 +178,24 @@ export async function requireCapability(
 }
 
 /**
+ * Pure predicate version of the capability check, for callers that already
+ * have the user doc and its custom roles resolved and don't want a second
+ * `getCurrentUser()` lookup — e.g. `resolveCaller` in
+ * `integrations/clockodoAbsences.ts`, which resolves its user via an
+ * explicit `clerkUserId` (a server-key-gated call from apps/api, not the
+ * caller's own live Convex session) so `ctx.auth` isn't the caller's
+ * identity there. Mirrors `isApplicantEligible`'s shape below.
+ */
+export function userHasCapability(
+  user: Doc<"users">,
+  customRoles: (Doc<"customRoles"> | null)[],
+  capability: Capability,
+): boolean {
+  if (MANAGER_ROLES.includes(user.role)) return true;
+  return customRoles.some((role) => role?.capabilities.includes(capability) ?? false);
+}
+
+/**
  * Non-throwing sibling of `requireCapability`, for filtering rather than
  * hard-gating (e.g. deciding how much of a record to reveal). Same
  * manager-auto-pass and custom-role lookup, but returns false instead of
@@ -189,10 +207,8 @@ export async function hasCapability(
 ): Promise<boolean> {
   const user = await getCurrentUser(ctx);
   if (!user) return false;
-  if (MANAGER_ROLES.includes(user.role)) return true;
-
   const customRoles = await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
-  return customRoles.some((role) => role?.capabilities.includes(capability) ?? false);
+  return userHasCapability(user, customRoles, capability);
 }
 
 /**

@@ -36,6 +36,15 @@ export interface CalendarAbsence {
   halfDay: boolean;
 }
 
+/** A pending absence in the manager/canManageTeam approval queue — unlike
+ * `CalendarAbsence`, this carries the full detail (reason included) since
+ * it's the approver's own action surface, not the shared org calendar. */
+export interface PendingApproval extends MyAbsence {
+  userId: string;
+  userName: string;
+  userDepartment: string | null;
+}
+
 /** The signed-in user's own absences — any status/type, private to them. */
 export function useMyAbsences(): { absences: MyAbsence[] | undefined; refresh: () => void } {
   const eden = useEdenApi();
@@ -98,4 +107,39 @@ export function usePendingAbsenceCount(enabled: boolean): number | undefined {
   }, [eden, enabled]);
 
   return count;
+}
+
+/** canManageTeam-only: the full org-wide pending-approval queue. */
+export function usePendingApprovals(enabled: boolean): {
+  approvals: PendingApproval[] | undefined;
+  refresh: () => void;
+} {
+  const eden = useEdenApi();
+  const [approvals, setApprovals] = useState<PendingApproval[] | undefined>(undefined);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await eden.clockodo.absences.pending.get();
+      if (!cancelled) setApprovals(data?.absences ?? []);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [eden, enabled, reloadKey]);
+
+  return { approvals, refresh: () => setReloadKey((k) => k + 1) };
+}
+
+/** Approve or deny a pending absence — a plain async helper (not a hook)
+ * since it's called from an event handler, not on render. */
+export async function setAbsenceApprovalStatus(
+  eden: ReturnType<typeof useEdenApi>,
+  id: string,
+  status: "approved" | "denied",
+): Promise<void> {
+  const { error } = await eden.clockodo.absences({ id }).status.put({ status });
+  if (error) throw error;
 }

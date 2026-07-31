@@ -340,7 +340,7 @@ function WhosOut() {
 export default function AbsencesPage() {
   const t = useTranslations("Absences");
   const isManager = useIsManager();
-  const canManageClockodo = useHasCapability("access_integrations");
+  const canManageClockodo = useHasCapability("manage_clockodo_team");
   const { absences: mine } = useMyAbsences();
 
   function exportIcs() {

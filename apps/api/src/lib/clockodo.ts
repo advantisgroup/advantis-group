@@ -64,7 +64,7 @@ export interface ClockodoAbsenceInput {
   count_days?: number | null;
   count_hours?: number | null;
   sick_note?: boolean | null;
-  status?: 0 | 1;
+  status?: 0 | 1 | 2;
 }
 
 interface ClockodoClientOptions {
@@ -302,6 +302,36 @@ function createClockodoClient(options: ClockodoClientOptions) {
       );
       return response.data;
     },
+    /** Approve (1) or deny (2) a pending absence. Clockodo's partial-PUT
+     * support for `{status}` alone isn't confirmed, so this re-sends the
+     * absence's existing editable fields alongside the new status — the
+     * same full-payload shape `updateAbsence` above always sends — rather
+     * than risking a bare status-only body the API might reject. */
+    async setAbsenceStatus(
+      id: number,
+      status: 1 | 2
+    ): Promise<ClockodoAbsence> {
+      const existing = await get<{ data: ClockodoAbsence }>(
+        `/v4/absences/${id}`
+      );
+      const response = await requestJson<{ data: ClockodoAbsence }>(
+        `/v4/absences/${id}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            date_since: existing.data.date_since,
+            date_until: existing.data.date_until,
+            type: existing.data.type,
+            note: existing.data.note,
+            count_days: existing.data.count_days,
+            count_hours: existing.data.count_hours,
+            sick_note: existing.data.sick_note,
+            status,
+          }),
+        }
+      );
+      return response.data;
+    },
   };
 }
 
@@ -355,6 +385,13 @@ export function updateAbsence(
   input: Omit<ClockodoAbsenceInput, "users_id" | "status">
 ): Promise<ClockodoAbsence> {
   return upstream(client().updateAbsence(id, input));
+}
+
+export function setAbsenceStatus(
+  id: number,
+  status: 1 | 2
+): Promise<ClockodoAbsence> {
+  return upstream(client().setAbsenceStatus(id, status));
 }
 
 export function listEntries(input: {

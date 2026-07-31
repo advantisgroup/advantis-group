@@ -613,6 +613,43 @@ export const stateBatch = query({
 });
 
 /**
+ * A plain "in office" boolean per user — device actively used (not idle)
+ * AND currently clocked in via Clockodo — for Directory's presence badge.
+ * Deliberately narrower than `teamOverview` (idle seconds, hostname,
+ * Genesys detail, gated on `view_activity_admin`): this exposes only the
+ * derived boolean to any signed-in user, since that's materially less
+ * sensitive than the admin payload it's drawn from, matching the audience
+ * Directory itself already has. Returns `null` (not `false`) for anyone
+ * without an ActivityTrack roster/device-state row at all — not everyone
+ * is on the roster, and the caller should fall back to a different signal
+ * rather than showing a false "not in office".
+ */
+export const inOfficeForUsers = query({
+  args: { userIds: v.array(v.id("users")) },
+  returns: v.array(
+    v.object({
+      userId: v.id("users"),
+      inOffice: v.union(v.boolean(), v.null()),
+    }),
+  ),
+  handler: async (ctx, { userIds }) => {
+    await requireUser(ctx);
+    const ids = userIds.slice(0, 500);
+    return await Promise.all(
+      ids.map(async (userId) => {
+        const subprofile = await getActivitySubprofile(ctx, userId);
+        if (!subprofile.employeeId) return { userId, inOffice: null };
+        const state = await getStateRow(ctx, subprofile.employeeId);
+        if (!state || state.deviceIdle === undefined || state.clockodoWorking === undefined) {
+          return { userId, inOffice: null };
+        }
+        return { userId, inOffice: state.deviceIdle === false && state.clockodoWorking === true };
+      }),
+    );
+  },
+});
+
+/**
  * Batched state history for the overview's per-card day strips: today's state
  * changes for many employees in one reactive query, so the overview grid does
  * not open one subscription per card. No prior-day row is prepended — the

@@ -1,7 +1,7 @@
 import { ConvexError, v } from "convex/values";
 
 import { query } from "../_generated/server";
-import { MANAGER_ROLES } from "../lib/auth";
+import { effectiveCustomRoleIds, MANAGER_ROLES, userHasCapability } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
 
 /**
@@ -33,6 +33,8 @@ export const clockodoCallerValidator = v.union(
     userId: v.id("users"),
     name: v.string(),
     isManager: v.boolean(),
+    canViewTeam: v.boolean(),
+    canManageTeam: v.boolean(),
   }),
   /** An intranet account exists and is linked to a Clockodo user. */
   v.object({
@@ -41,6 +43,8 @@ export const clockodoCallerValidator = v.union(
     name: v.string(),
     clockodoUserId: v.string(),
     isManager: v.boolean(),
+    canViewTeam: v.boolean(),
+    canManageTeam: v.boolean(),
   }),
 );
 
@@ -59,15 +63,35 @@ export const resolveCaller = query({
 
     const name = user.firstName ?? user.email;
     const isManager = MANAGER_ROLES.includes(user.role);
+    const customRoles = await Promise.all(
+      effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)),
+    );
+    const canManageTeam = userHasCapability(user, customRoles, "manage_clockodo_team");
+    const canViewTeam = canManageTeam || userHasCapability(user, customRoles, "view_clockodo_team");
     const clockodoUserId =
       typeof user.clockodoUserId === "number"
         ? toClockodoIdString(user.clockodoUserId)
         : (user.clockodoUserId ?? null);
 
     if (!clockodoUserId) {
-      return { status: "unlinked" as const, userId: user._id, name, isManager };
+      return {
+        status: "unlinked" as const,
+        userId: user._id,
+        name,
+        isManager,
+        canViewTeam,
+        canManageTeam,
+      };
     }
-    return { status: "linked" as const, userId: user._id, name, clockodoUserId, isManager };
+    return {
+      status: "linked" as const,
+      userId: user._id,
+      name,
+      clockodoUserId,
+      isManager,
+      canViewTeam,
+      canManageTeam,
+    };
   },
 });
 
