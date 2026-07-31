@@ -25,6 +25,15 @@ export interface AccessUser {
   gfAccess?: boolean;
   /** Defaults to true when undefined. */
   uploadRequestsEnabled?: boolean;
+  /** Full general-purpose file browser access (manager+, or the `access_files` capability). */
+  canAccessFiles?: boolean;
+  /** Indirect, scope-only write grant: holding `manage_guidebooks` lets an
+   * otherwise-non-manager editor write inside Team/Wiki (and nowhere else),
+   * since wiki attachments are OneDrive-backed. */
+  canWriteWiki?: boolean;
+  /** Same idea as `canWriteWiki`, scoped to Team/HR — granted by Applicant
+   * Management access, for employee documents living in OneDrive. */
+  canWriteHR?: boolean;
 }
 
 export interface AccessResult {
@@ -77,6 +86,24 @@ export function zoneOf(relPath: string): Zone {
 
 const isManagerRole = (role: Role): boolean => role === "admin" || role === "manager";
 
+/** Team/Wiki and Team/HR, relative to the AG root. */
+export function wikiFolderBase(): string {
+  return `${folderConfig().team}/Wiki`;
+}
+export function hrFolderBase(): string {
+  return `${folderConfig().team}/HR`;
+}
+
+/** Whether `relPath` (already normalized) falls inside the wiki/HR indirect
+ * write grant for `user` — i.e. they hold the domain capability and the path
+ * is within *only* their own subtree, never any other Team folder. */
+function scopedWriteGrant(user: AccessUser, path: string): boolean {
+  return (
+    (user.canWriteWiki === true && isWithin(path, wikiFolderBase())) ||
+    (user.canWriteHR === true && isWithin(path, hrFolderBase()))
+  );
+}
+
 /**
  * Effective permissions for `user` on the AG-relative `relPath`. The single
  * decision point — routes must call this and never trust client-supplied flags.
@@ -85,11 +112,19 @@ export function classifyAccess(user: AccessUser, relPath: string): AccessResult 
   const zone = zoneOf(relPath);
   const manager = isManagerRole(user.role);
   const uploadAllowed = user.uploadRequestsEnabled !== false;
+  const path = normalizePath(relPath);
 
   let canRead = false;
   switch (zone) {
     case "root":
     case "team":
+      // Team-zone read is intentionally universal for any active user (not
+      // gated by `canAccessFiles`) — wiki/HR attachments rely on that for
+      // every viewer's download/preview to work with zero extra grants.
+      // `canAccessFiles` (or the wiki/HR scope below) instead gates whether
+      // a user may *browse* the zone via the listing routes — see
+      // `requireFileBrowserAccess` and the explicit confinement check those
+      // routes apply on top of this.
       canRead = true;
       break;
     case "gf":
@@ -102,8 +137,12 @@ export function classifyAccess(user: AccessUser, relPath: string): AccessResult 
       break;
   }
 
-  const canWrite = canRead && manager;
-  const canRequest = canRead && !manager && uploadAllowed;
+  // Indirect permission: holding the wiki/HR domain capability grants write
+  // access strictly within that one subtree, independent of role — a
+  // non-manager wiki editor can create folders under Team/Wiki, but nowhere
+  // else in Team, and the same for an HR user under Team/HR.
+  const canWrite = (canRead && manager) || scopedWriteGrant(user, path);
+  const canRequest = canRead && !canWrite && uploadAllowed;
 
   return { canRead, canWrite, canRequest };
 }
@@ -119,5 +158,25 @@ export function assertCanRead(user: AccessUser, relPath: string): void {
 export function assertCanWrite(user: AccessUser, relPath: string): void {
   if (!classifyAccess(user, relPath).canWrite) {
     throw Errors.forbidden("You are not allowed to modify this folder");
+  }
+}
+
+/**
+ * `canRead` is deliberately universal across the whole Team zone (see
+ * `classifyAccess`), so it can't be used to confine *browsing* to a subtree.
+ * A user admitted into the listing/search routes only via the wiki/HR
+ * indirect grant (not general `canAccessFiles`) must still be limited to
+ * their own subtree there. Always true for anyone with full file-browser access.
+ */
+export function isWithinBrowsableScope(user: AccessUser, relPath: string): boolean {
+  if (user.canAccessFiles) return true;
+  return scopedWriteGrant(user, normalizePath(relPath));
+}
+
+/** Throw variant of `isWithinBrowsableScope`, for routes that list a single
+ * explicit folder (as opposed to filtering a result set from it). */
+export function assertWithinBrowsableScope(user: AccessUser, relPath: string): void {
+  if (!isWithinBrowsableScope(user, relPath)) {
+    throw Errors.forbidden("You do not have access to this folder");
   }
 }

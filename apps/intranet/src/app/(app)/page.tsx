@@ -34,7 +34,7 @@ import {
   EventsCard,
   WhosOutCard,
 } from "@/components/dashboard/TeamCompanyWidgets";
-import { LatestWikiCard, useLatestWikiPages } from "@/components/dashboard/WikiWidgets";
+import { useLatestWikiPages, WikiCarousel } from "@/components/dashboard/WikiWidgets";
 import { Link } from "@/components/Link";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { useHasCapability, useIsAdmin, useIsManager } from "@/components/providers/current-user";
@@ -168,9 +168,7 @@ export default function DashboardPage() {
   ].filter((w) => showCard(w.id));
 
   const hasNewWiki = (newWikiPages?.length ?? 0) > 0;
-  const newWikiWidgets: Widget[] = (
-    hasNewWiki ? [widget("newwiki", <LatestWikiCard />)] : []
-  ).filter((w) => showCard(w.id));
+  const showWikiCarousel = hasNewWiki && showCard("newwiki");
 
   const teamCompanyWidgets: Widget[] = [
     widget("events", <EventsCard />),
@@ -293,14 +291,14 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {newWikiWidgets.length > 0 && (
+      {showWikiCarousel && (
         <section className="mb-8">
           <SectionHeading
             icon={<NotebookPen />}
             title={t("sectionNewWiki")}
             tint="bg-violet-500/10 text-violet-600 dark:text-violet-300"
           />
-          <WidgetGrid widgets={newWikiWidgets} />
+          <WikiCarousel />
         </section>
       )}
 

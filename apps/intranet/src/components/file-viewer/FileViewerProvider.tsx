@@ -13,7 +13,11 @@ import {
 import { GlobalFileViewer } from "./GlobalFileViewer";
 
 export interface ViewableFile {
-  storageId: string;
+  /** Convex-storage id — set for legacy (pre-OneDrive) attachments/documents. */
+  storageId?: string;
+  /** OneDrive item id — set for anything uploaded through the current wiki/HR
+   * attach flow. The viewer resolves its own preview URL through apps/api. */
+  oneDriveItemId?: string;
   name: string;
   contentType?: string;
   size?: number;

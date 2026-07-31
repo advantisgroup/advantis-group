@@ -9,6 +9,7 @@
   "newFolder": "New folder",
   "newFolderDesc": "Creates a folder inside the current directory, visible to everyone with access to this location.",
   "folderName": "Folder name",
+  "noFolder": "No folder",
   "create": "Create",
   "cancel": "Cancel",
   "save": "Save",

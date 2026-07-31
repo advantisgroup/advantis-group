@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronRight,
   FileText,
+  FolderOpen,
   Pencil,
   Pin,
   PinOff,
@@ -425,6 +426,11 @@ export default function GuidebooksPage() {
         action={
           canManage ? (
             <div className="flex items-center gap-2">
+              <Button variant="outline" size="icon" asChild>
+                <Link href="/guidebooks/files" aria-label={t("browseFiles")}>
+                  <FolderOpen className="size-4" />
+                </Link>
+              </Button>
               <Button variant="outline" size="icon" onClick={() => setCategoryManagerOpen(true)}>
                 <Settings2 className="size-4" />
               </Button>

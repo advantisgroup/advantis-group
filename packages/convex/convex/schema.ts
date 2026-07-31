@@ -1715,16 +1715,20 @@ export default defineSchema({
   }).index("by_slug", ["slug"]),
 
   // --- Guidebook read receipts -------------------------------------------------
-  // One row per user per slug, written the first time they open a guidebook.
-  // Drives the "read" checkmark on guidebooks list cards and the "new in the
-  // wiki" dashboard section (unread = no row here yet). Never deleted.
+  // One row per user per slug, written when the user explicitly confirms
+  // "I read and understood this" (guidebookReads.markRead) — not a side
+  // effect of merely opening the page. Drives the "read" checkmark on
+  // guidebooks list cards, the "new in the wiki" dashboard section, and the
+  // per-entry confirmer list editors see (unread/unconfirmed = no row here
+  // yet). Never deleted.
   guidebookReads: defineTable({
     userId: v.id("users"),
     slug: v.string(),
     readAt: v.number(),
   })
     .index("by_user_slug", ["userId", "slug"])
-    .index("by_user", ["userId"]),
+    .index("by_user", ["userId"])
+    .index("by_slug", ["slug"]),
 
   // --- Wiki v2 (categories + entries) ------------------------------------------
   // The wiki overhaul: manageable colour-coded categories, entries with a
@@ -2085,9 +2089,17 @@ export default defineSchema({
     .index("by_sourceApplicant", ["sourceApplicantId"])
     .index("by_createdAt", ["createdAt"]),
 
+  // Employee documents are OneDrive-backed (Team/HR/<employee>/…), same
+  // reasoning as `guidebookAttachments`: Convex only stores the reference,
+  // the vault-unlock gate (`requireApplicantAccess`) is what actually
+  // protects them. `storageId` is kept optional purely for rows uploaded
+  // before this change (Convex-storage-backed) — `humanResources.ts`
+  // branches on whichever is present.
   employeeDocuments: defineTable({
     employeeProfileId: v.id("employeeProfiles"),
-    storageId: v.id("_storage"),
+    storageId: v.optional(v.id("_storage")),
+    oneDriveItemId: v.optional(v.string()),
+    oneDrivePath: v.optional(v.string()),
     fileName: v.string(),
     contentType: v.optional(v.string()),
     size: v.optional(v.number()),

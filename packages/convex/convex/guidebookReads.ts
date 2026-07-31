@@ -1,9 +1,10 @@
 import { v } from "convex/values";
 
 import { mutation, query } from "./_generated/server";
-import { requireUser } from "./lib/auth";
+import { requireCapability, requireUser } from "./lib/auth";
+import { profileDisplayName } from "./lib/profile";
 
-/** Slugs the current user has opened at least once. */
+/** Slugs the current user has confirmed reading. */
 export const listMine = query({
   args: {},
   handler: async (ctx) => {
@@ -16,7 +17,10 @@ export const listMine = query({
   },
 });
 
-/** Idempotent — called once a guidebook page has actually been opened. */
+/** Manual confirmation only — a user explicitly asserting "I read and
+ * understood this," not a side effect of opening the page. Idempotent
+ * (unique `by_user_slug`), so a re-confirm after the content changes is
+ * just a no-op rather than a second row. */
 export const markRead = mutation({
   args: { slug: v.string() },
   handler: async (ctx, { slug }) => {
@@ -28,5 +32,27 @@ export const markRead = mutation({
     if (existing) return { ok: true };
     await ctx.db.insert("guidebookReads", { userId: user._id, slug, readAt: Date.now() });
     return { ok: true };
+  },
+});
+
+/** Who has confirmed reading this wiki entry, newest first — for the page's
+ * editors to see who has (and hasn't, relative to the roster) acknowledged
+ * it. Gated the same way as editing the page itself. */
+export const listConfirmersForSlug = query({
+  args: { slug: v.string() },
+  handler: async (ctx, { slug }) => {
+    await requireCapability(ctx, "manage_guidebooks");
+    const rows = await ctx.db
+      .query("guidebookReads")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .collect();
+    const users = await Promise.all(rows.map((r) => ctx.db.get(r.userId)));
+    return rows
+      .map((r, i) => {
+        const u = users[i];
+        return u ? { userId: r.userId, name: profileDisplayName(u), readAt: r.readAt } : null;
+      })
+      .filter((r): r is { userId: (typeof rows)[number]["userId"]; name: string; readAt: number } => r !== null)
+      .sort((a, b) => b.readAt - a.readAt);
   },
 });

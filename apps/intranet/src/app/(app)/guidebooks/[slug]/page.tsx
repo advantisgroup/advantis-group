@@ -42,22 +42,29 @@ import { useConfirm } from "@/components/ui/dialog";
 import { RichText } from "@/components/ui/rich-text";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { parseBlocks } from "@/lib/guidebook-blocks";
-import { formatIsoDate } from "@/lib/format";
+import { formatDateTime, formatIsoDate } from "@/lib/format";
 import { msToDateInput } from "@/lib/wiki";
 
 const EMPTY_SLUGS: string[] = [];
 
 /**
  * Wikis double as "read this, something's changed" notices (a new flyer, new
- * credit rules, …), so opening the page shouldn't be the only signal —
- * this gives a visible, user-initiated confirmation alongside the silent
- * auto-mark-on-view.
+ * credit rules, …). Confirmation is entirely manual — opening the page
+ * records nothing on its own; only this explicit "yes, I read and
+ * understood it" click does. Editors additionally see who has confirmed.
  */
 function ReadConfirmation({ slug }: { slug: string }) {
   const t = useTranslations("Guidebooks");
+  const locale = useLocale();
+  const canManageWiki = useHasCapability("manage_guidebooks");
   const readSlugs = useQuery(api.guidebookReads.listMine) ?? EMPTY_SLUGS;
+  const confirmers = useQuery(
+    api.guidebookReads.listConfirmersForSlug,
+    canManageWiki ? { slug } : "skip",
+  );
   const markRead = useMutation(api.guidebookReads.markRead);
   const [justConfirmed, setJustConfirmed] = useState(false);
+  const [showConfirmers, setShowConfirmers] = useState(false);
   const isRead = readSlugs.includes(slug) || justConfirmed;
 
   async function onConfirm() {
@@ -65,28 +72,53 @@ function ReadConfirmation({ slug }: { slug: string }) {
     try {
       await markRead({ slug });
       toast.success(t("readConfirmedToast"));
-    } catch {
-      // The auto-mark-on-view already fires on every visit, so a failure
-      // here just means the visible confirmation didn't record — no need to
-      // roll back the optimistic checkmark over it.
+    } catch (e) {
+      setJustConfirmed(false);
+      toast.error(e instanceof Error ? e.message : t("readConfirmFailed"));
     }
   }
 
   return (
-    <div className="mt-8 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 print:hidden">
-      <p className="text-sm text-muted-foreground">
-        {isRead ? t("readConfirmedBody") : t("readConfirmBody")}
-      </p>
-      {isRead ? (
-        <Badge variant="success">
-          <Check className="mr-1 size-3.5" />
-          {t("readConfirmedBadge")}
-        </Badge>
-      ) : (
-        <Button size="sm" onClick={() => void onConfirm()}>
-          <Check className="mr-1.5 size-3.5" />
-          {t("readConfirmCta")}
-        </Button>
+    <div className="mt-8 space-y-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 print:hidden">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {isRead ? t("readConfirmedBody") : t("readConfirmBody")}
+        </p>
+        {isRead ? (
+          <Badge variant="success">
+            <Check className="mr-1 size-3.5" />
+            {t("readConfirmedBadge")}
+          </Badge>
+        ) : (
+          <Button size="sm" onClick={() => void onConfirm()}>
+            <Check className="mr-1.5 size-3.5" />
+            {t("readConfirmCta")}
+          </Button>
+        )}
+      </div>
+      {canManageWiki && (
+        <div className="border-t border-border/60 pt-3">
+          <button
+            type="button"
+            onClick={() => setShowConfirmers((v) => !v)}
+            className="text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            {confirmers
+              ? t("readConfirmersCount", { count: confirmers.length })
+              : t("readConfirmersLoading")}
+          </button>
+          {showConfirmers && confirmers && (
+            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+              {confirmers.length === 0 && <li>{t("readConfirmersEmpty")}</li>}
+              {confirmers.map((c) => (
+                <li key={c.userId} className="flex items-center justify-between gap-3">
+                  <span className="truncate">{c.name}</span>
+                  <span className="shrink-0">{formatDateTime(c.readAt, locale)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
     </div>
   );
@@ -120,7 +152,6 @@ export default function GuidebookPage() {
   const removePage = useMutation(api.guidebookPages.remove);
   const createAnnouncement = useMutation(api.announcements.create);
   const setPrefs = useMutation(api.userPreferences.setMine);
-  const markRead = useMutation(api.guidebookReads.markRead);
 
   const loading = !staticGuidebook && entry === undefined && legacyPage === undefined;
   const guidebook = staticGuidebook
@@ -147,15 +178,15 @@ export default function GuidebookPage() {
     ? guidebookDescription(staticGuidebook, t)
     : (entry?.categoryName ?? legacyPage?.description ?? "");
 
-  // Remember the last opened guidebook for the list page's "continue" banner,
-  // and record a read receipt for the unread checkmark/dashboard section.
+  // Remember the last opened guidebook for the list page's "continue"
+  // banner. The read receipt itself is manual now (see `ReadConfirmation`
+  // below) — opening the page no longer marks it read on its own.
   const guidebookSlug = guidebook?.slug;
   useEffect(() => {
     if (guidebookSlug && allowed) {
       void setPrefs({ lastGuidebookSlug: guidebookSlug });
-      void markRead({ slug: guidebookSlug });
     }
-  }, [guidebookSlug, allowed, setPrefs, markRead]);
+  }, [guidebookSlug, allowed, setPrefs]);
 
   async function onDeleteEntry() {
     if (!entry) return;

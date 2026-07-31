@@ -15,6 +15,8 @@ export interface OneDriveUser extends AccessUser {
   email: string;
   role: Role;
   canAccessFiles: boolean;
+  canWriteWiki: boolean;
+  canWriteHR: boolean;
 }
 
 /**
@@ -38,11 +40,16 @@ export async function resolveOneDriveUser(request: Request): Promise<OneDriveUse
     gfAccess: ctx.gfAccess,
     uploadRequestsEnabled: ctx.uploadRequestsEnabled,
     canAccessFiles: ctx.canAccessFiles,
+    canWriteWiki: ctx.canWriteWiki,
+    canWriteHR: ctx.canWriteHR,
   };
 }
 
+/** Full file-browser routes (listing, search, quota…) also admit a user who
+ * only holds the wiki/HR indirect grant — `assertWithinBrowsableScope` then
+ * confines what they can actually see to their own subtree. */
 export function requireFileBrowserAccess(user: OneDriveUser): void {
-  if (!user.canAccessFiles) {
+  if (!user.canAccessFiles && !user.canWriteWiki && !user.canWriteHR) {
     throw Errors.forbidden("Files access required");
   }
 }

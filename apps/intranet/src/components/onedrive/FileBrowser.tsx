@@ -161,7 +161,26 @@ interface QueueEntry {
   progress: number;
 }
 
-export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
+export function FileBrowser({
+  initialPath = "",
+  rootPath = "",
+  rootLabel,
+  routeBase = "/files",
+}: {
+  initialPath?: string;
+  /** Confines this browser to a subtree — used by the dedicated Wiki/HR
+   * explorer views. Purely a UX affordance (hiding the breadcrumb segments
+   * above it, replacing "Advantis Group" with `rootLabel`, and refusing to
+   * navigate above it); the server independently enforces the same
+   * boundary for anyone who only holds the wiki/HR indirect grant (see
+   * apps/api's `assertWithinBrowsableScope`), so this never has to be
+   * trusted as the real security boundary. */
+  rootPath?: string;
+  rootLabel?: string;
+  /** The route this instance is mounted at — navigation stays under it
+   * instead of always redirecting to `/files`. */
+  routeBase?: string;
+}) {
   const t = useTranslations("Files");
   const od = useOneDriveApi();
   const confirm = useConfirm();
@@ -239,8 +258,8 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         setPath(data.path);
         setCachedListing(next, data);
         if (data.previewItem) setPreviewItem(data.previewItem);
-        const url = pathToUrl(data.path);
-        if (url !== pathToUrl(next)) {
+        const url = pathToUrl(data.path, routeBase);
+        if (url !== pathToUrl(next, routeBase)) {
           router.replace(url);
         }
       } catch (e) {
@@ -249,14 +268,21 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
         setLoading(false);
       }
     },
-    [od, t, router],
+    [od, t, router, routeBase],
   );
 
   // Pushes the target folder into the URL immediately; the effect below
   // (reacting to the resulting `initialPath` change) does the actual fetch.
   // This keeps navigation to a single load instead of loading the old
   // folder first and only updating the URL once that fetch finishes.
-  const navigate = useCallback((next: string) => router.push(pathToUrl(next)), [router]);
+  // Confined instances refuse to navigate above their own root.
+  const navigate = useCallback(
+    (next: string) => {
+      if (rootPath && next !== rootPath && !next.startsWith(`${rootPath}/`)) return;
+      router.push(pathToUrl(next, routeBase));
+    },
+    [router, routeBase, rootPath],
+  );
 
   // Resolve whether OneDrive is configured before firing any Graph-backed
   // calls. `configured` essentially never flips mid-session, so apply any
@@ -520,7 +546,9 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
   }
 
   function copyLink(item: OneDriveItem) {
-    void navigator.clipboard.writeText(`${window.location.origin}${pathToUrl(item.path)}`);
+    void navigator.clipboard.writeText(
+      `${window.location.origin}${pathToUrl(item.path, routeBase)}`,
+    );
     toast.success(t("linkCopied"));
   }
 
@@ -629,6 +657,8 @@ export function FileBrowser({ initialPath = "" }: { initialPath?: string }) {
       >
         <Breadcrumbs
           listing={listing}
+          rootPath={rootPath}
+          rootLabel={rootLabel}
           onNavigate={(p) => {
             setQuery("");
             navigate(p);
@@ -1004,11 +1034,24 @@ function SortHeader({
 function Breadcrumbs({
   listing,
   onNavigate,
+  rootPath = "",
+  rootLabel,
 }: {
   listing: OneDriveListing | null;
   onNavigate: (path: string) => void;
+  rootPath?: string;
+  rootLabel?: string;
 }) {
-  const crumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis Group", path: "" }];
+  const allCrumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis Group", path: "" }];
+  // Confined instances never show anything above their own root — the
+  // server-returned breadcrumb trail always starts at the AG root, so clip
+  // it and relabel the root crumb instead.
+  const crumbs = rootPath
+    ? [
+        { id: rootPath, name: rootLabel ?? rootPath, path: rootPath },
+        ...allCrumbs.filter((c) => c.path !== rootPath && c.path.startsWith(`${rootPath}/`)),
+      ]
+    : allCrumbs;
   return (
     <nav className="flex min-w-0 items-center gap-1 overflow-x-auto text-sm">
       {crumbs.map((c, i) => (

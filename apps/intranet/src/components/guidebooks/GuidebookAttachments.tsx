@@ -9,25 +9,29 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { useConfirm } from "@/components/ui/dialog";
-import { useIsManager } from "@/components/providers/current-user";
+import { useHasCapability } from "@/components/providers/current-user";
 import { AttachmentDropZone } from "@/components/attachments/AttachmentDropZone";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
+import { OneDriveFolderPicker } from "@/components/attachments/OneDriveFolderPicker";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { Button } from "@/components/ui/button";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
+import { WIKI_FOLDER_BASE } from "@/lib/onedrive-scopes";
 import { formatFileSize, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 
 /**
- * Admin-uploaded files attached to a hardcoded (registry) guidebook page —
- * the one piece of per-guidebook content that's data-driven, since those
- * pages are otherwise fixed React components. Custom (block-based) pages
- * use an "image" block for this instead.
+ * Files attached to a hardcoded (registry) guidebook page — the one piece
+ * of per-guidebook content that's data-driven, since those pages are
+ * otherwise fixed React components. Custom (block-based) pages use an
+ * "image" block for this instead. Gated by `manage_guidebooks` (not just
+ * manager rank) — the same capability that grants the indirect Team/Wiki
+ * OneDrive write permission server-side (see apps/api's access.ts).
  */
 export function GuidebookAttachments({ slug }: { slug: string }) {
   const t = useTranslations("Guidebooks");
   const tc = useTranslations("Common");
-  const isManager = useIsManager();
+  const canManage = useHasCapability("manage_guidebooks");
   const confirm = useConfirm();
   const handleError = useErrorHandler();
   const attachments = useQuery(api.guidebookAttachments.list, { slug });
@@ -38,8 +42,9 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [inFlight, setInFlight] = useState<{ file: File; progress: number }[]>([]);
+  const [folder, setFolder] = useState("");
 
-  if (!isManager && attachments !== undefined && attachments.length === 0) return null;
+  if (!canManage && attachments !== undefined && attachments.length === 0) return null;
 
   function setFileProgress(file: File, progress: number) {
     setInFlight((prev) => prev.map((f) => (f.file === file ? { ...f, progress } : f)));
@@ -56,8 +61,11 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
       // busy/inFlight state while its siblings' XHRs are still in flight.
       const results = await Promise.allSettled(
         valid.map(async (file) => {
-          const uploaded = await oneDriveApi.attachToWiki(slug, file, (fraction) =>
-            setFileProgress(file, fraction),
+          const uploaded = await oneDriveApi.attachToWiki(
+            slug,
+            file,
+            (fraction) => setFileProgress(file, fraction),
+            folder || undefined,
           );
           await addAttachment({ slug, attachment: uploaded });
           setInFlight((prev) => prev.filter((f) => f.file !== file));
@@ -99,15 +107,20 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     <AttachmentDropZone
       onFiles={(files) => void onFilesSelected(files)}
       hint={t("dropHint")}
-      disabled={!isManager || busy}
+      disabled={!canManage || busy}
       className="mt-6 space-y-2 rounded-lg border-t border-border/60 pt-6 print:hidden"
     >
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {t("attachmentsTitle")}
         </p>
-        {isManager && (
-          <>
+        {canManage && (
+          <div className="flex items-center gap-2">
+            <OneDriveFolderPicker
+              basePath={`${WIKI_FOLDER_BASE}/${slug}`}
+              value={folder}
+              onChange={setFolder}
+            />
             <input
               ref={inputRef}
               type="file"
@@ -127,7 +140,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
               <Paperclip className="mr-1.5 size-3.5" />
               {t("addAttachment")}
             </Button>
-          </>
+          </div>
         )}
       </div>
       {inFlight.length > 0 && (
@@ -139,7 +152,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
         />
       )}
       {attachments === undefined ? null : attachments.length === 0 ? (
-        isManager ? (
+        canManage ? (
           <p className="text-xs text-muted-foreground">{t("noAttachments")}</p>
         ) : null
       ) : (
@@ -154,19 +167,17 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
               </span>
               <button
                 type="button"
-                onClick={() => {
-                  if (a.oneDriveItemId) {
-                    void oneDriveApi.download(a.oneDriveItemId, a.name);
-                  } else if (a.legacyUrl) {
-                    openFileViewer({
-                      storageId: a._id,
-                      name: a.name,
-                      contentType: a.contentType ?? undefined,
-                      size: a.size ?? undefined,
-                      url: a.legacyUrl,
-                    });
-                  }
-                }}
+                onClick={() =>
+                  openFileViewer({
+                    storageId: a._id,
+                    oneDriveItemId: a.oneDriveItemId ?? undefined,
+                    name: a.name,
+                    contentType: a.contentType ?? undefined,
+                    size: a.size ?? undefined,
+                    modifiedAt: a.createdAt,
+                    url: a.legacyUrl ?? undefined,
+                  })
+                }
                 className="min-w-0 text-left"
               >
                 <span className="block max-w-[14rem] truncate font-medium">{a.name}</span>
@@ -175,7 +186,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
                 </span>
               </button>
               <Download className="size-3.5 shrink-0 text-muted-foreground" />
-              {isManager && (
+              {canManage && (
                 <button
                   type="button"
                   onClick={() => void onDelete(a)}

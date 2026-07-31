@@ -7,6 +7,7 @@ import { internalAction, mutation, query } from "./_generated/server";
 import {
   effectiveCustomRoleIds,
   getUserByClerkId,
+  hasApplicantAccess,
   MANAGER_ROLES,
   requireCapability,
   requireUser,
@@ -107,6 +108,13 @@ export const apiUserContext = query({
       canAccessFiles:
         MANAGER_ROLES.includes(user.role) ||
         customRoles.some((customRole) => customRole?.capabilities.includes("access_files")),
+      // Indirect permission: anyone who can manage wikis/HR gets write access
+      // to that one OneDrive subtree (Team/Wiki, Team/HR) even without full
+      // file-browser access — see apps/api's `access.ts` for the scoping.
+      canWriteWiki:
+        MANAGER_ROLES.includes(user.role) ||
+        customRoles.some((customRole) => customRole?.capabilities.includes("manage_guidebooks")),
+      canWriteHR: hasApplicantAccess(user),
     };
   },
 });

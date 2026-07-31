@@ -7,10 +7,11 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { FileText, Link2, Plus, Search, UserPlus, Users } from "lucide-react";
+import { FileText, FolderOpen, Link2, Plus, Search, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { Link } from "@/components/Link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -229,10 +230,18 @@ export default function EmployeesPage() {
           <h2 className="font-display text-lg font-semibold">{t("employeeDirectoryTitle")}</h2>
           <p className="text-sm text-muted-foreground">{t("employeeDirectoryDescription")}</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" />
-          {t("employeeNew")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/hr/files">
+              <FolderOpen className="size-4" />
+              {t("browseFiles")}
+            </Link>
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" />
+            {t("employeeNew")}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">

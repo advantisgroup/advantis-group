@@ -24,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { downloadWithProgress } from "@/lib/download";
 import { formatDateTime } from "@/lib/format";
+import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -212,6 +213,8 @@ function ArchiveDownloadConfirm({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("FileViewer");
+  const od = useOneDriveApi();
+  const canDownload = Boolean(url) || Boolean(file.oneDriveItemId);
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md gap-0 p-0">
@@ -226,9 +229,10 @@ function ArchiveDownloadConfirm({
             {t("cancel")}
           </Button>
           <Button
-            disabled={!url}
+            disabled={!canDownload}
             onClick={() => {
-              if (url) void downloadUrl(url, file.name, t("downloading"));
+              if (file.oneDriveItemId) void od.download(file.oneDriveItemId, file.name);
+              else if (url) void downloadUrl(url, file.name, t("downloading"));
               onOpenChange(false);
             }}
             autoFocus
@@ -247,15 +251,20 @@ function FileViewerContent({
   file,
   url,
   kind,
+  isOneDriveOrigin,
+  previewLoading,
   onClose,
 }: {
   file: ViewableFile;
   url: string | undefined;
   kind: FileKind;
+  isOneDriveOrigin: boolean;
+  previewLoading: boolean;
   onClose: () => void;
 }) {
   const t = useTranslations("FileViewer");
   const locale = useLocale();
+  const od = useOneDriveApi();
   const [metadataOpen, setMetadataOpen] = useState(false);
   // Dimensions the browser actually decoded from the image, rather than
   // whatever (possibly stale/unset) width/height was passed in with the file.
@@ -306,20 +315,35 @@ function FileViewerContent({
       label: t("download"),
       icon: <Download className="size-4" />,
       onSelect: () => {
-        if (url) void downloadUrl(url, file.name, t("downloading"));
+        // OneDrive items: go through the authenticated /onedrive/download
+        // route by id — `url` there is a Graph preview/thumbnail link, not
+        // something a plain unauthenticated download fetch can read.
+        if (isOneDriveOrigin && file.oneDriveItemId) {
+          void od.download(file.oneDriveItemId, file.name);
+        } else if (url) {
+          void downloadUrl(url, file.name, t("downloading"));
+        }
       },
     },
-    {
-      key: "copy-link",
-      label: t("copyLink"),
-      icon: <Copy className="size-4" />,
-      onSelect: () => {
-        if (!url) return;
-        const contentType = kind.kind === "image" ? "image" : "file";
-        const publicUrl = `${process.env.NEXT_PUBLIC_MARKETING_URL}/content/${contentType}/${file.storageId}`;
-        void navigator.clipboard.writeText(publicUrl).then(() => toast.success(t("linkCopied")));
-      },
-    },
+    // No storage-backed public content URL exists for a OneDrive-origin
+    // file, so there's nothing stable to copy.
+    ...(isOneDriveOrigin
+      ? []
+      : [
+          {
+            key: "copy-link",
+            label: t("copyLink"),
+            icon: <Copy className="size-4" />,
+            onSelect: () => {
+              if (!url) return;
+              const contentType = kind.kind === "image" ? "image" : "file";
+              const publicUrl = `${process.env.NEXT_PUBLIC_MARKETING_URL}/content/${contentType}/${file.storageId}`;
+              void navigator.clipboard
+                .writeText(publicUrl)
+                .then(() => toast.success(t("linkCopied")));
+            },
+          },
+        ]),
   ];
 
   return (
@@ -442,9 +466,9 @@ function FileViewerContent({
       </TooltipProvider>
 
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 pb-6 sm:px-6">
-        {!url ? (
+        {previewLoading ? (
           <Loader2 className="size-6 animate-spin text-white/70" />
-        ) : kind.kind === "image" ? (
+        ) : kind.kind === "image" && url ? (
           <img
             src={url}
             alt={file.name}
@@ -456,9 +480,9 @@ function FileViewerContent({
             }
             className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
           />
-        ) : kind.kind === "pdf" ? (
+        ) : kind.kind === "pdf" && url ? (
           <PdfPreview url={url} />
-        ) : kind.kind === "code" || kind.kind === "text" ? (
+        ) : (kind.kind === "code" || kind.kind === "text") && url && !isOneDriveOrigin ? (
           <CodeOrTextPreview url={url} kind={kind} noPreviewLabel={t("noPreview")} />
         ) : (
           <div className="flex flex-col items-center gap-3 text-white/80">
@@ -467,7 +491,13 @@ function FileViewerContent({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => downloadUrl(url, file.name, t("downloading"))}
+              onClick={() => {
+                if (isOneDriveOrigin && file.oneDriveItemId) {
+                  void od.download(file.oneDriveItemId, file.name);
+                } else if (url) {
+                  void downloadUrl(url, file.name, t("downloading"));
+                }
+              }}
             >
               <Download className="size-4" />
               {t("download")}
@@ -508,12 +538,73 @@ export function GlobalFileViewer({
   }, [file, onClose]);
 
   const kind = useMemo(() => (file ? detectFileKind(file.name, file.contentType) : null), [file]);
+  const isOneDriveOrigin = Boolean(file?.oneDriveItemId && !file.url);
 
   const resolvedUrl = useQuery(
     api.files.getUrl,
-    file && !file.url ? { storageId: file.storageId as Id<"_storage"> } : "skip",
+    file && !file.url && file.storageId ? { storageId: file.storageId as Id<"_storage"> } : "skip",
   );
-  const url = file?.url ?? resolvedUrl ?? undefined;
+
+  const od = useOneDriveApi();
+  const [oneDrivePreview, setOneDrivePreview] = useState<{
+    itemId: string;
+    url: string | undefined;
+  } | null>(null);
+  useEffect(() => {
+    if (!isOneDriveOrigin || !file?.oneDriveItemId || !kind) return;
+    const itemId = file.oneDriveItemId;
+    let cancelled = false;
+    let objectUrl: string | undefined;
+
+    if (kind.kind === "image") {
+      // A real thumbnail image — no Office/PDF Online embed involved.
+      void od
+        .preview(itemId)
+        .then((r) => {
+          if (!cancelled) setOneDrivePreview({ itemId, url: r.thumbnailUrl ?? r.previewUrl });
+        })
+        .catch(() => {
+          if (!cancelled) setOneDrivePreview({ itemId, url: undefined });
+        });
+    } else if (kind.kind === "pdf") {
+      // Rendered natively through `PdfPreview` (same as a Convex-storage
+      // PDF) rather than Graph's embeddable preview iframe — fetches the
+      // actual bytes through the authenticated download route and hands
+      // react-pdf a local blob URL.
+      void od
+        .downloadAsFile({ id: itemId, name: file.name, mimeType: file.contentType })
+        .then((f) => {
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(f);
+          setOneDrivePreview({ itemId, url: objectUrl });
+        })
+        .catch(() => {
+          if (!cancelled) setOneDrivePreview({ itemId, url: undefined });
+        });
+    } else {
+      // Nothing else gets an inline preview — straight to "no preview,
+      // download instead".
+      setOneDrivePreview({ itemId, url: undefined });
+    }
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOneDriveOrigin, file?.oneDriveItemId, kind?.kind]);
+
+  const oneDrivePreviewReady = Boolean(
+    !isOneDriveOrigin || oneDrivePreview?.itemId === file?.oneDriveItemId,
+  );
+  const url =
+    file?.url ??
+    resolvedUrl ??
+    (isOneDriveOrigin && oneDrivePreviewReady ? oneDrivePreview?.url : undefined) ??
+    undefined;
+  const previewLoading = isOneDriveOrigin
+    ? !oneDrivePreviewReady
+    : !file?.url && resolvedUrl === undefined;
 
   if (!mounted || !file || !kind) return null;
 
@@ -534,7 +625,15 @@ export function GlobalFileViewer({
       className="fixed inset-0 z-[100] flex flex-col bg-black/80 backdrop-blur-xl"
       onClick={onClose}
     >
-      <FileViewerContent key={file.storageId} file={file} url={url} kind={kind} onClose={onClose} />
+      <FileViewerContent
+        key={file.storageId ?? file.oneDriveItemId ?? file.name}
+        file={file}
+        url={url}
+        kind={kind}
+        isOneDriveOrigin={isOneDriveOrigin}
+        previewLoading={previewLoading}
+        onClose={onClose}
+      />
     </div>,
     document.body,
   );

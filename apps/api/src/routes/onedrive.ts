@@ -8,9 +8,13 @@ import { Errors } from "../lib/errors.js";
 import {
   assertCanRead,
   assertCanWrite,
+  assertWithinBrowsableScope,
   classifyAccess,
   folderConfig,
+  hrFolderBase,
+  isWithinBrowsableScope,
   normalizePath,
+  wikiFolderBase,
 } from "../lib/onedrive/access.js";
 import { getCachedListing, invalidateAll, setCachedListing } from "../lib/onedrive/cache.js";
 import {
@@ -43,12 +47,24 @@ import {
   uploadFile,
 } from "../lib/onedrive/graph.js";
 import { scanFile } from "../lib/onedrive/scan.js";
-import { ensureFolderPath } from "../lib/onedrive/wikiFolder.js";
+import { ensureFolderPath } from "../lib/onedrive/provisionFolder.js";
 import { rateLimit } from "../lib/rate-limit.js";
 
 // --- helpers ----------------------------------------------------------------
 
 const serverKey = () => getConvexServerKey();
+
+/** A user-chosen subfolder under a wiki/HR attach base — collapsed to a
+ * clean relative path with no `.`/`..` segments, so it can never climb out
+ * of the base it's appended to. */
+function sanitizeRelativeSubfolder(input?: string): string {
+  if (!input) return "";
+  return input
+    .split("/")
+    .map((seg) => seg.trim())
+    .filter((seg) => seg.length > 0 && seg !== "." && seg !== "..")
+    .join("/");
+}
 
 function toItem(child: GraphItem, user: OneDriveUser): OneDriveItem | null {
   const rel = relPathOf(child);
@@ -83,6 +99,7 @@ async function buildListing(user: OneDriveUser, relPath: string): Promise<OneDri
   let folder = await getItemByPath(relPath);
   let folderRel = relPathOf(folder) ?? normalizePath(relPath);
   assertCanRead(user, folderRel);
+  assertWithinBrowsableScope(user, folderRel);
 
   // A deep link (e.g. a chat/announcement attachment) can point straight at
   // a file rather than a folder — list its parent instead and flag the file
@@ -94,6 +111,7 @@ async function buildListing(user: OneDriveUser, relPath: string): Promise<OneDri
     folder = await getItemByPath(parentRel);
     folderRel = relPathOf(folder) ?? normalizePath(parentRel);
     assertCanRead(user, folderRel);
+    assertWithinBrowsableScope(user, folderRel);
   }
 
   const scope = `${user.role}:${user.gfAccess ? 1 : 0}`;
@@ -198,7 +216,8 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
       const hits = await search(q);
       const items = hits
         .map((hit) => toItem(hit, user))
-        .filter((i): i is OneDriveItem => i !== null);
+        .filter((i): i is OneDriveItem => i !== null)
+        .filter((i) => isWithinBrowsableScope(user, i.path));
       return { items };
     },
     { query: t.Object({ q: t.String() }) },
@@ -465,18 +484,21 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     { body: t.Object({ path: t.Optional(t.String()), name: t.String() }) },
   )
 
-  // Upload a guidebook (wiki) attachment (manager+, same write rule as any
-  // other Team-zone write). Lazily provisions Team/Wiki/<slug> — Convex only
-  // ever stores the returned driveItemId/path as a reference, never the
-  // bytes, so the file lives in OneDrive as its single source of truth.
+  // Upload a guidebook (wiki) attachment. Write-gated by `assertCanWrite`,
+  // which now also admits a non-manager wiki editor via the indirect
+  // Team/Wiki grant (see access.ts). Lazily provisions Team/Wiki/<slug>[/<folder>]
+  // — Convex only ever stores the returned driveItemId/path as a reference,
+  // never the bytes, so the file lives in OneDrive as its single source of truth.
   .post(
     "/wiki/:slug/attach",
     async ({ request, params, body }) => {
       const user = await resolveOneDriveUser(request);
-      requireManagerUser(user);
+      requireFileBrowserAccess(user);
       await rateLimit("od.wikiAttach", user.clerkUserId, 20, "1 h");
 
-      const targetRel = `${folderConfig().team}/Wiki/${params.slug}`;
+      const base = `${wikiFolderBase()}/${params.slug}`;
+      const subfolder = sanitizeRelativeSubfolder(body.folder);
+      const targetRel = subfolder ? `${base}/${subfolder}` : base;
       assertCanWrite(user, targetRel);
 
       const file = body.file;
@@ -502,7 +524,52 @@ export const onedriveRoute = new Elysia({ prefix: "/onedrive" })
     },
     {
       params: t.Object({ slug: t.String() }),
-      body: t.Object({ file: t.File() }),
+      body: t.Object({ file: t.File(), folder: t.Optional(t.String()) }),
+    },
+  )
+
+  // Upload a document to an employee's HR folder — same shape/rules as the
+  // wiki attach route above (see access.ts's Team/HR indirect grant).
+  .post(
+    "/hr/:employeeProfileId/attach",
+    async ({ request, params, body }) => {
+      const user = await resolveOneDriveUser(request);
+      requireFileBrowserAccess(user);
+      await rateLimit("od.hrAttach", user.clerkUserId, 20, "1 h");
+
+      const { folderName } = await getConvex().query(api.humanResources.apiEmployeeFolderName, {
+        serverKey: serverKey(),
+        employeeProfileId: params.employeeProfileId as Id<"employeeProfiles">,
+      });
+      const base = `${hrFolderBase()}/${folderName}`;
+      const subfolder = sanitizeRelativeSubfolder(body.folder);
+      const targetRel = subfolder ? `${base}/${subfolder}` : base;
+      assertCanWrite(user, targetRel);
+
+      const file = body.file;
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const [report, folder] = await Promise.all([
+        scanFile({ bytes, fileName: file.name, declaredMime: file.type }),
+        ensureFolderPath(targetRel),
+      ]);
+      if (report.verdict === "blocked") {
+        const reason = report.flags.find((f) => f.severity === "danger");
+        throw Errors.badRequest(reason?.detail ?? "This file type is not allowed");
+      }
+      const created = await uploadFile(folder.id, file.name, bytes, file.type);
+      await invalidateAll();
+      return {
+        oneDriveItemId: created.id,
+        oneDrivePath: `${targetRel}/${file.name}`,
+        name: file.name,
+        size: bytes.byteLength,
+        contentType: file.type || "application/octet-stream",
+        kind: (file.type || "").startsWith("image/") ? ("image" as const) : ("file" as const),
+      };
+    },
+    {
+      params: t.Object({ employeeProfileId: t.String() }),
+      body: t.Object({ file: t.File(), folder: t.Optional(t.String()) }),
     },
   )
 

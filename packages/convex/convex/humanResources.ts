@@ -18,6 +18,13 @@ const employeeDocumentCategoryValidator = v.union(
   v.literal("other")
 );
 
+function assertServerKey(serverKey: string): void {
+  const expected = process.env.CONVEX_SERVER_KEY;
+  if (!expected || serverKey !== expected) {
+    throw new ConvexError({ code: "forbidden", message: "Invalid server key" });
+  }
+}
+
 /**
  * `employeeProfiles` is HumanResources' subprofile: a feature-owned record
  * representing "this person, as an HR employee record," optionally linked
@@ -277,10 +284,13 @@ export const archiveApplicant = mutation({
   },
 });
 
+/** New documents are OneDrive-backed — Convex only stores the reference
+ * (see `employeeDocuments` in schema.ts). */
 export const addDocument = mutation({
   args: {
     employeeProfileId: v.id("employeeProfiles"),
-    storageId: v.id("_storage"),
+    oneDriveItemId: v.string(),
+    oneDrivePath: v.string(),
     fileName: v.string(),
     contentType: v.optional(v.string()),
     size: v.optional(v.number()),
@@ -291,7 +301,8 @@ export const addDocument = mutation({
     await requireProfile(ctx, args.employeeProfileId);
     return ctx.db.insert("employeeDocuments", {
       employeeProfileId: args.employeeProfileId,
-      storageId: args.storageId,
+      oneDriveItemId: args.oneDriveItemId,
+      oneDrivePath: args.oneDrivePath,
       fileName: args.fileName,
       contentType: args.contentType,
       size: args.size,
@@ -321,7 +332,10 @@ export const listDocuments = query({
           return {
             ...document,
             uploadedByName: uploader ? profileDisplayName(uploader) : null,
-            url: await ctx.storage.getUrl(document.storageId),
+            // Legacy (pre-OneDrive) rows only — null for anything uploaded
+            // through the current attach flow, which resolves its own URL
+            // through apps/api's /onedrive/download|preview endpoints.
+            legacyUrl: document.storageId ? await ctx.storage.getUrl(document.storageId) : null,
           };
         })
     );
@@ -333,9 +347,43 @@ export const removeDocument = mutation({
   handler: async (ctx, { documentId }) => {
     await requireApplicantAccess(ctx);
     const document = await ctx.db.get(documentId);
-    if (!document) return { ok: true };
-    await ctx.storage.delete(document.storageId);
+    if (!document) return { ok: true, oneDriveItemId: null };
+    if (document.storageId) await ctx.storage.delete(document.storageId);
     await ctx.db.delete(documentId);
-    return { ok: true };
+    return { ok: true, oneDriveItemId: document.oneDriveItemId ?? null };
+  },
+});
+
+/** The folder name apps/api provisions this employee's OneDrive documents
+ * under: Team/HR/<name> (<id>) — the id suffix keeps it unique even when two
+ * employees share a name, without making the whole folder name opaque. */
+function employeeFolderNameFor(profile: Doc<"employeeProfiles">): string {
+  const cleanName = profile.name.replace(/[\\/:*?"<>|]/g, "").trim() || "Employee";
+  return `${cleanName} (${profile._id.slice(-6)})`;
+}
+
+/** Clerk-authenticated — lets the documents page resolve its own OneDrive
+ * folder path so it can list/browse it (the attach route resolves this
+ * itself server-side too, via `apiEmployeeFolderName` below). */
+export const employeeFolderName = query({
+  args: { employeeProfileId: v.id("employeeProfiles") },
+  handler: async (ctx, { employeeProfileId }) => {
+    await requireApplicantAccess(ctx);
+    const profile = await requireProfile(ctx, employeeProfileId);
+    return { folderName: employeeFolderNameFor(profile) };
+  },
+});
+
+/** Server-key gated variant of `employeeFolderName`, for apps/api — never
+ * trusts a client-supplied folder name for the actual upload path. */
+export const apiEmployeeFolderName = query({
+  args: { serverKey: v.string(), employeeProfileId: v.id("employeeProfiles") },
+  handler: async (ctx, { serverKey, employeeProfileId }) => {
+    assertServerKey(serverKey);
+    const profile = await ctx.db.get(employeeProfileId);
+    if (!profile) {
+      throw new ConvexError({ code: "not_found", message: "Employee profile not found" });
+    }
+    return { folderName: employeeFolderNameFor(profile) };
   },
 });

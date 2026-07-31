@@ -65,6 +65,52 @@ export interface WikiAttachmentUpload {
   kind: "image" | "file";
 }
 
+/** Shared XHR upload for the wiki/HR "attach" endpoints (multipart, optional
+ * subfolder, real progress via XHR rather than fetch). */
+function uploadToAttachEndpoint(
+  url: string,
+  file: File,
+  getToken: () => Promise<string | null>,
+  onProgress?: (fraction: number) => void,
+  folder?: string,
+): Promise<WikiAttachmentUpload> {
+  return new Promise<WikiAttachmentUpload>((resolve, reject) => {
+    void (async () => {
+      try {
+        const token = await getToken();
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", url);
+        if (token) xhr.setRequestHeader("authorization", `Bearer ${token}`);
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable && onProgress) {
+            onProgress(e.loaded / e.total);
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText) as WikiAttachmentUpload);
+          } else {
+            let message = "Upload failed";
+            try {
+              message = (JSON.parse(xhr.responseText) as { error?: string }).error ?? message;
+            } catch {
+              // keep generic
+            }
+            reject(new Error(message));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Upload failed"));
+        const form = new FormData();
+        form.append("file", file);
+        if (folder) form.append("folder", folder);
+        xhr.send(form);
+      } catch (error) {
+        reject(error instanceof Error ? error : new Error("Upload failed"));
+      }
+    })();
+  });
+}
+
 export function useOneDriveApi() {
   const { getToken } = useAuth();
   const t = useTranslations("Files");
@@ -193,41 +239,31 @@ export function useOneDriveApi() {
         slug: string,
         file: File,
         onProgress?: (fraction: number) => void,
+        folder?: string,
       ): Promise<WikiAttachmentUpload> =>
-        new Promise<WikiAttachmentUpload>((resolve, reject) => {
-          void (async () => {
-            try {
-              const token = await getToken();
-              const xhr = new XMLHttpRequest();
-              xhr.open("POST", `${API}/onedrive/wiki/${encodeURIComponent(slug)}/attach`);
-              if (token) xhr.setRequestHeader("authorization", `Bearer ${token}`);
-              xhr.upload.onprogress = (e) => {
-                if (e.lengthComputable && onProgress) {
-                  onProgress(e.loaded / e.total);
-                }
-              };
-              xhr.onload = () => {
-                if (xhr.status >= 200 && xhr.status < 300) {
-                  resolve(JSON.parse(xhr.responseText) as WikiAttachmentUpload);
-                } else {
-                  let message = "Upload failed";
-                  try {
-                    message = (JSON.parse(xhr.responseText) as { error?: string }).error ?? message;
-                  } catch {
-                    // keep generic
-                  }
-                  reject(new Error(message));
-                }
-              };
-              xhr.onerror = () => reject(new Error("Upload failed"));
-              const form = new FormData();
-              form.append("file", file);
-              xhr.send(form);
-            } catch (error) {
-              reject(error instanceof Error ? error : new Error("Upload failed"));
-            }
-          })();
-        }),
+        uploadToAttachEndpoint(
+          `${API}/onedrive/wiki/${encodeURIComponent(slug)}/attach`,
+          file,
+          getToken,
+          onProgress,
+          folder,
+        ),
+
+      /** Same shape as `attachToWiki`, for an employee's HR document folder
+       * (Team/HR/<employee>/…, auto-provisioned server-side). */
+      attachToHR: (
+        employeeProfileId: string,
+        file: File,
+        onProgress?: (fraction: number) => void,
+        folder?: string,
+      ): Promise<WikiAttachmentUpload> =>
+        uploadToAttachEndpoint(
+          `${API}/onedrive/hr/${encodeURIComponent(employeeProfileId)}/attach`,
+          file,
+          getToken,
+          onProgress,
+          folder,
+        ),
 
       approve: (uploadId: string, note?: string) =>
         send<{ ok: true }>(

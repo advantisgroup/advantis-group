@@ -9,6 +9,7 @@
   "newFolder": "Neuer Ordner",
   "newFolderDesc": "Erstellt einen Ordner im aktuellen Verzeichnis, sichtbar für alle mit Zugriff auf diesen Ort.",
   "folderName": "Ordnername",
+  "noFolder": "Kein Ordner",
   "create": "Erstellen",
   "cancel": "Abbrechen",
   "save": "Speichern",
