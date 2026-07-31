@@ -31,6 +31,7 @@ import { toast } from "sonner";
 import { ClockodoAdminPanel } from "@/components/clockodo/ClockodoAdminPanel";
 import { ClockStartPicker } from "@/components/clockodo/ClockStartPicker";
 import { ClockStatusGradient } from "@/components/clockodo/ClockStatusGradient";
+import { DateBadge } from "@/components/clockodo/DateBadge";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ErrorFallback } from "@/components/ErrorFallback";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
@@ -122,25 +123,31 @@ function SectionBoundary({
   );
 }
 
+/** Color-coded by absence type to match Clockodo's own convention (green
+ * for vacation, blue for sick) rather than a generic red for "sick". */
 const TYPE_STYLE: Record<
   AbsenceType,
-  { icon: typeof Plane; className: string }
+  { icon: typeof Plane; className: string; barClassName: string }
 > = {
   vacation: {
     icon: Plane,
     className: "bg-emerald-400/15 text-emerald-700 dark:text-emerald-300",
+    barClassName: "bg-emerald-500/80",
   },
   sick: {
     icon: Thermometer,
-    className: "bg-rose-400/15 text-rose-700 dark:text-rose-300",
+    className: "bg-sky-400/15 text-sky-700 dark:text-sky-300",
+    barClassName: "bg-sky-500/80",
   },
   personal: {
     icon: CircleDashed,
-    className: "bg-sky-400/15 text-sky-700 dark:text-sky-300",
+    className: "bg-violet-400/15 text-violet-700 dark:text-violet-300",
+    barClassName: "bg-violet-500/80",
   },
   other: {
     icon: CircleDashed,
     className: "bg-amber-400/15 text-amber-700 dark:text-amber-300",
+    barClassName: "bg-amber-500/80",
   },
 };
 
@@ -215,7 +222,10 @@ function CalendarBar({
     ) + 1;
   return (
     <span
-      className="absolute top-1/2 h-5 -translate-y-1/2 rounded-sm bg-emerald-500/80"
+      className={cn(
+        "absolute top-1/2 h-5 -translate-y-1/2 rounded-sm",
+        TYPE_STYLE[absence.type].barClassName,
+      )}
       style={{
         left: `${(offset / total) * 100}%`,
         width: `${Math.max((length / total) * 100, 2)}%`,
@@ -255,18 +265,10 @@ function Stat({
 function AbsencePill({ absence }: { absence: MyAbsence }) {
   const t = useTranslations("Absences");
   const style = TYPE_STYLE[absence.type];
-  const Icon = style.icon;
   return (
     <div className="flex items-center justify-between gap-3 border-b border-border/70 py-3 last:border-0">
       <div className="flex min-w-0 items-center gap-3">
-        <span
-          className={cn(
-            "grid size-8 shrink-0 place-items-center rounded-md",
-            style.className
-          )}
-        >
-          <Icon className="size-4" />
-        </span>
+        <DateBadge date={absence.startDate} className={style.className} />
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{t(absence.type)}</p>
           <p className="text-xs text-muted-foreground">
@@ -509,7 +511,12 @@ function Dashboard({
                       className="flex items-center justify-between gap-3 py-3"
                     >
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-emerald-400/15 text-xs font-semibold text-emerald-700">
+                        <span
+                          className={cn(
+                            "grid size-8 shrink-0 place-items-center rounded-full text-xs font-semibold",
+                            TYPE_STYLE[absence.type].className
+                          )}
+                        >
                           {absence.userName.slice(0, 2).toUpperCase()}
                         </span>
                         <div className="min-w-0">
@@ -521,7 +528,12 @@ function Dashboard({
                           </p>
                         </div>
                       </div>
-                      <Badge variant="success">{t("vacation")}</Badge>
+                      <Badge
+                        variant="outline"
+                        className={TYPE_STYLE[absence.type].className}
+                      >
+                        {t(absence.type)}
+                      </Badge>
                     </div>
                   ))}
               </div>
@@ -574,7 +586,7 @@ function Timetable({ mine }: { mine: MyAbsence[] | undefined }) {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between border-b border-border/70">
+      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-muted/40">
         <div>
           <CardTitle className="text-base">{t("yourTimetable")}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -719,7 +731,7 @@ function ClockodoAbsenceDialog({
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            <label className="mb-1 block text-xs font-semibold text-indigo-600 dark:text-indigo-400">
               {t("absenceType")}
             </label>
             <Select value={clockodoType} onValueChange={setClockodoType}>
@@ -744,7 +756,7 @@ function ClockodoAbsenceDialog({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              <label className="mb-1 block text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                 {t("startDate")}
               </label>
               <Input
@@ -754,7 +766,7 @@ function ClockodoAbsenceDialog({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              <label className="mb-1 block text-xs font-semibold text-indigo-600 dark:text-indigo-400">
                 {t("endDate")}
               </label>
               <Input
@@ -764,7 +776,7 @@ function ClockodoAbsenceDialog({
               />
             </div>
           </div>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
             <Checkbox
               checked={halfDay}
               onCheckedChange={value => setHalfDay(value === true)}
@@ -772,7 +784,7 @@ function ClockodoAbsenceDialog({
             {t("halfDay")}
           </label>
           <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            <label className="mb-1 block text-xs font-semibold text-indigo-600 dark:text-indigo-400">
               {t("note")}
             </label>
             <Textarea
@@ -819,8 +831,8 @@ function Requests({
       .includes(query.toLowerCase())
   );
   return (
-    <Card>
-      <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border/70">
+    <Card className="overflow-hidden">
+      <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border/70 bg-muted/40">
         <div>
           <CardTitle className="text-base">{t("yourRequests")}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -853,21 +865,13 @@ function Requests({
         <div className="divide-y divide-border/70">
           {visible.map(absence => {
             const style = TYPE_STYLE[absence.type];
-            const Icon = style.icon;
             return (
               <div
                 key={absence.id}
                 className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span
-                    className={cn(
-                      "grid size-9 shrink-0 place-items-center rounded-md",
-                      style.className
-                    )}
-                  >
-                    <Icon className="size-4" />
-                  </span>
+                  <DateBadge date={absence.startDate} className={style.className} />
                   <div className="min-w-0">
                     <p className="font-medium">{t(absence.type)}</p>
                     <p className="text-sm text-muted-foreground">
@@ -949,8 +953,8 @@ function Approvals({
   }
 
   return (
-    <Card>
-      <CardHeader className="border-b border-border/70">
+    <Card className="overflow-hidden">
+      <CardHeader className="border-b border-border/70 bg-muted/40">
         <CardTitle className="text-base">{t("pendingApprovals")}</CardTitle>
         <p className="mt-1 text-sm text-muted-foreground">{t("pendingApprovalsHint")}</p>
       </CardHeader>
@@ -958,21 +962,13 @@ function Approvals({
         <div className="divide-y divide-border/70">
           {approvals?.map(approval => {
             const style = TYPE_STYLE[approval.type];
-            const Icon = style.icon;
             return (
               <div
                 key={approval.id}
                 className="flex flex-wrap items-center justify-between gap-4 px-5 py-4"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <span
-                    className={cn(
-                      "grid size-9 shrink-0 place-items-center rounded-md",
-                      style.className
-                    )}
-                  >
-                    <Icon className="size-4" />
-                  </span>
+                  <DateBadge date={approval.startDate} className={style.className} />
                   <div className="min-w-0">
                     <p className="font-medium">
                       {approval.userName} · {t(approval.type)}
@@ -1049,7 +1045,7 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
   );
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="flex-row items-center justify-between border-b border-border/70">
+      <CardHeader className="flex-row items-center justify-between border-b border-border/70 bg-muted/40">
         <div>
           <CardTitle className="text-base">{t("absencePlanner")}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -1149,8 +1145,8 @@ function Reports({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
     return [...summary.entries()].sort(([, a], [, b]) => b.days - a.days);
   }, [calendar, year]);
   return (
-    <Card>
-      <CardHeader className="border-b border-border/70">
+    <Card className="overflow-hidden">
+      <CardHeader className="border-b border-border/70 bg-muted/40">
         <CardTitle className="text-base">{t("teamReport", { year })}</CardTitle>
         <p className="text-sm text-muted-foreground">{t("teamReportHint")}</p>
       </CardHeader>
