@@ -542,7 +542,12 @@ export function GlobalFileViewer({
 
   const resolvedUrl = useQuery(
     api.files.getUrl,
-    file && !file.url && file.storageId ? { storageId: file.storageId as Id<"_storage"> } : "skip",
+    // `oneDriveItemId` and `storageId` are mutually exclusive in practice —
+    // a caller mistakenly setting both must not still fire a (guaranteed
+    // to fail) Convex storage lookup against an id from a different table.
+    file && !file.url && !file.oneDriveItemId && file.storageId
+      ? { storageId: file.storageId as Id<"_storage"> }
+      : "skip",
   );
 
   const od = useOneDriveApi();

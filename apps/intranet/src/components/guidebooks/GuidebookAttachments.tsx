@@ -169,7 +169,12 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
                 type="button"
                 onClick={() =>
                   openFileViewer({
-                    storageId: a._id,
+                    // `a._id` is this attachment row's own id, not a
+                    // Convex storage id — never pass it as `storageId`
+                    // (GlobalFileViewer would try to resolve it via
+                    // files.getUrl and fail validation). OneDrive-backed
+                    // rows carry `oneDriveItemId` instead; legacy rows
+                    // already resolve their own `url` server-side.
                     oneDriveItemId: a.oneDriveItemId ?? undefined,
                     name: a.name,
                     contentType: a.contentType ?? undefined,
