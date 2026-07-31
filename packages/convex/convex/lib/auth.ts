@@ -178,6 +178,24 @@ export async function requireCapability(
 }
 
 /**
+ * Non-throwing sibling of `requireCapability`, for filtering rather than
+ * hard-gating (e.g. deciding how much of a record to reveal). Same
+ * manager-auto-pass and custom-role lookup, but returns false instead of
+ * throwing when there's no signed-in user or the capability isn't granted.
+ */
+export async function hasCapability(
+  ctx: QueryCtx | MutationCtx,
+  capability: Capability,
+): Promise<boolean> {
+  const user = await getCurrentUser(ctx);
+  if (!user) return false;
+  if (MANAGER_ROLES.includes(user.role)) return true;
+
+  const customRoles = await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
+  return customRoles.some((role) => role?.capabilities.includes(capability) ?? false);
+}
+
+/**
  * True when `user` qualifies to be granted Applicant Management access: at
  * least Manager (admins qualify too), or an employee holding any custom role
  * that carries `manage_members`. This is a data-sensitivity gate on the

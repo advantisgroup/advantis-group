@@ -2,6 +2,7 @@ import { type Role } from "@advantis/types";
 import {
   Activity,
   BookOpen,
+  Clock3,
   FolderLock,
   Megaphone,
   MessageSquare,
@@ -35,4 +36,6 @@ export const CAPABILITY_ICONS: Record<Capability, LucideIcon> = {
   manage_announcements: Megaphone,
   manage_guidebooks: BookOpen,
   manage_it_ticket_threads: MessageSquare,
+  view_clockodo_team: Clock3,
+  manage_clockodo_team: Clock3,
 };

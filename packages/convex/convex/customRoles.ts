@@ -2,7 +2,7 @@ import { ConvexError, v } from "convex/values";
 
 import { capabilityValidator } from "./schema";
 import { mutation, query } from "./_generated/server";
-import { effectiveCustomRoleIds, requireManager } from "./lib/auth";
+import { effectiveCustomRoleIds, requireManager, type Capability } from "./lib/auth";
 
 /**
  * Manager-defined roles (e.g. "Team Lead") that grant a scoped set of
@@ -12,6 +12,25 @@ import { effectiveCustomRoleIds, requireManager } from "./lib/auth";
  * narrower than the manager tier itself, so letting managers grant it doesn't
  * hand out anything they don't already have.
  */
+
+/**
+ * Capabilities are normally independent, but `manage_clockodo_team` is the
+ * first write/read pair in this system — granting write without the
+ * matching read would be a nonsensical, easy-to-misconfigure state. Enforced
+ * here at write time (not at every read-site) so every downstream check can
+ * stay a plain `capabilities.includes(x)` with no pairing to know about.
+ */
+const CAPABILITY_IMPLIES: Partial<Record<Capability, Capability[]>> = {
+  manage_clockodo_team: ["view_clockodo_team"],
+};
+
+function normalizeCapabilities(capabilities: Capability[]): Capability[] {
+  const set = new Set(capabilities);
+  for (const capability of capabilities) {
+    for (const implied of CAPABILITY_IMPLIES[capability] ?? []) set.add(implied);
+  }
+  return [...set];
+}
 
 export const list = query({
   args: {},
@@ -37,7 +56,7 @@ export const create = mutation({
     }
     return ctx.db.insert("customRoles", {
       name: trimmed,
-      capabilities,
+      capabilities: normalizeCapabilities(capabilities),
       createdBy: actor._id,
       createdAt: Date.now(),
     });
@@ -58,7 +77,7 @@ export const update = mutation({
     }
     await ctx.db.patch(customRoleId, {
       ...(name !== undefined ? { name: name.trim() || role.name } : {}),
-      ...(capabilities !== undefined ? { capabilities } : {}),
+      ...(capabilities !== undefined ? { capabilities: normalizeCapabilities(capabilities) } : {}),
     });
   },
 });

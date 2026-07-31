@@ -32,8 +32,21 @@ const CAPABILITIES = [
   "manage_announcements",
   "manage_guidebooks",
   "manage_it_ticket_threads",
+  "view_clockodo_team",
+  "manage_clockodo_team",
 ] as const;
 type Capability = (typeof CAPABILITIES)[number];
+
+/**
+ * `manage_clockodo_team` is the first write/read capability pair in this
+ * system — granting write without its matching read would be a nonsensical
+ * state. The server (`customRoles.ts`) normalizes this too on save; this
+ * mirror keeps the editor from ever showing the inconsistent in-between
+ * state in the first place (the implied capability's checkbox locks on).
+ */
+const CAPABILITY_IMPLIES: Partial<Record<Capability, Capability[]>> = {
+  manage_clockodo_team: ["view_clockodo_team"],
+};
 
 interface CustomRoleFormState {
   _id?: Id<"customRoles">;
@@ -55,9 +68,13 @@ function RoleForm({
   const [capabilities, setCapabilities] = useState<Capability[]>(role.capabilities);
 
   function toggle(cap: Capability) {
-    setCapabilities((prev) =>
-      prev.includes(cap) ? prev.filter((c) => c !== cap) : [...prev, cap],
-    );
+    setCapabilities((prev) => {
+      if (prev.includes(cap)) return prev.filter((c) => c !== cap);
+      const next = new Set(prev);
+      next.add(cap);
+      for (const implied of CAPABILITY_IMPLIES[cap] ?? []) next.add(implied);
+      return [...next];
+    });
   }
 
   return (
@@ -82,18 +99,21 @@ function RoleForm({
           <div className="grid max-h-80 grid-cols-1 gap-2 overflow-y-auto pr-1">
             {CAPABILITIES.map((cap) => {
               const checked = capabilities.includes(cap);
+              const impliedBy = capabilities.find((c) => CAPABILITY_IMPLIES[c]?.includes(cap));
               const Icon = CAPABILITY_ICONS[cap];
               return (
                 <button
                   key={cap}
                   type="button"
                   aria-pressed={checked}
+                  disabled={!!impliedBy}
                   onClick={() => toggle(cap)}
                   className={cn(
                     "flex items-start gap-2 rounded-lg border p-3 text-left transition-colors",
                     checked
                       ? "border-primary bg-primary/5"
                       : "border-border/70 hover:border-border",
+                    impliedBy && "cursor-not-allowed opacity-80",
                   )}
                 >
                   <div
@@ -112,6 +132,11 @@ function RoleForm({
                     <p className="text-xs leading-snug text-muted-foreground">
                       {t(`capability_${cap}_desc`)}
                     </p>
+                    {impliedBy && (
+                      <p className="text-xs leading-snug text-muted-foreground">
+                        {t("impliedBy", { by: t(`capability_${impliedBy}`) })}
+                      </p>
+                    )}
                   </div>
                 </button>
               );
