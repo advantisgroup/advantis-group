@@ -33,6 +33,7 @@ import {
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
+import { WIKI_FOLDER_BASE } from "@/lib/onedrive-scopes";
 import { addMonths, msToDateInput, slugify } from "@/lib/wiki";
 import { attachPendingFiles } from "@/lib/wiki-attachments";
 
@@ -308,6 +309,7 @@ export function EntryDialog({
               attachmentUpload.setFileProgress,
               attachmentUpload.removeByFile,
             );
+            toast.success(t("uploadedTo", { path: `${WIKI_FOLDER_BASE}/${slug}` }));
           } finally {
             attachmentUpload.setUploading(false);
           }
@@ -421,7 +423,11 @@ export function EntryDialog({
           {isEditing ? (
             <GuidebookAttachments slug={entry.slug} />
           ) : (
-            <PendingWikiAttachments attachmentUpload={attachmentUpload} busy={busy} />
+            <PendingWikiAttachments
+              attachmentUpload={attachmentUpload}
+              busy={busy}
+              slugPreview={thema ? slugify(thema) : undefined}
+            />
           )}
         </div>
         <DialogFooter>

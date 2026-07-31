@@ -21,6 +21,7 @@ import { useIsManager } from "@/components/providers/current-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { imageStorageIdsOf, serializeBlocks, slugify } from "@/lib/guidebook-blocks";
 import { useOneDriveApi } from "@/lib/onedrive-api";
+import { WIKI_FOLDER_BASE } from "@/lib/onedrive-scopes";
 import { attachPendingFiles } from "@/lib/wiki-attachments";
 
 export default function NewGuidebookPage() {
@@ -89,6 +90,7 @@ export default function NewGuidebookPage() {
             attachmentUpload.setFileProgress,
             attachmentUpload.removeByFile,
           );
+          toast.success(t("uploadedTo", { path: `${WIKI_FOLDER_BASE}/${slug}` }));
         } finally {
           attachmentUpload.setUploading(false);
         }

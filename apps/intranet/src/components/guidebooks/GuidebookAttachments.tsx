@@ -50,6 +50,8 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     setInFlight((prev) => prev.map((f) => (f.file === file ? { ...f, progress } : f)));
   }
 
+  const destinationPath = `${WIKI_FOLDER_BASE}/${slug}${folder ? `/${folder}` : ""}`;
+
   async function onFilesSelected(files: File[]) {
     const valid = files.filter((f) => f.size <= MAX_ATTACHMENT_BYTES);
     if (valid.length < files.length) toast.error(t("attachTooLarge"));
@@ -73,6 +75,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
       );
       const failed = results.find((r): r is PromiseRejectedResult => r.status === "rejected");
       if (failed) handleError(failed.reason);
+      else toast.success(t("uploadedTo", { path: destinationPath }));
     } finally {
       setBusy(false);
       setInFlight([]);
@@ -110,37 +113,44 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
       disabled={!canManage || busy}
       className="mt-6 space-y-2 rounded-lg border-t border-border/60 pt-6 print:hidden"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("attachmentsTitle")}
-        </p>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("attachmentsTitle")}
+          </p>
+          {canManage && (
+            <div className="flex flex-wrap items-center gap-2">
+              <OneDriveFolderPicker
+                basePath={`${WIKI_FOLDER_BASE}/${slug}`}
+                value={folder}
+                onChange={setFolder}
+              />
+              <input
+                ref={inputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  void onFilesSelected(Array.from(e.target.files ?? []));
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={busy}
+                onClick={() => inputRef.current?.click()}
+              >
+                <Paperclip className="mr-1.5 size-3.5" />
+                {t("addAttachment")}
+              </Button>
+            </div>
+          )}
+        </div>
         {canManage && (
-          <div className="flex items-center gap-2">
-            <OneDriveFolderPicker
-              basePath={`${WIKI_FOLDER_BASE}/${slug}`}
-              value={folder}
-              onChange={setFolder}
-            />
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                void onFilesSelected(Array.from(e.target.files ?? []));
-                e.target.value = "";
-              }}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() => inputRef.current?.click()}
-            >
-              <Paperclip className="mr-1.5 size-3.5" />
-              {t("addAttachment")}
-            </Button>
-          </div>
+          <p className="break-all text-[11px] text-muted-foreground">
+            {t("savingTo", { path: destinationPath })}
+          </p>
         )}
       </div>
       {inFlight.length > 0 && (

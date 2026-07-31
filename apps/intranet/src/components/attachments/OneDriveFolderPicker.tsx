@@ -62,7 +62,7 @@ export function OneDriveFolderPicker({
           else onChange(v === ROOT_VALUE ? "" : v);
         }}
       >
-        <SelectTrigger className="h-8 w-44 text-xs">
+        <SelectTrigger className="h-8 w-full text-xs sm:w-44">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

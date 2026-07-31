@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { AttachmentDropZone } from "@/components/attachments/AttachmentDropZone";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { type UseAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { WIKI_FOLDER_BASE } from "@/lib/onedrive-scopes";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -15,17 +16,25 @@ import { cn } from "@/lib/utils";
  * yet (still being composed) — OneDrive's wiki-attach endpoint needs one, so
  * these just sit as local files until the caller's create mutation resolves
  * and can flush them via `attachPendingFiles` (lib/wiki-attachments.ts).
+ *
+ * `slugPreview` (derived from the title being typed) is shown so it's clear
+ * *where* these files will actually land in OneDrive once the entry is
+ * created — the same destination the post-create `GuidebookAttachments`
+ * editor uses (`WIKI_FOLDER_BASE/<slug>`), just not final until save.
  */
 export function PendingWikiAttachments({
   attachmentUpload,
   busy,
+  slugPreview,
 }: {
   attachmentUpload: UseAttachmentUpload;
   busy?: boolean;
+  slugPreview?: string;
 }) {
   const t = useTranslations("Guidebooks");
   const tc = useTranslations("Common");
   const disabled = !!busy || attachmentUpload.uploading;
+  const destinationPath = `${WIKI_FOLDER_BASE}/${slugPreview || "…"}`;
 
   function addFiles(files: File[]) {
     // Each file uploads to OneDrive as its own request (attachPendingFiles),
@@ -40,6 +49,9 @@ export function PendingWikiAttachments({
       <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {t("attachmentsTitle")}
       </label>
+      <p className="break-all text-[11px] text-muted-foreground">
+        {t("savingToPending", { path: destinationPath })}
+      </p>
       <AttachmentDropZone onFiles={addFiles} hint={t("dropHint")} disabled={disabled}>
         <label
           className={cn(
