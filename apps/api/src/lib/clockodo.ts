@@ -336,10 +336,8 @@ async function upstream<T>(operation: Promise<T>): Promise<T> {
   }
 }
 
-export async function getAbsence(id: number): Promise<ClockodoAbsence> {
-  const absence = await upstream(client().getAbsence(id));
-  console.log(`[clockodo] getAbsence(${id}):`, JSON.stringify(absence));
-  return absence;
+export function getAbsence(id: number): Promise<ClockodoAbsence> {
+  return upstream(client().getAbsence(id));
 }
 
 export function listAbsences(year: number): Promise<ClockodoAbsence[]> {
@@ -405,19 +403,7 @@ export async function listCurrentAbsences(): Promise<ClockodoAbsence[]> {
   const now = new Date();
   const years = [now.getFullYear()];
   if (now.getMonth() === 0) years.push(now.getFullYear() - 1);
-  const absences = (
-    await Promise.all(years.map(year => listAbsences(year)))
-  ).flat();
-  // Unconditional dump of every raw record Clockodo returned for this call —
-  // the conditional "bad date" logging in clockodo-absences.ts only fires
-  // once a field has already been coerced to blank, which has repeatedly
-  // failed to catch the actual malformed shape in production. This gives a
-  // ground-truth capture of exactly what Clockodo sent, every time.
-  console.log(
-    `[clockodo] listCurrentAbsences(${years.join(",")}) -> ${absences.length} record(s):`,
-    JSON.stringify(absences)
-  );
-  return absences;
+  return (await Promise.all(years.map(year => listAbsences(year)))).flat();
 }
 
 let userCache: { map: Map<number, ClockodoUser>; expiresAt: number } | null =

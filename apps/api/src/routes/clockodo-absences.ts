@@ -141,18 +141,6 @@ function recentWindow() {
 }
 
 export const clockodoAbsencesRoute = new Elysia()
-  // Temporary: bridges client-side debug logging into Vercel's server-side
-  // runtime logs so the absence date-parsing bug can be diagnosed from a
-  // phone/no-devtools session. Remove once that's resolved.
-  .post(
-    "/clockodo/debug-log",
-    async ({ request, body }) => {
-      const { clerkUserId } = await requireAuth(request);
-      console.log(`[client-debug][${clerkUserId}] ${body.tag}:`, JSON.stringify(body.payload));
-      return { ok: true };
-    },
-    { body: t.Object({ tag: t.String(), payload: t.Any() }) }
-  )
   .get("/clockodo/clock/me", async ({ request }) => {
     const caller = await resolveClockodoCaller(request);
     const [{ timeSince, timeUntil }, account] = [
