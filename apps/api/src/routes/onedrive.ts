@@ -86,7 +86,7 @@ function toItem(child: GraphItem, user: OneDriveUser): OneDriveItem | null {
 }
 
 function breadcrumbs(relPath: string): OneDriveBreadcrumb[] {
-  const crumbs: OneDriveBreadcrumb[] = [{ id: "", name: "Advantis Group", path: "" }];
+  const crumbs: OneDriveBreadcrumb[] = [{ id: "", name: "Advantis GmbH", path: "" }];
   let acc = "";
   for (const seg of normalizePath(relPath).split("/").filter(Boolean)) {
     acc = acc ? `${acc}/${seg}` : seg;

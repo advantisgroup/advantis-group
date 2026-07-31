@@ -53,7 +53,7 @@ export interface FolderConfig {
 
 export function folderConfig(): FolderConfig {
   return {
-    root: process.env.ONEDRIVE_ROOT_PATH ?? "Documents/Advantis Group",
+    root: process.env.ONEDRIVE_ROOT_PATH ?? "Documents/Advantis GmbH",
     team: process.env.ONEDRIVE_TEAM_PATH ?? "Team",
     gf: process.env.ONEDRIVE_GF_PATH ?? "Geschäftsführung",
   };

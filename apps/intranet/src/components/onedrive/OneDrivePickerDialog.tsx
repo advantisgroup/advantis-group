@@ -89,7 +89,7 @@ export function OneDrivePickerDialog({
   }, [query, od]);
 
   const items = results ?? listing?.items ?? [];
-  const crumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis Group", path: "" }];
+  const crumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis GmbH", path: "" }];
   const searching = results !== null;
 
   async function activate(item: OneDriveItem) {

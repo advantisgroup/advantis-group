@@ -100,7 +100,7 @@ export function UploadApprovalQueue({
               <p className="truncate font-medium">{upload.fileName}</p>
               <p className="truncate text-xs text-muted-foreground">
                 {upload.requesterName} · {formatFileSize(upload.size)} ·{" "}
-                {upload.targetFolderPath || "Advantis Group"}
+                {upload.targetFolderPath || "Advantis GmbH"}
               </p>
             </div>
             {badge && (
@@ -158,7 +158,7 @@ function InspectorDialog({
         <DialogHeader>
           <DialogTitle className="truncate">{upload?.fileName}</DialogTitle>
           <DialogDescription>
-            {upload?.requesterName} → {upload?.targetFolderPath || "Advantis Group"}
+            {upload?.requesterName} → {upload?.targetFolderPath || "Advantis GmbH"}
           </DialogDescription>
         </DialogHeader>
 

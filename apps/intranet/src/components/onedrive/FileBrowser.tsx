@@ -1042,7 +1042,7 @@ function Breadcrumbs({
   rootPath?: string;
   rootLabel?: string;
 }) {
-  const allCrumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis Group", path: "" }];
+  const allCrumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis GmbH", path: "" }];
   // Confined instances never show anything above their own root — the
   // server-returned breadcrumb trail always starts at the AG root, so clip
   // it and relabel the root crumb instead.

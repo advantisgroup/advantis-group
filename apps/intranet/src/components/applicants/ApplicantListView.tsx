@@ -240,6 +240,7 @@ export function ApplicantListView() {
         icon={<UserRoundSearch />}
         title={t("listEmpty")}
         description={t("listEmptyDescription")}
+        action={<UploadCvButton />}
       />
     );
   }
