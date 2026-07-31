@@ -29,3 +29,12 @@ export function addDaysIso(iso: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+/** The Monday on or before `iso`, for aligning a 7-day view to a proper
+ * calendar week instead of a rolling window from an arbitrary start day. */
+export function mondayOfWeek(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  const day = d.getUTCDay(); // 0=Sun..6=Sat
+  d.setUTCDate(d.getUTCDate() + (day === 0 ? -6 : 1 - day));
+  return d.toISOString().slice(0, 10);
+}

@@ -1,3 +1,8 @@
+import {
+  getCachedAbsences,
+  invalidateAbsencesCache,
+  setCachedAbsences,
+} from "./clockodo-cache.js";
 import { Errors } from "./errors.js";
 
 // The @advantis/clockodo client used to live here; it was inlined back in
@@ -217,6 +222,11 @@ function createClockodoClient(options: ClockodoClientOptions) {
       );
       return response.entries ?? [];
     },
+    async deleteEntry(id: number, userId: number): Promise<void> {
+      await requestJson(`/v2/entries/${id}?users_id=${userId}`, {
+        method: "DELETE",
+      });
+    },
     listCustomers(): Promise<ClockodoCustomer[]> {
       return getAllPages<ClockodoCustomer>(
         "/v3/customers",
@@ -374,32 +384,54 @@ export function listAbsences(year: number): Promise<ClockodoAbsence[]> {
   return upstream(client().listAbsences(year));
 }
 
-export function createAbsence(
-  input: ClockodoAbsenceInput
-): Promise<ClockodoAbsence> {
-  return upstream(client().createAbsence(input));
+async function listAbsencesForYears(years: number[]): Promise<ClockodoAbsence[]> {
+  const cached = await getCachedAbsences<ClockodoAbsence[]>(years);
+  if (cached) return cached;
+  const data = (await Promise.all(years.map(year => listAbsences(year)))).flat();
+  await setCachedAbsences(years, data);
+  return data;
 }
 
-export function updateAbsence(
+export async function createAbsence(
+  input: ClockodoAbsenceInput
+): Promise<ClockodoAbsence> {
+  const absence = await upstream(client().createAbsence(input));
+  await invalidateAbsencesCache();
+  return absence;
+}
+
+export async function updateAbsence(
   id: number,
   input: Omit<ClockodoAbsenceInput, "users_id" | "status">
 ): Promise<ClockodoAbsence> {
-  return upstream(client().updateAbsence(id, input));
+  const absence = await upstream(client().updateAbsence(id, input));
+  await invalidateAbsencesCache();
+  return absence;
 }
 
-export function setAbsenceStatus(
+export async function setAbsenceStatus(
   id: number,
   status: 1 | 2
 ): Promise<ClockodoAbsence> {
-  return upstream(client().setAbsenceStatus(id, status));
+  const absence = await upstream(client().setAbsenceStatus(id, status));
+  await invalidateAbsencesCache();
+  return absence;
 }
 
+/** No caching here on purpose — unlike absences above, clock entries are
+ * exactly the kind of data that changes second-to-second (starting/stopping
+ * the clock, live Timetable views) and must always read straight through to
+ * Clockodo. */
 export function listEntries(input: {
   userId: number;
   timeSince: string;
   timeUntil: string;
 }): Promise<ClockodoEntry[]> {
   return upstream(client().listEntries(input));
+}
+
+export function deleteEntry(id: number, userId: number): Promise<void> {
+  return upstream(client().deleteEntry(id, userId));
 }
 
 export function listCustomers(): Promise<ClockodoCustomer[]> {
@@ -440,7 +472,7 @@ export async function listCurrentAbsences(): Promise<ClockodoAbsence[]> {
   const now = new Date();
   const years = [now.getFullYear()];
   if (now.getMonth() === 0) years.push(now.getFullYear() - 1);
-  return (await Promise.all(years.map(year => listAbsences(year)))).flat();
+  return listAbsencesForYears(years);
 }
 
 let userCache: { map: Map<number, ClockodoUser>; expiresAt: number } | null =

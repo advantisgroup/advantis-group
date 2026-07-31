@@ -8,9 +8,7 @@ import { usePathname } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
 import {
-  BarChart3,
   CalendarDays,
-  CheckSquare,
   Clock3,
   LayoutDashboard,
   Link2Off,
@@ -34,7 +32,14 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
   const migrateLegacyLink = useMutation(api.integrations.clockodoLink.migrateLegacyClockodoLink);
   const migrationStarted = useRef(false);
   const [migrationPending, setMigrationPending] = useState(!user.clockodoUserId);
-  const active = pathname.split("/")[2] ?? "dashboard";
+  // requests/approvals/planner all live under one "Absences" tab (with their
+  // own in-page sub-nav, see AbsencesSubNav in page.tsx) — keeping them as 3
+  // separate top-level tabs was both confusing (unclear how they related to
+  // each other) and, combined with dashboard/timetable/admin, overflowed the
+  // mobile bottom-nav pill for a full manager's tab set.
+  const ABSENCE_ROUTE_SEGMENTS = ["requests", "approvals", "planner"];
+  const rawSection = pathname.split("/")[2] ?? "dashboard";
+  const active = ABSENCE_ROUTE_SEGMENTS.includes(rawSection) ? "absences" : rawSection;
   const tabs = [
     { value: "dashboard", href: "/clockodo", label: t("section.dashboard"), icon: LayoutDashboard },
     {
@@ -43,33 +48,12 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
       label: t("section.timetable"),
       icon: CalendarDays,
     },
-    { value: "requests", href: "/clockodo/requests", label: t("section.requests"), icon: Clock3 },
-    ...(canManageClockodo
-      ? [
-          {
-            value: "approvals",
-            href: "/clockodo/approvals",
-            label: t("section.approvals"),
-            icon: CheckSquare,
-          },
-        ]
-      : []),
     {
-      value: "planner",
-      href: "/clockodo/planner",
-      label: t("section.planner"),
-      icon: CalendarDays,
+      value: "absences",
+      href: "/clockodo/requests",
+      label: t("section.absences"),
+      icon: Clock3,
     },
-    ...(hasTeamAccess
-      ? [
-          {
-            value: "reports",
-            href: "/clockodo/reports",
-            label: t("section.reports"),
-            icon: BarChart3,
-          },
-        ]
-      : []),
     ...(canManageClockodo
       ? [{ value: "admin", href: "/clockodo/admin", label: t("section.admin"), icon: Settings2 }]
       : []),

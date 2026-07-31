@@ -19,6 +19,7 @@ import {
   stopClock,
   updateAbsence,
 } from "../lib/clockodo.js";
+import { resolveClockodoCaller } from "../lib/clockodo-caller.js";
 import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
@@ -107,25 +108,6 @@ function rangesOverlap(
   bEnd: string
 ): boolean {
   return aStart <= bEnd && bStart <= aEnd;
-}
-
-async function resolveClockodoCaller(request: Request) {
-  const { clerkUserId } = await requireAuth(request);
-  const caller = await getConvex().query(
-    api.integrations.clockodoAbsences.resolveCaller,
-    {
-      serverKey: getConvexServerKey(),
-      clerkUserId,
-    }
-  );
-  if (caller.status !== "linked") {
-    throw Errors.forbidden("Clockodo account is not linked");
-  }
-  const clockodoUserId = Number(caller.clockodoUserId);
-  if (!Number.isSafeInteger(clockodoUserId)) {
-    throw Errors.forbidden("Clockodo account is not linked");
-  }
-  return { ...caller, clockodoUserId };
 }
 
 async function requireOwnAbsence(id: number, clockodoUserId: number) {
