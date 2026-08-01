@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { query } from "../_generated/server";
 import type { QueryCtx } from "../_generated/server";
-import { requireUser, requireCapability } from "../lib/auth";
+import { requireCapability } from "../lib/auth";
 import { readConfig } from "./settings";
 
 /**
@@ -184,7 +184,7 @@ export const dailyRange = query({
     endDay: v.string(),
   },
   handler: async (ctx, { deviceId, startDay, endDay }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("dailyStats")
       .withIndex("by_device_day", (q) =>
@@ -201,7 +201,7 @@ export const recentSamples = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { deviceId, limit }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("activitySamples")
       .withIndex("by_device_time", (q) => q.eq("deviceId", deviceId))
@@ -223,7 +223,7 @@ export const samplesForDay = query({
     endMs: v.number(),
   },
   handler: async (ctx, { deviceId, startMs, endMs }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("activitySamples")
       .withIndex("by_device_time", (q) =>
@@ -243,7 +243,7 @@ export const exportDevice = query({
     sampleLimit: v.optional(v.number()),
   },
   handler: async (ctx, { deviceId, startDay, endDay, sampleLimit }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
 
     const daily = await ctx.db
       .query("dailyStats")

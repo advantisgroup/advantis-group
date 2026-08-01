@@ -12,6 +12,5 @@ export async function requireAuth(request: Request): Promise<AuthedUser> {
 export function requireServerKey(request: Request): void {
   const provided = request.headers.get("x-convex-server-key");
   const expected = process.env.CONVEX_SERVER_KEY;
-  console.log(provided, expected);
   if (!expected || provided !== expected) throw Errors.unauthorized();
 }

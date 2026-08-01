@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { query } from "../_generated/server";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Doc } from "../_generated/dataModel";
-import { requireUser, requireCapability } from "../lib/auth";
+import { requireUser, requireCapability, hasCapability } from "../lib/auth";
 import { gatedMutation } from "../lib/featureGate";
 import { computeEmployeeState, type StateSignals } from "./lib/state";
 import {
@@ -493,11 +493,25 @@ export const overview = query({
   },
 });
 
+/**
+ * Requires `view_activity_admin` unless the caller is asking about their own
+ * `employeeId` — every by-employeeId read below is either an admin looking at
+ * someone else's presence/history, or a person looking at their own, and
+ * nothing in between is legitimate.
+ */
+async function requireSelfOrActivityAdmin(ctx: QueryCtx, employeeId: string): Promise<void> {
+  const user = await requireUser(ctx);
+  const subprofile = await getActivitySubprofile(ctx, user._id);
+  if (subprofile.employeeId === employeeId) return;
+  if (await hasCapability(ctx, "view_activity_admin")) return;
+  throw appError("auth.forbidden", "You do not have permission to view this employee's data");
+}
+
 /** Reactive single-employee read (timeline / detail panes). */
 export const get = query({
   args: { employeeId: v.string() },
   handler: async (ctx, { employeeId }) => {
-    await requireUser(ctx);
+    await requireSelfOrActivityAdmin(ctx, employeeId);
     return await getStateRow(ctx, employeeId);
   },
 });
@@ -561,9 +575,14 @@ export const stateBatch = query({
     const user = await requireUser(ctx);
 
     const subprofile = await getActivitySubprofile(ctx, user._id);
+    // Requesting anyone else's employeeId requires view_activity_admin; a
+    // caller without it only ever gets their own state back, same as if
+    // they'd asked for nothing at all (see requireSelfOrActivityAdmin above).
+    const canViewOthers = await hasCapability(ctx, "view_activity_admin");
+    const requested = canViewOthers ? employeeIds : [];
 
     const ids = [
-      ...new Set([...employeeIds, ...(subprofile.employeeId ? [subprofile.employeeId] : [])]),
+      ...new Set([...requested, ...(subprofile.employeeId ? [subprofile.employeeId] : [])]),
     ].slice(0, 100);
 
     return await Promise.all(
@@ -713,9 +732,13 @@ export const historyBatch = query({
   handler: async (ctx, { employeeIds, since }) => {
     const user = await requireUser(ctx);
     const subprofile = await getActivitySubprofile(ctx, user._id);
+    // Same rule as stateBatch: only an admin-capable caller can pull other
+    // employees' history, e.g. the overview grid's per-card strips.
+    const canViewOthers = await hasCapability(ctx, "view_activity_admin");
+    const requested = canViewOthers ? (employeeIds ?? []) : [];
 
     const ids = [
-      ...new Set(employeeIds),
+      ...new Set(requested),
       ...(subprofile.employeeId ? [subprofile.employeeId] : []),
     ].slice(0, 100);
 
@@ -744,7 +767,7 @@ export const history = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { employeeId, since, until, limit }) => {
-    await requireUser(ctx);
+    await requireSelfOrActivityAdmin(ctx, employeeId);
     const rows = await ctx.db
       .query("stateSamples")
       .withIndex("by_employee_time", (q) =>
@@ -779,7 +802,7 @@ export const discardedHistory = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { employeeId, since, until, limit }) => {
-    await requireUser(ctx);
+    await requireSelfOrActivityAdmin(ctx, employeeId);
     const rows = await ctx.db
       .query("discardedStateSamples")
       .withIndex("by_employee_time", (q) =>
@@ -807,7 +830,7 @@ export const discardedHistory = query({
 export const discardedRecent = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, { limit }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
     const rows = await ctx.db
       .query("discardedStateSamples")
       .withIndex("by_at")
