@@ -316,7 +316,13 @@ export default function EmployeesPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="truncate font-medium">{profile.name}</p>
+                          <Link
+                            href={`/hr/employees/${profile._id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="block truncate font-medium hover:underline"
+                          >
+                            {profile.name}
+                          </Link>
                           <p className="truncate text-xs text-muted-foreground">
                             {profile.email || t("employeeNoEmail")}
                           </p>

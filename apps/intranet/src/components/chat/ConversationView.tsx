@@ -175,6 +175,7 @@ export function ConversationView({
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const attachInputRef = useRef<HTMLInputElement>(null);
   const atBottomRef = useRef(true);
   const lastTyping = useRef(0);
   const longPressTimer = useRef<number | null>(null);
@@ -1215,18 +1216,24 @@ export function ConversationView({
             </div>
           )}
 
-          <label className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9">
+          <button
+            type="button"
+            aria-label={t("attachFile")}
+            onClick={() => attachInputRef.current?.click()}
+            className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
+          >
             <Paperclip className="h-5 w-5" />
-            <input
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                addLocalFiles(Array.from(e.target.files ?? []));
-                e.target.value = "";
-              }}
-            />
-          </label>
+          </button>
+          <input
+            ref={attachInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              addLocalFiles(Array.from(e.target.files ?? []));
+              e.target.value = "";
+            }}
+          />
 
           <button
             type="button"
