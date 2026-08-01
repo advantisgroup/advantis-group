@@ -206,7 +206,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
                   type="button"
                   onClick={() => void onDelete(a)}
                   aria-label={tc("delete")}
-                  className="ml-1 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                  className="ml-1 shrink-0 text-muted-foreground opacity-100 transition-opacity hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
                 >
                   <Trash2 className="size-3.5" />
                 </button>

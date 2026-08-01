@@ -173,7 +173,7 @@ export function BlockEditor({
                 type="button"
                 onClick={() => remove(index)}
                 aria-label={t("removeBlock")}
-                className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                className="text-muted-foreground opacity-100 transition-opacity hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
               >
                 <Trash2 className="size-3.5" />
               </button>

@@ -62,7 +62,7 @@ export function EntryRow({
               e.stopPropagation();
               onDelete();
             }}
-            className="flex size-8 items-center justify-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 group-hover:opacity-100"
+            className="flex size-8 items-center justify-center rounded-md text-muted-foreground opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
           >
             <Trash2 className="size-4" />
           </button>

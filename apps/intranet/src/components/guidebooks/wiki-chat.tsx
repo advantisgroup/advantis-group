@@ -467,7 +467,7 @@ export function WikiChat({ className }: { className?: string } = {}) {
                     >
                       {chat.title}
                     </button>
-                    <span className="flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className="flex shrink-0 items-center opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                       <button
                         onClick={() => startRename(chat)}
                         className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -625,6 +625,7 @@ export function WikiChat({ className }: { className?: string } = {}) {
               size="icon"
               onClick={send}
               disabled={!input.trim() || loading}
+              aria-label={t("wikiChat.send")}
               className="h-10 w-10 shrink-0 rounded-xl"
             >
               <Send className="h-4 w-4" />

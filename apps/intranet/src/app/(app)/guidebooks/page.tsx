@@ -270,7 +270,7 @@ function EntryCard({
               type="button"
               onClick={onEdit}
               aria-label={tc("edit")}
-              className="rounded-full p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100"
+              className="rounded-full p-1.5 text-muted-foreground opacity-100 transition-opacity hover:bg-accent hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
             >
               <Pencil className="size-3.5" />
             </button>
@@ -278,7 +278,7 @@ function EntryCard({
               type="button"
               onClick={() => void onDelete()}
               aria-label={tc("delete")}
-              className="rounded-full p-1.5 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-destructive group-hover:opacity-100"
+              className="rounded-full p-1.5 text-muted-foreground opacity-100 transition-opacity hover:bg-accent hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
             >
               <Trash2 className="size-3.5" />
             </button>
