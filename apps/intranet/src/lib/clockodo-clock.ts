@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -64,10 +64,19 @@ export function useClockodoClock(enabled: boolean) {
   const [state, setState] = useState<ClockodoClockState | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
+  // `eden` (from useEdenApi) isn't guaranteed referentially stable across
+  // renders — if it isn't, a `refresh` dependency here re-triggers this
+  // effect on every render (fetch -> setState -> re-render -> new `eden` ->
+  // repeat), hammering /clockodo/clock/me far faster than the 60s interval
+  // suggests. Read `eden` via a ref instead so the effect only depends on
+  // `enabled`, which changes rarely.
+  const edenRef = useRef(eden);
+  edenRef.current = eden;
+
   const refresh = useCallback(async () => {
-    const { data } = await eden.clockodo.clock.me.get();
+    const { data } = await edenRef.current.clockodo.clock.me.get();
     if (data) setState(data);
-  }, [eden]);
+  }, []);
 
   useEffect(() => {
     if (!enabled) return;
