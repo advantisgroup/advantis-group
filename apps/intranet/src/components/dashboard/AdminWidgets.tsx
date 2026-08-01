@@ -166,7 +166,7 @@ export function AdminStatsCard() {
             icon={<Plane />}
             label={t("pendingApprovals")}
             value={pendingCount}
-            href="/absences"
+            href="/clockodo/approvals"
           />
         )}
         {hasApplicantAccess &&

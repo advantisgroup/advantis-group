@@ -926,7 +926,7 @@ function Requests({
           <CardTitle className="text-base">{t("yourRequests")}</CardTitle>
           <p className="mt-1 text-sm text-muted-foreground">{t("yourRequestsHint")}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="tour-absences-new">
           <Button variant="outline" size="sm" onClick={onExport}>
             <CalendarArrowDown />
             {t("exportIcs")}
@@ -939,7 +939,7 @@ function Requests({
       </CardHeader>
       <CardContent className="p-0">
         <div className="border-b border-border/70 p-4">
-          <div className="relative max-w-sm">
+          <div className="relative max-w-sm" data-tour="tour-absences-search">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
@@ -950,7 +950,7 @@ function Requests({
           </div>
           <AbsenceTypeLegend className="mt-3" />
         </div>
-        <div className="divide-y divide-border/70">
+        <div className="divide-y divide-border/70" data-tour="tour-absences-list">
           {visible.map((absence) => {
             const style = TYPE_STYLE[absence.type];
             return (

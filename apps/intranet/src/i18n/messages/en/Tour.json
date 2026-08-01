@@ -112,16 +112,16 @@
         "description": "Request and track vacation, sick days, and personal time."
       },
       "stats": {
-        "title": "Your year at a glance",
-        "description": "Vacation days used, sick days, and open requests for the current year, calculated from your approved absences."
+        "title": "Request time off",
+        "description": "Log a new vacation, sick day, or personal absence here, or export your approved time off as a calendar file."
       },
       "filters": {
-        "title": "Filter your history",
-        "description": "Narrow the list by status or type. Below, everything is grouped by year — click any entry for its full timeline."
+        "title": "Find a request",
+        "description": "Search your requests by type or reason."
       },
       "list": {
-        "title": "Your absences",
-        "description": "Everything here is synced from Clockodo and read-only — approve, deny, or edit time off there. Managers also see who on the team is out over the next two weeks."
+        "title": "Your requests",
+        "description": "Every absence you've requested, with its live status — pending, approved, or denied. Managers reviewing team requests use the Approvals tab instead."
       }
     },
     "chat": {

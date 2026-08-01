@@ -196,7 +196,7 @@ export function CommandPalette() {
     const all = [
       { href: "/", label: tNav("dashboard"), icon: LayoutDashboard },
       { href: "/calendar", label: tNav("calendar"), icon: Calendar },
-      { href: "/absences", label: tNav("absences"), icon: Plane },
+      { href: "/clockodo", label: tNav("absences"), icon: Plane },
       {
         href: "/announcements",
         label: tNav("announcements"),
