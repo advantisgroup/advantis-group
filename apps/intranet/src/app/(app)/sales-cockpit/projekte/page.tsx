@@ -11,12 +11,24 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, useConfirm } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  useConfirm,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
-import { blankProjectForm, ProjectForm, type ProjectFormValue } from "@/components/sales-cockpit/ProjectForm";
+import {
+  blankProjectForm,
+  ProjectForm,
+  type ProjectFormValue,
+} from "@/components/sales-cockpit/ProjectForm";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
-type Project = NonNullable<ReturnType<typeof useQuery<typeof api.salesCockpit.listProjects>>>[number];
+type Project = NonNullable<
+  ReturnType<typeof useQuery<typeof api.salesCockpit.listProjects>>
+>[number];
 
 function toFormValue(p: Project): ProjectFormValue {
   return {
@@ -26,7 +38,12 @@ function toFormValue(p: Project): ProjectFormValue {
     benefits: p.benefits,
     ziele: p.ziele,
     sfInput: p.sfInput,
-    wege: p.wege.map((w) => ({ name: w.name, einwaende: w.einwaende, benefit: w.benefit, ziele: w.ziele })),
+    wege: p.wege.map((w) => ({
+      name: w.name,
+      einwaende: w.einwaende,
+      benefit: w.benefit,
+      ziele: w.ziele,
+    })),
     files: p.files,
   };
 }
@@ -38,9 +55,10 @@ export default function SalesCockpitProjektePage() {
   const projects = useQuery(api.salesCockpit.listProjects);
   const removeProject = useMutation(api.salesCockpit.removeProject);
 
-  const [editing, setEditing] = useState<{ id: Id<"salesCockpitProjects"> | null; value: ProjectFormValue } | null>(
-    null,
-  );
+  const [editing, setEditing] = useState<{
+    id: Id<"salesCockpitProjects"> | null;
+    value: ProjectFormValue;
+  } | null>(null);
 
   const handleDelete = async (project: Project) => {
     const ok = await confirm({
@@ -57,7 +75,8 @@ export default function SalesCockpitProjektePage() {
     }
   };
 
-  const fileCount = (p: Project) => p.files.plan.length + p.files.scripte.length + p.files.dateien.length;
+  const fileCount = (p: Project) =>
+    p.files.plan.length + p.files.scripte.length + p.files.dateien.length;
 
   return (
     <div className="space-y-4">
@@ -76,16 +95,23 @@ export default function SalesCockpitProjektePage() {
         <Card>
           <div className="divide-y divide-border/70">
             {projects.map((p) => (
-              <div key={p._id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+              <div
+                key={p._id}
+                className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
+              >
                 <div>
                   <b className="text-sm">{p.titel}</b>
                   <p className="text-xs text-muted-foreground">
-                    {t("start")} {p.start || "–"} · {p.wege.length} {t("wege")} · {p.benefits.length}{" "}
-                    {t("tabBenefits")} · {fileCount(p)} {t("dateien")}
+                    {t("start")} {p.start || "–"} · {p.wege.length} {t("wege")} ·{" "}
+                    {p.benefits.length} {t("tabBenefits")} · {fileCount(p)} {t("dateien")}
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setEditing({ id: p._id, value: toFormValue(p) })}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setEditing({ id: p._id, value: toFormValue(p) })}
+                  >
                     {t("bearbeiten")}
                   </Button>
                   <Button variant="destructive" size="sm" onClick={() => void handleDelete(p)}>
@@ -101,7 +127,9 @@ export default function SalesCockpitProjektePage() {
       <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{editing?.id ? t("projektBearbeiten") : t("neuesProjektAnlegen")}</DialogTitle>
+            <DialogTitle>
+              {editing?.id ? t("projektBearbeiten") : t("neuesProjektAnlegen")}
+            </DialogTitle>
           </DialogHeader>
           {editing && (
             <ProjectForm

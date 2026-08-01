@@ -191,9 +191,7 @@ export function WikiCarousel() {
                     ) : (
                       <span className="size-1.5 shrink-0 rounded-full bg-primary/60" />
                     )}
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                      {e.title}
-                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{e.title}</span>
                     {e.read && (
                       <CheckCircle2 className="size-3.5 shrink-0 text-muted-foreground/60" />
                     )}

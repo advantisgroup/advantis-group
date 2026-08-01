@@ -52,7 +52,10 @@ export default function SalesCockpitLexikonPage() {
 
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const searchHits = useQuery(api.salesCockpit.searchLexikon, searchQuery ? { query: searchQuery } : "skip");
+  const searchHits = useQuery(
+    api.salesCockpit.searchLexikon,
+    searchQuery ? { query: searchQuery } : "skip",
+  );
 
   const handleUpload = async () => {
     if (!titel.trim()) {
@@ -124,11 +127,19 @@ export default function SalesCockpitLexikonPage() {
           <h2 className="text-base font-semibold">{t("neuenEintragHochladen")}</h2>
           <div>
             <Label className="mb-1.5 block">{t("titel")}</Label>
-            <Input value={titel} onChange={(e) => setTitel(e.target.value)} placeholder={t("lexTitelPlaceholder")} />
+            <Input
+              value={titel}
+              onChange={(e) => setTitel(e.target.value)}
+              placeholder={t("lexTitelPlaceholder")}
+            />
           </div>
           <div>
             <Label className="mb-1.5 block">{t("stichworte")}</Label>
-            <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder={t("lexTagsPlaceholder")} />
+            <Input
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder={t("lexTagsPlaceholder")}
+            />
           </div>
           <div>
             <Label className="mb-1.5 block">{t("datei")}</Label>
@@ -179,7 +190,10 @@ export default function SalesCockpitLexikonPage() {
           ) : (
             <div className="divide-y divide-border/70">
               {list.map((entry) => (
-                <div key={entry._id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div
+                  key={entry._id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3"
+                >
                   <div className="min-w-0">
                     <b className="text-sm">{entry.titel}</b>
                     <p className="text-xs text-muted-foreground">
@@ -203,7 +217,11 @@ export default function SalesCockpitLexikonPage() {
                     >
                       {t("oeffnen")}
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => void handleDelete(entry._id, entry.titel)}>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => void handleDelete(entry._id, entry.titel)}
+                    >
                       {t("loeschen")}
                     </Button>
                   </div>

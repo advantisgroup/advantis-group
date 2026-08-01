@@ -105,7 +105,13 @@ function ChipList({
           }}
           placeholder={placeholder}
         />
-        <Button type="button" variant="outline" size="icon" onClick={submit} aria-label={placeholder}>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={submit}
+          aria-label={placeholder}
+        >
           <Plus />
         </Button>
       </div>
@@ -147,7 +153,9 @@ function FileCategoryEditor({
             className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm"
           >
             <span className="min-w-0 flex-1 truncate font-medium">{f.name}</span>
-            <span className="font-mono text-xs text-muted-foreground">{formatFileSize(f.size)}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {formatFileSize(f.size)}
+            </span>
             <button
               type="button"
               onClick={() => onRemoveExisting(f.id)}
@@ -231,7 +239,9 @@ function WegEditor({
             variant="ghost"
             size="icon-sm"
             aria-label={t("remove")}
-            onClick={() => onChange({ ...weg, einwaende: weg.einwaende.filter((_, i) => i !== ei) })}
+            onClick={() =>
+              onChange({ ...weg, einwaende: weg.einwaende.filter((_, i) => i !== ei) })
+            }
           >
             <X className="size-4" />
           </Button>
@@ -241,7 +251,9 @@ function WegEditor({
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => onChange({ ...weg, einwaende: [...weg.einwaende, { einwand: "", antwort: "" }] })}
+        onClick={() =>
+          onChange({ ...weg, einwaende: [...weg.einwaende, { einwand: "", antwort: "" }] })
+        }
       >
         <Plus className="size-3.5" />
         {t("einwandHinzufuegen")}
@@ -286,7 +298,10 @@ export function ProjectForm({
   const dateienUpload = useAttachmentUpload();
 
   const removeExistingFile = (cat: "plan" | "scripte" | "dateien", id: string) => {
-    setValue((v) => ({ ...v, files: { ...v.files, [cat]: v.files[cat].filter((f) => f.id !== id) } }));
+    setValue((v) => ({
+      ...v,
+      files: { ...v.files, [cat]: v.files[cat].filter((f) => f.id !== id) },
+    }));
   };
 
   const submit = async () => {
@@ -317,9 +332,30 @@ export function ProjectForm({
             ziele: w.ziele || undefined,
           })),
         files: {
-          plan: [...value.files.plan.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size })), ...plan.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 }))],
-          scripte: [...value.files.scripte.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size })), ...scripte.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 }))],
-          dateien: [...value.files.dateien.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size })), ...dateien.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 }))],
+          plan: [
+            ...value.files.plan.map((f) => ({
+              storageId: f.storageId,
+              name: f.name,
+              size: f.size,
+            })),
+            ...plan.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 })),
+          ],
+          scripte: [
+            ...value.files.scripte.map((f) => ({
+              storageId: f.storageId,
+              name: f.name,
+              size: f.size,
+            })),
+            ...scripte.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 })),
+          ],
+          dateien: [
+            ...value.files.dateien.map((f) => ({
+              storageId: f.storageId,
+              name: f.name,
+              size: f.size,
+            })),
+            ...dateien.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 })),
+          ],
         },
       };
       if (projectId) {
@@ -393,7 +429,9 @@ export function ProjectForm({
         <ChipList
           items={value.benefits}
           onAdd={(v) => setValue({ ...value, benefits: [...value.benefits, v] })}
-          onRemove={(i) => setValue({ ...value, benefits: value.benefits.filter((_, bi) => bi !== i) })}
+          onRemove={(i) =>
+            setValue({ ...value, benefits: value.benefits.filter((_, bi) => bi !== i) })
+          }
           placeholder={t("benefitPlaceholder")}
         />
       </div>
@@ -418,7 +456,9 @@ export function ProjectForm({
             key={i}
             weg={w}
             index={i}
-            onChange={(next) => setValue({ ...value, wege: value.wege.map((x, xi) => (xi === i ? next : x)) })}
+            onChange={(next) =>
+              setValue({ ...value, wege: value.wege.map((x, xi) => (xi === i ? next : x)) })
+            }
             onRemove={() => setValue({ ...value, wege: value.wege.filter((_, xi) => xi !== i) })}
             t={t}
           />
@@ -454,7 +494,9 @@ export function ProjectForm({
         <Button
           type="button"
           onClick={() => void submit()}
-          disabled={saving || planUpload.uploading || scripteUpload.uploading || dateienUpload.uploading}
+          disabled={
+            saving || planUpload.uploading || scripteUpload.uploading || dateienUpload.uploading
+          }
         >
           {t("projektSpeichern")}
         </Button>

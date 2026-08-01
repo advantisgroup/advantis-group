@@ -6,14 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useAction, useQuery } from "convex/react";
-import {
-  ArrowDown,
-  ArrowUp,
-  Download,
-  Plus,
-  Search,
-  TriangleAlert,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Plus, Search, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -456,7 +449,9 @@ export function ClockodoAdminPanel() {
   async function onBulkSetVacation(days: number) {
     try {
       await Promise.all(
-        [...selectedIds].map((id) => setVacationEntitlement({ clockodoUserId: id, daysPerYear: days })),
+        [...selectedIds].map((id) =>
+          setVacationEntitlement({ clockodoUserId: id, daysPerYear: days }),
+        ),
       );
       toast.success(t("bulkUpdated", { count: selectedIds.size }));
       setSelectedIds(new Set());

@@ -227,9 +227,9 @@ export default function ClockodoEmployeeDetailPage() {
     clockodoUserIds: [clockodoUserId],
   });
 
-  const [detail, setDetail] = useState<Awaited<
-    ReturnType<typeof getClockodoUserDetail>
-  > | null>(null);
+  const [detail, setDetail] = useState<Awaited<ReturnType<typeof getClockodoUserDetail>> | null>(
+    null,
+  );
   const [allUsers, setAllUsers] = useState<Awaited<ReturnType<typeof listClockodoUsers>> | null>(
     null,
   );
@@ -344,7 +344,12 @@ export default function ClockodoEmployeeDetailPage() {
 
   return (
     <section className="mx-auto max-w-4xl space-y-6">
-      <Button variant="ghost" size="sm" className="-ml-2" onClick={() => router.push("/clockodo/admin")}>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="-ml-2"
+        onClick={() => router.push("/clockodo/admin")}
+      >
         <ArrowLeft className="h-4 w-4" />
         {t("backToRoster")}
       </Button>
@@ -501,8 +506,14 @@ export default function ClockodoEmployeeDetailPage() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                <ViewRow label={t("role")} value={user.role === "owner" ? t("roleOwner") : t("roleWorker")} />
-                <ViewRow label={t("language")} value={user.language === "en" ? "English" : "Deutsch"} />
+                <ViewRow
+                  label={t("role")}
+                  value={user.role === "owner" ? t("roleOwner") : t("roleWorker")}
+                />
+                <ViewRow
+                  label={t("language")}
+                  value={user.language === "en" ? "English" : "Deutsch"}
+                />
                 <ViewRow label={t("startDate")} value={user.startDate ?? t("notSet")} />
                 <ViewRow label={t("exitDate")} value={user.exitDate ?? t("notSet")} />
                 <ViewRow
@@ -602,9 +613,7 @@ export default function ClockodoEmployeeDetailPage() {
             {mode === "view" ? (
               <ViewRow
                 label={t("vacationDaysPerYear")}
-                value={
-                  latestVacation ? `${latestVacation.daysPerYear} ${t("days")}` : t("notSet")
-                }
+                value={latestVacation ? `${latestVacation.daysPerYear} ${t("days")}` : t("notSet")}
               />
             ) : (
               <EditableNumber

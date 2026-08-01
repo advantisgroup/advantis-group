@@ -7,13 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
-import {
-  CalendarDays,
-  Clock3,
-  LayoutDashboard,
-  Link2Off,
-  Settings2,
-} from "lucide-react";
+import { CalendarDays, Clock3, LayoutDashboard, Link2Off, Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/applicants/RouteTabs";
