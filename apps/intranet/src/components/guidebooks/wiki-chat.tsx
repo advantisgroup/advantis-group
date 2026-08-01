@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { useAuth } from "@clerk/nextjs";
+import { motion } from "framer-motion";
 import { Pencil, Plus, Send, ShieldCheck, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
@@ -96,6 +97,33 @@ function deriveTitle(text: string, fallback: string): string {
 
 function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/**
+ * Renders streamed assistant text word-by-word, fading each new word in as
+ * it arrives instead of the whole bubble jumping per chunk (à la Claude /
+ * ChatGPT). Words already on screen keep the same index as their key, so
+ * framer-motion doesn't remount (and thus doesn't re-animate) them on
+ * subsequent chunks — only newly-appended words mount fresh and animate.
+ * Plain text only (no live Markdown) while streaming; the finished message
+ * re-renders through ReactMarkdown once the reply completes.
+ */
+function StreamingWords({ text }: { text: string }) {
+  const words = text.match(/\S+\s*/g) ?? [];
+  return (
+    <p className="mb-1 whitespace-pre-wrap last:mb-0">
+      {words.map((word, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0, filter: "blur(3px)" }}
+          animate={{ opacity: 1, filter: "blur(0px)" }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+        >
+          {word}
+        </motion.span>
+      ))}
+    </p>
+  );
 }
 
 function makeChat(title: string): Chat {
@@ -503,7 +531,9 @@ export function WikiChat({ className }: { className?: string } = {}) {
                           : "rounded-bl-sm border border-border bg-background text-foreground",
                     )}
                   >
-                    {m.role === "assistant" && !m.error ? (
+                    {m.role === "assistant" && !m.error && loading && i === messages.length - 1 ? (
+                      <StreamingWords text={m.content} />
+                    ) : m.role === "assistant" && !m.error ? (
                       <ReactMarkdown
                         components={{
                           p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
