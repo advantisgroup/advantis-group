@@ -47,12 +47,14 @@ export const listConfirmersForSlug = query({
       .withIndex("by_slug", (q) => q.eq("slug", slug))
       .collect();
     const users = await Promise.all(rows.map((r) => ctx.db.get(r.userId)));
+    // A since-deleted user still confirmed reading this at the time — drop
+    // the row and the confirmer count silently undercounts, so keep it with
+    // a placeholder name rather than filtering it out.
     return rows
       .map((r, i) => {
         const u = users[i];
-        return u ? { userId: r.userId, name: profileDisplayName(u), readAt: r.readAt } : null;
+        return { userId: r.userId, name: u ? profileDisplayName(u) : "Deleted user", readAt: r.readAt };
       })
-      .filter((r): r is { userId: (typeof rows)[number]["userId"]; name: string; readAt: number } => r !== null)
       .sort((a, b) => b.readAt - a.readAt);
   },
 });

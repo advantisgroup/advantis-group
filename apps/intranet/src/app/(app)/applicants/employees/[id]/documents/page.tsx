@@ -303,7 +303,7 @@ export default function EmployeeDocumentsPage() {
                 size="icon-sm"
                 aria-label={tc("delete")}
                 className={cn(
-                  "absolute right-1 top-1 opacity-0 backdrop-blur transition-opacity group-hover:opacity-100",
+                  "absolute right-1 top-1 opacity-100 backdrop-blur transition-opacity md:opacity-0 md:group-hover:opacity-100",
                 )}
                 onClick={() =>
                   void removeDocument({ documentId: document._id }).then((result) => {

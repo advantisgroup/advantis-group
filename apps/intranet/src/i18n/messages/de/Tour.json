@@ -112,16 +112,16 @@
         "description": "Beantrage und verfolge Urlaub, Krankheitstage und persönliche Zeit."
       },
       "stats": {
-        "title": "Dein Jahr im Überblick",
-        "description": "Genutzte Urlaubstage, Krankheitstage und offene Anträge des laufenden Jahres, berechnet aus deinen genehmigten Abwesenheiten."
+        "title": "Abwesenheit beantragen",
+        "description": "Trage hier einen neuen Urlaub, Krankheitstag oder eine persönliche Abwesenheit ein, oder exportiere deine genehmigten Abwesenheiten als Kalenderdatei."
       },
       "filters": {
-        "title": "Verlauf filtern",
-        "description": "Grenze die Liste nach Status oder Art ein. Darunter ist alles nach Jahr gruppiert — klicke auf einen Eintrag für die vollständige Historie."
+        "title": "Antrag finden",
+        "description": "Durchsuche deine Anträge nach Art oder Begründung."
       },
       "list": {
-        "title": "Deine Abwesenheiten",
-        "description": "Alles hier wird aus Clockodo synchronisiert und ist schreibgeschützt — genehmige, lehne ab oder bearbeite Abwesenheiten dort. Führungskräfte sehen zusätzlich, wer im Team in den nächsten zwei Wochen abwesend ist."
+        "title": "Deine Anträge",
+        "description": "Jede von dir beantragte Abwesenheit mit aktuellem Status — ausstehend, genehmigt oder abgelehnt. Führungskräfte nutzen für Team-Anträge den Reiter „Genehmigungen“."
       }
     },
     "chat": {

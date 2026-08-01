@@ -654,7 +654,7 @@ export function UpdateArtBanner({
             type="button"
             onClick={handleDownload}
             aria-label={t("downloadArt")}
-            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/30 text-white opacity-0 backdrop-blur-md transition-opacity duration-150 hover:bg-black/45 focus-visible:opacity-100 group-hover:opacity-100"
+            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/30 text-white opacity-100 backdrop-blur-md transition-opacity duration-150 hover:bg-black/45 focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
           >
             <Download className="size-4" />
           </button>

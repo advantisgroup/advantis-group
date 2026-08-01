@@ -467,7 +467,7 @@ export function WikiChat({ className }: { className?: string } = {}) {
                     >
                       {chat.title}
                     </button>
-                    <span className="flex shrink-0 items-center opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className="flex shrink-0 items-center opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100">
                       <button
                         onClick={() => startRename(chat)}
                         className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -506,7 +506,11 @@ export function WikiChat({ className }: { className?: string } = {}) {
             </button>
           </div>
 
-          <div ref={scrollRef} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+          <div
+            ref={scrollRef}
+            onScroll={onScroll}
+            className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6"
+          >
             {messages.length === 0 && !loading && (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
                 <div className="text-4xl">💬</div>
@@ -555,14 +559,10 @@ export function WikiChat({ className }: { className?: string } = {}) {
                             <p className="mb-1 text-sm font-semibold">{children}</p>
                           ),
                           h2: ({ children }) => (
-                            <p className="mt-2 mb-1 text-sm font-semibold first:mt-0">
-                              {children}
-                            </p>
+                            <p className="mt-2 mb-1 text-sm font-semibold first:mt-0">{children}</p>
                           ),
                           h3: ({ children }) => (
-                            <p className="mt-2 mb-1 text-sm font-semibold first:mt-0">
-                              {children}
-                            </p>
+                            <p className="mt-2 mb-1 text-sm font-semibold first:mt-0">{children}</p>
                           ),
                           hr: () => <hr className="my-2 border-border/60" />,
                           a: ({ children, href }) => (
@@ -625,6 +625,7 @@ export function WikiChat({ className }: { className?: string } = {}) {
               size="icon"
               onClick={send}
               disabled={!input.trim() || loading}
+              aria-label={t("wikiChat.send")}
               className="h-10 w-10 shrink-0 rounded-xl"
             >
               <Send className="h-4 w-4" />

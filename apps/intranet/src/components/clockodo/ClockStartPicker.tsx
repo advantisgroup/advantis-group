@@ -40,7 +40,7 @@ export function ClockStartPicker({
           <SelectValue placeholder={t("clockCustomer")} />
         </SelectTrigger>
         <SelectContent>
-          {options?.customers.map(customer => (
+          {options?.customers.map((customer) => (
             <SelectItem key={customer.id} value={String(customer.id)}>
               {customer.name}
             </SelectItem>
@@ -52,7 +52,7 @@ export function ClockStartPicker({
           <SelectValue placeholder={t("clockService")} />
         </SelectTrigger>
         <SelectContent>
-          {options?.services.map(service => (
+          {options?.services.map((service) => (
             <SelectItem key={service.id} value={String(service.id)}>
               {service.name}
             </SelectItem>

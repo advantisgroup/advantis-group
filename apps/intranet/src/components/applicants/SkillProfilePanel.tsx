@@ -17,14 +17,9 @@ import { AmpelDot } from "@/components/applicants/AmpelBadge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 import type { FunctionReturnType } from "convex/server";
@@ -67,68 +62,69 @@ function ProfileForm({
   }
 
   return (
-    <>
-      <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-        <DialogTitle className="leading-snug">
-          {profile._id ? t("editProfile") : t("newProfile")}
-        </DialogTitle>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">{t("profileName")}</label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("profileNamePlaceholder")}
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">{t("skills")}</label>
-          <div className="flex gap-2">
-            <Input
-              value={skillInput}
-              onChange={(e) => setSkillInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addSkills();
-                }
-              }}
-              placeholder={t("skillsPlaceholder")}
-            />
-            <Button type="button" variant="outline" onClick={addSkills}>
-              {t("addSkill")}
-            </Button>
-          </div>
-          {skills.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {skills.map((s) => (
-                <Badge key={s} variant="muted" className="gap-1.5 pr-1.5">
-                  {s}
-                  <button
-                    type="button"
-                    aria-label={t("removeSkill", { skill: s })}
-                    onClick={() => setSkills(skills.filter((x) => x !== s))}
-                    className="rounded-full px-1 text-muted-foreground hover:bg-background"
-                  >
-                    ✕
-                  </button>
-                </Badge>
-              ))}
-            </div>
-          )}
-        </div>
+    <ResponsiveDialog
+      open
+      onOpenChange={(o) => !o && onCancel()}
+      title={profile._id ? t("editProfile") : t("newProfile")}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onCancel}>
+            {tc("cancel")}
+          </Button>
+          <Button
+            disabled={!name.trim()}
+            onClick={() => onSave({ ...profile, name: name.trim(), skills })}
+          >
+            {profile._id ? tc("save") : t("createProfile")}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">{t("profileName")}</label>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t("profileNamePlaceholder")}
+        />
       </div>
-      <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
-        <Button variant="ghost" onClick={onCancel}>
-          {tc("cancel")}
-        </Button>
-        <Button
-          disabled={!name.trim()}
-          onClick={() => onSave({ ...profile, name: name.trim(), skills })}
-        >
-          {profile._id ? tc("save") : t("createProfile")}
-        </Button>
-      </DialogFooter>
-    </>
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-muted-foreground">{t("skills")}</label>
+        <div className="flex gap-2">
+          <Input
+            value={skillInput}
+            onChange={(e) => setSkillInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addSkills();
+              }
+            }}
+            placeholder={t("skillsPlaceholder")}
+          />
+          <Button type="button" variant="outline" onClick={addSkills}>
+            {t("addSkill")}
+          </Button>
+        </div>
+        {skills.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {skills.map((s) => (
+              <Badge key={s} variant="muted" className="gap-1.5 pr-1.5">
+                {s}
+                <button
+                  type="button"
+                  aria-label={t("removeSkill", { skill: s })}
+                  onClick={() => setSkills(skills.filter((x) => x !== s))}
+                  className="rounded-full px-1 text-muted-foreground hover:bg-background"
+                >
+                  ✕
+                </button>
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+    </ResponsiveDialog>
   );
 }
 
@@ -154,7 +150,7 @@ function ProfileMatches({ profile }: { profile: Profile }) {
           type="button"
           onClick={() =>
             router.push(
-              `/applicants/${applicant._id}/uebersicht?highlight=${encodeURIComponent(matched.join(","))}`,
+              `/hr/${applicant._id}/uebersicht?highlight=${encodeURIComponent(matched.join(","))}`,
             )
           }
           className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left text-sm hover:bg-accent/40"
@@ -265,6 +261,7 @@ export function SkillProfilePanel() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={t("editProfile")}
                     onClick={() =>
                       setEditing({
                         _id: profile._id,
@@ -278,6 +275,7 @@ export function SkillProfilePanel() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={t("deleteProfile")}
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => void handleDelete(profile)}
                   >
@@ -291,18 +289,14 @@ export function SkillProfilePanel() {
         ))}
       </div>
 
-      <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent className="max-w-md gap-0 p-0">
-          {editing && (
-            <ProfileForm
-              key={editing._id ?? "new"}
-              profile={editing}
-              onCancel={() => setEditing(null)}
-              onSave={handleSave}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      {editing && (
+        <ProfileForm
+          key={editing._id ?? "new"}
+          profile={editing}
+          onCancel={() => setEditing(null)}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 }

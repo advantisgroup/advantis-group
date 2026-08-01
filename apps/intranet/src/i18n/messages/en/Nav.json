@@ -33,5 +33,12 @@
   "privacy": "Privacy",
   "terms": "Terms",
   "imprint": "Imprint",
-  "updates": "Updates"
+  "updates": "Updates",
+  "authHeadline": "Welcome to the Advantis Intranet.",
+  "authSubheadline": "Your workplace for everything happening across the team.",
+  "authHighlights": [
+    "Appointments, absences & announcements in one place",
+    "A direct line to the whole team via chat",
+    "Secure — for Advantis employees only"
+  ]
 }

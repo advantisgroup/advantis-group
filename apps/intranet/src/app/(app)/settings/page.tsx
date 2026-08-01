@@ -58,6 +58,7 @@ import { UpdatesEmailConsent } from "@/components/updates/UpdatesEmailConsent";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials, roleLabel } from "@/lib/format";
 import { cropToSquare } from "@/lib/image";
+import { START_PAGES } from "@/lib/startPages";
 import { uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -68,8 +69,6 @@ function CheckpointStatusIcon({ status }: { status: CheckpointStatus }) {
   return <Circle className="size-3.5 text-muted-foreground/40" />;
 }
 
-const START_PAGES = ["/", "/calendar", "/absences", "/announcements", "/chat", "/files"] as const;
-
 function AppPreferencesCard() {
   const t = useTranslations("Settings");
   const prefs = useQuery(api.userPreferences.getMine);
@@ -78,7 +77,7 @@ function AppPreferencesCard() {
   const pageLabel: Record<(typeof START_PAGES)[number], string> = {
     "/": t("pageDashboard"),
     "/calendar": t("pageCalendar"),
-    "/absences": t("pageAbsences"),
+    "/clockodo": t("pageAbsences"),
     "/announcements": t("pageAnnouncements"),
     "/chat": t("pageChat"),
     "/files": t("pageFiles"),

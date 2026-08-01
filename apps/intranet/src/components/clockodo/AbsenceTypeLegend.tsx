@@ -28,7 +28,7 @@ export function AbsenceTypeLegend({ className }: { className?: string }) {
         className,
       )}
     >
-      {TYPES.map(type => (
+      {TYPES.map((type) => (
         <span key={type} className="flex items-center gap-1.5">
           <span className={cn("size-2 shrink-0 rounded-full", DOT_CLASSES[type])} />
           {t(type)}

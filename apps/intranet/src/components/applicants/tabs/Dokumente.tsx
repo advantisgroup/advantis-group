@@ -49,6 +49,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
   const confirm = useConfirm();
   const tc = useTranslations("Common");
   const rescanInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
 
   const [rescanFile, setRescanFile] = useState<File | null>(null);
   const [rescanInitialValues, setRescanInitialValues] = useState<CvFallbackFormState | null>(null);
@@ -183,7 +184,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
               </div>
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="sm" asChild aria-label={t("view")}>
-                  <Link href={`/applicants/${applicant._id}/dokumente/${d._id}`}>
+                  <Link href={`/hr/${applicant._id}/dokumente/${d._id}`}>
                     <Eye className="size-4" />
                     <span className="hidden md:inline">{t("view")}</span>
                   </Link>
@@ -209,19 +210,24 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
             </div>
           ))}
 
-          <label className="flex min-h-[7.5rem] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/70 p-3.5 text-center text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-accent/30 hover:text-foreground">
+          <button
+            type="button"
+            onClick={() => docInputRef.current?.click()}
+            className="flex min-h-[7.5rem] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/70 p-3.5 text-center text-sm text-muted-foreground transition-colors hover:border-primary/50 hover:bg-accent/30 hover:text-foreground"
+          >
             <UploadCloud className="size-5" />
             <span className="font-medium">{t("addDocument")}</span>
-            <input
-              type="file"
-              accept="application/pdf"
-              className="hidden"
-              onChange={(e) => {
-                void handleUpload(e.target.files);
-                e.target.value = "";
-              }}
-            />
-          </label>
+          </button>
+          <input
+            ref={docInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              void handleUpload(e.target.files);
+              e.target.value = "";
+            }}
+          />
         </div>
         <p className="text-xs text-muted-foreground">{t("maxFileSizeHint")}</p>
       </CardContent>

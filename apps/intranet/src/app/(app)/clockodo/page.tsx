@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 
 import {
   CalendarArrowDown,
@@ -61,13 +56,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  addDaysIso,
-  isoToday,
-  mondayOfWeek,
-  rangesOverlap,
-  workingDays,
-} from "@/lib/absences";
+import { addDaysIso, isoToday, mondayOfWeek, rangesOverlap, workingDays } from "@/lib/absences";
 import {
   type AbsenceStatus,
   type AbsenceType,
@@ -86,23 +75,13 @@ import {
   useClockodoActions,
   useClockodoClock,
 } from "@/lib/clockodo-clock";
-import {
-  deleteClockEntry,
-  type ClockEntry,
-  useClockEntries,
-} from "@/lib/clockodo-entries-api";
+import { deleteClockEntry, type ClockEntry, useClockEntries } from "@/lib/clockodo-entries-api";
 import { formatIsoDate } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
 import { useEdenApi } from "@/lib/eden";
 import { cn } from "@/lib/utils";
 
-type ClockodoSection =
-  | "dashboard"
-  | "timetable"
-  | "planner"
-  | "requests"
-  | "approvals"
-  | "admin";
+type ClockodoSection = "dashboard" | "timetable" | "planner" | "requests" | "approvals" | "admin";
 
 /** requests/approvals/planner share one "Absences" top-level tab (see
  * layout.tsx) — this small in-page pill lets you switch between them
@@ -129,19 +108,19 @@ function AbsencesSubNav({
   const t = useTranslations("Absences");
   return (
     <div className="flex items-center gap-1 overflow-x-auto">
-      {ABSENCE_SUB_SECTIONS.filter(
-        item => item.value !== "approvals" || canManageClockodo
-      ).map(item => (
-        <Button
-          key={item.value}
-          variant={active === item.value ? "default" : "ghost"}
-          size="sm"
-          className="shrink-0"
-          onClick={() => onNavigate(item.value)}
-        >
-          {t(`section.${item.labelKey}`)}
-        </Button>
-      ))}
+      {ABSENCE_SUB_SECTIONS.filter((item) => item.value !== "approvals" || canManageClockodo).map(
+        (item) => (
+          <Button
+            key={item.value}
+            variant={active === item.value ? "default" : "ghost"}
+            size="sm"
+            className="shrink-0"
+            onClick={() => onNavigate(item.value)}
+          >
+            {t(`section.${item.labelKey}`)}
+          </Button>
+        ),
+      )}
     </div>
   );
 }
@@ -151,13 +130,7 @@ function AbsencesSubNav({
  * inline "this part failed" card instead of taking the rest of the page
  * (other widgets, the tab bar) down with it.
  */
-function SectionBoundary({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
+function SectionBoundary({ title, children }: { title: string; children: ReactNode }) {
   return (
     <ErrorBoundary
       fallback={({ error, reset }) => (
@@ -190,8 +163,7 @@ const TYPE_STYLE: Record<
   },
   sick: {
     icon: Thermometer,
-    className:
-      "bg-gradient-to-br from-sky-400/30 to-sky-500/10 text-sky-700 dark:text-sky-300",
+    className: "bg-gradient-to-br from-sky-400/30 to-sky-500/10 text-sky-700 dark:text-sky-300",
     barClassName: "bg-gradient-to-r from-sky-500 to-sky-500/70",
   },
   personal: {
@@ -238,13 +210,8 @@ function formatClockTime(iso: string, locale: string): string {
   return date.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
-function statusVariant(
-  status: AbsenceStatus
-): "warning" | "success" | "destructive" | "muted" {
-  const variants: Record<
-    AbsenceStatus,
-    "warning" | "success" | "destructive" | "muted"
-  > = {
+function statusVariant(status: AbsenceStatus): "warning" | "success" | "destructive" | "muted" {
+  const variants: Record<AbsenceStatus, "warning" | "success" | "destructive" | "muted"> = {
     pending: "warning",
     approved: "success",
     denied: "destructive",
@@ -265,23 +232,20 @@ function CalendarBar({
   const total = Math.max(
     1,
     Math.round(
-      (new Date(`${end}T00:00:00Z`).getTime() -
-        new Date(`${start}T00:00:00Z`).getTime()) /
-        86_400_000
-    ) + 1
+      (new Date(`${end}T00:00:00Z`).getTime() - new Date(`${start}T00:00:00Z`).getTime()) /
+        86_400_000,
+    ) + 1,
   );
   const first = absence.startDate < start ? start : absence.startDate;
   const last = absence.endDate > end ? end : absence.endDate;
   const offset = Math.round(
-    (new Date(`${first}T00:00:00Z`).getTime() -
-      new Date(`${start}T00:00:00Z`).getTime()) /
-      86_400_000
+    (new Date(`${first}T00:00:00Z`).getTime() - new Date(`${start}T00:00:00Z`).getTime()) /
+      86_400_000,
   );
   const length =
     Math.round(
-      (new Date(`${last}T00:00:00Z`).getTime() -
-        new Date(`${first}T00:00:00Z`).getTime()) /
-        86_400_000
+      (new Date(`${last}T00:00:00Z`).getTime() - new Date(`${first}T00:00:00Z`).getTime()) /
+        86_400_000,
     ) + 1;
   return (
     <span
@@ -315,9 +279,7 @@ function Stat({
           <p className="text-xs font-medium text-muted-foreground">{label}</p>
           <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
         </div>
-        <span
-          className={cn("grid size-9 place-items-center rounded-md", accent)}
-        >
+        <span className={cn("grid size-9 place-items-center rounded-md", accent)}>
           <Icon className="size-4" />
         </span>
       </CardContent>
@@ -394,7 +356,7 @@ function ClockControl() {
             <span
               className={cn(
                 "relative grid size-10 place-items-center rounded-md",
-                clock ? clockStatusClassName(clock.status) : "bg-muted text-muted-foreground"
+                clock ? clockStatusClassName(clock.status) : "bg-muted text-muted-foreground",
               )}
             >
               <Clock3 className="size-5" />
@@ -403,18 +365,12 @@ function ClockControl() {
               )}
             </span>
             <div>
-              <p className="font-medium">
-                {clock?.accountName ?? t("clockLoading")}
-              </p>
+              <p className="font-medium">{clock?.accountName ?? t("clockLoading")}</p>
               <p className="text-sm text-muted-foreground">{detail}</p>
             </div>
           </div>
           {working ? (
-            <Button
-              variant="outline"
-              onClick={() => void actions.stop()}
-              disabled={actions.busy}
-            >
+            <Button variant="outline" onClick={() => void actions.stop()} disabled={actions.busy}>
               <Square className="size-4" />
               {t("stopClock")}
             </Button>
@@ -438,7 +394,9 @@ function ClockControl() {
             serviceId={actions.serviceId}
             onServiceChange={actions.setServiceId}
             busy={actions.busy}
-            onStart={() => void actions.start(Number(actions.customerId), Number(actions.serviceId))}
+            onStart={() =>
+              void actions.start(Number(actions.customerId), Number(actions.serviceId))
+            }
           />
           <DialogFooter>
             <Button variant="ghost" onClick={() => actions.setPickerOpen(false)}>
@@ -466,11 +424,7 @@ function Dashboard({
   const user = useCurrentUser();
   const [now, setNow] = useState(() => Date.now());
   const weekStart = mondayOfWeek(isoToday());
-  const { entries: weekEntries } = useClockEntries(
-    weekStart,
-    isoToday(),
-    !!user.clockodoUserId
-  );
+  const { entries: weekEntries } = useClockEntries(weekStart, isoToday(), !!user.clockodoUserId);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -484,7 +438,7 @@ function Dashboard({
       return Math.max(0, end - start);
     };
     const today = (weekEntries ?? []).filter(
-      entry => entry.startTime.slice(0, 10) === isoToday()
+      (entry) => entry.startTime.slice(0, 10) === isoToday(),
     );
     const todayMs = today.reduce((sum, entry) => sum + entryMs(entry), 0);
     const weekMs = (weekEntries ?? []).reduce((sum, entry) => sum + entryMs(entry), 0);
@@ -497,10 +451,10 @@ function Dashboard({
 
   const upcoming = (mine ?? [])
     .filter(
-      absence =>
+      (absence) =>
         typeof absence.endDate === "string" &&
         absence.endDate >= isoToday() &&
-        absence.status !== "cancelled"
+        absence.status !== "cancelled",
     )
     .sort((a, b) => {
       const aDate = typeof a.startDate === "string" ? a.startDate : "";
@@ -536,9 +490,8 @@ function Dashboard({
         <Stat
           label={t("teamOutToday")}
           value={
-            calendar?.filter(
-              a => a.startDate <= isoToday() && a.endDate >= isoToday()
-            ).length ?? "-"
+            calendar?.filter((a) => a.startDate <= isoToday() && a.endDate >= isoToday()).length ??
+            "-"
           }
           icon={Users}
           accent="bg-gradient-to-br from-indigo-400/30 to-indigo-500/10 text-indigo-700"
@@ -549,15 +502,9 @@ function Dashboard({
           <CardHeader className="flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base">{t("presenceToday")}</CardTitle>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {t("presenceTodayHint")}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("presenceTodayHint")}</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onNavigate("planner")}
-            >
+            <Button variant="outline" size="sm" onClick={() => onNavigate("planner")}>
               {t("openPlanner")}
             </Button>
           </CardHeader>
@@ -565,48 +512,33 @@ function Dashboard({
             <SectionBoundary title={t("presenceUnavailable")}>
               <div className="divide-y divide-border/70">
                 {calendar === undefined && (
-                  <p className="py-6 text-sm text-muted-foreground">
-                    {t("loading")}
-                  </p>
+                  <p className="py-6 text-sm text-muted-foreground">{t("loading")}</p>
                 )}
-                {calendar?.filter(
-                  a => a.startDate <= isoToday() && a.endDate >= isoToday()
-                ).length === 0 && (
-                  <p className="py-6 text-sm text-muted-foreground">
-                    {t("nobodyOutToday")}
-                  </p>
+                {calendar?.filter((a) => a.startDate <= isoToday() && a.endDate >= isoToday())
+                  .length === 0 && (
+                  <p className="py-6 text-sm text-muted-foreground">{t("nobodyOutToday")}</p>
                 )}
                 {calendar
-                  ?.filter(
-                    a => a.startDate <= isoToday() && a.endDate >= isoToday()
-                  )
-                  .map(absence => (
-                    <div
-                      key={absence.id}
-                      className="flex items-center justify-between gap-3 py-3"
-                    >
+                  ?.filter((a) => a.startDate <= isoToday() && a.endDate >= isoToday())
+                  .map((absence) => (
+                    <div key={absence.id} className="flex items-center justify-between gap-3 py-3">
                       <div className="flex min-w-0 items-center gap-3">
                         <span
                           className={cn(
                             "grid size-8 shrink-0 place-items-center rounded-full text-xs font-semibold",
-                            TYPE_STYLE[absence.type].className
+                            TYPE_STYLE[absence.type].className,
                           )}
                         >
                           {absence.userName.slice(0, 2).toUpperCase()}
                         </span>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">
-                            {absence.userName}
-                          </p>
+                          <p className="truncate text-sm font-medium">{absence.userName}</p>
                           <p className="truncate text-xs text-muted-foreground">
                             {absence.userDepartment ?? t("noDepartment")}
                           </p>
                         </div>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className={TYPE_STYLE[absence.type].className}
-                      >
+                      <Badge variant="outline" className={TYPE_STYLE[absence.type].className}>
                         {t(absence.type)}
                       </Badge>
                     </div>
@@ -618,24 +550,16 @@ function Dashboard({
         <Card>
           <CardHeader className="flex-row items-center justify-between">
             <CardTitle className="text-base">{t("upcomingAbsences")}</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onNavigate("requests")}
-            >
+            <Button variant="ghost" size="sm" onClick={() => onNavigate("requests")}>
               {t("viewAll")}
             </Button>
           </CardHeader>
           <CardContent className="pt-0">
             <SectionBoundary title={t("upcomingUnavailable")}>
               {upcoming.length === 0 ? (
-                <p className="py-6 text-sm text-muted-foreground">
-                  {t("noAbsences")}
-                </p>
+                <p className="py-6 text-sm text-muted-foreground">{t("noAbsences")}</p>
               ) : (
-                upcoming.map(absence => (
-                  <AbsencePill key={absence.id} absence={absence} />
-                ))
+                upcoming.map((absence) => <AbsencePill key={absence.id} absence={absence} />)
               )}
             </SectionBoundary>
           </CardContent>
@@ -659,15 +583,11 @@ function Timetable() {
   const weekStart = addDaysIso(mondayOfWeek(isoToday()), offset * 7);
   const dates = Array.from({ length: 7 }, (_, index) => addDaysIso(weekStart, index));
   const [selected, setSelected] = useState(() =>
-    dates.includes(isoToday()) ? isoToday() : dates[0]
+    dates.includes(isoToday()) ? isoToday() : dates[0],
   );
   const inThisWeek = dates.includes(selected) ? selected : dates[0];
 
-  const { entries, refresh } = useClockEntries(
-    dates[0],
-    dates.at(-1)!,
-    !!user.clockodoUserId
-  );
+  const { entries, refresh } = useClockEntries(dates[0], dates.at(-1)!, !!user.clockodoUserId);
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 30_000);
@@ -730,7 +650,7 @@ function Timetable() {
             variant="outline"
             size="icon-sm"
             aria-label={t("previousWeek")}
-            onClick={() => setOffset(value => value - 1)}
+            onClick={() => setOffset((value) => value - 1)}
           >
             <ChevronLeft />
           </Button>
@@ -738,15 +658,15 @@ function Timetable() {
             variant="outline"
             size="icon-sm"
             aria-label={t("nextWeek")}
-            onClick={() => setOffset(value => value + 1)}
+            onClick={() => setOffset((value) => value + 1)}
           >
             <ChevronRight />
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="overflow-x-auto p-0">
         <div className="grid min-w-[36rem] grid-cols-7 border-b border-border/70">
-          {dates.map(date => {
+          {dates.map((date) => {
             const active = date === inThisWeek;
             const isToday = date === isoToday();
             return (
@@ -756,13 +676,13 @@ function Timetable() {
                 onClick={() => setSelected(date)}
                 className={cn(
                   "border-r border-border/70 px-2 py-3 text-center transition-colors last:border-r-0 hover:bg-accent",
-                  active && "bg-accent"
+                  active && "bg-accent",
                 )}
               >
                 <p
                   className={cn(
                     "text-xs font-medium",
-                    isToday ? "text-primary" : "text-muted-foreground"
+                    isToday ? "text-primary" : "text-muted-foreground",
                   )}
                 >
                   {new Date(`${date}T00:00:00Z`).toLocaleDateString(locale, {
@@ -782,9 +702,7 @@ function Timetable() {
         </div>
         <div className="p-2">
           {entries === undefined && (
-            <p className="px-3 py-10 text-center text-sm text-muted-foreground">
-              {t("loading")}
-            </p>
+            <p className="px-3 py-10 text-center text-sm text-muted-foreground">{t("loading")}</p>
           )}
           {entries !== undefined && dayEntries.length === 0 && (
             <p className="px-3 py-10 text-center text-sm text-muted-foreground">
@@ -799,7 +717,7 @@ function Timetable() {
                 : null;
             const duration = elapsedSince(
               entry.startTime,
-              entry.endTime ? Date.parse(entry.endTime) : now
+              entry.endTime ? Date.parse(entry.endTime) : now,
             );
             return (
               <div key={entry.id}>
@@ -813,7 +731,9 @@ function Timetable() {
                   <div className="min-w-0">
                     <p className="text-sm font-medium tabular-nums">
                       {formatClockTime(entry.startTime, locale)} –{" "}
-                      {entry.endTime ? formatClockTime(entry.endTime, locale) : t("entryInProgress")}
+                      {entry.endTime
+                        ? formatClockTime(entry.endTime, locale)
+                        : t("entryInProgress")}
                     </p>
                     {(entry.customerName || entry.serviceName) && (
                       <p className="truncate text-xs text-muted-foreground">
@@ -822,9 +742,7 @@ function Timetable() {
                     )}
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="text-sm tabular-nums text-muted-foreground">
-                      {duration}
-                    </span>
+                    <span className="text-sm tabular-nums text-muted-foreground">{duration}</span>
                     {entry.endTime && (
                       <Button
                         variant="ghost"
@@ -908,9 +826,7 @@ function ClockodoAbsenceDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {absence ? t("editAbsence") : t("newAbsence")}
-          </DialogTitle>
+          <DialogTitle>{absence ? t("editAbsence") : t("newAbsence")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -922,12 +838,12 @@ function ClockodoAbsenceDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {CLOCKODO_ABSENCE_GROUPS.map(group => (
+                {CLOCKODO_ABSENCE_GROUPS.map((group) => (
                   <SelectGroup key={group.key}>
                     <p className="px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                       {t(`absenceTypeGroups.${group.key}`)}
                     </p>
-                    {group.types.map(type => (
+                    {group.types.map((type) => (
                       <SelectItem key={type} value={String(type)}>
                         {t(`clockodoTypes.${CLOCKODO_TYPE_KEYS[type]}`)}
                       </SelectItem>
@@ -945,7 +861,7 @@ function ClockodoAbsenceDialog({
               <Input
                 type="date"
                 value={dateSince}
-                onChange={event => setDateSince(event.target.value)}
+                onChange={(event) => setDateSince(event.target.value)}
               />
             </div>
             <div>
@@ -955,25 +871,19 @@ function ClockodoAbsenceDialog({
               <Input
                 type="date"
                 value={dateUntil}
-                onChange={event => setDateUntil(event.target.value)}
+                onChange={(event) => setDateUntil(event.target.value)}
               />
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400">
-            <Checkbox
-              checked={halfDay}
-              onCheckedChange={value => setHalfDay(value === true)}
-            />
+            <Checkbox checked={halfDay} onCheckedChange={(value) => setHalfDay(value === true)} />
             {t("halfDay")}
           </label>
           <div>
             <label className="mb-1 block text-xs font-semibold text-indigo-600 dark:text-indigo-400">
               {t("note")}
             </label>
-            <Textarea
-              value={note}
-              onChange={event => setNote(event.target.value)}
-            />
+            <Textarea value={note} onChange={(event) => setNote(event.target.value)} />
           </div>
         </div>
         <DialogFooter>
@@ -982,9 +892,7 @@ function ClockodoAbsenceDialog({
           </Button>
           <Button
             onClick={() => void submit()}
-            disabled={
-              saving || !dateSince || !dateUntil || dateUntil < dateSince
-            }
+            disabled={saving || !dateSince || !dateUntil || dateUntil < dateSince}
           >
             {t("saveAbsence")}
           </Button>
@@ -1008,21 +916,17 @@ function Requests({
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<MyAbsence | null>(null);
   const [newOpen, setNewOpen] = useState(false);
-  const visible = (mine ?? []).filter(absence =>
-    `${absence.type} ${absence.reason ?? ""}`
-      .toLowerCase()
-      .includes(query.toLowerCase())
+  const visible = (mine ?? []).filter((absence) =>
+    `${absence.type} ${absence.reason ?? ""}`.toLowerCase().includes(query.toLowerCase()),
   );
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex-row items-center justify-between gap-4 border-b border-border/70 bg-gradient-to-r from-muted/60 to-muted/10">
         <div>
           <CardTitle className="text-base">{t("yourRequests")}</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {t("yourRequestsHint")}
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("yourRequestsHint")}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-tour="tour-absences-new">
           <Button variant="outline" size="sm" onClick={onExport}>
             <CalendarArrowDown />
             {t("exportIcs")}
@@ -1035,19 +939,19 @@ function Requests({
       </CardHeader>
       <CardContent className="p-0">
         <div className="border-b border-border/70 p-4">
-          <div className="relative max-w-sm">
+          <div className="relative max-w-sm" data-tour="tour-absences-search">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
-              onChange={event => setQuery(event.target.value)}
+              onChange={(event) => setQuery(event.target.value)}
               placeholder={t("searchRequests")}
               className="pl-9"
             />
           </div>
           <AbsenceTypeLegend className="mt-3" />
         </div>
-        <div className="divide-y divide-border/70">
-          {visible.map(absence => {
+        <div className="divide-y divide-border/70" data-tour="tour-absences-list">
+          {visible.map((absence) => {
             const style = TYPE_STYLE[absence.type];
             return (
               <div
@@ -1062,25 +966,15 @@ function Requests({
                       {formatIsoDate(absence.startDate, locale)} -{" "}
                       {formatIsoDate(absence.endDate, locale)} ·{" "}
                       {t("workingDaysLabel", {
-                        count: workingDays(
-                          absence.startDate,
-                          absence.endDate,
-                          absence.halfDay
-                        ),
+                        count: workingDays(absence.startDate, absence.endDate, absence.halfDay),
                       })}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={statusVariant(absence.status)}>
-                    {t(absence.status)}
-                  </Badge>
+                  <Badge variant={statusVariant(absence.status)}>{t(absence.status)}</Badge>
                   {absence.status === "pending" && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditing(absence)}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => setEditing(absence)}>
                       {t("editAbsence")}
                     </Button>
                   )}
@@ -1104,7 +998,7 @@ function Requests({
       <ClockodoAbsenceDialog
         absence={editing}
         open={editing !== null}
-        onOpenChange={open => !open && setEditing(null)}
+        onOpenChange={(open) => !open && setEditing(null)}
         onSaved={onSaved}
       />
     </Card>
@@ -1144,7 +1038,7 @@ function Approvals({
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y divide-border/70">
-          {approvals?.map(approval => {
+          {approvals?.map((approval) => {
             const style = TYPE_STYLE[approval.type];
             return (
               <div
@@ -1161,17 +1055,11 @@ function Approvals({
                       {formatIsoDate(approval.startDate, locale)} -{" "}
                       {formatIsoDate(approval.endDate, locale)} ·{" "}
                       {t("workingDaysLabel", {
-                        count: workingDays(
-                          approval.startDate,
-                          approval.endDate,
-                          approval.halfDay
-                        ),
+                        count: workingDays(approval.startDate, approval.endDate, approval.halfDay),
                       })}
                     </p>
                     {approval.reason && (
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {approval.reason}
-                      </p>
+                      <p className="mt-1 text-sm text-muted-foreground">{approval.reason}</p>
                     )}
                   </div>
                 </div>
@@ -1222,40 +1110,26 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
   const people = useMemo(() => {
     const grouped = new Map<string, CalendarAbsence[]>();
     for (const absence of calendar ?? []) {
-      if (!rangesOverlap(absence.startDate, absence.endDate, start, end))
-        continue;
+      if (!rangesOverlap(absence.startDate, absence.endDate, start, end)) continue;
       const list = grouped.get(absence.userName) ?? [];
       list.push(absence);
       grouped.set(absence.userName, list);
     }
     return [...grouped.entries()].sort(([a], [b]) => a.localeCompare(b));
   }, [calendar, start, end]);
-  const days = Array.from({ length: 28 }, (_, index) =>
-    addDaysIso(start, index)
-  );
+  const days = Array.from({ length: 28 }, (_, index) => addDaysIso(start, index));
 
   const year = String(new Date().getFullYear());
   const summaryRows = useMemo(() => {
-    const summary = new Map<
-      string,
-      { department: string | null; days: number; periods: number }
-    >();
+    const summary = new Map<string, { department: string | null; days: number; periods: number }>();
     for (const absence of calendar ?? []) {
-      if (
-        typeof absence.startDate !== "string" ||
-        !absence.startDate.startsWith(year)
-      )
-        continue;
+      if (typeof absence.startDate !== "string" || !absence.startDate.startsWith(year)) continue;
       const existing = summary.get(absence.userName) ?? {
         department: absence.userDepartment,
         days: 0,
         periods: 0,
       };
-      existing.days += workingDays(
-        absence.startDate,
-        absence.endDate,
-        absence.halfDay
-      );
+      existing.days += workingDays(absence.startDate, absence.endDate, absence.halfDay);
       existing.periods += 1;
       summary.set(absence.userName, existing);
     }
@@ -1324,7 +1198,7 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
               <div className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {t("employee")}
               </div>
-              {days.map(day => (
+              {days.map((day) => (
                 <div
                   key={day}
                   className="border-l border-border/70 py-3 text-center text-[11px] text-muted-foreground"
@@ -1340,21 +1214,14 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
               >
                 <div className="px-4 py-3 text-sm font-medium">{name}</div>
                 <div className="relative col-span-28 min-h-11 border-l border-border/70 bg-[linear-gradient(to_right,transparent_calc(100%-1px),hsl(var(--border)/.7)_calc(100%-1px))] bg-[size:3.571428%_100%]">
-                  {absences.map(absence => (
-                    <CalendarBar
-                      key={absence.id}
-                      absence={absence}
-                      start={start}
-                      end={end}
-                    />
+                  {absences.map((absence) => (
+                    <CalendarBar key={absence.id} absence={absence} start={start} end={end} />
                   ))}
                 </div>
               </div>
             ))}
             {calendar !== undefined && people.length === 0 && (
-              <p className="p-8 text-center text-sm text-muted-foreground">
-                {t("nobodyOut")}
-              </p>
+              <p className="p-8 text-center text-sm text-muted-foreground">{t("nobodyOut")}</p>
             )}
           </div>
         </CardContent>
@@ -1366,30 +1233,17 @@ function Planner({ calendar }: { calendar: CalendarAbsence[] | undefined }) {
                 <tr>
                   <th className="px-5 py-3 font-semibold">{t("employee")}</th>
                   <th className="px-5 py-3 font-semibold">{t("department")}</th>
-                  <th className="px-5 py-3 text-right font-semibold">
-                    {t("absencePeriods")}
-                  </th>
-                  <th className="px-5 py-3 text-right font-semibold">
-                    {t("absenceDays")}
-                  </th>
+                  <th className="px-5 py-3 text-right font-semibold">{t("absencePeriods")}</th>
+                  <th className="px-5 py-3 text-right font-semibold">{t("absenceDays")}</th>
                 </tr>
               </thead>
               <tbody>
                 {summaryRows.map(([name, row]) => (
-                  <tr
-                    key={name}
-                    className="border-b border-border/70 last:border-0"
-                  >
+                  <tr key={name} className="border-b border-border/70 last:border-0">
                     <td className="px-5 py-3 font-medium">{name}</td>
-                    <td className="px-5 py-3 text-muted-foreground">
-                      {row.department ?? "-"}
-                    </td>
-                    <td className="px-5 py-3 text-right tabular-nums">
-                      {row.periods}
-                    </td>
-                    <td className="px-5 py-3 text-right tabular-nums">
-                      {row.days}
-                    </td>
+                    <td className="px-5 py-3 text-muted-foreground">{row.department ?? "-"}</td>
+                    <td className="px-5 py-3 text-right tabular-nums">{row.periods}</td>
+                    <td className="px-5 py-3 text-right tabular-nums">{row.days}</td>
                   </tr>
                 ))}
               </tbody>
@@ -1414,18 +1268,16 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
   const { approvals, refresh: refreshApprovals } = usePendingApprovals(canManageClockodo);
 
   function exportIcs() {
-    const approved = (mine ?? []).filter(
-      absence => absence.status === "approved"
-    );
+    const approved = (mine ?? []).filter((absence) => absence.status === "approved");
     const ics = buildIcs(
       t("title"),
-      approved.map(absence => ({
+      approved.map((absence) => ({
         uid: absence.id,
         title: t(absence.type),
         startDate: absence.startDate,
         endDate: absence.endDate,
         description: absence.reason ?? undefined,
-      }))
+      })),
     );
     downloadIcs("clockodo-absences.ics", ics);
     toast.success(t("exported"));
@@ -1458,12 +1310,7 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
       )}
     >
       {section === "dashboard" && (
-        <Dashboard
-          mine={mine}
-          calendar={calendar}
-          pending={pending}
-          onNavigate={navigate}
-        />
+        <Dashboard mine={mine} calendar={calendar} pending={pending} onNavigate={navigate} />
       )}
       {section === "timetable" && <Timetable />}
       <div className={cn(isAbsencesSubSection && "space-y-4")}>
@@ -1474,9 +1321,7 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
             onNavigate={navigate}
           />
         )}
-        {section === "requests" && (
-          <Requests mine={mine} onExport={exportIcs} onSaved={refresh} />
-        )}
+        {section === "requests" && <Requests mine={mine} onExport={exportIcs} onSaved={refresh} />}
         {section === "planner" && <Planner calendar={calendar} />}
         {section === "approvals" &&
           (canManageClockodo ? (
@@ -1485,8 +1330,7 @@ export function ClockodoWorkspace({ section }: { section: ClockodoSection }) {
             <ForbiddenScreen />
           ))}
       </div>
-      {section === "admin" &&
-        (canManageClockodo ? <ClockodoAdminPanel /> : <ForbiddenScreen />)}
+      {section === "admin" && (canManageClockodo ? <ClockodoAdminPanel /> : <ForbiddenScreen />)}
     </ErrorBoundary>
   );
 }

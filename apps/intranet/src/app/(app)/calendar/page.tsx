@@ -698,7 +698,7 @@ export default function CalendarPage() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={goPrev}
-                aria-label="Previous"
+                aria-label={tc("previous")}
                 className="rounded-r-none"
               >
                 <ChevronLeft className="size-4" />
@@ -708,7 +708,7 @@ export default function CalendarPage() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={goNext}
-                aria-label="Next"
+                aria-label={tc("next")}
                 className="rounded-l-none"
               >
                 <ChevronRight className="size-4" />

@@ -328,6 +328,7 @@ export function CustomRolesPanel() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label={t("edit")}
                   onClick={() =>
                     setEditing({
                       _id: role._id,
@@ -341,6 +342,7 @@ export function CustomRolesPanel() {
                 <Button
                   variant="ghost"
                   size="icon"
+                  aria-label={t("delete")}
                   className="text-danger hover:bg-danger/10 hover:text-danger"
                   onClick={() => void handleDelete(role)}
                 >

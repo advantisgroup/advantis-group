@@ -24,14 +24,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GroupAvatar } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -183,190 +178,184 @@ export function GroupSettingsDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("groupSettings")}</DialogTitle>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange} title={t("groupSettings")}>
+      <Tabs defaultValue="info">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="info">{t("tabInfo")}</TabsTrigger>
+          <TabsTrigger value="members">{t("members")}</TabsTrigger>
+          <TabsTrigger value="media">{t("sharedMedia")}</TabsTrigger>
+        </TabsList>
 
-        <Tabs defaultValue="info">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info">{t("tabInfo")}</TabsTrigger>
-            <TabsTrigger value="members">{t("members")}</TabsTrigger>
-            <TabsTrigger value="media">{t("sharedMedia")}</TabsTrigger>
-          </TabsList>
-
-          {/* Info: photo + name */}
-          <TabsContent value="info" className="space-y-4 pt-2">
-            <div className="flex flex-col items-center gap-3">
-              <div className="relative">
-                <GroupAvatar
-                  src={conversation?.groupAvatar}
-                  memberAvatars={(conversation?.members ?? [])
-                    .filter((m) => m._id !== me._id)
-                    .map((m) => m.avatar)}
-                  memberNames={(conversation?.members ?? [])
-                    .filter((m) => m._id !== me._id)
-                    .map((m) => m.name)}
-                  name={conversation?.title ?? "Group"}
-                  className="size-20"
-                />
-                <button
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
-                  aria-label={t("changePhoto")}
-                  className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full border-2 border-background bg-blue-500 text-white shadow-sm transition-colors hover:bg-blue-600"
-                >
-                  {uploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void onUploadPhoto(f);
-                    e.target.value = "";
-                  }}
-                />
-              </div>
-              {conversation?.groupAvatar && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-muted-foreground"
-                  onClick={onRemovePhoto}
-                >
-                  <ImageOff className="mr-1.5 h-4 w-4" />
-                  {t("removePhoto")}
-                </Button>
-              )}
-            </div>
-
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("groupName")}
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={nameValue}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder={t("groupName")}
-                />
-                <Button
-                  onClick={onSaveName}
-                  disabled={
-                    savingName || !nameValue.trim() || nameValue.trim() === conversation?.title
-                  }
-                >
-                  {savingName ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Check className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Danger zone */}
-            <div className="space-y-2 rounded-lg border border-border p-3">
-              <Button variant="outline" className="w-full justify-start" onClick={onLeave}>
-                <LogOut className="mr-2 h-4 w-4" />
-                {t("leaveGroup")}
-              </Button>
-              {isCreator && (
-                <Button
-                  variant="outline"
-                  className="w-full justify-start border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={onDelete}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  {t("deleteGroup")}
-                </Button>
-              )}
-            </div>
-          </TabsContent>
-
-          {/* Members */}
-          <TabsContent value="members" className="pt-2">
-            {adding ? (
-              <AddMembersPanel
-                existingIds={new Set((conversation?.members ?? []).map((m) => m._id))}
-                selected={selected}
-                onToggle={(id) =>
-                  setSelected((s) => {
-                    const next = new Set(s);
-                    if (next.has(id)) next.delete(id);
-                    else next.add(id);
-                    return next;
-                  })
-                }
-                onCancel={() => {
-                  setAdding(false);
-                  setSelected(new Set());
-                }}
-                onConfirm={onAddMembers}
-                labels={{
-                  add: t("addMembers"),
-                  cancel: tc("cancel"),
-                  empty: t("noPeople"),
+        {/* Info: photo + name */}
+        <TabsContent value="info" className="space-y-4 pt-2">
+          <div className="flex flex-col items-center gap-3">
+            <div className="relative">
+              <GroupAvatar
+                src={conversation?.groupAvatar}
+                memberAvatars={(conversation?.members ?? [])
+                  .filter((m) => m._id !== me._id)
+                  .map((m) => m.avatar)}
+                memberNames={(conversation?.members ?? [])
+                  .filter((m) => m._id !== me._id)
+                  .map((m) => m.name)}
+                name={conversation?.title ?? "Group"}
+                className="size-20"
+              />
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                aria-label={t("changePhoto")}
+                className="absolute -bottom-1 -right-1 flex size-8 items-center justify-center rounded-full border-2 border-background bg-blue-500 text-white shadow-sm transition-colors hover:bg-blue-600"
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void onUploadPhoto(f);
+                  e.target.value = "";
                 }}
               />
-            ) : (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mb-2 w-full"
-                  onClick={() => setAdding(true)}
-                >
-                  <UserPlus className="mr-1.5 h-4 w-4" />
-                  {t("addMembers")}
-                </Button>
-                <ScrollArea className="h-64 rounded-lg border border-border">
-                  {(conversation?.members ?? []).map((m) => (
-                    <div
-                      key={m._id}
-                      className="flex items-center gap-2.5 border-b border-border/60 px-3 py-2 last:border-b-0"
-                    >
-                      <Avatar className="size-8">
-                        {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
-                        <AvatarFallback className="text-xs">{initials(m.name)}</AvatarFallback>
-                      </Avatar>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {m.name}
-                        {m._id === me._id ? ` (${t("you")})` : ""}
-                      </span>
-                      {m.isCreator ? (
-                        <span className="text-[10px] text-muted-foreground">{t("creator")}</span>
-                      ) : isCreator && m._id !== me._id ? (
-                        <button
-                          aria-label={t("removeMember")}
-                          onClick={() => void onRemoveMember(m._id, m.name)}
-                          className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                        >
-                          <UserMinus className="h-4 w-4" />
-                        </button>
-                      ) : null}
-                    </div>
-                  ))}
-                </ScrollArea>
-              </>
+            </div>
+            {conversation?.groupAvatar && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground"
+                onClick={onRemovePhoto}
+              >
+                <ImageOff className="mr-1.5 h-4 w-4" />
+                {t("removePhoto")}
+              </Button>
             )}
-          </TabsContent>
+          </div>
 
-          {/* Shared media */}
-          <TabsContent value="media" className="pt-2">
-            <SharedMedia conversationId={conversationId} emptyLabel={t("noMedia")} />
-          </TabsContent>
-        </Tabs>
-      </DialogContent>
-    </Dialog>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("groupName")}
+            </label>
+            <div className="flex gap-2">
+              <Input
+                value={nameValue}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t("groupName")}
+              />
+              <Button
+                onClick={onSaveName}
+                disabled={
+                  savingName || !nameValue.trim() || nameValue.trim() === conversation?.title
+                }
+              >
+                {savingName ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Check className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Danger zone */}
+          <div className="space-y-2 rounded-lg border border-border p-3">
+            <Button variant="outline" className="w-full justify-start" onClick={onLeave}>
+              <LogOut className="mr-2 h-4 w-4" />
+              {t("leaveGroup")}
+            </Button>
+            {isCreator && (
+              <Button
+                variant="outline"
+                className="w-full justify-start border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                onClick={onDelete}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {t("deleteGroup")}
+              </Button>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* Members */}
+        <TabsContent value="members" className="pt-2">
+          {adding ? (
+            <AddMembersPanel
+              existingIds={new Set((conversation?.members ?? []).map((m) => m._id))}
+              selected={selected}
+              onToggle={(id) =>
+                setSelected((s) => {
+                  const next = new Set(s);
+                  if (next.has(id)) next.delete(id);
+                  else next.add(id);
+                  return next;
+                })
+              }
+              onCancel={() => {
+                setAdding(false);
+                setSelected(new Set());
+              }}
+              onConfirm={onAddMembers}
+              labels={{
+                add: t("addMembers"),
+                cancel: tc("cancel"),
+                empty: t("noPeople"),
+              }}
+            />
+          ) : (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mb-2 w-full"
+                onClick={() => setAdding(true)}
+              >
+                <UserPlus className="mr-1.5 h-4 w-4" />
+                {t("addMembers")}
+              </Button>
+              <ScrollArea className="h-64 rounded-lg border border-border">
+                {(conversation?.members ?? []).map((m) => (
+                  <div
+                    key={m._id}
+                    className="flex items-center gap-2.5 border-b border-border/60 px-3 py-2 last:border-b-0"
+                  >
+                    <Avatar className="size-8">
+                      {m.avatar && <AvatarImage src={m.avatar} alt={m.name} />}
+                      <AvatarFallback className="text-xs">{initials(m.name)}</AvatarFallback>
+                    </Avatar>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {m.name}
+                      {m._id === me._id ? ` (${t("you")})` : ""}
+                    </span>
+                    {m.isCreator ? (
+                      <span className="text-[10px] text-muted-foreground">{t("creator")}</span>
+                    ) : isCreator && m._id !== me._id ? (
+                      <button
+                        aria-label={t("removeMember")}
+                        onClick={() => void onRemoveMember(m._id, m.name)}
+                        className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <UserMinus className="h-4 w-4" />
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </ScrollArea>
+            </>
+          )}
+        </TabsContent>
+
+        {/* Shared media */}
+        <TabsContent value="media" className="pt-2">
+          <SharedMedia conversationId={conversationId} emptyLabel={t("noMedia")} />
+        </TabsContent>
+      </Tabs>
+    </ResponsiveDialog>
   );
 }
 

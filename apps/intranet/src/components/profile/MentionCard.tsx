@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -33,6 +33,8 @@ export function MentionCard({
   const t = useTranslations("Profile");
   const tRoles = useTranslations("Roles");
   const user = useQuery(api.users.get, { userId });
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [cardHeight, setCardHeight] = useState(0);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -42,11 +44,31 @@ export function MentionCard({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onClose]);
 
+  // Content height varies (loading state vs. loaded profile), so measure the
+  // rendered card and clamp/flip it to stay inside the viewport rather than
+  // letting it run off the bottom of the screen on small mobile viewports.
+  useLayoutEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    setCardHeight(el.getBoundingClientRect().height);
+  }, [user]);
+
   const cardWidth = 288;
+  const margin = 12;
   const left =
     typeof window === "undefined"
       ? rect.left
-      : Math.min(rect.left, window.innerWidth - cardWidth - 12);
+      : Math.min(rect.left, window.innerWidth - cardWidth - margin);
+
+  let top = rect.bottom + 8;
+  if (typeof window !== "undefined" && cardHeight > 0) {
+    const spaceBelow = window.innerHeight - rect.bottom - margin;
+    if (spaceBelow < cardHeight && rect.top - margin > cardHeight) {
+      top = rect.top - cardHeight - 8;
+    } else {
+      top = Math.min(top, window.innerHeight - cardHeight - margin);
+    }
+  }
 
   return (
     <>
@@ -54,10 +76,11 @@ export function MentionCard({
           lightweight hover card rather than a modal. */}
       <div className="fixed inset-0 z-50" onClick={onClose} />
       <div
+        ref={cardRef}
         role="dialog"
         aria-label={user?.name ?? t("title")}
-        className="fixed z-50 rounded-xl border border-border/70 bg-popover p-3.5 shadow-overlay"
-        style={{ top: rect.bottom + 8, left, width: cardWidth }}
+        className="fixed z-50 max-h-[calc(100dvh-24px)] overflow-y-auto rounded-xl border border-border/70 bg-popover p-3.5 shadow-overlay"
+        style={{ top, left, width: cardWidth }}
       >
         {user === undefined ? (
           <p className="py-3 text-center text-xs text-muted-foreground">…</p>

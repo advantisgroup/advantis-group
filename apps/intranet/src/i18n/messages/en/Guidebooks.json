@@ -225,6 +225,7 @@
     "privacyHint": "Your chats are encrypted and only visible to you.",
     "emptyPrompt": "Ask me anything about UTA products,\ntariffs, toll boxes or procedures.",
     "placeholder": "Type a question… (Enter to send)",
+    "send": "Send message",
     "openFull": "Open full-page chat",
     "openFullHint": "More room to breathe — its own page, like a real chat app."
   }

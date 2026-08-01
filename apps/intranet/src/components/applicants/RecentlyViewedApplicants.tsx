@@ -45,7 +45,7 @@ export function RecentlyViewedApplicants({ excludeId }: { excludeId?: string }) 
                 type="button"
                 onClick={() => {
                   setOpen(false);
-                  router.push(`/applicants/${r.id}/uebersicht`);
+                  router.push(`/hr/${r.id}/uebersicht`);
                 }}
                 className="block w-full truncate rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
               >

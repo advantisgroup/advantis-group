@@ -88,7 +88,7 @@ function buildTimeline(
       icon: CalendarClock,
       label: `${t(`terminTyp.${tm.typ}`)} · ${t(`terminArt.${tm.art}`)}`,
       notiz: tm.notiz,
-      href: `/applicants/${applicant._id}/termine/${tm._id}`,
+      href: `/hr/${applicant._id}/termine/${tm._id}`,
       upcoming: !tm.uebernommen && tm.datum >= now,
     })),
     ...applicant.kontakte.map((k) => ({
@@ -97,7 +97,7 @@ function buildTimeline(
       icon: PhoneCall,
       label: t(`kontaktArt.${k.art}`),
       notiz: k.notiz,
-      href: `/applicants/${applicant._id}/kontakte/${k._id}`,
+      href: `/hr/${applicant._id}/kontakte/${k._id}`,
       upcoming: false,
     })),
     ...applicant.emails.map((m) => ({
@@ -106,7 +106,7 @@ function buildTimeline(
       icon: Mail,
       label: t(`emailKategorie.${m.kategorie}`),
       notiz: m.notiz,
-      href: `/applicants/${applicant._id}/emails/${m._id}`,
+      href: `/hr/${applicant._id}/emails/${m._id}`,
       upcoming: false,
     })),
     ...applicant.interviews.map((iv) => ({
@@ -115,7 +115,7 @@ function buildTimeline(
       icon: Users,
       label: iv.interviewer || t("tabInterviews"),
       notiz: iv.notiz,
-      href: `/applicants/${applicant._id}/interviews/${iv._id}`,
+      href: `/hr/${applicant._id}/interviews/${iv._id}`,
       upcoming: false,
     })),
   ];

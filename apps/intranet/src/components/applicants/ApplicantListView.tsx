@@ -396,6 +396,7 @@ export function ApplicantListView() {
                         <Button
                           variant="ghost"
                           size="icon-sm"
+                          aria-label={t("makeEmployee")}
                           title={t("makeEmployee")}
                           onClick={(event) => {
                             event.stopPropagation();
@@ -407,6 +408,7 @@ export function ApplicantListView() {
                         <Button
                           variant="ghost"
                           size="icon-sm"
+                          aria-label={t("archiveApplicant")}
                           title={t("archiveApplicant")}
                           onClick={(event) => {
                             event.stopPropagation();

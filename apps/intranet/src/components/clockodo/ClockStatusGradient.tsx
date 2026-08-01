@@ -22,7 +22,7 @@ const GRADIENTS: Record<ClockStatus, string> = {
 export function ClockStatusGradient({ status }: { status: ClockStatus | null }) {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]">
-      {(Object.keys(GRADIENTS) as ClockStatus[]).map(key => (
+      {(Object.keys(GRADIENTS) as ClockStatus[]).map((key) => (
         <div
           key={key}
           className={cn(

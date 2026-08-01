@@ -7,6 +7,7 @@ import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
 import { requireEnv } from "../lib/env.js";
 import { requireAuth } from "../lib/middleware.js";
+import { rateLimit } from "../lib/rate-limit.js";
 
 const WIKI_SYSTEM = `Du bist ein interner Wissensassistent für UTA Edenred Kundenberater. Antworte präzise, freundlich und auf Deutsch. Nutze Aufzählungen, wenn es die Übersicht verbessert.
 
@@ -61,7 +62,8 @@ export const wikiChatRoute = new Elysia()
   .post(
     "/wiki-chat",
     async function* ({ request, body, set }) {
-      await requireAuth(request);
+      const { clerkUserId } = await requireAuth(request);
+      await rateLimit("wikiChat.ask", clerkUserId, 20, "1 m");
 
       set.headers["Content-Type"] = "text/plain; charset=utf-8";
       set.headers["X-Content-Type-Options"] = "nosniff";

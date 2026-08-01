@@ -10,6 +10,8 @@
   "loading": "Wird geladen…",
   "empty": "Noch nichts vorhanden",
   "back": "Zurück",
+  "previous": "Zurück",
+  "next": "Weiter",
   "all": "Alle",
   "none": "Keine",
   "optional": "optional",

@@ -15,6 +15,7 @@ import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -206,8 +207,10 @@ function BucketSection({
 
 export default function DataCleanupPage() {
   const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
   const isAdmin = useIsAdmin();
   const handleError = useErrorHandler();
+  const confirm = useConfirm();
 
   const populateReview = useMutation(api.orgDataMigration.populateReview);
   const runBackfill = useMutation(api.orgDataMigration.runBackfill);
@@ -235,6 +238,13 @@ export default function DataCleanupPage() {
   }
 
   async function onBackfill() {
+    const ok = await confirm({
+      title: t("dataCleanup.confirmBackfillTitle"),
+      description: t("dataCleanup.confirmBackfillBody"),
+      confirmLabel: t("dataCleanup.runBackfill"),
+      cancelLabel: tc("cancel"),
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const result = await runBackfill({});

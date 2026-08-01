@@ -1,6 +1,6 @@
 import { ConvexError, v } from "convex/values";
 
-import { type Id } from "./_generated/dataModel";
+import { type Doc, type Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser, hasApplicantAccess, requireUser, requireVaultUnlocked } from "./lib/auth";
 
@@ -38,24 +38,34 @@ export const apiGenerateUploadUrl = mutation({
   },
 });
 
+/** Shared by `getUrl`/`getUrls`: vault-gate a storage id that's an Applicant
+ *  Management document, and pass everything else through untouched. */
+async function resolveGatedUrl(
+  ctx: import("./_generated/server").QueryCtx,
+  user: Doc<"users">,
+  storageId: Id<"_storage">,
+): Promise<string | null> {
+  const applicantDocument = await ctx.db
+    .query("applicantDocuments")
+    .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+    .first();
+  const employeeDocument = await ctx.db
+    .query("employeeDocuments")
+    .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+    .first();
+  if (applicantDocument || employeeDocument) {
+    if (!hasApplicantAccess(user)) return null;
+    await requireVaultUnlocked(ctx, user._id);
+  }
+  return ctx.storage.getUrl(storageId);
+}
+
 /** Resolve a single storage id to a served URL (null if missing). */
 export const getUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
     const user = await requireUser(ctx);
-    const applicantDocument = await ctx.db
-      .query("applicantDocuments")
-      .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
-      .first();
-    const employeeDocument = await ctx.db
-      .query("employeeDocuments")
-      .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
-      .first();
-    if (applicantDocument || employeeDocument) {
-      if (!hasApplicantAccess(user)) return null;
-      await requireVaultUnlocked(ctx, user._id);
-    }
-    return ctx.storage.getUrl(storageId);
+    return resolveGatedUrl(ctx, user, storageId);
   },
 });
 
@@ -63,9 +73,9 @@ export const getUrl = query({
 export const getUrls = query({
   args: { storageIds: v.array(v.id("_storage")) },
   handler: async (ctx, { storageIds }) => {
-    await requireUser(ctx);
+    const user = await requireUser(ctx);
     const entries = await Promise.all(
-      storageIds.map(async (id) => [id, await ctx.storage.getUrl(id)] as const),
+      storageIds.map(async (id) => [id, await resolveGatedUrl(ctx, user, id)] as const),
     );
     return Object.fromEntries(entries) as Record<Id<"_storage">, string | null>;
   },

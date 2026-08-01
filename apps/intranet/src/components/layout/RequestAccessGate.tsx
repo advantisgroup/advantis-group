@@ -19,6 +19,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 
 export function RequestAccessGate() {
   const t = useTranslations("Access");
+  const tNav = useTranslations("Nav");
   const { user, isLoaded } = useUser();
   const status = useQuery(api.accessRequests.myStatus);
   const requestAccess = useMutation(api.accessRequests.create);
@@ -92,7 +93,7 @@ export function RequestAccessGate() {
 
           <SignOutButton>
             <Button variant="ghost" className="w-full">
-              Sign out
+              {tNav("signOut")}
             </Button>
           </SignOutButton>
         </CardContent>

@@ -175,202 +175,272 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
           />
         </div>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <Table className="whitespace-nowrap">
-          <TableHeader>
-            <TableRow>
-              <SortableHead
-                label={t("colName")}
-                sortKey="name"
-                active={sort.key === "name"}
-                dir={sort.dir}
-                onSort={toggleSort}
-              />
-              <SortableHead
-                label={t("colLeads")}
-                sortKey="leadsCreated"
-                active={sort.key === "leadsCreated"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colWorkable")}
-                sortKey="workableCreated"
-                active={sort.key === "workableCreated"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colWorkableRate")}
-                sortKey="workableRate"
-                active={sort.key === "workableRate"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colWon")}
-                sortKey="wonMonth"
-                active={sort.key === "wonMonth"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colHitrate")}
-                sortKey="hitrate"
-                active={sort.key === "hitrate"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colWonPerDay")}
-                sortKey="wonPerDay"
-                active={sort.key === "wonPerDay"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colForecast")}
-                sortKey="fc1"
-                active={sort.key === "fc1"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colOppsOpen")}
-                sortKey="oppsOpen"
-                active={sort.key === "oppsOpen"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colAnalysis30")}
-                sortKey="overduesAnalysis"
-                active={sort.key === "overduesAnalysis"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colOppOverdue")}
-                sortKey="overduesOpps"
-                active={sort.key === "overduesOpps"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colOpps30")}
-                sortKey="oppsOver30"
-                active={sort.key === "oppsOver30"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colLeads14")}
-                sortKey="leadsNoAction14"
-                active={sort.key === "leadsNoAction14"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colOpps14")}
-                sortKey="oppsNoAction14"
-                active={sort.key === "oppsNoAction14"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <TableHead>{t("colBadges")}</TableHead>
-              <TableHead>{t("colMark")}</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visibleSnaps.length === 0 && (
+      <CardContent className="p-0 sm:p-6 sm:pt-0">
+        {/* Below sm: a card per employee with the headline metrics only — all
+            17 columns of the real table don't fit a phone, and every row
+            already opens the employee's own full breakdown on tap. sm and
+            up: the real table. */}
+        <div className="space-y-2 border-t border-border/70 p-4 sm:hidden">
+          {visibleSnaps.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              {t("dashboardSearchEmpty")}
+            </p>
+          )}
+          {visibleSnaps.map((s) => {
+            const badges = data.badgeCounts[s.employeeId] ?? {};
+            const mark = data.marks[s.employeeId];
+            return (
+              <Card
+                key={s.employeeId}
+                className="cursor-pointer transition-colors hover:border-border"
+                onClick={() => router.push(`/performance/mitarbeiter/${s.employeeId}`)}
+              >
+                <CardContent className="space-y-2.5 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate font-medium">{s.name}</span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {mark && (
+                        <Badge variant={mark.level === "high" ? "success" : "warning"}>
+                          {mark.level === "high" ? t("markHigh") : t("markLow")}
+                        </Badge>
+                      )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-border/70 pt-2.5 text-xs">
+                    <span className="text-muted-foreground">
+                      {t("colWon")}:{" "}
+                      <span className="tabular-nums text-foreground">{fmtNum(s.wonMonth)}</span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      {t("colHitrate")}:{" "}
+                      <span className="tabular-nums text-foreground">{fmtPct(s.hitrate)}</span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      {t("colLeads")}:{" "}
+                      <span className="tabular-nums text-foreground">{fmtNum(s.leadsCreated)}</span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      {t("colOppsOpen")}:{" "}
+                      <span className="tabular-nums text-foreground">{fmtNum(s.oppsOpen)}</span>
+                    </span>
+                  </div>
+                  {Object.entries(badges).some(([, n]) => n > 0) && (
+                    <div className="flex items-center gap-1.5 text-sm">
+                      {Object.entries(badges)
+                        .filter(([, n]) => n > 0)
+                        .map(([key, n]) => (
+                          <span key={key} title={t(`badgeLabel.${key}`)}>
+                            {BADGE_ICONS[key] ?? ""}
+                            {n > 1 ? `×${n}` : ""}
+                          </span>
+                        ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+        <div className="hidden overflow-x-auto sm:block sm:px-6 sm:pb-6">
+          <Table className="whitespace-nowrap">
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={17} className="text-center text-sm text-muted-foreground">
-                  {t("dashboardSearchEmpty")}
-                </TableCell>
+                <SortableHead
+                  label={t("colName")}
+                  sortKey="name"
+                  active={sort.key === "name"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                />
+                <SortableHead
+                  label={t("colLeads")}
+                  sortKey="leadsCreated"
+                  active={sort.key === "leadsCreated"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colWorkable")}
+                  sortKey="workableCreated"
+                  active={sort.key === "workableCreated"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colWorkableRate")}
+                  sortKey="workableRate"
+                  active={sort.key === "workableRate"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colWon")}
+                  sortKey="wonMonth"
+                  active={sort.key === "wonMonth"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colHitrate")}
+                  sortKey="hitrate"
+                  active={sort.key === "hitrate"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colWonPerDay")}
+                  sortKey="wonPerDay"
+                  active={sort.key === "wonPerDay"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colForecast")}
+                  sortKey="fc1"
+                  active={sort.key === "fc1"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colOppsOpen")}
+                  sortKey="oppsOpen"
+                  active={sort.key === "oppsOpen"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colAnalysis30")}
+                  sortKey="overduesAnalysis"
+                  active={sort.key === "overduesAnalysis"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colOppOverdue")}
+                  sortKey="overduesOpps"
+                  active={sort.key === "overduesOpps"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colOpps30")}
+                  sortKey="oppsOver30"
+                  active={sort.key === "oppsOver30"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colLeads14")}
+                  sortKey="leadsNoAction14"
+                  active={sort.key === "leadsNoAction14"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colOpps14")}
+                  sortKey="oppsNoAction14"
+                  active={sort.key === "oppsNoAction14"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <TableHead>{t("colBadges")}</TableHead>
+                <TableHead>{t("colMark")}</TableHead>
+                <TableHead />
               </TableRow>
-            )}
-            {visibleSnaps.map((s) => {
-              const badges = data.badgeCounts[s.employeeId] ?? {};
-              const mark = data.marks[s.employeeId];
-              return (
-                <TableRow
-                  key={s.employeeId}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => router.push(`/performance/mitarbeiter/${s.employeeId}`)}
-                >
-                  <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.leadsCreated)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.workableCreated)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtPct(s.workableRate)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtNum(s.wonMonth)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtPct(s.hitrate)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtNum(s.wonPerDay)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtNum(s.fc1)}</TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtNum(s.oppsOpen)}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.overduesAnalysis)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.overduesOpps)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{fmtNum(s.oppsOver30)}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.leadsNoAction14)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.oppsNoAction14)}
-                  </TableCell>
-                  <TableCell>
-                    {Object.entries(badges).some(([, n]) => n > 0) ? (
-                      <span className="inline-flex items-center gap-1.5 text-sm">
-                        {Object.entries(badges)
-                          .filter(([, n]) => n > 0)
-                          .map(([key, n]) => (
-                            <span key={key} title={t(`badgeLabel.${key}`)}>
-                              {BADGE_ICONS[key] ?? ""}
-                              {n > 1 ? `×${n}` : ""}
-                            </span>
-                          ))}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">–</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {mark && (
-                      <Badge variant={mark.level === "high" ? "success" : "warning"}>
-                        {mark.level === "high" ? t("markHigh") : t("markLow")}
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="w-8">
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </TableHeader>
+            <TableBody>
+              {visibleSnaps.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={17} className="text-center text-sm text-muted-foreground">
+                    {t("dashboardSearchEmpty")}
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              )}
+              {visibleSnaps.map((s) => {
+                const badges = data.badgeCounts[s.employeeId] ?? {};
+                const mark = data.marks[s.employeeId];
+                return (
+                  <TableRow
+                    key={s.employeeId}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => router.push(`/performance/mitarbeiter/${s.employeeId}`)}
+                  >
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.leadsCreated)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.workableCreated)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtPct(s.workableRate)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNum(s.wonMonth)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtPct(s.hitrate)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNum(s.wonPerDay)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNum(s.fc1)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNum(s.oppsOpen)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.overduesAnalysis)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.overduesOpps)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.oppsOver30)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.leadsNoAction14)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.oppsNoAction14)}
+                    </TableCell>
+                    <TableCell>
+                      {Object.entries(badges).some(([, n]) => n > 0) ? (
+                        <span className="inline-flex items-center gap-1.5 text-sm">
+                          {Object.entries(badges)
+                            .filter(([, n]) => n > 0)
+                            .map(([key, n]) => (
+                              <span key={key} title={t(`badgeLabel.${key}`)}>
+                                {BADGE_ICONS[key] ?? ""}
+                                {n > 1 ? `×${n}` : ""}
+                              </span>
+                            ))}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">–</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {mark && (
+                        <Badge variant={mark.level === "high" ? "success" : "warning"}>
+                          {mark.level === "high" ? t("markHigh") : t("markLow")}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="w-8">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

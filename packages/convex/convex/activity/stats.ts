@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { query } from "../_generated/server";
 import type { QueryCtx } from "../_generated/server";
-import { requireUser, requireCapability } from "../lib/auth";
+import { requireCapability } from "../lib/auth";
 import { readConfig } from "./settings";
 
 /**
@@ -149,6 +149,30 @@ export const dashboardSummary = query({
       .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
+    // Batched the same way teamOverview does: one Promise.all per lookup
+    // table instead of an await per device in a loop.
+    const personIds = [...new Set(devices.flatMap((d) => (d.personId ? [d.personId] : [])))];
+    const peopleById = new Map(
+      (await Promise.all(personIds.map((id) => ctx.db.get(id)))).flatMap((p) =>
+        p ? [[p._id, p] as const] : [],
+      ),
+    );
+    const employeeIds = [
+      ...new Set([...peopleById.values()].flatMap((p) => (p.employeeId ? [p.employeeId] : []))),
+    ];
+    const stateByEmployee = new Map(
+      (
+        await Promise.all(
+          employeeIds.map((id) =>
+            ctx.db
+              .query("employeeStates")
+              .withIndex("by_employeeId", (q) => q.eq("employeeId", id))
+              .unique(),
+          ),
+        )
+      ).flatMap((s) => (s ? [[s.employeeId, s] as const] : [])),
+    );
+
     let online = 0;
     let active = 0;
     let onBreak = 0;
@@ -158,18 +182,10 @@ export const dashboardSummary = query({
       const isOnline = now - device.lastSeen < onlineThresholdMs;
       if (isOnline) online++;
       if (isOnline && latest != null && latest.idleMs < inactivityMs) active++;
-      if (device.personId) {
-        const person = await ctx.db.get(device.personId);
-        const employeeId = person?.employeeId;
-        const st = employeeId
-          ? await ctx.db
-              .query("employeeStates")
-              .withIndex("by_employeeId", (q) => q.eq("employeeId", employeeId))
-              .unique()
-          : null;
-        if (st?.clockodoBreak) onBreak++;
-        if (st?.clockodoAbsent) absent++;
-      }
+      const person = device.personId ? (peopleById.get(device.personId) ?? null) : null;
+      const st = person?.employeeId ? (stateByEmployee.get(person.employeeId) ?? null) : null;
+      if (st?.clockodoBreak) onBreak++;
+      if (st?.clockodoAbsent) absent++;
     }
 
     return { total: devices.length, online, active, onBreak, absent };
@@ -184,7 +200,7 @@ export const dailyRange = query({
     endDay: v.string(),
   },
   handler: async (ctx, { deviceId, startDay, endDay }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("dailyStats")
       .withIndex("by_device_day", (q) =>
@@ -201,7 +217,7 @@ export const recentSamples = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { deviceId, limit }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("activitySamples")
       .withIndex("by_device_time", (q) => q.eq("deviceId", deviceId))
@@ -223,7 +239,7 @@ export const samplesForDay = query({
     endMs: v.number(),
   },
   handler: async (ctx, { deviceId, startMs, endMs }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
     return await ctx.db
       .query("activitySamples")
       .withIndex("by_device_time", (q) =>
@@ -243,7 +259,7 @@ export const exportDevice = query({
     sampleLimit: v.optional(v.number()),
   },
   handler: async (ctx, { deviceId, startDay, endDay, sampleLimit }) => {
-    await requireUser(ctx);
+    await requireCapability(ctx, "view_activity_admin");
 
     const daily = await ctx.db
       .query("dailyStats")

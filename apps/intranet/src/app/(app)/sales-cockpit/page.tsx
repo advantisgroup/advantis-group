@@ -17,7 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
-type Project = NonNullable<ReturnType<typeof useQuery<typeof api.salesCockpit.listProjects>>>[number];
+type Project = NonNullable<
+  ReturnType<typeof useQuery<typeof api.salesCockpit.listProjects>>
+>[number];
 
 function highlight(text: string, q: string) {
   const i = text.toLowerCase().indexOf(q.toLowerCase());
@@ -25,7 +27,9 @@ function highlight(text: string, q: string) {
   return (
     <>
       {text.slice(0, i)}
-      <mark className="rounded bg-warning/25 px-0.5 text-inherit">{text.slice(i, i + q.length)}</mark>
+      <mark className="rounded bg-warning/25 px-0.5 text-inherit">
+        {text.slice(i, i + q.length)}
+      </mark>
       {text.slice(i + q.length)}
     </>
   );
@@ -71,7 +75,11 @@ function LexikonSearchResults({ query, onClose }: { query: string; onClose: () =
   );
 }
 
-function FileList({ files }: { files: { id: string; name: string; size: number; storageId: Id<"_storage"> }[] }) {
+function FileList({
+  files,
+}: {
+  files: { id: string; name: string; size: number; storageId: Id<"_storage"> }[];
+}) {
   const urls = useQuery(
     api.files.getUrls,
     files.length > 0 ? { storageIds: files.map((f) => f.storageId) } : "skip",
@@ -185,7 +193,10 @@ function Cockpit({ project }: { project: Project }) {
                     <p className="text-sm italic text-muted-foreground">{t("keineBenefits")}</p>
                   ) : (
                     items.map((b, i) => (
-                      <div key={i} className="flex items-start gap-2.5 border-b border-border/50 py-2 text-sm last:border-0">
+                      <div
+                        key={i}
+                        className="flex items-start gap-2.5 border-b border-border/50 py-2 text-sm last:border-0"
+                      >
                         <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
                         <span>{b}</span>
                       </div>
@@ -203,7 +214,10 @@ function Cockpit({ project }: { project: Project }) {
                     <p className="text-sm italic text-muted-foreground">{t("keineZiele")}</p>
                   ) : (
                     items.map((z, i) => (
-                      <div key={i} className="flex items-start gap-2.5 border-b border-border/50 py-2 text-sm last:border-0">
+                      <div
+                        key={i}
+                        className="flex items-start gap-2.5 border-b border-border/50 py-2 text-sm last:border-0"
+                      >
                         <Target className="mt-0.5 size-4 shrink-0 text-warning" />
                         <span>{z}</span>
                       </div>
@@ -221,7 +235,9 @@ function Cockpit({ project }: { project: Project }) {
           <b className="mb-1.5 block text-xs font-bold uppercase tracking-widest text-success">
             {t("sfInput")}
           </b>
-          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{project.sfInput}</pre>
+          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+            {project.sfInput}
+          </pre>
         </div>
       )}
 
@@ -291,7 +307,9 @@ export default function SalesCockpitHomePage() {
               onClick={() => setActiveProjectId(p._id)}
               className={cn(
                 "relative rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md",
-                p._id === activeProjectId ? "border-primary ring-2 ring-primary/30" : "border-border",
+                p._id === activeProjectId
+                  ? "border-primary ring-2 ring-primary/30"
+                  : "border-border",
               )}
             >
               <PhoneCall className="absolute right-3.5 top-3.5 size-4 text-primary" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -11,9 +11,9 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -73,6 +73,7 @@ function ChipList({
   onAdd: (value: string) => void;
   placeholder: string;
 }) {
+  const t = useTranslations("SalesCockpit");
   const [value, setValue] = useState("");
   const submit = () => {
     const v = value.trim();
@@ -86,7 +87,7 @@ function ChipList({
         {items.map((item, i) => (
           <Badge key={i} variant="secondary" className="gap-1.5">
             {item}
-            <button type="button" onClick={() => onRemove(i)} aria-label="Entfernen">
+            <button type="button" onClick={() => onRemove(i)} aria-label={t("remove")}>
               <X className="size-3" />
             </button>
           </Badge>
@@ -104,7 +105,13 @@ function ChipList({
           }}
           placeholder={placeholder}
         />
-        <Button type="button" variant="outline" size="icon" onClick={submit}>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          onClick={submit}
+          aria-label={placeholder}
+        >
           <Plus />
         </Button>
       </div>
@@ -125,6 +132,7 @@ function FileCategoryEditor({
   onRemoveExisting: (id: string) => void;
   upload: ReturnType<typeof useAttachmentUpload>;
 }) {
+  const t = useTranslations("SalesCockpit");
   return (
     <div>
       <Label className="mb-1.5 block">{label}</Label>
@@ -145,12 +153,14 @@ function FileCategoryEditor({
             className="flex items-center gap-2.5 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm"
           >
             <span className="min-w-0 flex-1 truncate font-medium">{f.name}</span>
-            <span className="font-mono text-xs text-muted-foreground">{formatFileSize(f.size)}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {formatFileSize(f.size)}
+            </span>
             <button
               type="button"
               onClick={() => onRemoveExisting(f.id)}
               className="text-destructive"
-              aria-label="Entfernen"
+              aria-label={t("remove")}
             >
               <X className="size-4" />
             </button>
@@ -169,7 +179,7 @@ function FileCategoryEditor({
               type="button"
               onClick={() => upload.remove(i)}
               className="text-destructive"
-              aria-label="Entfernen"
+              aria-label={t("remove")}
             >
               <X className="size-4" />
             </button>
@@ -228,7 +238,10 @@ function WegEditor({
             type="button"
             variant="ghost"
             size="icon-sm"
-            onClick={() => onChange({ ...weg, einwaende: weg.einwaende.filter((_, i) => i !== ei) })}
+            aria-label={t("remove")}
+            onClick={() =>
+              onChange({ ...weg, einwaende: weg.einwaende.filter((_, i) => i !== ei) })
+            }
           >
             <X className="size-4" />
           </Button>
@@ -238,7 +251,9 @@ function WegEditor({
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => onChange({ ...weg, einwaende: [...weg.einwaende, { einwand: "", antwort: "" }] })}
+        onClick={() =>
+          onChange({ ...weg, einwaende: [...weg.einwaende, { einwand: "", antwort: "" }] })
+        }
       >
         <Plus className="size-3.5" />
         {t("einwandHinzufuegen")}
@@ -260,11 +275,13 @@ function WegEditor({
 }
 
 export function ProjectForm({
+  open,
   projectId,
   initial,
   onSaved,
   onCancel,
 }: {
+  open: boolean;
   projectId: Id<"salesCockpitProjects"> | null;
   initial: ProjectFormValue;
   onSaved: () => void;
@@ -282,8 +299,23 @@ export function ProjectForm({
   const scripteUpload = useAttachmentUpload();
   const dateienUpload = useAttachmentUpload();
 
+  // The dialog stays mounted while closed (so close transitions can play),
+  // so opening it again for the same project needs an explicit reset —
+  // otherwise a cancelled draft would resurface on the next open.
+  useEffect(() => {
+    if (!open) return;
+    setValue(initial);
+    planUpload.reset();
+    scripteUpload.reset();
+    dateienUpload.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial]);
+
   const removeExistingFile = (cat: "plan" | "scripte" | "dateien", id: string) => {
-    setValue((v) => ({ ...v, files: { ...v.files, [cat]: v.files[cat].filter((f) => f.id !== id) } }));
+    setValue((v) => ({
+      ...v,
+      files: { ...v.files, [cat]: v.files[cat].filter((f) => f.id !== id) },
+    }));
   };
 
   const submit = async () => {
@@ -314,9 +346,30 @@ export function ProjectForm({
             ziele: w.ziele || undefined,
           })),
         files: {
-          plan: [...value.files.plan.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size })), ...plan.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 }))],
-          scripte: [...value.files.scripte.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size })), ...scripte.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 }))],
-          dateien: [...value.files.dateien.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size })), ...dateien.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 }))],
+          plan: [
+            ...value.files.plan.map((f) => ({
+              storageId: f.storageId,
+              name: f.name,
+              size: f.size,
+            })),
+            ...plan.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 })),
+          ],
+          scripte: [
+            ...value.files.scripte.map((f) => ({
+              storageId: f.storageId,
+              name: f.name,
+              size: f.size,
+            })),
+            ...scripte.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 })),
+          ],
+          dateien: [
+            ...value.files.dateien.map((f) => ({
+              storageId: f.storageId,
+              name: f.name,
+              size: f.size,
+            })),
+            ...dateien.map((f) => ({ storageId: f.storageId, name: f.name, size: f.size ?? 0 })),
+          ],
         },
       };
       if (projectId) {
@@ -334,7 +387,28 @@ export function ProjectForm({
   };
 
   return (
-    <div className="space-y-5">
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={(next) => !next && onCancel()}
+      title={projectId ? t("projektBearbeiten") : t("neuesProjektAnlegen")}
+      contentClassName="max-w-3xl"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {t("abbrechen")}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => void submit()}
+            disabled={
+              saving || planUpload.uploading || scripteUpload.uploading || dateienUpload.uploading
+            }
+          >
+            {t("projektSpeichern")}
+          </Button>
+        </>
+      }
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label className="mb-1.5 block">{t("titel")} *</Label>
@@ -390,7 +464,9 @@ export function ProjectForm({
         <ChipList
           items={value.benefits}
           onAdd={(v) => setValue({ ...value, benefits: [...value.benefits, v] })}
-          onRemove={(i) => setValue({ ...value, benefits: value.benefits.filter((_, bi) => bi !== i) })}
+          onRemove={(i) =>
+            setValue({ ...value, benefits: value.benefits.filter((_, bi) => bi !== i) })
+          }
           placeholder={t("benefitPlaceholder")}
         />
       </div>
@@ -415,7 +491,9 @@ export function ProjectForm({
             key={i}
             weg={w}
             index={i}
-            onChange={(next) => setValue({ ...value, wege: value.wege.map((x, xi) => (xi === i ? next : x)) })}
+            onChange={(next) =>
+              setValue({ ...value, wege: value.wege.map((x, xi) => (xi === i ? next : x)) })
+            }
             onRemove={() => setValue({ ...value, wege: value.wege.filter((_, xi) => xi !== i) })}
             t={t}
           />
@@ -443,19 +521,6 @@ export function ProjectForm({
           placeholder={t("sfInputPlaceholder")}
         />
       </div>
-
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          {t("abbrechen")}
-        </Button>
-        <Button
-          type="button"
-          onClick={() => void submit()}
-          disabled={saving || planUpload.uploading || scripteUpload.uploading || dateienUpload.uploading}
-        >
-          {t("projektSpeichern")}
-        </Button>
-      </DialogFooter>
-    </div>
+    </ResponsiveDialog>
   );
 }

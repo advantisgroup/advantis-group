@@ -6,14 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useAction, useQuery } from "convex/react";
-import {
-  ArrowDown,
-  ArrowUp,
-  Download,
-  Plus,
-  Search,
-  TriangleAlert,
-} from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Plus, Search, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -456,7 +449,9 @@ export function ClockodoAdminPanel() {
   async function onBulkSetVacation(days: number) {
     try {
       await Promise.all(
-        [...selectedIds].map((id) => setVacationEntitlement({ clockodoUserId: id, daysPerYear: days })),
+        [...selectedIds].map((id) =>
+          setVacationEntitlement({ clockodoUserId: id, daysPerYear: days }),
+        ),
       );
       toast.success(t("bulkUpdated", { count: selectedIds.size }));
       setSelectedIds(new Set());
@@ -621,101 +616,172 @@ export function ClockodoAdminPanel() {
       )}
 
       {rows !== null && !loadError && rows.length > 0 && (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-9">
-                  <Checkbox
-                    checked={visible.length > 0 && selectedIds.size === visible.length}
-                    onCheckedChange={toggleSelectAll}
-                    aria-label={t("selectAll")}
-                  />
-                </TableHead>
-                <SortableHead label={t("name")} sortKey="name" sort={sort} onSort={toggleSort} />
-                <TableHead>{t("email")}</TableHead>
-                <TableHead>{t("statusColumn")}</TableHead>
-                <SortableHead
-                  label={t("weeklyHours")}
-                  sortKey="weeklyHours"
-                  sort={sort}
-                  onSort={toggleSort}
-                />
-                <TableHead>{t("hoursThisWeekColumn")}</TableHead>
-                <SortableHead
-                  label={t("vacationDaysPerYear")}
-                  sortKey="vacationDaysPerYear"
-                  sort={sort}
-                  onSort={toggleSort}
-                />
-                <TableHead>{t("linkedEmployee")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {visible.length === 0 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={8}
-                    className="py-10 text-center text-sm text-muted-foreground"
-                  >
-                    {t("noResults")}
-                  </TableCell>
-                </TableRow>
-              )}
-              {visible.map((row) => {
-                const status = statusByUserId.get(row.id) ?? null;
-                const hours = hoursByUserId.get(row.id);
-                return (
-                  <TableRow
-                    key={row.id}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/clockodo/admin/${row.id}`)}
-                  >
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Checkbox
-                        checked={selectedIds.has(row.id)}
-                        onCheckedChange={(c) => toggleSelected(row.id, c === true)}
-                        aria-label={row.name}
+        <>
+          {visible.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                {t("noResults")}
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Below sm: a card per user — the 8-column table below is
+                  unreadable at phone width. sm and up: the real table. */}
+              <div className="space-y-2 sm:hidden">
+                {visible.map((row) => {
+                  const status = statusByUserId.get(row.id) ?? null;
+                  const hours = hoursByUserId.get(row.id);
+                  return (
+                    <Card
+                      key={row.id}
+                      className="cursor-pointer transition-colors hover:border-border"
+                      onClick={() => router.push(`/clockodo/admin/${row.id}`)}
+                    >
+                      <CardContent className="space-y-2.5 p-3">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={selectedIds.has(row.id)}
+                            onCheckedChange={(c) => toggleSelected(row.id, c === true)}
+                            aria-label={row.name}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="truncate font-medium text-fg">{row.name}</span>
+                              <Badge
+                                variant={row.active === false ? "muted" : "success"}
+                                className="text-[10px]"
+                              >
+                                {row.active === false ? t("inactive") : t("active")}
+                              </Badge>
+                            </div>
+                            <p className="truncate text-xs text-muted-foreground">{row.email}</p>
+                          </div>
+                          {status && (
+                            <span className="flex shrink-0 items-center gap-1.5 text-xs">
+                              <span className={cn("size-2 rounded-full", STATUS_DOT[status])} />
+                              {t(`liveStatus.${status}`)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border/70 pt-2 text-xs text-muted-foreground">
+                          <span>
+                            {t("weeklyHours")}:{" "}
+                            {row.weeklyHours !== null ? `${row.weeklyHours}h` : "—"}
+                          </span>
+                          <span>
+                            {t("hoursThisWeekColumn")}: {hours !== undefined ? `${hours}h` : "…"}
+                          </span>
+                          <span>
+                            {t("vacationDaysPerYear")}:{" "}
+                            {row.vacationDaysPerYear !== null
+                              ? `${row.vacationDaysPerYear} ${t("days")}`
+                              : "—"}
+                          </span>
+                          <span>
+                            {t("linkedEmployee")}: {row.linkedUserName ?? t("notLinked")}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+              <Card className="hidden sm:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-9">
+                        <Checkbox
+                          checked={visible.length > 0 && selectedIds.size === visible.length}
+                          onCheckedChange={toggleSelectAll}
+                          aria-label={t("selectAll")}
+                        />
+                      </TableHead>
+                      <SortableHead
+                        label={t("name")}
+                        sortKey="name"
+                        sort={sort}
+                        onSort={toggleSort}
                       />
-                    </TableCell>
-                    <TableCell className="text-fg">
-                      <div className="flex items-center gap-2">
-                        {row.name}
-                        <Badge
-                          variant={row.active === false ? "muted" : "success"}
-                          className="text-[10px]"
+                      <TableHead>{t("email")}</TableHead>
+                      <TableHead>{t("statusColumn")}</TableHead>
+                      <SortableHead
+                        label={t("weeklyHours")}
+                        sortKey="weeklyHours"
+                        sort={sort}
+                        onSort={toggleSort}
+                      />
+                      <TableHead>{t("hoursThisWeekColumn")}</TableHead>
+                      <SortableHead
+                        label={t("vacationDaysPerYear")}
+                        sortKey="vacationDaysPerYear"
+                        sort={sort}
+                        onSort={toggleSort}
+                      />
+                      <TableHead>{t("linkedEmployee")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visible.map((row) => {
+                      const status = statusByUserId.get(row.id) ?? null;
+                      const hours = hoursByUserId.get(row.id);
+                      return (
+                        <TableRow
+                          key={row.id}
+                          className="cursor-pointer"
+                          onClick={() => router.push(`/clockodo/admin/${row.id}`)}
                         >
-                          {row.active === false ? t("inactive") : t("active")}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{row.email}</TableCell>
-                    <TableCell>
-                      {status ? (
-                        <span className="flex items-center gap-1.5 text-xs">
-                          <span className={cn("size-2 rounded-full", STATUS_DOT[status])} />
-                          {t(`liveStatus.${status}`)}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{row.weeklyHours !== null ? `${row.weeklyHours}h` : "—"}</TableCell>
-                    <TableCell>{hours !== undefined ? `${hours}h` : "…"}</TableCell>
-                    <TableCell>
-                      {row.vacationDaysPerYear !== null
-                        ? `${row.vacationDaysPerYear} ${t("days")}`
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {row.linkedUserName ?? t("notLinked")}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Card>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.has(row.id)}
+                              onCheckedChange={(c) => toggleSelected(row.id, c === true)}
+                              aria-label={row.name}
+                            />
+                          </TableCell>
+                          <TableCell className="text-fg">
+                            <div className="flex items-center gap-2">
+                              {row.name}
+                              <Badge
+                                variant={row.active === false ? "muted" : "success"}
+                                className="text-[10px]"
+                              >
+                                {row.active === false ? t("inactive") : t("active")}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{row.email}</TableCell>
+                          <TableCell>
+                            {status ? (
+                              <span className="flex items-center gap-1.5 text-xs">
+                                <span className={cn("size-2 rounded-full", STATUS_DOT[status])} />
+                                {t(`liveStatus.${status}`)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {row.weeklyHours !== null ? `${row.weeklyHours}h` : "—"}
+                          </TableCell>
+                          <TableCell>{hours !== undefined ? `${hours}h` : "…"}</TableCell>
+                          <TableCell>
+                            {row.vacationDaysPerYear !== null
+                              ? `${row.vacationDaysPerYear} ${t("days")}`
+                              : "—"}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {row.linkedUserName ?? t("notLinked")}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </Card>
+            </>
+          )}
+        </>
       )}
 
       <BulkVacationDialog

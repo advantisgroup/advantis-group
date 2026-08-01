@@ -7,13 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
-import {
-  CalendarDays,
-  Clock3,
-  LayoutDashboard,
-  Link2Off,
-  Settings2,
-} from "lucide-react";
+import { CalendarDays, Clock3, LayoutDashboard, Link2Off, Settings2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/applicants/RouteTabs";
@@ -102,7 +96,12 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader title={t("title")} description={t("subtitle")} icon={<Clock3 />} />
+      <PageHeader
+        title={t("title")}
+        description={t("subtitle")}
+        icon={<Clock3 />}
+        tourCheckpoint="absences"
+      />
       <RouteTabs tabs={tabs} activeValue={active} />
       <div className="mt-4">{children}</div>
     </div>

@@ -12,7 +12,7 @@ export default function ApplicantsAccessPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (canManageAccess === false) router.replace("/applicants/termine");
+    if (canManageAccess === false) router.replace("/hr/termine");
   }, [canManageAccess, router]);
 
   if (!canManageAccess) return null;

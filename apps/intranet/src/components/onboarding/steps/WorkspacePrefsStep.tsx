@@ -12,8 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-const START_PAGES = ["/", "/calendar", "/absences", "/announcements", "/chat", "/files"] as const;
+import { START_PAGES } from "@/lib/startPages";
 
 export function WorkspacePrefsStep() {
   const t = useTranslations("Onboarding");
@@ -24,7 +23,7 @@ export function WorkspacePrefsStep() {
   const pageLabel: Record<(typeof START_PAGES)[number], string> = {
     "/": ts("pageDashboard"),
     "/calendar": ts("pageCalendar"),
-    "/absences": ts("pageAbsences"),
+    "/clockodo": ts("pageAbsences"),
     "/announcements": ts("pageAnnouncements"),
     "/chat": ts("pageChat"),
     "/files": ts("pageFiles"),

@@ -227,7 +227,6 @@ export async function sendUpdateBroadcast(
   updateId: string,
   recipients: BroadcastRecipient[],
 ): Promise<BroadcastResult[]> {
-  console.log(recipients);
   const { subject, html } = renderUpdateEmail(update);
   const results: BroadcastResult[] = [];
   const CHUNK = 100;

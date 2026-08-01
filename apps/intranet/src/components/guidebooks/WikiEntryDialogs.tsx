@@ -14,15 +14,10 @@ import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachmen
 import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Select,
   SelectContent,
@@ -30,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { WIKI_FOLDER_BASE } from "@/lib/onedrive-scopes";
@@ -140,66 +134,65 @@ export function CategoryManagerDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("categoryManagerTitle")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-2">
-          {categories.map((c) => (
-            <div key={c._id} className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void cycleColor({ categoryId: c._id }).catch(handleError)}
-                className="size-4 shrink-0 rounded-full transition-transform hover:scale-125"
-                style={{ backgroundColor: c.color }}
-                aria-label={t("cycleColor")}
-              />
-              <Input
-                defaultValue={c.name}
-                className="h-8"
-                onBlur={(e) => {
-                  const value = e.target.value.trim();
-                  if (value && value !== c.name) {
-                    renameCategory({ categoryId: c._id, name: value }).catch(handleError);
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => void onDelete(c._id)}
-                aria-label={tc("delete")}
-                className="shrink-0 text-muted-foreground hover:text-destructive"
-              >
-                <Trash2 className="size-4" />
-              </button>
-            </div>
-          ))}
-          <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            <Archive className="size-3.5 shrink-0" />
-            {t("catFixedNote")}
-          </div>
-          <div className="flex gap-2 pt-1">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder={t("addCategoryPlaceholder")}
-              onKeyDown={(e) => e.key === "Enter" && void onAdd()}
-              className="h-8"
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("categoryManagerTitle")}
+      footer={
+        <Button variant="outline" onClick={() => onOpenChange(false)}>
+          {tc("close")}
+        </Button>
+      }
+    >
+      <div className="space-y-2">
+        {categories.map((c) => (
+          <div key={c._id} className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void cycleColor({ categoryId: c._id }).catch(handleError)}
+              className="size-4 shrink-0 rounded-full transition-transform hover:scale-125"
+              style={{ backgroundColor: c.color }}
+              aria-label={t("cycleColor")}
             />
-            <Button size="sm" onClick={() => void onAdd()}>
-              <Plus className="mr-1 size-3.5" />
-              {t("addCategory")}
-            </Button>
+            <Input
+              defaultValue={c.name}
+              className="h-8"
+              onBlur={(e) => {
+                const value = e.target.value.trim();
+                if (value && value !== c.name) {
+                  renameCategory({ categoryId: c._id, name: value }).catch(handleError);
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => void onDelete(c._id)}
+              aria-label={tc("delete")}
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="size-4" />
+            </button>
           </div>
+        ))}
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+          <Archive className="size-3.5 shrink-0" />
+          {t("catFixedNote")}
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {tc("close")}
+        <div className="flex gap-2 pt-1">
+          <Input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder={t("addCategoryPlaceholder")}
+            onKeyDown={(e) => e.key === "Enter" && void onAdd()}
+            className="h-8"
+          />
+          <Button size="sm" onClick={() => void onAdd()}>
+            <Plus className="mr-1 size-3.5" />
+            {t("addCategory")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </ResponsiveDialog>
   );
 }
 
@@ -325,120 +318,118 @@ export function EntryDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onOpenChange(false)}>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? t("editEntryTitle") : t("newEntryTitle")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldCategory")}
-            </label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("fieldCategoryPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((c) => (
-                  <SelectItem key={c._id} value={c._id}>
-                    <span className="flex items-center gap-2">
-                      <span className="size-2 rounded-full" style={{ backgroundColor: c.color }} />
-                      {c.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldThema")}
-            </label>
-            <Input
-              value={thema}
-              onChange={(e) => setThema(e.target.value)}
-              placeholder={t("fieldThemaPlaceholder")}
-              autoFocus
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldErklaerung")}
-            </label>
-            <RichTextEditor
-              value={erklaerung}
-              onChange={setErklaerung}
-              placeholder={t("fieldErklaerungPlaceholder")}
-              minHeight="8rem"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldTags")}
-            </label>
-            <TagInput tags={tags} onChange={setTags} />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldLink")}
-            </label>
-            <Input
-              type="url"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://…"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldValidFrom")}
-              </label>
-              <Input type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldValidUntil")}
-              </label>
-              <Input
-                type="date"
-                value={validUntil}
-                onChange={(e) => setValidUntil(e.target.value)}
-              />
-              <div className="mt-1.5 flex gap-1.5">
-                {[3, 6, 12].map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => setValidUntil(msToDateInput(addMonths(Date.now(), m)))}
-                    className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-accent"
-                  >
-                    {t("quickMonths", { count: m })}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-          {isEditing ? (
-            <GuidebookAttachments slug={entry.slug} />
-          ) : (
-            <PendingWikiAttachments
-              attachmentUpload={attachmentUpload}
-              busy={busy}
-              slugPreview={thema ? slugify(thema) : undefined}
-            />
-          )}
-        </div>
-        <DialogFooter>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={(o) => !o && onOpenChange(false)}
+      title={isEditing ? t("editEntryTitle") : t("newEntryTitle")}
+      contentClassName="max-h-[85vh] max-w-2xl overflow-y-auto"
+      footer={
+        <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
           <Button onClick={() => void onSubmit()} disabled={busy}>
             {tc("save")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            {t("fieldCategory")}
+          </label>
+          <Select value={categoryId} onValueChange={setCategoryId}>
+            <SelectTrigger>
+              <SelectValue placeholder={t("fieldCategoryPlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((c) => (
+                <SelectItem key={c._id} value={c._id}>
+                  <span className="flex items-center gap-2">
+                    <span className="size-2 rounded-full" style={{ backgroundColor: c.color }} />
+                    {c.name}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            {t("fieldThema")}
+          </label>
+          <Input
+            value={thema}
+            onChange={(e) => setThema(e.target.value)}
+            placeholder={t("fieldThemaPlaceholder")}
+            autoFocus
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            {t("fieldErklaerung")}
+          </label>
+          <RichTextEditor
+            value={erklaerung}
+            onChange={setErklaerung}
+            placeholder={t("fieldErklaerungPlaceholder")}
+            minHeight="8rem"
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            {t("fieldTags")}
+          </label>
+          <TagInput tags={tags} onChange={setTags} />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            {t("fieldLink")}
+          </label>
+          <Input
+            type="url"
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            placeholder="https://…"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("fieldValidFrom")}
+            </label>
+            <Input type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("fieldValidUntil")}
+            </label>
+            <Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} />
+            <div className="mt-1.5 flex gap-1.5">
+              {[3, 6, 12].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setValidUntil(msToDateInput(addMonths(Date.now(), m)))}
+                  className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-accent"
+                >
+                  {t("quickMonths", { count: m })}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        {isEditing ? (
+          <GuidebookAttachments slug={entry.slug} />
+        ) : (
+          <PendingWikiAttachments
+            attachmentUpload={attachmentUpload}
+            busy={busy}
+            slugPreview={thema ? slugify(thema) : undefined}
+          />
+        )}
+      </div>
+    </ResponsiveDialog>
   );
 }

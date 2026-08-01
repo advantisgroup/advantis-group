@@ -19,10 +19,7 @@ export function DateBadge({ date, className }: { date: string; className?: strin
 
   return (
     <span
-      className={cn(
-        "grid size-11 shrink-0 place-items-center rounded-md leading-none",
-        className,
-      )}
+      className={cn("grid size-11 shrink-0 place-items-center rounded-md leading-none", className)}
     >
       <span className="flex flex-col items-center gap-0.5">
         <span className="text-[9px] font-semibold tracking-wide opacity-80">{month}</span>

@@ -19,6 +19,8 @@
   "updated": "Saved.",
   "linked": "Linked.",
   "unlinked": "Unlinked.",
+  "confirmUnlinkTitle": "Unlink this Clockodo account?",
+  "confirmUnlinkBody": "The intranet account loses its time-tracking and ActivityTrack presence link until someone relinks it here.",
   "empty": "No Clockodo users yet.",
   "loadError": "Couldn't load Clockodo users.",
   "searchPlaceholder": "Search by name or email",

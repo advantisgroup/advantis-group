@@ -59,6 +59,7 @@
   "wegeHint": "Each path is a conversation route: name, typical objections with responses, path benefits and path goals.",
   "weg": "Path {n}",
   "wegEntfernen": "Remove path",
+  "remove": "Remove",
   "wegName": "Path name",
   "wegNamePlaceholder": "e.g. Existing customer upgrade",
   "einwaendeAntworten": "Objections & responses",

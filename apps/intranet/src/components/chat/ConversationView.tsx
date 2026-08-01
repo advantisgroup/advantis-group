@@ -48,7 +48,7 @@ import { useAttachmentUpload } from "@/components/attachments/useAttachmentUploa
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
-import { UserProfile } from "@/components/profile/UserProfile";
+import { ONLINE_WINDOW_MS, UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -175,6 +175,7 @@ export function ConversationView({
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const attachInputRef = useRef<HTMLInputElement>(null);
   const atBottomRef = useRef(true);
   const lastTyping = useRef(0);
   const longPressTimer = useRef<number | null>(null);
@@ -186,7 +187,7 @@ export function ConversationView({
 
   const other =
     conversation?.type === "dm" ? conversation.members.find((m) => m._id !== me._id) : undefined;
-  const online = !!other?.lastActiveAt && Date.now() - other.lastActiveAt < 90_000;
+  const online = !!other?.lastActiveAt && Date.now() - other.lastActiveAt < ONLINE_WINDOW_MS;
 
   const mentionableMembers = useMemo(() => {
     if (!conversation || conversation.type !== "group" || !mention) return [];
@@ -645,7 +646,7 @@ export function ConversationView({
           size="icon"
           className="-ml-1 md:hidden"
           onClick={onBack}
-          aria-label="Back"
+          aria-label={tc("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -1215,18 +1216,24 @@ export function ConversationView({
             </div>
           )}
 
-          <label className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9">
+          <button
+            type="button"
+            aria-label={t("attachFile")}
+            onClick={() => attachInputRef.current?.click()}
+            className="flex size-10 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:size-9"
+          >
             <Paperclip className="h-5 w-5" />
-            <input
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                addLocalFiles(Array.from(e.target.files ?? []));
-                e.target.value = "";
-              }}
-            />
-          </label>
+          </button>
+          <input
+            ref={attachInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              addLocalFiles(Array.from(e.target.files ?? []));
+              e.target.value = "";
+            }}
+          />
 
           <button
             type="button"
@@ -1416,11 +1423,18 @@ function ConversationUnavailable({
   onBack: () => void;
 }) {
   const t = useTranslations("Chat");
+  const tc = useTranslations("Common");
   const deleted = status === "deleted";
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-border/70 px-4 py-3 md:hidden">
-        <Button variant="ghost" size="icon" className="-ml-1" onClick={onBack} aria-label="Back">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-ml-1"
+          onClick={onBack}
+          aria-label={tc("back")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </div>

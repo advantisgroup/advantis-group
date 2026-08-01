@@ -45,7 +45,6 @@ export const listEmailsByClerkUserId = query({
       )
       .order("desc")
       .take(50);
-    console.log(existing);
     if (!existing) {
       console.error("No submissions found for user", args.clerkUserId);
       return [];

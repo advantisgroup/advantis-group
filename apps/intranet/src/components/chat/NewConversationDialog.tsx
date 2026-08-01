@@ -12,16 +12,8 @@ import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
@@ -92,31 +84,33 @@ export function NewConversationDialog({
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (!o) reset();
-      }}
-    >
-      <DialogTrigger asChild>
-        {triggerVariant === "cta" ? (
-          <Button size="sm">
-            <Plus className="mr-1.5 h-4 w-4" />
-            {t("startConversationCta")}
-          </Button>
-        ) : (
-          <Button size="icon" variant="ghost" aria-label={t("newChat")}>
-            <Plus className="h-5 w-5" />
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{groupMode ? t("newGroup") : t("newChat")}</DialogTitle>
-          <DialogDescription>{t("newConversationHint")}</DialogDescription>
-        </DialogHeader>
-
+    <>
+      {triggerVariant === "cta" ? (
+        <Button size="sm" onClick={() => setOpen(true)}>
+          <Plus className="mr-1.5 h-4 w-4" />
+          {t("startConversationCta")}
+        </Button>
+      ) : (
+        <Button size="icon" variant="ghost" aria-label={t("newChat")} onClick={() => setOpen(true)}>
+          <Plus className="h-5 w-5" />
+        </Button>
+      )}
+      <ResponsiveDialog
+        open={open}
+        onOpenChange={(o) => {
+          setOpen(o);
+          if (!o) reset();
+        }}
+        title={groupMode ? t("newGroup") : t("newChat")}
+        description={t("newConversationHint")}
+        footer={
+          groupMode && others.length > 0 ? (
+            <Button onClick={makeGroup} disabled={!groupName.trim() || selected.size === 0}>
+              {tc("create")}
+            </Button>
+          ) : undefined
+        }
+      >
         {others.length > 0 && (
           <div className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted/40 p-1">
             <Button
@@ -180,15 +174,7 @@ export function NewConversationDialog({
             ))}
           </ScrollArea>
         )}
-
-        {groupMode && others.length > 0 && (
-          <DialogFooter>
-            <Button onClick={makeGroup} disabled={!groupName.trim() || selected.size === 0}>
-              {tc("create")}
-            </Button>
-          </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialog>
+    </>
   );
 }

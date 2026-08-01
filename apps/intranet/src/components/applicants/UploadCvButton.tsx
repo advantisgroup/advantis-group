@@ -40,7 +40,7 @@ export function UploadCvButton() {
         const result = await applicantsApi.extract(file);
         if (result.kind === "created") {
           toast.success(t("uploadSuccess", { name: file.name }));
-          router.push(`/applicants/${result.applicantId}/uebersicht`);
+          router.push(`/hr/${result.applicantId}/uebersicht`);
           continue;
         }
 
@@ -61,12 +61,12 @@ export function UploadCvButton() {
             fileName: file.name,
           });
           toast.success(t("duplicateAttached", { name: result.duplicate.name }));
-          router.push(`/applicants/${result.duplicate.applicantId}/uebersicht`);
+          router.push(`/hr/${result.duplicate.applicantId}/uebersicht`);
         } else {
           const forced = await applicantsApi.extract(file, true);
           if (forced.kind === "created") {
             toast.success(t("uploadSuccess", { name: file.name }));
-            router.push(`/applicants/${forced.applicantId}/uebersicht`);
+            router.push(`/hr/${forced.applicantId}/uebersicht`);
           }
         }
       } catch (e) {
@@ -136,7 +136,7 @@ export function UploadCvButton() {
           initialValues={blankCvFallbackForm()}
           onSaved={(applicantId) => {
             setFallbackFile(null);
-            router.push(`/applicants/${applicantId}/uebersicht`);
+            router.push(`/hr/${applicantId}/uebersicht`);
           }}
         />
       )}
