@@ -645,7 +645,7 @@ export function ConversationView({
           size="icon"
           className="-ml-1 md:hidden"
           onClick={onBack}
-          aria-label="Back"
+          aria-label={tc("back")}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
@@ -1416,11 +1416,18 @@ function ConversationUnavailable({
   onBack: () => void;
 }) {
   const t = useTranslations("Chat");
+  const tc = useTranslations("Common");
   const deleted = status === "deleted";
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-border/70 px-4 py-3 md:hidden">
-        <Button variant="ghost" size="icon" className="-ml-1" onClick={onBack} aria-label="Back">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-ml-1"
+          onClick={onBack}
+          aria-label={tc("back")}
+        >
           <ArrowLeft className="h-5 w-5" />
         </Button>
       </div>

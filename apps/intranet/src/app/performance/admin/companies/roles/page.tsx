@@ -289,6 +289,7 @@ export default function PerformanceRolesAdminPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      aria-label={t("roleEditTitle")}
                       onClick={() => setEditing(role)}
                     >
                       <Pencil className="h-3.5 w-3.5" />
@@ -298,6 +299,7 @@ export default function PerformanceRolesAdminPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
+                        aria-label={t("roleDelete")}
                         onClick={() => void handleDelete(role.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />

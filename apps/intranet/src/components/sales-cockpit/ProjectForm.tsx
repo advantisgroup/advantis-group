@@ -73,6 +73,7 @@ function ChipList({
   onAdd: (value: string) => void;
   placeholder: string;
 }) {
+  const t = useTranslations("SalesCockpit");
   const [value, setValue] = useState("");
   const submit = () => {
     const v = value.trim();
@@ -86,7 +87,7 @@ function ChipList({
         {items.map((item, i) => (
           <Badge key={i} variant="secondary" className="gap-1.5">
             {item}
-            <button type="button" onClick={() => onRemove(i)} aria-label="Entfernen">
+            <button type="button" onClick={() => onRemove(i)} aria-label={t("remove")}>
               <X className="size-3" />
             </button>
           </Badge>
@@ -104,7 +105,7 @@ function ChipList({
           }}
           placeholder={placeholder}
         />
-        <Button type="button" variant="outline" size="icon" onClick={submit}>
+        <Button type="button" variant="outline" size="icon" onClick={submit} aria-label={placeholder}>
           <Plus />
         </Button>
       </div>
@@ -125,6 +126,7 @@ function FileCategoryEditor({
   onRemoveExisting: (id: string) => void;
   upload: ReturnType<typeof useAttachmentUpload>;
 }) {
+  const t = useTranslations("SalesCockpit");
   return (
     <div>
       <Label className="mb-1.5 block">{label}</Label>
@@ -150,7 +152,7 @@ function FileCategoryEditor({
               type="button"
               onClick={() => onRemoveExisting(f.id)}
               className="text-destructive"
-              aria-label="Entfernen"
+              aria-label={t("remove")}
             >
               <X className="size-4" />
             </button>
@@ -169,7 +171,7 @@ function FileCategoryEditor({
               type="button"
               onClick={() => upload.remove(i)}
               className="text-destructive"
-              aria-label="Entfernen"
+              aria-label={t("remove")}
             >
               <X className="size-4" />
             </button>
@@ -228,6 +230,7 @@ function WegEditor({
             type="button"
             variant="ghost"
             size="icon-sm"
+            aria-label={t("remove")}
             onClick={() => onChange({ ...weg, einwaende: weg.einwaende.filter((_, i) => i !== ei) })}
           >
             <X className="size-4" />

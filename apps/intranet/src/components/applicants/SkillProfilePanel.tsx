@@ -265,6 +265,7 @@ export function SkillProfilePanel() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={t("editProfile")}
                     onClick={() =>
                       setEditing({
                         _id: profile._id,
@@ -278,6 +279,7 @@ export function SkillProfilePanel() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    aria-label={t("deleteProfile")}
                     className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => void handleDelete(profile)}
                   >
