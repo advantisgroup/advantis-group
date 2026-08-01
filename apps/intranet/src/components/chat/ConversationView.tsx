@@ -48,7 +48,7 @@ import { useAttachmentUpload } from "@/components/attachments/useAttachmentUploa
 import { GroupSettingsDialog } from "@/components/chat/GroupSettingsDialog";
 import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
-import { UserProfile } from "@/components/profile/UserProfile";
+import { ONLINE_WINDOW_MS, UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
 import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -186,7 +186,7 @@ export function ConversationView({
 
   const other =
     conversation?.type === "dm" ? conversation.members.find((m) => m._id !== me._id) : undefined;
-  const online = !!other?.lastActiveAt && Date.now() - other.lastActiveAt < 90_000;
+  const online = !!other?.lastActiveAt && Date.now() - other.lastActiveAt < ONLINE_WINDOW_MS;
 
   const mentionableMembers = useMemo(() => {
     if (!conversation || conversation.type !== "group" || !mention) return [];
