@@ -76,10 +76,7 @@ export function TerminDetailModal({
           {termin.uebernommen && (
             <p className="text-xs font-medium text-success">{t("terminConverted")}</p>
           )}
-          <CopyLinkButton
-            href={`/hr/${applicantId}/termine/${termin._id}`}
-            className="-ml-3"
-          />
+          <CopyLinkButton href={`/hr/${applicantId}/termine/${termin._id}`} className="-ml-3" />
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           {!termin.uebernommen && (

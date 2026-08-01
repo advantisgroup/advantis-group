@@ -60,10 +60,7 @@ export function KontaktDetailModal({
         </div>
         <div className="space-y-3 px-6 py-5">
           {kontakt.notiz && <p className="text-sm">{kontakt.notiz}</p>}
-          <CopyLinkButton
-            href={`/hr/${applicantId}/kontakte/${kontakt._id}`}
-            className="-ml-3"
-          />
+          <CopyLinkButton href={`/hr/${applicantId}/kontakte/${kontakt._id}`} className="-ml-3" />
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button
