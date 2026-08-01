@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -11,9 +11,9 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { useErrorHandler } from "@/hooks/use-error-handler";
@@ -275,11 +275,13 @@ function WegEditor({
 }
 
 export function ProjectForm({
+  open,
   projectId,
   initial,
   onSaved,
   onCancel,
 }: {
+  open: boolean;
   projectId: Id<"salesCockpitProjects"> | null;
   initial: ProjectFormValue;
   onSaved: () => void;
@@ -296,6 +298,18 @@ export function ProjectForm({
   const planUpload = useAttachmentUpload();
   const scripteUpload = useAttachmentUpload();
   const dateienUpload = useAttachmentUpload();
+
+  // The dialog stays mounted while closed (so close transitions can play),
+  // so opening it again for the same project needs an explicit reset —
+  // otherwise a cancelled draft would resurface on the next open.
+  useEffect(() => {
+    if (!open) return;
+    setValue(initial);
+    planUpload.reset();
+    scripteUpload.reset();
+    dateienUpload.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initial]);
 
   const removeExistingFile = (cat: "plan" | "scripte" | "dateien", id: string) => {
     setValue((v) => ({
@@ -373,7 +387,28 @@ export function ProjectForm({
   };
 
   return (
-    <div className="space-y-5">
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={(next) => !next && onCancel()}
+      title={projectId ? t("projektBearbeiten") : t("neuesProjektAnlegen")}
+      contentClassName="max-w-3xl"
+      footer={
+        <>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {t("abbrechen")}
+          </Button>
+          <Button
+            type="button"
+            onClick={() => void submit()}
+            disabled={
+              saving || planUpload.uploading || scripteUpload.uploading || dateienUpload.uploading
+            }
+          >
+            {t("projektSpeichern")}
+          </Button>
+        </>
+      }
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <Label className="mb-1.5 block">{t("titel")} *</Label>
@@ -486,21 +521,6 @@ export function ProjectForm({
           placeholder={t("sfInputPlaceholder")}
         />
       </div>
-
-      <DialogFooter>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          {t("abbrechen")}
-        </Button>
-        <Button
-          type="button"
-          onClick={() => void submit()}
-          disabled={
-            saving || planUpload.uploading || scripteUpload.uploading || dateienUpload.uploading
-          }
-        >
-          {t("projektSpeichern")}
-        </Button>
-      </DialogFooter>
-    </div>
+    </ResponsiveDialog>
   );
 }

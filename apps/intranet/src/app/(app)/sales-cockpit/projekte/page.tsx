@@ -11,13 +11,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   blankProjectForm,
@@ -124,24 +118,14 @@ export default function SalesCockpitProjektePage() {
         </Card>
       )}
 
-      <Dialog open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>
-              {editing?.id ? t("projektBearbeiten") : t("neuesProjektAnlegen")}
-            </DialogTitle>
-          </DialogHeader>
-          {editing && (
-            <ProjectForm
-              key={editing.id ?? "new"}
-              projectId={editing.id}
-              initial={editing.value}
-              onSaved={() => setEditing(null)}
-              onCancel={() => setEditing(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      <ProjectForm
+        key={editing?.id ?? "new"}
+        open={editing !== null}
+        projectId={editing?.id ?? null}
+        initial={editing?.value ?? blankProjectForm()}
+        onSaved={() => setEditing(null)}
+        onCancel={() => setEditing(null)}
+      />
     </div>
   );
 }
