@@ -10,14 +10,8 @@ import { useTranslations } from "next-intl";
 import { type ApplicantDetail } from "@/components/applicants/applicant-types";
 import { CopyLinkButton } from "@/components/applicants/CopyLinkButton";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 
@@ -50,28 +44,23 @@ export function KontaktDetailModal({
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && close()}>
-      <DialogContent className="max-w-md gap-0 p-0">
-        <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
-          <DialogTitle>{t(`kontaktArt.${kontakt.art}`)}</DialogTitle>
-          <DialogDescription className="mt-1">
-            {formatIsoDate(kontakt.datum, "de-DE")}
-          </DialogDescription>
-        </div>
-        <div className="space-y-3 px-6 py-5">
-          {kontakt.notiz && <p className="text-sm">{kontakt.notiz}</p>}
-          <CopyLinkButton href={`/hr/${applicantId}/kontakte/${kontakt._id}`} className="-ml-3" />
-        </div>
-        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
-          <Button
-            variant="ghost"
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            onClick={() => void handleRemove()}
-          >
-            {tc("delete")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <ResponsiveDialog
+      open
+      onOpenChange={(o) => !o && close()}
+      title={t(`kontaktArt.${kontakt.art}`)}
+      description={formatIsoDate(kontakt.datum, "de-DE")}
+      footer={
+        <Button
+          variant="ghost"
+          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => void handleRemove()}
+        >
+          {tc("delete")}
+        </Button>
+      }
+    >
+      {kontakt.notiz && <p className="text-sm">{kontakt.notiz}</p>}
+      <CopyLinkButton href={`/hr/${applicantId}/kontakte/${kontakt._id}`} className="-ml-3" />
+    </ResponsiveDialog>
   );
 }

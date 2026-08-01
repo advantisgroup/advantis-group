@@ -9,15 +9,9 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
 type Category = { _id: Id<"itTicketCategories">; name: string };
@@ -79,51 +73,52 @@ export function CategoriesDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogTitle>{t("categoriesTitle")}</DialogTitle>
-        <DialogDescription>{t("categoriesDescription")}</DialogDescription>
-        <div className="max-h-72 space-y-0 overflow-y-auto">
-          {categories.length === 0 && (
-            <p className="py-2 text-sm text-muted-foreground">{t("noCategories")}</p>
-          )}
-          {categories.map((category) => (
-            <div
-              key={category._id}
-              className="flex items-center justify-between border-b border-border/70 py-2 text-sm last:border-b-0"
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("categoriesTitle")}
+      description={t("categoriesDescription")}
+      footer={
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          {tc("close")}
+        </Button>
+      }
+    >
+      <div className="max-h-72 space-y-0 overflow-y-auto">
+        {categories.length === 0 && (
+          <p className="py-2 text-sm text-muted-foreground">{t("noCategories")}</p>
+        )}
+        {categories.map((category) => (
+          <div
+            key={category._id}
+            className="flex items-center justify-between border-b border-border/70 py-2 text-sm last:border-b-0"
+          >
+            <span>{category.name}</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              onClick={() => deleteCategory(category)}
             >
-              <span>{category.name}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                onClick={() => deleteCategory(category)}
-              >
-                {tc("delete")}
-              </Button>
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-2 pt-2">
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder={t("newCategoryPlaceholder")}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") addCategory();
-            }}
-          />
-          <Button type="button" onClick={addCategory}>
-            {t("addCategory")}
-          </Button>
-        </div>
-        <DialogFooter className="mt-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {tc("close")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+              {tc("delete")}
+            </Button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={t("newCategoryPlaceholder")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") addCategory();
+          }}
+        />
+        <Button type="button" onClick={addCategory}>
+          {t("addCategory")}
+        </Button>
+      </div>
+    </ResponsiveDialog>
   );
 }

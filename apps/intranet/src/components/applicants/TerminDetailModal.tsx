@@ -11,14 +11,8 @@ import { toast } from "sonner";
 import { type ApplicantDetail } from "@/components/applicants/applicant-types";
 import { CopyLinkButton } from "@/components/applicants/CopyLinkButton";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatIsoDate } from "@/lib/format";
 
@@ -62,23 +56,13 @@ export function TerminDetailModal({
   }
 
   return (
-    <Dialog open onOpenChange={(o) => !o && close()}>
-      <DialogContent className="max-w-md gap-0 p-0">
-        <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
-          <DialogTitle>{t(`terminTyp.${termin.typ}`)}</DialogTitle>
-          <DialogDescription className="mt-1">
-            {formatIsoDate(termin.datum, "de-DE")} · {termin.uhrzeit} ·{" "}
-            {t(`terminArt.${termin.art}`)}
-          </DialogDescription>
-        </div>
-        <div className="space-y-3 px-6 py-5">
-          {termin.notiz && <p className="text-sm">{termin.notiz}</p>}
-          {termin.uebernommen && (
-            <p className="text-xs font-medium text-success">{t("terminConverted")}</p>
-          )}
-          <CopyLinkButton href={`/hr/${applicantId}/termine/${termin._id}`} className="-ml-3" />
-        </div>
-        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
+    <ResponsiveDialog
+      open
+      onOpenChange={(o) => !o && close()}
+      title={t(`terminTyp.${termin.typ}`)}
+      description={`${formatIsoDate(termin.datum, "de-DE")} · ${termin.uhrzeit} · ${t(`terminArt.${termin.art}`)}`}
+      footer={
+        <>
           {!termin.uebernommen && (
             <Button variant="outline" onClick={handleConvert}>
               {t("markAsHappened")}
@@ -91,8 +75,14 @@ export function TerminDetailModal({
           >
             {tc("delete")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      {termin.notiz && <p className="text-sm">{termin.notiz}</p>}
+      {termin.uebernommen && (
+        <p className="text-xs font-medium text-success">{t("terminConverted")}</p>
+      )}
+      <CopyLinkButton href={`/hr/${applicantId}/termine/${termin._id}`} className="-ml-3" />
+    </ResponsiveDialog>
   );
 }
