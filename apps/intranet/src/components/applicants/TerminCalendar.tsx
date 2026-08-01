@@ -106,7 +106,7 @@ export function TerminRow({
           <button
             type="button"
             onClick={() => router.push(`/hr/${termin.applicantId}/uebersicht`)}
-            className="text-primary hover:underline"
+            className="-m-1.5 rounded p-1.5 text-primary hover:underline"
           >
             {applicantName}
           </button>
@@ -116,18 +116,24 @@ export function TerminRow({
       </div>
       {termin.notiz && <p className="text-muted-foreground">{termin.notiz}</p>}
       {!compact && (
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           {!termin.uebernommen && (
-            <button className="text-primary hover:underline" onClick={() => void handleConvert()}>
+            <button
+              className="-m-1.5 rounded p-1.5 text-primary hover:underline"
+              onClick={() => void handleConvert()}
+            >
               {t("markAsHappened")}
             </button>
           )}
-          <button className="text-destructive hover:underline" onClick={() => void handleRemove()}>
+          <button
+            className="-m-1.5 rounded p-1.5 text-destructive hover:underline"
+            onClick={() => void handleRemove()}
+          >
             {tc("delete")}
           </button>
           <Link
             href={`/hr/${termin.applicantId}/termine/${termin._id}`}
-            className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            className="-m-1.5 ml-auto inline-flex items-center gap-1 rounded p-1.5 text-muted-foreground hover:text-foreground"
           >
             <Link2 className="size-3" />
             {t("openTermin")}
