@@ -65,7 +65,7 @@ export function InterviewDetailModal({
         <div className="space-y-3 px-6 py-5">
           {interview.notiz && <p className="text-sm">{interview.notiz}</p>}
           <CopyLinkButton
-            href={`/applicants/${applicantId}/interviews/${interview._id}`}
+            href={`/hr/${applicantId}/interviews/${interview._id}`}
             className="-ml-3"
           />
         </div>

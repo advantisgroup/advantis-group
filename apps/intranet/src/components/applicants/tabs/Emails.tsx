@@ -53,7 +53,7 @@ export function Emails({ applicant }: { applicant: ApplicantDetail }) {
               {applicant.emails.map((m) => (
                 <EntryRow
                   key={m._id}
-                  href={`/applicants/${applicant._id}/emails/${m._id}`}
+                  href={`/hr/${applicant._id}/emails/${m._id}`}
                   icon={Mail}
                   title={t(`emailKategorie.${m.kategorie}`)}
                   meta={formatIsoDate(m.datum, "de-DE")}

@@ -139,7 +139,7 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
     if (fromStatus !== "alle") p.set("status", fromStatus);
     if (fromRating !== "alle") p.set("rating", fromRating);
     if (fromSearch) p.set("search", fromSearch);
-    return `/applicants/${targetId}/${activeTab}?${p.toString()}`;
+    return `/hr/${targetId}/${activeTab}?${p.toString()}`;
   }
 
   const itemLabel = useMemo(() => {
@@ -164,7 +164,7 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
     remove({ applicantId })
       .then(() => {
         toast.success(t("applicantDeleted"));
-        router.push("/applicants/list");
+        router.push("/hr/list");
       })
       .catch(handleError);
   }
@@ -179,41 +179,41 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
   const tabs = [
     {
       value: "uebersicht",
-      href: `/applicants/${applicantId}/uebersicht`,
+      href: `/hr/${applicantId}/uebersicht`,
       label: t("tabOverview"),
       icon: LayoutDashboard,
     },
     {
       value: "termine",
-      href: `/applicants/${applicantId}/termine`,
+      href: `/hr/${applicantId}/termine`,
       label: t("tabTermine"),
       icon: CalendarClock,
       count: applicant.termine.filter((tm) => !tm.uebernommen).length,
     },
     {
       value: "dokumente",
-      href: `/applicants/${applicantId}/dokumente`,
+      href: `/hr/${applicantId}/dokumente`,
       label: t("tabDocuments"),
       icon: FileText,
       count: applicant.documents.length,
     },
     {
       value: "kontakte",
-      href: `/applicants/${applicantId}/kontakte`,
+      href: `/hr/${applicantId}/kontakte`,
       label: t("tabKontakte"),
       icon: PhoneCall,
       count: applicant.kontakte.length,
     },
     {
       value: "emails",
-      href: `/applicants/${applicantId}/emails`,
+      href: `/hr/${applicantId}/emails`,
       label: t("tabEmails"),
       icon: Mail,
       count: applicant.emails.length,
     },
     {
       value: "interviews",
-      href: `/applicants/${applicantId}/interviews`,
+      href: `/hr/${applicantId}/interviews`,
       label: t("tabInterviews"),
       icon: Users,
       count: applicant.interviews.length,
@@ -225,12 +225,12 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/applicants/list">{t("pageTitle")}</BreadcrumbLink>
+            <BreadcrumbLink href="/hr/list">{t("pageTitle")}</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             {itemId || activeTab !== "uebersicht" ? (
-              <BreadcrumbLink href={`/applicants/${applicantId}/uebersicht`}>
+              <BreadcrumbLink href={`/hr/${applicantId}/uebersicht`}>
                 {applicant.name}
               </BreadcrumbLink>
             ) : (
@@ -242,7 +242,7 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 {itemId ? (
-                  <BreadcrumbLink href={`/applicants/${applicantId}/${activeTab}`}>
+                  <BreadcrumbLink href={`/hr/${applicantId}/${activeTab}`}>
                     {t(TAB_LABEL_KEYS[activeTab] ?? "tabOverview")}
                   </BreadcrumbLink>
                 ) : (

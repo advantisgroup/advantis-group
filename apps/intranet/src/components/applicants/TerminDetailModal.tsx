@@ -77,7 +77,7 @@ export function TerminDetailModal({
             <p className="text-xs font-medium text-success">{t("terminConverted")}</p>
           )}
           <CopyLinkButton
-            href={`/applicants/${applicantId}/termine/${termin._id}`}
+            href={`/hr/${applicantId}/termine/${termin._id}`}
             className="-ml-3"
           />
         </div>

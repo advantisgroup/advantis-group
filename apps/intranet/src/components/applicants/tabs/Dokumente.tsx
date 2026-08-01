@@ -183,7 +183,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
               </div>
               <div className="flex items-center gap-1.5">
                 <Button variant="outline" size="sm" asChild aria-label={t("view")}>
-                  <Link href={`/applicants/${applicant._id}/dokumente/${d._id}`}>
+                  <Link href={`/hr/${applicant._id}/dokumente/${d._id}`}>
                     <Eye className="size-4" />
                     <span className="hidden md:inline">{t("view")}</span>
                   </Link>

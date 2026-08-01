@@ -59,7 +59,7 @@ export function Kontakte({ applicant }: { applicant: ApplicantDetail }) {
               {applicant.kontakte.map((k) => (
                 <EntryRow
                   key={k._id}
-                  href={`/applicants/${applicant._id}/kontakte/${k._id}`}
+                  href={`/hr/${applicant._id}/kontakte/${k._id}`}
                   icon={PhoneCall}
                   title={t(`kontaktArt.${k.art}`)}
                   meta={formatIsoDate(k.datum, "de-DE")}

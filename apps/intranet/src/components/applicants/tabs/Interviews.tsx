@@ -53,7 +53,7 @@ export function Interviews({ applicant }: { applicant: ApplicantDetail }) {
               {applicant.interviews.map((iv) => (
                 <EntryRow
                   key={iv._id}
-                  href={`/applicants/${applicant._id}/interviews/${iv._id}`}
+                  href={`/hr/${applicant._id}/interviews/${iv._id}`}
                   icon={Users}
                   title={t("interviewOn", {
                     date: formatIsoDate(iv.datum, "de-DE"),

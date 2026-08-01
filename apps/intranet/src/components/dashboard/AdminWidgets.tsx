@@ -171,13 +171,13 @@ export function AdminStatsCard() {
         )}
         {hasApplicantAccess &&
           (vaultStatus === undefined ? null : !vaultStatus.unlocked ? (
-            <StatLine icon={<Lock />} label={t("vaultLockedHint")} value="" href="/applicants" />
+            <StatLine icon={<Lock />} label={t("vaultLockedHint")} value="" href="/hr" />
           ) : pipeline !== undefined ? (
             <StatLine
               icon={<Users2 />}
               label={t("openApplicantPipeline")}
               value={pipeline.open}
-              href="/applicants"
+              href="/hr"
             />
           ) : null)}
       </div>

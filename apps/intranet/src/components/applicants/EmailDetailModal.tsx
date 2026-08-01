@@ -61,7 +61,7 @@ export function EmailDetailModal({
         <div className="space-y-3 px-6 py-5">
           {email.notiz && <p className="text-sm">{email.notiz}</p>}
           <CopyLinkButton
-            href={`/applicants/${applicantId}/emails/${email._id}`}
+            href={`/hr/${applicantId}/emails/${email._id}`}
             className="-ml-3"
           />
         </div>

@@ -105,7 +105,7 @@ export function TerminRow({
         {applicantName && (
           <button
             type="button"
-            onClick={() => router.push(`/applicants/${termin.applicantId}/uebersicht`)}
+            onClick={() => router.push(`/hr/${termin.applicantId}/uebersicht`)}
             className="text-primary hover:underline"
           >
             {applicantName}
@@ -126,7 +126,7 @@ export function TerminRow({
             {tc("delete")}
           </button>
           <Link
-            href={`/applicants/${termin.applicantId}/termine/${termin._id}`}
+            href={`/hr/${termin.applicantId}/termine/${termin._id}`}
             className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
           >
             <Link2 className="size-3" />

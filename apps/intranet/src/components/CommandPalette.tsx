@@ -364,8 +364,8 @@ export function CommandPalette() {
             label: ap.name,
             sublabel: ap.position || ap.email,
             icon: UserRoundSearch,
-            href: `/applicants/${ap._id}/uebersicht`,
-            run: () => go(`/applicants/${ap._id}/uebersicht`),
+            href: `/hr/${ap._id}/uebersicht`,
+            run: () => go(`/hr/${ap._id}/uebersicht`),
           });
         }
       }

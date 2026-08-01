@@ -28,7 +28,7 @@ export default function ApplicantUebersichtPage() {
   );
   useEffect(() => {
     if (highlightParam) {
-      router.replace(`/applicants/${applicantId}/uebersicht`);
+      router.replace(`/hr/${applicantId}/uebersicht`);
     }
   }, [highlightParam, applicantId, router]);
 
