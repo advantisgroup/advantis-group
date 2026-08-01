@@ -18,6 +18,7 @@ import { useHasCapability } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -206,8 +207,10 @@ function EditableNumber({
 
 export default function ClockodoEmployeeDetailPage() {
   const t = useTranslations("Integrations");
+  const tc = useTranslations("Common");
   const router = useRouter();
   const handleError = useErrorHandler();
+  const confirm = useConfirm();
   const params = useParams<{ id: string }>();
   const clockodoUserId = Number(params.id);
 
@@ -405,11 +408,20 @@ export default function ClockodoEmployeeDetailPage() {
               <div className="flex items-center gap-2">
                 <Select
                   value={link?.userId ?? "none"}
-                  onValueChange={(v) =>
-                    v === "none"
-                      ? void unlinkClockodoUser({ userId: link!.userId })
-                      : void linkClockodoUser({ userId: v as Id<"users">, clockodoUserId })
-                  }
+                  onValueChange={async (v) => {
+                    if (v === "none") {
+                      const ok = await confirm({
+                        title: t("confirmUnlinkTitle"),
+                        description: t("confirmUnlinkBody"),
+                        confirmLabel: t("notLinked"),
+                        cancelLabel: tc("cancel"),
+                      });
+                      if (!ok) return;
+                      void unlinkClockodoUser({ userId: link!.userId });
+                    } else {
+                      void linkClockodoUser({ userId: v as Id<"users">, clockodoUserId });
+                    }
+                  }}
                 >
                   <SelectTrigger className="h-9 flex-1 text-sm">
                     <SelectValue />

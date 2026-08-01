@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 
@@ -29,9 +30,24 @@ function EntityRow({
   onArchiveToggle: (id: string, archived: boolean) => Promise<void>;
 }) {
   const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
   const handleError = useErrorHandler();
+  const confirm = useConfirm();
   const [name, setName] = useState(entity.name);
   const archived = entity.archivedAt !== undefined;
+
+  async function toggleArchive() {
+    if (!archived) {
+      const ok = await confirm({
+        title: t("orgEntity.confirmArchiveTitle", { name: entity.name }),
+        description: t("orgEntity.confirmArchiveBody"),
+        confirmLabel: t("orgEntity.archive"),
+        cancelLabel: tc("cancel"),
+      });
+      if (!ok) return;
+    }
+    onArchiveToggle(entity._id, !archived).catch(handleError);
+  }
 
   return (
     <Card className={archived ? "opacity-60" : undefined}>
@@ -55,11 +71,7 @@ function EntityRow({
           )}
           {archived && <Badge variant="muted">{t("orgEntity.archived")}</Badge>}
         </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onArchiveToggle(entity._id, !archived).catch(handleError)}
-        >
+        <Button size="sm" variant="outline" onClick={() => void toggleArchive()}>
           {archived ? t("orgEntity.restore") : t("orgEntity.archive")}
         </Button>
       </CardContent>

@@ -19,6 +19,8 @@
   "updated": "Gespeichert.",
   "linked": "Verknüpft.",
   "unlinked": "Verknüpfung aufgehoben.",
+  "confirmUnlinkTitle": "Diesen Clockodo-Account entknüpfen?",
+  "confirmUnlinkBody": "Das Intranet-Konto verliert die Zeiterfassungs- und ActivityTrack-Präsenzverknüpfung, bis jemand sie hier wiederherstellt.",
   "empty": "Noch keine Clockodo-Benutzer.",
   "loadError": "Clockodo-Benutzer konnten nicht geladen werden.",
   "searchPlaceholder": "Nach Name oder E-Mail suchen",
