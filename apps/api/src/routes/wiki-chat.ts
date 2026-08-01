@@ -60,8 +60,12 @@ interface ChatDTO {
 export const wikiChatRoute = new Elysia()
   .post(
     "/wiki-chat",
-    async ({ request, body, set }) => {
+    async function* ({ request, body, set }) {
       await requireAuth(request);
+
+      set.headers["Content-Type"] = "text/plain; charset=utf-8";
+      set.headers["X-Content-Type-Options"] = "nosniff";
+      set.headers["Cache-Control"] = "no-cache";
 
       const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
 
@@ -75,27 +79,11 @@ export const wikiChatRoute = new Elysia()
         })),
       });
 
-      const readable = new ReadableStream({
-        async start(controller) {
-          const encoder = new TextEncoder();
-          try {
-            for await (const event of stream) {
-              if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-                controller.enqueue(encoder.encode(event.delta.text));
-              }
-            }
-          } catch (err) {
-            controller.error(err);
-          } finally {
-            controller.close();
-          }
-        },
-      });
-
-      set.headers["Content-Type"] = "text/plain; charset=utf-8";
-      set.headers["X-Content-Type-Options"] = "nosniff";
-      set.headers["Cache-Control"] = "no-cache";
-      return readable;
+      for await (const event of stream) {
+        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+          yield event.delta.text;
+        }
+      }
     },
     {
       body: t.Object({

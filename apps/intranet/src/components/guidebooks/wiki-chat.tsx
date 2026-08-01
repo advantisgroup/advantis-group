@@ -521,6 +521,30 @@ export function WikiChat({ className }: { className?: string } = {}) {
                               {children}
                             </code>
                           ),
+                          h1: ({ children }) => (
+                            <p className="mb-1 text-sm font-semibold">{children}</p>
+                          ),
+                          h2: ({ children }) => (
+                            <p className="mt-2 mb-1 text-sm font-semibold first:mt-0">
+                              {children}
+                            </p>
+                          ),
+                          h3: ({ children }) => (
+                            <p className="mt-2 mb-1 text-sm font-semibold first:mt-0">
+                              {children}
+                            </p>
+                          ),
+                          hr: () => <hr className="my-2 border-border/60" />,
+                          a: ({ children, href }) => (
+                            <a
+                              href={href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline underline-offset-2"
+                            >
+                              {children}
+                            </a>
+                          ),
                         }}
                       >
                         {m.content}
