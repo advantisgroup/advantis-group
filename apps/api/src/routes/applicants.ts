@@ -8,6 +8,7 @@ import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { requireEnv } from "../lib/env.js";
 import { Errors } from "../lib/errors.js";
 import { requireAuth } from "../lib/middleware.js";
+import { rateLimit } from "../lib/rate-limit.js";
 
 const MAX_CV_BYTES = 3.5 * 1024 * 1024;
 
@@ -149,6 +150,7 @@ export const applicantsRoute = new Elysia()
     "/applicants/extract",
     async ({ request, body }) => {
       const { clerkUserId } = await requireAuth(request);
+      await rateLimit("applicants.extract", clerkUserId, 20, "1 m");
 
       const access = await getConvex().query(api.applicants.apiCheckAccess, {
         serverKey: getConvexServerKey(),
@@ -218,6 +220,7 @@ export const applicantsRoute = new Elysia()
     "/applicants/rescan",
     async ({ request, body }) => {
       const { clerkUserId } = await requireAuth(request);
+      await rateLimit("applicants.rescan", clerkUserId, 20, "1 m");
 
       const access = await getConvex().query(api.applicants.apiCheckAccess, {
         serverKey: getConvexServerKey(),

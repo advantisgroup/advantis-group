@@ -149,6 +149,30 @@ export const dashboardSummary = query({
       .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
+    // Batched the same way teamOverview does: one Promise.all per lookup
+    // table instead of an await per device in a loop.
+    const personIds = [...new Set(devices.flatMap((d) => (d.personId ? [d.personId] : [])))];
+    const peopleById = new Map(
+      (await Promise.all(personIds.map((id) => ctx.db.get(id)))).flatMap((p) =>
+        p ? [[p._id, p] as const] : [],
+      ),
+    );
+    const employeeIds = [
+      ...new Set([...peopleById.values()].flatMap((p) => (p.employeeId ? [p.employeeId] : []))),
+    ];
+    const stateByEmployee = new Map(
+      (
+        await Promise.all(
+          employeeIds.map((id) =>
+            ctx.db
+              .query("employeeStates")
+              .withIndex("by_employeeId", (q) => q.eq("employeeId", id))
+              .unique(),
+          ),
+        )
+      ).flatMap((s) => (s ? [[s.employeeId, s] as const] : [])),
+    );
+
     let online = 0;
     let active = 0;
     let onBreak = 0;
@@ -158,18 +182,10 @@ export const dashboardSummary = query({
       const isOnline = now - device.lastSeen < onlineThresholdMs;
       if (isOnline) online++;
       if (isOnline && latest != null && latest.idleMs < inactivityMs) active++;
-      if (device.personId) {
-        const person = await ctx.db.get(device.personId);
-        const employeeId = person?.employeeId;
-        const st = employeeId
-          ? await ctx.db
-              .query("employeeStates")
-              .withIndex("by_employeeId", (q) => q.eq("employeeId", employeeId))
-              .unique()
-          : null;
-        if (st?.clockodoBreak) onBreak++;
-        if (st?.clockodoAbsent) absent++;
-      }
+      const person = device.personId ? (peopleById.get(device.personId) ?? null) : null;
+      const st = person?.employeeId ? (stateByEmployee.get(person.employeeId) ?? null) : null;
+      if (st?.clockodoBreak) onBreak++;
+      if (st?.clockodoAbsent) absent++;
     }
 
     return { total: devices.length, online, active, onBreak, absent };
