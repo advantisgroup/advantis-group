@@ -51,6 +51,7 @@ export default function DirectoryPage() {
   const now = useNow();
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [department, setDepartment] = useState<string>("all");
   const [role, setRole] = useState<string>("all");
   const [team, setTeam] = useState<string>("all");
@@ -69,9 +70,17 @@ export default function DirectoryPage() {
     if (deepLinkUserId) setProfileId(deepLinkUserId as Id<"users">);
   }, [deepLinkUserId]);
 
+  // Debounced so typing doesn't re-fire the directoryList query on every
+  // keystroke — the input stays instantly responsive since it's bound to the
+  // undebounced `search` state directly.
+  useEffect(() => {
+    const handle = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(handle);
+  }, [search]);
+
   const departments = useQuery(api.users.departments) ?? [];
   const people = useQuery(api.users.directoryList, {
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     department: department === "all" ? undefined : department,
   });
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);

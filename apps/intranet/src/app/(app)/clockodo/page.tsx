@@ -744,7 +744,7 @@ function Timetable() {
           </Button>
         </div>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="overflow-x-auto p-0">
         <div className="grid min-w-[36rem] grid-cols-7 border-b border-border/70">
           {dates.map(date => {
             const active = date === inThisWeek;

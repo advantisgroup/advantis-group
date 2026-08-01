@@ -387,7 +387,7 @@ export default function ClockodoEmployeeDetailPage() {
       />
 
       <Tabs defaultValue="profile">
-        <TabsList className="grid grid-cols-4">
+        <TabsList>
           <TabsTrigger value="profile">{t("tabProfile")}</TabsTrigger>
           <TabsTrigger value="permissions">{t("tabPermissions")}</TabsTrigger>
           <TabsTrigger value="hours">{t("tabHoursVacation")}</TabsTrigger>
