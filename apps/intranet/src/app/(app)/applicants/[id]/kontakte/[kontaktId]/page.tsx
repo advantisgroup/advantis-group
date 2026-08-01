@@ -1,21 +1,11 @@
 "use client";
 
-import { useParams } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { useQuery } from "convex/react";
-
 import { KontaktDetailModal } from "@/components/applicants/KontaktDetailModal";
+import { useApplicantSubItem } from "@/components/applicants/useApplicantSubItem";
 
 export default function ApplicantKontaktDetailPage() {
-  const params = useParams<{ id: string; kontaktId: string }>();
-  const applicantId = params.id as Id<"applicants">;
-  const applicant = useQuery(api.applicants.get, { applicantId });
+  const result = useApplicantSubItem("kontakte", "kontaktId");
+  if (!result) return null;
 
-  if (!applicant) return null;
-  const kontakt = applicant.kontakte.find((k) => k._id === params.kontaktId);
-  if (!kontakt) return null;
-
-  return <KontaktDetailModal applicantId={applicantId} kontakt={kontakt} />;
+  return <KontaktDetailModal applicantId={result.applicant._id} kontakt={result.item} />;
 }

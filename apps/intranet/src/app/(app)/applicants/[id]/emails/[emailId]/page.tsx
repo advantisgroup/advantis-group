@@ -1,21 +1,11 @@
 "use client";
 
-import { useParams } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { useQuery } from "convex/react";
-
 import { EmailDetailModal } from "@/components/applicants/EmailDetailModal";
+import { useApplicantSubItem } from "@/components/applicants/useApplicantSubItem";
 
 export default function ApplicantEmailDetailPage() {
-  const params = useParams<{ id: string; emailId: string }>();
-  const applicantId = params.id as Id<"applicants">;
-  const applicant = useQuery(api.applicants.get, { applicantId });
+  const result = useApplicantSubItem("emails", "emailId");
+  if (!result) return null;
 
-  if (!applicant) return null;
-  const email = applicant.emails.find((m) => m._id === params.emailId);
-  if (!email) return null;
-
-  return <EmailDetailModal applicantId={applicantId} email={email} />;
+  return <EmailDetailModal applicantId={result.applicant._id} email={result.item} />;
 }
