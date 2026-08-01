@@ -22,10 +22,11 @@ import { usePerformanceSession } from "@/components/performance/usePerformanceSe
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import {
   Table,
   TableBody,
@@ -433,49 +434,48 @@ function CreateCompanyDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0">
-        <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">{t("companyNewTitle")}</DialogTitle>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("companyNameLabel")}
-            </label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("companyDomainLabel")}
-            </label>
-            <Input
-              value={domain}
-              onChange={(e) => setDomain(e.target.value.trim().toLowerCase())}
-              placeholder="salespirates.de"
-            />
-            <p className="text-xs text-muted-foreground">{t("companyDomainHint")}</p>
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("companyAdminEmailsLabel")}
-            </label>
-            <Input
-              value={emails}
-              onChange={(e) => setEmails(e.target.value)}
-              placeholder="admin@salespirates.de, lead@salespirates.de"
-            />
-            <p className="text-xs text-muted-foreground">{t("companyAdminEmailsHint")}</p>
-          </div>
-        </div>
-        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("companyNewTitle")}
+      footer={
+        <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
           <Button onClick={() => void handleSave()} disabled={saving || !canSave}>
             {t("companyCreateSubmit")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">{t("companyNameLabel")}</label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">
+          {t("companyDomainLabel")}
+        </label>
+        <Input
+          value={domain}
+          onChange={(e) => setDomain(e.target.value.trim().toLowerCase())}
+          placeholder="salespirates.de"
+        />
+        <p className="text-xs text-muted-foreground">{t("companyDomainHint")}</p>
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">
+          {t("companyAdminEmailsLabel")}
+        </label>
+        <Input
+          value={emails}
+          onChange={(e) => setEmails(e.target.value)}
+          placeholder="admin@salespirates.de, lead@salespirates.de"
+        />
+        <p className="text-xs text-muted-foreground">{t("companyAdminEmailsHint")}</p>
+      </div>
+    </ResponsiveDialog>
   );
 }
 
@@ -528,86 +528,33 @@ function EditCompanyDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0">
-        <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">{t("companyEditTitle")}</DialogTitle>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("companyNameLabel")}
-            </label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("companyAdminEmailsLabel")}
-            </label>
-            <Input value={emails} onChange={(e) => setEmails(e.target.value)} />
-            <p className="text-xs text-muted-foreground">{t("companyAdminEmailsHint")}</p>
-          </div>
-        </div>
-        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("companyEditTitle")}
+      footer={
+        <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
           <Button onClick={() => void handleSave()} disabled={saving || !canSave}>
             {t("companySaveChanges")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function DeleteCompanyDialog({
-  open,
-  onOpenChange,
-  token,
-  company,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  token: string;
-  company: CompanyRow | null;
-}) {
-  const t = useTranslations("Performance");
-  const handleError = useErrorHandler();
-  const deleteCompany = useAction(api.companies.deleteCompany);
-  const [deleting, setDeleting] = useState(false);
-
-  async function handleDelete() {
-    if (!company) return;
-    setDeleting(true);
-    try {
-      await deleteCompany({ token, companyId: company.id });
-      onOpenChange(false);
-    } catch (err) {
-      handleError(err);
-    } finally {
-      setDeleting(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0">
-        <div className="space-y-3 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">{t("companyDeleteTitle")}</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("companyDeleteWarning", { name: company?.name ?? "" })}
-          </p>
-        </div>
-        <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {t("topicCancel")}
-          </Button>
-          <Button variant="destructive" onClick={() => void handleDelete()} disabled={deleting}>
-            <Trash2 className="mr-2 h-3.5 w-3.5" />
-            {t("companyDeleteConfirm")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">{t("companyNameLabel")}</label>
+        <Input value={name} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">
+          {t("companyAdminEmailsLabel")}
+        </label>
+        <Input value={emails} onChange={(e) => setEmails(e.target.value)} />
+        <p className="text-xs text-muted-foreground">{t("companyAdminEmailsHint")}</p>
+      </div>
+    </ResponsiveDialog>
   );
 }
 
@@ -664,7 +611,9 @@ export default function PerformanceCompaniesAdminPage() {
   const t = useTranslations("Performance");
   const { token, session } = usePerformanceSession();
   const handleError = useErrorHandler();
+  const confirm = useConfirm();
   const checkDomainVerification = useAction(api.companies.checkDomainVerification);
+  const deleteCompany = useAction(api.companies.deleteCompany);
   const [creating, setCreating] = useState(false);
   const [retrying, setRetrying] = useState<{
     name: string;
@@ -672,7 +621,6 @@ export default function PerformanceCompaniesAdminPage() {
   } | null>(null);
   const [checking, setChecking] = useState<Id<"companies"> | null>(null);
   const [editing, setEditing] = useState<CompanyRow | null>(null);
-  const [deletingCompany, setDeletingCompany] = useState<CompanyRow | null>(null);
 
   // Gated on isSuperAdmin by the parent layout — always true by the time
   // this page is mounted.
@@ -687,6 +635,22 @@ export default function PerformanceCompaniesAdminPage() {
       handleError(err);
     } finally {
       setChecking(null);
+    }
+  }
+
+  async function handleDelete(company: CompanyRow) {
+    const ok = await confirm({
+      title: t("companyDeleteTitle"),
+      description: t("companyDeleteWarning", { name: company.name }),
+      confirmLabel: t("companyDeleteConfirm"),
+      cancelLabel: t("topicCancel"),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      await deleteCompany({ token, companyId: company.id });
+    } catch (err) {
+      handleError(err);
     }
   }
 
@@ -756,7 +720,7 @@ export default function PerformanceCompaniesAdminPage() {
                             }}
                             onCheck={() => void handleCheck(c.id)}
                             onEdit={() => setEditing(c)}
-                            onDelete={() => setDeletingCompany(c)}
+                            onDelete={() => void handleDelete(c)}
                           />
                         </div>
                       </CardContent>
@@ -813,7 +777,7 @@ export default function PerformanceCompaniesAdminPage() {
                               }}
                               onCheck={() => void handleCheck(c.id)}
                               onEdit={() => setEditing(c)}
-                              onDelete={() => setDeletingCompany(c)}
+                              onDelete={() => void handleDelete(c)}
                             />
                           </TableCell>
                         </TableRow>
@@ -839,14 +803,6 @@ export default function PerformanceCompaniesAdminPage() {
         }}
         token={token}
         company={editing}
-      />
-      <DeleteCompanyDialog
-        open={deletingCompany !== null}
-        onOpenChange={(open) => {
-          if (!open) setDeletingCompany(null);
-        }}
-        token={token}
-        company={deletingCompany}
       />
     </>
   );
