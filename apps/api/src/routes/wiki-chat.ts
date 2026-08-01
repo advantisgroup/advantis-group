@@ -68,7 +68,7 @@ export const wikiChatRoute = new Elysia()
       const stream = client.messages.stream({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
-        system: WIKI_SYSTEM,
+        system: [{ type: "text", text: WIKI_SYSTEM, cache_control: { type: "ephemeral" } }],
         messages: body.messages.map((m) => ({
           role: m.role,
           content: m.content,
