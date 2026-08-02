@@ -6,8 +6,8 @@ import { useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { useReverification } from "@clerk/nextjs";
-import { useAction, useMutation, useQuery } from "convex/react";
+import { useAuth, useReverification } from "@clerk/nextjs";
+import { useAction, useConvex, useMutation, useQuery } from "convex/react";
 import { KeyRound, ShieldAlert, TriangleAlert } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import posthog from "posthog-js";
@@ -56,6 +56,35 @@ function isReverificationHint(value: unknown): value is ReverificationHintShape 
     "clerk_error" in value &&
     (value as { clerk_error?: { reason?: string } }).clerk_error?.reason === "reverification-error"
   );
+}
+
+/**
+ * Convex authenticates its websocket once and reuses that token for every
+ * query/mutation/action until *Convex* decides to refetch — on its own
+ * schedule, or after the server rejects a token outright (see
+ * `AuthenticationManager` in convex's `browser/sync/authentication_manager.ts`).
+ * A mutation call never fetches a fresh token for itself.
+ *
+ * That means the automatic retry `useReverification` fires the instant the
+ * step-up modal closes almost always runs on the *same* Convex-side token
+ * that was cached before verification — Clerk's own session is fresher than
+ * what Convex is presenting to the server, so `isRecentlyVerified` on the
+ * backend still sees the old (unverified) `fva`. Calling `setAuth` again
+ * with `skipCache: true` forces Convex through a real re-authentication
+ * round-trip and resolves once the server has confirmed the new token, so a
+ * retry issued after this actually reflects the verification that just
+ * happened.
+ */
+function refreshConvexAuth(
+  convexClient: ReturnType<typeof useConvex>,
+  getToken: ReturnType<typeof useAuth>["getToken"],
+): Promise<void> {
+  return new Promise((resolve) => {
+    convexClient.setAuth(
+      () => getToken({ template: "convex", skipCache: true }),
+      () => resolve(),
+    );
+  });
 }
 
 function RequestHistory({ requestId }: { requestId: RequestId }) {
@@ -108,6 +137,8 @@ function RequestCard({
   const format = useFormatter();
   const [busy, setBusy] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const convexClient = useConvex();
+  const { getToken } = useAuth();
 
   // Both admin actions are wrapped: the Convex function returns Clerk's
   // reverification hint instead of acting when the session hasn't been
@@ -128,7 +159,14 @@ function RequestCard({
     setBusy(true);
     try {
       if (action === "issue") {
-        const result = await issue({ requestId: request.id });
+        let result = await issue({ requestId: request.id });
+        if (isReverificationHint(result)) {
+          // The step-up almost certainly did succeed — Convex just retried
+          // on a token it cached before verification. Force a fresh one and
+          // try exactly once more before reporting failure.
+          await refreshConvexAuth(convexClient, getToken);
+          result = await issue({ requestId: request.id });
+        }
         if (isReverificationHint(result)) {
           toast.error(t("adminReverifyStale"));
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
@@ -136,7 +174,11 @@ function RequestCard({
         }
         toast.success(t("adminIssued", { email: result.sentTo }));
       } else {
-        const result = await dismiss({ requestId: request.id });
+        let result = await dismiss({ requestId: request.id });
+        if (isReverificationHint(result)) {
+          await refreshConvexAuth(convexClient, getToken);
+          result = await dismiss({ requestId: request.id });
+        }
         if (isReverificationHint(result)) {
           toast.error(t("adminReverifyStale"));
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
