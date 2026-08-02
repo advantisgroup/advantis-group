@@ -83,6 +83,7 @@
     "ticketCreatorBadge": "Ersteller der Meldung",
     "readOnlyNote": "Nur Führungskräfte und Personen mit Berechtigung können hier schreiben.",
     "today": "Heute",
-    "yesterday": "Gestern"
+    "yesterday": "Gestern",
+    "react": "Reagieren"
   }
 }

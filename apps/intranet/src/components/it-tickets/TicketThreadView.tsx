@@ -6,20 +6,22 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
-import { Loader2, Lock, LockOpen, MessageSquare, SendHorizonal } from "lucide-react";
+import { Lock, LockOpen, MessageSquare, Paperclip, SmilePlus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { AttachmentList } from "@/components/attachments/AttachmentList";
+import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { MessageComposer } from "@/components/chat/MessageComposer";
+import { useFileViewer } from "@/components/file-viewer/FileViewerProvider";
 import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-const COMPOSER_MAX_HEIGHT = 160;
 
 type Thread = NonNullable<FunctionReturnType<typeof api.itTicketThreads.getForTicket>>;
 
@@ -58,6 +60,9 @@ export function TicketThreadView({
 
   const messages = useQuery(api.itTicketThreads.listMessages, { threadId: thread._id }) ?? [];
   const sendMessage = useMutation(api.itTicketThreads.sendMessage);
+  const toggleReaction = useMutation(api.itTicketThreads.toggleReaction);
+  const attachmentUpload = useAttachmentUpload();
+  const { openFileViewer } = useFileViewer();
   const lockThread = useMutation(api.itTicketThreads.lock);
   const unlockThread = useMutation(api.itTicketThreads.unlock);
 
@@ -65,13 +70,6 @@ export function TicketThreadView({
   const [sending, setSending] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, COMPOSER_MAX_HEIGHT)}px`;
-  }, [body]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -89,11 +87,23 @@ export function TicketThreadView({
 
   async function send() {
     const text = body.trim();
-    if (!text) return;
+    if (!text && attachmentUpload.entries.length === 0) return;
     setSending(true);
     try {
-      await sendMessage({ threadId: thread._id, body: text });
+      const uploaded = await attachmentUpload.uploadAll();
+      try {
+        await sendMessage({
+          threadId: thread._id,
+          body: text,
+          attachments: uploaded.length > 0 ? (uploaded as never) : undefined,
+        });
+      } catch (e) {
+        // Don't leave the files orphaned in storage if the send itself fails.
+        await attachmentUpload.rollback(uploaded);
+        throw e;
+      }
       setBody("");
+      attachmentUpload.reset();
       textareaRef.current?.focus();
     } catch (e) {
       handleError(e);
@@ -136,7 +146,7 @@ export function TicketThreadView({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto px-4 py-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
             <span className="flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
@@ -196,13 +206,64 @@ export function TicketThreadView({
                         )}
                       </div>
                       <div
-                        className={cn(
-                          "min-w-0 rounded-2xl px-3 py-2 text-sm",
-                          mine ? "rounded-br-md bg-blue-500/15" : "rounded-bl-md bg-muted",
-                        )}
+                        className={cn("group/msg flex items-end gap-1", mine && "flex-row-reverse")}
                       >
-                        <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                        <div
+                          className={cn(
+                            "min-w-0 rounded-2xl px-3 py-2 text-sm",
+                            mine ? "rounded-br-md bg-blue-500/15" : "rounded-bl-md bg-muted",
+                          )}
+                        >
+                          {m.body && <p className="whitespace-pre-wrap break-words">{m.body}</p>}
+                          {m.attachments.length > 0 && (
+                            <div className={cn("flex flex-col gap-1", m.body && "mt-1.5")}>
+                              {m.attachments.map((a) => (
+                                <button
+                                  key={a.storageId}
+                                  type="button"
+                                  onClick={() =>
+                                    openFileViewer({
+                                      storageId: a.storageId,
+                                      name: a.name,
+                                      contentType: a.contentType ?? undefined,
+                                      size: a.size ?? undefined,
+                                      url: a.url ?? undefined,
+                                    })
+                                  }
+                                  className="flex items-center gap-2 rounded-lg bg-background/60 px-2 py-1.5 text-left transition-colors hover:bg-background"
+                                >
+                                  <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+                                  <span className="min-w-0 truncate text-xs font-medium">
+                                    {a.name}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <ReactionPicker
+                          side="top"
+                          align={mine ? "end" : "start"}
+                          onPick={(emoji) =>
+                            void toggleReaction({ messageId: m._id, emoji }).catch(handleError)
+                          }
+                          trigger={
+                            <button
+                              type="button"
+                              aria-label={t("thread.react")}
+                              className="mb-1 hidden size-6 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground group-hover/msg:grid"
+                            >
+                              <SmilePlus className="size-3.5" />
+                            </button>
+                          }
+                        />
                       </div>
+                      <ReactionChips
+                        reactions={m.reactions}
+                        onToggle={(emoji) =>
+                          void toggleReaction({ messageId: m._id, emoji }).catch(handleError)
+                        }
+                      />
                     </div>
                   </div>
                 </Fragment>
@@ -219,35 +280,29 @@ export function TicketThreadView({
           {canPost && <p className="text-xs text-muted-foreground">{t("thread.lockedHint")}</p>}
         </div>
       ) : canPost ? (
-        <div className="flex shrink-0 items-end gap-2 border-t border-border/70 p-3">
-          <Textarea
-            ref={textareaRef}
+        <div className="shrink-0">
+          <MessageComposer
             value={body}
-            onChange={(e) => setBody(e.target.value)}
+            onChange={setBody}
+            onSend={() => void send()}
+            sending={sending}
+            disabled={attachmentUpload.uploading}
             placeholder={t("thread.messagePlaceholder")}
-            rows={1}
-            className="min-h-9 flex-1 resize-none overflow-y-auto border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
-            style={{ maxHeight: COMPOSER_MAX_HEIGHT }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void send();
-              }
-            }}
+            textareaRef={textareaRef}
+            onPickFiles={(files) => attachmentUpload.add(files)}
+            above={
+              attachmentUpload.entries.length > 0 ? (
+                <div className="mb-2">
+                  <AttachmentList
+                    entries={attachmentUpload.entries}
+                    uploading={attachmentUpload.uploading}
+                    onRemove={attachmentUpload.remove}
+                    removeLabel={tc("delete")}
+                  />
+                </div>
+              ) : null
+            }
           />
-          <Button
-            size="icon"
-            className="size-9 shrink-0"
-            onClick={() => void send()}
-            disabled={sending || !body.trim()}
-            aria-label={t("thread.send")}
-          >
-            {sending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <SendHorizonal className="size-4" />
-            )}
-          </Button>
         </div>
       ) : (
         <div className="shrink-0 border-t border-border/70 px-4 py-3 text-center text-xs text-muted-foreground">

@@ -414,6 +414,9 @@ export default defineSchema({
         threadId: v.id("itTicketThreads"),
         senderUserId: v.id("users"),
         body: v.string(),
+        /** Optional, unlike chat's required array — every message written
+         *  before ticket threads supported attachments predates the field. */
+        attachments: v.optional(v.array(attachmentValidator)),
         editedAt: v.optional(v.number()),
         deletedAt: v.optional(v.number()),
         createdAt: v.number(),
@@ -427,6 +430,18 @@ export default defineSchema({
       }),
     ),
   ).index("by_thread", ["threadId"]),
+
+  // Mirrors `messageReactions` — same shape so the chat reaction UI can be
+  // reused against ticket threads without a second set of concepts.
+  itTicketMessageReactions: defineTable({
+    messageId: v.id("itTicketMessages"),
+    threadId: v.id("itTicketThreads"),
+    userId: v.id("users"),
+    emoji: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_message_user", ["messageId", "userId"]),
 
   invites: defineTable({
     email: v.string(),
