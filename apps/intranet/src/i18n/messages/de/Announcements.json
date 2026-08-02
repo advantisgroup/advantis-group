@@ -52,5 +52,6 @@
   "expiresAtLabel": "Läuft ab (optional)",
   "scheduledFor": "Geplant für {date}",
   "scheduledToast": "Ankündigung geplant",
-  "expired": "Abgelaufen"
+  "expired": "Abgelaufen",
+  "optionsHint": "Kategorie, Zielgruppe, Anhänge und Zeitplanung für diese Ankündigung."
 }

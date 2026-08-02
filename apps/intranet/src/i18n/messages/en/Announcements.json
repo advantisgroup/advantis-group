@@ -52,5 +52,6 @@
   "expiresAtLabel": "Expires (optional)",
   "scheduledFor": "Scheduled for {date}",
   "scheduledToast": "Announcement scheduled",
-  "expired": "Expired"
+  "expired": "Expired",
+  "optionsHint": "Category, audience, attachments and scheduling for this announcement."
 }

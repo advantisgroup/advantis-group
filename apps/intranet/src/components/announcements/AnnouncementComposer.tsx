@@ -104,16 +104,17 @@ function QuickSendFields({
   );
 }
 
-/** A section wrapper giving the Options panel visual structure instead of a
- *  flat run of bare fields — a subtle card per group with its own heading. */
+/** One labelled group in the Options panel. Rules rather than cards: five
+ *  stacked bordered boxes inside a ~30rem panel read as clutter, and the
+ *  nested field borders inside them made it worse. */
 function OptionsSection({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="space-y-2.5 rounded-lg border border-border/60 bg-muted/20 p-3">
+    <section className="space-y-2.5 border-b border-border/60 pb-4 last:border-b-0 last:pb-0">
       <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </Label>
       {children}
-    </div>
+    </section>
   );
 }
 
@@ -361,7 +362,7 @@ function ComposerOptionsFields({
       )}
 
       <OptionsSection label={t("scheduling")}>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3">
           {!editing && (
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">{t("publishAtLabel")}</Label>
@@ -907,9 +908,14 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
         </MobileDrawer>
       ) : (
         <Sheet open={optionsOpen} onOpenChange={setOptionsOpen}>
-          <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
-            <SheetTitle>{t("options")}</SheetTitle>
-            <div className="mt-2">{optionsFields}</div>
+          <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
+            <div className="shrink-0 border-b border-border/70 px-5 pb-4 pt-5">
+              <SheetTitle>{t("options")}</SheetTitle>
+              <p className="mt-1 text-sm text-muted-foreground">{t("optionsHint")}</p>
+            </div>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
+              {optionsFields}
+            </div>
           </SheetContent>
         </Sheet>
       )}
