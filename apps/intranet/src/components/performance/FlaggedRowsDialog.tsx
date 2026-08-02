@@ -141,11 +141,26 @@ function FlaggedRowActions({ row, token }: { row: FlaggedRow; token: string }) {
 
 /** Banner + review dialog for call-report rows whose duration failed the
  * plausibility check on import (see `performanceFlaggedRows` in schema.ts).
- * Renders nothing once there's nothing pending. */
-export function FlaggedRowsDialog({ token }: { token: string }) {
+ * Renders nothing once there's nothing pending.
+ *
+ * `open`/`onOpenChange` are optional so a caller that just finished an
+ * upload can pop the review dialog straight open (from a toast action)
+ * instead of the admin having to notice the banner and click into it
+ * themselves — falls back to internal state when omitted. */
+export function FlaggedRowsDialog({
+  token,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+}: {
+  token: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = onOpenChangeProp ?? setOpenState;
   const rows = useQuery(api.performanceImport.listFlaggedRows, { token });
 
   if (!rows || rows.length === 0) return null;

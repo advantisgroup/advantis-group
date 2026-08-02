@@ -31,6 +31,8 @@
   "uploadFailed": "Upload failed.",
   "uploadUnsupportedType": "Unsupported file type — use .xlsx, .xlsm, or .csv.",
   "uploadOk": "{count} rows imported",
+  "uploadFlaggedToast": "\"{filename}\": {count} row(s) need review for implausible values.",
+  "uploadFlaggedInline": "{count} need review",
   "uploadEmpty": "No activity in this report — ignored.",
   "uploadDuplicateStatus": "Already uploaded",
   "uploadDuplicateDetail": "Same as \"{filename}\", uploaded {date} — nothing changed.",

@@ -352,7 +352,7 @@ async function writeInteractions(
 }
 
 export type ImportResult =
-  | { status: "ok"; rowsImported: number; skipped?: string[] }
+  | { status: "ok"; rowsImported: number; skipped?: string[]; flagged?: number }
   | { status: "empty"; reportDate: string }
   | { status: "duplicate"; filename: string; uploadedAt: number };
 
@@ -435,7 +435,7 @@ async function processReport(
         uploadedBy,
         replaceLogId,
       });
-      return { status: "ok", rowsImported: result.rowsImported, skipped };
+      return { status: "ok", rowsImported: result.rowsImported, skipped, flagged: flaggedRows.length };
     }
 
     const interactionRows = readInteractionsCsv(text);
@@ -543,7 +543,7 @@ async function processReport(
       uploadedBy,
       replaceLogId,
     });
-    return { status: "ok", rowsImported: result.rowsImported, skipped };
+    return { status: "ok", rowsImported: result.rowsImported, skipped, flagged: flaggedRows.length };
   }
 
   const template = parseAggregatedTemplate(rows);

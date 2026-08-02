@@ -31,6 +31,8 @@
   "uploadFailed": "Upload fehlgeschlagen.",
   "uploadUnsupportedType": "Dateityp nicht unterstützt — bitte .xlsx, .xlsm oder .csv verwenden.",
   "uploadOk": "{count} Datenzeile(n) importiert",
+  "uploadFlaggedToast": "„{filename}“: {count} Zeile(n) benötigen Prüfung wegen unplausibler Werte.",
+  "uploadFlaggedInline": "{count} zu prüfen",
   "uploadEmpty": "Keine Aktivität in diesem Report — ignoriert.",
   "uploadDuplicateStatus": "Bereits hochgeladen",
   "uploadDuplicateDetail": "Gleich wie „{filename}“, hochgeladen am {date} – keine Änderung.",

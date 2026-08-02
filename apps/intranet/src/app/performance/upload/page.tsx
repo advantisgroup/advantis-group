@@ -9,6 +9,7 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useQuery } from "convex/react";
 import {
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -68,6 +69,7 @@ interface QueueItem {
   progress: number;
   rowsImported?: number;
   skipped?: string[];
+  flaggedCount?: number;
   error?: string;
   duplicateOf?: { filename: string; uploadedAt: number };
   batchId?: string;
@@ -335,6 +337,7 @@ export default function PerformanceUploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [flaggedDialogOpen, setFlaggedDialogOpen] = useState(false);
 
   useEffect(() => {
     // Wait for the query to resolve — a visitor with no password cookie may
@@ -420,7 +423,17 @@ export default function PerformanceUploadPage() {
         status: "done",
         rowsImported: result.rowsImported,
         skipped: result.skipped,
+        flaggedCount: result.flagged,
       });
+      // The plausibility check runs silently during import — without this,
+      // an admin watching the queue sees a plain green "done" and has no
+      // reason to notice the (easy to miss, above-the-fold) review banner
+      // that just appeared, let alone that it's this file's own doing.
+      if (result.flagged) {
+        toast.warning(t("uploadFlaggedToast", { count: result.flagged, filename: file.name }), {
+          action: { label: t("flaggedReview"), onClick: () => setFlaggedDialogOpen(true) },
+        });
+      }
     }
   }
 
@@ -498,7 +511,13 @@ export default function PerformanceUploadPage() {
       <PerformanceHeader navItems={navItems} onExit={exit} />
 
       <main className="mx-auto max-w-7xl space-y-6 p-4 pb-24 md:p-6">
-        {token && <FlaggedRowsDialog token={token} />}
+        {token && (
+          <FlaggedRowsDialog
+            token={token}
+            open={flaggedDialogOpen}
+            onOpenChange={setFlaggedDialogOpen}
+          />
+        )}
         {token && <RescanOlderUploads token={token} />}
 
         <Card>
@@ -634,6 +653,16 @@ export default function PerformanceUploadPage() {
                                   count: item.rowsImported ?? 0,
                                 })}
                               </span>
+                            )}
+                            {item.status === "done" && !!item.flaggedCount && (
+                              <button
+                                type="button"
+                                onClick={() => setFlaggedDialogOpen(true)}
+                                className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 font-medium text-warning hover:bg-warning/25"
+                              >
+                                <AlertTriangle className="h-3 w-3 shrink-0" />
+                                {t("uploadFlaggedInline", { count: item.flaggedCount })}
+                              </button>
                             )}
                             {item.status === "empty" && (
                               <span className="text-muted-foreground">{t("uploadEmpty")}</span>

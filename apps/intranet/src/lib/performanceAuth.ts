@@ -81,6 +81,11 @@ export interface UploadReportResult {
   error?: string;
   rowsImported?: number;
   skipped?: string[];
+  // Rows whose duration failed the plausibility check on import — see
+  // `performanceFlaggedRows` in schema.ts. Surfaced so the upload page can
+  // tell the admin this specific upload needs review, not just that a
+  // review queue exists somewhere.
+  flagged?: number;
   // Only set when status is "duplicate" — the earlier upload this file's
   // content matches.
   filename?: string;
