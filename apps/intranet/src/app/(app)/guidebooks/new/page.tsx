@@ -13,16 +13,19 @@ import { toast } from "sonner";
 
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { GuidebookEditor, type GuidebookFormData } from "@/components/guidebooks/GuidebookEditor";
+import { useWikiEntryForm } from "@/components/guidebooks/useWikiEntryForm";
 import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
 import { Link } from "@/components/Link";
 import { PageHeader } from "@/components/PageHeader";
 import { useIsManager } from "@/components/providers/current-user";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { imageStorageIdsOf, serializeBlocks, slugify } from "@/lib/guidebook-blocks";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { WIKI_FOLDER_BASE } from "@/lib/onedrive-scopes";
 import { attachPendingFiles } from "@/lib/wiki-attachments";
+import { cn } from "@/lib/utils";
 
 export default function NewGuidebookPage() {
   const t = useTranslations("Guidebooks");
@@ -40,6 +43,11 @@ export default function NewGuidebookPage() {
   // second one under a suffixed slug.
   const createdRef = useRef<{ id: Id<"guidebookPages">; slug: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [mode, setMode] = useState<"entry" | "advanced">("entry");
+  const entryForm = useWikiEntryForm({
+    entry: "new",
+    onDone: () => router.push("/guidebooks"),
+  });
 
   const takenSlugs = useMemo(
     () => new Set([...staticGuidebookSlugs(), ...(customPages ?? []).map((p) => p.slug)]),
@@ -123,15 +131,61 @@ export default function NewGuidebookPage() {
         <ArrowLeft className="size-4" />
         {t("title")}
       </Link>
-      <PageHeader eyebrow={t("eyebrow")} title={t("createPage")} />
-      <GuidebookEditor
-        onSave={handleSave}
-        saving={submitting}
-        submitLabel={tc("create")}
-        attachmentsSlot={
-          <PendingWikiAttachments attachmentUpload={attachmentUpload} busy={submitting} />
-        }
+      <PageHeader
+        eyebrow={t("eyebrow")}
+        title={mode === "entry" ? t("createEntry") : t("createPage")}
+        description={mode === "entry" ? t("createEntryHint") : t("createPageHint")}
       />
+
+      {/* Both formats create a wiki page; which one you want depends on the
+          content, not on which menu item you happened to click. Switching
+          here keeps that a single decision inside one composer. */}
+      <div
+        role="tablist"
+        aria-label={t("composerModeLabel")}
+        className="mb-5 inline-grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+      >
+        {(["entry", "advanced"] as const).map((m) => (
+          <button
+            key={m}
+            role="tab"
+            type="button"
+            aria-selected={mode === m}
+            onClick={() => setMode(m)}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+              mode === m
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {m === "entry" ? t("composerModeEntry") : t("composerModeAdvanced")}
+          </button>
+        ))}
+      </div>
+
+      {mode === "entry" ? (
+        <div className="space-y-5">
+          {entryForm.fields}
+          <div className="flex justify-end gap-2 border-t border-border/70 pt-4">
+            <Button variant="ghost" onClick={() => router.push("/guidebooks")}>
+              {tc("cancel")}
+            </Button>
+            <Button onClick={() => void entryForm.submit()} disabled={entryForm.busy}>
+              {tc("create")}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <GuidebookEditor
+          onSave={handleSave}
+          saving={submitting}
+          submitLabel={tc("create")}
+          attachmentsSlot={
+            <PendingWikiAttachments attachmentUpload={attachmentUpload} busy={submitting} />
+          }
+        />
+      )}
     </div>
   );
 }

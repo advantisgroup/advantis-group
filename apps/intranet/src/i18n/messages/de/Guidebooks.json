@@ -230,5 +230,11 @@
     "openFullHint": "Mehr Platz zum Atmen — eigene Seite, wie ein echter Chat."
   },
   "tagsFilterLabel": "Stichwörter",
-  "legacySectionTitle": "Ältere Seiten"
+  "legacySectionTitle": "Ältere Seiten",
+  "createEntry": "Neuer Wiki-Eintrag",
+  "createEntryHint": "Strukturierte Felder mit Kategorie, Stichwörtern und Prüfdatum.",
+  "createPageHint": "Freier Block-Editor für längere, gestaltete Anleitungen.",
+  "composerModeLabel": "Eintragsformat",
+  "composerModeEntry": "Einfach",
+  "composerModeAdvanced": "Erweitert"
 }

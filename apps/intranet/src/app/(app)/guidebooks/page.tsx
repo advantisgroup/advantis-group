@@ -9,7 +9,6 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
   Archive,
-  ChevronDown,
   ChevronRight,
   FileText,
   FolderOpen,
@@ -42,12 +41,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { htmlToText } from "@/components/ui/rich-text";
@@ -452,24 +445,14 @@ export default function GuidebooksPage() {
               <Button variant="outline" size="icon" onClick={() => setCategoryManagerOpen(true)}>
                 <Settings2 className="size-4" />
               </Button>
-              <div className="flex">
-                <Button className="rounded-r-none" onClick={() => setEditing("new")}>
+              {/* One entry point — the composer itself offers the simple and
+                  advanced formats, so this no longer needs a split button. */}
+              <Button asChild>
+                <Link href="/guidebooks/new">
                   <Plus className="mr-2 size-4" />
                   {t("newEntry")}
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button className="rounded-l-none border-l border-l-primary-foreground/20 px-2">
-                      <ChevronDown className="size-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild>
-                      <Link href="/guidebooks/new">{t("newEntryAdvanced")}</Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                </Link>
+              </Button>
             </div>
           ) : undefined
         }

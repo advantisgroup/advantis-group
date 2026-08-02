@@ -230,5 +230,11 @@
     "openFullHint": "More room to breathe — its own page, like a real chat app."
   },
   "tagsFilterLabel": "Tags",
-  "legacySectionTitle": "Older pages"
+  "legacySectionTitle": "Older pages",
+  "createEntry": "New wiki entry",
+  "createEntryHint": "Structured fields with a category, tags and a review date.",
+  "createPageHint": "Free-form block editor for longer, laid-out guides.",
+  "composerModeLabel": "Entry format",
+  "composerModeEntry": "Simple",
+  "composerModeAdvanced": "Advanced"
 }
