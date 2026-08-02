@@ -42,6 +42,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SplitDivider } from "@/components/ui/split-divider";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { initials, relativeTime } from "@/lib/format";
 import {
@@ -392,6 +393,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
   const router = useRouter();
   const me = useCurrentUser();
   const isMobile = useIsMobile();
+  const keyboardInset = useKeyboardInset();
   const handleError = useErrorHandler();
 
   const create = useMutation(api.announcements.create);
@@ -847,7 +849,13 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
               {isMobile && (
                 <div
                   className="shrink-0 border-t border-border/70 bg-background/95 backdrop-blur"
-                  style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+                  style={{
+                    // The layout viewport doesn't shrink for the keyboard, so
+                    // sitting at the bottom of the column puts this bar behind
+                    // it. Lift it by however much the keyboard covers.
+                    marginBottom: keyboardInset,
+                    paddingBottom: keyboardInset ? 0 : "env(safe-area-inset-bottom)",
+                  }}
                 >
                   <RichTextToolbar
                     controller={controller}
