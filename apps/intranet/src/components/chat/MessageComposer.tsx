@@ -178,7 +178,9 @@ export function MessageComposer({
             className="min-h-9 resize-none overflow-y-auto border-0 bg-transparent px-1 py-2 shadow-none focus-visible:ring-0"
             style={{ maxHeight: COMPOSER_MAX_HEIGHT }}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && !submitBlocked) {
+              // Same guard as the send button — Enter during an in-flight
+              // upload otherwise starts a second one over the same entries.
+              if (e.key === "Enter" && !e.shiftKey && !submitBlocked && !sending && !disabled) {
                 e.preventDefault();
                 onSend();
               }

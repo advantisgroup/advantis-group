@@ -155,13 +155,16 @@ export function NotificationsMenu() {
                           so clearing one doesn't mean opening it first. */}
                       <span className="mt-1 flex shrink-0 items-center">
                         {!n.readAt && (
-                          <span className="size-2 rounded-full bg-primary group-hover/row:hidden" />
+                          <span className="hidden size-2 rounded-full bg-primary md:inline-block md:group-hover/row:hidden" />
                         )}
                         <button
                           aria-label={t("dismiss")}
                           title={t("dismiss")}
                           onClick={() => void remove({ notificationId: n._id })}
-                          className="hidden size-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground group-hover/row:grid"
+                          // Touch devices have no hover to reveal this, so it
+                          // stays visible below md and only hides behind hover
+                          // on pointer layouts.
+                          className="grid size-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden md:group-hover/row:grid"
                         >
                           <X className="size-3.5" />
                         </button>

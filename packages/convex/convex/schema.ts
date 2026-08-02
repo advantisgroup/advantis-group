@@ -382,7 +382,9 @@ export default defineSchema({
     info: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  }).index("by_nr", ["nr"]),
+  })
+    .index("by_nr", ["nr"])
+    .index("by_creator", ["createdByUserId"]),
 
   // Per-ticket chat thread — opt-in (a ticket has one iff someone with the
   // `manage_it_ticket_threads` capability, or a manager+, started it) rather
@@ -441,7 +443,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_message", ["messageId"])
-    .index("by_message_user", ["messageId", "userId"]),
+    .index("by_message_user", ["messageId", "userId"])
+    .index("by_thread", ["threadId"]),
 
   invites: defineTable({
     email: v.string(),

@@ -15,7 +15,6 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
-import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatIsoDate, formatTime, initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -179,20 +178,11 @@ export function MyDayCard() {
 export function MyTicketsCard() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
-  const me = useCurrentUser();
-  const tickets = useQuery(api.itTickets.list);
-
-  const mine = useMemo(
-    () =>
-      (tickets ?? [])
-        .filter((ticket) => ticket.createdByUserId === me._id && ticket.status !== "closed")
-        .slice(0, 5),
-    [tickets, me._id],
-  );
+  const mine = useQuery(api.itTickets.listMineOpen, { limit: 5 });
 
   return (
-    <DashCard icon={<Wrench />} title={t("myTicketsTitle")} count={mine.length || undefined}>
-      {tickets === undefined ? (
+    <DashCard icon={<Wrench />} title={t("myTicketsTitle")} count={mine?.length || undefined}>
+      {mine === undefined ? (
         <RowSkeletons />
       ) : mine.length === 0 ? (
         <Empty href="/it-tickets" linkLabel={t("openTickets")}>

@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "convex/react";
 import { type FunctionReturnType } from "convex/server";
 import { Lock, LockOpen, MessageSquare, Paperclip, SmilePlus } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
@@ -52,6 +53,9 @@ export function TicketThreadView({
 }) {
   const t = useTranslations("ItTickets");
   const tc = useTranslations("Common");
+  // The size-limit copy already exists in the Chat namespace; the composer
+  // is shared, so the message should be too.
+  const tChat = useTranslations("Chat");
   const locale = useLocale();
   const me = useCurrentUser();
   const confirm = useConfirm();
@@ -251,7 +255,7 @@ export function TicketThreadView({
                             <button
                               type="button"
                               aria-label={t("thread.react")}
-                              className="mb-1 hidden size-6 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground group-hover/msg:grid"
+                              className="mb-1 grid size-6 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:hidden md:group-hover/msg:grid"
                             >
                               <SmilePlus className="size-3.5" />
                             </button>
@@ -289,7 +293,12 @@ export function TicketThreadView({
             disabled={attachmentUpload.uploading}
             placeholder={t("thread.messagePlaceholder")}
             textareaRef={textareaRef}
-            onPickFiles={(files) => attachmentUpload.add(files)}
+            onPickFiles={(files) => {
+              // `add` refuses the whole batch over the size cap and returns
+              // false — without this the picker just closes with nothing
+              // attached and no explanation.
+              if (!attachmentUpload.add(files)) toast.error(tChat("attachTooLarge"));
+            }}
             above={
               attachmentUpload.entries.length > 0 ? (
                 <div className="mb-2">

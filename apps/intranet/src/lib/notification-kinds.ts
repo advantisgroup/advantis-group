@@ -73,8 +73,15 @@ export function notificationVisual(type: string): { icon: LucideIcon; tint: stri
 export type NotificationBucket = "today" | "yesterday" | "earlier";
 
 export function bucketFor(createdAt: number, now = Date.now()): NotificationBucket {
-  const startOfToday = new Date(now).setHours(0, 0, 0, 0);
-  if (createdAt >= startOfToday) return "today";
-  if (createdAt >= startOfToday - 86_400_000) return "yesterday";
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  // Step back a calendar day rather than 24h: across a DST change consecutive
+  // local midnights are 23 or 25 hours apart, which shifts items into the
+  // wrong bucket for part of the day.
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (createdAt >= today.getTime()) return "today";
+  if (createdAt >= yesterday.getTime()) return "yesterday";
   return "earlier";
 }

@@ -33,6 +33,16 @@ export function UploadCvButton() {
   const [seconds, setSeconds] = useState(0);
   const toastId = useRef<string | number | null>(null);
 
+  // Navigating away mid-extraction leaves `job` set on an unmounting
+  // component, so the duration:Infinity toast would otherwise stay on screen
+  // forever.
+  useEffect(
+    () => () => {
+      if (toastId.current !== null) toast.dismiss(toastId.current);
+    },
+    [],
+  );
+
   useEffect(() => {
     if (!job) return;
     setSeconds(0);

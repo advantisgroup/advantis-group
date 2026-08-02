@@ -108,6 +108,20 @@ export const listMessages = query({
       .withIndex("by_thread", (q) => q.eq("threadId", threadId))
       .collect();
     const sorted = rows.sort((a, b) => a.createdAt - b.createdAt);
+
+    // One read for the whole thread rather than one per message — a long
+    // thread otherwise issued N extra queries on every reactive refresh.
+    const allReactions = await ctx.db
+      .query("itTicketMessageReactions")
+      .withIndex("by_thread", (q) => q.eq("threadId", threadId))
+      .collect();
+    const reactionsByMessage = new Map<Id<"itTicketMessages">, typeof allReactions>();
+    for (const r of allReactions) {
+      const list = reactionsByMessage.get(r.messageId);
+      if (list) list.push(r);
+      else reactionsByMessage.set(r.messageId, [r]);
+    }
+
     return Promise.all(
       sorted.map(async (m) => {
         if (m.kind === "system") {
@@ -121,14 +135,10 @@ export const listMessages = query({
           };
         }
         const sender = m.deletedAt ? null : await ctx.db.get(m.senderUserId);
-        const reactionRows = await ctx.db
-          .query("itTicketMessageReactions")
-          .withIndex("by_message", (q) => q.eq("messageId", m._id))
-          .collect();
         // Collapse to one row per emoji with a count, the same shape the chat
         // bubble already renders.
         const byEmoji = new Map<string, { emoji: string; count: number; mine: boolean }>();
-        for (const r of reactionRows) {
+        for (const r of reactionsByMessage.get(m._id) ?? []) {
           const entry = byEmoji.get(r.emoji) ?? { emoji: r.emoji, count: 0, mine: false };
           entry.count += 1;
           if (r.userId === viewer._id) entry.mine = true;
