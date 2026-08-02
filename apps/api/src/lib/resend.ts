@@ -111,20 +111,6 @@ function render(
         ),
       };
     }
-    case "guest-invite": {
-      const token = str(data, "token");
-      const label = str(data, "label") || "Guest";
-      const hours = typeof data.hours === "number" ? data.hours : 48;
-      const url = `${INTERNAL_URL}/guest/login?token=${encodeURIComponent(token)}`;
-      return {
-        subject: "Your Advantis intranet guest tour",
-        html: layout(
-          "You've been given a guest tour",
-          `<p style="margin:0 0 16px;line-height:1.6">Hi ${label}, you've been granted a temporary guest view of the advantis GmbH intranet. This link gives a read-only tour and expires in about ${hours} hours.</p>
-           ${button(url, "Open guest tour")}`,
-        ),
-      };
-    }
     case "chat-reinvite": {
       const inviter = str(data, "inviterName") || "A colleague";
       const conversationId = str(data, "conversationId");

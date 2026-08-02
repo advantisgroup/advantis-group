@@ -218,5 +218,12 @@
         "subtitle": "Here's a quick look, then go enjoy your day off."
       }
     ]
+  },
+  "myTicketsTitle": "Your IT tickets",
+  "noOpenTickets": "No open tickets",
+  "openTickets": "Open IT tickets",
+  "ticketStatus": {
+    "offen": "Open",
+    "bearbeitung": "In progress"
   }
 }

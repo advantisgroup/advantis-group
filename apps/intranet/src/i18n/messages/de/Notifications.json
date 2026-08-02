@@ -10,7 +10,7 @@
   "viewAll": "Alle Benachrichtigungen ansehen",
   "allCaughtUp": "Du bist auf dem neuesten Stand",
   "unreadOnly": "Nur ungelesene",
-  "preferences": "Benachrichtigungseinstellungen",
+  "preferences": "Benachrichtigungs-Einstellungen",
   "preferencesHint": "Wähle, welche Benachrichtigungen du erhalten möchtest.",
   "cat_absence": "Abwesenheiten",
   "cat_announcement": "Ankündigungen",
@@ -41,5 +41,10 @@
   "browserHint": "System-Benachrichtigungen, während der Tab im Hintergrund ist.",
   "browserUnsupported": "Dein Browser unterstützt keine Benachrichtigungen.",
   "browserDenied": "Die Benachrichtigungs-Berechtigung wurde im Browser verweigert.",
-  "browserDeniedHint": "Benachrichtigungen sind für diese Seite in deinem Browser blockiert. Aktiviere sie in den Browser- oder Systemeinstellungen und schalte diesen Schalter danach erneut ein."
+  "browserDeniedHint": "Benachrichtigungen sind für diese Seite in deinem Browser blockiert. Aktiviere sie in den Browser- oder Systemeinstellungen und schalte diesen Schalter danach erneut ein.",
+  "bucket": {
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "earlier": "Früher"
+  }
 }

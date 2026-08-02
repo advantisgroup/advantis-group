@@ -527,16 +527,17 @@ export default function AnnouncementsPage() {
   // matching card once the list has loaded.
   const highlightId = useDeepLinkId("id");
 
-  async function onDelete(id: Id<"announcements">) {
+  async function onDelete(announcement: Announcement) {
     const ok = await confirm({
       title: t("deleteConfirm"),
       description: tc("deleteWarning"),
+      details: [{ label: tc("fieldTitle"), value: announcement.title }],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });
     if (ok) {
       try {
-        await remove({ announcementId: id });
+        await remove({ announcementId: announcement._id });
       } catch (e) {
         handleError(e);
       }
@@ -582,7 +583,7 @@ export default function AnnouncementsPage() {
       key={a._id}
       a={a}
       highlighted={a._id === highlightId}
-      onDelete={() => void onDelete(a._id)}
+      onDelete={() => void onDelete(a)}
       onOpenImage={(url, name) => setLightbox({ url, name })}
     />
   );

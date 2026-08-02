@@ -69,5 +69,9 @@
   "bulkDeleteTitle": "{count} Elemente löschen?",
   "uploadQueue": "Uploads",
   "retry": "Erneut versuchen",
-  "finalizing": "Wird abgeschlossen…"
+  "finalizing": "Wird abgeschlossen…",
+  "chooseFolder": "Ordner wählen",
+  "chooseFolderHint": "In einen Unterordner wechseln oder direkt in den aktuellen hochladen.",
+  "selectThisFolder": "Hier speichern",
+  "noSubfolders": "Noch keine Unterordner."
 }

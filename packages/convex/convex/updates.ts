@@ -136,7 +136,6 @@ export interface InsertUpdateArgs {
   body: string;
   authorUserId: Id<"users">;
   audience: Audience;
-  guestVisible?: boolean;
   affectedSystems?: string[];
   status?: Doc<"updates">["status"];
   startedAt?: number;
@@ -166,7 +165,6 @@ export async function insertUpdate(
     body: args.body,
     authorUserId: args.authorUserId,
     audience: args.audience,
-    guestVisible: args.guestVisible ?? false,
     affectedSystems: args.affectedSystems,
     status: args.status ?? defaultStatus(args.type),
     timeline: [],
@@ -190,7 +188,6 @@ export const create = mutation({
     bodyFormat: v.union(v.literal("richtext"), v.literal("markdown")),
     body: v.string(),
     audience: audienceValidator,
-    guestVisible: v.optional(v.boolean()),
     affectedSystems: v.optional(v.array(v.string())),
     status: v.optional(statusValidator),
     startedAt: v.optional(v.number()),
@@ -225,7 +222,6 @@ export const publishFromMarkdown = mutation({
     summary: v.string(),
     body: v.string(),
     audience: audienceValidator,
-    guestVisible: v.optional(v.boolean()),
     affectedSystems: v.optional(v.array(v.string())),
     status: v.optional(statusValidator),
     startedAt: v.optional(v.number()),
@@ -257,7 +253,6 @@ export const publishFromMarkdown = mutation({
         summary: args.summary,
         body: args.body,
         audience: args.audience,
-        guestVisible: args.guestVisible ?? existing.guestVisible,
         affectedSystems: args.affectedSystems ?? existing.affectedSystems,
         status: args.status ?? existing.status,
         revision: existing.revision + 1,
@@ -275,7 +270,6 @@ export const publishFromMarkdown = mutation({
       body: args.body,
       authorUserId: author._id,
       audience: args.audience,
-      guestVisible: args.guestVisible,
       affectedSystems: args.affectedSystems,
       status: args.status,
       startedAt: args.startedAt,
@@ -386,7 +380,6 @@ export const update = mutation({
     summary: v.optional(v.string()),
     body: v.optional(v.string()),
     audience: v.optional(audienceValidator),
-    guestVisible: v.optional(v.boolean()),
     affectedSystems: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { updateId, ...patch }) => {

@@ -228,5 +228,7 @@
     "send": "Nachricht senden",
     "openFull": "Chat in voller Ansicht öffnen",
     "openFullHint": "Mehr Platz zum Atmen — eigene Seite, wie ein echter Chat."
-  }
+  },
+  "tagsFilterLabel": "Stichwörter",
+  "legacySectionTitle": "Ältere Seiten"
 }

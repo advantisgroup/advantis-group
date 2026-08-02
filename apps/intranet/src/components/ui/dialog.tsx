@@ -3,7 +3,7 @@
 import * as React from "react";
 import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { CheckCircle2, CircleAlert, Lightbulb, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleAlert, Lightbulb, X, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -82,7 +82,11 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] gap-5 overflow-y-auto border border-border/70 bg-card p-6 shadow-2xl shadow-black/30 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-[calc(var(--radius)+0.25rem)]",
+        // Grid children default to `min-width: auto`, so one wide table or
+        // unbroken string stretches the whole dialog past max-w-lg and the
+        // page scrolls sideways. `min-w-0` lets them shrink instead; the
+        // overflow-x guard catches anything that still can't.
+        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] gap-5 overflow-y-auto overflow-x-hidden overscroll-contain break-words [&>*]:min-w-0 border border-border/70 bg-card p-6 shadow-2xl shadow-black/30 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-[calc(var(--radius)+0.25rem)]",
         className,
       )}
       {...props}
@@ -223,6 +227,35 @@ export function DialogChecklist({
   );
 }
 
+export interface DetailRow {
+  label: string;
+  value: ReactNode;
+}
+
+/**
+ * Identifying facts about whatever is being acted on — the name, the target
+ * folder, when it was created. A confirmation that restates the question is
+ * useless; one that shows *which* record is about to go is what actually lets
+ * someone catch a misclick before they commit to it.
+ */
+export function DialogDetails({ rows, className }: { rows: DetailRow[]; className?: string }) {
+  return (
+    <dl
+      className={cn(
+        "divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60 bg-muted/30 text-sm",
+        className,
+      )}
+    >
+      {rows.map((row, i) => (
+        <div key={i} className="flex items-start justify-between gap-4 px-3 py-2">
+          <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
+          <dd className="min-w-0 break-words text-right font-medium">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /* ──────────────────────────────────────────────────────────────────────────
    Imperative confirmation, built on the same dialog. Lives here so the app has
    a single dialog module rather than a separate confirm-dialog file.
@@ -231,6 +264,9 @@ export function DialogChecklist({
 interface ConfirmOptions {
   title: string;
   description?: string;
+  /** What's being acted on, as label/value rows. Prefer this over padding the
+   *  description with the same facts in prose. */
+  details?: DetailRow[];
   /** Optional highlighted tip rendered under the description. */
   tip?: ReactNode;
   /** Itemized consequences of the action, rendered as a checklist. */
@@ -273,6 +309,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   }
 
   const confirmBlocked = !!opts?.confirmText && typedConfirm !== opts.confirmText.target;
+  const destructive = opts?.destructive !== false;
+  // The description now sits in the header, so the body section is only worth
+  // rendering (and only worth its border/padding) when something fills it.
+  const hasBody =
+    !!opts?.confirmText || !!opts?.tip || !!opts?.details?.length || !!opts?.items?.length;
 
   return (
     <ConfirmContext.Provider value={confirm}>
@@ -284,30 +325,43 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         }}
       >
         <DialogContent className="max-w-md gap-0 p-0">
-          <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
-            <DialogTitle className="leading-snug">{opts?.title}</DialogTitle>
-          </div>
-          <div className="flex flex-col gap-4 px-6 pb-5 pt-4">
-            {opts?.description && (
-              <DialogDescription className="leading-relaxed">{opts.description}</DialogDescription>
+          <div className="flex items-start gap-3 border-b border-border/70 px-6 pb-4 pr-12 pt-6">
+            {destructive && (
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-destructive/10 text-destructive">
+                <AlertTriangle className="size-4" />
+              </span>
             )}
-            {opts?.items && opts.items.length > 0 && <DialogChecklist items={opts.items} />}
-            {opts?.tip && <DialogTip>{opts.tip}</DialogTip>}
-            {opts?.confirmText && (
-              <Input
-                autoFocus
-                value={typedConfirm}
-                onChange={(e) => setTypedConfirm(e.target.value)}
-                placeholder={opts.confirmText.placeholder ?? opts.confirmText.target}
-              />
-            )}
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="leading-snug">{opts?.title}</DialogTitle>
+              {opts?.description && (
+                <DialogDescription className="mt-1 leading-relaxed">
+                  {opts.description}
+                </DialogDescription>
+              )}
+            </div>
           </div>
+          {hasBody && (
+            <div className="flex flex-col gap-4 px-6 pb-5 pt-4">
+              {opts?.details && opts.details.length > 0 && <DialogDetails rows={opts.details} />}
+              {opts?.items && opts.items.length > 0 && <DialogChecklist items={opts.items} />}
+              {opts?.tip && <DialogTip>{opts.tip}</DialogTip>}
+              {opts?.confirmText && (
+                <Input
+                  autoFocus
+                  value={typedConfirm}
+                  onChange={(e) => setTypedConfirm(e.target.value)}
+                  placeholder={opts.confirmText.placeholder ?? opts.confirmText.target}
+                />
+              )}
+            </div>
+          )}
           <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
-            <Button variant="ghost" onClick={() => settle(false)}>
+            <Button variant="ghost" className="sm:min-w-24" onClick={() => settle(false)}>
               {opts?.cancelLabel ?? "Cancel"}
             </Button>
             <Button
-              variant={opts?.destructive === false ? "default" : "destructive"}
+              variant={destructive ? "destructive" : "default"}
+              className="sm:min-w-32"
               onClick={() => settle(true)}
               disabled={confirmBlocked}
               autoFocus={!opts?.confirmText}

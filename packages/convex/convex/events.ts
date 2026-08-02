@@ -21,7 +21,6 @@ export const create = mutation({
     allDay: v.boolean(),
     color: v.optional(v.string()),
     audience: audienceValidator,
-    guestVisible: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const user = await requireCapability(ctx, "manage_announcements");
@@ -51,7 +50,6 @@ export const update = mutation({
     allDay: v.optional(v.boolean()),
     color: v.optional(v.string()),
     audience: v.optional(audienceValidator),
-    guestVisible: v.optional(v.boolean()),
   },
   handler: async (ctx, { eventId, ...patch }) => {
     const user = await requireCapability(ctx, "manage_announcements");
@@ -108,7 +106,6 @@ export const listForRange = query({
         allDay: e.allDay,
         color: e.color ?? null,
         audience: e.audience,
-        guestVisible: e.guestVisible ?? false,
         createdByUserId: e.createdByUserId,
         createdByName: displayName(await ctx.db.get(e.createdByUserId)),
       })),

@@ -10,7 +10,7 @@
   "viewAll": "View all notifications",
   "allCaughtUp": "You're all caught up",
   "unreadOnly": "Unread only",
-  "preferences": "Notification preferences",
+  "preferences": "Notification settings",
   "preferencesHint": "Choose which notifications you want to receive.",
   "cat_absence": "Absences",
   "cat_announcement": "Announcements",
@@ -41,5 +41,10 @@
   "browserHint": "System notifications while the tab is in the background.",
   "browserUnsupported": "Your browser doesn't support notifications.",
   "browserDenied": "Notification permission was denied in the browser.",
-  "browserDeniedHint": "Notifications are blocked for this site in your browser. Enable them in your browser or OS settings, then turn this back on."
+  "browserDeniedHint": "Notifications are blocked for this site in your browser. Enable them in your browser or OS settings, then turn this back on.",
+  "bucket": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "earlier": "Earlier"
+  }
 }

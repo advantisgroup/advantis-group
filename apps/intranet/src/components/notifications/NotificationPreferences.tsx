@@ -4,18 +4,11 @@ import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-  AtSign,
-  BellRing,
-  CalendarCheck,
-  Megaphone,
-  MessageSquare,
-  Plane,
-  UploadCloud,
-} from "lucide-react";
+import { BellRing } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
 import type { LucideIcon } from "lucide-react";
@@ -24,43 +17,20 @@ import type { LucideIcon } from "lucide-react";
  * Every mutable notification type with its icon/tint. `access_request`
  * (system) is deliberately absent — admins must not mute access requests.
  */
+/**
+ * The subset of notification types a user is allowed to silence, in display
+ * order. Icons/tints come from the shared registry so this list and the
+ * notification feed can't drift apart.
+ */
 export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] = [
-  {
-    type: "chat-message",
-    icon: MessageSquare,
-    tint: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
-  },
-  {
-    type: "chat-mention",
-    icon: AtSign,
-    tint: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
-  },
-  {
-    type: "absence_request",
-    icon: Plane,
-    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  },
-  {
-    type: "absence_decision",
-    icon: CalendarCheck,
-    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  },
-  {
-    type: "announcement",
-    icon: Megaphone,
-    tint: "bg-primary/10 text-primary",
-  },
-  {
-    type: "upload_request",
-    icon: UploadCloud,
-    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  },
-  {
-    type: "upload_decision",
-    icon: UploadCloud,
-    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  },
-];
+  "chat-message",
+  "chat-mention",
+  "absence_request",
+  "absence_decision",
+  "announcement",
+  "upload_request",
+  "upload_decision",
+].map((type) => ({ type, ...notificationVisual(type) }));
 
 export function Switch({
   checked,

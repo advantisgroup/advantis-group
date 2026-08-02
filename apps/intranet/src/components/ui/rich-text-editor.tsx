@@ -13,8 +13,11 @@ import {
   Underline,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -402,6 +405,9 @@ export function RichTextToolbar({
             title={tool.label}
             aria-label={tool.label}
             aria-pressed={!!controller.active[tool.label]}
+            // Keep the caret (and the keyboard) where they are — a plain tap
+            // would blur the surface and close the docked bar mid-format.
+            onPointerDown={(e) => e.preventDefault()}
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => controller.run(tool)}
             className={cn(
@@ -516,25 +522,51 @@ export function RichTextEditor({
   mentionCandidates?: MentionCandidate[];
 }) {
   const controller = useRichTextController({ value, onChange, mentionCandidates });
+  const isMobile = useIsMobile();
+  const keyboardInset = useKeyboardInset();
+  const [focused, setFocused] = useState(false);
+  // The inline toolbar scrolls away above the keyboard as soon as there's a
+  // paragraph or two of text, so on mobile it moves to a bar sitting on top
+  // of the keyboard instead. It stays rendered in place (just hidden) so the
+  // box doesn't jump by a row's height when the keyboard opens.
+  const docked = isMobile && focused && keyboardInset > 0;
 
   return (
-    <div
-      className={cn(
-        "overflow-hidden rounded-lg border border-border bg-background shadow-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40",
-        className,
-      )}
-    >
-      <RichTextToolbar
-        controller={controller}
-        className="border-b border-border/70 bg-muted/40 px-1.5 py-1"
-      />
-      <RichTextSurface
-        controller={controller}
-        placeholder={placeholder}
-        onFocus={onFocus}
-        onBlur={onBlur}
-        className={cn("max-h-[28rem] overflow-y-auto", minHeight ?? "min-h-[14rem]")}
-      />
-    </div>
+    <>
+      <div
+        className={cn(
+          "overflow-hidden rounded-lg border border-border bg-background shadow-sm focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40",
+          className,
+        )}
+      >
+        <RichTextToolbar
+          controller={controller}
+          className={cn("border-b border-border/70 bg-muted/40 px-1.5 py-1", docked && "invisible")}
+        />
+        <RichTextSurface
+          controller={controller}
+          placeholder={placeholder}
+          onFocus={() => {
+            setFocused(true);
+            onFocus?.();
+          }}
+          onBlur={() => {
+            setFocused(false);
+            onBlur?.();
+          }}
+          className={cn("max-h-[28rem] overflow-y-auto", minHeight ?? "min-h-[14rem]")}
+        />
+      </div>
+      {docked &&
+        createPortal(
+          <div
+            style={{ bottom: keyboardInset }}
+            className="fixed inset-x-0 z-50 border-t border-border/70 bg-card px-2 py-1.5 shadow-[0_-4px_16px_-6px_rgb(0_0_0/0.25)]"
+          >
+            <RichTextToolbar controller={controller} className="justify-center" />
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

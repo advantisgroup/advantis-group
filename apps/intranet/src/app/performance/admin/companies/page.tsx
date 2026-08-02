@@ -609,6 +609,7 @@ function CompanyActions({
 
 export default function PerformanceCompaniesAdminPage() {
   const t = useTranslations("Performance");
+  const tc = useTranslations("Common");
   const { token, session } = usePerformanceSession();
   const handleError = useErrorHandler();
   const confirm = useConfirm();
@@ -642,6 +643,7 @@ export default function PerformanceCompaniesAdminPage() {
     const ok = await confirm({
       title: t("companyDeleteTitle"),
       description: t("companyDeleteWarning", { name: company.name }),
+      details: [{ label: tc("fieldName"), value: company.name }],
       confirmLabel: t("companyDeleteConfirm"),
       cancelLabel: t("topicCancel"),
       destructive: true,

@@ -382,7 +382,9 @@ export default defineSchema({
     info: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
-  }).index("by_nr", ["nr"]),
+  })
+    .index("by_nr", ["nr"])
+    .index("by_creator", ["createdByUserId"]),
 
   // Per-ticket chat thread — opt-in (a ticket has one iff someone with the
   // `manage_it_ticket_threads` capability, or a manager+, started it) rather
@@ -414,6 +416,9 @@ export default defineSchema({
         threadId: v.id("itTicketThreads"),
         senderUserId: v.id("users"),
         body: v.string(),
+        /** Optional, unlike chat's required array — every message written
+         *  before ticket threads supported attachments predates the field. */
+        attachments: v.optional(v.array(attachmentValidator)),
         editedAt: v.optional(v.number()),
         deletedAt: v.optional(v.number()),
         createdAt: v.number(),
@@ -427,6 +432,19 @@ export default defineSchema({
       }),
     ),
   ).index("by_thread", ["threadId"]),
+
+  // Mirrors `messageReactions` — same shape so the chat reaction UI can be
+  // reused against ticket threads without a second set of concepts.
+  itTicketMessageReactions: defineTable({
+    messageId: v.id("itTicketMessages"),
+    threadId: v.id("itTicketThreads"),
+    userId: v.id("users"),
+    emoji: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_message", ["messageId"])
+    .index("by_message_user", ["messageId", "userId"])
+    .index("by_thread", ["threadId"]),
 
   invites: defineTable({
     email: v.string(),
@@ -515,7 +533,7 @@ export default defineSchema({
     color: v.optional(v.string()),
     createdByUserId: v.id("users"),
     audience: audienceValidator,
-    /** Visible to temporary guest logins on the curated tour. */
+    /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),
     createdAt: v.number(),
   }).index("by_start", ["start"]),
@@ -534,7 +552,7 @@ export default defineSchema({
     attachmentStorageIds: v.array(v.id("_storage")),
     /** Rich attachments (name, kind, type) for newer announcements. */
     attachments: v.optional(v.array(attachmentValidator)),
-    /** Visible to temporary guest logins on the curated tour. */
+    /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),
     /** May be in the future (scheduled publish) — hidden from non-authors until then. */
     publishedAt: v.number(),
@@ -603,7 +621,7 @@ export default defineSchema({
     body: v.string(),
     authorUserId: v.id("users"),
     audience: audienceValidator,
-    /** Visible to temporary guest logins on the curated tour. */
+    /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),
     /** Free-text tags, optionally drawn from a predefined list in the UI. */
     affectedSystems: v.optional(v.array(v.string())),
@@ -832,9 +850,9 @@ export default defineSchema({
     lastActiveAt: v.number(),
   }).index("by_user", ["userId"]),
 
-  // --- Temporary guest logins (tour mode) ---------------------------------
-  // Admin-created, token-based, time-boxed read-only access to a curated tour.
-  // Fully separate from Clerk employee accounts; never sees sensitive data.
+  // Dead: the guest tour is gone. Kept declared only so
+  // `migrations/dropGuestFields` can empty it — drop this table and the
+  // `guestVisible` fields above once that has run.
   tempLogins: defineTable({
     label: v.string(),
     email: v.optional(v.string()),

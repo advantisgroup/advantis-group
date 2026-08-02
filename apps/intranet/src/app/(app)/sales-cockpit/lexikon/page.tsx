@@ -38,6 +38,7 @@ function readAsText(file: File): Promise<string> {
 
 export default function SalesCockpitLexikonPage() {
   const t = useTranslations("SalesCockpit");
+  const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const entries = useQuery(api.salesCockpit.listLexikon);
@@ -102,6 +103,7 @@ export default function SalesCockpitLexikonPage() {
     const ok = await confirm({
       title: t("eintragLoeschenTitel"),
       description: t("eintragLoeschenBeschreibung", { titel: titelValue }),
+      details: [{ label: tc("fieldTitle"), value: titelValue }],
       destructive: true,
     });
     if (!ok) return;

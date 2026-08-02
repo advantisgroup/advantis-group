@@ -10,7 +10,6 @@
   "start": "Start",
   "end": "End",
   "allDay": "All day",
-  "guestVisible": "Show to guests",
   "details": "Details",
   "organizer": "Organizer",
   "noEntries": "Nothing scheduled",

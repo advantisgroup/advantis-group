@@ -2,15 +2,7 @@
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import {
-  ChevronRight,
-  Clock,
-  KeyRound,
-  Mail,
-  ShieldCheck,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronRight, Clock, Mail, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
@@ -90,7 +82,6 @@ export default function AdminPage() {
   const members = useQuery(api.users.list, { includeSuspended: true });
   const requests = useQuery(api.accessRequests.list, isManager ? { status: "pending" } : "skip");
   const invites = useQuery(api.invites.list, isManager ? { status: "pending" } : "skip");
-  const guests = useQuery(api.guest.listTempLogins, isAdmin ? {} : "skip");
   const pendingUploads = useQuery(
     api.onedrive.listPending,
     isManager || hasUploadsView ? {} : "skip",
@@ -104,7 +95,6 @@ export default function AdminPage() {
   const activeMembers = members?.filter((m) => m.status === "active").length;
   const reqCount = requests?.length;
   const invCount = invites?.length;
-  const guestCount = guests?.filter((g) => g.status === "active").length;
   const uploadCount = pendingUploads?.length;
 
   const stats: {
@@ -132,14 +122,6 @@ export default function AdminPage() {
       accent: !!invCount,
     },
   ];
-  if (isAdmin) {
-    stats.push({
-      label: t("overviewGuests"),
-      value: dash(guestCount),
-      icon: KeyRound,
-      accent: !!guestCount,
-    });
-  }
 
   // Badge counts for the quick-access cards below — keyed by href so each
   // card can surface "something's waiting here" without a second query per
@@ -148,7 +130,6 @@ export default function AdminPage() {
     "/admin/requests": reqCount,
     "/admin/invites": invCount,
     "/admin/uploads": uploadCount,
-    "/admin/guests": guestCount,
   };
   const priorities = [
     { href: "/admin/requests", icon: Clock, label: t("overviewRequests"), count: reqCount },

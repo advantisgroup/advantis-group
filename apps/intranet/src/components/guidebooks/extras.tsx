@@ -85,7 +85,9 @@ export function GuidebookToc({ containerId = "guidebook-content" }: { containerI
   if (entries.length < 2) return null;
 
   return (
-    <nav aria-label={t("toc")} className="fixed right-6 top-36 hidden w-52 print:hidden xl:block">
+    // Shows from 2xl, not xl: the content column is centred in the full
+    // viewport and doesn't know this is here, so at ~1280px the two overlap.
+    <nav aria-label={t("toc")} className="fixed right-6 top-36 hidden w-72 print:hidden 2xl:block">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {t("toc")}
       </p>
@@ -100,7 +102,9 @@ export function GuidebookToc({ containerId = "guidebook-content" }: { containerI
                   ?.scrollIntoView({ behavior: "smooth", block: "start" })
               }
               className={cn(
-                "-ml-px block w-full truncate border-l-2 py-0.5 text-left transition-colors",
+                // Wrap to a second line rather than truncating — a cut-off
+                // heading is useless for navigating to it.
+                "-ml-px block w-full border-l-2 py-0.5 text-left leading-snug transition-colors",
                 e.level === 3 ? "pl-6" : "pl-3",
                 activeId === e.id
                   ? "border-primary font-medium text-foreground"

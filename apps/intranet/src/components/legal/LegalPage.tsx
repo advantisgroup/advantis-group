@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { ArrowLeft, ArrowUp, Menu } from "lucide-react";
+import { ArrowLeft, ArrowUp, Check, Copy, Menu } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { Link } from "@/components/Link";
 import { WordmarkLogo } from "@/components/Logo";
@@ -38,24 +39,99 @@ export interface LegalCrossLink {
 const CONTACT_SECTION_IDS = new Set(["controller", "contact", "provider"]);
 const FULL_LEGAL_SECTION_IDS = new Set(["provider"]);
 
+/**
+ * A legal value someone is likely to need elsewhere — pasted into an email,
+ * a form, an accountant's system. Retyping a VAT number by hand off a web
+ * page is exactly where transcription errors come from.
+ */
+function CopyableValue({
+  value,
+  label,
+  className,
+  children,
+}: {
+  value: string;
+  label: string;
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  const tCommon = useTranslations("Common");
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(id);
+  }, [copied]);
+
+  return (
+    <div className="group flex items-start justify-between gap-2">
+      <span className={cn("min-w-0 break-words", className)}>{children ?? value}</span>
+      <button
+        type="button"
+        aria-label={`${tCommon("copy")}: ${label}`}
+        onClick={() => {
+          void navigator.clipboard
+            .writeText(value)
+            .then(() => {
+              setCopied(true);
+              toast.success(tCommon("copied"));
+            })
+            .catch(() => toast.error(tCommon("copyFailed")));
+        }}
+        className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:opacity-0 md:group-hover:opacity-100 md:focus-visible:opacity-100"
+      >
+        {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
+      </button>
+    </div>
+  );
+}
+
 function ContactBox({ full = false }: { full?: boolean }) {
+  const address = process.env.NEXT_PUBLIC_ADRESS;
+  const email = process.env.NEXT_PUBLIC_EMAIL_ADRESS;
+  const phone = process.env.NEXT_PUBLIC_PHONE_NUMBER;
+
   return (
     <div className="space-y-1 rounded-lg bg-muted/30 p-4 text-sm">
       <p className="font-semibold text-foreground">advantis GmbH</p>
       <p className="text-foreground/80">Andrea Reichl</p>
-      <address className="not-italic text-muted-foreground">
-        {process.env.NEXT_PUBLIC_ADRESS}
-      </address>
-      <p className="text-muted-foreground">{process.env.NEXT_PUBLIC_EMAIL_ADRESS}</p>
-      {process.env.NEXT_PUBLIC_PHONE_NUMBER && (
-        <p className="text-muted-foreground">{process.env.NEXT_PUBLIC_PHONE_NUMBER}</p>
+      {address && (
+        <CopyableValue value={address} label="advantis GmbH" className="text-muted-foreground">
+          <address className="not-italic">{address}</address>
+        </CopyableValue>
+      )}
+      {email && (
+        <CopyableValue value={email} label={email} className="text-muted-foreground">
+          <a href={`mailto:${email}`} className="hover:text-foreground hover:underline">
+            {email}
+          </a>
+        </CopyableValue>
+      )}
+      {phone && (
+        <CopyableValue value={phone} label={phone} className="text-muted-foreground">
+          <a
+            href={`tel:${phone.replace(/\s/g, "")}`}
+            className="hover:text-foreground hover:underline"
+          >
+            {phone}
+          </a>
+        </CopyableValue>
       )}
       {full && (
         <div className="space-y-1 pt-1">
-          <p className="text-muted-foreground">
-            USt-IdNr.: <span className="tabular-nums">DE463759734</span>
-          </p>
-          <p className="text-muted-foreground">Amtsgericht Nürnberg, HRB 46148</p>
+          <CopyableValue value="DE463759734" label="USt-IdNr." className="text-muted-foreground">
+            <>
+              USt-IdNr.: <span className="tabular-nums">DE463759734</span>
+            </>
+          </CopyableValue>
+          <CopyableValue
+            value="HRB 46148"
+            label="Handelsregister"
+            className="text-muted-foreground"
+          >
+            <>Amtsgericht Nürnberg, HRB 46148</>
+          </CopyableValue>
         </div>
       )}
     </div>
@@ -251,7 +327,7 @@ export function LegalPage({
           )}
 
           <div className="min-w-0 flex-1 space-y-6">
-            {sections.map((section) => (
+            {sections.map((section, i) => (
               <section
                 key={section.id}
                 id={section.id}
@@ -260,8 +336,13 @@ export function LegalPage({
               >
                 <Card>
                   <CardHeader>
-                    <h2 className="text-xl font-semibold leading-none tracking-tight">
-                      {section.title}
+                    {/* Same number the table of contents shows, so "see 04"
+                        points at something the reader can actually find. */}
+                    <h2 className="flex items-baseline gap-3 text-xl font-semibold leading-none tracking-tight">
+                      <span className="shrink-0 text-base font-semibold tabular-nums text-primary">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="min-w-0">{section.title}</span>
                     </h2>
                   </CardHeader>
                   <CardContent className="space-y-4 pt-0 text-sm leading-relaxed text-foreground/80">

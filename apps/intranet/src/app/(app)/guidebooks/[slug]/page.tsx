@@ -194,6 +194,11 @@ export default function GuidebookPage() {
     const ok = await confirm({
       title: t("deleteEntryConfirm"),
       description: tc("deleteWarning"),
+      details: [
+        { label: t("fieldThema"), value: entry.thema },
+        ...(entry.categoryName ? [{ label: t("fieldCategory"), value: entry.categoryName }] : []),
+        { label: t("versionMeta", { version: entry.version }), value: entry.authorName },
+      ],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });
@@ -212,6 +217,7 @@ export default function GuidebookPage() {
     const ok = await confirm({
       title: t("deletePageConfirm"),
       description: tc("deleteWarning"),
+      details: [{ label: t("fieldThema"), value: legacyPage.title }],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });

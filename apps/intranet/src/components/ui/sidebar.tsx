@@ -105,7 +105,14 @@ export function SidebarProvider({
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
             } as React.CSSProperties
           }
-          className={cn("fixed inset-0 flex overflow-hidden", className)}
+          // Pinned to the viewport so <main> can be the scroll container.
+          // Print has to undo that: a fixed, overflow-hidden box is one
+          // viewport tall, so everything below the fold is clipped and the
+          // job ends after page one.
+          className={cn(
+            "fixed inset-0 flex overflow-hidden print:static print:block print:overflow-visible",
+            className,
+          )}
         >
           {children}
         </div>
@@ -169,7 +176,11 @@ export function SidebarInset({
   children: React.ReactNode;
   className?: string;
 }) {
-  return <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", className)}>{children}</div>;
+  return (
+    <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col print:block", className)}>
+      {children}
+    </div>
+  );
 }
 
 export function SidebarTrigger({ className }: { className?: string }) {

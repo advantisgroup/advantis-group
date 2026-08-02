@@ -180,6 +180,12 @@ export default function UpdateDetailPage() {
     const ok = await confirm({
       title: t("deleteConfirm"),
       description: tc("deleteWarning"),
+      details: data
+        ? [
+            { label: tc("fieldTitle"), value: data.title },
+            { label: tc("fieldStatus"), value: t(`type.${data.type}`) },
+          ]
+        : undefined,
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });

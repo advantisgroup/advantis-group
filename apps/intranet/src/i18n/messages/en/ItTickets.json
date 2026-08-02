@@ -83,6 +83,7 @@
     "ticketCreatorBadge": "Ticket creator",
     "readOnlyNote": "Only managers and people with permission can post here.",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "react": "React"
   }
 }

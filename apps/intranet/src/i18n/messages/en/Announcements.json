@@ -26,7 +26,6 @@
   "bodyLabel": "Write your announcement…",
   "titlePlaceholder": "Title",
   "pin": "Pin to top",
-  "guestVisible": "Show to guests",
   "by": "by {name}",
   "deleteConfirm": "Delete this announcement?",
   "empty": "No announcements yet",
@@ -53,5 +52,6 @@
   "expiresAtLabel": "Expires (optional)",
   "scheduledFor": "Scheduled for {date}",
   "scheduledToast": "Announcement scheduled",
-  "expired": "Expired"
+  "expired": "Expired",
+  "optionsHint": "Category, audience, attachments and scheduling for this announcement."
 }

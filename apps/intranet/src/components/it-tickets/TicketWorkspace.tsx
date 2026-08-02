@@ -138,7 +138,7 @@ export function TicketWorkspace({
   }
 
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full min-h-0 overflow-hidden">
       <div className="w-80 shrink-0 border-r border-border/70">{detail}</div>
       <div className="min-w-0 flex-1">{chat}</div>
     </div>

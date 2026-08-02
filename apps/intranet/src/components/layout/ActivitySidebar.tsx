@@ -79,7 +79,7 @@ export function ActivitySidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild tooltip={t("backToDashboard")}>
-              <Link href="/admin" onClick={close}>
+              <Link href="/" onClick={close}>
                 <ArrowLeft />
                 <SidebarLabel>{t("backToDashboard")}</SidebarLabel>
               </Link>

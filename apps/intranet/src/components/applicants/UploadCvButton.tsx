@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -24,8 +24,47 @@ export function UploadCvButton() {
   const confirm = useConfirm();
   const inputRef = useRef<HTMLInputElement>(null);
   const manualInputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState<string | null>(null);
   const [fallbackFile, setFallbackFile] = useState<File | null>(null);
+  // Extraction is a multi-second Claude call with no progress events to
+  // report, so the honest thing to show is which file is being read, how far
+  // into the batch it is, and that time is actually passing — a disabled
+  // button alone is indistinguishable from a hang.
+  const [job, setJob] = useState<{ file: string; index: number; total: number } | null>(null);
+  const [seconds, setSeconds] = useState(0);
+  const toastId = useRef<string | number | null>(null);
+
+  // Navigating away mid-extraction leaves `job` set on an unmounting
+  // component, so the duration:Infinity toast would otherwise stay on screen
+  // forever.
+  useEffect(
+    () => () => {
+      if (toastId.current !== null) toast.dismiss(toastId.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!job) return;
+    setSeconds(0);
+    const startedAt = Date.now();
+    const id = setInterval(() => setSeconds(Math.round((Date.now() - startedAt) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [job]);
+
+  useEffect(() => {
+    if (!job) {
+      if (toastId.current !== null) {
+        toast.dismiss(toastId.current);
+        toastId.current = null;
+      }
+      return;
+    }
+    toastId.current = toast.loading(t("extractAnalyzing", { file: job.file, seconds }), {
+      id: toastId.current ?? undefined,
+      description: job.total > 1 ? t("extractBatch", job) : undefined,
+      duration: Infinity,
+    });
+  }, [job, seconds, t]);
 
   async function handleFiles(files: FileList | null) {
     const pdfs = Array.from(files ?? []).filter((f) => f.type === "application/pdf");
@@ -35,7 +74,7 @@ export function UploadCvButton() {
     }
     for (let i = 0; i < pdfs.length; i++) {
       const file = pdfs[i];
-      setUploading(file.name);
+      setJob({ file: file.name, index: i + 1, total: pdfs.length });
       try {
         const result = await applicantsApi.extract(file);
         if (result.kind === "created") {
@@ -75,12 +114,12 @@ export function UploadCvButton() {
         if (remaining > 0) {
           toast.info(t("uploadBatchInterrupted", { remaining }));
         }
-        setUploading(null);
+        setJob(null);
         setFallbackFile(file);
         return;
       }
     }
-    setUploading(null);
+    setJob(null);
   }
 
   function openManualEntry() {
@@ -92,11 +131,13 @@ export function UploadCvButton() {
       <div className="flex gap-2">
         <Button
           onClick={() => inputRef.current?.click()}
-          disabled={!!uploading}
-          aria-label={uploading ? t("uploading") : t("uploadCv")}
+          disabled={!!job}
+          aria-label={job ? t("uploading") : t("uploadCv")}
         >
           <UploadCloud className="size-4" />
-          <span className="hidden md:inline">{uploading ? t("uploading") : t("uploadCv")}</span>
+          <span className="hidden md:inline">
+            {job ? (job.total > 1 ? t("extractBatch", job) : t("uploading")) : t("uploadCv")}
+          </span>
         </Button>
         <Button variant="outline" onClick={openManualEntry} aria-label={t("fillManually")}>
           <PenLine className="size-4" />

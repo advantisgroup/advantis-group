@@ -4,7 +4,12 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  reactCompiler: true,
+  // React Compiler runs as a Babel pass, which takes every module off Next's
+  // SWC fast path — the bulk of the 30s dev compiles (a route reporting
+  // "next.js: 36.5s" against 52ms of application code is all compilation).
+  // It only inserts memoization, so dev doesn't need it; production builds
+  // still get it. Set REACT_COMPILER=1 to check its output locally.
+  reactCompiler: process.env.NODE_ENV === "production" || process.env.REACT_COMPILER === "1",
   typedRoutes: false,
   // react-pdf/pdfjs-dist ship modern-syntax ESM meant for native
   // <script type=module> use; Next's official Next.js integration guide for

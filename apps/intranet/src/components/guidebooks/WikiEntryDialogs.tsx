@@ -121,6 +121,12 @@ export function CategoryManagerDialog({
   async function onDelete(categoryId: Id<"wikiCategories">) {
     const ok = await confirm({
       title: t("deleteCategoryConfirm"),
+      details: [
+        {
+          label: tc("fieldName"),
+          value: categories.find((c) => c._id === categoryId)?.name ?? "",
+        },
+      ],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
       destructive: true,

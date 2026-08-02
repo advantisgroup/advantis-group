@@ -487,6 +487,7 @@ export function ConversationView({
     const ok = await confirm({
       title: isGroup ? t("leaveGroup") : t("leaveChat"),
       description: isGroup ? t("leaveGroupHint") : t("leaveChatHint"),
+      details: conversation ? [{ label: tc("fieldName"), value: conversation.title }] : undefined,
       confirmLabel: isGroup ? t("leaveGroup") : t("leaveChat"),
       cancelLabel: tc("cancel"),
     });

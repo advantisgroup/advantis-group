@@ -86,6 +86,7 @@ export function GuidebookAttachments({ slug }: { slug: string }) {
     const ok = await confirm({
       title: t("deleteAttachmentConfirm"),
       description: tc("deleteWarning"),
+      details: [{ label: tc("fieldName"), value: attachment.name }],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });

@@ -98,6 +98,26 @@ export const list = query({
   },
 });
 
+/**
+ * The caller's own still-open tickets, for the dashboard card. Deliberately
+ * not a client-side filter over `list`: that returns the newest 500 tickets
+ * org-wide, so an older unresolved ticket of yours drops off once 500 newer
+ * ones exist — and every dashboard session would subscribe to hundreds of
+ * unrelated documents to render five rows.
+ */
+export const listMineOpen = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx, { limit }) => {
+    const user = await requireUser(ctx);
+    const rows = await ctx.db
+      .query("itTickets")
+      .withIndex("by_creator", (q) => q.eq("createdByUserId", user._id))
+      .order("desc")
+      .collect();
+    return rows.filter((t) => t.status !== "closed").slice(0, limit ?? 5);
+  },
+});
+
 export const create = mutation({
   args: ticketFields,
   handler: async (ctx, args) => {

@@ -210,6 +210,10 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
   async function onDelete() {
     const ok = await confirm({
       title: t("deleteMeasureConfirm"),
+      details: [
+        { label: tc("fieldTitle"), value: measure.description },
+        { label: tc("fieldStatus"), value: t(`phase.${measure.phase}`) },
+      ],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
       destructive: true,

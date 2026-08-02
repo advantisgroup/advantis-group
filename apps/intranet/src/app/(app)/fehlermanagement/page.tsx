@@ -247,6 +247,13 @@ function ErrorDetailDialog({
     if (!report) return;
     const ok = await confirm({
       title: t("deleteErrorConfirm"),
+      details: [
+        { label: tc("fieldTitle"), value: report.description },
+        ...(report.categoryName
+          ? [{ label: tc("fieldCategory"), value: report.categoryName }]
+          : []),
+        { label: tc("fieldStatus"), value: t(`severity.${report.severity}`) },
+      ],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
       destructive: true,

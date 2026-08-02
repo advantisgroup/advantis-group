@@ -25,10 +25,14 @@ const SCALE_STEP = 0.2;
  * fallback modal's `PdfViewer`). */
 export function PdfPreview({ url }: { url: string }) {
   const t = useTranslations("Applicants");
-  const [loadError, setLoadError] = useState(false);
+  // Tracked as "which url failed" rather than a boolean, so a new url clears
+  // the error on its own — a latched boolean kept showing the failure after
+  // a retry had already produced a working url.
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1);
+  const loadError = failedUrl === url;
 
   if (loadError) {
     return <p className="max-w-sm py-8 text-center text-sm text-white/70">{t("pdfLoadFailed")}</p>;
@@ -44,7 +48,7 @@ export function PdfPreview({ url }: { url: string }) {
             setNumPages(pdf.numPages);
             setCurrentPage(1);
           }}
-          onLoadError={() => setLoadError(true)}
+          onLoadError={() => setFailedUrl(url)}
         >
           <Page
             pageNumber={currentPage}
@@ -53,7 +57,7 @@ export function PdfPreview({ url }: { url: string }) {
             renderAnnotationLayer={false}
             loading={null}
             className="shadow-2xl"
-            onLoadError={() => setLoadError(true)}
+            onLoadError={() => setFailedUrl(url)}
           />
         </Document>
       </div>

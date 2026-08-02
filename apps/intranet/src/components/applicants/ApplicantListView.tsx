@@ -6,7 +6,6 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
 import { matchSkills } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
 import {
@@ -151,6 +150,7 @@ export function ApplicantListView() {
   const applicants = useQuery(api.applicants.list);
   const profiles = useQuery(api.applicants.listProfiles);
   const convertApplicant = useMutation(api.humanResources.convertApplicant);
+  const revertConversion = useMutation(api.humanResources.revertConversion);
   const archiveApplicant = useMutation(api.humanResources.archiveApplicant);
 
   const status = parseStatusFilter(searchParams.get("status"));
@@ -207,10 +207,23 @@ export function ApplicantListView() {
     return `/hr/${a._id}/uebersicht?${p.toString()}`;
   }
 
-  async function onConvert(applicantId: Id<"applicants">) {
+  async function onConvert(applicant: Applicant) {
     try {
-      await convertApplicant({ applicantId });
-      toast.success(t("applicantConverted"));
+      await convertApplicant({ applicantId: applicant._id });
+      // Hire sits right next to Archive, so a misclick is easy. Offering the
+      // reversal on the confirmation itself is the only moment the user is
+      // still looking at what just happened.
+      toast.success(t("applicantConverted"), {
+        duration: 12_000,
+        action: {
+          label: t("undoHire"),
+          onClick: () => {
+            void revertConversion({ applicantId: applicant._id })
+              .then(() => toast.success(t("undoHireDone", { name: applicant.name })))
+              .catch(() => toast.error(t("undoHireBlocked")));
+          },
+        },
+      });
     } catch (error) {
       handleError(error);
     }
@@ -219,6 +232,10 @@ export function ApplicantListView() {
   async function onArchive(applicant: Applicant) {
     const ok = await confirm({
       title: t("archiveApplicantConfirm", { name: applicant.name }),
+      details: [
+        ...(applicant.position ? [{ label: t("position"), value: applicant.position }] : []),
+        ...(applicant.email ? [{ label: t("email"), value: applicant.email }] : []),
+      ],
       confirmLabel: t("archiveApplicant"),
       cancelLabel: tc("cancel"),
       destructive: true,
@@ -400,7 +417,7 @@ export function ApplicantListView() {
                           title={t("makeEmployee")}
                           onClick={(event) => {
                             event.stopPropagation();
-                            void onConvert(a._id);
+                            void onConvert(a);
                           }}
                         >
                           <UserCheck className="size-4" />
@@ -466,7 +483,7 @@ export function ApplicantListView() {
                   </div>
                 </Link>
                 <div className="flex gap-1">
-                  <Button variant="outline" size="sm" onClick={() => void onConvert(a._id)}>
+                  <Button variant="outline" size="sm" onClick={() => void onConvert(a)}>
                     <UserCheck className="size-3.5" />
                     {t("makeEmployee")}
                   </Button>

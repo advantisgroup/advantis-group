@@ -156,6 +156,7 @@ export default function ApplicantDetailLayout({ children }: { children: ReactNod
     const ok = await confirm({
       title: t("deleteApplicant"),
       description: t("deleteApplicantConfirm", { name: applicant.name }),
+      details: [{ label: tc("fieldName"), value: applicant.name }],
       confirmText: { target: applicant.name },
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),

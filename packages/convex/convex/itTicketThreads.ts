@@ -3,6 +3,7 @@ import { ConvexError, v } from "convex/values";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, mutation, query } from "./_generated/server";
 import { requireCapability, requireUser } from "./lib/auth";
+import { attachmentValidator } from "./schema";
 
 /**
  * Per-ticket chat threads for the IT-Meldesystem: unlike the ticket log
@@ -101,12 +102,26 @@ export const start = mutation({
 export const listMessages = query({
   args: { threadId: v.id("itTicketThreads") },
   handler: async (ctx, { threadId }) => {
-    await requireUser(ctx);
+    const viewer = await requireUser(ctx);
     const rows = await ctx.db
       .query("itTicketMessages")
       .withIndex("by_thread", (q) => q.eq("threadId", threadId))
       .collect();
     const sorted = rows.sort((a, b) => a.createdAt - b.createdAt);
+
+    // One read for the whole thread rather than one per message — a long
+    // thread otherwise issued N extra queries on every reactive refresh.
+    const allReactions = await ctx.db
+      .query("itTicketMessageReactions")
+      .withIndex("by_thread", (q) => q.eq("threadId", threadId))
+      .collect();
+    const reactionsByMessage = new Map<Id<"itTicketMessages">, typeof allReactions>();
+    for (const r of allReactions) {
+      const list = reactionsByMessage.get(r.messageId);
+      if (list) list.push(r);
+      else reactionsByMessage.set(r.messageId, [r]);
+    }
+
     return Promise.all(
       sorted.map(async (m) => {
         if (m.kind === "system") {
@@ -120,12 +135,30 @@ export const listMessages = query({
           };
         }
         const sender = m.deletedAt ? null : await ctx.db.get(m.senderUserId);
+        // Collapse to one row per emoji with a count, the same shape the chat
+        // bubble already renders.
+        const byEmoji = new Map<string, { emoji: string; count: number; mine: boolean }>();
+        for (const r of reactionsByMessage.get(m._id) ?? []) {
+          const entry = byEmoji.get(r.emoji) ?? { emoji: r.emoji, count: 0, mine: false };
+          entry.count += 1;
+          if (r.userId === viewer._id) entry.mine = true;
+          byEmoji.set(r.emoji, entry);
+        }
         return {
           _id: m._id,
           kind: "message" as const,
           senderUserId: m.senderUserId,
           senderName: displayName(sender),
           body: m.deletedAt ? null : m.body,
+          attachments: m.deletedAt
+            ? []
+            : await Promise.all(
+                (m.attachments ?? []).map(async (a) => ({
+                  ...a,
+                  url: await ctx.storage.getUrl(a.storageId),
+                })),
+              ),
+          reactions: [...byEmoji.values()],
           editedAt: m.editedAt ?? null,
           deletedAt: m.deletedAt ?? null,
           createdAt: m.createdAt,
@@ -136,15 +169,21 @@ export const listMessages = query({
 });
 
 export const sendMessage = mutation({
-  args: { threadId: v.id("itTicketThreads"), body: v.string() },
-  handler: async (ctx, { threadId, body }) => {
+  args: {
+    threadId: v.id("itTicketThreads"),
+    body: v.string(),
+    attachments: v.optional(v.array(attachmentValidator)),
+  },
+  handler: async (ctx, { threadId, body, attachments }) => {
     const user = await requireCapability(ctx, "manage_it_ticket_threads");
     const thread = await requireThread(ctx, threadId);
     if (thread.lockedAt) {
       throw new ConvexError({ code: "locked", message: "This chat is locked" });
     }
     const trimmed = body.trim();
-    if (!trimmed) {
+    // A file on its own is a perfectly good message — only reject when there's
+    // neither text nor an attachment.
+    if (!trimmed && !attachments?.length) {
       throw new ConvexError({ code: "bad_request", message: "Message can't be empty" });
     }
     const now = Date.now();
@@ -153,6 +192,7 @@ export const sendMessage = mutation({
       threadId,
       senderUserId: user._id,
       body: trimmed,
+      attachments,
       createdAt: now,
     });
     await ctx.db.patch(threadId, { lastMessageAt: now });
@@ -234,3 +274,34 @@ export async function autoLockThreadOnTicketClosed(
     createdAt: now,
   });
 }
+
+/** One reaction per user per message, same rule as chat's `toggleReaction`.
+ *  Reacting is open to any reader — it's a read-side signal, not a post. */
+export const toggleReaction = mutation({
+  args: { messageId: v.id("itTicketMessages"), emoji: v.string() },
+  handler: async (ctx, { messageId, emoji }) => {
+    const user = await requireUser(ctx);
+    const message = await ctx.db.get(messageId);
+    if (!message || message.kind !== "message" || message.deletedAt) {
+      throw new ConvexError({ code: "not_found", message: "Message not found" });
+    }
+    const existing = await ctx.db
+      .query("itTicketMessageReactions")
+      .withIndex("by_message_user", (q) => q.eq("messageId", messageId).eq("userId", user._id))
+      .first();
+
+    if (existing) {
+      if (existing.emoji === emoji) await ctx.db.delete(existing._id);
+      else await ctx.db.patch(existing._id, { emoji, createdAt: Date.now() });
+      return { ok: true };
+    }
+    await ctx.db.insert("itTicketMessageReactions", {
+      messageId,
+      threadId: message.threadId,
+      userId: user._id,
+      emoji,
+      createdAt: Date.now(),
+    });
+    return { ok: true };
+  },
+});
