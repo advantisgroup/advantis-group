@@ -165,7 +165,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <main
           ref={mainRef}
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto print:overflow-visible",
+            "min-h-0 flex-1 overflow-y-auto print:block print:h-auto print:overflow-visible",
             !immersive && "md:pb-8",
             isUpdateDetail || immersive ? "" : "px-4 pt-6 md:px-8 md:pt-8",
             immersive ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]",

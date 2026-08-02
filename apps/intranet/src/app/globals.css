@@ -562,6 +562,44 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* The app shell pins itself to the viewport so <main> can be the scroll
+   container. Print needs the document to flow at its natural height instead,
+   or the page break never happens and everything past the first sheet is
+   dropped. Un-layered so it beats the utility classes that set the heights. */
+@media print {
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+  }
+
+  @page {
+    margin: 16mm;
+  }
+
+  /* Keep headings with the text they introduce, and don't strand a single
+     line of a paragraph on its own sheet. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  p,
+  li,
+  blockquote,
+  table,
+  img {
+    break-inside: avoid;
+  }
+
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+}
+
 /* iOS Safari zooms the viewport whenever a focused control's text is under
    16px, so every tap on a field makes the layout lurch and the user has to
    pinch back out. Un-layered on purpose: the same rule inside `@layer base`
