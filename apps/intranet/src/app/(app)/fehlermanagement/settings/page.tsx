@@ -81,9 +81,13 @@ export default function ErrorManagementSettingsPage() {
     }
   }
 
-  async function onDeleteCategory(categoryId: Parameters<typeof removeCategory>[0]["categoryId"]) {
+  async function onDeleteCategory(
+    categoryId: Parameters<typeof removeCategory>[0]["categoryId"],
+    name: string,
+  ) {
     const ok = await confirm({
       title: t("deleteCategoryConfirm"),
+      details: [{ label: tc("fieldName"), value: name }],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
       destructive: true,
@@ -132,7 +136,7 @@ export default function ErrorManagementSettingsPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => void onDeleteCategory(c._id)}
+                  onClick={() => void onDeleteCategory(c._id, c.name)}
                   aria-label={tc("delete")}
                   className="shrink-0 text-muted-foreground hover:text-destructive"
                 >

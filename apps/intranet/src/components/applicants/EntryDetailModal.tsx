@@ -56,6 +56,9 @@ export function EntryDetailModal({
     const ok = await confirm({
       title: confirmTitle ?? t("deleteEntry"),
       description: confirmDescription,
+      // Every entry kind (email, interview, appointment, contact) routes its
+      // delete through here, so naming the entry once covers all of them.
+      details: [{ label: tc("fieldTitle"), value: title }],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });

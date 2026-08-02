@@ -128,6 +128,7 @@ export function Dokumente({ applicant }: { applicant: ApplicantDetail }) {
     const ok = await confirm({
       title: t("deleteDocument"),
       description: t("deleteDocumentConfirm", { name }),
+      details: [{ label: tc("fieldName"), value: name }],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });

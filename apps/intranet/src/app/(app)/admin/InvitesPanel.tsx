@@ -41,14 +41,18 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
   const handleError = useErrorHandler();
   const allowedDomains = config?.allowedDomains ?? [];
 
-  async function onRevoke(id: Id<"invites">) {
+  async function onRevoke(invite: { _id: Id<"invites">; email: string; role: Role }) {
     const ok = await confirm({
       title: t("revoke"),
       description: tc("deleteWarning"),
+      details: [
+        { label: t("inviteEmail"), value: invite.email },
+        { label: t("role"), value: invite.role },
+      ],
       confirmLabel: t("revoke"),
       cancelLabel: tc("cancel"),
     });
-    if (ok) revoke({ inviteId: id }).catch(handleError);
+    if (ok) revoke({ inviteId: invite._id }).catch(handleError);
   }
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("employee");
@@ -164,7 +168,7 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
                     size="sm"
                     variant="ghost"
                     className="flex-1 sm:flex-none"
-                    onClick={() => void onRevoke(i._id)}
+                    onClick={() => void onRevoke(i)}
                   >
                     {t("revoke")}
                   </Button>
