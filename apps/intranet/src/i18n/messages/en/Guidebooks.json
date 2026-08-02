@@ -228,5 +228,7 @@
     "send": "Send message",
     "openFull": "Open full-page chat",
     "openFullHint": "More room to breathe — its own page, like a real chat app."
-  }
+  },
+  "tagsFilterLabel": "Tags",
+  "legacySectionTitle": "Older pages"
 }

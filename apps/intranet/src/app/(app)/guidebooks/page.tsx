@@ -327,6 +327,7 @@ export default function GuidebooksPage() {
   const [activeCategoryKeys, setActiveCategoryKeys] = useState<Set<string>>(new Set());
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
   const [showArchive, setShowArchive] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [editing, setEditing] = useState<WikiEntry | "new" | null>(null);
   const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -392,6 +393,10 @@ export default function GuidebooksPage() {
     const pool = (items ?? []).filter((i) => (showArchive ? i.archived : !i.archived));
     return [...new Set(pool.flatMap((i) => i.tags))].sort((a, b) => a.localeCompare(b, "de"));
   }, [items, showArchive]);
+  // Legacy (block-editor) pages render in their own collapsed section rather
+  // than interleaved with wiki entries — see the grid below.
+  const currentEntries = useMemo(() => sorted.filter((i) => i.kind !== "legacy"), [sorted]);
+  const legacyEntries = useMemo(() => sorted.filter((i) => i.kind === "legacy"), [sorted]);
 
   function toggleCategory(key: string) {
     setActiveCategoryKeys((prev) => {
@@ -511,7 +516,7 @@ export default function GuidebooksPage() {
               className="pl-9"
             />
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {categoryChips.map((c) => (
               <button
                 key={c.key}
@@ -530,15 +535,18 @@ export default function GuidebooksPage() {
                     : undefined
                 }
               >
-                <span className="size-2 rounded-full" style={{ backgroundColor: c.color }} />
-                {c.label}
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: c.color }}
+                />
+                <span className="whitespace-nowrap">{c.label}</span>
               </button>
             ))}
             <button
               type="button"
               onClick={() => setShowArchive((v) => !v)}
               className={cn(
-                "ml-auto inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                "ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                 showArchive
                   ? "border-muted-foreground/40 bg-muted-foreground/10 text-foreground"
                   : "border-dashed border-border text-muted-foreground hover:bg-accent",
@@ -549,22 +557,54 @@ export default function GuidebooksPage() {
             </button>
           </div>
           {availableTags.length > 0 && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5 border-t border-dashed border-border pt-2.5">
-              {availableTags.map((tag) => (
+            <div className="mt-2.5 border-t border-dashed border-border pt-2.5">
+              {/* Every tag as a permanent chip buried the actual entries on a
+                  phone — this list runs to twenty-plus. Collapsed by default;
+                  whatever is currently filtering stays visible either way. */}
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
-                  key={tag}
                   type="button"
-                  onClick={() => toggleTag(tag)}
-                  className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                    activeTags.has(tag)
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border text-muted-foreground hover:bg-accent",
-                  )}
+                  onClick={() => setTagsOpen((v) => !v)}
+                  aria-expanded={tagsOpen}
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
                 >
-                  #{tag}
+                  <ChevronRight
+                    className={cn("size-3 transition-transform", tagsOpen && "rotate-90")}
+                  />
+                  {t("tagsFilterLabel")}
+                  <span className="tabular-nums">{availableTags.length}</span>
                 </button>
-              ))}
+                {!tagsOpen &&
+                  [...activeTags].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className="rounded-full border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background"
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+              </div>
+              {tagsOpen && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {availableTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                        activeTags.has(tag)
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border text-muted-foreground hover:bg-accent",
+                      )}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -609,19 +649,46 @@ export default function GuidebooksPage() {
             title={showArchive ? t("archiveEmpty") : t("noResults")}
           />
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {sorted.map((i) => (
-              <EntryCard
-                key={i.key}
-                item={i}
-                canManage={canManage}
-                onEdit={() => {
-                  if (i.kind === "wiki" && i.wikiEntry) setEditing(i.wikiEntry);
-                  else router.push(`/guidebooks/${i.slug}/edit`);
-                }}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {currentEntries.map((i) => (
+                <EntryCard
+                  key={i.key}
+                  item={i}
+                  canManage={canManage}
+                  onEdit={() => {
+                    if (i.kind === "wiki" && i.wikiEntry) setEditing(i.wikiEntry);
+                    else router.push(`/guidebooks/${i.slug}/edit`);
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Not-yet-migrated block-editor pages. They outnumbered the real
+                entries in the shared grid and pushed them off the first
+                screen, so they get their own collapsed section — still
+                searchable and filterable, just not competing for attention. */}
+            {legacyEntries.length > 0 && (
+              <details className="group mt-4">
+                <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
+                  <FileText className="size-3.5" />
+                  {t("legacySectionTitle")}
+                  <span className="tabular-nums">· {legacyEntries.length}</span>
+                </summary>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {legacyEntries.map((i) => (
+                    <EntryCard
+                      key={i.key}
+                      item={i}
+                      canManage={canManage}
+                      onEdit={() => router.push(`/guidebooks/${i.slug}/edit`)}
+                    />
+                  ))}
+                </div>
+              </details>
+            )}
+          </>
         )}
       </div>
 
