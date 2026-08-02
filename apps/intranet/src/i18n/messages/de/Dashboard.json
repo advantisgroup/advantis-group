@@ -218,5 +218,12 @@
         "subtitle": "Hier ein kurzer Blick, dann genieß deinen freien Tag."
       }
     ]
+  },
+  "myTicketsTitle": "Deine IT-Meldungen",
+  "noOpenTickets": "Keine offenen Meldungen",
+  "openTickets": "IT-Meldesystem öffnen",
+  "ticketStatus": {
+    "offen": "Offen",
+    "bearbeitung": "In Bearbeitung"
   }
 }

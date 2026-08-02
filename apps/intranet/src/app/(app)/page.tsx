@@ -26,7 +26,12 @@ import {
   TeamPerformanceCard,
   TeamStatusCard,
 } from "@/components/dashboard/AdminWidgets";
-import { ChatsCard, MyDayCard, MyPerformanceCard } from "@/components/dashboard/ForYouWidgets";
+import {
+  ChatsCard,
+  MyDayCard,
+  MyPerformanceCard,
+  MyTicketsCard,
+} from "@/components/dashboard/ForYouWidgets";
 import { GreetingHeader } from "@/components/dashboard/GreetingHeader";
 import { SectionHeading } from "@/components/dashboard/SectionHeading";
 import {
@@ -56,6 +61,7 @@ const startOfToday = new Date(now).setHours(0, 0, 0, 0);
 const CARD_IDS = [
   "chats",
   "myday",
+  "mytickets",
   "myperformance",
   "newwiki",
   "events",
@@ -158,6 +164,7 @@ export default function DashboardPage() {
     teamstatus: t("teamStatusTitle"),
     teamperformance: t("teamPerformanceTitle"),
     errormeasures: t("errorMeasuresTitle"),
+    mytickets: t("myTicketsTitle"),
     adminstats: t("adminStatsTitle"),
     adminactivity: t("recentActivityTitle"),
   };
@@ -165,6 +172,7 @@ export default function DashboardPage() {
   const forYouWidgets: Widget[] = [
     widget("chats", <ChatsCard />),
     widget("myday", <MyDayCard />),
+    widget("mytickets", <MyTicketsCard />),
     ...(hasMyPerformance ? [widget("myperformance", <MyPerformanceCard />)] : []),
   ].filter((w) => showCard(w.id));
 

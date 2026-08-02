@@ -2,12 +2,23 @@
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import { Award, Circle, Clock, Coffee, LogOut, MessageSquare, TrendingUp } from "lucide-react";
+import {
+  Award,
+  Circle,
+  Clock,
+  Coffee,
+  LogOut,
+  MessageSquare,
+  TrendingUp,
+  Wrench,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
+import { useCurrentUser } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { formatTime, initials } from "@/lib/format";
+import { formatIsoDate, formatTime, initials } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
 import { todayLocalDay } from "@/lib/activity/fmt";
@@ -154,6 +165,65 @@ export function MyDayCard() {
             />
           );
         })
+      )}
+    </DashCard>
+  );
+}
+
+/**
+ * The caller's own still-open IT tickets. "For you" otherwise only covered
+ * things arriving *at* the user (messages, their clock state) — this is the
+ * one place showing work they started and are waiting on, which is what
+ * people were opening /it-tickets to re-check.
+ */
+export function MyTicketsCard() {
+  const t = useTranslations("Dashboard");
+  const locale = useLocale();
+  const me = useCurrentUser();
+  const tickets = useQuery(api.itTickets.list);
+
+  const mine = useMemo(
+    () =>
+      (tickets ?? [])
+        .filter((ticket) => ticket.createdByUserId === me._id && ticket.status !== "closed")
+        .slice(0, 5),
+    [tickets, me._id],
+  );
+
+  return (
+    <DashCard icon={<Wrench />} title={t("myTicketsTitle")} count={mine.length || undefined}>
+      {tickets === undefined ? (
+        <RowSkeletons />
+      ) : mine.length === 0 ? (
+        <Empty href="/it-tickets" linkLabel={t("openTickets")}>
+          {t("noOpenTickets")}
+        </Empty>
+      ) : (
+        mine.map((ticket) => (
+          <Row
+            key={ticket._id}
+            href={`/it-tickets?ticket=${ticket._id}`}
+            title={ticket.topic?.trim() || ticket.category}
+            subtitle={formatIsoDate(ticket.date, locale)}
+            leading={
+              <span className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-[11px] font-semibold tabular-nums text-muted-foreground">
+                {ticket.nr}
+              </span>
+            }
+            trailing={
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                  ticket.status === "offen"
+                    ? "bg-warning/15 text-warning"
+                    : "bg-primary/10 text-primary",
+                )}
+              >
+                {t(`ticketStatus.${ticket.status}`)}
+              </span>
+            }
+          />
+        ))
       )}
     </DashCard>
   );
