@@ -20,6 +20,8 @@ export const sendNotificationEmail = internalAction({
       v.literal("chat-reinvite"),
       v.literal("digest"),
       v.literal("academy-invite"),
+      v.literal("password-reset-request"),
+      v.literal("password-reset-link"),
     ),
     to: v.string(),
     data: v.any(),

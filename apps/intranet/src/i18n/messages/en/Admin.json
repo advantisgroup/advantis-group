@@ -155,7 +155,8 @@
     "departments": "Departments",
     "teams": "Teams",
     "audit": "Audit log",
-    "featureFlags": "Feature flags"
+    "featureFlags": "Feature flags",
+    "passwordResets": "Password resets"
   },
   "orgEntity": {
     "departmentsTitle": "Departments",

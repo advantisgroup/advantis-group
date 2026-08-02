@@ -8,6 +8,7 @@ import { Lock, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { ForgotPasswordPanel } from "@/components/password-reset/ForgotPasswordPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,10 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
   const [password, setPasswordInput] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // The forgot-password route only appears once the password has actually
+  // been got wrong — offering it up front invites skipping the password
+  // instead of remembering it.
+  const [attemptFailed, setAttemptFailed] = useState(false);
   // Convex only re-pushes `status` when something changes server-side —
   // expiry itself is just wall-clock time passing, so a local tick is what
   // actually flips the UI back to locked once expiresAt has passed.
@@ -74,6 +79,7 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
       await unlock({ password });
       setPasswordInput("");
     } catch (e) {
+      setAttemptFailed(true);
       handleError(e, t("vaultIncorrectPassword"));
     } finally {
       setSubmitting(false);
@@ -169,6 +175,7 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
           >
             {t("vaultUnlock")}
           </Button>
+          {attemptFailed && <ForgotPasswordPanel scope="hr" />}
         </CardContent>
       </Card>
     </div>

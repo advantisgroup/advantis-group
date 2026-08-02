@@ -38,6 +38,18 @@ function button(href: string, label: string): string {
 type Data = Record<string, unknown>;
 const str = (d: Data, k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
 
+/** Escapes a value before it goes into an email body. Needed for the password
+ * reset templates specifically: the account email there is typed into a
+ * public login form, so it's attacker-controlled all the way to the admin's
+ * inbox. */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 function render(
   kind: NotificationEmailKind,
   data: Data,
@@ -152,6 +164,52 @@ function render(
         ),
       };
     }
+    case "password-reset-request": {
+      const area = esc(str(data, "area"));
+      const accountEmail = esc(str(data, "accountEmail"));
+      const requestedByEmail = esc(str(data, "requestedByEmail"));
+      const requestedAt = str(data, "requestedAt");
+      const requestId = str(data, "requestId");
+      const selfService = data.selfService === true;
+      const when = requestedAt ? new Date(requestedAt).toUTCString() : "just now";
+      const url = `${INTERNAL_URL}/admin/password-resets?request=${encodeURIComponent(requestId)}`;
+      // The filer and the account are shown as two separate lines on purpose:
+      // approving is a judgement call about whether those two are the same
+      // person, and burying that in prose is how it gets skimmed past.
+      const filedBy = requestedByEmail
+        ? selfService
+          ? `<p style="margin:0 0 8px;line-height:1.6">Filed by: <strong>${requestedByEmail}</strong> (the account holder)</p>`
+          : `<p style="margin:0 0 8px;line-height:1.6;color:#b91c1c">Filed by: <strong>${requestedByEmail}</strong> — <strong>not</strong> the account holder. Confirm in person before issuing anything.</p>`
+        : `<p style="margin:0 0 8px;line-height:1.6;color:#b91c1c">Filed by: not signed in — identity unverified. Confirm in person before issuing anything.</p>`;
+      return {
+        subject: `Password reset requested: ${accountEmail} (${area})`,
+        html: layout(
+          "Password reset requested",
+          `<p style="margin:0 0 8px;line-height:1.6">Account: <strong>${accountEmail}</strong></p>
+           <p style="margin:0 0 8px;line-height:1.6">Area: <strong>${area}</strong></p>
+           <p style="margin:0 0 8px;line-height:1.6">When: <strong>${when}</strong></p>
+           ${filedBy}
+           <p style="margin:16px 0 24px;line-height:1.6">Nothing has changed yet. Open the queue to review who asked, for which account, and issue a one-time reset link if it checks out — the link is mailed to the account holder, never to whoever asked.</p>
+           ${button(url, "Review the request")}`,
+        ),
+      };
+    }
+    case "password-reset-link": {
+      const area = esc(str(data, "area"));
+      const url = str(data, "url");
+      const expiresAt = typeof data.expiresAt === "number" ? data.expiresAt : null;
+      const minutes = expiresAt ? Math.max(1, Math.round((expiresAt - Date.now()) / 60000)) : 60;
+      return {
+        subject: `Your ${area} password reset link`,
+        html: layout(
+          "Reset your password",
+          `<p style="margin:0 0 16px;line-height:1.6">An admin approved your request to reset your <strong>${area}</strong> password.</p>
+           <p style="margin:0 0 24px;line-height:1.6">This link works once and expires in about <strong>${minutes} minutes</strong>.</p>
+           ${button(url, "Choose a new password")}
+           <p style="margin:24px 0 0;line-height:1.6;color:#71717a;font-size:13px">Didn't ask for this? Don't open the link — tell an admin, and it will be revoked.</p>`,
+        ),
+      };
+    }
   }
 }
 
@@ -167,6 +225,14 @@ export async function sendNotificationEmail(
     subject,
     html,
   });
+  if (kind === "password-reset-request" || kind === "password-reset-link") {
+    // Masked recipient only — a reset link in a log line would be a
+    // credential in a log line.
+    const [local, domain] = to.split("@");
+    console.log(
+      `[passwordReset] email kind=${kind} to=${local?.slice(0, 1)}***@${domain} ok=${!error}`,
+    );
+  }
   if (error) throw Errors.upstream(`Resend error: ${error.message}`);
 }
 

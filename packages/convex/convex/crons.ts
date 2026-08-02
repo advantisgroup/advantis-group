@@ -82,6 +82,15 @@ crons.daily(
   {},
 );
 
+// Spent/expired reset tokens and long-settled requests. The audit trail
+// (passwordResetAuditLog) is deliberately not touched — it outlives both.
+crons.daily(
+  "password resets: purge stale tokens and requests",
+  { hourUTC: 3, minuteUTC: 50 },
+  internal.passwordResets.purgeStale,
+  {},
+);
+
 // Keep the OneDrive change-notification subscription fresh (renew well within
 // its expiry) so the file-listing cache invalidates promptly on changes.
 crons.daily(

@@ -110,6 +110,19 @@ export const suggestionOutcomeValidator = v.union(
   v.literal("implemented"),
 );
 
+/**
+ * The areas guarded by a password of their own, outside Clerk — the `o=`
+ * value in the shared `/password?o=<scope>&token=…` reset link, and the
+ * discriminant on `passwordResetRequests`/`passwordResetTokens`. Add a new
+ * literal here (plus a branch in `passwordResets.ts`'s `resolveTarget` /
+ * `applyNewPassword`) when a third area grows its own password; nothing else
+ * about the flow is per-area.
+ */
+export const passwordResetScopeValidator = v.union(
+  v.literal("hr"),
+  v.literal("performance"),
+);
+
 const linkPreviewValidator = v.object({
   url: v.string(),
   title: v.optional(v.string()),
@@ -993,7 +1006,11 @@ export default defineSchema({
     expiresAt: v.number(),
     createdAt: v.number(),
     lastUsedAt: v.number(),
-  }).index("by_token", ["token"]),
+  })
+    .index("by_token", ["token"])
+    // Needed to drop every session of one login at once — a password reset
+    // must not leave the sessions issued under the old password alive.
+    .index("by_login", ["loginId"]),
 
   // Sales-team roster for the Performance feature; rows are created on first
   // report import (added in a later phase — this table exists now so
@@ -2235,6 +2252,119 @@ export default defineSchema({
     unlockedAt: v.number(),
     expiresAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // --- Password resets for the non-Clerk password areas --------------------
+  /**
+   * One "I forgot my password" ping, filed from a lock screen after a failed
+   * attempt. Filing one never changes a password and never issues anything —
+   * it only puts the account in front of an admin, who decides whether to
+   * mail out a reset link (`passwordResetTokens`) or dismiss it.
+   *
+   * A row is written even when `targetEmail` matches no account at all
+   * (`targetUserId`/`targetLoginId` both absent). That keeps the caller's
+   * response identical either way — a lock screen must not double as an
+   * account-existence oracle — and turns repeated misses into a visible
+   * probing signal instead of nothing. Unresolved rows deliberately send no
+   * admin email/notification, so they can't be used to spam anyone.
+   */
+  passwordResetRequests: defineTable({
+    scope: passwordResetScopeValidator,
+    /** Lowercased email of the account the reset is *for*. */
+    targetEmail: v.string(),
+    targetUserId: v.optional(v.id("users")),
+    targetLoginId: v.optional(v.id("performanceLogins")),
+    targetCompanyId: v.optional(v.id("companies")),
+    /** The signed-in intranet identity that filed it, when there was one —
+     * absent for a Performance login filed from a tenant domain, where the
+     * filer has no Clerk session at all. */
+    requestedByUserId: v.optional(v.id("users")),
+    requestedByEmail: v.optional(v.string()),
+    /** False when the filer's own identity doesn't match the account they
+     * asked about (or is unknown) — the "an employee is asking for their
+     * manager's login" case an admin must eyeball before issuing anything. */
+    selfService: v.boolean(),
+    status: v.union(v.literal("pending"), v.literal("issued"), v.literal("dismissed")),
+    createdAt: v.number(),
+    handledByUserId: v.optional(v.id("users")),
+    handledAt: v.optional(v.number()),
+  })
+    .index("by_status_createdAt", ["status", "createdAt"])
+    // Backs the 24h-per-account cooldown.
+    .index("by_scope_email", ["scope", "targetEmail"])
+    .index("by_createdAt", ["createdAt"]),
+
+  /**
+   * A single-use magic link an admin issued for one request. Only the SHA-256
+   * of the token is stored — the plaintext exists solely in the emailed URL,
+   * so a database read can't be turned back into a working link. Issuing a
+   * new token revokes the target's outstanding ones, and consuming one
+   * revokes the rest.
+   */
+  passwordResetTokens: defineTable({
+    scope: passwordResetScopeValidator,
+    tokenHash: v.string(),
+    requestId: v.id("passwordResetRequests"),
+    targetUserId: v.optional(v.id("users")),
+    targetLoginId: v.optional(v.id("performanceLogins")),
+    /** Where the link was mailed — always the account's own address, never
+     * the filer's, so an approved-but-impersonated request still can't hand
+     * the link to whoever filed it. */
+    sentToEmail: v.string(),
+    issuedByUserId: v.id("users"),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_tokenHash", ["tokenHash"])
+    .index("by_targetUser", ["targetUserId"])
+    .index("by_targetLogin", ["targetLoginId"])
+    .index("by_expiresAt", ["expiresAt"]),
+
+  /**
+   * Append-only trail for the whole reset flow — every filing, every
+   * cooldown rejection, every admin decision (and the step-up
+   * re-verification behind it), every link consumed. Separate from the
+   * generic `auditLog` because this is the one place where "who asked for
+   * whose account, and which admin acted on it" has to be reconstructable
+   * long after the request row itself has been purged.
+   *
+   * Rows hold emails and ids but never a token, a token hash, or a password
+   * — nothing here can be replayed into access.
+   */
+  passwordResetAuditLog: defineTable({
+    event: v.union(
+      v.literal("request_filed"),
+      v.literal("request_cooldown_blocked"),
+      v.literal("request_unknown_account"),
+      v.literal("admins_notified"),
+      v.literal("link_issued"),
+      v.literal("request_dismissed"),
+      v.literal("token_checked"),
+      v.literal("reset_completed"),
+      v.literal("reset_rejected"),
+      v.literal("reverification_failed"),
+    ),
+    scope: passwordResetScopeValidator,
+    requestId: v.optional(v.id("passwordResetRequests")),
+    /** Who performed the action — the person filing, or the admin deciding. */
+    actorUserId: v.optional(v.id("users")),
+    actorEmail: v.optional(v.string()),
+    /** Whether the actor was an admin acting on someone else's account. */
+    actorIsAdmin: v.optional(v.boolean()),
+    /** Whether Clerk step-up re-verification was satisfied for this action. */
+    reverified: v.optional(v.boolean()),
+    targetEmail: v.optional(v.string()),
+    targetUserId: v.optional(v.id("users")),
+    targetLoginId: v.optional(v.id("performanceLogins")),
+    /** Short, non-sensitive free text (a reason code, a masked address, a
+     * cooldown expiry) — never a token or password. */
+    detail: v.optional(v.string()),
+    at: v.number(),
+  })
+    .index("by_at", ["at"])
+    .index("by_request", ["requestId"])
+    .index("by_actor", ["actorUserId"]),
 
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs

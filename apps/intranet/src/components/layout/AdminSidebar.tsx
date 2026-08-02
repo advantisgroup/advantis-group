@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Building2,
   Clock,
+  KeyRound,
   LayoutDashboard,
   type LucideIcon,
   Mail,
@@ -90,6 +91,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         icon: ShieldCheck,
         managerOnly: true,
       },
+      {
+        href: "/admin/password-resets",
+        labelKey: "nav.passwordResets",
+        icon: KeyRound,
+        adminOnly: true,
+      },
     ],
   },
   {
@@ -162,6 +169,7 @@ export function AdminSidebar() {
     isManager || hasUploadsView ? {} : "skip",
   );
   const pendingCount = pendingUploads?.length ?? 0;
+  const pendingResets = useQuery(api.passwordResets.pendingCount, isAdmin ? {} : "skip") ?? 0;
 
   return (
     <>
@@ -205,6 +213,11 @@ export function AdminSidebar() {
                         {item.href === "/admin/uploads" && pendingCount > 0 && (
                           <SidebarMenuBadge>
                             {pendingCount > 99 ? "99+" : pendingCount}
+                          </SidebarMenuBadge>
+                        )}
+                        {item.href === "/admin/password-resets" && pendingResets > 0 && (
+                          <SidebarMenuBadge>
+                            {pendingResets > 99 ? "99+" : pendingResets}
                           </SidebarMenuBadge>
                         )}
                       </Link>

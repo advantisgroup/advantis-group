@@ -36,6 +36,7 @@ import deNav from "./messages/de/Nav.json";
 import deNotFound from "./messages/de/NotFound.json";
 import deNotifications from "./messages/de/Notifications.json";
 import deOnboarding from "./messages/de/Onboarding.json";
+import dePasswordReset from "./messages/de/PasswordReset.json";
 import dePerformance from "./messages/de/Performance.json";
 import deprivacy from "./messages/de/privacy.json";
 import deProfile from "./messages/de/Profile.json";
@@ -78,6 +79,7 @@ import enNav from "./messages/en/Nav.json";
 import enNotFound from "./messages/en/NotFound.json";
 import enNotifications from "./messages/en/Notifications.json";
 import enOnboarding from "./messages/en/Onboarding.json";
+import enPasswordReset from "./messages/en/PasswordReset.json";
 import enPerformance from "./messages/en/Performance.json";
 import enprivacy from "./messages/en/privacy.json";
 import enProfile from "./messages/en/Profile.json";
@@ -112,6 +114,7 @@ const messagesByLocale = {
     Profile: enProfile,
     Tour: enTour,
     Onboarding: enOnboarding,
+    PasswordReset: enPasswordReset,
     Admin: enAdmin,
     Teams: enTeams,
     CustomRoles: enCustomRoles,
@@ -156,6 +159,7 @@ const messagesByLocale = {
     Profile: deProfile,
     Tour: deTour,
     Onboarding: deOnboarding,
+    PasswordReset: dePasswordReset,
     Admin: deAdmin,
     Teams: deTeams,
     CustomRoles: deCustomRoles,

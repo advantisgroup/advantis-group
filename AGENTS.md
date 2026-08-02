@@ -155,6 +155,17 @@ or embedding official logo assets — trademark usage has its own legal
 constraints beyond a copyright line, and no logo files exist in this repo
 today (`apps/intranet/public/` only has Advantis's own logos).
 
+## Password resets (HR vault, Performance login)
+
+The two areas with a password of their own outside Clerk share one recovery
+flow: a lock screen offers "forgot password" *only after a failed attempt*, it
+files an admin ping (never resets anything), and an admin issues a single-use
+magic link at `/password?o=<scope>&token=…`. Queue lives at
+`/admin/password-resets`. Both admin actions are gated on Clerk step-up
+re-verification, which needs an `fva` claim on the `convex` JWT template — see
+[`docs/password-resets.md`](./docs/password-resets.md) for that setup step, the
+env vars, the audit/PostHog logging, and how to add a third area.
+
 ## Publishing Updates (incidents / maintenance / changelog)
 
 The intranet's global banner + `/updates` feed can be published from a

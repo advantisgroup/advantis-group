@@ -41,7 +41,9 @@ export type NotificationEmailKind =
   | "upload-decision"
   | "chat-reinvite"
   | "digest"
-  | "academy-invite";
+  | "academy-invite"
+  | "password-reset-request"
+  | "password-reset-link";
 
 export interface UnfurlResult {
   url: string;

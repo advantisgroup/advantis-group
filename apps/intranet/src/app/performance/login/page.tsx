@@ -10,6 +10,7 @@ import { LineChart } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { ForgotPasswordPanel } from "@/components/password-reset/ForgotPasswordPanel";
 import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
 import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,8 @@ export default function PerformanceLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Only offered once the password has actually been got wrong.
+  const [attemptFailed, setAttemptFailed] = useState(false);
 
   async function submit() {
     if (!email.trim() || !password) return;
@@ -38,6 +41,7 @@ export default function PerformanceLoginPage() {
       router.replace("/performance");
     } catch {
       setError(t("loginInvalid"));
+      setAttemptFailed(true);
     } finally {
       setSubmitting(false);
     }
@@ -89,6 +93,9 @@ export default function PerformanceLoginPage() {
           >
             {t("loginSubmit")}
           </Button>
+          {attemptFailed && (
+            <ForgotPasswordPanel scope="performance" email={email} companySlug={slug} />
+          )}
           <p className="text-center text-sm text-muted-foreground">
             <Link href="/performance/setup" className="underline underline-offset-4">
               {t("setupLink")}

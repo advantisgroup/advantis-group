@@ -12,6 +12,10 @@ const PUBLIC_ROUTE_PREFIXES = [
   // Performance dashboard — password-gated on its own (performanceAuth.ts),
   // not yet coupled to Clerk. See AGENTS.md / the Performance feature plan.
   "/performance(.*)",
+  // The shared password-reset screen. Its magic-link token is the whole
+  // credential — the Performance login it may be resetting has no Clerk
+  // account behind it to sign in with first.
+  "/password(.*)",
   // Legal pages must be readable by anyone, including rejected sign-ups.
   "/privacy(.*)",
   "/terms(.*)",
@@ -115,10 +119,15 @@ async function resolveTenantRewrite(req: NextRequest): Promise<NextResponse | nu
     return NextResponse.rewrite(url);
   }
 
+  // `/password` stays where it is on every host — it's one shared screen for
+  // every password-guarded area (see `app/password/page.tsx`), so prefixing
+  // it here would give a tenant domain a 404 for its own reset links. It
+  // still goes through this branch rather than falling through to
+  // `clerkHandler`, for the reason in the doc comment below.
   url.pathname =
     url.pathname === "/"
       ? "/performance"
-      : url.pathname.startsWith("/performance")
+      : url.pathname === "/password" || url.pathname.startsWith("/performance")
         ? url.pathname
         : `/performance${url.pathname}`;
 
