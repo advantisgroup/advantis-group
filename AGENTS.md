@@ -162,9 +162,13 @@ flow: a lock screen offers "forgot password" *only after a failed attempt*, it
 files an admin ping (never resets anything), and an admin issues a single-use
 magic link at `/password?o=<scope>&token=…`. Queue lives at
 `/admin/password-resets`. Both admin actions are gated on Clerk step-up
-re-verification, which needs an `fva` claim on the `convex` JWT template — see
-[`docs/password-resets.md`](./docs/password-resets.md) for that setup step, the
-env vars, the audit/PostHog logging, and how to add a third area.
+re-verification, which reads the `fva` claim — a Clerk default claim present
+on every session token, not something to add to the `convex` JWT template
+(Clerk's dashboard rejects it as reserved if you try). If a step-up keeps
+failing right after Clerk reports success, that's Convex's own auth token
+being stale, not this claim — see
+[`docs/password-resets.md`](./docs/password-resets.md) for that, the env
+vars, the audit/PostHog logging, and how to add a third area.
 
 ## Publishing Updates (incidents / maintenance / changelog)
 
