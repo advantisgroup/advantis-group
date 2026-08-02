@@ -44,7 +44,12 @@ export function PageHeader({
             )}
           </div>
         </div>
-        {action && <div className="shrink-0">{action}</div>}
+        {/* Right-aligned even when the header stacks. Left-aligned actions on
+            mobile read as part of the description text above them, and put the
+            primary button furthest from the thumb. */}
+        {action && (
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{action}</div>
+        )}
       </div>
       {tourCheckpoint && <TourFirstVisitNudge checkpointId={tourCheckpoint} />}
     </>
