@@ -80,7 +80,10 @@
   "employeeApplicantHistory": "Applicant history",
   "employeeApplicantHistoryHint": "The original application remains available for recruiting context.",
   "employeeNoApplicantHistory": "This employee was created directly, without an applicant record.",
-  "employeeStatus": { "active": "Active", "archived": "Archived" },
+  "employeeStatus": {
+    "active": "Active",
+    "archived": "Archived"
+  },
   "employeeDocuments": "Employee documents",
   "employeeDocumentsDescription": "Contracts, payroll, legal, and general personnel files.",
   "employeeDocumentCategory": {
@@ -325,5 +328,12 @@
   "resetPasswordTitle": "Reset {name}'s vault password?",
   "resetPasswordDescription": "{name} will be signed out of Human Resources and asked to set a new password the next time they open it. Use this if they've forgotten their password — you can't see or choose it for them.",
   "resetPasswordConfirm": "Reset password",
-  "resetPasswordSuccess": "Password reset for {name}."
+  "resetPasswordSuccess": "Password reset for {name}.",
+  "extractAnalyzing": "Reading {file} with AI… {seconds}s",
+  "extractBatch": "{index} of {total}",
+  "undoHire": "Undo hire",
+  "undoHireConfirm": "Undo hiring {name}?",
+  "undoHireBody": "This removes the employee record that was created and puts them back in the applicant list.",
+  "undoHireDone": "{name} is back in the applicant list",
+  "undoHireBlocked": "This employee record already has documents attached, so it can't be undone automatically."
 }

@@ -80,7 +80,10 @@
   "employeeApplicantHistory": "Bewerberhistorie",
   "employeeApplicantHistoryHint": "Die ursprüngliche Bewerbung bleibt als Recruiting-Kontext erhalten.",
   "employeeNoApplicantHistory": "Dieser Mitarbeiter wurde direkt angelegt und hat keinen Bewerberdatensatz.",
-  "employeeStatus": { "active": "Aktiv", "archived": "Archiviert" },
+  "employeeStatus": {
+    "active": "Aktiv",
+    "archived": "Archiviert"
+  },
   "employeeDocuments": "Mitarbeiterdokumente",
   "employeeDocumentsDescription": "Verträge, Lohnabrechnungen, Rechtliches und allgemeine Personalunterlagen.",
   "employeeDocumentCategory": {
@@ -325,5 +328,12 @@
   "resetPasswordTitle": "Vault-Passwort von {name} zurücksetzen?",
   "resetPasswordDescription": "{name} wird aus Human Resources abgemeldet und beim nächsten Öffnen aufgefordert, ein neues Passwort festzulegen. Nutze dies, wenn das Passwort vergessen wurde — du kannst es nicht einsehen oder für die Person festlegen.",
   "resetPasswordConfirm": "Passwort zurücksetzen",
-  "resetPasswordSuccess": "Passwort für {name} zurückgesetzt."
+  "resetPasswordSuccess": "Passwort für {name} zurückgesetzt.",
+  "extractAnalyzing": "{file} wird per KI ausgewertet… {seconds}s",
+  "extractBatch": "{index} von {total}",
+  "undoHire": "Einstellung rückgängig",
+  "undoHireConfirm": "Einstellung von {name} rückgängig machen?",
+  "undoHireBody": "Der angelegte Mitarbeiter-Datensatz wird entfernt und die Person steht wieder in der Bewerberliste.",
+  "undoHireDone": "{name} steht wieder in der Bewerberliste",
+  "undoHireBlocked": "An diesem Mitarbeiter-Datensatz hängen bereits Dokumente — das lässt sich nicht automatisch rückgängig machen."
 }

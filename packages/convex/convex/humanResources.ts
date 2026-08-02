@@ -269,6 +269,51 @@ export const convertApplicant = mutation({
   },
 });
 
+/**
+ * Reverses `convertApplicant` — deletes the employee record it created and
+ * puts the applicant back in the list. Hiring is one click next to Archive,
+ * so a misclick is easy and there was no way back from it.
+ *
+ * Refuses once the record has picked up documents: at that point it isn't
+ * the empty shell the conversion produced, and deleting it would take real
+ * data with it. That's a manual call, not something to guess at here.
+ */
+export const revertConversion = mutation({
+  args: { applicantId: v.id("applicants") },
+  handler: async (ctx, { applicantId }) => {
+    await requireApplicantAccess(ctx);
+    const applicant = await ctx.db.get(applicantId);
+    if (!applicant)
+      throw new ConvexError({
+        code: "not_found",
+        message: "Applicant not found",
+      });
+    const employeeProfileId = applicant.convertedEmployeeProfileId;
+    if (!employeeProfileId)
+      throw new ConvexError({
+        code: "invalid",
+        message: "Applicant was never converted",
+      });
+
+    const documents = await ctx.db
+      .query("employeeDocuments")
+      .withIndex("by_employee", (q) => q.eq("employeeProfileId", employeeProfileId))
+      .first();
+    if (documents)
+      throw new ConvexError({
+        code: "invalid",
+        message: "Employee record already has documents",
+      });
+
+    await ctx.db.delete(employeeProfileId);
+    await ctx.db.patch(applicantId, {
+      convertedEmployeeProfileId: undefined,
+      archivedAt: undefined,
+    });
+    return { ok: true };
+  },
+});
+
 export const archiveApplicant = mutation({
   args: { applicantId: v.id("applicants") },
   handler: async (ctx, { applicantId }) => {
