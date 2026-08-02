@@ -7,19 +7,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Bell,
-  Check,
-  ChevronDown,
-  Mail,
-  MailOpen,
-  Megaphone,
-  MessageSquare,
-  Plane,
-  ShieldCheck,
-  Trash2,
-  UploadCloud,
-} from "lucide-react";
+import { Bell, Check, ChevronDown, Mail, MailOpen, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
@@ -29,25 +17,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useNow } from "@/lib/activity/useNow";
 import { relativeTime } from "@/lib/format";
+import { notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
 type Category = "absence" | "announcement" | "uploads" | "chat" | "system";
-
-const CATEGORY_ICON: Record<Category, typeof Bell> = {
-  absence: Plane,
-  announcement: Megaphone,
-  uploads: UploadCloud,
-  chat: MessageSquare,
-  system: ShieldCheck,
-};
-
-const CATEGORY_TINT: Record<Category, string> = {
-  absence: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  announcement: "bg-primary/10 text-primary",
-  uploads: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  chat: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
-  system: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
-};
 
 function categoryOf(type: string): Category {
   if (type.startsWith("absence")) return "absence";
@@ -249,8 +222,9 @@ function NotificationRow({ n }: { n: NotificationDoc }) {
   const markRead = useMutation(api.notifications.markRead);
   const markUnread = useMutation(api.notifications.markUnread);
   const remove = useMutation(api.notifications.remove);
-  const cat = categoryOf(n.type);
-  const Icon = CATEGORY_ICON[cat];
+  // Icon/tint come from the shared registry, so a row looks the same here
+  // as in the header menu. The coarse category is only for the filter chips.
+  const { icon: Icon, tint } = notificationVisual(n.type);
 
   function open() {
     if (!n.readAt) void markRead({ notificationId: n._id });
@@ -268,7 +242,7 @@ function NotificationRow({ n }: { n: NotificationDoc }) {
         <span
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-lg",
-            n.readAt ? "bg-muted text-muted-foreground" : CATEGORY_TINT[cat],
+            n.readAt ? "bg-muted text-muted-foreground" : tint,
           )}
         >
           <Icon className="size-[18px]" />
