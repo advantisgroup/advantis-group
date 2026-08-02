@@ -41,6 +41,7 @@ function EntityRow({
       const ok = await confirm({
         title: t("orgEntity.confirmArchiveTitle", { name: entity.name }),
         description: t("orgEntity.confirmArchiveBody"),
+        details: [{ label: tc("fieldName"), value: entity.name }],
         confirmLabel: t("orgEntity.archive"),
         cancelLabel: tc("cancel"),
       });

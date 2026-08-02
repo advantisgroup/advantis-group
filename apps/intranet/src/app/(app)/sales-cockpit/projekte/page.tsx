@@ -44,6 +44,7 @@ function toFormValue(p: Project): ProjectFormValue {
 
 export default function SalesCockpitProjektePage() {
   const t = useTranslations("SalesCockpit");
+  const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const confirm = useConfirm();
   const projects = useQuery(api.salesCockpit.listProjects);
@@ -58,6 +59,7 @@ export default function SalesCockpitProjektePage() {
     const ok = await confirm({
       title: t("projektLoeschenTitel"),
       description: t("projektLoeschenBeschreibung", { titel: project.titel }),
+      details: [{ label: tc("fieldTitle"), value: project.titel }],
       destructive: true,
     });
     if (!ok) return;

@@ -209,6 +209,7 @@ function RoleEditorShell({
 
 export function CustomRolesPanel() {
   const t = useTranslations("CustomRoles");
+  const tc = useTranslations("Common");
   const roles = useQuery(api.customRoles.list);
   const members = useQuery(api.users.list, { includeSuspended: true });
   const createRole = useMutation(api.customRoles.create);
@@ -235,6 +236,7 @@ export function CustomRolesPanel() {
     const ok = await confirm({
       title: t("delete"),
       description: t("deleteConfirm", { name: role.name }),
+      details: [{ label: tc("fieldName"), value: role.name }],
       confirmLabel: t("delete"),
       cancelLabel: t("cancel"),
     });

@@ -26,5 +26,11 @@
   "fromOneDrive": "Aus OneDrive",
   "skipToContent": "Zum Inhalt springen",
   "backToTop": "Nach oben",
-  "readingProgress": "Lesefortschritt"
+  "readingProgress": "Lesefortschritt",
+  "fieldName": "Name",
+  "fieldTitle": "Titel",
+  "fieldCategory": "Kategorie",
+  "fieldStatus": "Status",
+  "fieldDate": "Datum",
+  "fieldNumber": "Nr."
 }

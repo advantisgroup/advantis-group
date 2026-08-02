@@ -183,6 +183,7 @@ export function SkillProfilePanel() {
     const ok = await confirm({
       title: t("deleteProfile"),
       description: t("deleteProfileConfirm", { name: profile.name }),
+      details: [{ label: tc("fieldName"), value: profile.name }],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });

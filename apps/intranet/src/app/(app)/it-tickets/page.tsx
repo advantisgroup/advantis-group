@@ -316,6 +316,11 @@ function ItTicketsPageContent() {
     const confirmed = await confirm({
       title: tc("delete"),
       description: t("deleteTicketConfirm", { nr: ticket.nr }),
+      details: [
+        { label: tc("fieldNumber"), value: `#${ticket.nr}` },
+        { label: tc("fieldCategory"), value: ticket.category },
+        { label: tc("fieldDate"), value: ticket.date },
+      ],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
       destructive: true,
