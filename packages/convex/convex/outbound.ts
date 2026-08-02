@@ -17,7 +17,6 @@ export const sendNotificationEmail = internalAction({
       v.literal("access-denied"),
       v.literal("absence-decision"),
       v.literal("upload-decision"),
-      v.literal("guest-invite"),
       v.literal("chat-reinvite"),
       v.literal("digest"),
       v.literal("academy-invite"),

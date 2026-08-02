@@ -515,7 +515,7 @@ export default defineSchema({
     color: v.optional(v.string()),
     createdByUserId: v.id("users"),
     audience: audienceValidator,
-    /** Visible to temporary guest logins on the curated tour. */
+    /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),
     createdAt: v.number(),
   }).index("by_start", ["start"]),
@@ -534,7 +534,7 @@ export default defineSchema({
     attachmentStorageIds: v.array(v.id("_storage")),
     /** Rich attachments (name, kind, type) for newer announcements. */
     attachments: v.optional(v.array(attachmentValidator)),
-    /** Visible to temporary guest logins on the curated tour. */
+    /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),
     /** May be in the future (scheduled publish) — hidden from non-authors until then. */
     publishedAt: v.number(),
@@ -603,7 +603,7 @@ export default defineSchema({
     body: v.string(),
     authorUserId: v.id("users"),
     audience: audienceValidator,
-    /** Visible to temporary guest logins on the curated tour. */
+    /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),
     /** Free-text tags, optionally drawn from a predefined list in the UI. */
     affectedSystems: v.optional(v.array(v.string())),
@@ -832,9 +832,9 @@ export default defineSchema({
     lastActiveAt: v.number(),
   }).index("by_user", ["userId"]),
 
-  // --- Temporary guest logins (tour mode) ---------------------------------
-  // Admin-created, token-based, time-boxed read-only access to a curated tour.
-  // Fully separate from Clerk employee accounts; never sees sensitive data.
+  // Dead: the guest tour is gone. Kept declared only so
+  // `migrations/dropGuestFields` can empty it — drop this table and the
+  // `guestVisible` fields above once that has run.
   tempLogins: defineTable({
     label: v.string(),
     email: v.optional(v.string()),

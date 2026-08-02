@@ -26,7 +26,6 @@
   "bodyLabel": "Write your announcement…",
   "titlePlaceholder": "Title",
   "pin": "Pin to top",
-  "guestVisible": "Show to guests",
   "by": "by {name}",
   "deleteConfirm": "Delete this announcement?",
   "empty": "No announcements yet",

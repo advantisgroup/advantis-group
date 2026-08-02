@@ -314,15 +314,6 @@ function ComposerOptionsFields({
             <Checkbox checked={draft.pinned} onCheckedChange={(v) => set("pinned", v === true)} />
             {t("pin")}
           </label>
-          {!editing && (
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-              <Checkbox
-                checked={draft.guestVisible}
-                onCheckedChange={(v) => set("guestVisible", v === true)}
-              />
-              {t("guestVisible")}
-            </label>
-          )}
         </div>
       </OptionsSection>
 
@@ -451,7 +442,6 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
         title: editing.title,
         body: editing.body,
         pinned: editing.pinned,
-        guestVisible: false,
         category: editing.category ?? "",
         audienceKind: audience.kind === "all" ? "all" : "mixed",
         audienceDepartments:
@@ -669,7 +659,6 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
             audience: audienceValue,
             category: sanitizeCategory(draft.category) || undefined,
             attachments,
-            guestVisible: draft.guestVisible,
             publishAt: draft.publishAt ? new Date(draft.publishAt).getTime() : undefined,
             expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : undefined,
           });

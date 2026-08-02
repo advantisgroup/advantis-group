@@ -125,7 +125,6 @@ interface EventDraft {
   end: string;
   allDay: boolean;
   audience: string;
-  guestVisible: boolean;
 }
 
 function emptyDraft(dateIso?: string): EventDraft {
@@ -137,7 +136,6 @@ function emptyDraft(dateIso?: string): EventDraft {
     end: dateIso ? `${dateIso}T10:00` : "",
     allDay: false,
     audience: "all",
-    guestVisible: false,
   };
 }
 
@@ -178,7 +176,6 @@ function EventDialog({
         form.audience === "all"
           ? ({ kind: "all" } as const)
           : ({ kind: "department", department: form.audience } as const),
-      guestVisible: form.guestVisible,
     };
     try {
       if (form.eventId) {
@@ -251,15 +248,6 @@ function EventDialog({
                   onChange={(e) => set("allDay", e.target.checked)}
                 />
                 {t("allDay")}
-              </label>
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-[var(--primary)]"
-                  checked={form.guestVisible}
-                  onChange={(e) => set("guestVisible", e.target.checked)}
-                />
-                {t("guestVisible")}
               </label>
             </div>
           </div>
@@ -503,7 +491,6 @@ export default function CalendarPage() {
       end: format(new Date(e.end), "yyyy-MM-dd'T'HH:mm"),
       allDay: e.allDay,
       audience: audience.kind === "all" ? "all" : audience.department,
-      guestVisible: e.guestVisible,
     };
   }
 

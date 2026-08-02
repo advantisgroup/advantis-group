@@ -39,7 +39,6 @@ export type NotificationEmailKind =
   | "access-denied"
   | "absence-decision"
   | "upload-decision"
-  | "guest-invite"
   | "chat-reinvite"
   | "digest"
   | "academy-invite";

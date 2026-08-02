@@ -28,7 +28,6 @@ import deFeatureFlags from "./messages/de/FeatureFlags.json";
 import deFiles from "./messages/de/Files.json";
 import deFileViewer from "./messages/de/FileViewer.json";
 import deForbidden from "./messages/de/Forbidden.json";
-import deGuest from "./messages/de/Guest.json";
 import deGuidebooks from "./messages/de/Guidebooks.json";
 import deImprint from "./messages/de/imprint.json";
 import deIntegrations from "./messages/de/Integrations.json";
@@ -71,7 +70,6 @@ import enFeatureFlags from "./messages/en/FeatureFlags.json";
 import enFiles from "./messages/en/Files.json";
 import enFileViewer from "./messages/en/FileViewer.json";
 import enForbidden from "./messages/en/Forbidden.json";
-import enGuest from "./messages/en/Guest.json";
 import enGuidebooks from "./messages/en/Guidebooks.json";
 import enImprint from "./messages/en/imprint.json";
 import enIntegrations from "./messages/en/Integrations.json";
@@ -125,7 +123,6 @@ const messagesByLocale = {
     Notifications: enNotifications,
     Command: enCommand,
     Performance: enPerformance,
-    Guest: enGuest,
     Errors: enErrors,
     ErrorManagement: enErrorManagement,
     Activity: enActivity,
@@ -170,7 +167,6 @@ const messagesByLocale = {
     Notifications: deNotifications,
     Command: deCommand,
     Performance: dePerformance,
-    Guest: deGuest,
     Errors: deErrors,
     ErrorManagement: deErrorManagement,
     Activity: deActivity,

@@ -55,7 +55,6 @@ export const create = mutation({
     category: v.optional(v.string()),
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(v.array(attachmentValidator)),
-    guestVisible: v.optional(v.boolean()),
     /** Future timestamp schedules the announcement instead of publishing now. */
     publishAt: v.optional(v.number()),
     expiresAt: v.optional(v.number()),
@@ -77,7 +76,6 @@ export const create = mutation({
       category,
       attachmentStorageIds: storageIds,
       attachments: args.attachments,
-      guestVisible: args.guestVisible ?? false,
       publishedAt,
       expiresAt: args.expiresAt,
       createdAt: now,
@@ -142,7 +140,6 @@ export const update = mutation({
     audience: v.optional(audienceValidator),
     category: v.optional(v.string()),
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
-    guestVisible: v.optional(v.boolean()),
     expiresAt: v.optional(v.union(v.number(), v.null())),
   },
   handler: async (ctx, { announcementId, expiresAt, category, ...patch }) => {

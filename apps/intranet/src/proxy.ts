@@ -9,8 +9,6 @@ import { fetchQuery } from "convex/nextjs";
 const PUBLIC_ROUTE_PREFIXES = [
   "/sign-in(.*)",
   "/sign-up(.*)",
-  // Temporary guest tour — token-gated, no Clerk session.
-  "/guest(.*)",
   // Performance dashboard — password-gated on its own (performanceAuth.ts),
   // not yet coupled to Clerk. See AGENTS.md / the Performance feature plan.
   "/performance(.*)",

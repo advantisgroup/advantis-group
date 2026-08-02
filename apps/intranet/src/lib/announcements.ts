@@ -28,7 +28,6 @@ export interface Draft {
   title: string;
   body: string;
   pinned: boolean;
-  guestVisible: boolean;
   category: string;
   audienceKind: "all" | "mixed";
   audienceDepartments: string[];
@@ -41,7 +40,6 @@ export const EMPTY_DRAFT: Draft = {
   title: "",
   body: "",
   pinned: false,
-  guestVisible: false,
   category: "",
   audienceKind: "all",
   audienceDepartments: [],
