@@ -463,16 +463,21 @@ export default function CalendarPage() {
     return `${longDate(new Date(e.start))} · ${formatTime(e.start, locale)} – ${formatTime(e.end, locale)}`;
   }
 
-  async function onDeleteEvent(id: Id<"events">) {
+  async function onDeleteEvent(event: CalEvent) {
     const ok = await confirm({
       title: t("deleteEvent"),
       description: tc("deleteWarning"),
+      details: [
+        { label: t("eventTitle"), value: event.title },
+        { label: t("start"), value: eventWhen(event) },
+        ...(event.location ? [{ label: t("location"), value: event.location }] : []),
+      ],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });
     if (!ok) return;
     try {
-      await removeEvent({ eventId: id });
+      await removeEvent({ eventId: event._id });
       setDetail(null);
       toast.success(tc("delete"));
     } catch (e) {
@@ -1103,7 +1108,7 @@ export default function CalendarPage() {
                 setDetail(null);
                 setEventDraft(draftFromEvent(detailEvent, true));
               }}
-              onDelete={() => onDeleteEvent(detailEvent._id)}
+              onDelete={() => onDeleteEvent(detailEvent)}
             />
           )}
 

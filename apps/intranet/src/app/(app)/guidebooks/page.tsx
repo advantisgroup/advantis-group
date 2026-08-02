@@ -192,6 +192,19 @@ function EntryCard({
   async function onDelete() {
     const ok = await confirm({
       title: t("deleteEntryConfirm"),
+      description: tc("deleteWarning"),
+      details: [
+        { label: t("fieldThema"), value: item.title },
+        ...(item.categoryDeleted ? [] : [{ label: t("fieldCategory"), value: item.categoryLabel }]),
+        ...(item.version === null
+          ? []
+          : [
+              {
+                label: t("versionMeta", { version: item.version }),
+                value: item.wikiEntry?.authorName ?? "",
+              },
+            ]),
+      ],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
       destructive: true,

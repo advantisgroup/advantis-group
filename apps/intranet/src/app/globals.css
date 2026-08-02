@@ -562,6 +562,33 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* iOS Safari zooms the viewport whenever a focused control's text is under
+   16px, so every tap on a field makes the layout lurch and the user has to
+   pinch back out. Un-layered on purpose: the same rule inside `@layer base`
+   would lose to a `text-sm` utility on the element itself. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Date/time inputs carry a wide intrinsic width on iOS that ignores the box
+   they're in, which is what pushes dialogs and grid cells off-screen. They're
+   fully styled by the Input component already, so dropping the native chrome
+   costs nothing. */
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"],
+input[type="week"] {
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 @layer components {
   /* Smooth scroll behavior */
   html {
