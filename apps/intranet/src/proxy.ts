@@ -1,6 +1,7 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
 import { api } from "@advantis/convex/api";
+import { type Doc, type Id } from "@advantis/convex/dataModel";
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { fetchQuery } from "convex/nextjs";
 
@@ -47,6 +48,38 @@ function hostWithoutPort(host: string): string {
   return host.split(":")[0];
 }
 
+type TenantLookup = {
+  companyId: Id<"companies">;
+  name: string;
+  slug: string;
+  status: Doc<"companies">["status"];
+} | null;
+
+/** Per-hostname cache for the Convex round-trip below — every single
+ * request (full page loads, RSC/prefetch navigation fetches) matching this
+ * middleware's matcher otherwise re-queries Convex, even though the same
+ * handful of hostnames repeat constantly across one visitor's session, which
+ * is what made `companies:getByDomain` show up spammed in the Convex logs on
+ * completely ordinary navigation. Mirrors `apps/api/src/lib/cors.ts`'s
+ * `isActiveCompanyOrigin` cache for the identical query — negative results
+ * get a shorter TTL so a typo'd/never-registered hostname doesn't get stuck
+ * "unknown" for as long as a real company domain stays cached. */
+const CACHE_TTL_MS = 60_000;
+const NEGATIVE_CACHE_TTL_MS = 10_000;
+const tenantCache = new Map<string, { company: TenantLookup; expiresAt: number }>();
+
+async function lookupTenant(host: string): Promise<TenantLookup> {
+  const cached = tenantCache.get(host);
+  if (cached && cached.expiresAt > Date.now()) return cached.company;
+
+  const company = await fetchQuery(api.companies.getByDomain, { domain: host });
+  tenantCache.set(host, {
+    company,
+    expiresAt: Date.now() + (company ? CACHE_TTL_MS : NEGATIVE_CACHE_TTL_MS),
+  });
+  return company;
+}
+
 /**
  * Resolves a request's `Host` header to a Performance tenant company and
  * rewrites it into the `/performance` carve-out — the mechanism that lets a
@@ -64,7 +97,7 @@ async function resolveTenantRewrite(req: NextRequest): Promise<NextResponse | nu
   const host = hostWithoutPort(req.headers.get("host") ?? "");
   if (!host || host === "localhost" || host === INTRANET_HOST) return null;
 
-  const company = await fetchQuery(api.companies.getByDomain, { domain: host });
+  const company = await lookupTenant(host);
 
   const url = req.nextUrl.clone();
   if (!company) {
