@@ -471,6 +471,7 @@ export default function SettingsPage() {
       <ConnectionsCard />
 
       {/* Notification preferences (same controls as the notifications tab) */}
+      <div id="notifications" className="scroll-mt-24" />
       <Card>
         <CardContent className="space-y-3 p-5">
           <div>

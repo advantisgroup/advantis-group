@@ -76,7 +76,7 @@ export function NotificationsMenu() {
             </button>
           )}
           <Link
-            href="/settings?tab=notifications"
+            href="/settings#notifications"
             aria-label={t("preferences")}
             title={t("preferences")}
             className="grid size-7 shrink-0 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
