@@ -71,13 +71,31 @@ export const wikiChatRoute = new Elysia()
 
       const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
 
+      // Caching is a prefix match, and the prefix has to clear the model's
+      // minimum before anything is stored — 1024 tokens on Sonnet 4.6.
+      // WIKI_SYSTEM is only ~400, so a breakpoint on the system block alone
+      // never cached: the marker is ignored silently, no error, and
+      // cache_creation_input_tokens just stays 0. Marking the last message
+      // instead makes the cached prefix system + the whole conversation so
+      // far, which clears the minimum after the first couple of turns and
+      // lets every following turn read the history back.
+      const lastIndex = body.messages.length - 1;
       const stream = client.messages.stream({
         model: "claude-sonnet-4-6",
         max_tokens: 1024,
-        system: [{ type: "text", text: WIKI_SYSTEM, cache_control: { type: "ephemeral" } }],
-        messages: body.messages.map((m) => ({
+        system: [{ type: "text", text: WIKI_SYSTEM }],
+        messages: body.messages.map((m, i) => ({
           role: m.role,
-          content: m.content,
+          content:
+            i === lastIndex
+              ? [
+                  {
+                    type: "text" as const,
+                    text: m.content,
+                    cache_control: { type: "ephemeral" as const },
+                  },
+                ]
+              : m.content,
         })),
       });
 
@@ -86,6 +104,11 @@ export const wikiChatRoute = new Elysia()
           yield event.delta.text;
         }
       }
+
+      const { usage } = await stream.finalMessage();
+      console.log(
+        `[wiki-chat] cache write=${usage.cache_creation_input_tokens ?? 0} read=${usage.cache_read_input_tokens ?? 0} uncached=${usage.input_tokens}`,
+      );
     },
     {
       body: t.Object({
