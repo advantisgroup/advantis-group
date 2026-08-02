@@ -58,19 +58,21 @@ the flow that gets someone back in without anyone ever learning their password.
 
 ## Required setup
 
-### Clerk: expose `fva` on the `convex` JWT template
+### Clerk: `fva` needs no configuration
 
-The step-up gate reads Clerk's factor-verification-age claim through Convex.
-In the Clerk dashboard → **JWT Templates → `convex`**, add:
-
-```json
-"fva": "{{user.factor_verification_age}}"
-```
-
-**Without this line every admin action stays blocked.** That's deliberate — a
-missing claim is indistinguishable from a session that was never re-verified,
-and guessing permissively would silently turn the gate off. See
+The step-up gate reads Clerk's factor-verification-age (`fva`) claim through
+Convex. `fva` is a Clerk **default** claim present on every session token —
+the Dashboard's JWT Templates editor now rejects any attempt to add it to the
+`convex` template manually ("You can't use the reserved claim: fva"). There's
+nothing to set up here; if the claim is ever missing, every step-up-gated
+admin action reads as unverified and stays blocked. That's deliberate — see
 `packages/convex/convex/lib/reverification.ts`.
+
+If a step-up keeps failing even right after Clerk reports success, that's not
+this claim — it's almost always Convex's own auth token being stale (Convex
+caches its token independently of Clerk's session and doesn't refetch just
+because a reverification happened). `PasswordResetsPanel.tsx`'s
+`refreshConvexAuth` forces that refetch before retrying.
 
 ### Environment variables
 

@@ -39,15 +39,20 @@ export function reverificationHint(): ReverificationHint {
  * Whether the caller's Clerk session has been verified recently enough.
  *
  * Reads Clerk's `fva` ("factor verification age") claim — `"<minutes since
- * first factor>,<minutes since second factor>"`, with `-1` for "never". The
- * claim only reaches Convex if the **`convex` JWT template** exposes it:
- *
- *     "fva": "{{user.factor_verification_age}}"
- *
- * Without that line every step-up-gated action reads as unverified and stays
+ * first factor>,<minutes since second factor>"`, with `-1` for "never". `fva`
+ * is a Clerk default claim included on every session token automatically —
+ * the Dashboard's JWT Templates editor now refuses to let you add it
+ * manually ("You can't use the reserved claim: fva"), so there's nothing to
+ * configure here. If it's ever missing, this reads as unverified and stays
  * blocked. Failing closed is deliberate — a missing claim is indistinguishable
  * from a session that was never re-verified, and guessing in the permissive
  * direction would silently turn the whole gate off.
+ *
+ * A missing claim is *not* what causes a legitimate step-up to keep failing
+ * on retry, though — that's almost always `PasswordResetsPanel.tsx`'s
+ * `refreshConvexAuth`, which exists because Convex caches its auth token
+ * independently of Clerk's session and won't have picked up a verification
+ * that just happened without being told to refetch.
  */
 export async function isRecentlyVerified(ctx: QueryCtx | MutationCtx): Promise<boolean> {
   const identity = await ctx.auth.getUserIdentity();
