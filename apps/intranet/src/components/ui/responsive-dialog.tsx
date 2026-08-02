@@ -83,16 +83,30 @@ export function ResponsiveDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className={cn("max-w-md gap-0 p-0", contentClassName)}>
-        <div className="border-b border-border/70 px-6 pb-4 pr-12 pt-6">
+      {/* Column layout, not the base grid: the header and footer stay put and
+          only the body scrolls. The whole box scrolling instead is what put a
+          stray divider above the buttons and left a scrollbar on dialogs that
+          very nearly fit. */}
+      <DialogContent
+        className={cn(
+          "flex max-w-md flex-col gap-0 overflow-hidden overflow-y-hidden p-0",
+          contentClassName,
+        )}
+      >
+        <div className="shrink-0 border-b border-border/70 px-6 pb-4 pr-12 pt-6">
           <DialogTitle className="leading-snug">{title}</DialogTitle>
           {description && (
             <DialogDescription className="mt-1 leading-relaxed">{description}</DialogDescription>
           )}
         </div>
-        <div className="flex flex-col gap-4 px-6 pb-5 pt-4">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 pb-5 pt-4">
+          {children}
+        </div>
+        {/* No negative margins here: DialogContent is p-0 in this shell, so
+            the -mx-6/-mb-6 breakout the padded DialogFooter uses would push
+            this 1.5rem outside the box on every side. */}
         {footer && (
-          <div className="-mx-6 -mb-6 mt-1 flex flex-col-reverse gap-2 border-t border-border/70 px-6 pb-5 pt-4 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex shrink-0 flex-col-reverse gap-2 border-t border-border/70 px-6 pb-5 pt-4 sm:flex-row sm:items-center sm:justify-end">
             {footer}
           </div>
         )}

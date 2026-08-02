@@ -475,7 +475,14 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     cursor: default;
+    /* `clip` rather than `hidden`: `overflow-x: hidden` forces overflow-y to
+       compute to `auto`, which turns this into a scroll container and quietly
+       breaks `position: sticky` everywhere below it (the legal-page table of
+       contents, sticky table headers). `clip` cuts the same overflow off
+       without becoming a scroll container. The `hidden` line above it is the
+       fallback for Safari < 16, which doesn't know `clip`. */
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   p,
@@ -577,6 +584,21 @@ html.lenis body {
     margin: 16mm;
   }
 
+  /* Screen-only affordances — a download button, a chapter switcher or a
+     tab strip is dead ink on paper, and the numbered nav chips in particular
+     duplicate content that follows anyway. Anything genuinely worth printing
+     is text, not a control. */
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="tablist"],
+  [role="toolbar"],
+  input[type="button"],
+  input[type="submit"],
+  [data-print="hide"] {
+    display: none !important;
+  }
+
   /* Keep headings with the text they introduce, and don't strand a single
      line of a paragraph on its own sheet. */
   h1,
@@ -631,7 +653,10 @@ input[type="week"] {
   /* Smooth scroll behavior */
   html {
     scroll-behavior: smooth;
+    /* See the note on `body` — `hidden` here would make `html` the scroll
+       container and stop `position: sticky` working at all. */
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* Respect user preferences for reduced motion */
