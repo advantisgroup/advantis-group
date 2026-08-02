@@ -31,6 +31,33 @@ function isCancelled(error: unknown): boolean {
   );
 }
 
+/** Structurally matches `ReverificationHint` from
+ * `packages/convex/convex/lib/reverification.ts` — not imported directly
+ * since that module lives on the Convex build, not this package's client
+ * surface. */
+interface ReverificationHintShape {
+  clerk_error: { reason: "reverification-error" };
+}
+
+/**
+ * `useReverification` only guards the *first* call: if the retry it fires
+ * after the step-up modal closes is *still* unverified (stale `fva` claim,
+ * claim propagation lag, …), it returns Convex's raw reverification hint as
+ * if it were a normal result instead of throwing — see
+ * `@clerk/shared`'s `createReverificationHandler`, which never re-checks
+ * `isReverificationHint` on the retried result. Callers have to check for
+ * that shape themselves rather than trusting a resolved promise means
+ * success.
+ */
+function isReverificationHint(value: unknown): value is ReverificationHintShape {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "clerk_error" in value &&
+    (value as { clerk_error?: { reason?: string } }).clerk_error?.reason === "reverification-error"
+  );
+}
+
 function RequestHistory({ requestId }: { requestId: RequestId }) {
   const t = useTranslations("PasswordReset");
   const format = useFormatter();
@@ -102,9 +129,19 @@ function RequestCard({
     try {
       if (action === "issue") {
         const result = await issue({ requestId: request.id });
+        if (isReverificationHint(result)) {
+          toast.error(t("adminReverifyStale"));
+          posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
+          return;
+        }
         toast.success(t("adminIssued", { email: result.sentTo }));
       } else {
-        await dismiss({ requestId: request.id });
+        const result = await dismiss({ requestId: request.id });
+        if (isReverificationHint(result)) {
+          toast.error(t("adminReverifyStale"));
+          posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
+          return;
+        }
         toast.success(t("adminDismissed"));
       }
       posthog.capture("password_reset_admin_action", { scope: request.scope, action });
