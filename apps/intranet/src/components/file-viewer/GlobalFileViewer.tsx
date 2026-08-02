@@ -595,6 +595,12 @@ export function GlobalFileViewer({
     return () => {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
+      // The blob URL just revoked is dead, but the state still holds it —
+      // and `oneDrivePreviewReady` only compares itemIds, so reopening the
+      // same file would report "ready" and hand PdfPreview the revoked URL
+      // while the fresh download was still in flight. That's what made a
+      // preview work exactly once and fail on every reopen.
+      setOneDrivePreview(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOneDriveOrigin, file?.oneDriveItemId, kind?.kind]);
