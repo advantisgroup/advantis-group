@@ -69,5 +69,9 @@
   "bulkDeleteTitle": "Delete {count} items?",
   "uploadQueue": "Uploads",
   "retry": "Retry",
-  "finalizing": "Finalizing…"
+  "finalizing": "Finalizing…",
+  "chooseFolder": "Choose a folder",
+  "chooseFolderHint": "Browse into a subfolder, or upload straight to the current one.",
+  "selectThisFolder": "Save here",
+  "noSubfolders": "No subfolders here yet."
 }

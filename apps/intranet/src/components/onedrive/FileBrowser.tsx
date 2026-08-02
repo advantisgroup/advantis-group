@@ -258,8 +258,8 @@ export function FileBrowser({
         setPath(data.path);
         setCachedListing(next, data);
         if (data.previewItem) setPreviewItem(data.previewItem);
-        const url = pathToUrl(data.path, routeBase);
-        if (url !== pathToUrl(next, routeBase)) {
+        const url = pathToUrl(data.path, routeBase, rootPath);
+        if (url !== pathToUrl(next, routeBase, rootPath)) {
           router.replace(url);
         }
       } catch (e) {
@@ -268,7 +268,7 @@ export function FileBrowser({
         setLoading(false);
       }
     },
-    [od, t, router, routeBase],
+    [od, t, router, routeBase, rootPath],
   );
 
   // Pushes the target folder into the URL immediately; the effect below
@@ -279,7 +279,7 @@ export function FileBrowser({
   const navigate = useCallback(
     (next: string) => {
       if (rootPath && next !== rootPath && !next.startsWith(`${rootPath}/`)) return;
-      router.push(pathToUrl(next, routeBase));
+      router.push(pathToUrl(next, routeBase, rootPath));
     },
     [router, routeBase, rootPath],
   );
@@ -547,7 +547,7 @@ export function FileBrowser({
 
   function copyLink(item: OneDriveItem) {
     void navigator.clipboard.writeText(
-      `${window.location.origin}${pathToUrl(item.path, routeBase)}`,
+      `${window.location.origin}${pathToUrl(item.path, routeBase, rootPath)}`,
     );
     toast.success(t("linkCopied"));
   }
