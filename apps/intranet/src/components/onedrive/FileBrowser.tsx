@@ -182,6 +182,7 @@ export function FileBrowser({
   routeBase?: string;
 }) {
   const t = useTranslations("Files");
+  const tc = useTranslations("Common");
   const od = useOneDriveApi();
   const confirm = useConfirm();
   const isMobile = useIsMobile();
@@ -576,6 +577,8 @@ export function FileBrowser({
     const ok = await confirm({
       title: t("bulkDeleteTitle", { count: deletable.length }),
       description: t("deleteDesc"),
+      // A bare count is the one thing that can't be sanity-checked; name them.
+      details: deletable.slice(0, 6).map((i) => ({ label: tc("fieldName"), value: i.name })),
       confirmLabel: t("delete"),
       cancelLabel: t("cancel"),
       destructive: true,

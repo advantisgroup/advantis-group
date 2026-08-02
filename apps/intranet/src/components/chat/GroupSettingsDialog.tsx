@@ -147,6 +147,7 @@ export function GroupSettingsDialog({
     const ok = await confirm({
       title: t("leaveGroup"),
       description: t("leaveGroupHint"),
+      details: [{ label: tc("fieldName"), value: nameValue }],
       confirmLabel: t("leaveGroup"),
       cancelLabel: tc("cancel"),
     });
@@ -164,6 +165,7 @@ export function GroupSettingsDialog({
     const ok = await confirm({
       title: t("deleteGroup"),
       description: t("deleteGroupHint"),
+      details: [{ label: tc("fieldName"), value: nameValue }],
       confirmLabel: t("deleteGroup"),
       cancelLabel: tc("cancel"),
     });

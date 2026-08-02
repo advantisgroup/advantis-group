@@ -94,6 +94,7 @@ export function SuggestionRow({
     const ok = await confirm({
       title: t("deleteConfirmTitle"),
       description: tc("deleteWarning"),
+      details: [{ label: tc("fieldTitle"), value: suggestion.title }],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });
