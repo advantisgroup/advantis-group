@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   BookOpen,
   Calendar,
+  ChevronRight,
   Clock3,
   Cloud,
   ExternalLink,
@@ -36,6 +37,7 @@ import posthog from "posthog-js";
 import { useFeatureFlags } from "@/components/feature-flags/FeatureGate";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
+import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
 import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
@@ -82,6 +84,8 @@ interface NavGroup {
   labelKey: string;
   namespace?: "Nav" | "Admin";
   items: NavItem[];
+  /** Rendered behind a collapsed disclosure rather than inline. */
+  advanced?: boolean;
 }
 
 type SidebarMode = "workspace" | "organization";
@@ -203,15 +207,15 @@ export function Sidebar() {
             ]
           : []),
         {
+          href: "/fehlermanagement",
+          labelKey: "errorManagement",
+          icon: AlertTriangle,
+        },
+        {
           href: "/settings",
           labelKey: "settings",
           icon: Settings,
           tourAttr: "tour-nav-settings",
-        },
-        {
-          href: "/fehlermanagement",
-          labelKey: "errorManagement",
-          icon: AlertTriangle,
         },
       ],
     },
@@ -276,6 +280,7 @@ export function Sidebar() {
       labelKey: group.labelKey,
       namespace: "Admin" as const,
       items: group.items,
+      advanced: group.advanced,
     })),
   ];
 
@@ -297,16 +302,55 @@ export function Sidebar() {
       ? "organization"
       : "workspace";
   const [mode, setMode] = useState<SidebarMode>(routeMode);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   useEffect(() => {
     setMode(routeMode);
   }, [routeMode]);
 
+  // ActivityTrack is its own area with its own nav, the same way /admin used
+  // to be — it just lost the wiring in the workspace/organization split.
+  const inActivityArea = pathname.startsWith("/activity");
+
   const activeGroups =
     mode === "organization" && hasOrganization ? visibleOrganizationGroups : visibleGroups;
+  const primaryGroups = activeGroups.filter((group) => !group.advanced);
+  const advancedItems = activeGroups.filter((group) => group.advanced).flatMap((g) => g.items);
+  const advancedLabel = tAdmin("nav.groupAdvanced");
 
   function label(group: NavGroup, key: string) {
     return group.namespace === "Admin" ? tAdmin(key) : t(key);
+  }
+
+  function navLink(item: NavItem, itemLabel: string) {
+    const active =
+      item.href === "/"
+        ? pathname === "/"
+        : item.href === "/admin"
+          ? pathname === "/admin"
+          : pathname.startsWith(item.href);
+    const Icon = item.icon;
+    return (
+      <SidebarMenuItem key={item.href}>
+        <SidebarMenuButton asChild active={active} tooltip={itemLabel}>
+          <Link
+            href={item.href}
+            onClick={close}
+            aria-current={active ? "page" : undefined}
+            data-tour={item.tourAttr}
+          >
+            <Icon />
+            <SidebarLabel>{itemLabel}</SidebarLabel>
+            {item.external ? (
+              <ExternalLink className="ml-auto size-3.5 shrink-0 text-muted-foreground/70 group-data-[state=collapsed]/sidebar:hidden" />
+            ) : null}
+            {item.badge ? (
+              <SidebarMenuBadge>{item.badge > 99 ? "99+" : item.badge}</SidebarMenuBadge>
+            ) : null}
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
   }
 
   return (
@@ -315,7 +359,7 @@ export function Sidebar() {
         <Link href="/" onClick={close} aria-label="Advantis Intranet" className="flex items-center">
           {state === "collapsed" ? <MarkLogo size={28} className="size-7" /> : <WordmarkLogo />}
         </Link>
-        {hasOrganization && (
+        {hasOrganization && !inActivityArea && (
           <div className="grid grid-cols-2 rounded-lg bg-sidebar-accent/70 p-1 group-data-[state=collapsed]/sidebar:hidden">
             <button
               type="button"
@@ -356,61 +400,56 @@ export function Sidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <div className="group-data-[state=collapsed]/sidebar:hidden">
-          {mode === "organization" && hasOrganization && (
-            <div className="mb-2 rounded-lg border border-sidebar-border bg-sidebar-accent/35 px-3 py-2">
-              <p className="text-xs font-semibold text-sidebar-foreground">
-                {t("organizationConsole")}
-              </p>
-              <p className="mt-0.5 text-[11px] leading-snug text-sidebar-foreground/55">
-                {t("organizationConsoleHint")}
-              </p>
+        {inActivityArea ? (
+          <ActivitySidebar />
+        ) : (
+          <>
+            <div className="group-data-[state=collapsed]/sidebar:hidden">
+              {mode === "organization" && hasOrganization && (
+                <div className="mb-2 rounded-lg border border-sidebar-border bg-sidebar-accent/35 px-3 py-2">
+                  <p className="text-xs font-semibold text-sidebar-foreground">
+                    {t("organizationConsole")}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-sidebar-foreground/55">
+                    {t("organizationConsoleHint")}
+                  </p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        {activeGroups.map((group) => (
-          <SidebarGroup key={`${group.namespace ?? "Nav"}-${group.labelKey}`}>
-            <SidebarGroupLabel>{label(group, group.labelKey)}</SidebarGroupLabel>
-            <SidebarMenu>
-              {group.items.map((item) => {
-                const active =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : item.href === "/admin"
-                      ? pathname === "/admin"
-                      : pathname.startsWith(item.href);
-                const Icon = item.icon;
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      active={active}
-                      tooltip={label(group, item.labelKey)}
-                    >
-                      <Link
-                        href={item.href}
-                        onClick={close}
-                        aria-current={active ? "page" : undefined}
-                        data-tour={item.tourAttr}
-                      >
-                        <Icon />
-                        <SidebarLabel>{label(group, item.labelKey)}</SidebarLabel>
-                        {item.external ? (
-                          <ExternalLink className="ml-auto size-3.5 shrink-0 text-muted-foreground/70 group-data-[state=collapsed]/sidebar:hidden" />
-                        ) : null}
-                        {item.badge ? (
-                          <SidebarMenuBadge>
-                            {item.badge > 99 ? "99+" : item.badge}
-                          </SidebarMenuBadge>
-                        ) : null}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroup>
-        ))}
+            {primaryGroups.map((group) => (
+              <SidebarGroup key={`${group.namespace ?? "Nav"}-${group.labelKey}`}>
+                <SidebarGroupLabel>{label(group, group.labelKey)}</SidebarGroupLabel>
+                <SidebarMenu>
+                  {group.items.map((item) => navLink(item, label(group, item.labelKey)))}
+                </SidebarMenu>
+              </SidebarGroup>
+            ))}
+            {advancedItems.length > 0 && (
+              <SidebarGroup>
+                {/* The icon rail has no room for a disclosure label, so there
+                    the items just sit inline like any other group. */}
+                <button
+                  type="button"
+                  onClick={() => setAdvancedOpen((open) => !open)}
+                  aria-expanded={advancedOpen}
+                  className="flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/55 transition-colors hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:hidden"
+                >
+                  <ChevronRight
+                    className={cn("size-3 transition-transform", advancedOpen && "rotate-90")}
+                  />
+                  {advancedLabel}
+                </button>
+                <SidebarMenu
+                  className={cn(
+                    !advancedOpen && "hidden group-data-[state=collapsed]/sidebar:flex",
+                  )}
+                >
+                  {advancedItems.map((item) => navLink(item, tAdmin(item.labelKey)))}
+                </SidebarMenu>
+              </SidebarGroup>
+            )}
+          </>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="gap-3">

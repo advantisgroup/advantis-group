@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   Building2,
   Clock,
-  DatabaseZap,
   LayoutDashboard,
   type LucideIcon,
   Mail,
@@ -46,6 +45,12 @@ export interface AdminNavItem {
 export interface AdminNavGroup {
   labelKey: string;
   items: AdminNavItem[];
+  /**
+   * Set-and-forget configuration. Real admins reach for these a handful of
+   * times a year, so the sidebar tucks them behind one disclosure instead of
+   * making everyone scroll past them on every visit.
+   */
+  advanced?: boolean;
 }
 
 /**
@@ -88,7 +93,19 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
     ],
   },
   {
-    labelKey: "nav.groupOrganization",
+    labelKey: "nav.groupSystem",
+    items: [
+      { href: "/admin/uploads", labelKey: "nav.uploads", icon: Upload },
+      {
+        href: "/admin/integrations",
+        labelKey: "nav.integrations",
+        icon: Plug,
+      },
+    ],
+  },
+  {
+    labelKey: "nav.groupAdvanced",
+    advanced: true,
     items: [
       {
         href: "/admin/departments",
@@ -101,23 +118,6 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         labelKey: "nav.teams",
         icon: Users2,
         adminOnly: true,
-      },
-      {
-        href: "/admin/data-cleanup",
-        labelKey: "nav.dataCleanup",
-        icon: DatabaseZap,
-        adminOnly: true,
-      },
-    ],
-  },
-  {
-    labelKey: "nav.groupSystem",
-    items: [
-      { href: "/admin/uploads", labelKey: "nav.uploads", icon: Upload },
-      {
-        href: "/admin/integrations",
-        labelKey: "nav.integrations",
-        icon: Plug,
       },
       {
         href: "/admin/audit",

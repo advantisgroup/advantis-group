@@ -95,6 +95,7 @@ export function OrgEntityCrudList({
   onArchiveToggle: (id: string, archived: boolean) => Promise<void>;
 }) {
   const t = useTranslations("Admin");
+  const tc = useTranslations("Common");
   const handleError = useErrorHandler();
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -131,7 +132,7 @@ export function OrgEntityCrudList({
       </div>
 
       {entities === undefined ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">{t("dataCleanup.loading")}</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{tc("loading")}</p>
       ) : entities.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">{t("orgEntity.empty")}</p>
       ) : (
