@@ -487,7 +487,11 @@ export default function GuidebooksPage() {
             {t("interactiveToolsTitle")}
             <span className="tabular-nums">· {interactiveTools.length}</span>
           </summary>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {/* Fifteen full-width rows is most of a phone screen, so opening
+              this pushed the actual wiki entries out of view. Capped and
+              scrolled instead — single column on mobile so the longer
+              titles stay readable rather than truncating to nothing. */}
+          <div className="mt-2 grid max-h-72 gap-2 overflow-y-auto overscroll-contain pr-1 sm:max-h-none sm:grid-cols-2 sm:overflow-visible sm:pr-0">
             {interactiveTools.map((gb) => (
               <Link
                 key={gb.slug}
