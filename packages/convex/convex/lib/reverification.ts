@@ -48,22 +48,36 @@ export function reverificationHint(): ReverificationHint {
  * native Convex integration (Dashboard → Configure → Integrations), which
  * mints its own session token with `fva` as a true default claim and needs
  * no hand-built template at all.
+ *
+ * The claim comes back as a comma-delimited string (`"<age>,<age>"`) through
+ * our `reverificationAge` template mapping — shortcode interpolation in a
+ * JSON string field always stringifies. The `fva` fallback, if Clerk's
+ * native integration ever populates it, may instead hand back the raw
+ * `[number, number]` tuple, since that path isn't going through string
+ * interpolation. Accept either so the fallback isn't silently dead on
+ * arrival if that ever kicks in.
  */
-function readReverificationAge(identity: Record<string, unknown>): string | undefined {
-  const value = identity.reverificationAge ?? identity.fva;
-  return typeof value === "string" ? value : undefined;
+function firstFactorAgeFromClaim(value: unknown): number | undefined {
+  if (typeof value === "string") {
+    const age = Number(value.split(",")[0]);
+    return Number.isFinite(age) ? age : undefined;
+  }
+  if (Array.isArray(value) && typeof value[0] === "number") {
+    return value[0];
+  }
+  return undefined;
 }
 
 /**
  * Whether the caller's Clerk session has been verified recently enough.
  *
- * Reads the factor-verification-age claim — `"<minutes since first
- * factor>,<minutes since second factor>"`, with `-1` for "never". See
- * `readReverificationAge` for which claim name that actually is and why. If
- * it's ever missing, this reads as unverified and stays blocked. Failing
- * closed is deliberate — a missing claim is indistinguishable from a session
- * that was never re-verified, and guessing in the permissive direction would
- * silently turn the whole gate off.
+ * Reads the factor-verification-age claim, minutes since the first factor
+ * was verified (`-1` for "never") — see `firstFactorAgeFromClaim` for which
+ * claim name that actually is, its shape, and why. If it's ever missing,
+ * this reads as unverified and stays blocked. Failing closed is deliberate —
+ * a missing claim is indistinguishable from a session that was never
+ * re-verified, and guessing in the permissive direction would silently turn
+ * the whole gate off.
  *
  * A missing claim is *not* what causes a legitimate step-up to keep failing
  * on retry, though — that's almost always `PasswordResetsPanel.tsx`'s
@@ -74,10 +88,8 @@ function readReverificationAge(identity: Record<string, unknown>): string | unde
 export async function isRecentlyVerified(ctx: QueryCtx | MutationCtx): Promise<boolean> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return false;
-  const fva = readReverificationAge(identity);
-  if (fva === undefined) return false;
-  const firstFactorAge = Number(fva.split(",")[0]);
-  if (!Number.isFinite(firstFactorAge) || firstFactorAge < 0) return false;
+  const firstFactorAge = firstFactorAgeFromClaim(identity.reverificationAge ?? identity.fva);
+  if (firstFactorAge === undefined || firstFactorAge < 0) return false;
   return firstFactorAge <= REVERIFICATION_MAX_AGE_MINUTES;
 }
 
