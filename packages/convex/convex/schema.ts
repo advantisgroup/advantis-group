@@ -2352,7 +2352,8 @@ export default defineSchema({
     actorEmail: v.optional(v.string()),
     /** Whether the actor was an admin acting on someone else's account. */
     actorIsAdmin: v.optional(v.boolean()),
-    /** Whether Clerk step-up re-verification was satisfied for this action. */
+    /** Whether the admin email-code step-up (`lib/adminVerification.ts`) was
+     * satisfied for this action. */
     reverified: v.optional(v.boolean()),
     targetEmail: v.optional(v.string()),
     targetUserId: v.optional(v.id("users")),
@@ -2365,6 +2366,28 @@ export default defineSchema({
     .index("by_at", ["at"])
     .index("by_request", ["requestId"])
     .index("by_actor", ["actorUserId"]),
+
+  /**
+   * The step-up gate for admin password-reset actions (`issueResetLink`,
+   * `dismissRequest`): a 6-digit code mailed to the admin's own address via
+   * Resend, proving whoever holds the Convex session also holds that inbox
+   * right now. One row per admin — requesting a new code replaces any
+   * existing one, so there is never more than one guessable code live at a
+   * time. Once the correct code lands, `verifiedAt` is set and *is* the
+   * "recently verified" proof `lib/adminVerification.ts`'s
+   * `isRecentlyVerified` checks; the row is reused (not deleted) until it
+   * expires or is replaced, so one code can clear several admin actions
+   * within the verification window.
+   */
+  adminVerificationCodes: defineTable({
+    adminUserId: v.id("users"),
+    /** sha256 of the 6-digit code — the plaintext is never stored. */
+    codeHash: v.string(),
+    attempts: v.number(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+    verifiedAt: v.optional(v.number()),
+  }).index("by_admin", ["adminUserId"]),
 
   // --- Wiki Chat (AI assistant history) ------------------------------------
   // Per-user chat history for the Wiki AI assistant. Title and message blobs

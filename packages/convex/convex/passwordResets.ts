@@ -11,16 +11,17 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
+import {
+  isRecentlyVerified,
+  issueCode,
+  needsVerificationHint,
+  verifyCode,
+  type VerificationHint,
+} from "./lib/adminVerification";
 import { hashPassword, randomToken, sha256hex } from "./activity/lib/crypto";
 import { trackEvent } from "./lib/analytics";
 import { getCurrentUser, isApplicantAreaMember, requireAdmin, requireUser } from "./lib/auth";
 import { notifyUsers } from "./lib/notify";
-import {
-  debugFvaClaim,
-  isRecentlyVerified,
-  reverificationHint,
-  type ReverificationHint,
-} from "./lib/reverification";
 import { passwordResetScopeValidator } from "./schema";
 
 export type PasswordResetScope = "hr" | "performance";
@@ -503,6 +504,56 @@ export const pendingCount = query({
   },
 });
 
+// ------------------------------------------------------- admin step-up code
+
+/** Mails a fresh 6-digit code to the calling admin's own address, gating the
+ * two actions below. Cooldown-limited by `issueCode` itself. Not tied to any
+ * one request/scope, so it logs to the console rather than
+ * `passwordResetAuditLog` — the per-action `reverification_failed`/`*_issued`/
+ * `request_dismissed` entries there already capture the outcome of the action
+ * a code unlocked. */
+export const requestVerificationCode = mutation({
+  args: {},
+  handler: async (ctx): Promise<{ ok: true }> => {
+    const admin = await requireAdmin(ctx);
+    const code = await issueCode(ctx, admin);
+    await ctx.scheduler.runAfter(0, internal.outbound.sendNotificationEmail, {
+      kind: "admin-verification-code",
+      to: admin.email,
+      data: { code, expiresInMinutes: 10 },
+    });
+    console.log(`[adminVerification] code sent admin=${admin._id} to=${maskEmail(admin.email)}`);
+    return { ok: true };
+  },
+});
+
+/** Redeems a code mailed by `requestVerificationCode`. Success marks the
+ * admin "recently verified" for `REVERIFICATION_MAX_AGE_MINUTES`, which
+ * `isRecentlyVerified` reads from the same row. */
+export const submitVerificationCode = mutation({
+  args: { code: v.string() },
+  handler: async (ctx, { code }): Promise<{ ok: true }> => {
+    const admin = await requireAdmin(ctx);
+    const result = await verifyCode(ctx, admin._id, code);
+    if (!result.ok) {
+      console.log(`[adminVerification] code rejected admin=${admin._id} reason=${result.reason}`);
+      const message =
+        result.reason === "wrong_code"
+          ? `Incorrect code. ${result.attemptsLeft} attempt${result.attemptsLeft === 1 ? "" : "s"} left.`
+          : result.reason === "expired"
+            ? "This code has expired. Request a new one."
+            : result.reason === "too_many_attempts"
+              ? "Too many incorrect attempts. Request a new code."
+              : "No code is waiting. Request one first.";
+      throw new ConvexError({ code: result.reason, message });
+    }
+    console.log(`[adminVerification] code verified admin=${admin._id}`);
+    return { ok: true };
+  },
+});
+
+// ------------------------------------------------------------- admin review
+
 /** Dismiss without issuing anything — the right answer for a probe, or for a
  * request an admin has resolved out-of-band. Step-up gated like issuing is:
  * silently burying "someone is trying to get into the CFO's account" is its
@@ -512,14 +563,14 @@ export const dismissRequest = mutation({
   handler: async (
     ctx,
     { requestId },
-  ): Promise<{ ok: true } | ReverificationHint> => {
+  ): Promise<{ ok: true } | VerificationHint> => {
     const admin = await requireAdmin(ctx);
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({ code: "not_found", message: "No pending request." });
     }
 
-    if (!(await isRecentlyVerified(ctx))) {
+    if (!(await isRecentlyVerified(ctx, admin._id))) {
       await audit(ctx, {
         event: "reverification_failed",
         scope: request.scope,
@@ -528,14 +579,14 @@ export const dismissRequest = mutation({
         actorIsAdmin: true,
         reverified: false,
         targetEmail: request.targetEmail,
-        detail: `action=dismiss ${await debugFvaClaim(ctx)}`,
+        detail: "action=dismiss",
       });
       await trackEvent(ctx, {
         event: "password_reset_reverification_required",
         distinctId: admin.clerkUserId,
         properties: { scope: request.scope, action: "dismiss" },
       });
-      return reverificationHint();
+      return needsVerificationHint();
     }
 
     await ctx.db.patch(requestId, {
@@ -578,7 +629,6 @@ export const prepareIssue = internalQuery({
   ): Promise<{
     admin: Doc<"users">;
     reverified: boolean;
-    debugFva: string;
     scope: PasswordResetScope;
     targetEmail: string;
     sentToEmail: string | null;
@@ -588,8 +638,7 @@ export const prepareIssue = internalQuery({
     createdAt: number;
   }> => {
     const admin = await requireAdmin(ctx);
-    const reverified = await isRecentlyVerified(ctx);
-    const debugFva = await debugFvaClaim(ctx);
+    const reverified = await isRecentlyVerified(ctx, admin._id);
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({ code: "not_found", message: "No pending request." });
@@ -610,7 +659,6 @@ export const prepareIssue = internalQuery({
     return {
       admin,
       reverified,
-      debugFva,
       scope: request.scope,
       targetEmail: request.targetEmail,
       sentToEmail: resolved.sentToEmail ?? null,
@@ -704,7 +752,7 @@ export const issueResetLink = action({
   handler: async (
     ctx,
     { requestId },
-  ): Promise<{ ok: true; sentTo: string } | ReverificationHint> => {
+  ): Promise<{ ok: true; sentTo: string } | VerificationHint> => {
     const prepared = await ctx.runQuery(internal.passwordResets.prepareIssue, { requestId });
 
     if (!prepared.reverified) {
@@ -716,9 +764,9 @@ export const issueResetLink = action({
         actorIsAdmin: true,
         reverified: false,
         targetEmail: prepared.targetEmail,
-        detail: `action=issue ${prepared.debugFva}`,
+        detail: "action=issue",
       });
-      return reverificationHint();
+      return needsVerificationHint();
     }
     if (!prepared.sentToEmail) {
       throw new ConvexError({
@@ -940,20 +988,28 @@ export const completeReset = action({
 
 // -------------------------------------------------------------- housekeeping
 
-/** Drops spent/expired tokens, and request rows old enough to have stopped
- * being useful evidence. The audit trail outlives both. Scheduled from
- * `crons.ts`. */
+/** Drops spent/expired tokens, request rows old enough to have stopped being
+ * useful evidence, and expired admin verification codes. The audit trail
+ * outlives all three. Scheduled from `crons.ts`. */
 export const purgeStale = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ tokens: number; requests: number }> => {
-    const tokenCutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    // Admin verification codes are one small row per admin at most, so a full
+    // scan is cheap — there's no index to range-query expiresAt by.
+    const codes = await ctx.db.query("adminVerificationCodes").collect();
+    await Promise.all(
+      codes.filter((c) => c.expiresAt <= now).map((c) => ctx.db.delete(c._id)),
+    );
+
+    const tokenCutoff = now - 7 * 24 * 60 * 60 * 1000;
     const tokens = await ctx.db
       .query("passwordResetTokens")
       .withIndex("by_expiresAt", (q) => q.lt("expiresAt", tokenCutoff))
       .take(500);
     await Promise.all(tokens.map((t) => ctx.db.delete(t._id)));
 
-    const requestCutoff = Date.now() - 180 * 24 * 60 * 60 * 1000;
+    const requestCutoff = now - 180 * 24 * 60 * 60 * 1000;
     const requests = await ctx.db
       .query("passwordResetRequests")
       .withIndex("by_createdAt", (q) => q.lt("createdAt", requestCutoff))
@@ -961,7 +1017,7 @@ export const purgeStale = internalMutation({
     await Promise.all(requests.map((r) => ctx.db.delete(r._id)));
 
     console.log(
-      `[passwordReset] purge tokens=${tokens.length} requests=${requests.length}`,
+      `[passwordReset] purge tokens=${tokens.length} requests=${requests.length} codes=${codes.length}`,
     );
     return { tokens: tokens.length, requests: requests.length };
   },

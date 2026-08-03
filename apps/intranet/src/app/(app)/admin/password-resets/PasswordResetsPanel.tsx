@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useSearchParams } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { useAuth, useReverification } from "@clerk/nextjs";
-import { useAction, useConvex, useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
+import { ConvexError } from "convex/values";
 import { KeyRound, ShieldAlert, TriangleAlert } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import posthog from "posthog-js";
@@ -15,76 +15,46 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type RequestId = Id<"passwordResetRequests">;
 
-/** Clerk rejects the wrapped call with this code when the user closes the
- * step-up modal instead of verifying. */
-function isCancelled(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: string }).code === "reverification_cancelled"
-  );
-}
+/** How long a "resend" click stays disabled, mirroring the server-side
+ * cooldown in `packages/convex/convex/lib/adminVerification.ts`'s
+ * `REQUEST_COOLDOWN_MS`. Purely cosmetic — the server enforces the real
+ * limit — so a mismatch here is never a security issue, only a UX one. */
+const RESEND_COOLDOWN_MS = 60_000;
 
-/** Structurally matches `ReverificationHint` from
- * `packages/convex/convex/lib/reverification.ts` — not imported directly
+/** Structurally matches `VerificationHint` from
+ * `packages/convex/convex/lib/adminVerification.ts` — not imported directly
  * since that module lives on the Convex build, not this package's client
  * surface. */
-interface ReverificationHintShape {
-  clerk_error: { reason: "reverification-error" };
+interface VerificationHintShape {
+  needsVerification: true;
 }
 
-/**
- * `useReverification` only guards the *first* call: if the retry it fires
- * after the step-up modal closes is *still* unverified (stale `fva` claim,
- * claim propagation lag, …), it returns Convex's raw reverification hint as
- * if it were a normal result instead of throwing — see
- * `@clerk/shared`'s `createReverificationHandler`, which never re-checks
- * `isReverificationHint` on the retried result. Callers have to check for
- * that shape themselves rather than trusting a resolved promise means
- * success.
- */
-function isReverificationHint(value: unknown): value is ReverificationHintShape {
+function isVerificationHint(value: unknown): value is VerificationHintShape {
   return (
-    typeof value === "object" &&
-    value !== null &&
-    "clerk_error" in value &&
-    (value as { clerk_error?: { reason?: string } }).clerk_error?.reason === "reverification-error"
+    typeof value === "object" && value !== null && (value as VerificationHintShape).needsVerification === true
   );
 }
 
-/**
- * Convex authenticates its websocket once and reuses that token for every
- * query/mutation/action until *Convex* decides to refetch — on its own
- * schedule, or after the server rejects a token outright (see
- * `AuthenticationManager` in convex's `browser/sync/authentication_manager.ts`).
- * A mutation call never fetches a fresh token for itself.
- *
- * That means the automatic retry `useReverification` fires the instant the
- * step-up modal closes almost always runs on the *same* Convex-side token
- * that was cached before verification — Clerk's own session is fresher than
- * what Convex is presenting to the server, so `isRecentlyVerified` on the
- * backend still sees the old (unverified) `fva`. Calling `setAuth` again
- * with `skipCache: true` forces Convex through a real re-authentication
- * round-trip and resolves once the server has confirmed the new token, so a
- * retry issued after this actually reflects the verification that just
- * happened.
- */
-function refreshConvexAuth(
-  convexClient: ReturnType<typeof useConvex>,
-  getToken: ReturnType<typeof useAuth>["getToken"],
-): Promise<void> {
-  return new Promise((resolve) => {
-    convexClient.setAuth(
-      () => getToken({ template: "convex", skipCache: true }),
-      () => resolve(),
-    );
-  });
+function errorMessage(error: unknown): string {
+  if (error instanceof ConvexError && typeof error.data === "object" && error.data !== null) {
+    const message = (error.data as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return "Something went wrong.";
 }
 
 function RequestHistory({ requestId }: { requestId: RequestId }) {
@@ -126,6 +96,134 @@ function RequestHistory({ requestId }: { requestId: RequestId }) {
   );
 }
 
+/**
+ * A code-entry step-up, replacing Clerk's `useReverification` modal. Opens
+ * already sending: mounting it fires `requestVerificationCode`, which mails a
+ * 6-digit code to the *admin's own* address (never anything client-supplied —
+ * see `passwordResets.ts`'s `requestVerificationCode`). Resolves `onVerified`
+ * once `submitVerificationCode` accepts the code the admin types back in.
+ */
+function VerificationDialog({
+  open,
+  onVerified,
+  onCancel,
+}: {
+  open: boolean;
+  onVerified: () => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("PasswordReset");
+  const requestCode = useMutation(api.passwordResets.requestVerificationCode);
+  const submitCode = useMutation(api.passwordResets.submitVerificationCode);
+  const [code, setCode] = useState("");
+  const [sending, setSending] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  const sentOnce = useRef(false);
+
+  async function sendCode() {
+    setSending(true);
+    setError(null);
+    try {
+      await requestCode({});
+      setCooldownUntil(Date.now() + RESEND_COOLDOWN_MS);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!open) {
+      sentOnce.current = false;
+      setCode("");
+      setError(null);
+      return;
+    }
+    if (sentOnce.current) return;
+    sentOnce.current = true;
+    void sendCode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || cooldownUntil <= Date.now()) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [open, cooldownUntil]);
+
+  async function submit() {
+    setSubmitting(true);
+    setError(null);
+    try {
+      await submitCode({ code });
+      onVerified();
+    } catch (err) {
+      setError(errorMessage(err));
+      setCode("");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const cooldownLeft = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onCancel();
+      }}
+    >
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("adminVerifyTitle")}</DialogTitle>
+          <DialogDescription>{t("adminVerifyBody")}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Input
+            autoFocus
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="123456"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && code.length === 6 && !submitting) void submit();
+            }}
+            className="text-center font-mono text-lg tracking-[0.3em]"
+          />
+          {error && <p className="text-xs text-destructive">{error}</p>}
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={sending || cooldownLeft > 0}
+            onClick={() => void sendCode()}
+          >
+            {cooldownLeft > 0
+              ? t("adminVerifyResendIn", { seconds: cooldownLeft })
+              : sending
+                ? t("adminVerifySending")
+                : t("adminVerifyResend")}
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onCancel()}>
+            {t("adminVerifyCancel")}
+          </Button>
+          <Button disabled={code.length !== 6 || submitting} onClick={() => void submit()}>
+            {submitting ? t("adminVerifySubmitting") : t("adminVerifySubmit")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function RequestCard({
   request,
   highlighted,
@@ -137,15 +235,15 @@ function RequestCard({
   const format = useFormatter();
   const [busy, setBusy] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const convexClient = useConvex();
-  const { getToken } = useAuth();
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const verifyResolver = useRef<((verified: boolean) => void) | null>(null);
 
-  // Both admin actions are wrapped: the Convex function returns Clerk's
-  // reverification hint instead of acting when the session hasn't been
-  // re-verified in the last 10 minutes, and this hook turns that into the
-  // step-up modal and a retry.
-  const issue = useReverification(useAction(api.passwordResets.issueResetLink));
-  const dismiss = useReverification(useMutation(api.passwordResets.dismissRequest));
+  // Both admin actions are wrapped: the Convex function returns a
+  // `{ needsVerification: true }` hint instead of acting when the admin
+  // hasn't entered an email code recently enough — see `run` below, which
+  // opens `VerificationDialog` and retries exactly once.
+  const issue = useAction(api.passwordResets.issueResetLink);
+  const dismiss = useMutation(api.passwordResets.dismissRequest);
 
   const when = (at: number) =>
     format.dateTime(new Date(at), {
@@ -155,44 +253,50 @@ function RequestCard({
       minute: "2-digit",
     });
 
+  function openVerification(): Promise<boolean> {
+    setVerifyOpen(true);
+    return new Promise((resolve) => {
+      verifyResolver.current = resolve;
+    });
+  }
+
+  function settleVerification(verified: boolean) {
+    verifyResolver.current?.(verified);
+    verifyResolver.current = null;
+    setVerifyOpen(false);
+  }
+
   async function run(action: "issue" | "dismiss") {
     setBusy(true);
     try {
       if (action === "issue") {
         let result = await issue({ requestId: request.id });
-        if (isReverificationHint(result)) {
-          // The step-up almost certainly did succeed — Convex just retried
-          // on a token it cached before verification. Force a fresh one and
-          // try exactly once more before reporting failure.
-          await refreshConvexAuth(convexClient, getToken);
+        if (isVerificationHint(result)) {
+          if (!(await openVerification())) return;
           result = await issue({ requestId: request.id });
         }
-        if (isReverificationHint(result)) {
-          toast.error(t("adminReverifyStale"));
+        if (isVerificationHint(result)) {
+          toast.error(t("adminVerifyStale"));
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
           return;
         }
         toast.success(t("adminIssued", { email: result.sentTo }));
       } else {
         let result = await dismiss({ requestId: request.id });
-        if (isReverificationHint(result)) {
-          await refreshConvexAuth(convexClient, getToken);
+        if (isVerificationHint(result)) {
+          if (!(await openVerification())) return;
           result = await dismiss({ requestId: request.id });
         }
-        if (isReverificationHint(result)) {
-          toast.error(t("adminReverifyStale"));
+        if (isVerificationHint(result)) {
+          toast.error(t("adminVerifyStale"));
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
           return;
         }
         toast.success(t("adminDismissed"));
       }
       posthog.capture("password_reset_admin_action", { scope: request.scope, action });
-    } catch (error) {
-      if (isCancelled(error)) {
-        toast.info(t("adminReverifyCancelled"));
-      } else {
-        toast.error(action === "issue" ? t("adminIssueFailed") : t("adminReverifyStale"));
-      }
+    } catch {
+      toast.error(action === "issue" ? t("adminIssueFailed") : t("adminActionFailed"));
       posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
     } finally {
       setBusy(false);
@@ -287,6 +391,12 @@ function RequestCard({
       )}
 
       {showHistory && <RequestHistory requestId={request.id} />}
+
+      <VerificationDialog
+        open={verifyOpen}
+        onVerified={() => settleVerification(true)}
+        onCancel={() => settleVerification(false)}
+      />
     </div>
   );
 }

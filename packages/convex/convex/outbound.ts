@@ -22,6 +22,7 @@ export const sendNotificationEmail = internalAction({
       v.literal("academy-invite"),
       v.literal("password-reset-request"),
       v.literal("password-reset-link"),
+      v.literal("admin-verification-code"),
     ),
     to: v.string(),
     data: v.any(),

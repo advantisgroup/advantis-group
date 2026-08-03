@@ -27,6 +27,7 @@ export const internalNotificationsRoute = new Elysia().post(
         t.Literal("academy-invite"),
         t.Literal("password-reset-request"),
         t.Literal("password-reset-link"),
+        t.Literal("admin-verification-code"),
       ]),
       to: t.String(),
       data: t.Optional(t.Record(t.String(), t.Unknown())),

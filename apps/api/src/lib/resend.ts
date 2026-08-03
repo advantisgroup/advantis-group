@@ -194,6 +194,21 @@ function render(
         ),
       };
     }
+    case "admin-verification-code": {
+      const code = str(data, "code");
+      const expiresInMinutes =
+        typeof data.expiresInMinutes === "number" ? data.expiresInMinutes : 10;
+      return {
+        subject: `Your verification code: ${code}`,
+        html: layout(
+          "Verify it's you",
+          `<p style="margin:0 0 16px;line-height:1.6">Use this code to approve or dismiss a password-reset request in the intranet admin queue.</p>
+           <p style="margin:0 0 24px;font-size:28px;font-weight:700;letter-spacing:0.12em;font-family:monospace">${esc(code)}</p>
+           <p style="margin:0 0 8px;line-height:1.6;color:#71717a;font-size:13px">Expires in about ${expiresInMinutes} minutes.</p>
+           <p style="margin:24px 0 0;line-height:1.6;color:#b91c1c;font-size:13px">Didn't request this? Someone may have access to your intranet session — change your password and tell IT immediately.</p>`,
+        ),
+      };
+    }
     case "password-reset-link": {
       const area = esc(str(data, "area"));
       const url = str(data, "url");
@@ -225,7 +240,11 @@ export async function sendNotificationEmail(
     subject,
     html,
   });
-  if (kind === "password-reset-request" || kind === "password-reset-link") {
+  if (
+    kind === "password-reset-request" ||
+    kind === "password-reset-link" ||
+    kind === "admin-verification-code"
+  ) {
     // Masked recipient only — a reset link in a log line would be a
     // credential in a log line.
     const [local, domain] = to.split("@");

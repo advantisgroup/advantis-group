@@ -43,7 +43,8 @@ export type NotificationEmailKind =
   | "digest"
   | "academy-invite"
   | "password-reset-request"
-  | "password-reset-link";
+  | "password-reset-link"
+  | "admin-verification-code";
 
 export interface UnfurlResult {
   url: string;

@@ -45,9 +45,9 @@ the flow that gets someone back in without anyone ever learning their password.
   back into a working link, and an admin never sees one either.
 - **Admins can trigger a reset, not perform one.** `issueResetLink` returns no
   token to its caller.
-- **Step-up re-verification** on both admin actions (issue *and* dismiss —
-  quietly burying "someone is trying to get into the CFO's account" is its own
-  kind of damage). See below.
+- **Email-code step-up** on both admin actions (issue *and* dismiss — quietly
+  burying "someone is trying to get into the CFO's account" is its own kind of
+  damage). See below.
 - **The `o=` parameter is not trusted.** A token whose stored scope doesn't
   match reports as plain `invalid`, so the URL can't be used to ask which area
   a token belongs to.
@@ -58,41 +58,33 @@ the flow that gets someone back in without anyone ever learning their password.
 
 ## Required setup
 
-### Clerk: expose the factor-verification-age claim as `reverificationAge`
+### Admin step-up: email code, not Clerk
 
-The step-up gate reads Clerk's factor-verification-age claim through Convex.
-Confirmed in production by logging the raw claim: Clerk's Dashboard blocks
-`fva` as a claim *name* on **custom** JWT Templates outright ("You can't use
-the reserved claim: fva") — that error does not mean the claim ships
-automatically, it means a hand-built template can never carry it. `identity.fva`
-reads as `undefined` on every request if you rely on the name `fva`.
+Both admin actions used to lean on Clerk's step-up re-verification (the
+`fva`/factor-verification-age claim), which turned out to be structurally
+unworkable: Clerk's Dashboard rejects `fva` as a **custom** JWT Template claim
+name outright ("You can't use the reserved claim: fva"), and Convex's SDK
+independently strips any claim literally named `fva` from
+`ctx.auth.getUserIdentity()`. A claim-renaming workaround
+(`reverificationAge`) got it working, but it was still built on a claim path
+Clerk doesn't officially support for hand-built templates.
 
-In the Clerk dashboard → **JWT Templates → `convex`**, add the same shortcode
-under a different key instead:
+The gate is now fully self-contained: `packages/convex/convex/lib/
+adminVerification.ts` mails a 6-digit code to the **admin's own address**
+(`admin.email`, never anything client-supplied) via the same Resend pipeline
+as the reset links themselves (`outbound.sendNotificationEmail`, kind
+`"admin-verification-code"`). `requestVerificationCode` issues and mails the
+code (cooldown-limited); `submitVerificationCode` checks it (5 attempts, then
+the code is invalidated and a fresh one has to be requested); a correct
+code marks the admin "recently verified" for 10 minutes
+(`REVERIFICATION_MAX_AGE_MINUTES`), which `isRecentlyVerified` reads to gate
+`issueResetLink` and `dismissRequest`. No Clerk JWT Template configuration is
+needed for this flow anymore.
 
-```json
-"reverificationAge": "{{user.factor_verification_age}}"
-```
-
-`packages/convex/convex/lib/reverification.ts`'s `readReverificationAge`
-reads `reverificationAge`, falling back to `fva` for if/when this project
-switches to Clerk's native Convex integration (Dashboard → Configure →
-Integrations), which mints its own session token with `fva` as a true
-default claim and needs no hand-built template at all — toggling that on
-didn't take effect for this app as of this writing, which is why the
-custom-template workaround above is the one actually in use.
-
-**Without the `reverificationAge` claim every admin action stays blocked.**
-That's deliberate — a missing claim is indistinguishable from a session that
-was never re-verified, and guessing permissively would silently turn the
-gate off.
-
-If a step-up keeps failing even right after Clerk reports success *and* the
-claim is confirmed present, that's Convex's own auth token being stale
-instead (Convex caches its token independently of Clerk's session and
-doesn't refetch just because a reverification happened) —
-`PasswordResetsPanel.tsx`'s `refreshConvexAuth` forces that refetch before
-retrying.
+**Without a verified code, both admin actions stay blocked.** That's
+deliberate — a missing/expired/never-entered code is indistinguishable from
+"never stepped up", and guessing permissively would silently turn the gate
+off.
 
 ### Environment variables
 
@@ -104,7 +96,9 @@ retrying.
 | `INTERNAL_URL`                  | Convex deployment    | Already set. Base for reset links on the intranet host.              |
 
 Set Convex vars with `npx convex env set NAME value` from `packages/convex`.
-`apps/api` needs nothing new — it only renders and sends the two emails.
+`apps/api` needs nothing new — it only renders and sends the three emails
+(request notice, reset link, admin verification code) through its existing
+`RESEND_API_KEY`.
 
 ## Logging
 
