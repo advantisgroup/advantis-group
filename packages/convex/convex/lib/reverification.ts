@@ -36,17 +36,34 @@ export function reverificationHint(): ReverificationHint {
 }
 
 /**
+ * Confirmed by logging the raw claim in production: Clerk's Dashboard blocks
+ * `fva` as a claim *name* on custom JWT Templates outright ("You can't use
+ * the reserved claim: fva") — it doesn't mean the claim is already included,
+ * it means a hand-built template can never carry it, full stop. `identity.fva`
+ * was reading as `undefined` on every request, not stale — genuinely absent.
+ *
+ * The `convex` JWT Template maps the same `{{user.factor_verification_age}}`
+ * shortcode under a non-reserved key, `reverificationAge`, instead. `fva`
+ * itself is kept as a fallback for if/when this project switches to Clerk's
+ * native Convex integration (Dashboard → Configure → Integrations), which
+ * mints its own session token with `fva` as a true default claim and needs
+ * no hand-built template at all.
+ */
+function readReverificationAge(identity: Record<string, unknown>): string | undefined {
+  const value = identity.reverificationAge ?? identity.fva;
+  return typeof value === "string" ? value : undefined;
+}
+
+/**
  * Whether the caller's Clerk session has been verified recently enough.
  *
- * Reads Clerk's `fva` ("factor verification age") claim — `"<minutes since
- * first factor>,<minutes since second factor>"`, with `-1` for "never". `fva`
- * is a Clerk default claim included on every session token automatically —
- * the Dashboard's JWT Templates editor now refuses to let you add it
- * manually ("You can't use the reserved claim: fva"), so there's nothing to
- * configure here. If it's ever missing, this reads as unverified and stays
- * blocked. Failing closed is deliberate — a missing claim is indistinguishable
- * from a session that was never re-verified, and guessing in the permissive
- * direction would silently turn the whole gate off.
+ * Reads the factor-verification-age claim — `"<minutes since first
+ * factor>,<minutes since second factor>"`, with `-1` for "never". See
+ * `readReverificationAge` for which claim name that actually is and why. If
+ * it's ever missing, this reads as unverified and stays blocked. Failing
+ * closed is deliberate — a missing claim is indistinguishable from a session
+ * that was never re-verified, and guessing in the permissive direction would
+ * silently turn the whole gate off.
  *
  * A missing claim is *not* what causes a legitimate step-up to keep failing
  * on retry, though — that's almost always `PasswordResetsPanel.tsx`'s
@@ -57,8 +74,8 @@ export function reverificationHint(): ReverificationHint {
 export async function isRecentlyVerified(ctx: QueryCtx | MutationCtx): Promise<boolean> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return false;
-  const fva = identity.fva;
-  if (typeof fva !== "string") return false;
+  const fva = readReverificationAge(identity);
+  if (fva === undefined) return false;
   const firstFactorAge = Number(fva.split(",")[0]);
   if (!Number.isFinite(firstFactorAge) || firstFactorAge < 0) return false;
   return firstFactorAge <= REVERIFICATION_MAX_AGE_MINUTES;
@@ -66,13 +83,13 @@ export async function isRecentlyVerified(ctx: QueryCtx | MutationCtx): Promise<b
 
 /**
  * TEMPORARY diagnostic: surfaces exactly what `ctx.auth.getUserIdentity()`
- * is handing back for the `fva` claim, so a `reverification_failed` audit
- * row shows the raw value instead of just the boolean verdict. Remove once
- * we've confirmed whether `fva` is landing on the token at all — see the
- * discussion on the reverification-retry bug this is diagnosing.
+ * is handing back for both possible claim names, so a `reverification_failed`
+ * audit row shows the raw values instead of just the boolean verdict. Remove
+ * once `reverificationAge` has been confirmed working for a few real
+ * step-ups.
  */
 export async function debugFvaClaim(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return "no-identity";
-  return `fva=${JSON.stringify(identity.fva)}`;
+  return `reverificationAge=${JSON.stringify(identity.reverificationAge)} fva=${JSON.stringify(identity.fva)}`;
 }
