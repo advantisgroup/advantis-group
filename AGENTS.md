@@ -1,5 +1,7 @@
 # AGENTS.md
 
+ALWAYS PULL LATEST CHANGES FROM ORIGIN BEFORE STARTING WORK. COMPARE THE LATEST CHANGES AND SEE IF THEY BREAK YOUR CURRENT CHANGES/SESSION EDITS!
+
 Instructions for AI coding agents (Claude Code, etc.) working in this repo.
 `CLAUDE.md` points here — this file is the canonical source; keep it up to
 date rather than duplicating its content elsewhere.
