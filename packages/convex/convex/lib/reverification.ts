@@ -63,3 +63,16 @@ export async function isRecentlyVerified(ctx: QueryCtx | MutationCtx): Promise<b
   if (!Number.isFinite(firstFactorAge) || firstFactorAge < 0) return false;
   return firstFactorAge <= REVERIFICATION_MAX_AGE_MINUTES;
 }
+
+/**
+ * TEMPORARY diagnostic: surfaces exactly what `ctx.auth.getUserIdentity()`
+ * is handing back for the `fva` claim, so a `reverification_failed` audit
+ * row shows the raw value instead of just the boolean verdict. Remove once
+ * we've confirmed whether `fva` is landing on the token at all — see the
+ * discussion on the reverification-retry bug this is diagnosing.
+ */
+export async function debugFvaClaim(ctx: QueryCtx | MutationCtx): Promise<string> {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) return "no-identity";
+  return `fva=${JSON.stringify(identity.fva)}`;
+}

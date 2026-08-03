@@ -16,6 +16,7 @@ import { trackEvent } from "./lib/analytics";
 import { getCurrentUser, isApplicantAreaMember, requireAdmin, requireUser } from "./lib/auth";
 import { notifyUsers } from "./lib/notify";
 import {
+  debugFvaClaim,
   isRecentlyVerified,
   reverificationHint,
   type ReverificationHint,
@@ -527,7 +528,7 @@ export const dismissRequest = mutation({
         actorIsAdmin: true,
         reverified: false,
         targetEmail: request.targetEmail,
-        detail: "action=dismiss",
+        detail: `action=dismiss ${await debugFvaClaim(ctx)}`,
       });
       await trackEvent(ctx, {
         event: "password_reset_reverification_required",
@@ -577,6 +578,7 @@ export const prepareIssue = internalQuery({
   ): Promise<{
     admin: Doc<"users">;
     reverified: boolean;
+    debugFva: string;
     scope: PasswordResetScope;
     targetEmail: string;
     sentToEmail: string | null;
@@ -587,6 +589,7 @@ export const prepareIssue = internalQuery({
   }> => {
     const admin = await requireAdmin(ctx);
     const reverified = await isRecentlyVerified(ctx);
+    const debugFva = await debugFvaClaim(ctx);
     const request = await ctx.db.get(requestId);
     if (!request || request.status !== "pending") {
       throw new ConvexError({ code: "not_found", message: "No pending request." });
@@ -607,6 +610,7 @@ export const prepareIssue = internalQuery({
     return {
       admin,
       reverified,
+      debugFva,
       scope: request.scope,
       targetEmail: request.targetEmail,
       sentToEmail: resolved.sentToEmail ?? null,
@@ -712,7 +716,7 @@ export const issueResetLink = action({
         actorIsAdmin: true,
         reverified: false,
         targetEmail: prepared.targetEmail,
-        detail: "action=issue",
+        detail: `action=issue ${prepared.debugFva}`,
       });
       return reverificationHint();
     }
