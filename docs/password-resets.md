@@ -58,21 +58,41 @@ the flow that gets someone back in without anyone ever learning their password.
 
 ## Required setup
 
-### Clerk: `fva` needs no configuration
+### Clerk: expose the factor-verification-age claim as `reverificationAge`
 
-The step-up gate reads Clerk's factor-verification-age (`fva`) claim through
-Convex. `fva` is a Clerk **default** claim present on every session token —
-the Dashboard's JWT Templates editor now rejects any attempt to add it to the
-`convex` template manually ("You can't use the reserved claim: fva"). There's
-nothing to set up here; if the claim is ever missing, every step-up-gated
-admin action reads as unverified and stays blocked. That's deliberate — see
-`packages/convex/convex/lib/reverification.ts`.
+The step-up gate reads Clerk's factor-verification-age claim through Convex.
+Confirmed in production by logging the raw claim: Clerk's Dashboard blocks
+`fva` as a claim *name* on **custom** JWT Templates outright ("You can't use
+the reserved claim: fva") — that error does not mean the claim ships
+automatically, it means a hand-built template can never carry it. `identity.fva`
+reads as `undefined` on every request if you rely on the name `fva`.
 
-If a step-up keeps failing even right after Clerk reports success, that's not
-this claim — it's almost always Convex's own auth token being stale (Convex
-caches its token independently of Clerk's session and doesn't refetch just
-because a reverification happened). `PasswordResetsPanel.tsx`'s
-`refreshConvexAuth` forces that refetch before retrying.
+In the Clerk dashboard → **JWT Templates → `convex`**, add the same shortcode
+under a different key instead:
+
+```json
+"reverificationAge": "{{user.factor_verification_age}}"
+```
+
+`packages/convex/convex/lib/reverification.ts`'s `readReverificationAge`
+reads `reverificationAge`, falling back to `fva` for if/when this project
+switches to Clerk's native Convex integration (Dashboard → Configure →
+Integrations), which mints its own session token with `fva` as a true
+default claim and needs no hand-built template at all — toggling that on
+didn't take effect for this app as of this writing, which is why the
+custom-template workaround above is the one actually in use.
+
+**Without the `reverificationAge` claim every admin action stays blocked.**
+That's deliberate — a missing claim is indistinguishable from a session that
+was never re-verified, and guessing permissively would silently turn the
+gate off.
+
+If a step-up keeps failing even right after Clerk reports success *and* the
+claim is confirmed present, that's Convex's own auth token being stale
+instead (Convex caches its token independently of Clerk's session and
+doesn't refetch just because a reverification happened) —
+`PasswordResetsPanel.tsx`'s `refreshConvexAuth` forces that refetch before
+retrying.
 
 ### Environment variables
 
