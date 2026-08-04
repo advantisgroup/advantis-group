@@ -440,10 +440,18 @@ export default function GuidebooksPage() {
           canManage
             ? [
                 {
+                  key: "browse-files",
+                  label: t("browseFiles"),
+                  icon: FolderOpen,
+                  onClick: () => router.push("/guidebooks/files"),
+                  variant: "outline" as const,
+                },
+                {
                   key: "categories",
                   label: t("categoryManagerTitle"),
                   icon: Settings2,
                   onClick: () => setCategoryManagerOpen(true),
+                  variant: "outline" as const,
                 },
                 {
                   key: "new-entry",
@@ -455,17 +463,6 @@ export default function GuidebooksPage() {
             : []
         }
       />
-
-      {canManage && (
-        <div className="mb-4 flex justify-end">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/guidebooks/files">
-              <FolderOpen className="size-4" />
-              {t("browseFiles")}
-            </Link>
-          </Button>
-        </div>
-      )}
 
       {interactiveTools.length > 0 && (
         <details

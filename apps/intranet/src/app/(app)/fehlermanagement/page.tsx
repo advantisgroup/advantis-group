@@ -53,6 +53,7 @@ import {
 } from "@/lib/error-management";
 import { formatIsoDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 
 type Report = NonNullable<ReturnType<typeof useQuery<typeof api.errorReports.list>>>[number];
 type Scope = "offen" | "alle" | "geschlossen";
@@ -621,6 +622,17 @@ export default function FehlermanagementPage() {
 
   return (
     <div className="space-y-4" data-tour="tour-fehlermanagement-list">
+      <PageHeaderActions
+        actions={[
+          {
+            key: "new-error",
+            label: t("newError"),
+            icon: Plus,
+            onClick: () => setNewOpen(true),
+            variant: "outline" as const,
+          }
+        ]}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -631,10 +643,6 @@ export default function FehlermanagementPage() {
             className="pl-9"
           />
         </div>
-        <Button onClick={() => setNewOpen(true)}>
-          <Plus className="mr-1.5 size-4" />
-          {t("newError")}
-        </Button>
       </div>
 
       <div className="flex gap-1.5">
