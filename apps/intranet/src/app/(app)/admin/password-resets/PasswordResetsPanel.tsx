@@ -51,6 +51,23 @@ function isVerificationHint(value: unknown): value is VerificationHintShape {
   );
 }
 
+/** Structurally matches the `needsEmailChoice` branch of
+ * `issueResetLink`'s return type — the server's defense-in-depth echo of
+ * what the list query already told the client via `emailChoice`. */
+interface EmailChoiceHintShape {
+  needsEmailChoice: true;
+  feature: string;
+  intranet: string;
+}
+
+function isEmailChoiceHint(value: unknown): value is EmailChoiceHintShape {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as EmailChoiceHintShape).needsEmailChoice === true
+  );
+}
+
 function errorMessage(error: unknown): string {
   if (error instanceof ConvexError && typeof error.data === "object" && error.data !== null) {
     const message = (error.data as { message?: unknown }).message;
@@ -226,6 +243,74 @@ function VerificationDialog({
   );
 }
 
+/**
+ * Lets the admin pick which of an account's two known addresses a link
+ * should go to — asked up front, before the step-up code, so the choice
+ * never gets baked in silently. `feature` arrives already masked by the
+ * server; `intranet` arrives in full, since an intranet account's own
+ * address is already visible in the staff directory.
+ */
+function EmailChoiceDialog({
+  open,
+  feature,
+  intranet,
+  onChoose,
+  onCancel,
+}: {
+  open: boolean;
+  feature: string | null;
+  intranet: string | null;
+  onChoose: (choice: "feature" | "intranet") => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations("PasswordReset");
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onCancel();
+      }}
+    >
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t("adminEmailChoiceTitle")}</DialogTitle>
+          <DialogDescription>{t("adminEmailChoiceBody")}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto w-full flex-col items-start gap-0.5 py-2 text-left"
+            onClick={() => onChoose("feature")}
+          >
+            <span className="text-xs text-muted-foreground">
+              {t("adminEmailChoiceFeatureLabel")}
+            </span>
+            <span className="break-all font-mono text-sm font-normal">{feature}</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-auto w-full flex-col items-start gap-0.5 py-2 text-left"
+            onClick={() => onChoose("intranet")}
+          >
+            <span className="text-xs text-muted-foreground">
+              {t("adminEmailChoiceIntranetLabel")}
+            </span>
+            <span className="break-all font-mono text-sm font-normal">{intranet}</span>
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onCancel()}>
+            {t("adminEmailChoiceCancel")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function RequestCard({
   request,
   highlighted,
@@ -239,6 +324,14 @@ function RequestCard({
   const [showHistory, setShowHistory] = useState(false);
   const [verifyOpen, setVerifyOpen] = useState(false);
   const verifyResolver = useRef<((verified: boolean) => void) | null>(null);
+  const [emailChoiceOpen, setEmailChoiceOpen] = useState(false);
+  const [emailChoiceOptions, setEmailChoiceOptions] = useState<{
+    feature: string | null;
+    intranet: string | null;
+  }>({ feature: null, intranet: null });
+  const emailChoiceResolver = useRef<((choice: "feature" | "intranet" | null) => void) | null>(
+    null,
+  );
 
   // Both admin actions are wrapped: the Convex function returns a
   // `{ needsVerification: true }` hint instead of acting when the admin
@@ -268,17 +361,56 @@ function RequestCard({
     setVerifyOpen(false);
   }
 
+  function openEmailChoice(
+    feature: string | null,
+    intranet: string | null,
+  ): Promise<"feature" | "intranet" | null> {
+    setEmailChoiceOptions({ feature, intranet });
+    setEmailChoiceOpen(true);
+    return new Promise((resolve) => {
+      emailChoiceResolver.current = resolve;
+    });
+  }
+
+  function settleEmailChoice(choice: "feature" | "intranet" | null) {
+    emailChoiceResolver.current?.(choice);
+    emailChoiceResolver.current = null;
+    setEmailChoiceOpen(false);
+  }
+
   async function run(action: "issue" | "dismiss") {
     setBusy(true);
     try {
       if (action === "issue") {
-        let result = await issue({ requestId: request.id });
+        // Asked before the step-up code, not after — the destination is
+        // never something the reverification step should be able to gloss
+        // over. `request.emailChoice` already carries both addresses from
+        // the list query, so this needs no extra round trip.
+        let sendTo: "feature" | "intranet" | undefined;
+        if (request.emailChoice) {
+          const choice = await openEmailChoice(
+            request.emailChoice.feature,
+            request.emailChoice.intranet,
+          );
+          if (!choice) return;
+          sendTo = choice;
+        }
+
+        let result = await issue({ requestId: request.id, sendTo });
         if (isVerificationHint(result)) {
           if (!(await openVerification())) return;
-          result = await issue({ requestId: request.id });
+          result = await issue({ requestId: request.id, sendTo });
         }
         if (isVerificationHint(result)) {
           toast.error(t("adminVerifyStale"));
+          posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
+          return;
+        }
+        if (isEmailChoiceHint(result)) {
+          // The client thought it already knew the answer (or didn't know a
+          // choice was needed at all) but the server disagrees — safer to
+          // ask the admin to retry against fresh data than to guess here.
+          toast.error(t("adminEmailChoiceStale"));
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
           return;
         }
@@ -313,7 +445,7 @@ function RequestCard({
     >
       <div className="min-w-0 space-y-1.5">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="break-all font-medium">{request.targetEmail}</span>
+          <span className="break-all font-medium">{request.targetEmailDisplay}</span>
           {request.selfService ? (
             <Badge variant="outline">{t("adminSelf")}</Badge>
           ) : (
@@ -341,7 +473,7 @@ function RequestCard({
       {!request.targetExists && (
         <p className="mt-3 flex items-start gap-2 text-xs text-muted-foreground">
           <ShieldAlert className="mt-px size-3.5 shrink-0" />
-          {t("adminUnknownAccountHint")}
+          {request.canForceIssue ? t("adminForceHint") : t("adminUnknownAccountHint")}
         </p>
       )}
       {request.targetExists && !request.selfService && (
@@ -359,6 +491,16 @@ function RequestCard({
                 {busy ? t("adminIssuing") : t("adminIssue")}
               </Button>
             )}
+            {!request.targetExists && request.canForceIssue && (
+              <Button
+                size="sm"
+                variant="destructive"
+                disabled={busy}
+                onClick={() => void run("issue")}
+              >
+                {busy ? t("adminIssuing") : t("adminForceIssue")}
+              </Button>
+            )}
             <Button size="sm" variant="outline" disabled={busy} onClick={() => void run("dismiss")}>
               {t("adminDismiss")}
             </Button>
@@ -366,7 +508,7 @@ function RequestCard({
               {showHistory ? t("adminHistoryHide") : t("adminHistory")}
             </Button>
           </div>
-          {request.targetExists && (
+          {(request.targetExists || request.canForceIssue) && (
             <p className="text-xs text-muted-foreground">{t("adminLinkGoesTo")}</p>
           )}
         </div>
@@ -398,6 +540,13 @@ function RequestCard({
         open={verifyOpen}
         onVerified={() => settleVerification(true)}
         onCancel={() => settleVerification(false)}
+      />
+      <EmailChoiceDialog
+        open={emailChoiceOpen}
+        feature={emailChoiceOptions.feature}
+        intranet={emailChoiceOptions.intranet}
+        onChoose={(choice) => settleEmailChoice(choice)}
+        onCancel={() => settleEmailChoice(null)}
       />
     </div>
   );
