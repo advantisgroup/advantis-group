@@ -49,6 +49,7 @@ export const addRichDateToMine = mutation({
     end: v.number(),
     allDay: v.boolean(),
     kind: v.optional(richDateKindValidator),
+    automatic: v.boolean(),
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
@@ -77,7 +78,11 @@ export const addRichDateToMine = mutation({
       kind: args.kind,
     };
     if (existing) {
+      if (existing.dismissedAt && args.automatic) {
+        return { id: existing._id, created: false, updated: false };
+      }
       const changed =
+        existing.dismissedAt !== undefined ||
         existing.title !== event.title ||
         existing.description !== event.description ||
         existing.location !== event.location ||
@@ -88,7 +93,11 @@ export const addRichDateToMine = mutation({
       if (!changed) {
         return { id: existing._id, created: false, updated: false };
       }
-      await ctx.db.patch(existing._id, { ...event, updatedAt: Date.now() });
+      await ctx.db.patch(existing._id, {
+        ...event,
+        dismissedAt: undefined,
+        updatedAt: Date.now(),
+      });
       return { id: existing._id, created: false, updated: true };
     }
 
@@ -139,14 +148,17 @@ export const remove = mutation({
     const user = await requireUser(ctx);
     const event = await ctx.db.get(eventId);
     if (!event) return { ok: false };
-    if (event.personalForUserId !== user._id) {
-      const manager = await requireCapability(ctx, "manage_announcements");
-      if (!isOwnerOrAdmin(manager, event.createdByUserId)) {
-        throw new ConvexError({
-          code: "forbidden",
-          message: "Only the creator or an admin can delete this event",
-        });
-      }
+    if (event.personalForUserId === user._id) {
+      // Keep the source ID so automatic saves do not recreate an event the user removed.
+      await ctx.db.patch(eventId, { dismissedAt: Date.now(), updatedAt: Date.now() });
+      return { ok: true };
+    }
+    const manager = await requireCapability(ctx, "manage_announcements");
+    if (!isOwnerOrAdmin(manager, event.createdByUserId)) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "Only the creator or an admin can delete this event",
+      });
     }
     await ctx.db.delete(eventId);
     return { ok: true };
@@ -162,7 +174,9 @@ export const listForRange = query({
       .query("events")
       .withIndex("by_start", (q) => q.lte("start", end))
       .collect();
-    const visible = events.filter((e) => e.end >= start && userMatchesAudience(user, e.audience));
+    const visible = events.filter(
+      (e) => !e.dismissedAt && e.end >= start && userMatchesAudience(user, e.audience),
+    );
     return Promise.all(
       visible.map(async (e) => ({
         _id: e._id,

@@ -19,10 +19,12 @@ export function MentionRichText({
   html,
   className,
   autoSaveDates,
+  sourcedDateSummary,
 }: {
   html: string;
   className?: string;
   autoSaveDates?: boolean;
+  sourcedDateSummary?: string;
 }) {
   const [mention, setMention] = useState<{ userId: Id<"users">; rect: DOMRect } | null>(null);
   const [fullProfileId, setFullProfileId] = useState<Id<"users"> | null>(null);
@@ -33,6 +35,7 @@ export function MentionRichText({
         html={html}
         className={className}
         autoSaveDates={autoSaveDates}
+        sourcedDateSummary={sourcedDateSummary}
         onMentionClick={(userId, target) =>
           setMention({ userId: userId as Id<"users">, rect: target.getBoundingClientRect() })
         }

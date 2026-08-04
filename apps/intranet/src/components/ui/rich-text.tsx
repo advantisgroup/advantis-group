@@ -6,6 +6,7 @@ import { type KeyboardEvent, type MouseEvent, useEffect, useMemo, useState } fro
 import { RichDatePrompt } from "@/components/ui/rich-date-prompt";
 import { useRichDateCalendar } from "@/hooks/use-rich-date-calendar";
 import {
+  ANNOUNCEMENT_RELEVANT_DATE_SOURCE,
   hasCalendarPayload,
   readRichDateElement,
   RICH_DATE_ATTRIBUTES,
@@ -150,11 +151,13 @@ export function RichText({
   className,
   onMentionClick,
   autoSaveDates = true,
+  sourcedDateSummary,
 }: {
   html: string;
   className?: string;
   onMentionClick?: (userId: string, target: HTMLElement) => void;
   autoSaveDates?: boolean;
+  sourcedDateSummary?: string;
 }) {
   const t = useTranslations("RichText");
   const { addToCalendar, busy, isExternal } = useRichDateCalendar();
@@ -168,9 +171,15 @@ export function RichText({
     if (!autoSaveDates || isExternal || !clean) return;
     const doc = new DOMParser().parseFromString(clean, "text/html");
     for (const element of doc.querySelectorAll<HTMLElement>("[data-rich-date-start]")) {
+      if (element.getAttribute("data-rich-date-source") === ANNOUNCEMENT_RELEVANT_DATE_SOURCE) {
+        continue;
+      }
       const value = readRichDateElement(element);
       if (value && hasCalendarPayload(value)) {
-        void addToCalendar(value, element.textContent ?? "", { silent: true });
+        void addToCalendar(value, element.textContent ?? "", {
+          automatic: true,
+          silent: true,
+        });
       }
     }
   }, [addToCalendar, autoSaveDates, clean, isExternal]);
@@ -185,7 +194,11 @@ export function RichText({
     const dateTarget = target.closest<HTMLElement>("[data-rich-date-start]");
     const value = dateTarget ? readRichDateElement(dateTarget) : null;
     if (dateTarget && value) {
-      const summary = dateTarget.textContent ?? "";
+      const summary =
+        dateTarget.getAttribute("data-rich-date-source") === ANNOUNCEMENT_RELEVANT_DATE_SOURCE &&
+        sourcedDateSummary?.trim()
+          ? sourcedDateSummary
+          : (dateTarget.textContent ?? "");
       if (hasCalendarPayload(value)) {
         void addToCalendar(value, summary);
       } else {

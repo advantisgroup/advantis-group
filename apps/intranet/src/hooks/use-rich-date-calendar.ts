@@ -22,7 +22,7 @@ export function useRichDateCalendar() {
     async (
       value: RichDateValue,
       summary: string,
-      options?: { silent?: boolean },
+      options?: { automatic?: boolean; silent?: boolean },
     ): Promise<boolean> => {
       setBusy(true);
       try {
@@ -35,6 +35,7 @@ export function useRichDateCalendar() {
           end: richDateEndTimestamp(value),
           allDay: value.allDay,
           kind: value.kind,
+          automatic: options?.automatic ?? false,
         });
         if (!options?.silent) {
           toast.success(

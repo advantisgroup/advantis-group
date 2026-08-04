@@ -564,6 +564,7 @@ export default defineSchema({
     createdByUserId: v.id("users"),
     sourceRichDateId: v.optional(v.string()),
     personalForUserId: v.optional(v.id("users")),
+    dismissedAt: v.optional(v.number()),
     audience: audienceValidator,
     /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),

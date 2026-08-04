@@ -185,7 +185,7 @@ function ViewersPopover({
 }
 
 /** Collapses long bodies behind a "read more" toggle. */
-function CollapsibleBody({ html }: { html: string }) {
+function CollapsibleBody({ html, title }: { html: string; title: string }) {
   const t = useTranslations("Announcements");
   const ref = useRef<HTMLDivElement>(null);
   const [overflowing, setOverflowing] = useState(false);
@@ -202,7 +202,7 @@ function CollapsibleBody({ html }: { html: string }) {
         ref={ref}
         className={cn("relative overflow-hidden", overflowing && !expanded && "max-h-80")}
       >
-        <MentionRichText html={html} />
+        <MentionRichText html={html} sourcedDateSummary={title} />
         {overflowing && !expanded && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
         )}
@@ -418,7 +418,7 @@ function AnnouncementCard({
             className="-mx-5 -mt-4 mb-4 border-t-0"
           />
         )}
-        <CollapsibleBody html={a.body} />
+        <CollapsibleBody html={a.body} title={a.title} />
         {a.attachments.length > 0 && (
           <div className="mt-4 space-y-3">
             {/* Images embed inline */}

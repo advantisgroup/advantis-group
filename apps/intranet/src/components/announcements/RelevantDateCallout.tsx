@@ -32,6 +32,7 @@ export function RelevantDateCallout({
   useEffect(() => {
     if (!autoSave || isExternal || !complete) return;
     void saveToCalendar({ id, startAt, endAt, allDay, kind, description, location }, summary, {
+      automatic: true,
       silent: true,
     });
   }, [
