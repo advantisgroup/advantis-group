@@ -2,14 +2,50 @@ import { ConvexError, v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
-import { type QueryCtx } from "./_generated/server";
+import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireCapability, requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
 import { attachmentValidator, audienceValidator } from "./schema";
+
+const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
+
+function escapeHtml(value: string): string {
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      })[character]!,
+  );
+}
+
+async function getOrCreateIntranetBot(ctx: MutationCtx): Promise<Id<"users">> {
+  const existing = await ctx.db
+    .query("users")
+    .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", INTRANET_BOT_CLERK_USER_ID))
+    .unique();
+  if (existing) return existing._id;
+
+  return await ctx.db.insert("users", {
+    clerkUserId: INTRANET_BOT_CLERK_USER_ID,
+    email: "intranet-bot@advantisgroup.de",
+    firstName: "Intranet",
+    lastName: "Bot",
+    role: "employee",
+    jobTitle: "Automated announcements",
+    status: "suspended",
+    external: false,
+    createdAt: Date.now(),
+  });
+}
 
 function aggregateReactions(
   rows: { emoji: string; userId: Id<"users"> }[],
@@ -29,9 +65,13 @@ function aggregateReactions(
   }));
 }
 
-/** The author and admins can always see an announcement, regardless of audience. */
+function announcementOwnerUserId(announcement: Doc<"announcements">): Id<"users"> {
+  return announcement.ownerUserId ?? announcement.authorUserId;
+}
+
+/** The owner and admins can always see an announcement, regardless of audience. */
 function isVisibleToUser(user: Doc<"users">, a: Doc<"announcements">): boolean {
-  return isOwnerOrAdmin(user, a.authorUserId) || userMatchesAudience(user, a.audience);
+  return isOwnerOrAdmin(user, announcementOwnerUserId(a)) || userMatchesAudience(user, a.audience);
 }
 
 /** Read-only: works from both query and mutation handlers (MutationCtx is a QueryCtx plus write access). */
@@ -71,6 +111,7 @@ export const create = mutation({
       title: args.title,
       body: args.body,
       authorUserId: author._id,
+      ownerUserId: author._id,
       pinned: args.pinned ?? false,
       audience: args.audience,
       category,
@@ -111,6 +152,65 @@ export const create = mutation({
   },
 });
 
+export const announceGuidebook = mutation({
+  args: {
+    guideTitle: v.string(),
+    guideDescription: v.optional(v.string()),
+    guideSlug: v.string(),
+    locale: v.union(v.literal("en"), v.literal("de")),
+  },
+  handler: async (ctx, args) => {
+    const publisher = await requireManager(ctx);
+    const botUserId = await getOrCreateIntranetBot(ctx);
+    const publisherName = displayName(publisher);
+    const description = args.guideDescription?.trim();
+    const shortDescription =
+      description && description.length > 180
+        ? `${description.slice(0, 177).trimEnd()}...`
+        : description;
+    const safePublisherName = escapeHtml(publisherName);
+    const safeDescription = shortDescription ? escapeHtml(shortDescription) : undefined;
+    const guideHref = `/guidebooks/${encodeURIComponent(args.guideSlug)}`;
+    const isGerman = args.locale === "de";
+    const title = isGerman
+      ? `Neuer Wiki-Eintrag: ${args.guideTitle}`
+      : `New guidebook: ${args.guideTitle}`;
+    const body = [
+      `<p>${safePublisherName} ${
+        isGerman ? "hat einen neuen Wiki-Eintrag veröffentlicht." : "has posted a new guidebook."
+      }</p>`,
+      safeDescription ? `<p>${safeDescription}</p>` : undefined,
+      `<p><a href="${guideHref}">${isGerman ? "Wiki-Eintrag öffnen" : "Open guidebook"}</a></p>`,
+    ]
+      .filter(Boolean)
+      .join("");
+    const now = Date.now();
+    const id = await ctx.db.insert("announcements", {
+      title,
+      body,
+      authorUserId: botUserId,
+      ownerUserId: publisher._id,
+      pinned: false,
+      audience: { kind: "all" },
+      category: isGerman ? "Wiki" : "Guidebooks",
+      attachmentStorageIds: [],
+      publishedAt: now,
+      createdAt: now,
+    });
+    const recipients = (await resolveAudienceUserIds(ctx, { kind: "all" })).filter(
+      (userId) => userId !== publisher._id && userId !== botUserId,
+    );
+    await notifyUsers(ctx, recipients, {
+      type: "announcement",
+      title: isGerman ? "Neuer Wiki-Eintrag" : "New guidebook",
+      body: args.guideTitle,
+      link: `/announcements?id=${id}`,
+    });
+
+    return { id };
+  },
+});
+
 /** Fired by the scheduler when a scheduled announcement's publish time lands. */
 export const notifyPublished = internalMutation({
   args: { announcementId: v.id("announcements") },
@@ -120,7 +220,7 @@ export const notifyPublished = internalMutation({
     if (!announcement || announcement.publishedAt > Date.now()) return;
     if (announcement.expiresAt && announcement.expiresAt <= Date.now()) return;
     const recipients = (await resolveAudienceUserIds(ctx, announcement.audience)).filter(
-      (uid) => uid !== announcement.authorUserId,
+      (uid) => uid !== announcementOwnerUserId(announcement),
     );
     await notifyUsers(ctx, recipients, {
       type: "announcement",
@@ -148,10 +248,10 @@ export const update = mutation({
     if (!announcement) {
       throw new ConvexError({ code: "not_found", message: "Not found" });
     }
-    if (!isOwnerOrAdmin(user, announcement.authorUserId)) {
+    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
-        message: "Only the author or an admin can edit",
+        message: "Only the owner or an admin can edit",
       });
     }
     // Clean up removed attachments, and index newly-added ones so
@@ -194,10 +294,10 @@ export const remove = mutation({
     const user = await requireCapability(ctx, "manage_announcements");
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return { ok: false };
-    if (!isOwnerOrAdmin(user, announcement.authorUserId)) {
+    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
-        message: "Only the author or an admin can delete",
+        message: "Only the owner or an admin can delete",
       });
     }
     for (const sid of announcement.attachmentStorageIds) {
@@ -232,17 +332,17 @@ export const list = query({
       .take(limit ?? 100);
 
     // Scheduled (future) and expired announcements stay visible to their
-    // author and admins (flagged below) but disappear for everyone else.
+    // owner and admins (flagged below) but disappear for everyone else.
     const visible = announcements.filter((a) => {
-      const isAuthorOrAdmin = isOwnerOrAdmin(user, a.authorUserId);
-      // The author/an admin must always see it regardless of audience — a
+      const isOwnerOrAdminUser = isOwnerOrAdmin(user, announcementOwnerUserId(a));
+      // The owner/an admin must always see it regardless of audience — a
       // manager targeting a "specific people" audience that excludes
       // themselves would otherwise lose the announcement (and the edit/delete
-      // controls that only render for authorId === me._id) the moment they
+      // controls that only render for ownerId === me._id) the moment they
       // create it.
-      if (!isAuthorOrAdmin && !userMatchesAudience(user, a.audience)) return false;
-      if (a.publishedAt > now && !isAuthorOrAdmin) return false;
-      if (a.expiresAt && a.expiresAt <= now && !isAuthorOrAdmin) return false;
+      if (!isOwnerOrAdminUser && !userMatchesAudience(user, a.audience)) return false;
+      if (a.publishedAt > now && !isOwnerOrAdminUser) return false;
+      if (a.expiresAt && a.expiresAt <= now && !isOwnerOrAdminUser) return false;
       return true;
     });
 
@@ -329,6 +429,7 @@ export const list = query({
           authorName: displayName(author),
           authorAvatar,
           authorId: a.authorUserId,
+          ownerId: announcementOwnerUserId(a),
           audience: a.audience,
           audienceCount: activeUsers.filter((u) => userMatchesAudience(u, a.audience)).length,
           attachments,
@@ -518,10 +619,10 @@ export const nonReaders = query({
     const user = await requireUser(ctx);
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) return [];
-    if (!isOwnerOrAdmin(user, announcement.authorUserId)) {
+    if (!isOwnerOrAdmin(user, announcementOwnerUserId(announcement))) {
       throw new ConvexError({
         code: "forbidden",
-        message: "Only the author or an admin can see who hasn't read this",
+        message: "Only the owner or an admin can see who hasn't read this",
       });
     }
     const audienceIds = await resolveAudienceUserIds(ctx, announcement.audience);
@@ -531,7 +632,7 @@ export const nonReaders = query({
       .collect();
     const readSet = new Set(reads.map((r) => r.userId));
     const nonReaderIds = audienceIds.filter(
-      (id) => id !== announcement.authorUserId && !readSet.has(id),
+      (id) => id !== announcementOwnerUserId(announcement) && !readSet.has(id),
     );
     const users = await Promise.all(nonReaderIds.map((id) => ctx.db.get(id)));
     return Promise.all(
