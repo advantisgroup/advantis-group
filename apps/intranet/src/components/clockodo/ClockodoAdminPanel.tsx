@@ -525,9 +525,16 @@ export function ClockodoAdminPanel() {
         ]}
       />
 
-      {showCreate && (
-        <Card>
-          <CardContent className="grid gap-2 p-4 sm:grid-cols-2">
+      {/* A dialog, not an inline card — the trigger now lives in the sticky
+          header/bottom nav, reachable from anywhere on the page, so toggling
+          a card anchored to the top of the roster would open off-screen for
+          anyone who's scrolled down. */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("createUser")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-2 sm:grid-cols-2">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("name")} />
             <Input
               type="email"
@@ -542,16 +549,17 @@ export function ClockodoAdminPanel() {
               placeholder={t("vacationDaysPerYear")}
               className="sm:col-span-2"
             />
-            <Button
-              onClick={onCreate}
-              disabled={creating || !name.trim() || !email.trim()}
-              className="sm:col-span-2"
-            >
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowCreate(false)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={onCreate} disabled={creating || !name.trim() || !email.trim()}>
               {t("createUser")}
             </Button>
-          </CardContent>
-        </Card>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {gaps.length > 0 && (
         <div className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
