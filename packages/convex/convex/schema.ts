@@ -573,6 +573,9 @@ export default defineSchema({
     expiresAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
+    /** Who saved the most recent edit — distinct from `authorUserId` when an
+     * admin edits someone else's announcement. */
+    updatedByUserId: v.optional(v.id("users")),
   }).index("by_publishedAt", ["publishedAt"]),
 
   announcementReads: defineTable({

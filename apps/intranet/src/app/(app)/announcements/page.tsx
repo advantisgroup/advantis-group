@@ -31,6 +31,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
+import { MentionLink } from "@/components/profile/MentionLink";
 import { MentionRichText } from "@/components/profile/MentionRichText";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -289,54 +290,81 @@ function AnnouncementCard({
       )}
     >
       {a.pinned && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
-      {/* Header: author + title (left), date/time + actions (right) */}
-      <header className="flex items-start gap-3 border-b border-border/60 px-5 py-3.5">
-        <Avatar className="size-9 shrink-0">
-          {a.authorAvatar && <AvatarImage src={a.authorAvatar} alt={a.authorName} />}
-          <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-            {initials(a.authorName, a.authorName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            {a.pinned && (
-              <Pin
-                className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
-                aria-label={t("pinned")}
-              />
-            )}
-            <h2 className="truncate font-display text-base font-semibold leading-tight">
-              {a.title}
-            </h2>
-            {a.category && (
-              <Badge
-                variant="muted"
-                className="min-w-0 shrink gap-1 font-normal"
-                title={a.category}
-              >
-                <Tag className="size-3 shrink-0" />
-                <span className="truncate">{a.category}</span>
-              </Badge>
-            )}
-            {!a.read && !a.scheduled && (
-              <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-            )}
-            {a.scheduled && (
-              <Badge variant="warning" className="gap-1">
-                <CalendarClock className="size-3" />
-                {t("scheduledFor", {
-                  date: formatDateTime(a.publishedAt, locale),
-                })}
-              </Badge>
-            )}
-            {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
+      {/* Header: author + title (left), date/time + actions (right). Stacks
+          into two rows below `sm` instead of squeezing the title, badges,
+          and action buttons into one cramped row — a plain `flex-wrap` on
+          a single row doesn't reliably do this, since the title block's
+          `flex-1` (flex-basis: 0%) + `min-w-0` gives it a zero hypothetical
+          size for the browser's line-fitting math, so the always-visible
+          action icons can keep "fitting" on line 1 while the title is the
+          one actually being squeezed. */}
+      <header className="flex flex-col gap-2 border-b border-border/60 px-4 py-3.5 sm:flex-row sm:items-start sm:gap-3 sm:px-5">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <Avatar className="size-9 shrink-0">
+            {a.authorAvatar && <AvatarImage src={a.authorAvatar} alt={a.authorName} />}
+            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+              {initials(a.authorName, a.authorName)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              {a.pinned && (
+                <Pin
+                  className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
+                  aria-label={t("pinned")}
+                />
+              )}
+              <h2 className="truncate font-display text-base font-semibold leading-tight">
+                {a.title}
+              </h2>
+              {a.category && (
+                <Badge
+                  variant="muted"
+                  className="min-w-0 shrink gap-1 font-normal"
+                  title={a.category}
+                >
+                  <Tag className="size-3 shrink-0" />
+                  <span className="truncate">{a.category}</span>
+                </Badge>
+              )}
+              {!a.read && !a.scheduled && (
+                <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+              )}
+              {a.scheduled && (
+                <Badge variant="warning" className="gap-1">
+                  <CalendarClock className="size-3" />
+                  {t("scheduledFor", {
+                    date: formatDateTime(a.publishedAt, locale),
+                  })}
+                </Badge>
+              )}
+              {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
+            </div>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              {a.authorName}
+              {a.updatedAt && (
+                <>
+                  {" · "}
+                  {a.updatedByUserId && a.updatedByName ? (
+                    <>
+                      {t("editedBy")}{" "}
+                      <MentionLink
+                        userId={a.updatedByUserId}
+                        className="font-medium text-foreground"
+                      >
+                        {a.updatedByName}
+                      </MentionLink>
+                    </>
+                  ) : (
+                    t("edited")
+                  )}{" "}
+                  {formatTime(a.updatedAt, "de-DE")}
+                </>
+              )}
+            </p>
           </div>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {a.authorName}
-            {a.updatedAt ? ` · ${t("edited")} ${formatTime(a.updatedAt, "de-DE")}` : ""}
-          </p>
         </div>
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 self-end sm:self-start">
           <CopyButton
             value={`https://intern.advantisgroup.de/announcements?id=${a._id}`}
             label="Copy announcement link"

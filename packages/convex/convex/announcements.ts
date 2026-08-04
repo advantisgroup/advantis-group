@@ -182,6 +182,7 @@ export const update = mutation({
       // Empty string clears the category the same way null clears the expiry.
       ...(category !== undefined ? { category: category.trim() || undefined } : {}),
       updatedAt: Date.now(),
+      updatedByUserId: user._id,
     });
     return { ok: true };
   },
@@ -263,6 +264,13 @@ export const list = query({
         const authorAvatar = author?.avatarStorageId
           ? await ctx.storage.getUrl(author.avatarStorageId)
           : (author?.avatarUrl ?? null);
+        // Only resolved when it actually differs from the author — an author
+        // editing their own announcement doesn't need a name, just the
+        // "edited" timestamp already shown.
+        const updatedByUser =
+          a.updatedByUserId && a.updatedByUserId !== a.authorUserId
+            ? await ctx.db.get(a.updatedByUserId)
+            : null;
         // Prefer stored rich metadata; fall back to resolving the content type
         // from system storage metadata for older rows that only kept ids.
         const attachments =
@@ -316,6 +324,8 @@ export const list = query({
           scheduled: a.publishedAt > now,
           expired: !!a.expiresAt && a.expiresAt <= now,
           updatedAt: a.updatedAt ?? null,
+          updatedByUserId: updatedByUser?._id ?? null,
+          updatedByName: updatedByUser ? displayName(updatedByUser) : null,
           authorName: displayName(author),
           authorAvatar,
           authorId: a.authorUserId,
