@@ -15,7 +15,17 @@ import { RichText } from "@/components/ui/rich-text";
  * the full profile if the reader wants more. Kept out of the ui/ layer
  * (unlike plain `RichText`) since it's Convex-aware.
  */
-export function MentionRichText({ html, className }: { html: string; className?: string }) {
+export function MentionRichText({
+  html,
+  className,
+  autoSaveDates,
+  sourcedDateSummary,
+}: {
+  html: string;
+  className?: string;
+  autoSaveDates?: boolean;
+  sourcedDateSummary?: string;
+}) {
   const [mention, setMention] = useState<{ userId: Id<"users">; rect: DOMRect } | null>(null);
   const [fullProfileId, setFullProfileId] = useState<Id<"users"> | null>(null);
 
@@ -24,6 +34,8 @@ export function MentionRichText({ html, className }: { html: string; className?:
       <RichText
         html={html}
         className={className}
+        autoSaveDates={autoSaveDates}
+        sourcedDateSummary={sourcedDateSummary}
         onMentionClick={(userId, target) =>
           setMention({ userId: userId as Id<"users">, rect: target.getBoundingClientRect() })
         }

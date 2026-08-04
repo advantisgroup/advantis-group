@@ -1,7 +1,17 @@
 "use client";
 
-import { type MouseEvent, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { type KeyboardEvent, type MouseEvent, useEffect, useMemo, useState } from "react";
 
+import { RichDatePrompt } from "@/components/ui/rich-date-prompt";
+import { useRichDateCalendar } from "@/hooks/use-rich-date-calendar";
+import {
+  ANNOUNCEMENT_RELEVANT_DATE_SOURCE,
+  hasCalendarPayload,
+  readRichDateElement,
+  RICH_DATE_ATTRIBUTES,
+  type RichDateValue,
+} from "@/lib/rich-date";
 import { cn } from "@/lib/utils";
 
 const ALLOWED = new Set([
@@ -71,6 +81,20 @@ function cleanInto(node: Node, out: Node, doc: Document) {
         if (mentionUserId) {
           safe.setAttribute("data-mention-user-id", mentionUserId);
           safe.setAttribute("class", "mention");
+        } else {
+          const dateStart = el.getAttribute("data-rich-date-start");
+          if (!dateStart?.trim() || !Number.isFinite(Number(dateStart))) {
+            cleanInto(el, safe, doc);
+            out.appendChild(safe);
+            return;
+          }
+          for (const attribute of RICH_DATE_ATTRIBUTES) {
+            const value = el.getAttribute(attribute);
+            if (value !== null) safe.setAttribute(attribute, value);
+          }
+          safe.setAttribute("class", "rich-date");
+          safe.setAttribute("role", "button");
+          safe.setAttribute("tabindex", "0");
         }
       }
       cleanInto(el, safe, doc);
@@ -126,28 +150,114 @@ export function RichText({
   html,
   className,
   onMentionClick,
+  autoSaveDates = true,
+  sourcedDateSummary,
 }: {
   html: string;
   className?: string;
   onMentionClick?: (userId: string, target: HTMLElement) => void;
+  autoSaveDates?: boolean;
+  sourcedDateSummary?: string;
 }) {
+  const t = useTranslations("RichText");
+  const { addToCalendar, busy, isExternal } = useRichDateCalendar();
   const clean = useMemo(() => sanitizeHtml(html), [html]);
+  const [datePrompt, setDatePrompt] = useState<{
+    value: RichDateValue;
+    summary: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!autoSaveDates || isExternal || !clean) return;
+    const doc = new DOMParser().parseFromString(clean, "text/html");
+    for (const element of doc.querySelectorAll<HTMLElement>("[data-rich-date-start]")) {
+      if (element.getAttribute("data-rich-date-source") === ANNOUNCEMENT_RELEVANT_DATE_SOURCE) {
+        continue;
+      }
+      const value = readRichDateElement(element);
+      if (value && hasCalendarPayload(value)) {
+        void addToCalendar(value, element.textContent ?? "", {
+          automatic: true,
+          silent: true,
+        });
+      }
+    }
+  }, [addToCalendar, autoSaveDates, clean, isExternal]);
+
+  function activate(target: HTMLElement) {
+    const mentionTarget = target.closest<HTMLElement>("[data-mention-user-id]");
+    const userId = mentionTarget?.getAttribute("data-mention-user-id");
+    if (mentionTarget && userId && onMentionClick) {
+      onMentionClick(userId, mentionTarget);
+      return;
+    }
+    const dateTarget = target.closest<HTMLElement>("[data-rich-date-start]");
+    const value = dateTarget ? readRichDateElement(dateTarget) : null;
+    if (dateTarget && value) {
+      const summary =
+        dateTarget.getAttribute("data-rich-date-source") === ANNOUNCEMENT_RELEVANT_DATE_SOURCE &&
+        sourcedDateSummary?.trim()
+          ? sourcedDateSummary
+          : (dateTarget.textContent ?? "");
+      if (hasCalendarPayload(value)) {
+        void addToCalendar(value, summary);
+      } else {
+        setDatePrompt({ value, summary });
+      }
+    }
+  }
 
   function handleClick(e: MouseEvent<HTMLDivElement>) {
-    if (!onMentionClick) return;
-    const target = (e.target as HTMLElement).closest<HTMLElement>("[data-mention-user-id]");
-    const userId = target?.getAttribute("data-mention-user-id");
-    if (target && userId) onMentionClick(userId, target);
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-rich-date-start]")) e.preventDefault();
+    activate(target);
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const target = e.target as HTMLElement;
+    if (!target.matches("[data-mention-user-id], [data-rich-date-start]")) return;
+    e.preventDefault();
+    activate(target);
   }
 
   if (!clean) {
     return <div className={cn("rich-text whitespace-pre-wrap", className)}>{htmlToText(html)}</div>;
   }
   return (
-    <div
-      className={cn("rich-text", className)}
-      onClick={onMentionClick ? handleClick : undefined}
-      dangerouslySetInnerHTML={{ __html: clean }}
-    />
+    <>
+      <div
+        className={cn("rich-text", className)}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        onMouseOver={(event) => {
+          const target = (event.target as HTMLElement).closest<HTMLElement>(
+            "[data-rich-date-start]",
+          );
+          if (target) {
+            const value = readRichDateElement(target);
+            target.title = t(
+              isExternal
+                ? "saveToIntranetCalendar"
+                : value && hasCalendarPayload(value)
+                  ? "inIntranetCalendar"
+                  : "addToIntranetCalendar",
+            );
+          }
+        }}
+        dangerouslySetInnerHTML={{ __html: clean }}
+      />
+      {datePrompt && (
+        <RichDatePrompt
+          open
+          onOpenChange={(open) => !open && setDatePrompt(null)}
+          value={datePrompt.value}
+          summary={datePrompt.summary}
+          busy={busy}
+          submitLabel={t(isExternal ? "saveToIntranetCalendar" : "addToIntranetCalendar")}
+          onSubmit={addToCalendar}
+        />
+      )}
+    </>
   );
 }

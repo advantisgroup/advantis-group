@@ -3,8 +3,8 @@ import { ConvexError, v } from "convex/values";
 import { type Doc } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
-import { audienceValidator } from "./schema";
 import { userMatchesAudience } from "./lib/audience";
+import { audienceValidator, richDateKindValidator } from "./schema";
 
 function displayName(user: Doc<"users"> | null): string {
   if (!user) return "Unknown";
@@ -36,6 +36,80 @@ export const create = mutation({
       createdAt: Date.now(),
     });
     return { id };
+  },
+});
+
+export const addRichDateToMine = mutation({
+  args: {
+    richDateId: v.string(),
+    title: v.string(),
+    description: v.optional(v.string()),
+    location: v.optional(v.string()),
+    start: v.number(),
+    end: v.number(),
+    allDay: v.boolean(),
+    kind: v.optional(richDateKindValidator),
+    automatic: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const user = await requireUser(ctx);
+    const richDateId = args.richDateId.trim();
+    const title = args.title.trim();
+    if (!richDateId || !title) {
+      throw new ConvexError({ code: "bad_request", message: "Date and title are required" });
+    }
+    if (args.allDay ? args.end < args.start : args.end <= args.start) {
+      throw new ConvexError({ code: "bad_request", message: "End must be after start" });
+    }
+
+    const existing = await ctx.db
+      .query("events")
+      .withIndex("by_personal_rich_date", (q) =>
+        q.eq("personalForUserId", user._id).eq("sourceRichDateId", richDateId),
+      )
+      .unique();
+    const event = {
+      title,
+      description: args.description?.trim() || undefined,
+      location: args.location?.trim() || undefined,
+      start: args.start,
+      end: args.end,
+      allDay: args.allDay,
+      kind: args.kind,
+    };
+    if (existing) {
+      if (existing.dismissedAt && args.automatic) {
+        return { id: existing._id, created: false, updated: false };
+      }
+      const changed =
+        existing.dismissedAt !== undefined ||
+        existing.title !== event.title ||
+        existing.description !== event.description ||
+        existing.location !== event.location ||
+        existing.start !== event.start ||
+        existing.end !== event.end ||
+        existing.allDay !== event.allDay ||
+        existing.kind !== event.kind;
+      if (!changed) {
+        return { id: existing._id, created: false, updated: false };
+      }
+      await ctx.db.patch(existing._id, {
+        ...event,
+        dismissedAt: undefined,
+        updatedAt: Date.now(),
+      });
+      return { id: existing._id, created: false, updated: true };
+    }
+
+    const id = await ctx.db.insert("events", {
+      ...event,
+      createdByUserId: user._id,
+      sourceRichDateId: richDateId,
+      personalForUserId: user._id,
+      audience: { kind: "users", userIds: [user._id] },
+      createdAt: Date.now(),
+    });
+    return { id, created: true, updated: false };
   },
 });
 
@@ -71,10 +145,16 @@ export const update = mutation({
 export const remove = mutation({
   args: { eventId: v.id("events") },
   handler: async (ctx, { eventId }) => {
-    const user = await requireCapability(ctx, "manage_announcements");
+    const user = await requireUser(ctx);
     const event = await ctx.db.get(eventId);
     if (!event) return { ok: false };
-    if (!isOwnerOrAdmin(user, event.createdByUserId)) {
+    if (event.personalForUserId === user._id) {
+      // Keep the source ID so automatic saves do not recreate an event the user removed.
+      await ctx.db.patch(eventId, { dismissedAt: Date.now(), updatedAt: Date.now() });
+      return { ok: true };
+    }
+    const manager = await requireCapability(ctx, "manage_announcements");
+    if (!isOwnerOrAdmin(manager, event.createdByUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only the creator or an admin can delete this event",
@@ -94,7 +174,9 @@ export const listForRange = query({
       .query("events")
       .withIndex("by_start", (q) => q.lte("start", end))
       .collect();
-    const visible = events.filter((e) => e.end >= start && userMatchesAudience(user, e.audience));
+    const visible = events.filter(
+      (e) => !e.dismissedAt && e.end >= start && userMatchesAudience(user, e.audience),
+    );
     return Promise.all(
       visible.map(async (e) => ({
         _id: e._id,
@@ -104,9 +186,11 @@ export const listForRange = query({
         start: e.start,
         end: e.end,
         allDay: e.allDay,
+        kind: e.kind ?? null,
         color: e.color ?? null,
         audience: e.audience,
         createdByUserId: e.createdByUserId,
+        personalForUserId: e.personalForUserId ?? null,
         createdByName: displayName(await ctx.db.get(e.createdByUserId)),
       })),
     );

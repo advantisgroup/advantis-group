@@ -41,6 +41,7 @@ import dePerformance from "./messages/de/Performance.json";
 import deprivacy from "./messages/de/privacy.json";
 import deProfile from "./messages/de/Profile.json";
 import deRoles from "./messages/de/Roles.json";
+import deRichText from "./messages/de/RichText.json";
 import deSalesCockpit from "./messages/de/SalesCockpit.json";
 import deSettings from "./messages/de/Settings.json";
 import deSuggestions from "./messages/de/Suggestions.json";
@@ -84,6 +85,7 @@ import enPerformance from "./messages/en/Performance.json";
 import enprivacy from "./messages/en/privacy.json";
 import enProfile from "./messages/en/Profile.json";
 import enRoles from "./messages/en/Roles.json";
+import enRichText from "./messages/en/RichText.json";
 import enSalesCockpit from "./messages/en/SalesCockpit.json";
 import enSettings from "./messages/en/Settings.json";
 import enSuggestions from "./messages/en/Suggestions.json";
@@ -109,6 +111,7 @@ const messagesByLocale = {
     Calendar: enCalendar,
     Absences: enAbsences,
     Announcements: enAnnouncements,
+    RichText: enRichText,
     Chat: enChat,
     Directory: enDirectory,
     Profile: enProfile,
@@ -154,6 +157,7 @@ const messagesByLocale = {
     Calendar: deCalendar,
     Absences: deAbsences,
     Announcements: deAnnouncements,
+    RichText: deRichText,
     Chat: deChat,
     Directory: deDirectory,
     Profile: deProfile,

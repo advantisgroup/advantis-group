@@ -79,6 +79,22 @@ export const audienceValidator = v.union(
   }),
 );
 
+export const richDateKindValidator = v.union(
+  v.literal("event"),
+  v.literal("deadline"),
+  v.literal("reminder"),
+);
+
+export const relevantDateValidator = v.object({
+  id: v.optional(v.string()),
+  startAt: v.number(),
+  endAt: v.optional(v.number()),
+  allDay: v.boolean(),
+  kind: v.optional(richDateKindValidator),
+  description: v.optional(v.string()),
+  location: v.optional(v.string()),
+});
+
 export const attachmentValidator = v.object({
   storageId: v.id("_storage"),
   kind: v.union(v.literal("image"), v.literal("file")),
@@ -543,13 +559,20 @@ export default defineSchema({
     start: v.number(), // epoch ms
     end: v.number(),
     allDay: v.boolean(),
+    kind: v.optional(richDateKindValidator),
     color: v.optional(v.string()),
     createdByUserId: v.id("users"),
+    sourceRichDateId: v.optional(v.string()),
+    personalForUserId: v.optional(v.id("users")),
+    dismissedAt: v.optional(v.number()),
     audience: audienceValidator,
     /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),
     createdAt: v.number(),
-  }).index("by_start", ["start"]),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_start", ["start"])
+    .index("by_personal_rich_date", ["personalForUserId", "sourceRichDateId"]),
 
   // --- Announcements -------------------------------------------------------
   announcements: defineTable({
@@ -563,6 +586,7 @@ export default defineSchema({
     /** Free-text topic tag (e.g. "Onboarding", "Customer Care") for grouping
      * the feed — admins type or pick from previously-used values, no fixed enum. */
     category: v.optional(v.string()),
+    relevantDate: v.optional(relevantDateValidator),
     /** Flat storage ids — kept for cleanup + older rows without rich metadata. */
     attachmentStorageIds: v.array(v.id("_storage")),
     /** Rich attachments (name, kind, type) for newer announcements. */

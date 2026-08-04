@@ -27,6 +27,7 @@
   "duplicate": "Duplicate",
   "updated": "Event updated",
   "exportIcs": "Export view (.ics)",
+  "downloadEventIcs": "Download event (.ics)",
   "exported": "Calendar file downloaded",
   "onlyMyAbsences": "Only my absences",
   "allDepartments": "All departments",

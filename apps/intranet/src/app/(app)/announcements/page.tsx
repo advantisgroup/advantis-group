@@ -31,6 +31,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
+import { RelevantDateCallout } from "@/components/announcements/RelevantDateCallout";
 import { MentionLink } from "@/components/profile/MentionLink";
 import { MentionRichText } from "@/components/profile/MentionRichText";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
@@ -184,7 +185,7 @@ function ViewersPopover({
 }
 
 /** Collapses long bodies behind a "read more" toggle. */
-function CollapsibleBody({ html }: { html: string }) {
+function CollapsibleBody({ html, title }: { html: string; title: string }) {
   const t = useTranslations("Announcements");
   const ref = useRef<HTMLDivElement>(null);
   const [overflowing, setOverflowing] = useState(false);
@@ -201,7 +202,7 @@ function CollapsibleBody({ html }: { html: string }) {
         ref={ref}
         className={cn("relative overflow-hidden", overflowing && !expanded && "max-h-80")}
       >
-        <MentionRichText html={html} />
+        <MentionRichText html={html} sourcedDateSummary={title} />
         {overflowing && !expanded && (
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-card to-transparent" />
         )}
@@ -410,7 +411,14 @@ function AnnouncementCard({
 
       {/* Styled message body */}
       <div className="px-5 py-4">
-        <CollapsibleBody html={a.body} />
+        {a.relevantDate && (
+          <RelevantDateCallout
+            value={a.relevantDate}
+            summary={a.title}
+            className="-mx-5 -mt-4 mb-4 border-t-0"
+          />
+        )}
+        <CollapsibleBody html={a.body} title={a.title} />
         {a.attachments.length > 0 && (
           <div className="mt-4 space-y-3">
             {/* Images embed inline */}

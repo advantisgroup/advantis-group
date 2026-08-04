@@ -68,6 +68,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useAbsencesCalendar } from "@/lib/absences-api";
 import { formatIsoDate, formatTime } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
+import { formatRichDate } from "@/lib/rich-date";
 import { cn } from "@/lib/utils";
 
 const ABSENCE_COLORS: Record<string, string> = {
@@ -439,7 +440,7 @@ export default function CalendarPage() {
   const dayEntries = detailDay
     ? {
         events: (filteredEvents ?? []).filter(
-          (e) => isoDay(new Date(e.start)) <= detailDay && detailDay <= isoDay(new Date(e.end)),
+          (e) => eventDay(e, e.start) <= detailDay && detailDay <= eventDay(e, e.end),
         ),
         absences: (filteredAbsences ?? []).filter(
           (a) => a.startDate <= detailDay && detailDay <= a.endDate,
@@ -458,8 +459,57 @@ export default function CalendarPage() {
   }
 
   function eventWhen(e: CalEvent) {
-    if (e.allDay) return `${longDate(new Date(e.start))} · ${t("allDay")}`;
+    if (e.personalForUserId) {
+      return `${formatRichDate(
+        {
+          startAt: e.start,
+          ...(e.end !== e.start ? { endAt: e.end } : {}),
+          allDay: e.allDay,
+        },
+        locale,
+      )}${e.allDay ? ` · ${t("allDay")}` : ""}`;
+    }
+    if (e.allDay) {
+      const start = longDate(new Date(e.start));
+      const end =
+        isoDay(new Date(e.end)) === isoDay(new Date(e.start))
+          ? ""
+          : ` – ${longDate(new Date(e.end))}`;
+      return `${start}${end} · ${t("allDay")}`;
+    }
     return `${longDate(new Date(e.start))} · ${formatTime(e.start, locale)} – ${formatTime(e.end, locale)}`;
+  }
+
+  function eventDay(e: CalEvent, timestamp: number): string {
+    return e.allDay && e.personalForUserId
+      ? new Date(timestamp).toISOString().slice(0, 10)
+      : isoDay(new Date(timestamp));
+  }
+
+  function eventIcs(e: CalEvent) {
+    return {
+      uid: e._id,
+      title: e.title,
+      ...(e.allDay
+        ? {
+            startDate: eventDay(e, e.start),
+            endDate: eventDay(e, e.end),
+          }
+        : { startMs: e.start, endMs: e.end }),
+      description: e.description ?? undefined,
+      location: e.location ?? undefined,
+      categories: e.kind ? [e.kind.toUpperCase()] : undefined,
+    };
+  }
+
+  function downloadEventIcs(event: CalEvent) {
+    const filename =
+      event.title
+        .trim()
+        .replace(/[^\p{L}\p{N}]+/gu, "-")
+        .replace(/^-|-$/g, "") || "event";
+    downloadIcs(`${filename}.ics`, buildIcs(t("title"), [eventIcs(event)]));
+    toast.success(t("exported"));
   }
 
   async function onDeleteEvent(event: CalEvent) {
@@ -502,9 +552,7 @@ export default function CalendarPage() {
   function eventsOn(day: Date): CalEvent[] {
     const iso = isoDay(day);
     return (
-      filteredEvents?.filter(
-        (e) => isoDay(new Date(e.start)) <= iso && iso <= isoDay(new Date(e.end)),
-      ) ?? []
+      filteredEvents?.filter((e) => eventDay(e, e.start) <= iso && iso <= eventDay(e, e.end)) ?? []
     );
   }
   function absencesOn(day: Date): CalAbsence[] {
@@ -515,16 +563,7 @@ export default function CalendarPage() {
   function exportIcs() {
     const ics = buildIcs(t("title"), [
       ...(filteredEvents ?? []).map((e) => ({
-        uid: e._id,
-        title: e.title,
-        ...(e.allDay
-          ? {
-              startDate: isoDay(new Date(e.start)),
-              endDate: isoDay(new Date(e.end)),
-            }
-          : { startMs: e.start, endMs: e.end }),
-        description: e.description ?? undefined,
-        location: e.location ?? undefined,
+        ...eventIcs(e),
       })),
       ...(filteredAbsences ?? []).map((a) => ({
         uid: a.id,
@@ -575,7 +614,7 @@ export default function CalendarPage() {
   }
 
   function EventChip({ e, day }: { e: CalEvent; day?: Date }) {
-    const continues = day ? isoDay(new Date(e.start)) !== isoDay(day) : false;
+    const continues = day ? eventDay(e, e.start) !== isoDay(day) : false;
     return (
       <div
         role="button"
@@ -1089,7 +1128,13 @@ export default function CalendarPage() {
             <EventDetail
               event={detailEvent}
               when={eventWhen(detailEvent)}
-              canManage={isManager && isOwnerOrAdmin(me, detailEvent.createdByUserId)}
+              canEdit={isManager && isOwnerOrAdmin(me, detailEvent.createdByUserId)}
+              canDelete={
+                detailEvent.personalForUserId === me._id ||
+                (isManager && isOwnerOrAdmin(me, detailEvent.createdByUserId))
+              }
+              canDuplicate={isManager && !detailEvent.personalForUserId}
+              onDownload={() => downloadEventIcs(detailEvent)}
               onEdit={() => {
                 setDetail(null);
                 setEventDraft(draftFromEvent(detailEvent));
@@ -1129,14 +1174,20 @@ export default function CalendarPage() {
   function EventDetail({
     event,
     when,
-    canManage,
+    canEdit,
+    canDelete,
+    canDuplicate,
+    onDownload,
     onEdit,
     onDuplicate,
     onDelete,
   }: {
     event: CalEvent;
     when: string;
-    canManage: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+    canDuplicate: boolean;
+    onDownload: () => void;
     onEdit: () => void;
     onDuplicate: () => void;
     onDelete: () => void;
@@ -1160,24 +1211,28 @@ export default function CalendarPage() {
           )}
         </div>
         <DialogFooter className="flex-wrap">
-          {canManage && (
-            <>
-              <Button variant="destructive" onClick={onDelete}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {tc("delete")}
-              </Button>
-              <Button variant="outline" onClick={onEdit}>
-                <Pencil className="mr-2 h-4 w-4" />
-                {t("editEvent")}
-              </Button>
-            </>
+          {canDelete && (
+            <Button variant="destructive" onClick={onDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              {tc("delete")}
+            </Button>
           )}
-          {isManager && (
+          {canEdit && (
+            <Button variant="outline" onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {t("editEvent")}
+            </Button>
+          )}
+          {canDuplicate && (
             <Button variant="outline" onClick={onDuplicate}>
               <Copy className="mr-2 h-4 w-4" />
               {t("duplicate")}
             </Button>
           )}
+          <Button variant="outline" onClick={onDownload}>
+            <CalendarArrowDown className="mr-2 h-4 w-4" />
+            {t("downloadEventIcs")}
+          </Button>
           <Button variant="ghost" onClick={() => setDetail(null)}>
             {tc("close")}
           </Button>

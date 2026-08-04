@@ -12,6 +12,14 @@
   "allCategories": "Alle Kategorien",
   "options": "Optionen",
   "scheduling": "Zeitplanung",
+  "relevantDate": "Relevantes Datum",
+  "relevantDateHint": "Zeige Lesern, wann etwas zu dieser Ankündigung stattfindet.",
+  "addRelevantDate": "Relevantes Datum hinzufügen",
+  "removeRelevantDate": "Relevantes Datum entfernen",
+  "insertRelevantDate": "Datum in Text einfügen",
+  "insertRelevantDatePrompt": "Möchtest du dieses Datum in den Ankündigungstext einfügen?",
+  "addToText": "In Text einfügen",
+  "notNow": "Nicht jetzt",
   "attachFile": "Datei anhängen",
   "attachments": "Anhänge",
   "attachHint": "Bis zu 5 MB insgesamt",
@@ -55,5 +63,5 @@
   "scheduledFor": "Wird gesendet {date}",
   "scheduledToast": "Ankündigung geplant",
   "expired": "Abgelaufen",
-  "optionsHint": "Kategorie, Zielgruppe, Anhänge und Zeitplanung für diese Ankündigung."
+  "optionsHint": "Kategorie, Zielgruppe, Anhänge, relevantes Datum und Zeitplanung für diese Ankündigung."
 }

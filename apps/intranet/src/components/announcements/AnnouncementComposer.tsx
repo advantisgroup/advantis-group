@@ -10,6 +10,8 @@ import { useMutation, useQuery } from "convex/react";
 import {
   ArrowLeft,
   Building2,
+  CalendarDays,
+  CalendarPlus,
   Check,
   Cloud,
   Paperclip,
@@ -40,8 +42,16 @@ import {
   RichTextToolbar,
   useRichTextController,
 } from "@/components/ui/rich-text-editor";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { SplitDivider } from "@/components/ui/split-divider";
+import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -52,11 +62,21 @@ import {
   CATEGORY_MAX_LENGTH,
   DRAFT_KEY,
   type Draft,
+  draftRelevantDateOf,
   EMPTY_DRAFT,
   migrateStoredDraft,
   msToLocalInput,
+  relevantDateHasValidRange,
+  relevantDateValueOf,
   sanitizeCategory,
 } from "@/lib/announcements";
+import {
+  ANNOUNCEMENT_RELEVANT_DATE_SOURCE,
+  formatRichDate,
+  richDateTimestampFromInput,
+  syncSourcedRichDateHtml,
+  type RichDateKind,
+} from "@/lib/rich-date";
 import { formatFileSize, isImage, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -135,6 +155,7 @@ function ComposerOptionsFields({
   attachmentUpload,
   addFiles,
   onOpenOneDrivePicker,
+  onInsertRelevantDate,
 }: {
   draft: Draft;
   set: <K extends keyof Draft>(key: K, value: Draft[K]) => void;
@@ -151,14 +172,64 @@ function ComposerOptionsFields({
   attachmentUpload: ReturnType<typeof useAttachmentUpload>;
   addFiles: (files: File[]) => boolean;
   onOpenOneDrivePicker: () => void;
+  onInsertRelevantDate: () => void;
 }) {
   const t = useTranslations("Announcements");
   const tc = useTranslations("Common");
+  const tr = useTranslations("RichText");
+  const [dateTextPromptOpen, setDateTextPromptOpen] = useState(false);
+  const relevantDateRangeValid = relevantDateHasValidRange(draft.relevantDate);
+  const relevantDateStartTimestamp = draft.relevantDate?.startAt
+    ? richDateTimestampFromInput(draft.relevantDate.startAt, draft.relevantDate.allDay)
+    : undefined;
+  const relevantDateEndTimestamp = draft.relevantDate?.endAt
+    ? richDateTimestampFromInput(draft.relevantDate.endAt, draft.relevantDate.allDay)
+    : undefined;
+  const relevantDateStartValid =
+    relevantDateStartTimestamp === undefined || Number.isFinite(relevantDateStartTimestamp);
+  const relevantDateEndValid =
+    relevantDateEndTimestamp === undefined || Number.isFinite(relevantDateEndTimestamp);
 
   const matchingCategories = existingCategories.filter((c) => {
     const q = draft.category.trim().toLowerCase();
     return !q || (c.toLowerCase().includes(q) && c.toLowerCase() !== q);
   });
+
+  function updateRelevantDate(
+    patch: Partial<NonNullable<Draft["relevantDate"]>>,
+    promptForText = false,
+  ) {
+    set("relevantDate", {
+      startAt: "",
+      endAt: "",
+      allDay: false,
+      kind: "",
+      description: "",
+      location: "",
+      ...draft.relevantDate,
+      id: draft.relevantDate?.id ?? crypto.randomUUID(),
+      ...patch,
+    });
+    if (promptForText) setDateTextPromptOpen(true);
+  }
+
+  function toggleRelevantDateAllDay(allDay: boolean) {
+    const value = draft.relevantDate;
+    if (!value) return;
+    updateRelevantDate({
+      allDay,
+      startAt: allDay
+        ? value.startAt.slice(0, 10)
+        : value.startAt
+          ? `${value.startAt.slice(0, 10)}T09:00`
+          : "",
+      endAt: value.endAt
+        ? allDay
+          ? value.endAt.slice(0, 10)
+          : `${value.endAt.slice(0, 10)}T10:00`
+        : "",
+    });
+  }
 
   return (
     <div className="space-y-4">
@@ -362,6 +433,149 @@ function ComposerOptionsFields({
         </OptionsSection>
       )}
 
+      <OptionsSection label={t("relevantDate")}>
+        {!draft.relevantDate ? (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full justify-start"
+            onClick={() => updateRelevantDate({})}
+          >
+            <CalendarDays className="mr-2 size-4" />
+            {t("addRelevantDate")}
+          </Button>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">{t("relevantDateHint")}</p>
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <Checkbox
+                checked={draft.relevantDate.allDay}
+                onCheckedChange={(checked) => toggleRelevantDateAllDay(checked === true)}
+              />
+              {tr("allDay")}
+            </label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">{tr("starts")}</Label>
+                <Input
+                  type={draft.relevantDate.allDay ? "date" : "datetime-local"}
+                  value={draft.relevantDate.startAt}
+                  onChange={(event) =>
+                    updateRelevantDate(
+                      { startAt: event.target.value },
+                      !draft.relevantDate?.startAt && !!event.target.value,
+                    )
+                  }
+                  aria-invalid={!relevantDateStartValid}
+                />
+                {!relevantDateStartValid && !draft.relevantDate.allDay && (
+                  <p className="text-xs text-destructive">{tr("invalidBerlinTime")}</p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">{tr("endsOptional")}</Label>
+                <Input
+                  type={draft.relevantDate.allDay ? "date" : "datetime-local"}
+                  value={draft.relevantDate.endAt}
+                  onChange={(event) => updateRelevantDate({ endAt: event.target.value })}
+                  aria-invalid={!relevantDateEndValid || !relevantDateRangeValid}
+                />
+                {!relevantDateEndValid && !draft.relevantDate.allDay && (
+                  <p className="text-xs text-destructive">{tr("invalidBerlinTime")}</p>
+                )}
+                {relevantDateStartValid && relevantDateEndValid && !relevantDateRangeValid && (
+                  <p className="text-xs text-destructive">{tr("endAfterStart")}</p>
+                )}
+              </div>
+            </div>
+            {!draft.relevantDate.allDay && (
+              <p className="text-xs text-muted-foreground">{tr("berlinTimeZone")}</p>
+            )}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{tr("eventTypeOptional")}</Label>
+              <Select
+                value={draft.relevantDate.kind || undefined}
+                onValueChange={(kind) => updateRelevantDate({ kind: kind as RichDateKind })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={tr("selectEventType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="event">{tr("kindEvent")}</SelectItem>
+                  <SelectItem value="deadline">{tr("kindDeadline")}</SelectItem>
+                  <SelectItem value="reminder">{tr("kindReminder")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{tr("descriptionOptional")}</Label>
+              <Textarea
+                value={draft.relevantDate.description}
+                onChange={(event) => updateRelevantDate({ description: event.target.value })}
+                placeholder={tr("descriptionPlaceholder")}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">{tr("locationOptional")}</Label>
+              <Input
+                value={draft.relevantDate.location}
+                onChange={(event) => updateRelevantDate({ location: event.target.value })}
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Popover open={dateTextPromptOpen} onOpenChange={setDateTextPromptOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!draft.relevantDate.startAt}
+                  >
+                    <CalendarPlus className="mr-1.5 size-4" />
+                    {t("insertRelevantDate")}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-72">
+                  <p className="text-sm font-medium">{t("insertRelevantDatePrompt")}</p>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => {
+                        onInsertRelevantDate();
+                        setDateTextPromptOpen(false);
+                      }}
+                    >
+                      {t("addToText")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setDateTextPromptOpen(false)}
+                    >
+                      {t("notNow")}
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  set("relevantDate", null);
+                  setDateTextPromptOpen(false);
+                }}
+              >
+                <X className="mr-1.5 size-4" />
+                {t("removeRelevantDate")}
+              </Button>
+            </div>
+          </div>
+        )}
+      </OptionsSection>
+
       <OptionsSection label={t("scheduling")}>
         <div className="grid grid-cols-1 gap-3">
           {!editing && (
@@ -465,6 +679,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
               : [],
         publishAt: "",
         expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
+        relevantDate: editing.relevantDate ? draftRelevantDateOf(editing.relevantDate) : null,
       });
     } else {
       try {
@@ -516,7 +731,23 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     if (key === "audienceKind" || key === "audienceDepartments" || key === "audienceUserIds") {
       setAudienceTouched(true);
     }
-    setDraft((d) => ({ ...d, [key]: value }));
+    setDraft((d) => {
+      if (key !== "relevantDate") return { ...d, [key]: value };
+      const relevantDate = value as Draft["relevantDate"];
+      const richDate = relevantDateValueOf(relevantDate);
+      const body =
+        relevantDate === null || !relevantDate.startAt
+          ? syncSourcedRichDateHtml(d.body, ANNOUNCEMENT_RELEVANT_DATE_SOURCE, null)
+          : richDate
+            ? syncSourcedRichDateHtml(
+                d.body,
+                ANNOUNCEMENT_RELEVANT_DATE_SOURCE,
+                richDate,
+                formatRichDate(richDate, locale),
+              )
+            : d.body;
+      return { ...d, relevantDate, body };
+    });
   }
 
   function discardDraft() {
@@ -554,7 +785,21 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     value: draft.body,
     onChange: (v) => set("body", v),
     mentionCandidates,
+    onSourcedDateChange: (source, value) => {
+      if (source !== ANNOUNCEMENT_RELEVANT_DATE_SOURCE) return;
+      setDraft((current) => ({
+        ...current,
+        relevantDate: draftRelevantDateOf(value),
+      }));
+    },
   });
+
+  function insertRelevantDateIntoBody() {
+    const value = relevantDateValueOf(draft.relevantDate);
+    if (!value) return;
+    controller.insertDate(value, formatRichDate(value, locale), ANNOUNCEMENT_RELEVANT_DATE_SOURCE);
+    setOptionsOpen(false);
+  }
 
   const audienceValue = useMemo(() => audienceValueOf(draft), [draft]);
   // A "users" audience with nothing picked yet reaches nobody — skip the
@@ -609,7 +854,11 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     }));
   }
 
-  const canSend = draft.title.trim().length > 0 && hasBody && audienceHasTarget;
+  const canSend =
+    draft.title.trim().length > 0 &&
+    hasBody &&
+    audienceHasTarget &&
+    relevantDateHasValidRange(draft.relevantDate);
 
   const files = useMemo(
     () => attachmentUpload.entries.map((e) => e.file),
@@ -652,6 +901,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
           ...(keepOriginalAudience ? {} : { audience: audienceValue }),
           category: sanitizeCategory(draft.category),
           expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : null,
+          relevantDate: relevantDateValueOf(draft.relevantDate) ?? null,
         });
         toast.success(t("updated"));
         router.push(`/announcements?id=${editing._id}`);
@@ -668,6 +918,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
             attachments,
             publishAt: draft.publishAt ? new Date(draft.publishAt).getTime() : undefined,
             expiresAt: draft.expiresAt ? new Date(draft.expiresAt).getTime() : undefined,
+            relevantDate: relevantDateValueOf(draft.relevantDate),
           });
           createdId = res.id;
         } catch (e) {
@@ -716,6 +967,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
       attachmentUpload={attachmentUpload}
       addFiles={addFiles}
       onOpenOneDrivePicker={() => setOneDrivePickerOpen(true)}
+      onInsertRelevantDate={insertRelevantDateIntoBody}
     />
   );
 
@@ -821,6 +1073,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
                 authorAvatar={me.avatar}
                 locale={locale}
                 previews={previews}
+                relevantDate={relevantDateValueOf(draft.relevantDate) ?? null}
               />
             </div>
           ) : (
@@ -895,6 +1148,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
                 authorAvatar={me.avatar}
                 locale={locale}
                 previews={previews}
+                relevantDate={relevantDateValueOf(draft.relevantDate) ?? null}
               />
             </div>
           </div>
