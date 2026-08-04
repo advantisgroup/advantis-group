@@ -3,6 +3,8 @@ import { type Id } from "@advantis/convex/dataModel";
 
 import type { FunctionReturnType } from "convex/server";
 
+import type { RichDateKind, RichDateValue } from "./rich-date";
+
 export type Announcement = FunctionReturnType<typeof api.announcements.list>[number];
 
 /** Additive: reaches anyone in any of `departments` plus anyone individually
@@ -19,6 +21,15 @@ export type Audience =
 export const ALL_CATEGORIES_VALUE = "__all_categories__";
 export const CATEGORY_MAX_LENGTH = 40;
 
+export interface DraftRelevantDate {
+  startAt: string;
+  endAt: string;
+  allDay: boolean;
+  kind: RichDateKind | "";
+  description: string;
+  location: string;
+}
+
 export function sanitizeCategory(raw: string): string {
   const trimmed = raw.trim();
   return trimmed === ALL_CATEGORIES_VALUE ? "" : trimmed;
@@ -34,6 +45,7 @@ export interface Draft {
   audienceUserIds: string[];
   publishAt: string;
   expiresAt: string;
+  relevantDate: DraftRelevantDate | null;
 }
 
 export const EMPTY_DRAFT: Draft = {
@@ -46,6 +58,7 @@ export const EMPTY_DRAFT: Draft = {
   audienceUserIds: [],
   publishAt: "",
   expiresAt: "",
+  relevantDate: null,
 };
 
 export const DRAFT_KEY = "announcements:draft";
@@ -54,6 +67,35 @@ export function msToLocalInput(ms: number): string {
   const d = new Date(ms);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function draftRelevantDateTimestamp(input: string, allDay: boolean): number {
+  if (!allDay) return new Date(input).getTime();
+  const [year, month, day] = input.split("-").map(Number);
+  return new Date(year, month - 1, day).getTime();
+}
+
+export function relevantDateHasValidRange(value: DraftRelevantDate | null): boolean {
+  if (!value?.startAt || !value.endAt) return true;
+  return (
+    draftRelevantDateTimestamp(value.endAt, value.allDay) >
+    draftRelevantDateTimestamp(value.startAt, value.allDay)
+  );
+}
+
+export function relevantDateValueOf(value: DraftRelevantDate | null): RichDateValue | undefined {
+  if (!value?.startAt || !relevantDateHasValidRange(value)) return undefined;
+  const startAt = draftRelevantDateTimestamp(value.startAt, value.allDay);
+  const endAt = value.endAt ? draftRelevantDateTimestamp(value.endAt, value.allDay) : undefined;
+  if (!Number.isFinite(startAt)) return undefined;
+  return {
+    startAt,
+    ...(endAt !== undefined && Number.isFinite(endAt) ? { endAt } : {}),
+    allDay: value.allDay,
+    ...(value.kind ? { kind: value.kind } : {}),
+    ...(value.description.trim() ? { description: value.description.trim() } : {}),
+    ...(value.location.trim() ? { location: value.location.trim() } : {}),
+  };
 }
 
 /** Shape of a draft as it may have been saved to localStorage by an earlier

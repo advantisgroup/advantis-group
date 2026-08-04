@@ -2,6 +2,7 @@
 
 import {
   Bold,
+  CalendarPlus,
   Italic,
   Keyboard,
   Link2,
@@ -12,13 +13,42 @@ import {
   Strikethrough,
   Underline,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { MobileDrawer } from "@/components/ui/mobile-drawer";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { initials } from "@/lib/format";
+import {
+  formatRichDate,
+  readRichDateElement,
+  type RichDateKind,
+  type RichDateValue,
+  writeRichDateElement,
+} from "@/lib/rich-date";
 import { cn } from "@/lib/utils";
 
 /** A mentionable person — supplied by the consumer, e.g. from `api.users.list`. */
@@ -32,7 +62,8 @@ export interface MentionCandidate {
 type Cmd =
   | { icon: typeof Bold; label: string; command: string; value?: string }
   | { icon: typeof Link2; label: string; action: "link" }
-  | { icon: typeof Keyboard; label: string; action: "kbd" };
+  | { icon: typeof Keyboard; label: string; action: "kbd" }
+  | { icon: typeof CalendarPlus; label: string; action: "date" };
 
 const TOOLS: (Cmd | "divider")[] = [
   { icon: Bold, label: "Bold", command: "bold" },
@@ -51,12 +82,38 @@ const TOOLS: (Cmd | "divider")[] = [
   },
   "divider",
   { icon: Link2, label: "Insert link", action: "link" },
+  { icon: CalendarPlus, label: "Insert date", action: "date" },
   {
     icon: RemoveFormatting,
     label: "Clear formatting",
     command: "removeFormat",
   },
 ];
+
+interface DateEditorState {
+  element: HTMLElement | null;
+  range: Range | null;
+  label: string;
+  startAt: string;
+  endAt: string;
+  allDay: boolean;
+  kind: RichDateKind | "";
+  description: string;
+  location: string;
+}
+
+function toLocalDateInput(timestamp: number, allDay: boolean): string {
+  const date = new Date(timestamp);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  return allDay ? day : `${day}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function fromLocalDateInput(value: string, allDay: boolean): number {
+  if (!allDay) return new Date(value).getTime();
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day).getTime();
+}
 
 /** Walk up from `node` (staying inside `root`) looking for a matching tag. */
 function closestAncestorTag(root: HTMLElement, node: Node | null, tag: string): HTMLElement | null {
@@ -70,6 +127,13 @@ function closestAncestorTag(root: HTMLElement, node: Node | null, tag: string): 
 
 function isInsideTag(root: HTMLElement, node: Node | null, tag: string): boolean {
   return !!closestAncestorTag(root, node, tag);
+}
+
+function closestRichDate(root: HTMLElement, node: Node | null): HTMLElement | null {
+  const element =
+    node?.nodeType === Node.ELEMENT_NODE ? (node as HTMLElement) : node?.parentElement;
+  const date = element?.closest<HTMLElement>("[data-rich-date-start]") ?? null;
+  return date && root.contains(date) ? date : null;
 }
 
 /** Inline formatting wrappers a caret can end up "trapped" inside after a command runs. */
@@ -144,6 +208,7 @@ export function useRichTextController({
   const [active, setActive] = useState<Record<string, boolean>>({});
   const [mention, setMention] = useState<{ query: string; rect: DOMRect } | null>(null);
   const [mentionActiveIndex, setMentionActiveIndex] = useState(0);
+  const [dateEditor, setDateEditor] = useState<DateEditorState | null>(null);
 
   const syncValue = useCallback(() => {
     const el = elRef.current;
@@ -285,6 +350,91 @@ export function useRichTextController({
     emit();
   }
 
+  function insertDate(dateValue: RichDateValue, label?: string, target?: HTMLElement | null) {
+    const el = elRef.current;
+    const text = label?.trim() || formatRichDate(dateValue, navigator.language);
+    const span = target ?? document.createElement("span");
+    writeRichDateElement(span, dateValue);
+    span.textContent = text;
+    if (!el) {
+      onChange(`${value}${value && !/\s$/.test(value) ? " " : ""}${span.outerHTML} `);
+      return;
+    }
+
+    if (!target) {
+      const savedRange = dateEditor?.range;
+      const range =
+        savedRange && el.contains(savedRange.commonAncestorContainer) ? savedRange : null;
+      const space = document.createTextNode(" ");
+      if (range) {
+        range.deleteContents();
+        range.insertNode(span);
+        span.after(space);
+      } else {
+        if (el.textContent && !/\s$/.test(el.textContent)) el.append(" ");
+        el.append(span, space);
+      }
+      const selection = window.getSelection();
+      const nextRange = document.createRange();
+      nextRange.setStart(space, 1);
+      nextRange.collapse(true);
+      selection?.removeAllRanges();
+      selection?.addRange(nextRange);
+    }
+    emit();
+    refreshActive();
+  }
+
+  function openDateEditor(target?: HTMLElement | null) {
+    const el = elRef.current;
+    if (!el) return;
+    const selection = window.getSelection();
+    const currentRange =
+      selection &&
+      selection.rangeCount > 0 &&
+      el.contains(selection.getRangeAt(0).commonAncestorContainer)
+        ? selection.getRangeAt(0).cloneRange()
+        : null;
+    const existing =
+      target ?? (currentRange ? closestRichDate(el, currentRange.commonAncestorContainer) : null);
+    const value = existing ? readRichDateElement(existing) : null;
+    const nextHour = new Date();
+    nextHour.setMinutes(0, 0, 0);
+    nextHour.setHours(nextHour.getHours() + 1);
+    setDateEditor({
+      element: existing,
+      range: currentRange,
+      label: existing?.textContent ?? currentRange?.toString() ?? "",
+      startAt: value
+        ? toLocalDateInput(value.startAt, value.allDay)
+        : toLocalDateInput(nextHour.getTime(), false),
+      endAt: value?.endAt ? toLocalDateInput(value.endAt, value.allDay) : "",
+      allDay: value?.allDay ?? false,
+      kind: value?.kind ?? "",
+      description: value?.description ?? "",
+      location: value?.location ?? "",
+    });
+  }
+
+  function saveDateEditor() {
+    if (!dateEditor?.startAt) return;
+    const startAt = fromLocalDateInput(dateEditor.startAt, dateEditor.allDay);
+    const endAt = dateEditor.endAt
+      ? fromLocalDateInput(dateEditor.endAt, dateEditor.allDay)
+      : undefined;
+    if (!Number.isFinite(startAt) || (endAt !== undefined && endAt <= startAt)) return;
+    const value: RichDateValue = {
+      startAt,
+      ...(endAt ? { endAt } : {}),
+      allDay: dateEditor.allDay,
+      ...(dateEditor.kind ? { kind: dateEditor.kind } : {}),
+      ...(dateEditor.description.trim() ? { description: dateEditor.description.trim() } : {}),
+      ...(dateEditor.location.trim() ? { location: dateEditor.location.trim() } : {}),
+    };
+    insertDate(value, dateEditor.label, dateEditor.element);
+    setDateEditor(null);
+  }
+
   /** Returns true when it handled the keystroke (so the caller should
    *  preventDefault instead of letting it reach the contentEditable). */
   function handleMentionKeyDown(key: string): boolean {
@@ -366,6 +516,8 @@ export function useRichTextController({
     } else if (tool.action === "kbd") {
       elRef.current?.focus();
       wrapSelectionInKbd();
+    } else if (tool.action === "date") {
+      openDateEditor();
     }
   }
 
@@ -380,6 +532,11 @@ export function useRichTextController({
     mentionActiveIndex,
     insertMention,
     handleMentionKeyDown,
+    dateEditor,
+    setDateEditor,
+    openDateEditor,
+    saveDateEditor,
+    insertDate,
   };
 }
 
@@ -425,6 +582,162 @@ export function RichTextToolbar({
   );
 }
 
+function RichDateEditor({ controller }: { controller: RichTextController }) {
+  const t = useTranslations("RichText");
+  const isMobile = useIsMobile();
+  const state = controller.dateEditor;
+  if (!state) return null;
+  const startTimestamp = state.startAt
+    ? fromLocalDateInput(state.startAt, state.allDay)
+    : Number.NaN;
+  const endTimestamp = state.endAt ? fromLocalDateInput(state.endAt, state.allDay) : undefined;
+  const invalidEnd =
+    endTimestamp !== undefined &&
+    (!Number.isFinite(endTimestamp) || endTimestamp <= startTimestamp);
+
+  function update(patch: Partial<DateEditorState>) {
+    controller.setDateEditor((current) => (current ? { ...current, ...patch } : current));
+  }
+
+  function toggleAllDay(allDay: boolean) {
+    const current = controller.dateEditor;
+    if (!current) return;
+    update({
+      allDay,
+      startAt: allDay ? current.startAt.slice(0, 10) : `${current.startAt.slice(0, 10)}T09:00`,
+      endAt: current.endAt
+        ? allDay
+          ? current.endAt.slice(0, 10)
+          : `${current.endAt.slice(0, 10)}T10:00`
+        : "",
+    });
+  }
+
+  const fields = (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Label htmlFor="rich-date-label">{t("dateText")}</Label>
+        <Input
+          id="rich-date-label"
+          value={state.label}
+          onChange={(event) => update({ label: event.target.value })}
+          placeholder={t("dateTextPlaceholder")}
+        />
+      </div>
+      <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+        <Checkbox
+          checked={state.allDay}
+          onCheckedChange={(checked) => toggleAllDay(checked === true)}
+        />
+        {t("allDay")}
+      </label>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="rich-date-start">{t("starts")}</Label>
+          <Input
+            id="rich-date-start"
+            type={state.allDay ? "date" : "datetime-local"}
+            value={state.startAt}
+            onChange={(event) => update({ startAt: event.target.value })}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="rich-date-end">{t("endsOptional")}</Label>
+          <Input
+            id="rich-date-end"
+            type={state.allDay ? "date" : "datetime-local"}
+            value={state.endAt}
+            onChange={(event) => update({ endAt: event.target.value })}
+            aria-invalid={invalidEnd}
+          />
+          {invalidEnd && <p className="text-xs text-destructive">{t("endAfterStart")}</p>}
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <Label>{t("eventTypeOptional")}</Label>
+        <Select
+          value={state.kind || undefined}
+          onValueChange={(kind) => update({ kind: kind as RichDateKind })}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={t("selectEventType")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="event">{t("kindEvent")}</SelectItem>
+            <SelectItem value="deadline">{t("kindDeadline")}</SelectItem>
+            <SelectItem value="reminder">{t("kindReminder")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="rich-date-editor-description">{t("descriptionOptional")}</Label>
+        <Textarea
+          id="rich-date-editor-description"
+          value={state.description}
+          onChange={(event) => update({ description: event.target.value })}
+          placeholder={t("descriptionPlaceholder")}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="rich-date-editor-location">{t("locationOptional")}</Label>
+        <Input
+          id="rich-date-editor-location"
+          value={state.location}
+          onChange={(event) => update({ location: event.target.value })}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">{t("missingPayloadHint")}</p>
+    </div>
+  );
+
+  const actions = (
+    <>
+      <Button variant="ghost" onClick={() => controller.setDateEditor(null)}>
+        {t("cancel")}
+      </Button>
+      <Button
+        onClick={controller.saveDateEditor}
+        disabled={!state.label.trim() || !state.startAt || invalidEnd}
+      >
+        {t("saveDate")}
+      </Button>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <MobileDrawer
+        open
+        onOpenChange={(open) => !open && controller.setDateEditor(null)}
+        ariaLabel={t("insertDate")}
+        className="h-[88vh]"
+      >
+        <div className="border-b border-border/70 px-5 pb-4">
+          <p className="font-display text-lg font-semibold">{t("insertDate")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("insertDateDescription")}</p>
+        </div>
+        <div className="flex-1 px-5 py-4">{fields}</div>
+        <div className="flex shrink-0 gap-2 border-t border-border/70 px-5 py-4 [&>button]:flex-1">
+          {actions}
+        </div>
+      </MobileDrawer>
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && controller.setDateEditor(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("insertDate")}</DialogTitle>
+          <DialogDescription>{t("insertDateDescription")}</DialogDescription>
+        </DialogHeader>
+        {fields}
+        <DialogFooter>{actions}</DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 /** The contentEditable surface — placeable independently of the toolbar. */
 export function RichTextSurface({
   controller,
@@ -458,6 +771,13 @@ export function RichTextSurface({
         }}
         onKeyUp={controller.refreshActive}
         onMouseUp={controller.refreshActive}
+        onClick={(event) => {
+          const date = (event.target as HTMLElement).closest<HTMLElement>("[data-rich-date-start]");
+          if (date) {
+            event.preventDefault();
+            controller.openDateEditor(date);
+          }
+        }}
         role="textbox"
         aria-multiline="true"
         className={cn("rich-text px-3.5 py-3 outline-none", className)}
@@ -494,6 +814,7 @@ export function RichTextSurface({
           ))}
         </div>
       )}
+      <RichDateEditor controller={controller} />
     </>
   );
 }

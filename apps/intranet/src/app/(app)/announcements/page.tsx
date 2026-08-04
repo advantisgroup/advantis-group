@@ -31,6 +31,7 @@ import { useLocale, useTranslations } from "next-intl";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
+import { RelevantDateCallout } from "@/components/announcements/RelevantDateCallout";
 import { MentionLink } from "@/components/profile/MentionLink";
 import { MentionRichText } from "@/components/profile/MentionRichText";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
@@ -410,6 +411,13 @@ function AnnouncementCard({
 
       {/* Styled message body */}
       <div className="px-5 py-4">
+        {a.relevantDate && (
+          <RelevantDateCallout
+            value={a.relevantDate}
+            summary={a.title}
+            className="-mx-5 -mt-4 mb-4 border-t-0"
+          />
+        )}
         <CollapsibleBody html={a.body} />
         {a.attachments.length > 0 && (
           <div className="mt-4 space-y-3">

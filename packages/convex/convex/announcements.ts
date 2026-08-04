@@ -9,7 +9,7 @@ import { isOwnerOrAdmin, requireCapability, requireManager, requireUser } from "
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
-import { attachmentValidator, audienceValidator } from "./schema";
+import { attachmentValidator, audienceValidator, relevantDateValidator } from "./schema";
 
 const INTRANET_BOT_CLERK_USER_ID = "system:intranet-bot";
 
@@ -93,6 +93,7 @@ export const create = mutation({
     pinned: v.optional(v.boolean()),
     audience: audienceValidator,
     category: v.optional(v.string()),
+    relevantDate: v.optional(relevantDateValidator),
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
     attachments: v.optional(v.array(attachmentValidator)),
     /** Future timestamp schedules the announcement instead of publishing now. */
@@ -115,6 +116,7 @@ export const create = mutation({
       pinned: args.pinned ?? false,
       audience: args.audience,
       category,
+      relevantDate: args.relevantDate,
       attachmentStorageIds: storageIds,
       attachments: args.attachments,
       publishedAt,
@@ -239,10 +241,11 @@ export const update = mutation({
     pinned: v.optional(v.boolean()),
     audience: v.optional(audienceValidator),
     category: v.optional(v.string()),
+    relevantDate: v.optional(v.union(relevantDateValidator, v.null())),
     attachmentStorageIds: v.optional(v.array(v.id("_storage"))),
     expiresAt: v.optional(v.union(v.number(), v.null())),
   },
-  handler: async (ctx, { announcementId, expiresAt, category, ...patch }) => {
+  handler: async (ctx, { announcementId, expiresAt, category, relevantDate, ...patch }) => {
     const user = await requireCapability(ctx, "manage_announcements");
     const announcement = await ctx.db.get(announcementId);
     if (!announcement) {
@@ -281,6 +284,7 @@ export const update = mutation({
       ...(expiresAt !== undefined ? { expiresAt: expiresAt ?? undefined } : {}),
       // Empty string clears the category the same way null clears the expiry.
       ...(category !== undefined ? { category: category.trim() || undefined } : {}),
+      ...(relevantDate !== undefined ? { relevantDate: relevantDate ?? undefined } : {}),
       updatedAt: Date.now(),
       updatedByUserId: user._id,
     });
@@ -419,6 +423,7 @@ export const list = query({
           body: a.body,
           pinned: a.pinned,
           category: a.category ?? null,
+          relevantDate: a.relevantDate ?? null,
           publishedAt: a.publishedAt,
           expiresAt: a.expiresAt ?? null,
           scheduled: a.publishedAt > now,

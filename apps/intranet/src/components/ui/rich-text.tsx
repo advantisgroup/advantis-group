@@ -1,7 +1,8 @@
 "use client";
 
-import { type MouseEvent, useMemo } from "react";
+import { type KeyboardEvent, type MouseEvent, useMemo } from "react";
 
+import { readRichDateElement, RICH_DATE_ATTRIBUTES, type RichDateValue } from "@/lib/rich-date";
 import { cn } from "@/lib/utils";
 
 const ALLOWED = new Set([
@@ -71,6 +72,20 @@ function cleanInto(node: Node, out: Node, doc: Document) {
         if (mentionUserId) {
           safe.setAttribute("data-mention-user-id", mentionUserId);
           safe.setAttribute("class", "mention");
+        } else {
+          const dateStart = el.getAttribute("data-rich-date-start");
+          if (!dateStart?.trim() || !Number.isFinite(Number(dateStart))) {
+            cleanInto(el, safe, doc);
+            out.appendChild(safe);
+            return;
+          }
+          for (const attribute of RICH_DATE_ATTRIBUTES) {
+            const value = el.getAttribute(attribute);
+            if (value !== null) safe.setAttribute(attribute, value);
+          }
+          safe.setAttribute("class", "rich-date");
+          safe.setAttribute("role", "button");
+          safe.setAttribute("tabindex", "0");
         }
       }
       cleanInto(el, safe, doc);
@@ -126,18 +141,41 @@ export function RichText({
   html,
   className,
   onMentionClick,
+  onRichDateClick,
+  richDateTitle,
 }: {
   html: string;
   className?: string;
   onMentionClick?: (userId: string, target: HTMLElement) => void;
+  onRichDateClick?: (value: RichDateValue, label: string, target: HTMLElement) => void;
+  richDateTitle?: string;
 }) {
   const clean = useMemo(() => sanitizeHtml(html), [html]);
 
+  function activate(target: HTMLElement) {
+    const mentionTarget = target.closest<HTMLElement>("[data-mention-user-id]");
+    const userId = mentionTarget?.getAttribute("data-mention-user-id");
+    if (mentionTarget && userId && onMentionClick) {
+      onMentionClick(userId, mentionTarget);
+      return;
+    }
+    const dateTarget = target.closest<HTMLElement>("[data-rich-date-start]");
+    const value = dateTarget ? readRichDateElement(dateTarget) : null;
+    if (dateTarget && value && onRichDateClick) {
+      onRichDateClick(value, dateTarget.textContent ?? "", dateTarget);
+    }
+  }
+
   function handleClick(e: MouseEvent<HTMLDivElement>) {
-    if (!onMentionClick) return;
-    const target = (e.target as HTMLElement).closest<HTMLElement>("[data-mention-user-id]");
-    const userId = target?.getAttribute("data-mention-user-id");
-    if (target && userId) onMentionClick(userId, target);
+    activate(e.target as HTMLElement);
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const target = e.target as HTMLElement;
+    if (!target.matches("[data-mention-user-id], [data-rich-date-start]")) return;
+    e.preventDefault();
+    activate(target);
   }
 
   if (!clean) {
@@ -146,7 +184,18 @@ export function RichText({
   return (
     <div
       className={cn("rich-text", className)}
-      onClick={onMentionClick ? handleClick : undefined}
+      onClick={onMentionClick || onRichDateClick ? handleClick : undefined}
+      onKeyDown={onMentionClick || onRichDateClick ? handleKeyDown : undefined}
+      onMouseOver={
+        richDateTitle
+          ? (event) => {
+              const target = (event.target as HTMLElement).closest<HTMLElement>(
+                "[data-rich-date-start]",
+              );
+              if (target) target.title = richDateTitle;
+            }
+          : undefined
+      }
       dangerouslySetInnerHTML={{ __html: clean }}
     />
   );
