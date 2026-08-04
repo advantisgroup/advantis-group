@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
 
 import { useBottomNavTabs } from "@/components/layout/bottom-nav-tabs";
+import { MobilePageHeaderActions, usePageHeaderBarState } from "@/components/layout/PageHeaderBar";
 import { useSidebar } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +24,11 @@ import { cn } from "@/lib/utils";
  * Management's `RouteTabs` on mobile), their icons render first in the same
  * pill — so "the bottom nav" doubles as that page's tab switcher instead of
  * a separate dropdown, without losing the search/menu entry points.
+ *
+ * Same reasoning applies to a page's registered `PageHeaderActions` (see
+ * `PageHeaderBar.tsx`): those render in the Intranet Header on desktop, but
+ * a phone's top header is well outside thumb reach, so here they show up as
+ * icon-only entries in this pill instead, right after any tabs.
  */
 export function BottomNav() {
   const t = useTranslations("Nav");
@@ -35,6 +41,8 @@ export function BottomNav() {
   const chatUnread = chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const unread = chatUnread + (announcementUnread ?? 0);
   const hasTabs = tabs !== null && tabs.length > 0;
+  const { actions: pageActions } = usePageHeaderBarState();
+  const hasActions = pageActions !== null && pageActions.length > 0;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] print:hidden md:hidden">
@@ -69,6 +77,12 @@ export function BottomNav() {
                 </Link>
               );
             })}
+            <span className="h-5 w-px shrink-0 bg-border/70" aria-hidden />
+          </>
+        )}
+        {hasActions && (
+          <>
+            <MobilePageHeaderActions />
             <span className="h-5 w-px shrink-0 bg-border/70" aria-hidden />
           </>
         )}

@@ -2,9 +2,10 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-import { Info } from "lucide-react";
+import { Info, type LucideIcon } from "lucide-react";
 
 import { TourReplayButton, type CheckpointId } from "@/components/tour";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export interface PageHeaderIdentity {
@@ -15,14 +16,24 @@ export interface PageHeaderIdentity {
   tourCheckpoint?: CheckpointId;
 }
 
+export interface PageHeaderAction {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+  /** Matches `Button`'s variant — "default" reads as the primary action. */
+  variant?: "default" | "outline";
+  disabled?: boolean;
+}
+
 interface PageHeaderBarState {
   identity: PageHeaderIdentity | null;
-  actions: ReactNode | null;
+  actions: PageHeaderAction[] | null;
 }
 
 const PageHeaderBarContext = createContext<PageHeaderBarState>({ identity: null, actions: null });
 const SetIdentityContext = createContext<(identity: PageHeaderIdentity | null) => void>(() => {});
-const SetActionsContext = createContext<(actions: ReactNode | null) => void>(() => {});
+const SetActionsContext = createContext<(actions: PageHeaderAction[] | null) => void>(() => {});
 
 /**
  * Two independent state slots (not one merged object) because a section's
@@ -33,7 +44,7 @@ const SetActionsContext = createContext<(actions: ReactNode | null) => void>(() 
  */
 export function PageHeaderBarProvider({ children }: { children: ReactNode }) {
   const [identity, setIdentity] = useState<PageHeaderIdentity | null>(null);
-  const [actions, setActions] = useState<ReactNode | null>(null);
+  const [actions, setActions] = useState<PageHeaderAction[] | null>(null);
   return (
     <SetIdentityContext.Provider value={setIdentity}>
       <SetActionsContext.Provider value={setActions}>
@@ -67,17 +78,20 @@ export function PageHeaderBar({ title, icon, description, tourCheckpoint }: Page
 }
 
 /**
- * Registers this page's primary action button(s) into the Intranet Header,
- * independent of `PageHeaderBar`'s title — lets one tab within a section
- * (e.g. Clockodo's admin tab) contribute actions without owning the
- * section's title/icon, and have them disappear again when it unmounts.
+ * Registers this page's primary action button(s) as data (not JSX) — the
+ * header row and the mobile bottom nav each render the same actions with
+ * their own visual treatment (labelled buttons vs. icon-only pill entries),
+ * the same way `RouteTab`/`BottomNavTab` share one tab list across two
+ * renderings. On a phone, the top header sits well outside thumb reach, so
+ * actions surface in `BottomNav`'s floating pill there instead — the header
+ * slot only ever renders them at the `md` breakpoint and up.
  */
-export function PageHeaderActions({ children }: { children: ReactNode }) {
+export function PageHeaderActions({ actions }: { actions: PageHeaderAction[] }) {
   const setActions = useContext(SetActionsContext);
   useEffect(() => {
-    setActions(children);
+    setActions(actions);
     return () => setActions(null);
-  }, [setActions, children]);
+  }, [setActions, actions]);
   return null;
 }
 
@@ -120,9 +134,51 @@ export function PageHeaderBarSlot() {
 
 /** Renders the currently-registered page actions into the Intranet Header,
  * in a fixed slot right after the title — same position on every page that
- * opts in, regardless of how many/which actions are active. */
+ * opts in, regardless of how many/which actions are active. Desktop only
+ * (see `PageHeaderActions`'s doc comment) — `MobilePageHeaderActions`
+ * covers the same data on a phone. */
 export function PageHeaderActionsSlot() {
   const { actions } = usePageHeaderBarState();
-  if (!actions) return null;
-  return <div className="flex shrink-0 items-center gap-1.5 md:gap-2">{actions}</div>;
+  if (!actions || actions.length === 0) return null;
+  return (
+    <div className="hidden shrink-0 items-center gap-2 md:flex">
+      {actions.map((action) => (
+        <Button
+          key={action.key}
+          variant={action.variant ?? "default"}
+          size="sm"
+          onClick={action.onClick}
+          disabled={action.disabled}
+        >
+          <action.icon className="size-4" />
+          {action.label}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
+/** Mobile counterpart of `PageHeaderActionsSlot` — same registered actions,
+ * rendered as icon-only circular buttons matching `BottomNav`'s floating
+ * pill so they land in the thumb zone instead of the top header. Mounted by
+ * `BottomNav` itself; renders nothing when no page has registered actions. */
+export function MobilePageHeaderActions() {
+  const { actions } = usePageHeaderBarState();
+  if (!actions || actions.length === 0) return null;
+  return (
+    <>
+      {actions.map((action) => (
+        <button
+          key={action.key}
+          type="button"
+          aria-label={action.label}
+          disabled={action.disabled}
+          onClick={action.onClick}
+          className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
+        >
+          <action.icon className="size-4" />
+        </button>
+      ))}
+    </>
+  );
 }

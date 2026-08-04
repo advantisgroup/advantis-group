@@ -503,23 +503,27 @@ export function ClockodoAdminPanel() {
       {/* No section header here — the "Clockodo" title + logo already live in
           the Intranet Header (see clockodo/layout.tsx) and the "Admin" tab
           says which tab this is, so a repeated "Clockodo Management" block
-          would just be a second header. Only the actions move up there. */}
-      <PageHeaderActions>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={exportCsv}
-          disabled={visible.length === 0}
-          aria-label={t("exportCsv")}
-        >
-          <Download />
-          <span className="hidden sm:inline">{t("exportCsv")}</span>
-        </Button>
-        <Button size="sm" onClick={() => setShowCreate((s) => !s)} aria-label={t("createUser")}>
-          <Plus />
-          <span className="hidden sm:inline">{t("createUser")}</span>
-        </Button>
-      </PageHeaderActions>
+          would just be a second header. Only the actions move up there (and,
+          on mobile, down into the bottom nav's thumb zone instead — see
+          PageHeaderActions's doc comment). */}
+      <PageHeaderActions
+        actions={[
+          {
+            key: "export",
+            label: t("exportCsv"),
+            icon: Download,
+            onClick: exportCsv,
+            variant: "outline",
+            disabled: visible.length === 0,
+          },
+          {
+            key: "create",
+            label: t("createUser"),
+            icon: Plus,
+            onClick: () => setShowCreate((s) => !s),
+          },
+        ]}
+      />
 
       {showCreate && (
         <Card>
