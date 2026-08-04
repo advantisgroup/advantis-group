@@ -111,7 +111,10 @@ export function formatRichDate(value: RichDateValue, locale: string): string {
   const options: Intl.DateTimeFormatOptions = value.allDay
     ? { dateStyle: "medium", timeZone: "UTC" }
     : { dateStyle: "medium", timeStyle: "short", timeZone: RICH_DATE_TIME_ZONE };
-  return new Intl.DateTimeFormat(locale, options).format(value.startAt);
+  const formatter = new Intl.DateTimeFormat(locale, options);
+  return value.endAt
+    ? formatter.formatRange(value.startAt, value.endAt)
+    : formatter.format(value.startAt);
 }
 
 export function richDateInputFromTimestamp(timestamp: number, allDay: boolean): string {

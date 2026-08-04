@@ -59,7 +59,7 @@ export function RichDatePrompt({
         ...value,
         kind,
         description: description.trim(),
-        ...(location.trim() ? { location: location.trim() } : {}),
+        location: location.trim() || undefined,
       },
       summary,
     );
