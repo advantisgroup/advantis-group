@@ -736,7 +736,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
       const relevantDate = value as Draft["relevantDate"];
       const richDate = relevantDateValueOf(relevantDate);
       const body =
-        relevantDate === null
+        relevantDate === null || !relevantDate.startAt
           ? syncSourcedRichDateHtml(d.body, ANNOUNCEMENT_RELEVANT_DATE_SOURCE, null)
           : richDate
             ? syncSourcedRichDateHtml(
