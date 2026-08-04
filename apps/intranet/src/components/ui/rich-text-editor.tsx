@@ -578,6 +578,7 @@ export function RichTextToolbar({
   controller: RichTextController;
   className?: string;
 }) {
+  const t = useTranslations("RichText");
   return (
     <div className={cn("flex flex-wrap items-center gap-0.5", className)}>
       {TOOLS.map((tool, i) =>
@@ -587,8 +588,8 @@ export function RichTextToolbar({
           <button
             key={tool.label}
             type="button"
-            title={tool.label}
-            aria-label={tool.label}
+            title={"action" in tool && tool.action === "date" ? t("insertDate") : tool.label}
+            aria-label={"action" in tool && tool.action === "date" ? t("insertDate") : tool.label}
             aria-pressed={!!controller.active[tool.label]}
             // Keep the caret (and the keyboard) where they are — a plain tap
             // would blur the surface and close the docked bar mid-format.
