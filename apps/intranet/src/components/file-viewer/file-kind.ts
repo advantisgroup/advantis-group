@@ -57,9 +57,12 @@ const CODE_LANG_BY_EXTENSION: Record<string, BundledLanguage> = {
   svelte: "svelte",
 };
 
+const DOCX_CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
 export type FileKind =
   | { kind: "image" }
   | { kind: "pdf" }
+  | { kind: "docx" }
   | { kind: "code"; lang: BundledLanguage }
   | { kind: "text" }
   | { kind: "archive" }
@@ -78,6 +81,11 @@ export function detectFileKind(name: string, contentType?: string): FileKind {
   }
   if (contentType === "application/pdf" || ext === "pdf") {
     return { kind: "pdf" };
+  }
+  // Legacy `.doc` (application/msword) is a binary OLE format mammoth can't
+  // read — only the modern zip-based `.docx` gets an in-app preview.
+  if (contentType === DOCX_CONTENT_TYPE || ext === "docx") {
+    return { kind: "docx" };
   }
   const lang = CODE_LANG_BY_EXTENSION[ext];
   if (lang) return { kind: "code", lang };

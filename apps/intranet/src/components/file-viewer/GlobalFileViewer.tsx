@@ -37,6 +37,11 @@ const PdfPreview = dynamic(() => import("./PdfPreview").then((mod) => mod.PdfPre
   loading: () => <Loader2 className="size-6 animate-spin text-white/70" />,
 });
 
+const DocxPreview = dynamic(() => import("./DocxPreview").then((mod) => mod.DocxPreview), {
+  ssr: false,
+  loading: () => <Loader2 className="size-6 animate-spin text-white/70" />,
+});
+
 async function downloadUrl(url: string, name: string, label: string) {
   try {
     await downloadWithProgress(url, name, label);
@@ -482,6 +487,8 @@ function FileViewerContent({
           />
         ) : kind.kind === "pdf" && url ? (
           <PdfPreview url={url} />
+        ) : kind.kind === "docx" && url ? (
+          <DocxPreview url={url} />
         ) : (kind.kind === "code" || kind.kind === "text") && url && !isOneDriveOrigin ? (
           <CodeOrTextPreview url={url} kind={kind} noPreviewLabel={t("noPreview")} />
         ) : (
@@ -571,11 +578,11 @@ export function GlobalFileViewer({
         .catch(() => {
           if (!cancelled) setOneDrivePreview({ itemId, url: undefined });
         });
-    } else if (kind.kind === "pdf") {
-      // Rendered natively through `PdfPreview` (same as a Convex-storage
-      // PDF) rather than Graph's embeddable preview iframe — fetches the
-      // actual bytes through the authenticated download route and hands
-      // react-pdf a local blob URL.
+    } else if (kind.kind === "pdf" || kind.kind === "docx") {
+      // Rendered natively through `PdfPreview`/`DocxPreview` (same as a
+      // Convex-storage file of that kind) rather than Graph's embeddable
+      // preview iframe — fetches the actual bytes through the authenticated
+      // download route and hands react-pdf/mammoth a local blob URL.
       void od
         .downloadAsFile({ id: itemId, name: file.name, mimeType: file.contentType })
         .then((f) => {

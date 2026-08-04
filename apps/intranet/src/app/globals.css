@@ -839,6 +839,95 @@ input[type="week"] {
     background: color-mix(in oklch, var(--primary) 20%, transparent);
   }
 
+  /* .docx preview page in the global file viewer — always a literal white
+     sheet of paper regardless of app theme (matches how PdfPreview always
+     renders a light page against the dark backdrop), so colors are
+     hardcoded rather than pulled from the light/dark --foreground vars. */
+  .docx-preview {
+    font-size: 0.925rem;
+    line-height: 1.65;
+    color: #171717;
+  }
+
+  .docx-preview > :first-child {
+    margin-top: 0;
+  }
+
+  .docx-preview > :last-child {
+    margin-bottom: 0;
+  }
+
+  .docx-preview p {
+    margin: 0.6rem 0;
+  }
+
+  .docx-preview h1,
+  .docx-preview h2,
+  .docx-preview h3 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 1.1rem 0 0.5rem;
+    line-height: 1.25;
+  }
+
+  .docx-preview h1 {
+    font-size: 1.4rem;
+  }
+
+  .docx-preview h2 {
+    font-size: 1.2rem;
+  }
+
+  .docx-preview h3 {
+    font-size: 1.05rem;
+  }
+
+  .docx-preview ul,
+  .docx-preview ol {
+    margin: 0.5rem 0;
+    padding-left: 1.4rem;
+  }
+
+  .docx-preview ul {
+    list-style: disc;
+  }
+
+  .docx-preview ol {
+    list-style: decimal;
+  }
+
+  .docx-preview li {
+    margin: 0.2rem 0;
+  }
+
+  .docx-preview a {
+    color: #2563eb;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .docx-preview img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .docx-preview table {
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+    width: 100%;
+  }
+
+  .docx-preview td,
+  .docx-preview th {
+    border: 1px solid #d4d4d4;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .docx-preview strong,
+  .docx-preview b {
+    font-weight: 700;
+  }
+
   /* Rich-text editor placeholder */
   [data-rte]:empty::before,
   [data-rte][data-empty="true"]::before {
