@@ -62,6 +62,7 @@ import {
   CATEGORY_MAX_LENGTH,
   DRAFT_KEY,
   type Draft,
+  draftRelevantDateOf,
   EMPTY_DRAFT,
   migrateStoredDraft,
   msToLocalInput,
@@ -69,7 +70,12 @@ import {
   relevantDateValueOf,
   sanitizeCategory,
 } from "@/lib/announcements";
-import { formatRichDate, type RichDateKind } from "@/lib/rich-date";
+import {
+  ANNOUNCEMENT_RELEVANT_DATE_SOURCE,
+  formatRichDate,
+  syncSourcedRichDateHtml,
+  type RichDateKind,
+} from "@/lib/rich-date";
 import { formatFileSize, isImage, MAX_ATTACHMENT_BYTES } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
@@ -651,22 +657,7 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
               : [],
         publishAt: "",
         expiresAt: editing.expiresAt ? msToLocalInput(editing.expiresAt) : "",
-        relevantDate: editing.relevantDate
-          ? {
-              startAt: editing.relevantDate.allDay
-                ? msToLocalInput(editing.relevantDate.startAt).slice(0, 10)
-                : msToLocalInput(editing.relevantDate.startAt),
-              endAt: editing.relevantDate.endAt
-                ? editing.relevantDate.allDay
-                  ? msToLocalInput(editing.relevantDate.endAt).slice(0, 10)
-                  : msToLocalInput(editing.relevantDate.endAt)
-                : "",
-              allDay: editing.relevantDate.allDay,
-              kind: editing.relevantDate.kind ?? "",
-              description: editing.relevantDate.description ?? "",
-              location: editing.relevantDate.location ?? "",
-            }
-          : null,
+        relevantDate: editing.relevantDate ? draftRelevantDateOf(editing.relevantDate) : null,
       });
     } else {
       try {
@@ -718,7 +709,23 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     if (key === "audienceKind" || key === "audienceDepartments" || key === "audienceUserIds") {
       setAudienceTouched(true);
     }
-    setDraft((d) => ({ ...d, [key]: value }));
+    setDraft((d) => {
+      if (key !== "relevantDate") return { ...d, [key]: value };
+      const relevantDate = value as Draft["relevantDate"];
+      const richDate = relevantDateValueOf(relevantDate);
+      const body =
+        relevantDate === null
+          ? syncSourcedRichDateHtml(d.body, ANNOUNCEMENT_RELEVANT_DATE_SOURCE, null)
+          : richDate
+            ? syncSourcedRichDateHtml(
+                d.body,
+                ANNOUNCEMENT_RELEVANT_DATE_SOURCE,
+                richDate,
+                formatRichDate(richDate, locale),
+              )
+            : d.body;
+      return { ...d, relevantDate, body };
+    });
   }
 
   function discardDraft() {
@@ -756,12 +763,19 @@ export function AnnouncementComposer({ editing }: { editing: Announcement | null
     value: draft.body,
     onChange: (v) => set("body", v),
     mentionCandidates,
+    onSourcedDateChange: (source, value) => {
+      if (source !== ANNOUNCEMENT_RELEVANT_DATE_SOURCE) return;
+      setDraft((current) => ({
+        ...current,
+        relevantDate: draftRelevantDateOf(value),
+      }));
+    },
   });
 
   function insertRelevantDateIntoBody() {
     const value = relevantDateValueOf(draft.relevantDate);
     if (!value) return;
-    controller.insertDate(value, formatRichDate(value, locale));
+    controller.insertDate(value, formatRichDate(value, locale), ANNOUNCEMENT_RELEVANT_DATE_SOURCE);
     setOptionsOpen(false);
   }
 

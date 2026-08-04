@@ -3,7 +3,12 @@ import { type Id } from "@advantis/convex/dataModel";
 
 import type { FunctionReturnType } from "convex/server";
 
-import type { RichDateKind, RichDateValue } from "./rich-date";
+import {
+  richDateInputFromTimestamp,
+  richDateTimestampFromInput,
+  type RichDateKind,
+  type RichDateValue,
+} from "./rich-date";
 
 export type Announcement = FunctionReturnType<typeof api.announcements.list>[number];
 
@@ -69,24 +74,18 @@ export function msToLocalInput(ms: number): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function draftRelevantDateTimestamp(input: string, allDay: boolean): number {
-  if (!allDay) return new Date(input).getTime();
-  const [year, month, day] = input.split("-").map(Number);
-  return new Date(year, month - 1, day).getTime();
-}
-
 export function relevantDateHasValidRange(value: DraftRelevantDate | null): boolean {
   if (!value?.startAt || !value.endAt) return true;
   return (
-    draftRelevantDateTimestamp(value.endAt, value.allDay) >
-    draftRelevantDateTimestamp(value.startAt, value.allDay)
+    richDateTimestampFromInput(value.endAt, value.allDay) >
+    richDateTimestampFromInput(value.startAt, value.allDay)
   );
 }
 
 export function relevantDateValueOf(value: DraftRelevantDate | null): RichDateValue | undefined {
   if (!value?.startAt || !relevantDateHasValidRange(value)) return undefined;
-  const startAt = draftRelevantDateTimestamp(value.startAt, value.allDay);
-  const endAt = value.endAt ? draftRelevantDateTimestamp(value.endAt, value.allDay) : undefined;
+  const startAt = richDateTimestampFromInput(value.startAt, value.allDay);
+  const endAt = value.endAt ? richDateTimestampFromInput(value.endAt, value.allDay) : undefined;
   if (!Number.isFinite(startAt)) return undefined;
   return {
     startAt,
@@ -95,6 +94,17 @@ export function relevantDateValueOf(value: DraftRelevantDate | null): RichDateVa
     ...(value.kind ? { kind: value.kind } : {}),
     ...(value.description.trim() ? { description: value.description.trim() } : {}),
     ...(value.location.trim() ? { location: value.location.trim() } : {}),
+  };
+}
+
+export function draftRelevantDateOf(value: RichDateValue): DraftRelevantDate {
+  return {
+    startAt: richDateInputFromTimestamp(value.startAt, value.allDay),
+    endAt: value.endAt ? richDateInputFromTimestamp(value.endAt, value.allDay) : "",
+    allDay: value.allDay,
+    kind: value.kind ?? "",
+    description: value.description ?? "",
+    location: value.location ?? "",
   };
 }
 

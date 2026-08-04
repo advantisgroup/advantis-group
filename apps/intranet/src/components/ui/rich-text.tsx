@@ -1,8 +1,16 @@
 "use client";
 
-import { type KeyboardEvent, type MouseEvent, useMemo } from "react";
+import { useTranslations } from "next-intl";
+import { type KeyboardEvent, type MouseEvent, useMemo, useState } from "react";
 
-import { readRichDateElement, RICH_DATE_ATTRIBUTES, type RichDateValue } from "@/lib/rich-date";
+import { RichDatePrompt } from "@/components/ui/rich-date-prompt";
+import {
+  downloadCalendarEvent,
+  hasCalendarPayload,
+  readRichDateElement,
+  RICH_DATE_ATTRIBUTES,
+  type RichDateValue,
+} from "@/lib/rich-date";
 import { cn } from "@/lib/utils";
 
 const ALLOWED = new Set([
@@ -141,16 +149,17 @@ export function RichText({
   html,
   className,
   onMentionClick,
-  onRichDateClick,
-  richDateTitle,
 }: {
   html: string;
   className?: string;
   onMentionClick?: (userId: string, target: HTMLElement) => void;
-  onRichDateClick?: (value: RichDateValue, label: string, target: HTMLElement) => void;
-  richDateTitle?: string;
 }) {
+  const t = useTranslations("RichText");
   const clean = useMemo(() => sanitizeHtml(html), [html]);
+  const [datePrompt, setDatePrompt] = useState<{
+    value: RichDateValue;
+    summary: string;
+  } | null>(null);
 
   function activate(target: HTMLElement) {
     const mentionTarget = target.closest<HTMLElement>("[data-mention-user-id]");
@@ -161,8 +170,13 @@ export function RichText({
     }
     const dateTarget = target.closest<HTMLElement>("[data-rich-date-start]");
     const value = dateTarget ? readRichDateElement(dateTarget) : null;
-    if (dateTarget && value && onRichDateClick) {
-      onRichDateClick(value, dateTarget.textContent ?? "", dateTarget);
+    if (dateTarget && value) {
+      const summary = dateTarget.textContent ?? "";
+      if (hasCalendarPayload(value)) {
+        downloadCalendarEvent(value, summary);
+      } else {
+        setDatePrompt({ value, summary });
+      }
     }
   }
 
@@ -182,21 +196,27 @@ export function RichText({
     return <div className={cn("rich-text whitespace-pre-wrap", className)}>{htmlToText(html)}</div>;
   }
   return (
-    <div
-      className={cn("rich-text", className)}
-      onClick={onMentionClick || onRichDateClick ? handleClick : undefined}
-      onKeyDown={onMentionClick || onRichDateClick ? handleKeyDown : undefined}
-      onMouseOver={
-        richDateTitle
-          ? (event) => {
-              const target = (event.target as HTMLElement).closest<HTMLElement>(
-                "[data-rich-date-start]",
-              );
-              if (target) target.title = richDateTitle;
-            }
-          : undefined
-      }
-      dangerouslySetInnerHTML={{ __html: clean }}
-    />
+    <>
+      <div
+        className={cn("rich-text", className)}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        onMouseOver={(event) => {
+          const target = (event.target as HTMLElement).closest<HTMLElement>(
+            "[data-rich-date-start]",
+          );
+          if (target) target.title = t("addToCalendar");
+        }}
+        dangerouslySetInnerHTML={{ __html: clean }}
+      />
+      {datePrompt && (
+        <RichDatePrompt
+          open
+          onOpenChange={(open) => !open && setDatePrompt(null)}
+          value={datePrompt.value}
+          summary={datePrompt.summary}
+        />
+      )}
+    </>
   );
 }

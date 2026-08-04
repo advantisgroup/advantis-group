@@ -45,6 +45,9 @@ import { initials } from "@/lib/format";
 import {
   formatRichDate,
   readRichDateElement,
+  richDateInputFromTimestamp,
+  richDateTimestampFromInput,
+  syncSourcedRichDateHtml,
   type RichDateKind,
   type RichDateValue,
   writeRichDateElement,
@@ -100,19 +103,6 @@ interface DateEditorState {
   kind: RichDateKind | "";
   description: string;
   location: string;
-}
-
-function toLocalDateInput(timestamp: number, allDay: boolean): string {
-  const date = new Date(timestamp);
-  const pad = (value: number) => String(value).padStart(2, "0");
-  const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-  return allDay ? day : `${day}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function fromLocalDateInput(value: string, allDay: boolean): number {
-  if (!allDay) return new Date(value).getTime();
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day).getTime();
 }
 
 /** Walk up from `node` (staying inside `root`) looking for a matching tag. */
@@ -196,11 +186,13 @@ export function useRichTextController({
   value,
   onChange,
   mentionCandidates = [],
+  onSourcedDateChange,
 }: {
   value: string;
   onChange: (html: string) => void;
   /** Enables "@name" autocomplete when non-empty; omit to leave mentions off. */
   mentionCandidates?: MentionCandidate[];
+  onSourcedDateChange?: (source: string, value: RichDateValue) => void;
 }) {
   const elRef = useRef<HTMLDivElement | null>(null);
   // Which toolbar styles apply to the current selection/caret — drives the
@@ -350,18 +342,39 @@ export function useRichTextController({
     emit();
   }
 
-  function insertDate(dateValue: RichDateValue, label?: string, target?: HTMLElement | null) {
+  function insertDate(
+    dateValue: RichDateValue,
+    label?: string,
+    source?: string,
+    target?: HTMLElement | null,
+  ) {
     const el = elRef.current;
     const text = label?.trim() || formatRichDate(dateValue, navigator.language);
-    const span = target ?? document.createElement("span");
-    writeRichDateElement(span, dateValue);
+    const sourcedTarget =
+      target ??
+      (source && el
+        ? Array.from(el.querySelectorAll<HTMLElement>("[data-rich-date-source]")).find(
+            (element) => element.getAttribute("data-rich-date-source") === source,
+          )
+        : null);
+    const span = sourcedTarget ?? document.createElement("span");
+    writeRichDateElement(span, dateValue, source);
     span.textContent = text;
     if (!el) {
+      if (source) {
+        const synced = syncSourcedRichDateHtml(value, source, dateValue, text);
+        if (synced !== value) {
+          onChange(synced);
+          onSourcedDateChange?.(source, dateValue);
+          return;
+        }
+      }
       onChange(`${value}${value && !/\s$/.test(value) ? " " : ""}${span.outerHTML} `);
+      if (source) onSourcedDateChange?.(source, dateValue);
       return;
     }
 
-    if (!target) {
+    if (!sourcedTarget) {
       const savedRange = dateEditor?.range;
       const range =
         savedRange && el.contains(savedRange.commonAncestorContainer) ? savedRange : null;
@@ -382,6 +395,7 @@ export function useRichTextController({
       selection?.addRange(nextRange);
     }
     emit();
+    if (source) onSourcedDateChange?.(source, dateValue);
     refreshActive();
   }
 
@@ -406,9 +420,9 @@ export function useRichTextController({
       range: currentRange,
       label: existing?.textContent ?? currentRange?.toString() ?? "",
       startAt: value
-        ? toLocalDateInput(value.startAt, value.allDay)
-        : toLocalDateInput(nextHour.getTime(), false),
-      endAt: value?.endAt ? toLocalDateInput(value.endAt, value.allDay) : "",
+        ? richDateInputFromTimestamp(value.startAt, value.allDay)
+        : richDateInputFromTimestamp(nextHour.getTime(), false),
+      endAt: value?.endAt ? richDateInputFromTimestamp(value.endAt, value.allDay) : "",
       allDay: value?.allDay ?? false,
       kind: value?.kind ?? "",
       description: value?.description ?? "",
@@ -418,9 +432,9 @@ export function useRichTextController({
 
   function saveDateEditor() {
     if (!dateEditor?.startAt) return;
-    const startAt = fromLocalDateInput(dateEditor.startAt, dateEditor.allDay);
+    const startAt = richDateTimestampFromInput(dateEditor.startAt, dateEditor.allDay);
     const endAt = dateEditor.endAt
-      ? fromLocalDateInput(dateEditor.endAt, dateEditor.allDay)
+      ? richDateTimestampFromInput(dateEditor.endAt, dateEditor.allDay)
       : undefined;
     if (!Number.isFinite(startAt) || (endAt !== undefined && endAt <= startAt)) return;
     const value: RichDateValue = {
@@ -431,7 +445,12 @@ export function useRichTextController({
       ...(dateEditor.description.trim() ? { description: dateEditor.description.trim() } : {}),
       ...(dateEditor.location.trim() ? { location: dateEditor.location.trim() } : {}),
     };
-    insertDate(value, dateEditor.label, dateEditor.element);
+    insertDate(
+      value,
+      dateEditor.label,
+      dateEditor.element?.getAttribute("data-rich-date-source") ?? undefined,
+      dateEditor.element,
+    );
     setDateEditor(null);
   }
 
@@ -588,9 +607,11 @@ function RichDateEditor({ controller }: { controller: RichTextController }) {
   const state = controller.dateEditor;
   if (!state) return null;
   const startTimestamp = state.startAt
-    ? fromLocalDateInput(state.startAt, state.allDay)
+    ? richDateTimestampFromInput(state.startAt, state.allDay)
     : Number.NaN;
-  const endTimestamp = state.endAt ? fromLocalDateInput(state.endAt, state.allDay) : undefined;
+  const endTimestamp = state.endAt
+    ? richDateTimestampFromInput(state.endAt, state.allDay)
+    : undefined;
   const invalidEnd =
     endTimestamp !== undefined &&
     (!Number.isFinite(endTimestamp) || endTimestamp <= startTimestamp);
