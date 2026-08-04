@@ -440,10 +440,18 @@ export default function GuidebooksPage() {
           canManage
             ? [
                 {
+                  key: "browse-files",
+                  label: t("browseFiles"),
+                  icon: FolderOpen,
+                  onClick: () => router.push("/guidebooks/files"),
+                  variant: "outline" as const,
+                },
+                {
                   key: "categories",
                   label: t("categoryManagerTitle"),
                   icon: Settings2,
                   onClick: () => setCategoryManagerOpen(true),
+                  variant: "outline" as const,
                 },
                 {
                   key: "new-entry",

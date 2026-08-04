@@ -393,8 +393,14 @@ function ItTicketsPageContent() {
             label: t("manageCategories"),
             icon: Settings2,
             onClick: () => setCategoriesDialogOpen(true),
+            variant: "outline" as const,
           },
-          { key: "new-ticket", label: t("newTicket"), icon: Plus, onClick: openCreate },
+          {
+            key: "new-ticket",
+            label: t("newTicket"),
+            icon: Plus,
+            onClick: openCreate,
+          },
         ]}
       />
 
