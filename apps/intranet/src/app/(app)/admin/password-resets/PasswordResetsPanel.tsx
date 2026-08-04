@@ -385,8 +385,13 @@ function RequestCard({
         // Asked before the step-up code, not after — the destination is
         // never something the reverification step should be able to gloss
         // over. `request.emailChoice` already carries both addresses from
-        // the list query, so this needs no extra round trip.
+        // the list query, so this needs no extra round trip. `expectedEmail`
+        // is the exact string shown for whichever option gets picked — the
+        // server rejects the choice if that address has changed underneath
+        // it (e.g. a re-linked intranet account) by the time the step-up
+        // code clears, rather than silently sending to whatever's current.
         let sendTo: "feature" | "intranet" | undefined;
+        let expectedEmail: string | undefined;
         if (request.emailChoice) {
           const choice = await openEmailChoice(
             request.emailChoice.feature,
@@ -394,12 +399,14 @@ function RequestCard({
           );
           if (!choice) return;
           sendTo = choice;
+          expectedEmail =
+            choice === "feature" ? request.emailChoice.feature : request.emailChoice.intranet;
         }
 
-        let result = await issue({ requestId: request.id, sendTo });
+        let result = await issue({ requestId: request.id, sendTo, expectedEmail });
         if (isVerificationHint(result)) {
           if (!(await openVerification())) return;
-          result = await issue({ requestId: request.id, sendTo });
+          result = await issue({ requestId: request.id, sendTo, expectedEmail });
         }
         if (isVerificationHint(result)) {
           toast.error(t("adminVerifyStale"));
@@ -407,9 +414,10 @@ function RequestCard({
           return;
         }
         if (isEmailChoiceHint(result)) {
-          // The client thought it already knew the answer (or didn't know a
-          // choice was needed at all) but the server disagrees — safer to
-          // ask the admin to retry against fresh data than to guess here.
+          // Either the client didn't think a choice was needed and the
+          // server disagrees, or the address the admin picked has since
+          // changed underneath it — either way, safer to send the admin
+          // back through the (now up to date) picker than to guess here.
           toast.error(t("adminEmailChoiceStale"));
           posthog.capture("password_reset_admin_action_failed", { scope: request.scope, action });
           return;

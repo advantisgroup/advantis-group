@@ -37,13 +37,22 @@ the flow that gets someone back in without anyone ever learning their password.
    requires a real `users`/`performanceLogins` row by that email — it never
    invents an address to mail. A plain "nothing matched this email" probe
    (see the "No account-existence oracle" note below) still has no force
-   option, because there's nothing real to bypass to.
+   option, because there's nothing real to bypass to. Bypassing never widens
+   *which* company a `performance` login is looked up in — since email
+   uniqueness there is per-company, not global, matching by email alone
+   across companies could otherwise resolve to (and force-issue a link for)
+   an entirely different tenant's account.
 
    When a `performance` login is linked to its owner's intranet account
    (`linkedUserId`) and that account's email differs from the login's own,
    the admin is asked **which** address to use — feature account or intranet
    account — before the step-up code, on both the safe and the forced path.
-   Issuing never silently defaults to one when both are known.
+   Issuing never silently defaults to one when both are known, and never
+   silently rebinds a stale choice either: the admin's pick is checked
+   against the address it resolves to *right now*, so if a link got
+   re-pointed or an email changed while the step-up code was in flight, the
+   admin is sent back through the (now current) picker instead of the token
+   quietly going to a different address than the one they approved.
 5. **Consuming it** at `/password?o=<scope>&token=<token>`. Sets the new
    password, marks the token used, revokes the target's other outstanding
    tokens, and kills every session minted under the old password.
