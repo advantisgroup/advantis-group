@@ -43,13 +43,18 @@ const SCOPE_LABEL: Record<PasswordResetScope, string> = {
   performance: "Performance",
 };
 
-/** `k***@advantisgroup.de` — enough to recognise an account, useless for
- * reaching it. Used everywhere an address would otherwise land in a log line
- * or in front of whoever is holding a reset link. */
+/** `abc***@advantisgroup.de` — 1-3 leading characters (never the whole local
+ * part) then a *fixed* run of asterisks, so the visible text can't be counted
+ * to recover how long the hidden part actually is. Used everywhere an address
+ * would otherwise land in a log line, an admin's screen, or in front of
+ * whoever is holding a reset link — except the intranet account's own
+ * address, which is already visible in the staff directory and doesn't need
+ * hiding from an admin. */
 function maskEmail(email: string): string {
   const [local, domain] = email.split("@");
   if (!domain) return "***";
-  return `${local.slice(0, 1)}***@${domain}`;
+  const visible = Math.min(3, Math.max(1, local.length - 1));
+  return `${local.slice(0, visible)}***@${domain}`;
 }
 
 function normalizeEmail(email: string): string {
@@ -144,18 +149,39 @@ interface ResolvedTarget {
   targetUserId?: Id<"users">;
   targetLoginId?: Id<"performanceLogins">;
   targetCompanyId?: Id<"companies">;
-  /** Where a link for this target would be mailed, when it exists. */
+  /** Where a link for this target would be mailed, when it exists — the
+   * *feature* account's own address (the vault user's email for `hr`, the
+   * login's own email for `performance`). */
   sentToEmail?: string;
+  /** The same person's intranet (Clerk) account address, when the feature
+   * account is known to be linked to one and that address differs from
+   * `sentToEmail` — an alternate, already-public delivery address an admin
+   * can choose instead. Absent for `hr` (the feature account *is* the
+   * intranet account there, so there's nothing to choose between) and for
+   * any `performance` login with no `linkedUserId`. */
+  intranetEmail?: string;
 }
 
 /** Which account, if any, `scope` + `email` names. A resolution with every id
  * absent is a normal outcome, not an error — a lock screen must never become
- * an account-existence oracle. */
+ * an account-existence oracle.
+ *
+ * `bypassFilters` skips the active/membership/company-suspended checks below
+ * (but still requires a matching row to exist) — the escape hatch behind the
+ * admin queue's "force issue", for an account real but currently filtered
+ * out (deactivated, no longer an applicant-area member, tenant suspended)
+ * rather than one that never existed at all. It never widens *which* company
+ * a `performance` login is looked up in — every lookup below stays scoped to
+ * `companySlug` (or the company-less super-admin case) even when bypassing,
+ * since Performance email uniqueness is per-company: matching by email alone
+ * across companies could resolve to, and force-issue a link for, a
+ * completely different tenant's account. */
 async function resolveTarget(
   ctx: QueryCtx | MutationCtx,
   scope: PasswordResetScope,
   email: string,
   companySlug: string | undefined,
+  opts: { bypassFilters?: boolean } = {},
 ): Promise<ResolvedTarget> {
   const targetEmail = normalizeEmail(email);
   if (scope === "hr") {
@@ -165,7 +191,7 @@ async function resolveTarget(
       .unique();
     // A vault password only exists for someone who belongs to the area at
     // all — anyone else is "no such account" as far as this flow goes.
-    if (!user || user.status !== "active" || !isApplicantAreaMember(user)) {
+    if (!user || !(opts.bypassFilters || (user.status === "active" && isApplicantAreaMember(user)))) {
       return { targetEmail };
     }
     return { targetEmail, targetUserId: user._id, sentToEmail: user.email };
@@ -176,7 +202,7 @@ async function resolveTarget(
     .withIndex("by_slug", (q) => q.eq("slug", companySlug ?? "advantis"))
     .unique();
   let login: Doc<"performanceLogins"> | null = null;
-  if (company && company.status === "active") {
+  if (company && (opts.bypassFilters || company.status === "active")) {
     login = await ctx.db
       .query("performanceLogins")
       .withIndex("by_company_email", (q) => q.eq("companyId", company._id).eq("email", targetEmail))
@@ -184,20 +210,43 @@ async function resolveTarget(
   }
   if (!login) {
     // Super-admin logins have no companyId to scope by (see
-    // `performanceAuth.ts`'s `getSuperAdminLoginByEmail`).
+    // `performanceAuth.ts`'s `getSuperAdminLoginByEmail`) — this global
+    // fallback stays restricted to those even when bypassing. Performance
+    // email uniqueness is per-company, not global, so widening this to "any
+    // login by that email" could resolve (and force-issue a link for) a
+    // completely different tenant's account than the one the request was
+    // actually about — bypassing must never cross a company boundary.
     const candidates = await ctx.db
       .query("performanceLogins")
       .withIndex("by_email", (q) => q.eq("email", targetEmail))
       .collect();
     login = candidates.find((c) => c.isSuperAdmin === true) ?? null;
   }
-  if (!login || !login.active) return { targetEmail };
+  if (!login || !(opts.bypassFilters || login.active)) return { targetEmail };
+  const linkedUser = login.linkedUserId ? await ctx.db.get(login.linkedUserId) : null;
   return {
     targetEmail,
     targetLoginId: login._id,
     targetCompanyId: login.companyId,
     sentToEmail: login.email,
+    intranetEmail: linkedUser && linkedUser.email !== login.email ? linkedUser.email : undefined,
   };
+}
+
+/** Tries the safe, filtered lookup first; only falls back to the
+ * filter-bypassing one when that finds nothing. `forced` tells the caller
+ * whether the eventual match only turned up via the bypass — i.e. whether
+ * issuing off of it counts as a forced issue for the audit trail. */
+async function resolveWithFallback(
+  ctx: QueryCtx | MutationCtx,
+  scope: PasswordResetScope,
+  email: string,
+  companySlug: string | undefined,
+): Promise<{ resolved: ResolvedTarget; forced: boolean }> {
+  const safe = await resolveTarget(ctx, scope, email, companySlug);
+  if (safe.targetUserId ?? safe.targetLoginId) return { resolved: safe, forced: false };
+  const forced = await resolveTarget(ctx, scope, email, companySlug, { bypassFilters: true });
+  return { resolved: forced, forced: !!(forced.targetUserId ?? forced.targetLoginId) };
 }
 
 /** Active intranet admins — the reviewers for every scope, since the queue
@@ -384,10 +433,25 @@ interface AdminRequestRow {
   id: Id<"passwordResetRequests">;
   scope: PasswordResetScope;
   targetEmail: string;
+  /** `targetEmail`, masked unless this is an intranet account's own address
+   * (always true for `hr`; never true for `performance`, whose target email
+   * is a feature account's own address) — that's the one email in this flow
+   * that's already public within the org. */
+  targetEmailDisplay: string;
   targetName: string | null;
   targetCompanyName: string | null;
   /** False when nothing matched the email — a probe, not a real request. */
   targetExists: boolean;
+  /** True when `targetExists` is false but a filter-bypassing lookup still
+   * finds a real (if deactivated/unlinked/filtered-out) account — the "force
+   * issue" button shows only then, never for an email that matches nothing
+   * at all. */
+  canForceIssue: boolean;
+  /** Present only when the account is known to have two distinct addresses
+   * an issued link could go to. `feature` is masked; `intranet` is the
+   * already-public intranet account address, shown in full. Issuing must
+   * pick one explicitly rather than silently defaulting. */
+  emailChoice: { feature: string; intranet: string } | null;
   requestedByName: string | null;
   requestedByEmail: string | null;
   selfService: boolean;
@@ -429,13 +493,34 @@ async function toAdminRow(
     (t) => t.requestId === request._id && !t.usedAt && !t.revokedAt && t.expiresAt > Date.now(),
   );
 
+  const targetExists = !!(request.targetUserId ?? request.targetLoginId);
+  let canForceIssue = false;
+  let emailChoice: { feature: string; intranet: string } | null = null;
+  // Only worth resolving for a request still awaiting a decision — a
+  // handled one's "could we force it" answer no longer matters.
+  if (request.status === "pending") {
+    const { resolved, forced } = await resolveWithFallback(
+      ctx,
+      request.scope,
+      request.targetEmail,
+      company?.slug,
+    );
+    canForceIssue = !targetExists && forced;
+    if (resolved.sentToEmail && resolved.intranetEmail) {
+      emailChoice = { feature: maskEmail(resolved.sentToEmail), intranet: resolved.intranetEmail };
+    }
+  }
+
   return {
     id: request._id,
     scope: request.scope,
     targetEmail: request.targetEmail,
+    targetEmailDisplay: request.scope === "hr" ? request.targetEmail : maskEmail(request.targetEmail),
     targetName: userLabel(targetUser) ?? targetLogin?.name ?? null,
     targetCompanyName: company?.name ?? null,
-    targetExists: !!(request.targetUserId ?? request.targetLoginId),
+    targetExists,
+    canForceIssue,
+    emailChoice,
     requestedByName: userLabel(requester),
     requestedByEmail: request.requestedByEmail ?? null,
     selfService: request.selfService,
@@ -617,21 +702,64 @@ export const dismissRequest = mutation({
 
 // ------------------------------------------------------------ issuing a link
 
+const sendToValidator = v.union(v.literal("feature"), v.literal("intranet"));
+type SendTo = "feature" | "intranet";
+
+/** Whether `sendTo` + `expectedEmail` still describe the address the admin
+ * was actually shown. `expectedEmail` is the exact string the picker
+ * displayed for that choice — masked for `feature`, in full for `intranet` —
+ * so this only passes if the freshly re-resolved address is *still* the one
+ * the admin approved. Re-resolving fresh (rather than trusting what the list
+ * query returned) is deliberate elsewhere in this file, but a choice between
+ * two addresses is different: between the picker and the step-up code
+ * clearing, a `linkedUserId` could get re-pointed or an email edited, and an
+ * enum alone (`"intranet"`) can't tell a stale choice from a fresh one — it
+ * would just silently bind to whatever address resolves *now*. Requiring the
+ * exact address closes that gap: a mismatch is treated as no choice made at
+ * all, sending the admin back through the picker with the current
+ * addresses. */
+function sendToMatchesExpected(
+  sendTo: SendTo | undefined,
+  expectedEmail: string | undefined,
+  featureEmail: string,
+  intranetEmail: string,
+): boolean {
+  if (!sendTo || expectedEmail === undefined) return false;
+  const actual = sendTo === "intranet" ? intranetEmail : maskEmail(featureEmail);
+  return actual === expectedEmail;
+}
+
 /** Everything `issueResetLink` needs before it can hash a token, gathered in
  * one db-capable call since actions have no `ctx.db`. Re-resolves the target
  * from the email rather than trusting the ids frozen into the request row —
- * the account could have been renamed, deactivated or created in between. */
+ * the account could have been renamed, deactivated or created in between.
+ *
+ * Falls back to the filter-bypassing lookup when the safe one finds nothing
+ * (`forced`) — the same escape hatch `toAdminRow`'s `canForceIssue` previews
+ * to the admin before they ever click anything. When the account has two
+ * distinct addresses to choose from, `sentToEmail` stays null and
+ * `needsEmailChoice` is true until `sendTo` + `expectedEmail` name the exact
+ * address the admin picked — never silently defaulting to one, and never
+ * binding to a choice that's gone stale (see `sendToMatchesExpected`). */
 export const prepareIssue = internalQuery({
-  args: { requestId: v.id("passwordResetRequests") },
+  args: {
+    requestId: v.id("passwordResetRequests"),
+    sendTo: v.optional(sendToValidator),
+    expectedEmail: v.optional(v.string()),
+  },
   handler: async (
     ctx,
-    { requestId },
+    { requestId, sendTo, expectedEmail },
   ): Promise<{
     admin: Doc<"users">;
     reverified: boolean;
     scope: PasswordResetScope;
     targetEmail: string;
     sentToEmail: string | null;
+    needsEmailChoice: boolean;
+    featureEmail: string | null;
+    intranetEmail: string | null;
+    forced: boolean;
     targetUserId?: Id<"users">;
     targetLoginId?: Id<"performanceLogins">;
     linkBase: string;
@@ -645,7 +773,25 @@ export const prepareIssue = internalQuery({
     }
 
     const company = request.targetCompanyId ? await ctx.db.get(request.targetCompanyId) : null;
-    const resolved = await resolveTarget(ctx, request.scope, request.targetEmail, company?.slug);
+    const { resolved, forced } = await resolveWithFallback(
+      ctx,
+      request.scope,
+      request.targetEmail,
+      company?.slug,
+    );
+
+    const featureEmail = resolved.sentToEmail ?? null;
+    const intranetEmail = resolved.intranetEmail ?? null;
+    const hasChoice = !!featureEmail && !!intranetEmail;
+    const needsEmailChoice =
+      hasChoice && !sendToMatchesExpected(sendTo, expectedEmail, featureEmail, intranetEmail);
+    const sentToEmail = !featureEmail
+      ? null
+      : needsEmailChoice
+        ? null
+        : sendTo === "intranet" && intranetEmail
+          ? intranetEmail
+          : featureEmail;
 
     // Land the link on the domain the person actually signs in on: their own
     // company's for a Performance tenant, the intranet's for everyone else.
@@ -661,7 +807,11 @@ export const prepareIssue = internalQuery({
       reverified,
       scope: request.scope,
       targetEmail: request.targetEmail,
-      sentToEmail: resolved.sentToEmail ?? null,
+      sentToEmail,
+      needsEmailChoice,
+      featureEmail,
+      intranetEmail,
+      forced,
       targetUserId: resolved.targetUserId,
       targetLoginId: resolved.targetLoginId,
       linkBase,
@@ -681,6 +831,8 @@ export const storeIssuedToken = internalMutation({
     sentToEmail: v.string(),
     issuedByUserId: v.id("users"),
     expiresAt: v.number(),
+    forced: v.boolean(),
+    sendTo: sendToValidator,
   },
   handler: async (ctx, args): Promise<{ ok: true }> => {
     await revokeTokensFor(ctx, args.targetUserId, args.targetLoginId);
@@ -720,7 +872,7 @@ export const storeIssuedToken = internalMutation({
       targetEmail: args.targetEmail,
       targetUserId: args.targetUserId,
       targetLoginId: args.targetLoginId,
-      detail: `sentTo=${maskEmail(args.sentToEmail)} ttlMin=${Math.round(
+      detail: `sentTo=${maskEmail(args.sentToEmail)} sendTo=${args.sendTo} forced=${args.forced} ttlMin=${Math.round(
         (args.expiresAt - now) / 60000,
       )} waitedMs=${request ? now - request.createdAt : 0}`,
     });
@@ -731,6 +883,8 @@ export const storeIssuedToken = internalMutation({
         scope: args.scope,
         waited_ms: request ? now - request.createdAt : 0,
         self_service: request?.selfService ?? false,
+        forced: args.forced,
+        send_to: args.sendTo,
       },
     });
     return { ok: true };
@@ -739,21 +893,47 @@ export const storeIssuedToken = internalMutation({
 
 /**
  * Admin approves one request: mints a single-use link and mails it to the
- * account's *own* address, never to whoever filed the request. That's what
- * keeps an approved-but-impersonated request harmless — the worst an
- * employee gets from asking on their manager's behalf is a link landing in
- * the manager's inbox.
+ * account's own address — the feature account's, or, when `sendTo` says so
+ * and the account is known to be linked to one, its owner's intranet
+ * address — never to whoever filed the request. That's what keeps an
+ * approved-but-impersonated request harmless — the worst an employee gets
+ * from asking on their manager's behalf is a link landing in the manager's
+ * inbox.
+ *
+ * When the safe, filtered lookup finds nothing, this transparently falls
+ * back to the filter-bypassing one (`prepareIssue`'s `forced`) — the "force
+ * issue" the admin queue offers once a request has nothing else it can do
+ * with it. When the account has two distinct known addresses, a first call
+ * without `sendTo`/`expectedEmail` comes back `needsEmailChoice` instead of
+ * sending anything, so the UI can ask before spending the one-shot token.
+ * `expectedEmail` must match the address `sendTo` resolves to *right now*
+ * (`sendToMatchesExpected`) — if a `linkedUserId` got re-pointed or an email
+ * changed between the picker and the step-up code clearing, the stale choice
+ * is rejected rather than silently rebound to whatever's current, and
+ * `needsEmailChoice` comes back again with the fresh addresses.
  *
  * The plaintext token is never stored and never returned to the admin, so an
  * admin can trigger a reset without being able to walk through one.
  */
 export const issueResetLink = action({
-  args: { requestId: v.id("passwordResetRequests") },
+  args: {
+    requestId: v.id("passwordResetRequests"),
+    sendTo: v.optional(sendToValidator),
+    expectedEmail: v.optional(v.string()),
+  },
   handler: async (
     ctx,
-    { requestId },
-  ): Promise<{ ok: true; sentTo: string } | VerificationHint> => {
-    const prepared = await ctx.runQuery(internal.passwordResets.prepareIssue, { requestId });
+    { requestId, sendTo, expectedEmail },
+  ): Promise<
+    | { ok: true; sentTo: string }
+    | { needsEmailChoice: true; feature: string; intranet: string }
+    | VerificationHint
+  > => {
+    const prepared = await ctx.runQuery(internal.passwordResets.prepareIssue, {
+      requestId,
+      sendTo,
+      expectedEmail,
+    });
 
     if (!prepared.reverified) {
       await ctx.runMutation(internal.passwordResets.recordAudit, {
@@ -768,6 +948,17 @@ export const issueResetLink = action({
       });
       return needsVerificationHint();
     }
+    if (prepared.needsEmailChoice) {
+      // Both possible addresses, masked/public exactly as the admin UI would
+      // otherwise show them — this is a defense-in-depth echo of what
+      // `toAdminRow`'s `emailChoice` already told the client, for the rare
+      // case the client acted on stale data.
+      return {
+        needsEmailChoice: true,
+        feature: maskEmail(prepared.featureEmail!),
+        intranet: prepared.intranetEmail!,
+      };
+    }
     if (!prepared.sentToEmail) {
       throw new ConvexError({
         code: "no_account",
@@ -775,6 +966,8 @@ export const issueResetLink = action({
       });
     }
 
+    const resolvedSendTo: SendTo =
+      sendTo === "intranet" && prepared.sentToEmail === prepared.intranetEmail ? "intranet" : "feature";
     const token = randomToken();
     const expiresAt = Date.now() + TOKEN_TTL_MS;
     await ctx.runMutation(internal.passwordResets.storeIssuedToken, {
@@ -787,6 +980,8 @@ export const issueResetLink = action({
       sentToEmail: prepared.sentToEmail,
       issuedByUserId: prepared.admin._id,
       expiresAt,
+      forced: prepared.forced,
+      sendTo: resolvedSendTo,
     });
 
     await ctx.runAction(internal.outbound.sendNotificationEmail, {
@@ -798,7 +993,12 @@ export const issueResetLink = action({
         expiresAt,
       },
     });
-    return { ok: true, sentTo: prepared.sentToEmail };
+    // Echoed back masked unless it's the intranet account's own (already
+    // public) address — the same display rule the admin queue's list uses.
+    return {
+      ok: true,
+      sentTo: resolvedSendTo === "intranet" ? prepared.sentToEmail : maskEmail(prepared.sentToEmail),
+    };
   },
 });
 

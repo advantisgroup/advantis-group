@@ -30,6 +30,29 @@ the flow that gets someone back in without anyone ever learning their password.
    token, valid **60 minutes**, and emails it to the **account holder's own
    address** — never to whoever filed the request. That's what makes an
    approved-but-impersonated request harmless.
+
+   The safe lookup (active account, still a member of the area, tenant not
+   suspended) runs first. If that finds nothing, the admin queue offers
+   **Force issue anyway**: a second, filter-bypassing lookup that still
+   requires a real `users`/`performanceLogins` row by that email — it never
+   invents an address to mail. A plain "nothing matched this email" probe
+   (see the "No account-existence oracle" note below) still has no force
+   option, because there's nothing real to bypass to. Bypassing never widens
+   *which* company a `performance` login is looked up in — since email
+   uniqueness there is per-company, not global, matching by email alone
+   across companies could otherwise resolve to (and force-issue a link for)
+   an entirely different tenant's account.
+
+   When a `performance` login is linked to its owner's intranet account
+   (`linkedUserId`) and that account's email differs from the login's own,
+   the admin is asked **which** address to use — feature account or intranet
+   account — before the step-up code, on both the safe and the forced path.
+   Issuing never silently defaults to one when both are known, and never
+   silently rebinds a stale choice either: the admin's pick is checked
+   against the address it resolves to *right now*, so if a link got
+   re-pointed or an email changed while the step-up code was in flight, the
+   admin is sent back through the (now current) picker instead of the token
+   quietly going to a different address than the one they approved.
 5. **Consuming it** at `/password?o=<scope>&token=<token>`. Sets the new
    password, marks the token used, revokes the target's other outstanding
    tokens, and kills every session minted under the old password.
@@ -51,6 +74,16 @@ the flow that gets someone back in without anyone ever learning their password.
 - **The `o=` parameter is not trusted.** A token whose stored scope doesn't
   match reports as plain `invalid`, so the URL can't be used to ask which area
   a token belongs to.
+- **The admin queue masks every address except the intranet account's own.**
+  `passwordResets.ts`'s `maskEmail` shows 1-3 leading characters of the local
+  part (never all of it) then a *fixed* run of asterisks — long enough to
+  recognise an account, short enough that the asterisk count can't be counted
+  to recover the real length — and the full domain. A `hr`-scope target email
+  is always the intranet account's own (already visible in the staff
+  directory), so it's shown unmasked; a `performance`-scope target email is a
+  feature account's own address and stays masked, as does the "feature
+  account" option in the email-choice picker. Only the picker's "intranet
+  account" option is ever shown unmasked, for the same reason.
 - **`/password` is one route, not one per area,** deliberately outside both the
   Clerk gate (`proxy.ts`'s `PUBLIC_ROUTE_PREFIXES`) and the tenant rewrite: a
   Performance user resetting from their own company's domain has no intranet
