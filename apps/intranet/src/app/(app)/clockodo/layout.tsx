@@ -11,10 +11,12 @@ import { CalendarDays, Clock3, LayoutDashboard, Link2Off, Settings2 } from "luci
 import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/applicants/RouteTabs";
+import { Mark } from "@/components/branding/ProviderMark";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { StatusScreen } from "@/components/layout/StatusScreen";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser, useHasCapability } from "@/components/providers/current-user";
+import { TourFirstVisitNudge } from "@/components/tour";
 import { Button } from "@/components/ui/button";
 
 export default function ClockodoLayout({ children }: { children: ReactNode }) {
@@ -96,12 +98,13 @@ export default function ClockodoLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader
+      <PageHeaderBar
         title={t("title")}
         description={t("subtitle")}
-        icon={<Clock3 />}
+        icon={<Mark provider="clockodo" className="h-4 w-auto md:h-[18px]" />}
         tourCheckpoint="absences"
       />
+      <TourFirstVisitNudge checkpointId="absences" />
       <RouteTabs tabs={tabs} activeValue={active} />
       <div className="mt-4">{children}</div>
     </div>

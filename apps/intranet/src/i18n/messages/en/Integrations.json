@@ -3,8 +3,6 @@
   "hubSubtitle": "Provision and manage third-party accounts for your team.",
   "clockodoCard": "Clockodo",
   "clockodoCardDescription": "Create and manage Clockodo users, target hours, and vacation entitlement.",
-  "clockodoTitle": "Clockodo Management",
-  "clockodoSubtitle": "Centrally manage Clockodo accounts, links, target hours, permissions, and vacation entitlement.",
   "createUser": "Create Clockodo user",
   "name": "Name",
   "email": "Email",

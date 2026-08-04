@@ -10,9 +10,8 @@ import { ArrowDown, ArrowUp, Download, Plus, Search, TriangleAlert } from "lucid
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { Mark } from "@/components/branding/ProviderMark";
 import { TrademarkNotice } from "@/components/branding/TrademarkNotice";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -501,23 +500,26 @@ export function ClockodoAdminPanel() {
 
   return (
     <section className="mx-auto max-w-7xl space-y-6">
-      <PageHeader
-        title={t("clockodoTitle")}
-        description={t("clockodoSubtitle")}
-        icon={<Mark provider="clockodo" className="h-6 w-6" />}
-        action={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={exportCsv} disabled={visible.length === 0}>
-              <Download className="h-4 w-4" />
-              {t("exportCsv")}
-            </Button>
-            <Button onClick={() => setShowCreate((s) => !s)}>
-              <Plus className="h-4 w-4" />
-              {t("createUser")}
-            </Button>
-          </div>
-        }
-      />
+      {/* No section header here — the "Clockodo" title + logo already live in
+          the Intranet Header (see clockodo/layout.tsx) and the "Admin" tab
+          says which tab this is, so a repeated "Clockodo Management" block
+          would just be a second header. Only the actions move up there. */}
+      <PageHeaderActions>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={exportCsv}
+          disabled={visible.length === 0}
+          aria-label={t("exportCsv")}
+        >
+          <Download />
+          <span className="hidden sm:inline">{t("exportCsv")}</span>
+        </Button>
+        <Button size="sm" onClick={() => setShowCreate((s) => !s)} aria-label={t("createUser")}>
+          <Plus />
+          <span className="hidden sm:inline">{t("createUser")}</span>
+        </Button>
+      </PageHeaderActions>
 
       {showCreate && (
         <Card>
