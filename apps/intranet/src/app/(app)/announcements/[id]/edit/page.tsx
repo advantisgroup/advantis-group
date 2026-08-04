@@ -30,7 +30,7 @@ export default function EditAnnouncementPage() {
     );
   }
 
-  if (!isOwnerOrAdmin(me, editing.authorId)) return <ForbiddenScreen />;
+  if (!isOwnerOrAdmin(me, editing.ownerId)) return <ForbiddenScreen />;
 
   return <AnnouncementComposer editing={editing} />;
 }

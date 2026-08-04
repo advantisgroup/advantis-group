@@ -5,7 +5,7 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { isOwnerOrAdmin, requireCapability, requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireCapability, requireManager, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
 import { displayName } from "./lib/users";
@@ -160,7 +160,7 @@ export const announceGuidebook = mutation({
     locale: v.union(v.literal("en"), v.literal("de")),
   },
   handler: async (ctx, args) => {
-    const publisher = await requireCapability(ctx, "manage_guidebooks");
+    const publisher = await requireManager(ctx);
     const botUserId = await getOrCreateIntranetBot(ctx);
     const publisherName = displayName(publisher);
     const description = args.guideDescription?.trim();
