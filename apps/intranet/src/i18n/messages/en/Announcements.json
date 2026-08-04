@@ -12,6 +12,14 @@
   "allCategories": "All categories",
   "options": "Options",
   "scheduling": "Scheduling",
+  "relevantDate": "Relevant date",
+  "relevantDateHint": "Show readers when something related to this announcement happens.",
+  "addRelevantDate": "Add relevant date",
+  "removeRelevantDate": "Remove relevant date",
+  "insertRelevantDate": "Add date to text",
+  "insertRelevantDatePrompt": "Want to add this date to the announcement text?",
+  "addToText": "Add to text",
+  "notNow": "Not now",
   "attachFile": "Attach file",
   "attachments": "Attachments",
   "attachHint": "Up to 5 MB total",
@@ -55,5 +63,5 @@
   "scheduledFor": "Sends {date}",
   "scheduledToast": "Announcement scheduled",
   "expired": "Expired",
-  "optionsHint": "Category, audience, attachments and scheduling for this announcement."
+  "optionsHint": "Category, audience, attachments, relevant date and scheduling for this announcement."
 }

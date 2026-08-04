@@ -4,8 +4,10 @@ import { FileText, Pin } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { MentionRichText } from "@/components/profile/MentionRichText";
+import { RelevantDateCallout } from "@/components/announcements/RelevantDateCallout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { formatDateTime, initials } from "@/lib/format";
+import { type RichDateValue } from "@/lib/rich-date";
 import { formatFileSize } from "@/lib/upload";
 
 interface PreviewFile {
@@ -26,6 +28,7 @@ export function AnnouncementPreview({
   authorAvatar,
   locale,
   previews,
+  relevantDate,
 }: {
   title: string;
   body: string;
@@ -34,6 +37,7 @@ export function AnnouncementPreview({
   authorAvatar?: string | null;
   locale: string;
   previews: PreviewFile[];
+  relevantDate: RichDateValue | null;
 }) {
   const t = useTranslations("Announcements");
 
@@ -55,6 +59,13 @@ export function AnnouncementPreview({
         </div>
       </header>
       <div className="px-5 py-4">
+        {relevantDate && (
+          <RelevantDateCallout
+            value={relevantDate}
+            summary={title.trim() || t("titlePlaceholder")}
+            className="-mx-5 -mt-4 mb-4 border-t-0"
+          />
+        )}
         <MentionRichText html={body} />
         {previews.length > 0 && (
           <div className="mt-4 space-y-3">

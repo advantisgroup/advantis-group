@@ -839,6 +839,30 @@ input[type="week"] {
     background: color-mix(in oklch, var(--primary) 20%, transparent);
   }
 
+  .rich-text .rich-date {
+    display: inline;
+    border: 1px solid color-mix(in oklch, var(--signal) 35%, var(--border));
+    border-radius: 0.3rem;
+    background: color-mix(in oklch, var(--signal) 11%, transparent);
+    padding: 0.05rem 0.35rem;
+    color: color-mix(in oklch, var(--signal) 72%, var(--foreground));
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .rich-text .rich-date:hover {
+    border-color: color-mix(in oklch, var(--signal) 55%, var(--border));
+    background: color-mix(in oklch, var(--signal) 18%, transparent);
+  }
+
+  .rich-text .rich-date:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
   /* .docx preview page in the global file viewer — always a literal white
      sheet of paper regardless of app theme (matches how PdfPreview always
      renders a light page against the dark backdrop), so colors are
