@@ -45,7 +45,9 @@ interface VerificationHintShape {
 
 function isVerificationHint(value: unknown): value is VerificationHintShape {
   return (
-    typeof value === "object" && value !== null && (value as VerificationHintShape).needsVerification === true
+    typeof value === "object" &&
+    value !== null &&
+    (value as VerificationHintShape).needsVerification === true
   );
 }
 
