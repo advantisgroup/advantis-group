@@ -16,8 +16,8 @@ import { GuidebookEditor, type GuidebookFormData } from "@/components/guidebooks
 import { useWikiEntryForm } from "@/components/guidebooks/useWikiEntryForm";
 import { PendingWikiAttachments } from "@/components/guidebooks/PendingWikiAttachments";
 import { staticGuidebookSlugs } from "@/components/guidebooks/registry";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
 import { useIsManager } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -131,8 +131,7 @@ export default function NewGuidebookPage() {
         <ArrowLeft className="size-4" />
         {t("title")}
       </Link>
-      <PageHeader
-        eyebrow={t("eyebrow")}
+      <PageHeaderBar
         title={mode === "entry" ? t("createEntry") : t("createPage")}
         description={mode === "entry" ? t("createEntryHint") : t("createPageHint")}
       />

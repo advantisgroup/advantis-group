@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 import { useFeatureFlags } from "@/components/feature-flags/FeatureGate";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -209,7 +209,7 @@ export default function FeatureFlagsPage() {
 
   return (
     <section className="mx-auto max-w-3xl space-y-6">
-      <PageHeader title={t("title")} description={t("subtitle")} icon={<PowerOff />} />
+      <PageHeaderBar title={t("title")} description={t("subtitle")} icon={<PowerOff />} />
       <div className="space-y-3">
         {flags === undefined
           ? Array.from({ length: 2 }).map((_, i) => (

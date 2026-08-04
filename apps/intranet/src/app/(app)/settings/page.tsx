@@ -23,13 +23,13 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ProviderBadge } from "@/components/branding/ProviderMark";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import {
   NotificationPreferences,
   Switch,
 } from "@/components/notifications/NotificationPreferences";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
-import { PageHeader } from "@/components/PageHeader";
 import { useCurrentUser } from "@/components/providers/current-user";
 import type { CheckpointStatus } from "@/components/tour/tour-types";
 import { useTour } from "@/components/tour/TourProvider";
@@ -345,7 +345,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader title={t("title")} tourCheckpoint="settings" />
+      <PageHeaderBar title={t("title")} tourCheckpoint="settings" />
       {/* Personal identity hero */}
       <Card className="overflow-hidden" data-tour="tour-settings-profile">
         <div className="app-atmosphere flex items-center gap-4 border-b border-border/60 px-5 py-5">

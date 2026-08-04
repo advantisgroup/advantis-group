@@ -8,7 +8,7 @@ import { ScrollText } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -106,25 +106,28 @@ export default function AuditLogPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader
-        eyebrow={t("title")}
+      <PageHeaderBar
         title={t("auditLog.title")}
         description={t("auditLog.description")}
         icon={<ScrollText />}
-        action={
-          <Select value={source} onValueChange={(v) => setSource(v as Source | "all")}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("auditLog.allSources")}</SelectItem>
-              <SelectItem value="activity">{t("auditLog.source_activity")}</SelectItem>
-              <SelectItem value="onedrive">{t("auditLog.source_onedrive")}</SelectItem>
-              <SelectItem value="integrations">{t("auditLog.source_integrations")}</SelectItem>
-            </SelectContent>
-          </Select>
-        }
       />
+
+      {/* Source filter sits with the list it filters now that the header
+          only takes button-style actions — see admin/audit for the one
+          PageHeader migration whose "action" wasn't a row of buttons. */}
+      <div className="flex justify-end">
+        <Select value={source} onValueChange={(v) => setSource(v as Source | "all")}>
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{t("auditLog.allSources")}</SelectItem>
+            <SelectItem value="activity">{t("auditLog.source_activity")}</SelectItem>
+            <SelectItem value="onedrive">{t("auditLog.source_onedrive")}</SelectItem>
+            <SelectItem value="integrations">{t("auditLog.source_integrations")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {rows === undefined ? (
         <Skeleton className="h-64 w-full" />

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { InvitesPanel } from "@/app/(app)/admin/InvitesPanel";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 
 export default function AdminInvitesPage() {
@@ -19,7 +19,7 @@ export default function AdminInvitesPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader title={t("invites")} icon={<Mail />} />
+      <PageHeaderBar title={t("invites")} icon={<Mail />} />
       <InvitesPanel isAdmin={isAdmin} />
     </div>
   );

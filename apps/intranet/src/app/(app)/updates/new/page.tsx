@@ -11,7 +11,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -117,7 +117,7 @@ export default function NewUpdatePage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <PageHeader title={t("newUpdate")} description={t("newUpdateDescription")} />
+      <PageHeaderBar title={t("newUpdate")} description={t("newUpdateDescription")} />
 
       <div className="space-y-6">
         <div>

@@ -10,7 +10,7 @@ import { useMutation, useQuery } from "convex/react";
 import { Building2, MessageSquare, Plane, Search, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
 import { ONLINE_WINDOW_MS, UserProfile } from "@/components/profile/UserProfile";
 import { useCurrentUser } from "@/components/providers/current-user";
@@ -232,7 +232,7 @@ export default function DirectoryPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title={t("title")} tourCheckpoint="directory" />
+      <PageHeaderBar title={t("title")} tourCheckpoint="directory" />
 
       <div className="mb-4 space-y-2" data-tour="tour-directory-filters">
         <div className="flex flex-col gap-2 sm:flex-row">

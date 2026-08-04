@@ -7,8 +7,8 @@ import { useTranslations } from "next-intl";
 
 import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
 import { useHasCapability, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -140,8 +140,7 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
-      <PageHeader
-        eyebrow={t("title")}
+      <PageHeaderBar
         title={t("organizationTitle")}
         description={t("organizationSubtitle")}
         icon={<ShieldCheck />}

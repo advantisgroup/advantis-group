@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 
 import { OrgEntityCrudList } from "@/components/admin/OrgEntityCrudList";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
 
 export default function TeamsPage() {
@@ -26,8 +26,7 @@ export default function TeamsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader
-        eyebrow={t("title")}
+      <PageHeaderBar
         title={t("orgEntity.teamsTitle")}
         description={t("orgEntity.teamsDescription")}
         icon={<Users2 />}

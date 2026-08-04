@@ -12,8 +12,8 @@ import { toast } from "sonner";
 import { GuidebookAttachments } from "@/components/guidebooks/GuidebookAttachments";
 import { GuidebookEditor, type GuidebookFormData } from "@/components/guidebooks/GuidebookEditor";
 import { type GuidebookTopic } from "@/components/guidebooks/registry";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
 import { isOwnerOrAdmin, useCurrentUser } from "@/components/providers/current-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { imageStorageIdsOf, parseBlocks, serializeBlocks } from "@/lib/guidebook-blocks";
@@ -68,7 +68,7 @@ export default function EditGuidebookPage() {
         <ArrowLeft className="size-4" />
         {page.title}
       </Link>
-      <PageHeader eyebrow={t("eyebrow")} title={t("editPage")} />
+      <PageHeaderBar title={t("editPage")} />
       <GuidebookEditor
         initial={{
           title: page.title,

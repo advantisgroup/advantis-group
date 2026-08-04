@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 
 import { PasswordResetsPanel } from "@/app/(app)/admin/password-resets/PasswordResetsPanel";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
 
 export default function AdminPasswordResetsPage() {
@@ -20,7 +20,7 @@ export default function AdminPasswordResetsPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader title={t("adminTitle")} description={t("adminSubtitle")} icon={<KeyRound />} />
+      <PageHeaderBar title={t("adminTitle")} description={t("adminSubtitle")} icon={<KeyRound />} />
       <Suspense fallback={null}>
         <PasswordResetsPanel />
       </Suspense>
