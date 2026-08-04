@@ -24,9 +24,15 @@ export function DocxPreview({ url }: { url: string }) {
     void fetch(url)
       .then((res) => res.arrayBuffer())
       .then(async (arrayBuffer) => {
-        const mammoth = await import("mammoth");
+        const [mammoth, { default: DOMPurify }] = await Promise.all([
+          import("mammoth"),
+          import("dompurify"),
+        ]);
         const result = await mammoth.convertToHtml({ arrayBuffer });
-        if (!cancelled) setHtml(result.value);
+        // Mammoth doesn't sanitize its own output — a crafted .docx can carry
+        // a `javascript:` hyperlink or similar, which would otherwise execute
+        // under this origin the moment another user clicks it in the preview.
+        if (!cancelled) setHtml(DOMPurify.sanitize(result.value));
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -40,7 +46,10 @@ export function DocxPreview({ url }: { url: string }) {
     return <p className="max-w-sm py-8 text-center text-sm text-white/70">{t("noPreview")}</p>;
   }
 
-  if (!html) {
+  // `html` starts `null` and is only ever set (even to "" for a blank doc)
+  // once conversion finishes — checking for `null` specifically (rather than
+  // falsy) keeps an empty document from getting stuck on the loading spinner.
+  if (html === null) {
     return <Loader2 className="size-6 animate-spin text-white/70" />;
   }
 
