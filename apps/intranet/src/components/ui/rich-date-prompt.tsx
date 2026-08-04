@@ -26,18 +26,24 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { downloadCalendarEvent, type RichDateKind, type RichDateValue } from "@/lib/rich-date";
+import { type RichDateKind, type RichDateValue } from "@/lib/rich-date";
 
 export function RichDatePrompt({
   open,
   onOpenChange,
   value,
   summary,
+  busy,
+  submitLabel,
+  onSubmit,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   value: RichDateValue;
   summary: string;
+  busy: boolean;
+  submitLabel: string;
+  onSubmit: (value: RichDateValue, summary: string) => Promise<boolean>;
 }) {
   const t = useTranslations("RichText");
   const isMobile = useIsMobile();
@@ -52,9 +58,9 @@ export function RichDatePrompt({
     setLocation(value.location ?? "");
   }, [open, value]);
 
-  function add() {
+  async function add() {
     if (!kind || !description.trim()) return;
-    downloadCalendarEvent(
+    const completed = await onSubmit(
       {
         ...value,
         kind,
@@ -63,7 +69,7 @@ export function RichDatePrompt({
       },
       summary,
     );
-    onOpenChange(false);
+    if (completed) onOpenChange(false);
   }
 
   const fields = (
@@ -106,9 +112,9 @@ export function RichDatePrompt({
       <Button variant="ghost" onClick={() => onOpenChange(false)}>
         {t("cancel")}
       </Button>
-      <Button onClick={add} disabled={!kind || !description.trim()}>
+      <Button onClick={() => void add()} disabled={busy || !kind || !description.trim()}>
         <CalendarPlus className="mr-1.5 size-4" />
-        {t("addToCalendar")}
+        {submitLabel}
       </Button>
     </>
   );

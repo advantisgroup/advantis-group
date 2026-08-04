@@ -64,9 +64,10 @@ export function AnnouncementPreview({
             value={relevantDate}
             summary={title.trim() || t("titlePlaceholder")}
             className="-mx-5 -mt-4 mb-4 border-t-0"
+            autoSave={false}
           />
         )}
-        <MentionRichText html={body} />
+        <MentionRichText html={body} autoSaveDates={false} />
         {previews.length > 0 && (
           <div className="mt-4 space-y-3">
             {previews.some((p) => p.url) && (

@@ -181,46 +181,7 @@ export function hasCalendarPayload(value: RichDateValue): boolean {
   return !!value.kind && !!value.description?.trim();
 }
 
-function icsEscape(value: string): string {
-  return value
-    .replace(/\\/g, "\\\\")
-    .replace(/\r?\n/g, "\\n")
-    .replace(/,/g, "\\,")
-    .replace(/;/g, "\\;");
-}
-
-function icsUtc(timestamp: number): string {
-  return new Date(timestamp)
-    .toISOString()
-    .replace(/[-:]/g, "")
-    .replace(/\.\d{3}Z$/, "Z");
-}
-
-function icsDate(timestamp: number): string {
-  const date = new Date(timestamp);
-  const pad = (value: number) => String(value).padStart(2, "0");
-  return `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}`;
-}
-
-function foldIcsLine(line: string): string {
-  const encoder = new TextEncoder();
-  const chunks: string[] = [];
-  let chunk = "";
-  let limit = 75;
-  for (const character of line) {
-    if (chunk && encoder.encode(chunk + character).length > limit) {
-      chunks.push(chunk);
-      chunk = character;
-      limit = 74;
-    } else {
-      chunk += character;
-    }
-  }
-  chunks.push(chunk);
-  return chunks.join("\r\n ");
-}
-
-function stableCalendarId(value: RichDateValue, summary: string): string {
+export function richDateCalendarId(value: RichDateValue, summary: string): string {
   if (value.id) return value.id;
   const seed = JSON.stringify([
     summary.trim(),
@@ -239,47 +200,6 @@ function stableCalendarId(value: RichDateValue, summary: string): string {
   return `${value.startAt}-${(hash >>> 0).toString(36)}`;
 }
 
-export function downloadCalendarEvent(value: RichDateValue, summary: string) {
-  const endAt = value.endAt ?? value.startAt + (value.allDay ? DAY_MS : 60 * 60 * 1000);
-  const calendarEndAt = value.allDay && value.endAt ? endAt + DAY_MS : endAt;
-  const startLine = value.allDay
-    ? `DTSTART;VALUE=DATE:${icsDate(value.startAt)}`
-    : `DTSTART:${icsUtc(value.startAt)}`;
-  const endLine = value.allDay
-    ? `DTEND;VALUE=DATE:${icsDate(calendarEndAt)}`
-    : `DTEND:${icsUtc(calendarEndAt)}`;
-  const lines = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Advantis Group//Intranet Rich Date//EN",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    `UID:${icsEscape(stableCalendarId(value, summary))}@advantisgroup.de`,
-    `DTSTAMP:${icsUtc(Date.now())}`,
-    startLine,
-    endLine,
-    `SUMMARY:${icsEscape(summary.trim() || "Announcement")}`,
-    ...(value.description ? [`DESCRIPTION:${icsEscape(value.description)}`] : []),
-    ...(value.location ? [`LOCATION:${icsEscape(value.location)}`] : []),
-    ...(value.kind ? [`CATEGORIES:${value.kind.toUpperCase()}`] : []),
-    "END:VEVENT",
-    "END:VCALENDAR",
-  ];
-  const blob = new Blob([`${lines.map(foldIcsLine).join("\r\n")}\r\n`], {
-    type: "text/calendar;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${
-    summary
-      .trim()
-      .replace(/[^\p{L}\p{N}]+/gu, "-")
-      .replace(/^-|-$/g, "") || "event"
-  }.ics`;
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+export function richDateEndTimestamp(value: RichDateValue): number {
+  return value.endAt ?? value.startAt + (value.allDay ? 0 : 60 * 60 * 1000);
 }

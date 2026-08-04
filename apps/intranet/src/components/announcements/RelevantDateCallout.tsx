@@ -1,36 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { CalendarDays, CalendarPlus, MapPin } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { RichDatePrompt } from "@/components/ui/rich-date-prompt";
-import {
-  downloadCalendarEvent,
-  formatRichDate,
-  hasCalendarPayload,
-  type RichDateValue,
-} from "@/lib/rich-date";
+import { useRichDateCalendar } from "@/hooks/use-rich-date-calendar";
+import { formatRichDate, hasCalendarPayload, type RichDateValue } from "@/lib/rich-date";
 import { cn } from "@/lib/utils";
 
 export function RelevantDateCallout({
   value,
   summary,
   className,
+  autoSave = true,
 }: {
   value: RichDateValue;
   summary: string;
   className?: string;
+  autoSave?: boolean;
 }) {
   const t = useTranslations("RichText");
   const locale = useLocale();
+  const { addToCalendar: saveToCalendar, busy, isExternal } = useRichDateCalendar();
   const [promptOpen, setPromptOpen] = useState(false);
+  const complete = hasCalendarPayload(value);
+  const { id, startAt, endAt, allDay, kind, description, location } = value;
+
+  useEffect(() => {
+    if (!autoSave || isExternal || !complete) return;
+    void saveToCalendar({ id, startAt, endAt, allDay, kind, description, location }, summary, {
+      silent: true,
+    });
+  }, [
+    allDay,
+    autoSave,
+    complete,
+    description,
+    endAt,
+    id,
+    isExternal,
+    kind,
+    location,
+    saveToCalendar,
+    startAt,
+    summary,
+  ]);
 
   function addToCalendar() {
-    if (hasCalendarPayload(value)) {
-      downloadCalendarEvent(value, summary);
+    if (complete) {
+      void saveToCalendar(value, summary);
     } else {
       setPromptOpen(true);
     }
@@ -77,9 +98,16 @@ export function RelevantDateCallout({
           size="sm"
           className="self-start sm:self-auto"
           onClick={addToCalendar}
+          disabled={busy}
         >
           <CalendarPlus className="mr-1.5 size-4" />
-          {t("addToCalendar")}
+          {t(
+            isExternal
+              ? "saveToIntranetCalendar"
+              : complete
+                ? "inIntranetCalendar"
+                : "addToIntranetCalendar",
+          )}
         </Button>
       </div>
       <RichDatePrompt
@@ -87,6 +115,9 @@ export function RelevantDateCallout({
         onOpenChange={setPromptOpen}
         value={value}
         summary={summary}
+        busy={busy}
+        submitLabel={t(isExternal ? "saveToIntranetCalendar" : "addToIntranetCalendar")}
+        onSubmit={saveToCalendar}
       />
     </>
   );

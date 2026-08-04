@@ -27,6 +27,7 @@
   "duplicate": "Duplizieren",
   "updated": "Termin aktualisiert",
   "exportIcs": "Ansicht exportieren (.ics)",
+  "downloadEventIcs": "Termin herunterladen (.ics)",
   "exported": "Kalenderdatei heruntergeladen",
   "onlyMyAbsences": "Nur meine Abwesenheiten",
   "allDepartments": "Alle Abteilungen",

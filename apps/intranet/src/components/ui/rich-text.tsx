@@ -1,11 +1,11 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { type KeyboardEvent, type MouseEvent, useMemo, useState } from "react";
+import { type KeyboardEvent, type MouseEvent, useEffect, useMemo, useState } from "react";
 
 import { RichDatePrompt } from "@/components/ui/rich-date-prompt";
+import { useRichDateCalendar } from "@/hooks/use-rich-date-calendar";
 import {
-  downloadCalendarEvent,
   hasCalendarPayload,
   readRichDateElement,
   RICH_DATE_ATTRIBUTES,
@@ -149,17 +149,31 @@ export function RichText({
   html,
   className,
   onMentionClick,
+  autoSaveDates = true,
 }: {
   html: string;
   className?: string;
   onMentionClick?: (userId: string, target: HTMLElement) => void;
+  autoSaveDates?: boolean;
 }) {
   const t = useTranslations("RichText");
+  const { addToCalendar, busy, isExternal } = useRichDateCalendar();
   const clean = useMemo(() => sanitizeHtml(html), [html]);
   const [datePrompt, setDatePrompt] = useState<{
     value: RichDateValue;
     summary: string;
   } | null>(null);
+
+  useEffect(() => {
+    if (!autoSaveDates || isExternal || !clean) return;
+    const doc = new DOMParser().parseFromString(clean, "text/html");
+    for (const element of doc.querySelectorAll<HTMLElement>("[data-rich-date-start]")) {
+      const value = readRichDateElement(element);
+      if (value && hasCalendarPayload(value)) {
+        void addToCalendar(value, element.textContent ?? "", { silent: true });
+      }
+    }
+  }, [addToCalendar, autoSaveDates, clean, isExternal]);
 
   function activate(target: HTMLElement) {
     const mentionTarget = target.closest<HTMLElement>("[data-mention-user-id]");
@@ -173,7 +187,7 @@ export function RichText({
     if (dateTarget && value) {
       const summary = dateTarget.textContent ?? "";
       if (hasCalendarPayload(value)) {
-        downloadCalendarEvent(value, summary);
+        void addToCalendar(value, summary);
       } else {
         setDatePrompt({ value, summary });
       }
@@ -207,7 +221,16 @@ export function RichText({
           const target = (event.target as HTMLElement).closest<HTMLElement>(
             "[data-rich-date-start]",
           );
-          if (target) target.title = t("addToCalendar");
+          if (target) {
+            const value = readRichDateElement(target);
+            target.title = t(
+              isExternal
+                ? "saveToIntranetCalendar"
+                : value && hasCalendarPayload(value)
+                  ? "inIntranetCalendar"
+                  : "addToIntranetCalendar",
+            );
+          }
         }}
         dangerouslySetInnerHTML={{ __html: clean }}
       />
@@ -217,6 +240,9 @@ export function RichText({
           onOpenChange={(open) => !open && setDatePrompt(null)}
           value={datePrompt.value}
           summary={datePrompt.summary}
+          busy={busy}
+          submitLabel={t(isExternal ? "saveToIntranetCalendar" : "addToIntranetCalendar")}
+          onSubmit={addToCalendar}
         />
       )}
     </>
