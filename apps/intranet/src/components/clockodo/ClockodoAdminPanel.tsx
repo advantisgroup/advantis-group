@@ -10,9 +10,8 @@ import { ArrowDown, ArrowUp, Download, Plus, Search, TriangleAlert } from "lucid
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { Mark } from "@/components/branding/ProviderMark";
 import { TrademarkNotice } from "@/components/branding/TrademarkNotice";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -501,27 +500,41 @@ export function ClockodoAdminPanel() {
 
   return (
     <section className="mx-auto max-w-7xl space-y-6">
-      <PageHeader
-        title={t("clockodoTitle")}
-        description={t("clockodoSubtitle")}
-        icon={<Mark provider="clockodo" className="h-6 w-6" />}
-        action={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={exportCsv} disabled={visible.length === 0}>
-              <Download className="h-4 w-4" />
-              {t("exportCsv")}
-            </Button>
-            <Button onClick={() => setShowCreate((s) => !s)}>
-              <Plus className="h-4 w-4" />
-              {t("createUser")}
-            </Button>
-          </div>
-        }
+      {/* No section header here — the "Clockodo" title + logo already live in
+          the Intranet Header (see clockodo/layout.tsx) and the "Admin" tab
+          says which tab this is, so a repeated "Clockodo Management" block
+          would just be a second header. Only the actions move up there (and,
+          on mobile, down into the bottom nav's thumb zone instead — see
+          PageHeaderActions's doc comment). */}
+      <PageHeaderActions
+        actions={[
+          {
+            key: "export",
+            label: t("exportCsv"),
+            icon: Download,
+            onClick: exportCsv,
+            variant: "outline",
+            disabled: visible.length === 0,
+          },
+          {
+            key: "create",
+            label: t("createUser"),
+            icon: Plus,
+            onClick: () => setShowCreate((s) => !s),
+          },
+        ]}
       />
 
-      {showCreate && (
-        <Card>
-          <CardContent className="grid gap-2 p-4 sm:grid-cols-2">
+      {/* A dialog, not an inline card — the trigger now lives in the sticky
+          header/bottom nav, reachable from anywhere on the page, so toggling
+          a card anchored to the top of the roster would open off-screen for
+          anyone who's scrolled down. */}
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("createUser")}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-2 sm:grid-cols-2">
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("name")} />
             <Input
               type="email"
@@ -536,16 +549,17 @@ export function ClockodoAdminPanel() {
               placeholder={t("vacationDaysPerYear")}
               className="sm:col-span-2"
             />
-            <Button
-              onClick={onCreate}
-              disabled={creating || !name.trim() || !email.trim()}
-              className="sm:col-span-2"
-            >
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setShowCreate(false)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={onCreate} disabled={creating || !name.trim() || !email.trim()}>
               {t("createUser")}
             </Button>
-          </CardContent>
-        </Card>
-      )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {gaps.length > 0 && (
         <div className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
