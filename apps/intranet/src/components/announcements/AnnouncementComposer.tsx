@@ -469,6 +469,9 @@ function ComposerOptionsFields({
                 )}
               </div>
             </div>
+            {!draft.relevantDate.allDay && (
+              <p className="text-xs text-muted-foreground">{tr("berlinTimeZone")}</p>
+            )}
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">{tr("eventTypeOptional")}</Label>
               <Select

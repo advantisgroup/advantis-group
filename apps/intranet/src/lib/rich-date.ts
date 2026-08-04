@@ -20,8 +20,45 @@ export const RICH_DATE_ATTRIBUTES = [
 ] as const;
 
 export const ANNOUNCEMENT_RELEVANT_DATE_SOURCE = "announcement-relevant";
+export const RICH_DATE_TIME_ZONE = "Europe/Berlin";
 
 const kinds = new Set<RichDateKind>(["event", "deadline", "reminder"]);
+const berlinDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: RICH_DATE_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+});
+
+function berlinDateTimeParts(timestamp: number) {
+  const parts = Object.fromEntries(
+    berlinDateTimeFormatter
+      .formatToParts(timestamp)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, Number(part.value)]),
+  );
+  return {
+    year: parts.year,
+    month: parts.month,
+    day: parts.day,
+    hour: parts.hour,
+    minute: parts.minute,
+    second: parts.second,
+  };
+}
+
+function berlinOffsetAt(timestamp: number): number {
+  const parts = berlinDateTimeParts(timestamp);
+  const roundedTimestamp = Math.floor(timestamp / 1000) * 1000;
+  return (
+    Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second) -
+    roundedTimestamp
+  );
+}
 
 export function readRichDateElement(element: HTMLElement): RichDateValue | null {
   const startValue = element.getAttribute("data-rich-date-start");
@@ -67,24 +104,32 @@ export function writeRichDateElement(
 export function formatRichDate(value: RichDateValue, locale: string): string {
   const options: Intl.DateTimeFormatOptions = value.allDay
     ? { dateStyle: "medium", timeZone: "UTC" }
-    : { dateStyle: "medium", timeStyle: "short" };
+    : { dateStyle: "medium", timeStyle: "short", timeZone: RICH_DATE_TIME_ZONE };
   return new Intl.DateTimeFormat(locale, options).format(value.startAt);
 }
 
 export function richDateInputFromTimestamp(timestamp: number, allDay: boolean): string {
   const date = new Date(timestamp);
   const pad = (value: number) => String(value).padStart(2, "0");
-  const year = allDay ? date.getUTCFullYear() : date.getFullYear();
-  const month = allDay ? date.getUTCMonth() + 1 : date.getMonth() + 1;
-  const dayOfMonth = allDay ? date.getUTCDate() : date.getDate();
+  const berlin = allDay ? null : berlinDateTimeParts(timestamp);
+  const year = allDay ? date.getUTCFullYear() : berlin!.year;
+  const month = allDay ? date.getUTCMonth() + 1 : berlin!.month;
+  const dayOfMonth = allDay ? date.getUTCDate() : berlin!.day;
   const day = `${year}-${pad(month)}-${pad(dayOfMonth)}`;
-  return allDay ? day : `${day}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return allDay ? day : `${day}T${pad(berlin!.hour)}:${pad(berlin!.minute)}`;
 }
 
 export function richDateTimestampFromInput(value: string, allDay: boolean): number {
-  if (!allDay) return new Date(value).getTime();
-  const [year, month, day] = value.split("-").map(Number);
-  return Date.UTC(year, month - 1, day);
+  const [datePart, timePart = "00:00"] = value.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  if (allDay) return Date.UTC(year, month - 1, day);
+  const [hour, minute] = timePart.split(":").map(Number);
+  const wallClockUtc = Date.UTC(year, month - 1, day, hour, minute);
+  let timestamp = wallClockUtc;
+  for (let i = 0; i < 3; i += 1) {
+    timestamp = wallClockUtc - berlinOffsetAt(timestamp);
+  }
+  return timestamp;
 }
 
 export function syncSourcedRichDateHtml(

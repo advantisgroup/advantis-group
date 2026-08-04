@@ -7,6 +7,7 @@
   "endsOptional": "Ende (optional)",
   "endAfterStart": "Das Ende muss nach dem Beginn liegen.",
   "allDay": "Ganztägig",
+  "berlinTimeZone": "Zeiten verwenden Europe/Berlin.",
   "eventType": "Termintyp",
   "eventTypeOptional": "Termintyp (optional)",
   "selectEventType": "Typ auswählen",

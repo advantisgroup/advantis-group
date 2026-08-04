@@ -674,6 +674,7 @@ function RichDateEditor({ controller }: { controller: RichTextController }) {
           {invalidEnd && <p className="text-xs text-destructive">{t("endAfterStart")}</p>}
         </div>
       </div>
+      {!state.allDay && <p className="text-xs text-muted-foreground">{t("berlinTimeZone")}</p>}
       <div className="space-y-1.5">
         <Label>{t("eventTypeOptional")}</Label>
         <Select
