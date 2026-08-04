@@ -17,6 +17,12 @@ import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ClockodoHeaderControl } from "@/components/layout/ClockodoHeaderControl";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
+import {
+  PageHeaderActionsSlot,
+  PageHeaderBarProvider,
+  PageHeaderBarSlot,
+  usePageHeaderBarState,
+} from "@/components/layout/PageHeaderBar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Link } from "@/components/Link";
@@ -70,6 +76,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const mainRef = useRef<HTMLElement>(null);
   const { state: tourState, phase: tourPhase, targetRect } = useTour();
   const tourActive = (tourState?.active && tourPhase === "active") ?? false;
+  const { identity: pageHeaderBar } = usePageHeaderBarState();
 
   // The main pane is the scroll container (not the window), so reset it to the
   // top on navigation — otherwise a new page would open mid-scroll.
@@ -135,14 +142,22 @@ function AppShellInner({ children }: { children: ReactNode }) {
           ) : (
             <SidebarTrigger className="-ml-1" />
           )}
-          {/* Search lives in the desktop header, but on mobile it moves to the
-              reachable bottom bar — so here it's just a flex spacer. The
-              component stays mounted so ⌘K and the bottom-bar trigger work. */}
-          <div className="flex flex-1 justify-start">
-            <div className="hidden w-full md:flex">
+          {/* A page opted into <PageHeaderBar> (see clockodo/layout.tsx) takes
+              this slot over from search — search stays mounted underneath so
+              ⌘K keeps working, it's just visually hidden instead of unmounted.
+              Pages that haven't opted in see exactly the old layout: search on
+              desktop, an empty flex spacer on mobile. */}
+          <div className="flex min-w-0 flex-1 items-center justify-start gap-2">
+            {!isUpdatesReading && <PageHeaderBarSlot />}
+            <div className={pageHeaderBar ? "hidden" : "hidden w-full md:flex"}>
               <CommandPalette />
             </div>
           </div>
+          {/* Fixed slot right after the title — same position on every page
+              regardless of which/how many actions are active, so actions
+              never shift around the way they would sitting under a
+              variable-length description. */}
+          {!isUpdatesReading && <PageHeaderActionsSlot />}
           {/* Silent fallback: a header widget crashing shouldn't take out
               every page in the app the way an unwrapped one would. */}
           {!isUpdatesReading && (
@@ -202,7 +217,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <TourProvider>
           <OnboardingProvider>
             <FileViewerProvider>
-              <AppShellInner>{children}</AppShellInner>
+              <PageHeaderBarProvider>
+                <AppShellInner>{children}</AppShellInner>
+              </PageHeaderBarProvider>
             </FileViewerProvider>
           </OnboardingProvider>
         </TourProvider>
