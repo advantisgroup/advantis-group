@@ -94,6 +94,7 @@ const TOOLS: (Cmd | "divider")[] = [
 ];
 
 interface DateEditorState {
+  id: string;
   element: HTMLElement | null;
   range: Range | null;
   label: string;
@@ -416,6 +417,7 @@ export function useRichTextController({
     nextHour.setMinutes(0, 0, 0);
     nextHour.setHours(nextHour.getHours() + 1);
     setDateEditor({
+      id: value?.id ?? crypto.randomUUID(),
       element: existing,
       range: currentRange,
       label: existing?.textContent ?? currentRange?.toString() ?? "",
@@ -436,8 +438,15 @@ export function useRichTextController({
     const endAt = dateEditor.endAt
       ? richDateTimestampFromInput(dateEditor.endAt, dateEditor.allDay)
       : undefined;
-    if (!Number.isFinite(startAt) || (endAt !== undefined && endAt <= startAt)) return;
+    if (
+      !Number.isFinite(startAt) ||
+      (endAt !== undefined &&
+        (!Number.isFinite(endAt) || (dateEditor.allDay ? endAt < startAt : endAt <= startAt)))
+    ) {
+      return;
+    }
     const value: RichDateValue = {
+      id: dateEditor.id,
       startAt,
       ...(endAt ? { endAt } : {}),
       allDay: dateEditor.allDay,
@@ -612,9 +621,14 @@ function RichDateEditor({ controller }: { controller: RichTextController }) {
   const endTimestamp = state.endAt
     ? richDateTimestampFromInput(state.endAt, state.allDay)
     : undefined;
-  const invalidEnd =
+  const invalidStart = !Number.isFinite(startTimestamp);
+  const invalidEndTime = endTimestamp !== undefined && !Number.isFinite(endTimestamp);
+  const invalidEndRange =
     endTimestamp !== undefined &&
-    (!Number.isFinite(endTimestamp) || endTimestamp <= startTimestamp);
+    Number.isFinite(endTimestamp) &&
+    Number.isFinite(startTimestamp) &&
+    (state.allDay ? endTimestamp < startTimestamp : endTimestamp <= startTimestamp);
+  const invalidEnd = invalidEndTime || invalidEndRange;
 
   function update(patch: Partial<DateEditorState>) {
     controller.setDateEditor((current) => (current ? { ...current, ...patch } : current));
@@ -660,7 +674,11 @@ function RichDateEditor({ controller }: { controller: RichTextController }) {
             type={state.allDay ? "date" : "datetime-local"}
             value={state.startAt}
             onChange={(event) => update({ startAt: event.target.value })}
+            aria-invalid={invalidStart}
           />
+          {invalidStart && !state.allDay && (
+            <p className="text-xs text-destructive">{t("invalidBerlinTime")}</p>
+          )}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="rich-date-end">{t("endsOptional")}</Label>
@@ -671,7 +689,10 @@ function RichDateEditor({ controller }: { controller: RichTextController }) {
             onChange={(event) => update({ endAt: event.target.value })}
             aria-invalid={invalidEnd}
           />
-          {invalidEnd && <p className="text-xs text-destructive">{t("endAfterStart")}</p>}
+          {invalidEndTime && !state.allDay && (
+            <p className="text-xs text-destructive">{t("invalidBerlinTime")}</p>
+          )}
+          {invalidEndRange && <p className="text-xs text-destructive">{t("endAfterStart")}</p>}
         </div>
       </div>
       {!state.allDay && <p className="text-xs text-muted-foreground">{t("berlinTimeZone")}</p>}
@@ -719,7 +740,7 @@ function RichDateEditor({ controller }: { controller: RichTextController }) {
       </Button>
       <Button
         onClick={controller.saveDateEditor}
-        disabled={!state.label.trim() || !state.startAt || invalidEnd}
+        disabled={!state.label.trim() || !state.startAt || invalidStart || invalidEnd}
       >
         {t("saveDate")}
       </Button>

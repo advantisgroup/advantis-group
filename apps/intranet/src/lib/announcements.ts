@@ -27,6 +27,7 @@ export const ALL_CATEGORIES_VALUE = "__all_categories__";
 export const CATEGORY_MAX_LENGTH = 40;
 
 export interface DraftRelevantDate {
+  id?: string;
   startAt: string;
   endAt: string;
   allDay: boolean;
@@ -75,11 +76,13 @@ export function msToLocalInput(ms: number): string {
 }
 
 export function relevantDateHasValidRange(value: DraftRelevantDate | null): boolean {
-  if (!value?.startAt || !value.endAt) return true;
-  return (
-    richDateTimestampFromInput(value.endAt, value.allDay) >
-    richDateTimestampFromInput(value.startAt, value.allDay)
-  );
+  if (!value?.startAt) return true;
+  const startAt = richDateTimestampFromInput(value.startAt, value.allDay);
+  if (!Number.isFinite(startAt)) return false;
+  if (!value.endAt) return true;
+  const endAt = richDateTimestampFromInput(value.endAt, value.allDay);
+  if (!Number.isFinite(endAt)) return false;
+  return value.allDay ? endAt >= startAt : endAt > startAt;
 }
 
 export function relevantDateValueOf(value: DraftRelevantDate | null): RichDateValue | undefined {
@@ -88,6 +91,7 @@ export function relevantDateValueOf(value: DraftRelevantDate | null): RichDateVa
   const endAt = value.endAt ? richDateTimestampFromInput(value.endAt, value.allDay) : undefined;
   if (!Number.isFinite(startAt)) return undefined;
   return {
+    ...(value.id ? { id: value.id } : {}),
     startAt,
     ...(endAt !== undefined && Number.isFinite(endAt) ? { endAt } : {}),
     allDay: value.allDay,
@@ -99,6 +103,7 @@ export function relevantDateValueOf(value: DraftRelevantDate | null): RichDateVa
 
 export function draftRelevantDateOf(value: RichDateValue): DraftRelevantDate {
   return {
+    id: value.id ?? crypto.randomUUID(),
     startAt: richDateInputFromTimestamp(value.startAt, value.allDay),
     endAt: value.endAt ? richDateInputFromTimestamp(value.endAt, value.allDay) : "",
     allDay: value.allDay,

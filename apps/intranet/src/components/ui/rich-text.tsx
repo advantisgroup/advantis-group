@@ -181,7 +181,9 @@ export function RichText({
   }
 
   function handleClick(e: MouseEvent<HTMLDivElement>) {
-    activate(e.target as HTMLElement);
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-rich-date-start]")) e.preventDefault();
+    activate(target);
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {

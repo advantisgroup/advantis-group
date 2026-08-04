@@ -80,6 +80,7 @@ export const audienceValidator = v.union(
 );
 
 export const relevantDateValidator = v.object({
+  id: v.optional(v.string()),
   startAt: v.number(),
   endAt: v.optional(v.number()),
   allDay: v.boolean(),

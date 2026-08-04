@@ -1,6 +1,7 @@
 export type RichDateKind = "event" | "deadline" | "reminder";
 
 export interface RichDateValue {
+  id?: string;
   startAt: number;
   endAt?: number;
   allDay: boolean;
@@ -10,6 +11,7 @@ export interface RichDateValue {
 }
 
 export const RICH_DATE_ATTRIBUTES = [
+  "data-rich-date-id",
   "data-rich-date-start",
   "data-rich-date-end",
   "data-rich-date-all-day",
@@ -22,6 +24,7 @@ export const RICH_DATE_ATTRIBUTES = [
 export const ANNOUNCEMENT_RELEVANT_DATE_SOURCE = "announcement-relevant";
 export const RICH_DATE_TIME_ZONE = "Europe/Berlin";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
 const kinds = new Set<RichDateKind>(["event", "deadline", "reminder"]);
 const berlinDateTimeFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: RICH_DATE_TIME_ZONE,
@@ -67,10 +70,12 @@ export function readRichDateElement(element: HTMLElement): RichDateValue | null 
   if (!Number.isFinite(startAt)) return null;
   const endValue = element.getAttribute("data-rich-date-end");
   const endAt = endValue?.trim() ? Number(endValue) : undefined;
+  const id = element.getAttribute("data-rich-date-id")?.trim();
   const kind = element.getAttribute("data-rich-date-kind");
   const description = element.getAttribute("data-rich-date-description")?.trim();
   const location = element.getAttribute("data-rich-date-location")?.trim();
   return {
+    ...(id ? { id } : {}),
     startAt,
     ...(endAt !== undefined && Number.isFinite(endAt) && endAt > 0 ? { endAt } : {}),
     allDay: element.getAttribute("data-rich-date-all-day") === "true",
@@ -88,6 +93,7 @@ export function writeRichDateElement(
   for (const attribute of RICH_DATE_ATTRIBUTES) element.removeAttribute(attribute);
   element.className = "rich-date";
   element.setAttribute("contenteditable", "false");
+  if (value.id) element.setAttribute("data-rich-date-id", value.id);
   element.setAttribute("data-rich-date-start", String(value.startAt));
   element.setAttribute("data-rich-date-all-day", String(value.allDay));
   if (value.endAt) element.setAttribute("data-rich-date-end", String(value.endAt));
@@ -125,11 +131,24 @@ export function richDateTimestampFromInput(value: string, allDay: boolean): numb
   if (allDay) return Date.UTC(year, month - 1, day);
   const [hour, minute] = timePart.split(":").map(Number);
   const wallClockUtc = Date.UTC(year, month - 1, day, hour, minute);
-  let timestamp = wallClockUtc;
-  for (let i = 0; i < 3; i += 1) {
-    timestamp = wallClockUtc - berlinOffsetAt(timestamp);
-  }
-  return timestamp;
+  const offsets = new Set([
+    berlinOffsetAt(wallClockUtc - DAY_MS),
+    berlinOffsetAt(wallClockUtc),
+    berlinOffsetAt(wallClockUtc + DAY_MS),
+  ]);
+  const candidates = [...offsets]
+    .map((offset) => wallClockUtc - offset)
+    .filter((timestamp) => {
+      const parts = berlinDateTimeParts(timestamp);
+      return (
+        parts.year === year &&
+        parts.month === month &&
+        parts.day === day &&
+        parts.hour === hour &&
+        parts.minute === minute
+      );
+    });
+  return candidates.length > 0 ? Math.min(...candidates) : Number.NaN;
 }
 
 export function syncSourcedRichDateHtml(
@@ -180,13 +199,52 @@ function icsDate(timestamp: number): string {
   return `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(date.getUTCDate())}`;
 }
 
+function foldIcsLine(line: string): string {
+  const encoder = new TextEncoder();
+  const chunks: string[] = [];
+  let chunk = "";
+  let limit = 75;
+  for (const character of line) {
+    if (chunk && encoder.encode(chunk + character).length > limit) {
+      chunks.push(chunk);
+      chunk = character;
+      limit = 74;
+    } else {
+      chunk += character;
+    }
+  }
+  chunks.push(chunk);
+  return chunks.join("\r\n ");
+}
+
+function stableCalendarId(value: RichDateValue, summary: string): string {
+  if (value.id) return value.id;
+  const seed = JSON.stringify([
+    summary.trim(),
+    value.startAt,
+    value.endAt,
+    value.allDay,
+    value.kind,
+    value.description,
+    value.location,
+  ]);
+  let hash = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return `${value.startAt}-${(hash >>> 0).toString(36)}`;
+}
+
 export function downloadCalendarEvent(value: RichDateValue, summary: string) {
-  const endAt =
-    value.endAt ?? value.startAt + (value.allDay ? 24 * 60 * 60 * 1000 : 60 * 60 * 1000);
+  const endAt = value.endAt ?? value.startAt + (value.allDay ? DAY_MS : 60 * 60 * 1000);
+  const calendarEndAt = value.allDay && value.endAt ? endAt + DAY_MS : endAt;
   const startLine = value.allDay
     ? `DTSTART;VALUE=DATE:${icsDate(value.startAt)}`
     : `DTSTART:${icsUtc(value.startAt)}`;
-  const endLine = value.allDay ? `DTEND;VALUE=DATE:${icsDate(endAt)}` : `DTEND:${icsUtc(endAt)}`;
+  const endLine = value.allDay
+    ? `DTEND;VALUE=DATE:${icsDate(calendarEndAt)}`
+    : `DTEND:${icsUtc(calendarEndAt)}`;
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -194,7 +252,7 @@ export function downloadCalendarEvent(value: RichDateValue, summary: string) {
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",
-    `UID:${value.startAt}-${crypto.randomUUID()}@advantisgroup.de`,
+    `UID:${icsEscape(stableCalendarId(value, summary))}@advantisgroup.de`,
     `DTSTAMP:${icsUtc(Date.now())}`,
     startLine,
     endLine,
@@ -205,7 +263,9 @@ export function downloadCalendarEvent(value: RichDateValue, summary: string) {
     "END:VEVENT",
     "END:VCALENDAR",
   ];
-  const blob = new Blob([lines.join("\r\n")], { type: "text/calendar;charset=utf-8" });
+  const blob = new Blob([`${lines.map(foldIcsLine).join("\r\n")}\r\n`], {
+    type: "text/calendar;charset=utf-8",
+  });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;

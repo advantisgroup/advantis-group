@@ -73,6 +73,7 @@ import {
 import {
   ANNOUNCEMENT_RELEVANT_DATE_SOURCE,
   formatRichDate,
+  richDateTimestampFromInput,
   syncSourcedRichDateHtml,
   type RichDateKind,
 } from "@/lib/rich-date";
@@ -178,6 +179,16 @@ function ComposerOptionsFields({
   const tr = useTranslations("RichText");
   const [dateTextPromptOpen, setDateTextPromptOpen] = useState(false);
   const relevantDateRangeValid = relevantDateHasValidRange(draft.relevantDate);
+  const relevantDateStartTimestamp = draft.relevantDate?.startAt
+    ? richDateTimestampFromInput(draft.relevantDate.startAt, draft.relevantDate.allDay)
+    : undefined;
+  const relevantDateEndTimestamp = draft.relevantDate?.endAt
+    ? richDateTimestampFromInput(draft.relevantDate.endAt, draft.relevantDate.allDay)
+    : undefined;
+  const relevantDateStartValid =
+    relevantDateStartTimestamp === undefined || Number.isFinite(relevantDateStartTimestamp);
+  const relevantDateEndValid =
+    relevantDateEndTimestamp === undefined || Number.isFinite(relevantDateEndTimestamp);
 
   const matchingCategories = existingCategories.filter((c) => {
     const q = draft.category.trim().toLowerCase();
@@ -196,6 +207,7 @@ function ComposerOptionsFields({
       description: "",
       location: "",
       ...draft.relevantDate,
+      id: draft.relevantDate?.id ?? crypto.randomUUID(),
       ...patch,
     });
     if (promptForText) setDateTextPromptOpen(true);
@@ -454,7 +466,11 @@ function ComposerOptionsFields({
                       !draft.relevantDate?.startAt && !!event.target.value,
                     )
                   }
+                  aria-invalid={!relevantDateStartValid}
                 />
+                {!relevantDateStartValid && !draft.relevantDate.allDay && (
+                  <p className="text-xs text-destructive">{tr("invalidBerlinTime")}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">{tr("endsOptional")}</Label>
@@ -462,9 +478,12 @@ function ComposerOptionsFields({
                   type={draft.relevantDate.allDay ? "date" : "datetime-local"}
                   value={draft.relevantDate.endAt}
                   onChange={(event) => updateRelevantDate({ endAt: event.target.value })}
-                  aria-invalid={!relevantDateRangeValid}
+                  aria-invalid={!relevantDateEndValid || !relevantDateRangeValid}
                 />
-                {!relevantDateRangeValid && (
+                {!relevantDateEndValid && !draft.relevantDate.allDay && (
+                  <p className="text-xs text-destructive">{tr("invalidBerlinTime")}</p>
+                )}
+                {relevantDateStartValid && relevantDateEndValid && !relevantDateRangeValid && (
                   <p className="text-xs text-destructive">{tr("endAfterStart")}</p>
                 )}
               </div>
