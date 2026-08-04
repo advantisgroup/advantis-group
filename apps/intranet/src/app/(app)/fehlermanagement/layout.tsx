@@ -8,7 +8,7 @@ import { AlertTriangle, ClipboardList, LayoutDashboard, Settings2 } from "lucide
 import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/applicants/RouteTabs";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsManager } from "@/components/providers/current-user";
 
 /**
@@ -50,7 +50,7 @@ export default function FehlermanagementLayout({ children }: { children: ReactNo
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
-      <PageHeader
+      <PageHeaderBar
         title={t("pageTitle")}
         description={t("pageDescription")}
         icon={<AlertTriangle />}

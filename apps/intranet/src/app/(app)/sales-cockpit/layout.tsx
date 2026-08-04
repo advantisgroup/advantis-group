@@ -8,7 +8,7 @@ import { BookOpen, FolderKanban, PhoneCall } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { RouteTabs } from "@/components/applicants/RouteTabs";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 
 /**
  * Sales Cockpit — call prep for sales campaigns. Ported from a standalone
@@ -38,7 +38,11 @@ export default function SalesCockpitLayout({ children }: { children: ReactNode }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <PageHeader title={t("pageTitle")} description={t("pageDescription")} icon={<PhoneCall />} />
+      <PageHeaderBar
+        title={t("pageTitle")}
+        description={t("pageDescription")}
+        icon={<PhoneCall />}
+      />
       <RouteTabs tabs={tabs} activeValue={segment} />
       <div className="mt-4">{children}</div>
     </div>

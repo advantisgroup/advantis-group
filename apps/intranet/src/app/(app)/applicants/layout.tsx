@@ -9,7 +9,7 @@ import { useTranslations } from "next-intl";
 
 import { ApplicantVaultGate } from "@/components/applicants/ApplicantVaultGate";
 import { RouteTabs } from "@/components/applicants/RouteTabs";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import {
   useCanManageApplicantAccess,
   useHasApplicantAccess,
@@ -96,12 +96,7 @@ export default function ApplicantsLayout({ children }: { children: ReactNode }) 
   return (
     <ApplicantVaultGate>
       <div className="mx-auto max-w-6xl space-y-6">
-        <PageHeader
-          eyebrow={t("hrEyebrow")}
-          title={t("pageTitle")}
-          description={t("pageDescription")}
-          icon={<Users />}
-        />
+        <PageHeaderBar title={t("pageTitle")} description={t("pageDescription")} icon={<Users />} />
         <RouteTabs tabs={tabs} activeValue={segment} />
         <div className="mt-4">{children}</div>
       </div>
