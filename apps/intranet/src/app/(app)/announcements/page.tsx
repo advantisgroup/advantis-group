@@ -246,7 +246,7 @@ function AnnouncementCard({
   const me = useCurrentUser();
   const markRead = useMutation(api.announcements.markRead);
   const toggleReaction = useMutation(api.announcements.toggleReaction);
-  const canManage = isOwnerOrAdmin(me, a.authorId);
+  const canManage = isOwnerOrAdmin(me, a.ownerId);
   const articleRef = useRef<HTMLElement>(null);
 
   // Deep link from a notification: scroll the matching card into view and

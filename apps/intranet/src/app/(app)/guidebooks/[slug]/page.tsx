@@ -151,7 +151,7 @@ export default function GuidebookPage() {
   );
   const removeEntry = useMutation(api.wikiEntries.remove);
   const removePage = useMutation(api.guidebookPages.remove);
-  const createAnnouncement = useMutation(api.announcements.create);
+  const announceGuidebook = useMutation(api.announcements.announceGuidebook);
   const setPrefs = useMutation(api.userPreferences.setMine);
 
   const loading = !staticGuidebook && entry === undefined && legacyPage === undefined;
@@ -238,14 +238,15 @@ export default function GuidebookPage() {
       description: t("shareConfirmDescription"),
       confirmLabel: t("shareAsAnnouncement"),
       cancelLabel: tc("cancel"),
+      destructive: false,
     });
     if (!ok) return;
     try {
-      await createAnnouncement({
-        title: t("announcementTitle", { title }),
-        body: `<p>${t("announcementBody", { title, description })}</p><p><a href="/guidebooks/${guidebook.slug}">${title}</a></p>`,
-        audience: { kind: "all" },
-        category: t("title"),
+      await announceGuidebook({
+        guideTitle: title,
+        guideDescription: description || undefined,
+        guideSlug: guidebook.slug,
+        locale: locale === "de" ? "de" : "en",
       });
       toast.success(t("announcementSent"));
     } catch (e) {

@@ -556,6 +556,8 @@ export default defineSchema({
     title: v.string(),
     body: v.string(),
     authorUserId: v.id("users"),
+    /** User who owns/manages the post when its visible author is an automation account. */
+    ownerUserId: v.optional(v.id("users")),
     pinned: v.boolean(),
     audience: audienceValidator,
     /** Free-text topic tag (e.g. "Onboarding", "Customer Care") for grouping
