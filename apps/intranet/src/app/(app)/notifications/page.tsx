@@ -10,8 +10,8 @@ import { useMutation, useQuery } from "convex/react";
 import { Bell, Check, ChevronDown, Mail, MailOpen, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { NotificationPreferences } from "@/components/notifications/NotificationPreferences";
-import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -98,19 +98,25 @@ export default function NotificationsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader
-        eyebrow={t("title")}
+      <PageHeaderBar
         title={t("title")}
         description={t("subtitle")}
         icon={<Bell />}
         tourCheckpoint="notifications"
-        action={
-          unreadCount > 0 ? (
-            <Button variant="outline" onClick={() => void markAllRead({})}>
-              <Check className="mr-2 size-4" />
-              {t("markAllRead")}
-            </Button>
-          ) : undefined
+      />
+      <PageHeaderActions
+        actions={
+          unreadCount > 0
+            ? [
+                {
+                  key: "mark-all-read",
+                  label: t("markAllRead"),
+                  icon: Check,
+                  onClick: () => void markAllRead({}),
+                  variant: "outline",
+                },
+              ]
+            : []
         }
       />
 

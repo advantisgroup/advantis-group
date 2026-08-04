@@ -40,7 +40,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,7 +63,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useAbsencesCalendar } from "@/lib/absences-api";
@@ -641,37 +640,28 @@ export default function CalendarPage() {
 
   return (
     <div className="mx-auto max-w-5xl" data-tour="tour-calendar-view">
-      <PageHeader
-        title={t("title")}
-        tourCheckpoint="calendar"
-        action={
-          <div className="flex items-center gap-2">
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    aria-label={t("exportIcs")}
-                    onClick={exportIcs}
-                  >
-                    <CalendarArrowDown />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t("exportIcs")}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {isManager && (
-              <Button
-                onClick={() => setEventDraft(emptyDraft(isoDay(cursor)))}
-                data-tour="tour-calendar-add"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                {t("addEvent")}
-              </Button>
-            )}
-          </div>
-        }
+      <PageHeaderBar title={t("title")} tourCheckpoint="calendar" />
+      <PageHeaderActions
+        actions={[
+          {
+            key: "export",
+            label: t("exportIcs"),
+            icon: CalendarArrowDown,
+            onClick: exportIcs,
+            variant: "outline",
+          },
+          ...(isManager
+            ? [
+                {
+                  key: "add-event",
+                  label: t("addEvent"),
+                  icon: Plus,
+                  onClick: () => setEventDraft(emptyDraft(isoDay(cursor))),
+                  tourTarget: "tour-calendar-add",
+                },
+              ]
+            : []),
+        ]}
       />
 
       <div

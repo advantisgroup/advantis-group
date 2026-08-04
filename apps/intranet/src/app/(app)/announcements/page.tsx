@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { useRouter } from "next/navigation";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
@@ -27,8 +29,8 @@ import {
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
 import { MentionRichText } from "@/components/profile/MentionRichText";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -507,6 +509,7 @@ type Sort = "newest" | "reactions";
 export default function AnnouncementsPage() {
   const t = useTranslations("Announcements");
   const tc = useTranslations("Common");
+  const router = useRouter();
   const isManager = useIsManager();
   const confirm = useConfirm();
   const announcements = useQuery(api.announcements.list, {});
@@ -590,18 +593,20 @@ export default function AnnouncementsPage() {
 
   return (
     <div className="mx-auto max-w-3xl" data-tour="tour-announcements-list">
-      <PageHeader
-        title={t("title")}
-        tourCheckpoint="announcements"
-        action={
-          isManager ? (
-            <Button asChild data-tour="tour-announcements-new">
-              <Link href="/announcements/new">
-                <Plus className="mr-2 h-4 w-4" />
-                {t("new")}
-              </Link>
-            </Button>
-          ) : undefined
+      <PageHeaderBar title={t("title")} tourCheckpoint="announcements" />
+      <PageHeaderActions
+        actions={
+          isManager
+            ? [
+                {
+                  key: "new",
+                  label: t("new"),
+                  icon: Plus,
+                  onClick: () => router.push("/announcements/new"),
+                  tourTarget: "tour-announcements-new",
+                },
+              ]
+            : []
         }
       />
 

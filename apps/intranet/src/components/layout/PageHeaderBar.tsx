@@ -24,6 +24,10 @@ export interface PageHeaderAction {
   /** Matches `Button`'s variant — "default" reads as the primary action. */
   variant?: "default" | "outline";
   disabled?: boolean;
+  /** `data-tour` value, applied to both the desktop and mobile renderings —
+   * see TourProvider's `findVisibleTarget` for why a tour step can safely
+   * target an attribute that now matches two elements at once. */
+  tourTarget?: string;
 }
 
 interface PageHeaderBarState {
@@ -149,6 +153,7 @@ export function PageHeaderActionsSlot() {
           size="sm"
           onClick={action.onClick}
           disabled={action.disabled}
+          data-tour={action.tourTarget}
         >
           <action.icon className="size-4" />
           {action.label}
@@ -174,6 +179,7 @@ export function MobilePageHeaderActions() {
           aria-label={action.label}
           disabled={action.disabled}
           onClick={action.onClick}
+          data-tour={action.tourTarget}
           className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-accent disabled:pointer-events-none disabled:opacity-40"
         >
           <action.icon className="size-4" />

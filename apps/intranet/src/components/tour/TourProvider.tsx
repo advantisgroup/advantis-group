@@ -40,11 +40,23 @@ const TourContext = createContext<TourContextValue | null>(null);
 const PADDING = 10;
 const SYNC_DEBOUNCE_MS = 2000;
 
+/** A `data-tour` value can now match more than one element at once — a
+ * `PageHeaderBar` action renders both in the desktop header and, hidden via
+ * CSS rather than unmounted, in the mobile bottom-nav pill. Pick whichever
+ * copy is actually visible instead of always the first in DOM order. */
+function findVisibleTarget(attr: string): Element | null {
+  const candidates = document.querySelectorAll(`[data-tour="${attr}"]`);
+  for (const el of candidates) {
+    const r = el.getBoundingClientRect();
+    if (r.width !== 0 || r.height !== 0) return el;
+  }
+  return null;
+}
+
 function measureTarget(attr: string): TargetRect | null {
-  const el = document.querySelector(`[data-tour="${attr}"]`);
+  const el = findVisibleTarget(attr);
   if (!el) return null;
   const r = el.getBoundingClientRect();
-  if (r.width === 0 && r.height === 0) return null;
   const computed = window.getComputedStyle(el);
   const borderRadius = parseFloat(computed.borderRadius) || 8;
   return {
@@ -204,7 +216,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       const rect = measureTarget(currentStep!.targetAttr);
       if (rect) {
-        const el = document.querySelector(`[data-tour="${currentStep!.targetAttr}"]`);
+        const el = findVisibleTarget(currentStep!.targetAttr);
         void (async () => {
           if (el) await scrollTargetIntoView(el);
           if (cancelled) return;

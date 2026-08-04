@@ -30,8 +30,8 @@ import {
   EntryDialog,
   type WikiEntry,
 } from "@/components/guidebooks/WikiEntryDialogs";
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
 import {
   isOwnerOrAdmin,
   useCurrentUser,
@@ -429,34 +429,43 @@ export default function GuidebooksPage() {
 
   return (
     <div className="mx-auto max-w-5xl" data-tour="tour-guidebooks-list">
-      <PageHeader
-        eyebrow={t("eyebrow")}
-        title={t("title")}
-        description={t("subtitle")}
-        tourCheckpoint="guidebooks"
-        action={
-          canManage ? (
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="icon" asChild>
-                <Link href="/guidebooks/files" aria-label={t("browseFiles")}>
-                  <FolderOpen className="size-4" />
-                </Link>
-              </Button>
-              <Button variant="outline" size="icon" onClick={() => setCategoryManagerOpen(true)}>
-                <Settings2 className="size-4" />
-              </Button>
-              {/* One entry point — the composer itself offers the simple and
-                  advanced formats, so this no longer needs a split button. */}
-              <Button asChild>
-                <Link href="/guidebooks/new">
-                  <Plus className="mr-2 size-4" />
-                  {t("newEntry")}
-                </Link>
-              </Button>
-            </div>
-          ) : undefined
+      <PageHeaderBar title={t("title")} description={t("subtitle")} tourCheckpoint="guidebooks" />
+      {/* Manage categories + new entry are the two primary actions and move
+          into the header/bottom-nav pill; "Browse files" is a shortcut to a
+          different tool entirely, not a page action, so it stays a plain
+          in-page link instead of crowding that fixed slot with a third
+          icon. */}
+      <PageHeaderActions
+        actions={
+          canManage
+            ? [
+                {
+                  key: "categories",
+                  label: t("categoryManagerTitle"),
+                  icon: Settings2,
+                  onClick: () => setCategoryManagerOpen(true),
+                },
+                {
+                  key: "new-entry",
+                  label: t("newEntry"),
+                  icon: Plus,
+                  onClick: () => router.push("/guidebooks/new"),
+                },
+              ]
+            : []
         }
       />
+
+      {canManage && (
+        <div className="mb-4 flex justify-end">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/guidebooks/files">
+              <FolderOpen className="size-4" />
+              {t("browseFiles")}
+            </Link>
+          </Button>
+        </div>
+      )}
 
       {interactiveTools.length > 0 && (
         <details

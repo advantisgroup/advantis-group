@@ -7,11 +7,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import { MessageSquare, MessageSquarePlus, Settings2, Wrench } from "lucide-react";
+import { MessageSquare, MessageSquarePlus, Plus, Settings2, Wrench } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { PageHeader } from "@/components/PageHeader";
 import { CategoriesDialog } from "@/components/it-tickets/CategoriesDialog";
 import {
   STATUS_BORDER,
@@ -21,6 +20,7 @@ import {
 } from "@/components/it-tickets/shared";
 import { TicketDialog } from "@/components/it-tickets/TicketDialog";
 import { TicketWorkspace } from "@/components/it-tickets/TicketWorkspace";
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useHasCapability } from "@/components/providers/current-user";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -385,19 +385,17 @@ function ItTicketsPageContent() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
-      <PageHeader
-        title={t("pageTitle")}
-        description={t("pageDescription")}
-        icon={<Wrench />}
-        action={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => setCategoriesDialogOpen(true)}>
-              <Settings2 />
-              <span className="sr-only">{t("manageCategories")}</span>
-            </Button>
-            <Button onClick={openCreate}>{t("newTicket")}</Button>
-          </div>
-        }
+      <PageHeaderBar title={t("pageTitle")} description={t("pageDescription")} icon={<Wrench />} />
+      <PageHeaderActions
+        actions={[
+          {
+            key: "categories",
+            label: t("manageCategories"),
+            icon: Settings2,
+            onClick: () => setCategoriesDialogOpen(true),
+          },
+          { key: "new-ticket", label: t("newTicket"), icon: Plus, onClick: openCreate },
+        ]}
       />
 
       <TicketStats tickets={tickets ?? []} categories={(categories ?? []).map((c) => c.name)} />

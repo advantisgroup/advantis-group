@@ -9,12 +9,11 @@ import { Lightbulb, Plus, Settings2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { CategoryManagerDialog } from "@/components/suggestions/CategoryManagerDialog";
 import { NewSuggestionDialog } from "@/components/suggestions/NewSuggestionDialog";
 import { SuggestionRow } from "@/components/suggestions/SuggestionRow";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
@@ -184,25 +183,22 @@ export default function SuggestionsPage() {
 
   return (
     <div className={cn("mx-auto space-y-6", canSplit ? "max-w-7xl" : "max-w-4xl")}>
-      <PageHeader
-        eyebrow={t("eyebrow")}
-        title={t("title")}
-        description={t("description")}
-        icon={<Lightbulb />}
-        action={
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Button variant="outline" onClick={() => setCategoriesOpen(true)}>
-                <Settings2 className="mr-2 size-4" />
-                {t("manageCategories")}
-              </Button>
-            )}
-            <Button onClick={() => setNewOpen(true)}>
-              <Plus className="mr-2 size-4" />
-              {t("new")}
-            </Button>
-          </div>
-        }
+      <PageHeaderBar title={t("title")} description={t("description")} icon={<Lightbulb />} />
+      <PageHeaderActions
+        actions={[
+          ...(isAdmin
+            ? [
+                {
+                  key: "categories",
+                  label: t("manageCategories"),
+                  icon: Settings2,
+                  onClick: () => setCategoriesOpen(true),
+                  variant: "outline" as const,
+                },
+              ]
+            : []),
+          { key: "new", label: t("new"), icon: Plus, onClick: () => setNewOpen(true) },
+        ]}
       />
 
       {canSplit ? (
