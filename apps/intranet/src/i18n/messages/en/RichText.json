@@ -24,5 +24,12 @@
   "saveDate": "Save date",
   "completeDateTitle": "Complete calendar event",
   "completeDateDescription": "This date is missing calendar details. Add them before continuing.",
-  "addToCalendar": "Add to calendar"
+  "addToCalendar": "Add to calendar",
+  "addToIntranetCalendar": "Add to intranet calendar",
+  "saveToIntranetCalendar": "Save to intranet calendar",
+  "inIntranetCalendar": "In your intranet calendar",
+  "addedToIntranetCalendar": "Added to your intranet calendar",
+  "updatedInIntranetCalendar": "Updated in your intranet calendar",
+  "alreadyInIntranetCalendar": "Already in your intranet calendar",
+  "calendarEventTitleFallback": "Announcement"
 }

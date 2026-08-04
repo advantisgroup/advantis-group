@@ -79,12 +79,18 @@ export const audienceValidator = v.union(
   }),
 );
 
+export const richDateKindValidator = v.union(
+  v.literal("event"),
+  v.literal("deadline"),
+  v.literal("reminder"),
+);
+
 export const relevantDateValidator = v.object({
   id: v.optional(v.string()),
   startAt: v.number(),
   endAt: v.optional(v.number()),
   allDay: v.boolean(),
-  kind: v.optional(v.union(v.literal("event"), v.literal("deadline"), v.literal("reminder"))),
+  kind: v.optional(richDateKindValidator),
   description: v.optional(v.string()),
   location: v.optional(v.string()),
 });
@@ -553,13 +559,19 @@ export default defineSchema({
     start: v.number(), // epoch ms
     end: v.number(),
     allDay: v.boolean(),
+    kind: v.optional(richDateKindValidator),
     color: v.optional(v.string()),
     createdByUserId: v.id("users"),
+    sourceRichDateId: v.optional(v.string()),
+    personalForUserId: v.optional(v.id("users")),
     audience: audienceValidator,
     /** Dead — guest tour removed. Drop after `migrations/dropGuestFields` runs. */
     guestVisible: v.optional(v.boolean()),
     createdAt: v.number(),
-  }).index("by_start", ["start"]),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_start", ["start"])
+    .index("by_personal_rich_date", ["personalForUserId", "sourceRichDateId"]),
 
   // --- Announcements -------------------------------------------------------
   announcements: defineTable({

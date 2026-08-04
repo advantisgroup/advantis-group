@@ -24,5 +24,12 @@
   "saveDate": "Datum speichern",
   "completeDateTitle": "Kalendereintrag vervollständigen",
   "completeDateDescription": "Für dieses Datum fehlen Kalenderdetails. Ergänze sie, bevor du fortfährst.",
-  "addToCalendar": "Zum Kalender hinzufügen"
+  "addToCalendar": "Zum Kalender hinzufügen",
+  "addToIntranetCalendar": "Zum Intranet-Kalender hinzufügen",
+  "saveToIntranetCalendar": "Im Intranet-Kalender speichern",
+  "inIntranetCalendar": "In deinem Intranet-Kalender",
+  "addedToIntranetCalendar": "Zu deinem Intranet-Kalender hinzugefügt",
+  "updatedInIntranetCalendar": "In deinem Intranet-Kalender aktualisiert",
+  "alreadyInIntranetCalendar": "Bereits in deinem Intranet-Kalender",
+  "calendarEventTitleFallback": "Ankündigung"
 }
