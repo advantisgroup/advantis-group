@@ -49,9 +49,10 @@
   "latestSection": "Aktuell",
   "willReach": "{count, plural, one {Erreicht # Person} other {Erreicht # Personen}}",
   "readStats": "{count} / {total} gelesen",
-  "publishAtLabel": "Planen (optional)",
+  "publishAtLabel": "Senden am (optional)",
+  "publishAtHint": "Zu diesem Zeitpunkt wird die Ankündigung an die Zielgruppe gesendet und sichtbar – kein Ereignisdatum. Geht es in der Ankündigung um einen Termin, gehört das Datum in den Text.",
   "expiresAtLabel": "Läuft ab (optional)",
-  "scheduledFor": "Geplant für {date}",
+  "scheduledFor": "Wird gesendet {date}",
   "scheduledToast": "Ankündigung geplant",
   "expired": "Abgelaufen",
   "optionsHint": "Kategorie, Zielgruppe, Anhänge und Zeitplanung für diese Ankündigung."

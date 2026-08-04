@@ -49,9 +49,10 @@
   "latestSection": "Latest",
   "willReach": "{count, plural, one {Will reach # person} other {Will reach # people}}",
   "readStats": "{count} / {total} read",
-  "publishAtLabel": "Schedule (optional)",
+  "publishAtLabel": "Send at (optional)",
+  "publishAtHint": "The announcement is sent and becomes visible to your audience at this time — it's not an event date. If the announcement is about an event, mention the date in the text itself.",
   "expiresAtLabel": "Expires (optional)",
-  "scheduledFor": "Scheduled for {date}",
+  "scheduledFor": "Sends {date}",
   "scheduledToast": "Announcement scheduled",
   "expired": "Expired",
   "optionsHint": "Category, audience, attachments and scheduling for this announcement."

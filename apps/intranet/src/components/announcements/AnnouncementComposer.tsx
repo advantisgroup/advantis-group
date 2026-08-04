@@ -21,6 +21,7 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { InfoTip } from "@/components/activity/InfoTip";
 import { AttachmentList } from "@/components/attachments/AttachmentList";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
 import { OneDrivePickerDialog } from "@/components/onedrive/OneDrivePickerDialog";
@@ -365,7 +366,10 @@ function ComposerOptionsFields({
         <div className="grid grid-cols-1 gap-3">
           {!editing && (
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">{t("publishAtLabel")}</Label>
+              <Label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                {t("publishAtLabel")}
+                <InfoTip text={t("publishAtHint")} />
+              </Label>
               <Input
                 type="datetime-local"
                 value={draft.publishAt}
