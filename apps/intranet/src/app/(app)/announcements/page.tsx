@@ -410,12 +410,12 @@ function AnnouncementCard({
       </header>
 
       {/* Styled message body */}
-      <div className="px-5 py-4">
+      <div className="px-5 py-3.5">
         {a.relevantDate && (
           <RelevantDateCallout
             value={a.relevantDate}
             summary={a.title}
-            className="-mx-5 -mt-4 mb-4 border-t-0"
+            className="-mx-5 -mt-3.5 mb-3 border-t-0"
           />
         )}
         <CollapsibleBody html={a.body} title={a.title} />
@@ -519,7 +519,7 @@ function AnnouncementCard({
       {/* Reactions + viewed status. Wraps instead of squeezing the chips
           when a popular post collects more reactions than a narrow screen
           has room for on one line. */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-border/60 px-5 py-2.5">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-border/60 px-5 py-2">
         <ReactionPicker
           side="top"
           onPick={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}

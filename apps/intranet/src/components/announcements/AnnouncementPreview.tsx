@@ -58,12 +58,12 @@ export function AnnouncementPreview({
           </p>
         </div>
       </header>
-      <div className="px-5 py-4">
+      <div className="px-5 py-3.5">
         {relevantDate && (
           <RelevantDateCallout
             value={relevantDate}
             summary={title.trim() || t("titlePlaceholder")}
-            className="-mx-5 -mt-4 mb-4 border-t-0"
+            className="-mx-5 -mt-3.5 mb-3 border-t-0"
             autoSave={false}
           />
         )}
