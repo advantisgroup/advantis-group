@@ -63,6 +63,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
@@ -120,7 +121,7 @@ export function Sidebar() {
   const hasFilesAccess = useHasCapability("access_files");
   const hasApplicantAccess = useHasApplicantAccess();
   const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
-  const { setOpenMobile, state } = useSidebar();
+  const { setOpenMobile, state, isMobile } = useSidebar();
   const featureFlags = useFeatureFlags();
   const disabledFeatures = new Set(
     (featureFlags ?? []).filter((f) => !f.enabled).map((f) => f.key),
@@ -452,7 +453,7 @@ export function Sidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="gap-3">
+      <SidebarFooter>
         {/* The top bar stays minimal on mobile, so the account and preferences
             controls live here at the bottom-left of the sidebar. On desktop
             they remain in the header, so this row is hidden there. */}
@@ -463,22 +464,59 @@ export function Sidebar() {
           />
           <SettingsMenu className="shrink-0 hover:bg-sidebar-accent" />
         </div>
+        {/* Collapsed desktop rail has no room for the header's account
+            trigger to be reachable at a glance, so it gets its own
+            icon-only entry point here — hidden everywhere else since the
+            header already covers expanded desktop, and this row covers
+            mobile. */}
+        <div className="hidden group-data-[state=collapsed]/sidebar:block">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <AccountMenu
+                triggerClassName="h-9 w-9 justify-center px-0"
+                onNavigate={close}
+                hideName
+              />
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center">
+              {user.name}
+            </TooltipContent>
+          </Tooltip>
+        </div>
         {/* Deliberately not a NavGroup item — Updates lives here, tucked next
             to the footer branding, rather than competing for space in the
             main tabs. Covers mobile too: this footer is shared by the
             desktop rail and the mobile drawer opened from BottomNav. */}
-        <Link
-          href="/updates"
-          onClick={close}
-          className="relative flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-        >
-          <Rss className="size-3.5 shrink-0" />
-          <SidebarLabel>{t("updates")}</SidebarLabel>
-          {activeUpdate?.top ? (
-            <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-          ) : null}
-        </Link>
-        <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
+        {(() => {
+          const updatesLink = (
+            <Link
+              href="/updates"
+              onClick={close}
+              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
+            >
+              <div className="relative shrink-0">
+                <Rss className="size-3.5" />
+                {activeUpdate?.top ? (
+                  <span className="absolute -right-0.5 -top-0.5 hidden size-1.5 rounded-full bg-primary ring-1 ring-sidebar group-data-[state=collapsed]/sidebar:block" />
+                ) : null}
+              </div>
+              <SidebarLabel>{t("updates")}</SidebarLabel>
+              {activeUpdate?.top ? (
+                <span className="size-1.5 shrink-0 rounded-full bg-primary group-data-[state=collapsed]/sidebar:hidden" />
+              ) : null}
+            </Link>
+          );
+          if (isMobile || state !== "collapsed") return updatesLink;
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>{updatesLink}</TooltipTrigger>
+              <TooltipContent side="right" align="center">
+                {t("updates")}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })()}
+        <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden">
           Advantis Group
         </p>
       </SidebarFooter>

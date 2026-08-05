@@ -226,7 +226,12 @@ export function SidebarContent({ children, className }: React.HTMLAttributes<HTM
 
 export function SidebarFooter({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("mt-auto px-4 py-3 group-data-[state=collapsed]/sidebar:hidden", className)}>
+    <div
+      className={cn(
+        "mt-auto flex flex-col gap-3 border-t border-sidebar-border px-4 py-3 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-2",
+        className,
+      )}
+    >
       {children}
     </div>
   );

@@ -29,10 +29,13 @@ import { cn } from "@/lib/utils";
 export function AccountMenu({
   triggerClassName,
   onNavigate,
+  hideName = false,
 }: {
   triggerClassName?: string;
   /** Fired when an item navigates — used to close the mobile sidebar sheet. */
   onNavigate?: () => void;
+  /** Icon-only trigger, for the collapsed sidebar rail. */
+  hideName?: boolean;
 }) {
   const user = useCurrentUser();
   const { signOut } = useClerk();
@@ -48,7 +51,7 @@ export function AccountMenu({
             {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
             <AvatarFallback className="text-xs">{initials(user.name, user.email)}</AvatarFallback>
           </Avatar>
-          <span className="max-w-32 truncate text-sm font-medium">{user.name}</span>
+          {!hideName && <span className="max-w-32 truncate text-sm font-medium">{user.name}</span>}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

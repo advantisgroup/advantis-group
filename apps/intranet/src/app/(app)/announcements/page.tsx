@@ -410,12 +410,12 @@ function AnnouncementCard({
       </header>
 
       {/* Styled message body */}
-      <div className="px-5 py-4">
+      <div className="px-5 py-3.5">
         {a.relevantDate && (
           <RelevantDateCallout
             value={a.relevantDate}
             summary={a.title}
-            className="-mx-5 -mt-4 mb-4 border-t-0"
+            className="-mx-5 -mt-3.5 mb-3 border-t-0"
           />
         )}
         <CollapsibleBody html={a.body} title={a.title} />
@@ -516,8 +516,10 @@ function AnnouncementCard({
         )}
       </div>
 
-      {/* Reactions + viewed status */}
-      <div className="flex items-center gap-2 border-t border-border/60 px-5 py-2.5">
+      {/* Reactions + viewed status. Wraps instead of squeezing the chips
+          when a popular post collects more reactions than a narrow screen
+          has room for on one line. */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-border/60 px-5 py-2">
         <ReactionPicker
           side="top"
           onPick={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
@@ -646,12 +648,11 @@ export default function AnnouncementsPage() {
         }
       />
 
-      {/* Search, filters, sort, mark-all-read */}
-      <div
-        className="mb-4 flex flex-wrap items-center gap-2"
-        data-tour="tour-announcements-toolbar"
-      >
-        <div className="relative min-w-0 flex-1 basis-48">
+      {/* Search gets its own full-width row — sharing one line with the
+          filter pills/selects left it squeezed down to a sliver on mobile,
+          with the rest of the toolbar wrapping unpredictably around it. */}
+      <div className="mb-4 space-y-2.5" data-tour="tour-announcements-toolbar">
+        <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
@@ -660,57 +661,61 @@ export default function AnnouncementsPage() {
             className="pl-9"
           />
         </div>
-        {(["all", "unread", "pinned"] as const).map((f) => (
-          <button
-            key={f}
-            type="button"
-            onClick={() => setFilter(f)}
-            className={cn(
-              "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              filter === f
-                ? "border-transparent bg-foreground text-background"
-                : "border-border text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {t(`filter_${f}`)}
-            {f === "unread" && unreadCount > 0 ? ` (${unreadCount})` : ""}
-          </button>
-        ))}
-        {existingCategories.length > 0 && (
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(["all", "unread", "pinned"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFilter(f)}
+                className={cn(
+                  "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                  filter === f
+                    ? "border-transparent bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                {t(`filter_${f}`)}
+                {f === "unread" && unreadCount > 0 ? ` (${unreadCount})` : ""}
+              </button>
+            ))}
+          </div>
+          {existingCategories.length > 0 && (
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL_CATEGORIES_VALUE}>{t("allCategories")}</SelectItem>
+                {existingCategories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
             <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_CATEGORIES_VALUE}>{t("allCategories")}</SelectItem>
-              {existingCategories.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
+              <SelectItem value="newest">{t("sortNewest")}</SelectItem>
+              <SelectItem value="reactions">{t("sortReactions")}</SelectItem>
             </SelectContent>
           </Select>
-        )}
-        <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-          <SelectTrigger className="h-8 w-auto gap-1.5 rounded-full text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="newest">{t("sortNewest")}</SelectItem>
-            <SelectItem value="reactions">{t("sortReactions")}</SelectItem>
-          </SelectContent>
-        </Select>
-        {unreadCount > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground"
-            onClick={() => void markAllRead({})}
-          >
-            <CheckCheck className="mr-1.5 size-3.5" />
-            {t("markAllRead")}
-          </Button>
-        )}
+          {unreadCount > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto text-muted-foreground"
+              onClick={() => void markAllRead({})}
+            >
+              <CheckCheck className="mr-1.5 size-3.5" />
+              {t("markAllRead")}
+            </Button>
+          )}
+        </div>
       </div>
 
       {announcements && announcements.length === 0 && (
