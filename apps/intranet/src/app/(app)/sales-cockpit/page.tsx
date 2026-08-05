@@ -5,9 +5,10 @@ import { useMemo, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import { CheckCircle2, PhoneCall, Search, Target } from "lucide-react";
+import { CheckCircle2, ExternalLink, PhoneCall, Search, Target, Workflow } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -132,32 +133,49 @@ function Cockpit({ project }: { project: Project }) {
         </p>
       </div>
 
-      <div>
-        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          {t("wegWaehlen")}
-        </p>
-        {project.wege.length === 0 ? (
-          <p className="text-sm italic text-muted-foreground">{t("keineWege")}</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {project.wege.map((w) => (
-              <button
-                key={w.id}
-                type="button"
-                onClick={() => setWegId(w.id)}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
-                  w.id === wegId
-                    ? "border-primary bg-primary text-primary-foreground shadow"
-                    : "border-border hover:border-primary hover:text-primary",
-                )}
-              >
-                {w.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      {project.flow ? (
+        <Link
+          href={`/sales-cockpit/flows/${project.flow._id}`}
+          target="_blank"
+          className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10"
+        >
+          <Workflow className="size-5 shrink-0 text-primary" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">{project.flow.titel}</span>
+            <span className="block text-xs text-muted-foreground">
+              {t("flowKnoten", { n: project.flow.nodeCount })}
+            </span>
+          </span>
+          <ExternalLink className="size-4 shrink-0 text-primary" />
+        </Link>
+      ) : (
+        <div>
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {t("wegWaehlen")}
+          </p>
+          {project.wege.length === 0 ? (
+            <p className="text-sm italic text-muted-foreground">{t("keineWege")}</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {project.wege.map((w) => (
+                <button
+                  key={w.id}
+                  type="button"
+                  onClick={() => setWegId(w.id)}
+                  className={cn(
+                    "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
+                    w.id === wegId
+                      ? "border-primary bg-primary text-primary-foreground shadow"
+                      : "border-border hover:border-primary hover:text-primary",
+                  )}
+                >
+                  {w.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {weg && (
         <Card>

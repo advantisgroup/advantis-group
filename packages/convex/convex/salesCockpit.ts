@@ -4,15 +4,6 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx, mutation, query } from "./_generated/server";
 import { requireUser } from "./lib/auth";
 
-const einwandValidator = v.object({ einwand: v.string(), antwort: v.string() });
-
-const wegInputValidator = v.object({
-  name: v.string(),
-  einwaende: v.array(einwandValidator),
-  benefit: v.optional(v.string()),
-  ziele: v.optional(v.string()),
-});
-
 const fileInputValidator = v.object({
   storageId: v.id("_storage"),
   name: v.string(),
@@ -32,40 +23,11 @@ const projectFieldsValidator = {
   benefits: v.array(v.string()),
   ziele: v.array(v.string()),
   sfInput: v.optional(v.string()),
-  wege: v.array(wegInputValidator),
+  flowId: v.optional(v.id("salesCockpitFlows")),
   files: projectFilesInputValidator,
 };
 
 type FileCategory = "plan" | "scripte" | "dateien";
-
-/** Replaces every `salesCockpitWege` row for `projectId` with `wege`. Simplest
- *  correct approach given the form always submits the whole route list at
- *  once (same replace-on-save semantics as the prototype). */
-async function replaceWege(
-  ctx: MutationCtx,
-  projectId: Id<"salesCockpitProjects">,
-  wege: { name: string; einwaende: { einwand: string; antwort: string }[]; benefit?: string; ziele?: string }[],
-): Promise<void> {
-  const existing = await ctx.db
-    .query("salesCockpitWege")
-    .withIndex("by_project", (q) => q.eq("projectId", projectId))
-    .collect();
-  await Promise.all(existing.map((w) => ctx.db.delete(w._id)));
-  await Promise.all(
-    wege
-      .filter((w) => w.name.trim())
-      .map((w, order) =>
-        ctx.db.insert("salesCockpitWege", {
-          projectId,
-          name: w.name,
-          einwaende: w.einwaende.filter((e) => e.einwand.trim() || e.antwort.trim()),
-          benefit: w.benefit,
-          ziele: w.ziele,
-          order,
-        }),
-      ),
-  );
-}
 
 /** Replaces every `salesCockpitFiles` row for `projectId`, deleting storage
  *  objects for files that were removed and inserting rows for newly-uploaded
@@ -112,7 +74,10 @@ async function replaceFiles(
 }
 
 async function hydrateProject(ctx: QueryCtx | MutationCtx, project: Doc<"salesCockpitProjects">) {
-  const [wege, files] = await Promise.all([
+  const flowId = project.flowId;
+  const [wege, files, flowDoc, flowNodes] = await Promise.all([
+    // Legacy, read-only: rows from before Wege editing was replaced by
+    // linking a Flow. Still hydrated so old projects keep showing them.
     ctx.db
       .query("salesCockpitWege")
       .withIndex("by_project", (q) => q.eq("projectId", project._id))
@@ -121,7 +86,15 @@ async function hydrateProject(ctx: QueryCtx | MutationCtx, project: Doc<"salesCo
       .query("salesCockpitFiles")
       .withIndex("by_project", (q) => q.eq("projectId", project._id))
       .collect(),
+    flowId ? ctx.db.get(flowId) : Promise.resolve(null),
+    flowId
+      ? ctx.db
+          .query("salesCockpitFlowNodes")
+          .withIndex("by_flow", (q) => q.eq("flowId", flowId))
+          .collect()
+      : Promise.resolve(null),
   ]);
+  const flow = flowDoc ? { _id: flowDoc._id, titel: flowDoc.titel, nodeCount: flowNodes?.length ?? 0 } : null;
   const byCategory = (cat: FileCategory) =>
     files
       .filter((f) => f.category === cat)
@@ -134,6 +107,10 @@ async function hydrateProject(ctx: QueryCtx | MutationCtx, project: Doc<"salesCo
     benefits: project.benefits,
     ziele: project.ziele,
     sfInput: project.sfInput ?? "",
+    // Derived from the fetched doc (not `project.flowId` directly) so a
+    // dangling reference to a since-deleted flow reads as unlinked.
+    flowId: flow?._id,
+    flow,
     wege: wege
       .sort((a, b) => a.order - b.order)
       .map((w) => ({
@@ -174,10 +151,10 @@ export const createProject = mutation({
       benefits: args.benefits,
       ziele: args.ziele,
       sfInput: args.sfInput,
+      flowId: args.flowId,
       createdByUserId: user._id,
       createdAt: now,
     });
-    await replaceWege(ctx, projectId, args.wege);
     await replaceFiles(ctx, projectId, user._id, args.files);
     return { id: projectId };
   },
@@ -196,9 +173,9 @@ export const updateProject = mutation({
       benefits: args.benefits,
       ziele: args.ziele,
       sfInput: args.sfInput,
+      flowId: args.flowId,
       updatedAt: Date.now(),
     });
-    await replaceWege(ctx, projectId, args.wege);
     await replaceFiles(ctx, projectId, user._id, args.files);
     return { id: projectId };
   },

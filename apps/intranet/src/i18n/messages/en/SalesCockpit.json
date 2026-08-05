@@ -126,5 +126,12 @@
   "flowTreeTab": "Flow",
   "flowDetailsTab": "Details",
   "flowSaving": "Saving…",
-  "flowSaved": "Saved"
+  "flowSaved": "Saved",
+
+  "flowVerknuepft": "Linked flow",
+  "flowVerknuepftHint": "The call script for this project now lives in a Flow (the branching tree builder) instead of the old flat path list — link an existing one or create a new one.",
+  "flowKeinFlow": "No flow linked",
+  "flowEditorOeffnen": "Open flow editor",
+  "flowZeile": "Flow \"{titel}\" ({n} nodes)",
+  "wegeLegacyZeile": "{n} paths (legacy)"
 }

@@ -32,12 +32,7 @@ function toFormValue(p: Project): ProjectFormValue {
     benefits: p.benefits,
     ziele: p.ziele,
     sfInput: p.sfInput,
-    wege: p.wege.map((w) => ({
-      name: w.name,
-      einwaende: w.einwaende,
-      benefit: w.benefit,
-      ziele: w.ziele,
-    })),
+    flowId: p.flowId,
     files: p.files,
   };
 }
@@ -98,8 +93,13 @@ export default function SalesCockpitProjektePage() {
                 <div>
                   <b className="text-sm">{p.titel}</b>
                   <p className="text-xs text-muted-foreground">
-                    {t("start")} {p.start || "–"} · {p.wege.length} {t("wege")} ·{" "}
-                    {p.benefits.length} {t("tabBenefits")} · {fileCount(p)} {t("dateien")}
+                    {t("start")} {p.start || "–"} ·{" "}
+                    {p.flow
+                      ? t("flowZeile", { titel: p.flow.titel, n: p.flow.nodeCount })
+                      : p.wege.length > 0
+                        ? t("wegeLegacyZeile", { n: p.wege.length })
+                        : t("flowKeinFlow")}{" "}
+                    · {p.benefits.length} {t("tabBenefits")} · {fileCount(p)} {t("dateien")}
                   </p>
                 </div>
                 <div className="flex gap-2">

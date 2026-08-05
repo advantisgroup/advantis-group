@@ -2527,9 +2527,12 @@ export default defineSchema({
   // Ported from a standalone prototype (window.storage-backed) into real
   // Convex-persisted data. A "Projekt" is a calling campaign: an opening
   // line, general benefits/goals, Salesforce input notes and attached
-  // documents; each project's conversation routes ("Wege") live in the
-  // separate `salesCockpitWege` table below rather than as a nested array,
-  // so a Weg's objection list can grow without rewriting the whole project.
+  // documents. Conversation routes used to live inline as "Wege" (the
+  // `salesCockpitWege` table below) but that's superseded by linking a
+  // `salesCockpitFlows` tree instead — `flowId` is that link. Existing
+  // Wege rows are kept and still hydrated/read for projects that have
+  // them (read-only history), but the project form no longer creates or
+  // edits them; new projects link a Flow instead.
   salesCockpitProjects: defineTable({
     titel: v.string(),
     start: v.optional(v.string()), // ISO date (YYYY-MM-DD)
@@ -2537,13 +2540,16 @@ export default defineSchema({
     benefits: v.array(v.string()),
     ziele: v.array(v.string()),
     sfInput: v.optional(v.string()),
+    flowId: v.optional(v.id("salesCockpitFlows")),
     createdByUserId: v.id("users"),
     createdAt: v.number(),
     updatedAt: v.optional(v.number()),
   }).index("by_createdAt", ["createdAt"]),
 
-  // One row per conversation route ("Weg") within a project. `einwaende` is
-  // a small, bounded list of {einwand, antwort} pairs authored inline in the
+  // One row per conversation route ("Weg") within a project — legacy,
+  // read-only history now that Wege editing has been replaced by linking a
+  // Flow (see `salesCockpitProjects.flowId` above). `einwaende` is a small,
+  // bounded list of {einwand, antwort} pairs authored inline in the old
   // project form, so keeping it as a nested array here (rather than yet
   // another table) is simplest — it never needs its own index or partial
   // update.
