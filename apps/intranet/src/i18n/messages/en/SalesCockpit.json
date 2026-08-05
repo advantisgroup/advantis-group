@@ -133,5 +133,12 @@
   "flowKeinFlow": "No flow linked",
   "flowEditorOeffnen": "Open flow editor",
   "flowZeile": "Flow \"{titel}\" ({n} nodes)",
-  "wegeLegacyZeile": "{n} paths (legacy)"
+  "wegeLegacyZeile": "{n} paths (legacy)",
+
+  "flowLeer": "This flow has no start node yet.",
+  "flowKeinScript": "No script for this step yet.",
+  "flowKundenantwort": "Customer's answer",
+  "flowAstEnde": "End of this branch — no follow-up steps yet.",
+  "flowZurueck": "Back",
+  "flowVonVorne": "Start over"
 }
