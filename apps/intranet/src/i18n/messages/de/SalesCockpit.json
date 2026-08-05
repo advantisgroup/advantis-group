@@ -133,5 +133,12 @@
   "flowKeinFlow": "Kein Flow verknüpft",
   "flowEditorOeffnen": "Flow-Editor öffnen",
   "flowZeile": "Flow „{titel}\" ({n} Knoten)",
-  "wegeLegacyZeile": "{n} Wege (Legacy)"
+  "wegeLegacyZeile": "{n} Wege (Legacy)",
+
+  "flowLeer": "Dieser Flow hat noch keinen Startknoten.",
+  "flowKeinScript": "Noch kein Script für diesen Schritt.",
+  "flowKundenantwort": "Antwort des Kunden",
+  "flowAstEnde": "Ende dieses Zweigs — noch keine weiteren Schritte.",
+  "flowZurueck": "Zurück",
+  "flowVonVorne": "Von vorne"
 }

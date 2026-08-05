@@ -5,10 +5,10 @@ import { useMemo, useState } from "react";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
-import { CheckCircle2, ExternalLink, PhoneCall, Search, Target, Workflow } from "lucide-react";
+import { CheckCircle2, PhoneCall, Search, Target } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { Link } from "@/components/Link";
+import { FlowPlayer } from "@/components/sales-cockpit/FlowPlayer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -133,21 +133,11 @@ function Cockpit({ project }: { project: Project }) {
         </p>
       </div>
 
+      {/* Keyed by flow id — switching projects must remount, not reuse, the
+          player, or its currentId would still point at a node from the
+          previous flow. */}
       {project.flow ? (
-        <Link
-          href={`/sales-cockpit/flows/${project.flow._id}`}
-          target="_blank"
-          className="flex items-center gap-3 rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10"
-        >
-          <Workflow className="size-5 shrink-0 text-primary" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold">{project.flow.titel}</span>
-            <span className="block text-xs text-muted-foreground">
-              {t("flowKnoten", { n: project.flow.nodeCount })}
-            </span>
-          </span>
-          <ExternalLink className="size-4 shrink-0 text-primary" />
-        </Link>
+        <FlowPlayer key={project.flow._id} flowId={project.flow._id} />
       ) : (
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
