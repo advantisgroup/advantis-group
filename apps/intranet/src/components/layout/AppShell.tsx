@@ -90,8 +90,16 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const isAnnouncementComposer =
     pathname === "/announcements/new" ||
     (pathname.startsWith("/announcements/") && pathname.endsWith("/edit"));
+  // Same deal for the Sales Cockpit flow composer (`/sales-cockpit/flows/<id>`,
+  // but not the `/sales-cockpit/flows` list itself) — a React Flow canvas
+  // needs the full viewport, not viewport-minus-bottom-nav.
+  const isFlowComposer =
+    pathname.startsWith("/sales-cockpit/flows/") && pathname !== "/sales-cockpit/flows/";
   const immersive =
-    pathname.startsWith("/chat") || pathname.startsWith("/wiki-chat") || isAnnouncementComposer;
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/wiki-chat") ||
+    isAnnouncementComposer ||
+    isFlowComposer;
 
   // The Updates section reads like a blog (Anthropic/GitHub-changelog style)
   // rather than an app surface — the nav sidebar, bottom nav and the sitewide

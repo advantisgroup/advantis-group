@@ -2595,4 +2595,41 @@ export default defineSchema({
   })
     .index("by_createdAt", ["createdAt"])
     .index("by_storageId", ["storageId"]),
+
+  // Call-flow trees, edited in the React Flow-powered composer
+  // (`/sales-cockpit/flows/[flowId]`). Deliberately its own top-level entity
+  // rather than nested under `salesCockpitWege`: `updateProject`'s
+  // `replaceWege` deletes and reinserts every Weg row on every save, so a
+  // Weg's `_id` isn't stable across an edit — anything keyed off it (like a
+  // node tree) would get silently orphaned the next time someone tweaks the
+  // project's title. A Flow can optionally reference a project for context,
+  // but never a Weg.
+  salesCockpitFlows: defineTable({
+    titel: v.string(),
+    projectId: v.optional(v.id("salesCockpitProjects")),
+    createdByUserId: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_createdAt", ["createdAt"])
+    .index("by_project", ["projectId"]),
+
+  // One row per node in a flow's tree. `parentId` is undefined only for a
+  // flow's single root node; every other node hangs off exactly one parent,
+  // and `branchLabel` is the customer answer/objection that walks the
+  // conversation down that particular branch — this is the n8n-style
+  // "answer branches" tree, not a general DAG (no node has two parents).
+  salesCockpitFlowNodes: defineTable({
+    flowId: v.id("salesCockpitFlows"),
+    parentId: v.optional(v.id("salesCockpitFlowNodes")),
+    branchLabel: v.optional(v.string()),
+    title: v.string(),
+    body: v.string(),
+    x: v.number(),
+    y: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.optional(v.number()),
+  })
+    .index("by_flow", ["flowId"])
+    .index("by_parent", ["parentId"]),
 });
