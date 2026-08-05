@@ -126,5 +126,12 @@
   "flowTreeTab": "Flow",
   "flowDetailsTab": "Details",
   "flowSaving": "Speichert …",
-  "flowSaved": "Gespeichert"
+  "flowSaved": "Gespeichert",
+
+  "flowVerknuepft": "Verknüpfter Flow",
+  "flowVerknuepftHint": "Das Gesprächsscript für dieses Projekt lebt jetzt in einem Flow (dem verzweigten Baum-Editor) statt in der alten flachen Wege-Liste — verknüpfe einen bestehenden oder lege einen neuen an.",
+  "flowKeinFlow": "Kein Flow verknüpft",
+  "flowEditorOeffnen": "Flow-Editor öffnen",
+  "flowZeile": "Flow „{titel}\" ({n} Knoten)",
+  "wegeLegacyZeile": "{n} Wege (Legacy)"
 }

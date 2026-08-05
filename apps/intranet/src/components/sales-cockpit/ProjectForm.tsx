@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
-import { useMutation } from "convex/react";
-import { Plus, X } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { ExternalLink, Plus, Workflow, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
@@ -14,28 +14,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAttachmentUpload } from "@/components/attachments/useAttachmentUpload";
+import { Link } from "@/components/Link";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatFileSize } from "@/lib/upload";
+
+const NO_FLOW_VALUE = "__none__";
 
 interface ExistingFile {
   id: string;
   name: string;
   size: number;
   storageId: Id<"_storage">;
-}
-
-interface Einwand {
-  einwand: string;
-  antwort: string;
-}
-
-interface Weg {
-  name: string;
-  einwaende: Einwand[];
-  benefit: string;
-  ziele: string;
 }
 
 export interface ProjectFormValue {
@@ -45,7 +43,7 @@ export interface ProjectFormValue {
   benefits: string[];
   ziele: string[];
   sfInput: string;
-  wege: Weg[];
+  flowId: Id<"salesCockpitFlows"> | undefined;
   files: { plan: ExistingFile[]; scripte: ExistingFile[]; dateien: ExistingFile[] };
 }
 
@@ -57,7 +55,7 @@ export function blankProjectForm(): ProjectFormValue {
     benefits: [],
     ziele: [],
     sfInput: "",
-    wege: [],
+    flowId: undefined,
     files: { plan: [], scripte: [], dateien: [] },
   };
 }
@@ -190,86 +188,92 @@ function FileCategoryEditor({
   );
 }
 
-function WegEditor({
-  weg,
-  index,
+/** Replaces the old flat Wege editor: link an existing Flow (built on the
+ *  Flows tab) or spin up a new one without leaving this dialog. Creating a
+ *  flow here is a real, immediately-persisted `salesCockpitFlows` row (not
+ *  part of the project's own draft state) — the "Open flow editor" link
+ *  opens in a new tab precisely so that doesn't cost the user their
+ *  in-progress project edits. */
+function FlowLinkSection({
+  flowId,
   onChange,
-  onRemove,
-  t,
+  projectTitel,
 }: {
-  weg: Weg;
-  index: number;
-  onChange: (weg: Weg) => void;
-  onRemove: () => void;
-  t: (key: string, values?: Record<string, string | number>) => string;
+  flowId: Id<"salesCockpitFlows"> | undefined;
+  onChange: (flowId: Id<"salesCockpitFlows"> | undefined) => void;
+  projectTitel: string;
 }) {
-  const setEinwand = (i: number, field: keyof Einwand, value: string) => {
-    const einwaende = weg.einwaende.map((e, ei) => (ei === i ? { ...e, [field]: value } : e));
-    onChange({ ...weg, einwaende });
-  };
+  const t = useTranslations("SalesCockpit");
+  const handleError = useErrorHandler();
+  const flows = useQuery(api.salesCockpitFlows.listFlows);
+  const createFlow = useMutation(api.salesCockpitFlows.createFlow);
+  const [creating, setCreating] = useState(false);
+
+  const linked = flows?.find((f) => f._id === flowId);
+
+  async function handleCreate() {
+    setCreating(true);
+    try {
+      const res = await createFlow({ titel: projectTitel.trim() || t("flowTitelPlaceholder") });
+      onChange(res.id);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
-    <div className="mb-4 rounded-xl border border-border/70 bg-muted/30 p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold">{t("weg", { n: index + 1 })}</h3>
-        <Button type="button" variant="destructive" size="sm" onClick={onRemove}>
-          {t("wegEntfernen")}
+    <div>
+      <Label className="mb-1.5 block">{t("flowVerknuepft")}</Label>
+      <p className="mb-2.5 text-xs text-muted-foreground">{t("flowVerknuepftHint")}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Select
+          value={flowId ?? NO_FLOW_VALUE}
+          onValueChange={(v) =>
+            onChange(v === NO_FLOW_VALUE ? undefined : (v as Id<"salesCockpitFlows">))
+          }
+        >
+          <SelectTrigger className="w-auto min-w-56">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_FLOW_VALUE}>{t("flowKeinFlow")}</SelectItem>
+            {(flows ?? []).map((f) => (
+              <SelectItem key={f._id} value={f._id}>
+                {f.titel}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => void handleCreate()}
+          disabled={creating}
+        >
+          <Plus className="size-3.5" />
+          {t("neuerFlow")}
         </Button>
       </div>
-      <Label className="mb-1.5 mt-2 block">{t("wegName")}</Label>
-      <Input
-        value={weg.name}
-        onChange={(e) => onChange({ ...weg, name: e.target.value })}
-        placeholder={t("wegNamePlaceholder")}
-      />
-      <Label className="mb-1.5 mt-3 block">{t("einwaendeAntworten")}</Label>
-      {weg.einwaende.map((e, ei) => (
-        <div key={ei} className="mb-2 grid grid-cols-[1fr_1fr_auto] gap-2">
-          <Input
-            value={e.einwand}
-            onChange={(ev) => setEinwand(ei, "einwand", ev.target.value)}
-            placeholder={t("einwandPlaceholder")}
-          />
-          <Input
-            value={e.antwort}
-            onChange={(ev) => setEinwand(ei, "antwort", ev.target.value)}
-            placeholder={t("antwortPlaceholder")}
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label={t("remove")}
-            onClick={() =>
-              onChange({ ...weg, einwaende: weg.einwaende.filter((_, i) => i !== ei) })
-            }
+      {linked && (
+        <div className="mt-2.5 flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm">
+          <Workflow className="size-4 shrink-0 text-muted-foreground" />
+          <span className="min-w-0 flex-1 truncate font-medium">{linked.titel}</span>
+          <span className="shrink-0 font-mono text-xs text-muted-foreground">
+            {t("flowKnoten", { n: linked.nodeCount })}
+          </span>
+          <Link
+            href={`/sales-cockpit/flows/${linked._id}`}
+            target="_blank"
+            className="flex shrink-0 items-center gap-1 text-xs font-semibold text-primary hover:underline"
           >
-            <X className="size-4" />
-          </Button>
+            {t("flowEditorOeffnen")}
+            <ExternalLink className="size-3" />
+          </Link>
         </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() =>
-          onChange({ ...weg, einwaende: [...weg.einwaende, { einwand: "", antwort: "" }] })
-        }
-      >
-        <Plus className="size-3.5" />
-        {t("einwandHinzufuegen")}
-      </Button>
-      <Label className="mb-1.5 mt-3 block">{t("wegBenefit")}</Label>
-      <Textarea
-        value={weg.benefit}
-        onChange={(e) => onChange({ ...weg, benefit: e.target.value })}
-        placeholder={t("wegBenefitPlaceholder")}
-      />
-      <Label className="mb-1.5 mt-3 block">{t("wegZiele")}</Label>
-      <Textarea
-        value={weg.ziele}
-        onChange={(e) => onChange({ ...weg, ziele: e.target.value })}
-        placeholder={t("wegZielePlaceholder")}
-      />
+      )}
     </div>
   );
 }
@@ -337,14 +341,7 @@ export function ProjectForm({
         benefits: value.benefits,
         ziele: value.ziele,
         sfInput: value.sfInput || undefined,
-        wege: value.wege
-          .filter((w) => w.name.trim())
-          .map((w) => ({
-            name: w.name,
-            einwaende: w.einwaende.filter((e) => e.einwand.trim() || e.antwort.trim()),
-            benefit: w.benefit || undefined,
-            ziele: w.ziele || undefined,
-          })),
+        flowId: value.flowId,
         files: {
           plan: [
             ...value.files.plan.map((f) => ({
@@ -481,37 +478,11 @@ export function ProjectForm({
         />
       </div>
 
-      <div>
-        <div className="mb-2 flex items-center justify-between">
-          <Label>{t("wege")}</Label>
-        </div>
-        <p className="mb-2.5 text-xs text-muted-foreground">{t("wegeHint")}</p>
-        {value.wege.map((w, i) => (
-          <WegEditor
-            key={i}
-            weg={w}
-            index={i}
-            onChange={(next) =>
-              setValue({ ...value, wege: value.wege.map((x, xi) => (xi === i ? next : x)) })
-            }
-            onRemove={() => setValue({ ...value, wege: value.wege.filter((_, xi) => xi !== i) })}
-            t={t}
-          />
-        ))}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() =>
-            setValue({
-              ...value,
-              wege: [...value.wege, { name: "", einwaende: [], benefit: "", ziele: "" }],
-            })
-          }
-        >
-          <Plus className="size-3.5" />
-          {t("wegHinzufuegen")}
-        </Button>
-      </div>
+      <FlowLinkSection
+        flowId={value.flowId}
+        onChange={(flowId) => setValue({ ...value, flowId })}
+        projectTitel={value.titel}
+      />
 
       <div>
         <Label className="mb-1.5 block">{t("sfInputLabel")}</Label>
