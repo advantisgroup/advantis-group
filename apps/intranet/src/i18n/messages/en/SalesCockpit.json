@@ -124,5 +124,7 @@
   "flowSplitVertical": "Side-by-side panes (vertical split)",
   "flowSwapSides": "Swap pane sides",
   "flowTreeTab": "Flow",
-  "flowDetailsTab": "Details"
+  "flowDetailsTab": "Details",
+  "flowSaving": "Saving…",
+  "flowSaved": "Saved"
 }
