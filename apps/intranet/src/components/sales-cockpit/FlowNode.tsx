@@ -1,7 +1,7 @@
 "use client";
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
-import { Plus } from "lucide-react";
+import { MessageSquare, Play, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -17,24 +17,44 @@ export interface FlowNodeData {
 /** Custom React Flow node — a compact card showing the node's title and a
  *  snippet of its script/response text, with a "+" affordance (n8n's own
  *  quick-add pattern) to start a new answer branch straight from the node
- *  instead of only via the details panel. */
+ *  instead of only via the details panel. The root gets a distinct
+ *  accent/icon since it's the one node every call starts from. */
 export function FlowNode({ data }: NodeProps & { data: FlowNodeData }) {
   return (
     <div
       className={cn(
-        "relative w-56 rounded-lg border bg-card px-3 py-2.5 shadow-sm transition-colors",
+        "relative w-60 rounded-xl border bg-card px-3.5 py-3 shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-all",
+        data.isRoot && "bg-gradient-to-br from-primary/[0.07] to-transparent",
         data.selected
           ? "border-primary ring-2 ring-primary/30"
-          : "border-border hover:border-ring/50",
+          : "border-border hover:border-ring/50 hover:shadow-[0_2px_10px_-4px_rgb(0_0_0/0.15)]",
       )}
     >
       {!data.isRoot && (
         <Handle type="target" position={Position.Left} className="!bg-muted-foreground" />
       )}
-      <p className="truncate text-sm font-semibold">{data.title || "…"}</p>
-      {data.body && (
-        <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{data.body}</p>
-      )}
+      <div className="flex items-start gap-2.5">
+        <span
+          className={cn(
+            "grid size-7 shrink-0 place-items-center rounded-md",
+            data.isRoot ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+          )}
+        >
+          {data.isRoot ? (
+            <Play className="size-3 fill-current" />
+          ) : (
+            <MessageSquare className="size-3.5" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p className="truncate text-sm font-semibold leading-tight">{data.title || "…"}</p>
+          {data.body && (
+            <p className="mt-1 line-clamp-2 text-xs leading-snug text-muted-foreground">
+              {data.body}
+            </p>
+          )}
+        </div>
+      </div>
       <Handle type="source" position={Position.Right} className="!bg-muted-foreground" />
       <button
         type="button"

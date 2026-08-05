@@ -6,7 +6,9 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import {
   Background,
+  BackgroundVariant,
   Controls,
+  MarkerType,
   ReactFlow,
   useEdgesState,
   useNodesState,
@@ -16,10 +18,21 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useMutation, useQuery } from "convex/react";
-import { ArrowLeft, Columns2, GitBranch, Plus, Rows2, Trash2, ArrowLeftRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowLeftRight,
+  Check,
+  Columns2,
+  GitBranch,
+  Loader2,
+  Plus,
+  Rows2,
+  Trash2,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { useTheme } from "@/components/theme/theme-provider";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -143,6 +156,7 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
   const confirm = useConfirm();
   const handleError = useErrorHandler();
   const isMobile = useIsMobile();
+  const { resolvedTheme } = useTheme();
 
   const flow = useQuery(api.salesCockpitFlows.getFlow, { flowId });
   const renameFlow = useMutation(api.salesCockpitFlows.renameFlow);
@@ -150,10 +164,37 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
   const moveNode = useMutation(api.salesCockpitFlows.moveNode);
   const removeNode = useMutation(api.salesCockpitFlows.removeNode);
 
+  // Every edit here autosaves (there's no separate "save" action anywhere
+  // in this composer), which is easy to miss without some visible
+  // confirmation — this pill is that confirmation.
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
+  const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  async function withSaveIndicator<T>(fn: () => Promise<T>): Promise<T | undefined> {
+    if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+    setSaveState("saving");
+    try {
+      const result = await fn();
+      setSaveState("saved");
+      savedTimeoutRef.current = setTimeout(() => setSaveState("idle"), 2000);
+      return result;
+    } catch (error) {
+      setSaveState("idle");
+      handleError(error);
+      return undefined;
+    }
+  }
+
   const [titel, setTitel] = useState("");
   useEffect(() => {
     if (flow) setTitel(flow.titel);
   }, [flow]);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+    };
+  }, []);
 
   const [selectedId, setSelectedId] = useState<Id<"salesCockpitFlowNodes"> | null>(null);
   const [mobileView, setMobileView] = useState<"flow" | "details">("flow");
@@ -216,8 +257,8 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
     const parent = flow?.nodes.find((n) => n._id === parentId);
     if (!parent) return;
     const siblingCount = flow?.nodes.filter((n) => n.parentId === parentId).length ?? 0;
-    try {
-      const res = await upsertNode({
+    const res = await withSaveIndicator(() =>
+      upsertNode({
         flowId,
         parentId,
         branchLabel: t("flowNeuerZweig"),
@@ -225,12 +266,11 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
         body: "",
         x: parent.x + CHILD_X_OFFSET,
         y: parent.y + siblingCount * CHILD_Y_STEP,
-      });
-      setSelectedId(res.id);
-      if (isMobile) setMobileView("details");
-    } catch (error) {
-      handleError(error);
-    }
+      }),
+    );
+    if (!res) return;
+    setSelectedId(res.id);
+    if (isMobile) setMobileView("details");
   }
 
   // Rebuilds the canvas from server data whenever it changes — simplest way
@@ -271,15 +311,13 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
   const selectedNode = flow?.nodes.find((n) => n._id === selectedId) ?? null;
 
   async function handleNodeDragStop(_event: unknown, node: Node) {
-    try {
-      await moveNode({
+    await withSaveIndicator(() =>
+      moveNode({
         nodeId: node.id as Id<"salesCockpitFlowNodes">,
         x: node.position.x,
         y: node.position.y,
-      });
-    } catch (error) {
-      handleError(error);
-    }
+      }),
+    );
   }
 
   function handleNodeClick(_event: unknown, node: Node) {
@@ -297,18 +335,14 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
       destructive: true,
     });
     if (!ok) return;
-    try {
-      await removeNode({ nodeId: selectedNode._id });
-      setSelectedId(null);
-    } catch (error) {
-      handleError(error);
-    }
+    const res = await withSaveIndicator(() => removeNode({ nodeId: selectedNode._id }));
+    if (res) setSelectedId(null);
   }
 
   async function saveField(patch: { title?: string; body?: string; branchLabel?: string }) {
     if (!selectedNode) return;
-    try {
-      await upsertNode({
+    await withSaveIndicator(() =>
+      upsertNode({
         flowId,
         nodeId: selectedNode._id,
         title: patch.title ?? selectedNode.title,
@@ -316,10 +350,8 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
         branchLabel: patch.branchLabel ?? selectedNode.branchLabel,
         x: selectedNode.x,
         y: selectedNode.y,
-      });
-    } catch (error) {
-      handleError(error);
-    }
+      }),
+    );
   }
 
   async function saveTitel() {
@@ -333,15 +365,11 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
       return;
     }
     if (trimmed === flow.titel) return;
-    try {
-      await renameFlow({ flowId, titel: trimmed });
-    } catch (error) {
-      handleError(error);
-    }
+    await withSaveIndicator(() => renameFlow({ flowId, titel: trimmed }));
   }
 
   const treePane = (
-    <div className="relative min-h-0 flex-1">
+    <div className="relative min-h-0 flex-1 bg-gradient-to-br from-muted/40 via-transparent to-primary/[0.03]">
       {flow === undefined ? (
         <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
           {t("loading")}
@@ -356,11 +384,26 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
           onNodeClick={handleNodeClick}
           onPaneClick={() => setSelectedId(null)}
           nodeTypes={nodeTypes}
+          colorMode={resolvedTheme}
           fitView
           minZoom={0.2}
           proOptions={{ hideAttribution: false }}
+          defaultEdgeOptions={{
+            type: "smoothstep",
+            style: { stroke: "var(--muted-foreground)", strokeWidth: 1.5, opacity: 0.6 },
+            labelStyle: { fill: "var(--foreground)", fontSize: 11, fontWeight: 600 },
+            labelBgStyle: { fill: "var(--card)" },
+            labelBgPadding: [6, 3],
+            labelBgBorderRadius: 6,
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: "var(--muted-foreground)",
+              width: 16,
+              height: 16,
+            },
+          }}
         >
-          <Background gap={20} />
+          <Background variant={BackgroundVariant.Dots} gap={22} size={1.5} color="var(--border)" />
           <Controls showInteractive={false} />
         </ReactFlow>
       )}
@@ -398,6 +441,24 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
           className="h-9 min-w-0 flex-1 border-0 bg-transparent px-1 text-sm font-semibold shadow-none focus-visible:ring-1"
           aria-label={t("titel")}
         />
+
+        {/* Every edit in this composer autosaves with no explicit "save"
+            button anywhere — this is the only thing telling the user that
+            actually happened. */}
+        <div className="hidden shrink-0 items-center gap-1.5 text-xs text-muted-foreground sm:flex">
+          {saveState === "saving" && (
+            <>
+              <Loader2 className="size-3.5 animate-spin" />
+              {t("flowSaving")}
+            </>
+          )}
+          {saveState === "saved" && (
+            <>
+              <Check className="size-3.5 text-success" />
+              {t("flowSaved")}
+            </>
+          )}
+        </div>
 
         {isMobile ? (
           <div className="flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">

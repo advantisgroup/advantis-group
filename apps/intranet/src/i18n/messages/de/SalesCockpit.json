@@ -124,5 +124,7 @@
   "flowSplitVertical": "Bereiche nebeneinander (vertikale Teilung)",
   "flowSwapSides": "Seiten tauschen",
   "flowTreeTab": "Flow",
-  "flowDetailsTab": "Details"
+  "flowDetailsTab": "Details",
+  "flowSaving": "Speichert …",
+  "flowSaved": "Gespeichert"
 }
