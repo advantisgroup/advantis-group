@@ -133,8 +133,11 @@ function Cockpit({ project }: { project: Project }) {
         </p>
       </div>
 
+      {/* Keyed by flow id — switching projects must remount, not reuse, the
+          player, or its currentId would still point at a node from the
+          previous flow. */}
       {project.flow ? (
-        <FlowPlayer flowId={project.flow._id} />
+        <FlowPlayer key={project.flow._id} flowId={project.flow._id} />
       ) : (
         <div>
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
