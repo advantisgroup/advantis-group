@@ -166,20 +166,31 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
 
   // Every edit here autosaves (there's no separate "save" action anywhere
   // in this composer), which is easy to miss without some visible
-  // confirmation — this pill is that confirmation.
+  // confirmation — this pill is that confirmation. `pendingRef` counts
+  // in-flight saves rather than treating any single completion as "done":
+  // blurring one field and immediately editing another before the first
+  // mutation resolves would otherwise let the first response flip the pill
+  // to "Saved" while the second save is still in flight (or could still
+  // fail) — a false all-clear.
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const savedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingRef = useRef(0);
 
   async function withSaveIndicator<T>(fn: () => Promise<T>): Promise<T | undefined> {
     if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current);
+    pendingRef.current += 1;
     setSaveState("saving");
     try {
       const result = await fn();
-      setSaveState("saved");
-      savedTimeoutRef.current = setTimeout(() => setSaveState("idle"), 2000);
+      pendingRef.current -= 1;
+      if (pendingRef.current === 0) {
+        setSaveState("saved");
+        savedTimeoutRef.current = setTimeout(() => setSaveState("idle"), 2000);
+      }
       return result;
     } catch (error) {
-      setSaveState("idle");
+      pendingRef.current -= 1;
+      if (pendingRef.current === 0) setSaveState("idle");
       handleError(error);
       return undefined;
     }
@@ -444,21 +455,26 @@ export function FlowComposer({ flowId }: { flowId: Id<"salesCockpitFlows"> }) {
 
         {/* Every edit in this composer autosaves with no explicit "save"
             button anywhere — this is the only thing telling the user that
-            actually happened. */}
-        <div className="hidden shrink-0 items-center gap-1.5 text-xs text-muted-foreground sm:flex">
-          {saveState === "saving" && (
-            <>
+            actually happened. Renders nothing at all while idle so it
+            doesn't permanently eat space in the already-tight mobile
+            header; the icon (not just the text label) stays visible below
+            `sm` too, since mobile autosaves the same as desktop and needs
+            the same confirmation. */}
+        {saveState !== "idle" && (
+          <div
+            aria-live="polite"
+            className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground"
+          >
+            {saveState === "saving" ? (
               <Loader2 className="size-3.5 animate-spin" />
-              {t("flowSaving")}
-            </>
-          )}
-          {saveState === "saved" && (
-            <>
+            ) : (
               <Check className="size-3.5 text-success" />
-              {t("flowSaved")}
-            </>
-          )}
-        </div>
+            )}
+            <span className="hidden sm:inline">
+              {saveState === "saving" ? t("flowSaving") : t("flowSaved")}
+            </span>
+          </div>
+        )}
 
         {isMobile ? (
           <div className="flex items-center gap-1 rounded-full border border-border bg-muted/40 p-0.5">
