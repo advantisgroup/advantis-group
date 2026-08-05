@@ -84,6 +84,14 @@ export const createFlow = mutation({
       createdByUserId: user._id,
       createdAt: now,
     });
+    // `salesCockpitProjects.flowId` is what project surfaces (the Projekte
+    // list, the Cockpit view) actually read to decide "is a flow linked" —
+    // picking a project here needs to write that side too, or a flow
+    // created from this tab with a project attached would be invisible
+    // from every project-facing view until someone re-links it by hand.
+    if (projectId) {
+      await ctx.db.patch(projectId, { flowId, updatedAt: now });
+    }
     const rootId = await ctx.db.insert("salesCockpitFlowNodes", {
       flowId,
       title: "Start",
