@@ -186,12 +186,6 @@ export default function DirectoryPage() {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="truncate font-medium">{p.name}</span>
-                <Badge variant="muted" className="shrink-0">
-                  {roleLabel(p, tRoles)}
-                </Badge>
-              </div>
               <p className="truncate text-xs text-muted-foreground">{p.jobTitle || p.email}</p>
               <PersonIdentityBadges
                 role={p.role}
