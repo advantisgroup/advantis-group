@@ -66,20 +66,28 @@ export function RelevantDateCallout({
       }[value.kind]
     : null;
 
+  const saveLabel = t(
+    isExternal
+      ? "saveToIntranetCalendar"
+      : complete
+        ? "inIntranetCalendar"
+        : "addToIntranetCalendar",
+  );
+
   return (
     <>
       <div
         className={cn(
-          "flex flex-col gap-2.5 border-y border-border/60 bg-muted/35 px-5 py-2.5 sm:flex-row sm:items-center",
+          "flex items-start gap-2.5 border-y border-border/60 bg-muted/35 px-4 py-2.5",
           className,
         )}
       >
-        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+        <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
           <CalendarDays className="size-3.5" />
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-            <p className="font-semibold">{formatRichDate(value, locale)}</p>
+            <p className="text-sm font-semibold">{formatRichDate(value, locale)}</p>
             {kindLabel && (
               <span className="text-xs font-medium text-muted-foreground">{kindLabel}</span>
             )}
@@ -94,21 +102,20 @@ export function RelevantDateCallout({
             </p>
           )}
         </div>
+        {/* Icon-only below `sm` — the full label doesn't fit next to the
+            date on a phone-width card without wrapping the whole callout
+            onto a third row. */}
         <Button
           variant="outline"
-          size="sm"
-          className="self-start sm:self-auto"
+          size="icon-sm"
+          className="shrink-0 sm:h-8 sm:w-auto sm:px-3"
           onClick={addToCalendar}
           disabled={busy}
+          aria-label={saveLabel}
+          title={saveLabel}
         >
-          <CalendarPlus className="mr-1.5 size-4" />
-          {t(
-            isExternal
-              ? "saveToIntranetCalendar"
-              : complete
-                ? "inIntranetCalendar"
-                : "addToIntranetCalendar",
-          )}
+          <CalendarPlus />
+          <span className="hidden sm:inline">{saveLabel}</span>
         </Button>
       </div>
       <RichDatePrompt
