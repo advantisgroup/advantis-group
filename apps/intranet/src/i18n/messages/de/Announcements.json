@@ -35,6 +35,7 @@
   "titlePlaceholder": "Titel",
   "pin": "Oben anheften",
   "by": "von {name}",
+  "copyLink": "Link kopieren",
   "deleteConfirm": "Diese Ankündigung löschen?",
   "empty": "Noch keine Ankündigungen",
   "viewedBy": "{count, plural, =0 {Noch nicht gesehen} one {# Aufruf} other {# Aufrufe}}",

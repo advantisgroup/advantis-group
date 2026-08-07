@@ -20,6 +20,7 @@ import {
   FileText,
   Link as LinkIcon,
   Megaphone,
+  MoreHorizontal,
   Pencil,
   Pin,
   Plus,
@@ -28,6 +29,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { toast } from "sonner";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
@@ -39,6 +41,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, useConfirm } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
@@ -58,7 +66,6 @@ import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import { ALL_CATEGORIES_VALUE, type Announcement } from "@/lib/announcements";
-import { CopyButton } from "@/components/activity/CopyButton";
 
 function ViewersPopover({
   announcementId,
@@ -281,263 +288,269 @@ function AnnouncementCard({
   }, [a._id, a.read, a.scheduled, markRead]);
 
   return (
-    <article
-      ref={articleRef}
-      className={cn(
-        "group relative overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
-        a.pinned && "border-primary/30",
-        (a.scheduled || a.expired) && "opacity-80",
-        highlighted && "deeplink-hl",
-      )}
-    >
-      {a.pinned && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
-      {/* Header: author + title (left), date/time + actions (right). Stacks
-          into two rows below `sm` instead of squeezing the title, badges,
-          and action buttons into one cramped row — a plain `flex-wrap` on
-          a single row doesn't reliably do this, since the title block's
-          `flex-1` (flex-basis: 0%) + `min-w-0` gives it a zero hypothetical
-          size for the browser's line-fitting math, so the always-visible
-          action icons can keep "fitting" on line 1 while the title is the
-          one actually being squeezed. */}
-      <header className="flex flex-col gap-2 border-b border-border/60 px-4 py-3.5 sm:flex-row sm:items-start sm:gap-3 sm:px-5">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
-          <Avatar className="size-9 shrink-0">
-            {a.authorAvatar && <AvatarImage src={a.authorAvatar} alt={a.authorName} />}
-            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-              {initials(a.authorName, a.authorName)}
-            </AvatarFallback>
-          </Avatar>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-              {a.pinned && (
-                <Pin
-                  className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
-                  aria-label={t("pinned")}
-                />
-              )}
-              <h2 className="truncate font-display text-base font-semibold leading-tight">
-                {a.title}
-              </h2>
-              {a.category && (
-                <Badge
-                  variant="muted"
-                  className="min-w-0 shrink gap-1 font-normal"
-                  title={a.category}
-                >
-                  <Tag className="size-3 shrink-0" />
-                  <span className="truncate">{a.category}</span>
-                </Badge>
-              )}
-              {!a.read && !a.scheduled && (
-                <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-              )}
-              {a.scheduled && (
-                <Badge variant="warning" className="gap-1">
-                  <CalendarClock className="size-3" />
-                  {t("scheduledFor", {
-                    date: formatDateTime(a.publishedAt, locale),
-                  })}
-                </Badge>
-              )}
-              {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
+    <div className="flex gap-3 sm:gap-4">
+      {/* Profile section - outside card */}
+      <div className="flex shrink-0 flex-col items-center gap-1.5 pt-1">
+        <Avatar className="size-10 sm:size-11">
+          {a.authorAvatar && <AvatarImage src={a.authorAvatar} alt={a.authorName} />}
+          <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+            {initials(a.authorName, a.authorName)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="hidden text-center text-[10px] text-muted-foreground sm:block max-w-[60px] line-clamp-2">
+          {a.authorName}
+        </div>
+      </div>
+
+      {/* Card content */}
+      <article
+        ref={articleRef}
+        className={cn(
+          "group relative flex-1 overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
+          a.pinned && "border-primary/30",
+          (a.scheduled || a.expired) && "opacity-80",
+          highlighted && "deeplink-hl",
+        )}
+      >
+        {a.pinned && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
+        {/* Simplified header with title, badges, and actions dropdown */}
+        <header className="flex flex-col gap-2 border-b border-border/60 px-4 py-3.5 sm:px-5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                {a.pinned && (
+                  <Pin
+                    className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
+                    aria-label={t("pinned")}
+                  />
+                )}
+                <h2 className="truncate font-display text-base font-semibold leading-tight">
+                  {a.title}
+                </h2>
+                {a.category && (
+                  <Badge
+                    variant="muted"
+                    className="min-w-0 shrink gap-1 font-normal"
+                    title={a.category}
+                  >
+                    <Tag className="size-3 shrink-0" />
+                    <span className="truncate">{a.category}</span>
+                  </Badge>
+                )}
+                {!a.read && !a.scheduled && (
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+                )}
+              </div>
             </div>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {a.authorName}
-              {a.updatedAt && (
-                <>
-                  {" · "}
-                  {a.updatedByUserId && a.updatedByName ? (
-                    <>
-                      {t("editedBy")}{" "}
-                      <MentionLink
-                        userId={a.updatedByUserId}
-                        className="font-medium text-foreground"
-                      >
-                        {a.updatedByName}
-                      </MentionLink>
-                    </>
-                  ) : (
-                    t("edited")
-                  )}{" "}
-                  {formatTime(a.updatedAt, "de-DE")}
-                </>
-              )}
-            </p>
+
+            {/* Actions dropdown menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(
+                      `https://intern.advantisgroup.de/announcements?id=${a._id}`
+                    );
+                    toast.success(tc("copied"));
+                  }}
+                >
+                  <LinkIcon className="h-4 w-4" />
+                  <span>{t("copyLink")}</span>
+                </DropdownMenuItem>
+                {canManage && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/announcements/${a._id}/edit`}>
+                        <Pencil className="h-4 w-4" />
+                        <span>{t("edit")}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={onDelete}
+                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>{tc("delete")}</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-1 self-end sm:self-start">
-          <CopyButton
-            value={`https://intern.advantisgroup.de/announcements?id=${a._id}`}
-            label="Copy announcement link"
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-8 text-muted-foreground opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-            >
-              <LinkIcon className="h-4 w-4" />
-            </Button>
-          </CopyButton>
-          {canManage && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t("edit")}
-                className="size-8 text-muted-foreground opacity-100 transition-opacity focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                asChild
-              >
-                <Link href={`/announcements/${a._id}/edit`}>
-                  <Pencil className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={tc("delete")}
-                className="size-8 text-muted-foreground opacity-100 transition-opacity hover:text-destructive focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
-                onClick={onDelete}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </>
+
+          {/* Metadata row */}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            {a.scheduled && (
+              <Badge variant="warning" className="gap-1">
+                <CalendarClock className="size-3" />
+                {t("scheduledFor", {
+                  date: formatDateTime(a.publishedAt, locale),
+                })}
+              </Badge>
+            )}
+            {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
+            <time>{formatDateTime(a.publishedAt, locale)}</time>
+            {a.updatedAt && (
+              <>
+                <span>·</span>
+                {a.updatedByUserId && a.updatedByName ? (
+                  <>
+                    {t("editedBy")}{" "}
+                    <MentionLink
+                      userId={a.updatedByUserId}
+                      className="font-medium text-foreground"
+                    >
+                      {a.updatedByName}
+                    </MentionLink>
+                  </>
+                ) : (
+                  t("edited")
+                )}{" "}
+                {formatTime(a.updatedAt, "de-DE")}
+              </>
+            )}
+          </div>
+        </header>
+
+        {/* Styled message body */}
+        <div className="px-5 py-3.5">
+          {a.relevantDate && (
+            <RelevantDateCallout
+              value={a.relevantDate}
+              summary={a.title}
+              className="-mx-5 -mt-3.5 mb-3 border-t-0"
+            />
           )}
-
-          <time className="whitespace-nowrap text-xs text-muted-foreground">
-            {formatDateTime(a.publishedAt, locale)}
-          </time>
-        </div>
-      </header>
-
-      {/* Styled message body */}
-      <div className="px-5 py-3.5">
-        {a.relevantDate && (
-          <RelevantDateCallout
-            value={a.relevantDate}
-            summary={a.title}
-            className="-mx-5 -mt-3.5 mb-3 border-t-0"
-          />
-        )}
-        <CollapsibleBody html={a.body} title={a.title} />
-        {a.attachments.length > 0 && (
-          <div className="mt-4 space-y-3">
-            {/* Images embed inline */}
-            {a.attachments.some((att) => att.kind === "image" && att.url) && (
-              <div className="flex flex-wrap gap-2">
-                {a.attachments
-                  .filter((att) => att.kind === "image" && att.url)
-                  .map((att) => {
-                    const fromOneDrive = Boolean(att.oneDrivePath);
-                    return fromOneDrive ? (
-                      <a
-                        key={att.storageId}
-                        href={pathToUrl(att.oneDrivePath!)}
-                        className="group/att relative block overflow-hidden rounded-lg border border-border"
-                      >
-                        <img
-                          src={att.url ?? ""}
-                          alt={att.name}
-                          className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
-                        />
-                        <span
-                          title={tc("fromOneDrive")}
-                          className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
+          <CollapsibleBody html={a.body} title={a.title} />
+          {a.attachments.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {/* Images embed inline */}
+              {a.attachments.some((att) => att.kind === "image" && att.url) && (
+                <div className="flex flex-wrap gap-2">
+                  {a.attachments
+                    .filter((att) => att.kind === "image" && att.url)
+                    .map((att) => {
+                      const fromOneDrive = Boolean(att.oneDrivePath);
+                      return fromOneDrive ? (
+                        <a
+                          key={att.storageId}
+                          href={pathToUrl(att.oneDrivePath!)}
+                          className="group/att relative block overflow-hidden rounded-lg border border-border"
                         >
-                          <Cloud className="size-3.5 text-blue-500" />
-                        </span>
-                      </a>
-                    ) : (
-                      <button
-                        key={att.storageId}
-                        type="button"
-                        onClick={() => onOpenImage(att.url ?? "", att.name)}
-                        className="group/att relative block overflow-hidden rounded-lg border border-border"
-                      >
-                        <img
-                          src={att.url ?? ""}
-                          alt={att.name}
-                          className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
-                        />
-                      </button>
-                    );
-                  })}
-              </div>
-            )}
+                          <img
+                            src={att.url ?? ""}
+                            alt={att.name}
+                            className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
+                          />
+                          <span
+                            title={tc("fromOneDrive")}
+                            className="absolute right-1.5 top-1.5 grid size-6 place-items-center rounded-full bg-background/90 shadow ring-1 ring-border"
+                          >
+                            <Cloud className="size-3.5 text-blue-500" />
+                          </span>
+                        </a>
+                      ) : (
+                        <button
+                          key={att.storageId}
+                          type="button"
+                          onClick={() => onOpenImage(att.url ?? "", att.name)}
+                          className="group/att relative block overflow-hidden rounded-lg border border-border"
+                        >
+                          <img
+                            src={att.url ?? ""}
+                            alt={att.name}
+                            className="max-h-60 w-auto max-w-full object-cover transition-transform duration-200 group-hover/att:scale-[1.02]"
+                          />
+                        </button>
+                      );
+                    })}
+                </div>
+              )}
 
-            {/* Other files show as chips with name + type/size */}
-            {a.attachments.some((att) => att.kind !== "image") && (
-              <div className="flex flex-wrap gap-2">
-                {a.attachments
-                  .filter((att) => att.kind !== "image")
-                  .map((att) => {
-                    const fromOneDrive = Boolean(att.oneDrivePath);
-                    return (
-                      <a
-                        key={att.storageId}
-                        href={fromOneDrive ? pathToUrl(att.oneDrivePath!) : (att.url ?? undefined)}
-                        target={fromOneDrive ? undefined : "_blank"}
-                        rel={fromOneDrive ? undefined : "noreferrer"}
-                        download={fromOneDrive ? undefined : att.name}
-                        className="group/att flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-accent"
-                      >
-                        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+              {/* Other files show as chips with name + type/size */}
+              {a.attachments.some((att) => att.kind !== "image") && (
+                <div className="flex flex-wrap gap-2">
+                  {a.attachments
+                    .filter((att) => att.kind !== "image")
+                    .map((att) => {
+                      const fromOneDrive = Boolean(att.oneDrivePath);
+                      return (
+                        <a
+                          key={att.storageId}
+                          href={fromOneDrive ? pathToUrl(att.oneDrivePath!) : (att.url ?? undefined)}
+                          target={fromOneDrive ? undefined : "_blank"}
+                          rel={fromOneDrive ? undefined : "noreferrer"}
+                          download={fromOneDrive ? undefined : att.name}
+                          className="group/att flex items-center gap-2.5 rounded-lg border border-border bg-background px-3 py-2 transition-colors hover:bg-accent"
+                        >
+                          <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+                            {fromOneDrive ? (
+                              <Cloud className="size-4 text-blue-500" />
+                            ) : (
+                              <FileText className="size-4" />
+                            )}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block max-w-[14rem] truncate text-sm font-medium">
+                              {att.name}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                              {fromOneDrive
+                                ? tc("fromOneDrive")
+                                : [
+                                    att.contentType?.split("/")[1]?.toUpperCase(),
+                                    att.size != null ? formatFileSize(att.size) : null,
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ") || t("attachments")}
+                            </span>
+                          </span>
                           {fromOneDrive ? (
-                            <Cloud className="size-4 text-blue-500" />
+                            <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-0 transition-opacity group-hover/att:opacity-100" />
                           ) : (
-                            <FileText className="size-4" />
+                            <Download className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/att:opacity-100" />
                           )}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block max-w-[14rem] truncate text-sm font-medium">
-                            {att.name}
-                          </span>
-                          <span className="block text-xs text-muted-foreground">
-                            {fromOneDrive
-                              ? tc("fromOneDrive")
-                              : [
-                                  att.contentType?.split("/")[1]?.toUpperCase(),
-                                  att.size != null ? formatFileSize(att.size) : null,
-                                ]
-                                  .filter(Boolean)
-                                  .join(" · ") || t("attachments")}
-                          </span>
-                        </span>
-                        {fromOneDrive ? (
-                          <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-0 transition-opacity group-hover/att:opacity-100" />
-                        ) : (
-                          <Download className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/att:opacity-100" />
-                        )}
-                      </a>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Reactions + viewed status. Wraps instead of squeezing the chips
-          when a popular post collects more reactions than a narrow screen
-          has room for on one line. */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-border/60 px-5 py-2">
-        <ReactionPicker
-          side="top"
-          onPick={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
-        />
-        <ReactionChips
-          reactions={a.reactions}
-          onToggle={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
-        />
-        <div className="ml-auto">
-          <ViewersPopover
-            announcementId={a._id}
-            count={a.viewCount}
-            total={canManage ? a.audienceCount : undefined}
-            canManage={canManage}
-          />
+                        </a>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      </div>
-    </article>
+
+        {/* Reactions + viewed status. Wraps instead of squeezing the chips
+            when a popular post collects more reactions than a narrow screen
+            has room for on one line. */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-border/60 px-5 py-2">
+          <ReactionPicker
+            side="top"
+            onPick={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
+          />
+          <ReactionChips
+            reactions={a.reactions}
+            onToggle={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
+          />
+          <div className="ml-auto">
+            <ViewersPopover
+              announcementId={a._id}
+              count={a.viewCount}
+              total={canManage ? a.audienceCount : undefined}
+              canManage={canManage}
+            />
+          </div>
+        </div>
+      </article>
+    </div>
   );
 }
 
