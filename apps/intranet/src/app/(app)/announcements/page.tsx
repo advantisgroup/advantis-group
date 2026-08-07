@@ -630,7 +630,7 @@ export default function AnnouncementsPage() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl" data-tour="tour-announcements-list">
+    <div className="mx-auto max-w-4xl" data-tour="tour-announcements-list">
       <PageHeaderBar title={t("title")} tourCheckpoint="announcements" />
       <PageHeaderActions
         actions={
