@@ -5,8 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { useMutation, useQuery } from "convex/react";
 import {
   CalendarClock,
@@ -16,7 +14,6 @@ import {
   Cloud,
   Download,
   ExternalLink,
-  Eye,
   FileText,
   Link as LinkIcon,
   Megaphone,
@@ -32,7 +29,9 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { ReactionsSummary } from "@/components/announcements/ReactionsSummary";
 import { RelevantDateCallout } from "@/components/announcements/RelevantDateCallout";
+import { ViewersSummary } from "@/components/announcements/ViewersSummary";
 import { MentionLink } from "@/components/profile/MentionLink";
 import { MentionRichText } from "@/components/profile/MentionRichText";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
@@ -43,7 +42,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
+import { ReactionPicker } from "@/components/ui/reactions";
 import { htmlToText } from "@/components/ui/rich-text";
 import {
   Select,
@@ -60,130 +59,6 @@ import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import { ALL_CATEGORIES_VALUE, type Announcement } from "@/lib/announcements";
-
-function ViewersPopover({
-  announcementId,
-  count,
-  total,
-  canManage,
-}: {
-  announcementId: Id<"announcements">;
-  count: number;
-  /** Audience size — shown as "x / y" to the author/admins only. */
-  total?: number;
-  /** Author/admin gets a second tab listing who hasn't read it yet. */
-  canManage: boolean;
-}) {
-  const t = useTranslations("Announcements");
-  const locale = useLocale();
-  const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"read" | "unread">("read");
-  const viewers = useQuery(
-    api.announcements.viewers,
-    open && tab === "read" ? { announcementId } : "skip",
-  );
-  const nonReaders = useQuery(
-    api.announcements.nonReaders,
-    open && canManage && tab === "unread" ? { announcementId } : "skip",
-  );
-
-  return (
-    <PopoverPrimitive.Root
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (!o) setTab("read");
-      }}
-    >
-      <PopoverPrimitive.Trigger asChild>
-        <button
-          type="button"
-          className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <Eye className="h-3.5 w-3.5" />
-          <span className="tabular-nums">
-            {total !== undefined ? t("readStats", { count, total }) : t("viewedBy", { count })}
-          </span>
-        </button>
-      </PopoverPrimitive.Trigger>
-      <PopoverPrimitive.Portal>
-        <PopoverPrimitive.Content
-          align="end"
-          sideOffset={6}
-          className="z-50 max-h-80 w-64 overflow-y-auto rounded-lg border border-border/70 bg-popover p-1.5 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
-        >
-          {canManage && (
-            <div className="mb-1 grid grid-cols-2 gap-1 px-0.5 pb-1">
-              <button
-                type="button"
-                onClick={() => setTab("read")}
-                className={cn(
-                  "rounded-md px-2 py-1 text-xs font-medium transition-colors",
-                  tab === "read"
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:bg-accent/60",
-                )}
-              >
-                {t("viewedBy", { count })}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab("unread")}
-                className={cn(
-                  "rounded-md px-2 py-1 text-xs font-medium transition-colors",
-                  tab === "unread"
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:bg-accent/60",
-                )}
-              >
-                {t("notReadYet")}
-              </button>
-            </div>
-          )}
-          {!canManage && (
-            <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("viewedBy", { count })}
-            </p>
-          )}
-          {tab === "read" ? (
-            viewers === undefined ? (
-              <p className="px-2 py-2 text-xs text-muted-foreground">…</p>
-            ) : viewers.length === 0 ? (
-              <p className="px-2 py-2 text-xs text-muted-foreground">{t("noViews")}</p>
-            ) : (
-              viewers.map((v) => (
-                <div key={v.userId} className="flex items-center gap-2 rounded-md px-2 py-1.5">
-                  <Avatar className="size-6">
-                    {v.avatar && <AvatarImage src={v.avatar} alt={v.name} />}
-                    <AvatarFallback className="text-[9px]">{initials(v.name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="flex-1 truncate text-sm">{v.name}</span>
-                  <span className="shrink-0 text-[10px] text-muted-foreground">
-                    {formatDateTime(v.readAt, locale)}
-                  </span>
-                </div>
-              ))
-            )
-          ) : nonReaders === undefined ? (
-            <p className="px-2 py-2 text-xs text-muted-foreground">…</p>
-          ) : nonReaders.length === 0 ? (
-            <p className="px-2 py-2 text-xs text-muted-foreground">{t("everyoneRead")}</p>
-          ) : (
-            nonReaders.map((v) => (
-              <div key={v.userId} className="flex items-center gap-2 rounded-md px-2 py-1.5">
-                <Avatar className="size-6">
-                  {v.avatar && <AvatarImage src={v.avatar} alt={v.name} />}
-                  <AvatarFallback className="text-[9px]">{initials(v.name)}</AvatarFallback>
-                </Avatar>
-                <span className="flex-1 truncate text-sm">{v.name}</span>
-              </div>
-            ))
-          )}
-        </PopoverPrimitive.Content>
-      </PopoverPrimitive.Portal>
-    </PopoverPrimitive.Root>
-  );
-}
 
 /** Collapses long bodies behind a "read more" toggle. */
 function CollapsibleBody({ html, title }: { html: string; title: string }) {
@@ -499,13 +374,15 @@ function AnnouncementCard({
             side="top"
             onPick={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
           />
-          <ReactionChips
+          <ReactionsSummary
+            announcementId={a._id}
             reactions={a.reactions}
             onToggle={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
           />
           <div className="ml-auto">
-            <ViewersPopover
+            <ViewersSummary
               announcementId={a._id}
+              sample={a.viewerSample}
               count={a.viewCount}
               total={canManage ? a.audienceCount : undefined}
               canManage={canManage}

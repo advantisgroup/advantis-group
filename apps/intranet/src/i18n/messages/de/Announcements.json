@@ -64,5 +64,6 @@
   "scheduledFor": "Wird gesendet {date}",
   "scheduledToast": "Ankündigung geplant",
   "expired": "Abgelaufen",
+  "reactions": "Reaktionen",
   "optionsHint": "Kategorie, Zielgruppe, Anhänge, relevantes Datum und Zeitplanung für diese Ankündigung."
 }

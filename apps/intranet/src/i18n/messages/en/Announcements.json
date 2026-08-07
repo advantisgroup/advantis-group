@@ -64,5 +64,6 @@
   "scheduledFor": "Sends {date}",
   "scheduledToast": "Announcement scheduled",
   "expired": "Expired",
+  "reactions": "Reactions",
   "optionsHint": "Category, audience, attachments, relevant date and scheduling for this announcement."
 }
