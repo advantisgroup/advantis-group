@@ -184,5 +184,134 @@
     "source_activity": "ActivityTrack",
     "source_onedrive": "OneDrive",
     "source_integrations": "Integrations"
+  },
+  "overview": {
+    "open": "Open",
+    "jumpTo": "All admin areas",
+    "jumpToHint": "Every page in the admin area",
+    "throughput": "Throughput",
+    "throughputHint": "What the org filed and finished, by day",
+    "rangeLabel": "Time range",
+    "rangeDays": "{days} days",
+    "familyHint": "Last {range}",
+    "viewLabel": "View",
+    "viewChart": "Chart",
+    "viewTable": "Table",
+    "tableDay": "Day",
+    "sparklineLabel": "{series}, last {days} days",
+    "vitals": {
+      "headcount": "Headcount",
+      "joined": "{count} joined in 30 days",
+      "headcountContext": "{managers} managers · {external} external",
+      "queue": "Waiting on you",
+      "queueOverdue": "{count} past due",
+      "queueClear": "Nothing overdue",
+      "queueContext": "Across {areas} areas",
+      "online": "Online now",
+      "seenToday": "{count} seen today",
+      "onlineContext": "of {total} active members",
+      "systems": "Integrations",
+      "systemsOk": "All reporting healthy",
+      "incidents": "{count} live now",
+      "flagsOff": "{count} feature off",
+      "flagsAllOn": "All features on"
+    },
+    "queue": {
+      "title": "Needs attention",
+      "hint": "Everything across the intranet waiting on a decision",
+      "waiting": "{count} waiting",
+      "oldest": "waiting {age}",
+      "overdue": "{count} overdue",
+      "clearTitle": "Nothing is waiting",
+      "clearBody": "Every request, invite, upload and report has been dealt with.",
+      "accessRequests": "Access requests",
+      "invites": "Pending invites",
+      "uploads": "Upload approvals",
+      "itTickets": "Open IT tickets",
+      "errorReports": "Open error reports",
+      "errorMeasures": "Open measures",
+      "suggestions": "Open suggestions",
+      "passwordResets": "Password resets",
+      "orgDataReview": "Org data review"
+    },
+    "series": {
+      "ticketsOpened": "Opened",
+      "ticketsClosed": "Closed",
+      "errorsOpened": "Reported",
+      "errorsClosed": "Closed",
+      "suggestions": "Suggestions",
+      "requests": "Access requests",
+      "uploads": "Uploads",
+      "joined": "New members",
+      "announcements": "Announcements",
+      "updates": "Updates",
+      "adminActions": "Admin actions"
+    },
+    "families": {
+      "support": "Support",
+      "quality": "Quality",
+      "access": "People & access",
+      "comms": "Comms",
+      "governance": "Governance"
+    },
+    "people": {
+      "members": "Members",
+      "departmentsTitle": "Departments",
+      "departmentsHint": "Active members per department, and the role mix",
+      "noDepartments": "No departments set up yet.",
+      "unassigned": "Unassigned",
+      "admins": "Admins",
+      "managers": "Managers",
+      "employees": "Employees",
+      "accountsTitle": "Accounts",
+      "accountsHint": "Hygiene checks and who is arriving",
+      "dormant": "Dormant over 30 days",
+      "neverSignedIn": "Never signed in",
+      "suspended": "Suspended",
+      "upcomingStarts": "Starting in 30 days",
+      "newestTitle": "Newest members"
+    },
+    "systems": {
+      "title": "Systems",
+      "hint": "Integrations, agents and anything switched off",
+      "noIntegrations": "No integrations reporting yet.",
+      "noIncidents": "No live incidents or maintenance",
+      "lastOk": "last healthy {age}",
+      "agents": "Desktop agents",
+      "agentsDetail": "{online} online · {stale} stale · {pending} pending",
+      "webhook": "Clockodo webhook",
+      "webhookDetail": "last event {age} · {failures} failures in 24h",
+      "flagOff": "{key} is switched off",
+      "source": {
+        "genesys": "Genesys",
+        "clockodo": "Clockodo"
+      },
+      "status": {
+        "ok": "Healthy",
+        "unavailable": "Unavailable",
+        "unconfigured": "Not configured"
+      },
+      "updateType": {
+        "incident": "Incident",
+        "maintenance": "Maintenance",
+        "changelog": "Changelog"
+      },
+      "updateStatus": {
+        "investigating": "Investigating",
+        "identified": "Identified",
+        "monitoring": "Monitoring",
+        "resolved": "Resolved",
+        "scheduled": "Scheduled",
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      }
+    },
+    "audit": {
+      "title": "Recent admin activity",
+      "hint": "Privileged actions across every subsystem",
+      "empty": "No admin actions recorded yet.",
+      "unknown": "unknown"
+    }
   }
 }
