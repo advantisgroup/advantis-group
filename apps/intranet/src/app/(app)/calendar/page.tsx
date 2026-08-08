@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -194,88 +195,89 @@ function EventDialog({
   }
 
   return (
-    <Dialog open={draft !== null} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{form.eventId ? t("editEvent") : t("addEvent")}</DialogTitle>
-          <DialogDescription>{t("addEventHint")}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <Input
-              placeholder={t("eventTitle")}
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              className="h-11 text-base font-medium"
-            />
-            <Input
-              placeholder={t("location")}
-              value={form.location}
-              onChange={(e) => set("location", e.target.value)}
-            />
-            <Textarea
-              placeholder={t("description")}
-              value={form.description}
-              onChange={(e) => set("description", e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>{t("start")}</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.start}
-                  onChange={(e) => set("start", e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t("end")}</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.end}
-                  onChange={(e) => set("end", e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 pt-1">
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-[var(--primary)]"
-                  checked={form.allDay}
-                  onChange={(e) => set("allDay", e.target.checked)}
-                />
-                {t("allDay")}
-              </label>
-            </div>
-          </div>
-
-          <Select value={form.audience} onValueChange={(v) => set("audience", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tc("all")}</SelectItem>
-              {departments.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <DialogFooter>
+    <ResponsiveDialog
+      open={draft !== null}
+      onOpenChange={onOpenChange}
+      title={form.eventId ? t("editEvent") : t("addEvent")}
+      description={t("addEventHint")}
+      footer={
+        <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
           <Button onClick={submit} disabled={busy || !form.title.trim()}>
             {form.eventId ? tc("save") : tc("create")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="space-y-3">
+          <Input
+            placeholder={t("eventTitle")}
+            value={form.title}
+            onChange={(e) => set("title", e.target.value)}
+            className="h-11 text-base font-medium"
+          />
+          <Input
+            placeholder={t("location")}
+            value={form.location}
+            onChange={(e) => set("location", e.target.value)}
+          />
+          <Textarea
+            placeholder={t("description")}
+            value={form.description}
+            onChange={(e) => set("description", e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>{t("start")}</Label>
+              <Input
+                type="datetime-local"
+                value={form.start}
+                onChange={(e) => set("start", e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t("end")}</Label>
+              <Input
+                type="datetime-local"
+                value={form.end}
+                onChange={(e) => set("end", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 pt-1">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                className="size-4 accent-[var(--primary)]"
+                checked={form.allDay}
+                onChange={(e) => set("allDay", e.target.checked)}
+              />
+              {t("allDay")}
+            </label>
+          </div>
+        </div>
+
+        <Select value={form.audience} onValueChange={(v) => set("audience", v)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{tc("all")}</SelectItem>
+            {departments.map((d) => (
+              <SelectItem key={d} value={d}>
+                {d}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </ResponsiveDialog>
   );
 }
 

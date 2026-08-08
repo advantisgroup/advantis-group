@@ -108,7 +108,7 @@ function AttachmentChip({
         onClick={onRemove}
         aria-label={removeLabel}
         disabled={uploading}
-        className="shrink-0 text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
+        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
       >
         <X className="size-3.5" />
       </button>

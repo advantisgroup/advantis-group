@@ -63,7 +63,10 @@ export function FlowNode({ data }: NodeProps & { data: FlowNodeData }) {
           data.onAddBranch();
         }}
         aria-label="Add branch"
-        className="absolute -right-3 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:border-primary hover:text-primary"
+        // `nodrag` is React Flow's own convention for opting an element out
+        // of node-drag/pan handling — without it, a touch tap here is
+        // ambiguous with "start dragging/panning the canvas".
+        className="nodrag absolute -right-4 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors hover:border-primary hover:text-primary"
       >
         <Plus className="size-3.5" />
       </button>

@@ -42,16 +42,10 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Link } from "@/components/Link";
+import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useConfirm } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -1097,64 +1091,83 @@ function RowMenu({
 }) {
   const t = useTranslations("Files");
   const isFile = item.type === "file";
+
+  const items: ActionMenuItem[] = [
+    ...(isFile
+      ? ([
+          {
+            key: "preview",
+            label: t("preview"),
+            icon: <FileText className="size-4" />,
+            onSelect: () => onAction("preview"),
+          },
+          {
+            key: "download",
+            label: t("download"),
+            icon: <Download className="size-4" />,
+            onSelect: () => onAction("download"),
+          },
+          {
+            key: "versions",
+            label: t("versions"),
+            icon: <RotateCcw className="size-4" />,
+            onSelect: () => onAction("versions"),
+          },
+        ] satisfies ActionMenuItem[])
+      : []),
+    {
+      key: "copylink",
+      label: t("copyLink"),
+      icon: <Copy className="size-4" />,
+      onSelect: () => onAction("copylink"),
+    },
+    ...(item.type === "folder"
+      ? ([
+          {
+            key: "favorite",
+            label: favorite ? t("removeFavorite") : t("addFavorite"),
+            icon: <Star className={cn("size-4", favorite && "fill-amber-400 text-amber-500")} />,
+            onSelect: () => onAction("favorite"),
+          },
+        ] satisfies ActionMenuItem[])
+      : []),
+    ...(item.canWrite
+      ? ([
+          { key: "sep-write", separator: true },
+          {
+            key: "share",
+            label: t("share"),
+            icon: <Link2 className="size-4" />,
+            onSelect: () => onAction("share"),
+          },
+          {
+            key: "rename",
+            label: t("rename"),
+            icon: <Pencil className="size-4" />,
+            onSelect: () => onAction("rename"),
+          },
+          {
+            key: "delete",
+            label: t("delete"),
+            icon: <Trash2 className="size-4" />,
+            onSelect: () => onAction("delete"),
+            destructive: true,
+          },
+        ] satisfies ActionMenuItem[])
+      : []),
+  ];
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <ActionMenu
+      ariaLabel={t("actions")}
+      align="end"
+      items={items}
+      trigger={
         <Button variant="ghost" size="icon-sm" aria-label={t("actions")}>
           <MoreVertical className="size-4" />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {isFile && (
-          <DropdownMenuItem onClick={() => onAction("preview")}>
-            <FileText className="size-4" />
-            {t("preview")}
-          </DropdownMenuItem>
-        )}
-        {isFile && (
-          <DropdownMenuItem onClick={() => onAction("download")}>
-            <Download className="size-4" />
-            {t("download")}
-          </DropdownMenuItem>
-        )}
-        {isFile && (
-          <DropdownMenuItem onClick={() => onAction("versions")}>
-            <RotateCcw className="size-4" />
-            {t("versions")}
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onClick={() => onAction("copylink")}>
-          <Copy className="size-4" />
-          {t("copyLink")}
-        </DropdownMenuItem>
-        {item.type === "folder" && (
-          <DropdownMenuItem onClick={() => onAction("favorite")}>
-            <Star className={cn("size-4", favorite && "fill-amber-400 text-amber-500")} />
-            {favorite ? t("removeFavorite") : t("addFavorite")}
-          </DropdownMenuItem>
-        )}
-        {item.canWrite && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onAction("share")}>
-              <Link2 className="size-4" />
-              {t("share")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onAction("rename")}>
-              <Pencil className="size-4" />
-              {t("rename")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => onAction("delete")}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="size-4" />
-              {t("delete")}
-            </DropdownMenuItem>
-          </>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      }
+    />
   );
 }
 

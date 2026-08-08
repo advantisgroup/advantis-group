@@ -24,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -529,37 +530,38 @@ export function ClockodoAdminPanel() {
           header/bottom nav, reachable from anywhere on the page, so toggling
           a card anchored to the top of the roster would open off-screen for
           anyone who's scrolled down. */}
-      <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("createUser")}</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("name")} />
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t("email")}
-            />
-            <Input
-              type="number"
-              value={vacationDaysPerYear}
-              onChange={(e) => setVacationDaysPerYear(e.target.value)}
-              placeholder={t("vacationDaysPerYear")}
-              className="sm:col-span-2"
-            />
-          </div>
-          <DialogFooter>
+      <ResponsiveDialog
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        title={t("createUser")}
+        footer={
+          <>
             <Button variant="ghost" onClick={() => setShowCreate(false)}>
               {t("cancel")}
             </Button>
             <Button onClick={onCreate} disabled={creating || !name.trim() || !email.trim()}>
               {t("createUser")}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </>
+        }
+      >
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("name")} />
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={t("email")}
+          />
+          <Input
+            type="number"
+            value={vacationDaysPerYear}
+            onChange={(e) => setVacationDaysPerYear(e.target.value)}
+            placeholder={t("vacationDaysPerYear")}
+            className="sm:col-span-2"
+          />
+        </div>
+      </ResponsiveDialog>
 
       {gaps.length > 0 && (
         <div className="flex flex-col gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">

@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 
 export const COMPOSER_EMOJIS = [
   "😀",
@@ -82,6 +83,7 @@ export function MessageComposer({
 }) {
   const t = useTranslations("Chat");
   const tc = useTranslations("Common");
+  const keyboardInset = useKeyboardInset();
   const internalRef = useRef<HTMLTextAreaElement | null>(null);
   const textareaRef = externalRef ?? internalRef;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -101,7 +103,12 @@ export function MessageComposer({
   return (
     <div
       className="border-t border-border/70 p-3"
-      style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+      style={{
+        // Layout viewport doesn't shrink for the keyboard, so this needs
+        // lifting by however much it covers (see AnnouncementComposer).
+        marginBottom: keyboardInset,
+        paddingBottom: keyboardInset ? 0 : "calc(0.75rem + env(safe-area-inset-bottom))",
+      }}
     >
       {above}
       <div className="relative flex items-end gap-2 rounded-xl border border-border bg-background p-1.5 shadow-sm transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">

@@ -239,6 +239,7 @@ export default function ClockodoEmployeeDetailPage() {
   const [hoursThisWeek, setHoursThisWeek] = useState<number | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
+  const [tab, setTab] = useState("profile");
 
   useEffect(() => {
     if (!Number.isFinite(clockodoUserId)) return;
@@ -394,13 +395,27 @@ export default function ClockodoEmployeeDetailPage() {
         }
       />
 
-      <Tabs defaultValue="profile">
-        <TabsList>
+      <Tabs value={tab} onValueChange={setTab}>
+        {/* A full-width horizontal strip here would be a second control
+            competing with the mobile bottom nav's thumb-zone space, so below
+            md this collapses to a single compact Select instead. */}
+        <TabsList className="hidden md:inline-flex">
           <TabsTrigger value="profile">{t("tabProfile")}</TabsTrigger>
           <TabsTrigger value="permissions">{t("tabPermissions")}</TabsTrigger>
           <TabsTrigger value="hours">{t("tabHoursVacation")}</TabsTrigger>
           <TabsTrigger value="history">{t("tabHistory")}</TabsTrigger>
         </TabsList>
+        <Select value={tab} onValueChange={setTab}>
+          <SelectTrigger className="md:hidden">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="profile">{t("tabProfile")}</SelectItem>
+            <SelectItem value="permissions">{t("tabPermissions")}</SelectItem>
+            <SelectItem value="hours">{t("tabHoursVacation")}</SelectItem>
+            <SelectItem value="history">{t("tabHistory")}</SelectItem>
+          </SelectContent>
+        </Select>
 
         <TabsContent value="profile" className="space-y-5">
           <Section label={t("linkedEmployee")}>
