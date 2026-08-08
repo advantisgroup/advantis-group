@@ -50,6 +50,10 @@
     "turbo": "^2.10.7",
     "typescript": "^7.0.2"
   },
+  "//overrides": "Keep vaul on the same @radix-ui/react-dialog the apps use. A second copy nests its own @radix-ui/react-dismissable-layer, and that module tracks the body's original `pointer-events` in a module-level variable — two instances then disagree about what to restore and can leave the page permanently dead to clicks. See docs/radix-vaul-dedupe.md.",
+  "overrides": {
+    "@radix-ui/react-dialog": "^1.1.23"
+  },
   "engines": {
     "node": ">=18"
   },
