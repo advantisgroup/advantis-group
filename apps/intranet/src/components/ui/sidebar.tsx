@@ -214,7 +214,7 @@ export function SidebarHeader({ children, className }: React.HTMLAttributes<HTML
   return (
     <div
       className={cn(
-        "flex h-16 items-center gap-2 px-4 group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:justify-center",
+        "flex h-16 shrink-0 items-center gap-2 px-4 group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:justify-center",
         className,
       )}
     >
@@ -240,7 +240,10 @@ export function SidebarFooter({ children, className }: React.HTMLAttributes<HTML
   return (
     <div
       className={cn(
-        "mt-auto flex flex-col gap-3 border-t border-sidebar-border px-4 py-3 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-2",
+        // `shrink-0` so a long nav list eats into SidebarContent (which
+        // scrolls) rather than compressing the footer's rows — the sidebar
+        // and the mobile sheet both clip rather than scroll as a whole.
+        "mt-auto flex shrink-0 flex-col gap-3 border-t border-sidebar-border px-4 py-3 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-2",
         className,
       )}
     >

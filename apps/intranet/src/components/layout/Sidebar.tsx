@@ -453,7 +453,10 @@ export function Sidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter>
+      {/* Roomier on mobile: this footer is the bottom of a sheet a thumb
+          reaches into, so its rows get tap-target height and the branding
+          line gets space of its own instead of sitting on top of them. */}
+      <SidebarFooter className="py-4 md:py-3">
         {/* The top bar stays minimal on mobile, so the account and preferences
             controls live here at the bottom-left of the sidebar. On desktop
             they remain in the header, so this row is hidden there. */}
@@ -492,10 +495,10 @@ export function Sidebar() {
             <Link
               href="/updates"
               onClick={close}
-              className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0"
+              className="flex items-center gap-2 rounded-md px-2 py-2.5 text-sm font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 md:py-1.5 md:text-xs"
             >
               <div className="relative shrink-0">
-                <Rss className="size-3.5" />
+                <Rss className="size-4 md:size-3.5" />
                 {activeUpdate?.top ? (
                   <span className="absolute -right-0.5 -top-0.5 hidden size-1.5 rounded-full bg-primary ring-1 ring-sidebar group-data-[state=collapsed]/sidebar:block" />
                 ) : null}
@@ -516,7 +519,7 @@ export function Sidebar() {
             </Tooltip>
           );
         })()}
-        <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden">
+        <p className="border-t border-sidebar-border pt-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden md:border-0 md:pt-0">
           Advantis Group
         </p>
       </SidebarFooter>
