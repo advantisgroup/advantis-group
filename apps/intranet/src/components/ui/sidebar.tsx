@@ -54,6 +54,15 @@ export function SidebarProvider({
     if (stored === "collapsed") setOpenState(false);
   }, []);
 
+  // The shell below is pinned to the viewport and <main> is the scroll
+  // container, so the document must not scroll at all — see
+  // `.app-shell-locked` in globals.css. Scoped to this provider's lifetime
+  // because the pages outside the app shell scroll normally.
+  React.useEffect(() => {
+    document.documentElement.classList.add("app-shell-locked");
+    return () => document.documentElement.classList.remove("app-shell-locked");
+  }, []);
+
   const setOpen = React.useCallback((value: boolean) => {
     setOpenState(value);
     window.localStorage.setItem(SIDEBAR_STORAGE_KEY, value ? "expanded" : "collapsed");
@@ -106,11 +115,14 @@ export function SidebarProvider({
             } as React.CSSProperties
           }
           // Pinned to the viewport so <main> can be the scroll container.
-          // Print has to undo that: a fixed, overflow-hidden box is one
-          // viewport tall, so everything below the fold is clipped and the
-          // job ends after page one.
+          // Height comes from `.app-shell-viewport` (dvh) rather than
+          // `inset-0`, which would resolve against the large viewport and
+          // hide the bottom nav under a phone's URL bar. Print has to undo
+          // that: a fixed, overflow-hidden box is one viewport tall, so
+          // everything below the fold is clipped and the job ends after
+          // page one.
           className={cn(
-            "fixed inset-0 flex overflow-hidden print:static print:block print:overflow-visible",
+            "app-shell-viewport fixed inset-x-0 top-0 flex overflow-hidden print:static print:block print:h-auto print:overflow-visible",
             className,
           )}
         >
@@ -158,7 +170,7 @@ export function Sidebar({
       data-tour={dataTour}
       aria-label={ariaLabel}
       className={cn(
-        "group/sidebar z-30 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear print:hidden md:flex",
+        "group/sidebar z-30 hidden h-full shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear print:hidden md:flex",
         state === "collapsed" ? "w-[var(--sidebar-width-icon)]" : "w-[var(--sidebar-width)]",
         className,
       )}
@@ -202,7 +214,7 @@ export function SidebarHeader({ children, className }: React.HTMLAttributes<HTML
   return (
     <div
       className={cn(
-        "flex h-16 items-center gap-2 px-4 group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:justify-center",
+        "flex h-16 shrink-0 items-center gap-2 px-4 group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:justify-center",
         className,
       )}
     >
@@ -228,7 +240,10 @@ export function SidebarFooter({ children, className }: React.HTMLAttributes<HTML
   return (
     <div
       className={cn(
-        "mt-auto flex flex-col gap-3 border-t border-sidebar-border px-4 py-3 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-2",
+        // `shrink-0` so a long nav list eats into SidebarContent (which
+        // scrolls) rather than compressing the footer's rows — the sidebar
+        // and the mobile sheet both clip rather than scroll as a whole.
+        "mt-auto flex shrink-0 flex-col gap-3 border-t border-sidebar-border px-4 py-3 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-2",
         className,
       )}
     >
