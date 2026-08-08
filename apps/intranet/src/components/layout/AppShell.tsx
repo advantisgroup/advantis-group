@@ -10,6 +10,7 @@ import { useMutation, useQuery } from "convex/react";
 
 import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
 import { CommandPalette } from "@/components/CommandPalette";
+import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
@@ -74,15 +75,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const heartbeat = useMutation(api.presence.heartbeat);
   const mainRef = useRef<HTMLElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const { state: tourState, phase: tourPhase, targetRect } = useTour();
   const tourActive = (tourState?.active && tourPhase === "active") ?? false;
   const { identity: pageHeaderBar } = usePageHeaderBarState();
-
-  // The main pane is the scroll container (not the window), so reset it to the
-  // top on navigation — otherwise a new page would open mid-scroll.
-  useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0 });
-  }, [pathname]);
 
   // Chat and the announcement composer are full-screen, self-managing views
   // (their own header and sticky composer/toolbar), so they opt out of the
@@ -116,6 +112,19 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // overflow-x to compute to auto too, per the CSS overflow spec, so any
   // content pushed past <main>'s padding box gets clipped right back to it.)
   const isUpdateDetail = pathname.startsWith("/updates/") && pathname !== "/updates/new";
+
+  // Sitewide smooth scrolling on the real scroll container (see
+  // `useSmoothScroll` for why this can't be marketing's `<ReactLenis root>`).
+  const lenisRef = useSmoothScroll(mainRef, mainContentRef, !immersive);
+
+  // The main pane is the scroll container (not the window), so reset it to the
+  // top on navigation — otherwise a new page would open mid-scroll. When Lenis
+  // owns the container it has to do the reset: a bare `scrollTo` leaves its
+  // animated position pointing at the old offset, which it then eases back to.
+  useEffect(() => {
+    if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
+    else mainRef.current?.scrollTo({ top: 0 });
+  }, [pathname, lenisRef]);
 
   // Keep presence fresh while the app is open so chat can show online state.
   // 60s leaves ample margin under the 5-minute online window
@@ -199,7 +208,17 @@ function AppShellInner({ children }: { children: ReactNode }) {
         >
           {/* Isolate page crashes so the surrounding shell stays usable.
               Keyed by route so navigating away clears a previous error. */}
-          <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+          {immersive ? (
+            <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+          ) : (
+            // Lenis needs a single content element inside the scroller to
+            // translate. Only rendered off the immersive branch — those routes
+            // size themselves to the viewport through <main>, and an extra div
+            // would break their `h-full` chain.
+            <div ref={mainContentRef}>
+              <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+            </div>
+          )}
         </main>
       </SidebarInset>
 

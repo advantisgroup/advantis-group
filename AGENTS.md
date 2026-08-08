@@ -67,6 +67,34 @@ pushing to the working branch only, and merge into `main` once at a real
 stopping point (the whole task done, or a checkpoint the user explicitly
 asks for), not after every intermediate commit.
 
+## Convex backend conventions
+
+Read [`docs/convex-best-practices.md`](./docs/convex-best-practices.md)
+before adding or editing anything in `packages/convex/convex`. It's Convex's
+official best-practices list annotated with where this repo follows it, where
+it deliberately doesn't, and why. Nothing enforces any of it automatically —
+`packages/convex` has no lint script and none of the `@convex-dev/*` ESLint
+rules are installed — so it's on whoever writes the function.
+
+The four that bite hardest here:
+
+- **`.collect()` only on org-scale tables.** `users`/`presence`/`departments`
+  are fine; `activitySamples`, `stateSamples`, `messages`, the audit tables
+  and `notifications` grow without bound and need `.take()` on an index
+  (newest-first) or `.paginate()`.
+- **Access control first, via `lib/auth.ts`.** `requireUser` /
+  `requireManager` / `requireAdmin` / `requireCapability`, plus non-throwing
+  `hasCapability` when the decision is "how much of this record do I reveal."
+  Don't hand-roll a `ctx.auth` check.
+- **The public `api*` functions are deliberate.** `activity/state.ts`'s
+  `pushSignal`/`reportHealth`/`mappings` and every `api*`-prefixed function
+  elsewhere are reached from `apps/api` server-to-server behind a server key
+  and validate it in-handler. Converting them to `internal` breaks the
+  integration relays.
+- **No `Date.now()` inside a query's `.withIndex` range bound.** Comparing it
+  against already-read rows (overdue labels) is cheap; making the read range
+  itself move continuously is not. Pass a rounded time in as an argument.
+
 ## Profile / Subprofile architecture
 
 `users` is the one canonical intranet identity ("Profile"); every

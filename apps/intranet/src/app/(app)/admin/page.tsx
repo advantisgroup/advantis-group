@@ -1,198 +1,71 @@
 "use client";
 
-import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
-import { ChevronRight, Clock, Mail, ShieldCheck, Users, type LucideIcon } from "lucide-react";
+import { useMemo } from "react";
+
+import { ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
+import { ActionQueue } from "@/components/admin/overview/ActionQueue";
+import { AuditFeed, JumpTo } from "@/components/admin/overview/AuditFeed";
+import { AccountsRadar, OrgComposition } from "@/components/admin/overview/PeoplePanels";
+import { SystemsPanel } from "@/components/admin/overview/SystemsPanel";
+import { ThroughputPanel } from "@/components/admin/overview/ThroughputPanel";
+import { Vitals } from "@/components/admin/overview/Vitals";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
-import { Link } from "@/components/Link";
-import { useHasCapability, useIsAdmin, useIsManager } from "@/components/providers/current-user";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { useIsAdmin, useIsManager } from "@/components/providers/current-user";
 
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  accent,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: number | string;
-  accent: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card px-4 py-3.5">
-      <span
-        className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-lg ring-1 ring-inset",
-          accent
-            ? "bg-signal/12 text-signal ring-signal/25"
-            : "bg-panel-2 text-muted-foreground ring-border",
-        )}
-      >
-        <Icon className="size-4" />
-      </span>
-      <div className="min-w-0">
-        <p className="text-xl font-semibold leading-none tabular-nums">{value}</p>
-        <p className="mt-1 truncate text-xs text-muted-foreground">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function QuickLinkCard({
-  href,
-  icon: Icon,
-  label,
-  count,
-}: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  count?: number;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3 rounded-xl border border-border/70 bg-card px-4 py-3.5 transition-all hover:-translate-y-0.5 hover:border-border hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-18px_rgb(0_0_0/0.18)]"
-    >
-      <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary [&_svg]:size-4">
-        <Icon />
-      </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{label}</span>
-      {count ? (
-        <Badge variant="warning">{count > 99 ? "99+" : count}</Badge>
-      ) : (
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground" />
-      )}
-    </Link>
-  );
-}
-
-export default function AdminPage() {
+/**
+ * The organization control room.
+ *
+ * Read top to bottom it answers four questions in order of how often they're
+ * asked: does anything need me right now (vitals + queue), is the org getting
+ * through its work (throughput), who is here and are the accounts clean
+ * (people), and is anything broken (systems). The link grid that used to be the
+ * whole page is last — it's navigation, not information.
+ *
+ * Manager+ only, matching every `adminOverview.*` query's own `requireManager`.
+ * The `/admin` layout admits narrower capability holders (`manage_uploads`,
+ * `access_integrations`, …) so they can reach their one subpage; they get the
+ * forbidden screen here rather than a page of failed subscriptions.
+ */
+export default function AdminOverviewPage() {
   const t = useTranslations("Admin");
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
-  const hasUploadsView = useHasCapability("manage_uploads");
 
-  const members = useQuery(api.users.list, { includeSuspended: true });
-  const requests = useQuery(api.accessRequests.list, isManager ? { status: "pending" } : "skip");
-  const invites = useQuery(api.invites.list, isManager ? { status: "pending" } : "skip");
-  const pendingUploads = useQuery(
-    api.onedrive.listPending,
-    isManager || hasUploadsView ? {} : "skip",
-  );
+  // Day bucketing happens server-side but has to land on the viewer's
+  // midnight, not UTC's — Convex has no timezone of its own. Memoized so the
+  // query args stay referentially stable across re-renders.
+  const tzOffsetMinutes = useMemo(() => new Date().getTimezoneOffset(), []);
 
-  if (!isManager) {
-    return <ForbiddenScreen />;
-  }
-
-  const dash = (n: number | undefined) => (n === undefined ? "—" : n);
-  const activeMembers = members?.filter((m) => m.status === "active").length;
-  const reqCount = requests?.length;
-  const invCount = invites?.length;
-  const uploadCount = pendingUploads?.length;
-
-  const stats: {
-    label: string;
-    value: number | string;
-    icon: LucideIcon;
-    accent: boolean;
-  }[] = [
-    {
-      label: t("overviewMembers"),
-      value: dash(activeMembers),
-      icon: Users,
-      accent: false,
-    },
-    {
-      label: t("overviewRequests"),
-      value: dash(reqCount),
-      icon: Clock,
-      accent: !!reqCount,
-    },
-    {
-      label: t("overviewInvites"),
-      value: dash(invCount),
-      icon: Mail,
-      accent: !!invCount,
-    },
-  ];
-
-  // Badge counts for the quick-access cards below — keyed by href so each
-  // card can surface "something's waiting here" without a second query per
-  // card (the underlying queries are already fetched for the stat row).
-  const counts: Record<string, number | undefined> = {
-    "/admin/requests": reqCount,
-    "/admin/invites": invCount,
-    "/admin/uploads": uploadCount,
-  };
-  const priorities = [
-    { href: "/admin/requests", icon: Clock, label: t("overviewRequests"), count: reqCount },
-    { href: "/admin/invites", icon: Mail, label: t("overviewInvites"), count: invCount },
-    { href: "/admin/uploads", icon: ShieldCheck, label: t("pendingUploads"), count: uploadCount },
-  ];
-  const priorityHrefs = new Set(priorities.map((item) => item.href));
+  if (!isManager) return <ForbiddenScreen />;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="mx-auto max-w-7xl space-y-6 pb-4">
       <PageHeaderBar
         title={t("organizationTitle")}
         description={t("organizationSubtitle")}
         icon={<ShieldCheck />}
       />
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {stats.map((s) => (
-          <StatCard key={s.label} {...s} />
-        ))}
+      <Vitals tzOffsetMinutes={tzOffsetMinutes} />
+
+      <ActionQueue />
+
+      <ThroughputPanel />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <OrgComposition tzOffsetMinutes={tzOffsetMinutes} />
+        <AccountsRadar tzOffsetMinutes={tzOffsetMinutes} />
       </div>
 
-      <section>
-        <div className="mb-3 flex items-baseline justify-between gap-3">
-          <h2 className="text-sm font-semibold">{t("organizationPriorities")}</h2>
-          <p className="text-xs text-muted-foreground">{t("organizationPrioritiesHint")}</p>
-        </div>
-        <div className="grid gap-2.5 sm:grid-cols-3">
-          {priorities.map((item) => (
-            <QuickLinkCard key={item.href} {...item} />
-          ))}
-        </div>
-      </section>
-
-      <div className="space-y-6">
-        {ADMIN_NAV_GROUPS.filter((group) => group.labelKey !== "nav.groupGeneral").map((group) => {
-          const items = group.items.filter(
-            (item) =>
-              (!item.managerOnly || isManager) &&
-              (!item.adminOnly || isAdmin) &&
-              !priorityHrefs.has(item.href),
-          );
-          if (items.length === 0) return null;
-          return (
-            <section key={group.labelKey}>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {t(group.labelKey)}
-              </h2>
-              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map((item) => (
-                  <QuickLinkCard
-                    key={item.href}
-                    href={item.href}
-                    icon={item.icon}
-                    label={t(item.labelKey)}
-                    count={counts[item.href]}
-                  />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SystemsPanel />
+        {isAdmin ? <AuditFeed /> : <JumpTo />}
       </div>
+
+      {isAdmin && <JumpTo />}
     </div>
   );
 }
