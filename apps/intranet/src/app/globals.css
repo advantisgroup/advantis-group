@@ -569,13 +569,30 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* The app shell pins itself to the viewport and makes <main> the scroll
+   container, so the document itself must never scroll. Without this the mobile
+   browser still treats <html> as scrollable: a swipe past the end of <main>
+   chains out to the document and drags the whole app up, leaving a strip of
+   dead page below the bottom nav. Set by SidebarProvider while it's mounted
+   rather than on `html` outright, because the standalone pages sharing this
+   stylesheet (legal, sign-in, /performance, /wallbox-sales-academy) are
+   ordinary documents that do scroll. */
+html.app-shell-locked,
+html.app-shell-locked body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 /* The app shell pins itself to the viewport so <main> can be the scroll
    container. Print needs the document to flow at its natural height instead,
    or the page break never happens and everything past the first sheet is
    dropped. Un-layered so it beats the utility classes that set the heights. */
 @media print {
   html,
-  body {
+  body,
+  html.app-shell-locked,
+  html.app-shell-locked body {
     height: auto;
     overflow: visible;
   }
@@ -650,6 +667,18 @@ input[type="week"] {
 }
 
 @layer components {
+  /* The pinned app shell's height. `inset: 0` on a fixed element resolves
+     against the *large* viewport, so on a phone with the URL bar showing the
+     bottom of the shell — the bottom nav — sits under the browser chrome, and
+     the document can't be scrolled to reveal it (see `.app-shell-locked`).
+     `dvh` tracks the visible area instead; the `vh` line is the fallback for
+     Safari < 15.4. In `components` so a Tailwind height utility on the same
+     element still wins. */
+  .app-shell-viewport {
+    height: 100vh;
+    height: 100dvh;
+  }
+
   /* Smooth scroll behavior */
   html {
     scroll-behavior: smooth;

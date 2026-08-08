@@ -188,7 +188,10 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <main
           ref={mainRef}
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto print:block print:h-auto print:overflow-visible",
+            // `overscroll-contain`: swiping past either end of the page must
+            // stop here rather than handing the gesture to the document,
+            // where it turns into a rubber-band or a pull-to-refresh.
+            "min-h-0 flex-1 overflow-y-auto overscroll-contain print:block print:h-auto print:overflow-visible",
             !immersive && "md:pb-8",
             isUpdateDetail || immersive ? "" : "px-4 pt-6 md:px-8 md:pt-8",
             immersive ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]",
