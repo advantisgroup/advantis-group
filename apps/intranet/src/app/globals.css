@@ -672,6 +672,30 @@ html.app-shell-locked body {
   }
 }
 
+/* Lenis smooth scrolling (see `components/effects/SmoothScrolling.tsx`).
+   Trimmed from marketing's copy: the `html.lenis` rules there exist because
+   marketing runs Lenis in `root` mode on the document — here the scroller is
+   `<main>`, so the document is never the Lenis wrapper and those rules would
+   have nothing to match. What remains is the part that applies to any wrapper:
+   kill native smooth-scroll so it can't fight the eased position, let a nested
+   `data-lenis-prevent` scroller contain its own overscroll, and stop iframes
+   from eating pointer events mid-scroll. Un-layered so it beats utilities. */
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
 /* iOS Safari zooms the viewport whenever a focused control's text is under
    16px, so every tap on a field makes the layout lurch and the user has to
    pinch back out. Un-layered on purpose: the same rule inside `@layer base`
