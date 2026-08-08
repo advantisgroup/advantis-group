@@ -138,7 +138,7 @@ export default function ErrorManagementSettingsPage() {
                   type="button"
                   onClick={() => void onDeleteCategory(c._id, c.name)}
                   aria-label={tc("delete")}
-                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
                 >
                   <Trash2 className="size-4" />
                 </button>

@@ -10,6 +10,7 @@ import ReactMarkdown from "react-markdown";
 
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { cn } from "@/lib/utils";
 
 const API = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "https://api.advantisgroup.de";
@@ -143,6 +144,7 @@ export function WikiChat({ className }: { className?: string } = {}) {
   const loadingQuotes = locale === "de" ? LOADING_QUOTES_DE : LOADING_QUOTES_EN;
   const errorQuotes = locale === "de" ? ERROR_QUOTES_DE : ERROR_QUOTES_EN;
   const { getToken } = useAuth();
+  const keyboardInset = useKeyboardInset();
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -607,7 +609,16 @@ export function WikiChat({ className }: { className?: string } = {}) {
           </div>
 
           {/* Composer */}
-          <div className="flex gap-2 border-t border-border p-3 sm:p-4">
+          <div
+            className="flex gap-2 border-t border-border p-3 sm:p-4"
+            style={{
+              // Layout viewport doesn't shrink for the keyboard, so this
+              // needs lifting by however much it covers (see
+              // AnnouncementComposer's identical fix).
+              marginBottom: keyboardInset,
+              paddingBottom: keyboardInset ? 0 : "env(safe-area-inset-bottom)",
+            }}
+          >
             <textarea
               rows={1}
               value={input}

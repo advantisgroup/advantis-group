@@ -60,6 +60,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { formatTime, initials, relativeTime } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
@@ -118,6 +119,7 @@ export function ConversationView({
   const confirm = useConfirm();
   const { getToken } = useAuth();
   const isMobile = useIsMobile();
+  const keyboardInset = useKeyboardInset();
   const { openFileViewer } = useFileViewer();
 
   // Reactive: this re-runs the moment access changes (left, removed, deleted,
@@ -1126,7 +1128,14 @@ export function ConversationView({
       {/* Composer */}
       <div
         className="border-t border-border/70 p-3"
-        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        style={{
+          // The layout viewport doesn't shrink for the keyboard, so sitting
+          // at the bottom of the column puts this behind it (see
+          // AnnouncementComposer's identical fix). Lift it by however much
+          // the keyboard covers.
+          marginBottom: keyboardInset,
+          paddingBottom: keyboardInset ? 0 : "calc(0.75rem + env(safe-area-inset-bottom))",
+        }}
       >
         {(replyTo || editing) && (
           <div className="mb-2 flex items-center gap-2 rounded-lg border border-blue-500/30 bg-blue-500/5 px-3 py-1.5 text-xs">

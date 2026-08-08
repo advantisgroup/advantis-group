@@ -34,6 +34,7 @@ export default function TeamsPage() {
       <OrgEntityCrudList
         entities={teams}
         showMemberCount
+        createInDialog
         createPlaceholder={t("orgEntity.teamNamePlaceholder")}
         onCreate={(name) => createTeam({ name }).then(() => {})}
         onRename={(teamId, name) =>

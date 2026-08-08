@@ -54,7 +54,7 @@ export function DocxPreview({ url }: { url: string }) {
   }
 
   return (
-    <div className="h-full w-full max-w-3xl overflow-auto rounded-lg bg-white p-8 shadow-2xl">
+    <div className="h-full w-full max-w-3xl overflow-auto rounded-lg bg-white p-4 shadow-2xl sm:p-8">
       <div className="docx-preview" dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );

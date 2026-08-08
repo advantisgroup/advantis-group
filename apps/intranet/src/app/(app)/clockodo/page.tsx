@@ -665,7 +665,12 @@ function Timetable() {
         </div>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0">
-        <div className="grid min-w-[36rem] grid-cols-7 border-b border-border/70">
+        {/* No min-width here (unlike the multi-week Planner grid below, which
+            genuinely needs it): 7 columns already fit a phone screen if left
+            to shrink naturally, so forcing one made a simple day picker
+            scroll for no reason. `overflow-x-auto` above still catches the
+            rare viewport too narrow for even that. */}
+        <div className="grid grid-cols-7 border-b border-border/70">
           {dates.map((date) => {
             const active = date === inThisWeek;
             const isToday = date === isoToday();

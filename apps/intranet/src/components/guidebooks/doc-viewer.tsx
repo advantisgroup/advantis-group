@@ -142,7 +142,7 @@ function DocImage({ block }: { block: Extract<DocBlock, { kind: "image" }> }) {
           height={block.height}
           className="h-auto max-w-full rounded-lg"
         />
-        <span className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100">
+        <span className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-100 shadow-sm backdrop-blur transition-opacity md:opacity-0 md:group-hover:opacity-100">
           <ZoomIn className="size-4" />
         </span>
       </button>

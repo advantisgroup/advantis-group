@@ -44,6 +44,7 @@ import {
   useIsManager,
 } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -117,6 +118,7 @@ export function CommandPalette() {
   const hasApplicantAccess = useHasApplicantAccess();
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
+  const keyboardInset = useKeyboardInset();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
@@ -441,7 +443,16 @@ export function CommandPalette() {
       <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
         <DialogPrimitive.Portal>
           <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-          <DialogPrimitive.Content className="fixed left-1/2 top-[12vh] z-50 flex max-h-[76vh] w-[92vw] max-w-xl -translate-x-1/2 flex-col overflow-hidden rounded-xl border border-border/70 bg-popover shadow-2xl shadow-black/30 duration-150 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+          <DialogPrimitive.Content
+            className="fixed left-1/2 top-[12vh] z-50 flex max-h-[76vh] w-[92vw] max-w-xl -translate-x-1/2 flex-col overflow-hidden rounded-xl border border-border/70 bg-popover shadow-2xl shadow-black/30 duration-150 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+            style={
+              // top-[12vh] + max-h-[76vh] end 12vh above the bottom edge already;
+              // an open keyboard eats into the layout viewport's bottom without
+              // shrinking it, so without this the results list ends up hidden
+              // behind the keyboard instead of shrinking to fit above it.
+              keyboardInset ? { maxHeight: `calc(76vh - ${keyboardInset}px)` } : undefined
+            }
+          >
             <DialogPrimitive.Title className="sr-only">{t("hint")}</DialogPrimitive.Title>
             <div className="flex items-center gap-2.5 border-b border-border/70 px-4">
               <Search className="size-4 shrink-0 text-muted-foreground" />

@@ -14,16 +14,11 @@ import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PersonIdentityBadges } from "@/components/people/PersonIdentityBadges";
 import { UserProfile } from "@/components/profile/UserProfile";
 import { TOUR_CHECKPOINTS } from "@/components/tour/tour-config";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -135,21 +130,29 @@ export function MembersPanel({ isManager }: { isManager: boolean }) {
   // without this menu growing forever.
   function MemberMenu({ m }: { m: Member }) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
+      <ActionMenu
+        ariaLabel={t("moreActions")}
+        align="end"
+        trigger={
           <Button size="icon-sm" variant="ghost" aria-label={t("moreActions")}>
             <MoreHorizontal />
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={() => setSelectedId(m._id as Id<"users">)}>
-            <Users2 className="size-4" /> {t("viewProfile")}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => copyEmail(m.email)}>
-            <Copy className="size-4" /> {t("copyEmail")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        }
+        items={[
+          {
+            key: "view-profile",
+            label: t("viewProfile"),
+            icon: <Users2 className="size-4" />,
+            onSelect: () => setSelectedId(m._id as Id<"users">),
+          },
+          {
+            key: "copy-email",
+            label: t("copyEmail"),
+            icon: <Copy className="size-4" />,
+            onSelect: () => copyEmail(m.email),
+          },
+        ]}
+      />
     );
   }
 

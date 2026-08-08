@@ -103,21 +103,24 @@ export function SuggestionRow({
 
   return (
     <div className="border-b border-border/60 last:border-b-0">
+      {/* A rigid 12-column grid had no room to reflow at phone widths — this
+          stacks the four pieces on mobile and lines them back up into a row
+          from `sm` up, instead of compressing every column. */}
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="grid w-full grid-cols-12 items-center gap-2 px-4 py-3 text-left hover:bg-accent/50"
+        className="flex w-full flex-col gap-1.5 px-4 py-3 text-left hover:bg-accent/50 sm:flex-row sm:items-center sm:gap-2"
       >
-        <div className="col-span-2 text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground sm:w-20 sm:shrink-0">
           {formatDateTime(suggestion.createdAt, locale)}
         </div>
-        <div className="col-span-3 truncate text-sm font-medium">{suggestion.title}</div>
-        <div className="col-span-2">
+        <div className="min-w-0 truncate text-sm font-medium sm:flex-1">{suggestion.title}</div>
+        <div className="sm:shrink-0">
           <Badge variant="muted" className="max-w-full truncate font-normal">
             {suggestion.categoryName}
           </Badge>
         </div>
-        <div className="col-span-5 flex flex-wrap items-center justify-end gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 sm:ml-auto sm:justify-end">
           <Badge variant={STATUS_VARIANT[suggestion.status]}>
             {t(`status_${suggestion.status}`)}
           </Badge>

@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { type OneDriveVersion, useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 
@@ -66,20 +67,13 @@ export function NewFolderDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{t("newFolder")}</DialogTitle>
-          <DialogDescription>{t("newFolderDesc")}</DialogDescription>
-        </DialogHeader>
-        <Input
-          autoFocus
-          value={name}
-          placeholder={t("folderName")}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && void submit()}
-        />
-        <DialogFooter>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("newFolder")}
+      description={t("newFolderDesc")}
+      footer={
+        <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("cancel")}
           </Button>
@@ -87,9 +81,17 @@ export function NewFolderDialog({
             {busy && <Loader2 className="size-4 animate-spin" />}
             {t("create")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <Input
+        autoFocus
+        value={name}
+        placeholder={t("folderName")}
+        onChange={(e) => setName(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && void submit()}
+      />
+    </ResponsiveDialog>
   );
 }
 

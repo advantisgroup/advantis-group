@@ -353,9 +353,9 @@ function AnnouncementCard({
                             </span>
                           </span>
                           {fromOneDrive ? (
-                            <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-0 transition-opacity group-hover/att:opacity-100" />
+                            <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-100 transition-opacity md:opacity-0 md:group-hover/att:opacity-100" />
                           ) : (
-                            <Download className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/att:opacity-100" />
+                            <Download className="size-4 shrink-0 text-muted-foreground opacity-100 transition-opacity md:opacity-0 md:group-hover/att:opacity-100" />
                           )}
                         </a>
                       );
