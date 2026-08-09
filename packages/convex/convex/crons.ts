@@ -28,8 +28,8 @@ crons.cron(
   {},
 );
 crons.cron(
-  "activity: poll integrations (off-hours fallback)",
-  "0 0-4/2,19-23/2 * * *",
+  "activity: poll integrations (midnight)",
+  "0 0 * * *",
   internal.activity.integrations.pollAll,
   {},
 );
