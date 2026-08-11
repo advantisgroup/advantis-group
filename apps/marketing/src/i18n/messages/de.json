@@ -98,7 +98,7 @@
   },
   "contact": {
     "title": "Kontakt",
-    "subtitle": "Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten",
+    "subtitle": "Lass uns gemeinsam an deinem Vertriebserfolg arbeiten",
     "email": "E-Mail",
     "phone": "Telefon",
     "address": "Adresse",
@@ -111,7 +111,7 @@
       "otherInquiriesShort": "Anfrage"
     },
     "form": {
-      "company": "Ihr Firmenname",
+      "company": "Dein Firmenname",
       "firstName": "Vorname",
       "lastName": "Nachname",
       "email": "E-Mail",
@@ -120,11 +120,11 @@
       "submit": "Absenden",
       "callbackRequest": "Rückruf anfordern",
       "phonePlaceholder": "+49 123 456789",
-      "desiredTime": "Wann können wir Sie erreichen?",
+      "desiredTime": "Wann können wir dich erreichen?",
       "notes": "Anmerkungen (optional)",
       "notesPlaceholder": "Worum geht es in dem Gespräch?",
-      "callbackEmailNote": "Für die Bestätigung Ihres Rückrufs",
-      "callbackTimeNote": "Wir rufen Sie zum gewünschten Zeitpunkt an",
+      "callbackEmailNote": "Für die Bestätigung deines Rückrufs",
+      "callbackTimeNote": "Wir rufen dich zum gewünschten Zeitpunkt an",
       "privacyPrefix": "Mit dem Absenden des Formulars erklären Sie sich damit einverstanden, dass die",
       "privacySuffix": "Ihre angegebenen Daten zum Zweck der Bearbeitung Ihrer Anfrage verwendet. Ihre Daten werden ausschließlich zur Beantwortung Ihrer Anfrage gespeichert und nicht an Dritte weitergegeben.",
       "privacySuffixCallback": "Ihre angegebenen Daten zum Zweck der Rückrufvereinbarung verwendet.",
@@ -133,27 +133,27 @@
     },
     "sidebar": {
       "title": "Warum",
-      "description1": "Ob Sie Unterstützung im aktiven Vertrieb, in der strategischen Beratung oder bei der Auswahl moderner KI-Lösungen suchen – wir helfen Ihnen dabei!",
-      "descriptionMessage": "Kontaktieren Sie uns für ein unverbindliches Beratungsgespräch und lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten.",
-      "descriptionCallback": "Vereinbaren Sie einen Rückruf und wir besprechen gemeinsam, wie wir Ihren Vertrieb voranbringen können.",
-      "descriptionOther": "Nutzen Sie dieses Formular für allgemeine Anfragen, Fragen zu Ihren Rechten oder andere Anliegen.",
-      "closingMessage": "Wir freuen uns auf Ihre Anfrage!",
-      "closingCallback": "Wir freuen uns auf Ihren Anruf!",
-      "closingOther": "Wir beantworten Ihre Anfrage schnellstmöglich!"
+      "description1": "Ob du Unterstützung im aktiven Vertrieb, in der strategischen Beratung oder bei der Auswahl moderner KI-Lösungen suchst – wir helfen dir dabei!",
+      "descriptionMessage": "Kontaktiere uns für ein unverbindliches Beratungsgespräch und lass uns gemeinsam an deinem Vertriebserfolg arbeiten.",
+      "descriptionCallback": "Vereinbare einen Rückruf und wir besprechen gemeinsam, wie wir deinen Vertrieb voranbringen können.",
+      "descriptionOther": "Nutze dieses Formular für allgemeine Anfragen, Fragen zu deinen Rechten oder andere Anliegen.",
+      "closingMessage": "Wir freuen uns auf deine Anfrage!",
+      "closingCallback": "Wir freuen uns auf deinen Anruf!",
+      "closingOther": "Wir beantworten deine Anfrage schnellstmöglich!"
     },
     "messages": {
-      "writeUs": "Schreiben Sie uns",
-      "writeUsDesc": "Senden Sie uns eine Nachricht und wir melden uns innerhalb von 24 Stunden",
+      "writeUs": "Schreib uns",
+      "writeUsDesc": "Sende uns eine Nachricht und wir melden uns innerhalb von 24 Stunden",
       "callback": "Rückruf vereinbaren",
-      "callbackDesc": "Teilen Sie uns mit, wann wir Sie am besten erreichen können",
+      "callbackDesc": "Teile uns mit, wann wir dich am besten erreichen können",
       "otherInquiry": "Andere Anfrage",
-      "otherInquiryDesc": "Haben Sie Fragen oder allgemeine Anliegen? Wir helfen Ihnen gerne!",
+      "otherInquiryDesc": "Hast du Fragen oder allgemeine Anliegen? Wir helfen dir gerne!",
       "successTitle": "Gesendet!",
       "successDesc": "Wir werden uns in bis zu 24h bei ihnen melden.",
       "callSuccessTitle": "Rückruf angefordert!",
-      "callSuccessDesc": "Wir rufen Sie zum gewünschten Zeitpunkt an.",
+      "callSuccessDesc": "Wir rufen dich zum gewünschten Zeitpunkt an.",
       "errorTitle": "Etwas ist schiefgelaufen",
-      "errorDesc": "Bitte überprüfen Sie Ihre Eingaben"
+      "errorDesc": "Bitte überprüfe deine Eingaben"
     },
     "submissionBanner": {
       "title": "Formulare vorübergehend nicht verfügbar",
@@ -173,45 +173,45 @@
         "remove": "Abbestellen"
       },
       "errors": {
-        "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-        "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+        "generic": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+        "network": "Netzwerkfehler. Bitte überprüfe deine Verbindung und versuche es erneut.",
         "invalidEmail": "Bitte eine gültige E-Mail-Adresse eingeben."
       },
       "subscribe": {
-        "title": "Bleiben Sie auf dem Laufenden",
-        "description": "Tragen Sie Ihre E-Mail ein und wir benachrichtigen Sie, sobald unsere Kontaktformulare wieder online sind.",
+        "title": "Bleib auf dem Laufenden",
+        "description": "Trag deine E-Mail ein und wir benachrichtigen dich, sobald unsere Kontaktformulare wieder online sind.",
         "cta": "Benachrichtigen",
         "loading": "Speichern…"
       },
       "remove": {
         "title": "E-Mail entfernen",
-        "description": "Geben Sie die E-Mail-Adresse ein, die aus unserer Benachrichtigungsliste entfernt werden soll.",
+        "description": "Gib die E-Mail-Adresse ein, die aus unserer Benachrichtigungsliste entfernt werden soll.",
         "cta": "Entfernen",
         "loading": "Entfernen…"
       },
       "success": {
-        "title": "Sie stehen auf der Liste!",
-        "description": "Wir senden Ihnen eine Benachrichtigung, sobald die Kontaktformulare wieder live sind."
+        "title": "Du stehst auf der Liste!",
+        "description": "Wir senden dir eine Benachrichtigung, sobald die Kontaktformulare wieder live sind."
       },
       "duplicate": {
-        "title": "Sie stehen bereits auf der Liste!",
-        "description": "Ihre E-Mail-Adresse ist bereits hinterlegt. Wir melden uns, sobald die Formulare wieder live sind."
+        "title": "Du stehst bereits auf der Liste!",
+        "description": "Deine E-Mail-Adresse ist bereits hinterlegt. Wir melden uns, sobald die Formulare wieder live sind."
       },
       "removed": {
         "title": "E-Mail entfernt",
-        "description": "Ihre E-Mail-Adresse wurde aus unserer Benachrichtigungsliste entfernt. Sie erhalten keine weiteren Updates."
+        "description": "Deine E-Mail-Adresse wurde aus unserer Benachrichtigungsliste entfernt. Du erhältst keine weiteren Updates."
       }
     },
     "otherForm": {
       "topic": "Thema",
-      "selectTopic": "Bitte wählen Sie ein Thema",
+      "selectTopic": "Bitte wähle ein Thema",
       "topics": {
         "withdrawal": "Widerrufsrecht",
         "question": "Frage",
         "legal": "Rechtliches"
       },
       "subject": "Betreff",
-      "subjectPlaceholder": "Geben Sie einen spezifischen Betreff ein",
+      "subjectPlaceholder": "Gib einen spezifischen Betreff ein",
       "optional": "optional"
     },
     "accountHelper": {
@@ -233,7 +233,7 @@
   "about": {
     "hero": {
       "badge": "Über uns",
-      "titlePart1": "Ihre Heimat für",
+      "titlePart1": "Deine Heimat für",
       "titlePart2": "exzellenten Vertrieb",
       "subtitle": "Die <brand>advantis GmbH</brand> vereint über 15 Jahre Vertriebserfahrung unter einem Dach – mit Leidenschaft, Pragmatismus und einem klaren Fokus auf Erfolg."
     },
@@ -269,7 +269,7 @@
     },
     "cta": {
       "title": "Bereit für den nächsten Schritt?",
-      "description": "Lassen Sie uns gemeinsam an Ihrem Vertriebserfolg arbeiten. Ob Unterstützung im aktiven Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen Ihnen dabei.",
+      "description": "Lass uns gemeinsam an deinem Vertriebserfolg arbeiten. Ob Unterstützung im aktiven Vertrieb, strategische Beratung oder moderne KI-Lösungen – wir helfen dir dabei.",
       "button": "Kontakt aufnehmen"
     }
   },
@@ -297,7 +297,7 @@
     },
     "grid": {
       "title": "Unser Team",
-      "subtitle": "Die Experten an Ihrer Seite",
+      "subtitle": "Die Experten an deiner Seite",
       "cardFooter": "Advantis Team"
     }
   },
@@ -307,12 +307,12 @@
       "titlePrefix": "Unsere",
       "titleSuffix": "Marken",
       "subtitle": "Maßgeschneiderte Sales-Lösungen für nachhaltigen Erfolg",
-      "scroll": "Entdecken Sie unsere Marken"
+      "scroll": "Entdecke unsere Marken"
     },
     "items": {
       "salespirates": {
-        "tagline": "Ihre externe Vertriebsagentur",
-        "description": "Ihre externe Vertriebsagentur für den Inbound- oder Outboundsales. Wir liefern Leads oder unterstützen Ihren Vertrieb – aktiv, zielgerichtet und mit messbaren Ergebnissen.",
+        "tagline": "Deine externe Vertriebsagentur",
+        "description": "Deine externe Vertriebsagentur für den Inbound- oder Outboundsales. Wir liefern Leads oder unterstützen deinen Vertrieb – aktiv, zielgerichtet und mit messbaren Ergebnissen.",
         "highlights": {
           "0": "Lead-Generierung & Qualifizierung",
           "1": "Inbound & Outbound Sales",
@@ -321,7 +321,7 @@
       },
       "rodeo": {
         "tagline": "Strategische Sales-Beratung",
-        "description": "Sales ist Wild West und mit Rodeo kennen wir uns aus! Wir liefern Ihnen eine strategische Sales-Beratung, die Ihren Vertrieb neu ausrichtet, absolut skalierbar macht und mit Effizienz zum Wachstum führt.",
+        "description": "Sales ist Wild West und mit Rodeo kennen wir uns aus! Wir liefern dir eine strategische Sales-Beratung, die deinen Vertrieb neu ausrichtet, absolut skalierbar macht und mit Effizienz zum Wachstum führt.",
         "highlights": {
           "0": "Strategische Neuausrichtung",
           "1": "Skalierbare Prozesse",
@@ -330,7 +330,7 @@
       },
       "oldschool": {
         "tagline": "Authentische Sales-Trainings",
-        "description": "Die Welt braucht keinen neuen Sales Schnick-Schnack. Wir bringen Ihre Sales Teams mit authentischen Sales-Coachings to the Max! Das Zauberwort hier ist Nachhaltigkeit. Sie können 1000 Sales Coachings buchen, ohne im daily Business jemals erfolgreich damit zu sein – wir haben das eine Training, dass Sie und Ihr Team wirklich weiterbringt. Erfahrung, Empathie und echte Praxis treffen bei uns auf moderne Lernmethoden.",
+        "description": "Die Welt braucht keinen neuen Sales Schnick-Schnack. Wir bringen deine Sales Teams mit authentischen Sales-Coachings to the Max! Das Zauberwort hier ist Nachhaltigkeit. Du kannst 1000 Sales Coachings buchen, ohne im daily Business jemals erfolgreich damit zu sein – wir haben das eine Training, dass dich und dein Team wirklich weiterbringt. Erfahrung, Empathie und echte Praxis treffen bei uns auf moderne Lernmethoden.",
         "highlights": {
           "0": "Nachhaltige Trainings",
           "1": "Praxisorientiert",
@@ -339,7 +339,7 @@
       },
       "salesai": {
         "tagline": "KI für intelligenten Vertrieb",
-        "description": "Alle sprechen über KI Tools. Wir beraten Sie, welche KI-Tools für Sales-Teams aktuell Sinn machen und einen echten Mehrwert bringen. Wir zeigen Ihnen, wie KI Technologie Ihren Vertrieb tatsächlich smarter macht.",
+        "description": "Alle sprechen über KI Tools. Wir beraten dich, welche KI-Tools für Sales-Teams aktuell Sinn machen und einen echten Mehrwert bringen. Wir zeigen dir, wie KI Technologie deinen Vertrieb tatsächlich smarter macht.",
         "highlights": {
           "0": "KI-Tool Beratung",
           "1": "Praktische Integration",
@@ -349,8 +349,8 @@
     },
     "cta": {
       "titlePart1": "Welche Marke",
-      "titlePart2": "passt zu Ihnen?",
-      "description": "Lassen Sie uns gemeinsam herausfinden, wie wir Ihren Vertrieb auf das nächste Level bringen können.",
+      "titlePart2": "passt zu dir?",
+      "description": "Lass uns gemeinsam herausfinden, wie wir deinen Vertrieb auf das nächste Level bringen können.",
       "button": "Jetzt Kontakt aufnehmen"
     },
     "learnMore": "Mehr erfahren"
