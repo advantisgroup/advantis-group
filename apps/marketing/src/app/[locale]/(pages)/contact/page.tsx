@@ -14,6 +14,7 @@ import { SubmissionBanner } from "@/components/contact/SubmissionBanner";
 import { TabNavigation } from "@/components/contact/TabNavigation";
 import { WhyAdvantisSidebar } from "@/components/contact/WhyAdvantis";
 import { useContactForm } from "@/hooks/use-contact-form";
+import { COMPANY_ADDRESS } from "@/lib/company";
 import { cn } from "@/lib/utils";
 import { type ContactInfoItem, type ContactMode } from "@/types/contact";
 
@@ -75,7 +76,7 @@ export default function Kontakt() {
     {
       icon: MapPin,
       label: t("address"),
-      value: `${process.env.NEXT_PUBLIC_ADRESS}`,
+      value: COMPANY_ADDRESS,
       href: "#",
     },
   ];
