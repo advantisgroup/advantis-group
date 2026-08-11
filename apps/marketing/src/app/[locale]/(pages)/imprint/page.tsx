@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { BrandText } from "@/components/effects/BrandText";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { COMPANY_ADDRESS } from "@/lib/company";
 
 export default function Impressum() {
   const t = useTranslations("imprint");
@@ -18,7 +19,7 @@ export default function Impressum() {
           <p className="font-semibold">
             <BrandText brand="advantis">advantis GmbH</BrandText>
           </p>
-          <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
+          <p>{COMPANY_ADDRESS}</p>
           <p className="text-muted-foreground">{t("sections.company.country")}</p>
         </div>
       ),
@@ -100,7 +101,7 @@ export default function Impressum() {
               <p>
                 <BrandText brand="advantis">advantis GmbH</BrandText>
               </p>
-              <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
+              <p>{COMPANY_ADDRESS}</p>
             </CardContent>
           </Card>
         </section>

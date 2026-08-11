@@ -528,5 +528,15 @@
         "failed": "Needs attention"
       }
     }
+  },
+  "licenses": {
+    "eyebrow": "Open source",
+    "title": "Licenses",
+    "description": "This website is built with open-source software. Browse the packages used and their respective licenses.",
+    "searchPlaceholder": "Search package, license, or publisher…",
+    "searchLabel": "Search licenses",
+    "resultCount": "{count, plural, =0 {No packages} one {# package} other {# packages}}",
+    "repository": "Open repository",
+    "empty": "No matching licenses found."
   }
 }
