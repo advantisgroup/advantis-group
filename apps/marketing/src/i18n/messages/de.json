@@ -537,6 +537,9 @@
     "searchLabel": "Lizenzen durchsuchen",
     "resultCount": "{count, plural, =0 {Keine Pakete} one {# Paket} other {# Pakete}}",
     "repository": "Repository öffnen",
-    "empty": "Keine passenden Lizenzen gefunden."
+    "empty": "Keine passenden Lizenzen gefunden.",
+    "filterAll": "Alle",
+    "filterOther": "Sonstige",
+    "filterLabel": "Nach Lizenz filtern"
   }
 }

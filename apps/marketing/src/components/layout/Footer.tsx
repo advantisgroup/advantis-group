@@ -114,7 +114,7 @@ export const Footer = () => {
     <>
       <SectionDivider variant="curve" opacity={0.35} />
       <footer ref={footerRef} className="relative border-t border-white/50 bg-card overflow-hidden">
-        <div className="container mx-auto px-4 py-24 relative">
+        <div className="container relative z-20 mx-auto px-4 py-24">
           {/* Large animated company name */}
           <div className="mb-24 overflow-hidden">
             <div className="text-center mb-4">

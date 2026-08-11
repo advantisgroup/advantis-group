@@ -537,6 +537,9 @@
     "searchLabel": "Rechercher des licences",
     "resultCount": "{count, plural, =0 {Aucun paquet} one {# paquet} other {# paquets}}",
     "repository": "Ouvrir le dépôt",
-    "empty": "Aucune licence correspondante."
+    "empty": "Aucune licence correspondante.",
+    "filterAll": "Toutes",
+    "filterOther": "Autres",
+    "filterLabel": "Filtrer par licence"
   }
 }
