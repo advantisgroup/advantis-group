@@ -18,20 +18,24 @@ export const TrustBadges = () => {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            {SALES_CLUB_YEARS.map((year) => (
-              <div
-                key={year}
-                className="relative h-20 w-20 opacity-80 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 sm:h-24 sm:w-24"
-              >
-                <Image
-                  src={`/badges/sales-presidents-club-${year}.png`}
-                  alt={t("salesClub", { year })}
-                  fill
-                  sizes="96px"
-                  className="object-contain"
-                />
-              </div>
-            ))}
+            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+              {SALES_CLUB_YEARS.map((year) => (
+                <div
+                  key={year}
+                  className="relative h-20 w-20 opacity-80 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 sm:h-24 sm:w-24"
+                >
+                  <Image
+                    src={`/badges/sales-presidents-club-${year}.png`}
+                    alt={t("salesClub", { year })}
+                    fill
+                    sizes="96px"
+                    className="object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden h-16 w-px bg-border sm:block" aria-hidden />
             <div className="relative h-20 w-20 opacity-80 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 sm:h-24 sm:w-24">
               <Image
                 src="/badges/dsgvo-konform.png"
