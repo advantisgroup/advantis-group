@@ -528,5 +528,15 @@
         "failed": "À vérifier"
       }
     }
+  },
+  "licenses": {
+    "eyebrow": "Open source",
+    "title": "Licences",
+    "description": "Ce site utilise des logiciels open source. Découvrez les paquets utilisés et leurs licences respectives.",
+    "searchPlaceholder": "Rechercher un paquet, une licence ou un éditeur…",
+    "searchLabel": "Rechercher des licences",
+    "resultCount": "{count, plural, =0 {Aucun paquet} one {# paquet} other {# paquets}}",
+    "repository": "Ouvrir le dépôt",
+    "empty": "Aucune licence correspondante."
   }
 }

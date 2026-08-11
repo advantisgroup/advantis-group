@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TableOfContents } from "@/components/ui/TableOfContents";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { COMPANY_ADDRESS } from "@/lib/company";
 import { cn } from "@/lib/utils";
 
 export default function Datenschutz() {
@@ -52,7 +53,7 @@ export default function Datenschutz() {
             <div className="bg-muted/20 p-6 rounded-lg space-y-1">
               <p className="font-semibold text-foreground">advantis GmbH</p>
               <p className="text-foreground/80">Andrea Reichl</p>
-              <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
+              <p>{COMPANY_ADDRESS}</p>
               <p className="text-foreground/80 mt-3">
                 E-Mail: {process.env.NEXT_PUBLIC_EMAIL_ADRESS}
               </p>

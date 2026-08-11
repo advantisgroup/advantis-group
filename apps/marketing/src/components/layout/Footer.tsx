@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { Link } from "@/i18n/navigation";
+import { COMPANY_ADDRESS } from "@/lib/company";
 import { isAuthRoute } from "@/lib/utils";
 
 import { SectionDivider } from "./SectionDivider";
@@ -211,7 +212,7 @@ export const Footer = () => {
                 </li>
                 <li className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span>{process.env.NEXT_PUBLIC_ADRESS}</span>
+                  <span>{COMPANY_ADDRESS}</span>
                 </li>
               </ul>
             </div>
