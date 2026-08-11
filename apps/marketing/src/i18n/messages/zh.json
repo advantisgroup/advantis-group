@@ -1014,6 +1014,9 @@
     "searchLabel": "搜索许可证",
     "resultCount": "{count} 个软件包",
     "repository": "打开代码仓库",
-    "empty": "未找到匹配的许可证。"
+    "empty": "未找到匹配的许可证。",
+    "filterAll": "全部",
+    "filterOther": "其他",
+    "filterLabel": "按许可证筛选"
   }
 }

@@ -37,10 +37,7 @@ export const Footer = () => {
       const footerHeight = footerRef.current.offsetHeight;
 
       // Progress from 0 to 1 as we scroll through the footer
-      const progress = Math.min(
-        Math.max(scrollIntoFooter / footerHeight, 0),
-        1
-      );
+      const progress = Math.min(Math.max(scrollIntoFooter / footerHeight, 0), 1);
       setScrollProgress(progress);
     };
 
@@ -104,8 +101,7 @@ export const Footer = () => {
 
     const liftIndex = index - startIndex;
     const maxLift = 40;
-    const liftAmount =
-      ((liftIndex + 1) / lettersToLift) * maxLift * scrollProgress;
+    const liftAmount = ((liftIndex + 1) / lettersToLift) * maxLift * scrollProgress;
 
     return -liftAmount; // Negative to lift up
   };
@@ -116,17 +112,12 @@ export const Footer = () => {
   return (
     <>
       <SectionDivider variant="curve" opacity={0.35} />
-      <footer
-        ref={footerRef}
-        className="relative border-t border-white/50 bg-card overflow-hidden"
-      >
-        <div className="container mx-auto px-4 py-24 relative">
+      <footer ref={footerRef} className="relative border-t border-white/50 bg-card overflow-hidden">
+        <div className="container relative z-20 mx-auto px-4 py-24">
           {/* Large animated company name */}
           <div className="mb-24 overflow-hidden">
             <div className="text-center mb-4">
-              <p className="text-sm text-muted-foreground">
-                {t("footer.description")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("footer.description")}</p>
             </div>
             <h2 className="text-[11vw] md:text-[12vw] lg:text-[8rem] font-bold leading-none tracking-tighter text-center">
               {letters.map((letter, index) => (
@@ -154,9 +145,7 @@ export const Footer = () => {
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold">
-                {t("footer.quickLinks")}
-              </h3>
+              <h3 className="text-sm font-semibold">{t("footer.quickLinks")}</h3>
               <ul className="space-y-3 text-sm">
                 {footerLinks.map((link, i) => (
                   <li key={`${link.label}_${i}`}>
@@ -232,8 +221,7 @@ export const Footer = () => {
           <div className="pt-8 border-t border-border">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-xs text-muted-foreground">
-                © {new Date().getFullYear().toString()} ADVANTIS GROUP.{" "}
-                {t("footer.copyright")}
+                © {new Date().getFullYear().toString()} ADVANTIS GROUP. {t("footer.copyright")}
               </p>
               <div className="flex items-center gap-6">
                 <Link
@@ -268,12 +256,7 @@ export const Footer = () => {
           }}
         >
           <div className="relative w-32 h-32 md:w-48 md:h-48 ">
-            <Image
-              src={logo}
-              alt="Advantis Logo"
-              fill
-              className="object-contain"
-            />
+            <Image src={logo} alt="Advantis Logo" fill className="object-contain" />
           </div>
         </div>
       </footer>

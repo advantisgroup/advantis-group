@@ -56,3 +56,6 @@ next-env.d.ts
 
 .env.local
 archived/
+
+# Claude Code local agent worktrees
+.claude/

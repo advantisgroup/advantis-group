@@ -18,7 +18,7 @@ export const TrustBadges = () => {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-            {SALES_CLUB_YEARS.map(year => (
+            {SALES_CLUB_YEARS.map((year) => (
               <div
                 key={year}
                 className="relative h-20 w-20 opacity-80 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0 sm:h-24 sm:w-24"

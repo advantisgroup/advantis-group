@@ -1014,6 +1014,9 @@
     "searchLabel": "Search licenses",
     "resultCount": "{count, plural, =0 {No packages} one {# package} other {# packages}}",
     "repository": "Open repository",
-    "empty": "No matching licenses found."
+    "empty": "No matching licenses found.",
+    "filterAll": "All",
+    "filterOther": "Other",
+    "filterLabel": "Filter by license"
   }
 }
