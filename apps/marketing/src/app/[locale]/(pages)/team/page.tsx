@@ -14,13 +14,8 @@ import { SectionDivider } from "@/components/layout/SectionDivider";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
-// Drop real files into /public/office (e.g. /office/office-01.jpg) and list them
-// here to enable the "office life" section below the team grid. `size` controls
-// the tile's footprint in the parallax masonry grid.
 const OFFICE_PHOTOS: { src: string; alt: string; size?: "sm" | "lg" }[] = [];
 
-// Each tile scrolls at a slightly different speed for a parallax effect.
-// Larger tiles move less so they don't overshoot their taller frame.
 function ParallaxPhoto({
   src,
   alt,
@@ -40,9 +35,18 @@ function ParallaxPhoto({
   const y = useTransform(scrollYProgress, [0, 1], [`-${speed}%`, `${speed}%`]);
 
   return (
-    <div ref={ref} className={`${className} relative overflow-hidden rounded-2xl`}>
+    <div
+      ref={ref}
+      className={`${className} relative overflow-hidden rounded-2xl`}
+    >
       <motion.div style={{ y }} className="absolute inset-[-15%]">
-        <Image src={src} alt={alt} fill sizes="(min-width: 768px) 33vw, 50vw" className="object-cover" />
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          sizes="(min-width: 768px) 33vw, 50vw"
+          className="object-cover"
+        />
       </motion.div>
     </div>
   );
@@ -52,11 +56,13 @@ function ParallaxPhoto({
 // not generated) or fails to load.
 function Avatar({
   photo,
+  name,
   initials,
   className,
   fontSizeClassName,
 }: {
   photo?: string;
+  name: string;
   initials: string;
   className: string;
   fontSizeClassName: string;
@@ -77,7 +83,7 @@ function Avatar({
     <div className={`${className} relative overflow-hidden`}>
       <Image
         src={photo}
-        alt={initials}
+        alt={name}
         fill
         sizes="200px"
         className="object-cover"
@@ -186,6 +192,7 @@ export default function Team() {
                     <div className="relative mb-6">
                       <Avatar
                         photo={teamMembers[0].photo}
+                        name={teamMembers[0].name}
                         initials={teamMembers[0].initials}
                         fontSizeClassName="text-4xl md:text-5xl"
                         className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-linear-to-br from-primary/20 to-secondary/20 text-primary border-4 border-background shadow-2xl relative z-10 group-hover:scale-105 transition-transform duration-500"
@@ -196,8 +203,12 @@ export default function Team() {
                     </div>
 
                     <div className="space-y-1">
-                      <h2 className="text-3xl font-bold">{teamMembers[0].name}</h2>
-                      <p className="text-lg text-primary font-medium">{teamMembers[0].role}</p>
+                      <h2 className="text-3xl font-bold">
+                        {teamMembers[0].name}
+                      </h2>
+                      <p className="text-lg text-primary font-medium">
+                        {teamMembers[0].role}
+                      </p>
                     </div>
 
                     {teamMembers[0].email && (
@@ -237,14 +248,23 @@ export default function Team() {
 
           {/* Team Grid */}
           <section>
-            <ScrollReveal delay={100} className="mb-12 text-center md:text-left">
-              <h2 className="text-3xl md:text-4xl font-bold">{t("grid.title")}</h2>
+            <ScrollReveal
+              delay={100}
+              className="mb-12 text-center md:text-left"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold">
+                {t("grid.title")}
+              </h2>
               <p className="text-muted-foreground mt-2">{t("grid.subtitle")}</p>
             </ScrollReveal>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {teamMembers.slice(1).map((member, index) => (
-                <ScrollReveal key={member.name || index} delay={index * 100} className="h-full">
+                <ScrollReveal
+                  key={member.name || index}
+                  delay={index * 100}
+                  className="h-full"
+                >
                   <div className="group h-full relative bg-card/40 hover:bg-card/60 backdrop-blur-sm border border-border/50 hover:border-primary/30 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-primary/5 overflow-hidden">
                     {/* Hover Gradient */}
                     <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -253,6 +273,7 @@ export default function Team() {
                       <div className="mb-6 relative">
                         <Avatar
                           photo={member.photo}
+                          name={member.name}
                           initials={member.initials}
                           fontSizeClassName="text-2xl"
                           className="w-24 h-24 rounded-2xl bg-linear-to-br from-background to-muted text-muted-foreground group-hover:text-primary group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300 shadow-inner"
@@ -265,7 +286,9 @@ export default function Team() {
                       <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">
                         {member.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground mb-4">{member.role}</p>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {member.role}
+                      </p>
 
                       <div className="mt-auto pt-4 border-t border-border/50 w-full opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0">
                         <span className="text-xs font-medium text-primary uppercase tracking-wider">
@@ -282,9 +305,16 @@ export default function Team() {
           {/* Office Life */}
           {OFFICE_PHOTOS.length > 0 && (
             <section className="mt-32">
-              <ScrollReveal delay={100} className="mb-12 text-center md:text-left">
-                <h2 className="text-3xl md:text-4xl font-bold">{t("office.title")}</h2>
-                <p className="text-muted-foreground mt-2">{t("office.subtitle")}</p>
+              <ScrollReveal
+                delay={100}
+                className="mb-12 text-center md:text-left"
+              >
+                <h2 className="text-3xl md:text-4xl font-bold">
+                  {t("office.title")}
+                </h2>
+                <p className="text-muted-foreground mt-2">
+                  {t("office.subtitle")}
+                </p>
               </ScrollReveal>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 auto-rows-[10rem] md:auto-rows-[12rem]">
@@ -292,7 +322,11 @@ export default function Team() {
                   <ScrollReveal
                     key={photo.src}
                     delay={index * 100}
-                    className={photo.size === "lg" ? "col-span-2 row-span-2" : "row-span-2"}
+                    className={
+                      photo.size === "lg"
+                        ? "col-span-2 row-span-2"
+                        : "row-span-2"
+                    }
                   >
                     <ParallaxPhoto
                       src={photo.src}
