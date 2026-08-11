@@ -7,11 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/i18n/navigation";
-import {
-  SERVICE_ICONS,
-  SERVICE_SLUGS,
-  VERTRIEBSTRAINING_TILE,
-} from "@/lib/services";
+import { SERVICE_ICONS, SERVICE_SLUGS, VERTRIEBSTRAINING_TILE } from "@/lib/services";
 
 const ServiceTile = ({
   href,
@@ -45,15 +41,11 @@ const ServiceTile = ({
         <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15 transition-transform duration-300 group-hover:scale-110">
           <Icon className="h-5 w-5" strokeWidth={1.5} />
         </span>
-        <h3 className="font-[family-name:var(--font-outfit)] text-lg">
-          {title}
-        </h3>
+        <h3 className="font-[family-name:var(--font-outfit)] text-lg">{title}</h3>
       </div>
       <ArrowRight className="h-4 w-4 shrink-0 -translate-x-1 text-primary opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
     </div>
-    <p className="relative text-sm leading-relaxed text-muted-foreground">
-      {description}
-    </p>
+    <p className="relative text-sm leading-relaxed text-muted-foreground">{description}</p>
   </Link>
 );
 
@@ -63,11 +55,7 @@ export const HomeServices = () => {
   const isVisible = useInView(sectionRef, { once: true, margin: "-100px" });
 
   return (
-    <section
-      id="leistungen"
-      ref={sectionRef}
-      className="relative overflow-hidden py-16 md:py-20"
-    >
+    <section id="leistungen" ref={sectionRef} className="relative overflow-hidden py-16 md:py-20">
       <div className="container relative z-10 mx-auto px-4">
         <div className="mx-auto max-w-7xl space-y-14">
           <div className="mx-auto max-w-3xl space-y-5 text-center">

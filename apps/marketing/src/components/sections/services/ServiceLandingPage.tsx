@@ -18,8 +18,7 @@ function getRelatedSlugs(slug: ServiceSlug): ServiceSlug[] {
   const startIndex = SERVICE_SLUGS.indexOf(slug);
   const related: ServiceSlug[] = [];
   for (let offset = 1; related.length < 3; offset++) {
-    const candidate =
-      SERVICE_SLUGS[(startIndex + offset) % SERVICE_SLUGS.length];
+    const candidate = SERVICE_SLUGS[(startIndex + offset) % SERVICE_SLUGS.length];
     if (candidate !== slug) related.push(candidate);
   }
   return related;
@@ -75,21 +74,15 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
           <ScrollReveal>
             <section className="space-y-4">
               <h2 className="text-2xl font-bold md:text-3xl">{whatTitle}</h2>
-              <p className="text-lg leading-relaxed text-muted-foreground">
-                {whatText}
-              </p>
+              <p className="text-lg leading-relaxed text-muted-foreground">{whatText}</p>
             </section>
           </ScrollReveal>
         ) : null}
 
         <ScrollReveal>
           <section className="space-y-4">
-            <h2 className="text-2xl font-bold md:text-3xl">
-              {common("offeringsTitle")}
-            </h2>
-            <p className="text-lg leading-relaxed text-muted-foreground">
-              {t("offeringsText")}
-            </p>
+            <h2 className="text-2xl font-bold md:text-3xl">{common("offeringsTitle")}</h2>
+            <p className="text-lg leading-relaxed text-muted-foreground">{t("offeringsText")}</p>
           </section>
         </ScrollReveal>
 
@@ -97,50 +90,38 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
           <section className="space-y-6">
             <h2 className="text-2xl font-bold md:text-3xl">{t("aiTitle")}</h2>
             <ul className="grid gap-4 sm:grid-cols-2">
-              {aiItems.map(item => (
+              {aiItems.map((item) => (
                 <li
                   key={item}
                   className="flex items-start gap-3 rounded-2xl border border-border/60 bg-card/40 p-4"
                 >
                   <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <span className="text-sm leading-relaxed md:text-base">
-                    {item}
-                  </span>
+                  <span className="text-sm leading-relaxed md:text-base">{item}</span>
                 </li>
               ))}
             </ul>
           </section>
         </ScrollReveal>
 
-        {extraSections.map(section => (
+        {extraSections.map((section) => (
           <ScrollReveal key={section.title}>
             <section className="space-y-4">
-              <h2 className="text-2xl font-bold md:text-3xl">
-                {section.title}
-              </h2>
-              <p className="text-lg leading-relaxed text-muted-foreground">
-                {section.text}
-              </p>
+              <h2 className="text-2xl font-bold md:text-3xl">{section.title}</h2>
+              <p className="text-lg leading-relaxed text-muted-foreground">{section.text}</p>
             </section>
           </ScrollReveal>
         ))}
 
         <ScrollReveal>
           <section className="space-y-4 rounded-3xl border border-border/60 bg-card/40 p-8 md:p-12">
-            <h2 className="text-2xl font-bold md:text-3xl">
-              {common("whyTitle")}
-            </h2>
-            <p className="text-lg leading-relaxed text-muted-foreground">
-              {t("whyText")}
-            </p>
+            <h2 className="text-2xl font-bold md:text-3xl">{common("whyTitle")}</h2>
+            <p className="text-lg leading-relaxed text-muted-foreground">{t("whyText")}</p>
           </section>
         </ScrollReveal>
 
         <ScrollReveal>
           <p className="text-sm leading-relaxed text-muted-foreground/70">
-            <span className="font-semibold text-muted-foreground">
-              {common("seoLabel")}:
-            </span>{" "}
+            <span className="font-semibold text-muted-foreground">{common("seoLabel")}:</span>{" "}
             {t("seoKeywords")}
           </p>
         </ScrollReveal>
@@ -175,7 +156,7 @@ export const ServiceLandingPage = ({ slug }: { slug: ServiceSlug }) => {
             {common("relatedTitle")}
           </h2>
           <div className="grid gap-6 md:grid-cols-3">
-            {relatedSlugs.map(relatedSlug => (
+            {relatedSlugs.map((relatedSlug) => (
               <RelatedServiceCard key={relatedSlug} slug={relatedSlug} />
             ))}
           </div>
@@ -197,12 +178,8 @@ const RelatedServiceCard = ({ slug }: { slug: ServiceSlug }) => {
       <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
         <Icon className="h-5 w-5" strokeWidth={1.5} />
       </span>
-      <h3 className="font-[family-name:var(--font-outfit)] text-lg">
-        {t("tileTitle")}
-      </h3>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        {t("tileDescription")}
-      </p>
+      <h3 className="font-[family-name:var(--font-outfit)] text-lg">{t("tileTitle")}</h3>
+      <p className="text-sm leading-relaxed text-muted-foreground">{t("tileDescription")}</p>
       <span className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-primary opacity-0 transition-opacity duration-300 group-hover:opacity-100">
         <ArrowRight className="h-4 w-4" />
       </span>

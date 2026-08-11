@@ -7,10 +7,7 @@ import { LicenseDirectory } from "@/components/licenses/LicenseDirectory";
 export default function LicensesPage() {
   const t = useTranslations("licenses");
   const licenses = Object.entries(
-    licensesData as Record<
-      string,
-      { licenses: string; publisher?: string; repository?: string }
-    >,
+    licensesData as Record<string, { licenses: string; publisher?: string; repository?: string }>,
   )
     .map(([name, details]) => ({
       name,

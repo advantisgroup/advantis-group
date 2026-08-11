@@ -16,7 +16,7 @@ export const HomeBrands = () => {
   const [isVisible, setIsVisible] = useState(
     () =>
       typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export const HomeBrands = () => {
           observer.unobserve(entry.target);
         }
       },
-      { threshold: 0.1, rootMargin: "0px 0px -100px 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -100px 0px" },
     );
 
     const node = sectionRef.current;
@@ -67,10 +67,7 @@ export const HomeBrands = () => {
   ];
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative overflow-hidden py-16 md:py-20"
-    >
+    <section ref={sectionRef} className="relative overflow-hidden py-16 md:py-20">
       <div className="absolute inset-0 bg-linear-to-b from-background via-primary/4 to-primary/8" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,transparent,oklch(0.64_0.2_14_/_0.12),transparent)] [background-size:100%_1px] [background-position:0_30%] [background-repeat:no-repeat]" />
       <div className="absolute bottom-0 left-0 right-0 h-36 bg-linear-to-b from-transparent via-primary/8 to-primary/10 pointer-events-none" />
@@ -80,9 +77,7 @@ export const HomeBrands = () => {
           <div
             className={cn(
               "space-y-5 text-left transition-[transform,opacity] duration-1000",
-              isVisible
-                ? "translate-y-0 opacity-100"
-                : "-translate-y-8 opacity-0"
+              isVisible ? "translate-y-0 opacity-100" : "-translate-y-8 opacity-0",
             )}
             style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
           >
@@ -90,12 +85,9 @@ export const HomeBrands = () => {
               {t("eyebrow")}
             </p>
             <h2 className="font-[family-name:var(--font-outfit)] text-4xl leading-[1.05] md:text-6xl lg:text-7xl">
-              {t("title")}{" "}
-              <span className="text-primary">{t("titleHighlight")}</span>
+              {t("title")} <span className="text-primary">{t("titleHighlight")}</span>
             </h2>
-            <p className="max-w-3xl text-lg text-muted-foreground md:text-2xl">
-              {t("subtitle")}
-            </p>
+            <p className="max-w-3xl text-lg text-muted-foreground md:text-2xl">{t("subtitle")}</p>
           </div>
 
           <div className="border-y border-border/60">
@@ -107,9 +99,7 @@ export const HomeBrands = () => {
                   className={cn(
                     "group block border-b border-border/60 last:border-b-0",
                     "transition-[transform,opacity] duration-700",
-                    isVisible
-                      ? "translate-y-0 opacity-100"
-                      : "translate-y-8 opacity-0"
+                    isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0",
                   )}
                   style={{
                     transitionDelay: `${idx * 120 + 180}ms`,
@@ -144,18 +134,11 @@ export const HomeBrands = () => {
           <div
             className={cn(
               "pt-2 transition-[transform,opacity] duration-1000 delay-500",
-              isVisible
-                ? "translate-y-0 opacity-100"
-                : "translate-y-8 opacity-0"
+              isVisible ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0",
             )}
             style={{ willChange: isVisible ? "auto" : "transform, opacity" }}
           >
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="rounded-full px-8 font-medium"
-            >
+            <Button asChild size="lg" variant="outline" className="rounded-full px-8 font-medium">
               <Link href="/brands">
                 {t("cta")}
                 <ArrowRight className="ml-2 h-4 w-4" />

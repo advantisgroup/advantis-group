@@ -9,9 +9,7 @@ import { isServiceSlug, SERVICE_SLUGS } from "@/lib/services";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function generateStaticParams() {
-  return locales.flatMap(locale =>
-    SERVICE_SLUGS.map(slug => ({ locale, slug }))
-  );
+  return locales.flatMap((locale) => SERVICE_SLUGS.map((slug) => ({ locale, slug })));
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
