@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import Image from "next/image";
 
 import { Mail, ArrowRight } from "lucide-react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { useTranslations } from "next-intl";
 
 import { ScrollReveal } from "@/components/effects/ScrollReveal";
@@ -14,8 +15,38 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 
 // Drop real files into /public/office (e.g. /office/office-01.jpg) and list them
-// here to enable the "office life" section below the team grid.
-const OFFICE_PHOTOS: { src: string; alt: string }[] = [];
+// here to enable the "office life" section below the team grid. `size` controls
+// the tile's footprint in the parallax masonry grid.
+const OFFICE_PHOTOS: { src: string; alt: string; size?: "sm" | "lg" }[] = [];
+
+// Each tile scrolls at a slightly different speed for a parallax effect.
+// Larger tiles move less so they don't overshoot their taller frame.
+function ParallaxPhoto({
+  src,
+  alt,
+  className,
+  speed,
+}: {
+  src: string;
+  alt: string;
+  className: string;
+  speed: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [`-${speed}%`, `${speed}%`]);
+
+  return (
+    <div ref={ref} className={`${className} relative overflow-hidden rounded-2xl`}>
+      <motion.div style={{ y }} className="absolute inset-[-15%]">
+        <Image src={src} alt={alt} fill sizes="(min-width: 768px) 33vw, 50vw" className="object-cover" />
+      </motion.div>
+    </div>
+  );
+}
 
 // Falls back to initials when the photo file doesn't exist yet (placeholders
 // not generated) or fails to load.
@@ -256,21 +287,19 @@ export default function Team() {
                 <p className="text-muted-foreground mt-2">{t("office.subtitle")}</p>
               </ScrollReveal>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6 auto-rows-[10rem] md:auto-rows-[12rem]">
                 {OFFICE_PHOTOS.map((photo, index) => (
-                  <ScrollReveal key={photo.src} delay={index * 100}>
-                    <div
-                      className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border/50 shadow-lg transition-transform duration-500 hover:scale-[1.02]"
-                      style={{ transform: `rotate(${index % 2 === 0 ? -1.5 : 1.5}deg)` }}
-                    >
-                      <Image
-                        src={photo.src}
-                        alt={photo.alt}
-                        fill
-                        sizes="(min-width: 768px) 33vw, 50vw"
-                        className="object-cover"
-                      />
-                    </div>
+                  <ScrollReveal
+                    key={photo.src}
+                    delay={index * 100}
+                    className={photo.size === "lg" ? "col-span-2 row-span-2" : "row-span-2"}
+                  >
+                    <ParallaxPhoto
+                      src={photo.src}
+                      alt={photo.alt}
+                      speed={8 + (index % 3) * 4}
+                      className="h-full w-full border border-border/50 shadow-lg"
+                    />
                   </ScrollReveal>
                 ))}
               </div>
