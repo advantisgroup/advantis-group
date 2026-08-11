@@ -43,6 +43,7 @@
   "notReadYet": "Not read yet",
   "everyoneRead": "Everyone in the audience has read this",
   "edit": "Edit announcement",
+  "actions": "Actions",
   "updated": "Announcement updated",
   "edited": "edited",
   "editedBy": "edited by",
@@ -64,5 +65,6 @@
   "scheduledFor": "Sends {date}",
   "scheduledToast": "Announcement scheduled",
   "expired": "Expired",
+  "reactions": "Reactions",
   "optionsHint": "Category, audience, attachments, relevant date and scheduling for this announcement."
 }

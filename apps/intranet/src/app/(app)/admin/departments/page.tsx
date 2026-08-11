@@ -33,6 +33,7 @@ export default function DepartmentsPage() {
       />
       <OrgEntityCrudList
         entities={departments}
+        createInDialog
         createPlaceholder={t("orgEntity.departmentNamePlaceholder")}
         onCreate={(name) => createDepartment({ name }).then(() => {})}
         onRename={(departmentId, name) =>

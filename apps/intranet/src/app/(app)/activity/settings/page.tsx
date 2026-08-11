@@ -8,6 +8,13 @@ import { DiscardedPanel } from "@/components/activity/admin/DiscardedPanel";
 import { SystemPanel } from "@/components/activity/admin/SystemPanel";
 import { UsersPanel } from "@/components/activity/admin/UsersPanel";
 import { PageHeader } from "@/components/PageHeader";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useI18n } from "@/lib/activity/i18n";
 import { useTabParam } from "@/lib/activity/useTabParam";
@@ -31,7 +38,10 @@ export default function SettingsPage() {
       />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
+        {/* A full-width horizontal strip here would be a second control
+            competing with the mobile bottom nav's thumb-zone space, so below
+            md this collapses to a single compact Select instead. */}
+        <TabsList className="hidden md:inline-flex">
           <TabsTrigger value="config">{t("settings.tabs.config")}</TabsTrigger>
           <TabsTrigger value="system">{t("settings.tabs.system")}</TabsTrigger>
           <TabsTrigger value="users">{t("settings.tabs.users")}</TabsTrigger>
@@ -43,6 +53,20 @@ export default function SettingsPage() {
             <TabsTrigger value="discarded">{t("settings.tabs.discarded")}</TabsTrigger>
           )}
         </TabsList>
+        <Select value={tab} onValueChange={setTab}>
+          <SelectTrigger className="md:hidden">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="config">{t("settings.tabs.config")}</SelectItem>
+            <SelectItem value="system">{t("settings.tabs.system")}</SelectItem>
+            <SelectItem value="users">{t("settings.tabs.users")}</SelectItem>
+            <SelectItem value="audit">{t("settings.tabs.audit")}</SelectItem>
+            {tab === "discarded" && (
+              <SelectItem value="discarded">{t("settings.tabs.discarded")}</SelectItem>
+            )}
+          </SelectContent>
+        </Select>
 
         <TabsContent value="config">
           <ConfigPanel onOpenDiscarded={() => setTab("discarded")} />

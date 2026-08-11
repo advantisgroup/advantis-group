@@ -340,7 +340,7 @@ export function GroupSettingsDialog({
                       <button
                         aria-label={t("removeMember")}
                         onClick={() => void onRemoveMember(m._id, m.name)}
-                        className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        className="flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                       >
                         <UserMinus className="h-4 w-4" />
                       </button>

@@ -25,6 +25,13 @@ import {
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type RequestId = Id<"passwordResetRequests">;
@@ -566,10 +573,14 @@ export function PasswordResetsPanel() {
   const highlighted = params.get("request");
   const pending = useQuery(api.passwordResets.listRequests, { status: "pending" });
   const handled = useQuery(api.passwordResets.listRequests, { status: "handled" });
+  const [tab, setTab] = useState("pending");
 
   return (
-    <Tabs defaultValue="pending">
-      <TabsList>
+    <Tabs value={tab} onValueChange={setTab}>
+      {/* A full-width horizontal strip here would be a second control
+          competing with the mobile bottom nav's thumb-zone space, so below
+          md this collapses to a single compact Select instead. */}
+      <TabsList className="hidden md:inline-flex">
         <TabsTrigger value="pending">
           {t("adminPending")}
           {pending && pending.length > 0 && (
@@ -580,6 +591,18 @@ export function PasswordResetsPanel() {
         </TabsTrigger>
         <TabsTrigger value="handled">{t("adminHandled")}</TabsTrigger>
       </TabsList>
+      <Select value={tab} onValueChange={setTab}>
+        <SelectTrigger className="md:hidden">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="pending">
+            {t("adminPending")}
+            {pending && pending.length > 0 ? ` (${pending.length})` : ""}
+          </SelectItem>
+          <SelectItem value="handled">{t("adminHandled")}</SelectItem>
+        </SelectContent>
+      </Select>
 
       <TabsContent value="pending" className="space-y-3">
         {pending?.length === 0 ? (

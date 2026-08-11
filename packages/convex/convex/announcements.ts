@@ -47,22 +47,51 @@ async function getOrCreateIntranetBot(ctx: MutationCtx): Promise<Id<"users">> {
   });
 }
 
-function aggregateReactions(
-  rows: { emoji: string; userId: Id<"users"> }[],
+// Capped so the always-visible avatar stacks on the card stay cheap to
+// resolve for every announcement in the list — the full lists (for the
+// mobile drawer / popover detail views) are fetched separately, lazily, by
+// the `reactors`/`viewers`/`nonReaders` queries below.
+const REACTION_SAMPLE_SIZE = 4;
+const VIEWER_SAMPLE_SIZE = 4;
+
+async function aggregateReactions(
+  ctx: QueryCtx,
+  rows: { emoji: string; userId: Id<"users">; createdAt: number }[],
   meId: Id<"users">,
-): { emoji: string; count: number; mine: boolean }[] {
-  const map = new Map<string, { count: number; mine: boolean }>();
+): Promise<
+  {
+    emoji: string;
+    count: number;
+    mine: boolean;
+    sample: { userId: Id<"users">; name: string; avatar: string | null }[];
+  }[]
+> {
+  const byEmoji = new Map<string, { userId: Id<"users">; createdAt: number }[]>();
   for (const r of rows) {
-    const entry = map.get(r.emoji) ?? { count: 0, mine: false };
-    entry.count += 1;
-    if (r.userId === meId) entry.mine = true;
-    map.set(r.emoji, entry);
+    const entries = byEmoji.get(r.emoji) ?? [];
+    entries.push({ userId: r.userId, createdAt: r.createdAt });
+    byEmoji.set(r.emoji, entries);
   }
-  return [...map.entries()].map(([emoji, e]) => ({
-    emoji,
-    count: e.count,
-    mine: e.mine,
-  }));
+  return Promise.all(
+    [...byEmoji.entries()].map(async ([emoji, entries]) => {
+      entries.sort((a, b) => b.createdAt - a.createdAt);
+      const sample = await Promise.all(
+        entries.slice(0, REACTION_SAMPLE_SIZE).map(async ({ userId }) => {
+          const u = await ctx.db.get(userId);
+          const avatar = u?.avatarStorageId
+            ? await ctx.storage.getUrl(u.avatarStorageId)
+            : (u?.avatarUrl ?? null);
+          return { userId, name: displayName(u), avatar };
+        }),
+      );
+      return {
+        emoji,
+        count: entries.length,
+        mine: entries.some((e) => e.userId === meId),
+        sample,
+      };
+    }),
+  );
 }
 
 function announcementOwnerUserId(announcement: Doc<"announcements">): Id<"users"> {
@@ -417,6 +446,21 @@ export const list = query({
           .query("announcementReads")
           .withIndex("by_announcement", (q) => q.eq("announcementId", a._id))
           .collect();
+        // Capped avatar sample for the inline "seen by" stack — the full
+        // list is fetched lazily by the `viewers`/`nonReaders` queries once
+        // the reader actually opens the panel.
+        const viewerSample = await Promise.all(
+          [...reads]
+            .sort((x, y) => y.readAt - x.readAt)
+            .slice(0, VIEWER_SAMPLE_SIZE)
+            .map(async (r) => {
+              const u = await ctx.db.get(r.userId);
+              const avatar = u?.avatarStorageId
+                ? await ctx.storage.getUrl(u.avatarStorageId)
+                : (u?.avatarUrl ?? null);
+              return { userId: r.userId, name: displayName(u), avatar };
+            }),
+        );
         return {
           _id: a._id,
           title: a.title,
@@ -438,8 +482,9 @@ export const list = query({
           audience: a.audience,
           audienceCount: activeUsers.filter((u) => userMatchesAudience(u, a.audience)).length,
           attachments,
-          reactions: aggregateReactions(reactionRows, user._id),
+          reactions: await aggregateReactions(ctx, reactionRows, user._id),
           viewCount: reads.length,
+          viewerSample,
           read: readSet.has(a._id),
         };
       }),
@@ -579,6 +624,42 @@ export const toggleReaction = mutation({
       });
     }
     return { ok: true };
+  },
+});
+
+/**
+ * Every reactor for an announcement, individually — powers the mobile
+ * long-press drawer's per-emoji breakdown. The `list` query only ships a
+ * capped avatar sample per emoji for the inline stack, so this is fetched
+ * separately, lazily, once the drawer is actually opened.
+ */
+export const reactors = query({
+  args: { announcementId: v.id("announcements") },
+  handler: async (ctx, { announcementId }) => {
+    const user = await requireUser(ctx);
+    const announcement = await ctx.db.get(announcementId);
+    if (!announcement || !isVisibleToUser(user, announcement)) {
+      return [];
+    }
+    const rows = await ctx.db
+      .query("announcementReactions")
+      .withIndex("by_announcement", (q) => q.eq("announcementId", announcementId))
+      .collect();
+    rows.sort((a, b) => b.createdAt - a.createdAt);
+    return Promise.all(
+      rows.map(async (r) => {
+        const u = await ctx.db.get(r.userId);
+        const avatar = u?.avatarStorageId
+          ? await ctx.storage.getUrl(u.avatarStorageId)
+          : (u?.avatarUrl ?? null);
+        return {
+          userId: r.userId,
+          name: displayName(u),
+          avatar,
+          emoji: r.emoji,
+        };
+      }),
+    );
   },
 });
 

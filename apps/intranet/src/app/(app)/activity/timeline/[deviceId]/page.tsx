@@ -25,6 +25,13 @@ import { RawTab } from "@/components/activity/timeline/RawTab";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -542,7 +549,10 @@ export default function TimelinePage({ params }: { params: Promise<{ deviceId: s
 
       <Tabs value={tab} onValueChange={setTab}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <TabsList>
+          {/* A full-width horizontal strip here would be a second control
+              competing with the mobile bottom nav's thumb-zone space, so
+              below md this collapses to a single compact Select instead. */}
+          <TabsList className="hidden md:inline-flex">
             <TabsTrigger value="charts">{t("timeline.tabs.charts")}</TabsTrigger>
             <TabsTrigger value="day">{t("timeline.tabs.day")}</TabsTrigger>
             <TabsTrigger value="pattern">{t("timeline.tabs.pattern")}</TabsTrigger>
@@ -555,6 +565,21 @@ export default function TimelinePage({ params }: { params: Promise<{ deviceId: s
               <TabsTrigger value="discarded">{t("timeline.tabs.discarded")}</TabsTrigger>
             )}
           </TabsList>
+          <Select value={tab} onValueChange={setTab}>
+            <SelectTrigger className="w-40 md:hidden">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="charts">{t("timeline.tabs.charts")}</SelectItem>
+              <SelectItem value="day">{t("timeline.tabs.day")}</SelectItem>
+              <SelectItem value="pattern">{t("timeline.tabs.pattern")}</SelectItem>
+              <SelectItem value="raw">{t("timeline.tabs.raw")}</SelectItem>
+              <SelectItem value="export">{t("timeline.tabs.export")}</SelectItem>
+              {tab === "discarded" && (
+                <SelectItem value="discarded">{t("timeline.tabs.discarded")}</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
           {tab !== "discarded" && (
             <InfoTip text={t("timeline.discarded.hint")} side="left">
               <button

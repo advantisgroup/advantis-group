@@ -9,6 +9,7 @@ import { BookOpen, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatFileSize, uploadToConvex } from "@/lib/upload";
 
@@ -46,6 +48,7 @@ export default function SalesCockpitLexikonPage() {
   const uploadLexikon = useMutation(api.salesCockpit.uploadLexikon);
   const removeLexikon = useMutation(api.salesCockpit.removeLexikon);
 
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [titel, setTitel] = useState("");
   const [tags, setTags] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -91,6 +94,7 @@ export default function SalesCockpitLexikonPage() {
       setTitel("");
       setTags("");
       setFile(null);
+      setUploadOpen(false);
       toast.success(t("eintragAufgenommen"));
     } catch (error) {
       handleError(error);
@@ -124,9 +128,29 @@ export default function SalesCockpitLexikonPage() {
 
   return (
     <div className="space-y-5">
-      <Card>
-        <CardContent className="space-y-3 pt-5">
-          <h2 className="text-base font-semibold">{t("neuenEintragHochladen")}</h2>
+      <PageHeaderActions
+        actions={[
+          {
+            key: "upload",
+            label: t("neuenEintragHochladen"),
+            icon: Upload,
+            onClick: () => setUploadOpen(true),
+          },
+        ]}
+      />
+
+      <ResponsiveDialog
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        title={t("neuenEintragHochladen")}
+        footer={
+          <Button onClick={() => void handleUpload()} disabled={uploading}>
+            <Upload className="size-3.5" />
+            {t("insLexikonAufnehmen")}
+          </Button>
+        }
+      >
+        <div className="space-y-3">
           <div>
             <Label className="mb-1.5 block">{t("titel")}</Label>
             <Input
@@ -152,14 +176,8 @@ export default function SalesCockpitLexikonPage() {
             />
             <p className="mt-1 text-xs text-muted-foreground">{t("lexUploadHint")}</p>
           </div>
-          <div className="flex justify-end">
-            <Button onClick={() => void handleUpload()} disabled={uploading}>
-              <Upload className="size-3.5" />
-              {t("insLexikonAufnehmen")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </ResponsiveDialog>
 
       <Card>
         <CardContent className="space-y-3 pt-5">

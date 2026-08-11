@@ -126,6 +126,7 @@ export function AvatarStack({
               <button
                 type="button"
                 onClick={() => onSelect(p.id)}
+                aria-label={p.name}
                 className="relative rounded-full ring-2 ring-card transition-transform hover:z-10 hover:-translate-y-0.5 focus-visible:z-10 focus-visible:outline-none"
               >
                 <Avatar className={size}>

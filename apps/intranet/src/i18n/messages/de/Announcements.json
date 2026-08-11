@@ -43,6 +43,7 @@
   "notReadYet": "Noch nicht gelesen",
   "everyoneRead": "Alle in der Zielgruppe haben es gelesen",
   "edit": "Ankündigung bearbeiten",
+  "actions": "Aktionen",
   "updated": "Ankündigung aktualisiert",
   "edited": "bearbeitet",
   "editedBy": "bearbeitet von",
@@ -64,5 +65,6 @@
   "scheduledFor": "Wird gesendet {date}",
   "scheduledToast": "Ankündigung geplant",
   "expired": "Abgelaufen",
+  "reactions": "Reaktionen",
   "optionsHint": "Kategorie, Zielgruppe, Anhänge, relevantes Datum und Zeitplanung für diese Ankündigung."
 }

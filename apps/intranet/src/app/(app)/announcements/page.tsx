@@ -5,8 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import * as PopoverPrimitive from "@radix-ui/react-popover";
 import { useMutation, useQuery } from "convex/react";
 import {
   CalendarClock,
@@ -16,11 +14,10 @@ import {
   Cloud,
   Download,
   ExternalLink,
-  Eye,
   FileText,
   Link as LinkIcon,
   Megaphone,
-  MoreHorizontal,
+  MoreVertical,
   Pencil,
   Pin,
   Plus,
@@ -32,24 +29,20 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
-import { Link } from "@/components/Link";
+import { ReactionsSummary } from "@/components/announcements/ReactionsSummary";
 import { RelevantDateCallout } from "@/components/announcements/RelevantDateCallout";
+import { ViewersSummary } from "@/components/announcements/ViewersSummary";
 import { MentionLink } from "@/components/profile/MentionLink";
 import { MentionRichText } from "@/components/profile/MentionRichText";
 import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
+import { ActionMenu, type ActionMenuItem } from "@/components/ui/action-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, useConfirm } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { ReactionChips, ReactionPicker } from "@/components/ui/reactions";
+import { ReactionPicker } from "@/components/ui/reactions";
 import { htmlToText } from "@/components/ui/rich-text";
 import {
   Select,
@@ -60,136 +53,12 @@ import {
 } from "@/components/ui/select";
 import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import { formatDateTime, formatTime, initials } from "@/lib/format";
+import { formatDateTime, initials } from "@/lib/format";
 import { pathToUrl } from "@/lib/onedrive-path";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import { ALL_CATEGORIES_VALUE, type Announcement } from "@/lib/announcements";
-
-function ViewersPopover({
-  announcementId,
-  count,
-  total,
-  canManage,
-}: {
-  announcementId: Id<"announcements">;
-  count: number;
-  /** Audience size — shown as "x / y" to the author/admins only. */
-  total?: number;
-  /** Author/admin gets a second tab listing who hasn't read it yet. */
-  canManage: boolean;
-}) {
-  const t = useTranslations("Announcements");
-  const locale = useLocale();
-  const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<"read" | "unread">("read");
-  const viewers = useQuery(
-    api.announcements.viewers,
-    open && tab === "read" ? { announcementId } : "skip",
-  );
-  const nonReaders = useQuery(
-    api.announcements.nonReaders,
-    open && canManage && tab === "unread" ? { announcementId } : "skip",
-  );
-
-  return (
-    <PopoverPrimitive.Root
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (!o) setTab("read");
-      }}
-    >
-      <PopoverPrimitive.Trigger asChild>
-        <button
-          type="button"
-          className="flex items-center gap-1.5 rounded-md px-1.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-        >
-          <Eye className="h-3.5 w-3.5" />
-          <span className="tabular-nums">
-            {total !== undefined ? t("readStats", { count, total }) : t("viewedBy", { count })}
-          </span>
-        </button>
-      </PopoverPrimitive.Trigger>
-      <PopoverPrimitive.Portal>
-        <PopoverPrimitive.Content
-          align="end"
-          sideOffset={6}
-          className="z-50 max-h-80 w-64 overflow-y-auto rounded-lg border border-border/70 bg-popover p-1.5 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
-        >
-          {canManage && (
-            <div className="mb-1 grid grid-cols-2 gap-1 px-0.5 pb-1">
-              <button
-                type="button"
-                onClick={() => setTab("read")}
-                className={cn(
-                  "rounded-md px-2 py-1 text-xs font-medium transition-colors",
-                  tab === "read"
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:bg-accent/60",
-                )}
-              >
-                {t("viewedBy", { count })}
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab("unread")}
-                className={cn(
-                  "rounded-md px-2 py-1 text-xs font-medium transition-colors",
-                  tab === "unread"
-                    ? "bg-accent text-foreground"
-                    : "text-muted-foreground hover:bg-accent/60",
-                )}
-              >
-                {t("notReadYet")}
-              </button>
-            </div>
-          )}
-          {!canManage && (
-            <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("viewedBy", { count })}
-            </p>
-          )}
-          {tab === "read" ? (
-            viewers === undefined ? (
-              <p className="px-2 py-2 text-xs text-muted-foreground">…</p>
-            ) : viewers.length === 0 ? (
-              <p className="px-2 py-2 text-xs text-muted-foreground">{t("noViews")}</p>
-            ) : (
-              viewers.map((v) => (
-                <div key={v.userId} className="flex items-center gap-2 rounded-md px-2 py-1.5">
-                  <Avatar className="size-6">
-                    {v.avatar && <AvatarImage src={v.avatar} alt={v.name} />}
-                    <AvatarFallback className="text-[9px]">{initials(v.name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="flex-1 truncate text-sm">{v.name}</span>
-                  <span className="shrink-0 text-[10px] text-muted-foreground">
-                    {formatDateTime(v.readAt, locale)}
-                  </span>
-                </div>
-              ))
-            )
-          ) : nonReaders === undefined ? (
-            <p className="px-2 py-2 text-xs text-muted-foreground">…</p>
-          ) : nonReaders.length === 0 ? (
-            <p className="px-2 py-2 text-xs text-muted-foreground">{t("everyoneRead")}</p>
-          ) : (
-            nonReaders.map((v) => (
-              <div key={v.userId} className="flex items-center gap-2 rounded-md px-2 py-1.5">
-                <Avatar className="size-6">
-                  {v.avatar && <AvatarImage src={v.avatar} alt={v.name} />}
-                  <AvatarFallback className="text-[9px]">{initials(v.name)}</AvatarFallback>
-                </Avatar>
-                <span className="flex-1 truncate text-sm">{v.name}</span>
-              </div>
-            ))
-          )}
-        </PopoverPrimitive.Content>
-      </PopoverPrimitive.Portal>
-    </PopoverPrimitive.Root>
-  );
-}
 
 /** Collapses long bodies behind a "read more" toggle. */
 function CollapsibleBody({ html, title }: { html: string; title: string }) {
@@ -252,6 +121,7 @@ function AnnouncementCard({
   const tc = useTranslations("Common");
   const locale = useLocale();
   const me = useCurrentUser();
+  const router = useRouter();
   const markRead = useMutation(api.announcements.markRead);
   const toggleReaction = useMutation(api.announcements.toggleReaction);
   const canManage = isOwnerOrAdmin(me, a.ownerId);
@@ -287,152 +157,118 @@ function AnnouncementCard({
     return () => observer.disconnect();
   }, [a._id, a.read, a.scheduled, markRead]);
 
+  const menuItems: ActionMenuItem[] = [
+    {
+      key: "copy",
+      label: tc("copy"),
+      icon: <LinkIcon />,
+      onSelect: () => {
+        const promise = navigator.clipboard.writeText(
+          `https://intern.advantisgroup.de/announcements?id=${a._id}`,
+        );
+        toast.promise(promise, {
+          loading: tc("copy"),
+          success: tc("copied"),
+          error: tc("copyFailed"),
+        });
+      },
+    },
+    ...(canManage
+      ? [
+          {
+            key: "edit",
+            label: tc("edit"),
+            icon: <Pencil />,
+            onSelect: () => router.push(`/announcements/${a._id}/edit`),
+          },
+          {
+            key: "delete",
+            label: tc("delete"),
+            icon: <Trash2 />,
+            destructive: true,
+            onSelect: onDelete,
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <div className="flex gap-3 sm:gap-4">
-      {/* Profile section - outside card */}
-      <div className="flex shrink-0 flex-col items-center gap-1.5 pt-1">
-        <Avatar className="size-10 sm:size-11">
-          {a.authorAvatar && <AvatarImage src={a.authorAvatar} alt={a.authorName} />}
-          <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-            {initials(a.authorName, a.authorName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="hidden text-center text-[10px] text-muted-foreground sm:block max-w-[60px] line-clamp-2">
-          {a.authorName}
+    <article
+      ref={articleRef}
+      className={cn(
+        "group relative -mx-2 flex gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-accent/40",
+        (a.scheduled || a.expired) && "opacity-70",
+        highlighted && "deeplink-hl",
+      )}
+    >
+      <Avatar className="size-9 shrink-0">
+        {a.authorAvatar && <AvatarImage src={a.authorAvatar} alt={a.authorName} />}
+        <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+          {initials(a.authorName, a.authorName)}
+        </AvatarFallback>
+      </Avatar>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 pr-8">
+          {a.pinned && (
+            <Pin
+              className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
+              aria-label={t("pinned")}
+            />
+          )}
+          <span className="truncate text-sm font-semibold">{a.authorName}</span>
+          <time className="shrink-0 text-xs text-muted-foreground">
+            {formatDateTime(a.publishedAt, locale)}
+          </time>
+          {!a.read && !a.scheduled && (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+          )}
+          {a.updatedAt && (
+            <span className="shrink-0 text-xs text-muted-foreground">
+              ·{" "}
+              {a.updatedByUserId && a.updatedByName ? (
+                <>
+                  {t("editedBy")}{" "}
+                  <MentionLink userId={a.updatedByUserId} className="font-medium text-foreground">
+                    {a.updatedByName}
+                  </MentionLink>
+                </>
+              ) : (
+                t("edited")
+              )}
+            </span>
+          )}
+          {a.category && (
+            <Badge variant="muted" className="min-w-0 shrink gap-1 font-normal" title={a.category}>
+              <Tag className="size-3 shrink-0" />
+              <span className="truncate">{a.category}</span>
+            </Badge>
+          )}
+          {a.scheduled && (
+            <Badge variant="warning" className="gap-1">
+              <CalendarClock className="size-3" />
+              {t("scheduledFor", {
+                date: formatDateTime(a.publishedAt, locale),
+              })}
+            </Badge>
+          )}
+          {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
         </div>
-      </div>
 
-      {/* Card content */}
-      <article
-        ref={articleRef}
-        className={cn(
-          "group relative flex-1 overflow-hidden rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)] transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
-          a.pinned && "border-primary/30",
-          (a.scheduled || a.expired) && "opacity-80",
-          highlighted && "deeplink-hl",
-        )}
-      >
-        {a.pinned && <span className="absolute inset-y-0 left-0 w-1 bg-primary" />}
-        {/* Simplified header with title, badges, and actions dropdown */}
-        <header className="flex flex-col gap-2 border-b border-border/60 px-4 py-3.5 sm:px-5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                {a.pinned && (
-                  <Pin
-                    className="h-3.5 w-3.5 shrink-0 fill-primary text-primary"
-                    aria-label={t("pinned")}
-                  />
-                )}
-                <h2 className="truncate font-display text-base font-semibold leading-tight">
-                  {a.title}
-                </h2>
-                {a.category && (
-                  <Badge
-                    variant="muted"
-                    className="min-w-0 shrink gap-1 font-normal"
-                    title={a.category}
-                  >
-                    <Tag className="size-3 shrink-0" />
-                    <span className="truncate">{a.category}</span>
-                  </Badge>
-                )}
-                {!a.read && !a.scheduled && (
-                  <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-                )}
-              </div>
-            </div>
-
-            {/* Actions dropdown menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(
-                      `https://intern.advantisgroup.de/announcements?id=${a._id}`
-                    );
-                    toast.success(tc("copied"));
-                  }}
-                >
-                  <LinkIcon className="h-4 w-4" />
-                  <span>{t("copyLink")}</span>
-                </DropdownMenuItem>
-                {canManage && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/announcements/${a._id}/edit`}>
-                        <Pencil className="h-4 w-4" />
-                        <span>{t("edit")}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={onDelete}
-                      className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span>{tc("delete")}</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Metadata row */}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            {a.scheduled && (
-              <Badge variant="warning" className="gap-1">
-                <CalendarClock className="size-3" />
-                {t("scheduledFor", {
-                  date: formatDateTime(a.publishedAt, locale),
-                })}
-              </Badge>
-            )}
-            {a.expired && <Badge variant="muted">{t("expired")}</Badge>}
-            <time>{formatDateTime(a.publishedAt, locale)}</time>
-            {a.updatedAt && (
-              <>
-                <span>·</span>
-                {a.updatedByUserId && a.updatedByName ? (
-                  <>
-                    {t("editedBy")}{" "}
-                    <MentionLink
-                      userId={a.updatedByUserId}
-                      className="font-medium text-foreground"
-                    >
-                      {a.updatedByName}
-                    </MentionLink>
-                  </>
-                ) : (
-                  t("edited")
-                )}{" "}
-                {formatTime(a.updatedAt, "de-DE")}
-              </>
-            )}
-          </div>
-        </header>
-
-        {/* Styled message body */}
-        <div className="px-5 py-3.5">
+        <div className="mt-1 min-w-0 overflow-hidden rounded-lg border border-border/60 bg-card px-3.5 py-3">
           {a.relevantDate && (
             <RelevantDateCallout
               value={a.relevantDate}
               summary={a.title}
-              className="-mx-5 -mt-3.5 mb-3 border-t-0"
+              className="-mx-3.5 -mt-3 mb-3 border-t-0"
             />
           )}
-          <CollapsibleBody html={a.body} title={a.title} />
+          <h2 className="font-display text-base font-semibold leading-tight">{a.title}</h2>
+          <div className="mt-1">
+            <CollapsibleBody html={a.body} title={a.title} />
+          </div>
           {a.attachments.length > 0 && (
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-3">
               {/* Images embed inline */}
               {a.attachments.some((att) => att.kind === "image" && att.url) && (
                 <div className="flex flex-wrap gap-2">
@@ -486,7 +322,9 @@ function AnnouncementCard({
                       return (
                         <a
                           key={att.storageId}
-                          href={fromOneDrive ? pathToUrl(att.oneDrivePath!) : (att.url ?? undefined)}
+                          href={
+                            fromOneDrive ? pathToUrl(att.oneDrivePath!) : (att.url ?? undefined)
+                          }
                           target={fromOneDrive ? undefined : "_blank"}
                           rel={fromOneDrive ? undefined : "noreferrer"}
                           download={fromOneDrive ? undefined : att.name}
@@ -515,9 +353,9 @@ function AnnouncementCard({
                             </span>
                           </span>
                           {fromOneDrive ? (
-                            <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-0 transition-opacity group-hover/att:opacity-100" />
+                            <ExternalLink className="size-4 shrink-0 text-blue-500 opacity-100 transition-opacity md:opacity-0 md:group-hover/att:opacity-100" />
                           ) : (
-                            <Download className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/att:opacity-100" />
+                            <Download className="size-4 shrink-0 text-muted-foreground opacity-100 transition-opacity md:opacity-0 md:group-hover/att:opacity-100" />
                           )}
                         </a>
                       );
@@ -531,26 +369,44 @@ function AnnouncementCard({
         {/* Reactions + viewed status. Wraps instead of squeezing the chips
             when a popular post collects more reactions than a narrow screen
             has room for on one line. */}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-border/60 px-5 py-2">
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <ReactionPicker
             side="top"
             onPick={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
           />
-          <ReactionChips
+          <ReactionsSummary
+            announcementId={a._id}
             reactions={a.reactions}
             onToggle={(emoji) => void toggleReaction({ announcementId: a._id, emoji })}
           />
           <div className="ml-auto">
-            <ViewersPopover
+            <ViewersSummary
               announcementId={a._id}
+              sample={a.viewerSample}
               count={a.viewCount}
               total={canManage ? a.audienceCount : undefined}
               canManage={canManage}
             />
           </div>
         </div>
-      </article>
-    </div>
+      </div>
+
+      <div className="absolute right-2 top-2 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+        <ActionMenu
+          ariaLabel={t("actions")}
+          items={menuItems}
+          trigger={
+            <button
+              type="button"
+              className="flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label={t("actions")}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+          }
+        />
+      </div>
+    </article>
   );
 }
 

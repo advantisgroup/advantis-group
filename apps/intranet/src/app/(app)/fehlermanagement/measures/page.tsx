@@ -15,16 +15,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -105,77 +99,13 @@ function NewMeasureDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{t("newMeasure")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldLinkedError")}
-            </label>
-            <Select value={errorId} onValueChange={setErrorId}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {reports.map((r) => (
-                  <SelectItem key={r._id} value={r._id}>
-                    {r.description.slice(0, 60)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldMeasureDescription")}
-            </label>
-            <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("fieldMeasureDescriptionPlaceholder")}
-              autoFocus
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldPhase")}
-              </label>
-              <Select value={phase} onValueChange={(v) => setPhase(v as MeasurePhase)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MEASURE_PHASES.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {t(`phase.${p}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-muted-foreground">
-                {t("fieldResponsible")}
-              </label>
-              <Input
-                value={responsible}
-                onChange={(e) => setResponsible(e.target.value)}
-                placeholder={t("fieldResponsiblePlaceholder")}
-              />
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-muted-foreground">
-              {t("fieldDueAt")}
-            </label>
-            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-          </div>
-        </div>
-        <DialogFooter>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t("newMeasure")}
+      contentClassName="max-w-lg"
+      footer={
+        <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
@@ -185,9 +115,75 @@ function NewMeasureDialog({
           >
             {tc("create")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            {t("fieldLinkedError")}
+          </label>
+          <Select value={errorId} onValueChange={setErrorId}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {reports.map((r) => (
+                <SelectItem key={r._id} value={r._id}>
+                  {r.description.slice(0, 60)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            {t("fieldMeasureDescription")}
+          </label>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t("fieldMeasureDescriptionPlaceholder")}
+            autoFocus
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("fieldPhase")}
+            </label>
+            <Select value={phase} onValueChange={(v) => setPhase(v as MeasurePhase)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MEASURE_PHASES.map((p) => (
+                  <SelectItem key={p} value={p}>
+                    {t(`phase.${p}`)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-muted-foreground">
+              {t("fieldResponsible")}
+            </label>
+            <Input
+              value={responsible}
+              onChange={(e) => setResponsible(e.target.value)}
+              placeholder={t("fieldResponsiblePlaceholder")}
+            />
+          </div>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-muted-foreground">
+            {t("fieldDueAt")}
+          </label>
+          <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        </div>
+      </div>
+    </ResponsiveDialog>
   );
 }
 
@@ -290,7 +286,7 @@ function MeasureCard({ measure, errorLabel }: { measure: Measure; errorLabel: st
               type="button"
               onClick={() => void onDelete()}
               aria-label={tc("delete")}
-              className="shrink-0 text-muted-foreground hover:text-destructive"
+              className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
             >
               <Trash2 className="size-3.5" />
             </button>

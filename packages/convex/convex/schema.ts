@@ -134,10 +134,7 @@ export const suggestionOutcomeValidator = v.union(
  * `applyNewPassword`) when a third area grows its own password; nothing else
  * about the flow is per-area.
  */
-export const passwordResetScopeValidator = v.union(
-  v.literal("hr"),
-  v.literal("performance"),
-);
+export const passwordResetScopeValidator = v.union(v.literal("hr"), v.literal("performance"));
 
 const linkPreviewValidator = v.object({
   url: v.string(),
@@ -296,6 +293,7 @@ export default defineSchema({
   })
     .index("by_clerkUserId", ["clerkUserId"])
     .index("by_email", ["email"])
+    .index("by_createdAt", ["createdAt"])
     .index("by_role", ["role"])
     .index("by_status", ["status"])
     .index("by_clockodoUserId", ["clockodoUserId"])
@@ -413,7 +411,13 @@ export default defineSchema({
     updatedAt: v.optional(v.number()),
   })
     .index("by_nr", ["nr"])
-    .index("by_creator", ["createdByUserId"]),
+    .index("by_creator", ["createdByUserId"])
+    // Both back `/admin`'s throughput timelines: "opened in window" over
+    // `createdAt`, "closed in window" over the closing edit's `updatedAt`.
+    // Without the second one a ticket opened before the window but closed
+    // inside it would be invisible to the closed-per-day series.
+    .index("by_createdAt", ["createdAt"])
+    .index("by_status_updatedAt", ["status", "updatedAt"]),
 
   // Per-ticket chat thread — opt-in (a ticket has one iff someone with the
   // `manage_it_ticket_threads` capability, or a manager+, started it) rather
@@ -508,7 +512,8 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_clerkUserId", ["clerkUserId"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_createdAt", ["createdAt"]),
 
   // --- Calendar: absences & events ----------------------------------------
   /**
@@ -1979,7 +1984,8 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_user", ["requesterUserId"])
-    .index("by_driveItemId", ["driveItemId"]),
+    .index("by_driveItemId", ["driveItemId"])
+    .index("by_createdAt", ["createdAt"]),
 
   // Append-only audit of OneDrive actions (requests, approvals, deletes, …).
   // `request`/`upload`/`approve`/`deny` are written directly from
@@ -2473,7 +2479,10 @@ export default defineSchema({
   })
     .index("by_status", ["status"])
     .index("by_category", ["categoryId"])
-    .index("by_createdAt", ["createdAt"]),
+    .index("by_createdAt", ["createdAt"])
+    // "Closed in window" for the resolution timeline — an error opened before
+    // the window but closed inside it has to land in the closed series.
+    .index("by_closedAt", ["closedAt"]),
 
   // 8D-PDCA corrective measures linked to an error report. `phase` walks
   // through the standard 8D steps: immediate containment (D3) → root cause
