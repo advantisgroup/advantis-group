@@ -1,5 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
+import Image from "next/image";
+
 import { Mail, ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -8,6 +12,49 @@ import { ShapeParticles } from "@/components/effects/ShapeParticles";
 import { SectionDivider } from "@/components/layout/SectionDivider";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
+
+// Drop real files into /public/office (e.g. /office/office-01.jpg) and list them
+// here to enable the "office life" section below the team grid.
+const OFFICE_PHOTOS: { src: string; alt: string }[] = [];
+
+// Falls back to initials when the photo file doesn't exist yet (placeholders
+// not generated) or fails to load.
+function Avatar({
+  photo,
+  initials,
+  className,
+  fontSizeClassName,
+}: {
+  photo?: string;
+  initials: string;
+  className: string;
+  fontSizeClassName: string;
+}) {
+  const [errored, setErrored] = useState(false);
+
+  if (!photo || errored) {
+    return (
+      <div
+        className={`${className} flex items-center justify-center font-bold ${fontSizeClassName}`}
+      >
+        {initials}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${className} relative overflow-hidden`}>
+      <Image
+        src={photo}
+        alt={initials}
+        fill
+        sizes="200px"
+        className="object-cover"
+        onError={() => setErrored(true)}
+      />
+    </div>
+  );
+}
 
 export default function Team() {
   const t = useTranslations("team");
@@ -18,41 +65,43 @@ export default function Team() {
       initials: "AR",
       bio: t("founder.bio"),
       email: `${process.env.NEXT_PUBLIC_EMAIL_ADRESS}`,
+      photo: "/team/andrea-reichl.jpg",
     },
     {
       name: "Andrea Lautenbacher",
       role: t("roles.inbound"),
       initials: "AL",
+      photo: "/team/andrea-lautenbacher.jpg",
     },
     {
       name: "Jessica Blume",
       role: t("roles.outbound"),
       initials: "JB",
-    },
-    {
-      name: "Kaleb Daniel",
-      role: t("roles.it"),
-      initials: "KD",
+      photo: "/team/jessica-blume.jpg",
     },
     {
       name: "Morena Azzuro",
       role: t("roles.hr"),
       initials: "MA",
+      photo: "/team/morena-azzuro.jpg",
     },
     {
       name: "Adam Kämpfer",
       role: t("roles.marketing"),
       initials: "AK",
+      photo: "/team/adam-kaempfer.jpg",
     },
     {
       name: "Sabine Sagasser",
       role: t("roles.coach"),
       initials: "SS",
+      photo: "/team/sabine-sagasser.jpg",
     },
     {
       name: "Martin Bergmüller",
       role: t("roles.quality"),
       initials: "MB",
+      photo: "/team/martin-bergmueller.jpg",
     },
   ];
 
@@ -104,9 +153,12 @@ export default function Team() {
                 <div className="grid md:grid-cols-12 gap-12 items-center">
                   <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
                     <div className="relative mb-6">
-                      <div className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-linear-to-br from-primary/20 to-secondary/20 flex items-center justify-center text-4xl md:text-5xl font-bold text-primary border-4 border-background shadow-2xl relative z-10 group-hover:scale-105 transition-transform duration-500">
-                        {teamMembers[0].initials}
-                      </div>
+                      <Avatar
+                        photo={teamMembers[0].photo}
+                        initials={teamMembers[0].initials}
+                        fontSizeClassName="text-4xl md:text-5xl"
+                        className="w-40 h-40 md:w-48 md:h-48 rounded-full bg-linear-to-br from-primary/20 to-secondary/20 text-primary border-4 border-background shadow-2xl relative z-10 group-hover:scale-105 transition-transform duration-500"
+                      />
                       {/* Orbiting particles or rings could go here */}
                       <div className="absolute inset-0 border border-primary/20 rounded-full scale-110 animate-pulse-slow" />
                       <div className="absolute inset-0 border border-dashed border-primary/20 rounded-full scale-125 animate-spin-slow" />
@@ -168,9 +220,12 @@ export default function Team() {
 
                     <div className="relative z-10 flex flex-col items-center text-center h-full">
                       <div className="mb-6 relative">
-                        <div className="w-24 h-24 rounded-2xl bg-linear-to-br from-background to-muted flex items-center justify-center text-2xl font-bold text-muted-foreground group-hover:text-primary group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300 shadow-inner">
-                          {member.initials}
-                        </div>
+                        <Avatar
+                          photo={member.photo}
+                          initials={member.initials}
+                          fontSizeClassName="text-2xl"
+                          className="w-24 h-24 rounded-2xl bg-linear-to-br from-background to-muted text-muted-foreground group-hover:text-primary group-hover:from-primary/10 group-hover:to-primary/5 transition-all duration-300 shadow-inner"
+                        />
                         <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-background rounded-full flex items-center justify-center border border-border opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100 scale-0 group-hover:scale-100">
                           <ArrowRight className="w-4 h-4 text-primary -rotate-45" />
                         </div>
@@ -192,6 +247,35 @@ export default function Team() {
               ))}
             </div>
           </section>
+
+          {/* Office Life */}
+          {OFFICE_PHOTOS.length > 0 && (
+            <section className="mt-32">
+              <ScrollReveal delay={100} className="mb-12 text-center md:text-left">
+                <h2 className="text-3xl md:text-4xl font-bold">{t("office.title")}</h2>
+                <p className="text-muted-foreground mt-2">{t("office.subtitle")}</p>
+              </ScrollReveal>
+
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {OFFICE_PHOTOS.map((photo, index) => (
+                  <ScrollReveal key={photo.src} delay={index * 100}>
+                    <div
+                      className="relative aspect-4/3 rounded-2xl overflow-hidden border border-border/50 shadow-lg transition-transform duration-500 hover:scale-[1.02]"
+                      style={{ transform: `rotate(${index % 2 === 0 ? -1.5 : 1.5}deg)` }}
+                    >
+                      <Image
+                        src={photo.src}
+                        alt={photo.alt}
+                        fill
+                        sizes="(min-width: 768px) 33vw, 50vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  </ScrollReveal>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </main>
     </div>

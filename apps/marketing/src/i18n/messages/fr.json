@@ -287,7 +287,7 @@
       "role": "PDG / Directrice Générale",
       "badge": "Leadership",
       "quote": "« La vente n'est pas seulement un travail, c'est une attitude. »",
-      "bio": "Passionnée de vente, stratège et faiseuse. Avec plus de 15 ans d'expérience dans la vente, le coaching et la création d'entreprise, Andrea dirige le groupe advantis avec passion, pragmatisme et un accent clair sur le succès et l'humain.",
+      "bio": "Passionnée de vente, stratège et faiseuse. Avec plus de 15 ans d'expérience dans la vente, le coaching et la création d'entreprise, Andrea dirige l'ADVANTIS GROUP avec passion, pragmatisme et un accent clair sur le succès et l'humain.",
       "contactBtn": "Contacter"
     },
     "roles": {
@@ -303,6 +303,10 @@
       "title": "Notre Équipe",
       "subtitle": "Les experts à vos côtés",
       "cardFooter": "Équipe Advantis"
+    },
+    "office": {
+      "title": "Un Aperçu de Notre Quotidien",
+      "subtitle": "Quelques instants du bureau et sur le terrain."
     }
   },
   "brandsPage": {
