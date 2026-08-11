@@ -26,8 +26,8 @@ const manrope = Manrope({
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata: Metadata = {
   title: {
-    default: "advantis GmbH",
-    template: "%s | advantis GmbH",
+    default: "ADVANTIS GROUP",
+    template: "%s | ADVANTIS GROUP",
   },
   description:
     "Ganzheitliche Sales Power: von Marketingstrategie und Leadgenerierung über Akquise Support, Sales Trainings bis hin zur Implementierung von KI-Tools.",
@@ -39,32 +39,32 @@ export const metadata: Metadata = {
     "Akquise",
     "Sales Training",
     "KI-Tools",
-    "Advantis Group",
+    "ADVANTIS GROUP",
     "Marketingstrategie",
   ],
-  authors: [{ name: "advantis GmbH" }],
-  creator: "advantis GmbH",
+  authors: [{ name: "ADVANTIS GROUP" }],
+  creator: "ADVANTIS GROUP",
   metadataBase: new URL("https://advantisgroup.de"),
   openGraph: {
     type: "website",
     locale: "de_DE",
     url: "https://advantisgroup.de",
-    title: "advantis GmbH",
+    title: "ADVANTIS GROUP",
     description:
       "Ganzheitliche Sales Power: von Marketingstrategie und Leadgenerierung über Akquise Support, Sales Trainings bis hin zur Implementierung von KI-Tools.",
-    siteName: "advantis GmbH",
+    siteName: "ADVANTIS GROUP",
     images: [
       {
         url: "/base_logo_transparent_background.png",
         width: 1200,
         height: 630,
-        alt: "advantis GmbH Logo",
+        alt: "ADVANTIS GROUP Logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "advantis GmbH",
+    title: "ADVANTIS GROUP",
     description:
       "Ganzheitliche Sales Power: von Marketingstrategie und Leadgenerierung über Akquise Support, Sales Trainings bis hin zur Implementierung von KI-Tools.",
     images: ["/base_logo_transparent_background.png"],

@@ -44,7 +44,7 @@ export const email = new Elysia().post(
 
     try {
       const { data, error } = await resend.emails.send({
-        from: `Advantis Group <${process.env.NEXT_PUBLIC_EMAIL_ADRESS}>`,
+        from: `ADVANTIS GROUP <${process.env.NEXT_PUBLIC_EMAIL_ADRESS}>`,
         to: addresses,
         bcc,
         cc,

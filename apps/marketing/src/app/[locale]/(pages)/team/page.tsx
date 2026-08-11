@@ -3,7 +3,6 @@
 import { Mail, ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import { BrandText } from "@/components/effects/BrandText";
 import { ScrollReveal } from "@/components/effects/ScrollReveal";
 import { ShapeParticles } from "@/components/effects/ShapeParticles";
 import { SectionDivider } from "@/components/layout/SectionDivider";
@@ -41,9 +40,9 @@ export default function Team() {
       initials: "MA",
     },
     {
-      name: "Sebastian Kämpfer",
+      name: "Adam Kämpfer",
       role: t("roles.marketing"),
-      initials: "SK",
+      initials: "AK",
     },
     {
       name: "Sabine Sagasser",
@@ -78,12 +77,9 @@ export default function Team() {
                 </div>
                 <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight">
                   {t("hero.titlePart1")} <br />
-                  <BrandText
-                    brand="advantis"
-                    className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary/60"
-                  >
-                    Advantis Group
-                  </BrandText>
+                  <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary/60">
+                    ADVANTIS GROUP
+                  </span>
                 </h1>
                 <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                   {t("hero.subtitle")}

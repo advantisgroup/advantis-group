@@ -28,23 +28,27 @@
     "ctaPrimary": "Contact Us Now",
     "ctaSecondary": "Discover Our Brands"
   },
+  "homeIntro": {
+    "eyebrow": "Revenue & Customer Engagement Partner",
+    "text": "ADVANTIS GROUP helps companies build modern customer care and inside sales organizations. Our experts take care of customer service, lead generation, telesales, new customer acquisition, and sales outsourcing. Our portfolio is rounded out with AI-powered process automation, CRM consulting, and sales training."
+  },
   "features": {
     "badge": "Our Strengths",
     "eyebrow": "Advisory Engine",
     "title": "Why",
-    "titleBrand": "Advantis Group",
-    "subtitle": "We combine over 15 years of experience with innovative approaches to take your sales to the next level.",
+    "titleBrand": "ADVANTIS GROUP",
+    "subtitle": "We combine over 15 years of sales experience with innovative sales approaches and AI tools to take your sales to the next level.",
     "feature1": {
-      "title": "Making Sales Teams Successful",
-      "description": "Through targeted strategies and practical support, we help your teams achieve their goals and grow sustainably."
+      "title": "We make your sales team successful",
+      "description": "Through a targeted lead-generation strategy and hands-on support, we help your team grow and reach its goals."
     },
     "feature2": {
-      "title": "Making Sales Smarter",
-      "description": "With modern tools and proven methods, we optimize your sales processes for maximum efficiency."
+      "title": "Making sales smarter – in-house or outsourced",
+      "description": "With modern tools and AI, we optimize your sales processes for maximum efficiency. We help strengthen your own team, or take over the entire sales process as your outsourcing partner – it's your call!"
     },
     "feature3": {
       "title": "Delivering Sustainable Results",
-      "description": "Over 15 years of experience combined with innovative approaches for long-term success that convinces."
+      "description": "We bring our experience, expertise, and a lot of heart to every partnership. The goal is a successful, long-term collaboration – we're ready to work hard for our shared success!"
     },
     "stats": {
       "experience": "Years of Experience",
@@ -60,7 +64,7 @@
     "subtitle": "Four strong brands, one common goal: Your sales success",
     "salespirates": {
       "tagline": "External Sales Agency",
-      "description": "We deliver leads or support your sales with measurable results. Active, targeted, and effective."
+      "description": "We generate leads through cold calling, pre-qualify them, and take over your inside sales. From lead to close, for maximum sales success."
     },
     "rodeo": {
       "tagline": "Strategic Consulting",
@@ -79,10 +83,10 @@
   "cta": {
     "title": "Ready for the next",
     "titleHighlight": "Level?",
-    "subtitle": "Let's find out together how we can transform your sales.",
+    "subtitle": "Let's find out together how we can transform and push your sales forward.",
     "primary": "Contact Us Now",
     "secondary": "Send Email",
-    "benefits": "Free Initial Consultation • No Obligations • Individual Solutions"
+    "benefits": "Free Initial Consultation • Tailored Solutions • Individual Offers"
   },
   "footer": {
     "description": "We are your partner for successful sales. With over 15 years of experience and four strong brands, we move your business forward.",
@@ -235,7 +239,7 @@
       "badge": "About Us",
       "titlePart1": "Your Home for",
       "titlePart2": "Excellent Sales",
-      "subtitle": "The <brand>advantis GmbH</brand> unites over 15 years of sales experience under one roof – with passion, pragmatism, and a clear focus on success."
+      "subtitle": "The <brand>ADVANTIS GROUP</brand> unites over 15 years of sales experience under one roof – with passion, pragmatism, and a clear focus on success."
     },
     "mission": {
       "badge": "Mission",
@@ -249,7 +253,7 @@
     },
     "story": {
       "badge": "Our Story",
-      "text1": "The <brand>advantis GmbH</brand> was founded in 2025 by <founder>Andrea Reichl</founder> and unites over 15 years of sales experience in various industries under one roof.",
+      "text1": "The <brand>ADVANTIS GROUP</brand> was founded in 2025 by <founder>Andrea Reichl</founder> and unites over 15 years of sales experience in various industries under one roof.",
       "text2": "What began years ago as a sole proprietorship is now a group of companies with strong brands and a common focus: 100% Sales.",
       "text3": "We don't do frills – we haven't reinvented the wheel, just put on some fancy rims. Pragmatic, effective, sustainable."
     },
@@ -283,7 +287,7 @@
       "role": "CEO / Managing Director",
       "badge": "Leadership",
       "quote": "\"Sales is not just a job, it's an attitude.\"",
-      "bio": "Sales enthusiast, strategist, and doer. With over 15 years of experience in sales, coaching, and company building, Andrea leads the Advantis Group with passion, pragmatism, and a clear focus on success and humanity.",
+      "bio": "Sales enthusiast, strategist, and doer. With over 15 years of experience in sales, coaching, and company building, Andrea leads the ADVANTIS GROUP with passion, pragmatism, and a clear focus on success and humanity.",
       "contactBtn": "Contact"
     },
     "roles": {
@@ -489,7 +493,7 @@
     "signedIn": "Signed in with Clerk",
     "accountCta": "Manage account",
     "signOut": "Sign out",
-    "signInTitle": "Welcome back to Advantis Group",
+    "signInTitle": "Welcome back to ADVANTIS GROUP",
     "signInSubtitle": "Sign in with Clerk to manage your profile, security settings, and future protected experiences from one place.",
     "signUpTitle": "Create your Advantis account",
     "signUpSubtitle": "Use Clerk to create a secure account and manage your profile, sign-in methods, and future member-only experiences.",
@@ -528,6 +532,479 @@
         "failed": "Needs attention"
       }
     }
+  },
+  "services": {
+    "eyebrow": "Our Services",
+    "title": "Everything for Your Sales Success",
+    "subtitle": "From customer care to AI automation — discover how we support your sales holistically.",
+    "common": {
+      "whyTitle": "Why ADVANTIS GROUP?",
+      "offeringsTitle": "Our Services",
+      "ctaTitle": "Get in Touch",
+      "ctaButton": "Get a Free Consultation",
+      "relatedTitle": "You Might Also Be Interested In",
+      "backLabel": "Back to Overview",
+      "seoLabel": "Topics",
+      "vertriebstrainingTile": {
+        "title": "Sales Training",
+        "description": "From objection handling to conversation techniques to closing — our sales training delivers directly applicable knowledge for inside sales, field sales, and customer care teams."
+      }
+    },
+    "items": {
+      "customer-care": {
+        "tileTitle": "Customer Care",
+        "tileDescription": "Excellent customer service across the entire customer journey – AI-powered for faster response times.",
+        "metaTitle": "AI-Powered Customer Care",
+        "metaDescription": "Professional customer service with AI support: hotlines, complaint management, and after-sales service for higher service quality.",
+        "title": "Customer Care – Professional Customer Service with AI Support",
+        "heroSubtitle": "Excellent customer care today plays a decisive role in how customers perceive a company. ADVANTIS GROUP combines personal customer support with modern AI solutions. Artificial intelligence supports our service staff through intelligent knowledge bases, real-time response suggestions, automatic call summaries, ticket classification, and workflow automation — resulting in faster response times, higher quality, and a consistent customer experience.",
+        "whatTitle": "What Does Customer Care Mean?",
+        "whatText": "Customer care covers all measures for supporting your customers along the entire customer journey — from the first inquiry to after-sales service. Modern AI systems analyze inquiries, prioritize tickets, detect sentiment, and support employees with suitable solution suggestions.",
+        "offeringsText": "We handle customer service hotlines, complaint management, after-sales service, and customer support via phone, email, and chat. Our AI solutions automate recurring processes, create call notes, suggest responses, and help maintain service levels.",
+        "aiTitle": "AI Solutions for Your Customer Care",
+        "aiItems": [
+          "AI chatbots for standard inquiries",
+          "AI voicebots for pre-qualification",
+          "Automatic ticket classification",
+          "Intelligent knowledge bases",
+          "Real-time support during customer calls",
+          "AI-generated call summaries",
+          "Quality analysis and coaching through AI",
+          "Sentiment analysis to detect dissatisfied customers",
+          "Automatic translations for multilingual support",
+          "CRM automation and workflow control"
+        ],
+        "extraSections": [
+          {
+            "title": "Customer Care Outsourcing",
+            "text": "Our teams work seamlessly with your existing processes. Using AI, processing times can be reduced, first-contact resolution improved, and costs lowered."
+          },
+          {
+            "title": "Technology",
+            "text": "We integrate with Salesforce, HubSpot, Microsoft Dynamics, Zendesk, Freshdesk, SAP, and custom CRM systems, among others. AI agents can be integrated into existing system landscapes without replacing your processes."
+          },
+          {
+            "title": "Data Protection",
+            "text": "All AI solutions are deployed in compliance with GDPR. Data protection, information security, and transparent processes are our top priority."
+          }
+        ],
+        "whyText": "We combine experienced customer care teams with intelligent automation, giving you a modern customer service that blends personal care with efficiency, scalability, and measurable results.",
+        "ctaText": "Want to modernize your customer service or integrate AI meaningfully? Together we'll develop an individual customer care strategy — from process analysis to operational implementation.",
+        "seoKeywords": "Customer Care, Customer Service, Complaint Management, After-Sales Service, AI Customer Service, Chatbot, Voicebot, CRM, Salesforce, GDPR."
+      },
+      "contact-center": {
+        "tileTitle": "Contact Center",
+        "tileDescription": "Inbound & outbound across every channel – flexibly scalable and fully GDPR-compliant.",
+        "metaTitle": "Contact Center Outsourcing with AI",
+        "metaDescription": "Modern contact center for inbound and outbound: customer service, order handling, and complaint management – AI-powered and GDPR-compliant.",
+        "title": "Contact Center – Intelligent Customer Communication with People & AI",
+        "heroSubtitle": "A modern contact center is today's central communication platform between companies and customers. ADVANTIS GROUP combines personal advice with AI-powered technologies. Our staff is supported by intelligent assistant systems, so inquiries are processed faster, answers are more precise, and processes are efficiently automated.",
+        "whatTitle": "",
+        "whatText": "",
+        "offeringsText": "We handle inbound and outbound communication via phone, email, chat, and digital channels — including customer service, order taking, appointment scheduling, complaint management, helpdesk, after-sales service, lead qualification, and customer win-back.",
+        "aiTitle": "AI-Powered Contact Center Solutions",
+        "aiItems": [
+          "AI voicebots for call handling and pre-qualification",
+          "Chatbots for standard inquiries around the clock",
+          "Automatic call summaries",
+          "Real-time response suggestions for staff",
+          "Sentiment analysis to detect critical calls",
+          "Automatic ticket classification and prioritization",
+          "Intelligent knowledge bases",
+          "AI-powered quality analysis and coaching",
+          "Workflow and CRM automation",
+          "Multilingual real-time translations"
+        ],
+        "extraSections": [
+          {
+            "title": "Omnichannel Customer Experience",
+            "text": "Customers today expect seamless communication across all channels. Our contact center connects phone, email, chat, web forms, and social messaging into one consistent customer experience, with all contacts documented centrally."
+          },
+          {
+            "title": "Benefits of an Outsourced Contact Center",
+            "text": "Companies benefit from flexible scaling, predictable costs, high availability, short response times, and experienced service teams. AI support reduces processing times and improves first-contact resolution."
+          },
+          {
+            "title": "Technology & CRM",
+            "text": "We integrate with Salesforce, HubSpot, Microsoft Dynamics, Zendesk, Freshdesk, SAP, and custom CRM solutions. AI agents complement existing processes and deliver valuable analytics and automation."
+          },
+          {
+            "title": "Data Protection",
+            "text": "Data protection and information security are our top priority. Our processes consistently follow GDPR. AI is deployed responsibly, transparently, and in compliance with applicable data protection requirements."
+          }
+        ],
+        "whyText": "We combine modern contact center technology with experienced service and sales teams — resulting in faster processes, satisfied customers, measurable KPIs, and a scalable communication solution for companies of any size.",
+        "ctaText": "Want to turn your call center into a modern contact center, or use AI meaningfully? Together we'll develop an individual solution — from strategy to operational delivery.",
+        "seoKeywords": "Contact Center, Contact Center Outsourcing, Customer Service, Inbound Service, Outbound Service, Helpdesk, Service Desk, Omnichannel, AI Contact Center, Voicebot, Chatbot, CRM, Salesforce, Customer Experience, BPO, GDPR."
+      },
+      "telesales": {
+        "tileTitle": "Telesales",
+        "tileDescription": "Professional B2B phone sales – more qualified conversations and higher close rates.",
+        "metaTitle": "Telesales for B2B Sales",
+        "metaDescription": "Telesales with experienced sales consultants and AI: new customer acquisition, appointment setting, and quote follow-up for more revenue growth.",
+        "title": "Telesales – Successful B2B Sales with People & AI",
+        "heroSubtitle": "Professional telesales is far more than phone selling. ADVANTIS GROUP combines experienced sales consultants with modern AI solutions, data-driven sales processes, and proven sales strategies — resulting in more qualified conversations, higher close rates, and sustainable revenue growth.",
+        "whatTitle": "Why Telesales?",
+        "whatText": "Phone-based sales enables direct dialogue with decision-makers, shortens sales cycles, and builds personal relationships. Especially in B2B, telesales is an efficient channel for lead generation and new customer acquisition.",
+        "offeringsText": "We handle phone-based new customer acquisition, lead qualification, appointment setting, quote follow-up, cross- and upselling, existing customer support, and the complete management of your sales pipeline — from first contact to closed deal.",
+        "aiTitle": "AI-Powered Sales Support",
+        "aiItems": [
+          "AI-powered lead prioritization",
+          "Call preparation with company analyses",
+          "Real-time call support and argumentation aids",
+          "Automatic call summaries",
+          "AI-powered CRM documentation",
+          "Analysis of objections and success rates",
+          "Next-best-action recommendations",
+          "Automated email follow-ups",
+          "Sales dashboards and KPI analytics"
+        ],
+        "extraSections": [
+          {
+            "title": "Our Sales Methodology",
+            "text": "We work with structured call scripts, open questioning techniques, professional objection handling, and a clearly defined sales funnel. Every step is measurably documented and continuously optimized."
+          },
+          {
+            "title": "CRM & Digitalization",
+            "text": "Our teams work directly in Salesforce, HubSpot, Microsoft Dynamics, or your existing CRM. All activities are transparently documented and enriched with AI-powered analytics."
+          },
+          {
+            "title": "Industries",
+            "text": "Our telesales teams support companies in industry, software, SaaS, energy, mobility, logistics, retail, financial services, and many other B2B sectors."
+          }
+        ],
+        "whyText": "We combine hands-on sales experience, modern technology, and AI automation, increasing the productivity of your sales organization and delivering measurable results — from more leads to higher close rates.",
+        "ctaText": "Want to professionalize your phone sales or build a scalable telesales process? Together we'll develop the right strategy and, on request, take over the complete operational delivery.",
+        "seoKeywords": "Telesales, Phone Sales, B2B Sales, New Customer Acquisition, Lead Generation, Inside Sales, Sales Outsourcing, Cold Calling, Appointment Setting, Business Development, AI Sales, CRM, Salesforce, Sales Outsourcing, Lead Management, Conversion Optimization."
+      },
+      "new-customer-acquisition": {
+        "tileTitle": "New Customer Acquisition",
+        "tileDescription": "More qualified leads and more closed deals through individual new-customer-acquisition strategies.",
+        "metaTitle": "New Customer Acquisition with AI",
+        "metaDescription": "Individual strategies for new customer acquisition: lead generation, qualification, and closing deals — data-driven and AI-powered.",
+        "title": "New Customer Acquisition – Sustainable Growth Through Modern Sales Strategies & AI",
+        "heroSubtitle": "New customers are the foundation of sustainable company growth. ADVANTIS GROUP develops individual strategies for new customer acquisition, combining experienced sales teams with data-driven processes and artificial intelligence — helping you reach the right decision-makers faster and increase your close rate.",
+        "whatTitle": "",
+        "whatText": "",
+        "offeringsText": "We support you throughout the entire sales process — from target group analysis through lead generation, lead qualification, and appointment setting, to quote management, follow-up, and successful deal closing. On request, we take over the complete sales process as your outsourcing partner.",
+        "aiTitle": "AI-Powered New Customer Acquisition",
+        "aiItems": [
+          "AI-powered target group analysis",
+          "Lead scoring and prioritization",
+          "Automatic company research",
+          "Personalized email campaigns",
+          "AI-supported call preparation",
+          "Analysis of purchase probability",
+          "Next-best-action recommendations",
+          "CRM automation",
+          "Sales dashboards and KPI analytics"
+        ],
+        "extraSections": [
+          {
+            "title": "More Qualified Leads",
+            "text": "Successful new customer acquisition starts with the right target group. Together we define your Ideal Customer Profile (ICP), identify potential, and develop a scalable lead funnel for long-term growth."
+          },
+          {
+            "title": "Omnichannel Sales",
+            "text": "We combine phone, email, LinkedIn, digital campaigns, and marketing automation into one continuous sales strategy. All contacts are documented centrally and systematically nurtured."
+          },
+          {
+            "title": "CRM & Sales Automation",
+            "text": "Our teams work with Salesforce, HubSpot, Microsoft Dynamics, and other CRM systems. AI automates routine tasks, documents activities, and delivers valuable recommendations for sales."
+          },
+          {
+            "title": "Which Companies Benefit?",
+            "text": "Our solutions are suited for B2B companies in industry, software, SaaS, energy, mobility, logistics, retail, financial services, and many other sectors."
+          }
+        ],
+        "whyText": "We combine strategy, operational execution, and modern AI technologies — resulting in more qualified leads, shorter sales cycles, higher conversion rates, and predictable sales success.",
+        "ctaText": "Want to professionalize your new customer acquisition or scale your sales? Together we'll develop an individual strategy and support you from the first idea to measurable success.",
+        "seoKeywords": "New Customer Acquisition, B2B New Customers, Lead Generation, Lead Management, Lead Qualification, Sales, Telesales, Inside Sales, Sales Outsourcing, Business Development, Cold Calling, Appointment Setting, CRM, Salesforce, AI Sales, Sales Automation, Conversion Optimization."
+      },
+      "customer-experience": {
+        "tileTitle": "Customer Experience",
+        "tileDescription": "Positive experiences at every touchpoint – for stronger loyalty and more referrals.",
+        "metaTitle": "Customer Experience Management",
+        "metaDescription": "Sustainably improve customer experience: journey analysis, omnichannel communication, and AI for higher customer satisfaction.",
+        "title": "Customer Experience – Delighting Customers with People, Processes & AI",
+        "heroSubtitle": "Products and prices can be compared — exceptional customer experiences are what stick in memory. A well-designed customer experience (CX) today plays a decisive role in customer satisfaction, loyalty, and referrals. ADVANTIS GROUP helps companies turn every customer touchpoint into a positive experience.",
+        "whatTitle": "What Does Customer Experience Mean?",
+        "whatText": "Customer experience describes the sum of all experiences customers have with a company — from initial research through purchase to customer service and after-sales. The goal is a consistent, personal, and positive customer journey across all touchpoints.",
+        "offeringsText": "We analyze existing customer journeys, identify optimization potential, and develop measures to improve customer satisfaction — including customer care, contact center, omnichannel communication, voice-of-customer programs, complaint management, and service optimization.",
+        "aiTitle": "AI for a Better Customer Experience",
+        "aiItems": [
+          "AI-powered customer journey analysis",
+          "Sentiment analysis to detect customer moods",
+          "Personalized communication",
+          "AI chatbots and voicebots",
+          "Real-time support for service staff",
+          "Automatic summaries and documentation",
+          "Predictive analytics to anticipate customer needs",
+          "Next-best-action recommendations",
+          "CRM and workflow automation"
+        ],
+        "extraSections": [
+          {
+            "title": "Omnichannel Communication",
+            "text": "Customers today expect seamless communication via phone, email, chat, social media, and self-service portals. We connect all channels into one consistent customer experience, ensuring consistent information and fast response times."
+          },
+          {
+            "title": "Measurable Results",
+            "text": "An optimized customer experience increases customer satisfaction (CSAT), referral rate (NPS), loyalty, and repurchase rates, while reducing processing times, escalations, and service costs."
+          },
+          {
+            "title": "CRM & Data",
+            "text": "We integrate existing CRM systems like Salesforce, HubSpot, Microsoft Dynamics, or SAP, creating a 360° view of your customers so your team has all relevant information at every touchpoint."
+          }
+        ],
+        "whyText": "We combine customer care, sales, digitalization, and artificial intelligence into a holistic customer experience strategy, targeting measurable improvements across the entire customer journey.",
+        "ctaText": "Want to sustainably improve your customer experience? Together we'll analyze your customer journey, develop individual measures, and deploy modern AI solutions to delight your customers long-term.",
+        "seoKeywords": "Customer Experience, Customer Journey, Customer Satisfaction, Customer Experience Management, Customer Care, Contact Center, Omnichannel, Customer Service, CX Strategy, AI Customer Experience, Voicebot, Chatbot, CRM, Salesforce, NPS, CSAT."
+      },
+      "ai-automation": {
+        "tileTitle": "AI Automation",
+        "tileDescription": "Intelligent processes for sales, service, and growth – from chatbots to workflow automation.",
+        "metaTitle": "AI Automation for Sales & Service",
+        "metaDescription": "AI automation for sales and customer service: AI agents, chatbots, voicebots, and process automation – GDPR-compliant.",
+        "title": "AI Automation – Intelligent Processes for Sales, Service, and Growth",
+        "heroSubtitle": "Artificial intelligence is changing the way companies work. ADVANTIS GROUP helps companies automate recurring tasks, relieve staff, and make processes smarter. We combine modern AI technologies with hands-on consulting and operational implementation.",
+        "whatTitle": "What Does AI Automation Mean?",
+        "whatText": "AI automation goes far beyond classic workflows. Modern AI systems analyze data, provide recommendations, create content, answer inquiries, document processes, and support employees in real time — resulting in faster processes, lower costs, and higher service quality.",
+        "offeringsText": "We implement AI agents for sales, customer care, and back office, AI chatbots and voicebots, automatic email processing, CRM automation, document and invoice processing, as well as knowledge bases with AI search and workflow automation.",
+        "aiTitle": "Our AI Solutions",
+        "aiItems": [
+          "AI agents for sales, customer care, and back office",
+          "AI chatbots for website and customer service",
+          "Voicebots for phone inquiries",
+          "Automatic email processing",
+          "CRM automation and data capture",
+          "AI-powered lead qualification and lead scoring",
+          "Document and invoice processing",
+          "Knowledge bases with AI search",
+          "Meeting and call summaries",
+          "Translations and multilingual communication",
+          "Workflow automation and process control"
+        ],
+        "extraSections": [
+          {
+            "title": "AI in Sales",
+            "text": "Our AI solutions support sales teams with research, call preparation, lead prioritization, quote follow-up, and analysis of sales opportunities. Next-best-action recommendations help identify potential faster and increase close rates."
+          },
+          {
+            "title": "AI in Customer Care",
+            "text": "In customer service, AI handles pre-qualification of inquiries, suggests suitable responses, analyzes sentiment, creates ticket summaries, and supports staff throughout the customer contact — shortening response times and increasing customer satisfaction."
+          },
+          {
+            "title": "System Integration",
+            "text": "Our solutions integrate with existing systems such as Salesforce, HubSpot, Microsoft Dynamics, SAP, Zendesk, Freshdesk, and custom CRM/ERP solutions. The goal is to intelligently extend existing processes — not replace them."
+          },
+          {
+            "title": "Data Protection & GDPR",
+            "text": "Responsible handling of data is our top priority. We develop AI solutions in compliance with GDPR and establish transparent processes, role and permission concepts, and traceable documentation."
+          }
+        ],
+        "whyText": "We combine AI expertise with years of experience in sales, customer care, and process optimization. Together we identify automation potential, develop individual solutions, and support the rollout through to operational use.",
+        "ctaText": "Want to put artificial intelligence to meaningful use in your company? We analyze your processes, identify quick wins, and develop a scalable AI strategy — from the first idea to successful implementation.",
+        "seoKeywords": "AI Automation, Artificial Intelligence, AI Agents, Business Process Automation, AI in Sales, AI in Customer Service, Chatbot, Voicebot, CRM Automation, Salesforce AI, Workflow Automation, Generative AI, Digital Transformation, Machine Learning, Enterprise Automation."
+      },
+      "crm": {
+        "tileTitle": "CRM",
+        "tileDescription": "Salesforce and HubSpot consulting for more transparency and higher conversion rates.",
+        "metaTitle": "CRM Consulting: Salesforce & HubSpot",
+        "metaDescription": "CRM consulting focused on Salesforce and HubSpot: implementation, optimization, and AI-powered sales processes.",
+        "title": "CRM – Successful Customer Management with Salesforce, HubSpot & AI",
+        "heroSubtitle": "A modern Customer Relationship Management (CRM) system is the heart of a successful sales and customer service process. ADVANTIS GROUP helps companies strategically implement CRM systems, optimize existing processes, and make them more efficient through artificial intelligence.",
+        "whatTitle": "Specialized in Salesforce & HubSpot",
+        "whatText": "Our consultants and sales experts have extensive hands-on experience with Salesforce and HubSpot. We support implementation, migration, configuration, process optimization, user adoption, reporting, and ongoing development. Both platforms form the foundation for scalable sales, marketing, and customer care processes.",
+        "offeringsText": "We support Salesforce consulting and process optimization, HubSpot implementation and administration, CRM rollout, lead and opportunity management, sales pipeline design, marketing and sales automation, customer care workflows, dashboards and KPI reports, data quality and CRM governance, and user training and change management.",
+        "aiTitle": "AI in CRM",
+        "aiItems": [
+          "AI-powered lead scoring",
+          "Automatic call and meeting summaries",
+          "Next-best-action recommendations",
+          "Forecasts for close probability",
+          "Automatic data capture and CRM documentation",
+          "Email and task automation",
+          "AI agents for sales and customer care",
+          "Intelligent analytics and forecasts"
+        ],
+        "extraSections": [
+          {
+            "title": "More Than Software – Optimized Processes",
+            "text": "A CRM only delivers value through clearly defined processes. Together we analyze your customer journey, sales pipeline, and service workflows, creating standardized, measurable, and scalable workflows."
+          },
+          {
+            "title": "Your Benefits",
+            "text": "A properly set up CRM increases transparency, close rates, and customer satisfaction, while reducing manual tasks, improving collaboration between sales and service, and providing reliable metrics for informed decisions."
+          },
+          {
+            "title": "Data Protection & Integration",
+            "text": "Our solutions comply with GDPR requirements and integrate seamlessly with existing ERP, telephony, marketing, and service systems — creating a central 360° customer view."
+          }
+        ],
+        "whyText": "We combine years of hands-on experience in sales, customer care, and digitalization with deep expertise in Salesforce and HubSpot, focusing on measurable results, high user adoption, and sustainable process improvement.",
+        "ctaText": "Want to get the most out of Salesforce or HubSpot, or implement a new CRM? We support you from analysis through implementation to continuous optimization, and support your team in daily use.",
+        "seoKeywords": "CRM Consulting, Salesforce Consulting, HubSpot Consulting, Salesforce Implementation, HubSpot Implementation, CRM Rollout, CRM Optimization, Sales Automation, Marketing Automation, Lead Management, Opportunity Management, Customer Relationship Management, AI in CRM, Salesforce Experts, HubSpot Experts."
+      },
+      "sales-academy": {
+        "tileTitle": "Sales Academy",
+        "tileDescription": "Hands-on sales training for sales teams, leaders, and companies of any size.",
+        "metaTitle": "Sales Academy: Sales Training",
+        "metaDescription": "Sales training for telesales, cold calling, objection handling, and leadership development – hands-on and AI-supported.",
+        "title": "Sales Academy – Sales Training for Sustainable Success",
+        "heroSubtitle": "Successful sales teams don't happen by chance. The Advantis Sales Academy systematically develops salespeople, leaders, and customer care teams. Our training combines proven sales methods, modern communication techniques, and AI-supported learning approaches into hands-on programs with direct value.",
+        "whatTitle": "Who Is the Sales Academy For?",
+        "whatText": "Our training programs are aimed at companies of any size — from start-ups to international corporations. We train inside sales, field sales, customer care, contact center, business development, leaders, and new hires as part of structured onboarding programs.",
+        "offeringsText": "Our training portfolio covers telesales & inside sales, new customer acquisition, cold calling, objection handling, questioning techniques and needs analysis, closing techniques, customer care & complaint management, contact center excellence, CRM (Salesforce & HubSpot), AI in sales, leadership development, sales and team coaching, and KPI management and performance management.",
+        "aiTitle": "Sales Academy Meets AI",
+        "aiItems": [
+          "AI-powered call analysis",
+          "Roleplays with AI",
+          "Real-time feedback on sales calls",
+          "Automatic coaching recommendations",
+          "AI-powered creation of call scripts",
+          "Learning assistants for staff",
+          "Knowledge bases with AI search",
+          "Analysis of success rates and call patterns"
+        ],
+        "extraSections": [
+          {
+            "title": "Practice Over Theory",
+            "text": "All training is based on real sales situations. Participants work with concrete call scripts, case studies, and roleplays, so content becomes directly applicable and firmly anchored in daily work."
+          },
+          {
+            "title": "Onboarding & Sales Enablement",
+            "text": "We develop structured onboarding concepts for new hires, support the ramp-up, and establish continuous learning programs — shortening onboarding time and boosting team productivity faster."
+          },
+          {
+            "title": "Measurable Results",
+            "text": "Our training is guided by clear KPIs such as conversion rate, appointment rate, close rate, call quality, customer satisfaction, and productivity. Progress is transparently documented and regularly reviewed."
+          }
+        ],
+        "whyText": "Our trainers have years of hands-on experience in B2B sales, customer care, and contact centers. We don't teach textbook theory, but practice-proven methods used successfully in sales every day.",
+        "ctaText": "Want to develop your sales team or establish a modern sales academy in your company? Together we'll develop an individual training concept — as in-person training, online workshop, or blended-learning program.",
+        "seoKeywords": "Sales Academy, Sales Training, Telesales Training, Inside Sales Training, Cold Calling Training, Customer Care Training, Contact Center Training, Salesforce Training, HubSpot Training, Sales Coaching, Sales Leadership Training, Sales Onboarding, AI in Sales, Sales Enablement."
+      },
+      "lead-management": {
+        "tileTitle": "Lead Management",
+        "tileDescription": "Efficient lead processes for faster handling and more closed deals.",
+        "metaTitle": "Lead Management & Lead Scoring",
+        "metaDescription": "Professional lead management: lead scoring, nurturing, and routing with Salesforce, HubSpot, and AI.",
+        "title": "Lead Management – Getting More Out of Every Lead",
+        "heroSubtitle": "A lead is only valuable if it's handled at the right time with the right strategy. ADVANTIS GROUP develops professional lead management processes that connect marketing, sales, and customer care. The goal is to turn more qualified leads into paying customers and measurably optimize the entire sales process.",
+        "whatTitle": "What Is Lead Management?",
+        "whatText": "Lead management covers the entire process from lead capture through qualification and prioritization to handover to sales and successful closing. With clear processes, defined KPIs, and modern CRM systems, we create transparency and increase conversion rates.",
+        "offeringsText": "We handle lead generation and capture, lead qualification, lead scoring, lead nurturing, appointment setting, opportunity management, CRM administration, sales processes and sales funnels, as well as KPI dashboards, reporting, and sales and marketing automation.",
+        "aiTitle": "AI in Lead Management",
+        "aiItems": [
+          "AI-powered lead scoring",
+          "Prioritization by close probability",
+          "Automatic lead routing processes",
+          "AI agents for pre-qualification",
+          "Personalized email follow-ups",
+          "Call summaries and CRM documentation",
+          "Conversion rate forecasts",
+          "Next-best-action recommendations",
+          "Automatic follow-up reminders and task management"
+        ],
+        "extraSections": [
+          {
+            "title": "Salesforce & HubSpot",
+            "text": "We specialize in Salesforce and HubSpot, supporting companies with implementation, optimization, and daily use. Intelligent lead management processes ensure no potential is lost and every lead is handled traceably."
+          },
+          {
+            "title": "Fast Response Times",
+            "text": "Successful lead management starts with speed. We develop SLA-based processes, define contact strategies, and ensure new leads are handled promptly — increasing reachability, appointment rate, and close probability."
+          },
+          {
+            "title": "Measurable KPIs",
+            "text": "We analyze metrics including lead-to-opportunity rate, conversion rate, response time, contact rate, appointment rate, close rate, cost per lead, and customer acquisition cost — identifying optimization potential early."
+          }
+        ],
+        "whyText": "Our experience in sales, customer care, CRM, and digitalization lets us design lead management processes holistically. We combine operational execution with modern AI, creating scalable processes for sustainable growth.",
+        "ctaText": "Want to professionalize your lead handling or increase your conversion rate? Together we'll develop an efficient lead management process — from first contact to successful deal closing.",
+        "seoKeywords": "Lead Management, Lead Scoring, Lead Qualification, Lead Nurturing, Lead Routing, Sales Funnel, Conversion Rate, Opportunity Management, CRM, Salesforce, HubSpot, Lead Generation, Sales Process, Marketing Automation, AI Lead Management, AI Sales."
+      },
+      "sales-outsourcing": {
+        "tileTitle": "Sales Outsourcing",
+        "tileDescription": "Outsource your sales to experienced sales experts – flexible, scalable, and measurable.",
+        "metaTitle": "Sales Outsourcing",
+        "metaDescription": "Outsource sales to ADVANTIS GROUP: lead generation, inside sales, and complete sales processes as your external partner.",
+        "title": "Sales Outsourcing – Outsourcing Sales to Experienced Sales Experts",
+        "heroSubtitle": "Not every company needs its own sales department — but every company needs sales success. ADVANTIS GROUP takes over parts or all of your company's sales process: from lead generation to closed deal. Flexible, scalable, and without the fixed costs of an in-house sales team.",
+        "whatTitle": "What Does Sales Outsourcing Mean?",
+        "whatText": "Sales outsourcing means an external partner takes over sales tasks — from individual process steps such as appointment setting to the complete sales funnel. Companies gain flexibility, save ramp-up time, and benefit from experienced, well-coordinated sales teams.",
+        "offeringsText": "We handle lead generation, appointment setting, inside sales, quote follow-up, and complete sales processes as an external partner. On request, we act as an extension of your sales team or as an independent sales unit for new markets and products.",
+        "aiTitle": "AI-Powered Sales Outsourcing",
+        "aiItems": [
+          "AI-powered lead prioritization and target group analysis",
+          "Automated call preparation and CRM documentation",
+          "Next-best-action recommendations for every sales stage",
+          "Real-time reporting and sales dashboards",
+          "Automated email follow-up processes",
+          "AI-powered forecasts and close probabilities"
+        ],
+        "extraSections": [
+          {
+            "title": "Scale Flexibly",
+            "text": "Whether it's project business, market entry, or capacity peaks — we scale your sales team as needed, without you having to hire, train, or fully utilize your own staff."
+          },
+          {
+            "title": "Transparent Collaboration",
+            "text": "All activities are documented in your CRM and traceable at any time. Regular reporting and clear KPIs ensure full transparency into the success of our collaboration."
+          },
+          {
+            "title": "Which Companies Benefit?",
+            "text": "Our sales outsourcing solutions suit B2B companies in industry, software, SaaS, energy, logistics, retail, and financial services that want to build sales capacity without carrying the full risk of an in-house team."
+          }
+        ],
+        "whyText": "We bring over 15 years of hands-on sales experience and modern AI technology to every collaboration. You get a well-coordinated sales team that delivers from day one — measurable, scalable, and without a lengthy ramp-up process.",
+        "ctaText": "Want to build sales capacity without building your own team? Together we'll find the right model — from individual sales tasks to fully outsourcing your sales process.",
+        "seoKeywords": "Sales Outsourcing, Outsource Sales, Sales Process Outsourcing, Field Sales Outsourcing, Inside Sales Outsourcing, Sales Partner, B2B Sales, Lead Generation, Telesales, New Customer Acquisition, Sales as a Service, AI in Sales, Sales Process, CRM, Salesforce."
+      },
+      "business-development": {
+        "tileTitle": "Business Development",
+        "tileDescription": "Enter new markets and build sales structures – from strategy to execution.",
+        "metaTitle": "Business Development & Market Development",
+        "metaDescription": "Business development with ADVANTIS GROUP: market entry, sales structures, and growth strategies – data-driven and AI-powered.",
+        "title": "Business Development – Entering New Markets with Strategy & AI",
+        "heroSubtitle": "Sustainable growth doesn't happen by chance — it comes from a clear strategy. ADVANTIS GROUP helps companies enter new markets, build sales structures, and systematically identify and act on growth potential.",
+        "whatTitle": "What Does Business Development Mean?",
+        "whatText": "Business development covers all strategic and operational measures for opening up new business areas, markets, and customer groups. It combines market analysis, sales strategy, and operational execution into one holistic growth approach.",
+        "offeringsText": "We develop market entry strategies, identify new target groups and sales channels, build sales structures, and support companies from strategy through operational implementation — including lead generation and partnership development.",
+        "aiTitle": "AI-Powered Market Development",
+        "aiItems": [
+          "AI-powered market and competitor analysis",
+          "Automatic identification of new target groups and potential",
+          "Data-driven prioritization of markets and channels",
+          "Predictive analytics for growth forecasts",
+          "CRM automation for new sales structures",
+          "Dashboards to steer growth initiatives"
+        ],
+        "extraSections": [
+          {
+            "title": "Market Entry & Expansion",
+            "text": "We support entry into new regions, industries, and customer segments — from the initial market analysis through building local sales structures to scaling."
+          },
+          {
+            "title": "Building Sales Structures",
+            "text": "We develop sales organizations, processes, and KPI systems designed for sustainable growth — including recruiting support and enablement for new teams."
+          },
+          {
+            "title": "Partnerships & Collaborations",
+            "text": "We identify strategic partners and sales channels and support the development of long-term collaborations that further accelerate your growth."
+          }
+        ],
+        "whyText": "We combine strategic consulting with hands-on sales experience and modern AI technology, turning growth ideas into concrete, measurable results — from initial market analysis to successful execution.",
+        "ctaText": "Want to enter new markets or sharpen your growth strategy? Together we'll develop a clear roadmap — from analysis to operational implementation.",
+        "seoKeywords": "Business Development, Market Development, Market Entry, Growth Strategy, Sales Strategy, Entering New Markets, Building Sales Structures, B2B Sales, Sales Outsourcing, AI in Sales, Strategy Consulting, Expansion, Partnerships."
+      }
+    }
+  },
+  "trustBadges": {
+    "title": "Recognized & Trusted",
+    "salesClub": "Sales Presidents Club {year}",
+    "dsgvo": "GDPR Compliant"
   },
   "licenses": {
     "eyebrow": "Open source",

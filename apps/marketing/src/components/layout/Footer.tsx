@@ -15,7 +15,6 @@ import { COMPANY_ADDRESS } from "@/lib/company";
 import { isAuthRoute } from "@/lib/utils";
 
 import { SectionDivider } from "./SectionDivider";
-import { BrandText } from "../effects/BrandText";
 
 export const Footer = () => {
   const pathname = usePathname();
@@ -222,8 +221,7 @@ export const Footer = () => {
           <div className="pt-8 border-t border-border">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-xs text-muted-foreground">
-                © {new Date().getFullYear().toString()}{" "}
-                <BrandText brand="advantis">advantis</BrandText> GmbH. {t("footer.copyright")}
+                © {new Date().getFullYear().toString()} ADVANTIS GROUP. {t("footer.copyright")}
               </p>
               <div className="flex items-center gap-6">
                 <Link

@@ -28,23 +28,27 @@
     "ctaPrimary": "Contactez-nous Maintenant",
     "ctaSecondary": "Découvrir Nos Marques"
   },
+  "homeIntro": {
+    "eyebrow": "Partenaire Revenue & Customer Engagement",
+    "text": "ADVANTIS GROUP accompagne les entreprises dans la mise en place d'organisations modernes de Customer Care et d'Inside Sales. Nos experts prennent en charge le service client, la génération de leads, la télévente, l'acquisition de nouveaux clients et l'externalisation commerciale. Notre offre est complétée par l'automatisation des processus par IA, le conseil CRM et les formations commerciales."
+  },
   "features": {
     "badge": "Nos Forces",
     "eyebrow": "Moteur Conseil",
     "title": "Pourquoi",
-    "titleBrand": "Advantis Group",
-    "subtitle": "Nous combinons plus de 15 ans d'expérience avec des approches innovantes pour porter vos ventes au niveau supérieur.",
+    "titleBrand": "ADVANTIS GROUP",
+    "subtitle": "Nous combinons plus de 15 ans d'expérience commerciale avec des approches de vente innovantes et des outils d'IA pour porter vos ventes au niveau supérieur.",
     "feature1": {
-      "title": "Rendre les Équipes Commerciales Performantes",
-      "description": "Grâce à des stratégies ciblées et un soutien pratique, nous aidons vos équipes à atteindre leurs objectifs et à croître durablement."
+      "title": "Nous rendons votre équipe commerciale performante",
+      "description": "Grâce à une stratégie de génération de leads ciblée et un accompagnement concret, nous aidons votre équipe à grandir et à atteindre ses objectifs."
     },
     "feature2": {
-      "title": "Rendre les Ventes Plus Intelligentes",
-      "description": "Avec des outils modernes et des méthodes éprouvées, nous optimisons vos processus de vente pour une efficacité maximale."
+      "title": "Rendre la vente plus intelligente – en interne ou en externe",
+      "description": "Avec des outils modernes et l'IA, nous optimisons vos processus de vente pour une efficacité maximale. Nous renforçons votre propre équipe ou reprenons l'ensemble du processus commercial en tant que partenaire d'externalisation – à vous de choisir !"
     },
     "feature3": {
       "title": "Fournir des Résultats Durables",
-      "description": "Plus de 15 ans d'expérience combinés à des approches innovantes pour un succès à long terme qui convainc."
+      "description": "Nous mettons notre expérience, notre expertise et beaucoup de cœur dans chaque collaboration. L'objectif est un partenariat durable et fructueux – nous sommes prêts à travailler dur pour cette réussite commune !"
     },
     "stats": {
       "experience": "Années d'Expérience",
@@ -60,7 +64,7 @@
     "subtitle": "Quatre marques fortes, un objectif commun : Votre succès commercial",
     "salespirates": {
       "tagline": "Agence de Vente Externe",
-      "description": "Nous fournissons des leads ou soutenons vos ventes avec des résultats mesurables. Actif, ciblé et efficace."
+      "description": "Nous générons des leads par cold calling, les pré-qualifions et prenons en charge votre inside sales. Du lead jusqu'à la conclusion, pour un succès commercial maximal."
     },
     "rodeo": {
       "tagline": "Conseil Stratégique",
@@ -79,10 +83,10 @@
   "cta": {
     "title": "Prêt pour le prochain",
     "titleHighlight": "Niveau ?",
-    "subtitle": "Découvrons ensemble comment nous pouvons transformer vos ventes.",
+    "subtitle": "Découvrons ensemble comment transformer et dynamiser vos ventes.",
     "primary": "Contactez-nous Maintenant",
     "secondary": "Envoyer un E-mail",
-    "benefits": "Consultation Initiale Gratuite • Sans Engagement • Solutions Individuelles"
+    "benefits": "Consultation Initiale Gratuite • Solutions Individuelles • Offres Personnalisées"
   },
   "footer": {
     "description": "Nous sommes votre partenaire pour des ventes réussies. Avec plus de 15 ans d'expérience et quatre marques fortes, nous faisons avancer votre entreprise.",
@@ -235,7 +239,7 @@
       "badge": "À Propos",
       "titlePart1": "Votre maison pour",
       "titlePart2": "l'excellence commerciale",
-      "subtitle": "<brand>advantis GmbH</brand> réunit plus de 15 ans d'expérience commerciale sous un même toit – avec passion, pragmatisme et une focalisation claire sur le succès."
+      "subtitle": "<brand>ADVANTIS GROUP</brand> réunit plus de 15 ans d'expérience commerciale sous un même toit – avec passion, pragmatisme et une focalisation claire sur le succès."
     },
     "mission": {
       "badge": "Mission",
@@ -249,7 +253,7 @@
     },
     "story": {
       "badge": "Notre Histoire",
-      "text1": "<brand>advantis GmbH</brand> a été fondée en 2025 par <founder>Andrea Reichl</founder> et réunit plus de 15 ans d'expérience commerciale dans divers secteurs sous un même toit.",
+      "text1": "<brand>ADVANTIS GROUP</brand> a été fondée en 2025 par <founder>Andrea Reichl</founder> et réunit plus de 15 ans d'expérience commerciale dans divers secteurs sous un même toit.",
       "text2": "Ce qui a commencé il y a des années comme une entreprise individuelle est maintenant un groupe d'entreprises avec des marques fortes et un objectif commun : 100 % Sales.",
       "text3": "Nous n'aimons pas le superflu – nous n'avons pas réinventé la roue, juste mis de belles jantes. Pragmatique, efficace, durable."
     },
@@ -489,7 +493,7 @@
     "signedIn": "Connecté avec Clerk",
     "accountCta": "Gérer le compte",
     "signOut": "Se déconnecter",
-    "signInTitle": "Bon retour chez Advantis Group",
+    "signInTitle": "Bon retour chez ADVANTIS GROUP",
     "signInSubtitle": "Connectez-vous avec Clerk pour gérer votre profil, vos paramètres de sécurité et les futures expériences protégées depuis un seul endroit.",
     "signUpTitle": "Créez votre compte Advantis",
     "signUpSubtitle": "Utilisez Clerk pour créer un compte sécurisé et gérer votre profil, vos méthodes de connexion et les futures expériences réservées aux membres.",
@@ -528,6 +532,479 @@
         "failed": "À vérifier"
       }
     }
+  },
+  "services": {
+    "eyebrow": "Nos Prestations",
+    "title": "Tout pour Votre Réussite Commerciale",
+    "subtitle": "Du Customer Care à l'automatisation IA — découvrez comment nous soutenons votre vente de façon globale.",
+    "common": {
+      "whyTitle": "Pourquoi ADVANTIS GROUP ?",
+      "offeringsTitle": "Nos Prestations",
+      "ctaTitle": "Demandez Conseil",
+      "ctaButton": "Consultation Gratuite",
+      "relatedTitle": "Cela Pourrait Aussi Vous Intéresser",
+      "backLabel": "Retour à l'Aperçu",
+      "seoLabel": "Thèmes",
+      "vertriebstrainingTile": {
+        "title": "Formation Commerciale",
+        "description": "Du traitement des objections à la conduite d'entretien jusqu'au closing — nos formations commerciales transmettent des connaissances directement applicables pour l'inside sales, le terrain et les équipes Customer Care."
+      }
+    },
+    "items": {
+      "customer-care": {
+        "tileTitle": "Customer Care",
+        "tileDescription": "Un service client d'excellence sur tout le parcours client — assisté par l'IA pour des temps de réponse plus rapides.",
+        "metaTitle": "Customer Care Assisté par l'IA",
+        "metaDescription": "Service client professionnel assisté par l'IA : hotlines, gestion des réclamations et service après-vente pour une meilleure qualité de service.",
+        "title": "Customer Care – Service Client Professionnel Assisté par l'IA",
+        "heroSubtitle": "Un Customer Care d'excellence détermine aujourd'hui largement la perception qu'ont les clients d'une entreprise. ADVANTIS GROUP allie accompagnement client personnalisé et solutions d'IA modernes. L'intelligence artificielle soutient nos collaborateurs grâce à des bases de connaissances intelligentes, des suggestions de réponses en temps réel, des résumés automatiques d'appels, la classification des tickets et l'automatisation des workflows — pour des temps de réponse plus rapides, une meilleure qualité et une expérience client cohérente.",
+        "whatTitle": "Que Signifie Customer Care ?",
+        "whatText": "Le Customer Care regroupe toutes les mesures d'accompagnement de vos clients tout au long du parcours client — de la première demande au service après-vente. Des systèmes d'IA modernes analysent les demandes, priorisent les tickets, détectent les sentiments et proposent aux collaborateurs des solutions adaptées.",
+        "offeringsText": "Nous prenons en charge les hotlines de service client, la gestion des réclamations, le service après-vente ainsi que le support client par téléphone, e-mail et chat. Nos solutions d'IA automatisent les processus récurrents, créent des notes d'appel, suggèrent des réponses et aident à respecter les niveaux de service.",
+        "aiTitle": "Solutions d'IA pour Votre Customer Care",
+        "aiItems": [
+          "Chatbots IA pour les demandes standards",
+          "Voicebots IA pour la pré-qualification",
+          "Classification automatique des tickets",
+          "Bases de connaissances intelligentes",
+          "Assistance en temps réel pendant les appels",
+          "Résumés d'appels générés par IA",
+          "Analyse qualité et coaching par IA",
+          "Analyse de sentiment pour détecter les clients insatisfaits",
+          "Traductions automatiques pour un support multilingue",
+          "Automatisation CRM et pilotage des workflows"
+        ],
+        "extraSections": [
+          {
+            "title": "Externalisation du Customer Care",
+            "text": "Nos équipes s'intègrent parfaitement à vos processus existants. Grâce à l'IA, les temps de traitement peuvent être réduits, la résolution au premier contact améliorée et les coûts diminués."
+          },
+          {
+            "title": "Technologie",
+            "text": "Nous nous intégrons notamment à Salesforce, HubSpot, Microsoft Dynamics, Zendesk, Freshdesk, SAP et à des systèmes CRM individuels. Les agents IA s'intègrent aux paysages système existants sans remplacer vos processus."
+          },
+          {
+            "title": "Protection des Données",
+            "text": "Toutes nos solutions d'IA sont déployées dans le respect du RGPD. La protection des données, la sécurité de l'information et des processus transparents sont notre priorité absolue."
+          }
+        ],
+        "whyText": "Nous combinons des équipes Customer Care expérimentées avec une automatisation intelligente, pour un service client moderne alliant accompagnement personnalisé, efficacité, évolutivité et résultats mesurables.",
+        "ctaText": "Vous souhaitez moderniser votre service client ou intégrer l'IA de façon pertinente ? Nous développons avec vous une stratégie Customer Care sur mesure — de l'analyse des processus à la mise en œuvre opérationnelle.",
+        "seoKeywords": "Customer Care, Service Client, Gestion des Réclamations, Service Après-Vente, IA Service Client, Chatbot, Voicebot, CRM, Salesforce, RGPD."
+      },
+      "contact-center": {
+        "tileTitle": "Contact Center",
+        "tileDescription": "Inbound et outbound sur tous les canaux – évolutif et pleinement conforme au RGPD.",
+        "metaTitle": "Externalisation de Contact Center avec IA",
+        "metaDescription": "Contact center moderne pour l'inbound et l'outbound : service client, prise de commandes et gestion des réclamations – assisté par l'IA et conforme au RGPD.",
+        "title": "Contact Center – Communication Client Intelligente, Humains & IA",
+        "heroSubtitle": "Un contact center moderne est aujourd'hui la plateforme de communication centrale entre les entreprises et leurs clients. ADVANTIS GROUP associe conseil personnalisé et technologies assistées par l'IA. Nos collaborateurs sont soutenus par des systèmes d'assistance intelligents, permettant un traitement plus rapide des demandes, des réponses plus précises et des processus automatisés efficacement.",
+        "whatTitle": "",
+        "whatText": "",
+        "offeringsText": "Nous prenons en charge la communication inbound et outbound par téléphone, e-mail, chat et canaux digitaux : service client, prise de commandes, prise de rendez-vous, gestion des réclamations, helpdesk, service après-vente, qualification de leads et reconquête client.",
+        "aiTitle": "Solutions de Contact Center Assistées par l'IA",
+        "aiItems": [
+          "Voicebots IA pour la réception et la pré-qualification des appels",
+          "Chatbots pour les demandes standards 24h/24",
+          "Résumés automatiques des appels",
+          "Suggestions de réponses en temps réel pour les collaborateurs",
+          "Analyse de sentiment pour détecter les appels critiques",
+          "Classification et priorisation automatiques des tickets",
+          "Bases de connaissances intelligentes",
+          "Analyse qualité et coaching assistés par l'IA",
+          "Automatisation des workflows et du CRM",
+          "Traductions multilingues en temps réel"
+        ],
+        "extraSections": [
+          {
+            "title": "Expérience Client Omnicanale",
+            "text": "Les clients attendent aujourd'hui une communication fluide sur tous les canaux. Notre contact center relie téléphone, e-mail, chat, formulaires web et messagerie sociale pour une expérience client cohérente, avec une documentation centralisée de tous les contacts."
+          },
+          {
+            "title": "Avantages d'un Contact Center Externalisé",
+            "text": "Les entreprises bénéficient d'une montée en charge flexible, de coûts maîtrisés, d'une haute disponibilité, de temps de réponse courts et d'équipes expérimentées. L'IA réduit les temps de traitement et améliore la résolution au premier contact."
+          },
+          {
+            "title": "Technologie & CRM",
+            "text": "Nous nous intégrons à Salesforce, HubSpot, Microsoft Dynamics, Zendesk, Freshdesk, SAP ainsi qu'à des solutions CRM individuelles. Les agents IA complètent les processus existants et fournissent analyses et automatisations précieuses."
+          },
+          {
+            "title": "Protection des Données",
+            "text": "La protection des données et la sécurité de l'information sont notre priorité absolue. Nos processus respectent strictement le RGPD. L'IA est utilisée de manière responsable, transparente et conforme aux exigences applicables."
+          }
+        ],
+        "whyText": "Nous combinons une technologie de contact center moderne avec des équipes de service et de vente expérimentées, pour des processus plus rapides, des clients satisfaits, des KPI mesurables et une solution de communication évolutive pour toute entreprise.",
+        "ctaText": "Vous souhaitez transformer votre call center en contact center moderne ou utiliser l'IA de façon pertinente ? Nous développons ensemble une solution sur mesure — de la stratégie à l'exploitation opérationnelle.",
+        "seoKeywords": "Contact Center, Externalisation Contact Center, Service Client, Service Inbound, Service Outbound, Helpdesk, Omnicanal, IA Contact Center, Voicebot, Chatbot, CRM, Salesforce, Expérience Client, RGPD."
+      },
+      "telesales": {
+        "tileTitle": "Télévente",
+        "tileDescription": "Vente téléphonique B2B professionnelle – davantage d'entretiens qualifiés et de meilleurs taux de conclusion.",
+        "metaTitle": "Télévente pour la Vente B2B",
+        "metaDescription": "Télévente avec des consultants commerciaux expérimentés et l'IA : acquisition de nouveaux clients, prise de rendez-vous et suivi des devis.",
+        "title": "Télévente – Réussir la Vente B2B avec les Humains & l'IA",
+        "heroSubtitle": "La télévente professionnelle va bien au-delà de la simple vente par téléphone. ADVANTIS GROUP associe des consultants commerciaux expérimentés à des solutions d'IA modernes, des processus de vente pilotés par la donnée et des stratégies commerciales éprouvées — pour davantage d'entretiens qualifiés, de meilleurs taux de conclusion et une croissance durable du chiffre d'affaires.",
+        "whatTitle": "Pourquoi la Télévente ?",
+        "whatText": "La vente par téléphone permet un dialogue direct avec les décideurs, raccourcit les cycles de vente et crée des relations personnelles. En B2B en particulier, la télévente est un canal efficace de génération de leads et d'acquisition de nouveaux clients.",
+        "offeringsText": "Nous prenons en charge l'acquisition téléphonique de nouveaux clients, la qualification de leads, la prise de rendez-vous, le suivi des devis, la vente croisée et additionnelle, le suivi des clients existants ainsi que l'accompagnement complet de votre pipeline commercial — du premier contact à la signature.",
+        "aiTitle": "Support Commercial Assisté par l'IA",
+        "aiItems": [
+          "Priorisation des leads assistée par l'IA",
+          "Préparation des appels avec analyses d'entreprises",
+          "Assistance en temps réel et aides à l'argumentation",
+          "Résumés automatiques des appels",
+          "Documentation CRM assistée par l'IA",
+          "Analyse des objections et des taux de réussite",
+          "Recommandations de next-best-action",
+          "Relances automatisées par e-mail",
+          "Tableaux de bord commerciaux et analyses de KPI"
+        ],
+        "extraSections": [
+          {
+            "title": "Notre Méthodologie Commerciale",
+            "text": "Nous travaillons avec des scripts d'appel structurés, des techniques de questionnement ouvert, un traitement professionnel des objections et un tunnel de vente clairement défini. Chaque étape est documentée de façon mesurable et optimisée en continu."
+          },
+          {
+            "title": "CRM & Digitalisation",
+            "text": "Nos équipes travaillent directement dans Salesforce, HubSpot, Microsoft Dynamics ou votre CRM existant. Toutes les activités sont documentées de façon transparente et enrichies par des analyses assistées par l'IA."
+          },
+          {
+            "title": "Secteurs d'Activité",
+            "text": "Nos équipes de télévente accompagnent des entreprises de l'industrie, du logiciel, du SaaS, de l'énergie, de la mobilité, de la logistique, du commerce, des services financiers et de nombreux autres secteurs B2B."
+          }
+        ],
+        "whyText": "Nous combinons expérience commerciale opérationnelle, technologies modernes et automatisation par l'IA, augmentant la productivité de votre organisation commerciale et générant des résultats mesurables — de davantage de leads à de meilleurs taux de conclusion.",
+        "ctaText": "Vous souhaitez professionnaliser votre vente téléphonique ou mettre en place un processus de télévente évolutif ? Nous développons ensemble la stratégie adaptée et prenons en charge, sur demande, l'exécution opérationnelle complète.",
+        "seoKeywords": "Télévente, Vente Téléphonique, Vente B2B, Acquisition de Nouveaux Clients, Génération de Leads, Inside Sales, Externalisation Commerciale, Prospection Téléphonique, Prise de Rendez-vous, Business Development, IA Commerciale, CRM, Salesforce."
+      },
+      "new-customer-acquisition": {
+        "tileTitle": "Acquisition de Nouveaux Clients",
+        "tileDescription": "Davantage de leads qualifiés et de conclusions grâce à des stratégies d'acquisition personnalisées.",
+        "metaTitle": "Acquisition de Nouveaux Clients avec l'IA",
+        "metaDescription": "Stratégies personnalisées d'acquisition de nouveaux clients : génération de leads, qualification et conclusion — pilotées par la donnée et l'IA.",
+        "title": "Acquisition de Nouveaux Clients – Croissance Durable par des Stratégies Modernes & l'IA",
+        "heroSubtitle": "Les nouveaux clients sont le fondement d'une croissance durable. ADVANTIS GROUP développe des stratégies personnalisées d'acquisition de nouveaux clients, combinant équipes commerciales expérimentées, processus pilotés par la donnée et intelligence artificielle — pour atteindre plus rapidement les bons décideurs et augmenter votre taux de conclusion.",
+        "whatTitle": "",
+        "whatText": "",
+        "offeringsText": "Nous vous accompagnons sur l'ensemble du processus commercial — de l'analyse de la cible à la génération de leads, leur qualification et la prise de rendez-vous, jusqu'à la gestion des devis, le suivi et la conclusion réussie du contrat. Sur demande, nous prenons en charge l'ensemble du processus commercial en tant que partenaire d'externalisation.",
+        "aiTitle": "Acquisition de Nouveaux Clients Assistée par l'IA",
+        "aiItems": [
+          "Analyse de cible assistée par l'IA",
+          "Lead scoring et priorisation",
+          "Recherche automatique d'entreprises",
+          "Campagnes e-mail personnalisées",
+          "Préparation d'appels assistée par l'IA",
+          "Analyse des probabilités d'achat",
+          "Recommandations de next-best-action",
+          "Automatisation CRM",
+          "Tableaux de bord commerciaux et analyses de KPI"
+        ],
+        "extraSections": [
+          {
+            "title": "Davantage de Leads Qualifiés",
+            "text": "Une acquisition de nouveaux clients réussie commence par la bonne cible. Nous définissons ensemble votre Ideal Customer Profile (ICP), identifions les potentiels et développons un tunnel de leads évolutif pour une croissance durable."
+          },
+          {
+            "title": "Vente Omnicanale",
+            "text": "Nous combinons téléphone, e-mail, LinkedIn, campagnes digitales et marketing automation en une stratégie commerciale continue. Tous les contacts sont documentés de façon centralisée et développés systématiquement."
+          },
+          {
+            "title": "CRM & Sales Automation",
+            "text": "Nos équipes travaillent avec Salesforce, HubSpot, Microsoft Dynamics et d'autres systèmes CRM. L'IA automatise les tâches routinières, documente les activités et fournit des recommandations précieuses pour la vente."
+          },
+          {
+            "title": "Pour Quelles Entreprises ?",
+            "text": "Nos solutions conviennent aux entreprises B2B de l'industrie, du logiciel, du SaaS, de l'énergie, de la mobilité, de la logistique, du commerce, des services financiers et de nombreux autres secteurs."
+          }
+        ],
+        "whyText": "Nous combinons stratégie, mise en œuvre opérationnelle et technologies d'IA modernes — pour davantage de leads qualifiés, des cycles de vente plus courts, des taux de conversion plus élevés et un succès commercial prévisible.",
+        "ctaText": "Vous souhaitez professionnaliser votre acquisition de nouveaux clients ou faire évoluer votre force commerciale ? Nous développons ensemble une stratégie sur mesure et vous accompagnons de la première idée au succès mesurable.",
+        "seoKeywords": "Acquisition de Nouveaux Clients, Nouveaux Clients B2B, Génération de Leads, Lead Management, Qualification de Leads, Vente, Télévente, Inside Sales, Externalisation Commerciale, Business Development, Prospection Téléphonique, CRM, Salesforce, IA Commerciale."
+      },
+      "customer-experience": {
+        "tileTitle": "Customer Experience",
+        "tileDescription": "Des expériences positives à chaque point de contact – pour plus de fidélité et de recommandations.",
+        "metaTitle": "Gestion de la Customer Experience",
+        "metaDescription": "Améliorez durablement votre Customer Experience : analyse du parcours, communication omnicanale et IA pour une satisfaction client accrue.",
+        "title": "Customer Experience – Des Expériences Client Marquantes, Humains, Processus & IA",
+        "heroSubtitle": "Les produits et les prix se comparent — les expériences client exceptionnelles, elles, restent en mémoire. Une Customer Experience (CX) bien pensée détermine aujourd'hui largement la satisfaction client, la fidélisation et les recommandations. ADVANTIS GROUP aide les entreprises à transformer chaque contact client en expérience positive.",
+        "whatTitle": "Que Signifie Customer Experience ?",
+        "whatText": "La Customer Experience désigne l'ensemble des expériences qu'un client vit avec une entreprise — de la première recherche à l'achat, en passant par le service client et l'après-vente. L'objectif est de créer un parcours client cohérent, personnalisé et positif sur tous les points de contact.",
+        "offeringsText": "Nous analysons les parcours clients existants, identifions les potentiels d'optimisation et développons des mesures pour améliorer la satisfaction client : Customer Care, Contact Center, communication omnicanale, programmes Voice of Customer, gestion des réclamations et optimisation du service.",
+        "aiTitle": "L'IA au Service d'une Meilleure Customer Experience",
+        "aiItems": [
+          "Analyse du parcours client assistée par l'IA",
+          "Analyse de sentiment pour détecter l'humeur des clients",
+          "Communication personnalisée",
+          "Chatbots et voicebots IA",
+          "Assistance en temps réel pour les collaborateurs",
+          "Résumés et documentation automatiques",
+          "Predictive analytics pour anticiper les besoins clients",
+          "Recommandations de next-best-action",
+          "Automatisation CRM et des workflows"
+        ],
+        "extraSections": [
+          {
+            "title": "Communication Omnicanale",
+            "text": "Les clients attendent aujourd'hui une communication fluide par téléphone, e-mail, chat, réseaux sociaux et portails en libre-service. Nous relions tous les canaux pour une expérience client cohérente, avec des informations homogènes et des temps de réponse rapides."
+          },
+          {
+            "title": "Résultats Mesurables",
+            "text": "Une Customer Experience optimisée augmente la satisfaction client (CSAT), le taux de recommandation (NPS), la fidélisation et les taux de réachat, tout en réduisant les temps de traitement, les escalades et les coûts de service."
+          },
+          {
+            "title": "CRM & Données",
+            "text": "Nous intégrons vos systèmes CRM existants comme Salesforce, HubSpot, Microsoft Dynamics ou SAP, créant une vue à 360° de vos clients afin que votre équipe dispose de toutes les informations pertinentes à chaque contact."
+          }
+        ],
+        "whyText": "Nous combinons Customer Care, vente, digitalisation et intelligence artificielle en une stratégie Customer Experience globale, visant des améliorations mesurables tout au long du parcours client.",
+        "ctaText": "Vous souhaitez améliorer durablement votre Customer Experience ? Nous analysons ensemble votre parcours client, développons des mesures sur mesure et déployons des solutions d'IA modernes pour enchanter durablement vos clients.",
+        "seoKeywords": "Customer Experience, Parcours Client, Satisfaction Client, Gestion de la Customer Experience, Customer Care, Contact Center, Omnicanal, Service Client, Stratégie CX, IA Customer Experience, Voicebot, Chatbot, CRM, Salesforce, NPS, CSAT."
+      },
+      "ai-automation": {
+        "tileTitle": "Automatisation IA",
+        "tileDescription": "Des processus intelligents pour la vente, le service et la croissance – des chatbots à l'automatisation des workflows.",
+        "metaTitle": "Automatisation IA pour la Vente & le Service",
+        "metaDescription": "Automatisation IA pour la vente et le service client : agents IA, chatbots, voicebots et automatisation des processus – conforme au RGPD.",
+        "title": "Automatisation IA – Des Processus Intelligents pour la Vente, le Service et la Croissance",
+        "heroSubtitle": "L'intelligence artificielle transforme la façon dont les entreprises travaillent. ADVANTIS GROUP aide les entreprises à automatiser les tâches récurrentes, à soulager leurs collaborateurs et à rendre leurs processus plus intelligents. Nous combinons technologies d'IA modernes, conseil concret et mise en œuvre opérationnelle.",
+        "whatTitle": "Que Signifie l'Automatisation IA ?",
+        "whatText": "L'automatisation IA va bien au-delà des workflows classiques. Des systèmes d'IA modernes analysent les données, formulent des recommandations, créent du contenu, répondent aux demandes, documentent les processus et assistent les collaborateurs en temps réel — pour des processus plus rapides, des coûts réduits et une meilleure qualité de service.",
+        "offeringsText": "Nous mettons en œuvre des agents IA pour la vente, le Customer Care et le back-office, des chatbots et voicebots IA, un traitement automatique des e-mails, l'automatisation CRM, le traitement des documents et factures, ainsi que des bases de connaissances avec recherche IA et l'automatisation des workflows.",
+        "aiTitle": "Nos Solutions d'IA",
+        "aiItems": [
+          "Agents IA pour la vente, le Customer Care et le back-office",
+          "Chatbots IA pour le site web et le service client",
+          "Voicebots pour les demandes téléphoniques",
+          "Traitement automatique des e-mails",
+          "Automatisation CRM et saisie de données",
+          "Qualification de leads et lead scoring assistés par l'IA",
+          "Traitement des documents et factures",
+          "Bases de connaissances avec recherche IA",
+          "Résumés de réunions et d'appels",
+          "Traductions et communication multilingue",
+          "Automatisation des workflows et pilotage des processus"
+        ],
+        "extraSections": [
+          {
+            "title": "L'IA dans la Vente",
+            "text": "Nos solutions d'IA assistent les équipes commerciales dans la recherche, la préparation des appels, la priorisation des leads, le suivi des devis et l'analyse des opportunités. Les recommandations de next-best-action permettent d'identifier plus vite les potentiels et d'augmenter les taux de conclusion."
+          },
+          {
+            "title": "L'IA dans le Customer Care",
+            "text": "Dans le service client, l'IA prend en charge la pré-qualification des demandes, suggère des réponses adaptées, analyse les sentiments, crée des résumés de tickets et assiste les collaborateurs tout au long du contact client — raccourcissant les temps de réponse et augmentant la satisfaction client."
+          },
+          {
+            "title": "Intégration Système",
+            "text": "Nos solutions s'intègrent à des systèmes existants tels que Salesforce, HubSpot, Microsoft Dynamics, SAP, Zendesk, Freshdesk ainsi qu'à des solutions CRM/ERP individuelles. L'objectif est d'enrichir intelligemment les processus existants — pas de les remplacer."
+          },
+          {
+            "title": "Protection des Données & RGPD",
+            "text": "Une gestion responsable des données est notre priorité absolue. Nous développons des solutions d'IA dans le respect du RGPD et mettons en place des processus transparents, des concepts de rôles et de droits ainsi qu'une documentation traçable."
+          }
+        ],
+        "whyText": "Nous combinons expertise en IA et longue expérience en vente, Customer Care et optimisation des processus. Nous identifions ensemble les potentiels d'automatisation, développons des solutions sur mesure et accompagnons la mise en œuvre jusqu'à l'exploitation opérationnelle.",
+        "ctaText": "Vous souhaitez utiliser l'intelligence artificielle de façon pertinente dans votre entreprise ? Nous analysons vos processus, identifions des quick wins et développons une stratégie IA évolutive — de la première idée à la mise en œuvre réussie.",
+        "seoKeywords": "Automatisation IA, Intelligence Artificielle, Agents IA, Automatisation des Processus Métier, IA dans la Vente, IA dans le Service Client, Chatbot, Voicebot, Automatisation CRM, IA Salesforce, Automatisation des Workflows, IA Générative, Transformation Digitale, Machine Learning."
+      },
+      "crm": {
+        "tileTitle": "CRM",
+        "tileDescription": "Conseil Salesforce et HubSpot pour plus de transparence et de meilleurs taux de conversion.",
+        "metaTitle": "Conseil CRM : Salesforce & HubSpot",
+        "metaDescription": "Conseil CRM axé sur Salesforce et HubSpot : implémentation, optimisation et processus commerciaux assistés par l'IA.",
+        "title": "CRM – Une Gestion Client Réussie avec Salesforce, HubSpot & l'IA",
+        "heroSubtitle": "Un Customer Relationship Management (CRM) moderne est le cœur d'un processus de vente et de service client réussi. ADVANTIS GROUP aide les entreprises à déployer stratégiquement des systèmes CRM, à optimiser les processus existants et à les rendre plus efficaces grâce à l'intelligence artificielle.",
+        "whatTitle": "Spécialistes Salesforce & HubSpot",
+        "whatText": "Nos consultants et experts commerciaux disposent d'une solide expérience pratique de Salesforce et HubSpot. Nous accompagnons l'implémentation, la migration, la configuration, l'optimisation des processus, l'adoption utilisateur, le reporting ainsi que l'évolution continue. Ces deux plateformes constituent le socle de processus commerciaux, marketing et Customer Care évolutifs.",
+        "offeringsText": "Nous accompagnons le conseil Salesforce et l'optimisation des processus, l'implémentation et l'administration HubSpot, le déploiement CRM, la gestion des leads et opportunités, la conception du pipeline commercial, la marketing et sales automation, les workflows Customer Care, les tableaux de bord et rapports de KPI, la qualité des données et la gouvernance CRM, ainsi que la formation des utilisateurs et la conduite du changement.",
+        "aiTitle": "L'IA dans le CRM",
+        "aiItems": [
+          "Lead scoring assisté par l'IA",
+          "Résumés automatiques d'appels et de réunions",
+          "Recommandations de next-best-action",
+          "Prévisions des probabilités de conclusion",
+          "Saisie automatique des données et documentation CRM",
+          "Automatisation des e-mails et des tâches",
+          "Agents IA pour la vente et le Customer Care",
+          "Analyses et prévisions intelligentes"
+        ],
+        "extraSections": [
+          {
+            "title": "Plus que du Logiciel – des Processus Optimisés",
+            "text": "Un CRM ne révèle sa valeur qu'à travers des processus clairement définis. Nous analysons ensemble votre parcours client, votre pipeline commercial et vos flux de service pour créer des workflows standardisés, mesurables et évolutifs."
+          },
+          {
+            "title": "Vos Avantages",
+            "text": "Un CRM correctement configuré augmente la transparence, les taux de conclusion et la satisfaction client, tout en réduisant les tâches manuelles, en améliorant la collaboration entre vente et service, et en fournissant des indicateurs fiables pour des décisions éclairées."
+          },
+          {
+            "title": "Protection des Données & Intégration",
+            "text": "Nos solutions respectent les exigences du RGPD et s'intègrent parfaitement à vos systèmes ERP, téléphonie, marketing et service existants — créant une vue client centralisée à 360°."
+          }
+        ],
+        "whyText": "Nous combinons une longue expérience opérationnelle en vente, Customer Care et digitalisation avec une expertise approfondie de Salesforce et HubSpot, en nous concentrant sur des résultats mesurables, une forte adoption utilisateur et une amélioration durable des processus.",
+        "ctaText": "Vous souhaitez tirer le meilleur parti de Salesforce ou HubSpot, ou déployer un nouveau CRM ? Nous vous accompagnons de l'analyse à l'implémentation puis à l'optimisation continue, et soutenons votre équipe au quotidien.",
+        "seoKeywords": "Conseil CRM, Conseil Salesforce, Conseil HubSpot, Implémentation Salesforce, Implémentation HubSpot, Déploiement CRM, Optimisation CRM, Sales Automation, Marketing Automation, Lead Management, Gestion des Opportunités, Customer Relationship Management, IA dans le CRM, Experts Salesforce, Experts HubSpot."
+      },
+      "sales-academy": {
+        "tileTitle": "Sales Academy",
+        "tileDescription": "Formations commerciales concrètes pour équipes de vente, managers et entreprises de toute taille.",
+        "metaTitle": "Sales Academy : Formation Commerciale",
+        "metaDescription": "Formations commerciales pour la télévente, la prospection, le traitement des objections et le développement managérial — concrètes et assistées par l'IA.",
+        "title": "Sales Academy – Des Formations Commerciales pour un Succès Durable",
+        "heroSubtitle": "Les équipes commerciales performantes ne naissent pas du hasard. L'Advantis Sales Academy développe systématiquement vendeurs, managers et équipes Customer Care. Nos formations associent méthodes commerciales éprouvées, techniques de communication modernes et approches pédagogiques assistées par l'IA en programmes concrets à forte valeur ajoutée.",
+        "whatTitle": "À Qui S'adresse la Sales Academy ?",
+        "whatText": "Nos formations s'adressent aux entreprises de toute taille — de la start-up au groupe international. Nous formons l'inside sales, le terrain, le Customer Care, le Contact Center, le Business Development, les managers et les nouveaux collaborateurs dans le cadre de programmes d'onboarding structurés.",
+        "offeringsText": "Notre portefeuille de formations couvre la télévente et l'inside sales, l'acquisition de nouveaux clients, la prospection téléphonique, le traitement des objections, les techniques de questionnement et l'analyse des besoins, les techniques de closing, le Customer Care et la gestion des réclamations, l'excellence en Contact Center, le CRM (Salesforce & HubSpot), l'IA dans la vente, le développement managérial, le coaching commercial et d'équipe, ainsi que le pilotage des KPI et de la performance.",
+        "aiTitle": "La Sales Academy Rencontre l'IA",
+        "aiItems": [
+          "Analyse d'appels assistée par l'IA",
+          "Jeux de rôle avec l'IA",
+          "Retour en temps réel sur les entretiens de vente",
+          "Recommandations de coaching automatiques",
+          "Création de scripts d'appel assistée par l'IA",
+          "Assistants d'apprentissage pour les collaborateurs",
+          "Bases de connaissances avec recherche IA",
+          "Analyse des taux de réussite et des schémas d'entretien"
+        ],
+        "extraSections": [
+          {
+            "title": "La Pratique Plutôt que la Théorie",
+            "text": "Toutes nos formations reposent sur des situations de vente réelles. Les participants travaillent avec des scripts d'appel concrets, des études de cas et des jeux de rôle, rendant les contenus directement applicables et durablement ancrés."
+          },
+          {
+            "title": "Onboarding & Sales Enablement",
+            "text": "Nous développons des concepts d'onboarding structurés pour les nouveaux collaborateurs, accompagnons leur montée en compétence et mettons en place des programmes d'apprentissage continu — réduisant le temps d'intégration et augmentant plus vite la productivité des équipes."
+          },
+          {
+            "title": "Résultats Mesurables",
+            "text": "Nos formations s'appuient sur des KPI clairs tels que le taux de conversion, le taux de rendez-vous, le taux de conclusion, la qualité des entretiens, la satisfaction client et la productivité. Les progrès sont documentés de façon transparente et régulièrement contrôlés."
+          }
+        ],
+        "whyText": "Nos formateurs disposent d'une longue expérience opérationnelle en vente B2B, Customer Care et Contact Center. Nous ne transmettons pas une théorie de manuel, mais des méthodes éprouvées, utilisées avec succès au quotidien dans la vente.",
+        "ctaText": "Vous souhaitez faire évoluer votre équipe commerciale ou mettre en place une Sales Academy moderne dans votre entreprise ? Nous développons ensemble un concept de formation sur mesure — en présentiel, en atelier en ligne ou en programme blended-learning.",
+        "seoKeywords": "Sales Academy, Formation Commerciale, Formation à la Vente, Formation Télévente, Formation Inside Sales, Formation Prospection Téléphonique, Formation Customer Care, Formation Contact Center, Formation Salesforce, Formation HubSpot, Sales Coaching, Formation Management Commercial, Onboarding Commercial, IA dans la Vente, Sales Enablement."
+      },
+      "lead-management": {
+        "tileTitle": "Lead Management",
+        "tileDescription": "Des processus de gestion des leads efficaces pour un traitement plus rapide et plus de conclusions.",
+        "metaTitle": "Lead Management & Lead Scoring",
+        "metaDescription": "Gestion professionnelle des leads : lead scoring, nurturing et routing avec Salesforce, HubSpot et l'IA.",
+        "title": "Lead Management – Tirer le Meilleur de Chaque Lead",
+        "heroSubtitle": "Un lead n'a de valeur que s'il est traité au bon moment avec la bonne stratégie. ADVANTIS GROUP développe des processus de Lead Management professionnels qui relient marketing, vente et Customer Care. L'objectif : transformer davantage de leads qualifiés en clients payants et optimiser de façon mesurable l'ensemble du processus commercial.",
+        "whatTitle": "Qu'est-ce que le Lead Management ?",
+        "whatText": "Le Lead Management couvre l'ensemble du processus, de la capture du lead à sa qualification et sa priorisation, jusqu'à sa transmission à la vente et sa conclusion réussie. Avec des processus clairs, des KPI définis et des systèmes CRM modernes, nous créons de la transparence et augmentons le taux de conversion.",
+        "offeringsText": "Nous prenons en charge la génération et la capture de leads, leur qualification, le lead scoring, le lead nurturing, la prise de rendez-vous, la gestion des opportunités, l'administration CRM, les processus commerciaux et le tunnel de vente, ainsi que les tableaux de bord de KPI, le reporting et l'automatisation commerciale et marketing.",
+        "aiTitle": "L'IA dans le Lead Management",
+        "aiItems": [
+          "Lead scoring assisté par l'IA",
+          "Priorisation selon la probabilité de conclusion",
+          "Processus de routage des leads automatiques",
+          "Agents IA pour la pré-qualification",
+          "Relances e-mail personnalisées",
+          "Résumés d'appels et documentation CRM",
+          "Prévisions des taux de conversion",
+          "Recommandations de next-best-action",
+          "Relances automatiques et gestion des tâches"
+        ],
+        "extraSections": [
+          {
+            "title": "Salesforce & HubSpot",
+            "text": "Nous sommes spécialisés dans Salesforce et HubSpot, et accompagnons les entreprises dans leur implémentation, leur optimisation et leur utilisation quotidienne. Des processus de Lead Management intelligents garantissent qu'aucun potentiel n'est perdu et que chaque lead est traité de façon traçable."
+          },
+          {
+            "title": "Des Temps de Réponse Rapides",
+            "text": "Un Lead Management réussi commence par la rapidité. Nous développons des processus basés sur des SLA, définissons des stratégies de contact et veillons à ce que les nouveaux leads soient traités rapidement — augmentant la joignabilité, le taux de rendez-vous et la probabilité de conclusion."
+          },
+          {
+            "title": "Des KPI Mesurables",
+            "text": "Nous analysons notamment le taux lead-to-opportunity, le taux de conversion, le temps de réponse, le taux de contact, le taux de rendez-vous, le taux de conclusion, le coût par lead et le coût d'acquisition client — pour identifier tôt les potentiels d'optimisation."
+          }
+        ],
+        "whyText": "Notre expérience en vente, Customer Care, CRM et digitalisation nous permet de concevoir des processus de Lead Management de façon globale. Nous combinons mise en œuvre opérationnelle et IA moderne pour des processus évolutifs au service d'une croissance durable.",
+        "ctaText": "Vous souhaitez professionnaliser le traitement de vos leads ou augmenter votre taux de conversion ? Nous développons ensemble un processus de Lead Management efficace — du premier contact à la signature réussie du contrat.",
+        "seoKeywords": "Lead Management, Lead Scoring, Qualification de Leads, Lead Nurturing, Lead Routing, Tunnel de Vente, Taux de Conversion, Gestion des Opportunités, CRM, Salesforce, HubSpot, Génération de Leads, Processus Commercial, Marketing Automation, IA Lead Management."
+      },
+      "sales-outsourcing": {
+        "tileTitle": "Externalisation Commerciale",
+        "tileDescription": "Externalisez votre vente à des experts commerciaux chevronnés – flexible, évolutif et mesurable.",
+        "metaTitle": "Externalisation Commerciale",
+        "metaDescription": "Externalisez votre vente auprès d'ADVANTIS GROUP : génération de leads, inside sales et processus commerciaux complets en tant que partenaire externe.",
+        "title": "Externalisation Commerciale – Confiez Votre Vente à des Experts Chevronnés",
+        "heroSubtitle": "Toutes les entreprises n'ont pas besoin de leur propre force de vente — mais toutes ont besoin de succès commercial. ADVANTIS GROUP prend en charge tout ou partie du processus commercial de votre entreprise : de la génération de leads à la signature du contrat. Flexible, évolutif et sans les coûts fixes d'une équipe commerciale interne.",
+        "whatTitle": "Que Signifie l'Externalisation Commerciale ?",
+        "whatText": "L'externalisation commerciale signifie qu'un partenaire externe prend en charge des tâches commerciales — de simples étapes comme la prise de rendez-vous jusqu'au tunnel de vente complet. Les entreprises y gagnent en flexibilité, économisent du temps de montée en puissance et bénéficient d'équipes commerciales expérimentées et déjà rodées.",
+        "offeringsText": "Nous prenons en charge la génération de leads, la prise de rendez-vous, l'inside sales, le suivi des devis et des processus commerciaux complets en tant que partenaire externe. Sur demande, nous agissons comme extension de votre équipe commerciale ou comme unité commerciale autonome pour de nouveaux marchés et produits.",
+        "aiTitle": "Externalisation Commerciale Assistée par l'IA",
+        "aiItems": [
+          "Priorisation des leads et analyse de cible assistées par l'IA",
+          "Préparation d'appels automatisée et documentation CRM",
+          "Recommandations de next-best-action à chaque étape commerciale",
+          "Reporting en temps réel et tableaux de bord commerciaux",
+          "Processus de relance automatisés par e-mail",
+          "Prévisions et probabilités de conclusion par IA"
+        ],
+        "extraSections": [
+          {
+            "title": "Évoluer en Toute Flexibilité",
+            "text": "Qu'il s'agisse d'affaires de projet, d'entrée sur un marché ou de pics d'activité, nous adaptons votre équipe commerciale selon vos besoins, sans que vous ayez à recruter, former ou occuper vos propres collaborateurs."
+          },
+          {
+            "title": "Une Collaboration Transparente",
+            "text": "Toutes les activités sont documentées dans votre CRM et traçables à tout moment. Des reportings réguliers et des KPI clairs garantissent une transparence totale sur le succès de notre collaboration."
+          },
+          {
+            "title": "Pour Quelles Entreprises ?",
+            "text": "Nos solutions d'externalisation commerciale conviennent aux entreprises B2B de l'industrie, du logiciel, du SaaS, de l'énergie, de la logistique, du commerce et des services financiers souhaitant développer leur capacité commerciale sans assumer le plein risque d'une équipe interne."
+          }
+        ],
+        "whyText": "Nous apportons plus de 15 ans d'expérience commerciale opérationnelle et une technologie d'IA moderne à chaque collaboration. Vous bénéficiez d'une équipe commerciale rodée qui performe dès le premier jour — mesurable, évolutive et sans long processus de montée en puissance.",
+        "ctaText": "Vous souhaitez développer votre capacité commerciale sans constituer votre propre équipe ? Nous trouvons ensemble le modèle adapté — de tâches commerciales isolées à l'externalisation complète de votre processus de vente.",
+        "seoKeywords": "Externalisation Commerciale, Externaliser la Vente, Externalisation du Processus Commercial, Externalisation Terrain, Externalisation Inside Sales, Partenaire Commercial, Vente B2B, Génération de Leads, Télévente, Acquisition de Nouveaux Clients, Sales as a Service, IA Commerciale, CRM, Salesforce."
+      },
+      "business-development": {
+        "tileTitle": "Business Development",
+        "tileDescription": "Conquérir de nouveaux marchés et bâtir des structures commerciales – de la stratégie à l'exécution.",
+        "metaTitle": "Business Development & Développement de Marché",
+        "metaDescription": "Business Development avec ADVANTIS GROUP : entrée sur de nouveaux marchés, structures commerciales et stratégies de croissance.",
+        "title": "Business Development – Conquérir de Nouveaux Marchés avec Stratégie & IA",
+        "heroSubtitle": "Une croissance durable ne naît pas du hasard, mais d'une stratégie claire. ADVANTIS GROUP aide les entreprises à conquérir de nouveaux marchés, à bâtir des structures commerciales et à identifier puis exploiter systématiquement leur potentiel de croissance.",
+        "whatTitle": "Que Signifie le Business Development ?",
+        "whatText": "Le Business Development regroupe toutes les mesures stratégiques et opérationnelles visant à conquérir de nouveaux domaines d'activité, marchés et segments de clientèle. Il associe analyse de marché, stratégie commerciale et mise en œuvre opérationnelle en une approche de croissance globale.",
+        "offeringsText": "Nous développons des stratégies d'entrée sur le marché, identifions de nouvelles cibles et de nouveaux canaux de vente, bâtissons des structures commerciales et accompagnons les entreprises de la stratégie à la mise en œuvre opérationnelle — y compris la génération de leads et la construction de partenariats.",
+        "aiTitle": "Développement de Marché Assisté par l'IA",
+        "aiItems": [
+          "Analyse de marché et concurrentielle assistée par l'IA",
+          "Identification automatique de nouvelles cibles et potentiels",
+          "Priorisation des marchés et canaux basée sur la donnée",
+          "Predictive analytics pour les prévisions de croissance",
+          "Automatisation CRM pour de nouvelles structures commerciales",
+          "Tableaux de bord pour piloter les initiatives de croissance"
+        ],
+        "extraSections": [
+          {
+            "title": "Entrée sur le Marché & Expansion",
+            "text": "Nous accompagnons la conquête de nouvelles régions, secteurs et segments de clientèle — de l'analyse de marché initiale à la construction de structures commerciales locales, jusqu'à la mise à l'échelle."
+          },
+          {
+            "title": "Bâtir des Structures Commerciales",
+            "text": "Nous développons des organisations commerciales, des processus et des systèmes de KPI conçus pour une croissance durable — y compris le soutien au recrutement et l'enablement des nouvelles équipes."
+          },
+          {
+            "title": "Partenariats & Coopérations",
+            "text": "Nous identifions des partenaires stratégiques et des canaux de vente, et accompagnons la construction de coopérations durables qui accélèrent encore votre croissance."
+          }
+        ],
+        "whyText": "Nous combinons conseil stratégique, expérience commerciale opérationnelle et technologie d'IA moderne, transformant les idées de croissance en résultats concrets et mesurables — de l'analyse de marché initiale à la mise en œuvre réussie.",
+        "ctaText": "Vous souhaitez conquérir de nouveaux marchés ou affiner votre stratégie de croissance ? Nous élaborons ensemble une feuille de route claire — de l'analyse à la mise en œuvre opérationnelle.",
+        "seoKeywords": "Business Development, Développement de Marché, Entrée sur le Marché, Stratégie de Croissance, Stratégie Commerciale, Conquérir de Nouveaux Marchés, Bâtir des Structures Commerciales, Vente B2B, Externalisation Commerciale, IA Commerciale, Conseil Stratégique, Expansion, Partenariats."
+      }
+    }
+  },
+  "trustBadges": {
+    "title": "Reconnus & Certifiés",
+    "salesClub": "Sales Presidents Club {year}",
+    "dsgvo": "Conforme RGPD"
   },
   "licenses": {
     "eyebrow": "Open source",

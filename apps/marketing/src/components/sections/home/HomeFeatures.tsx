@@ -5,8 +5,6 @@ import { useEffect, useRef } from "react";
 import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useTranslations } from "next-intl";
 
-import { BrandText } from "../../effects/BrandText";
-
 function CountUp({
   to,
   suffix = "",
@@ -69,7 +67,7 @@ export const HomeFeatures = () => {
   ];
 
   return (
-    <section ref={sectionRef} className="relative overflow-hidden py-24 md:py-32">
+    <section ref={sectionRef} className="relative overflow-hidden py-16 md:py-20">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,oklch(0.64_0.2_14_/_0.2),transparent_40%),radial-gradient(circle_at_85%_0%,oklch(0.76_0.16_68_/_0.12),transparent_45%)]" />
       <div className="absolute inset-0 bg-linear-to-b from-background via-background/95 to-background" />
 
@@ -86,7 +84,7 @@ export const HomeFeatures = () => {
                 {t("eyebrow")}
               </p>
               <h2 className="font-[family-name:var(--font-outfit)] text-4xl leading-[1.05] md:text-6xl lg:text-7xl">
-                {t("title")} <BrandText brand="advantis">{t("titleBrand")}</BrandText>?
+                {t("title")} <span className="whitespace-nowrap">{t("titleBrand")}?</span>
               </h2>
               <p className="max-w-xl text-lg leading-relaxed text-muted-foreground md:text-xl">
                 {t("subtitle")}
@@ -103,7 +101,7 @@ export const HomeFeatures = () => {
                 </div>
                 <div>
                   <p className="text-4xl font-semibold tabular-nums text-primary md:text-5xl">
-                    <CountUp to={500} suffix="+" />
+                    <CountUp to={150} suffix="+" />
                   </p>
                   <p className="mt-1 text-sm uppercase tracking-wider text-muted-foreground">
                     {t("stats.projects")}

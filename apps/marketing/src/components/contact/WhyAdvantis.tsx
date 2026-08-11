@@ -2,8 +2,6 @@ import { useTranslations } from "next-intl";
 
 import { type WhyAdvantisSidebarProps } from "@/types/contact";
 
-import { BrandText } from "../effects/BrandText";
-
 export function WhyAdvantisSidebar({ contactMode }: WhyAdvantisSidebarProps) {
   const t = useTranslations("contact.sidebar");
 
@@ -37,7 +35,7 @@ export function WhyAdvantisSidebar({ contactMode }: WhyAdvantisSidebarProps) {
     <aside className="flex h-full flex-col justify-between bg-muted/20 p-6 md:p-8">
       <div className="space-y-5">
         <h3 className="text-xl font-semibold text-foreground md:text-2xl">
-          {t("title")} <BrandText brand="advantis">Advantis Group</BrandText>?
+          {t("title")} ADVANTIS GROUP?
         </h3>
         <p className="text-base leading-7 text-muted-foreground">{t("description1")}</p>
         <p className="text-base leading-7 text-muted-foreground">{getDescription()}</p>
