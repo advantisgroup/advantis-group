@@ -8,10 +8,7 @@ import { Cake, Mail, MapPin, Phone, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { AmpelPicker } from "@/components/applicants/AmpelBadge";
-import {
-  type ApplicantDetail,
-  ensureRichHtml,
-} from "@/components/applicants/applicant-types";
+import { type ApplicantDetail, ensureRichHtml } from "@/components/applicants/applicant-types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
@@ -44,7 +41,7 @@ function Field({
       </span>
       <InputField
         value={v}
-        onChange={e => setV(e.target.value)}
+        onChange={(e) => setV(e.target.value)}
         onBlur={() => v !== value && onSave(v)}
         className={multiline ? "min-h-16" : undefined}
       />
@@ -69,9 +66,7 @@ export function ApplicantSidebar({
   const t = useTranslations("Applicants");
   const update = useMutation(api.applicants.update);
   const handleError = useErrorHandler();
-  const [notiz, setNotiz] = useState(() =>
-    ensureRichHtml(applicant.notizen ?? "")
-  );
+  const [notiz, setNotiz] = useState(() => ensureRichHtml(applicant.notizen ?? ""));
 
   function patch(fields: Parameters<typeof update>[0]) {
     update(fields).catch(handleError);
@@ -86,7 +81,7 @@ export function ApplicantSidebar({
           </p>
           <AmpelPicker
             value={applicant.rating}
-            onChange={rating => patch({ applicantId: applicant._id, rating })}
+            onChange={(rating) => patch({ applicantId: applicant._id, rating })}
           />
         </CardContent>
       </Card>
@@ -100,32 +95,32 @@ export function ApplicantSidebar({
             label={t("name")}
             icon={User}
             value={applicant.name}
-            onSave={v => patch({ applicantId: applicant._id, name: v })}
+            onSave={(v) => patch({ applicantId: applicant._id, name: v })}
           />
           <Field
             label={t("email")}
             icon={Mail}
             value={applicant.email ?? ""}
-            onSave={v => patch({ applicantId: applicant._id, email: v })}
+            onSave={(v) => patch({ applicantId: applicant._id, email: v })}
           />
           <Field
             label={t("phone")}
             icon={Phone}
             value={applicant.telefon ?? ""}
-            onSave={v => patch({ applicantId: applicant._id, telefon: v })}
+            onSave={(v) => patch({ applicantId: applicant._id, telefon: v })}
           />
           <Field
             label={t("address")}
             icon={MapPin}
             value={applicant.adresse ?? ""}
             multiline
-            onSave={v => patch({ applicantId: applicant._id, adresse: v })}
+            onSave={(v) => patch({ applicantId: applicant._id, adresse: v })}
           />
           <Field
             label={t("birthDate")}
             icon={Cake}
             value={applicant.geburtsdatum ?? ""}
-            onSave={v => patch({ applicantId: applicant._id, geburtsdatum: v })}
+            onSave={(v) => patch({ applicantId: applicant._id, geburtsdatum: v })}
           />
         </CardContent>
       </Card>

@@ -39,14 +39,13 @@ export const EMPLOYEE_STATES = [
 export type EmployeeState = (typeof EMPLOYEE_STATES)[number];
 
 /** Priority rank — lower number = higher priority (overrides the rest). */
-export const STATE_PRIORITY: Record<EmployeeState, number> =
-  EMPLOYEE_STATES.reduce(
-    (acc, state, i) => {
-      acc[state] = i;
-      return acc;
-    },
-    {} as Record<EmployeeState, number>
-  );
+export const STATE_PRIORITY: Record<EmployeeState, number> = EMPLOYEE_STATES.reduce(
+  (acc, state, i) => {
+    acc[state] = i;
+    return acc;
+  },
+  {} as Record<EmployeeState, number>,
+);
 
 /** Genesys routing status values (per /routingstatus). */
 export const GENESYS_ROUTING_STATUSES = [
@@ -58,12 +57,7 @@ export const GENESYS_ROUTING_STATUSES = [
 export type GenesysRoutingStatus = (typeof GENESYS_ROUTING_STATUSES)[number];
 
 /** Genesys system presence values (per /presences/purecloud). */
-export const GENESYS_PRESENCES = [
-  "AVAILABLE",
-  "BUSY",
-  "AWAY",
-  "OFFLINE",
-] as const;
+export const GENESYS_PRESENCES = ["AVAILABLE", "BUSY", "AWAY", "OFFLINE"] as const;
 export type GenesysPresence = (typeof GENESYS_PRESENCES)[number];
 
 /**
@@ -168,9 +162,7 @@ export type ClockodoSignal = z.infer<typeof clockodoSignalSchema>;
 // --- Pure Genesys normalization (shared by the backend cron action and the
 //     optional WebSocket worker, which run in different runtimes) -----------
 
-export function normalizeRoutingStatus(
-  raw: string | undefined
-): GenesysRoutingStatus | undefined {
+export function normalizeRoutingStatus(raw: string | undefined): GenesysRoutingStatus | undefined {
   switch (raw?.toUpperCase()) {
     case "IDLE":
       return "IDLE";
@@ -189,9 +181,7 @@ export function normalizeRoutingStatus(
  * Genesys `systemPresence` is a richer enum than our four-value model; collapse
  * the long tail (Meeting, Training, Break, Meal, …) onto the nearest bucket.
  */
-export function normalizePresence(
-  raw: string | undefined
-): GenesysPresence | undefined {
+export function normalizePresence(raw: string | undefined): GenesysPresence | undefined {
   switch (raw?.toUpperCase()) {
     case "AVAILABLE":
     case "ON QUEUE":
@@ -242,16 +232,12 @@ export interface ParsedGenesysEvent {
  * Map a raw notifications WebSocket message to a normalized event, or null if
  * it's a heartbeat / unrelated topic. Topic id shape: `v2.users.{id}.{kind}`.
  */
-export function parseGenesysNotification(
-  raw: unknown
-): ParsedGenesysEvent | null {
+export function parseGenesysNotification(raw: unknown): ParsedGenesysEvent | null {
   const msg = raw as { topicName?: string; eventBody?: unknown };
   const topic = msg?.topicName;
   if (!topic) return null;
 
-  const m = /^v2\.users\.([^.]+)\.(routingStatus|presence|conversations)$/.exec(
-    topic
-  );
+  const m = /^v2\.users\.([^.]+)\.(routingStatus|presence|conversations)$/.exec(topic);
   if (!m) return null;
   const genesysUserId = m[1]!;
   const kind = m[2]!;
@@ -259,15 +245,13 @@ export function parseGenesysNotification(
   if (!eventBody) return null;
 
   if (kind === "routingStatus") {
-    const status = (eventBody.routingStatus as { status?: string } | undefined)
-      ?.status;
+    const status = (eventBody.routingStatus as { status?: string } | undefined)?.status;
     return { genesysUserId, routingStatus: normalizeRoutingStatus(status) };
   }
 
   if (kind === "presence") {
-    const system = (
-      eventBody.presenceDefinition as { systemPresence?: string } | undefined
-    )?.systemPresence;
+    const system = (eventBody.presenceDefinition as { systemPresence?: string } | undefined)
+      ?.systemPresence;
     return {
       genesysUserId,
       presence: normalizePresence(system),
@@ -277,11 +261,10 @@ export function parseGenesysNotification(
 
   // conversations: flag after-call work when any participant is in wrap-up.
   const participants =
-    (eventBody.participants as
-      | Array<{ wrapupRequired?: boolean; state?: string }>
-      | undefined) ?? [];
+    (eventBody.participants as Array<{ wrapupRequired?: boolean; state?: string }> | undefined) ??
+    [];
   const inWrapUp = participants.some(
-    p => p.state?.toLowerCase() === "wrapup" || p.wrapupRequired === true
+    (p) => p.state?.toLowerCase() === "wrapup" || p.wrapupRequired === true,
   );
   return { genesysUserId, wrapUp: inWrapUp };
 }

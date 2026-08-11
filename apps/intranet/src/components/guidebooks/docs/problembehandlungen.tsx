@@ -44,8 +44,7 @@ const DOC: DocContent = {
           alt: "Windows-Soundeinstellungen, Bereich Ausgabe mit markiertem Lautstärkeregler",
           width: 950,
           height: 390,
-          caption:
-            "Ausgabe-Bereich der Soundeinstellungen — über den Lautstärkeregler testen",
+          caption: "Ausgabe-Bereich der Soundeinstellungen — über den Lautstärkeregler testen",
         },
         {
           kind: "text",
@@ -130,8 +129,7 @@ const DOC: DocContent = {
           alt: "Dialogfenster „Websitedaten auf dem Gerät“ mit Lösch-Symbolen pro Website",
           width: 457,
           height: 347,
-          caption:
-            "Für all diese Websites auf das Lösch-Symbol (Mülleimer) drücken",
+          caption: "Für all diese Websites auf das Lösch-Symbol (Mülleimer) drücken",
         },
         {
           kind: "text",
@@ -163,8 +161,7 @@ const DOC: DocContent = {
           alt: "Dialog „Cookies in use“ in Edge mit den Buttons Block und Remove",
           width: 401,
           height: 553,
-          caption:
-            "Auf die Website klicken und dann unten auf „Entfernen“/„Remove“",
+          caption: "Auf die Website klicken und dann unten auf „Entfernen“/„Remove“",
         },
         {
           kind: "callout",
@@ -258,8 +255,7 @@ const DOC: DocContent = {
               href: "https://help.mypurecloud.com/articles/audio-issues-with-webrtc-phones/",
             },
             {
-              label:
-                "Kunde hört den Agenten nicht oder Agent hört den Kunden nicht",
+              label: "Kunde hört den Agenten nicht oder Agent hört den Kunden nicht",
               href: "https://help.mypurecloud.com/articles/troubleshoot-genesys-cloud-webrtc-phone/",
             },
             {
@@ -271,8 +267,7 @@ const DOC: DocContent = {
               href: "https://help.mypurecloud.com/articles/run-the-built-in-genesys-cloud-webrtc-diagnostics-app/",
             },
             {
-              label:
-                "Hilfe bei Audio-Problemen über Citrix, Remote Desktop oder VDI",
+              label: "Hilfe bei Audio-Problemen über Citrix, Remote Desktop oder VDI",
               href: "https://help.mypurecloud.com/articles/require-webrtc-media-helper/",
             },
             {

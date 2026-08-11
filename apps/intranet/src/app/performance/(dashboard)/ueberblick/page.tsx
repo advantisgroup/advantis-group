@@ -2,12 +2,11 @@
 
 import { useMemo } from "react";
 
-import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
 import { AlertTriangle, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import {
   DeltaBadge,
   DeltaPair,
@@ -16,23 +15,15 @@ import {
   fmtYm,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { TeamTable } from "@/components/performance/TeamTable";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatIsoDate } from "@/lib/format";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 import { cn } from "@/lib/utils";
 
-const LIST_KEYS = [
-  "analysis30",
-  "opp_overdue",
-  "opp30",
-  "leads14",
-  "opps14",
-] as const;
+const LIST_KEYS = ["analysis30", "opp_overdue", "opp30", "leads14", "opps14"] as const;
 
 function PrimaryKpiCard({
   accent,
@@ -62,9 +53,7 @@ function PrimaryKpiCard({
           {label}
         </span>
         <span className="text-3xl font-semibold tabular-nums">{value}</span>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         <DeltaPair dVm={dVm} dVj={dVj} />
       </CardContent>
     </Card>
@@ -102,15 +91,7 @@ function StatCard({
   );
 }
 
-function ListStatCard({
-  href,
-  label,
-  value,
-}: {
-  href: string;
-  label: string;
-  value: string;
-}) {
+function ListStatCard({ href, label, value }: { href: string; label: string; value: string }) {
   return (
     <Link href={href}>
       <Card className="h-full transition-colors hover:bg-muted/50">
@@ -128,20 +109,16 @@ function ListStatCard({
 export default function DashboardOverviewPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
+  const data = useDashboardData();
 
   const fc2 = useMemo(() => {
     const fc = data?.total.fc;
-    if (!fc?.elapsed || data?.total.leadsCreated === undefined)
-      return undefined;
+    if (!fc?.elapsed || data?.total.leadsCreated === undefined) return undefined;
     return Math.round((data.total.leadsCreated / fc.elapsed) * fc.total);
   }, [data]);
   const fc3 = useMemo(() => {
     const fc = data?.total.fc;
-    if (!fc?.elapsed || data?.total.workableCreated === undefined)
-      return undefined;
+    if (!fc?.elapsed || data?.total.workableCreated === undefined) return undefined;
     return Math.round((data.total.workableCreated / fc.elapsed) * fc.total);
   }, [data]);
 
@@ -174,19 +151,14 @@ export default function DashboardOverviewPage() {
     leads14: data.total.leadsNoAction14,
     opps14: data.total.oppsNoAction14,
   };
-  const workdaysPct =
-    fc && fc.total
-      ? Math.min(100, Math.round((fc.elapsed / fc.total) * 100))
-      : 0;
+  const workdaysPct = fc && fc.total ? Math.min(100, Math.round((fc.elapsed / fc.total) * 100)) : 0;
 
   return (
     <div className="space-y-6">
       <p className="text-sm text-muted-foreground">
         {t("dashboardSubtitle", {
           ym: fmtYm(data.ym, locale),
-          date: data.total.reportDate
-            ? formatIsoDate(data.total.reportDate, locale)
-            : "–",
+          date: data.total.reportDate ? formatIsoDate(data.total.reportDate, locale) : "–",
           count: data.snaps.length,
         })}
       </p>
@@ -220,9 +192,7 @@ export default function DashboardOverviewPage() {
           label={t("dashboardMetricWon")}
           value={fmtNum(data.total.wonMonth)}
           subtitle={t("dashboardClosedWonSubtitle", {
-            date: data.total.reportDate
-              ? formatIsoDate(data.total.reportDate, locale)
-              : "–",
+            date: data.total.reportDate ? formatIsoDate(data.total.reportDate, locale) : "–",
           })}
         />
         <PrimaryKpiCard
@@ -246,13 +216,9 @@ export default function DashboardOverviewPage() {
         <Card className="border-none bg-foreground text-background">
           <CardContent className="flex flex-col gap-1.5 p-5">
             <span className="text-xs font-medium uppercase tracking-wide text-background/70">
-              {fc?.isActual
-                ? t("dashboardForecastTitleDone")
-                : t("dashboardForecastTitle")}
+              {fc?.isActual ? t("dashboardForecastTitleDone") : t("dashboardForecastTitle")}
             </span>
-            <span className="text-4xl font-semibold tabular-nums">
-              {fmtNum(fc?.fc1)}
-            </span>
+            <span className="text-4xl font-semibold tabular-nums">{fmtNum(fc?.fc1)}</span>
             {fc && (
               <p className="text-xs text-background/70">
                 {fc.isActual
@@ -279,18 +245,14 @@ export default function DashboardOverviewPage() {
         </Card>
         <Card>
           <CardContent className="flex flex-col gap-2 p-5">
-            <span className="text-xs text-muted-foreground">
-              {t("dashboardWorkdaysTitle")}
-            </span>
+            <span className="text-xs text-muted-foreground">{t("dashboardWorkdaysTitle")}</span>
             <span className="text-2xl font-semibold tabular-nums">
               {fc?.elapsed ?? "–"}{" "}
               <span className="text-base font-normal text-muted-foreground">
                 / {fc?.total ?? "–"}
               </span>
             </span>
-            <p className="text-xs text-muted-foreground">
-              {t("dashboardWorkdaysSubtitle")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("dashboardWorkdaysSubtitle")}</p>
             <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-emerald-500"
@@ -301,7 +263,7 @@ export default function DashboardOverviewPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard
           label={t("dashboardLeadsCreatedMonth")}
           value={fmtNum(data.total.leadsCreated)}
@@ -324,19 +286,10 @@ export default function DashboardOverviewPage() {
           label={t("dashboardLeadsDetailsIdentLabel")}
           value={fmtNum(data.total.leadsDetailsIdent)}
         />
-        <StatCard
-          label={t("dashboardOppsOpenLabel")}
-          value={fmtNum(data.total.oppsOpen)}
-        />
-        <StatCard
-          label={t("dashboardOppsClose7dLabel")}
-          value={fmtNum(data.total.oppsClose7d)}
-        />
-        <StatCard
-          label={t("dashboardOppsPendingLabel")}
-          value={fmtNum(data.total.oppsPending)}
-        />
-        {LIST_KEYS.map(key => (
+        <StatCard label={t("dashboardOppsOpenLabel")} value={fmtNum(data.total.oppsOpen)} />
+        <StatCard label={t("dashboardOppsClose7dLabel")} value={fmtNum(data.total.oppsClose7d)} />
+        <StatCard label={t("dashboardOppsPendingLabel")} value={fmtNum(data.total.oppsPending)} />
+        {LIST_KEYS.map((key) => (
           <ListStatCard
             key={key}
             href={`/performance/liste/${key}`}

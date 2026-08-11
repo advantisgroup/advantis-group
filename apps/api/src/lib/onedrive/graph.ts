@@ -28,10 +28,7 @@ const authority = () => optionalEnv("ONEDRIVE_AUTHORITY") ?? "consumers";
  * show a friendly "not set up yet" state instead of failing every call.
  */
 export async function isConfigured(): Promise<boolean> {
-  if (
-    !optionalEnv("MS_GRAPH_CLIENT_ID") ||
-    !optionalEnv("MS_GRAPH_CLIENT_SECRET")
-  ) {
+  if (!optionalEnv("MS_GRAPH_CLIENT_ID") || !optionalEnv("MS_GRAPH_CLIENT_SECRET")) {
     return false;
   }
   if (optionalEnv("ONEDRIVE_REFRESH_TOKEN")) return true;
@@ -70,7 +67,7 @@ async function loadRefreshToken(): Promise<string> {
   const seed = optionalEnv("ONEDRIVE_REFRESH_TOKEN");
   if (!seed) {
     throw Errors.internal(
-      "OneDrive is not authenticated — run the auth bootstrap to obtain a refresh token"
+      "OneDrive is not authenticated — run the auth bootstrap to obtain a refresh token",
     );
   }
   currentRefresh = seed;
@@ -100,18 +97,15 @@ async function getToken(force = false): Promise<string> {
     refresh_token: refreshToken,
     scope: GRAPH_SCOPE,
   });
-  const res = await fetch(
-    `https://login.microsoftonline.com/${authority()}/oauth2/v2.0/token`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body,
-    }
-  );
+  const res = await fetch(`https://login.microsoftonline.com/${authority()}/oauth2/v2.0/token`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body,
+  });
   if (!res.ok) {
     console.error(`[onedrive] token refresh failed: ${res.status}`);
     throw Errors.upstream(
-      "Could not authenticate with OneDrive — the refresh token may have expired; re-run the auth bootstrap"
+      "Could not authenticate with OneDrive — the refresh token may have expired; re-run the auth bootstrap",
     );
   }
   const json = (await res.json()) as {
@@ -156,13 +150,10 @@ async function mapStatus(res: Response, context: string): Promise<never> {
     throw Errors.forbidden("OneDrive denied the request");
   }
   if (status === 404) throw Errors.notFound("File or folder not found");
-  if (status === 409)
-    throw Errors.badRequest("A conflicting item already exists");
+  if (status === 409) throw Errors.badRequest("A conflicting item already exists");
   if (status === 423) throw Errors.badRequest("The item is locked");
-  if (status === 429)
-    throw Errors.rateLimited("OneDrive is throttling requests");
-  if (status >= 500)
-    throw Errors.upstream("OneDrive is temporarily unavailable");
+  if (status === 429) throw Errors.rateLimited("OneDrive is throttling requests");
+  if (status >= 500) throw Errors.upstream("OneDrive is temporarily unavailable");
   throw Errors.upstream("OneDrive request failed");
 }
 
@@ -171,11 +162,7 @@ interface FetchOpts {
   raw?: boolean;
 }
 
-async function graphRequest(
-  path: string,
-  init: RequestInit,
-  context: string
-): Promise<Response> {
+async function graphRequest(path: string, init: RequestInit, context: string): Promise<Response> {
   const url = path.startsWith("http") ? path : `${GRAPH_BASE}${path}`;
   let refreshed = false;
   for (let attempt = 0; ; attempt++) {
@@ -201,7 +188,7 @@ async function graphRequest(
         Number.isFinite(retryAfter) && retryAfter > 0
           ? retryAfter * 1000
           : Math.min(2 ** attempt * 1000, 8000);
-      await new Promise(r => setTimeout(r, waitMs));
+      await new Promise((r) => setTimeout(r, waitMs));
       continue;
     }
     if (!res.ok) await mapStatus(res, context);
@@ -213,7 +200,7 @@ async function graphFetch<T>(
   path: string,
   init: RequestInit = {},
   context = "request",
-  opts: FetchOpts = {}
+  opts: FetchOpts = {},
 ): Promise<T> {
   const res = await graphRequest(path, init, context);
   if (opts.raw) return res as unknown as T;
@@ -231,7 +218,7 @@ function driveBase(): string {
 function encodePath(fullPath: string): string {
   return fullPath
     .split("/")
-    .map(seg => encodeURIComponent(seg))
+    .map((seg) => encodeURIComponent(seg))
     .join("/");
 }
 
@@ -265,8 +252,7 @@ export interface GraphItem {
   webUrl?: string;
 }
 
-const SELECT =
-  "$select=id,name,size,file,folder,lastModifiedDateTime,parentReference,webUrl";
+const SELECT = "$select=id,name,size,file,folder,lastModifiedDateTime,parentReference,webUrl";
 
 /** AG-relative path of an item, or null when it lives outside the AG root. */
 export function relPathOf(item: GraphItem): string | null {
@@ -291,11 +277,7 @@ export async function getItemById(id: string): Promise<GraphItem> {
 }
 
 export async function getItemByPath(relPath: string): Promise<GraphItem> {
-  return graphFetch<GraphItem>(
-    pathUrl(relPath, `?${SELECT}`),
-    {},
-    "getItemByPath"
-  );
+  return graphFetch<GraphItem>(pathUrl(relPath, `?${SELECT}`), {}, "getItemByPath");
 }
 
 interface ChildrenPage {
@@ -325,12 +307,9 @@ export async function getQuota(): Promise<DriveQuota> {
 }
 
 export async function downloadById(id: string): Promise<Response> {
-  return graphFetch<Response>(
-    itemUrl(id, "/content"),
-    { redirect: "follow" },
-    "download",
-    { raw: true }
-  );
+  return graphFetch<Response>(itemUrl(id, "/content"), { redirect: "follow" }, "download", {
+    raw: true,
+  });
 }
 
 export async function getThumbnailUrl(id: string): Promise<string | undefined> {
@@ -353,7 +332,7 @@ export async function getPreviewUrl(id: string): Promise<string | undefined> {
       headers: { "content-type": "application/json" },
       body: "{}",
     },
-    "preview"
+    "preview",
   );
   return res.getUrl;
 }
@@ -364,30 +343,27 @@ export async function search(query: string): Promise<GraphItem[]> {
   const res = await graphFetch<ChildrenPage>(
     `${driveBase()}/root/search(q='${q}')?${SELECT}&$top=100`,
     {},
-    "search"
+    "search",
   );
   // The search index doesn't reliably return a usable parentReference.path on
   // the hit itself — re-fetch by id for anything that fails to resolve, since
   // regular item lookups (already used by browsing) always include it.
   const resolved = await Promise.all(
-    res.value.map(async hit => {
+    res.value.map(async (hit) => {
       if (relPathOf(hit) !== null) return hit;
       try {
         return await getItemById(hit.id);
       } catch {
         return hit;
       }
-    })
+    }),
   );
-  return resolved.filter(item => relPathOf(item) !== null);
+  return resolved.filter((item) => relPathOf(item) !== null);
 }
 
 // --- Write operations -------------------------------------------------------
 
-export async function createFolder(
-  parentId: string,
-  name: string
-): Promise<GraphItem> {
+export async function createFolder(parentId: string, name: string): Promise<GraphItem> {
   return graphFetch<GraphItem>(
     itemUrl(parentId, "/children"),
     {
@@ -399,13 +375,13 @@ export async function createFolder(
         "@microsoft.graph.conflictBehavior": "fail",
       }),
     },
-    "createFolder"
+    "createFolder",
   );
 }
 
 export async function renameOrMove(
   id: string,
-  patch: { name?: string; parentId?: string }
+  patch: { name?: string; parentId?: string },
 ): Promise<GraphItem> {
   const body: Record<string, unknown> = {};
   if (patch.name) body.name = patch.name;
@@ -417,7 +393,7 @@ export async function renameOrMove(
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     },
-    "renameOrMove"
+    "renameOrMove",
   );
 }
 
@@ -434,7 +410,7 @@ export async function uploadFile(
   parentId: string,
   name: string,
   bytes: Uint8Array,
-  contentType: string
+  contentType: string,
 ): Promise<GraphItem> {
   if (bytes.byteLength <= SMALL_UPLOAD_LIMIT) {
     return graphFetch<GraphItem>(
@@ -446,17 +422,13 @@ export async function uploadFile(
         // Bun (server) and DOM (eden type-import) lib typings.
         body: bytes.slice().buffer as ArrayBuffer,
       },
-      "uploadSmall"
+      "uploadSmall",
     );
   }
   return uploadLarge(parentId, name, bytes);
 }
 
-async function uploadLarge(
-  parentId: string,
-  name: string,
-  bytes: Uint8Array
-): Promise<GraphItem> {
+async function uploadLarge(parentId: string, name: string, bytes: Uint8Array): Promise<GraphItem> {
   const session = await graphFetch<{ uploadUrl: string }>(
     itemUrl(parentId, `:/${encodeURIComponent(name)}:/createUploadSession`),
     {
@@ -466,7 +438,7 @@ async function uploadLarge(
         item: { "@microsoft.graph.conflictBehavior": "fail" },
       }),
     },
-    "createUploadSession"
+    "createUploadSession",
   );
   const total = bytes.byteLength;
   let offset = 0;
@@ -513,19 +485,16 @@ export async function listVersions(id: string): Promise<GraphVersion[]> {
   const res = await graphFetch<{ value: GraphVersion[] }>(
     itemUrl(id, "/versions"),
     {},
-    "listVersions"
+    "listVersions",
   );
   return res.value;
 }
 
-export async function restoreVersion(
-  id: string,
-  versionId: string
-): Promise<void> {
+export async function restoreVersion(id: string, versionId: string): Promise<void> {
   await graphFetch<void>(
     itemUrl(id, `/versions/${encodeURIComponent(versionId)}/restoreVersion`),
     { method: "POST" },
-    "restoreVersion"
+    "restoreVersion",
   );
 }
 
@@ -546,11 +515,7 @@ export interface GraphPermission {
 function permissionGrantedTo(perm: GraphPermission, email: string): boolean {
   const target = email.toLowerCase();
   if (perm.grantedToV2?.user?.email?.toLowerCase() === target) return true;
-  return (
-    perm.grantedToIdentitiesV2?.some(
-      g => g.user?.email?.toLowerCase() === target
-    ) ?? false
-  );
+  return perm.grantedToIdentitiesV2?.some((g) => g.user?.email?.toLowerCase() === target) ?? false;
 }
 
 /** Any existing permission this item already grants `email`, regardless of
@@ -559,14 +524,14 @@ function permissionGrantedTo(perm: GraphPermission, email: string): boolean {
  * duplicates whatever access someone already has. */
 export async function findPermissionByEmail(
   itemId: string,
-  email: string
+  email: string,
 ): Promise<GraphPermission | null> {
   const list = await graphFetch<{ value: GraphPermission[] }>(
     itemUrl(itemId, "/permissions"),
     {},
-    "listPermissions"
+    "listPermissions",
   );
-  return list.value.find(p => permissionGrantedTo(p, email)) ?? null;
+  return list.value.find((p) => permissionGrantedTo(p, email)) ?? null;
 }
 
 /**
@@ -583,7 +548,7 @@ export async function findPermissionByEmail(
 export async function inviteToItem(
   itemId: string,
   email: string,
-  role: "read" | "write"
+  role: "read" | "write",
 ): Promise<{ permissionId: string }> {
   const res = await graphFetch<{ value: InvitePermission[] }>(
     itemUrl(itemId, "/invite"),
@@ -597,7 +562,7 @@ export async function inviteToItem(
         roles: [role],
       }),
     },
-    "invite"
+    "invite",
   );
   // Multiple recipients can partially fail with a 207 Multi-Status, which
   // `fetch`'s `res.ok` still treats as success (200-299) — so a granted
@@ -613,31 +578,23 @@ export async function inviteToItem(
   if (!match?.id) {
     console.error(
       `[onedrive] invite to ${email} did not resolve to a permission id:`,
-      JSON.stringify(res)
+      JSON.stringify(res),
     );
-    throw Errors.upstream(
-      "OneDrive did not grant a usable permission for that person"
-    );
+    throw Errors.upstream("OneDrive did not grant a usable permission for that person");
   }
   return { permissionId: match.id };
 }
 
 /** Revoke a previously granted direct share. */
-export async function removePermission(
-  itemId: string,
-  permissionId: string
-): Promise<void> {
+export async function removePermission(itemId: string, permissionId: string): Promise<void> {
   await graphFetch<void>(
     itemUrl(itemId, `/permissions/${encodeURIComponent(permissionId)}`),
     { method: "DELETE" },
-    "removePermission"
+    "removePermission",
   );
 }
 
-export async function createShareLink(
-  id: string,
-  expirationDateTime?: string
-): Promise<string> {
+export async function createShareLink(id: string, expirationDateTime?: string): Promise<string> {
   const res = await graphFetch<{ link?: { webUrl?: string } }>(
     itemUrl(id, "/createLink"),
     {
@@ -649,7 +606,7 @@ export async function createShareLink(
         ...(expirationDateTime ? { expirationDateTime } : {}),
       }),
     },
-    "createLink"
+    "createLink",
   );
   const url = res.link?.webUrl;
   if (!url) throw Errors.upstream("OneDrive did not return a share link");
@@ -667,7 +624,7 @@ export interface GraphSubscription {
 export async function createSubscription(
   notificationUrl: string,
   clientState: string,
-  expirationDateTime: string
+  expirationDateTime: string,
 ): Promise<GraphSubscription> {
   return graphFetch<GraphSubscription>(
     "/subscriptions",
@@ -682,13 +639,13 @@ export async function createSubscription(
         expirationDateTime,
       }),
     },
-    "createSubscription"
+    "createSubscription",
   );
 }
 
 export async function renewSubscription(
   id: string,
-  expirationDateTime: string
+  expirationDateTime: string,
 ): Promise<GraphSubscription> {
   return graphFetch<GraphSubscription>(
     `/subscriptions/${encodeURIComponent(id)}`,
@@ -697,7 +654,7 @@ export async function renewSubscription(
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ expirationDateTime }),
     },
-    "renewSubscription"
+    "renewSubscription",
   );
 }
 

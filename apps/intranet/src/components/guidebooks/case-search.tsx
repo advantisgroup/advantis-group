@@ -2,24 +2,16 @@
 
 import { type ReactNode, useMemo, useState } from "react";
 
-import {
-  Check,
-  List,
-  Map,
-  MessageSquare,
-  RotateCcw,
-  Search,
-  X,
-} from "lucide-react";
+import { Check, List, Map, MessageSquare, RotateCcw, Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { Link } from "@/components/Link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import { SOPPanel } from "./sop-panel";
 import { StationsFinder } from "./stations-finder";
-import { WikiChat } from "./wiki-chat";
 
 interface CaseRow {
   recordType: string;
@@ -1375,8 +1367,7 @@ const CASES: CaseRow[] = [
     subcategory: "Incoming Post",
     subcategoryDetail: "",
     processor: "HQ Logistics queue",
-    description:
-      "Daily incoming post and parcels that need to be put into the correct inboxes",
+    description: "Daily incoming post and parcels that need to be put into the correct inboxes",
   },
   {
     recordType: "Logistics",
@@ -1459,8 +1450,7 @@ const CASES: CaseRow[] = [
     subcategory: "Other",
     subcategoryDetail: "",
     processor: "HQ Logistics queue",
-    description:
-      "Anything regarding the covering and franking process of invoices",
+    description: "Anything regarding the covering and franking process of invoices",
   },
   {
     recordType: "Logistics",
@@ -1516,8 +1506,7 @@ const CASES: CaseRow[] = [
     subcategory: "Other",
     subcategoryDetail: "",
     processor: "HQ Logistics queue",
-    description:
-      "Anything else not being mentioned before that logistics is responsible for",
+    description: "Anything else not being mentioned before that logistics is responsible for",
   },
   {
     recordType: "Logistics",
@@ -1553,8 +1542,7 @@ const CASES: CaseRow[] = [
     subcategory: "See case description",
     subcategoryDetail: "",
     processor: "",
-    description:
-      "1st advice to the customer, with information to ServiceCenter or Client Tool",
+    description: "1st advice to the customer, with information to ServiceCenter or Client Tool",
   },
   {
     recordType: "Customer Service",
@@ -1596,8 +1584,7 @@ const CASES: CaseRow[] = [
     subcategory: "Conditions deposited too late",
     subcategoryDetail: "",
     processor: "",
-    description:
-      "Customer complains that discounts were missing from the invoice",
+    description: "Customer complains that discounts were missing from the invoice",
   },
   {
     recordType: "Customer Service",
@@ -1613,8 +1600,7 @@ const CASES: CaseRow[] = [
     subcategory: "Conditions not deposited",
     subcategoryDetail: "",
     processor: "",
-    description:
-      "Customer complains that discounts were missing from the invoice",
+    description: "Customer complains that discounts were missing from the invoice",
   },
   {
     recordType: "Customer Service",
@@ -1622,8 +1608,7 @@ const CASES: CaseRow[] = [
     subcategory: "Bonus payment",
     subcategoryDetail: "",
     processor: "",
-    description:
-      "Questions to Bonus payment, Create a new bonus/kickback for customers",
+    description: "Questions to Bonus payment, Create a new bonus/kickback for customers",
   },
   {
     recordType: "Customer Service",
@@ -1687,8 +1672,7 @@ const CASES: CaseRow[] = [
     subcategory: "Legal name/legal form change",
     subcategoryDetail: "",
     processor: "",
-    description:
-      "Customer has changed its name and either has a new company name or legal form",
+    description: "Customer has changed its name and either has a new company name or legal form",
   },
   {
     recordType: "Customer Service",
@@ -1720,8 +1704,7 @@ const CASES: CaseRow[] = [
     subcategory: "Addition/ Change of contact person",
     subcategoryDetail: "",
     processor: "",
-    description:
-      "Customer tells us a new contact person or our contact person changed",
+    description: "Customer tells us a new contact person or our contact person changed",
   },
   {
     recordType: "Customer Service",
@@ -1761,8 +1744,7 @@ const CASES: CaseRow[] = [
     subcategory: "Payment term / Invoice frequency",
     subcategoryDetail: "Change currency",
     processor: "",
-    description:
-      "In some cases we have to change the currency or create a bicurrency invoice",
+    description: "In some cases we have to change the currency or create a bicurrency invoice",
   },
   {
     recordType: "Customer Service",
@@ -1917,8 +1899,7 @@ const CASES: CaseRow[] = [
     subcategory: "Lost mail",
     subcategoryDetail: "",
     processor: "",
-    description:
-      "Documents from the customer, which were send to UTA are lost in the post",
+    description: "Documents from the customer, which were send to UTA are lost in the post",
   },
   {
     recordType: "Customer Service",
@@ -1977,8 +1958,7 @@ const CASES: CaseRow[] = [
     subcategory: "",
     subcategoryDetail: "",
     processor: "HQ pricing queue",
-    description:
-      "Mass imports (creation or deletion) to be imported from Pricing in Notes",
+    description: "Mass imports (creation or deletion) to be imported from Pricing in Notes",
   },
   {
     recordType: "Pricing",
@@ -1994,8 +1974,7 @@ const CASES: CaseRow[] = [
     subcategory: "",
     subcategoryDetail: "",
     processor: "HQ pricing queue",
-    description:
-      "Customer calculations, offers and tenders, special condition requests",
+    description: "Customer calculations, offers and tenders, special condition requests",
   },
   {
     recordType: "Pricing",
@@ -2145,8 +2124,7 @@ const CASES: CaseRow[] = [
     subcategory: "Securities",
     subcategoryDetail: "Request of new Security",
     processor: "defined by BTRIDA/profit centre",
-    description:
-      "Credit asks for a new security or for an increase of existing security",
+    description: "Credit asks for a new security or for an increase of existing security",
   },
   {
     recordType: "Finance",
@@ -2186,8 +2164,7 @@ const CASES: CaseRow[] = [
     subcategory: "Payment disruptions",
     subcategoryDetail: "Direct debit return / Payment request",
     processor: "defined by BTRIDA/profit centre",
-    description:
-      "Payment request to customer incl. sales because of direct debit return",
+    description: "Payment request to customer incl. sales because of direct debit return",
   },
   {
     recordType: "Finance",
@@ -2195,8 +2172,7 @@ const CASES: CaseRow[] = [
     subcategory: "Payment disruptions",
     subcategoryDetail: "Self-Payer / Payment request",
     processor: "defined by BTRIDA/profit centre",
-    description:
-      "Payment request to customer incl. sales because of not paid invoice (self-payer)",
+    description: "Payment request to customer incl. sales because of not paid invoice (self-payer)",
   },
   {
     recordType: "Finance",
@@ -2483,25 +2459,25 @@ function CaseSearchTab() {
   const [checked, setChecked] = useState<Record<number, boolean>>({});
 
   const recordTypes = useMemo(
-    () => ["All", ...Array.from(new Set(CASES.map(c => c.recordType)))],
-    []
+    () => ["All", ...Array.from(new Set(CASES.map((c) => c.recordType)))],
+    [],
   );
 
   const q = query.trim();
 
   const results = useMemo(() => {
     if (!q && selectedType === "All") return [];
-    return CASES.filter(c => {
+    return CASES.filter((c) => {
       if (selectedType !== "All" && c.recordType !== selectedType) return false;
       if (!q) return true;
       return scoreMatch(c, q) > 0;
     })
-      .map(c => ({ ...c, _score: q ? scoreMatch(c, q) : 0 }))
+      .map((c) => ({ ...c, _score: q ? scoreMatch(c, q) : 0 }))
       .sort((a, b) => b._score - a._score)
       .slice(0, MAX_RESULTS);
   }, [q, selectedType]);
 
-  const doneCount = CHECKLIST.filter(i => checked[i.id]).length;
+  const doneCount = CHECKLIST.filter((i) => checked[i.id]).length;
   const allDone = doneCount === CHECKLIST.length;
 
   return (
@@ -2511,15 +2487,11 @@ function CaseSearchTab() {
         <CardContent className="space-y-3 p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold">
-                {t("mandatoryTitle")}
-              </span>
+              <span className="text-sm font-semibold">{t("mandatoryTitle")}</span>
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums",
-                  allDone
-                    ? "bg-success/15 text-success"
-                    : "bg-muted text-muted-foreground"
+                  allDone ? "bg-success/15 text-success" : "bg-muted text-muted-foreground",
                 )}
               >
                 {doneCount}/{CHECKLIST.length}
@@ -2538,38 +2510,32 @@ function CaseSearchTab() {
           </div>
           <p className="text-xs text-muted-foreground">{t("mandatoryHint")}</p>
           <div className="flex flex-wrap gap-2">
-            {CHECKLIST.map(item => {
+            {CHECKLIST.map((item) => {
               const on = !!checked[item.id];
               return (
                 <button
                   key={item.id}
                   type="button"
                   aria-pressed={on}
-                  onClick={() =>
-                    setChecked(p => ({ ...p, [item.id]: !p[item.id] }))
-                  }
+                  onClick={() => setChecked((p) => ({ ...p, [item.id]: !p[item.id] }))}
                   className={cn(
                     "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-sm transition-colors",
                     on
                       ? "border-success/40 bg-success/10 text-foreground"
-                      : "border-border bg-card hover:bg-accent"
+                      : "border-border bg-card hover:bg-accent",
                   )}
                 >
                   <span
                     className={cn(
                       "flex size-4 shrink-0 items-center justify-center rounded-full text-[9px] font-bold",
-                      on
-                        ? "bg-success text-success-foreground"
-                        : "bg-muted text-muted-foreground"
+                      on ? "bg-success text-success-foreground" : "bg-muted text-muted-foreground",
                     )}
                   >
                     {on ? <Check className="size-3" /> : item.id}
                   </span>
                   <span className="font-medium">{item.label}</span>
                   {item.hint && (
-                    <span className="text-xs italic text-muted-foreground">
-                      ({item.hint})
-                    </span>
+                    <span className="text-xs italic text-muted-foreground">({item.hint})</span>
                   )}
                 </button>
               );
@@ -2584,7 +2550,7 @@ function CaseSearchTab() {
         <Input
           autoFocus
           value={query}
-          onChange={e => setQuery(e.target.value)}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
           className="h-11 pl-10 pr-10 text-base"
         />
@@ -2602,7 +2568,7 @@ function CaseSearchTab() {
 
       {/* Filter chips */}
       <div className="flex flex-wrap gap-2">
-        {recordTypes.map(rt => {
+        {recordTypes.map((rt) => {
           const active = selectedType === rt;
           const style = rt === "All" ? null : styleFor(rt);
           return (
@@ -2615,13 +2581,11 @@ function CaseSearchTab() {
                 "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
                 active
                   ? "border-primary/40 bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               <span className="flex items-center gap-1.5">
-                {style && (
-                  <span className={cn("size-2 rounded-full", style.accent)} />
-                )}
+                {style && <span className={cn("size-2 rounded-full", style.accent)} />}
                 {rt === "All" ? t("allTypes") : rt}
               </span>
             </button>
@@ -2642,18 +2606,14 @@ function CaseSearchTab() {
         </div>
       ) : results.length === 0 ? (
         <div className="flex flex-col items-center gap-2 py-16 text-center">
-          <p className="text-sm font-medium">
-            {t("noResultsTitle", { query: q })}
-          </p>
+          <p className="text-sm font-medium">{t("noResultsTitle", { query: q })}</p>
           <p className="text-xs text-muted-foreground">{t("noResultsHint")}</p>
         </div>
       ) : (
         <>
           <p className="text-sm text-muted-foreground">
             {t("resultsCount", { count: results.length })}
-            {results.length === MAX_RESULTS
-              ? ` ${t("topN", { n: MAX_RESULTS })}`
-              : ""}
+            {results.length === MAX_RESULTS ? ` ${t("topN", { n: MAX_RESULTS })}` : ""}
           </p>
           <div className="space-y-2.5">
             {results.map((c, i) => {
@@ -2663,34 +2623,21 @@ function CaseSearchTab() {
                   key={`${c.recordType}-${c.category}-${c.subcategory}-${c.subcategoryDetail}-${i}`}
                   className="relative overflow-hidden rounded-xl border border-border/70 bg-card p-4 pl-5 shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]"
                 >
-                  <span
-                    className={cn(
-                      "absolute inset-y-0 left-0 w-1",
-                      style.accent
-                    )}
-                  />
+                  <span className={cn("absolute inset-y-0 left-0 w-1", style.accent)} />
                   <div className="mb-3">
                     <span
                       className={cn(
                         "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide",
-                        style.chip
+                        style.chip,
                       )}
                     >
                       {c.recordType}
                     </span>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Field
-                      label={t("fieldCategory")}
-                      value={c.category}
-                      query={q}
-                    />
+                    <Field label={t("fieldCategory")} value={c.category} query={q} />
                     {c.subcategory && (
-                      <Field
-                        label={t("fieldSubcategory")}
-                        value={c.subcategory}
-                        query={q}
-                      />
+                      <Field label={t("fieldSubcategory")} value={c.subcategory} query={q} />
                     )}
                     {c.subcategoryDetail && c.subcategoryDetail !== "None" && (
                       <Field
@@ -2700,11 +2647,7 @@ function CaseSearchTab() {
                       />
                     )}
                     {c.processor && (
-                      <Field
-                        label={t("fieldProcessor")}
-                        value={c.processor}
-                        query={q}
-                      />
+                      <Field label={t("fieldProcessor")} value={c.processor} query={q} />
                     )}
                   </div>
                   {c.description && (
@@ -2725,23 +2668,13 @@ function CaseSearchTab() {
   );
 }
 
-function Field({
-  label,
-  value,
-  query,
-}: {
-  label: string;
-  value: string;
-  query: string;
-}) {
+function Field({ label, value, query }: { label: string; value: string; query: string }) {
   return (
     <div>
       <div className="mb-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
         {label}
       </div>
-      <div className="text-sm font-medium leading-snug">
-        {highlight(value, query)}
-      </div>
+      <div className="text-sm font-medium leading-snug">{highlight(value, query)}</div>
     </div>
   );
 }
@@ -2760,13 +2693,14 @@ const TABS: { id: Tab; label: string; icon: ReactNode }[] = [
 ];
 
 export function CaseSearchGuidebook() {
+  const t = useTranslations("Guidebooks");
   const [activeTab, setActiveTab] = useState<Tab>("sop");
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       {/* Tab bar */}
       <div className="flex gap-1 rounded-xl border border-border bg-muted/40 p-1">
-        {TABS.map(tab => (
+        {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -2774,7 +2708,7 @@ export function CaseSearchGuidebook() {
               "flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
               activeTab === tab.id
                 ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             {tab.icon}
@@ -2788,8 +2722,18 @@ export function CaseSearchGuidebook() {
         {activeTab === "sop" && <SOPPanel />}
         {activeTab === "search" && <CaseSearchTab />}
         {activeTab === "wiki" && (
-          <div className="h-[600px]">
-            <WikiChat />
+          <div className="flex h-[calc(100dvh-16rem)] min-h-[420px] flex-col items-center justify-center gap-4 rounded-xl border border-border bg-muted/20 p-8 text-center">
+            <MessageSquare className="h-10 w-10 text-muted-foreground" />
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{t("wikiChat.title")}</p>
+              <p className="max-w-sm text-sm text-muted-foreground">{t("wikiChat.openFullHint")}</p>
+            </div>
+            <Link
+              href="/wiki-chat"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              {t("wikiChat.openFull")}
+            </Link>
           </div>
         )}
         {activeTab === "stations" && <StationsFinder />}

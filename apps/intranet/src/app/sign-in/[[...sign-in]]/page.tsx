@@ -6,11 +6,11 @@ export default function SignInPage() {
   return (
     <AuthShell>
       <SignIn
+        signUpUrl="/sign-up"
         appearance={{
           elements: {
             rootBox: "w-full flex justify-center",
-            cardBox:
-              "shadow-xl shadow-black/5 border border-border/70 rounded-2xl",
+            cardBox: "shadow-xl shadow-black/5 border border-border/70 rounded-2xl",
           },
         }}
       />

@@ -8,11 +8,7 @@ import { errorMessage } from "./errors";
 import { useI18n } from "./i18n";
 import { useToast } from "./useToast";
 
-import type {
-  FunctionReference,
-  FunctionArgs,
-  FunctionReturnType,
-} from "convex/server";
+import type { FunctionReference, FunctionArgs, FunctionReturnType } from "convex/server";
 
 /**
  * A Convex mutation wrapped so that:
@@ -24,9 +20,9 @@ import type {
  * don't have to wrap every call in try/catch and we never emit an unhandled
  * rejection. Callers that need to branch on success can check the return value.
  */
-export function useMutationWithToast<
-  Mutation extends FunctionReference<"mutation">,
->(mutationRef: Mutation) {
+export function useMutationWithToast<Mutation extends FunctionReference<"mutation">>(
+  mutationRef: Mutation,
+) {
   const mutate = useMutation(mutationRef);
   const toast = useToast();
   const { t } = useI18n();
@@ -34,7 +30,7 @@ export function useMutationWithToast<
   return useCallback(
     async (
       args: FunctionArgs<Mutation>,
-      opts?: { success?: string }
+      opts?: { success?: string },
     ): Promise<FunctionReturnType<Mutation> | undefined> => {
       try {
         const result = (await mutate(args)) as FunctionReturnType<Mutation>;
@@ -48,6 +44,6 @@ export function useMutationWithToast<
         return undefined;
       }
     },
-    [mutate, toast, t]
+    [mutate, toast, t],
   );
 }

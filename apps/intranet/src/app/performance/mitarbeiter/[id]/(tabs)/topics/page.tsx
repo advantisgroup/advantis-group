@@ -11,17 +11,13 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
 import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { TopicDialog } from "@/components/performance/TopicDialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -41,21 +37,16 @@ export default function EmployeeTopicsPage() {
   const handleError = useErrorHandler();
 
   const session = useQuery(api.performanceAuth.validateSession, { token });
-  const isAdmin = session?.valid && session.role === "admin";
+  const isAdmin = session?.valid && session.permissions.includes("manage_roster");
 
-  const data = useQuery(api.performanceQueries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
+  const data = useEmployeeDetailData();
   const setTopicStatus = useMutation(api.performanceTopics.setTopicStatus);
   const deleteTopic = useMutation(api.performanceTopics.deleteTopic);
 
   const [topicDialog, setTopicDialog] = useState<
     { open: true; topic: Doc<"performanceTopics"> | null } | { open: false }
   >({ open: false });
-  const [deleteTarget, setDeleteTarget] =
-    useState<Doc<"performanceTopics"> | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Doc<"performanceTopics"> | null>(null);
 
   if (!data) return <PerformanceContentSkeleton />;
 
@@ -65,10 +56,7 @@ export default function EmployeeTopicsPage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">{t("topicsTitle")}</CardTitle>
           {isAdmin && (
-            <Button
-              size="sm"
-              onClick={() => setTopicDialog({ open: true, topic: null })}
-            >
+            <Button size="sm" onClick={() => setTopicDialog({ open: true, topic: null })}>
               <Plus className="mr-2 h-4 w-4" />
               {t("topicNew")}
             </Button>
@@ -78,28 +66,22 @@ export default function EmployeeTopicsPage() {
           {data.topics.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("topicEmpty")}</p>
           ) : (
-            data.topics.map(topic => (
+            data.topics.map((topic) => (
               <div
                 key={topic._id}
                 className="flex items-start justify-between gap-3 rounded-md border border-border/70 p-3"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{topic.topic}</p>
-                  {topic.todo && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {topic.todo}
-                    </p>
-                  )}
+                  {topic.todo && <p className="mt-1 text-xs text-muted-foreground">{topic.todo}</p>}
                   {topic.endDate && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {topic.endDate}
-                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">{topic.endDate}</p>
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <Select
                     value={topic.status}
-                    onValueChange={v =>
+                    onValueChange={(v) =>
                       void setTopicStatus({
                         token,
                         employeeId,
@@ -114,15 +96,9 @@ export default function EmployeeTopicsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="offen">
-                        {t("topicStatusOpen")}
-                      </SelectItem>
-                      <SelectItem value="erreicht">
-                        {t("topicStatusReached")}
-                      </SelectItem>
-                      <SelectItem value="nicht_erreicht">
-                        {t("topicStatusMissed")}
-                      </SelectItem>
+                      <SelectItem value="offen">{t("topicStatusOpen")}</SelectItem>
+                      <SelectItem value="erreicht">{t("topicStatusReached")}</SelectItem>
+                      <SelectItem value="nicht_erreicht">{t("topicStatusMissed")}</SelectItem>
                     </SelectContent>
                   </Select>
                   {isAdmin && (
@@ -155,9 +131,7 @@ export default function EmployeeTopicsPage() {
       {token && (
         <TopicDialog
           open={topicDialog.open}
-          onOpenChange={open =>
-            setTopicDialog(open ? topicDialog : { open: false })
-          }
+          onOpenChange={(open) => setTopicDialog(open ? topicDialog : { open: false })}
           topic={topicDialog.open ? topicDialog.topic : null}
           employeeId={employeeId}
           ym={ym ?? data.ym}
@@ -167,15 +141,13 @@ export default function EmployeeTopicsPage() {
 
       <Dialog
         open={deleteTarget !== null}
-        onOpenChange={o => {
+        onOpenChange={(o) => {
           if (!o) setDeleteTarget(null);
         }}
       >
         <DialogContent className="max-w-md gap-0 p-0">
           <div className="px-6 pb-5 pt-6 pr-12">
-            <DialogTitle className="leading-snug">
-              {t("topicDeleteTitle")}
-            </DialogTitle>
+            <DialogTitle className="leading-snug">{t("topicDeleteTitle")}</DialogTitle>
           </div>
           <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
             <Button variant="ghost" onClick={() => setDeleteTarget(null)}>

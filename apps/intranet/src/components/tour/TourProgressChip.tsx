@@ -5,21 +5,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { motion } from "framer-motion";
-import {
-  Check,
-  ChevronRight,
-  Circle,
-  Settings2,
-  SkipForward,
-} from "lucide-react";
+import { Check, ChevronRight, Circle, Settings2, SkipForward } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
@@ -28,8 +18,7 @@ import { useTour } from "./TourProvider";
 import type { CheckpointStatus } from "./tour-types";
 
 function StatusDot({ status }: { status: CheckpointStatus }) {
-  if (status === "completed")
-    return <Check className="size-3.5 shrink-0 text-green-500" />;
+  if (status === "completed") return <Check className="size-3.5 shrink-0 text-green-500" />;
   if (status === "skipped")
     return <SkipForward className="size-3.5 shrink-0 text-muted-foreground" />;
   if (status === "active")
@@ -45,8 +34,7 @@ function StatusDot({ status }: { status: CheckpointStatus }) {
  * it never eats the cramped header.
  */
 export function TourProgressChip() {
-  const { state, visibleCheckpoints, currentCheckpoint, redoCheckpoint } =
-    useTour();
+  const { state, visibleCheckpoints, currentCheckpoint, redoCheckpoint } = useTour();
   const tt = useTranslations("Tour");
   const router = useRouter();
   const isMobile = useIsMobile();
@@ -56,7 +44,7 @@ export function TourProgressChip() {
 
   const total = visibleCheckpoints.length;
   const done = visibleCheckpoints.filter(
-    cp => state.checkpoints[cp.id]?.status === "completed"
+    (cp) => state.checkpoints[cp.id]?.status === "completed",
   ).length;
 
   // Nothing left to nudge about once every checkpoint is done.
@@ -76,10 +64,7 @@ export function TourProgressChip() {
       {/* Expands on hover (desktop only) into a short progress bar. */}
       <span className="hidden max-w-0 items-center gap-2 overflow-hidden opacity-0 transition-all duration-300 group-hover:max-w-[160px] group-hover:opacity-100 group-data-[state=open]:max-w-[160px] group-data-[state=open]:opacity-100 md:flex">
         <span className="h-1.5 w-20 overflow-hidden rounded-full bg-muted">
-          <span
-            className="block h-full rounded-full bg-primary"
-            style={{ width: `${pct}%` }}
-          />
+          <span className="block h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
         </span>
         <span className="tabular-nums text-muted-foreground">
           {done}/{total}
@@ -105,16 +90,13 @@ export function TourProgressChip() {
           />
         </div>
         <p className="mt-2 text-xs text-muted-foreground">
-          {done === 0
-            ? tt("chipStart")
-            : tt("chipRemaining", { count: total - done })}
+          {done === 0 ? tt("chipStart") : tt("chipRemaining", { count: total - done })}
         </p>
       </div>
 
       <ul className="space-y-0.5">
-        {visibleCheckpoints.map(cp => {
-          const status: CheckpointStatus =
-            state.checkpoints[cp.id]?.status ?? "pending";
+        {visibleCheckpoints.map((cp) => {
+          const status: CheckpointStatus = state.checkpoints[cp.id]?.status ?? "pending";
           const isActive = currentCheckpoint?.id === cp.id;
           return (
             <li key={cp.id}>
@@ -127,13 +109,11 @@ export function TourProgressChip() {
                 className={cn(
                   "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors hover:bg-accent",
                   status === "completed" && "text-muted-foreground",
-                  isActive && "font-medium text-foreground"
+                  isActive && "font-medium text-foreground",
                 )}
               >
                 <StatusDot status={status} />
-                <span className="flex-1 truncate">
-                  {tt(`checkpoints.${cp.id}`)}
-                </span>
+                <span className="flex-1 truncate">{tt(`checkpoints.${cp.id}`)}</span>
                 {status !== "completed" && (
                   <ChevronRight className="size-3.5 shrink-0 text-muted-foreground/60" />
                 )}

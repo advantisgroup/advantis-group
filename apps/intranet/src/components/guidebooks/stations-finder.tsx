@@ -1,22 +1,12 @@
 "use client";
 
-import {
-  ExternalLink,
-  Fuel,
-  MapPin,
-  MonitorSmartphone,
-  Network,
-  Shield,
-  Zap,
-} from "lucide-react";
+import { ExternalLink, Fuel, MapPin, MonitorSmartphone, Network, Shield, Zap } from "lucide-react";
 
 import { Card, CardContent } from "@/components/ui/card";
 
 const STATION_URL = "https://www.uta.com/de-de/tools-services/stationsfinder";
-const DRIVE_APP_IOS =
-  "https://apps.apple.com/de/app/uta-edenred-drive/id1661660308";
-const DRIVE_APP_ANDROID =
-  "https://play.google.com/store/apps/details?id=com.edenred.uta.driver";
+const DRIVE_APP_IOS = "https://apps.apple.com/de/app/uta-edenred-drive/id1661660308";
+const DRIVE_APP_ANDROID = "https://play.google.com/store/apps/details?id=com.edenred.uta.driver";
 const SERVICE_CENTER_URL = "https://www.uta.com/de-de/service/servicecenter";
 
 const INFO_CARDS = [
@@ -99,8 +89,7 @@ export function StationsFinder() {
           <div>
             <h2 className="text-xl font-bold">UTA Stationsfinder</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              85.000+ Akzeptanzstellen in Europa. Kraftstoff, EV-Laden, Maut und
-              mehr.
+              85.000+ Akzeptanzstellen in Europa. Kraftstoff, EV-Laden, Maut und mehr.
             </p>
           </div>
           <a
@@ -117,7 +106,7 @@ export function StationsFinder() {
 
       {/* Info cards grid */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {INFO_CARDS.map(card => (
+        {INFO_CARDS.map((card) => (
           <Card key={card.title} className="border-border/60">
             <CardContent className="flex gap-3 p-4">
               <div
@@ -127,9 +116,7 @@ export function StationsFinder() {
               </div>
               <div>
                 <p className="text-sm font-semibold">{card.title}</p>
-                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                  {card.text}
-                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{card.text}</p>
               </div>
             </CardContent>
           </Card>
@@ -142,7 +129,7 @@ export function StationsFinder() {
           Schnellzugriff
         </p>
         <div className="flex flex-wrap gap-2">
-          {QUICK_LINKS.map(link => (
+          {QUICK_LINKS.map((link) => (
             <a
               key={link.label}
               href={link.href}

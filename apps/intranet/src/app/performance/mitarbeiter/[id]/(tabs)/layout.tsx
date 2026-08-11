@@ -7,14 +7,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Activity,
-  LayoutDashboard,
-  ListTodo,
-  Phone,
-  TrendingUp,
-  Upload,
-} from "lucide-react";
+import { Activity, LayoutDashboard, ListTodo, Phone, TrendingUp, Upload } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
@@ -26,10 +19,8 @@ import {
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
-import {
-  buildCallActivityChartData,
-  fmtYm,
-} from "@/components/performance/PerformanceFormat";
+import { PerformanceEmployeeDetailProvider } from "@/components/performance/PerformanceEmployeeDetailContext";
+import { buildCallActivityChartData, fmtYm } from "@/components/performance/PerformanceFormat";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
 import {
@@ -79,9 +70,7 @@ function EmployeeTopSection({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("dashboardCallActivity")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("dashboardCallActivity")}</CardTitle>
         </CardHeader>
         <CardContent>
           <FilterableBarChart
@@ -107,9 +96,7 @@ function EmployeeTopSection({
     if (!interactionDays) return null;
     return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
-  return (
-    <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />
-  );
+  return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
 function EmployeeChrome({
@@ -183,19 +170,14 @@ function EmployeeChrome({
     ...(isAdmin && !viaClerk
       ? [{ href: "/performance/upload", label: t("uploadLink"), icon: Upload }]
       : []),
-    ...(viaClerk
-      ? []
-      : [{ href: "/performance/passwort", label: t("passwordLink") }]),
+    ...(viaClerk ? [] : [{ href: "/performance/passwort", label: t("passwordLink") }]),
   ];
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={viaClerk ? undefined : onExit}
-      />
+      <PerformanceHeader navItems={navItems} onExit={viaClerk ? undefined : onExit} />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         {data && (
           <EmployeeTopSection
             data={data}
@@ -210,14 +192,14 @@ function EmployeeChrome({
           <h1 className="text-xl font-semibold">{data?.employee.name}</h1>
           <Select
             value={ym ?? data?.ym ?? ""}
-            onValueChange={v => setYm(v)}
+            onValueChange={(v) => setYm(v)}
             disabled={!data || data.months.length === 0}
           >
             <SelectTrigger className="w-56">
               <SelectValue placeholder={t("dashboardMonthLabel")} />
             </SelectTrigger>
             <SelectContent>
-              {[...(data?.months ?? [])].reverse().map(m => (
+              {[...(data?.months ?? [])].reverse().map((m) => (
                 <SelectItem key={m} value={m}>
                   {fmtYm(m, locale)}
                 </SelectItem>
@@ -226,9 +208,7 @@ function EmployeeChrome({
           </Select>
           {data && (
             <Badge variant={data.monthDone ? "muted" : "success"}>
-              {data.monthDone
-                ? t("dashboardMonthClosed")
-                : t("dashboardMonthOpen")}
+              {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
             </Badge>
           )}
         </div>
@@ -239,21 +219,16 @@ function EmployeeChrome({
           </div>
         </Card>
 
-        {children}
+        <PerformanceEmployeeDetailProvider data={data}>
+          {children}
+        </PerformanceEmployeeDetailProvider>
       </main>
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={viaClerk ? undefined : onExit}
-      />
+      <PerformanceBottomTabs navItems={navItems} onExit={viaClerk ? undefined : onExit} />
     </div>
   );
 }
 
-export default function EmployeeDetailLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function EmployeeDetailLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Performance");
   const router = useRouter();
   const params = useParams<{ id: string }>();
@@ -270,10 +245,10 @@ export default function EmployeeDetailLayout({
     }
   }, [session, router]);
 
-  const isAdmin = session?.valid && session.role === "admin";
+  const isAdmin = session?.valid && session.permissions.includes("view_all_employees");
   const canView =
     session?.valid &&
-    (session.role === "admin" || session.employeeId === employeeId);
+    (session.permissions.includes("view_all_employees") || session.employeeId === employeeId);
 
   function exit() {
     if (token) void logout({ token });
@@ -287,7 +262,7 @@ export default function EmployeeDetailLayout({
     return (
       <div className="min-h-screen bg-muted/20">
         <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
-        <main className="mx-auto max-w-3xl p-4 md:p-6">
+        <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
           <Card>
             <div className="p-6 text-center text-sm text-muted-foreground">
               {t("notLinkedBody")}

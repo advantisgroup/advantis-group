@@ -1,10 +1,15 @@
 {
   "title": "Files",
+  "wikiNoticeTitle": "New documents now live in the wiki",
+  "wikiNoticeBody": "Flyers, credit rules and other reference documents belong in the wiki now, where they can be found alongside the article that explains them. Files stays around for existing documents until it's phased out.",
+  "wikiNoticeCta": "Open the wiki",
+  "wikiNoticeDismiss": "Dismiss",
   "quota": "{used} of {total} used",
   "searchPlaceholder": "Search files…",
   "newFolder": "New folder",
   "newFolderDesc": "Creates a folder inside the current directory, visible to everyone with access to this location.",
   "folderName": "Folder name",
+  "noFolder": "No folder",
   "create": "Create",
   "cancel": "Cancel",
   "save": "Save",
@@ -64,5 +69,9 @@
   "bulkDeleteTitle": "Delete {count} items?",
   "uploadQueue": "Uploads",
   "retry": "Retry",
-  "finalizing": "Finalizing…"
+  "finalizing": "Finalizing…",
+  "chooseFolder": "Choose a folder",
+  "chooseFolderHint": "Browse into a subfolder, or upload straight to the current one.",
+  "selectThisFolder": "Save here",
+  "noSubfolders": "No subfolders here yet."
 }

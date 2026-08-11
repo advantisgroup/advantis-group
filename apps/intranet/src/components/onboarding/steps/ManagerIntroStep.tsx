@@ -20,9 +20,7 @@ export function ManagerIntroStep() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-display text-lg font-semibold tracking-tight">
-          {t("managerTitle")}
-        </h2>
+        <h2 className="font-display text-lg font-semibold tracking-tight">{t("managerTitle")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("managerHint")}</p>
       </div>
 
@@ -30,23 +28,16 @@ export function ManagerIntroStep() {
         <div className="flex items-center gap-4 rounded-xl border border-border/70 p-4">
           <Avatar className="size-14">
             {orgContext.manager.avatar && (
-              <AvatarImage
-                src={orgContext.manager.avatar}
-                alt={orgContext.manager.name}
-              />
+              <AvatarImage src={orgContext.manager.avatar} alt={orgContext.manager.name} />
             )}
             <AvatarFallback className="bg-primary/10 text-base font-semibold text-primary">
               {initials(orgContext.manager.name)}
             </AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-semibold tracking-tight">
-              {orgContext.manager.name}
-            </p>
+            <p className="font-semibold tracking-tight">{orgContext.manager.name}</p>
             {orgContext.manager.jobTitle && (
-              <p className="text-sm text-muted-foreground">
-                {orgContext.manager.jobTitle}
-              </p>
+              <p className="text-sm text-muted-foreground">{orgContext.manager.jobTitle}</p>
             )}
           </div>
         </div>

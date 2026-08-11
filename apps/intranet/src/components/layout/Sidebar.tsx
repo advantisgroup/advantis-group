@@ -1,40 +1,50 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { type FeatureFlagKey } from "@advantis/types";
 import { useQuery } from "convex/react";
 import {
   Activity,
+  AlertTriangle,
   BookOpen,
   Calendar,
+  ChevronRight,
+  Clock3,
   Cloud,
   ExternalLink,
+  Grid2X2,
   LayoutDashboard,
+  Lightbulb,
   LineChart,
   Megaphone,
   MessageSquare,
-  Plane,
-  Plug,
+  PhoneCall,
   Rss,
   Settings,
   ShieldCheck,
+  type LucideIcon,
   UserSearch,
   Users,
+  Wrench,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import posthog from "posthog-js";
 
 import { useFeatureFlags } from "@/components/feature-flags/FeatureGate";
 import { accessibleGuidebooks } from "@/components/guidebooks/registry";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { ActivitySidebar } from "@/components/layout/ActivitySidebar";
-import { AdminSidebar } from "@/components/layout/AdminSidebar";
+import { ADMIN_NAV_GROUPS } from "@/components/layout/AdminSidebar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Link } from "@/components/Link";
 import { MarkLogo, WordmarkLogo } from "@/components/Logo";
 import {
   useCurrentUser,
+  useHasCapability,
   useHasApplicantAccess,
   useIsAdmin,
   useIsManager,
@@ -53,12 +63,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface NavItem {
   href: string;
   labelKey: string;
-  icon: typeof LayoutDashboard;
+  icon: LucideIcon;
   badge?: number;
   managerOnly?: boolean;
   adminOnly?: boolean;
@@ -72,47 +83,59 @@ interface NavItem {
 
 interface NavGroup {
   labelKey: string;
+  namespace?: "Nav" | "Admin";
   items: NavItem[];
+  /** Rendered behind a collapsed disclosure rather than inline. */
+  advanced?: boolean;
+}
+
+type SidebarMode = "workspace" | "organization";
+
+function filterGroups(
+  groups: NavGroup[],
+  isManager: boolean,
+  isAdmin: boolean,
+  disabledFeatures: Set<FeatureFlagKey>,
+): NavGroup[] {
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) =>
+          (!item.managerOnly || isManager) &&
+          (!item.adminOnly || isAdmin) &&
+          (!item.featureKey || isAdmin || !disabledFeatures.has(item.featureKey)),
+      ),
+    }))
+    .filter((group) => group.items.length > 0);
 }
 
 export function Sidebar() {
   const t = useTranslations("Nav");
+  const tAdmin = useTranslations("Admin");
   const pathname = usePathname();
+  const router = useRouter();
   const isManager = useIsManager();
   const isAdmin = useIsAdmin();
   const user = useCurrentUser();
+  const hasFilesAccess = useHasCapability("access_files");
   const hasApplicantAccess = useHasApplicantAccess();
-  const { setOpenMobile, state } = useSidebar();
+  const hasClockodoTeamAccess = useHasCapability("view_clockodo_team");
+  const { setOpenMobile, state, isMobile } = useSidebar();
   const featureFlags = useFeatureFlags();
   const disabledFeatures = new Set(
-    (featureFlags ?? []).filter(f => !f.enabled).map(f => f.key)
+    (featureFlags ?? []).filter((f) => !f.enabled).map((f) => f.key),
   );
-
-  // Context-aware nav: inside the ActivityTrack or Admin areas the main nav
-  // slides out and the matching scoped nav slides in (see the sliding
-  // container below). Integrations stays a flat link — it's one provider
-  // today, not enough surface yet to warrant its own sidebar section.
-  const isActivity = pathname.startsWith("/activity");
-  const isAdminArea =
-    !isActivity &&
-    pathname.startsWith("/admin") &&
-    !pathname.startsWith("/admin/integrations");
-  const panel: "main" | "admin" | "activity" = isActivity
-    ? "activity"
-    : isAdminArea
-      ? "admin"
-      : "main";
 
   const chatConversations = useQuery(api.chat.listConversations);
   const announcementUnread = useQuery(api.announcements.unreadCount);
   const activeUpdate = useQuery(api.updates.bannerActive);
-  const chatUnread =
-    chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
+  const chatUnread = chatConversations?.reduce((sum, c) => sum + c.unread, 0) ?? 0;
   const hasGuidebooks = accessibleGuidebooks(user).length > 0;
 
-  const groups: NavGroup[] = [
+  const workspaceGroups: NavGroup[] = [
     {
-      labelKey: "groupGeneral",
+      labelKey: "groupProject",
       items: [
         {
           href: "/",
@@ -120,29 +143,11 @@ export function Sidebar() {
           icon: LayoutDashboard,
           tourAttr: "tour-nav-dashboard",
         },
-      ],
-    },
-    {
-      labelKey: "groupWorkspace",
-      items: [
         {
-          href: "/calendar",
-          labelKey: "calendar",
-          icon: Calendar,
-          tourAttr: "tour-nav-calendar",
-        },
-        {
-          href: "/absences",
-          labelKey: "absences",
-          icon: Plane,
-          tourAttr: "tour-nav-absences",
-        },
-        {
-          href: "/announcements",
-          labelKey: "announcements",
-          icon: Megaphone,
-          badge: announcementUnread,
-          tourAttr: "tour-nav-announcements",
+          href: "/directory",
+          labelKey: "directory",
+          icon: Users,
+          tourAttr: "tour-nav-directory",
         },
         {
           href: "/chat",
@@ -155,8 +160,43 @@ export function Sidebar() {
       ],
     },
     {
-      labelKey: "groupResources",
+      labelKey: "groupWorkspace",
       items: [
+        {
+          href: "/calendar",
+          labelKey: "calendar",
+          icon: Calendar,
+          tourAttr: "tour-nav-calendar",
+        },
+        ...(user.clockodoUserId || hasClockodoTeamAccess
+          ? [
+              {
+                href: "/clockodo",
+                labelKey: "absences",
+                icon: Clock3,
+                tourAttr: "tour-nav-absences",
+              },
+            ]
+          : []),
+        {
+          href: "/announcements",
+          labelKey: "announcements",
+          icon: Megaphone,
+          badge: announcementUnread,
+          tourAttr: "tour-nav-announcements",
+        },
+        {
+          href: "/suggestions",
+          labelKey: "suggestions",
+          icon: Lightbulb,
+          tourAttr: "tour-nav-suggestions",
+        },
+        {
+          href: "/it-tickets",
+          labelKey: "itTickets",
+          icon: Wrench,
+          tourAttr: "tour-nav-it-tickets",
+        },
         ...(hasGuidebooks
           ? [
               {
@@ -168,46 +208,26 @@ export function Sidebar() {
             ]
           : []),
         {
-          href: "/files",
-          labelKey: "files",
-          icon: Cloud,
-          tourAttr: "tour-nav-files",
+          href: "/fehlermanagement",
+          labelKey: "errorManagement",
+          icon: AlertTriangle,
         },
         {
-          href: "/directory",
-          labelKey: "directory",
-          icon: Users,
-          tourAttr: "tour-nav-directory",
-        },
-        ...(hasApplicantAccess
-          ? [
-              {
-                href: "/applicants",
-                labelKey: "applicants",
-                icon: UserSearch,
-                tourAttr: "tour-nav-applicants",
-              },
-            ]
-          : []),
-        {
-          href: "/performance",
-          labelKey: "performance",
-          icon: LineChart,
-          // Its own login (not yet Clerk-coupled), so flag it as a separate
-          // area like ActivityTrack rather than a normal in-app link.
-          external: true,
+          href: "/settings",
+          labelKey: "settings",
+          icon: Settings,
+          tourAttr: "tour-nav-settings",
         },
       ],
     },
     {
-      labelKey: "groupAdministration",
+      labelKey: "groupApps",
       items: [
         {
-          href: "/admin",
-          labelKey: "admin",
-          icon: ShieldCheck,
-          managerOnly: true,
-          tourAttr: "tour-nav-admin",
+          href: "/performance",
+          labelKey: "performance",
+          icon: LineChart,
+          external: true,
         },
         {
           href: "/activity",
@@ -218,140 +238,225 @@ export function Sidebar() {
           external: true,
         },
         {
-          href: "/admin/integrations",
-          labelKey: "integrations",
-          icon: Plug,
-          managerOnly: true,
-        },
-        {
-          href: "/settings",
-          labelKey: "settings",
-          icon: Settings,
-          tourAttr: "tour-nav-settings",
+          href: "/sales-cockpit",
+          labelKey: "salesCockpit",
+          icon: PhoneCall,
         },
       ],
     },
   ];
 
+  const organizationGroups: NavGroup[] = [
+    ...ADMIN_NAV_GROUPS.slice(0, 1).map((group) => ({
+      labelKey: group.labelKey,
+      namespace: "Admin" as const,
+      items: group.items,
+    })),
+    {
+      labelKey: "groupOrganization",
+      items: [
+        ...(hasFilesAccess
+          ? [
+              {
+                href: "/files",
+                labelKey: "files",
+                icon: Cloud,
+                tourAttr: "tour-nav-files",
+              },
+            ]
+          : []),
+        ...(hasApplicantAccess
+          ? [
+              {
+                href: "/hr",
+                labelKey: "applicants",
+                icon: UserSearch,
+                tourAttr: "tour-nav-applicants",
+              },
+            ]
+          : []),
+      ],
+    },
+    ...ADMIN_NAV_GROUPS.slice(1).map((group) => ({
+      labelKey: group.labelKey,
+      namespace: "Admin" as const,
+      items: group.items,
+      advanced: group.advanced,
+    })),
+  ];
+
   const close = () => setOpenMobile(false);
+
+  const visibleGroups = filterGroups(workspaceGroups, isManager, isAdmin, disabledFeatures);
+  const visibleOrganizationGroups = filterGroups(
+    organizationGroups,
+    isManager,
+    isAdmin,
+    disabledFeatures,
+  );
+  const hasOrganization = visibleOrganizationGroups.length > 0;
+  const routeMode: SidebarMode =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/hr") ||
+    pathname.startsWith("/applicants") ||
+    pathname.startsWith("/files")
+      ? "organization"
+      : "workspace";
+  const [mode, setMode] = useState<SidebarMode>(routeMode);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
+  useEffect(() => {
+    setMode(routeMode);
+  }, [routeMode]);
+
+  // ActivityTrack is its own area with its own nav, the same way /admin used
+  // to be — it just lost the wiring in the workspace/organization split.
+  const inActivityArea = pathname.startsWith("/activity");
+
+  const activeGroups =
+    mode === "organization" && hasOrganization ? visibleOrganizationGroups : visibleGroups;
+  const primaryGroups = activeGroups.filter((group) => !group.advanced);
+  const advancedItems = activeGroups.filter((group) => group.advanced).flatMap((g) => g.items);
+  const advancedLabel = tAdmin("nav.groupAdvanced");
+
+  function label(group: NavGroup, key: string) {
+    return group.namespace === "Admin" ? tAdmin(key) : t(key);
+  }
+
+  function navLink(item: NavItem, itemLabel: string) {
+    const active =
+      item.href === "/"
+        ? pathname === "/"
+        : item.href === "/admin"
+          ? pathname === "/admin"
+          : pathname.startsWith(item.href);
+    const Icon = item.icon;
+    return (
+      <SidebarMenuItem key={item.href}>
+        <SidebarMenuButton asChild active={active} tooltip={itemLabel}>
+          <Link
+            href={item.href}
+            onClick={close}
+            aria-current={active ? "page" : undefined}
+            data-tour={item.tourAttr}
+          >
+            <Icon />
+            <SidebarLabel>{itemLabel}</SidebarLabel>
+            {item.external ? (
+              <ExternalLink className="ml-auto size-3.5 shrink-0 text-muted-foreground/70 group-data-[state=collapsed]/sidebar:hidden" />
+            ) : null}
+            {item.badge ? (
+              <SidebarMenuBadge>{item.badge > 99 ? "99+" : item.badge}</SidebarMenuBadge>
+            ) : null}
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  }
 
   return (
     <SidebarShell ariaLabel="Advantis Intranet" data-tour="tour-sidebar">
-      <SidebarHeader>
-        <Link
-          href="/"
-          onClick={close}
-          aria-label="Advantis Intranet"
-          className="flex items-center"
-        >
-          {state === "collapsed" ? (
-            <MarkLogo size={28} className="size-7" />
-          ) : (
-            <WordmarkLogo />
-          )}
+      <SidebarHeader className="h-auto flex-col items-stretch justify-start gap-3 py-4 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-0">
+        <Link href="/" onClick={close} aria-label="Advantis Intranet" className="flex items-center">
+          {state === "collapsed" ? <MarkLogo size={28} className="size-7" /> : <WordmarkLogo />}
         </Link>
+        {hasOrganization && !inActivityArea && (
+          <div className="grid grid-cols-2 rounded-lg bg-sidebar-accent/70 p-1 group-data-[state=collapsed]/sidebar:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                posthog.capture("sidebar_mode_switched", { mode: "workspace" });
+                setMode("workspace");
+                router.push("/");
+              }}
+              className={cn(
+                "flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors",
+                mode === "workspace"
+                  ? "bg-sidebar text-sidebar-foreground shadow-sm"
+                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground",
+              )}
+            >
+              <Grid2X2 className="size-3.5" />
+              {t("workspaceMode")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                posthog.capture("sidebar_mode_switched", { mode: "organization" });
+                setMode("organization");
+                router.push("/admin");
+              }}
+              className={cn(
+                "flex h-8 items-center justify-center gap-1.5 rounded-md text-xs font-semibold transition-colors",
+                mode === "organization"
+                  ? "bg-sidebar text-sidebar-foreground shadow-sm"
+                  : "text-sidebar-foreground/60 hover:text-sidebar-foreground",
+              )}
+            >
+              <ShieldCheck className="size-3.5" />
+              {t("organizationMode")}
+            </button>
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
-        {/* Three nav panels laid out side-by-side; translate-X swaps between
-            them when entering/leaving the Admin or ActivityTrack areas.
-            Respects reduced motion. */}
-        <div className="relative overflow-x-hidden">
-          <div
-            className={cn(
-              "flex w-[300%] transition-transform duration-200 ease-out motion-reduce:transition-none",
-              panel === "admin" && "-translate-x-1/3",
-              panel === "activity" && "-translate-x-2/3",
-              panel === "main" && "translate-x-0"
+        {inActivityArea ? (
+          <ActivitySidebar />
+        ) : (
+          <>
+            <div className="group-data-[state=collapsed]/sidebar:hidden">
+              {mode === "organization" && hasOrganization && (
+                <div className="mb-2 rounded-lg border border-sidebar-border bg-sidebar-accent/35 px-3 py-2">
+                  <p className="text-xs font-semibold text-sidebar-foreground">
+                    {t("organizationConsole")}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-snug text-sidebar-foreground/55">
+                    {t("organizationConsoleHint")}
+                  </p>
+                </div>
+              )}
+            </div>
+            {primaryGroups.map((group) => (
+              <SidebarGroup key={`${group.namespace ?? "Nav"}-${group.labelKey}`}>
+                <SidebarGroupLabel>{label(group, group.labelKey)}</SidebarGroupLabel>
+                <SidebarMenu>
+                  {group.items.map((item) => navLink(item, label(group, item.labelKey)))}
+                </SidebarMenu>
+              </SidebarGroup>
+            ))}
+            {advancedItems.length > 0 && (
+              <SidebarGroup>
+                {/* The icon rail has no room for a disclosure label, so there
+                    the items just sit inline like any other group. */}
+                <button
+                  type="button"
+                  onClick={() => setAdvancedOpen((open) => !open)}
+                  aria-expanded={advancedOpen}
+                  className="flex w-full items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium uppercase tracking-wider text-sidebar-foreground/55 transition-colors hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:hidden"
+                >
+                  <ChevronRight
+                    className={cn("size-3 transition-transform", advancedOpen && "rotate-90")}
+                  />
+                  {advancedLabel}
+                </button>
+                <SidebarMenu
+                  className={cn(
+                    !advancedOpen && "hidden group-data-[state=collapsed]/sidebar:flex",
+                  )}
+                >
+                  {advancedItems.map((item) => navLink(item, tAdmin(item.labelKey)))}
+                </SidebarMenu>
+              </SidebarGroup>
             )}
-          >
-            <div
-              className={cn(
-                "w-1/3 shrink-0",
-                panel !== "main" && "pointer-events-none"
-              )}
-              aria-hidden={panel !== "main"}
-            >
-              {groups.map(group => {
-                const items = group.items.filter(
-                  item =>
-                    (!item.managerOnly || isManager) &&
-                    (!item.adminOnly || isAdmin) &&
-                    (!item.featureKey ||
-                      isAdmin ||
-                      !disabledFeatures.has(item.featureKey))
-                );
-                if (items.length === 0) return null;
-                return (
-                  <SidebarGroup key={group.labelKey}>
-                    <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
-                    <SidebarMenu>
-                      {items.map(item => {
-                        const active =
-                          item.href === "/"
-                            ? pathname === "/"
-                            : item.href === "/admin"
-                              ? pathname === "/admin" ||
-                                (pathname.startsWith("/admin") &&
-                                  !pathname.startsWith("/admin/integrations"))
-                              : pathname.startsWith(item.href);
-                        const Icon = item.icon;
-                        return (
-                          <SidebarMenuItem key={item.href}>
-                            <SidebarMenuButton
-                              asChild
-                              active={active}
-                              tooltip={t(item.labelKey)}
-                            >
-                              <Link
-                                href={item.href}
-                                onClick={close}
-                                aria-current={active ? "page" : undefined}
-                                data-tour={item.tourAttr}
-                              >
-                                <Icon />
-                                <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
-                                {item.external ? (
-                                  <ExternalLink className="ml-auto size-3.5 shrink-0 text-muted-foreground/70 group-data-[state=collapsed]/sidebar:hidden" />
-                                ) : null}
-                                {item.badge ? (
-                                  <SidebarMenuBadge>
-                                    {item.badge > 99 ? "99+" : item.badge}
-                                  </SidebarMenuBadge>
-                                ) : null}
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroup>
-                );
-              })}
-            </div>
-            <div
-              className={cn(
-                "w-1/3 shrink-0",
-                panel !== "admin" && "pointer-events-none"
-              )}
-              aria-hidden={panel !== "admin"}
-            >
-              <AdminSidebar />
-            </div>
-            <div
-              className={cn(
-                "w-1/3 shrink-0",
-                panel !== "activity" && "pointer-events-none"
-              )}
-              aria-hidden={panel !== "activity"}
-            >
-              <ActivitySidebar />
-            </div>
-          </div>
-        </div>
+          </>
+        )}
       </SidebarContent>
 
-      <SidebarFooter className="gap-3">
+      {/* Roomier on mobile: this footer is the bottom of a sheet a thumb
+          reaches into, so its rows get tap-target height and the branding
+          line gets space of its own instead of sitting on top of them. */}
+      <SidebarFooter className="py-4 md:py-3">
         {/* The top bar stays minimal on mobile, so the account and preferences
             controls live here at the bottom-left of the sidebar. On desktop
             they remain in the header, so this row is hidden there. */}
@@ -362,22 +467,59 @@ export function Sidebar() {
           />
           <SettingsMenu className="shrink-0 hover:bg-sidebar-accent" />
         </div>
+        {/* Collapsed desktop rail has no room for the header's account
+            trigger to be reachable at a glance, so it gets its own
+            icon-only entry point here — hidden everywhere else since the
+            header already covers expanded desktop, and this row covers
+            mobile. */}
+        <div className="hidden group-data-[state=collapsed]/sidebar:block">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <AccountMenu
+                triggerClassName="h-9 w-9 justify-center px-0"
+                onNavigate={close}
+                hideName
+              />
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center">
+              {user.name}
+            </TooltipContent>
+          </Tooltip>
+        </div>
         {/* Deliberately not a NavGroup item — Updates lives here, tucked next
             to the footer branding, rather than competing for space in the
             main tabs. Covers mobile too: this footer is shared by the
             desktop rail and the mobile drawer opened from BottomNav. */}
-        <Link
-          href="/updates"
-          onClick={close}
-          className="relative flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
-        >
-          <Rss className="size-3.5 shrink-0" />
-          <SidebarLabel>{t("updates")}</SidebarLabel>
-          {activeUpdate?.top ? (
-            <span className="size-1.5 shrink-0 rounded-full bg-primary" />
-          ) : null}
-        </Link>
-        <p className="text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
+        {(() => {
+          const updatesLink = (
+            <Link
+              href="/updates"
+              onClick={close}
+              className="flex items-center gap-2 rounded-md px-2 py-2.5 text-sm font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 md:py-1.5 md:text-xs"
+            >
+              <div className="relative shrink-0">
+                <Rss className="size-4 md:size-3.5" />
+                {activeUpdate?.top ? (
+                  <span className="absolute -right-0.5 -top-0.5 hidden size-1.5 rounded-full bg-primary ring-1 ring-sidebar group-data-[state=collapsed]/sidebar:block" />
+                ) : null}
+              </div>
+              <SidebarLabel>{t("updates")}</SidebarLabel>
+              {activeUpdate?.top ? (
+                <span className="size-1.5 shrink-0 rounded-full bg-primary group-data-[state=collapsed]/sidebar:hidden" />
+              ) : null}
+            </Link>
+          );
+          if (isMobile || state !== "collapsed") return updatesLink;
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>{updatesLink}</TooltipTrigger>
+              <TooltipContent side="right" align="center">
+                {t("updates")}
+              </TooltipContent>
+            </Tooltip>
+          );
+        })()}
+        <p className="border-t border-sidebar-border pt-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden md:border-0 md:pt-0">
           Advantis Group
         </p>
       </SidebarFooter>

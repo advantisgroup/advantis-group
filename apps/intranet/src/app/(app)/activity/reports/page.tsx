@@ -6,14 +6,7 @@ import Link from "next/link";
 
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
-import {
-  ChevronRight,
-  Clock,
-  Download,
-  FileBarChart,
-  Moon,
-  Users,
-} from "lucide-react";
+import { ChevronRight, Clock, Download, FileBarChart, Moon, Users } from "lucide-react";
 
 import { DailyTrendChart } from "@/components/activity/charts/DailyTrendChart";
 import { StatCard } from "@/components/activity/StatCard";
@@ -37,22 +30,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  sumDaily,
-  weekStartOf,
-  weeklyTrend,
-  type DailyStat,
-} from "@/lib/activity/activity";
+import { sumDaily, weekStartOf, weeklyTrend, type DailyStat } from "@/lib/activity/activity";
 import { downloadFile, toCsv } from "@/lib/activity/export";
 import { formatDuration, todayLocalDay } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 
-type TimeFrame =
-  | "thisWeek"
-  | "lastWeek"
-  | "last4Weeks"
-  | "thisMonth"
-  | "custom";
+type TimeFrame = "thisWeek" | "lastWeek" | "last4Weeks" | "thisMonth" | "custom";
 
 /** Shift a YYYY-MM-DD day by `n` days (UTC arithmetic). */
 function addDays(day: string, n: number): string {
@@ -65,7 +48,7 @@ function addDays(day: string, n: number): string {
 function rangeFor(
   tf: TimeFrame,
   today: string,
-  custom: { from: string; to: string }
+  custom: { from: string; to: string },
 ): { startDay: string; endDay: string } {
   const thisWeekStart = weekStartOf(today);
   switch (tf) {
@@ -98,7 +81,7 @@ export default function ReportsPage() {
 
   const { startDay, endDay } = useMemo(
     () => rangeFor(timeFrame, today, custom),
-    [timeFrame, today, custom]
+    [timeFrame, today, custom],
   );
 
   const report = useQuery(api.activity.reports.weeklyOverview, {
@@ -109,26 +92,20 @@ export default function ReportsPage() {
   // Filtered + sorted device rows with their range totals.
   const rows = useMemo(() => {
     const base = (report ?? []).filter(
-      d => deviceFilter === "__all__" || d.deviceId === deviceFilter
+      (d) => deviceFilter === "__all__" || d.deviceId === deviceFilter,
     );
     return base
-      .map(d => ({ ...d, totals: sumDaily(d.daily as DailyStat[]) }))
+      .map((d) => ({ ...d, totals: sumDaily(d.daily as DailyStat[]) }))
       .sort((a, b) => b.totals.activeSeconds - a.totals.activeSeconds);
   }, [report, deviceFilter]);
 
   // Weekly trend across the currently filtered devices (summed per week).
   const trend = useMemo(() => {
-    const flat: DailyStat[] = rows.flatMap(d => d.daily as DailyStat[]);
+    const flat: DailyStat[] = rows.flatMap((d) => d.daily as DailyStat[]);
     return weeklyTrend(flat, startDay, endDay);
   }, [rows, startDay, endDay]);
 
-  const timeFrames: TimeFrame[] = [
-    "thisWeek",
-    "lastWeek",
-    "last4Weeks",
-    "thisMonth",
-    "custom",
-  ];
+  const timeFrames: TimeFrame[] = ["thisWeek", "lastWeek", "last4Weeks", "thisMonth", "custom"];
 
   // Range totals across the currently filtered devices.
   const totals = useMemo(
@@ -137,13 +114,13 @@ export default function ReportsPage() {
       idle: rows.reduce((s, d) => s + d.totals.idleSeconds, 0),
       devices: rows.length,
     }),
-    [rows]
+    [rows],
   );
 
   // Download the table exactly as filtered — seconds for machine use plus the
   // human-readable durations, so the file works for both validation and Excel.
   function exportCsv() {
-    const data = rows.map(d => ({
+    const data = rows.map((d) => ({
       person: d.personName ?? "",
       computer: d.hostname,
       deviceId: d.deviceId,
@@ -161,11 +138,7 @@ export default function ReportsPage() {
       "active",
       "idle",
     ]);
-    downloadFile(
-      `activity-report_${startDay}_${endDay}.csv`,
-      "text/csv;charset=utf-8",
-      csv
-    );
+    downloadFile(`activity-report_${startDay}_${endDay}.csv`, "text/csv;charset=utf-8", csv);
   }
 
   return (
@@ -190,15 +163,12 @@ export default function ReportsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
         <label className="flex flex-col gap-1 text-xs text-muted-foreground">
           {t("reports.timeframe")}
-          <Select
-            value={timeFrame}
-            onValueChange={v => setTimeFrame(v as TimeFrame)}
-          >
+          <Select value={timeFrame} onValueChange={(v) => setTimeFrame(v as TimeFrame)}>
             <SelectTrigger className="w-full sm:w-44">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {timeFrames.map(tf => (
+              {timeFrames.map((tf) => (
                 <SelectItem key={tf} value={tf}>
                   {t(`reports.tf.${tf}`)}
                 </SelectItem>
@@ -215,7 +185,7 @@ export default function ReportsPage() {
                 type="date"
                 value={custom.from}
                 max={custom.to}
-                onChange={e => setCustom(c => ({ ...c, from: e.target.value }))}
+                onChange={(e) => setCustom((c) => ({ ...c, from: e.target.value }))}
                 className="w-full sm:w-40"
               />
             </label>
@@ -226,7 +196,7 @@ export default function ReportsPage() {
                 value={custom.to}
                 min={custom.from}
                 max={today}
-                onChange={e => setCustom(c => ({ ...c, to: e.target.value }))}
+                onChange={(e) => setCustom((c) => ({ ...c, to: e.target.value }))}
                 className="w-full sm:w-40"
               />
             </label>
@@ -241,7 +211,7 @@ export default function ReportsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__all__">{t("reports.filterAll")}</SelectItem>
-              {(report ?? []).map(d => (
+              {(report ?? []).map((d) => (
                 <SelectItem key={d.deviceId} value={d.deviceId}>
                   {d.personName ?? d.hostname}
                 </SelectItem>
@@ -255,9 +225,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatCard
           label={t("reports.col.active")}
-          value={
-            report === undefined ? "—" : formatDuration(totals.active, lang)
-          }
+          value={report === undefined ? "—" : formatDuration(totals.active, lang)}
           tone="ok"
           icon={<Clock className="h-4 w-4" />}
         />
@@ -278,12 +246,8 @@ export default function ReportsPage() {
       {/* Weekly trend chart */}
       <Card className="animate-fade-up">
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("reports.trend.heading")}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("reports.trend.sub")}
-          </p>
+          <CardTitle className="text-base">{t("reports.trend.heading")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("reports.trend.sub")}</p>
         </CardHeader>
         <CardContent className="pt-0 sm:pt-0">
           {report === undefined ? (
@@ -304,15 +268,9 @@ export default function ReportsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t("reports.col.person")}</TableHead>
-              <TableHead className="text-right">
-                {t("reports.col.active")}
-              </TableHead>
-              <TableHead className="text-right">
-                {t("reports.col.idle")}
-              </TableHead>
-              <TableHead className="text-right">
-                {t("reports.col.total")}
-              </TableHead>
+              <TableHead className="text-right">{t("reports.col.active")}</TableHead>
+              <TableHead className="text-right">{t("reports.col.idle")}</TableHead>
+              <TableHead className="text-right">{t("reports.col.total")}</TableHead>
               {/* Chevron column is redundant on mobile — the name is a link. */}
               <TableHead className="hidden w-8 sm:table-cell" />
             </TableRow>
@@ -328,15 +286,12 @@ export default function ReportsPage() {
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="py-8 text-center text-sm text-muted-foreground"
-                >
+                <TableCell colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
                   {t("reports.empty")}
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map(d => {
+              rows.map((d) => {
                 const total = d.totals.activeSeconds + d.totals.idleSeconds;
                 return (
                   <TableRow key={d.deviceId} className="group">

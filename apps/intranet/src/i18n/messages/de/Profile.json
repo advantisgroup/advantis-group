@@ -9,5 +9,6 @@
   "organisation": "Organisation",
   "manager": "Führungskraft",
   "reports": "{count, plural, one {Direkt unterstellte Person} other {Direkt unterstellte Personen}}",
-  "online": "Online"
+  "online": "Online",
+  "viewFullProfile": "Vollständiges Profil ansehen"
 }

@@ -10,11 +10,7 @@ import { HomeIntro } from "@/components/sections/home/HomeIntro";
 import { HomeServices } from "@/components/sections/home/HomeServices";
 import { TrustBadges } from "@/components/sections/home/TrustBadges";
 
-export default function Page({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params);
 
   useEffect(() => {

@@ -2,21 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import {
-  type MessageAttachment,
-  type OneDriveItem,
-  type OneDriveListing,
-} from "@advantis/types";
+import { type MessageAttachment, type OneDriveItem, type OneDriveListing } from "@advantis/types";
 import { ChevronRight, Frown, Loader2, Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
@@ -70,7 +61,7 @@ export function OneDrivePickerDialog({
         setLoading(false);
       }
     },
-    [od, t]
+    [od, t],
   );
 
   // Start fresh at the root every time the dialog is opened.
@@ -91,16 +82,14 @@ export function OneDrivePickerDialog({
     const id = window.setTimeout(() => {
       void od
         .search(q)
-        .then(r => setResults(r.items))
+        .then((r) => setResults(r.items))
         .catch(() => setResults([]));
     }, 300);
     return () => window.clearTimeout(id);
   }, [query, od]);
 
   const items = results ?? listing?.items ?? [];
-  const crumbs = listing?.breadcrumbs ?? [
-    { id: "", name: "Advantis Group", path: "" },
-  ];
+  const crumbs = listing?.breadcrumbs ?? [{ id: "", name: "Advantis GmbH", path: "" }];
   const searching = results !== null;
 
   async function activate(item: OneDriveItem) {
@@ -138,7 +127,7 @@ export function OneDrivePickerDialog({
           <Input
             autoFocus
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder={t("searchPlaceholder")}
             className="pl-8"
           />
@@ -148,9 +137,7 @@ export function OneDrivePickerDialog({
           <nav className="flex min-w-0 items-center gap-1 overflow-x-auto text-xs">
             {crumbs.map((c, i) => (
               <span key={c.path} className="flex items-center gap-1">
-                {i > 0 && (
-                  <ChevronRight className="size-3 shrink-0 text-muted-foreground" />
-                )}
+                {i > 0 && <ChevronRight className="size-3 shrink-0 text-muted-foreground" />}
                 <button
                   type="button"
                   onClick={() => void load(c.path)}
@@ -158,7 +145,7 @@ export function OneDrivePickerDialog({
                     "shrink-0 rounded px-1 py-0.5 hover:bg-accent",
                     i === crumbs.length - 1
                       ? "font-medium text-foreground"
-                      : "text-muted-foreground"
+                      : "text-muted-foreground",
                   )}
                 >
                   {c.name}
@@ -176,13 +163,11 @@ export function OneDrivePickerDialog({
           ) : items.length === 0 ? (
             <div className="flex flex-col items-center gap-2 py-10 text-center text-muted-foreground">
               <Frown className="size-6" />
-              <p className="text-sm">
-                {searching ? t("noResults") : t("emptyFolder")}
-              </p>
+              <p className="text-sm">{searching ? t("noResults") : t("emptyFolder")}</p>
             </div>
           ) : (
             <ul className="divide-y divide-border/60">
-              {items.map(item => (
+              {items.map((item) => (
                 <li key={item.id}>
                   <button
                     type="button"
@@ -192,10 +177,7 @@ export function OneDrivePickerDialog({
                   >
                     <ItemIcon item={item} className="size-4 shrink-0" />
                     <span className="min-w-0 flex-1 truncate text-sm">
-                      <HighlightMatch
-                        text={item.name}
-                        query={searching ? query.trim() : ""}
-                      />
+                      <HighlightMatch text={item.name} query={searching ? query.trim() : ""} />
                     </span>
                     {item.type === "file" && (
                       <span className="shrink-0 text-xs text-muted-foreground">

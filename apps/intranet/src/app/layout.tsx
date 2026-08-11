@@ -1,5 +1,3 @@
-/* eslint-disable react-refresh/only-export-components --
-   Next.js requires `metadata` and `viewport` to be exported from this layout. */
 import type { ReactNode } from "react";
 
 import { Geist, Geist_Mono } from "next/font/google";
@@ -59,11 +57,7 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
   const locale = await getLocale();
   const messages = await getMessages();
 
@@ -74,11 +68,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable}`}
     >
       <body className="bg-background text-foreground antialiased">
-        <ClerkProvider
-          publishableKey={
-            process.env.NEXT_PUBLIC_INTERNAL_CLERK_PUBLISHABLE_KEY
-          }
-        >
+        <ClerkProvider>
           <NextIntlClientProvider locale={locale} messages={messages}>
             <ConvexClientProvider>
               <ThemeProvider

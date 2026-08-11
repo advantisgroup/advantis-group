@@ -6,9 +6,10 @@ import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { assertAttachmentSizeOk } from "./lib/attachments";
-import { requireUser } from "./lib/auth";
+import { isOwnerOrAdmin, requireUser } from "./lib/auth";
 import { gatedMutation } from "./lib/featureGate";
 import { createNotification } from "./lib/notify";
+import { profileAvatarUrl, profileDisplayName } from "./lib/profile";
 import { attachmentValidator } from "./schema";
 
 const TYPING_WINDOW_MS = 6000;
@@ -23,22 +24,24 @@ const linkPreviewArg = v.object({
   siteName: v.optional(v.string()),
 });
 
+/** Chat's own return shapes use `_id`/`avatar` field names throughout (not
+ *  `PartialProfile`'s `userId`/`avatarUrl`) to stay consistent with the rest
+ *  of this file's conventions — but the actual name/avatar resolution
+ *  delegates to the one canonical implementation in `lib/profile.ts` instead
+ *  of maintaining its own copy. */
 function memberDisplay(user: Doc<"users"> | null): string {
-  if (!user) return "Unknown";
-  return (
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
-  );
+  return user ? profileDisplayName(user) : "Unknown";
 }
 
 async function getMembership(
   ctx: QueryCtx | MutationCtx,
   conversationId: Id<"conversations">,
-  userId: Id<"users">
+  userId: Id<"users">,
 ): Promise<Doc<"conversationMembers"> | null> {
   return ctx.db
     .query("conversationMembers")
-    .withIndex("by_user_conversation", q =>
-      q.eq("userId", userId).eq("conversationId", conversationId)
+    .withIndex("by_user_conversation", (q) =>
+      q.eq("userId", userId).eq("conversationId", conversationId),
     )
     .unique();
 }
@@ -46,7 +49,7 @@ async function getMembership(
 async function requireMembership(
   ctx: QueryCtx | MutationCtx,
   conversationId: Id<"conversations">,
-  userId: Id<"users">
+  userId: Id<"users">,
 ): Promise<Doc<"conversationMembers">> {
   const membership = await getMembership(ctx, conversationId, userId);
   if (!membership) {
@@ -62,38 +65,26 @@ function dmKeyFor(a: Id<"users">, b: Id<"users">): string {
   return [a, b].sort().join(":");
 }
 
-async function attachmentUrls(
-  ctx: QueryCtx,
-  attachments: Doc<"messages">["attachments"]
-) {
+async function attachmentUrls(ctx: QueryCtx, attachments: Doc<"messages">["attachments"]) {
   return Promise.all(
-    attachments.map(async a => ({
+    attachments.map(async (a) => ({
       ...a,
       url: await ctx.storage.getUrl(a.storageId),
-    }))
+    })),
   );
 }
 
 /** Resolve a user's display avatar (uploaded image first, else external URL). */
-async function userAvatar(
-  ctx: QueryCtx,
-  user: Doc<"users"> | null
-): Promise<string | null> {
-  if (!user) return null;
-  return user.avatarStorageId
-    ? await ctx.storage.getUrl(user.avatarStorageId)
-    : (user.avatarUrl ?? null);
+async function userAvatar(ctx: QueryCtx, user: Doc<"users"> | null): Promise<string | null> {
+  return user ? profileAvatarUrl(ctx, user) : null;
 }
 
 /** The other participant of a DM, derived from its immutable `dmKey`. Works
  *  even after that person has left (their membership row is gone). */
-function dmPartnerId(
-  conversation: Doc<"conversations">,
-  meId: Id<"users">
-): Id<"users"> | null {
+function dmPartnerId(conversation: Doc<"conversations">, meId: Id<"users">): Id<"users"> | null {
   if (conversation.type !== "dm" || !conversation.dmKey) return null;
   const ids = conversation.dmKey.split(":") as Id<"users">[];
-  return ids.find(id => id !== meId) ?? null;
+  return ids.find((id) => id !== meId) ?? null;
 }
 
 /** Sidebar preview text for a message — mirrors what listConversations used
@@ -107,11 +98,11 @@ function messagePreview(body: string, attachmentCount: number): string {
  *  query listConversations used to run on every single execution. */
 async function legacyLastMessagePreview(
   ctx: QueryCtx,
-  conversationId: Id<"conversations">
+  conversationId: Id<"conversations">,
 ): Promise<string> {
   const lastMessage = await ctx.db
     .query("messages")
-    .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
     .order("desc")
     .first();
   if (!lastMessage) return "";
@@ -126,15 +117,14 @@ async function legacyUnreadCount(
   ctx: QueryCtx,
   conversationId: Id<"conversations">,
   lastReadAt: number,
-  meId: Id<"users">
+  meId: Id<"users">,
 ): Promise<number> {
   const recent = await ctx.db
     .query("messages")
-    .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
     .order("desc")
     .take(50);
-  return recent.filter(m => m.createdAt > lastReadAt && m.senderUserId !== meId)
-    .length;
+  return recent.filter((m) => m.createdAt > lastReadAt && m.senderUserId !== meId).length;
 }
 
 function requireGroup(conversation: Doc<"conversations"> | null): void {
@@ -151,31 +141,31 @@ function requireGroup(conversation: Doc<"conversations"> | null): void {
  *  Shared by leave (last member), delete-group and the expired-DM cron. */
 async function purgeConversation(
   ctx: MutationCtx,
-  conversationId: Id<"conversations">
+  conversationId: Id<"conversations">,
 ): Promise<void> {
   const messages = await ctx.db
     .query("messages")
-    .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
     .collect();
   for (const m of messages) {
     for (const a of m.attachments) await ctx.storage.delete(a.storageId);
     const reactions = await ctx.db
       .query("messageReactions")
-      .withIndex("by_message", q => q.eq("messageId", m._id))
+      .withIndex("by_message", (q) => q.eq("messageId", m._id))
       .collect();
-    await Promise.all(reactions.map(r => ctx.db.delete(r._id)));
+    await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
     await ctx.db.delete(m._id);
   }
   const typing = await ctx.db
     .query("typing")
-    .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
     .collect();
-  await Promise.all(typing.map(t => ctx.db.delete(t._id)));
+  await Promise.all(typing.map((t) => ctx.db.delete(t._id)));
   const members = await ctx.db
     .query("conversationMembers")
-    .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+    .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
     .collect();
-  await Promise.all(members.map(m => ctx.db.delete(m._id)));
+  await Promise.all(members.map((m) => ctx.db.delete(m._id)));
   const conversation = await ctx.db.get(conversationId);
   if (conversation?.avatarStorageId) {
     await ctx.storage.delete(conversation.avatarStorageId);
@@ -187,30 +177,26 @@ async function purgeConversation(
 
 export const listConversations = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const memberships = await ctx.db
       .query("conversationMembers")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
     const rows = await Promise.all(
-      memberships.map(async membership => {
+      memberships.map(async (membership) => {
         const conversation = await ctx.db.get(membership.conversationId);
         if (!conversation) return null;
 
         // Other members (for DM naming / group avatars).
         const allMembers = await ctx.db
           .query("conversationMembers")
-          .withIndex("by_conversation", q =>
-            q.eq("conversationId", conversation._id)
-          )
+          .withIndex("by_conversation", (q) => q.eq("conversationId", conversation._id))
           .collect();
         const others = (
           await Promise.all(
-            allMembers
-              .filter(m => m.userId !== user._id)
-              .map(m => ctx.db.get(m.userId))
+            allMembers.filter((m) => m.userId !== user._id).map((m) => ctx.db.get(m.userId)),
           )
         ).filter((u): u is Doc<"users"> => u !== null);
 
@@ -221,16 +207,12 @@ export const listConversations = query({
           conversation.type === "dm"
             ? (others[0] ?? (partnerId ? await ctx.db.get(partnerId) : null))
             : null;
-        const otherLeft =
-          conversation.type === "dm" && !!partnerId && others.length === 0;
+        const otherLeft = conversation.type === "dm" && !!partnerId && others.length === 0;
 
         const title =
-          conversation.type === "group"
-            ? (conversation.name ?? "Group")
-            : memberDisplay(partner);
+          conversation.type === "group" ? (conversation.name ?? "Group") : memberDisplay(partner);
 
-        const avatar =
-          conversation.type === "dm" ? await userAvatar(ctx, partner) : null;
+        const avatar = conversation.type === "dm" ? await userAvatar(ctx, partner) : null;
         // Group: custom photo (if any) + up to 4 member avatars for the collage.
         const groupAvatar =
           conversation.type === "group" && conversation.avatarStorageId
@@ -238,7 +220,7 @@ export const listConversations = query({
             : null;
         const memberAvatars =
           conversation.type === "group"
-            ? await Promise.all(others.slice(0, 4).map(u => userAvatar(ctx, u)))
+            ? await Promise.all(others.slice(0, 4).map((u) => userAvatar(ctx, u)))
             : [];
 
         // Fallback for conversations/memberships from before lastMessagePreview
@@ -251,12 +233,7 @@ export const listConversations = query({
             : legacyLastMessagePreview(ctx, conversation._id),
           membership.unreadCount !== undefined
             ? membership.unreadCount
-            : legacyUnreadCount(
-                ctx,
-                conversation._id,
-                membership.lastReadAt,
-                user._id
-              ),
+            : legacyUnreadCount(ctx, conversation._id, membership.lastReadAt, user._id),
         ]);
 
         return {
@@ -266,10 +243,9 @@ export const listConversations = query({
           avatar,
           groupAvatar,
           memberAvatars,
-          memberNames: others.slice(0, 4).map(u => memberDisplay(u)),
+          memberNames: others.slice(0, 4).map((u) => memberDisplay(u)),
           memberCount: allMembers.length,
-          otherUserId:
-            conversation.type === "dm" ? (partner?._id ?? null) : null,
+          otherUserId: conversation.type === "dm" ? (partner?._id ?? null) : null,
           isCreator: conversation.createdByUserId === user._id,
           otherLeft,
           deleteAt: conversation.deleteAt ?? null,
@@ -280,7 +256,7 @@ export const listConversations = query({
           lastMessagePreview: preview,
           unread,
         };
-      })
+      }),
     );
 
     return rows
@@ -308,31 +284,28 @@ export const mutualConversations = query({
       (
         await ctx.db
           .query("conversationMembers")
-          .withIndex("by_user", q => q.eq("userId", otherUserId))
+          .withIndex("by_user", (q) => q.eq("userId", otherUserId))
           .collect()
-      ).map(m => m.conversationId)
+      ).map((m) => m.conversationId),
     );
 
     const mine = await ctx.db
       .query("conversationMembers")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
-    const shared = mine.filter(m => theirConvIds.has(m.conversationId));
+    const shared = mine.filter((m) => theirConvIds.has(m.conversationId));
 
     const rows = await Promise.all(
-      shared.map(async m => {
+      shared.map(async (m) => {
         const conversation = await ctx.db.get(m.conversationId);
         if (!conversation) return null;
 
         const members = await ctx.db
           .query("conversationMembers")
-          .withIndex("by_conversation", q =>
-            q.eq("conversationId", conversation._id)
-          )
+          .withIndex("by_conversation", (q) => q.eq("conversationId", conversation._id))
           .collect();
 
-        const other =
-          conversation.type === "dm" ? await ctx.db.get(otherUserId) : null;
+        const other = conversation.type === "dm" ? await ctx.db.get(otherUserId) : null;
         const avatar =
           conversation.type === "dm" && other
             ? other.avatarStorageId
@@ -344,13 +317,11 @@ export const mutualConversations = query({
           _id: conversation._id,
           type: conversation.type,
           title:
-            conversation.type === "group"
-              ? (conversation.name ?? "Group")
-              : memberDisplay(other),
+            conversation.type === "group" ? (conversation.name ?? "Group") : memberDisplay(other),
           avatar,
           memberCount: members.length,
         };
-      })
+      }),
     );
 
     return rows
@@ -377,7 +348,7 @@ export const getOrCreateDm = gatedMutation("chat")({
     const key = dmKeyFor(user._id, otherUserId);
     const existing = await ctx.db
       .query("conversations")
-      .withIndex("by_dmKey", q => q.eq("dmKey", key))
+      .withIndex("by_dmKey", (q) => q.eq("dmKey", key))
       .first();
     if (existing) {
       const now = Date.now();
@@ -466,12 +437,12 @@ export const getConversation = query({
 
     const members = await ctx.db
       .query("conversationMembers")
-      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+      .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
       .collect();
-    const memberUsers = (
-      await Promise.all(members.map(m => ctx.db.get(m.userId)))
-    ).filter((u): u is Doc<"users"> => u !== null);
-    const others = memberUsers.filter(u => u._id !== user._id);
+    const memberUsers = (await Promise.all(members.map((m) => ctx.db.get(m.userId)))).filter(
+      (u): u is Doc<"users"> => u !== null,
+    );
+    const others = memberUsers.filter((u) => u._id !== user._id);
 
     // DM whose partner has left: resolve them from dmKey for name + re-invite.
     const partnerId = dmPartnerId(conversation, user._id);
@@ -479,11 +450,9 @@ export const getConversation = query({
       conversation.type === "dm"
         ? (others[0] ?? (partnerId ? await ctx.db.get(partnerId) : null))
         : null;
-    const dmOtherLeft =
-      conversation.type === "dm" && !!partnerId && others.length === 0;
+    const dmOtherLeft = conversation.type === "dm" && !!partnerId && others.length === 0;
 
-    const avatar =
-      conversation.type === "dm" ? await userAvatar(ctx, partner) : null;
+    const avatar = conversation.type === "dm" ? await userAvatar(ctx, partner) : null;
     const groupAvatar =
       conversation.type === "group" && conversation.avatarStorageId
         ? await ctx.storage.getUrl(conversation.avatarStorageId)
@@ -494,28 +463,24 @@ export const getConversation = query({
       _id: conversation._id,
       type: conversation.type,
       title:
-        conversation.type === "group"
-          ? (conversation.name ?? "Group")
-          : memberDisplay(partner),
+        conversation.type === "group" ? (conversation.name ?? "Group") : memberDisplay(partner),
       avatar,
       groupAvatar,
       createdByUserId: conversation.createdByUserId,
       isCreator: conversation.createdByUserId === user._id,
       deleteAt: conversation.deleteAt ?? null,
       dmOtherLeft,
-      dmPartner: partner
-        ? { _id: partner._id, name: memberDisplay(partner) }
-        : null,
+      dmPartner: partner ? { _id: partner._id, name: memberDisplay(partner) } : null,
       myLastReadAt: myMembership.lastReadAt,
       pinned: !!myMembership.pinnedAt,
       archived: !!myMembership.archivedAt,
       muted: !!myMembership.mutedAt,
       members: await Promise.all(
-        memberUsers.map(async u => {
-          const membership = members.find(m => m.userId === u._id);
+        memberUsers.map(async (u) => {
+          const membership = members.find((m) => m.userId === u._id);
           const pres = await ctx.db
             .query("presence")
-            .withIndex("by_user", q => q.eq("userId", u._id))
+            .withIndex("by_user", (q) => q.eq("userId", u._id))
             .unique();
           return {
             _id: u._id,
@@ -526,7 +491,7 @@ export const getConversation = query({
             memberRole: membership?.role ?? "member",
             lastActiveAt: pres?.lastActiveAt ?? u.lastSeenAt ?? null,
           };
-        })
+        }),
       ),
     };
   },
@@ -536,7 +501,7 @@ export const getConversation = query({
 
 function aggregateReactions(
   rows: { emoji: string; userId: Id<"users"> }[],
-  meId: Id<"users">
+  meId: Id<"users">,
 ): { emoji: string; count: number; mine: boolean }[] {
   const map = new Map<string, { count: number; mine: boolean }>();
   for (const r of rows) {
@@ -568,41 +533,39 @@ export const getMessages = query({
 
     const page = await ctx.db
       .query("messages")
-      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+      .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
       .order("desc")
       .paginate(paginationOpts);
 
     // Members + their read cursors, for per-message "seen by".
     const members = await ctx.db
       .query("conversationMembers")
-      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+      .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
       .collect();
     const memberNames = new Map<Id<"users">, string>();
     const memberAvatars = new Map<Id<"users">, string | null>();
     await Promise.all(
-      members.map(async mb => {
+      members.map(async (mb) => {
         const u = await ctx.db.get(mb.userId);
         memberNames.set(mb.userId, memberDisplay(u));
         memberAvatars.set(mb.userId, await userAvatar(ctx, u));
-      })
+      }),
     );
 
     const items = await Promise.all(
-      page.page.map(async m => {
+      page.page.map(async (m) => {
         const sender = await ctx.db.get(m.senderUserId);
         const reactionRows = await ctx.db
           .query("messageReactions")
-          .withIndex("by_message", q => q.eq("messageId", m._id))
+          .withIndex("by_message", (q) => q.eq("messageId", m._id))
           .collect();
         // Members (excluding the sender) whose read cursor is at/after this
         // message — i.e. who have seen it.
         const seenMembers = members.filter(
-          mb => mb.userId !== m.senderUserId && mb.lastReadAt >= m.createdAt
+          (mb) => mb.userId !== m.senderUserId && mb.lastReadAt >= m.createdAt,
         );
-        const seenBy = seenMembers.map(
-          mb => memberNames.get(mb.userId) ?? "Unknown"
-        );
-        const seenByUsers = seenMembers.map(mb => ({
+        const seenBy = seenMembers.map((mb) => memberNames.get(mb.userId) ?? "Unknown");
+        const seenByUsers = seenMembers.map((mb) => ({
           _id: mb.userId,
           name: memberNames.get(mb.userId) ?? "Unknown",
           avatar: memberAvatars.get(mb.userId) ?? null,
@@ -636,20 +599,16 @@ export const getMessages = query({
           body: m.deletedAt ? "" : m.body,
           deleted: !!m.deletedAt,
           edited: !!m.editedAt,
-          attachments: m.deletedAt
-            ? []
-            : await attachmentUrls(ctx, m.attachments),
+          attachments: m.deletedAt ? [] : await attachmentUrls(ctx, m.attachments),
           linkPreviews: m.deletedAt ? [] : m.linkPreviews,
-          reactions: m.deletedAt
-            ? []
-            : aggregateReactions(reactionRows, user._id),
+          reactions: m.deletedAt ? [] : aggregateReactions(reactionRows, user._id),
           mentions: m.deletedAt ? [] : (m.mentions ?? []),
           replyTo,
           seenBy,
           seenByUsers,
           createdAt: m.createdAt,
         };
-      })
+      }),
     );
 
     return { ...page, page: items };
@@ -672,9 +631,7 @@ export const toggleReaction = mutation({
     // WhatsApp-style: one reaction per user per message.
     const existing = await ctx.db
       .query("messageReactions")
-      .withIndex("by_message_user", q =>
-        q.eq("messageId", messageId).eq("userId", user._id)
-      )
+      .withIndex("by_message_user", (q) => q.eq("messageId", messageId).eq("userId", user._id))
       .first();
 
     if (existing) {
@@ -707,11 +664,7 @@ export const sendMessage = gatedMutation("chat")({
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
-    const membership = await requireMembership(
-      ctx,
-      args.conversationId,
-      user._id
-    );
+    const membership = await requireMembership(ctx, args.conversationId, user._id);
 
     const body = args.body.trim();
     const attachments = args.attachments ?? [];
@@ -734,14 +687,10 @@ export const sendMessage = gatedMutation("chat")({
     // Keep only mentions that are actually members of this conversation.
     const memberRows = await ctx.db
       .query("conversationMembers")
-      .withIndex("by_conversation", q =>
-        q.eq("conversationId", args.conversationId)
-      )
+      .withIndex("by_conversation", (q) => q.eq("conversationId", args.conversationId))
       .collect();
-    const memberIds = new Set(memberRows.map(m => m.userId));
-    const mentions = (args.mentions ?? []).filter(
-      id => id !== user._id && memberIds.has(id)
-    );
+    const memberIds = new Set(memberRows.map((m) => m.userId));
+    const mentions = (args.mentions ?? []).filter((id) => id !== user._id && memberIds.has(id));
 
     const now = Date.now();
     const messageId = await ctx.db.insert("messages", {
@@ -755,13 +704,13 @@ export const sendMessage = gatedMutation("chat")({
       createdAt: now,
     });
     await Promise.all(
-      attachments.map(a =>
+      attachments.map((a) =>
         ctx.db.insert("attachmentOwners", {
           storageId: a.storageId,
           kind: "message",
           conversationId: args.conversationId,
-        })
-      )
+        }),
+      ),
     );
     await ctx.db.patch(args.conversationId, {
       lastMessageAt: now,
@@ -772,29 +721,44 @@ export const sendMessage = gatedMutation("chat")({
     // Every other member is now one message further behind.
     await Promise.all(
       memberRows
-        .filter(m => m.userId !== user._id)
-        .map(m =>
-          ctx.db.patch(m._id, { unreadCount: (m.unreadCount ?? 0) + 1 })
-        )
+        .filter((m) => m.userId !== user._id)
+        .map((m) => ctx.db.patch(m._id, { unreadCount: (m.unreadCount ?? 0) + 1 })),
     );
 
-    // Notify @mentioned members, unless they've muted this conversation.
-    if (mentions.length > 0) {
+    // Notify other members, unless they've muted this conversation.
+    // @mentions get a distinct, more urgent notification; everyone else
+    // still needs to hear about the message itself (this is what feeds
+    // BrowserNotificationBridge — without a row here, a plain message
+    // never surfaces an OS/browser notification for its recipients).
+    {
       const conversation = await ctx.db.get(args.conversationId);
-      const title =
-        conversation?.type === "group"
-          ? (conversation.name ?? "Group")
-          : memberDisplay(user);
-      const muted = new Set(
-        memberRows.filter(m => m.mutedAt).map(m => m.userId)
-      );
+      const senderName = memberDisplay(user);
+      const contextLabel =
+        conversation?.type === "group" ? (conversation.name ?? "Group") : senderName;
+      const muted = new Set(memberRows.filter((m) => m.mutedAt).map((m) => m.userId));
+      const mentionSet = new Set(mentions);
+
       for (const uid of mentions) {
         if (muted.has(uid)) continue;
         await createNotification(ctx, {
           userId: uid,
           type: "chat-mention",
-          title: `${memberDisplay(user)} mentioned you`,
-          body: `${title}: ${body.slice(0, 120)}`,
+          title: `${senderName} mentioned you`,
+          body: `${contextLabel}: ${body.slice(0, 120)}`,
+          link: `/chat?c=${args.conversationId}`,
+        });
+      }
+
+      const preview = messagePreview(body, attachments.length).slice(0, 120);
+      for (const member of memberRows) {
+        if (member.userId === user._id) continue;
+        if (muted.has(member.userId)) continue;
+        if (mentionSet.has(member.userId)) continue;
+        await createNotification(ctx, {
+          userId: member.userId,
+          type: "chat-message",
+          title: senderName,
+          body: conversation?.type === "group" ? `${contextLabel}: ${preview}` : preview,
           link: `/chat?c=${args.conversationId}`,
         });
       }
@@ -842,13 +806,13 @@ export const editMessage = mutation({
     // send; a harmless duplicate for those already covered.
     if (attachments) {
       await Promise.all(
-        attachments.map(a =>
+        attachments.map((a) =>
           ctx.db.insert("attachmentOwners", {
             storageId: a.storageId,
             kind: "message",
             conversationId: message.conversationId,
-          })
-        )
+          }),
+        ),
       );
     }
     return { ok: true };
@@ -861,7 +825,7 @@ export const deleteMessage = mutation({
     const user = await requireUser(ctx);
     const message = await ctx.db.get(messageId);
     if (!message || message.deletedAt) return { ok: false };
-    if (message.senderUserId !== user._id && user.role !== "admin") {
+    if (!isOwnerOrAdmin(user, message.senderUserId)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You can only delete your own messages",
@@ -874,9 +838,9 @@ export const deleteMessage = mutation({
     // Remove reactions on the deleted message.
     const reactions = await ctx.db
       .query("messageReactions")
-      .withIndex("by_message", q => q.eq("messageId", messageId))
+      .withIndex("by_message", (q) => q.eq("messageId", messageId))
       .collect();
-    await Promise.all(reactions.map(r => ctx.db.delete(r._id)));
+    await Promise.all(reactions.map((r) => ctx.db.delete(r._id)));
     await ctx.db.patch(messageId, {
       deletedAt: Date.now(),
       body: "",
@@ -921,8 +885,8 @@ export const setTyping = mutation({
     await requireMembership(ctx, conversationId, user._id);
     const existing = await ctx.db
       .query("typing")
-      .withIndex("by_conversation_user", q =>
-        q.eq("conversationId", conversationId).eq("userId", user._id)
+      .withIndex("by_conversation_user", (q) =>
+        q.eq("conversationId", conversationId).eq("userId", user._id),
       )
       .unique();
     const now = Date.now();
@@ -949,13 +913,11 @@ export const whoIsTyping = query({
     const cutoff = Date.now() - TYPING_WINDOW_MS;
     const rows = await ctx.db
       .query("typing")
-      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+      .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
       .collect();
-    const active = rows.filter(
-      r => r.userId !== user._id && r.updatedAt > cutoff
-    );
+    const active = rows.filter((r) => r.userId !== user._id && r.updatedAt > cutoff);
     const names = await Promise.all(
-      active.map(async r => memberDisplay(await ctx.db.get(r.userId)))
+      active.map(async (r) => memberDisplay(await ctx.db.get(r.userId))),
     );
     return names;
   },
@@ -993,10 +955,7 @@ export const setGroupAvatar = mutation({
     const conversation = await ctx.db.get(conversationId);
     requireGroup(conversation);
     // Drop the previous photo from storage when it's replaced or removed.
-    if (
-      conversation!.avatarStorageId &&
-      conversation!.avatarStorageId !== avatarStorageId
-    ) {
+    if (conversation!.avatarStorageId && conversation!.avatarStorageId !== avatarStorageId) {
       await ctx.storage.delete(conversation!.avatarStorageId);
     }
     await ctx.db.patch(conversationId, { avatarStorageId });
@@ -1097,7 +1056,7 @@ export const leaveConversation = mutation({
     await ctx.db.delete(membership._id);
     const remaining = await ctx.db
       .query("conversationMembers")
-      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+      .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
       .collect();
 
     if (remaining.length === 0) {
@@ -1134,11 +1093,7 @@ export const reinviteDm = mutation({
       throw new ConvexError({ code: "not_found", message: "No one to invite" });
     }
     // Guard: only when the partner has actually left.
-    const partnerMembership = await getMembership(
-      ctx,
-      conversationId,
-      partnerId
-    );
+    const partnerMembership = await getMembership(ctx, conversationId, partnerId);
     if (partnerMembership) {
       throw new ConvexError({
         code: "bad_request",
@@ -1204,7 +1159,7 @@ export const rejoinDm = mutation({
     }
     // Cancel the pending deletion and let the other side know.
     await ctx.db.patch(conversationId, { deleteAt: undefined });
-    const otherId = ids.find(id => id !== user._id);
+    const otherId = ids.find((id) => id !== user._id);
     if (otherId) {
       await createNotification(ctx, {
         userId: otherId,
@@ -1222,7 +1177,7 @@ export const rejoinDm = mutation({
 async function toggleTimestamp(
   ctx: MutationCtx,
   conversationId: Id<"conversations">,
-  field: "pinnedAt" | "archivedAt" | "mutedAt"
+  field: "pinnedAt" | "archivedAt" | "mutedAt",
 ) {
   const user = await requireUser(ctx);
   const membership = await requireMembership(ctx, conversationId, user._id);
@@ -1234,20 +1189,17 @@ async function toggleTimestamp(
 
 export const togglePin = mutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) =>
-    toggleTimestamp(ctx, conversationId, "pinnedAt"),
+  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "pinnedAt"),
 });
 
 export const toggleArchive = mutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) =>
-    toggleTimestamp(ctx, conversationId, "archivedAt"),
+  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "archivedAt"),
 });
 
 export const toggleMute = mutation({
   args: { conversationId: v.id("conversations") },
-  handler: (ctx, { conversationId }) =>
-    toggleTimestamp(ctx, conversationId, "mutedAt"),
+  handler: (ctx, { conversationId }) => toggleTimestamp(ctx, conversationId, "mutedAt"),
 });
 
 // --- Shared media ------------------------------------------------------------
@@ -1266,22 +1218,22 @@ export const listSharedMedia = query({
     }
     const page = await ctx.db
       .query("messages")
-      .withIndex("by_conversation", q => q.eq("conversationId", conversationId))
+      .withIndex("by_conversation", (q) => q.eq("conversationId", conversationId))
       .order("desc")
       .paginate(paginationOpts);
 
     const items = (
       await Promise.all(
         page.page
-          .filter(m => !m.deletedAt && m.attachments.length > 0)
-          .map(async m => {
+          .filter((m) => !m.deletedAt && m.attachments.length > 0)
+          .map(async (m) => {
             const withUrls = await attachmentUrls(ctx, m.attachments);
-            return withUrls.map(a => ({
+            return withUrls.map((a) => ({
               messageId: m._id,
               createdAt: m.createdAt,
               ...a,
             }));
-          })
+          }),
       )
     ).flat();
 
@@ -1295,19 +1247,17 @@ export const listSharedMedia = query({
  *  hourly cron (see crons.ts). Only single-member (abandoned) DMs are removed. */
 export const purgeExpiredDms = internalMutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const now = Date.now();
     const expired = await ctx.db
       .query("conversations")
-      .withIndex("by_deleteAt", q => q.gt("deleteAt", 0).lte("deleteAt", now))
+      .withIndex("by_deleteAt", (q) => q.gt("deleteAt", 0).lte("deleteAt", now))
       .collect();
     let purged = 0;
     for (const conversation of expired) {
       const members = await ctx.db
         .query("conversationMembers")
-        .withIndex("by_conversation", q =>
-          q.eq("conversationId", conversation._id)
-        )
+        .withIndex("by_conversation", (q) => q.eq("conversationId", conversation._id))
         .collect();
       // A rejoin restores two members; those are cleared below defensively.
       if (members.length >= 2) {

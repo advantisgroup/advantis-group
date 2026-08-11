@@ -22,13 +22,9 @@ const severityValidator = v.union(
   v.literal("info"),
   v.literal("warning"),
   v.literal("error"),
-  v.literal("critical")
+  v.literal("critical"),
 );
-const sourceValidator = v.union(
-  v.literal("backend"),
-  v.literal("tracker"),
-  v.literal("dashboard")
-);
+const sourceValidator = v.union(v.literal("backend"), v.literal("tracker"), v.literal("dashboard"));
 
 interface LogArgs {
   severity: Severity;
@@ -45,11 +41,8 @@ export async function logEvent(ctx: MutationCtx, args: LogArgs): Promise<void> {
   const now = Date.now();
   const existing = await ctx.db
     .query("activitySystemEvents")
-    .withIndex("by_open", q =>
-      q
-        .eq("resolvedAt", undefined)
-        .eq("code", args.code)
-        .eq("deviceId", args.deviceId)
+    .withIndex("by_open", (q) =>
+      q.eq("resolvedAt", undefined).eq("code", args.code).eq("deviceId", args.deviceId),
     )
     .first();
 
@@ -100,19 +93,19 @@ const OFFLINE_THRESHOLD_MS = 30 * 60 * 1000;
 /** Plain-language health summary for the whole team. Any signed-in user. */
 export const health = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     const now = Date.now();
 
     const activeDevices = await ctx.db
       .query("devices")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
     const offlineDevices = await Promise.all(
       activeDevices
-        .filter(d => now - d.lastSeen > OFFLINE_THRESHOLD_MS)
-        .map(async d => {
+        .filter((d) => now - d.lastSeen > OFFLINE_THRESHOLD_MS)
+        .map(async (d) => {
           const person = d.personId ? await ctx.db.get(d.personId) : null;
           return {
             deviceId: d.deviceId,
@@ -121,17 +114,17 @@ export const health = query({
             lastSeen: d.lastSeen,
             offlineForMs: now - d.lastSeen,
           };
-        })
+        }),
     );
     offlineDevices.sort((a, b) => b.offlineForMs - a.offlineForMs);
 
     const openEvents = await ctx.db
       .query("activitySystemEvents")
-      .withIndex("by_resolvedAt", q => q.eq("resolvedAt", undefined))
+      .withIndex("by_resolvedAt", (q) => q.eq("resolvedAt", undefined))
       .order("desc")
       .take(200);
 
-    const recentIssues = openEvents.slice(0, 50).map(e => ({
+    const recentIssues = openEvents.slice(0, 50).map((e) => ({
       id: e._id,
       severity: e.severity,
       code: e.code,
@@ -142,19 +135,16 @@ export const health = query({
       lastAt: e.lastAt,
     }));
 
-    const worstSeverity: Severity | null = openEvents.reduce<Severity | null>(
-      (worst, e) => {
-        const rank: Record<Severity, number> = {
-          info: 0,
-          warning: 1,
-          error: 2,
-          critical: 3,
-        };
-        if (!worst || rank[e.severity] > rank[worst]) return e.severity;
-        return worst;
-      },
-      null
-    );
+    const worstSeverity: Severity | null = openEvents.reduce<Severity | null>((worst, e) => {
+      const rank: Record<Severity, number> = {
+        info: 0,
+        warning: 1,
+        error: 2,
+        critical: 3,
+      };
+      if (!worst || rank[e.severity] > rank[worst]) return e.severity;
+      return worst;
+    }, null);
 
     return {
       generatedAt: now,
@@ -180,7 +170,7 @@ export const listEvents = query({
     if (onlyOpen) {
       rows = await ctx.db
         .query("activitySystemEvents")
-        .withIndex("by_resolvedAt", q => q.eq("resolvedAt", undefined))
+        .withIndex("by_resolvedAt", (q) => q.eq("resolvedAt", undefined))
         .order("desc")
         .take(take);
     } else {
@@ -192,13 +182,13 @@ export const listEvents = query({
     }
 
     return Promise.all(
-      rows.map(async r => {
+      rows.map(async (r) => {
         const resolver = r.resolvedBy ? await ctx.db.get(r.resolvedBy) : null;
         return {
           ...r,
           resolvedByName: resolver ? displayName(resolver) : null,
         };
-      })
+      }),
     );
   },
 });
@@ -265,7 +255,7 @@ export const purgeOldEvents = internalMutation({
     const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
     const stale = await ctx.db
       .query("activitySystemEvents")
-      .withIndex("by_resolvedAt", q => q.gt("resolvedAt", 0))
+      .withIndex("by_resolvedAt", (q) => q.gt("resolvedAt", 0))
       .take(4000);
     let deleted = 0;
     for (const row of stale) {

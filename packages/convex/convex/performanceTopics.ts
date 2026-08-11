@@ -11,51 +11,37 @@ import { ConvexError, v } from "convex/values";
 
 import { type Doc, type Id } from "./_generated/dataModel";
 import { mutation, type MutationCtx } from "./_generated/server";
-import { resolveActiveSession } from "./performanceAuth";
+import {
+  requireCanViewEmployee as requireCanView,
+  requirePermission,
+  requireSessionLogin as requireLogin,
+} from "./performanceAuth";
+
+async function getEmployeeOrThrow(
+  ctx: MutationCtx,
+  employeeId: Id<"performanceEmployees">,
+): Promise<Doc<"performanceEmployees">> {
+  const employee = await ctx.db.get(employeeId);
+  if (!employee) {
+    throw new ConvexError({
+      code: "not_found",
+      message: "Employee not found.",
+    });
+  }
+  return employee;
+}
 
 const TOPIC_STATUSES = ["offen", "erreicht", "nicht_erreicht"] as const;
 const statusValidator = v.union(
   v.literal("offen"),
   v.literal("erreicht"),
-  v.literal("nicht_erreicht")
+  v.literal("nicht_erreicht"),
 );
-
-async function requireLogin(
-  ctx: MutationCtx,
-  token: string
-): Promise<Doc<"performanceLogins">> {
-  const resolved = await resolveActiveSession(ctx, token);
-  if (!resolved) {
-    throw new ConvexError({
-      code: "unauthenticated",
-      message: "Please sign in.",
-    });
-  }
-  return resolved.login;
-}
-
-function requireAdmin(login: Doc<"performanceLogins">): void {
-  if (login.role !== "admin") {
-    throw new ConvexError({ code: "forbidden", message: "Admins only." });
-  }
-}
-
-function requireCanView(
-  login: Doc<"performanceLogins">,
-  employeeId: Id<"performanceEmployees">
-): void {
-  if (login.role === "admin") return;
-  if (login.employeeId === employeeId) return;
-  throw new ConvexError({
-    code: "forbidden",
-    message: "You can't view this employee.",
-  });
-}
 
 async function getOwnTopic(
   ctx: MutationCtx,
   id: Id<"performanceTopics">,
-  employeeId: Id<"performanceEmployees">
+  employeeId: Id<"performanceEmployees">,
 ): Promise<Doc<"performanceTopics">> {
   const topic = await ctx.db.get(id);
   if (!topic || topic.employeeId !== employeeId) {
@@ -78,7 +64,8 @@ export const saveTopic = mutation({
   },
   handler: async (ctx, args): Promise<{ id: Id<"performanceTopics"> }> => {
     const login = await requireLogin(ctx, args.token);
-    requireAdmin(login);
+    const employee = await getEmployeeOrThrow(ctx, args.employeeId);
+    await requirePermission(ctx, login, "manage_roster", employee.companyId);
 
     const topic = args.topic.trim();
     if (!topic) {
@@ -89,10 +76,7 @@ export const saveTopic = mutation({
     }
     const todo = args.todo?.trim() || undefined;
     const endDate = args.endDate?.trim() || undefined;
-    const status =
-      args.status && TOPIC_STATUSES.includes(args.status)
-        ? args.status
-        : "offen";
+    const status = args.status && TOPIC_STATUSES.includes(args.status) ? args.status : "offen";
     const now = Date.now();
 
     if (args.id) {
@@ -129,7 +113,8 @@ export const deleteTopic = mutation({
   },
   handler: async (ctx, { token, employeeId, id }): Promise<{ ok: true }> => {
     const login = await requireLogin(ctx, token);
-    requireAdmin(login);
+    const employee = await getEmployeeOrThrow(ctx, employeeId);
+    await requirePermission(ctx, login, "manage_roster", employee.companyId);
     const existing = await getOwnTopic(ctx, id, employeeId);
     await ctx.db.delete(existing._id);
     return { ok: true };
@@ -145,12 +130,10 @@ export const setTopicStatus = mutation({
     id: v.id("performanceTopics"),
     status: statusValidator,
   },
-  handler: async (
-    ctx,
-    { token, employeeId, id, status }
-  ): Promise<{ ok: true }> => {
+  handler: async (ctx, { token, employeeId, id, status }): Promise<{ ok: true }> => {
     const login = await requireLogin(ctx, token);
-    requireCanView(login, employeeId);
+    const employee = await getEmployeeOrThrow(ctx, employeeId);
+    await requireCanView(ctx, login, employee);
     const existing = await getOwnTopic(ctx, id, employeeId);
     await ctx.db.patch(existing._id, { status, updatedAt: Date.now() });
     return { ok: true };

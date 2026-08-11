@@ -14,6 +14,9 @@ export interface OneDriveUser extends AccessUser {
   name: string;
   email: string;
   role: Role;
+  canAccessFiles: boolean;
+  canWriteWiki: boolean;
+  canWriteHR: boolean;
 }
 
 /**
@@ -21,9 +24,7 @@ export interface OneDriveUser extends AccessUser {
  * + OneDrive flags) from Convex. This is the identity every OneDrive route
  * starts from — Graph itself only ever sees the service account.
  */
-export async function resolveOneDriveUser(
-  request: Request
-): Promise<OneDriveUser> {
+export async function resolveOneDriveUser(request: Request): Promise<OneDriveUser> {
   const { clerkUserId } = await requireAuth(request);
   const ctx = await getConvex().query(api.onedrive.apiUserContext, {
     serverKey: getConvexServerKey(),
@@ -38,7 +39,19 @@ export async function resolveOneDriveUser(
     role: ctx.role,
     gfAccess: ctx.gfAccess,
     uploadRequestsEnabled: ctx.uploadRequestsEnabled,
+    canAccessFiles: ctx.canAccessFiles,
+    canWriteWiki: ctx.canWriteWiki,
+    canWriteHR: ctx.canWriteHR,
   };
+}
+
+/** Full file-browser routes (listing, search, quota…) also admit a user who
+ * only holds the wiki/HR indirect grant — `assertWithinBrowsableScope` then
+ * confines what they can actually see to their own subtree. */
+export function requireFileBrowserAccess(user: OneDriveUser): void {
+  if (!user.canAccessFiles && !user.canWriteWiki && !user.canWriteHR) {
+    throw Errors.forbidden("Files access required");
+  }
 }
 
 export function requireManagerUser(user: OneDriveUser): void {

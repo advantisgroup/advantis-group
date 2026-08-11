@@ -11,6 +11,7 @@ import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
 import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
+import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { setPerformanceToken } from "@/lib/performanceAuth";
 export default function PerformanceSetupPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
+  const slug = usePerformanceCompanySlug();
   const setupAccount = useAction(api.performanceAuth.setupAccount);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -32,7 +34,7 @@ export default function PerformanceSetupPage() {
     setSubmitting(true);
     setError(null);
     try {
-      const result = await setupAccount({ email, name, password });
+      const result = await setupAccount({ slug, email, name, password });
       setPerformanceToken(result.token, result.expiresAt);
       router.replace("/performance");
     } catch {
@@ -61,7 +63,7 @@ export default function PerformanceSetupPage() {
               type="email"
               autoComplete="username"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -70,20 +72,18 @@ export default function PerformanceSetupPage() {
               id="performance-setup-name"
               autoComplete="name"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="performance-setup-password">
-              {t("passwordLabel")}
-            </Label>
+            <Label htmlFor="performance-setup-password">{t("passwordLabel")}</Label>
             <Input
               id="performance-setup-password"
               type="password"
               autoComplete="new-password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") void submit();
               }}
             />
@@ -97,10 +97,7 @@ export default function PerformanceSetupPage() {
             {t("setupSubmit")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            <Link
-              href="/performance/login"
-              className="underline underline-offset-4"
-            >
+            <Link href="/performance/login" className="underline underline-offset-4">
               {t("backToLogin")}
             </Link>
           </p>

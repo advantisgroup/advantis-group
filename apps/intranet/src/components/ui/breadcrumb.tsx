@@ -15,7 +15,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
     <ol
       className={cn(
         "flex flex-wrap items-center gap-1.5 overflow-x-auto whitespace-nowrap text-sm text-muted-foreground [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-        className
+        className,
       )}
       {...props}
     />
@@ -23,26 +23,14 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
 }
 
 function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
-  return (
-    <li
-      className={cn("inline-flex shrink-0 items-center gap-1.5", className)}
-      {...props}
-    />
-  );
+  return <li className={cn("inline-flex shrink-0 items-center gap-1.5", className)} {...props} />;
 }
 
-function BreadcrumbLink({
-  className,
-  href,
-  ...props
-}: React.ComponentProps<typeof Link>) {
+function BreadcrumbLink({ className, href, ...props }: React.ComponentProps<typeof Link>) {
   return (
     <Link
       href={href}
-      className={cn(
-        "shrink-0 truncate transition-colors hover:text-foreground",
-        className
-      )}
+      className={cn("shrink-0 truncate transition-colors hover:text-foreground", className)}
       {...props}
     />
   );
@@ -60,11 +48,7 @@ function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
-function BreadcrumbSeparator({
-  children,
-  className,
-  ...props
-}: React.ComponentProps<"li">) {
+function BreadcrumbSeparator({ children, className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
       role="presentation"
@@ -77,10 +61,7 @@ function BreadcrumbSeparator({
   );
 }
 
-function BreadcrumbEllipsis({
-  className,
-  ...props
-}: React.ComponentProps<"span">) {
+function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
       role="presentation"

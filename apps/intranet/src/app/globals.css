@@ -97,9 +97,10 @@
   animation: tour-pulse-ring 1.8s ease-in-out infinite;
 }
 
-/* One-shot flash for a skill chip landed on from a Skill-Profile match
-   search — fades from a warm highlight back to the resting style. */
-@keyframes skill-flash {
+/* One-shot flash for an item landed on via a deep link (a notification's
+   `link`, a skill-profile match, …) — fades from a warm highlight back to
+   the resting style. */
+@keyframes deeplink-flash {
   0% {
     background: color-mix(in oklch, var(--warning) 35%, transparent);
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--warning) 45%, transparent);
@@ -116,12 +117,12 @@
   }
 }
 
-.skill-hl {
-  animation: skill-flash 2.5s ease-out forwards;
+.deeplink-hl {
+  animation: deeplink-flash 2.5s ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skill-hl {
+  .deeplink-hl {
     animation: none;
     background: color-mix(in oklch, var(--warning) 12%, transparent);
   }
@@ -244,14 +245,10 @@
 
   /* Card/elevation shadows. */
   --shadow-soft: 0 1px 2px rgba(28, 22, 14, 0.04);
-  --shadow-card:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(20, 16, 10, 0.035);
+  --shadow-card: inset 0 1px 0 0 rgba(255, 255, 255, 0.03), 0 1px 2px rgba(20, 16, 10, 0.035);
   --shadow-card-hover:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.04),
-    0 2px 10px -4px rgba(20, 16, 10, 0.1);
-  --shadow-overlay:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.05),
-    0 24px 60px -16px rgba(8, 6, 3, 0.5);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 0 2px 10px -4px rgba(20, 16, 10, 0.1);
+  --shadow-overlay: inset 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 24px 60px -16px rgba(8, 6, 3, 0.5);
   --shadow-glow: 0 8px 24px -10px rgba(60, 120, 240, 0.4);
 
   /* Motion — ease-out entrances ≤260ms; transform & opacity only. */
@@ -341,6 +338,26 @@
     --chart-fg: #f0eee8;
     --chart-cursor: rgba(96, 150, 248, 0.14);
     --chart-tooltip-shadow: 0 16px 40px -16px rgba(0, 0, 0, 0.7);
+
+    /* Categorical series slots (dark). Assign in fixed slot order and never
+       cycle — a series keeps its hue when a filter removes its neighbours, so
+       "opened is blue" stays true. The `@theme` block above already maps
+       `--color-chart-N` onto these, which is what shadcn's chart registry
+       expects, so a chart copied from ui.shadcn.com/charts recolours itself
+       into this palette with no edits.
+
+       Validated as a set against the dark card surface (#22201d): lightness
+       band, chroma floor, adjacent-pair CVD separation (worst ΔE 8.4), the
+       normal-vision floor (worst ΔE 19.3) and 3:1 contrast all pass. Slots
+       1–3 additionally clear the stricter all-pairs gate, so any chart whose
+       series can appear in any combination (scatter, small multiples) caps at
+       three. Re-run the validator against this surface before editing a
+       value — the order itself is the CVD-safety mechanism, not cosmetics. */
+    --chart-1: #3987e5; /* blue */
+    --chart-2: #d95926; /* orange */
+    --chart-3: #199e70; /* aqua */
+    --chart-4: #c98500; /* yellow */
+    --chart-5: #d55181; /* magenta */
 
     /* Fused-state palette (dark) — the employee states as they appear in
        timeline strips, the minute grid and the stacked hourly chart. The four
@@ -436,6 +453,19 @@
     --chart-cursor: rgba(43, 96, 232, 0.07);
     --chart-tooltip-shadow: 0 10px 30px -12px rgba(40, 33, 22, 0.22);
 
+    /* Categorical series slots (light) — the same five hues re-stepped for the
+       light card surface (#fffffe), not a flipped copy of the dark steps.
+       Validated as a set: worst adjacent CVD ΔE 8.2, worst adjacent
+       normal-vision ΔE 19.6. Slots 4 and 5 land below 3:1 contrast here, so a
+       chart that reaches them owes the reader relief (visible direct labels or
+       the table view); slots 1–3, which is all the overview uses, clear 3:1
+       and the all-pairs gate. */
+    --chart-1: #2a78d6; /* blue */
+    --chart-2: #eb6834; /* orange */
+    --chart-3: #129e6e; /* aqua */
+    --chart-4: #eda100; /* yellow */
+    --chart-5: #e87ba4; /* magenta */
+
     /* Fused-state palette (light) — own steps, validated against the light
        card surface (not a flipped copy of dark). */
     --state-active: #129e6e;
@@ -478,7 +508,14 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     cursor: default;
+    /* `clip` rather than `hidden`: `overflow-x: hidden` forces overflow-y to
+       compute to `auto`, which turns this into a scroll container and quietly
+       breaks `position: sticky` everywhere below it (the legal-page table of
+       contents, sticky table headers). `clip` cuts the same overflow off
+       without becoming a scroll container. The `hidden` line above it is the
+       fallback for Safari < 16, which doesn't know `clip`. */
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   p,
@@ -565,11 +602,147 @@ html.lenis body {
   pointer-events: none;
 }
 
+/* The app shell pins itself to the viewport and makes <main> the scroll
+   container, so the document itself must never scroll. Without this the mobile
+   browser still treats <html> as scrollable: a swipe past the end of <main>
+   chains out to the document and drags the whole app up, leaving a strip of
+   dead page below the bottom nav. Set by SidebarProvider while it's mounted
+   rather than on `html` outright, because the standalone pages sharing this
+   stylesheet (legal, sign-in, /performance, /wallbox-sales-academy) are
+   ordinary documents that do scroll. */
+html.app-shell-locked,
+html.app-shell-locked body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* The app shell pins itself to the viewport so <main> can be the scroll
+   container. Print needs the document to flow at its natural height instead,
+   or the page break never happens and everything past the first sheet is
+   dropped. Un-layered so it beats the utility classes that set the heights. */
+@media print {
+  html,
+  body,
+  html.app-shell-locked,
+  html.app-shell-locked body {
+    height: auto;
+    overflow: visible;
+  }
+
+  @page {
+    margin: 16mm;
+  }
+
+  /* Screen-only affordances — a download button, a chapter switcher or a
+     tab strip is dead ink on paper, and the numbered nav chips in particular
+     duplicate content that follows anyway. Anything genuinely worth printing
+     is text, not a control. */
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="tablist"],
+  [role="toolbar"],
+  input[type="button"],
+  input[type="submit"],
+  [data-print="hide"] {
+    display: none !important;
+  }
+
+  /* Keep headings with the text they introduce, and don't strand a single
+     line of a paragraph on its own sheet. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  p,
+  li,
+  blockquote,
+  table,
+  img {
+    break-inside: avoid;
+  }
+
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+}
+
+/* Lenis smooth scrolling (see `components/effects/SmoothScrolling.tsx`).
+   Trimmed from marketing's copy: the `html.lenis` rules there exist because
+   marketing runs Lenis in `root` mode on the document — here the scroller is
+   `<main>`, so the document is never the Lenis wrapper and those rules would
+   have nothing to match. What remains is the part that applies to any wrapper:
+   kill native smooth-scroll so it can't fight the eased position, let a nested
+   `data-lenis-prevent` scroller contain its own overscroll, and stop iframes
+   from eating pointer events mid-scroll. Un-layered so it beats utilities. */
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+
+/* iOS Safari zooms the viewport whenever a focused control's text is under
+   16px, so every tap on a field makes the layout lurch and the user has to
+   pinch back out. Un-layered on purpose: the same rule inside `@layer base`
+   would lose to a `text-sm` utility on the element itself. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Date/time inputs carry a wide intrinsic width on iOS that ignores the box
+   they're in, which is what pushes dialogs and grid cells off-screen. They're
+   fully styled by the Input component already, so dropping the native chrome
+   costs nothing. */
+input[type="date"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="time"],
+input[type="week"] {
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 @layer components {
+  /* The pinned app shell's height. `inset: 0` on a fixed element resolves
+     against the *large* viewport, so on a phone with the URL bar showing the
+     bottom of the shell — the bottom nav — sits under the browser chrome, and
+     the document can't be scrolled to reveal it (see `.app-shell-locked`).
+     `dvh` tracks the visible area instead; the `vh` line is the fallback for
+     Safari < 15.4. In `components` so a Tailwind height utility on the same
+     element still wins. */
+  .app-shell-viewport {
+    height: 100vh;
+    height: 100dvh;
+  }
+
   /* Smooth scroll behavior */
   html {
     scroll-behavior: smooth;
+    /* See the note on `body` — `hidden` here would make `html` the scroll
+       container and stop `position: sticky` working at all. */
     overflow-x: hidden;
+    overflow-x: clip;
   }
 
   /* Respect user preferences for reduced motion */
@@ -599,10 +772,7 @@ html.lenis body {
 
   .grid-pattern {
     background-image:
-      linear-gradient(
-        color-mix(in oklch, var(--foreground) 6%, transparent) 1px,
-        transparent 1px
-      ),
+      linear-gradient(color-mix(in oklch, var(--foreground) 6%, transparent) 1px, transparent 1px),
       linear-gradient(
         90deg,
         color-mix(in oklch, var(--foreground) 6%, transparent) 1px,
@@ -722,12 +892,150 @@ html.lenis body {
     border-radius: 0.3rem;
   }
 
+  .rich-text kbd {
+    font-family: var(--font-mono), monospace;
+    font-size: 0.8em;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    padding: 0.05rem 0.4rem;
+    border-radius: 0.35rem;
+    box-shadow: 0 1px 0 var(--border);
+  }
+
   .rich-text pre {
     background: var(--muted);
     padding: 0.75rem 0.9rem;
     border-radius: 0.5rem;
     overflow-x: auto;
     margin: 0.75rem 0;
+  }
+
+  .rich-text .mention {
+    display: inline;
+    font-weight: 600;
+    color: var(--primary);
+    background: color-mix(in oklch, var(--primary) 12%, transparent);
+    border-radius: 0.3rem;
+    padding: 0.05rem 0.3rem;
+    cursor: pointer;
+  }
+
+  .rich-text .mention:hover {
+    background: color-mix(in oklch, var(--primary) 20%, transparent);
+  }
+
+  .rich-text .rich-date {
+    display: inline;
+    border: 1px solid color-mix(in oklch, var(--signal) 35%, var(--border));
+    border-radius: 0.3rem;
+    background: color-mix(in oklch, var(--signal) 11%, transparent);
+    padding: 0.05rem 0.35rem;
+    color: color-mix(in oklch, var(--signal) 72%, var(--foreground));
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+
+  .rich-text .rich-date:hover {
+    border-color: color-mix(in oklch, var(--signal) 55%, var(--border));
+    background: color-mix(in oklch, var(--signal) 18%, transparent);
+  }
+
+  .rich-text .rich-date:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* .docx preview page in the global file viewer — always a literal white
+     sheet of paper regardless of app theme (matches how PdfPreview always
+     renders a light page against the dark backdrop), so colors are
+     hardcoded rather than pulled from the light/dark --foreground vars. */
+  .docx-preview {
+    font-size: 0.925rem;
+    line-height: 1.65;
+    color: #171717;
+  }
+
+  .docx-preview > :first-child {
+    margin-top: 0;
+  }
+
+  .docx-preview > :last-child {
+    margin-bottom: 0;
+  }
+
+  .docx-preview p {
+    margin: 0.6rem 0;
+  }
+
+  .docx-preview h1,
+  .docx-preview h2,
+  .docx-preview h3 {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 1.1rem 0 0.5rem;
+    line-height: 1.25;
+  }
+
+  .docx-preview h1 {
+    font-size: 1.4rem;
+  }
+
+  .docx-preview h2 {
+    font-size: 1.2rem;
+  }
+
+  .docx-preview h3 {
+    font-size: 1.05rem;
+  }
+
+  .docx-preview ul,
+  .docx-preview ol {
+    margin: 0.5rem 0;
+    padding-left: 1.4rem;
+  }
+
+  .docx-preview ul {
+    list-style: disc;
+  }
+
+  .docx-preview ol {
+    list-style: decimal;
+  }
+
+  .docx-preview li {
+    margin: 0.2rem 0;
+  }
+
+  .docx-preview a {
+    color: #2563eb;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .docx-preview img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .docx-preview table {
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+    width: 100%;
+  }
+
+  .docx-preview td,
+  .docx-preview th {
+    border: 1px solid #d4d4d4;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .docx-preview strong,
+  .docx-preview b {
+    font-weight: 700;
   }
 
   /* Rich-text editor placeholder */

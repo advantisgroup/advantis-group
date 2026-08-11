@@ -66,9 +66,7 @@ export default function UnsereMarken() {
           <div className="mx-auto max-w-5xl space-y-8 text-left">
             <h1 className="font-[family-name:var(--font-outfit)] text-5xl leading-[0.95] md:text-7xl lg:text-8xl">
               <span className="block">{t("hero.titlePrefix")}</span>
-              <span className="block text-primary">
-                {t("hero.titleSuffix")}
-              </span>
+              <span className="block text-primary">{t("hero.titleSuffix")}</span>
             </h1>
             <p className="max-w-3xl text-lg leading-relaxed text-muted-foreground md:text-2xl">
               {t("hero.subtitle")}
@@ -100,7 +98,7 @@ export default function UnsereMarken() {
                     </div>
 
                     <ul className="space-y-3 text-sm leading-relaxed text-foreground/85 md:text-base">
-                      {brand.highlights.map(highlight => {
+                      {brand.highlights.map((highlight) => {
                         return (
                           <li key={highlight} className="flex gap-3">
                             <span aria-hidden className="text-primary">
@@ -113,16 +111,8 @@ export default function UnsereMarken() {
                     </ul>
 
                     <div className="flex items-start lg:justify-end">
-                      <Button
-                        asChild
-                        variant="outline"
-                        className="group rounded-full px-6"
-                      >
-                        <Link
-                          href={brand.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                      <Button asChild variant="outline" className="group rounded-full px-6">
+                        <Link href={brand.url} target="_blank" rel="noopener noreferrer">
                           {t("learnMore")}
                           <ExternalLink className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                         </Link>
@@ -146,8 +136,7 @@ export default function UnsereMarken() {
         <div className="container relative z-10 mx-auto px-4">
           <div className="mx-auto max-w-4xl space-y-8 text-center">
             <h2 className="font-[family-name:var(--font-outfit)] text-4xl leading-tight md:text-6xl lg:text-7xl">
-              {t("cta.titlePart1")}{" "}
-              <span className="text-primary">{t("cta.titlePart2")}</span>
+              {t("cta.titlePart1")} <span className="text-primary">{t("cta.titlePart2")}</span>
             </h2>
             <p className="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-2xl">
               {t("cta.description")}

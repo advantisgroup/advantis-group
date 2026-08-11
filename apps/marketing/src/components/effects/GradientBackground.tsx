@@ -28,15 +28,11 @@ function GradientBackground({
   const finalBlurClass = blurClassMap[backdropBlurAmount] || blurClassMap["sm"];
 
   if (forceDisable) {
-    return (
-      <div className={`w-full h-full overflow-hidden bg-black ${className}`} />
-    );
+    return <div className={`w-full h-full overflow-hidden bg-black ${className}`} />;
   }
 
   return (
-    <div
-      className={`w-full h-full overflow-hidden bg-black relative ${className}`}
-    >
+    <div className={`w-full h-full overflow-hidden bg-black relative ${className}`}>
       {/* Animated gradient using CSS */}
       <div className="absolute inset-0 opacity-100">
         {/* Base gradient layers */}
@@ -59,8 +55,7 @@ function GradientBackground({
         <div
           className="absolute w-[500px] h-[500px] rounded-full blur-3xl opacity-20 animate-float-slow"
           style={{
-            background:
-              "radial-gradient(circle, rgba(180, 30, 80, 0.8), transparent 70%)",
+            background: "radial-gradient(circle, rgba(180, 30, 80, 0.8), transparent 70%)",
             top: "10%",
             left: "20%",
           }}
@@ -68,8 +63,7 @@ function GradientBackground({
         <div
           className="absolute w-[400px] h-[400px] rounded-full blur-3xl opacity-20 animate-float-medium"
           style={{
-            background:
-              "radial-gradient(circle, rgba(0, 30, 80, 0.8), transparent 70%)",
+            background: "radial-gradient(circle, rgba(0, 30, 80, 0.8), transparent 70%)",
             bottom: "10%",
             right: "20%",
           }}
@@ -77,8 +71,7 @@ function GradientBackground({
         <div
           className="absolute w-[300px] h-[300px] rounded-full blur-3xl opacity-15 animate-float-fast"
           style={{
-            background:
-              "radial-gradient(circle, rgba(100, 20, 100, 0.8), transparent 70%)",
+            background: "radial-gradient(circle, rgba(100, 20, 100, 0.8), transparent 70%)",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",

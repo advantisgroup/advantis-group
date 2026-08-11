@@ -7,7 +7,7 @@ import { toast } from "sonner";
 async function fetchBlobWithProgress(
   url: string,
   init: RequestInit | undefined,
-  onProgress?: (fraction: number | null) => void
+  onProgress?: (fraction: number | null) => void,
 ): Promise<Blob> {
   const res = await fetch(url, init);
   if (!res.ok) throw new Error("Download failed");
@@ -49,19 +49,18 @@ export async function downloadWithProgress(
   url: string,
   name: string,
   label: string,
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<void> {
   let toastId: string | number | undefined;
   const timer = setTimeout(() => {
     toastId = toast.loading(label);
   }, 400);
   try {
-    const blob = await fetchBlobWithProgress(url, init, fraction => {
+    const blob = await fetchBlobWithProgress(url, init, (fraction) => {
       if (toastId === undefined) return;
-      toast.loading(
-        fraction != null ? `${label} ${Math.round(fraction * 100)}%` : label,
-        { id: toastId }
-      );
+      toast.loading(fraction != null ? `${label} ${Math.round(fraction * 100)}%` : label, {
+        id: toastId,
+      });
     });
     saveBlob(blob, name);
   } finally {
@@ -77,7 +76,7 @@ export async function fetchAsFile(
   url: string,
   name: string,
   mimeType: string | undefined,
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<File> {
   const blob = await fetchBlobWithProgress(url, init);
   return new File([blob], name, {

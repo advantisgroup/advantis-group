@@ -44,7 +44,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         icon: <X />,
       });
     },
-    [tMessages]
+    [tMessages],
   );
 
   const resetButtonState = useCallback(() => {
@@ -79,9 +79,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
 
         if (response.status === 500) {
           setButtonState("error");
-          showErrorToast(
-            "Falls das Problem anhält versuchen sie es später nochmal"
-          );
+          showErrorToast("Falls das Problem anhält versuchen sie es später nochmal");
           resetButtonState();
           onError?.(new Error("Server error"));
           return false;
@@ -90,8 +88,7 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
         if (response.status === 429) {
           setButtonState("error");
           toast.error("Rate Limit", {
-            description:
-              "Sie haben zu viele Anfragen geschickt. Versuchen sie es später nochmal",
+            description: "Sie haben zu viele Anfragen geschickt. Versuchen sie es später nochmal",
             icon: <X />,
           });
           resetButtonState();
@@ -109,15 +106,13 @@ export function useEmailSubmit(options: UseEmailSubmitOptions = {}) {
       } catch (error) {
         console.log(error);
         setButtonState("error");
-        showErrorToast(
-          "Falls das Problem anhält versuchen sie es später nochmal"
-        );
+        showErrorToast("Falls das Problem anhält versuchen sie es später nochmal");
         resetButtonState();
         onError?.(error);
         return false;
       }
     },
-    [onSuccess, onError, resetButtonState, showErrorToast, tMessages, user]
+    [onSuccess, onError, resetButtonState, showErrorToast, tMessages, user],
   );
 
   return {

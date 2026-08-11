@@ -2,12 +2,11 @@
 
 import { useMemo } from "react";
 
-import { api } from "@advantis/convex/api";
-import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
 import { CHART } from "@/components/activity/charts/theme";
+import { useDashboardData } from "@/components/performance/PerformanceDashboardContext";
 import {
   DeltaPair,
   fmtDayShort,
@@ -15,9 +14,7 @@ import {
   fmtNum,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 
 function CallStatCard({
   label,
@@ -44,21 +41,19 @@ function CallStatCard({
 export default function DashboardCallsPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.teamDashboard, { token, ym });
+  const data = useDashboardData();
 
   // The "Call-Aktivität" chart (answered/outbound) no longer renders here —
   // it's promoted to the top of the page by (dashboard)/layout.tsx's
   // DashboardTopSection for this tab, so it isn't shown twice.
   const timeChart = useMemo(
     () =>
-      (data?.days ?? []).map(d => ({
+      (data?.days ?? []).map((d) => ({
         label: fmtDayShort(d.date, locale),
         talk: d.values.talkTotalSec ?? 0,
         login: d.values.loginSec ?? 0,
       })),
-    [data?.days, locale]
+    [data?.days, locale],
   );
 
   if (!data) return <PerformanceContentSkeleton />;
@@ -73,16 +68,14 @@ export default function DashboardCallsPage() {
     );
   }
 
-  const daysWithData = data.days.filter(
-    d => d.values.callsToday !== undefined
-  ).length;
+  const daysWithData = data.days.filter((d) => d.values.callsToday !== undefined).length;
   const loginPerDay = daysWithData
     ? Math.round((data.total.loginSec ?? 0) / daysWithData)
     : undefined;
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <CallStatCard
           label={t("callsTotalLabel")}
           value={fmtNum(data.total.callsToday)}
@@ -119,10 +112,7 @@ export default function DashboardCallsPage() {
           dVm={data.dVm.loginSec}
           dVj={data.dVj.loginSec}
         />
-        <CallStatCard
-          label={t("callsLoginPerDayLabel")}
-          value={fmtDuration(loginPerDay)}
-        />
+        <CallStatCard label={t("callsLoginPerDayLabel")} value={fmtDuration(loginPerDay)} />
       </div>
 
       <Card>
@@ -139,16 +129,17 @@ export default function DashboardCallsPage() {
                 key: "talk",
                 name: t("callsTotalTalkLabel"),
                 color: CHART.idle,
+                axis: "left",
               },
               {
                 key: "login",
                 name: t("callsLoginLabel"),
                 color: CHART.info,
+                axis: "right",
               },
             ]}
             yTickFormatter={(v: number) => fmtDuration(v)}
             tooltipFormatter={(value: number) => fmtDuration(value)}
-            yScale="log"
           />
         </CardContent>
       </Card>

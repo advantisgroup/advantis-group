@@ -4,8 +4,17 @@ import { internal } from "./_generated/api";
 import { type Doc, type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { internalAction, mutation, query } from "./_generated/server";
-import { getUserByClerkId, requireCapability, requireUser } from "./lib/auth";
+import {
+  effectiveCustomRoleIds,
+  getUserByClerkId,
+  hasApplicantAccess,
+  MANAGER_ROLES,
+  requireCapability,
+  requireUser,
+} from "./lib/auth";
 import { createNotification, notifyUsers } from "./lib/notify";
+import { recordUnifiedAudit } from "./lib/auditLogWrite";
+import { batchUserSummaries, displayName } from "./lib/users";
 
 /**
  * OneDrive system-of-record. The Elysia API owns the Microsoft Graph credentials
@@ -23,35 +32,55 @@ function assertServerKey(serverKey: string): void {
   }
 }
 
-function userName(u: Doc<"users">): string {
-  return [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email;
-}
-
 async function approverIds(ctx: MutationCtx): Promise<Id<"users">[]> {
   const admins = await ctx.db
     .query("users")
-    .withIndex("by_role", q => q.eq("role", "admin"))
+    .withIndex("by_role", (q) => q.eq("role", "admin"))
     .collect();
   const managers = await ctx.db
     .query("users")
-    .withIndex("by_role", q => q.eq("role", "manager"))
+    .withIndex("by_role", (q) => q.eq("role", "manager"))
     .collect();
-  return [...admins, ...managers]
-    .filter(u => u.status === "active")
-    .map(u => u._id);
+  return [...admins, ...managers].filter((u) => u.status === "active").map((u) => u._id);
 }
+
+type OnedriveAuditAction =
+  | "request"
+  | "upload"
+  | "approve"
+  | "deny"
+  | "mkdir"
+  | "move"
+  | "rename"
+  | "delete"
+  | "restore"
+  | "share"
+  | "grant_gf_access"
+  | "revoke_gf_access"
+  | "enable_uploads"
+  | "disable_uploads"
+  | "teamAccessGrant"
+  | "teamAccessRevoke";
 
 async function writeAudit(
   ctx: MutationCtx,
   actorUserId: Id<"users">,
-  action: string,
-  target?: string
+  action: OnedriveAuditAction,
+  target?: string,
 ): Promise<void> {
+  const at = Date.now();
   await ctx.db.insert("onedriveAudit", {
     actorUserId,
     action,
     target,
-    at: Date.now(),
+    at,
+  });
+  await recordUnifiedAudit(ctx, {
+    domain: "onedrive",
+    actorUserId,
+    action,
+    target,
+    at,
   });
 }
 
@@ -66,13 +95,26 @@ export const apiUserContext = query({
     assertServerKey(serverKey);
     const user = await getUserByClerkId(ctx, clerkUserId);
     if (!user || user.status !== "active") return null;
+    const customRoles = await Promise.all(
+      effectiveCustomRoleIds(user).map((customRoleId) => ctx.db.get(customRoleId)),
+    );
     return {
       userId: user._id,
       role: user.role,
-      name: userName(user),
+      name: displayName(user),
       email: user.email,
       gfAccess: user.gfAccess ?? false,
       uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
+      canAccessFiles:
+        MANAGER_ROLES.includes(user.role) ||
+        customRoles.some((customRole) => customRole?.capabilities.includes("access_files")),
+      // Indirect permission: anyone who can manage wikis/HR gets write access
+      // to that one OneDrive subtree (Team/Wiki, Team/HR) even without full
+      // file-browser access — see apps/api's `access.ts` for the scoping.
+      canWriteWiki:
+        MANAGER_ROLES.includes(user.role) ||
+        customRoles.some((customRole) => customRole?.capabilities.includes("manage_guidebooks")),
+      canWriteHR: hasApplicantAccess(user),
     };
   },
 });
@@ -119,8 +161,8 @@ export const apiSubmitRequest = mutation({
     await notifyUsers(ctx, await approverIds(ctx), {
       type: "upload_request",
       title: "Upload awaiting approval",
-      body: `${userName(requester)} wants to upload "${args.fileName}" to ${args.targetFolderPath || "Advantis Group"}`,
-      link: "/admin/uploads",
+      body: `${displayName(requester)} wants to upload "${args.fileName}" to ${args.targetFolderPath || "Advantis Group"}`,
+      link: `/admin/uploads?upload=${uploadId}`,
     });
     return { uploadId };
   },
@@ -186,7 +228,7 @@ async function notifyDecision(
   ctx: MutationCtx,
   upload: Doc<"onedriveUploads">,
   decision: "approved" | "denied",
-  note: string | undefined
+  note: string | undefined,
 ): Promise<void> {
   const requester = await ctx.db.get(upload.requesterUserId);
   if (!requester) return;
@@ -291,7 +333,14 @@ export const apiRecordAction = mutation({
   args: {
     serverKey: v.string(),
     actorUserId: v.id("users"),
-    action: v.string(),
+    action: v.union(
+      v.literal("mkdir"),
+      v.literal("move"),
+      v.literal("rename"),
+      v.literal("delete"),
+      v.literal("restore"),
+      v.literal("share"),
+    ),
     target: v.optional(v.string()),
   },
   handler: async (ctx, { serverKey, actorUserId, action, target }) => {
@@ -341,11 +390,11 @@ export const apiUploadersByItemIds = query({
     for (const itemId of itemIds) {
       const row = await ctx.db
         .query("onedriveUploads")
-        .withIndex("by_driveItemId", q => q.eq("driveItemId", itemId))
+        .withIndex("by_driveItemId", (q) => q.eq("driveItemId", itemId))
         .first();
       if (!row) continue;
       const u = await ctx.db.get(row.requesterUserId);
-      if (u) out[itemId] = userName(u);
+      if (u) out[itemId] = displayName(u);
     }
     return out;
   },
@@ -359,12 +408,12 @@ export const apiTeamAccessRoster = query({
     assertServerKey(serverKey);
     const users = await ctx.db
       .query("users")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
     return users
-      .map(u => ({
+      .map((u) => ({
         userId: u._id,
-        name: userName(u),
+        name: displayName(u),
         email: u.email,
         permissionId: u.oneDrivePermissionId ?? null,
       }))
@@ -380,19 +429,11 @@ export const apiSetTeamAccess = mutation({
     targetUserId: v.id("users"),
     permissionId: v.string(),
   },
-  handler: async (
-    ctx,
-    { serverKey, actorUserId, targetUserId, permissionId }
-  ) => {
+  handler: async (ctx, { serverKey, actorUserId, targetUserId, permissionId }) => {
     assertServerKey(serverKey);
     const target = await ctx.db.get(targetUserId);
     await ctx.db.patch(targetUserId, { oneDrivePermissionId: permissionId });
-    await writeAudit(
-      ctx,
-      actorUserId,
-      "teamAccessGrant",
-      target ? userName(target) : undefined
-    );
+    await writeAudit(ctx, actorUserId, "teamAccessGrant", target ? displayName(target) : undefined);
     return { ok: true };
   },
 });
@@ -412,7 +453,7 @@ export const apiClearTeamAccess = mutation({
       ctx,
       actorUserId,
       "teamAccessRevoke",
-      target ? userName(target) : undefined
+      target ? displayName(target) : undefined,
     );
     return { ok: true };
   },
@@ -428,25 +469,25 @@ export const apiClearTeamAccess = mutation({
  */
 export const listPending = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireCapability(ctx, "manage_uploads");
     const rows = await ctx.db
       .query("onedriveUploads")
-      .withIndex("by_status", q => q.eq("status", "pending"))
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
       .order("desc")
       .take(200);
     return Promise.all(
-      rows.map(async row => {
+      rows.map(async (row) => {
         const requester = await ctx.db.get(row.requesterUserId);
         const previewUrl = row.stagingStorageId
           ? await ctx.storage.getUrl(row.stagingStorageId)
           : null;
         return {
           ...row,
-          requesterName: requester ? userName(requester) : "unknown",
+          requesterName: requester ? displayName(requester) : "unknown",
           previewUrl,
         };
-      })
+      }),
     );
   },
 });
@@ -454,11 +495,11 @@ export const listPending = query({
 /** The signed-in user's own upload history / request statuses. */
 export const myUploads = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     return ctx.db
       .query("onedriveUploads")
-      .withIndex("by_user", q => q.eq("requesterUserId", user._id))
+      .withIndex("by_user", (q) => q.eq("requesterUserId", user._id))
       .order("desc")
       .take(100);
   },
@@ -477,17 +518,13 @@ export const auditFeed = query({
       .withIndex("by_at")
       .order("desc")
       .take(Math.min(limit ?? 100, 500));
-    const actorIds = [...new Set(rows.map(r => r.actorUserId))];
-    const byId = new Map(
-      (await Promise.all(actorIds.map(id => ctx.db.get(id)))).flatMap(u =>
-        u ? [[u._id, u] as const] : []
-      )
+    const byId = await batchUserSummaries(
+      ctx,
+      rows.map((r) => r.actorUserId),
     );
-    return rows.map(row => ({
+    return rows.map((row) => ({
       ...row,
-      actorName: byId.get(row.actorUserId)
-        ? userName(byId.get(row.actorUserId)!)
-        : "unknown",
+      user: byId.get(row.actorUserId) ?? null,
     }));
   },
 });
@@ -536,9 +573,7 @@ export const renewSubscription = internalAction({
     const baseUrl = process.env.API_INTERNAL_URL ?? process.env.API_URL;
     const serverKey = process.env.CONVEX_SERVER_KEY;
     if (!baseUrl || !serverKey) {
-      console.warn(
-        "[onedrive] subscription renewal skipped — API not configured"
-      );
+      console.warn("[onedrive] subscription renewal skipped — API not configured");
       return { ok: false };
     }
     try {

@@ -11,11 +11,7 @@ export const saveEmail = mutation({
     subject: v.string(),
     message: v.string(),
     company: v.optional(v.string()),
-    submissionType: v.union(
-      v.literal("message"),
-      v.literal("callback"),
-      v.literal("other")
-    ),
+    submissionType: v.union(v.literal("message"), v.literal("callback"), v.literal("other")),
     topic: v.optional(v.string()),
     desiredDateTime: v.optional(v.string()),
     notes: v.optional(v.string()),
@@ -44,18 +40,38 @@ export const listEmailsByClerkUserId = query({
     }
     const existing = await ctx.db
       .query("emails")
-      .withIndex("by_clerkUserId_sentAt", q =>
-        q.eq("clerkUserId", args.clerkUserId).gte("sentAt", 0)
+      .withIndex("by_clerkUserId_sentAt", (q) =>
+        q.eq("clerkUserId", args.clerkUserId).gte("sentAt", 0),
       )
       .order("desc")
       .take(50);
-    console.log(existing);
     if (!existing) {
       console.error("No submissions found for user", args.clerkUserId);
       return [];
     }
 
     return existing;
+  },
+});
+
+/**
+ * Look up submissions by the signed-in account's email rather than
+ * clerkUserId — used so a customer's submission history still resolves after
+ * re-signing-up under a different Clerk user id (e.g. after the marketing +
+ * intranet Clerk instance merge).
+ */
+export const listEmailsByAccountEmail = query({
+  args: {
+    accountEmail: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const email = args.accountEmail.toLowerCase();
+    if (!email) return [];
+    return await ctx.db
+      .query("emails")
+      .withIndex("by_accountEmail_sentAt", (q) => q.eq("accountEmail", email).gte("sentAt", 0))
+      .order("desc")
+      .take(50);
   },
 });
 export const saveNotifyEmail = mutation({
@@ -65,7 +81,7 @@ export const saveNotifyEmail = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("notifyEmails")
-      .withIndex("by_email", q => q.eq("email", args.email))
+      .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
     if (existing) {
@@ -88,7 +104,7 @@ export const deleteNotifyEmail = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("notifyEmails")
-      .withIndex("by_email", q => q.eq("email", args.email))
+      .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
 
     if (!existing) {

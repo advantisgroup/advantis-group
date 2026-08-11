@@ -21,24 +21,30 @@ import deCommon from "./messages/de/Common.json";
 import deCustomRoles from "./messages/de/CustomRoles.json";
 import deDashboard from "./messages/de/Dashboard.json";
 import deDirectory from "./messages/de/Directory.json";
+import deErrorManagement from "./messages/de/ErrorManagement.json";
 import deErrors from "./messages/de/Errors.json";
 import deErrorsCatalog from "./messages/de/ErrorsCatalog.json";
 import deFeatureFlags from "./messages/de/FeatureFlags.json";
 import deFiles from "./messages/de/Files.json";
 import deFileViewer from "./messages/de/FileViewer.json";
 import deForbidden from "./messages/de/Forbidden.json";
-import deGuest from "./messages/de/Guest.json";
 import deGuidebooks from "./messages/de/Guidebooks.json";
+import deImprint from "./messages/de/imprint.json";
 import deIntegrations from "./messages/de/Integrations.json";
+import deItTickets from "./messages/de/ItTickets.json";
 import deNav from "./messages/de/Nav.json";
 import deNotFound from "./messages/de/NotFound.json";
 import deNotifications from "./messages/de/Notifications.json";
 import deOnboarding from "./messages/de/Onboarding.json";
+import dePasswordReset from "./messages/de/PasswordReset.json";
 import dePerformance from "./messages/de/Performance.json";
 import deprivacy from "./messages/de/privacy.json";
 import deProfile from "./messages/de/Profile.json";
 import deRoles from "./messages/de/Roles.json";
+import deRichText from "./messages/de/RichText.json";
+import deSalesCockpit from "./messages/de/SalesCockpit.json";
 import deSettings from "./messages/de/Settings.json";
+import deSuggestions from "./messages/de/Suggestions.json";
 import deTeams from "./messages/de/Teams.json";
 import determs from "./messages/de/terms.json";
 import deTour from "./messages/de/Tour.json";
@@ -59,24 +65,30 @@ import enCommon from "./messages/en/Common.json";
 import enCustomRoles from "./messages/en/CustomRoles.json";
 import enDashboard from "./messages/en/Dashboard.json";
 import enDirectory from "./messages/en/Directory.json";
+import enErrorManagement from "./messages/en/ErrorManagement.json";
 import enErrors from "./messages/en/Errors.json";
 import enErrorsCatalog from "./messages/en/ErrorsCatalog.json";
 import enFeatureFlags from "./messages/en/FeatureFlags.json";
 import enFiles from "./messages/en/Files.json";
 import enFileViewer from "./messages/en/FileViewer.json";
 import enForbidden from "./messages/en/Forbidden.json";
-import enGuest from "./messages/en/Guest.json";
 import enGuidebooks from "./messages/en/Guidebooks.json";
+import enImprint from "./messages/en/imprint.json";
 import enIntegrations from "./messages/en/Integrations.json";
+import enItTickets from "./messages/en/ItTickets.json";
 import enNav from "./messages/en/Nav.json";
 import enNotFound from "./messages/en/NotFound.json";
 import enNotifications from "./messages/en/Notifications.json";
 import enOnboarding from "./messages/en/Onboarding.json";
+import enPasswordReset from "./messages/en/PasswordReset.json";
 import enPerformance from "./messages/en/Performance.json";
 import enprivacy from "./messages/en/privacy.json";
 import enProfile from "./messages/en/Profile.json";
 import enRoles from "./messages/en/Roles.json";
+import enRichText from "./messages/en/RichText.json";
+import enSalesCockpit from "./messages/en/SalesCockpit.json";
 import enSettings from "./messages/en/Settings.json";
+import enSuggestions from "./messages/en/Suggestions.json";
 import enTeams from "./messages/en/Teams.json";
 import enterms from "./messages/en/terms.json";
 import enTour from "./messages/en/Tour.json";
@@ -99,11 +111,13 @@ const messagesByLocale = {
     Calendar: enCalendar,
     Absences: enAbsences,
     Announcements: enAnnouncements,
+    RichText: enRichText,
     Chat: enChat,
     Directory: enDirectory,
     Profile: enProfile,
     Tour: enTour,
     Onboarding: enOnboarding,
+    PasswordReset: enPasswordReset,
     Admin: enAdmin,
     Teams: enTeams,
     CustomRoles: enCustomRoles,
@@ -115,8 +129,8 @@ const messagesByLocale = {
     Notifications: enNotifications,
     Command: enCommand,
     Performance: enPerformance,
-    Guest: enGuest,
     Errors: enErrors,
+    ErrorManagement: enErrorManagement,
     Activity: enActivity,
     Files: enFiles,
     FileViewer: enFileViewer,
@@ -127,8 +141,12 @@ const messagesByLocale = {
     ErrorsCatalog: enErrorsCatalog,
     privacy: enprivacy,
     terms: enterms,
+    imprint: enImprint,
     Applicants: enApplicants,
     FeatureFlags: enFeatureFlags,
+    Suggestions: enSuggestions,
+    ItTickets: enItTickets,
+    SalesCockpit: enSalesCockpit,
   },
   de: {
     App: deApp,
@@ -139,11 +157,13 @@ const messagesByLocale = {
     Calendar: deCalendar,
     Absences: deAbsences,
     Announcements: deAnnouncements,
+    RichText: deRichText,
     Chat: deChat,
     Directory: deDirectory,
     Profile: deProfile,
     Tour: deTour,
     Onboarding: deOnboarding,
+    PasswordReset: dePasswordReset,
     Admin: deAdmin,
     Teams: deTeams,
     CustomRoles: deCustomRoles,
@@ -155,8 +175,8 @@ const messagesByLocale = {
     Notifications: deNotifications,
     Command: deCommand,
     Performance: dePerformance,
-    Guest: deGuest,
     Errors: deErrors,
+    ErrorManagement: deErrorManagement,
     Activity: deActivity,
     Files: deFiles,
     FileViewer: deFileViewer,
@@ -167,8 +187,12 @@ const messagesByLocale = {
     ErrorsCatalog: deErrorsCatalog,
     privacy: deprivacy,
     terms: determs,
+    imprint: deImprint,
     Applicants: deApplicants,
     FeatureFlags: deFeatureFlags,
+    Suggestions: deSuggestions,
+    ItTickets: deItTickets,
+    SalesCockpit: deSalesCockpit,
   },
 } satisfies Record<Locale, Record<string, unknown>>;
 

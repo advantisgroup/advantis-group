@@ -1,8 +1,8 @@
 import { ConvexError, v } from "convex/values";
 
-import { type Id } from "./_generated/dataModel";
+import { type Doc, type Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
-import { getCurrentUser, requireUser } from "./lib/auth";
+import { getCurrentUser, hasApplicantAccess, requireUser, requireVaultUnlocked } from "./lib/auth";
 
 /**
  * Issue a short-lived upload URL for chat attachments, avatars and
@@ -11,7 +11,7 @@ import { getCurrentUser, requireUser } from "./lib/auth";
  */
 export const generateUploadUrl = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     return ctx.storage.generateUploadUrl();
   },
@@ -38,12 +38,34 @@ export const apiGenerateUploadUrl = mutation({
   },
 });
 
+/** Shared by `getUrl`/`getUrls`: vault-gate a storage id that's an Applicant
+ *  Management document, and pass everything else through untouched. */
+async function resolveGatedUrl(
+  ctx: import("./_generated/server").QueryCtx,
+  user: Doc<"users">,
+  storageId: Id<"_storage">,
+): Promise<string | null> {
+  const applicantDocument = await ctx.db
+    .query("applicantDocuments")
+    .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+    .first();
+  const employeeDocument = await ctx.db
+    .query("employeeDocuments")
+    .withIndex("by_storageId", (q) => q.eq("storageId", storageId))
+    .first();
+  if (applicantDocument || employeeDocument) {
+    if (!hasApplicantAccess(user)) return null;
+    await requireVaultUnlocked(ctx, user._id);
+  }
+  return ctx.storage.getUrl(storageId);
+}
+
 /** Resolve a single storage id to a served URL (null if missing). */
 export const getUrl = query({
   args: { storageId: v.id("_storage") },
   handler: async (ctx, { storageId }) => {
-    await requireUser(ctx);
-    return ctx.storage.getUrl(storageId);
+    const user = await requireUser(ctx);
+    return resolveGatedUrl(ctx, user, storageId);
   },
 });
 
@@ -51,9 +73,9 @@ export const getUrl = query({
 export const getUrls = query({
   args: { storageIds: v.array(v.id("_storage")) },
   handler: async (ctx, { storageIds }) => {
-    await requireUser(ctx);
+    const user = await requireUser(ctx);
     const entries = await Promise.all(
-      storageIds.map(async id => [id, await ctx.storage.getUrl(id)] as const)
+      storageIds.map(async (id) => [id, await resolveGatedUrl(ctx, user, id)] as const),
     );
     return Object.fromEntries(entries) as Record<Id<"_storage">, string | null>;
   },
@@ -85,31 +107,36 @@ function userCanViewAnnouncement(
   user: { _id: Id<"users">; departmentId?: Id<"departments"> },
   userDept: { name: string } | null,
   audience: {
-    kind: "all" | "departmentId" | "department" | "users";
+    kind: "all" | "departmentId" | "department" | "users" | "mixed";
     departmentId?: Id<"departments"> | null;
     department?: string;
     userIds?: Id<"users">[];
-  }
+    departments?: string[];
+  },
 ): boolean {
   if (audience.kind === "all") return true;
-  if (audience.kind === "departmentId")
-    return user.departmentId === audience.departmentId;
+  if (audience.kind === "departmentId") return user.departmentId === audience.departmentId;
   if (audience.kind === "department")
     return userDept ? userDept.name === audience.department : false;
-  if (audience.kind === "users")
-    return (audience.userIds ?? []).includes(user._id);
+  if (audience.kind === "users") return (audience.userIds ?? []).includes(user._id);
+  if (audience.kind === "mixed") {
+    if ((audience.userIds ?? []).includes(user._id)) return true;
+    return userDept
+      ? (audience.departments ?? []).some((d) => d.toLowerCase() === userDept.name.toLowerCase())
+      : false;
+  }
   return false;
 }
 
 async function isConversationMember(
   ctx: { db: import("./_generated/server").QueryCtx["db"] },
   conversationId: Id<"conversations">,
-  userId: Id<"users">
+  userId: Id<"users">,
 ): Promise<boolean> {
   const row = await ctx.db
     .query("conversationMembers")
-    .withIndex("by_user_conversation", q =>
-      q.eq("userId", userId).eq("conversationId", conversationId)
+    .withIndex("by_user_conversation", (q) =>
+      q.eq("userId", userId).eq("conversationId", conversationId),
     )
     .unique();
   return row !== null;
@@ -142,7 +169,7 @@ export const canAccessFile = query({
     // Check if used as a user avatar (public to everyone)
     const userAvatar = await ctx.db
       .query("users")
-      .withIndex("by_avatarStorageId", q => q.eq("avatarStorageId", storageCId))
+      .withIndex("by_avatarStorageId", (q) => q.eq("avatarStorageId", storageCId))
       .first();
     if (userAvatar) {
       return granted("public_user_avatar");
@@ -156,7 +183,7 @@ export const canAccessFile = query({
     // Check if used as a conversation/group avatar
     const conversationAvatar = await ctx.db
       .query("conversations")
-      .withIndex("by_avatarStorageId", q => q.eq("avatarStorageId", storageCId))
+      .withIndex("by_avatarStorageId", (q) => q.eq("avatarStorageId", storageCId))
       .first();
     if (conversationAvatar) {
       if (await isConversationMember(ctx, conversationAvatar._id, user._id)) {
@@ -171,7 +198,7 @@ export const canAccessFile = query({
     // path", which the pre-migration fallback below still does in full.
     const owners = await ctx.db
       .query("attachmentOwners")
-      .withIndex("by_storageId", q => q.eq("storageId", storageCId))
+      .withIndex("by_storageId", (q) => q.eq("storageId", storageCId))
       .collect();
 
     if (owners.length > 0) {
@@ -180,10 +207,11 @@ export const canAccessFile = query({
         if (owner.kind === "announcement" && owner.announcementId) {
           const ann = await ctx.db.get(owner.announcementId);
           if (!ann) continue;
-          if (ann.audience.kind === "department" && userDept === null) {
-            userDept = user.departmentId
-              ? await ctx.db.get(user.departmentId)
-              : null;
+          if (
+            (ann.audience.kind === "department" || ann.audience.kind === "mixed") &&
+            userDept === null
+          ) {
+            userDept = user.departmentId ? await ctx.db.get(user.departmentId) : null;
           }
           if (userCanViewAnnouncement(user, userDept, ann.audience)) {
             return granted("announcement_audience");
@@ -203,17 +231,14 @@ export const canAccessFile = query({
     // this stays in place rather than being removed once the index is live.
     const announcements = await ctx.db.query("announcements").collect();
     for (const ann of announcements) {
-      if (!ann.attachmentStorageIds.length && !ann.attachments?.length)
-        continue;
+      if (!ann.attachmentStorageIds.length && !ann.attachments?.length) continue;
       const ids = [
         ...ann.attachmentStorageIds,
-        ...(ann.attachments?.map(a => a.storageId) ?? []),
+        ...(ann.attachments?.map((a) => a.storageId) ?? []),
       ];
-      if (!ids.some(id => id === storageCId)) continue;
+      if (!ids.some((id) => id === storageCId)) continue;
 
-      const userDept = user.departmentId
-        ? await ctx.db.get(user.departmentId)
-        : null;
+      const userDept = user.departmentId ? await ctx.db.get(user.departmentId) : null;
       if (userCanViewAnnouncement(user, userDept, ann.audience)) {
         return granted("announcement_audience");
       }
@@ -222,8 +247,8 @@ export const canAccessFile = query({
     const messages = await ctx.db.query("messages").collect();
     for (const msg of messages) {
       if (!msg.attachments.length) continue;
-      const ids = msg.attachments.map(a => a.storageId);
-      if (!ids.some(id => id === storageCId)) continue;
+      const ids = msg.attachments.map((a) => a.storageId);
+      if (!ids.some((id) => id === storageCId)) continue;
 
       if (await isConversationMember(ctx, msg.conversationId, user._id)) {
         return granted("message_conversation_member");

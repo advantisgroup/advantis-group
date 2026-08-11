@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-import { accessibleGuidebooks, type Guidebook } from "./registry";
+import { accessibleGuidebooks, guidebookTitle, type Guidebook } from "./registry";
 
 /**
  * Compact dropdown to jump between guidebooks without going back to the
@@ -38,29 +38,22 @@ export function GuidebookSwitcher({ current }: { current: Guidebook }) {
         className="flex max-w-64 items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
       >
         <CurrentIcon className="size-4 shrink-0 text-primary" />
-        <span className="truncate">{t(current.titleKey)}</span>
+        <span className="truncate">{guidebookTitle(current, t)}</span>
         <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-72">
-        {guidebooks.map(gb => {
+        {guidebooks.map((gb) => {
           const Icon = gb.icon;
           const isCurrent = gb.slug === current.slug;
           return (
             <DropdownMenuItem key={gb.slug} asChild>
               <Link
                 href={`/guidebooks/${gb.slug}`}
-                className={cn(
-                  "flex items-center gap-2.5",
-                  isCurrent && "bg-accent"
-                )}
+                className={cn("flex items-center gap-2.5", isCurrent && "bg-accent")}
               >
                 <Icon className="size-4 shrink-0 text-primary" />
-                <span className="min-w-0 flex-1 truncate">
-                  {t(gb.titleKey)}
-                </span>
-                {isCurrent && (
-                  <Check className="size-4 shrink-0 text-muted-foreground" />
-                )}
+                <span className="min-w-0 flex-1 truncate">{guidebookTitle(gb, t)}</span>
+                {isCurrent && <Check className="size-4 shrink-0 text-muted-foreground" />}
               </Link>
             </DropdownMenuItem>
           );
@@ -81,7 +74,7 @@ export function GuidebookPager({ current }: { current: Guidebook }) {
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
 
-  const index = guidebooks.findIndex(gb => gb.slug === current.slug);
+  const index = guidebooks.findIndex((gb) => gb.slug === current.slug);
   const prev = index > 0 ? guidebooks[index - 1] : undefined;
   const next = index >= 0 ? guidebooks[index + 1] : undefined;
 
@@ -98,9 +91,7 @@ export function GuidebookPager({ current }: { current: Guidebook }) {
             <ArrowLeft className="size-3.5 transition-transform group-hover:-translate-x-0.5" />
             {t("switcher.previous")}
           </span>
-          <span className="truncate text-sm font-semibold">
-            {t(prev.titleKey)}
-          </span>
+          <span className="truncate text-sm font-semibold">{guidebookTitle(prev, t)}</span>
         </Link>
       ) : (
         <span className="hidden sm:block" />
@@ -115,7 +106,7 @@ export function GuidebookPager({ current }: { current: Guidebook }) {
             <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
           </span>
           <span className="max-w-full truncate text-sm font-semibold">
-            {t(next.titleKey)}
+            {guidebookTitle(next, t)}
           </span>
         </Link>
       )}

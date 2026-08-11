@@ -24,8 +24,7 @@ export const ScrollReveal = ({
   threshold = 0.1,
 }: ScrollRevealProps) => {
   const prefersReducedMotion = () =>
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const [reducedMotion] = useState(prefersReducedMotion);
   const [isVisible, setIsVisible] = useState(prefersReducedMotion);
   const ref = useRef<HTMLDivElement>(null);
@@ -43,7 +42,7 @@ export const ScrollReveal = ({
       {
         threshold,
         rootMargin: "0px 0px -50px 0px",
-      }
+      },
     );
 
     const node = ref.current;
@@ -70,11 +69,7 @@ export const ScrollReveal = ({
     };
     const visibleClasses = "translate-y-0 translate-x-0 opacity-100";
 
-    return cn(
-      baseClasses,
-      !isVisible && hiddenClasses[direction],
-      isVisible && visibleClasses
-    );
+    return cn(baseClasses, !isVisible && hiddenClasses[direction], isVisible && visibleClasses);
   };
 
   return (
@@ -91,15 +86,12 @@ export const ScrollReveal = ({
             <div
               key={index}
               className={cn(
-                !reducedMotion &&
-                  "transition-[transform,opacity] duration-700 ease-out",
+                !reducedMotion && "transition-[transform,opacity] duration-700 ease-out",
                 !reducedMotion && !isVisible && "translate-y-8 opacity-0",
-                (reducedMotion || isVisible) && "translate-y-0 opacity-100"
+                (reducedMotion || isVisible) && "translate-y-0 opacity-100",
               )}
               style={{
-                transitionDelay: reducedMotion
-                  ? "0ms"
-                  : `${delay + index * staggerDelay}ms`,
+                transitionDelay: reducedMotion ? "0ms" : `${delay + index * staggerDelay}ms`,
                 willChange: isVisible ? "auto" : "transform, opacity",
               }}
             >

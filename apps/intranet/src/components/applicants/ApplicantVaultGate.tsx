@@ -8,6 +8,7 @@ import { Lock, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { ForgotPasswordPanel } from "@/components/password-reset/ForgotPasswordPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,10 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
   const [password, setPasswordInput] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // The forgot-password route only appears once the password has actually
+  // been got wrong — offering it up front invites skipping the password
+  // instead of remembering it.
+  const [attemptFailed, setAttemptFailed] = useState(false);
   // Convex only re-pushes `status` when something changes server-side —
   // expiry itself is just wall-clock time passing, so a local tick is what
   // actually flips the UI back to locked once expiresAt has passed.
@@ -64,8 +69,7 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
 
   if (status === undefined) return null;
 
-  const expired =
-    status.unlocked && status.expiresAt !== null && status.expiresAt <= now;
+  const expired = status.unlocked && status.expiresAt !== null && status.expiresAt <= now;
   if (status.unlocked && !expired) return <>{children}</>;
 
   async function handleUnlock() {
@@ -75,6 +79,7 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
       await unlock({ password });
       setPasswordInput("");
     } catch (e) {
+      setAttemptFailed(true);
       handleError(e, t("vaultIncorrectPassword"));
     } finally {
       setSubmitting(false);
@@ -111,24 +116,22 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
             <div className="space-y-1 text-center">
               <ShieldCheck className="mx-auto size-6 text-primary" />
               <p className="font-semibold">{t("vaultSetupTitle")}</p>
-              <p className="text-sm text-muted-foreground">
-                {t("vaultSetupDescription")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("vaultSetupDescription")}</p>
             </div>
             <Input
               type="password"
               value={password}
-              onChange={e => setPasswordInput(e.target.value)}
+              onChange={(e) => setPasswordInput(e.target.value)}
               placeholder={t("vaultPasswordPlaceholder")}
               autoComplete="new-password"
             />
             <Input
               type="password"
               value={confirmPassword}
-              onChange={e => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder={t("vaultConfirmPasswordPlaceholder")}
               autoComplete="new-password"
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter") void handleSetPassword();
               }}
             />
@@ -152,18 +155,16 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
           <div className="space-y-1 text-center">
             <Lock className="mx-auto size-6 text-primary" />
             <p className="font-semibold">{t("vaultLockedTitle")}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("vaultLockedDescription")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("vaultLockedDescription")}</p>
           </div>
           <Input
             type="password"
             value={password}
-            onChange={e => setPasswordInput(e.target.value)}
+            onChange={(e) => setPasswordInput(e.target.value)}
             placeholder={t("vaultPasswordPlaceholder")}
             autoComplete="current-password"
             autoFocus
-            onKeyDown={e => {
+            onKeyDown={(e) => {
               if (e.key === "Enter") void handleUnlock();
             }}
           />
@@ -174,6 +175,7 @@ export function ApplicantVaultGate({ children }: { children: ReactNode }) {
           >
             {t("vaultUnlock")}
           </Button>
+          {attemptFailed && <ForgotPasswordPanel scope="hr" />}
         </CardContent>
       </Card>
     </div>

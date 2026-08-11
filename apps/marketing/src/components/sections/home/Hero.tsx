@@ -22,8 +22,7 @@ export const Hero = () => {
         className="absolute bottom-0 left-0 right-0 h-32 bg-background/90 pointer-events-none"
         style={{
           maskImage: "linear-gradient(to top, black 0%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to top, black 0%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to top, black 0%, transparent 100%)",
         }}
       />
 
@@ -31,8 +30,7 @@ export const Hero = () => {
         <div className="md:max-w-7xl max-w-full mx-auto text-center space-y-6">
           <div className="space-y-2">
             <h1 className="text-4xl group font-bold leading-tight md:text-6xl lg:text-8xl">
-              {t("title")}{" "}
-              <span className="md:hidden">{t("titleHighlight")}</span>
+              {t("title")} <span className="md:hidden">{t("titleHighlight")}</span>
               <span className="hidden md:inline">
                 <BrandText hoverable groupHover>
                   {t("titleHighlight")}

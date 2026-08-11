@@ -18,10 +18,7 @@ import {
   Search,
 } from "lucide-react";
 
-import {
-  StateStrip,
-  StateStripLegend,
-} from "@/components/activity/charts/StateStrip";
+import { StateStrip, StateStripLegend } from "@/components/activity/charts/StateStrip";
 import { InfoTip } from "@/components/activity/InfoTip";
 import { Stagger, StaggerItem } from "@/components/activity/motion/Stagger";
 import { QueryState } from "@/components/activity/QueryState";
@@ -33,16 +30,8 @@ import { StatusSummary } from "@/components/activity/state/StatusSummary";
 import { PageHeader } from "@/components/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  dayStateSegments,
-  STATE_NAMES,
-  type StateSegment,
-} from "@/lib/activity/activity";
-import {
-  formatDuration,
-  formatRelativeTime,
-  todayLocalDay,
-} from "@/lib/activity/fmt";
+import { dayStateSegments, STATE_NAMES, type StateSegment } from "@/lib/activity/activity";
+import { formatDuration, formatRelativeTime, todayLocalDay } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
 import { formatCountdown, nextPollAt } from "@/lib/activity/pollSchedule";
 import { describeStatus, type StatusInput } from "@/lib/activity/status";
@@ -56,18 +45,14 @@ import type { FunctionReturnType } from "convex/server";
 
 const DAY_MS = 86_400_000;
 
-type TeamRow = FunctionReturnType<
-  typeof api.activity.stats.teamOverview
->[number];
+type TeamRow = FunctionReturnType<typeof api.activity.stats.teamOverview>[number];
 
 /** The raw signals of one row, in the shape `describeStatus` expects. */
 function statusOf(d: TeamRow): StatusInput {
   return {
     online: d.online,
     deviceIdle: d.deviceIdle,
-    idleSeconds:
-      d.stateIdleSeconds ??
-      (d.idleMs != null ? Math.round(d.idleMs / 1000) : null),
+    idleSeconds: d.stateIdleSeconds ?? (d.idleMs != null ? Math.round(d.idleMs / 1000) : null),
     genesysRoutingStatus: d.genesysRoutingStatus,
     genesysWrapUp: d.genesysWrapUp,
     clockodoWorking: d.clockodoWorking,
@@ -94,8 +79,7 @@ function isFilterValue(v: string): v is FilterValue {
 }
 
 function bucketOf(d: TeamRow): Bucket {
-  if (d.clockodoAbsent || d.clockodoBreak || d.clockodoClockedOut)
-    return "away";
+  if (d.clockodoAbsent || d.clockodoBreak || d.clockodoClockedOut) return "away";
   if (!d.online) return "offline";
   const { tone } = describeStatus(statusOf(d));
   if (tone === "warn") return "attention";
@@ -143,7 +127,7 @@ function FleetSummary({
 }) {
   const { t } = useI18n();
   const total = rows.length;
-  const onlineCount = rows.filter(d => d.online).length;
+  const onlineCount = rows.filter((d) => d.online).length;
 
   const bucketIcon: Record<Bucket, ReactNode> = {
     working: <Activity className="h-4 w-4" />,
@@ -154,7 +138,7 @@ function FleetSummary({
 
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-      {BUCKET_ORDER.map(bucket => {
+      {BUCKET_ORDER.map((bucket) => {
         const active = filter === bucket;
         return (
           <button
@@ -188,9 +172,7 @@ function FleetSummary({
           label={t("overview.total")}
           value={total}
           tone="fg"
-          hint={
-            total > 0 ? `${onlineCount} ${t("overview.online")}` : undefined
-          }
+          hint={total > 0 ? `${onlineCount} ${t("overview.online")}` : undefined}
           icon={<MonitorSmartphone className="h-4 w-4" />}
           className={cn(filter === "all" && "ring-2 ring-signal/60")}
         />
@@ -214,7 +196,7 @@ function BucketFilter({
   const { t } = useI18n();
   const chips: { id: FilterValue; label: string; count: number }[] = [
     { id: "all", label: t("overview.filter.all"), count: total },
-    ...BUCKET_ORDER.map(b => ({
+    ...BUCKET_ORDER.map((b) => ({
       id: b,
       label: t(`overview.filter.${b}`),
       count: counts[b],
@@ -223,7 +205,7 @@ function BucketFilter({
 
   return (
     <div className="flex flex-wrap gap-1.5" role="group">
-      {chips.map(chip => {
+      {chips.map((chip) => {
         const active = value === chip.id;
         return (
           <button
@@ -235,7 +217,7 @@ function BucketFilter({
               "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
               active
                 ? "border-signal/40 bg-signal/10 text-signal"
-                : "border-border bg-panel/60 text-muted-foreground hover:border-border hover:text-fg"
+                : "border-border bg-panel/60 text-muted-foreground hover:border-border hover:text-fg",
             )}
           >
             {chip.label}
@@ -271,9 +253,7 @@ function DeviceCard({
   // heartbeat; otherwise the moment the fused state last changed.
   const since = !d.online ? d.lastSeen : d.finalStateSince;
   const outdated =
-    !!d.agentVersion &&
-    !!latestAgentVersion &&
-    isOlderVersion(d.agentVersion, latestAgentVersion);
+    !!d.agentVersion && !!latestAgentVersion && isOlderVersion(d.agentVersion, latestAgentVersion);
 
   return (
     <Link
@@ -290,8 +270,7 @@ function DeviceCard({
                 {d.personName ?? d.hostname}
               </span>
               <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {d.personName ? d.hostname : t("overview.unassigned")} ·{" "}
-                {d.windowsUser}
+                {d.personName ? d.hostname : t("overview.unassigned")} · {d.windowsUser}
               </p>
             </div>
             {outdated && (
@@ -311,7 +290,7 @@ function DeviceCard({
             <ChevronRight
               className={cn(
                 "mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-150",
-                "group-hover:translate-x-0.5 group-hover:text-signal"
+                "group-hover:translate-x-0.5 group-hover:text-signal",
               )}
             />
           </div>
@@ -326,7 +305,7 @@ function DeviceCard({
               compact
               segments={segments}
               dayStart={dayStart}
-              label={s => t(`empstate.${s}`)}
+              label={(s) => t(`empstate.${s}`)}
               nowPct={nowPct}
               nowLabel={t("timeline.day.now")}
             />
@@ -341,9 +320,7 @@ function DeviceCard({
             </span>
             <span className="shrink-0">
               {t("overview.lastSeen")}{" "}
-              <span className="font-medium text-fg/80">
-                {formatRelativeTime(d.lastSeen, lang)}
-              </span>
+              <span className="font-medium text-fg/80">{formatRelativeTime(d.lastSeen, lang)}</span>
             </span>
           </div>
         </CardContent>
@@ -396,15 +373,9 @@ function NextSyncBadge() {
 export default function OverviewPage() {
   const { t } = useI18n();
   const team = useQuery(api.activity.stats.teamOverview);
-  const latestAgentVersion = useQuery(
-    api.activity.agentVersion.getLatestAgentVersion
-  );
+  const latestAgentVersion = useQuery(api.activity.agentVersion.getLatestAgentVersion);
   // The active chip lives in `?filter=` so a reload or shared link keeps it.
-  const [filter, setFilter] = useQueryParam<FilterValue>(
-    "filter",
-    "all",
-    isFilterValue
-  );
+  const [filter, setFilter] = useQueryParam<FilterValue>("filter", "all", isFilterValue);
   const [search, setSearch] = useState("");
   const searchRef = useSlashFocus<HTMLInputElement>();
   // 30s tick so "last seen"/"since" labels and the now-marker stay fresh even
@@ -413,10 +384,7 @@ export default function OverviewPage() {
 
   // Local midnight for the per-card day strips ("today" in the viewer's tz).
   const today = todayLocalDay();
-  const dayStart = useMemo(
-    () => new Date(`${today}T00:00:00`).getTime(),
-    [today]
-  );
+  const dayStart = useMemo(() => new Date(`${today}T00:00:00`).getTime(), [today]);
   const nowPct = ((now - dayStart) / DAY_MS) * 100;
 
   // Debug visibility into the version check from the browser console — the
@@ -427,19 +395,18 @@ export default function OverviewPage() {
     console.warn("[ActivityTrack] latestAgentVersion:", latestAgentVersion);
     console.warn(
       "[ActivityTrack] device agentVersions:",
-      team.map(d => ({ hostname: d.hostname, agentVersion: d.agentVersion }))
+      team.map((d) => ({ hostname: d.hostname, agentVersion: d.agentVersion })),
     );
     if (latestAgentVersion) {
       const outdated = team.filter(
-        d =>
-          d.agentVersion && isOlderVersion(d.agentVersion, latestAgentVersion)
+        (d) => d.agentVersion && isOlderVersion(d.agentVersion, latestAgentVersion),
       );
       console.warn(
         "[ActivityTrack] outdated devices:",
-        outdated.map(d => ({
+        outdated.map((d) => ({
           hostname: d.hostname,
           agentVersion: d.agentVersion,
-        }))
+        })),
       );
     }
   }, [team, latestAgentVersion]);
@@ -447,8 +414,8 @@ export default function OverviewPage() {
   // Surface the attention count in the browser tab ("(2) …") so a manager with
   // the dashboard pinned sees trouble without switching tabs.
   const attentionCount = useMemo(
-    () => (team ?? []).filter(d => bucketOf(d) === "attention").length,
-    [team]
+    () => (team ?? []).filter((d) => bucketOf(d) === "attention").length,
+    [team],
   );
   useEffect(() => {
     if (attentionCount === 0) return;
@@ -464,17 +431,13 @@ export default function OverviewPage() {
   const employeeIds = useMemo(
     () =>
       [
-        ...new Set(
-          (team ?? []).flatMap(d =>
-            d.personEmployeeId ? [d.personEmployeeId] : []
-          )
-        ),
+        ...new Set((team ?? []).flatMap((d) => (d.personEmployeeId ? [d.personEmployeeId] : []))),
       ].sort(),
-    [team]
+    [team],
   );
   const strips = useQuery(
     api.activity.state.historyBatch,
-    employeeIds.length > 0 ? { employeeIds, since: dayStart } : "skip"
+    employeeIds.length > 0 ? { employeeIds, since: dayStart } : "skip",
   );
   const segmentsByEmployee = useMemo(() => {
     const map = new Map<string, StateSegment[]>();
@@ -487,12 +450,10 @@ export default function OverviewPage() {
   // Which states actually occur today, for the shared strip legend.
   const presentStates = useMemo(
     () =>
-      STATE_NAMES.filter(name =>
-        [...segmentsByEmployee.values()].some(segs =>
-          segs.some(seg => seg.state === name)
-        )
+      STATE_NAMES.filter((name) =>
+        [...segmentsByEmployee.values()].some((segs) => segs.some((seg) => seg.state === name)),
       ),
-    [segmentsByEmployee]
+    [segmentsByEmployee],
   );
 
   return (
@@ -504,9 +465,7 @@ export default function OverviewPage() {
         action={
           team !== undefined ? (
             <div className="flex items-center gap-2">
-              {latestAgentVersion && (
-                <LatestVersionBadge version={latestAgentVersion} />
-              )}
+              {latestAgentVersion && <LatestVersionBadge version={latestAgentVersion} />}
               <NextSyncBadge />
               <span
                 title={t("overview.liveHint")}
@@ -533,7 +492,7 @@ export default function OverviewPage() {
                   key={i}
                   className={cn(
                     "h-[7.5rem] animate-pulse rounded-2xl border border-border bg-panel/60",
-                    i === 4 && "col-span-2 lg:col-span-1"
+                    i === 4 && "col-span-2 lg:col-span-1",
                   )}
                 />
               ))}
@@ -553,29 +512,25 @@ export default function OverviewPage() {
           </Card>
         }
       >
-        {rows => {
+        {(rows) => {
           // Name order inside a bucket keeps cards from jumping around; the
           // bucket sections below take care of attention-first ordering.
           const sorted = [...rows].sort((a, b) =>
-            (a.personName ?? a.hostname).localeCompare(
-              b.personName ?? b.hostname
-            )
+            (a.personName ?? a.hostname).localeCompare(b.personName ?? b.hostname),
           );
           const q = search.trim().toLowerCase();
           const searched = q
-            ? sorted.filter(d =>
+            ? sorted.filter((d) =>
                 [d.personName, d.hostname, d.windowsUser]
                   .filter(Boolean)
-                  .some(s => String(s).toLowerCase().includes(q))
+                  .some((s) => String(s).toLowerCase().includes(q)),
               )
             : sorted;
           const visible =
-            filter === "all"
-              ? searched
-              : searched.filter(d => bucketOf(d) === filter);
+            filter === "all" ? searched : searched.filter((d) => bucketOf(d) === filter);
           // Cards grouped under bucket headings, worst first.
-          const groups = BUCKET_ORDER.flatMap(bucket => {
-            const cards = visible.filter(d => bucketOf(d) === bucket);
+          const groups = BUCKET_ORDER.flatMap((bucket) => {
+            const cards = visible.filter((d) => bucketOf(d) === bucket);
             return cards.length > 0 ? [{ bucket, cards }] : [];
           });
           // Single source of truth for "how many people are in each bucket" —
@@ -606,16 +561,13 @@ export default function OverviewPage() {
                     <Input
                       ref={searchRef}
                       value={search}
-                      onChange={e => setSearch(e.target.value)}
+                      onChange={(e) => setSearch(e.target.value)}
                       placeholder={t("common.search")}
                       aria-label={t("common.search")}
                       className="h-9 w-full pl-9 sm:w-44"
                     />
                   </div>
-                  <StateStripLegend
-                    states={presentStates}
-                    label={s => t(`empstate.${s}`)}
-                  />
+                  <StateStripLegend states={presentStates} label={(s) => t(`empstate.${s}`)} />
                 </div>
               </div>
 
@@ -630,9 +582,7 @@ export default function OverviewPage() {
                   <section key={bucket} className="space-y-3">
                     <h2 className="kicker flex items-center gap-2">
                       {t(`overview.filter.${bucket}`)}
-                      <span className="tabular-nums text-muted-foreground">
-                        {cards.length}
-                      </span>
+                      <span className="tabular-nums text-muted-foreground">{cards.length}</span>
                     </h2>
                     <Stagger className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {cards.map((d, index) => (
@@ -641,8 +591,7 @@ export default function OverviewPage() {
                             d={d}
                             segments={
                               d.personEmployeeId
-                                ? (segmentsByEmployee.get(d.personEmployeeId) ??
-                                  [])
+                                ? (segmentsByEmployee.get(d.personEmployeeId) ?? [])
                                 : null
                             }
                             dayStart={dayStart}

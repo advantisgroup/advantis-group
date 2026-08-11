@@ -12,7 +12,7 @@ export const TEAMS = [
 
 export type TeamId = (typeof TEAMS)[number]["id"];
 
-export const TEAM_IDS: readonly string[] = TEAMS.map(t => t.id);
+export const TEAM_IDS: readonly string[] = TEAMS.map((t) => t.id);
 
 /** A Tailwind background class per team, used for the dots in the team picker. */
 export const TEAM_COLORS: Record<string, string> = {
@@ -28,5 +28,5 @@ export function teamColor(id: string): string {
 }
 
 export function teamLabelKey(id: string): string {
-  return TEAMS.find(t => t.id === id)?.labelKey ?? id;
+  return TEAMS.find((t) => t.id === id)?.labelKey ?? id;
 }

@@ -11,7 +11,9 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { hashPassword, verifyPassword } from "./activity/lib/crypto";
+import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
+  isApplicantAreaMember,
   requireAdmin,
   requireApplicantAreaMember,
   requireUser,
@@ -27,17 +29,17 @@ export const UNLOCK_DURATION_MS = 30 * 60 * 1000;
  * `users.ts` can invoke it directly from within their own mutation. */
 export async function clearVaultPasswordForUser(
   ctx: MutationCtx,
-  userId: Id<"users">
+  userId: Id<"users">,
 ): Promise<void> {
   const passwordRow = await ctx.db
     .query("applicantVaultPasswords")
-    .withIndex("by_user", q => q.eq("userId", userId))
+    .withIndex("by_user", (q) => q.eq("userId", userId))
     .unique();
   if (passwordRow) await ctx.db.delete(passwordRow._id);
 
   const unlockRow = await ctx.db
     .query("applicantVaultUnlocks")
-    .withIndex("by_user", q => q.eq("userId", userId))
+    .withIndex("by_user", (q) => q.eq("userId", userId))
     .unique();
   if (unlockRow) await ctx.db.delete(unlockRow._id);
 }
@@ -48,15 +50,15 @@ export async function clearVaultPasswordForUser(
  * to decide what to show. */
 export const status = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireApplicantAreaMember(ctx);
     const passwordRow = await ctx.db
       .query("applicantVaultPasswords")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const unlockRow = await ctx.db
       .query("applicantVaultUnlocks")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     const unlocked = !!unlockRow && unlockRow.expiresAt > Date.now();
     return {
@@ -72,7 +74,7 @@ export const getPasswordRow = internalQuery({
   handler: async (ctx, { userId }) =>
     await ctx.db
       .query("applicantVaultPasswords")
-      .withIndex("by_user", q => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique(),
 });
 
@@ -81,7 +83,7 @@ export const storePasswordHash = internalMutation({
   handler: async (ctx, { userId, hash }) => {
     const existing = await ctx.db
       .query("applicantVaultPasswords")
-      .withIndex("by_user", q => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
     if (existing) {
       await ctx.db.patch(existing._id, { hash, updatedAt: Date.now() });
@@ -98,13 +100,21 @@ export const storePasswordHash = internalMutation({
     // independent now.
     const unlock = await ctx.db
       .query("applicantVaultUnlocks")
-      .withIndex("by_user", q => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
     if (unlock) await ctx.db.delete(unlock._id);
+    const auditAt = Date.now();
+    const auditAction = existing ? "vault_password_rotated" : "vault_password_set";
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: userId,
-      action: existing ? "vault_password_rotated" : "vault_password_set",
-      at: Date.now(),
+      action: auditAction,
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: userId,
+      action: auditAction,
+      at: auditAt,
     });
   },
 });
@@ -116,12 +126,7 @@ export const setPassword = action({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
     const me = await ctx.runQuery(api.users.me, {});
-    if (
-      !me ||
-      (me.role !== "admin" &&
-        !me.applicantAccess &&
-        !me.applicantAccessDelegate)
-    ) {
+    if (!me || !isApplicantAreaMember(me)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -148,7 +153,7 @@ export const recordUnlock = internalMutation({
     const expiresAt = now + UNLOCK_DURATION_MS;
     const existing = await ctx.db
       .query("applicantVaultUnlocks")
-      .withIndex("by_user", q => q.eq("userId", userId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
     if (existing) {
       await ctx.db.patch(existing._id, { unlockedAt: now, expiresAt });
@@ -164,6 +169,12 @@ export const recordUnlock = internalMutation({
       action: "vault_unlocked",
       at: now,
     });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: userId,
+      action: "vault_unlocked",
+      at: now,
+    });
   },
 });
 
@@ -173,12 +184,7 @@ export const unlock = action({
   args: { password: v.string() },
   handler: async (ctx, { password }) => {
     const me = await ctx.runQuery(api.users.me, {});
-    if (
-      !me ||
-      (me.role !== "admin" &&
-        !me.applicantAccess &&
-        !me.applicantAccessDelegate)
-    ) {
+    if (!me || !isApplicantAreaMember(me)) {
       throw new ConvexError({
         code: "forbidden",
         message: "You do not have permission to do that",
@@ -210,17 +216,24 @@ export const unlock = action({
  * unlock to expire on its own. */
 export const lock = mutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const existing = await ctx.db
       .query("applicantVaultUnlocks")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
     if (existing) await ctx.db.delete(existing._id);
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: user._id,
       action: "vault_locked",
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: user._id,
+      action: "vault_locked",
+      at: auditAt,
     });
   },
 });
@@ -239,11 +252,19 @@ export const resetPassword = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await clearVaultPasswordForUser(ctx, userId);
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: admin._id,
       action: "vault_password_reset_by_admin",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: admin._id,
+      action: "vault_password_reset_by_admin",
+      target: target.email,
+      at: auditAt,
     });
   },
 });
@@ -254,14 +275,12 @@ export const resetPassword = mutation({
  * exists. */
 export const memberPasswordStatuses = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireApplicantAreaMember(ctx);
-    const members = (await ctx.db.query("users").collect()).filter(
-      u => u.role === "admin" || u.applicantAccess || u.applicantAccessDelegate
-    );
+    const members = (await ctx.db.query("users").collect()).filter(isApplicantAreaMember);
     const rows = await ctx.db.query("applicantVaultPasswords").collect();
-    const setByUser = new Set(rows.map(r => r.userId));
-    return members.map(u => ({
+    const setByUser = new Set(rows.map((r) => r.userId));
+    return members.map((u) => ({
       userId: u._id,
       passwordIsSet: setByUser.has(u._id),
     }));

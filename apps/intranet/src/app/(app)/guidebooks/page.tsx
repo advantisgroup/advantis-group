@@ -1,436 +1,703 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import { useRouter } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
+import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
 import {
-  ArrowRight,
-  BookOpen,
+  Archive,
   ChevronRight,
-  Clock,
-  MessageSquare,
+  FileText,
+  FolderOpen,
+  Pencil,
   Pin,
   PinOff,
+  Plus,
   Search,
-  ShieldCheck,
+  Settings2,
   Sparkles,
-  Star,
-  Wrench,
+  Trash2,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { accessibleGuidebooks, guidebookTitle } from "@/components/guidebooks/registry";
 import {
-  accessibleGuidebooks,
-  type Guidebook,
-  type GuidebookTopic,
-} from "@/components/guidebooks/registry";
+  CategoryManagerDialog,
+  EntryDialog,
+  type WikiEntry,
+} from "@/components/guidebooks/WikiEntryDialogs";
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Link } from "@/components/Link";
-import { PageHeader } from "@/components/PageHeader";
 import {
+  isOwnerOrAdmin,
   useCurrentUser,
-  useIsManager,
+  useHasCapability,
 } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
+import { htmlToText } from "@/components/ui/rich-text";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { formatIsoDate } from "@/lib/format";
+import {
+  addMonths,
+  daysUntil,
+  inArchive,
+  legacyTopicColor,
+  legacyTopicLabel,
+  msToDateInput,
+  needsReview,
+} from "@/lib/wiki";
 import { cn } from "@/lib/utils";
 
-import type { LucideIcon } from "lucide-react";
+const EMPTY_CATEGORIES: NonNullable<ReturnType<typeof useQuery<typeof api.wikiCategories.list>>> =
+  [];
 
-/** "interactive" reuses the registry category; everything else is a topic. */
-type GroupKey = "interactive" | GuidebookTopic;
-
-const GROUP_ORDER: GroupKey[] = [
-  "interactive",
-  "onboarding",
-  "collaboration",
-  "time-account",
-  "it-workplace",
-  "management",
-];
-
-const GROUP_META: Record<
-  GroupKey,
-  { labelKey: string; icon: LucideIcon; badgeTint: string; accent: string }
-> = {
-  interactive: {
-    labelKey: "categoryInteractive",
-    icon: Sparkles,
-    badgeTint: "bg-violet-500/10 text-violet-600 dark:text-violet-300",
-    accent: "text-violet-600 dark:text-violet-300",
-  },
-  onboarding: {
-    labelKey: "topicOnboarding",
-    icon: BookOpen,
-    badgeTint: "bg-primary/10 text-primary",
-    accent: "text-primary",
-  },
-  collaboration: {
-    labelKey: "topicCollaboration",
-    icon: MessageSquare,
-    badgeTint: "bg-sky-500/10 text-sky-600 dark:text-sky-300",
-    accent: "text-sky-600 dark:text-sky-300",
-  },
-  "time-account": {
-    labelKey: "topicTimeAccount",
-    icon: Clock,
-    badgeTint: "bg-amber-500/10 text-amber-600 dark:text-amber-300",
-    accent: "text-amber-600 dark:text-amber-300",
-  },
-  "it-workplace": {
-    labelKey: "topicItWorkplace",
-    icon: Wrench,
-    badgeTint: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-    accent: "text-emerald-600 dark:text-emerald-300",
-  },
-  management: {
-    labelKey: "topicManagement",
-    icon: ShieldCheck,
-    badgeTint: "bg-rose-500/10 text-rose-600 dark:text-rose-300",
-    accent: "text-rose-600 dark:text-rose-300",
-  },
-};
-
-function groupOf(gb: Guidebook): GroupKey {
-  return gb.category === "interactive"
-    ? "interactive"
-    : (gb.topic ?? "it-workplace");
+/** Unified shape for both wiki-v2 entries and legacy (block-editor)
+ * guidebook pages, so the grid, filters, search and sort treat them the
+ * same — only edit/delete/pin dispatch differently underneath. */
+interface GridItem {
+  kind: "wiki" | "legacy";
+  key: string;
+  slug: string;
+  title: string;
+  snippet: string;
+  tags: string[];
+  categoryKey: string;
+  categoryLabel: string;
+  categoryColor: string;
+  categoryDeleted: boolean;
+  pinned: boolean;
+  version: number | null;
+  archived: boolean;
+  reviewDue: boolean;
+  validUntil: number | null;
+  authorUserId: string;
+  updatedAt: number;
+  wikiEntry: WikiEntry | null;
 }
 
-function GuidebookCardItem({
-  gb,
-  favorite,
-  onToggleFavorite,
-  highlighted,
-  canHighlight,
-  onToggleHighlight,
+function useGridItems() {
+  const entries = useQuery(api.wikiEntries.list);
+  const legacyPages = useQuery(api.guidebookPages.list);
+  const highlightedSlugs = useQuery(api.guidebookHighlights.list);
+
+  return useMemo(() => {
+    if (entries === undefined || legacyPages === undefined || highlightedSlugs === undefined) {
+      return undefined;
+    }
+    const migratedSlugs = new Set(entries.map((e) => e.slug));
+    const highlighted = new Set(highlightedSlugs);
+
+    const wikiItems: GridItem[] = entries.map((e) => ({
+      kind: "wiki",
+      key: e._id,
+      slug: e.slug,
+      title: e.thema,
+      snippet: htmlToText(e.erklaerung),
+      tags: e.tags,
+      categoryKey: e.categoryId ? `cat:${e.categoryId}` : "none",
+      categoryLabel: e.categoryName ?? "",
+      categoryColor: e.categoryColor ?? "#77808A",
+      categoryDeleted: e.categoryDeleted,
+      pinned: e.pinned,
+      version: e.version,
+      archived: inArchive(e),
+      reviewDue: !inArchive(e) && needsReview(e),
+      validUntil: e.validUntil,
+      authorUserId: e.authorUserId,
+      updatedAt: e.updatedAt,
+      wikiEntry: e,
+    }));
+
+    // Pages already migrated (a wikiEntries row shares their slug) are
+    // superseded — showing both would just be a duplicate.
+    const legacyItems: GridItem[] = legacyPages
+      .filter((p) => !migratedSlugs.has(p.slug))
+      .map((p) => ({
+        kind: "legacy",
+        key: p._id,
+        slug: p.slug,
+        title: p.title,
+        snippet: p.description,
+        tags: [],
+        categoryKey: `topic:${p.topic}`,
+        categoryLabel: legacyTopicLabel(p.topic),
+        categoryColor: legacyTopicColor(p.topic),
+        categoryDeleted: false,
+        pinned: highlighted.has(p.slug),
+        version: null,
+        archived: false,
+        reviewDue: false,
+        validUntil: null,
+        authorUserId: p.authorUserId,
+        updatedAt: p.updatedAt,
+        wikiEntry: null,
+      }));
+
+    return [...wikiItems, ...legacyItems];
+  }, [entries, legacyPages, highlightedSlugs]);
+}
+
+// --- Entry card -----------------------------------------------------------
+
+function EntryCard({
+  item,
+  canManage,
+  onEdit,
 }: {
-  gb: Guidebook;
-  favorite: boolean;
-  onToggleFavorite: () => void;
-  highlighted: boolean;
-  canHighlight: boolean;
-  onToggleHighlight: () => void;
+  item: GridItem;
+  canManage: boolean;
+  onEdit: () => void;
 }) {
   const t = useTranslations("Guidebooks");
-  const Icon = gb.icon;
-  const tint = GROUP_META[groupOf(gb)].badgeTint;
+  const tc = useTranslations("Common");
+  const user = useCurrentUser();
+  const handleError = useErrorHandler();
+  const confirm = useConfirm();
+  const togglePin = useMutation(api.wikiEntries.togglePin);
+  const toggleHighlight = useMutation(api.guidebookHighlights.toggle);
+  const removeEntry = useMutation(api.wikiEntries.remove);
+  const removePage = useMutation(api.guidebookPages.remove);
+  const color = item.archived ? "#77808A" : item.categoryColor;
+  // Pinning is manager-curated (no ownership check, mirrors the server's
+  // `togglePin`/`guidebookHighlights.toggle`); edit/delete require owning the
+  // entry (or being admin) — showing those buttons more broadly would just
+  // surface an action that fails server-side.
+  const canEditThis = canManage && isOwnerOrAdmin(user, item.authorUserId);
+
+  async function onTogglePin() {
+    try {
+      if (item.kind === "wiki") await togglePin({ entryId: item.wikiEntry!._id });
+      else await toggleHighlight({ slug: item.slug });
+    } catch (e) {
+      handleError(e);
+    }
+  }
+
+  async function onDelete() {
+    const ok = await confirm({
+      title: t("deleteEntryConfirm"),
+      description: tc("deleteWarning"),
+      details: [
+        { label: t("fieldThema"), value: item.title },
+        ...(item.categoryDeleted ? [] : [{ label: t("fieldCategory"), value: item.categoryLabel }]),
+        ...(item.version === null
+          ? []
+          : [
+              {
+                label: t("versionMeta", { version: item.version }),
+                value: item.wikiEntry?.authorName ?? "",
+              },
+            ]),
+      ],
+      confirmLabel: tc("delete"),
+      cancelLabel: tc("cancel"),
+      destructive: true,
+    });
+    if (!ok) return;
+    try {
+      if (item.kind === "wiki") await removeEntry({ entryId: item.wikiEntry!._id });
+      else await removePage({ pageId: item.key as Id<"guidebookPages"> });
+    } catch (err) {
+      handleError(err);
+    }
+  }
+
   return (
     <Card
-      className={cn(
-        "group relative h-full transition-shadow hover:shadow-[0_2px_4px_0_rgb(0_0_0/0.05),0_16px_36px_-20px_rgb(0_0_0/0.18)]",
-        highlighted && "border-primary/30"
-      )}
+      className="group relative h-full overflow-hidden transition-shadow hover:shadow-md"
+      style={{ borderLeft: `4px solid ${color}` }}
     >
-      <Link href={`/guidebooks/${gb.slug}`} className="block h-full">
-        <CardContent className="flex h-full items-start gap-3 p-4">
-          <span
-            className={cn(
-              "flex size-10 shrink-0 items-center justify-center rounded-xl",
-              tint
-            )}
-          >
-            <Icon className="size-5" />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="flex flex-wrap items-center gap-1.5 font-display font-semibold tracking-tight">
-              {t(gb.titleKey)}
-              {gb.minRole && (
-                <Badge variant="muted" className="font-normal">
-                  {t("managerBadge")}
-                </Badge>
-              )}
-            </p>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {t(gb.descriptionKey)}
-            </p>
+      <Link href={`/guidebooks/${item.slug}`} className="block h-full">
+        <CardContent className="space-y-2 p-4">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <p
+                className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider"
+                style={{ color }}
+              >
+                {item.kind === "legacy" && <FileText className="size-3" />}
+                {item.archived ? t("archiveChip") : item.categoryLabel}
+                {item.archived && item.categoryLabel && (
+                  <span className="ml-1 font-normal normal-case text-muted-foreground">
+                    · {t("wasCategory", { name: item.categoryLabel })}
+                  </span>
+                )}
+              </p>
+              <p className="font-display font-semibold tracking-tight">{item.title}</p>
+            </div>
           </div>
-          <ChevronRight className="mt-6 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          <p className="line-clamp-2 text-sm text-muted-foreground">{item.snippet}</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {item.tags.map((tag) => (
+              <Badge key={tag} variant="muted" className="font-normal">
+                #{tag}
+              </Badge>
+            ))}
+            {item.reviewDue && !item.archived && (
+              <Badge variant="warning">{t("reviewDueBadge")}</Badge>
+            )}
+            {item.archived && !item.categoryDeleted && (
+              <Badge variant="muted">{t("expiredBadge")}</Badge>
+            )}
+          </div>
+          {item.version !== null && (
+            <p className="text-xs text-muted-foreground">
+              {t("versionMeta", { version: item.version })}
+            </p>
+          )}
         </CardContent>
       </Link>
-      <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 sm:right-2.5 sm:top-2.5">
-        {canHighlight && (
+      <div className="absolute right-2 top-2 flex items-center gap-0.5">
+        {canManage && !item.archived && (
           <button
             type="button"
-            aria-label={highlighted ? t("unhighlight") : t("highlight")}
-            aria-pressed={highlighted}
-            onClick={onToggleHighlight}
+            onClick={() => void onTogglePin()}
+            aria-label={item.pinned ? t("unpinAction") : t("pinAction")}
             className={cn(
-              "rounded-md p-2 transition-colors hover:bg-accent sm:p-1",
-              highlighted
-                ? "text-primary"
-                : "text-muted-foreground/50 hover:text-foreground"
+              "rounded-full p-1.5 transition-colors hover:bg-accent",
+              item.pinned ? "text-primary" : "text-muted-foreground/50",
             )}
           >
-            {highlighted ? (
-              <Pin className="size-4 fill-primary/20" />
-            ) : (
-              <PinOff className="size-4" />
-            )}
+            {item.pinned ? <Pin className="size-4" /> : <PinOff className="size-4" />}
           </button>
         )}
-        <button
-          type="button"
-          aria-label={favorite ? t("removeFavorite") : t("addFavorite")}
-          aria-pressed={favorite}
-          onClick={onToggleFavorite}
-          className={cn(
-            "rounded-md p-2 transition-colors hover:bg-accent sm:p-1",
-            favorite
-              ? "text-amber-500"
-              : "text-muted-foreground/50 hover:text-foreground"
-          )}
-        >
-          <Star className={cn("size-4", favorite && "fill-amber-400")} />
-        </button>
+        {canEditThis && (
+          <>
+            <button
+              type="button"
+              onClick={onEdit}
+              aria-label={tc("edit")}
+              className="rounded-full p-1.5 text-muted-foreground opacity-100 transition-opacity hover:bg-accent hover:text-foreground md:opacity-0 md:group-hover:opacity-100"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void onDelete()}
+              aria-label={tc("delete")}
+              className="rounded-full p-1.5 text-muted-foreground opacity-100 transition-opacity hover:bg-accent hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
+            >
+              <Trash2 className="size-3.5" />
+            </button>
+          </>
+        )}
       </div>
     </Card>
   );
 }
 
-function GuidebookGrid({
-  items,
-  favorites,
-  onToggleFavorite,
-  highlightedSlugs,
-  canHighlight,
-  onToggleHighlight,
-}: {
-  items: Guidebook[];
-  favorites: string[];
-  onToggleFavorite: (slug: string) => void;
-  highlightedSlugs: string[];
-  canHighlight: boolean;
-  onToggleHighlight: (slug: string) => void;
-}) {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {items.map(gb => (
-        <GuidebookCardItem
-          key={gb.slug}
-          gb={gb}
-          favorite={favorites.includes(gb.slug)}
-          onToggleFavorite={() => onToggleFavorite(gb.slug)}
-          highlighted={highlightedSlugs.includes(gb.slug)}
-          canHighlight={canHighlight}
-          onToggleHighlight={() => onToggleHighlight(gb.slug)}
-        />
-      ))}
-    </div>
-  );
-}
-
 export default function GuidebooksPage() {
   const t = useTranslations("Guidebooks");
+  const locale = useLocale();
+  const router = useRouter();
   const user = useCurrentUser();
-  const isManager = useIsManager();
+  const canManage = useHasCapability("manage_guidebooks");
   const handleError = useErrorHandler();
-  const guidebooks = accessibleGuidebooks(user);
+
+  const items = useGridItems();
+  const wikiCategoriesRaw = useQuery(api.wikiCategories.list);
+  const wikiCategories = wikiCategoriesRaw ?? EMPTY_CATEGORIES;
+  const extend = useMutation(api.wikiEntries.update);
+  const ensureDefaultCategories = useMutation(api.wikiCategories.ensureDefaults);
+
+  // Seed the prototype's default categories the first time anyone loads the
+  // wiki with none yet — mirrors the original app's own lazy bootstrap
+  // rather than requiring a manager to notice and create them by hand.
+  useEffect(() => {
+    if (wikiCategoriesRaw?.length === 0) void ensureDefaultCategories({});
+  }, [wikiCategoriesRaw, ensureDefaultCategories]);
+
   const [search, setSearch] = useState("");
-  const [groupFilter, setGroupFilter] = useState<"all" | GroupKey>("all");
-  const prefs = useQuery(api.userPreferences.getMine);
-  const setPrefs = useMutation(api.userPreferences.setMine);
-  const highlightedSlugs = useQuery(api.guidebookHighlights.list) ?? [];
-  const toggleHighlightMutation = useMutation(api.guidebookHighlights.toggle);
+  const [activeCategoryKeys, setActiveCategoryKeys] = useState<Set<string>>(new Set());
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set());
+  const [showArchive, setShowArchive] = useState(false);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [editing, setEditing] = useState<WikiEntry | "new" | null>(null);
+  const [categoryManagerOpen, setCategoryManagerOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
 
-  const favorites = useMemo(() => prefs?.favoriteGuidebooks ?? [], [prefs]);
+  const interactiveTools = useMemo(() => accessibleGuidebooks(user), [user]);
 
-  const lastVisited = prefs?.lastGuidebookSlug
-    ? guidebooks.find(gb => gb.slug === prefs.lastGuidebookSlug)
-    : undefined;
-
-  function favoritesFirst(rows: Guidebook[]) {
-    return [...rows].sort(
-      (a, b) =>
-        Number(favorites.includes(b.slug)) - Number(favorites.includes(a.slug))
+  // Every filterable category/topic in play: manageable wikiCategories plus
+  // whichever legacy topics still have unmigrated pages — always visible,
+  // not gated on migration.
+  const categoryChips = useMemo(() => {
+    const chips = wikiCategories.map((c) => ({
+      key: `cat:${c._id}`,
+      label: c.name,
+      color: c.color,
+    }));
+    const legacyTopics = new Set(
+      (items ?? []).filter((i) => i.kind === "legacy").map((i) => i.categoryKey),
     );
+    for (const key of legacyTopics) {
+      const topic = key.slice("topic:".length);
+      chips.push({ key, label: legacyTopicLabel(topic), color: legacyTopicColor(topic) });
+    }
+    return chips;
+  }, [wikiCategories, items]);
+
+  const reviewDue = useMemo(
+    () =>
+      (items ?? [])
+        .filter((i) => i.kind === "wiki" && i.reviewDue)
+        .sort((a, b) => (a.validUntil ?? 0) - (b.validUntil ?? 0)),
+    [items],
+  );
+
+  const filtered = useMemo(() => {
+    if (!items) return [];
+    const query = search.trim().toLowerCase();
+    return items.filter((i) => {
+      if (showArchive) {
+        if (!i.archived) return false;
+      } else {
+        if (i.archived) return false;
+        if (activeCategoryKeys.size && !activeCategoryKeys.has(i.categoryKey)) return false;
+      }
+      if (activeTags.size && ![...activeTags].every((tag) => i.tags.includes(tag))) return false;
+      if (query) {
+        const haystack =
+          `${i.title} ${i.snippet} ${i.tags.join(" ")} ${i.categoryLabel}`.toLowerCase();
+        if (!haystack.includes(query)) return false;
+      }
+      return true;
+    });
+  }, [items, showArchive, activeCategoryKeys, activeTags, search]);
+
+  const sorted = useMemo(
+    () =>
+      [...filtered].sort(
+        (a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt - a.updatedAt,
+      ),
+    [filtered],
+  );
+
+  const availableTags = useMemo(() => {
+    const pool = (items ?? []).filter((i) => (showArchive ? i.archived : !i.archived));
+    return [...new Set(pool.flatMap((i) => i.tags))].sort((a, b) => a.localeCompare(b, "de"));
+  }, [items, showArchive]);
+  // Legacy (block-editor) pages render in their own collapsed section rather
+  // than interleaved with wiki entries — see the grid below.
+  const currentEntries = useMemo(() => sorted.filter((i) => i.kind !== "legacy"), [sorted]);
+  const legacyEntries = useMemo(() => sorted.filter((i) => i.kind === "legacy"), [sorted]);
+
+  function toggleCategory(key: string) {
+    setActiveCategoryKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+  function toggleTag(tag: string) {
+    setActiveTags((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
   }
 
-  const query = search.trim().toLowerCase();
-  const searched = query
-    ? guidebooks.filter(gb =>
-        [t(gb.titleKey), t(gb.descriptionKey)].some(text =>
-          text.toLowerCase().includes(query)
-        )
-      )
-    : guidebooks;
-
-  const featured = highlightedSlugs
-    .map(slug => searched.find(gb => gb.slug === slug))
-    .filter((gb): gb is Guidebook => gb !== undefined);
-
-  const groups = GROUP_ORDER.map(key => ({
-    key,
-    meta: GROUP_META[key],
-    items: favoritesFirst(searched.filter(gb => groupOf(gb) === key)),
-  })).filter(g => g.items.length > 0);
-
-  const filtered =
-    groupFilter === "all"
-      ? favoritesFirst(searched)
-      : (groups.find(g => g.key === groupFilter)?.items ?? []);
-
-  function toggleFavorite(slug: string) {
-    const next = favorites.includes(slug)
-      ? favorites.filter(f => f !== slug)
-      : [...favorites, slug];
-    void setPrefs({ favoriteGuidebooks: next });
-  }
-
-  function toggleHighlight(slug: string) {
-    toggleHighlightMutation({ slug })
-      .then(res =>
-        toast.success(res.highlighted ? t("highlighted") : t("unhighlighted"))
-      )
-      .catch(handleError);
+  async function onExtend(item: GridItem) {
+    if (!item.wikiEntry) return;
+    try {
+      await extend({
+        entryId: item.wikiEntry._id,
+        categoryId: item.wikiEntry.categoryId ?? undefined,
+        thema: item.wikiEntry.thema,
+        erklaerung: item.wikiEntry.erklaerung,
+        tags: item.wikiEntry.tags,
+        link: item.wikiEntry.link ?? undefined,
+        validFrom: item.wikiEntry.validFrom,
+        validUntil: addMonths(Date.now(), 3),
+      });
+      toast.success(t("extended"));
+    } catch (e) {
+      handleError(e);
+    }
   }
 
   return (
     <div className="mx-auto max-w-5xl" data-tour="tour-guidebooks-list">
-      <PageHeader
-        eyebrow={t("eyebrow")}
-        title={t("title")}
-        description={t("subtitle")}
-        tourCheckpoint="guidebooks"
+      <PageHeaderBar title={t("title")} description={t("subtitle")} tourCheckpoint="guidebooks" />
+      {/* Manage categories + new entry are the two primary actions and move
+          into the header/bottom-nav pill; "Browse files" is a shortcut to a
+          different tool entirely, not a page action, so it stays a plain
+          in-page link instead of crowding that fixed slot with a third
+          icon. */}
+      <PageHeaderActions
+        actions={
+          canManage
+            ? [
+                {
+                  key: "browse-files",
+                  label: t("browseFiles"),
+                  icon: FolderOpen,
+                  onClick: () => router.push("/guidebooks/files"),
+                  variant: "outline" as const,
+                },
+                {
+                  key: "categories",
+                  label: t("categoryManagerTitle"),
+                  icon: Settings2,
+                  onClick: () => setCategoryManagerOpen(true),
+                  variant: "outline" as const,
+                },
+                {
+                  key: "new-entry",
+                  label: t("newEntry"),
+                  icon: Plus,
+                  onClick: () => router.push("/guidebooks/new"),
+                },
+              ]
+            : []
+        }
       />
 
-      {guidebooks.length === 0 ? (
-        <EmptyState
-          icon={<BookOpen />}
-          title={t("empty")}
-          description={t("emptyHint")}
-        />
-      ) : (
-        <div className="space-y-4">
-          {featured.length > 0 && (
-            <div className="rounded-2xl border border-primary/25 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4">
-              <div className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
-                <Pin className="size-3.5" />
-                {t("featured")}
-                <span className="tabular-nums text-primary/70">
-                  · {featured.length}
-                </span>
-              </div>
-              <GuidebookGrid
-                items={featured}
-                favorites={favorites}
-                onToggleFavorite={toggleFavorite}
-                highlightedSlugs={highlightedSlugs}
-                canHighlight={isManager}
-                onToggleHighlight={toggleHighlight}
-              />
-            </div>
-          )}
-
-          {guidebooks.length > 1 && (
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder={t("searchPlaceholder")}
-                className="h-11 pl-9 sm:h-9"
-              />
-            </div>
-          )}
-
-          {groups.length > 1 && (
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                onClick={() => setGroupFilter("all")}
-                aria-pressed={groupFilter === "all"}
-                className={cn(
-                  "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                  groupFilter === "all"
-                    ? "border-primary/40 bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-                )}
-              >
-                {t("categoryAll")} · {searched.length}
-              </button>
-              {groups.map(g => (
-                <button
-                  key={g.key}
-                  type="button"
-                  onClick={() => setGroupFilter(g.key)}
-                  aria-pressed={groupFilter === g.key}
-                  className={cn(
-                    "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                    groupFilter === g.key
-                      ? "border-primary/40 bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
-                  )}
-                >
-                  {t(g.meta.labelKey)} · {g.items.length}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {lastVisited && !search && (
-            <Link
-              href={`/guidebooks/${lastVisited.slug}`}
-              className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 transition-colors hover:bg-primary/10"
-            >
-              <lastVisited.icon className="size-4 shrink-0 text-primary" />
-              <span className="min-w-0 flex-1 text-sm">
-                <span className="text-muted-foreground">
-                  {t("continueReading")}{" "}
-                </span>
-                <span className="font-medium">{t(lastVisited.titleKey)}</span>
-              </span>
-              <ArrowRight className="size-4 shrink-0 text-primary" />
+      {canManage && (
+        <div className="mb-4 flex justify-end">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/guidebooks/files">
+              <FolderOpen className="size-4" />
+              {t("browseFiles")}
             </Link>
-          )}
-
-          {filtered.length === 0 ? (
-            <EmptyState icon={<Search />} title={t("noResults")} />
-          ) : groupFilter === "all" && groups.length > 1 ? (
-            <div className="space-y-6">
-              {groups.map(g => (
-                <section key={g.key}>
-                  <div
-                    className={cn(
-                      "mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider",
-                      g.meta.accent
-                    )}
-                  >
-                    <g.meta.icon className="size-3.5" />
-                    <span className="text-muted-foreground">
-                      {t(g.meta.labelKey)}
-                    </span>
-                    <span className="tabular-nums text-muted-foreground">
-                      · {g.items.length}
-                    </span>
-                  </div>
-                  <GuidebookGrid
-                    items={g.items}
-                    favorites={favorites}
-                    onToggleFavorite={toggleFavorite}
-                    highlightedSlugs={highlightedSlugs}
-                    canHighlight={isManager}
-                    onToggleHighlight={toggleHighlight}
-                  />
-                </section>
-              ))}
-            </div>
-          ) : (
-            <GuidebookGrid
-              items={filtered}
-              favorites={favorites}
-              onToggleFavorite={toggleFavorite}
-              highlightedSlugs={highlightedSlugs}
-              canHighlight={isManager}
-              onToggleHighlight={toggleHighlight}
-            />
-          )}
+          </Button>
         </div>
       )}
+
+      {interactiveTools.length > 0 && (
+        <details
+          className="group mb-6"
+          open={toolsOpen}
+          onToggle={(e) => setToolsOpen(e.currentTarget.open)}
+        >
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
+            <Sparkles className="size-3.5" />
+            {t("interactiveToolsTitle")}
+            <span className="tabular-nums">· {interactiveTools.length}</span>
+          </summary>
+          {/* Fifteen full-width rows is most of a phone screen, so opening
+              this pushed the actual wiki entries out of view. Capped and
+              scrolled instead — single column on mobile so the longer
+              titles stay readable rather than truncating to nothing. */}
+          <div className="mt-2 grid max-h-72 gap-2 overflow-y-auto overscroll-contain pr-1 sm:max-h-none sm:grid-cols-2 sm:overflow-visible sm:pr-0">
+            {interactiveTools.map((gb) => (
+              <Link
+                key={gb.slug}
+                href={`/guidebooks/${gb.slug}`}
+                className="flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-2.5 transition-colors hover:bg-accent"
+              >
+                <gb.icon className="size-4 shrink-0 text-primary" />
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                  {guidebookTitle(gb, t)}
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </details>
+      )}
+
+      <div className="space-y-4">
+        <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="relative mb-3">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("searchPlaceholder")}
+              className="pl-9"
+            />
+          </div>
+          <div className="-mx-1 flex items-center gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {categoryChips.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                disabled={showArchive}
+                onClick={() => toggleCategory(c.key)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-40",
+                  activeCategoryKeys.has(c.key) && !showArchive
+                    ? "border-transparent text-white"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+                style={
+                  activeCategoryKeys.has(c.key) && !showArchive
+                    ? { backgroundColor: c.color }
+                    : undefined
+                }
+              >
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: c.color }}
+                />
+                <span className="whitespace-nowrap">{c.label}</span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setShowArchive((v) => !v)}
+              className={cn(
+                "ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                showArchive
+                  ? "border-muted-foreground/40 bg-muted-foreground/10 text-foreground"
+                  : "border-dashed border-border text-muted-foreground hover:bg-accent",
+              )}
+            >
+              <Archive className="size-3.5" />
+              {t("archiveChip")}
+            </button>
+          </div>
+          {availableTags.length > 0 && (
+            <div className="mt-2.5 border-t border-dashed border-border pt-2.5">
+              {/* Every tag as a permanent chip buried the actual entries on a
+                  phone — this list runs to twenty-plus. Collapsed by default;
+                  whatever is currently filtering stays visible either way. */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setTagsOpen((v) => !v)}
+                  aria-expanded={tagsOpen}
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                >
+                  <ChevronRight
+                    className={cn("size-3 transition-transform", tagsOpen && "rotate-90")}
+                  />
+                  {t("tagsFilterLabel")}
+                  <span className="tabular-nums">{availableTags.length}</span>
+                </button>
+                {!tagsOpen &&
+                  [...activeTags].map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className="rounded-full border border-foreground bg-foreground px-2.5 py-1 text-xs font-medium text-background"
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+              </div>
+              {tagsOpen && (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {availableTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                        activeTags.has(tag)
+                          ? "border-foreground bg-foreground text-background"
+                          : "border-border text-muted-foreground hover:bg-accent",
+                      )}
+                    >
+                      #{tag}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {!showArchive && reviewDue.length > 0 && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
+            <p className="mb-1 text-sm font-semibold text-amber-700 dark:text-amber-400">
+              {t("reviewPanelTitle")}
+            </p>
+            <p className="mb-3 text-xs text-muted-foreground">{t("reviewPanelBody")}</p>
+            <div className="space-y-2">
+              {reviewDue.map((i) => {
+                const days = daysUntil(i.validUntil ?? 0);
+                return (
+                  <div
+                    key={i.key}
+                    className="flex flex-wrap items-center gap-2 rounded-lg bg-card px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 flex-1 truncate font-medium">{i.title}</span>
+                    <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                      {days < 0
+                        ? t("expiredSince", {
+                            date: formatIsoDate(msToDateInput(i.validUntil ?? 0), locale),
+                          })
+                        : t("expiresInDays", { count: days })}
+                    </span>
+                    {canManage && (
+                      <Button size="sm" variant="outline" onClick={() => void onExtend(i)}>
+                        {t("extendBy3Months")}
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {items === undefined ? null : sorted.length === 0 ? (
+          <EmptyState
+            icon={showArchive ? <Archive /> : <Sparkles />}
+            title={showArchive ? t("archiveEmpty") : t("noResults")}
+          />
+        ) : (
+          <>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {currentEntries.map((i) => (
+                <EntryCard
+                  key={i.key}
+                  item={i}
+                  canManage={canManage}
+                  onEdit={() => {
+                    if (i.kind === "wiki" && i.wikiEntry) setEditing(i.wikiEntry);
+                    else router.push(`/guidebooks/${i.slug}/edit`);
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Not-yet-migrated block-editor pages. They outnumbered the real
+                entries in the shared grid and pushed them off the first
+                screen, so they get their own collapsed section — still
+                searchable and filterable, just not competing for attention. */}
+            {legacyEntries.length > 0 && (
+              <details className="group mt-4">
+                <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <ChevronRight className="size-3.5 transition-transform group-open:rotate-90" />
+                  <FileText className="size-3.5" />
+                  {t("legacySectionTitle")}
+                  <span className="tabular-nums">· {legacyEntries.length}</span>
+                </summary>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {legacyEntries.map((i) => (
+                    <EntryCard
+                      key={i.key}
+                      item={i}
+                      canManage={canManage}
+                      onEdit={() => router.push(`/guidebooks/${i.slug}/edit`)}
+                    />
+                  ))}
+                </div>
+              </details>
+            )}
+          </>
+        )}
+      </div>
+
+      <EntryDialog entry={editing} onOpenChange={() => setEditing(null)} />
+      <CategoryManagerDialog open={categoryManagerOpen} onOpenChange={setCategoryManagerOpen} />
     </div>
   );
 }

@@ -11,10 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useErrorHandler } from "@/hooks/use-error-handler";
-import {
-  dismissLinkPrompt,
-  isLinkPromptDismissed,
-} from "@/lib/performanceAuth";
+import { dismissLinkPrompt, isLinkPromptDismissed } from "@/lib/performanceAuth";
 
 /**
  * Self-service prompt shown after a real password login (never for one
@@ -66,19 +63,10 @@ export function SelfLinkPrompt({ token }: { token: string }) {
           })}
         </p>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            disabled={linking}
-            onClick={() => void handleLink()}
-          >
+          <Button size="sm" disabled={linking} onClick={() => void handleLink()}>
             {t("linkPromptConfirm")}
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={linking}
-            onClick={handleDismiss}
-          >
+          <Button variant="ghost" size="sm" disabled={linking} onClick={handleDismiss}>
             <X className="mr-1 h-3.5 w-3.5" />
             {t("linkPromptDismiss")}
           </Button>

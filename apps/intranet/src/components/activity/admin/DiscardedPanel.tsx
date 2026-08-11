@@ -5,10 +5,7 @@ import { useQuery } from "convex/react";
 import { ShieldAlert } from "lucide-react";
 
 import { STATE_COLOR } from "@/components/activity/charts/theme";
-import {
-  ProviderBadge,
-  type Provider,
-} from "@/components/branding/ProviderMark";
+import { ProviderBadge, type Provider } from "@/components/branding/ProviderMark";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StateName } from "@/lib/activity/activity";
@@ -56,13 +53,9 @@ export function DiscardedPanel() {
           <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
             <ShieldAlert className="h-4 w-4" />
           </span>
-          <CardTitle className="text-base">
-            {t("settings.discarded.heading")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("settings.discarded.heading")}</CardTitle>
         </div>
-        <p className="text-sm text-muted-foreground">
-          {t("settings.discarded.sub")}
-        </p>
+        <p className="text-sm text-muted-foreground">{t("settings.discarded.sub")}</p>
         <div className="rounded-md border border-border-soft bg-muted/40 p-3">
           <p className="text-xs leading-relaxed text-muted-foreground">
             {t("timeline.discarded.explain")}
@@ -81,25 +74,15 @@ export function DiscardedPanel() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border-soft text-left text-xs text-muted-foreground">
-                  <th className="py-2 pr-4 font-medium">
-                    {t("timeline.discarded.col.time")}
-                  </th>
-                  <th className="py-2 pr-4 font-medium">
-                    {t("settings.discarded.col.person")}
-                  </th>
-                  <th className="py-2 pr-4 font-medium">
-                    {t("timeline.discarded.col.state")}
-                  </th>
-                  <th className="py-2 pr-4 font-medium">
-                    {t("timeline.discarded.col.source")}
-                  </th>
-                  <th className="py-2 font-medium">
-                    {t("timeline.discarded.col.reason")}
-                  </th>
+                  <th className="py-2 pr-4 font-medium">{t("timeline.discarded.col.time")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("settings.discarded.col.person")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("timeline.discarded.col.state")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("timeline.discarded.col.source")}</th>
+                  <th className="py-2 font-medium">{t("timeline.discarded.col.reason")}</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map(r => (
+                {rows.map((r) => (
                   <tr
                     key={`${r.employeeId}-${r.at}-${r.state}`}
                     className="border-b border-border-soft last:border-0"
@@ -122,12 +105,8 @@ export function DiscardedPanel() {
                         {t(`empstate.${r.state}`)}
                       </span>
                     </td>
-                    <td className="py-2 pr-4 text-muted-foreground">
-                      {sourceLabel(r.source)}
-                    </td>
-                    <td className="py-2 text-muted-foreground">
-                      {reasonLabel(r.reason)}
-                    </td>
+                    <td className="py-2 pr-4 text-muted-foreground">{sourceLabel(r.source)}</td>
+                    <td className="py-2 text-muted-foreground">{reasonLabel(r.reason)}</td>
                   </tr>
                 ))}
               </tbody>

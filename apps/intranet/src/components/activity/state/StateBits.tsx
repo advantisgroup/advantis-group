@@ -80,12 +80,8 @@ export function Signal({
         {label}
       </span>
       <span className="flex items-center gap-2">
-        {known && dotClass && (
-          <span className={cn("h-2 w-2 rounded-full", dotClass)} />
-        )}
-        <span className={cn("text-sm font-bold tabular-nums", valueClass)}>
-          {value ?? "—"}
-        </span>
+        {known && dotClass && <span className={cn("h-2 w-2 rounded-full", dotClass)} />}
+        <span className={cn("text-sm font-bold tabular-nums", valueClass)}>{value ?? "—"}</span>
       </span>
     </div>
   );
@@ -94,6 +90,7 @@ export function Signal({
 /** Per-source signals (workstation / Genesys / Clockodo) for one employee. */
 export function SourceSignals({
   deviceIdle,
+  deviceOnline = true,
   genesysRoutingStatus,
   genesysPresence,
   clockodoWorking,
@@ -102,6 +99,13 @@ export function SourceSignals({
   clockodoClockedOut = null,
 }: {
   deviceIdle: boolean | null;
+  /** Whether the workstation's heartbeat is within the online window (see
+   * `device.online` on the timeline page). `deviceIdle` is only a stale
+   * snapshot from whenever the last sample actually arrived — showing it
+   * unqualified while the device has been unreachable for hours reads as
+   * contradicting the page's own "Offline" verdict just above it. Defaults
+   * to `true` so callers that don't track reachability keep prior behaviour. */
+  deviceOnline?: boolean;
   genesysRoutingStatus: string | null;
   genesysPresence: string | null;
   clockodoWorking: boolean | null;
@@ -124,29 +128,21 @@ export function SourceSignals({
     <div>
       <Signal
         label={t("state.source.agent")}
-        tone={deviceIdle == null ? "neutral" : deviceIdle ? "warn" : "ok"}
+        tone={!deviceOnline || deviceIdle == null ? "neutral" : deviceIdle ? "warn" : "ok"}
         value={
-          deviceIdle == null
-            ? null
-            : deviceIdle
-              ? t("common.idle")
-              : t("common.active")
+          !deviceOnline
+            ? t("timeline.offline")
+            : deviceIdle == null
+              ? null
+              : deviceIdle
+                ? t("common.idle")
+                : t("common.active")
         }
       />
-      <Signal
-        label={<ProviderBadge provider="genesys" />}
-        tone={genesysTone}
-        value={genesys}
-      />
+      <Signal label={<ProviderBadge provider="genesys" />} tone={genesysTone} value={genesys} />
       <Signal
         label={<ProviderBadge provider="clockodo" />}
-        tone={
-          clockodoAbsent || clockodoBreak
-            ? "warn"
-            : clockodoWorking
-              ? "ok"
-              : "neutral"
-        }
+        tone={clockodoAbsent || clockodoBreak ? "warn" : clockodoWorking ? "ok" : "neutral"}
         value={
           clockodoAbsent
             ? t("empstate.ABSENT")
@@ -173,12 +169,12 @@ export function SourceSignals({
 export function HealthBanner() {
   const { t } = useI18n();
   const health = useQuery(api.activity.state.health);
-  const degraded = (health ?? []).filter(h => h.status !== "ok");
+  const degraded = (health ?? []).filter((h) => h.status !== "ok");
   if (degraded.length === 0) return null;
 
   return (
     <div className="space-y-2">
-      {degraded.map(h => {
+      {degraded.map((h) => {
         const source = t(`state.source.${h.source}`);
         const text =
           h.status === "unconfigured"
@@ -197,9 +193,7 @@ export function HealthBanner() {
               <p className="text-sm text-fg">
                 <BrandedText text={text} />
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {t("state.health.degraded")}
-              </p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t("state.health.degraded")}</p>
             </div>
           </div>
         );

@@ -1,21 +1,11 @@
 "use client";
 
-import { useParams } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { useQuery } from "convex/react";
-
 import { TerminDetailModal } from "@/components/applicants/TerminDetailModal";
+import { useApplicantSubItem } from "@/components/applicants/useApplicantSubItem";
 
 export default function ApplicantTerminDetailPage() {
-  const params = useParams<{ id: string; terminId: string }>();
-  const applicantId = params.id as Id<"applicants">;
-  const applicant = useQuery(api.applicants.get, { applicantId });
+  const result = useApplicantSubItem("termine", "terminId");
+  if (!result) return null;
 
-  if (!applicant) return null;
-  const termin = applicant.termine.find(t => t._id === params.terminId);
-  if (!termin) return null;
-
-  return <TerminDetailModal applicantId={applicantId} termin={termin} />;
+  return <TerminDetailModal applicantId={result.applicant._id} termin={result.item} />;
 }

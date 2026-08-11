@@ -28,7 +28,7 @@ export function UnqualifiedReasonsChart({
         <CardTitle className="text-base">{t("dashboardUnqualified")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
-        {reasons.map(r => (
+        {reasons.map((r) => (
           <div
             key={r.reason}
             className="grid grid-cols-[8rem_1fr_2.5rem] items-center gap-3 text-sm sm:grid-cols-[12rem_1fr_2.5rem]"
@@ -40,9 +40,7 @@ export function UnqualifiedReasonsChart({
                 style={{ width: `${(r.count / max) * 100}%` }}
               />
             </div>
-            <span className="text-right font-medium tabular-nums">
-              {fmtNum(r.count)}
-            </span>
+            <span className="text-right font-medium tabular-nums">{fmtNum(r.count)}</span>
           </div>
         ))}
       </CardContent>

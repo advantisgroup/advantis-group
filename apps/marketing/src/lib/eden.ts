@@ -14,13 +14,10 @@ const normalizeBaseUrl = (value: string) => {
 };
 
 const configuredDomain = process.env.NEXT_PUBLIC_DOMAIN;
-const runtimeOrigin =
-  typeof window !== "undefined" ? window.location.origin : undefined;
+const runtimeOrigin = typeof window !== "undefined" ? window.location.origin : undefined;
 
 if (!configuredDomain && !runtimeOrigin && !dev) {
-  throw new Error(
-    "NEXT_PUBLIC_DOMAIN must be set for production server-side API requests."
-  );
+  throw new Error("NEXT_PUBLIC_DOMAIN must be set for production server-side API requests.");
 }
 
 const fallbackBaseUrl = runtimeOrigin || "http://localhost:3000";

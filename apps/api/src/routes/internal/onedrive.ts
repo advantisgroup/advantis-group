@@ -20,11 +20,7 @@ export const internalOnedriveRoute = new Elysia().post(
     // Graph drive subscriptions live at most ~30 days; renew daily from cron.
     const expiry = new Date(Date.now() + 6 * 86_400_000).toISOString();
     try {
-      const sub = await createSubscription(
-        notificationUrl,
-        clientState,
-        expiry
-      );
+      const sub = await createSubscription(notificationUrl, clientState, expiry);
       return {
         ok: true,
         subscriptionId: sub.id,
@@ -34,5 +30,5 @@ export const internalOnedriveRoute = new Elysia().post(
       console.error("[onedrive] subscription create failed:", error);
       throw Errors.upstream("Could not create OneDrive subscription");
     }
-  }
+  },
 );

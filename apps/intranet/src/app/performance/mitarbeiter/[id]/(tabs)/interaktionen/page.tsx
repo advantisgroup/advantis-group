@@ -7,51 +7,64 @@ import { useParams } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 
-import { InteractionsTable } from "@/components/performance/InteractionsTable";
+import { InteractionRecordsTable } from "@/components/performance/InteractionRecordsTable";
+import { shiftAnchor, todayIso } from "@/components/performance/lib";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { PeriodFilter } from "@/components/performance/PeriodFilter";
-import {
-  computePeriodRange,
-  shiftAnchor,
-  todayIso,
-  type PeriodGranularity,
-} from "@/components/performance/periodFilter";
+import { Button } from "@/components/ui/button";
+import { formatIsoDate } from "@/lib/format";
 import { getPerformanceToken } from "@/lib/performanceAuth";
 
 export default function EmployeeInteractionsPage() {
+  const t = useTranslations("Performance");
+  const locale = useLocale();
   const params = useParams<{ id: string }>();
   const employeeId = params.id as Id<"performanceEmployees">;
   const token = getPerformanceToken() ?? "";
-  const [granularity, setGranularity] = useState<PeriodGranularity>("month");
   const [anchor, setAnchor] = useState(todayIso);
-  const { start, end } = computePeriodRange(anchor, granularity);
 
-  const data = useQuery(api.performanceQueries.interactionsMonth, {
+  const data = useQuery(api.performanceQueries.interactionsDayDetail, {
     token,
+    date: anchor,
     employeeId,
-    start,
-    end,
   });
 
   if (!data) return <PerformanceContentSkeleton />;
 
   return (
     <div className="space-y-4">
-      <PeriodFilter
-        granularity={granularity}
-        anchor={anchor}
-        onGranularityChange={g => setGranularity(g)}
-        onShift={dir => setAnchor(a => shiftAnchor(a, granularity, dir))}
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          title={t("paginationPrev")}
+          onClick={() => setAnchor((a) => shiftAnchor(a, "day", -1))}
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <span className="min-w-36 text-center text-sm font-medium tabular-nums">
+          {formatIsoDate(anchor, locale)}
+        </span>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8"
+          title={t("paginationNext")}
+          onClick={() => setAnchor((a) => shiftAnchor(a, "day", 1))}
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        {anchor !== todayIso() && (
+          <Button variant="ghost" size="sm" onClick={() => setAnchor(todayIso())}>
+            {t("today")}
+          </Button>
+        )}
+      </div>
 
-      <InteractionsTable
-        days={data.days}
-        total={data.total}
-        hrefForRow={row =>
-          `/performance/mitarbeiter/${employeeId}/interaktionen/${row.date}`
-        }
-      />
+      <InteractionRecordsTable records={data.records} total={data.total} showEmployee={false} />
     </div>
   );
 }

@@ -11,12 +11,7 @@ import { cn } from "@/lib/utils";
 
 function FlagDE({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 5 3"
-      preserveAspectRatio="none"
-      className={className}
-      aria-hidden
-    >
+    <svg viewBox="0 0 5 3" preserveAspectRatio="none" className={className} aria-hidden>
       <rect width="5" height="3" fill="#000000" />
       <rect width="5" height="2" y="1" fill="#DD0000" />
       <rect width="5" height="1" y="2" fill="#FFCE00" />
@@ -26,12 +21,7 @@ function FlagDE({ className }: { className?: string }) {
 
 function FlagGB({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 60 30"
-      preserveAspectRatio="none"
-      className={className}
-      aria-hidden
-    >
+    <svg viewBox="0 0 60 30" preserveAspectRatio="none" className={className} aria-hidden>
       <clipPath id="flag-gb-clip">
         <path d="M0 0v30h60V0z" />
       </clipPath>
@@ -52,19 +42,13 @@ const FLAG_BY_LOCALE: Record<Locale, ComponentType<{ className?: string }>> = {
 };
 
 /** Rounded flag chip for a given locale. */
-export function LocaleFlag({
-  locale,
-  className,
-}: {
-  locale: Locale;
-  className?: string;
-}) {
+export function LocaleFlag({ locale, className }: { locale: Locale; className?: string }) {
   const Flag = FLAG_BY_LOCALE[locale];
   return (
     <span
       className={cn(
         "inline-flex h-3.5 w-5 shrink-0 overflow-hidden rounded-[2px] ring-1 ring-black/10",
-        className
+        className,
       )}
     >
       <Flag className="h-full w-full" />

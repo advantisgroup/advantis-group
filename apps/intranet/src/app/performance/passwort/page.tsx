@@ -51,12 +51,9 @@ export default function PerformancePasswordPage() {
     router.replace("/performance/login");
   }
 
-  const mismatch =
-    confirmPassword.length > 0 && newPassword !== confirmPassword;
+  const mismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
   const canSubmit =
-    currentPassword.length > 0 &&
-    newPassword.length >= 8 &&
-    newPassword === confirmPassword;
+    currentPassword.length > 0 && newPassword.length >= 8 && newPassword === confirmPassword;
 
   async function handleSubmit() {
     if (!canSubmit) return;
@@ -80,12 +77,11 @@ export default function PerformancePasswordPage() {
 
   const navItems = [
     {
-      href:
-        session.role === "admin"
-          ? "/performance"
-          : session.employeeId
-            ? `/performance/mitarbeiter/${session.employeeId}`
-            : "/performance",
+      href: session.permissions.includes("view_all_employees")
+        ? "/performance"
+        : session.employeeId
+          ? `/performance/mitarbeiter/${session.employeeId}`
+          : "/performance",
       label: t("backToDashboard"),
     },
   ];
@@ -94,16 +90,14 @@ export default function PerformancePasswordPage() {
     <div className="min-h-screen bg-muted/20">
       <PerformanceHeader navItems={navItems} onExit={exit} />
 
-      <main className="mx-auto max-w-md space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-md space-y-6 p-4 pb-24 md:p-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <KeyRound className="h-4 w-4 text-primary" />
               {t("passwordTitle")}
             </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              {t("passwordIntro")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("passwordIntro")}</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
@@ -113,7 +107,7 @@ export default function PerformancePasswordPage() {
               <Input
                 type="password"
                 value={currentPassword}
-                onChange={e => setCurrentPassword(e.target.value)}
+                onChange={(e) => setCurrentPassword(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
@@ -123,7 +117,7 @@ export default function PerformancePasswordPage() {
               <Input
                 type="password"
                 value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
+                onChange={(e) => setNewPassword(e.target.value)}
               />
             </div>
             <div className="space-y-1.5">
@@ -133,13 +127,9 @@ export default function PerformancePasswordPage() {
               <Input
                 type="password"
                 value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
               />
-              {mismatch && (
-                <p className="text-xs text-destructive">
-                  {t("passwordMismatch")}
-                </p>
-              )}
+              {mismatch && <p className="text-xs text-destructive">{t("passwordMismatch")}</p>}
             </div>
             {done && (
               <p className="text-sm text-emerald-600 dark:text-emerald-400">

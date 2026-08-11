@@ -56,10 +56,7 @@ export function createEslintConfig(tsconfigRootDir) {
         ...tseslint.configs.recommended.rules,
         ...tseslint.configs["recommended-type-checked"].rules,
         ...reactHooks.configs.recommended.rules,
-        "react-refresh/only-export-components": [
-          "warn",
-          { allowConstantExport: true },
-        ],
+        "react-refresh/only-export-components": ["off", { allowConstantExport: true }],
         "@typescript-eslint/no-unused-vars": [
           "warn",
           {

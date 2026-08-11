@@ -444,7 +444,7 @@
       },
       "taxId": {
         "title": "VAT ID",
-        "content": "VAT identification number according to § 27 a of the Value Added Tax Act: [to follow]"
+        "content": "VAT identification number according to § 27 a of the Value Added Tax Act: DE463759734"
       },
       "register": {
         "title": "Commercial Register Entry",
@@ -481,6 +481,11 @@
     "menuLabel": "Account",
     "guest": "Guest user",
     "providerHint": "Continue with  Google or use your email to create an account.",
+    "authShellHighlights": [
+      "Track the status of your requests",
+      "Manage your profile in one place",
+      "Secured with Clerk"
+    ],
     "signInPageCta": "Open sign-in page",
     "signUpPageCta": "Open sign-up page",
     "signIn": "Sign in",
@@ -1000,5 +1005,15 @@
     "title": "Recognized & Trusted",
     "salesClub": "Sales Presidents Club {year}",
     "dsgvo": "GDPR Compliant"
+  },
+  "licenses": {
+    "eyebrow": "Open source",
+    "title": "Licenses",
+    "description": "This website is built with open-source software. Browse the packages used and their respective licenses.",
+    "searchPlaceholder": "Search package, license, or publisher…",
+    "searchLabel": "Search licenses",
+    "resultCount": "{count, plural, =0 {No packages} one {# package} other {# packages}}",
+    "repository": "Open repository",
+    "empty": "No matching licenses found."
   }
 }

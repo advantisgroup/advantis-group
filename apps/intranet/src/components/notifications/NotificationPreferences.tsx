@@ -4,16 +4,11 @@ import { useEffect, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-  BellRing,
-  CalendarCheck,
-  Megaphone,
-  Plane,
-  UploadCloud,
-} from "lucide-react";
+import { BellRing } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { notificationVisual } from "@/lib/notification-kinds";
 import { cn } from "@/lib/utils";
 
 import type { LucideIcon } from "lucide-react";
@@ -22,33 +17,20 @@ import type { LucideIcon } from "lucide-react";
  * Every mutable notification type with its icon/tint. `access_request`
  * (system) is deliberately absent — admins must not mute access requests.
  */
-const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] = [
-  {
-    type: "absence_request",
-    icon: Plane,
-    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  },
-  {
-    type: "absence_decision",
-    icon: CalendarCheck,
-    tint: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  },
-  {
-    type: "announcement",
-    icon: Megaphone,
-    tint: "bg-primary/10 text-primary",
-  },
-  {
-    type: "upload_request",
-    icon: UploadCloud,
-    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  },
-  {
-    type: "upload_decision",
-    icon: UploadCloud,
-    tint: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  },
-];
+/**
+ * The subset of notification types a user is allowed to silence, in display
+ * order. Icons/tints come from the shared registry so this list and the
+ * notification feed can't drift apart.
+ */
+export const MUTABLE_TYPES: { type: string; icon: LucideIcon; tint: string }[] = [
+  "chat-message",
+  "chat-mention",
+  "absence_request",
+  "absence_decision",
+  "announcement",
+  "upload_request",
+  "upload_decision",
+].map((type) => ({ type, ...notificationVisual(type) }));
 
 export function Switch({
   checked,
@@ -68,13 +50,13 @@ export function Switch({
       onClick={onToggle}
       className={cn(
         "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-        checked ? "bg-primary" : "bg-muted"
+        checked ? "bg-primary" : "bg-muted",
       )}
     >
       <span
         className={cn(
           "absolute top-0.5 size-5 rounded-full bg-background shadow transition-all",
-          checked ? "left-[1.375rem]" : "left-0.5"
+          checked ? "left-[1.375rem]" : "left-0.5",
         )}
       />
     </button>
@@ -92,30 +74,23 @@ export function NotificationPreferences() {
   const setPreferences = useMutation(api.notifications.setPreferences);
   const userPrefs = useQuery(api.userPreferences.getMine);
   const setUserPrefs = useMutation(api.userPreferences.setMine);
-  const [permission, setPermission] = useState<NotificationPermission | null>(
-    null
-  );
+  const [permission, setPermission] = useState<NotificationPermission | null>(null);
 
   useEffect(() => {
     // The Notification global doesn't exist during SSR; this can only be
     // read post-mount.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPermission(
-      typeof Notification !== "undefined" ? Notification.permission : null
-    );
+    setPermission(typeof Notification !== "undefined" ? Notification.permission : null);
   }, []);
 
   const muted = prefs?.mutedTypes ?? [];
 
   function toggleType(type: string) {
-    const next = muted.includes(type)
-      ? muted.filter(m => m !== type)
-      : [...muted, type];
+    const next = muted.includes(type) ? muted.filter((m) => m !== type) : [...muted, type];
     void setPreferences({ mutedTypes: next });
   }
 
-  const browserEnabled =
-    (userPrefs?.browserPushEnabled ?? false) && permission === "granted";
+  const browserEnabled = (userPrefs?.browserPushEnabled ?? false) && permission === "granted";
 
   async function toggleBrowser() {
     if (browserEnabled) {
@@ -137,25 +112,28 @@ export function NotificationPreferences() {
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 py-3">
-        <div className="flex items-center gap-3">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-300">
-            <BellRing className="size-[18px]" />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-sm font-medium">
-              {t("browserTitle")}
+      <div className="border-b border-border/60 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-300">
+              <BellRing className="size-[18px]" />
             </span>
-            <span className="block text-xs text-muted-foreground">
-              {t("browserHint")}
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">{t("browserTitle")}</span>
+              <span className="block text-xs text-muted-foreground">{t("browserHint")}</span>
             </span>
-          </span>
+          </div>
+          <Switch
+            checked={browserEnabled}
+            onToggle={() => void toggleBrowser()}
+            label={t("browserTitle")}
+          />
         </div>
-        <Switch
-          checked={browserEnabled}
-          onToggle={() => void toggleBrowser()}
-          label={t("browserTitle")}
-        />
+        {permission === "denied" && (
+          <p className="ml-12 mt-2 text-xs text-amber-600 dark:text-amber-400">
+            {t("browserDeniedHint")}
+          </p>
+        )}
       </div>
       {MUTABLE_TYPES.map(({ type, icon: Icon, tint }) => (
         <div
@@ -164,14 +142,14 @@ export function NotificationPreferences() {
         >
           <div className="flex items-center gap-3">
             <span
-              className={cn(
-                "flex size-9 items-center justify-center rounded-lg",
-                tint
-              )}
+              className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg", tint)}
             >
               <Icon className="size-[18px]" />
             </span>
-            <span className="text-sm font-medium">{t(`type_${type}`)}</span>
+            <span className="min-w-0">
+              <span className="block text-sm font-medium">{t(`type_${type}`)}</span>
+              <span className="block text-xs text-muted-foreground">{t(`desc_${type}`)}</span>
+            </span>
           </div>
           <Switch
             checked={!muted.includes(type)}

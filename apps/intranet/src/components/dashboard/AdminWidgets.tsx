@@ -3,7 +3,9 @@
 import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import {
+  AlertTriangle,
   Award,
+  ClipboardCheck,
   Coffee,
   Lock,
   Plane,
@@ -14,10 +16,8 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import {
-  useCurrentUser,
-  useIsAdmin,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsAdmin } from "@/components/providers/current-user";
+import { usePendingAbsenceCount } from "@/lib/absences-api";
 import { relativeTime } from "@/lib/format";
 
 import { DashCard, Empty, Row, RowSkeletons, StatLine } from "./primitives";
@@ -107,6 +107,40 @@ export function TeamPerformanceCard() {
   );
 }
 
+export function OpenMeasuresCard() {
+  const t = useTranslations("Dashboard");
+  const measures = useQuery(api.errorMeasures.list, {});
+  const open = measures?.filter((measure) => measure.status === "offen") ?? [];
+  const overdue = open.filter((measure) => measure.dueAt && measure.dueAt < Date.now());
+
+  return (
+    <DashCard icon={<ClipboardCheck />} title={t("errorMeasuresTitle")} count={open.length}>
+      {measures === undefined ? (
+        <RowSkeletons />
+      ) : open.length === 0 ? (
+        <Empty href="/fehlermanagement/measures" linkLabel={t("openErrorMeasures")}>
+          {t("noOpenMeasures")}
+        </Empty>
+      ) : (
+        <div className="space-y-1">
+          <StatLine
+            icon={<ClipboardCheck />}
+            label={t("openMeasures")}
+            value={open.length}
+            href="/fehlermanagement/measures"
+          />
+          <StatLine
+            icon={<AlertTriangle />}
+            label={t("overdueMeasures")}
+            value={overdue.length}
+            href="/fehlermanagement/measures"
+          />
+        </div>
+      )}
+    </DashCard>
+  );
+}
+
 /** Pending absence approvals + open applicant pipeline. Managers+; the
  * applicant stat only fires once the caller both has access and has their
  * vault unlocked, so a locked vault degrades to a hint instead of an error. */
@@ -114,45 +148,36 @@ export function AdminStatsCard() {
   const t = useTranslations("Dashboard");
   const user = useCurrentUser();
   const isAdmin = useIsAdmin();
-  const pending = useQuery(api.absences.pendingForApproval);
-  const hasApplicantAccess =
-    isAdmin || user.applicantAccess || user.applicantAccessDelegate;
-  const vaultStatus = useQuery(
-    api.applicantVault.status,
-    hasApplicantAccess ? {} : "skip"
-  );
+  const pendingCount = usePendingAbsenceCount(true);
+  const hasApplicantAccess = isAdmin || user.applicantAccess || user.applicantAccessDelegate;
+  const vaultStatus = useQuery(api.applicantVault.status, hasApplicantAccess ? {} : "skip");
   const pipeline = useQuery(
     api.applicants.pipelineCount,
-    hasApplicantAccess && vaultStatus?.unlocked ? {} : "skip"
+    hasApplicantAccess && vaultStatus?.unlocked ? {} : "skip",
   );
 
   return (
     <DashCard icon={<ScrollText />} title={t("adminStatsTitle")}>
       <div className="space-y-1">
-        {pending === undefined ? (
+        {pendingCount === undefined ? (
           <RowSkeletons />
         ) : (
           <StatLine
             icon={<Plane />}
             label={t("pendingApprovals")}
-            value={pending.count}
-            href="/absences"
+            value={pendingCount}
+            href="/clockodo/approvals"
           />
         )}
         {hasApplicantAccess &&
           (vaultStatus === undefined ? null : !vaultStatus.unlocked ? (
-            <StatLine
-              icon={<Lock />}
-              label={t("vaultLockedHint")}
-              value=""
-              href="/applicants"
-            />
+            <StatLine icon={<Lock />} label={t("vaultLockedHint")} value="" href="/hr" />
           ) : pipeline !== undefined ? (
             <StatLine
               icon={<Users2 />}
               label={t("openApplicantPipeline")}
               value={pipeline.open}
-              href="/applicants"
+              href="/hr"
             />
           ) : null)}
       </div>
@@ -175,15 +200,13 @@ export function RecentActivityCard() {
           {t("noRecentActivity")}
         </Empty>
       ) : (
-        rows.map(r => (
+        rows.map((r) => (
           <Row
             key={r._id}
-            href="/admin/audit"
-            title={`${r.actorName} · ${r.action}`}
+            href={`/admin/audit?entry=${r._id}`}
+            title={`${r.user?.name ?? "unknown"} · ${r.action}`}
             subtitle={r.target ?? undefined}
-            trailing={
-              <span className="whitespace-nowrap">{relativeTime(r.at)}</span>
-            }
+            trailing={<span className="whitespace-nowrap">{relativeTime(r.at)}</span>}
           />
         ))
       )}

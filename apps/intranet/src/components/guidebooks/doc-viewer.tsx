@@ -142,14 +142,12 @@ function DocImage({ block }: { block: Extract<DocBlock, { kind: "image" }> }) {
           height={block.height}
           className="h-auto max-w-full rounded-lg"
         />
-        <span className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-0 shadow-sm backdrop-blur transition-opacity group-hover:opacity-100">
+        <span className="absolute right-3 top-3 flex size-7 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-100 shadow-sm backdrop-blur transition-opacity md:opacity-0 md:group-hover:opacity-100">
           <ZoomIn className="size-4" />
         </span>
       </button>
       {block.caption && (
-        <figcaption className="mt-1.5 text-xs text-muted-foreground">
-          {block.caption}
-        </figcaption>
+        <figcaption className="mt-1.5 text-xs text-muted-foreground">{block.caption}</figcaption>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -167,9 +165,7 @@ function DocImage({ block }: { block: Extract<DocBlock, { kind: "image" }> }) {
             className="h-auto w-full rounded-lg"
           />
           {block.caption && (
-            <p className="mt-2 text-center text-xs text-muted-foreground">
-              {block.caption}
-            </p>
+            <p className="mt-2 text-center text-xs text-muted-foreground">{block.caption}</p>
           )}
         </DialogContent>
       </Dialog>
@@ -188,9 +184,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
       );
     case "text":
       return (
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          {renderInline(block.body)}
-        </p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{renderInline(block.body)}</p>
       );
     case "image":
       return <DocImage block={block} />;
@@ -215,7 +209,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
         <div
           className={cn(
             "flex items-start gap-3 rounded-lg border px-3.5 py-2.5 text-sm leading-relaxed",
-            style.container
+            style.container,
           )}
         >
           <style.Icon className="mt-0.5 size-4 shrink-0" />
@@ -226,7 +220,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
     case "links":
       return (
         <div className="grid gap-2 sm:grid-cols-2">
-          {block.items.map(link => (
+          {block.items.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -235,9 +229,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
               className="group flex items-start gap-2.5 rounded-lg border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40 hover:bg-accent"
             >
               <ExternalLink className="mt-0.5 size-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
-              <span className="min-w-0 text-sm font-medium leading-snug">
-                {link.label}
-              </span>
+              <span className="min-w-0 text-sm font-medium leading-snug">{link.label}</span>
             </a>
           ))}
         </div>
@@ -245,20 +237,16 @@ function DocBlockView({ block }: { block: DocBlock }) {
     case "shortcuts":
       return (
         <div className="grid gap-x-8 sm:grid-cols-2">
-          {block.items.map(item => (
+          {block.items.map((item) => (
             <div
               key={item.action}
               className="flex items-center justify-between gap-4 border-b border-border/60 py-2"
             >
-              <span className="text-sm text-muted-foreground">
-                {item.action}
-              </span>
+              <span className="text-sm text-muted-foreground">{item.action}</span>
               <span className="flex shrink-0 items-center gap-1">
                 {item.keys.map((key, i) => (
                   <Fragment key={i}>
-                    {i > 0 && (
-                      <span className="text-xs text-muted-foreground">+</span>
-                    )}
+                    {i > 0 && <span className="text-xs text-muted-foreground">+</span>}
                     <Kbd>{key}</Kbd>
                   </Fragment>
                 ))}
@@ -309,12 +297,8 @@ export function DocViewer({
                 <FileText className="size-4" />
               </span>
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
-                  {doc.download.fileName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {t("docViewer.downloadHint")}
-                </p>
+                <p className="truncate text-sm font-medium">{doc.download.fileName}</p>
+                <p className="text-xs text-muted-foreground">{t("docViewer.downloadHint")}</p>
               </div>
             </div>
             <a
@@ -333,9 +317,7 @@ export function DocViewer({
               <span className="font-mono text-sm font-bold text-primary">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <h2 className="font-display text-xl font-bold tracking-tight">
-                {section.title}
-              </h2>
+              <h2 className="font-display text-xl font-bold tracking-tight">{section.title}</h2>
             </div>
             <div className="space-y-4">
               {section.blocks.map((block, j) => (

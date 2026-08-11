@@ -36,10 +36,7 @@ function bearer(headers: Record<string, string | undefined>): string | null {
   return h?.startsWith("Bearer ") ? h.slice(7) : null;
 }
 
-function keyMatches(
-  provided: string | null | undefined,
-  expected: string | undefined
-): boolean {
+function keyMatches(provided: string | null | undefined, expected: string | undefined): boolean {
   return !!expected && !!provided && provided === expected;
 }
 
@@ -49,11 +46,7 @@ function str(body: unknown, key: string): string | null {
 }
 
 const ok = (body: Record<string, unknown> = {}) => ({ ok: true, ...body });
-const fail = (
-  set: { status?: number | string },
-  status: number,
-  error: string
-) => {
+const fail = (set: { status?: number | string }, status: number, error: string) => {
   set.status = status;
   return { ok: false, error };
 };
@@ -77,26 +70,17 @@ export const activityRoute = new Elysia()
     const windowsUser = str(body, "windowsUser");
     const agentVersion = str(body, "agentVersion");
     const claimNonce = str(body, "claimNonce");
-    if (
-      !deviceId ||
-      !hostname ||
-      !windowsUser ||
-      !agentVersion ||
-      !claimNonce
-    ) {
+    if (!deviceId || !hostname || !windowsUser || !agentVersion || !claimNonce) {
       return fail(set, 400, "bad_request");
     }
-    const { status } = await getConvex().mutation(
-      api.activity.devices.requestEnrollment,
-      {
-        secret: signalSecret(),
-        deviceId,
-        hostname,
-        windowsUser,
-        agentVersion,
-        claimNonce,
-      }
-    );
+    const { status } = await getConvex().mutation(api.activity.devices.requestEnrollment, {
+      secret: signalSecret(),
+      deviceId,
+      hostname,
+      windowsUser,
+      agentVersion,
+      claimNonce,
+    });
     return ok({ status });
   })
   .post("/agent/poll", async ({ body, set }) => {
@@ -122,21 +106,17 @@ export const activityRoute = new Elysia()
     const b = (body ?? {}) as Record<string, unknown>;
     const employeeId = typeof b.employeeId === "string" ? b.employeeId : null;
     const deviceIdle = typeof b.deviceIdle === "boolean" ? b.deviceIdle : null;
-    const idleSeconds =
-      typeof b.idleSeconds === "number" ? b.idleSeconds : null;
+    const idleSeconds = typeof b.idleSeconds === "number" ? b.idleSeconds : null;
     if (employeeId === null || deviceIdle === null || idleSeconds === null) {
       return fail(set, 400, "bad_request");
     }
-    const { finalState } = await getConvex().mutation(
-      api.activity.state.pushSignal,
-      {
-        secret: signalSecret(),
-        employeeId,
-        source: "agent",
-        deviceIdle,
-        idleSeconds,
-      }
-    );
+    const { finalState } = await getConvex().mutation(api.activity.state.pushSignal, {
+      secret: signalSecret(),
+      employeeId,
+      source: "agent",
+      deviceIdle,
+      idleSeconds,
+    });
     return ok({ finalState });
   })
   // --- Genesys relay --------------------------------------------------------
@@ -147,18 +127,14 @@ export const activityRoute = new Elysia()
     const b = (body ?? {}) as Record<string, unknown>;
     const employeeId = typeof b.employeeId === "string" ? b.employeeId : null;
     if (!employeeId) return fail(set, 400, "bad_request");
-    const { finalState } = await getConvex().mutation(
-      api.activity.state.pushSignal,
-      {
-        secret: signalSecret(),
-        employeeId,
-        source: "genesys",
-        genesysRoutingStatus: b.routingStatus as never,
-        genesysPresence: b.presence as never,
-        genesysWrapUp:
-          typeof b.wrapUp === "boolean" ? (b.wrapUp as boolean) : undefined,
-      }
-    );
+    const { finalState } = await getConvex().mutation(api.activity.state.pushSignal, {
+      secret: signalSecret(),
+      employeeId,
+      source: "genesys",
+      genesysRoutingStatus: b.routingStatus as never,
+      genesysPresence: b.presence as never,
+      genesysWrapUp: typeof b.wrapUp === "boolean" ? (b.wrapUp as boolean) : undefined,
+    });
     return ok({ finalState });
   })
   .post("/integrations/genesys/sync", async ({ body, headers, set }) => {
@@ -166,8 +142,7 @@ export const activityRoute = new Elysia()
       return fail(set, 401, "unauthorized");
     }
     const b = (body ?? {}) as { employeeId?: string; genesysUserId?: string };
-    if (!b?.employeeId || !b?.genesysUserId)
-      return fail(set, 400, "bad_request");
+    if (!b?.employeeId || !b?.genesysUserId) return fail(set, 400, "bad_request");
     const result = await getConvex().action(api.activity.genesys.syncGenesys, {
       secret: signalSecret(),
       employeeId: b.employeeId,
@@ -176,111 +151,101 @@ export const activityRoute = new Elysia()
     return result;
   })
   // --- Clockodo relay (time entries; distinct from /webhooks/clockodo absence-sync) ---
-  .post(
-    "/integrations/clockodo/webhook",
-    async ({ body, headers, query, set }) => {
-      const b = (body ?? {}) as Record<string, unknown>;
+  .post("/integrations/clockodo/webhook", async ({ body, headers, query, set }) => {
+    const b = (body ?? {}) as Record<string, unknown>;
 
-      // A. Validation handshake — surface the secret and acknowledge.
-      if (typeof b.secret === "string" && !b.event_name && !b.employeeId) {
+    // A. Validation handshake — surface the secret and acknowledge.
+    if (typeof b.secret === "string" && !b.event_name && !b.employeeId) {
+      console.warn(`[activity/clockodo] webhook validation secret: ${b.secret}`);
+      logClockodoWebhookDelivery({
+        endpoint: "integrations/clockodo/webhook",
+        ok: true,
+        reason: "handshake",
+        token: b.secret,
+      });
+      return ok();
+    }
+
+    // B. Native Clockodo event.
+    if (typeof b.event_name === "string") {
+      const token = typeof b.token === "string" ? b.token : null;
+      const tokenOk =
+        keyMatches(token, process.env.CLOCKODO_WEBHOOK_TOKEN) ||
+        keyMatches(token, process.env.ACTIVITYTRACK_WEBHOOK_SECRET);
+      if (!tokenOk) {
         console.warn(
-          `[activity/clockodo] webhook validation secret: ${b.secret}`
+          `[activity/clockodo] 401 token mismatch — event: ${b.event_name}, received token present: ${!!token}`,
         );
         logClockodoWebhookDelivery({
           endpoint: "integrations/clockodo/webhook",
-          ok: true,
-          reason: "handshake",
-          token: b.secret,
+          eventName: b.event_name,
+          ok: false,
+          reason: "token_mismatch",
+          token,
         });
-        return ok();
+        return fail(set, 401, "unauthorized");
       }
-
-      // B. Native Clockodo event.
-      if (typeof b.event_name === "string") {
-        const token = typeof b.token === "string" ? b.token : null;
-        const tokenOk =
-          keyMatches(token, process.env.CLOCKODO_WEBHOOK_TOKEN) ||
-          keyMatches(token, process.env.ACTIVITYTRACK_WEBHOOK_SECRET);
-        if (!tokenOk) {
-          console.warn(
-            `[activity/clockodo] 401 token mismatch — event: ${b.event_name}, received token present: ${!!token}`
-          );
-          logClockodoWebhookDelivery({
-            endpoint: "integrations/clockodo/webhook",
-            eventName: b.event_name,
-            ok: false,
-            reason: "token_mismatch",
-            token,
-          });
-          return fail(set, 401, "unauthorized");
-        }
-        const payload = (b.payload ?? {}) as {
-          entry?: { id?: number | string; users_id?: number | string };
-        };
-        const entryId = payload.entry?.id;
-        if (entryId == null) {
-          console.log(
-            `[activity/clockodo] 200 ignored event with no entry id — event: ${b.event_name}`
-          );
-          logClockodoWebhookDelivery({
-            endpoint: "integrations/clockodo/webhook",
-            eventName: b.event_name,
-            ok: true,
-            reason: "ignored_no_entry_id",
-            token,
-          });
-          return ok({ ignored: true });
-        }
+      const payload = (b.payload ?? {}) as {
+        entry?: { id?: number | string; users_id?: number | string };
+      };
+      const entryId = payload.entry?.id;
+      if (entryId == null) {
         console.log(
-          `[activity/clockodo] 200 processing entry event — event: ${b.event_name}, entryId: ${entryId}`
+          `[activity/clockodo] 200 ignored event with no entry id — event: ${b.event_name}`,
         );
         logClockodoWebhookDelivery({
           endpoint: "integrations/clockodo/webhook",
           eventName: b.event_name,
           ok: true,
-          reason: "processed",
+          reason: "ignored_no_entry_id",
           token,
-          resourceId: String(entryId),
         });
-        // users_id rides along so deleted entries (which can no longer be
-        // fetched) still resolve to a user for the day recompute.
-        const payloadUsersId = payload.entry?.users_id;
-        return await getConvex().action(
-          api.activity.clockodo.refreshClockodoByEntry,
-          {
-            secret: signalSecret(),
-            entryId: String(entryId),
-            eventName: b.event_name,
-            usersId:
-              payloadUsersId != null ? String(payloadUsersId) : undefined,
-          }
-        );
+        return ok({ ignored: true });
       }
-
-      // C. Legacy adapter shapes.
-      const secret =
-        bearer(headers) ?? (query as Record<string, string>)?.secret ?? null;
-      if (!keyMatches(secret, process.env.ACTIVITYTRACK_WEBHOOK_SECRET)) {
-        console.warn("[activity/clockodo] 401 legacy secret mismatch");
-        logClockodoWebhookDelivery({
-          endpoint: "integrations/clockodo/webhook",
-          ok: false,
-          reason: "legacy_secret_mismatch",
-          token: secret,
-        });
-        return fail(set, 401, "unauthorized");
-      }
-      const raw = b as { employeeId?: string; clockodoUserId?: string };
-      if (raw.employeeId && raw.clockodoUserId) {
-        console.log(
-          `[activity/clockodo] 200 legacy refresh — employeeId: ${raw.employeeId}, clockodoUserId: ${raw.clockodoUserId}`
-        );
-        return await getConvex().action(api.activity.clockodo.refreshClockodo, {
-          secret: signalSecret(),
-          employeeId: raw.employeeId,
-          clockodoUserId: raw.clockodoUserId,
-        });
-      }
-      return fail(set, 400, "bad_request");
+      console.log(
+        `[activity/clockodo] 200 processing entry event — event: ${b.event_name}, entryId: ${entryId}`,
+      );
+      logClockodoWebhookDelivery({
+        endpoint: "integrations/clockodo/webhook",
+        eventName: b.event_name,
+        ok: true,
+        reason: "processed",
+        token,
+        resourceId: String(entryId),
+      });
+      // users_id rides along so deleted entries (which can no longer be
+      // fetched) still resolve to a user for the day recompute.
+      const payloadUsersId = payload.entry?.users_id;
+      return await getConvex().action(api.activity.clockodo.refreshClockodoByEntry, {
+        secret: signalSecret(),
+        entryId: String(entryId),
+        eventName: b.event_name,
+        usersId: payloadUsersId != null ? String(payloadUsersId) : undefined,
+      });
     }
-  );
+
+    // C. Legacy adapter shapes.
+    const secret = bearer(headers) ?? (query as Record<string, string>)?.secret ?? null;
+    if (!keyMatches(secret, process.env.ACTIVITYTRACK_WEBHOOK_SECRET)) {
+      console.warn("[activity/clockodo] 401 legacy secret mismatch");
+      logClockodoWebhookDelivery({
+        endpoint: "integrations/clockodo/webhook",
+        ok: false,
+        reason: "legacy_secret_mismatch",
+        token: secret,
+      });
+      return fail(set, 401, "unauthorized");
+    }
+    const raw = b as { employeeId?: string; clockodoUserId?: string };
+    if (raw.employeeId && raw.clockodoUserId) {
+      console.log(
+        `[activity/clockodo] 200 legacy refresh — employeeId: ${raw.employeeId}, clockodoUserId: ${raw.clockodoUserId}`,
+      );
+      return await getConvex().action(api.activity.clockodo.refreshClockodo, {
+        secret: signalSecret(),
+        employeeId: raw.employeeId,
+        clockodoUserId: raw.clockodoUserId,
+      });
+    }
+    return fail(set, 400, "bad_request");
+  });

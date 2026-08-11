@@ -14,12 +14,7 @@ export type CheckpointId =
 
 export type CheckpointStatus = "pending" | "active" | "completed" | "skipped";
 
-export type TourPhase =
-  | "idle"
-  | "navigating"
-  | "measuring"
-  | "active"
-  | "complete";
+export type TourPhase = "idle" | "navigating" | "measuring" | "active" | "complete";
 
 export interface CheckpointState {
   status: CheckpointStatus;

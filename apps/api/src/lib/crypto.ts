@@ -23,7 +23,7 @@ function getKey(): Buffer {
   const key = Buffer.from(raw, "base64");
   if (key.length !== 32) {
     throw new Error(
-      "WIKI_CHAT_ENC_KEY must be 32 bytes, base64-encoded (e.g. `openssl rand -base64 32`)"
+      "WIKI_CHAT_ENC_KEY must be 32 bytes, base64-encoded (e.g. `openssl rand -base64 32`)",
     );
   }
   cachedKey = key;
@@ -33,10 +33,7 @@ function getKey(): Buffer {
 export function encrypt(plaintext: string): string {
   const iv = randomBytes(IV_BYTES);
   const cipher = createCipheriv(ALGO, getKey(), iv);
-  const ciphertext = Buffer.concat([
-    cipher.update(plaintext, "utf8"),
-    cipher.final(),
-  ]);
+  const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
   return [
     iv.toString("base64url"),
@@ -50,11 +47,7 @@ export function decrypt(payload: string): string {
   if (!ivB64 || !tagB64 || !dataB64) {
     throw new Error("Malformed ciphertext");
   }
-  const decipher = createDecipheriv(
-    ALGO,
-    getKey(),
-    Buffer.from(ivB64, "base64url")
-  );
+  const decipher = createDecipheriv(ALGO, getKey(), Buffer.from(ivB64, "base64url"));
   decipher.setAuthTag(Buffer.from(tagB64, "base64url"));
   return Buffer.concat([
     decipher.update(Buffer.from(dataB64, "base64url")),

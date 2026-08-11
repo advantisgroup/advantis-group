@@ -29,7 +29,7 @@ export function LanguageSwitcher() {
     router.replace(pathname, { locale: newLocale });
   };
 
-  const currentLanguage = languages.find(lang => lang.code === locale);
+  const currentLanguage = languages.find((lang) => lang.code === locale);
 
   return (
     <DropdownMenu>
@@ -40,7 +40,7 @@ export function LanguageSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {languages.map(language => (
+        {languages.map((language) => (
           <DropdownMenuItem
             key={language.code}
             onClick={() => switchLanguage(language.code)}

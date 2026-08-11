@@ -28,17 +28,13 @@ export const de: Dict = {
   "login.toSignup": "Noch kein Konto? Registrieren",
   "login.toSignin": "Bereits ein Konto? Anmelden",
   "login.error": "Anmeldung fehlgeschlagen. Bitte Daten prüfen.",
-  "login.firstUserNote":
-    "Das erste registrierte Konto wird automatisch IT-Administrator.",
+  "login.firstUserNote": "Das erste registrierte Konto wird automatisch IT-Administrator.",
   "login.passwordHint": "Mindestens 8 Zeichen.",
-  "login.feature.insights":
-    "Aktivitätsmuster auf einen Blick — Diagramme statt endloser Listen.",
-  "login.feature.privacy":
-    "Nur Aktiv-/Inaktivzeiten — keine Screenshots, keine Tastatureingaben.",
+  "login.feature.insights": "Aktivitätsmuster auf einen Blick — Diagramme statt endloser Listen.",
+  "login.feature.privacy": "Nur Aktiv-/Inaktivzeiten — keine Screenshots, keine Tastatureingaben.",
 
   "overview.heading": "Team-Übersicht",
-  "overview.empty":
-    "Noch keine genehmigten Geräte. Genehmigen Sie ein Gerät unter „Geräte“.",
+  "overview.empty": "Noch keine genehmigten Geräte. Genehmigen Sie ein Gerät unter „Geräte“.",
   "overview.working": "Arbeitet",
   "overview.idleNow": "Inaktiv",
   "overview.offline": "Offline",
@@ -48,8 +44,7 @@ export const de: Dict = {
   "overview.total": "Geräte gesamt",
   "overview.ofTotal": "von {total} Geräten",
   "overview.online": "online",
-  "overview.sub":
-    "Wer arbeitet gerade, wer ist still geworden – und seit wann. Auf einen Blick.",
+  "overview.sub": "Wer arbeitet gerade, wer ist still geworden – und seit wann. Auf einen Blick.",
   "overview.filter.all": "Alle",
   "overview.filter.attention": "Inaktiv",
   "overview.filter.working": "Arbeitet",
@@ -59,7 +54,7 @@ export const de: Dict = {
   "overview.live": "Live",
   "overview.nextSync": "Nächste Aktualisierung in {duration}",
   "overview.nextSyncHint":
-    "Genesys und Clockodo werden tagsüber alle 2 Minuten und nachts alle 10 Minuten abgefragt – das ist der Countdown dazu. Clockodo kann Änderungen per Webhook auch schneller melden.",
+    "Genesys und Clockodo werden tagsüber alle 15 Minuten und nachts alle 2 Stunden abgefragt – das ist der Countdown dazu. Clockodo kann Änderungen per Webhook auch schneller melden.",
   "overview.liveHint": "Aktualisiert sich in Echtzeit – kein Neuladen nötig.",
   "overview.outdated": "Update verfügbar",
   "overview.outdatedHint":
@@ -69,8 +64,7 @@ export const de: Dict = {
     "Neueste veröffentlichte ActivityTrack-Version, stündlich von GitHub Releases gespiegelt.",
 
   "devices.heading": "Geräte",
-  "devices.sub":
-    "Neue Agents genehmigen, Computer Mitarbeitern zuordnen und die Flotte verwalten.",
+  "devices.sub": "Neue Agents genehmigen, Computer Mitarbeitern zuordnen und die Flotte verwalten.",
   "devices.pending": "Wartet auf Genehmigung",
   "devices.all": "Alle Geräte",
   "devices.host": "Computer",
@@ -91,8 +85,7 @@ export const de: Dict = {
   "status.disabled": "Deaktiviert",
 
   "people.heading": "Mitarbeiter",
-  "people.sub":
-    "Die Stammliste: Namen, E-Mail und die Integrations-IDs hinter dem Live-Status.",
+  "people.sub": "Die Stammliste: Namen, E-Mail und die Integrations-IDs hinter dem Live-Status.",
   "people.add": "Mitarbeiter hinzufügen",
   "people.name": "Name",
   "people.email": "E-Mail",
@@ -128,8 +121,7 @@ export const de: Dict = {
   "audit.empty": "Noch keine Einträge.",
 
   "settings.heading": "Einstellungen",
-  "settings.subtitle":
-    "Konfiguration, Systemstatus, Benutzer und Protokoll an einem Ort.",
+  "settings.subtitle": "Konfiguration, Systemstatus, Benutzer und Protokoll an einem Ort.",
   "settings.tabs.config": "Konfiguration",
   "settings.tabs.system": "Systemstatus",
   "settings.tabs.users": "Benutzer",
@@ -139,8 +131,7 @@ export const de: Dict = {
   "settings.discarded.hint":
     "Signale, die die Statuslogik abgelehnt hat (z. B. außerhalb der Geschäftszeiten), werden in Quarantäne gestellt statt in die Zeitleisten geschrieben. Hier lässt sich prüfen, was verworfen wurde und warum.",
   "settings.discarded.open": "Verworfene Daten öffnen",
-  "settings.discarded.sub":
-    "Abgelehnte Signale aller Mitarbeiter, neueste zuerst.",
+  "settings.discarded.sub": "Abgelehnte Signale aller Mitarbeiter, neueste zuerst.",
   "settings.discarded.empty": "Es wurde nichts verworfen.",
   "settings.discarded.col.person": "Mitarbeiter",
   "settings.trouble.heading": "Problembehebung",
@@ -159,8 +150,7 @@ export const de: Dict = {
   "settings.trouble.pruneHint":
     "Löscht Daten, die älter als das konfigurierte Aufbewahrungsfenster sind, sofort statt bei der nächtlichen Bereinigung.",
   "settings.trouble.pruneDone": "Fertig — {count} alte Zeilen gelöscht.",
-  "settings.trouble.failed":
-    "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+  "settings.trouble.failed": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
   "settings.trouble.sanitize": "Tiefenbereinigung (Clockodo)",
   "settings.trouble.sanitizeHint":
     "Fragt jeden Clockodo-Eintrag für den gewählten Tag tief ab (nicht nur den aktuellen Moment) und schreibt den Abwesenheits-/Ausstempel-/Pausen-Verlauf dieses Tages entsprechend neu — korrigiert Daten von vor der Geschäftszeiten-Korrektur oder Abweichungen durch nachträglich bearbeitete oder gelöschte Clockodo-Einträge. Rührt Gespräch/Aktiv/Inaktiv-Zustände von Genesys oder dem Arbeitsplatz-Agenten nie an. Kann gefahrlos mehrfach ausgeführt werden.",
@@ -178,8 +168,7 @@ export const de: Dict = {
   "settings.config.inactivityHint":
     "Untätigkeit, ab der jemand als inaktiv zählt (für Diagramme und Kennzahlen).",
   "settings.config.offline": "Offline-Schwelle",
-  "settings.config.offlineHint":
-    "Zeit ohne Lebenszeichen, ab der ein Gerät als offline gilt.",
+  "settings.config.offlineHint": "Zeit ohne Lebenszeichen, ab der ein Gerät als offline gilt.",
   "settings.config.retention": "Aufbewahrung",
   "settings.config.retentionHint":
     "Wie lange Rohdaten und Statusverlauf aufbewahrt werden, bevor sie gelöscht werden.",
@@ -230,8 +219,7 @@ export const de: Dict = {
   "timeline.now.showAll": "Alle {count} anzeigen",
   "timeline.now.showFewer": "Weniger anzeigen",
   "timeline.now.numbers": "Tageswerte",
-  "timeline.now.numbersHint":
-    "Exakte Zahlen zur Validierung und für den Export.",
+  "timeline.now.numbersHint": "Exakte Zahlen zur Validierung und für den Export.",
   "timeline.prevPerson": "Vorherige Person",
   "timeline.nextPerson": "Nächste Person",
   "timeline.trend.heading": "Aktivität der letzten 14 Tage",
@@ -246,8 +234,7 @@ export const de: Dict = {
     "Minuten pro Stunde nach Zustand — inaktiv, im Gespräch, Pause, Nachbearbeitung.",
   "timeline.hourly.empty":
     "Noch kein Statusverlauf für heute. Daten erscheinen, sobald Signale eintreffen.",
-  "timeline.hourly.unlinked":
-    "Dieses Gerät ist keinem Mitarbeiter mit Integrationen zugeordnet.",
+  "timeline.hourly.unlinked": "Dieses Gerät ist keinem Mitarbeiter mit Integrationen zugeordnet.",
   "timeline.unlinkedCta": "Unter Mitarbeiter zuordnen →",
   "timeline.state.heading": "Aktueller Status",
   "timeline.state.empty": "Noch keine Statusdaten für diesen Mitarbeiter.",
@@ -267,8 +254,7 @@ export const de: Dict = {
   "timeline.discarded.col.state": "Abgelehnter Status",
   "timeline.discarded.col.source": "Quelle",
   "timeline.discarded.col.reason": "Grund",
-  "timeline.discarded.reason.outside_business_hours":
-    "Außerhalb der Geschäftszeiten",
+  "timeline.discarded.reason.outside_business_hours": "Außerhalb der Geschäftszeiten",
   "timeline.discarded.source.agent": "Arbeitsplatz",
   "timeline.discarded.source.genesys": "Genesys",
   "timeline.discarded.source.clockodo": "Clockodo",
@@ -381,8 +367,7 @@ export const de: Dict = {
   "devices.slots.copy": "Kopieren",
   "devices.slots.copied": "Kopiert!",
   "devices.slots.revoke": "Widerrufen",
-  "devices.slots.confirmRevoke":
-    "Diesen Registrierungscode wirklich widerrufen?",
+  "devices.slots.confirmRevoke": "Diesen Registrierungscode wirklich widerrufen?",
   "devices.slots.status.active": "Aktiv",
   "devices.slots.status.used": "Eingelöst",
   "devices.slots.status.expired": "Abgelaufen",
@@ -396,8 +381,7 @@ export const de: Dict = {
   "devices.slots.heading.devices": "Alle Geräte",
   "devices.filter.search": "Suche …",
   "devices.filter.all": "Alle Status",
-  "devices.empty":
-    "Noch keine Geräte. Genehmigen Sie eines, sobald sich sein Tracker registriert.",
+  "devices.empty": "Noch keine Geräte. Genehmigen Sie eines, sobald sich sein Tracker registriert.",
   "devices.noMatches": "Keine Geräte entsprechen diesen Filtern.",
   "devices.confirmDelete": "Dieses Gerät endgültig löschen?",
   "devices.confirmDeleteBody":
@@ -417,10 +401,8 @@ export const de: Dict = {
   // Live employee state (Arbeitsplatz + Genesys + Clockodo zusammengeführt).
   "nav.state": "Live-Status",
   "state.heading": "Live-Status",
-  "state.subtitle":
-    "Zusammengeführter Status aus Arbeitsplatz, Genesys und Clockodo.",
-  "state.empty":
-    "Noch keine Statusdaten. Sobald Signale eintreffen, erscheinen sie hier.",
+  "state.subtitle": "Zusammengeführter Status aus Arbeitsplatz, Genesys und Clockodo.",
+  "state.empty": "Noch keine Statusdaten. Sobald Signale eintreffen, erscheinen sie hier.",
   "state.updated": "Aktualisiert",
   "state.signals": "Signale",
   "state.source.agent": "Arbeitsplatz",
@@ -460,32 +442,26 @@ export const de: Dict = {
 
   // Error toasts — shown when an action fails. Keyed by the backend error code.
   "error.generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
-  "error.network":
-    "Keine Verbindung zum Server. Bitte später erneut versuchen.",
+  "error.network": "Keine Verbindung zum Server. Bitte später erneut versuchen.",
   "error.auth.required": "Bitte erneut anmelden.",
   "error.auth.forbidden": "Dafür fehlt Ihnen die Berechtigung.",
-  "error.notFound.device":
-    "Das Gerät wurde nicht gefunden (evtl. bereits gelöscht).",
+  "error.notFound.device": "Das Gerät wurde nicht gefunden (evtl. bereits gelöscht).",
   "error.notFound.person": "Der Mitarbeiter wurde nicht gefunden.",
   "error.notFound.user": "Der Benutzer wurde nicht gefunden.",
   "error.notFound.slot": "Der Code wurde nicht gefunden.",
   "error.notFound.event": "Der Eintrag wurde nicht gefunden.",
   "error.clockodo.managedElsewhere":
     "Diese Person ist mit einem Intranet-Konto verknüpft — bearbeiten Sie die Clockodo-ID stattdessen unter Admin → Integrationen → Clockodo.",
-  "error.validation.password_short":
-    "Das Passwort muss mindestens 6 Zeichen haben.",
-  "error.validation.out_of_range":
-    "Der Wert liegt außerhalb des zulässigen Bereichs.",
+  "error.validation.password_short": "Das Passwort muss mindestens 6 Zeichen haben.",
+  "error.validation.out_of_range": "Der Wert liegt außerhalb des zulässigen Bereichs.",
   "error.user.cannot_demote_self":
     "Sie können sich nicht selbst die IT-Administratorrolle entziehen.",
 
   // System health page.
   "health.heading": "Systemstatus",
-  "health.subtitle":
-    "Verbindung der Geräte und gemeldete Störungen auf einen Blick.",
+  "health.subtitle": "Verbindung der Geräte und gemeldete Störungen auf einen Blick.",
   "health.allGood.title": "Alles in Ordnung",
-  "health.allGood.body":
-    "Alle Geräte melden sich und es liegen keine offenen Störungen vor.",
+  "health.allGood.body": "Alle Geräte melden sich und es liegen keine offenen Störungen vor.",
   "health.attention.title": "{count} Sache(n) brauchen Aufmerksamkeit",
   "health.attention.body": "Eine Übersicht finden Sie unten.",
   "health.offline.heading": "Geräte, die sich nicht melden",
@@ -523,8 +499,7 @@ export const de: Dict = {
   // Plain-language descriptions per event code (for non-technical viewers).
   "health.friendly.ingest.unauthorized":
     "Ein unbekanntes oder gesperrtes Gerät hat versucht, Daten zu senden.",
-  "health.friendly.ingest.bad_payload":
-    "Ein Gerät hat fehlerhafte Daten gesendet.",
+  "health.friendly.ingest.bad_payload": "Ein Gerät hat fehlerhafte Daten gesendet.",
   "health.friendly.enroll.unauthorized":
     "Eine nicht autorisierte Installation hat versucht, sich zu registrieren.",
   "health.friendly.enroll.code_invalid":
@@ -535,8 +510,7 @@ export const de: Dict = {
     "Die Ersteinrichtung eines Computers ist fehlgeschlagen.",
   "health.friendly.tracker.queue_io":
     "Ein Computer kann seine Daten lokal nicht zwischenspeichern.",
-  "health.friendly.dashboard.crash":
-    "Im Dashboard ist ein unerwarteter Fehler aufgetreten.",
+  "health.friendly.dashboard.crash": "Im Dashboard ist ein unerwarteter Fehler aufgetreten.",
   "health.friendly.unknown": "Ein Problem wurde gemeldet.",
 
   // ErrorBoundary fallback.
@@ -560,15 +534,13 @@ export const de: Dict = {
   "nav.more": "Mehr",
 
   "help.title": "Hilfe & FAQ",
-  "help.subtitle":
-    "Häufige Fragen und Lösungen — suchen oder nach Thema stöbern.",
+  "help.subtitle": "Häufige Fragen und Lösungen — suchen oder nach Thema stöbern.",
   "help.search": "Hilfe durchsuchen…",
   "help.noResults": "Keine passenden Hilfeartikel.",
   "help.deviceStatus.pending":
     "Wartet auf Freigabe durch eine:n Admin, bevor die Daten gezählt werden.",
   "help.deviceStatus.active": "Freigegeben und meldet normal.",
-  "help.deviceStatus.disabled":
-    "Von einer:m Admin deaktiviert — meldet und zählt nicht mehr.",
+  "help.deviceStatus.disabled": "Von einer:m Admin deaktiviert — meldet und zählt nicht mehr.",
 
   "faq.section.access": "Anmeldung & Zugriff",
   "faq.section.tracker": "Der Desktop-Tracker",
@@ -597,8 +569,7 @@ export const de: Dict = {
   "faq.q.offline": "Jemand wird als offline angezeigt, sitzt aber am Platz",
   "faq.a.offline":
     "Ein Gerät gilt als „offline“, wenn es länger als das Offline-Zeitfenster (Einstellungen → Konfiguration) keine Signale sendet. Ursachen: PC im Ruhezustand, nicht im Netzwerk, oder Tracker geschlossen. Es korrigiert sich, sobald der Tracker wieder meldet.",
-  "faq.q.enroll_failed":
-    "Der Tracker meldet, dass die Registrierung fehlgeschlagen ist",
+  "faq.q.enroll_failed": "Der Tracker meldet, dass die Registrierung fehlgeschlagen ist",
   "faq.a.enroll_failed":
     "Der einmalige Registrierungscode ist falsch, bereits benutzt oder abgelaufen. Erstellen Sie unter Geräte → Registrierungscodes einen neuen und tragen Sie ihn in die Gerätekonfiguration ein (oder neu installieren mit gültigem Code).",
   "faq.q.debug_password": "Was ist das Tracker-Debug-Passwort?",
@@ -620,8 +591,7 @@ export const de: Dict = {
   "faq.q.retention": "Wie lange werden Daten gespeichert?",
   "faq.a.retention":
     "Rohdaten werden nach dem Aufbewahrungszeitraum gelöscht (Einstellungen → Konfiguration, Standard 90 Tage). Tagessummen bleiben dauerhaft erhalten, sodass Verlaufsberichte auch nach dem Löschen der Rohdaten bestehen.",
-  "faq.q.add_person":
-    "Wie füge ich eine:n Mitarbeiter:in hinzu und verknüpfe den Computer?",
+  "faq.q.add_person": "Wie füge ich eine:n Mitarbeiter:in hinzu und verknüpfe den Computer?",
   "faq.a.add_person":
     "Personen → Person hinzufügen. Dann Geräte → Gerät öffnen und mit der Person verknüpfen. Nach dem Verknüpfen zeigt das Dashboard den Namen statt des Hostnamens.",
   "faq.q.approve_device": "Ein neues Gerät hängt auf „ausstehend“",
@@ -642,11 +612,9 @@ export const de: Dict = {
     "Siehe die technischen Details unten oder die Hilfeseite. Wenn es weiter auftritt, wenden Sie sich an Ihre:n Administrator:in.",
 
   "setup.title": "Einrichtung abschließen",
-  "setup.subtitle":
-    "Noch ein paar Schritte, bis ActivityTrack vollständig läuft.",
+  "setup.subtitle": "Noch ein paar Schritte, bis ActivityTrack vollständig läuft.",
   "setup.remaining": "{count} offen",
-  "setup.item.access":
-    "Festlegen, wer sich anmelden darf (Admins oder erlaubte Domains)",
+  "setup.item.access": "Festlegen, wer sich anmelden darf (Admins oder erlaubte Domains)",
   "setup.item.approve": "Mindestens ein Gerät freigeben",
   "setup.item.people": "Die erfassten Personen hinzufügen",
   "setup.item.link": "Ein Gerät mit einer Person verknüpfen",

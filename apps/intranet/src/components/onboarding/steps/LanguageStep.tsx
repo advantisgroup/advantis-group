@@ -28,16 +28,12 @@ export function LanguageStep() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="font-display text-lg font-semibold tracking-tight">
-          {t("languageTitle")}
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t("languageHint")}
-        </p>
+        <h2 className="font-display text-lg font-semibold tracking-tight">{t("languageTitle")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("languageHint")}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {locales.map(locale => (
+        {locales.map((locale) => (
           <button
             key={locale}
             type="button"
@@ -47,7 +43,7 @@ export function LanguageStep() {
               "flex items-center justify-center gap-2 rounded-xl border px-4 py-4 text-sm font-medium transition-colors disabled:opacity-60",
               locale === current
                 ? "border-primary/50 bg-primary/5 text-primary"
-                : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                : "border-border text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
           >
             <LocaleFlag locale={locale} className="h-4 w-6" />

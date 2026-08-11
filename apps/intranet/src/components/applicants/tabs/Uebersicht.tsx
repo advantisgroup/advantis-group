@@ -8,22 +8,10 @@ import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { matchSkills } from "@advantis/types";
 import { useMutation, useQuery } from "convex/react";
-import {
-  Briefcase,
-  Calendar,
-  CalendarClock,
-  Check,
-  Mail,
-  PhoneCall,
-  Users,
-  X,
-} from "lucide-react";
+import { Briefcase, Calendar, CalendarClock, Check, Mail, PhoneCall, Users, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
-import {
-  type ApplicantDetail,
-  ensureRichHtml,
-} from "@/components/applicants/applicant-types";
+import { type ApplicantDetail, ensureRichHtml } from "@/components/applicants/applicant-types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -89,50 +77,50 @@ function today(): string {
 
 function buildTimeline(
   applicant: ApplicantDetail,
-  t: ReturnType<typeof useTranslations>
+  t: ReturnType<typeof useTranslations>,
 ): TimelineEntry[] {
   const now = today();
   const entries: TimelineEntry[] = [
-    ...applicant.termine.map(tm => ({
+    ...applicant.termine.map((tm) => ({
       id: `termin:${tm._id}`,
       date: tm.datum,
       time: tm.uhrzeit,
       icon: CalendarClock,
       label: `${t(`terminTyp.${tm.typ}`)} · ${t(`terminArt.${tm.art}`)}`,
       notiz: tm.notiz,
-      href: `/applicants/${applicant._id}/termine/${tm._id}`,
+      href: `/hr/${applicant._id}/termine/${tm._id}`,
       upcoming: !tm.uebernommen && tm.datum >= now,
     })),
-    ...applicant.kontakte.map(k => ({
+    ...applicant.kontakte.map((k) => ({
       id: `kontakt:${k._id}`,
       date: k.datum,
       icon: PhoneCall,
       label: t(`kontaktArt.${k.art}`),
       notiz: k.notiz,
-      href: `/applicants/${applicant._id}/kontakte/${k._id}`,
+      href: `/hr/${applicant._id}/kontakte/${k._id}`,
       upcoming: false,
     })),
-    ...applicant.emails.map(m => ({
+    ...applicant.emails.map((m) => ({
       id: `email:${m._id}`,
       date: m.datum,
       icon: Mail,
       label: t(`emailKategorie.${m.kategorie}`),
       notiz: m.notiz,
-      href: `/applicants/${applicant._id}/emails/${m._id}`,
+      href: `/hr/${applicant._id}/emails/${m._id}`,
       upcoming: false,
     })),
-    ...applicant.interviews.map(iv => ({
+    ...applicant.interviews.map((iv) => ({
       id: `interview:${iv._id}`,
       date: iv.datum,
       icon: Users,
       label: iv.interviewer || t("tabInterviews"),
       notiz: iv.notiz,
-      href: `/applicants/${applicant._id}/interviews/${iv._id}`,
+      href: `/hr/${applicant._id}/interviews/${iv._id}`,
       upcoming: false,
     })),
   ];
   return entries.sort((a, b) =>
-    (b.date + (b.time ?? "00:00")).localeCompare(a.date + (a.time ?? "00:00"))
+    (b.date + (b.time ?? "00:00")).localeCompare(a.date + (a.time ?? "00:00")),
   );
 }
 
@@ -149,13 +137,11 @@ export function Uebersicht({
   const update = useMutation(api.applicants.update);
   const handleError = useErrorHandler();
   const isHighlighted = (skill: string) =>
-    highlight.some(h => h.toLowerCase() === skill.toLowerCase());
+    highlight.some((h) => h.toLowerCase() === skill.toLowerCase());
 
-  const profile = profiles?.find(p => p._id === applicant.profilId) ?? null;
+  const profile = profiles?.find((p) => p._id === applicant.profilId) ?? null;
   const matched = profile ? matchSkills(profile.skills, applicant) : [];
-  const missing = profile
-    ? profile.skills.filter(s => !matched.includes(s))
-    : [];
+  const missing = profile ? profile.skills.filter((s) => !matched.includes(s)) : [];
   const matchPct =
     profile && profile.skills.length > 0
       ? Math.round((matched.length / profile.skills.length) * 100)
@@ -164,7 +150,7 @@ export function Uebersicht({
   const timeline = useMemo(
     () => buildTimeline(applicant, t),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [applicant]
+    [applicant],
   );
 
   function patch(fields: Parameters<typeof update>[0]) {
@@ -184,7 +170,7 @@ export function Uebersicht({
               className="mt-1.5 text-base font-medium"
               defaultValue={applicant.position ?? ""}
               placeholder={t("positionUnknown")}
-              onBlur={e => {
+              onBlur={(e) => {
                 if (e.target.value !== (applicant.position ?? "")) {
                   patch({
                     applicantId: applicant._id,
@@ -198,20 +184,15 @@ export function Uebersicht({
           <div className="space-y-2 border-t border-border/60 pt-4">
             <p className="text-sm font-semibold">{t("skillMatch")}</p>
             {!profiles || profiles.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("noProfilesYet")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("noProfilesYet")}</p>
             ) : (
               <>
                 <Select
                   value={applicant.profilId ?? "none"}
-                  onValueChange={v =>
+                  onValueChange={(v) =>
                     patch({
                       applicantId: applicant._id,
-                      profilId:
-                        v === "none"
-                          ? null
-                          : (v as Id<"applicantSkillProfiles">),
+                      profilId: v === "none" ? null : (v as Id<"applicantSkillProfiles">),
                     })
                   }
                 >
@@ -219,10 +200,8 @@ export function Uebersicht({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">
-                      {t("noProfileAssigned")}
-                    </SelectItem>
-                    {profiles.map(p => (
+                    <SelectItem value="none">{t("noProfileAssigned")}</SelectItem>
+                    {profiles.map((p) => (
                       <SelectItem key={p._id} value={p._id}>
                         {p.name} ({p.skills.length})
                       </SelectItem>
@@ -236,7 +215,7 @@ export function Uebersicht({
                         <div
                           className={cn(
                             "h-full rounded-full transition-[width]",
-                            matchPct === 100 ? "bg-success" : "bg-primary"
+                            matchPct === 100 ? "bg-success" : "bg-primary",
                           )}
                           style={{ width: `${matchPct}%` }}
                         />
@@ -246,23 +225,20 @@ export function Uebersicht({
                       </span>
                     </div>
                     <div className="space-y-1 text-sm">
-                      {matched.map(s => (
+                      {matched.map((s) => (
                         <div
                           key={s}
                           className={cn(
                             "flex items-center gap-2 rounded px-1 -mx-1",
-                            isHighlighted(s) && "skill-hl"
+                            isHighlighted(s) && "deeplink-hl",
                           )}
                         >
                           <Check className="size-3.5 shrink-0 text-success" />
                           {s}
                         </div>
                       ))}
-                      {missing.map(s => (
-                        <div
-                          key={s}
-                          className="flex items-center gap-2 text-muted-foreground"
-                        >
+                      {missing.map((s) => (
+                        <div key={s} className="flex items-center gap-2 text-muted-foreground">
                           <X className="size-3.5 shrink-0 text-destructive" />
                           {s}
                         </div>
@@ -278,11 +254,11 @@ export function Uebersicht({
                   {t("skillsFromDocuments")}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {applicant.skills.map(s => (
+                  {applicant.skills.map((s) => (
                     <Badge
                       key={s}
                       variant="muted"
-                      className={cn(isHighlighted(s) && "skill-hl")}
+                      className={cn(isHighlighted(s) && "deeplink-hl")}
                     >
                       {s}
                     </Badge>
@@ -298,23 +274,19 @@ export function Uebersicht({
               label={t("summary")}
               html={applicant.zusammenfassung ?? ""}
               placeholder={t("richFieldPlaceholder")}
-              onSave={v =>
-                patch({ applicantId: applicant._id, zusammenfassung: v })
-              }
+              onSave={(v) => patch({ applicantId: applicant._id, zusammenfassung: v })}
             />
             <RichField
               label={t("experience")}
               html={applicant.berufserfahrung ?? ""}
               placeholder={t("richFieldPlaceholder")}
-              onSave={v =>
-                patch({ applicantId: applicant._id, berufserfahrung: v })
-              }
+              onSave={(v) => patch({ applicantId: applicant._id, berufserfahrung: v })}
             />
             <RichField
               label={t("education")}
               html={applicant.ausbildung ?? ""}
               placeholder={t("richFieldPlaceholder")}
-              onSave={v => patch({ applicantId: applicant._id, ausbildung: v })}
+              onSave={(v) => patch({ applicantId: applicant._id, ausbildung: v })}
             />
           </div>
         </CardContent>
@@ -324,19 +296,17 @@ export function Uebersicht({
         <CardContent className="p-4">
           <p className="mb-3 text-sm font-semibold">{t("timeline")}</p>
           {timeline.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              {t("timelineEmpty")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("timelineEmpty")}</p>
           ) : (
             <ol className="relative space-y-4 border-l border-border/70 pl-6">
-              {timeline.map(entry => (
+              {timeline.map((entry) => (
                 <li key={entry.id} className="relative">
                   <span
                     className={cn(
                       "absolute -left-[calc(1.5rem+5px)] top-0.5 flex size-6 items-center justify-center rounded-full ring-4 ring-background",
                       entry.upcoming
                         ? "bg-primary/15 text-primary"
-                        : "bg-muted text-muted-foreground"
+                        : "bg-muted text-muted-foreground",
                     )}
                   >
                     <entry.icon className="size-3.5" />
@@ -359,9 +329,7 @@ export function Uebersicht({
                       {entry.time ? ` · ${entry.time}` : ""}
                     </p>
                     {entry.notiz && (
-                      <p className="mt-0.5 line-clamp-2 text-muted-foreground">
-                        {entry.notiz}
-                      </p>
+                      <p className="mt-0.5 line-clamp-2 text-muted-foreground">{entry.notiz}</p>
                     )}
                   </Link>
                 </li>

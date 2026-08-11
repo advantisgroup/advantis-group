@@ -6,40 +6,34 @@ import { Download } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { UpdateType } from "@/lib/updates";
 import { cn } from "@/lib/utils";
 
 const VIEW_W = 1200;
 const VIEW_H = 320;
 
-const PALETTES: Record<
-  UpdateType,
-  { bgFrom: string; bgTo: string; glow: string; accent: string }
-> = {
-  changelog: {
-    bgFrom: "#141a3d",
-    bgTo: "#28327a",
-    glow: "#6c86ff",
-    accent: "#cbd6ff",
-  },
-  incident: {
-    bgFrom: "#391414",
-    bgTo: "#6e2020",
-    glow: "#ff7a63",
-    accent: "#ffd9d0",
-  },
-  maintenance: {
-    bgFrom: "#2e2410",
-    bgTo: "#634a1c",
-    glow: "#ffbb52",
-    accent: "#ffe6b8",
-  },
-};
+const PALETTES: Record<UpdateType, { bgFrom: string; bgTo: string; glow: string; accent: string }> =
+  {
+    changelog: {
+      bgFrom: "#141a3d",
+      bgTo: "#28327a",
+      glow: "#6c86ff",
+      accent: "#cbd6ff",
+    },
+    incident: {
+      bgFrom: "#391414",
+      bgTo: "#6e2020",
+      glow: "#ff7a63",
+      accent: "#ffd9d0",
+    },
+    maintenance: {
+      bgFrom: "#2e2410",
+      bgTo: "#634a1c",
+      glow: "#ffbb52",
+      accent: "#ffe6b8",
+    },
+  };
 
 const STYLES = [
   "constellation",
@@ -160,7 +154,7 @@ function smoothPath(points: [number, number][]): string {
 function buildConstellation(
   rand: () => number,
   focalX: number,
-  focalY: number
+  focalY: number,
 ): Pick<ConstellationArt, "nodes" | "edges"> {
   const nodeCount = 6 + Math.floor(rand() * 4);
   const nodes = Array.from({ length: nodeCount }, () => {
@@ -193,14 +187,11 @@ function buildContours(rand: () => number): Pick<ContoursArt, "lines"> {
     const phase = rand() * Math.PI * 2;
     const freq = 1 + rand() * 1.4;
     const segs = 7;
-    const points: [number, number][] = Array.from(
-      { length: segs + 1 },
-      (_, s) => {
-        const x = (VIEW_W / segs) * s;
-        const y = baseY + Math.sin(phase + s * freq) * amp;
-        return [x, y];
-      }
-    );
+    const points: [number, number][] = Array.from({ length: segs + 1 }, (_, s) => {
+      const x = (VIEW_W / segs) * s;
+      const y = baseY + Math.sin(phase + s * freq) * amp;
+      return [x, y];
+    });
     return {
       d: smoothPath(points),
       opacity: 0.14 + rand() * 0.3,
@@ -213,7 +204,7 @@ function buildContours(rand: () => number): Pick<ContoursArt, "lines"> {
 function buildHalftone(
   rand: () => number,
   focalX: number,
-  focalY: number
+  focalY: number,
 ): Pick<HalftoneArt, "dots"> {
   const spacing = 38 + rand() * 14;
   const maxDist = 560;
@@ -235,11 +226,7 @@ function buildHalftone(
   return { dots };
 }
 
-function buildOrbits(
-  rand: () => number,
-  focalX: number,
-  focalY: number
-): Pick<OrbitsArt, "rings"> {
+function buildOrbits(rand: () => number, focalX: number, focalY: number): Pick<OrbitsArt, "rings"> {
   const count = 4 + Math.floor(rand() * 4);
   const rings = Array.from({ length: count }, (_, i) => {
     const r = 46 + i * (26 + rand() * 22);
@@ -264,17 +251,10 @@ function buildOrbits(
 function buildBranches(
   rand: () => number,
   focalX: number,
-  focalY: number
+  focalY: number,
 ): Pick<BranchesArt, "segments"> {
   const segments: BranchesArt["segments"] = [];
-  function grow(
-    x: number,
-    y: number,
-    angle: number,
-    length: number,
-    width: number,
-    depth: number
-  ) {
+  function grow(x: number, y: number, angle: number, length: number, width: number, depth: number) {
     if (depth <= 0 || length < 5) return;
     const wobble = (rand() - 0.5) * 0.5;
     const x2 = x + Math.cos(angle + wobble) * length;
@@ -290,14 +270,7 @@ function buildBranches(
     const branchCount = depth > 2 && rand() < 0.75 ? 2 : 1;
     for (let b = 0; b < branchCount; b++) {
       const spread = (rand() - 0.5) * 1.0 + (b === 1 ? 0.45 : -0.1);
-      grow(
-        x2,
-        y2,
-        angle + spread,
-        length * (0.66 + rand() * 0.18),
-        width * 0.72,
-        depth - 1
-      );
+      grow(x2, y2, angle + spread, length * (0.66 + rand() * 0.18), width * 0.72, depth - 1);
     }
   }
   const mainBranches = 3 + Math.floor(rand() * 3);
@@ -317,16 +290,11 @@ function buildRidgeline(rand: () => number): Pick<RidgelineArt, "layers"> {
     const segs = 8;
     const freq = 1.0 + rand() * 0.5;
     const phase = rand() * Math.PI * 2;
-    const points: [number, number][] = Array.from(
-      { length: segs + 1 },
-      (_, s) => {
-        const x = (VIEW_W / segs) * s;
-        const y =
-          baseY -
-          Math.abs(Math.sin(phase + s * freq)) * amp * (0.5 + rand() * 0.7);
-        return [x, y];
-      }
-    );
+    const points: [number, number][] = Array.from({ length: segs + 1 }, (_, s) => {
+      const x = (VIEW_W / segs) * s;
+      const y = baseY - Math.abs(Math.sin(phase + s * freq)) * amp * (0.5 + rand() * 0.7);
+      return [x, y];
+    });
     const ridge = points.map(([x, y]) => `${x} ${y}`).join(" L ");
     return {
       d: `M 0 ${VIEW_H} L ${ridge} L ${VIEW_W} ${VIEW_H} Z`,
@@ -337,11 +305,7 @@ function buildRidgeline(rand: () => number): Pick<RidgelineArt, "layers"> {
 }
 
 /** A scattered flock of birds (chevrons) swirling around the focal point. */
-function buildFlock(
-  rand: () => number,
-  focalX: number,
-  focalY: number
-): Pick<FlockArt, "birds"> {
+function buildFlock(rand: () => number, focalX: number, focalY: number): Pick<FlockArt, "birds"> {
   const count = 16 + Math.floor(rand() * 14);
   const birds = Array.from({ length: count }, () => {
     const angle = rand() * Math.PI * 2;
@@ -442,14 +406,7 @@ function ArtMarks({ art }: { art: Art }) {
             />
           ))}
           {art.nodes.map((n, i) => (
-            <circle
-              key={i}
-              cx={n.x}
-              cy={n.y}
-              r={n.r}
-              fill={art.accent}
-              fillOpacity={0.9}
-            />
+            <circle key={i} cx={n.x} cy={n.y} r={n.r} fill={art.accent} fillOpacity={0.9} />
           ))}
         </>
       );
@@ -522,12 +479,7 @@ function ArtMarks({ art }: { art: Art }) {
       return (
         <>
           {art.layers.map((layer, i) => (
-            <path
-              key={i}
-              d={layer.d}
-              fill={art.accent}
-              fillOpacity={layer.opacity}
-            />
+            <path key={i} d={layer.d} fill={art.accent} fillOpacity={layer.opacity} />
           ))}
         </>
       );
@@ -623,7 +575,7 @@ export function UpdateArtBanner({
         }
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);
-        canvas.toBlob(blob => {
+        canvas.toBlob((blob) => {
           if (!blob) return;
           const dlUrl = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -647,15 +599,10 @@ export function UpdateArtBanner({
 
   return (
     <div
-      className={cn(
-        "group relative h-48 w-full overflow-hidden md:h-64 lg:h-72",
-        className
-      )}
+      className={cn("group relative h-48 w-full overflow-hidden md:h-64 lg:h-72", className)}
       style={{
-        maskImage:
-          "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
-        WebkitMaskImage:
-          "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+        maskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
       }}
     >
       <svg
@@ -675,13 +622,7 @@ export function UpdateArtBanner({
             <stop offset="0%" stopColor={art.glow} stopOpacity="0.55" />
             <stop offset="100%" stopColor={art.glow} stopOpacity="0" />
           </radialGradient>
-          <filter
-            id={`${uid}-blur`}
-            x="-60%"
-            y="-60%"
-            width="220%"
-            height="220%"
-          >
+          <filter id={`${uid}-blur`} x="-60%" y="-60%" width="220%" height="220%">
             <feGaussianBlur stdDeviation="34" />
           </filter>
           <filter id={`${uid}-grain`}>
@@ -691,10 +632,7 @@ export function UpdateArtBanner({
               numOctaves="2"
               stitchTiles="stitch"
             />
-            <feColorMatrix
-              type="matrix"
-              values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0"
-            />
+            <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.05 0" />
           </filter>
         </defs>
 
@@ -707,12 +645,7 @@ export function UpdateArtBanner({
           filter={`url(#${uid}-blur)`}
         />
         <ArtMarks art={art} />
-        <rect
-          width={VIEW_W}
-          height={VIEW_H}
-          filter={`url(#${uid}-grain)`}
-          opacity={0.4}
-        />
+        <rect width={VIEW_W} height={VIEW_H} filter={`url(#${uid}-grain)`} opacity={0.4} />
       </svg>
 
       <Tooltip>
@@ -721,7 +654,7 @@ export function UpdateArtBanner({
             type="button"
             onClick={handleDownload}
             aria-label={t("downloadArt")}
-            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/30 text-white opacity-0 backdrop-blur-md transition-opacity duration-150 hover:bg-black/45 focus-visible:opacity-100 group-hover:opacity-100"
+            className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-full bg-black/30 text-white opacity-100 backdrop-blur-md transition-opacity duration-150 hover:bg-black/45 focus-visible:opacity-100 md:opacity-0 md:group-hover:opacity-100"
           >
             <Download className="size-4" />
           </button>

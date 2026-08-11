@@ -22,12 +22,7 @@ const BATCH_SIZE = 200;
 // Per-table upsert mutation reference.
 const UPSERT: Record<
   MigrationTable,
-  FunctionReference<
-    "mutation",
-    "internal",
-    { migrationId: any; rows: any[] },
-    { warnings: number }
-  >
+  FunctionReference<"mutation", "internal", { migrationId: any; rows: any[] }, { warnings: number }>
 > = {
   people: internal.activity.migration.upsertPeople,
   devices: internal.activity.migration.upsertDevices,
@@ -63,7 +58,7 @@ async function fetchExportBatch(
   secret: string,
   table: MigrationTable,
   cursor: string | null,
-  numItems: number
+  numItems: number,
 ): Promise<ExportBatch> {
   const endpoint = `${oldUrl.replace(/\/$/, "")}/api/query`;
 
@@ -80,15 +75,13 @@ async function fetchExportBatch(
     });
   } catch (e) {
     throw new Error(
-      `could not reach old deployment: ${e instanceof Error ? e.message : String(e)}`
+      `could not reach old deployment: ${e instanceof Error ? e.message : String(e)}`,
     );
   }
 
   const bodyText = await resp.text();
   if (!resp.ok) {
-    throw new Error(
-      `old deployment HTTP ${resp.status}: ${bodyText.slice(0, 200)}`
-    );
+    throw new Error(`old deployment HTTP ${resp.status}: ${bodyText.slice(0, 200)}`);
   }
 
   let parsed: any;
@@ -99,16 +92,11 @@ async function fetchExportBatch(
   }
 
   if (parsed.status === "error") {
-    const reason =
-      typeof parsed.errorMessage === "string" ? parsed.errorMessage : "";
-    throw new Error(
-      `old deployment rejected export${reason ? `: ${reason.slice(0, 200)}` : ""}`
-    );
+    const reason = typeof parsed.errorMessage === "string" ? parsed.errorMessage : "";
+    throw new Error(`old deployment rejected export${reason ? `: ${reason.slice(0, 200)}` : ""}`);
   }
   if (parsed.status !== "success" || !parsed.value) {
-    throw new Error(
-      `unexpected response from old deployment (status=${String(parsed.status)})`
-    );
+    throw new Error(`unexpected response from old deployment (status=${String(parsed.status)})`);
   }
 
   const value = parsed.value as Partial<ExportBatch>;
@@ -137,12 +125,11 @@ export const run = internalAction({
       const run = await ctx.runQuery(internal.activity.migration.getRun, {
         migrationId,
       });
-      const next = run?.steps.find(s => s.status !== "completed");
+      const next = run?.steps.find((s) => s.status !== "completed");
       if (next) {
         await ctx.runMutation(internal.activity.migration.failStep, {
           stepId: next._id,
-          error:
-            "ACTIVITYTRACK_OLD_CONVEX_URL / ACTIVITYTRACK_SIGNAL_SECRET not configured",
+          error: "ACTIVITYTRACK_OLD_CONVEX_URL / ACTIVITYTRACK_SIGNAL_SECRET not configured",
         });
       }
       return;
@@ -154,14 +141,11 @@ export const run = internalAction({
         migrationId,
       });
       if (!run || run.migration.status !== "running") {
-        console.log(
-          "[migration] stopping — status:",
-          run?.migration.status ?? "not found"
-        );
+        console.log("[migration] stopping — status:", run?.migration.status ?? "not found");
         return;
       }
 
-      const step = run.steps.find(s => s.status !== "completed");
+      const step = run.steps.find((s) => s.status !== "completed");
       if (!step) {
         console.log("[migration] all steps completed — finishing");
         await ctx.runMutation(internal.activity.migration.finishMigration, {
@@ -173,7 +157,7 @@ export const run = internalAction({
 
       const table = step.table as MigrationTable;
       console.log(
-        `[migration] batch ${batches + 1}/${MAX_BATCHES_PER_RUN} — table="${table}" cursor=${JSON.stringify(step.cursor ?? null)} processed=${step.processed}`
+        `[migration] batch ${batches + 1}/${MAX_BATCHES_PER_RUN} — table="${table}" cursor=${JSON.stringify(step.cursor ?? null)} processed=${step.processed}`,
       );
 
       await ctx.runMutation(internal.activity.migration.markStepRunning, {
@@ -186,11 +170,11 @@ export const run = internalAction({
           secret,
           table,
           step.cursor ?? null,
-          BATCH_SIZE
+          BATCH_SIZE,
         );
 
         console.log(
-          `[migration] fetched ${result.page.length} rows from old deployment — isDone=${result.isDone}`
+          `[migration] fetched ${result.page.length} rows from old deployment — isDone=${result.isDone}`,
         );
 
         const { warnings } = await ctx.runMutation(UPSERT[table], {
@@ -199,9 +183,7 @@ export const run = internalAction({
         });
 
         if (warnings > 0) {
-          console.warn(
-            `[migration] ${warnings} warning(s) in table="${table}" (unlinked records)`
-          );
+          console.warn(`[migration] ${warnings} warning(s) in table="${table}" (unlinked records)`);
         }
 
         await ctx.runMutation(internal.activity.migration.advanceStep, {
@@ -212,9 +194,7 @@ export const run = internalAction({
           done: result.isDone,
         });
       } catch (err) {
-        const message = (
-          err instanceof Error ? err.message : String(err)
-        ).slice(0, 300);
+        const message = (err instanceof Error ? err.message : String(err)).slice(0, 300);
         console.error(`[migration] FAILED table="${table}": ${message}`);
         await ctx.runMutation(internal.activity.migration.failStep, {
           stepId: step._id,

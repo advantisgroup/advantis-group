@@ -57,14 +57,14 @@ export function DayDetailTab({
 
   const history = useQuery(
     api.activity.state.history,
-    employeeId ? { employeeId, since: dayStart, until: dayEnd } : "skip"
+    employeeId ? { employeeId, since: dayStart, until: dayEnd } : "skip",
   );
 
   const { segments, minutes } = useMemo(() => {
     // The backend prepends the prior-day state so past days render correctly
     // across midnight. For today, that row would extend yesterday's state from
     // 00:00 even if work hadn't started yet — filter it out.
-    const rows = (history ?? []).filter(r => day !== today || r.at >= dayStart);
+    const rows = (history ?? []).filter((r) => day !== today || r.at >= dayStart);
     return {
       segments: dayStateSegments(rows, dayStart, effectiveDayEnd),
       minutes: minuteStates(rows, dayStart, effectiveDayEnd),
@@ -78,12 +78,8 @@ export function DayDetailTab({
       <CardHeader className="gap-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-base">
-              {t("timeline.day.heading")}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              {t("timeline.day.sub")}
-            </p>
+            <CardTitle className="text-base">{t("timeline.day.heading")}</CardTitle>
+            <p className="text-sm text-muted-foreground">{t("timeline.day.sub")}</p>
           </div>
           <label className="flex w-full flex-col gap-1 text-xs text-muted-foreground sm:w-auto">
             {t("timeline.day.date")}
@@ -91,7 +87,7 @@ export function DayDetailTab({
               type="date"
               value={day}
               max={today}
-              onChange={e => onSelectDay(e.target.value || today)}
+              onChange={(e) => onSelectDay(e.target.value || today)}
               className="w-full sm:w-40"
             />
           </label>

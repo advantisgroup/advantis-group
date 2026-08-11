@@ -4,22 +4,11 @@ import { usePathname } from "next/navigation";
 
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
-import {
-  AlertTriangle,
-  ChevronDown,
-  ChevronRight,
-  Sparkles,
-  Wrench,
-  X,
-} from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight, Sparkles, Wrench, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { relativeTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -72,19 +61,14 @@ export function UpdateBanner() {
     <div
       className={cn(
         "relative flex items-center justify-center gap-2 px-10 py-2 print:hidden",
-        className
+        className,
       )}
     >
-      <Link
-        href={`/updates/${top._id}`}
-        className="flex min-w-0 items-center gap-2"
-      >
+      <Link href={`/updates/${top._id}`} className="flex min-w-0 items-center gap-2">
         <Icon className="size-4 shrink-0" />
         <span className="min-w-0 truncate text-sm font-medium">
           {top.title}
-          {top.summary ? (
-            <span className="opacity-80"> — {top.summary}</span>
-          ) : null}
+          {top.summary ? <span className="opacity-80"> — {top.summary}</span> : null}
         </span>
         <ChevronRight className="size-4 shrink-0 opacity-70" />
       </Link>
@@ -96,7 +80,7 @@ export function UpdateBanner() {
               type="button"
               className={cn(
                 "flex shrink-0 items-center gap-1 px-2 py-0.5 text-xs font-semibold transition-colors",
-                chipClassName
+                chipClassName,
               )}
             >
               +{moreCount} {t("more")}
@@ -105,7 +89,7 @@ export function UpdateBanner() {
           </PopoverTrigger>
           <PopoverContent align="center" sideOffset={8} className="w-64 p-1">
             <div className="space-y-0.5">
-              {others.map(u => {
+              {others.map((u) => {
                 const { icon: OtherIcon, rowClassName } = TYPE_STYLE[u.type];
                 return (
                   <Link
@@ -113,7 +97,7 @@ export function UpdateBanner() {
                     href={`/updates/${u._id}`}
                     className={cn(
                       "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground transition-colors hover:bg-accent",
-                      rowClassName
+                      rowClassName,
                     )}
                   >
                     <OtherIcon className="size-3.5 shrink-0 text-muted-foreground" />
@@ -132,7 +116,7 @@ export function UpdateBanner() {
       <button
         type="button"
         aria-label={t("dismiss")}
-        onClick={e => {
+        onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           void dismiss({ updateId: top._id });

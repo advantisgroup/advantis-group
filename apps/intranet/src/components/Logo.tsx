@@ -19,10 +19,7 @@ export function BrandLogo({
 }) {
   return (
     <span
-      className={cn(
-        "inline-flex flex-col items-center leading-none text-foreground",
-        className
-      )}
+      className={cn("inline-flex flex-col items-center leading-none text-foreground", className)}
     >
       <span className="font-display text-2xl font-semibold uppercase tracking-[0.3em]">
         Advantis
@@ -42,21 +39,9 @@ export function BrandLogo({
 export function WordmarkLogo({ className }: { className?: string }) {
   const src = useSingleLetterLogo();
   return (
-    <span
-      className={cn(
-        "flex items-center gap-1.5 text-lg font-bold tracking-tight",
-        className
-      )}
-    >
+    <span className={cn("flex items-center gap-1.5 text-lg font-bold tracking-tight", className)}>
       <span className="relative mr-1 size-7 shrink-0">
-        <Image
-          src={src}
-          alt="Advantis"
-          fill
-          sizes="28px"
-          priority
-          className="object-contain"
-        />
+        <Image src={src} alt="Advantis" fill sizes="28px" priority className="object-contain" />
       </span>
       <span className="text-advantis">Advantis</span>
       <span className="text-foreground">Group</span>
@@ -65,13 +50,7 @@ export function WordmarkLogo({ className }: { className?: string }) {
 }
 
 /** Compact single-letter mark for collapsed nav / avatars. */
-export function MarkLogo({
-  className,
-  size = 32,
-}: {
-  className?: string;
-  size?: number;
-}) {
+export function MarkLogo({ className, size = 32 }: { className?: string; size?: number }) {
   const src = useSingleLetterLogo();
   return (
     <Image

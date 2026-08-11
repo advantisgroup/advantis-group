@@ -8,9 +8,11 @@ import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 import {
   Activity,
+  Building2,
   Download,
   LayoutDashboard,
   Phone,
+  ShieldCheck,
   TrendingUp,
   Upload,
   Users,
@@ -26,6 +28,7 @@ import {
   type LastDayInteractionRow,
 } from "@/components/performance/LastDayInteractions";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
+import { PerformanceDashboardDataProvider } from "@/components/performance/PerformanceDashboardContext";
 import {
   buildCallActivityChartData,
   fmtDayShort,
@@ -50,10 +53,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatIsoDate } from "@/lib/format";
-import {
-  clearPerformanceToken,
-  downloadPerformanceFile,
-} from "@/lib/performanceAuth";
+import { clearPerformanceToken, downloadPerformanceFile } from "@/lib/performanceAuth";
 
 interface DashboardTopData {
   hasCalls: boolean;
@@ -88,9 +88,7 @@ function DashboardTopSection({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("dashboardCallActivity")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("dashboardCallActivity")}</CardTitle>
         </CardHeader>
         <CardContent>
           <FilterableBarChart
@@ -117,16 +115,14 @@ function DashboardTopSection({
     return <LastDayInteractions days={interactionDays} locale={locale} />;
   }
   if (activeTab === "team") {
-    const chartData = data.loggedIn.map(d => ({
+    const chartData = data.loggedIn.map((d) => ({
       label: fmtDayShort(d.date, locale),
       count: d.count,
     }));
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">
-            {t("dashboardLoggedInTitle")}
-          </CardTitle>
+          <CardTitle className="text-base">{t("dashboardLoggedInTitle")}</CardTitle>
         </CardHeader>
         <CardContent>
           <FilterableBarChart
@@ -147,19 +143,21 @@ function DashboardTopSection({
   // (over its own trailing-3-month window) further down the page — no
   // top-of-page chart needed here too.
   if (activeTab === "entwicklung") return null;
-  return (
-    <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />
-  );
+  return <ClosedWonTrendChart days={data.wonTrend.days} avg={data.wonTrend.avg} />;
 }
 
 function DashboardChrome({
   token,
   viaClerk,
+  isSuperAdmin,
+  permissions,
   onExit,
   children,
 }: {
   token: string;
   viaClerk: boolean;
+  isSuperAdmin: boolean;
+  permissions: string[];
   onExit: () => void;
   children: ReactNode;
 }) {
@@ -209,38 +207,53 @@ function DashboardChrome({
     },
   ];
 
+  // Company management and role management now live as tabs on one page
+  // (/performance/admin/companies) instead of two competing nav entries —
+  // a super-admin lands on the company list with a Roles tab alongside it,
+  // while a scoped admin who can only manage_roles goes straight to the
+  // Roles tab, since they have no company list to see. A super-admin
+  // always has every permission (see performanceAuth.ts's validateSession),
+  // so checking it first already covers both cases with one link.
   const navItems = [
     { href: "/performance/benutzer", label: t("usersLink"), icon: Users },
-    ...(viaClerk
-      ? []
-      : [
-          { href: "/performance/upload", label: t("uploadLink"), icon: Upload },
-        ]),
-    ...(viaClerk
-      ? []
-      : [{ href: "/performance/passwort", label: t("passwordLink") }]),
+    ...(isSuperAdmin
+      ? [
+          {
+            href: "/performance/admin/companies",
+            label: t("companiesLink"),
+            icon: Building2,
+          },
+        ]
+      : permissions.includes("manage_roles")
+        ? [
+            {
+              href: "/performance/admin/companies/roles",
+              label: t("rolesLink"),
+              icon: ShieldCheck,
+            },
+          ]
+        : []),
+    ...(viaClerk ? [] : [{ href: "/performance/upload", label: t("uploadLink"), icon: Upload }]),
+    ...(viaClerk ? [] : [{ href: "/performance/passwort", label: t("passwordLink") }]),
   ];
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={viaClerk ? undefined : onExit}
-      />
+      <PerformanceHeader navItems={navItems} onExit={viaClerk ? undefined : onExit} />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         {!viaClerk && <SelfLinkPrompt token={token} />}
         <div className="flex flex-wrap items-center gap-3">
           <Select
             value={ym ?? data?.ym ?? ""}
-            onValueChange={v => setYm(v)}
+            onValueChange={(v) => setYm(v)}
             disabled={!data || data.months.length === 0}
           >
             <SelectTrigger className="w-56">
               <SelectValue placeholder={t("dashboardMonthLabel")} />
             </SelectTrigger>
             <SelectContent>
-              {[...(data?.months ?? [])].reverse().map(m => (
+              {[...(data?.months ?? [])].reverse().map((m) => (
                 <SelectItem key={m} value={m}>
                   {fmtYm(m, locale)}
                 </SelectItem>
@@ -249,9 +262,7 @@ function DashboardChrome({
           </Select>
           {data && (
             <Badge variant={data.monthDone ? "muted" : "success"}>
-              {data.monthDone
-                ? t("dashboardMonthClosed")
-                : t("dashboardMonthOpen")}
+              {data.monthDone ? t("dashboardMonthClosed") : t("dashboardMonthOpen")}
             </Badge>
           )}
           {data?.total.reportDate && (
@@ -269,7 +280,7 @@ function DashboardChrome({
                 void downloadPerformanceFile(
                   `/performance/export?ym=${data.ym}`,
                   token,
-                  `performance-${data.ym}.xlsx`
+                  `performance-${data.ym}.xlsx`,
                 )
               }
             >
@@ -295,21 +306,14 @@ function DashboardChrome({
           </div>
         </Card>
 
-        {children}
+        <PerformanceDashboardDataProvider data={data}>{children}</PerformanceDashboardDataProvider>
       </main>
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={viaClerk ? undefined : onExit}
-      />
+      <PerformanceBottomTabs navItems={navItems} onExit={viaClerk ? undefined : onExit} />
     </div>
   );
 }
 
-export default function PerformanceDashboardLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function PerformanceDashboardLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("Performance");
   const router = useRouter();
   const { token, session } = usePerformanceSession();
@@ -333,7 +337,7 @@ export default function PerformanceDashboardLayout({
   // Employee logins have their own detail page — this layout is the admin
   // team view.
   useEffect(() => {
-    if (!session?.valid || session.role === "admin") return;
+    if (!session?.valid || session.permissions.includes("view_all_employees")) return;
     if (session.employeeId) {
       router.replace(`/performance/mitarbeiter/${session.employeeId}`);
     }
@@ -348,12 +352,12 @@ export default function PerformanceDashboardLayout({
   if (session === undefined) return <PerformancePageSkeleton />;
   if (!session.valid) return null;
 
-  if (session.role !== "admin") {
+  if (!session.permissions.includes("view_all_employees")) {
     if (session.employeeId) return null; // redirecting
     return (
       <div className="min-h-screen bg-muted/20">
         <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
-        <main className="mx-auto max-w-3xl p-4 md:p-6">
+        <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
           <Card>
             <CardHeader className="items-center text-center">
               <CardTitle>{t("notLinkedTitle")}</CardTitle>
@@ -370,7 +374,13 @@ export default function PerformanceDashboardLayout({
 
   return (
     <PerformanceYmProvider>
-      <DashboardChrome token={token} viaClerk={session.viaClerk} onExit={exit}>
+      <DashboardChrome
+        token={token}
+        viaClerk={session.viaClerk}
+        isSuperAdmin={session.isSuperAdmin}
+        permissions={session.permissions}
+        onExit={exit}
+      >
         {children}
       </DashboardChrome>
     </PerformanceYmProvider>

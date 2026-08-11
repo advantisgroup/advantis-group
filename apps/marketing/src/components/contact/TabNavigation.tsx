@@ -4,10 +4,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { type TabNavigationProps } from "@/types/contact";
 
-export function TabNavigation({
-  contactMode,
-  onModeChange,
-}: TabNavigationProps) {
+export function TabNavigation({ contactMode, onModeChange }: TabNavigationProps) {
   const t = useTranslations("contact.tabs");
 
   return (
@@ -19,7 +16,7 @@ export function TabNavigation({
             "flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-4 text-sm font-medium transition-all relative",
             contactMode === "message"
               ? "text-foreground bg-card"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
           )}
         >
           <MessageSquare className="w-4 h-4" />
@@ -35,7 +32,7 @@ export function TabNavigation({
             "flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-4 text-sm font-medium transition-all relative border-l border-border",
             contactMode === "callback"
               ? "text-foreground bg-card"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
           )}
         >
           <Phone className="w-4 h-4" />
@@ -51,7 +48,7 @@ export function TabNavigation({
             "flex-1 flex items-center justify-center gap-2 px-4 md:px-6 py-4 text-sm font-medium transition-all relative border-l border-border",
             contactMode === "other"
               ? "text-foreground bg-card"
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
           )}
         >
           <HelpCircle className="w-4 h-4" />

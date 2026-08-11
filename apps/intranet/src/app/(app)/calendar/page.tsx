@@ -1,14 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
@@ -47,11 +40,8 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import { PageHeader } from "@/components/PageHeader";
-import {
-  useCurrentUser,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { PageHeaderActions, PageHeaderBar } from "@/components/layout/PageHeaderBar";
+import { isOwnerOrAdmin, useCurrentUser, useIsManager } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,6 +55,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -73,15 +64,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { useDeepLinkId } from "@/hooks/use-deep-link-id";
 import { useErrorHandler } from "@/hooks/use-error-handler";
+import { useAbsencesCalendar } from "@/lib/absences-api";
 import { formatIsoDate, formatTime } from "@/lib/format";
 import { buildIcs, downloadIcs } from "@/lib/ics";
+import { formatRichDate } from "@/lib/rich-date";
 import { cn } from "@/lib/utils";
 
 const ABSENCE_COLORS: Record<string, string> = {
@@ -138,7 +126,6 @@ interface EventDraft {
   end: string;
   allDay: boolean;
   audience: string;
-  guestVisible: boolean;
 }
 
 function emptyDraft(dateIso?: string): EventDraft {
@@ -150,7 +137,6 @@ function emptyDraft(dateIso?: string): EventDraft {
     end: dateIso ? `${dateIso}T10:00` : "",
     allDay: false,
     audience: "all",
-    guestVisible: false,
   };
 }
 
@@ -175,7 +161,7 @@ function EventDialog({
   }, [draft]);
 
   const set = <K extends keyof EventDraft>(key: K, value: EventDraft[K]) =>
-    setForm(f => ({ ...f, [key]: value }));
+    setForm((f) => ({ ...f, [key]: value }));
 
   async function submit() {
     if (!form.title.trim() || !form.start || !form.end) return;
@@ -191,7 +177,6 @@ function EventDialog({
         form.audience === "all"
           ? ({ kind: "all" } as const)
           : ({ kind: "department", department: form.audience } as const),
-      guestVisible: form.guestVisible,
     };
     try {
       if (form.eventId) {
@@ -210,106 +195,96 @@ function EventDialog({
   }
 
   return (
-    <Dialog open={draft !== null} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {form.eventId ? t("editEvent") : t("addEvent")}
-          </DialogTitle>
-          <DialogDescription>{t("addEventHint")}</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-5">
-          <div className="space-y-3">
-            <Input
-              placeholder={t("eventTitle")}
-              value={form.title}
-              onChange={e => set("title", e.target.value)}
-              className="h-11 text-base font-medium"
-            />
-            <Input
-              placeholder={t("location")}
-              value={form.location}
-              onChange={e => set("location", e.target.value)}
-            />
-            <Textarea
-              placeholder={t("description")}
-              value={form.description}
-              onChange={e => set("description", e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>{t("start")}</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.start}
-                  onChange={e => set("start", e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t("end")}</Label>
-                <Input
-                  type="datetime-local"
-                  value={form.end}
-                  onChange={e => set("end", e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-4 pt-1">
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-[var(--primary)]"
-                  checked={form.allDay}
-                  onChange={e => set("allDay", e.target.checked)}
-                />
-                {t("allDay")}
-              </label>
-              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
-                <input
-                  type="checkbox"
-                  className="size-4 accent-[var(--primary)]"
-                  checked={form.guestVisible}
-                  onChange={e => set("guestVisible", e.target.checked)}
-                />
-                {t("guestVisible")}
-              </label>
-            </div>
-          </div>
-
-          <Select value={form.audience} onValueChange={v => set("audience", v)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{tc("all")}</SelectItem>
-              {departments.map(d => (
-                <SelectItem key={d} value={d}>
-                  {d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <DialogFooter>
+    <ResponsiveDialog
+      open={draft !== null}
+      onOpenChange={onOpenChange}
+      title={form.eventId ? t("editEvent") : t("addEvent")}
+      description={t("addEventHint")}
+      footer={
+        <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
           <Button onClick={submit} disabled={busy || !form.title.trim()}>
             {form.eventId ? tc("save") : tc("create")}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="space-y-3">
+          <Input
+            placeholder={t("eventTitle")}
+            value={form.title}
+            onChange={(e) => set("title", e.target.value)}
+            className="h-11 text-base font-medium"
+          />
+          <Input
+            placeholder={t("location")}
+            value={form.location}
+            onChange={(e) => set("location", e.target.value)}
+          />
+          <Textarea
+            placeholder={t("description")}
+            value={form.description}
+            onChange={(e) => set("description", e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-3 rounded-lg border border-border/70 bg-muted/30 p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>{t("start")}</Label>
+              <Input
+                type="datetime-local"
+                value={form.start}
+                onChange={(e) => set("start", e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t("end")}</Label>
+              <Input
+                type="datetime-local"
+                value={form.end}
+                onChange={(e) => set("end", e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 pt-1">
+            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                className="size-4 accent-[var(--primary)]"
+                checked={form.allDay}
+                onChange={(e) => set("allDay", e.target.checked)}
+              />
+              {t("allDay")}
+            </label>
+          </div>
+        </div>
+
+        <Select value={form.audience} onValueChange={(v) => set("audience", v)}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{tc("all")}</SelectItem>
+            {departments.map((d) => (
+              <SelectItem key={d} value={d}>
+                {d}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </ResponsiveDialog>
   );
 }
 
 type DetailState =
   | { kind: "day"; day: string }
   | { kind: "event"; id: Id<"events"> }
-  | { kind: "absence"; id: Id<"absences"> }
+  | { kind: "absence"; id: string }
   | null;
 
 type CalendarView = "month" | "week" | "list";
@@ -350,10 +325,7 @@ export default function CalendarPage() {
   // The dense month grid is hard to read on phones, so default to the agenda
   // (list) view there. Runs once on mount; users can still switch freely.
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      window.matchMedia("(max-width: 767px)").matches
-    ) {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
       setView("list");
     }
   }, []);
@@ -367,6 +339,21 @@ export default function CalendarPage() {
       window.history.replaceState(null, "", "/calendar");
     }
   }, []);
+
+  // Deep link from a notification/dashboard widget: /calendar?event=<id> or
+  // ?absence=<id> opens the matching detail dialog directly.
+  const deepLinkEventId = useDeepLinkId("event");
+  const deepLinkAbsenceId = useDeepLinkId("absence");
+  useEffect(() => {
+    if (deepLinkEventId) {
+      setDetail({ kind: "event", id: deepLinkEventId as Id<"events"> });
+    }
+  }, [deepLinkEventId]);
+  useEffect(() => {
+    if (deepLinkAbsenceId) {
+      setDetail({ kind: "absence", id: deepLinkAbsenceId });
+    }
+  }, [deepLinkAbsenceId]);
 
   // The queried range depends on the active view: the month grid spans whole
   // weeks; the week view a single week; the agenda the whole month.
@@ -389,16 +376,13 @@ export default function CalendarPage() {
     start: rangeStart.getTime(),
     end: rangeEnd.getTime(),
   });
-  const absences = useQuery(api.absences.listForCalendar, {
-    start: isoDay(rangeStart),
-    end: isoDay(rangeEnd),
-  });
+  const absences = useAbsencesCalendar(isoDay(rangeStart), isoDay(rangeEnd));
 
   const goPrev = useCallback(() => {
-    setCursor(c => (view === "week" ? subWeeks(c, 1) : subMonths(c, 1)));
+    setCursor((c) => (view === "week" ? subWeeks(c, 1) : subMonths(c, 1)));
   }, [view]);
   const goNext = useCallback(() => {
-    setCursor(c => (view === "week" ? addWeeks(c, 1) : addMonths(c, 1)));
+    setCursor((c) => (view === "week" ? addWeeks(c, 1) : addMonths(c, 1)));
   }, [view]);
 
   // Arrow keys page through periods, "t" jumps to today — unless a dialog is
@@ -421,7 +405,7 @@ export default function CalendarPage() {
     return Array.from({ length: 7 }, (_, i) =>
       new Date(monday.getTime() + i * 86400000).toLocaleDateString(locale, {
         weekday: "short",
-      })
+      }),
     );
   }, [locale, weekStartsOn]);
 
@@ -430,15 +414,11 @@ export default function CalendarPage() {
 
   const filteredEvents = useMemo(() => {
     if (!events) return undefined;
-    return events.filter(e => {
+    return events.filter((e) => {
       if (hiddenKinds.has("event")) return false;
       if (deptFilter !== "all") {
         const audience = e.audience as Audience;
-        if (
-          audience.kind === "department" &&
-          audience.department !== deptFilter
-        )
-          return false;
+        if (audience.kind === "department" && audience.department !== deptFilter) return false;
       }
       return true;
     });
@@ -446,7 +426,7 @@ export default function CalendarPage() {
 
   const filteredAbsences = useMemo(() => {
     if (!absences) return undefined;
-    return absences.filter(a => {
+    return absences.filter((a) => {
       if (hiddenKinds.has(a.type as FilterKind)) return false;
       if (onlyMyAbsences && a.userId !== me._id) return false;
       if (deptFilter !== "all" && a.userDepartment !== deptFilter) return false;
@@ -455,23 +435,17 @@ export default function CalendarPage() {
   }, [absences, hiddenKinds, onlyMyAbsences, deptFilter, me._id]);
 
   const detailEvent =
-    detail?.kind === "event"
-      ? events?.find(e => e._id === detail.id)
-      : undefined;
+    detail?.kind === "event" ? events?.find((e) => e._id === detail.id) : undefined;
   const detailAbsence =
-    detail?.kind === "absence"
-      ? absences?.find(a => a._id === detail.id)
-      : undefined;
+    detail?.kind === "absence" ? absences?.find((a) => a.id === detail.id) : undefined;
   const detailDay = detail?.kind === "day" ? detail.day : null;
   const dayEntries = detailDay
     ? {
         events: (filteredEvents ?? []).filter(
-          e =>
-            isoDay(new Date(e.start)) <= detailDay &&
-            detailDay <= isoDay(new Date(e.end))
+          (e) => eventDay(e, e.start) <= detailDay && detailDay <= eventDay(e, e.end),
         ),
         absences: (filteredAbsences ?? []).filter(
-          a => a.startDate <= detailDay && detailDay <= a.endDate
+          (a) => a.startDate <= detailDay && detailDay <= a.endDate,
         ),
       }
     : null;
@@ -487,20 +461,74 @@ export default function CalendarPage() {
   }
 
   function eventWhen(e: CalEvent) {
-    if (e.allDay) return `${longDate(new Date(e.start))} · ${t("allDay")}`;
+    if (e.personalForUserId) {
+      return `${formatRichDate(
+        {
+          startAt: e.start,
+          ...(e.end !== e.start ? { endAt: e.end } : {}),
+          allDay: e.allDay,
+        },
+        locale,
+      )}${e.allDay ? ` · ${t("allDay")}` : ""}`;
+    }
+    if (e.allDay) {
+      const start = longDate(new Date(e.start));
+      const end =
+        isoDay(new Date(e.end)) === isoDay(new Date(e.start))
+          ? ""
+          : ` – ${longDate(new Date(e.end))}`;
+      return `${start}${end} · ${t("allDay")}`;
+    }
     return `${longDate(new Date(e.start))} · ${formatTime(e.start, locale)} – ${formatTime(e.end, locale)}`;
   }
 
-  async function onDeleteEvent(id: Id<"events">) {
+  function eventDay(e: CalEvent, timestamp: number): string {
+    return e.allDay && e.personalForUserId
+      ? new Date(timestamp).toISOString().slice(0, 10)
+      : isoDay(new Date(timestamp));
+  }
+
+  function eventIcs(e: CalEvent) {
+    return {
+      uid: e._id,
+      title: e.title,
+      ...(e.allDay
+        ? {
+            startDate: eventDay(e, e.start),
+            endDate: eventDay(e, e.end),
+          }
+        : { startMs: e.start, endMs: e.end }),
+      description: e.description ?? undefined,
+      location: e.location ?? undefined,
+      categories: e.kind ? [e.kind.toUpperCase()] : undefined,
+    };
+  }
+
+  function downloadEventIcs(event: CalEvent) {
+    const filename =
+      event.title
+        .trim()
+        .replace(/[^\p{L}\p{N}]+/gu, "-")
+        .replace(/^-|-$/g, "") || "event";
+    downloadIcs(`${filename}.ics`, buildIcs(t("title"), [eventIcs(event)]));
+    toast.success(t("exported"));
+  }
+
+  async function onDeleteEvent(event: CalEvent) {
     const ok = await confirm({
       title: t("deleteEvent"),
       description: tc("deleteWarning"),
+      details: [
+        { label: t("eventTitle"), value: event.title },
+        { label: t("start"), value: eventWhen(event) },
+        ...(event.location ? [{ label: t("location"), value: event.location }] : []),
+      ],
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });
     if (!ok) return;
     try {
-      await removeEvent({ eventId: id });
+      await removeEvent({ eventId: event._id });
       setDetail(null);
       toast.success(tc("delete"));
     } catch (e) {
@@ -519,7 +547,6 @@ export default function CalendarPage() {
       end: format(new Date(e.end), "yyyy-MM-dd'T'HH:mm"),
       allDay: e.allDay,
       audience: audience.kind === "all" ? "all" : audience.department,
-      guestVisible: e.guestVisible,
     };
   }
 
@@ -527,35 +554,21 @@ export default function CalendarPage() {
   function eventsOn(day: Date): CalEvent[] {
     const iso = isoDay(day);
     return (
-      filteredEvents?.filter(
-        e => isoDay(new Date(e.start)) <= iso && iso <= isoDay(new Date(e.end))
-      ) ?? []
+      filteredEvents?.filter((e) => eventDay(e, e.start) <= iso && iso <= eventDay(e, e.end)) ?? []
     );
   }
   function absencesOn(day: Date): CalAbsence[] {
     const iso = isoDay(day);
-    return (
-      filteredAbsences?.filter(a => a.startDate <= iso && iso <= a.endDate) ??
-      []
-    );
+    return filteredAbsences?.filter((a) => a.startDate <= iso && iso <= a.endDate) ?? [];
   }
 
   function exportIcs() {
     const ics = buildIcs(t("title"), [
-      ...(filteredEvents ?? []).map(e => ({
-        uid: e._id,
-        title: e.title,
-        ...(e.allDay
-          ? {
-              startDate: isoDay(new Date(e.start)),
-              endDate: isoDay(new Date(e.end)),
-            }
-          : { startMs: e.start, endMs: e.end }),
-        description: e.description ?? undefined,
-        location: e.location ?? undefined,
+      ...(filteredEvents ?? []).map((e) => ({
+        ...eventIcs(e),
       })),
-      ...(filteredAbsences ?? []).map(a => ({
-        uid: a._id,
+      ...(filteredAbsences ?? []).map((a) => ({
+        uid: a.id,
         title: `${a.userName} · ${tAbs(a.type)}`,
         startDate: a.startDate,
         endDate: a.endDate,
@@ -579,15 +592,15 @@ export default function CalendarPage() {
 
   // Only days that actually have entries, for the agenda view.
   const agendaDays = gridDays
-    .map(day => ({
+    .map((day) => ({
       day,
       dayEvents: eventsOn(day),
       dayAbsences: absencesOn(day),
     }))
-    .filter(d => d.dayEvents.length > 0 || d.dayAbsences.length > 0);
+    .filter((d) => d.dayEvents.length > 0 || d.dayAbsences.length > 0);
 
   function toggleKind(kind: FilterKind) {
-    setHiddenKinds(prev => {
+    setHiddenKinds((prev) => {
       const next = new Set(prev);
       if (next.has(kind)) next.delete(kind);
       else next.add(kind);
@@ -603,16 +616,16 @@ export default function CalendarPage() {
   }
 
   function EventChip({ e, day }: { e: CalEvent; day?: Date }) {
-    const continues = day ? isoDay(new Date(e.start)) !== isoDay(day) : false;
+    const continues = day ? eventDay(e, e.start) !== isoDay(day) : false;
     return (
       <div
         role="button"
         tabIndex={0}
-        onClick={ev => {
+        onClick={(ev) => {
           ev.stopPropagation();
           setDetail({ kind: "event", id: e._id });
         }}
-        onKeyDown={ev => {
+        onKeyDown={(ev) => {
           if (ev.key === "Enter") {
             ev.stopPropagation();
             setDetail({ kind: "event", id: e._id });
@@ -621,7 +634,7 @@ export default function CalendarPage() {
         className={cn(
           "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[11px] font-medium",
           eventChipClass(e),
-          continues && "opacity-75"
+          continues && "opacity-75",
         )}
         title={e.title}
       >
@@ -629,9 +642,7 @@ export default function CalendarPage() {
           <ChevronRight className="size-3 shrink-0 opacity-70" />
         ) : (
           !e.allDay && (
-            <span className="tabular-nums opacity-70">
-              {format(new Date(e.start), "HH:mm")}
-            </span>
+            <span className="tabular-nums opacity-70">{format(new Date(e.start), "HH:mm")}</span>
           )
         )}
         <span className="truncate">{e.title}</span>
@@ -644,19 +655,19 @@ export default function CalendarPage() {
       <div
         role="button"
         tabIndex={0}
-        onClick={ev => {
+        onClick={(ev) => {
           ev.stopPropagation();
-          setDetail({ kind: "absence", id: a._id });
+          setDetail({ kind: "absence", id: a.id });
         }}
-        onKeyDown={ev => {
+        onKeyDown={(ev) => {
           if (ev.key === "Enter") {
             ev.stopPropagation();
-            setDetail({ kind: "absence", id: a._id });
+            setDetail({ kind: "absence", id: a.id });
           }
         }}
         className={cn(
           "flex items-center gap-1 truncate rounded px-1 py-0.5 text-[11px] font-medium",
-          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other
+          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other,
         )}
         title={`${a.userName} · ${tAbs(a.type)}`}
       >
@@ -670,37 +681,28 @@ export default function CalendarPage() {
 
   return (
     <div className="mx-auto max-w-5xl" data-tour="tour-calendar-view">
-      <PageHeader
-        title={t("title")}
-        tourCheckpoint="calendar"
-        action={
-          <div className="flex items-center gap-2">
-            <TooltipProvider delayDuration={150}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    aria-label={t("exportIcs")}
-                    onClick={exportIcs}
-                  >
-                    <CalendarArrowDown />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t("exportIcs")}</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {isManager && (
-              <Button
-                onClick={() => setEventDraft(emptyDraft(isoDay(cursor)))}
-                data-tour="tour-calendar-add"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                {t("addEvent")}
-              </Button>
-            )}
-          </div>
-        }
+      <PageHeaderBar title={t("title")} tourCheckpoint="calendar" />
+      <PageHeaderActions
+        actions={[
+          {
+            key: "export",
+            label: t("exportIcs"),
+            icon: CalendarArrowDown,
+            onClick: exportIcs,
+            variant: "outline",
+          },
+          ...(isManager
+            ? [
+                {
+                  key: "add-event",
+                  label: t("addEvent"),
+                  icon: Plus,
+                  onClick: () => setEventDraft(emptyDraft(isoDay(cursor))),
+                  tourTarget: "tour-calendar-add",
+                },
+              ]
+            : []),
+        ]}
       />
 
       <div
@@ -719,7 +721,7 @@ export default function CalendarPage() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={goPrev}
-                aria-label="Previous"
+                aria-label={tc("previous")}
                 className="rounded-r-none"
               >
                 <ChevronLeft className="size-4" />
@@ -729,26 +731,21 @@ export default function CalendarPage() {
                 variant="ghost"
                 size="icon-sm"
                 onClick={goNext}
-                aria-label="Next"
+                aria-label={tc("next")}
                 className="rounded-l-none"
               >
                 <ChevronRight className="size-4" />
               </Button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCursor(new Date())}
-            >
+            <Button variant="outline" size="sm" onClick={() => setCursor(new Date())}>
               {t("today")}
             </Button>
             <Input
               type="date"
               aria-label={t("jumpToDate")}
               value={format(cursor, "yyyy-MM-dd")}
-              onChange={e => {
-                if (e.target.value)
-                  setCursor(new Date(`${e.target.value}T12:00`));
+              onChange={(e) => {
+                if (e.target.value) setCursor(new Date(`${e.target.value}T12:00`));
               }}
               className="h-8 w-[8.75rem] text-xs"
             />
@@ -763,7 +760,7 @@ export default function CalendarPage() {
               { key: "week", label: t("viewWeek"), icon: CalendarRange },
               { key: "list", label: t("viewList"), icon: List },
             ] as const
-          ).map(v => {
+          ).map((v) => {
             const Icon = v.icon;
             return (
               <button
@@ -775,7 +772,7 @@ export default function CalendarPage() {
                   "flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-medium transition-colors",
                   view === v.key
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
               >
                 <Icon className="size-4" />
@@ -792,7 +789,7 @@ export default function CalendarPage() {
         className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs"
         data-tour="tour-calendar-filters"
       >
-        {ALL_KINDS.map(kind => {
+        {ALL_KINDS.map((kind) => {
           const hidden = hiddenKinds.has(kind);
           return (
             <button
@@ -802,16 +799,14 @@ export default function CalendarPage() {
               onClick={() => toggleKind(kind)}
               className={cn(
                 "flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 font-medium transition-colors hover:bg-accent",
-                hidden
-                  ? "text-muted-foreground/50 line-through"
-                  : "text-muted-foreground"
+                hidden ? "text-muted-foreground/50 line-through" : "text-muted-foreground",
               )}
             >
               <span
                 className={cn(
                   "size-2.5 rounded-full",
                   kind === "event" ? "bg-primary" : ABSENCE_DOTS[kind],
-                  hidden && "opacity-40"
+                  hidden && "opacity-40",
                 )}
               />
               {kind === "event" ? t("event") : tAbs(kind)}
@@ -821,12 +816,12 @@ export default function CalendarPage() {
         <button
           type="button"
           aria-pressed={onlyMyAbsences}
-          onClick={() => setOnlyMyAbsences(v => !v)}
+          onClick={() => setOnlyMyAbsences((v) => !v)}
           className={cn(
             "rounded-full border px-2.5 py-1 font-medium transition-colors",
             onlyMyAbsences
               ? "border-transparent bg-foreground text-background"
-              : "border-border text-muted-foreground hover:bg-accent"
+              : "border-border text-muted-foreground hover:bg-accent",
           )}
         >
           {t("onlyMyAbsences")}
@@ -838,7 +833,7 @@ export default function CalendarPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("allDepartments")}</SelectItem>
-              {departments.map(d => (
+              {departments.map((d) => (
                 <SelectItem key={d} value={d}>
                   {d}
                 </SelectItem>
@@ -854,7 +849,7 @@ export default function CalendarPage() {
           <div className="border-b border-r border-border/60 bg-muted/30 p-2 text-center text-[10px] font-semibold uppercase text-muted-foreground/70">
             {t("weekShort")}
           </div>
-          {weekdays.map(d => (
+          {weekdays.map((d) => (
             <div
               key={d}
               className="border-b border-r border-border/60 bg-muted/30 p-2 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground last:border-r-0"
@@ -869,8 +864,7 @@ export default function CalendarPage() {
             const isToday = isSameDay(day, new Date());
             const shownEvents = dayEvents.slice(0, 3);
             const absenceSlots = Math.max(0, 3 - shownEvents.length);
-            const aggregateAbsences =
-              dayAbsences.length > absenceSlots && dayAbsences.length > 1;
+            const aggregateAbsences = dayAbsences.length > absenceSlots && dayAbsences.length > 1;
             const eventOverflow = dayEvents.length - shownEvents.length;
             return (
               <Fragment key={day.toISOString()}>
@@ -884,19 +878,18 @@ export default function CalendarPage() {
                   onClick={() => setDetail({ kind: "day", day: isoDay(day) })}
                   className={cn(
                     "min-h-24 space-y-1 border-b border-r border-border/60 p-1.5 text-left align-top transition-colors last:border-r-0 hover:bg-accent/50",
-                    !inMonth && "bg-muted/20 text-muted-foreground"
+                    !inMonth && "bg-muted/20 text-muted-foreground",
                   )}
                 >
                   <div
                     className={cn(
                       "flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
-                      isToday &&
-                        "bg-primary font-semibold text-primary-foreground"
+                      isToday && "bg-primary font-semibold text-primary-foreground",
                     )}
                   >
                     {day.getDate()}
                   </div>
-                  {shownEvents.map(e => (
+                  {shownEvents.map((e) => (
                     <EventChip key={e._id} e={e} day={day} />
                   ))}
                   {aggregateAbsences ? (
@@ -905,9 +898,7 @@ export default function CalendarPage() {
                       {t("outCount", { count: dayAbsences.length })}
                     </div>
                   ) : (
-                    dayAbsences
-                      .slice(0, absenceSlots)
-                      .map(a => <AbsenceChip key={a._id} a={a} />)
+                    dayAbsences.slice(0, absenceSlots).map((a) => <AbsenceChip key={a.id} a={a} />)
                   )}
                   {eventOverflow > 0 && (
                     <div className="px-1 text-[10px] font-medium text-muted-foreground">
@@ -924,7 +915,7 @@ export default function CalendarPage() {
       {/* Week view — one column per day, all entries listed */}
       {view === "week" && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
-          {gridDays.map(day => {
+          {gridDays.map((day) => {
             const dayEvents = eventsOn(day);
             const dayAbsences = absencesOn(day);
             const isToday = isSameDay(day, new Date());
@@ -933,7 +924,7 @@ export default function CalendarPage() {
                 key={day.toISOString()}
                 className={cn(
                   "flex min-h-48 flex-col rounded-xl border border-border/70 bg-card shadow-[0_1px_2px_0_rgb(0_0_0/0.04)]",
-                  isToday && "border-primary/40 ring-1 ring-primary/20"
+                  isToday && "border-primary/40 ring-1 ring-primary/20",
                 )}
               >
                 <button
@@ -947,7 +938,7 @@ export default function CalendarPage() {
                   <span
                     className={cn(
                       "flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-xs font-semibold",
-                      isToday && "bg-primary text-primary-foreground"
+                      isToday && "bg-primary text-primary-foreground",
                     )}
                   >
                     {day.getDate()}
@@ -960,11 +951,11 @@ export default function CalendarPage() {
                     </p>
                   ) : (
                     <>
-                      {dayEvents.map(e => (
+                      {dayEvents.map((e) => (
                         <EventChip key={e._id} e={e} day={day} />
                       ))}
-                      {dayAbsences.map(a => (
-                        <AbsenceChip key={a._id} a={a} />
+                      {dayAbsences.map((a) => (
+                        <AbsenceChip key={a.id} a={a} />
                       ))}
                     </>
                   )}
@@ -993,7 +984,7 @@ export default function CalendarPage() {
                   <p
                     className={cn(
                       "text-sm font-semibold capitalize",
-                      isSameDay(day, new Date()) && "text-primary"
+                      isSameDay(day, new Date()) && "text-primary",
                     )}
                   >
                     {day.toLocaleDateString(locale, {
@@ -1004,7 +995,7 @@ export default function CalendarPage() {
                   </p>
                 </div>
                 <div className="min-w-0 flex-1 space-y-1.5">
-                  {dayEvents.map(e => (
+                  {dayEvents.map((e) => (
                     <button
                       key={e._id}
                       onClick={() => setDetail({ kind: "event", id: e._id })}
@@ -1013,26 +1004,22 @@ export default function CalendarPage() {
                       <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                         <CalendarClock className="size-3.5" />
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {e.title}
-                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-medium">{e.title}</span>
                       <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                        {e.allDay
-                          ? t("allDay")
-                          : `${formatTime(e.start, locale)}`}
+                        {e.allDay ? t("allDay") : `${formatTime(e.start, locale)}`}
                       </span>
                     </button>
                   ))}
-                  {dayAbsences.map(a => (
+                  {dayAbsences.map((a) => (
                     <button
-                      key={a._id}
-                      onClick={() => setDetail({ kind: "absence", id: a._id })}
+                      key={a.id}
+                      onClick={() => setDetail({ kind: "absence", id: a.id })}
                       className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 px-2.5 py-2 text-left transition-colors hover:bg-accent"
                     >
                       <span
                         className={cn(
                           "flex size-7 shrink-0 items-center justify-center rounded-md",
-                          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other
+                          ABSENCE_COLORS[a.type] ?? ABSENCE_COLORS.other,
                         )}
                       >
                         <Plane className="size-3.5" />
@@ -1040,9 +1027,7 @@ export default function CalendarPage() {
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {a.userName}
                       </span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {tAbs(a.type)}
-                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{tAbs(a.type)}</span>
                     </button>
                   ))}
                 </div>
@@ -1053,24 +1038,19 @@ export default function CalendarPage() {
       )}
 
       {/* Detail dialog (Google-Calendar style) */}
-      <Dialog open={detail !== null} onOpenChange={o => !o && setDetail(null)}>
+      <Dialog open={detail !== null} onOpenChange={(o) => !o && setDetail(null)}>
         <DialogContent>
           {/* Day overview */}
           {detailDay && dayEntries && (
             <>
               <DialogHeader>
-                <DialogTitle className="capitalize">
-                  {longDate(detailDay)}
-                </DialogTitle>
+                <DialogTitle className="capitalize">{longDate(detailDay)}</DialogTitle>
               </DialogHeader>
               <div className="max-h-[60vh] space-y-4 overflow-y-auto">
-                {dayEntries.events.length === 0 &&
-                dayEntries.absences.length === 0 ? (
+                {dayEntries.events.length === 0 && dayEntries.absences.length === 0 ? (
                   <div className="flex flex-col items-center gap-2 py-8 text-center">
                     <CalendarClock className="h-7 w-7 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      {t("noEntries")}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{t("noEntries")}</p>
                   </div>
                 ) : (
                   <>
@@ -1079,21 +1059,17 @@ export default function CalendarPage() {
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {t("events")}
                         </p>
-                        {dayEntries.events.map(e => (
+                        {dayEntries.events.map((e) => (
                           <button
                             key={e._id}
-                            onClick={() =>
-                              setDetail({ kind: "event", id: e._id })
-                            }
+                            onClick={() => setDetail({ kind: "event", id: e._id })}
                             className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left transition-colors hover:bg-accent"
                           >
                             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                               <CalendarClock className="h-4 w-4" />
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">
-                                {e.title}
-                              </p>
+                              <p className="truncate text-sm font-medium">{e.title}</p>
                               <p className="truncate text-xs text-muted-foreground">
                                 {e.allDay
                                   ? t("allDay")
@@ -1110,21 +1086,17 @@ export default function CalendarPage() {
                         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                           {t("absences")}
                         </p>
-                        {dayEntries.absences.map(a => (
+                        {dayEntries.absences.map((a) => (
                           <button
-                            key={a._id}
-                            onClick={() =>
-                              setDetail({ kind: "absence", id: a._id })
-                            }
+                            key={a.id}
+                            onClick={() => setDetail({ kind: "absence", id: a.id })}
                             className="flex w-full items-center gap-3 rounded-lg border border-border/70 p-2.5 text-left transition-colors hover:bg-accent"
                           >
                             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                               <Plane className="h-4 w-4" />
                             </span>
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">
-                                {a.userName}
-                              </p>
+                              <p className="truncate text-sm font-medium">{a.userName}</p>
                               <p className="truncate text-xs text-muted-foreground">
                                 {tAbs(a.type)}
                               </p>
@@ -1158,10 +1130,13 @@ export default function CalendarPage() {
             <EventDetail
               event={detailEvent}
               when={eventWhen(detailEvent)}
-              canManage={
-                isManager &&
-                (detailEvent.createdByUserId === me._id || me.role === "admin")
+              canEdit={isManager && isOwnerOrAdmin(me, detailEvent.createdByUserId)}
+              canDelete={
+                detailEvent.personalForUserId === me._id ||
+                (isManager && isOwnerOrAdmin(me, detailEvent.createdByUserId))
               }
+              canDuplicate={isManager && !detailEvent.personalForUserId}
+              onDownload={() => downloadEventIcs(detailEvent)}
               onEdit={() => {
                 setDetail(null);
                 setEventDraft(draftFromEvent(detailEvent));
@@ -1170,7 +1145,7 @@ export default function CalendarPage() {
                 setDetail(null);
                 setEventDraft(draftFromEvent(detailEvent, true));
               }}
-              onDelete={() => onDeleteEvent(detailEvent._id)}
+              onDelete={() => onDeleteEvent(detailEvent)}
             />
           )}
 
@@ -1185,25 +1160,14 @@ export default function CalendarPage() {
         </DialogContent>
       </Dialog>
 
-      <EventDialog
-        draft={eventDraft}
-        onOpenChange={open => !open && setEventDraft(null)}
-      />
+      <EventDialog draft={eventDraft} onOpenChange={(open) => !open && setEventDraft(null)} />
     </div>
   );
 
-  function DetailRow({
-    icon,
-    children,
-  }: {
-    icon: ReactNode;
-    children: ReactNode;
-  }) {
+  function DetailRow({ icon, children }: { icon: ReactNode; children: ReactNode }) {
     return (
       <div className="flex items-start gap-3 text-sm">
-        <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">
-          {icon}
-        </span>
+        <span className="mt-0.5 text-muted-foreground [&_svg]:size-4">{icon}</span>
         <span className="min-w-0 flex-1">{children}</span>
       </div>
     );
@@ -1212,14 +1176,20 @@ export default function CalendarPage() {
   function EventDetail({
     event,
     when,
-    canManage,
+    canEdit,
+    canDelete,
+    canDuplicate,
+    onDownload,
     onEdit,
     onDuplicate,
     onDelete,
   }: {
     event: CalEvent;
     when: string;
-    canManage: boolean;
+    canEdit: boolean;
+    canDelete: boolean;
+    canDuplicate: boolean;
+    onDownload: () => void;
     onEdit: () => void;
     onDuplicate: () => void;
     onDelete: () => void;
@@ -1231,9 +1201,7 @@ export default function CalendarPage() {
         </DialogHeader>
         <div className="space-y-3">
           <DetailRow icon={<CalendarClock />}>{when}</DetailRow>
-          {event.location && (
-            <DetailRow icon={<MapPin />}>{event.location}</DetailRow>
-          )}
+          {event.location && <DetailRow icon={<MapPin />}>{event.location}</DetailRow>}
           <DetailRow icon={<User />}>
             <span className="text-muted-foreground">{t("organizer")}: </span>
             {event.createdByName}
@@ -1245,24 +1213,28 @@ export default function CalendarPage() {
           )}
         </div>
         <DialogFooter className="flex-wrap">
-          {canManage && (
-            <>
-              <Button variant="destructive" onClick={onDelete}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                {tc("delete")}
-              </Button>
-              <Button variant="outline" onClick={onEdit}>
-                <Pencil className="mr-2 h-4 w-4" />
-                {t("editEvent")}
-              </Button>
-            </>
+          {canDelete && (
+            <Button variant="destructive" onClick={onDelete}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              {tc("delete")}
+            </Button>
           )}
-          {isManager && (
+          {canEdit && (
+            <Button variant="outline" onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {t("editEvent")}
+            </Button>
+          )}
+          {canDuplicate && (
             <Button variant="outline" onClick={onDuplicate}>
               <Copy className="mr-2 h-4 w-4" />
               {t("duplicate")}
             </Button>
           )}
+          <Button variant="outline" onClick={onDownload}>
+            <CalendarArrowDown className="mr-2 h-4 w-4" />
+            {t("downloadEventIcs")}
+          </Button>
           <Button variant="ghost" onClick={() => setDetail(null)}>
             {tc("close")}
           </Button>
@@ -1287,16 +1259,11 @@ export default function CalendarPage() {
         </DialogHeader>
         <div className="space-y-3">
           <DetailRow icon={<Plane />}>
-            <Badge
-              variant="muted"
-              className={ABSENCE_COLORS[absence.type] ?? ABSENCE_COLORS.other}
-            >
+            <Badge variant="muted" className={ABSENCE_COLORS[absence.type] ?? ABSENCE_COLORS.other}>
               {typeLabel}
             </Badge>
             {absence.userDepartment && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                {absence.userDepartment}
-              </span>
+              <span className="ml-2 text-xs text-muted-foreground">{absence.userDepartment}</span>
             )}
           </DetailRow>
           <DetailRow icon={<CalendarClock />}>{range}</DetailRow>

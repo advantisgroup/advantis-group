@@ -11,11 +11,13 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { RoleSelect } from "@/app/(app)/admin/RoleSelect";
+import { PageHeaderActions } from "@/components/layout/PageHeaderBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime } from "@/lib/format";
 
@@ -41,15 +43,20 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
   const handleError = useErrorHandler();
   const allowedDomains = config?.allowedDomains ?? [];
 
-  async function onRevoke(id: Id<"invites">) {
+  async function onRevoke(invite: { _id: Id<"invites">; email: string; role: Role }) {
     const ok = await confirm({
       title: t("revoke"),
       description: tc("deleteWarning"),
+      details: [
+        { label: t("inviteEmail"), value: invite.email },
+        { label: t("role"), value: invite.role },
+      ],
       confirmLabel: t("revoke"),
       cancelLabel: tc("cancel"),
     });
-    if (ok) revoke({ inviteId: id }).catch(handleError);
+    if (ok) revoke({ inviteId: invite._id }).catch(handleError);
   }
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("employee");
   const [busy, setBusy] = useState(false);
@@ -79,6 +86,7 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
       await create({ email: trimmed, role });
       toast.success(t("sendInvite"));
       setEmail("");
+      setInviteOpen(false);
     } catch (e) {
       handleError(e);
     } finally {
@@ -88,53 +96,52 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
 
   const enteredExternal = isExternalEmail(email.trim(), allowedDomains);
 
-  const pending = invites?.filter(i => i.status === "pending") ?? [];
+  const pending = invites?.filter((i) => i.status === "pending") ?? [];
 
   return (
     <div className="space-y-4">
-      <Card nested>
-        <CardContent className="flex flex-col gap-2 p-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end">
-            <Input
-              type="email"
-              placeholder={t("inviteEmail")}
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              className="sm:flex-1"
-            />
-            <div className="flex gap-2">
-              <RoleSelect
-                value={role}
-                onChange={setRole}
-                canElevate={isAdmin}
-              />
-              <Button
-                onClick={send}
-                disabled={
-                  busy || !email.trim() || (enteredExternal && !isAdmin)
-                }
-                className="flex-1 sm:flex-none"
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                {t("sendInvite")}
-              </Button>
-            </div>
-          </div>
-          {enteredExternal && (
-            <p className="text-xs text-amber-600 dark:text-amber-500">
-              {isAdmin ? t("inviteExternalHint") : t("inviteExternalForbidden")}
-            </p>
-          )}
-        </CardContent>
-      </Card>
+      <PageHeaderActions
+        actions={[
+          { key: "invite", label: t("sendInvite"), icon: Mail, onClick: () => setInviteOpen(true) },
+        ]}
+      />
+
+      <ResponsiveDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        title={t("sendInvite")}
+        footer={
+          <Button
+            onClick={send}
+            disabled={busy || !email.trim() || (enteredExternal && !isAdmin)}
+            className="w-full sm:w-auto"
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            {t("sendInvite")}
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-2">
+          <Input
+            type="email"
+            placeholder={t("inviteEmail")}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <RoleSelect value={role} onChange={setRole} canElevate={isAdmin} />
+        </div>
+        {enteredExternal && (
+          <p className="mt-2 text-xs text-amber-600 dark:text-amber-500">
+            {isAdmin ? t("inviteExternalHint") : t("inviteExternalForbidden")}
+          </p>
+        )}
+      </ResponsiveDialog>
 
       {pending.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {t("noInvites")}
-        </p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{t("noInvites")}</p>
       ) : (
         <div className="space-y-2">
-          {pending.map(i => (
+          {pending.map((i) => (
             <Card nested key={i._id}>
               <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-2">
@@ -172,7 +179,7 @@ export function InvitesPanel({ isAdmin }: { isAdmin: boolean }) {
                     size="sm"
                     variant="ghost"
                     className="flex-1 sm:flex-none"
-                    onClick={() => void onRevoke(i._id)}
+                    onClick={() => void onRevoke(i)}
                   >
                     {t("revoke")}
                   </Button>

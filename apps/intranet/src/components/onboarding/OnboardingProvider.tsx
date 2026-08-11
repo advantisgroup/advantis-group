@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable react-refresh/only-export-components --
-   Provider colocated with its `useOnboarding` hook, imported across the app. */
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -16,16 +14,10 @@ import {
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 
-import {
-  useCurrentUser,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsManager } from "@/components/providers/current-user";
 
 import { ONBOARDING_STEPS } from "./onboarding-config";
-import {
-  getOrInitOnboardingState,
-  writeOnboardingState,
-} from "./onboarding-storage";
+import { getOrInitOnboardingState, writeOnboardingState } from "./onboarding-storage";
 
 import type {
   OnboardingContextValue,
@@ -42,9 +34,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
   const isManagerOrAdmin = useIsManager();
   const remote = useQuery(api.userPreferences.getMine);
   const setMine = useMutation(api.userPreferences.setMine);
-  const resetOnboardingRemote = useMutation(
-    api.userPreferences.resetOnboarding
-  );
+  const resetOnboardingRemote = useMutation(api.userPreferences.resetOnboarding);
 
   const [local, setLocal] = useState<OnboardingLocalState | null>(null);
   const [open, setOpen] = useState(false);
@@ -84,18 +74,14 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
           onboardingStep: next.stepIndex,
           onboardingStepStatuses: JSON.stringify(next.stepStatuses),
           ...(next.startedAt ? { onboardingStartedAt: next.startedAt } : {}),
-          ...(next.completedAt
-            ? { onboardingCompletedAt: next.completedAt }
-            : {}),
-          ...(next.dismissedAt
-            ? { onboardingDismissedAt: next.dismissedAt }
-            : {}),
+          ...(next.completedAt ? { onboardingCompletedAt: next.completedAt } : {}),
+          ...(next.dismissedAt ? { onboardingDismissedAt: next.dismissedAt } : {}),
         });
       } else {
         syncTimerRef.current = setTimeout(flushSync, SYNC_DEBOUNCE_MS);
       }
     },
-    [user._id, setMine, flushSync]
+    [user._id, setMine, flushSync],
   );
 
   // One-time init: wait for the cross-device query to resolve, merge it over
@@ -105,8 +91,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     initializedRef.current = true;
 
     const loaded = getOrInitOnboardingState(user._id);
-    if (remote?.onboardingStep != null)
-      loaded.stepIndex = remote.onboardingStep;
+    if (remote?.onboardingStep != null) loaded.stepIndex = remote.onboardingStep;
     if (remote?.onboardingStepStatuses) {
       try {
         loaded.stepStatuses = {
@@ -127,8 +112,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     stateRef.current = loaded;
     setLocal(loaded);
 
-    const alreadyDone =
-      loaded.completedAt != null || loaded.dismissedAt != null;
+    const alreadyDone = loaded.completedAt != null || loaded.dismissedAt != null;
     // Managers/admins never get the forced auto-open — only the header
     // trigger shows for them until they open it (or dismiss it) themselves.
     if (!alreadyDone && !loaded.seenThisSession && !isManagerOrAdmin) {
@@ -150,8 +134,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remote, user._id, isManagerOrAdmin]);
 
-  const currentStepId: OnboardingStepId =
-    ONBOARDING_STEPS[local?.stepIndex ?? 0] ?? "welcome";
+  const currentStepId: OnboardingStepId = ONBOARDING_STEPS[local?.stepIndex ?? 0] ?? "welcome";
 
   const next = useCallback(() => {
     if (!local) return;
@@ -193,7 +176,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
         stepStatuses: { ...local.stepStatuses, finish: "completed" },
         completedAt: Date.now(),
       },
-      true
+      true,
     );
     setOpen(false);
     setForced(false);
@@ -206,10 +189,7 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
 
   const restart = useCallback(() => {
     void resetOnboardingRemote({});
-    const stepStatuses = {} as Record<
-      OnboardingStepId,
-      "pending" | "completed" | "skipped"
-    >;
+    const stepStatuses = {} as Record<OnboardingStepId, "pending" | "completed" | "skipped">;
     for (const step of ONBOARDING_STEPS) stepStatuses[step] = "pending";
     const fresh: OnboardingLocalState = {
       version: 1,
@@ -236,9 +216,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       currentStepId,
       stepStatuses:
         local?.stepStatuses ??
-        (Object.fromEntries(
-          ONBOARDING_STEPS.map(s => [s, "pending"])
-        ) as Record<OnboardingStepId, "pending" | "completed" | "skipped">),
+        (Object.fromEntries(ONBOARDING_STEPS.map((s) => [s, "pending"])) as Record<
+          OnboardingStepId,
+          "pending" | "completed" | "skipped"
+        >),
       isCompleted: local?.completedAt != null,
       next,
       back,
@@ -248,26 +229,10 @@ export function OnboardingProvider({ children }: { children: ReactNode }) {
       reopen,
       restart,
     }),
-    [
-      open,
-      forced,
-      local,
-      currentStepId,
-      next,
-      back,
-      skip,
-      close,
-      complete,
-      reopen,
-      restart,
-    ]
+    [open, forced, local, currentStepId, next, back, skip, close, complete, reopen, restart],
   );
 
-  return (
-    <OnboardingContext.Provider value={value}>
-      {children}
-    </OnboardingContext.Provider>
-  );
+  return <OnboardingContext.Provider value={value}>{children}</OnboardingContext.Provider>;
 }
 
 export function useOnboarding(): OnboardingContextValue {

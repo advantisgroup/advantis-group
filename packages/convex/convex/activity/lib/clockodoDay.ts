@@ -48,11 +48,9 @@ export interface DeriveClockodoDaySegmentsArgs {
 function gapKind(
   gapMs: number,
   assumedClockedOutAfterMs: number,
-  isPastDayEnd: boolean
+  isPastDayEnd: boolean,
 ): "CLOCKED_OUT" | "BREAK" {
-  return gapMs > assumedClockedOutAfterMs || isPastDayEnd
-    ? "CLOCKED_OUT"
-    : "BREAK";
+  return gapMs > assumedClockedOutAfterMs || isPastDayEnd ? "CLOCKED_OUT" : "BREAK";
 }
 
 export function deriveClockodoDaySegments({
@@ -93,7 +91,5 @@ export function deriveClockodoDaySegments({
   // Collapse consecutive duplicate kinds (a WORKING entry immediately
   // followed by another WORKING entry after a zero-length gap, etc.) so the
   // caller doesn't write redundant same-state samples back to back.
-  return segments.filter(
-    (seg, i) => i === 0 || seg.kind !== segments[i - 1]!.kind
-  );
+  return segments.filter((seg, i) => i === 0 || seg.kind !== segments[i - 1]!.kind);
 }

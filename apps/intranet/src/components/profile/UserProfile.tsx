@@ -27,21 +27,13 @@ import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Drawer } from "vaul";
 
+import { RoleSelect } from "@/app/(app)/admin/RoleSelect";
 import { VaultStepUpDialog } from "@/components/applicants/VaultStepUpDialog";
-import {
-  useCurrentUser,
-  useIsAdmin,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  useConfirm,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, useConfirm } from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -51,25 +43,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { addDaysIso, isoToday } from "@/lib/absences";
+import { useAbsencesCalendar } from "@/lib/absences-api";
 import { useNow } from "@/lib/activity/useNow";
 import { formatIsoDate, initials, roleLabel } from "@/lib/format";
 import { TEAMS, teamColor, teamLabelKey } from "@/lib/teams";
@@ -103,44 +82,14 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function RoleSelect({
-  value,
-  onChange,
-}: {
-  value: Role;
-  onChange: (r: Role) => void;
-}) {
-  const t = useTranslations("Roles");
-  return (
-    <Select value={value} onValueChange={v => onChange(v as Role)}>
-      <SelectTrigger className="h-8 w-36">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="employee">{t("employee")}</SelectItem>
-        <SelectItem value="manager">{t("manager")}</SelectItem>
-        <SelectItem value="admin">{t("admin")}</SelectItem>
-      </SelectContent>
-    </Select>
-  );
-}
-
-function TeamsEditor({
-  userId,
-  teams,
-}: {
-  userId: Id<"users">;
-  teams: string[];
-}) {
+function TeamsEditor({ userId, teams }: { userId: Id<"users">; teams: string[] }) {
   const t = useTranslations("Admin");
   const tTeams = useTranslations("Teams");
   const setTeams = useMutation(api.users.setTeams);
   const handleError = useErrorHandler();
 
   function toggle(id: string) {
-    const next = teams.includes(id)
-      ? teams.filter(x => x !== id)
-      : [...teams, id];
+    const next = teams.includes(id) ? teams.filter((x) => x !== id) : [...teams, id];
     setTeams({ userId, teams: next }).catch(handleError);
   }
 
@@ -152,11 +101,8 @@ function TeamsEditor({
           {t("teams")}
           {teams.length > 0 && (
             <span className="ml-0.5 flex items-center gap-1">
-              {teams.map(id => (
-                <span
-                  key={id}
-                  className={cn("size-1.5 rounded-full", teamColor(id))}
-                />
+              {teams.map((id) => (
+                <span key={id} className={cn("size-1.5 rounded-full", teamColor(id))} />
               ))}
             </span>
           )}
@@ -170,21 +116,21 @@ function TeamsEditor({
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {TEAMS.map(team => {
+        {TEAMS.map((team) => {
           const checked = teams.includes(team.id);
           return (
             <DropdownMenuCheckboxItem
               key={team.id}
               checked={checked}
               onCheckedChange={() => toggle(team.id)}
-              onSelect={e => e.preventDefault()}
+              onSelect={(e) => e.preventDefault()}
               className="gap-2 py-1.5"
             >
               <span
                 className={cn(
                   "size-2 rounded-full transition-opacity",
                   teamColor(team.id),
-                  checked ? "opacity-100" : "opacity-40"
+                  checked ? "opacity-100" : "opacity-40",
                 )}
               />
               <span className="flex-1">{tTeams(team.labelKey)}</span>
@@ -212,10 +158,7 @@ function ContactRow({
     <div className="flex items-center gap-2.5 text-sm">
       <span className="text-muted-foreground">{icon}</span>
       {href ? (
-        <a
-          href={href}
-          className="min-w-0 flex-1 truncate hover:text-primary hover:underline"
-        >
+        <a href={href} className="min-w-0 flex-1 truncate hover:text-primary hover:underline">
           {value}
         </a>
       ) : (
@@ -255,18 +198,10 @@ function Organisation({ userId }: { userId: Id<"users"> }) {
     >
       <Avatar className="size-7 shrink-0">
         {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-        <AvatarFallback className="text-[10px]">
-          {initials(p.name, "")}
-        </AvatarFallback>
+        <AvatarFallback className="text-[10px]">{initials(p.name, "")}</AvatarFallback>
       </Avatar>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">
-        {p.name}
-      </span>
-      {p.jobTitle && (
-        <span className="shrink-0 text-xs text-muted-foreground">
-          {p.jobTitle}
-        </span>
-      )}
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
+      {p.jobTitle && <span className="shrink-0 text-xs text-muted-foreground">{p.jobTitle}</span>}
     </div>
   );
 
@@ -310,7 +245,7 @@ function MutualConversations({
   return (
     <Section label={t("mutual")}>
       <div className="space-y-1">
-        {mutual.map(c => (
+        {mutual.map((c) => (
           <button
             key={c._id}
             type="button"
@@ -323,18 +258,14 @@ function MutualConversations({
             {c.type === "dm" ? (
               <Avatar className="size-7 shrink-0">
                 {c.avatar && <AvatarImage src={c.avatar} alt={c.title} />}
-                <AvatarFallback className="text-[10px]">
-                  {initials(c.title, "")}
-                </AvatarFallback>
+                <AvatarFallback className="text-[10px]">{initials(c.title, "")}</AvatarFallback>
               </Avatar>
             ) : (
               <span className="grid size-7 shrink-0 place-items-center rounded-full bg-panel-2 text-muted-foreground">
                 <Hash className="size-3.5" />
               </span>
             )}
-            <span className="min-w-0 flex-1 truncate text-sm font-medium">
-              {c.title}
-            </span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">{c.title}</span>
             {c.type === "group" && (
               <span className="shrink-0 text-xs text-muted-foreground">
                 {t("memberCount", { count: c.memberCount })}
@@ -351,21 +282,28 @@ function UpcomingAbsences({ userId }: { userId: Id<"users"> }) {
   const t = useTranslations("Profile");
   const tAbs = useTranslations("Absences");
   const locale = useLocale();
-  const absences = useQuery(api.absences.upcomingForUser, { userId });
+  const today = isoToday();
+  // No fixed end date for "upcoming" — a wide-enough window covers any
+  // realistically pre-planned absence without needing an open-ended query.
+  const calendar = useAbsencesCalendar(today, addDaysIso(today, 180));
+  const absences = calendar
+    ?.filter((a) => a.userId === userId && a.endDate >= today)
+    .sort((a, b) => a.startDate.localeCompare(b.startDate))
+    .slice(0, 5);
 
   if (!absences || absences.length === 0) return null;
 
   return (
     <Section label={t("upcoming")}>
       <div className="space-y-1.5">
-        {absences.map(a => {
+        {absences.map((a) => {
           const range =
             a.startDate === a.endDate
               ? formatIsoDate(a.startDate, locale)
               : `${formatIsoDate(a.startDate, locale)} – ${formatIsoDate(a.endDate, locale)}`;
           return (
             <div
-              key={a._id}
+              key={a.id}
               className="flex items-center gap-2.5 rounded-lg border border-border/70 px-2.5 py-2 text-sm"
             >
               <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
@@ -464,20 +402,14 @@ function AdminControls({
       enabled: !user.uploadRequestsEnabled,
     })
       .then(() =>
-        toast.success(
-          user.uploadRequestsEnabled
-            ? t("uploadsDisabled")
-            : t("uploadsEnabled")
-        )
+        toast.success(user.uploadRequestsEnabled ? t("uploadsDisabled") : t("uploadsEnabled")),
       )
       .catch(handleError);
   }
 
   function toggleGf() {
     setGfAccess({ userId: user._id, gfAccess: !user.gfAccess })
-      .then(() =>
-        toast.success(user.gfAccess ? t("gfRevoked") : t("gfGranted"))
-      )
+      .then(() => toast.success(user.gfAccess ? t("gfRevoked") : t("gfGranted")))
       .catch(handleError);
   }
 
@@ -490,8 +422,8 @@ function AdminControls({
         toast.success(
           user.applicantAccessDelegate
             ? t("applicantDelegateRevoked")
-            : t("applicantDelegateGranted")
-        )
+            : t("applicantDelegateGranted"),
+        ),
       )
       .catch(handleError);
   }
@@ -512,35 +444,30 @@ function AdminControls({
     setStepUpOpen(true);
   }
 
-  const hasCustomRole = Boolean(user.customRoleName);
+  const hasCustomRoles = user.customRoles.length > 0;
   const hasNamedPermissions =
-    user.gfAccess ||
-    user.applicantAccessDelegate ||
-    !user.uploadRequestsEnabled;
+    user.gfAccess || user.applicantAccessDelegate || !user.uploadRequestsEnabled;
 
   return (
     <Section label={t("title")}>
-      {(hasCustomRole || hasNamedPermissions) && (
+      {(hasCustomRoles || hasNamedPermissions) && (
         <div className="mb-3 flex flex-wrap items-center gap-1.5">
-          <span className="text-sm text-muted-foreground">
-            {t("permissions")}
-          </span>
-          {hasCustomRole && (
-            <Tooltip>
+          <span className="text-sm text-muted-foreground">{t("permissions")}</span>
+          {user.customRoles.map((role) => (
+            <Tooltip key={role._id}>
               <TooltipTrigger asChild>
-                <Badge variant="muted" className="cursor-help">
-                  {user.customRoleName}
+                <Badge variant="muted" className="cursor-help gap-1">
+                  <ShieldCheck className="size-3" />
+                  {role.name}
                 </Badge>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-xs">
-                {user.capabilities.length > 0
-                  ? user.capabilities
-                      .map(cap => tCustomRoles(`capability_${cap}`))
-                      .join(", ")
+                {role.capabilities.length > 0
+                  ? role.capabilities.map((cap) => tCustomRoles(`capability_${cap}`)).join(", ")
                   : tCustomRoles("noCapabilities")}
               </TooltipContent>
             </Tooltip>
-          )}
+          ))}
           {user.gfAccess && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -565,16 +492,14 @@ function AdminControls({
               </TooltipContent>
             </Tooltip>
           )}
-          {!user.uploadRequestsEnabled && (
-            <Badge variant="warning">{t("uploadsDisabled")}</Badge>
-          )}
+          {!user.uploadRequestsEnabled && <Badge variant="warning">{t("uploadsDisabled")}</Badge>}
         </div>
       )}
       <div className="space-y-3 rounded-lg border border-border/70 p-3">
         {isAdmin && !isSelf && (
           <div className="flex items-center justify-between gap-2">
             <span className="text-sm text-muted-foreground">{t("role")}</span>
-            <RoleSelect value={user.role} onChange={changeRole} />
+            <RoleSelect value={user.role} onChange={changeRole} canElevate />
           </div>
         )}
         {isAdmin && (
@@ -585,9 +510,7 @@ function AdminControls({
         )}
         {!isSelf && (
           <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-muted-foreground">
-              {t("hireDate")}
-            </span>
+            <span className="text-sm text-muted-foreground">{t("hireDate")}</span>
             <HireDateEditor userId={user._id} hireDate={user.hireDate} />
           </div>
         )}
@@ -607,19 +530,10 @@ function AdminControls({
               onClick={toggleUploads}
             >
               <UploadCloud />
-              <span>
-                {user.uploadRequestsEnabled
-                  ? t("disableUploads")
-                  : t("enableUploads")}
-              </span>
+              <span>{user.uploadRequestsEnabled ? t("disableUploads") : t("enableUploads")}</span>
             </Button>
             {isAdmin && (
-              <Button
-                variant="outline"
-                size="sm"
-                className={actionButtonClass}
-                onClick={toggleGf}
-              >
+              <Button variant="outline" size="sm" className={actionButtonClass} onClick={toggleGf}>
                 <Lock />
                 <span>{user.gfAccess ? t("revokeGf") : t("grantGf")}</span>
               </Button>
@@ -687,13 +601,7 @@ function AdminControls({
  * anniversary shoutouts. Not sensitive like `dateOfBirth`, so no visibility
  * toggle is needed; it's just Manager+-only to *set*.
  */
-function HireDateEditor({
-  userId,
-  hireDate,
-}: {
-  userId: Id<"users">;
-  hireDate: string | null;
-}) {
+function HireDateEditor({ userId, hireDate }: { userId: Id<"users">; hireDate: string | null }) {
   const t = useTranslations("Admin");
   const tc = useTranslations("Common");
   const locale = useLocale();
@@ -712,7 +620,7 @@ function HireDateEditor({
   return (
     <Popover
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         setOpen(o);
         if (o) setValue(hireDate ?? "");
       }}
@@ -724,11 +632,7 @@ function HireDateEditor({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 space-y-2" align="end">
-        <Input
-          type="date"
-          value={value}
-          onChange={e => setValue(e.target.value)}
-        />
+        <Input type="date" value={value} onChange={(e) => setValue(e.target.value)} />
         <div className="flex justify-end gap-2">
           <Button
             size="sm"
@@ -780,7 +684,7 @@ function RoleBadge({
   return (
     <Popover
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         setOpen(o);
         if (o) setValue(member.roleLabel ?? "");
       }}
@@ -793,12 +697,10 @@ function RoleBadge({
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 space-y-2" align="start">
-        <p className="text-xs font-medium text-muted-foreground">
-          {t("roleLabelHint")}
-        </p>
+        <p className="text-xs font-medium text-muted-foreground">{t("roleLabelHint")}</p>
         <Input
           value={value}
-          onChange={e => setValue(e.target.value)}
+          onChange={(e) => setValue(e.target.value)}
           placeholder={tRoles(member.role)}
         />
         <div className="flex justify-end gap-2">
@@ -828,13 +730,7 @@ function RoleBadge({
   );
 }
 
-function ProfileContent({
-  user,
-  onClose,
-}: {
-  user: ProfileUser;
-  onClose: () => void;
-}) {
+function ProfileContent({ user, onClose }: { user: ProfileUser; onClose: () => void }) {
   const t = useTranslations("Profile");
   const tRoles = useTranslations("Roles");
   const tAdmin = useTranslations("Admin");
@@ -877,15 +773,13 @@ function ProfileContent({
   const hasContact = Boolean(user.email || user.phone || user.department);
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       {/* Header */}
       <div className="flex items-start gap-3 border-b border-border/70 p-5">
         <div className="relative shrink-0">
           <Avatar className="size-16">
             {user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-            <AvatarFallback className="text-lg">
-              {initials(user.name, user.email)}
-            </AvatarFallback>
+            <AvatarFallback className="text-lg">{initials(user.name, user.email)}</AvatarFallback>
           </Avatar>
           {user.lastActiveAt && now - user.lastActiveAt < ONLINE_WINDOW_MS && (
             <span
@@ -895,27 +789,16 @@ function ProfileContent({
           )}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-lg font-semibold leading-tight">
-            {user.name}
-          </p>
+          <p className="truncate text-lg font-semibold leading-tight">{user.name}</p>
           {user.jobTitle && (
-            <p className="truncate text-sm text-muted-foreground">
-              {user.jobTitle}
-            </p>
+            <p className="truncate text-sm text-muted-foreground">{user.jobTitle}</p>
           )}
           <div className="mt-1.5 flex flex-wrap gap-1">
-            <RoleBadge
-              member={user}
-              isAdmin={isAdmin}
-              tRoles={tRoles}
-              onSave={saveRoleLabel}
-            />
+            <RoleBadge member={user} isAdmin={isAdmin} tRoles={tRoles} onSave={saveRoleLabel} />
             {user.status === "suspended" && (
               <Badge variant="destructive">{tAdmin("suspended")}</Badge>
             )}
-            {user.external && (
-              <Badge variant="warning">{tAdmin("external")}</Badge>
-            )}
+            {user.external && <Badge variant="warning">{tAdmin("external")}</Badge>}
           </div>
         </div>
       </div>
@@ -945,10 +828,7 @@ function ProfileContent({
                 />
               )}
               {user.department && (
-                <ContactRow
-                  icon={<Building2 className="size-4" />}
-                  value={user.department}
-                />
+                <ContactRow icon={<Building2 className="size-4" />} value={user.department} />
               )}
             </div>
           </Section>
@@ -957,11 +837,9 @@ function ProfileContent({
         {user.teams.length > 0 && (
           <Section label={tAdmin("teams")}>
             <div className="flex flex-wrap gap-1">
-              {user.teams.map(team => (
+              {user.teams.map((team) => (
                 <Badge key={team} variant="muted" className="gap-1.5">
-                  <span
-                    className={cn("size-1.5 rounded-full", teamColor(team))}
-                  />
+                  <span className={cn("size-1.5 rounded-full", teamColor(team))} />
                   {tTeams(teamLabelKey(team))}
                 </Badge>
               ))}
@@ -971,9 +849,7 @@ function ProfileContent({
 
         <Organisation userId={user._id} />
 
-        {!isSelf && (
-          <MutualConversations userId={user._id} onNavigate={onClose} />
-        )}
+        {!isSelf && <MutualConversations userId={user._id} onNavigate={onClose} />}
 
         <UpcomingAbsences userId={user._id} />
 
@@ -1035,9 +911,7 @@ export function UserProfile({ userId, open, onOpenChange }: UserProfileProps) {
             <div className="flex shrink-0 cursor-grab items-center justify-center pb-1 pt-3 active:cursor-grabbing">
               <span className="h-1.5 w-10 rounded-full bg-border" />
             </div>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {body}
-            </div>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">{body}</div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>

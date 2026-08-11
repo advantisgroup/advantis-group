@@ -111,18 +111,10 @@ function EntryDialogShell({
                 paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)",
               }}
             >
-              <Button
-                variant="ghost"
-                className="flex-1"
-                onClick={() => onOpenChange(false)}
-              >
+              <Button variant="ghost" className="flex-1" onClick={() => onOpenChange(false)}>
                 {tc("cancel")}
               </Button>
-              <Button
-                className="flex-1"
-                disabled={saveDisabled}
-                onClick={onSave}
-              >
+              <Button className="flex-1" disabled={saveDisabled} onClick={onSave}>
                 {saveLabel}
               </Button>
             </div>
@@ -138,9 +130,7 @@ function EntryDialogShell({
         <div className="border-b border-border/70 px-6 pb-4 pr-12 pt-6">
           <DialogTitle className="leading-snug">{title}</DialogTitle>
           {description && (
-            <DialogDescription className="mt-1 leading-relaxed">
-              {description}
-            </DialogDescription>
+            <DialogDescription className="mt-1 leading-relaxed">{description}</DialogDescription>
           )}
         </div>
         <div className="flex flex-col gap-4 px-6 pb-5 pt-4">
@@ -209,20 +199,16 @@ function KontaktForm({
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1.5">
           <FieldLabel>{t("date")}</FieldLabel>
-          <Input
-            type="date"
-            value={datum}
-            onChange={e => setDatum(e.target.value)}
-          />
+          <Input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
         </label>
         <div className="space-y-1.5">
           <FieldLabel>{t("entryKind")}</FieldLabel>
-          <Select value={art} onValueChange={v => setArt(v as typeof art)}>
+          <Select value={art} onValueChange={(v) => setArt(v as typeof art)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {KONTAKT_ARTEN.map(a => (
+              {KONTAKT_ARTEN.map((a) => (
                 <SelectItem key={a} value={a}>
                   {t(`kontaktArt.${a}`)}
                 </SelectItem>
@@ -235,7 +221,7 @@ function KontaktForm({
         <FieldLabel>{t("note")}</FieldLabel>
         <Textarea
           value={notiz}
-          onChange={e => setNotiz(e.target.value)}
+          onChange={(e) => setNotiz(e.target.value)}
           placeholder={t("contactNotePlaceholder")}
         />
       </label>
@@ -243,9 +229,7 @@ function KontaktForm({
   );
 }
 
-export function KontaktDialog(
-  props: EntryDialogProps & { showFirstContactHint?: boolean }
-) {
+export function KontaktDialog(props: EntryDialogProps & { showFirstContactHint?: boolean }) {
   // Mounted only while open so each opening starts from a blank form.
   if (!props.open) return null;
   return <KontaktForm {...props} />;
@@ -258,8 +242,7 @@ function EmailForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
   const addEmail = useMutation(api.applicants.addEmail);
   const handleError = useErrorHandler();
   const [datum, setDatum] = useState(today());
-  const [kategorie, setKategorie] =
-    useState<(typeof EMAIL_KATEGORIEN)[number]>("sonstiges");
+  const [kategorie, setKategorie] = useState<(typeof EMAIL_KATEGORIEN)[number]>("sonstiges");
   const [notiz, setNotiz] = useState("");
 
   function save() {
@@ -288,23 +271,16 @@ function EmailForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1.5">
           <FieldLabel>{t("date")}</FieldLabel>
-          <Input
-            type="date"
-            value={datum}
-            onChange={e => setDatum(e.target.value)}
-          />
+          <Input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
         </label>
         <div className="space-y-1.5">
           <FieldLabel>{t("entryKind")}</FieldLabel>
-          <Select
-            value={kategorie}
-            onValueChange={v => setKategorie(v as typeof kategorie)}
-          >
+          <Select value={kategorie} onValueChange={(v) => setKategorie(v as typeof kategorie)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {EMAIL_KATEGORIEN.map(k => (
+              {EMAIL_KATEGORIEN.map((k) => (
                 <SelectItem key={k} value={k}>
                   {t(`emailKategorie.${k}`)}
                 </SelectItem>
@@ -317,7 +293,7 @@ function EmailForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
         <FieldLabel>{t("note")}</FieldLabel>
         <Input
           value={notiz}
-          onChange={e => setNotiz(e.target.value)}
+          onChange={(e) => setNotiz(e.target.value)}
           placeholder={t("emailNotePlaceholder")}
         />
       </label>
@@ -365,17 +341,13 @@ function InterviewForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1.5">
           <FieldLabel>{t("date")}</FieldLabel>
-          <Input
-            type="date"
-            value={datum}
-            onChange={e => setDatum(e.target.value)}
-          />
+          <Input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
         </label>
         <label className="space-y-1.5">
           <FieldLabel>{t("interviewer")}</FieldLabel>
           <Input
             value={interviewer}
-            onChange={e => setInterviewer(e.target.value)}
+            onChange={(e) => setInterviewer(e.target.value)}
             placeholder={t("interviewerPlaceholder")}
           />
         </label>
@@ -384,7 +356,7 @@ function InterviewForm({ open, onOpenChange, applicantId }: EntryDialogProps) {
         <FieldLabel>{t("note")}</FieldLabel>
         <Textarea
           value={notiz}
-          onChange={e => setNotiz(e.target.value)}
+          onChange={(e) => setNotiz(e.target.value)}
           placeholder={t("interviewNotePlaceholder")}
         />
       </label>
@@ -428,20 +400,13 @@ interface TerminDialogProps {
   fixedApplicantId?: Id<"applicants">;
 }
 
-function TerminForm({
-  open,
-  onOpenChange,
-  applicants = [],
-  fixedApplicantId,
-}: TerminDialogProps) {
+function TerminForm({ open, onOpenChange, applicants = [], fixedApplicantId }: TerminDialogProps) {
   const t = useTranslations("Applicants");
   const locale = useLocale();
   const createTermin = useMutation(api.applicants.createTermin);
   const handleError = useErrorHandler();
 
-  const [applicantId, setApplicantId] = useState<string>(
-    fixedApplicantId ?? ""
-  );
+  const [applicantId, setApplicantId] = useState<string>(fixedApplicantId ?? "");
   const [datum, setDatum] = useState(today());
   const [uhrzeit, setUhrzeit] = useState("10:00");
   const [art, setArt] = useState<(typeof TERMIN_ARTEN)[number]>("telefon");
@@ -496,7 +461,7 @@ function TerminForm({
               <SelectValue placeholder={t("chooseApplicant")} />
             </SelectTrigger>
             <SelectContent>
-              {applicants.map(a => (
+              {applicants.map((a) => (
                 <SelectItem key={a._id} value={a._id}>
                   {a.name}
                   {a.position ? ` (${a.position})` : ""}
@@ -509,28 +474,20 @@ function TerminForm({
       <div className="grid grid-cols-2 gap-3">
         <label className="space-y-1.5">
           <FieldLabel>{t("date")}</FieldLabel>
-          <Input
-            type="date"
-            value={datum}
-            onChange={e => setDatum(e.target.value)}
-          />
+          <Input type="date" value={datum} onChange={(e) => setDatum(e.target.value)} />
         </label>
         <label className="space-y-1.5">
           <FieldLabel>{t("time")}</FieldLabel>
-          <Input
-            type="time"
-            value={uhrzeit}
-            onChange={e => setUhrzeit(e.target.value)}
-          />
+          <Input type="time" value={uhrzeit} onChange={(e) => setUhrzeit(e.target.value)} />
         </label>
         <div className="space-y-1.5">
           <FieldLabel>{t("terminArtLabel")}</FieldLabel>
-          <Select value={art} onValueChange={v => setArt(v as typeof art)}>
+          <Select value={art} onValueChange={(v) => setArt(v as typeof art)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {TERMIN_ARTEN.map(a => (
+              {TERMIN_ARTEN.map((a) => (
                 <SelectItem key={a} value={a}>
                   {t(`terminArt.${a}`)}
                 </SelectItem>
@@ -540,12 +497,12 @@ function TerminForm({
         </div>
         <div className="space-y-1.5">
           <FieldLabel>{t("terminTypLabel")}</FieldLabel>
-          <Select value={typ} onValueChange={v => setTyp(v as typeof typ)}>
+          <Select value={typ} onValueChange={(v) => setTyp(v as typeof typ)}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {TERMIN_TYPEN.map(ty => (
+              {TERMIN_TYPEN.map((ty) => (
                 <SelectItem key={ty} value={ty}>
                   {t(`terminTyp.${ty}`)}
                 </SelectItem>
@@ -559,7 +516,7 @@ function TerminForm({
         <Input
           placeholder={t("terminNotePlaceholder")}
           value={notiz}
-          onChange={e => setNotiz(e.target.value)}
+          onChange={(e) => setNotiz(e.target.value)}
         />
       </label>
     </EntryDialogShell>

@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 
 import { OrgEntityCrudList } from "@/components/admin/OrgEntityCrudList";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsAdmin } from "@/components/providers/current-user";
 
 export default function DepartmentsPage() {
@@ -26,16 +26,16 @@ export default function DepartmentsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader
-        eyebrow={t("title")}
+      <PageHeaderBar
         title={t("orgEntity.departmentsTitle")}
         description={t("orgEntity.departmentsDescription")}
         icon={<Building2 />}
       />
       <OrgEntityCrudList
         entities={departments}
+        createInDialog
         createPlaceholder={t("orgEntity.departmentNamePlaceholder")}
-        onCreate={name => createDepartment({ name }).then(() => {})}
+        onCreate={(name) => createDepartment({ name }).then(() => {})}
         onRename={(departmentId, name) =>
           renameDepartment({
             departmentId: departmentId as Id<"departments">,

@@ -11,35 +11,68 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import {
-  hashPassword,
-  randomToken,
-  verifyPassword,
-} from "./activity/lib/crypto";
+import { hashPassword, randomToken, verifyPassword } from "./activity/lib/crypto";
 import { getCurrentUser } from "./lib/auth";
+import { PERMISSIONS, type Permission } from "./performance/lib/permissions";
 
 const SESSION_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
-/** Emails allowed to be bootstrapped as a Performance admin, from the
- * `PERFORMANCE_ADMIN_EMAILS` Convex env var (comma/semicolon/whitespace
- * list) — mirrors `getAdminEmails`/`parseList` in `lib/auth.ts`. Not a
- * secret; unlike the password, it's fine to configure this way. */
-function getSeedAdminEmails(): string[] {
-  const value = process.env.PERFORMANCE_ADMIN_EMAILS;
+function parseEmailList(value: string | undefined): string[] {
   if (!value) return [];
   return value
     .split(/[,;\s]+/)
-    .map(entry => entry.trim().toLowerCase())
-    .filter(entry => entry.length > 0);
+    .map((entry) => entry.trim().toLowerCase())
+    .filter((entry) => entry.length > 0);
 }
 
-export const getLoginByEmail = internalQuery({
-  args: { email: v.string() },
-  handler: async (ctx, { email }): Promise<Doc<"performanceLogins"> | null> =>
+/** Emails allowed to be bootstrapped as a Performance admin via the old,
+ * global `PERFORMANCE_ADMIN_EMAILS` env var. Superseded by each company's
+ * own `adminBootstrapEmails`, but grandfathered in for the Advantis company
+ * specifically (see `isEligibleBootstrapEmail`) so the pre-multi-tenant
+ * deploy's existing config keeps working unchanged. */
+export function getSeedAdminEmails(): string[] {
+  return parseEmailList(process.env.PERFORMANCE_ADMIN_EMAILS);
+}
+
+/** Emails allowed to self-claim a cross-company `isSuperAdmin` login, from
+ * `PERFORMANCE_SUPER_ADMIN_EMAILS` — the one piece of Performance config
+ * that legitimately stays global rather than per-company, since a
+ * super-admin is cross-company by definition and isn't something any
+ * "create company" flow would ever set. */
+export function getSuperAdminEmails(): string[] {
+  return parseEmailList(process.env.PERFORMANCE_SUPER_ADMIN_EMAILS);
+}
+
+function isEligibleBootstrapEmail(company: Doc<"companies">, email: string): boolean {
+  if (company.adminBootstrapEmails.includes(email)) return true;
+  return company.slug === "advantis" && getSeedAdminEmails().includes(email);
+}
+
+// --------------------------------------------------------------- lookups
+
+export const getLoginByCompanyEmail = internalQuery({
+  args: { companyId: v.id("companies"), email: v.string() },
+  handler: async (ctx, { companyId, email }): Promise<Doc<"performanceLogins"> | null> =>
     await ctx.db
       .query("performanceLogins")
-      .withIndex("by_email", q => q.eq("email", email))
+      .withIndex("by_company_email", (q) => q.eq("companyId", companyId).eq("email", email))
       .unique(),
+});
+
+/** A super-admin login has no `companyId`, so it can't use
+ * `by_company_email` — email uniqueness for super-admins is enforced in
+ * application code (collect the handful of same-email rows across
+ * companies, filter for the one flagged `isSuperAdmin`) rather than via a
+ * dedicated index, since super-admin logins are expected to be rare. */
+export const getSuperAdminLoginByEmail = internalQuery({
+  args: { email: v.string() },
+  handler: async (ctx, { email }): Promise<Doc<"performanceLogins"> | null> => {
+    const candidates = await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .collect();
+    return candidates.find((c) => c.isSuperAdmin === true) ?? null;
+  },
 });
 
 export const createLoginIfMissing = internalMutation({
@@ -47,22 +80,24 @@ export const createLoginIfMissing = internalMutation({
     email: v.string(),
     name: v.string(),
     passwordHash: v.string(),
-    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    companyId: v.id("companies"),
+    roleId: v.id("companyRoles"),
   },
   handler: async (
     ctx,
-    { email, name, passwordHash, role }
+    { email, name, passwordHash, companyId, roleId },
   ): Promise<{ created: boolean }> => {
     const existing = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_email", q => q.eq("email", email))
+      .withIndex("by_company_email", (q) => q.eq("companyId", companyId).eq("email", email))
       .unique();
     if (existing) return { created: false };
     await ctx.db.insert("performanceLogins", {
       email,
       name,
       passwordHash,
-      role,
+      companyId,
+      roleId,
       active: true,
       createdAt: Date.now(),
     });
@@ -70,42 +105,73 @@ export const createLoginIfMissing = internalMutation({
   },
 });
 
-/** Whether `email` is still eligible for self-service admin setup: present
- * in the `PERFORMANCE_ADMIN_EMAILS` allowlist and not already claimed. The
- * setup page uses this to decide whether to show the "first time setup"
- * form at all — it does not gate `setupAccount` itself, which re-checks
- * both conditions server-side regardless. */
+export const createSuperAdminLoginIfMissing = internalMutation({
+  args: { email: v.string(), name: v.string(), passwordHash: v.string() },
+  handler: async (ctx, { email, name, passwordHash }): Promise<{ created: boolean }> => {
+    const candidates = await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .collect();
+    if (candidates.some((c) => c.isSuperAdmin === true)) return { created: false };
+    await ctx.db.insert("performanceLogins", {
+      email,
+      name,
+      passwordHash,
+      isSuperAdmin: true,
+      active: true,
+      createdAt: Date.now(),
+    });
+    return { created: true };
+  },
+});
+
+/** Whether `email` is still eligible for this company's self-service admin
+ * setup: present in its (or, for Advantis, the legacy global) bootstrap
+ * allowlist and not already claimed. */
 export const canSetUpAccount = query({
-  args: { email: v.string() },
-  handler: async (ctx, { email }): Promise<boolean> => {
+  args: { slug: v.string(), email: v.string() },
+  handler: async (ctx, { slug, email }): Promise<boolean> => {
+    const company = await ctx.db
+      .query("companies")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .unique();
+    if (!company || company.status !== "active") return false;
     const normalizedEmail = email.trim().toLowerCase();
-    if (!getSeedAdminEmails().includes(normalizedEmail)) return false;
+    if (!isEligibleBootstrapEmail(company, normalizedEmail)) return false;
     const existing = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_email", q => q.eq("email", normalizedEmail))
+      .withIndex("by_company_email", (q) =>
+        q.eq("companyId", company._id).eq("email", normalizedEmail),
+      )
       .unique();
     return !existing;
   },
 });
 
 /**
- * Self-service first-time setup: an email in the `PERFORMANCE_ADMIN_EMAILS`
- * allowlist claims its account by choosing its own password, right in the
- * app UI — no CLI, no Convex Dashboard, no env var ever holds a password.
- * Only works once per email (first claim wins); a second attempt for an
- * already-claimed address fails the same generic way as an email that was
- * never on the allowlist, so this can't be used to probe which emails are
- * eligible.
+ * Self-service first-time setup: an email on a company's
+ * `adminBootstrapEmails` list claims that company's built-in Admin role by
+ * choosing its own password, right in the app UI — no CLI, no Convex
+ * Dashboard, no env var ever holds a password. Only works once per
+ * (company, email) — a second attempt fails the same generic way as an
+ * email that was never eligible, so this can't be used to probe which
+ * emails are eligible.
  */
 export const setupAccount = action({
-  args: { email: v.string(), name: v.string(), password: v.string() },
+  args: {
+    slug: v.string(),
+    email: v.string(),
+    name: v.string(),
+    password: v.string(),
+  },
   handler: async (
     ctx,
-    { email, name, password }
+    { slug, email, name, password },
   ): Promise<{
     token: string;
     expiresAt: number;
-    role: PerformanceRole;
+    companyId: Id<"companies">;
+    roleId: Id<"companyRoles">;
     name: string;
   }> => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -114,7 +180,6 @@ export const setupAccount = action({
         code: "not_allowed",
         message: "This email can't be set up right now.",
       });
-    if (!getSeedAdminEmails().includes(normalizedEmail)) throw notAllowed();
     if (password.length < 8) {
       throw new ConvexError({
         code: "validation",
@@ -122,27 +187,103 @@ export const setupAccount = action({
       });
     }
 
+    const company = await ctx.runQuery(internal.companies.getBySlugInternal, {
+      slug,
+    });
+    if (!company || company.status !== "active") throw notAllowed();
+    if (!isEligibleBootstrapEmail(company, normalizedEmail)) throw notAllowed();
+
+    const adminRole = await ctx.runQuery(internal.companies.getRoleByName, {
+      companyId: company._id,
+      name: "Admin",
+    });
+    // Shouldn't happen — every company is seeded with an Admin role at
+    // creation time (`companies.upsertProvisioningRow`).
+    if (!adminRole) throw notAllowed();
+
     const passwordHash = await hashPassword(password);
-    const { created } = await ctx.runMutation(
-      internal.performanceAuth.createLoginIfMissing,
-      { email: normalizedEmail, name: name.trim(), passwordHash, role: "admin" }
-    );
+    const { created } = await ctx.runMutation(internal.performanceAuth.createLoginIfMissing, {
+      email: normalizedEmail,
+      name: name.trim(),
+      passwordHash,
+      companyId: company._id,
+      roleId: adminRole._id,
+    });
     if (!created) throw notAllowed(); // already claimed
 
-    const loginRow: Doc<"performanceLogins"> | null = await ctx.runQuery(
-      internal.performanceAuth.getLoginByEmail,
-      { email: normalizedEmail }
-    );
+    const loginRow = await ctx.runQuery(internal.performanceAuth.getLoginByCompanyEmail, {
+      companyId: company._id,
+      email: normalizedEmail,
+    });
     if (!loginRow) throw notAllowed(); // shouldn't happen; defensive
 
-    const session = await ctx.runMutation(
-      internal.performanceAuth.createSession,
-      { loginId: loginRow._id }
-    );
+    const session = await ctx.runMutation(internal.performanceAuth.createSession, {
+      loginId: loginRow._id,
+    });
     return {
       token: session.token,
       expiresAt: session.expiresAt,
-      role: loginRow.role,
+      companyId: company._id,
+      roleId: adminRole._id,
+      name: loginRow.name,
+    };
+  },
+});
+
+/** Same self-service shape as `canSetUpAccount`/`setupAccount`, for the one
+ * login that isn't scoped to any company: the platform-level super-admin,
+ * bootstrapped via `PERFORMANCE_SUPER_ADMIN_EMAILS` instead of a
+ * per-company list. */
+export const canSetUpSuperAdmin = query({
+  args: { email: v.string() },
+  handler: async (ctx, { email }): Promise<boolean> => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!getSuperAdminEmails().includes(normalizedEmail)) return false;
+    const candidates = await ctx.db
+      .query("performanceLogins")
+      .withIndex("by_email", (q) => q.eq("email", normalizedEmail))
+      .collect();
+    return !candidates.some((c) => c.isSuperAdmin === true);
+  },
+});
+
+export const setupSuperAdminAccount = action({
+  args: { email: v.string(), name: v.string(), password: v.string() },
+  handler: async (
+    ctx,
+    { email, name, password },
+  ): Promise<{ token: string; expiresAt: number; name: string }> => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const notAllowed = () =>
+      new ConvexError({
+        code: "not_allowed",
+        message: "This email can't be set up right now.",
+      });
+    if (!getSuperAdminEmails().includes(normalizedEmail)) throw notAllowed();
+    if (password.length < 8) {
+      throw new ConvexError({
+        code: "validation",
+        message: "Password must be at least 8 characters.",
+      });
+    }
+    const passwordHash = await hashPassword(password);
+    const { created } = await ctx.runMutation(
+      internal.performanceAuth.createSuperAdminLoginIfMissing,
+      { email: normalizedEmail, name: name.trim(), passwordHash },
+    );
+    if (!created) throw notAllowed();
+
+    const loginRow = await ctx.runQuery(internal.performanceAuth.getSuperAdminLoginByEmail, {
+      email: normalizedEmail,
+    });
+    if (!loginRow) throw notAllowed();
+
+    const session = await ctx.runMutation(internal.performanceAuth.createSession, {
+      loginId: loginRow._id,
+    });
+    return {
+      token: session.token,
+      expiresAt: session.expiresAt,
       name: loginRow.name,
     };
   },
@@ -150,15 +291,14 @@ export const setupAccount = action({
 
 export const createSession = internalMutation({
   args: { loginId: v.id("performanceLogins") },
-  handler: async (
-    ctx,
-    { loginId }
-  ): Promise<{ token: string; expiresAt: number }> => {
+  handler: async (ctx, { loginId }): Promise<{ token: string; expiresAt: number }> => {
     const now = Date.now();
     const token = randomToken();
+    const login = await ctx.db.get(loginId);
     await ctx.db.insert("performanceSessions", {
       token,
       loginId,
+      companyId: login?.companyId,
       expiresAt: now + SESSION_DURATION_MS,
       createdAt: now,
       lastUsedAt: now,
@@ -167,18 +307,24 @@ export const createSession = internalMutation({
   },
 });
 
-/** Verify email+password and start a session. Runs as an action so it can
- * use Web Crypto (PBKDF2) to verify, matching the applicant vault's and the
- * tray-app debug login's existing pattern. */
+/** Verify email+password and start a session. `slug` omitted means "this is
+ * a super-admin login attempt" (no company to scope by); runs as an action
+ * so it can use Web Crypto (PBKDF2) to verify, matching the applicant
+ * vault's and the tray-app debug login's existing pattern. */
 export const login = action({
-  args: { email: v.string(), password: v.string() },
+  args: {
+    slug: v.optional(v.string()),
+    email: v.string(),
+    password: v.string(),
+  },
   handler: async (
     ctx,
-    { email, password }
+    { slug, email, password },
   ): Promise<{
     token: string;
     expiresAt: number;
-    role: PerformanceRole;
+    companyId: Id<"companies"> | null;
+    isSuperAdmin: boolean;
     name: string;
   }> => {
     const normalizedEmail = email.trim().toLowerCase();
@@ -188,25 +334,34 @@ export const login = action({
         message: "Email or password is incorrect.",
       });
 
-    const loginRow: Doc<"performanceLogins"> | null = await ctx.runQuery(
-      internal.performanceAuth.getLoginByEmail,
-      { email: normalizedEmail }
-    );
+    let loginRow: Doc<"performanceLogins"> | null;
+    if (slug) {
+      const company = await ctx.runQuery(internal.companies.getBySlugInternal, {
+        slug,
+      });
+      if (!company || company.status !== "active") throw invalid();
+      loginRow = await ctx.runQuery(internal.performanceAuth.getLoginByCompanyEmail, {
+        companyId: company._id,
+        email: normalizedEmail,
+      });
+    } else {
+      loginRow = await ctx.runQuery(internal.performanceAuth.getSuperAdminLoginByEmail, {
+        email: normalizedEmail,
+      });
+    }
     if (!loginRow || !loginRow.active) throw invalid();
 
     const ok = await verifyPassword(password, loginRow.passwordHash);
     if (!ok) throw invalid();
 
-    const session = await ctx.runMutation(
-      internal.performanceAuth.createSession,
-      {
-        loginId: loginRow._id,
-      }
-    );
+    const session = await ctx.runMutation(internal.performanceAuth.createSession, {
+      loginId: loginRow._id,
+    });
     return {
       token: session.token,
       expiresAt: session.expiresAt,
-      role: loginRow.role,
+      companyId: loginRow.companyId ?? null,
+      isSuperAdmin: loginRow.isSuperAdmin ?? false,
       name: loginRow.name,
     };
   },
@@ -218,15 +373,19 @@ export const login = action({
  * Benutzer page's "Intranet account" field), that login authenticates
  * them without a separate password. Never throws — just returns null when
  * there's no Clerk identity or no matching active login, so callers fall
- * through to "please sign in" the same as an invalid password token. */
+ * through to "please sign in" the same as an invalid password token.
+ *
+ * Generalized to any company's logins (not hardcoded to Advantis) — in
+ * practice it only has eligible link targets for companies whose staff
+ * have an intranet Clerk `users` row, which today is Advantis only. */
 async function resolveClerkLinkedLogin(
-  ctx: QueryCtx | MutationCtx
+  ctx: QueryCtx | MutationCtx,
 ): Promise<{ session: null; login: Doc<"performanceLogins"> } | null> {
   const user = await getCurrentUser(ctx);
   if (!user) return null;
   const login = await ctx.db
     .query("performanceLogins")
-    .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+    .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
     .first();
   if (!login || !login.active) return null;
   return { session: null, login };
@@ -234,7 +393,7 @@ async function resolveClerkLinkedLogin(
 
 export async function resolveActiveSession(
   ctx: QueryCtx | MutationCtx,
-  token: string
+  token: string,
 ): Promise<{
   session: Doc<"performanceSessions"> | null;
   login: Doc<"performanceLogins">;
@@ -242,7 +401,7 @@ export async function resolveActiveSession(
   if (token) {
     const session = await ctx.db
       .query("performanceSessions")
-      .withIndex("by_token", q => q.eq("token", token))
+      .withIndex("by_token", (q) => q.eq("token", token))
       .unique();
     if (session && session.expiresAt >= Date.now()) {
       const login = await ctx.db.get(session.loginId);
@@ -252,24 +411,144 @@ export async function resolveActiveSession(
   return resolveClerkLinkedLogin(ctx);
 }
 
-/** Require a valid session belonging to an active admin login; throws
- * otherwise. Shared by any Performance query/mutation that needs to gate
- * on "caller is a Performance admin" (e.g. the upload log, later the KPI
- * dashboards' admin-only views) — Performance auth is its own session
- * system, not Clerk, so this is the equivalent of `lib/auth.ts`'s
- * `requireAdmin` for this feature. */
+// ------------------------------------------------------- permission gates
+
+/** Whether `login` holds `permission`, either directly (via its role's
+ * bundle) or by being a cross-company super-admin (always true). Doesn't
+ * check company scoping itself — see `requirePermission` for the
+ * throw-or-scope-checked version most call sites want. */
+export async function hasPermission(
+  ctx: QueryCtx | MutationCtx,
+  login: Doc<"performanceLogins">,
+  permission: Permission,
+): Promise<boolean> {
+  if (login.isSuperAdmin) return true;
+  if (!login.roleId) return false;
+  const role = await ctx.db.get(login.roleId);
+  return role?.permissions.includes(permission) ?? false;
+}
+
+/** The universal permission gate every Performance query/mutation/action
+ * uses. `companyId`, when supplied, is the company whose data is actually
+ * being touched (e.g. a specific employee's `companyId`) — a company-scoped
+ * login must match it exactly; a super-admin bypasses this check entirely,
+ * including for companies that don't exist yet at the time it was granted. */
+export async function requirePermission(
+  ctx: QueryCtx | MutationCtx,
+  login: Doc<"performanceLogins">,
+  permission: Permission,
+  companyId?: Id<"companies">,
+): Promise<void> {
+  if (login.isSuperAdmin) return;
+  if (companyId !== undefined && login.companyId !== companyId) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You can't act on this company.",
+    });
+  }
+  if (!(await hasPermission(ctx, login, permission))) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "You don't have permission to do this.",
+    });
+  }
+}
+
+/** Require a valid session belonging to a login that can manage other
+ * logins (`manage_logins`) — the closest equivalent to the old fixed
+ * "admin" role, used to gate the user-management surface (`listLogins`,
+ * `createLogin`, `updateLogin`, and the upload/export server-key path via
+ * `assertAdminSession`). */
 export async function requireAdminLogin(
   ctx: QueryCtx | MutationCtx,
-  token: string
+  token: string,
 ): Promise<Doc<"performanceLogins">> {
   const resolved = await resolveActiveSession(ctx, token);
-  if (!resolved || resolved.login.role !== "admin") {
+  if (!resolved) {
     throw new ConvexError({
       code: "forbidden",
       message: "Admin session required.",
     });
   }
+  await requirePermission(ctx, resolved.login, "manage_logins");
   return resolved.login;
+}
+
+/** Require a valid session belonging to the cross-company super-admin —
+ * gates platform-level actions like creating a company, which isn't a
+ * per-company permission at all. */
+export async function requireSuperAdminLogin(
+  ctx: QueryCtx | MutationCtx,
+  token: string,
+): Promise<Doc<"performanceLogins">> {
+  const resolved = await resolveActiveSession(ctx, token);
+  if (!resolved || !resolved.login.isSuperAdmin) {
+    throw new ConvexError({
+      code: "forbidden",
+      message: "Super-admin session required.",
+    });
+  }
+  return resolved.login;
+}
+
+/**
+ * Require *any* valid Performance session (not necessarily privileged) and
+ * return its login row; throws `unauthenticated` otherwise.
+ */
+export async function requireSessionLogin(
+  ctx: QueryCtx | MutationCtx,
+  token: string,
+): Promise<Doc<"performanceLogins">> {
+  const resolved = await resolveActiveSession(ctx, token);
+  if (!resolved) {
+    throw new ConvexError({
+      code: "unauthenticated",
+      message: "Please sign in.",
+    });
+  }
+  return resolved.login;
+}
+
+/** Mirrors the reference script's `may_view_employee`: a super-admin or a
+ * login with `view_all_employees` for `employee`'s company sees it; a plain
+ * login only ever sees its own linked employee. Takes the employee **doc**
+ * (not just its id) so it can read `employee.companyId` — every call site
+ * needs the doc in hand before calling this. */
+export async function requireCanViewEmployee(
+  ctx: QueryCtx | MutationCtx,
+  login: Doc<"performanceLogins">,
+  employee: Doc<"performanceEmployees">,
+): Promise<void> {
+  if (login.isSuperAdmin) return;
+  if (login.employeeId === employee._id) return;
+  await requirePermission(ctx, login, "view_all_employees", employee.companyId);
+}
+
+/** Resolves which company a company-scoped query/mutation should act on: an
+ * explicitly passed `companyId` always wins (how a super-admin views another
+ * company's data), otherwise the caller's own `companyId`. A super-admin
+ * backfilled from an existing company login (see the migration) still has
+ * their original `companyId` and defaults to it just like a normal login;
+ * only a super-admin with no company at all (self-service setup via
+ * `setupSuperAdminAccount`) requires an explicit arg. Shared by every
+ * Performance module (queries, import, topics) that takes an optional
+ * `companyId` arg for this reason. */
+export function resolveCompanyId(
+  login: Doc<"performanceLogins">,
+  companyIdArg: Id<"companies"> | undefined,
+): Id<"companies"> {
+  if (companyIdArg) return companyIdArg;
+  if (login.companyId) return login.companyId;
+  if (login.isSuperAdmin) {
+    throw new ConvexError({
+      code: "validation",
+      message: "companyId is required.",
+    });
+  }
+  throw new ConvexError({
+    code: "forbidden",
+    message: "This login has no company.",
+  });
 }
 
 export const validateSession = query({
@@ -277,12 +556,15 @@ export const validateSession = query({
   handler: async (ctx, { token }) => {
     const resolved = await resolveActiveSession(ctx, token);
     if (!resolved) return { valid: false as const };
+    const role = resolved.login.roleId ? await ctx.db.get(resolved.login.roleId) : null;
     return {
       valid: true as const,
       loginId: resolved.login._id,
       email: resolved.login.email,
       name: resolved.login.name,
-      role: resolved.login.role,
+      companyId: resolved.login.companyId ?? null,
+      isSuperAdmin: resolved.login.isSuperAdmin ?? false,
+      permissions: resolved.login.isSuperAdmin ? [...PERMISSIONS] : (role?.permissions ?? []),
       employeeId: resolved.login.employeeId ?? null,
       // True when this session came from the caller's linked Clerk
       // identity rather than the password-session token — the client uses
@@ -297,8 +579,7 @@ export const touchSession = mutation({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
     const resolved = await resolveActiveSession(ctx, token);
-    if (resolved?.session)
-      await ctx.db.patch(resolved.session._id, { lastUsedAt: Date.now() });
+    if (resolved?.session) await ctx.db.patch(resolved.session._id, { lastUsedAt: Date.now() });
     return { ok: true };
   },
 });
@@ -308,7 +589,7 @@ export const logout = mutation({
   handler: async (ctx, { token }) => {
     const session = await ctx.db
       .query("performanceSessions")
-      .withIndex("by_token", q => q.eq("token", token))
+      .withIndex("by_token", (q) => q.eq("token", token))
       .unique();
     if (session) await ctx.db.delete(session._id);
     return { ok: true };
@@ -317,13 +598,21 @@ export const logout = mutation({
 
 // ------------------------------------------------------------- admin tools
 
-/** Throws unless `token` belongs to an active admin; actions have no
- * `ctx.db` so they reach this via `ctx.runQuery` instead of calling
- * `requireAdminLogin` directly. */
+/** Throws unless `token` belongs to a login that can manage other logins —
+ * actions have no `ctx.db` so they reach this via `ctx.runQuery` instead of
+ * calling `requireAdminLogin` directly. */
 export const assertAdminSession = internalQuery({
   args: { token: v.string() },
   handler: async (ctx, { token }): Promise<Doc<"performanceLogins">> =>
     await requireAdminLogin(ctx, token),
+});
+
+/** Action-side equivalent of `requireSuperAdminLogin`, for `companies.ts`'s
+ * `createCompany`/`listCompanies`. */
+export const assertSuperAdminSession = internalQuery({
+  args: { token: v.string() },
+  handler: async (ctx, { token }): Promise<Doc<"performanceLogins">> =>
+    await requireSuperAdminLogin(ctx, token),
 });
 
 /** Resolves a session token to its login doc, or null — the action-side
@@ -336,12 +625,22 @@ export const sessionLoginDoc = internalQuery({
   },
 });
 
+/** Plain by-id lookup for handlers with no `ctx.db` (actions) — used by
+ * `resetLoginPassword` to check the target login's `companyId` before
+ * letting a company-scoped admin touch it. */
+export const getLoginById = internalQuery({
+  args: { loginId: v.id("performanceLogins") },
+  handler: async (ctx, { loginId }): Promise<Doc<"performanceLogins"> | null> =>
+    await ctx.db.get(loginId),
+});
+
 export const insertLogin = internalMutation({
   args: {
     email: v.string(),
     name: v.string(),
     passwordHash: v.string(),
-    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    companyId: v.id("companies"),
+    roleId: v.id("companyRoles"),
     employeeId: v.optional(v.id("performanceEmployees")),
     linkedUserId: v.optional(v.id("users")),
   },
@@ -361,7 +660,7 @@ export const getLoginLinkedTo = internalQuery({
   handler: async (ctx, { userId }): Promise<Doc<"performanceLogins"> | null> =>
     await ctx.db
       .query("performanceLogins")
-      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", userId))
+      .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", userId))
       .first(),
 });
 
@@ -373,38 +672,58 @@ export const setPasswordHash = internalMutation({
   },
 });
 
-/** All Performance logins, for the admin user-management page. */
+/** All Performance logins for the caller's company (every company, for a
+ * super-admin), for the admin user-management page. */
 export const listLogins = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
-    await requireAdminLogin(ctx, token);
-    const [logins, employees, users] = await Promise.all([
-      ctx.db.query("performanceLogins").collect(),
-      ctx.db.query("performanceEmployees").collect(),
-      ctx.db.query("users").collect(),
-    ]);
-    const employeeName = new Map(employees.map(e => [e._id, e.name]));
-    const userName = new Map(
-      users.map(u => [
-        u._id,
-        [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
-      ])
+    const admin = await requireAdminLogin(ctx, token);
+    const logins = admin.isSuperAdmin
+      ? await ctx.db.query("performanceLogins").collect()
+      : await ctx.db
+          .query("performanceLogins")
+          .withIndex("by_company_email", (q) => q.eq("companyId", admin.companyId!))
+          .collect();
+
+    const roleIds = [
+      ...new Set(
+        logins.map((l) => l.roleId).filter((id): id is Id<"companyRoles"> => id !== undefined),
+      ),
+    ];
+    const roles = await Promise.all(roleIds.map((id) => ctx.db.get(id)));
+    const roleName = new Map(
+      roles.filter((r): r is Doc<"companyRoles"> => r !== null).map((r) => [r._id, r.name]),
     );
+
+    const employees = admin.isSuperAdmin
+      ? await ctx.db.query("performanceEmployees").collect()
+      : await ctx.db
+          .query("performanceEmployees")
+          .withIndex("by_company", (q) => q.eq("companyId", admin.companyId))
+          .collect();
+    const users = await ctx.db.query("users").collect();
+    const employeeName = new Map(employees.map((e) => [e._id, e.name]));
+    const userName = new Map(
+      users.map((u) => [u._id, [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email]),
+    );
+
     return logins
-      .map(l => ({
+      .map((l) => ({
         id: l._id,
         email: l.email,
         name: l.name,
-        role: l.role,
+        roleId: l.roleId ?? null,
+        roleName: l.isSuperAdmin
+          ? "Super Admin"
+          : l.roleId
+            ? (roleName.get(l.roleId) ?? null)
+            : null,
+        isSuperAdmin: l.isSuperAdmin ?? false,
         active: l.active,
         employeeId: l.employeeId ?? null,
-        employeeName: l.employeeId
-          ? (employeeName.get(l.employeeId) ?? null)
-          : null,
+        employeeName: l.employeeId ? (employeeName.get(l.employeeId) ?? null) : null,
         linkedUserId: l.linkedUserId ?? null,
-        linkedUserName: l.linkedUserId
-          ? (userName.get(l.linkedUserId) ?? null)
-          : null,
+        linkedUserName: l.linkedUserId ? (userName.get(l.linkedUserId) ?? null) : null,
         createdAt: l.createdAt,
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -412,15 +731,22 @@ export const listLogins = query({
 });
 
 /** Employees available to link a login to, for the same page's dropdown —
- * unfiltered (includes owners excluded from team KPI aggregation, since
- * that exclusion is about reporting, not about who can have an account). */
+ * unfiltered by active status (includes owners excluded from team KPI
+ * aggregation, since that exclusion is about reporting, not about who can
+ * have an account), scoped to the caller's own company (every company, for
+ * a super-admin). */
 export const listEmployeesForLink = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
-    await requireAdminLogin(ctx, token);
-    const employees = await ctx.db.query("performanceEmployees").collect();
+    const admin = await requireAdminLogin(ctx, token);
+    const employees = admin.isSuperAdmin
+      ? await ctx.db.query("performanceEmployees").collect()
+      : await ctx.db
+          .query("performanceEmployees")
+          .withIndex("by_company", (q) => q.eq("companyId", admin.companyId))
+          .collect();
     return employees
-      .map(e => ({ id: e._id, name: e.name, active: e.active }))
+      .map((e) => ({ id: e._id, name: e.name, active: e.active }))
       .sort((a, b) => a.name.localeCompare(b.name));
   },
 });
@@ -428,23 +754,29 @@ export const listEmployeesForLink = query({
 /** Active intranet accounts available to link a login to, for the same
  * page's "Intranet account" field — each annotated with the Performance
  * login it's already linked to (if any), so the admin UI can warn before
- * reassigning one out from under another login. */
+ * reassigning one out from under another login. The intranet `users` table
+ * has no company concept of its own (it's Advantis's own staff table), so
+ * this returns nothing for any caller whose own company isn't Advantis —
+ * their staff never have Clerk intranet accounts, and this table is
+ * Advantis's private employee directory, not something another company's
+ * admin should ever be able to read. */
 export const listIntranetUsersForLink = query({
   args: { token: v.string() },
   handler: async (ctx, { token }) => {
-    await requireAdminLogin(ctx, token);
+    const admin = await requireAdminLogin(ctx, token);
+    const company = admin.companyId ? await ctx.db.get(admin.companyId) : null;
+    if (company?.slug !== "advantis") return [];
+
     const [users, logins] = await Promise.all([
       ctx.db.query("users").collect(),
       ctx.db.query("performanceLogins").collect(),
     ]);
     const linkedToLoginName = new Map(
-      logins
-        .filter(l => l.linkedUserId)
-        .map(l => [l.linkedUserId!, l.name] as const)
+      logins.filter((l) => l.linkedUserId).map((l) => [l.linkedUserId!, l.name] as const),
     );
     return users
-      .filter(u => u.status === "active")
-      .map(u => ({
+      .filter((u) => u.status === "active")
+      .map((u) => ({
         id: u._id,
         name: [u.firstName, u.lastName].filter(Boolean).join(" ") || u.email,
         email: u.email,
@@ -458,8 +790,9 @@ export const listIntranetUsersForLink = query({
 /** Whether the caller — signed into a real Performance password session
  * right now — could link that login to their own signed-in intranet
  * (Clerk) account, for the self-service "link me" prompt shown after a
- * password login. Admin-only by design (self-linking a `mitarbeiter` login
- * goes through the admin picker on the Benutzer page instead, so an admin
+ * password login. Gated on `manage_logins` (the closest equivalent of the
+ * old admin-only restriction) by design (self-linking a plain login goes
+ * through the admin picker on the Benutzer page instead, so an admin
  * always sees who's linked to what). Deliberately narrower than that admin
  * picker in one other way too: only offers linking the login the caller is
  * *currently signed in as*, to their *own* Clerk identity — never someone
@@ -468,7 +801,7 @@ export const myLinkableClerkIdentity = query({
   args: { token: v.string() },
   handler: async (
     ctx,
-    { token }
+    { token },
   ): Promise<
     | { eligible: false }
     | {
@@ -483,7 +816,9 @@ export const myLinkableClerkIdentity = query({
     // already resolved via a Clerk link (resolved.session === null) is
     // linked already, and has nothing to gain from it.
     if (!resolved || !resolved.session) return { eligible: false };
-    if (resolved.login.role !== "admin") return { eligible: false };
+    if (!(await hasPermission(ctx, resolved.login, "manage_logins"))) {
+      return { eligible: false };
+    }
     if (resolved.login.linkedUserId) return { eligible: false };
 
     const user = await getCurrentUser(ctx);
@@ -491,15 +826,14 @@ export const myLinkableClerkIdentity = query({
 
     const conflict = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+      .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
       .first();
     if (conflict) return { eligible: false };
 
     return {
       eligible: true,
       loginId: resolved.login._id,
-      name:
-        [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email,
+      name: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email,
       email: user.email,
     };
   },
@@ -519,7 +853,7 @@ export const linkMyAccount = mutation({
         message: "Please sign in.",
       });
     }
-    if (resolved.login.role !== "admin") {
+    if (!(await hasPermission(ctx, resolved.login, "manage_logins"))) {
       throw new ConvexError({
         code: "forbidden",
         message: "Admin session required.",
@@ -542,7 +876,7 @@ export const linkMyAccount = mutation({
 
     const conflict = await ctx.db
       .query("performanceLogins")
-      .withIndex("by_linkedUserId", q => q.eq("linkedUserId", user._id))
+      .withIndex("by_linkedUserId", (q) => q.eq("linkedUserId", user._id))
       .first();
     if (conflict) throw alreadyLinked();
 
@@ -568,14 +902,15 @@ function passwordTooShort(): ConvexError<{ code: string; message: string }> {
 function alreadyLinked(): ConvexError<{ code: string; message: string }> {
   return new ConvexError({
     code: "already_linked",
-    message:
-      "This intranet account is already linked to another Performance login.",
+    message: "This intranet account is already linked to another Performance login.",
   });
 }
 
 /** Admin creates a new Performance login directly — unlike `setupAccount`,
- * this isn't gated by the `PERFORMANCE_ADMIN_EMAILS` allowlist, since that
- * allowlist only exists to bootstrap the very first admin.
+ * this isn't gated by an allowlist, since that allowlist only exists to
+ * bootstrap the very first admin. Scoped to the caller's own company,
+ * unless the caller is a super-admin explicitly passing `companyId` (e.g.
+ * from the platform-level admin UI).
  *
  * `password` is only required when `linkedUserId` is omitted. A login
  * created with `linkedUserId` set authenticates entirely through that
@@ -589,23 +924,40 @@ export const createLogin = action({
     email: v.string(),
     name: v.string(),
     password: v.optional(v.string()),
-    role: v.union(v.literal("admin"), v.literal("mitarbeiter")),
+    roleId: v.id("companyRoles"),
     employeeId: v.optional(v.id("performanceEmployees")),
     linkedUserId: v.optional(v.id("users")),
+    companyId: v.optional(v.id("companies")),
   },
   handler: async (
     ctx,
-    { token, email, name, password, role, employeeId, linkedUserId }
+    { token, email, name, password, roleId, employeeId, linkedUserId, companyId },
   ): Promise<{ id: Id<"performanceLogins"> }> => {
-    await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
+    const admin = await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
       token,
     });
+    const targetCompanyId = companyId ?? admin.companyId;
+    if (!targetCompanyId) {
+      throw new ConvexError({
+        code: "validation",
+        message: "companyId is required.",
+      });
+    }
+
+    const role = await ctx.runQuery(internal.companies.getRoleByIdInternal, {
+      roleId,
+    });
+    if (!role || role.companyId !== targetCompanyId) {
+      throw new ConvexError({
+        code: "validation",
+        message: "That role doesn't belong to this company.",
+      });
+    }
 
     if (linkedUserId) {
-      const conflict = await ctx.runQuery(
-        internal.performanceAuth.getLoginLinkedTo,
-        { userId: linkedUserId }
-      );
+      const conflict = await ctx.runQuery(internal.performanceAuth.getLoginLinkedTo, {
+        userId: linkedUserId,
+      });
       if (conflict) throw alreadyLinked();
     } else if (!password || password.length < 8) {
       throw passwordTooShort();
@@ -613,8 +965,8 @@ export const createLogin = action({
 
     const normalizedEmail = email.trim().toLowerCase();
     const existing: Doc<"performanceLogins"> | null = await ctx.runQuery(
-      internal.performanceAuth.getLoginByEmail,
-      { email: normalizedEmail }
+      internal.performanceAuth.getLoginByCompanyEmail,
+      { companyId: targetCompanyId, email: normalizedEmail },
     );
     if (existing) throw emailTaken();
 
@@ -625,35 +977,36 @@ export const createLogin = action({
         email: normalizedEmail,
         name: name.trim(),
         passwordHash,
-        role,
+        companyId: targetCompanyId,
+        roleId,
         employeeId,
         linkedUserId,
-      }
+      },
     );
     return { id };
   },
 });
 
-/** Patch a login's name/role/active/employee link. Password changes go
+/** Patch a login's name/roleId/active/employee link. Password changes go
  * through `resetLoginPassword`/`changeOwnPassword` instead, since hashing
  * needs Web Crypto (only available to actions). Guards the same "can't
- * remove the last active admin" rule as the reference script's
- * `user_update`. */
+ * remove the last active admin" rule as before, generalized to "can't
+ * remove the last active login holding `manage_logins` for this company". */
 export const updateLogin = mutation({
   args: {
     token: v.string(),
     loginId: v.id("performanceLogins"),
     name: v.optional(v.string()),
-    role: v.optional(v.union(v.literal("admin"), v.literal("mitarbeiter"))),
+    roleId: v.optional(v.id("companyRoles")),
     active: v.optional(v.boolean()),
     employeeId: v.optional(v.union(v.id("performanceEmployees"), v.null())),
     linkedUserId: v.optional(v.union(v.id("users"), v.null())),
   },
   handler: async (
     ctx,
-    { token, loginId, name, role, active, employeeId, linkedUserId }
+    { token, loginId, name, roleId, active, employeeId, linkedUserId },
   ): Promise<{ ok: true }> => {
-    await requireAdminLogin(ctx, token);
+    const admin = await requireAdminLogin(ctx, token);
     const target = await ctx.db.get(loginId);
     if (!target) {
       throw new ConvexError({
@@ -661,52 +1014,98 @@ export const updateLogin = mutation({
         message: "Login not found.",
       });
     }
+    if (!admin.isSuperAdmin && target.companyId !== admin.companyId) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You can't edit this login.",
+      });
+    }
+    if (target.isSuperAdmin && !admin.isSuperAdmin) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You can't edit a super-admin login.",
+      });
+    }
 
-    const losesAdmin =
-      target.role === "admin" &&
-      target.active &&
-      ((role !== undefined && role !== "admin") || active === false);
-    if (losesAdmin) {
-      const admins = await ctx.db
-        .query("performanceLogins")
-        .filter(q =>
-          q.and(q.eq(q.field("role"), "admin"), q.eq(q.field("active"), true))
-        )
-        .collect();
-      if (admins.length <= 1) {
+    if (roleId !== undefined) {
+      const role = await ctx.db.get(roleId);
+      if (!role || (target.companyId && role.companyId !== target.companyId)) {
         throw new ConvexError({
-          code: "last_admin",
-          message: "Can't remove the last active admin.",
+          code: "validation",
+          message: "That role doesn't belong to this company.",
         });
       }
     }
 
-    if (linkedUserId) {
-      const conflict = await ctx.db
+    const losingManageLogins =
+      !target.isSuperAdmin &&
+      target.companyId !== undefined &&
+      (await hasPermission(ctx, target, "manage_logins")) &&
+      ((roleId !== undefined &&
+        !(await hasPermission(ctx, { ...target, roleId }, "manage_logins"))) ||
+        active === false);
+
+    if (losingManageLogins) {
+      const companyLogins = await ctx.db
         .query("performanceLogins")
-        .withIndex("by_linkedUserId", q => q.eq("linkedUserId", linkedUserId))
-        .first();
-      if (conflict && conflict._id !== loginId) {
-        throw alreadyLinked();
+        .withIndex("by_company_email", (q) => q.eq("companyId", target.companyId!))
+        .collect();
+      let remainingManagers = 0;
+      for (const l of companyLogins) {
+        if (l._id === target._id || !l.active) continue;
+        if (await hasPermission(ctx, l, "manage_logins")) remainingManagers++;
+      }
+      if (remainingManagers === 0) {
+        throw new ConvexError({
+          code: "last_admin",
+          message: "Can't remove the last active admin for this company.",
+        });
       }
     }
 
     await ctx.db.patch(loginId, {
       ...(name !== undefined ? { name: name.trim() } : {}),
-      ...(role !== undefined ? { role } : {}),
+      ...(roleId !== undefined ? { roleId } : {}),
       ...(active !== undefined ? { active } : {}),
-      ...(employeeId !== undefined
-        ? { employeeId: employeeId ?? undefined }
-        : {}),
-      ...(linkedUserId !== undefined
-        ? { linkedUserId: linkedUserId ?? undefined }
-        : {}),
+      ...(employeeId !== undefined ? { employeeId: employeeId ?? undefined } : {}),
+      ...(linkedUserId !== undefined ? { linkedUserId: linkedUserId ?? undefined } : {}),
     });
     return { ok: true };
   },
 });
 
-/** Admin sets a new password for another login. */
+/** Super-admin-only: flips an existing login's cross-company `isSuperAdmin`
+ * flag on or off. Promoting leaves `companyId`/`roleId` in place (unused
+ * while the flag is set, per `hasPermission`'s bypass) so demoting later
+ * restores the login's original company scope and role with no re-picking
+ * needed — the same behavior the one-time backfill migration relied on.
+ * Blocked on the caller's own login so a super-admin can't strand
+ * themselves without Convex Dashboard access. */
+export const setSuperAdmin = mutation({
+  args: {
+    token: v.string(),
+    loginId: v.id("performanceLogins"),
+    isSuperAdmin: v.boolean(),
+  },
+  handler: async (ctx, { token, loginId, isSuperAdmin }): Promise<{ ok: true }> => {
+    const admin = await requireSuperAdminLogin(ctx, token);
+    if (admin._id === loginId) {
+      throw new ConvexError({
+        code: "cannot_edit_self",
+        message: "You can't change your own super-admin status here.",
+      });
+    }
+    const target = await ctx.db.get(loginId);
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "Login not found." });
+    }
+    await ctx.db.patch(loginId, { isSuperAdmin });
+    return { ok: true };
+  },
+});
+
+/** Admin sets a new password for another login in their own company (or, for
+ * a super-admin, any login). */
 export const resetLoginPassword = action({
   args: {
     token: v.string(),
@@ -714,12 +1113,9 @@ export const resetLoginPassword = action({
     password: v.string(),
   },
   handler: async (ctx, { token, loginId, password }): Promise<{ ok: true }> => {
-    const admin = await ctx.runQuery(
-      internal.performanceAuth.assertAdminSession,
-      {
-        token,
-      }
-    );
+    const admin = await ctx.runQuery(internal.performanceAuth.assertAdminSession, {
+      token,
+    });
     // An admin resets a colleague's password without needing their current
     // one — that's exactly the escape hatch `changeOwnPassword` deliberately
     // doesn't offer. Keeping the two paths mutually exclusive (rather than
@@ -729,8 +1125,19 @@ export const resetLoginPassword = action({
     if (admin._id === loginId) {
       throw new ConvexError({
         code: "use_change_own_password",
-        message:
-          "Use „My password“ to change your own password (it verifies your current one).",
+        message: "Use „My password“ to change your own password (it verifies your current one).",
+      });
+    }
+    const target = await ctx.runQuery(internal.performanceAuth.getLoginById, {
+      loginId,
+    });
+    if (!target) {
+      throw new ConvexError({ code: "not_found", message: "Login not found." });
+    }
+    if (!admin.isSuperAdmin && target.companyId !== admin.companyId) {
+      throw new ConvexError({
+        code: "forbidden",
+        message: "You can't reset this login's password.",
       });
     }
     if (password.length < 8) throw passwordTooShort();
@@ -750,13 +1157,10 @@ export const changeOwnPassword = action({
     currentPassword: v.string(),
     newPassword: v.string(),
   },
-  handler: async (
-    ctx,
-    { token, currentPassword, newPassword }
-  ): Promise<{ ok: true }> => {
+  handler: async (ctx, { token, currentPassword, newPassword }): Promise<{ ok: true }> => {
     const login: Doc<"performanceLogins"> | null = await ctx.runQuery(
       internal.performanceAuth.sessionLoginDoc,
-      { token }
+      { token },
     );
     if (!login) {
       throw new ConvexError({
@@ -781,5 +1185,4 @@ export const changeOwnPassword = action({
   },
 });
 
-export type PerformanceRole = Doc<"performanceLogins">["role"];
 export type PerformanceLoginId = Id<"performanceLogins">;

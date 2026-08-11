@@ -19,6 +19,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 
 export function RequestAccessGate() {
   const t = useTranslations("Access");
+  const tNav = useTranslations("Nav");
   const { user, isLoaded } = useUser();
   const status = useQuery(api.accessRequests.myStatus);
   const requestAccess = useMutation(api.accessRequests.create);
@@ -41,8 +42,7 @@ export function RequestAccessGate() {
   }
 
   const state = status?.status ?? "none";
-  const domainAllowed =
-    status && "domainAllowed" in status ? status.domainAllowed : true;
+  const domainAllowed = status && "domainAllowed" in status ? status.domainAllowed : true;
 
   // A blocked domain can never gain access — no request form, no limbo.
   if (status && state === "none" && !domainAllowed) {
@@ -57,8 +57,7 @@ export function RequestAccessGate() {
           <div>
             <CardTitle className="font-display text-xl">{t("title")}</CardTitle>
             <p className="mt-1.5 text-sm text-muted-foreground">
-              {t("signedInAs")}{" "}
-              <span className="font-medium text-foreground">{email}</span>
+              {t("signedInAs")} <span className="font-medium text-foreground">{email}</span>
             </p>
           </div>
         </div>
@@ -83,7 +82,7 @@ export function RequestAccessGate() {
               <Textarea
                 placeholder={t("messageLabel")}
                 value={message}
-                onChange={e => setMessage(e.target.value)}
+                onChange={(e) => setMessage(e.target.value)}
                 rows={3}
               />
               <Button className="w-full" onClick={submit} disabled={submitting}>
@@ -94,7 +93,7 @@ export function RequestAccessGate() {
 
           <SignOutButton>
             <Button variant="ghost" className="w-full">
-              Sign out
+              {tNav("signOut")}
             </Button>
           </SignOutButton>
         </CardContent>

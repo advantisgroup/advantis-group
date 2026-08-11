@@ -10,6 +10,8 @@
   "loading": "Loading…",
   "empty": "Nothing here yet",
   "back": "Back",
+  "previous": "Previous",
+  "next": "Next",
   "all": "All",
   "none": "None",
   "optional": "optional",
@@ -17,7 +19,18 @@
   "close": "Close",
   "open": "Open",
   "copy": "Copy",
+  "copied": "Copied to clipboard",
+  "copyFailed": "Failed to copy..",
   "areYouSure": "Are you sure?",
   "deleteWarning": "This action can't be undone.",
-  "fromOneDrive": "From OneDrive"
+  "fromOneDrive": "From OneDrive",
+  "skipToContent": "Skip to content",
+  "backToTop": "Back to top",
+  "readingProgress": "Reading progress",
+  "fieldName": "Name",
+  "fieldTitle": "Title",
+  "fieldCategory": "Category",
+  "fieldStatus": "Status",
+  "fieldDate": "Date",
+  "fieldNumber": "No."
 }

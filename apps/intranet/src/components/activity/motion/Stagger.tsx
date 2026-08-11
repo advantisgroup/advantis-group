@@ -15,13 +15,7 @@ import { MOTION } from "./motion-tokens";
  * sibling is added/removed instead of snapping — e.g. revoking an enrollment
  * code now reflows smoothly.
  */
-export function Stagger({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function Stagger({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={className}>
       <AnimatePresence initial>{children}</AnimatePresence>

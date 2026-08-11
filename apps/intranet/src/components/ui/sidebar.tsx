@@ -9,12 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MobileDrawer } from "@/components/ui/mobile-drawer";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_ICON = "3.25rem";
@@ -59,17 +54,23 @@ export function SidebarProvider({
     if (stored === "collapsed") setOpenState(false);
   }, []);
 
+  // The shell below is pinned to the viewport and <main> is the scroll
+  // container, so the document must not scroll at all — see
+  // `.app-shell-locked` in globals.css. Scoped to this provider's lifetime
+  // because the pages outside the app shell scroll normally.
+  React.useEffect(() => {
+    document.documentElement.classList.add("app-shell-locked");
+    return () => document.documentElement.classList.remove("app-shell-locked");
+  }, []);
+
   const setOpen = React.useCallback((value: boolean) => {
     setOpenState(value);
-    window.localStorage.setItem(
-      SIDEBAR_STORAGE_KEY,
-      value ? "expanded" : "collapsed"
-    );
+    window.localStorage.setItem(SIDEBAR_STORAGE_KEY, value ? "expanded" : "collapsed");
   }, []);
 
   const toggleSidebar = React.useCallback(() => {
     if (isMobile) {
-      setOpenMobile(o => !o);
+      setOpenMobile((o) => !o);
     } else {
       setOpen(!open);
     }
@@ -100,7 +101,7 @@ export function SidebarProvider({
       isMobile,
       toggleSidebar,
     }),
-    [open, setOpen, openMobile, isMobile, toggleSidebar]
+    [open, setOpen, openMobile, isMobile, toggleSidebar],
   );
 
   return (
@@ -113,7 +114,17 @@ export function SidebarProvider({
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
             } as React.CSSProperties
           }
-          className={cn("fixed inset-0 flex overflow-hidden", className)}
+          // Pinned to the viewport so <main> can be the scroll container.
+          // Height comes from `.app-shell-viewport` (dvh) rather than
+          // `inset-0`, which would resolve against the large viewport and
+          // hide the bottom nav under a phone's URL bar. Print has to undo
+          // that: a fixed, overflow-hidden box is one viewport tall, so
+          // everything below the fold is clipped and the job ends after
+          // page one.
+          className={cn(
+            "app-shell-viewport fixed inset-x-0 top-0 flex overflow-hidden print:static print:block print:h-auto print:overflow-visible",
+            className,
+          )}
         >
           {children}
         </div>
@@ -159,11 +170,9 @@ export function Sidebar({
       data-tour={dataTour}
       aria-label={ariaLabel}
       className={cn(
-        "group/sidebar z-30 hidden h-svh shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear print:hidden md:flex",
-        state === "collapsed"
-          ? "w-[var(--sidebar-width-icon)]"
-          : "w-[var(--sidebar-width)]",
-        className
+        "group/sidebar z-30 hidden h-full shrink-0 flex-col overflow-hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 ease-linear print:hidden md:flex",
+        state === "collapsed" ? "w-[var(--sidebar-width-icon)]" : "w-[var(--sidebar-width)]",
+        className,
       )}
     >
       {children}
@@ -180,7 +189,7 @@ export function SidebarInset({
   className?: string;
 }) {
   return (
-    <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", className)}>
+    <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col print:block", className)}>
       {children}
     </div>
   );
@@ -201,15 +210,12 @@ export function SidebarTrigger({ className }: { className?: string }) {
   );
 }
 
-export function SidebarHeader({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function SidebarHeader({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "flex h-16 items-center gap-2 px-4 group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:justify-center",
-        className
+        "flex h-16 shrink-0 items-center gap-2 px-4 group-data-[state=collapsed]/sidebar:px-0 group-data-[state=collapsed]/sidebar:justify-center",
+        className,
       )}
     >
       {children}
@@ -217,15 +223,12 @@ export function SidebarHeader({
   );
 }
 
-export function SidebarContent({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function SidebarContent({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
         "flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden px-2 py-2",
-        className
+        className,
       )}
     >
       {children}
@@ -233,15 +236,15 @@ export function SidebarContent({
   );
 }
 
-export function SidebarFooter({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function SidebarFooter({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "mt-auto px-4 py-3 group-data-[state=collapsed]/sidebar:hidden",
-        className
+        // `shrink-0` so a long nav list eats into SidebarContent (which
+        // scrolls) rather than compressing the footer's rows — the sidebar
+        // and the mobile sheet both clip rather than scroll as a whole.
+        "mt-auto flex shrink-0 flex-col gap-3 border-t border-sidebar-border px-4 py-3 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-2",
+        className,
       )}
     >
       {children}
@@ -249,26 +252,16 @@ export function SidebarFooter({
   );
 }
 
-export function SidebarGroup({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("flex flex-col gap-0.5 py-1", className)}>
-      {children}
-    </div>
-  );
+export function SidebarGroup({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("flex flex-col gap-0.5 py-1", className)}>{children}</div>;
 }
 
-export function SidebarGroupLabel({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function SidebarGroupLabel({ children, className }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
         "px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/50 transition-opacity group-data-[state=collapsed]/sidebar:opacity-0",
-        className
+        className,
       )}
     >
       {children}
@@ -276,17 +269,11 @@ export function SidebarGroupLabel({
   );
 }
 
-export function SidebarMenu({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLUListElement>) {
+export function SidebarMenu({ children, className }: React.HTMLAttributes<HTMLUListElement>) {
   return <ul className={cn("flex flex-col gap-0.5", className)}>{children}</ul>;
 }
 
-export function SidebarMenuItem({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLLIElement>) {
+export function SidebarMenuItem({ children, className }: React.HTMLAttributes<HTMLLIElement>) {
   return <li className={cn("relative", className)}>{children}</li>;
 }
 
@@ -296,12 +283,11 @@ const sidebarMenuButtonVariants = cva(
     variants: {
       active: {
         true: "bg-sidebar-primary/10 text-sidebar-primary",
-        false:
-          "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+        false: "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground",
       },
     },
     defaultVariants: { active: false },
-  }
+  },
 );
 
 interface SidebarMenuButtonProps
@@ -312,14 +298,8 @@ interface SidebarMenuButtonProps
   tooltip?: string;
 }
 
-export const SidebarMenuButton = React.forwardRef<
-  HTMLButtonElement,
-  SidebarMenuButtonProps
->(
-  (
-    { asChild = false, active, tooltip, className, children, ...props },
-    ref
-  ) => {
+export const SidebarMenuButton = React.forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
+  ({ asChild = false, active, tooltip, className, children, ...props }, ref) => {
     const { state, isMobile } = useSidebar();
     const Comp = asChild ? Slot : "button";
 
@@ -346,19 +326,16 @@ export const SidebarMenuButton = React.forwardRef<
         </TooltipContent>
       </Tooltip>
     );
-  }
+  },
 );
 SidebarMenuButton.displayName = "SidebarMenuButton";
 
-export function SidebarMenuBadge({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLSpanElement>) {
+export function SidebarMenuBadge({ children, className }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
     <span
       className={cn(
         "ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-sidebar-primary px-1.5 text-[11px] font-semibold tabular-nums text-sidebar-primary-foreground group-data-[state=collapsed]/sidebar:hidden",
-        className
+        className,
       )}
     >
       {children}
@@ -367,17 +344,9 @@ export function SidebarMenuBadge({
 }
 
 /** Label text that collapses away with the icon rail. */
-export function SidebarLabel({
-  children,
-  className,
-}: React.HTMLAttributes<HTMLSpanElement>) {
+export function SidebarLabel({ children, className }: React.HTMLAttributes<HTMLSpanElement>) {
   return (
-    <span
-      className={cn(
-        "flex-1 truncate group-data-[state=collapsed]/sidebar:hidden",
-        className
-      )}
-    >
+    <span className={cn("flex-1 truncate group-data-[state=collapsed]/sidebar:hidden", className)}>
       {children}
     </span>
   );

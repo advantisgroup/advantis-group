@@ -59,7 +59,7 @@ export function InteractionsTable({
   const t = useTranslations("Performance");
   const locale = useLocale();
   const router = useRouter();
-  const showEmployee = days.some(d => d.employeeName !== undefined);
+  const showEmployee = days.some((d) => d.employeeName !== undefined);
 
   return (
     <Card>
@@ -68,9 +68,7 @@ export function InteractionsTable({
       </CardHeader>
       <CardContent className="overflow-x-auto">
         {days.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t("interactionsEmpty")}
-          </p>
+          <p className="text-sm text-muted-foreground">{t("interactionsEmpty")}</p>
         ) : (
           <Table>
             <TableHeader>
@@ -80,41 +78,23 @@ export function InteractionsTable({
                 <TableHead>{t("colFrom")}</TableHead>
                 <TableHead>{t("colTo")}</TableHead>
                 <TableHead className="text-right">{t("colCount")}</TableHead>
-                <TableHead className="text-right">
-                  {t("colTotalDuration")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("colAvgDuration")}
-                </TableHead>
+                <TableHead className="text-right">{t("colTotalDuration")}</TableHead>
+                <TableHead className="text-right">{t("colAvgDuration")}</TableHead>
                 {hrefForRow && <TableHead className="w-8" />}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {days.map(d => (
+              {days.map((d) => (
                 <TableRow
                   key={`${d.employeeId ?? ""}\n${d.date}`}
-                  className={
-                    hrefForRow ? "cursor-pointer hover:bg-muted/50" : undefined
-                  }
-                  onClick={
-                    hrefForRow ? () => router.push(hrefForRow(d)) : undefined
-                  }
+                  className={hrefForRow ? "cursor-pointer hover:bg-muted/50" : undefined}
+                  onClick={hrefForRow ? () => router.push(hrefForRow(d)) : undefined}
                 >
-                  <TableCell className="font-medium">
-                    {formatIsoDate(d.date, locale)}
-                  </TableCell>
-                  {showEmployee && (
-                    <TableCell>{d.employeeName ?? "–"}</TableCell>
-                  )}
-                  <TableCell className="tabular-nums">
-                    {fmtTimeOfDay(d.from)}
-                  </TableCell>
-                  <TableCell className="tabular-nums">
-                    {fmtTimeOfDay(d.to)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(d.count)}
-                  </TableCell>
+                  <TableCell className="font-medium">{formatIsoDate(d.date, locale)}</TableCell>
+                  {showEmployee && <TableCell>{d.employeeName ?? "–"}</TableCell>}
+                  <TableCell className="tabular-nums">{fmtTimeOfDay(d.from)}</TableCell>
+                  <TableCell className="tabular-nums">{fmtTimeOfDay(d.to)}</TableCell>
+                  <TableCell className="text-right tabular-nums">{fmtNum(d.count)}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {fmtDurationPrecise(d.totalDurationSec)}
                   </TableCell>
@@ -131,9 +111,7 @@ export function InteractionsTable({
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell className="font-semibold">
-                  {t("interactionsTotalRow")}
-                </TableCell>
+                <TableCell className="font-semibold">{t("interactionsTotalRow")}</TableCell>
                 {showEmployee && <TableCell />}
                 <TableCell />
                 <TableCell />

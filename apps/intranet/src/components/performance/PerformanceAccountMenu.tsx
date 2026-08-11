@@ -4,10 +4,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 
 import { AccountMenu } from "@/components/layout/AccountMenu";
-import {
-  CurrentUserProvider,
-  type CurrentUser,
-} from "@/components/providers/current-user";
+import { CurrentUserProvider, type CurrentUser } from "@/components/providers/current-user";
 
 /** `AccountMenu` needs `CurrentUserProvider`, which only exists inside the
  * Clerk-gated `(app)` shell — Performance runs entirely outside it (see

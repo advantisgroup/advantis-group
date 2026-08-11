@@ -24,17 +24,13 @@ function fromB64(b64: string): Uint8Array {
   return out;
 }
 
-async function pbkdf2(
-  password: string,
-  salt: Uint8Array,
-  iterations: number
-): Promise<Uint8Array> {
+async function pbkdf2(password: string, salt: Uint8Array, iterations: number): Promise<Uint8Array> {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(password) as unknown as ArrayBuffer,
     "PBKDF2",
     false,
-    ["deriveBits"]
+    ["deriveBits"],
   );
   const bits = await crypto.subtle.deriveBits(
     {
@@ -44,7 +40,7 @@ async function pbkdf2(
       hash: "SHA-256",
     },
     key,
-    256
+    256,
   );
   return new Uint8Array(bits);
 }
@@ -63,10 +59,7 @@ export function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
-export async function verifyPassword(
-  password: string,
-  stored: string
-): Promise<boolean> {
+export async function verifyPassword(password: string, stored: string): Promise<boolean> {
   const parts = stored.split("$");
   if (parts.length !== 4 || parts[0] !== "pbkdf2") return false;
   const iterations = Number(parts[1]);
@@ -79,12 +72,9 @@ export async function verifyPassword(
 /** SHA-256 hex digest of an arbitrary string. */
 export async function sha256hex(input: string): Promise<string> {
   const bytes = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest(
-    "SHA-256",
-    bytes as unknown as ArrayBuffer
-  );
+  const hash = await crypto.subtle.digest("SHA-256", bytes as unknown as ArrayBuffer);
   return Array.from(new Uint8Array(hash))
-    .map(b => b.toString(16).padStart(2, "0"))
+    .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
@@ -95,6 +85,6 @@ export const hashNonce = sha256hex;
 export function randomToken(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return Array.from(bytes)
-    .map(b => b.toString(16).padStart(2, "0"))
+    .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }

@@ -9,6 +9,7 @@ import { type Id } from "@advantis/convex/dataModel";
 import { useAction, useQuery } from "convex/react";
 import {
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -29,9 +30,11 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { FlaggedRowsDialog } from "@/components/performance/FlaggedRowsDialog";
 import { PerformanceBottomTabs } from "@/components/performance/PerformanceBottomTabs";
 import { PerformanceHeader } from "@/components/performance/PerformanceHeader";
 import { PerformancePageSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { RescanOlderUploads } from "@/components/performance/RescanOlderUploads";
 import { usePerformanceSession } from "@/components/performance/usePerformanceSession";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,11 +47,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { formatDateTime, formatIsoDate, relativeTime } from "@/lib/format";
 import {
@@ -61,14 +60,7 @@ import { cn } from "@/lib/utils";
 
 const ACCEPTED_EXTENSIONS = [".xlsx", ".xlsm", ".csv"];
 
-type QueueStatus =
-  | "queued"
-  | "uploading"
-  | "processing"
-  | "done"
-  | "empty"
-  | "duplicate"
-  | "error";
+type QueueStatus = "queued" | "uploading" | "processing" | "done" | "empty" | "duplicate" | "error";
 
 interface QueueItem {
   id: string;
@@ -77,6 +69,7 @@ interface QueueItem {
   progress: number;
   rowsImported?: number;
   skipped?: string[];
+  flaggedCount?: number;
   error?: string;
   duplicateOf?: { filename: string; uploadedAt: number };
   batchId?: string;
@@ -104,15 +97,11 @@ function StatusIcon({ status }: { status: QueueStatus }) {
     case "processing":
       return <Loader2 className="h-4 w-4 shrink-0 animate-spin text-primary" />;
     case "done":
-      return (
-        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-      );
+      return <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />;
     case "empty":
       return <Info className="h-4 w-4 shrink-0 text-muted-foreground" />;
     case "duplicate":
-      return (
-        <Copy className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-      );
+      return <Copy className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />;
     case "error":
       return <XCircle className="h-4 w-4 shrink-0 text-destructive" />;
   }
@@ -129,6 +118,7 @@ interface UploadLogRow {
   skippedNames?: string[];
   fileSize?: number;
   batchId?: string;
+  uploadedBy?: string;
 }
 
 function LogRow({
@@ -170,13 +160,10 @@ function LogRow({
   return (
     <TableRow className={indent ? "bg-muted/30" : undefined}>
       <TableCell
-        className={cn(
-          "break-all",
-          indent && "border-l-2 border-l-foreground/30 pl-6"
-        )}
+        className={cn("max-w-[20rem]", indent && "border-l-2 border-l-foreground/30 pl-6")}
       >
-        <span className="inline-flex items-center gap-1.5">
-          {row.filename}
+        <span className="flex min-w-0 items-center gap-1.5" title={row.filename}>
+          <span className="truncate">{row.filename}</span>
           {legacy && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -192,11 +179,11 @@ function LogRow({
             void navigator.clipboard.writeText(row._id);
             toast.success(t("uploadIdCopied"));
           }}
-          title={t("uploadCopyId")}
-          className="mt-0.5 flex items-center gap-1 break-all font-mono text-[10px] text-muted-foreground/70 hover:text-foreground"
+          title={`${t("uploadCopyId")}: ${row._id}`}
+          className="mt-0.5 flex min-w-0 max-w-full items-center gap-1 font-mono text-[10px] text-muted-foreground/70 hover:text-foreground"
         >
           <Copy className="h-3 w-3 shrink-0" />
-          {row._id}
+          <span className="truncate">{row._id}</span>
         </button>
       </TableCell>
       <TableCell>
@@ -208,9 +195,7 @@ function LogRow({
           <span className="text-muted-foreground">–</span>
         )}
       </TableCell>
-      <TableCell>
-        {row.reportDate ? formatIsoDate(row.reportDate, locale) : "–"}
-      </TableCell>
+      <TableCell>{row.reportDate ? formatIsoDate(row.reportDate, locale) : "–"}</TableCell>
       <TableCell>
         <span className="inline-flex items-center gap-1.5">
           {row.sourceRowCount && row.sourceRowCount !== row.rowsImported
@@ -242,6 +227,9 @@ function LogRow({
       <TableCell>{row.fileSize ? formatFileSize(row.fileSize) : "–"}</TableCell>
       <TableCell title={relativeTime(row.uploadedAt)}>
         {formatDateTime(row.uploadedAt, locale)}
+      </TableCell>
+      <TableCell className="max-w-[10rem] truncate" title={row.uploadedBy}>
+        {row.uploadedBy ?? <span className="text-muted-foreground">–</span>}
       </TableCell>
       <TableCell>
         <Button
@@ -289,10 +277,8 @@ function BatchRows({
     setReimporting(true);
     try {
       const { results } = await reimportBatch({ token, batchId });
-      const ok = results.filter(r => r.status === "ok").length;
-      toast.success(
-        t("uploadReimportBatchOk", { count: ok, total: results.length })
-      );
+      const ok = results.filter((r) => r.status === "ok").length;
+      toast.success(t("uploadReimportBatchOk", { count: ok, total: results.length }));
     } catch (err) {
       handleError(err);
     } finally {
@@ -316,8 +302,9 @@ function BatchRows({
         </TableCell>
         <TableCell>{totalRows}</TableCell>
         <TableCell />
-        <TableCell title={relativeTime(latest)}>
-          {formatDateTime(latest, locale)}
+        <TableCell title={relativeTime(latest)}>{formatDateTime(latest, locale)}</TableCell>
+        <TableCell className="max-w-[10rem] truncate" title={rows[0].uploadedBy}>
+          {rows[0].uploadedBy ?? <span className="text-muted-foreground">–</span>}
         </TableCell>
         <TableCell>
           <Button
@@ -337,15 +324,7 @@ function BatchRows({
         </TableCell>
       </TableRow>
       {expanded &&
-        rows.map(row => (
-          <LogRow
-            key={row._id}
-            row={row}
-            locale={locale}
-            token={token}
-            indent
-          />
-        ))}
+        rows.map((row) => <LogRow key={row._id} row={row} locale={locale} token={token} indent />)}
     </>
   );
 }
@@ -358,6 +337,7 @@ export default function PerformanceUploadPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [flaggedDialogOpen, setFlaggedDialogOpen] = useState(false);
 
   useEffect(() => {
     // Wait for the query to resolve — a visitor with no password cookie may
@@ -368,7 +348,7 @@ export default function PerformanceUploadPage() {
       router.replace("/performance/login");
       return;
     }
-    if (session.role !== "admin") {
+    if (!session.permissions.includes("upload_reports")) {
       router.replace("/performance");
       return;
     }
@@ -379,14 +359,11 @@ export default function PerformanceUploadPage() {
     if (session.viaClerk) router.replace("/performance");
   }, [session, router]);
 
-  const isAdmin = session?.valid && session.role === "admin";
-  const log = useQuery(
-    api.performanceImport.listUploadLog,
-    isAdmin ? { token } : "skip"
-  );
+  const isAdmin = session?.valid && session.permissions.includes("upload_reports");
+  const log = useQuery(api.performanceImport.listUploadLog, isAdmin ? { token } : "skip");
 
   function updateItem(id: string, patch: Partial<QueueItem>) {
-    setQueue(prev => prev.map(it => (it.id === id ? { ...it, ...patch } : it)));
+    setQueue((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
   }
 
   async function enqueue(files: File[]) {
@@ -395,10 +372,8 @@ export default function PerformanceUploadPage() {
     // later show them as one batch — tagged even for a single file; the
     // log only renders batch chrome once a batchId actually repeats.
     const batchId = crypto.randomUUID();
-    const items: QueueItem[] = files.map(file => {
-      const accepted = ACCEPTED_EXTENSIONS.some(ext =>
-        file.name.toLowerCase().endsWith(ext)
-      );
+    const items: QueueItem[] = files.map((file) => {
+      const accepted = ACCEPTED_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
       return {
         id: crypto.randomUUID(),
         file,
@@ -408,7 +383,7 @@ export default function PerformanceUploadPage() {
         batchId,
       };
     });
-    setQueue(prev => [...items, ...prev]);
+    setQueue((prev) => [...items, ...prev]);
 
     for (const item of items) {
       if (item.status !== "queued") continue;
@@ -416,15 +391,11 @@ export default function PerformanceUploadPage() {
     }
   }
 
-  async function runUpload(
-    id: string,
-    file: File,
-    opts?: { force?: boolean; batchId?: string }
-  ) {
+  async function runUpload(id: string, file: File, opts?: { force?: boolean; batchId?: string }) {
     if (!token) return;
     updateItem(id, { status: "uploading", progress: 0, error: undefined });
     const result = await uploadPerformanceReport(file, token, {
-      onProgress: frac =>
+      onProgress: (frac) =>
         updateItem(id, {
           progress: frac,
           status: frac >= 1 ? "processing" : "uploading",
@@ -452,40 +423,45 @@ export default function PerformanceUploadPage() {
         status: "done",
         rowsImported: result.rowsImported,
         skipped: result.skipped,
+        flaggedCount: result.flagged,
       });
+      // The plausibility check runs silently during import — without this,
+      // an admin watching the queue sees a plain green "done" and has no
+      // reason to notice the (easy to miss, above-the-fold) review banner
+      // that just appeared, let alone that it's this file's own doing.
+      if (result.flagged) {
+        toast.warning(t("uploadFlaggedToast", { count: result.flagged, filename: file.name }), {
+          action: { label: t("flaggedReview"), onClick: () => setFlaggedDialogOpen(true) },
+        });
+      }
     }
   }
 
   function retryItem(id: string) {
-    const item = queue.find(it => it.id === id);
+    const item = queue.find((it) => it.id === id);
     if (item) void runUpload(id, item.file, { batchId: item.batchId });
   }
 
   function forceItem(id: string) {
-    const item = queue.find(it => it.id === id);
-    if (item)
-      void runUpload(id, item.file, { force: true, batchId: item.batchId });
+    const item = queue.find((it) => it.id === id);
+    if (item) void runUpload(id, item.file, { force: true, batchId: item.batchId });
   }
 
   function removeItem(id: string) {
-    setQueue(prev => prev.filter(it => it.id !== id));
+    setQueue((prev) => prev.filter((it) => it.id !== id));
   }
 
   function clearFinished() {
-    setQueue(prev =>
-      prev.filter(it => it.status === "queued" || it.status === "uploading")
-    );
+    setQueue((prev) => prev.filter((it) => it.status === "queued" || it.status === "uploading"));
   }
 
-  const hasFinished = queue.some(it =>
-    ["done", "empty", "duplicate", "error"].includes(it.status)
+  const hasFinished = queue.some((it) =>
+    ["done", "empty", "duplicate", "error"].includes(it.status),
   );
 
-  const [expandedBatches, setExpandedBatches] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedBatches, setExpandedBatches] = useState<Set<string>>(new Set());
   function toggleBatch(batchId: string) {
-    setExpandedBatches(prev => {
+    setExpandedBatches((prev) => {
       const next = new Set(prev);
       if (next.has(batchId)) next.delete(batchId);
       else next.add(batchId);
@@ -521,7 +497,7 @@ export default function PerformanceUploadPage() {
   }, [log]);
 
   if (session === undefined) return <PerformancePageSkeleton />;
-  if (!session.valid || session.role !== "admin" || session.viaClerk)
+  if (!session.valid || !session.permissions.includes("upload_reports") || session.viaClerk)
     return null;
 
   const navItems = [{ href: "/performance", label: t("backToDashboard") }];
@@ -534,7 +510,16 @@ export default function PerformanceUploadPage() {
     <div className="min-h-screen bg-muted/20">
       <PerformanceHeader navItems={navItems} onExit={exit} />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-7xl space-y-6 p-4 pb-24 md:p-6">
+        {token && (
+          <FlaggedRowsDialog
+            token={token}
+            open={flaggedDialogOpen}
+            onOpenChange={setFlaggedDialogOpen}
+          />
+        )}
+        {token && <RescanOlderUploads token={token} />}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -552,7 +537,7 @@ export default function PerformanceUploadPage() {
                 void downloadPerformanceFile(
                   "/performance/template",
                   token,
-                  "performance-vorlage.xlsx"
+                  "performance-vorlage.xlsx",
                 )
               }
             >
@@ -564,25 +549,25 @@ export default function PerformanceUploadPage() {
               role="button"
               tabIndex={0}
               onClick={() => inputRef.current?.click()}
-              onKeyDown={e => {
+              onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   inputRef.current?.click();
                 }
               }}
-              onDragEnter={e => {
+              onDragEnter={(e) => {
                 e.preventDefault();
                 setDragging(true);
               }}
-              onDragOver={e => {
+              onDragOver={(e) => {
                 e.preventDefault();
                 setDragging(true);
               }}
-              onDragLeave={e => {
+              onDragLeave={(e) => {
                 e.preventDefault();
                 setDragging(false);
               }}
-              onDrop={e => {
+              onDrop={(e) => {
                 e.preventDefault();
                 setDragging(false);
                 if (e.dataTransfer.files.length) {
@@ -593,21 +578,19 @@ export default function PerformanceUploadPage() {
                 "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed p-8 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 dragging
                   ? "border-primary bg-primary/5"
-                  : "border-border/70 hover:border-border hover:bg-muted/30"
+                  : "border-border/70 hover:border-border hover:bg-muted/30",
               )}
             >
               <UploadCloud className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm font-medium">{t("uploadDropzoneTitle")}</p>
-              <p className="text-xs text-muted-foreground">
-                {t("uploadDropzoneHint")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("uploadDropzoneHint")}</p>
               <input
                 ref={inputRef}
                 type="file"
                 multiple
                 accept={ACCEPTED_EXTENSIONS.join(",")}
                 className="hidden"
-                onChange={e => {
+                onChange={(e) => {
                   if (e.target.files?.length) {
                     void enqueue(Array.from(e.target.files));
                   }
@@ -634,18 +617,13 @@ export default function PerformanceUploadPage() {
                   )}
                 </div>
                 <ul className="space-y-2">
-                  {queue.map(item => (
-                    <li
-                      key={item.id}
-                      className="rounded-md border border-border/70 p-3"
-                    >
+                  {queue.map((item) => (
+                    <li key={item.id} className="rounded-md border border-border/70 p-3">
                       <div className="flex items-center gap-2">
                         <FileIcon name={item.file.name} />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="truncate text-sm font-medium">
-                              {item.file.name}
-                            </span>
+                            <span className="truncate text-sm font-medium">{item.file.name}</span>
                             <span className="shrink-0 text-xs text-muted-foreground">
                               {formatFileSize(item.file.size)}
                             </span>
@@ -676,28 +654,31 @@ export default function PerformanceUploadPage() {
                                 })}
                               </span>
                             )}
+                            {item.status === "done" && !!item.flaggedCount && (
+                              <button
+                                type="button"
+                                onClick={() => setFlaggedDialogOpen(true)}
+                                className="inline-flex items-center gap-1 rounded-full bg-warning/15 px-2 py-0.5 font-medium text-warning hover:bg-warning/25"
+                              >
+                                <AlertTriangle className="h-3 w-3 shrink-0" />
+                                {t("uploadFlaggedInline", { count: item.flaggedCount })}
+                              </button>
+                            )}
                             {item.status === "empty" && (
-                              <span className="text-muted-foreground">
-                                {t("uploadEmpty")}
-                              </span>
+                              <span className="text-muted-foreground">{t("uploadEmpty")}</span>
                             )}
                             {item.status === "duplicate" && (
                               <span className="text-amber-600 dark:text-amber-400">
                                 {item.duplicateOf
                                   ? t("uploadDuplicateDetail", {
                                       filename: item.duplicateOf.filename,
-                                      date: formatDateTime(
-                                        item.duplicateOf.uploadedAt,
-                                        locale
-                                      ),
+                                      date: formatDateTime(item.duplicateOf.uploadedAt, locale),
                                     })
                                   : t("uploadDuplicateStatus")}
                               </span>
                             )}
                             {item.status === "error" && (
-                              <span className="text-destructive">
-                                {item.error}
-                              </span>
+                              <span className="text-destructive">{item.error}</span>
                             )}
                           </div>
                         </div>
@@ -768,9 +749,7 @@ export default function PerformanceUploadPage() {
           </CardHeader>
           <CardContent className="overflow-x-auto">
             {!log || log.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {t("uploadLogEmpty")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("uploadLogEmpty")}</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -781,11 +760,12 @@ export default function PerformanceUploadPage() {
                     <TableHead>{t("uploadLogRows")}</TableHead>
                     <TableHead>{t("uploadLogSize")}</TableHead>
                     <TableHead>{t("uploadLogWhen")}</TableHead>
+                    <TableHead>{t("uploadLogBy")}</TableHead>
                     <TableHead />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {logGroups.map(group =>
+                  {logGroups.map((group) =>
                     group.batched ? (
                       <BatchRows
                         key={group.key}
@@ -797,13 +777,8 @@ export default function PerformanceUploadPage() {
                         token={token}
                       />
                     ) : (
-                      <LogRow
-                        key={group.key}
-                        row={group.rows[0]}
-                        locale={locale}
-                        token={token}
-                      />
-                    )
+                      <LogRow key={group.key} row={group.rows[0]} locale={locale} token={token} />
+                    ),
                   )}
                 </TableBody>
               </Table>

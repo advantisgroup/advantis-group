@@ -2,14 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 
-import {
-  Cloud,
-  File as FileIcon,
-  FileArchive,
-  FileSpreadsheet,
-  FileText,
-  X,
-} from "lucide-react";
+import { Cloud, File as FileIcon, FileArchive, FileSpreadsheet, FileText, X } from "lucide-react";
 
 import { formatFileSize, isImage } from "@/lib/upload";
 
@@ -23,8 +16,7 @@ function fileTypeIcon(file: File, className: string) {
     return <FileSpreadsheet className={className} />;
   if (type.includes("zip") || type.includes("compressed"))
     return <FileArchive className={className} />;
-  if (type.includes("word") || type.includes("document"))
-    return <FileText className={className} />;
+  if (type.includes("word") || type.includes("document")) return <FileText className={className} />;
   return <FileIcon className={className} />;
 }
 
@@ -69,15 +61,12 @@ function AttachmentChip({
   removeLabel: string;
 }) {
   const { file, progress, oneDriveSource } = entry;
-  const preview = useMemo(
-    () => (isImage(file) ? URL.createObjectURL(file) : null),
-    [file]
-  );
+  const preview = useMemo(() => (isImage(file) ? URL.createObjectURL(file) : null), [file]);
   useEffect(
     () => () => {
       if (preview) URL.revokeObjectURL(preview);
     },
-    [preview]
+    [preview],
   );
 
   const showProgress = uploading && progress > 0 && progress < 1;
@@ -111,9 +100,7 @@ function AttachmentChip({
             </span>
           </span>
         ) : (
-          <span className="block text-muted-foreground">
-            {formatFileSize(file.size)}
-          </span>
+          <span className="block text-muted-foreground">{formatFileSize(file.size)}</span>
         )}
       </span>
       <button
@@ -121,7 +108,7 @@ function AttachmentChip({
         onClick={onRemove}
         aria-label={removeLabel}
         disabled={uploading}
-        className="shrink-0 text-muted-foreground transition-colors hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
+        className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-destructive disabled:pointer-events-none disabled:opacity-40"
       >
         <X className="size-3.5" />
       </button>

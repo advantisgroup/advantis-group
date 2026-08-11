@@ -128,8 +128,7 @@ const DOC: DocContent = {
           kind: "links",
           items: [
             {
-              label:
-                "Outlook für Windows: Signaturen und automatische Antworten erstellen",
+              label: "Outlook für Windows: Signaturen und automatische Antworten erstellen",
               href: "https://support.microsoft.com/en-us/office/create-signatures-and-automatic-replies-in-outlook-for-windows-1528addb-bd2e-43c5-86f6-d8de5ff13ae9",
             },
             {
@@ -145,8 +144,7 @@ const DOC: DocContent = {
               href: "https://www.ionos.com/help/email/using-webmail/creating-signatures-in-ionos-webmail/",
             },
             {
-              label:
-                "IONOS Digital Guide: E-Mail-Signatur erstellen — Schritt für Schritt",
+              label: "IONOS Digital Guide: E-Mail-Signatur erstellen — Schritt für Schritt",
               href: "https://www.ionos.com/digitalguide/e-mail/technical-matters/create-an-e-mail-signature/",
             },
           ],

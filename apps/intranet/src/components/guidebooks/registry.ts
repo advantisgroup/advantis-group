@@ -1,5 +1,7 @@
 import type { ComponentType } from "react";
 
+import { type Role } from "@advantis/types";
+
 import {
   CalendarCheck,
   CalendarDays,
@@ -16,6 +18,7 @@ import {
   UploadCloud,
   UserCog,
   Wrench,
+  Zap,
 } from "lucide-react";
 
 import { type TeamId } from "@/lib/teams";
@@ -57,9 +60,19 @@ export type GuidebookTopic =
 export interface Guidebook {
   /** URL slug: /guidebooks/<slug> */
   slug: string;
-  /** i18n key inside the "Guidebooks" namespace (supports nesting). */
-  titleKey: string;
-  descriptionKey: string;
+  /** i18n key inside the "Guidebooks" namespace (supports nesting). Omit for
+   *  a `custom` (DB-backed) entry, which carries a literal `title` instead —
+   *  authored content can't live in a static translation file. */
+  titleKey?: string;
+  descriptionKey?: string;
+  /** Literal title/description for `custom` entries — ignored otherwise. */
+  title?: string;
+  description?: string;
+  /** True for a manager-authored page from `/guidebooks/new` (rendered from
+   *  stored blocks, see GuidebookPageView) rather than a registered Component. */
+  custom?: boolean;
+  /** `custom` entries only — drives the "new" badge on the guidebooks list. */
+  createdAt?: number;
   icon: LucideIcon;
   category: GuidebookCategory;
   /** Subject grouping, required for "guide" entries (see GuidebookTopic). */
@@ -71,7 +84,27 @@ export interface Guidebook {
   minRole?: "manager" | "admin";
   /** Teams allowed to open this guidebook. Empty = everyone signed in. */
   teams: TeamId[];
-  Component: ComponentType;
+  /**
+   * Skip the reading-doc furniture (table of contents, "was this helpful"
+   * feedback, related-guidebooks chips, prev/next pager) around the
+   * component. For a self-contained tool with its own internal navigation
+   * (tabs, screens, its own chapter switcher) rather than a single article,
+   * that furniture is just clutter competing with the tool's own UI.
+   */
+  minimalChrome?: boolean;
+  /** Widen the page's content column past the default `max-w-4xl` — for
+   * tools with tables/dashboards that feel cramped at article width. */
+  wide?: boolean;
+  /**
+   * Rendered by `/guidebooks/[slug]/page.tsx`. Omit when this guidebook owns
+   * a dedicated static route tree instead (e.g.
+   * `app/(app)/guidebooks/<slug>/**`) — Next.js matches that static segment
+   * before the `[slug]` dynamic route, so `[slug]/page.tsx` never actually
+   * receives this slug and `Component` would never be rendered anyway. The
+   * registry entry still exists for the guidebooks list card and sidebar
+   * visibility/access checks.
+   */
+  Component?: ComponentType;
 }
 
 /**
@@ -87,6 +120,17 @@ export const GUIDEBOOKS: Guidebook[] = [
     category: "interactive",
     teams: ["customer-care"],
     Component: CaseSearchGuidebook,
+    minimalChrome: true,
+    wide: true,
+  },
+  {
+    slug: "wallbox-sales-academy",
+    titleKey: "wallboxSalesAcademy.title",
+    descriptionKey: "wallboxSalesAcademy.description",
+    icon: Zap,
+    category: "interactive",
+    teams: [],
+    // Owns its own route tree — see app/(app)/guidebooks/wallbox-sales-academy/.
   },
   {
     slug: "problembehandlungen",
@@ -225,11 +269,14 @@ export const GUIDEBOOKS: Guidebook[] = [
 ];
 
 interface AccessUser {
-  role: string;
+  role: Role;
   teams?: string[];
 }
 
-export function canAccessGuidebook(user: AccessUser, gb: Guidebook): boolean {
+export function canAccessGuidebook(
+  user: AccessUser,
+  gb: Pick<Guidebook, "minRole" | "teams">,
+): boolean {
   // Admins can always open guidebooks (for review/management).
   if (user.role === "admin") return true;
   if (gb.minRole === "admin") return false; // admin already handled above
@@ -237,13 +284,30 @@ export function canAccessGuidebook(user: AccessUser, gb: Guidebook): boolean {
   // No team restriction → available to everyone signed in.
   if (gb.teams.length === 0) return true;
   const mine = user.teams ?? [];
-  return gb.teams.some(t => mine.includes(t));
+  return gb.teams.some((t) => mine.includes(t));
 }
 
 export function accessibleGuidebooks(user: AccessUser): Guidebook[] {
-  return GUIDEBOOKS.filter(gb => canAccessGuidebook(user, gb));
+  return GUIDEBOOKS.filter((gb) => canAccessGuidebook(user, gb));
 }
 
 export function getGuidebook(slug: string): Guidebook | undefined {
-  return GUIDEBOOKS.find(gb => gb.slug === slug);
+  return GUIDEBOOKS.find((gb) => gb.slug === slug);
+}
+
+/** Resolves a translated title for a static entry, or the literal `title`
+ *  a custom (DB-backed) one carries instead. */
+export function guidebookTitle(gb: Guidebook, t: (key: string) => string): string {
+  return gb.titleKey ? t(gb.titleKey) : (gb.title ?? "");
+}
+
+export function guidebookDescription(gb: Guidebook, t: (key: string) => string): string {
+  return gb.descriptionKey ? t(gb.descriptionKey) : (gb.description ?? "");
+}
+
+/** All slugs already taken by a hardcoded guidebook — the create-page flow
+ *  must not let a custom page's slug collide with one of these (Convex has
+ *  no visibility into this static list to check it itself). */
+export function staticGuidebookSlugs(): string[] {
+  return GUIDEBOOKS.map((gb) => gb.slug);
 }

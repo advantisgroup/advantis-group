@@ -6,22 +6,23 @@ import { audienceValidator } from "../schema";
 export type Audience = Infer<typeof audienceValidator>;
 
 /** Does the given user fall within the target audience? */
-export function userMatchesAudience(
-  user: Doc<"users">,
-  audience: Audience
-): boolean {
+export function userMatchesAudience(user: Doc<"users">, audience: Audience): boolean {
   switch (audience.kind) {
     case "all":
       return true;
     case "department":
       return (
-        !!user.department &&
-        user.department.toLowerCase() === audience.department.toLowerCase()
+        !!user.department && user.department.toLowerCase() === audience.department.toLowerCase()
       );
     case "departmentId":
       return user.departmentId === audience.departmentId;
     case "users":
-      return audience.userIds.some(id => id === user._id);
+      return audience.userIds.some((id) => id === user._id);
+    case "mixed": {
+      if (audience.userIds.some((id) => id === user._id)) return true;
+      const dept = user.department;
+      return !!dept && audience.departments.some((d) => d.toLowerCase() === dept.toLowerCase());
+    }
   }
 }
 
@@ -43,5 +44,13 @@ export function audienceLabel(audience: Audience): string {
       return `${audience.userIds.length} selected ${
         audience.userIds.length === 1 ? "person" : "people"
       }`;
+    case "mixed": {
+      const parts: string[] = [];
+      if (audience.departments.length) parts.push(`${audience.departments.length} dept.`);
+      if (audience.userIds.length) {
+        parts.push(`${audience.userIds.length} ${audience.userIds.length === 1 ? "person" : "people"}`);
+      }
+      return parts.length ? parts.join(" + ") : "No one selected";
+    }
   }
 }

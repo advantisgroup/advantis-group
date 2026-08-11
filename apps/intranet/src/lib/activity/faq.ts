@@ -60,6 +60,4 @@ export const FAQ_SECTIONS: FaqSection[] = [
 ];
 
 /** All entry ids flattened — handy for search/iteration. */
-export const FAQ_ENTRY_IDS: string[] = FAQ_SECTIONS.flatMap(s =>
-  s.entries.map(e => e.id)
-);
+export const FAQ_ENTRY_IDS: string[] = FAQ_SECTIONS.flatMap((s) => s.entries.map((e) => e.id));

@@ -7,14 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation, useQuery } from "convex/react";
-import {
-  AlertTriangle,
-  ArrowLeft,
-  Mail,
-  Sparkles,
-  Trash2,
-  Wrench,
-} from "lucide-react";
+import { AlertTriangle, ArrowLeft, Mail, Sparkles, Trash2, Wrench } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -26,11 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { RichText } from "@/components/ui/rich-text";
 import {
   Select,
@@ -40,20 +29,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { UpdateArtBanner } from "@/components/updates/UpdateArtBanner";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useNow } from "@/lib/activity/useNow";
 import { formatDateTime, initials } from "@/lib/format";
-import {
-  formatDuration,
-  statusesForType,
-  type UpdateType,
-} from "@/lib/updates";
+import { formatDuration, statusesForType, type UpdateType } from "@/lib/updates";
 
 import type { FunctionReturnType } from "convex/server";
 
@@ -91,10 +72,7 @@ function StatusCard({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("statusLabel")}
           </p>
-          <Badge
-            variant={data.resolvedAt ? "muted" : "warning"}
-            className="mt-1"
-          >
+          <Badge variant={data.resolvedAt ? "muted" : "warning"} className="mt-1">
             {data.status ? t(`status.${data.status}`) : "—"}
           </Badge>
         </div>
@@ -102,9 +80,7 @@ function StatusCard({
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {t("durationLabel")}
           </p>
-          <p className="mt-1 text-sm font-medium">
-            {formatDuration(durationMs)}
-          </p>
+          <p className="mt-1 text-sm font-medium">{formatDuration(durationMs)}</p>
         </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -117,9 +93,7 @@ function StatusCard({
             {t("resolvedLabel")}
           </p>
           <p className="mt-1 text-sm">
-            {data.resolvedAt
-              ? formatDateTime(data.resolvedAt, locale)
-              : t("ongoing")}
+            {data.resolvedAt ? formatDateTime(data.resolvedAt, locale) : t("ongoing")}
           </p>
         </div>
         {data.affectedSystems.length > 0 && (
@@ -128,12 +102,8 @@ function StatusCard({
               {t("affectedSystemsLabel")}
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {data.affectedSystems.map(s => (
-                <Badge
-                  key={s}
-                  variant="outline"
-                  className="min-w-0 max-w-full break-words"
-                >
+              {data.affectedSystems.map((s) => (
+                <Badge key={s} variant="outline" className="min-w-0 max-w-full break-words">
                   {s}
                 </Badge>
               ))}
@@ -178,12 +148,8 @@ export default function UpdateDetailPage() {
     return (
       <div className="px-4 pt-6 md:px-8 md:pt-8">
         <div className="mx-auto max-w-3xl space-y-2 text-center">
-          <h1 className="font-display text-2xl font-bold tracking-tight">
-            {t("notFoundTitle")}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("notFoundDescription")}
-          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight">{t("notFoundTitle")}</h1>
+          <p className="text-sm text-muted-foreground">{t("notFoundDescription")}</p>
         </div>
       </div>
     );
@@ -214,6 +180,12 @@ export default function UpdateDetailPage() {
     const ok = await confirm({
       title: t("deleteConfirm"),
       description: tc("deleteWarning"),
+      details: data
+        ? [
+            { label: tc("fieldTitle"), value: data.title },
+            { label: tc("fieldStatus"), value: t(`type.${data.type}`) },
+          ]
+        : undefined,
       confirmLabel: tc("delete"),
       cancelLabel: tc("cancel"),
     });
@@ -229,12 +201,7 @@ export default function UpdateDetailPage() {
 
   return (
     <>
-      <UpdateArtBanner
-        seed={data._id}
-        type={data.type}
-        title={data.title}
-        className="mb-8"
-      />
+      <UpdateArtBanner seed={data._id} type={data.type} title={data.title} className="mb-8" />
       <div className="px-4 md:px-8">
         <div className="mx-auto max-w-3xl break-words">
           <div className="mb-6 flex items-start justify-between gap-4">
@@ -270,25 +237,21 @@ export default function UpdateDetailPage() {
                     {data.emailStats && data.recipients ? (
                       <>
                         <div className="mb-3 flex flex-wrap gap-3">
-                          {Object.entries(data.emailStats).map(
-                            ([status, count]) => (
-                              <div key={status} className="text-sm">
-                                <span className="font-semibold">{count}</span>{" "}
-                                <span className="text-muted-foreground">
-                                  {t(`emailStatus.${status}`)}
-                                </span>
-                              </div>
-                            )
-                          )}
+                          {Object.entries(data.emailStats).map(([status, count]) => (
+                            <div key={status} className="text-sm">
+                              <span className="font-semibold">{count}</span>{" "}
+                              <span className="text-muted-foreground">
+                                {t(`emailStatus.${status}`)}
+                              </span>
+                            </div>
+                          ))}
                           {data.recipients.length === 0 && (
-                            <p className="text-sm text-muted-foreground">
-                              {t("noEmailsSentYet")}
-                            </p>
+                            <p className="text-sm text-muted-foreground">{t("noEmailsSentYet")}</p>
                           )}
                         </div>
                         {data.recipients.length > 0 && (
                           <div className="max-h-72 space-y-1 overflow-y-auto">
-                            {data.recipients.map(r => (
+                            {data.recipients.map((r) => (
                               <div
                                 key={r.userId}
                                 className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-accent"
@@ -298,21 +261,15 @@ export default function UpdateDetailPage() {
                                     {initials(r.name)}
                                   </AvatarFallback>
                                 </Avatar>
-                                <span className="min-w-0 flex-1 truncate">
-                                  {r.name}
-                                </span>
-                                <Badge variant="muted">
-                                  {t(`emailStatus.${r.status}`)}
-                                </Badge>
+                                <span className="min-w-0 flex-1 truncate">{r.name}</span>
+                                <Badge variant="muted">{t(`emailStatus.${r.status}`)}</Badge>
                               </div>
                             ))}
                           </div>
                         )}
                       </>
                     ) : (
-                      <p className="text-sm text-muted-foreground">
-                        {t("emailNotSent")}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{t("emailNotSent")}</p>
                     )}
                   </PopoverContent>
                 </Popover>
@@ -340,9 +297,7 @@ export default function UpdateDetailPage() {
               <Icon className="size-3" />
               {t(`type.${data.type}`)}
             </Badge>
-            {data.scheduled && (
-              <Badge variant="outline">{t("scheduled")}</Badge>
-            )}
+            {data.scheduled && <Badge variant="outline">{t("scheduled")}</Badge>}
           </div>
 
           <h1 className="break-words font-display text-4xl font-extrabold tracking-tight md:text-5xl">
@@ -365,9 +320,7 @@ export default function UpdateDetailPage() {
             {data.bodyFormat === "richtext" ? (
               <RichText html={data.body} />
             ) : (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {data.body}
-              </ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{data.body}</ReactMarkdown>
             )}
           </div>
 
@@ -378,19 +331,13 @@ export default function UpdateDetailPage() {
               </h2>
               <ol className="space-y-4 border-l border-border pl-4">
                 {data.timeline.length === 0 && (
-                  <li className="text-sm text-muted-foreground">
-                    {t("noTimelineYet")}
-                  </li>
+                  <li className="text-sm text-muted-foreground">{t("noTimelineYet")}</li>
                 )}
                 {data.timeline.map((entry, i) => (
                   <li key={i} className="relative">
                     <span className="absolute -left-[1.1875rem] top-1 size-2 rounded-full bg-primary" />
                     <div className="flex flex-wrap items-center gap-2">
-                      {entry.status && (
-                        <Badge variant="muted">
-                          {t(`status.${entry.status}`)}
-                        </Badge>
-                      )}
+                      {entry.status && <Badge variant="muted">{t(`status.${entry.status}`)}</Badge>}
                       <span className="text-xs text-muted-foreground">
                         {formatDateTime(entry.at, locale)} · {entry.authorName}
                       </span>
@@ -404,7 +351,7 @@ export default function UpdateDetailPage() {
                 <div className="mt-5 space-y-2 rounded-xl border border-border/70 bg-card p-4">
                   <Textarea
                     value={message}
-                    onChange={e => setMessage(e.target.value)}
+                    onChange={(e) => setMessage(e.target.value)}
                     placeholder={t("postUpdatePlaceholder")}
                     rows={2}
                   />
@@ -414,10 +361,8 @@ export default function UpdateDetailPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">
-                          {t("noStatusChange")}
-                        </SelectItem>
-                        {statusesForType(data.type as UpdateType).map(s => (
+                        <SelectItem value="none">{t("noStatusChange")}</SelectItem>
+                        {statusesForType(data.type as UpdateType).map((s) => (
                           <SelectItem key={s} value={s}>
                             {t(`status.${s}`)}
                           </SelectItem>

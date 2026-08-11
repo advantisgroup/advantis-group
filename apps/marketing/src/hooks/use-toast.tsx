@@ -4,12 +4,7 @@ import * as React from "react";
 export type ToastActionElement = React.ReactElement;
 
 // Define toast types for visual distinction
-export type ToastType =
-  | "default"
-  | "destructive"
-  | "success"
-  | "warning"
-  | "info";
+export type ToastType = "default" | "destructive" | "success" | "warning" | "info";
 
 // Main Toast interface
 export interface ToastItem {
@@ -87,9 +82,7 @@ const reducer = (state: State, action: Action): State => {
     case actionTypes.UPDATE_TOAST:
       return {
         ...state,
-        toasts: state.toasts.map(t =>
-          t.id === action.toast.id ? { ...t, ...action.toast } : t
-        ),
+        toasts: state.toasts.map((t) => (t.id === action.toast.id ? { ...t, ...action.toast } : t)),
       };
 
     case actionTypes.DISMISS_TOAST: {
@@ -98,7 +91,7 @@ const reducer = (state: State, action: Action): State => {
       if (toastId === undefined) {
         return {
           ...state,
-          toasts: state.toasts.map(t => ({
+          toasts: state.toasts.map((t) => ({
             ...t,
             open: false,
           })),
@@ -107,9 +100,7 @@ const reducer = (state: State, action: Action): State => {
 
       return {
         ...state,
-        toasts: state.toasts.map(t =>
-          t.id === toastId ? { ...t, open: false } : t
-        ),
+        toasts: state.toasts.map((t) => (t.id === toastId ? { ...t, open: false } : t)),
       };
     }
 
@@ -125,7 +116,7 @@ const reducer = (state: State, action: Action): State => {
 
       return {
         ...state,
-        toasts: state.toasts.filter(t => t.id !== toastId),
+        toasts: state.toasts.filter((t) => t.id !== toastId),
       };
     }
   }
@@ -138,7 +129,7 @@ let memoryState: State = { toasts: [] };
 // Dispatch function to update state and notify listeners
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action);
-  listeners.forEach(listener => {
+  listeners.forEach((listener) => {
     listener(memoryState);
   });
 }
@@ -197,7 +188,7 @@ function toast(props: ToastOptions) {
       ...props,
       id,
       open: true,
-      onOpenChange: open => {
+      onOpenChange: (open) => {
         if (!open) dismiss();
         props.onOpenChange?.(open);
       },
@@ -212,16 +203,12 @@ function toast(props: ToastOptions) {
 }
 
 // Convenience functions for different toast types
-toast.default = (props: Omit<ToastOptions, "type">) =>
-  toast({ ...props, type: "default" });
-toast.destructive = (props: Omit<ToastOptions, "type">) =>
-  toast({ ...props, type: "destructive" });
+toast.default = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "default" });
+toast.destructive = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "destructive" });
 toast.success = (props: Omit<ToastOptions, "type">) =>
   toast({ ...props, type: "success", variant: "success" });
-toast.warning = (props: Omit<ToastOptions, "type">) =>
-  toast({ ...props, type: "warning" });
-toast.info = (props: Omit<ToastOptions, "type">) =>
-  toast({ ...props, type: "info" });
+toast.warning = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "warning" });
+toast.info = (props: Omit<ToastOptions, "type">) => toast({ ...props, type: "info" });
 
 // Hook for consuming toasts
 function useToast() {

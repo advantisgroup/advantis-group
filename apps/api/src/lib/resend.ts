@@ -15,11 +15,8 @@ function getResend(): Resend {
   return resend;
 }
 
-const FROM =
-  process.env.INTERNAL_EMAIL_FROM ??
-  "Advantis Intranet <noreply@advantisgroup.de>";
-const INTERNAL_URL =
-  process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
+const FROM = process.env.INTERNAL_EMAIL_FROM ?? "Advantis Intranet <noreply@advantisgroup.de>";
+const INTERNAL_URL = process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de";
 
 function layout(title: string, bodyHtml: string): string {
   return `<!doctype html><html><body style="margin:0;background:#f4f4f5;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#18181b">
@@ -39,12 +36,23 @@ function button(href: string, label: string): string {
 }
 
 type Data = Record<string, unknown>;
-const str = (d: Data, k: string) =>
-  typeof d[k] === "string" ? (d[k] as string) : "";
+const str = (d: Data, k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
+
+/** Escapes a value before it goes into an email body. Needed for the password
+ * reset templates specifically: the account email there is typed into a
+ * public login form, so it's attacker-controlled all the way to the admin's
+ * inbox. */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 function render(
   kind: NotificationEmailKind,
-  data: Data
+  data: Data,
 ): {
   subject: string;
   html: string;
@@ -61,7 +69,7 @@ function render(
           "You've been invited",
           `<p style="margin:0 0 16px;line-height:1.6">${by ? `${by} invited you` : "You've been invited"} to join the advantis GmbH intranet as <strong>${role}</strong>.</p>
            <p style="margin:0 0 24px;line-height:1.6">Sign up with this email address to get instant access.</p>
-           ${button(url, "Accept invitation")}`
+           ${button(url, "Accept invitation")}`,
         ),
       };
     }
@@ -72,7 +80,7 @@ function render(
         html: layout(
           "Access approved",
           `<p style="margin:0 0 24px;line-height:1.6">Your request to access the Advantis intranet was approved (role: <strong>${role}</strong>). You can sign in now.</p>
-           ${button(INTERNAL_URL, "Open the intranet")}`
+           ${button(INTERNAL_URL, "Open the intranet")}`,
         ),
       };
     }
@@ -81,7 +89,7 @@ function render(
         subject: "Your intranet access request",
         html: layout(
           "Access request update",
-          `<p style="margin:0;line-height:1.6">Your request to access the Advantis intranet was not approved. If you think this is a mistake, please contact your manager or IT.</p>`
+          `<p style="margin:0;line-height:1.6">Your request to access the Advantis intranet was not approved. If you think this is a mistake, please contact your manager or IT.</p>`,
         ),
       };
     case "absence-decision": {
@@ -96,7 +104,7 @@ function render(
           `Absence ${decision}`,
           `<p style="margin:0 0 16px;line-height:1.6">Your <strong>${type}</strong> absence from <strong>${start}</strong> to <strong>${end}</strong> was <strong>${decision}</strong>.</p>
            ${note ? `<p style="margin:0 0 24px;line-height:1.6;color:#52525b">Note: ${note}</p>` : ""}
-           ${button(`${INTERNAL_URL}/absences`, "View absences")}`
+           ${button(`${INTERNAL_URL}/absences`, "View absences")}`,
         ),
       };
     }
@@ -111,21 +119,7 @@ function render(
           `Upload ${decision}`,
           `<p style="margin:0 0 16px;line-height:1.6">Your upload <strong>${fileName}</strong>${folder ? ` to <strong>${folder}</strong>` : ""} was <strong>${decision}</strong>.</p>
            ${note ? `<p style="margin:0 0 24px;line-height:1.6;color:#52525b">Note: ${note}</p>` : ""}
-           ${button(`${INTERNAL_URL}/files`, "Open files")}`
-        ),
-      };
-    }
-    case "guest-invite": {
-      const token = str(data, "token");
-      const label = str(data, "label") || "Guest";
-      const hours = typeof data.hours === "number" ? data.hours : 48;
-      const url = `${INTERNAL_URL}/guest/login?token=${encodeURIComponent(token)}`;
-      return {
-        subject: "Your Advantis intranet guest tour",
-        html: layout(
-          "You've been given a guest tour",
-          `<p style="margin:0 0 16px;line-height:1.6">Hi ${label}, you've been granted a temporary guest view of the advantis GmbH intranet. This link gives a read-only tour and expires in about ${hours} hours.</p>
-           ${button(url, "Open guest tour")}`
+           ${button(`${INTERNAL_URL}/files`, "Open files")}`,
         ),
       };
     }
@@ -141,7 +135,7 @@ function render(
           "You've been re-invited to a chat",
           `<p style="margin:0 0 16px;line-height:1.6"><strong>${inviter}</strong> would like to keep chatting with you on the advantis GmbH intranet.</p>
            <p style="margin:0 0 24px;line-height:1.6">Re-join to keep the conversation — otherwise it will be deleted within 48 hours.</p>
-           ${button(url, "Re-join the chat")}`
+           ${button(url, "Re-join the chat")}`,
         ),
       };
     }
@@ -150,16 +144,94 @@ function render(
         subject: "Your Advantis intranet digest",
         html: layout(
           "Digest",
-          `<p style="margin:0;line-height:1.6">${str(data, "summary") || "Here's what's new on the intranet."}</p>`
+          `<p style="margin:0;line-height:1.6">${str(data, "summary") || "Here's what's new on the intranet."}</p>`,
         ),
       };
+    case "academy-invite": {
+      const academyName = str(data, "academyName") || "the Wallbox Sales Academy";
+      const code = str(data, "code");
+      const by = str(data, "invitedByName");
+      const path = str(data, "path") || "/wallbox-sales-academy";
+      const url = `${INTERNAL_URL}${path}?code=${encodeURIComponent(code)}`;
+      return {
+        subject: `You've been invited to ${academyName}`,
+        html: layout(
+          "You've been invited to a training",
+          `<p style="margin:0 0 16px;line-height:1.6">${by ? `${by} invited you` : "You've been invited"} to ${academyName} on the intranet.</p>
+           <p style="margin:0 0 8px;line-height:1.6">Your access code:</p>
+           <p style="margin:0 0 24px;font-size:22px;font-weight:700;letter-spacing:0.08em">${code}</p>
+           ${button(url, "Open the training")}`,
+        ),
+      };
+    }
+    case "password-reset-request": {
+      const area = esc(str(data, "area"));
+      const accountEmail = esc(str(data, "accountEmail"));
+      const requestedByEmail = esc(str(data, "requestedByEmail"));
+      const requestedAt = str(data, "requestedAt");
+      const requestId = str(data, "requestId");
+      const selfService = data.selfService === true;
+      const when = requestedAt ? new Date(requestedAt).toUTCString() : "just now";
+      const url = `${INTERNAL_URL}/admin/password-resets?request=${encodeURIComponent(requestId)}`;
+      // The filer and the account are shown as two separate lines on purpose:
+      // approving is a judgement call about whether those two are the same
+      // person, and burying that in prose is how it gets skimmed past.
+      const filedBy = requestedByEmail
+        ? selfService
+          ? `<p style="margin:0 0 8px;line-height:1.6">Filed by: <strong>${requestedByEmail}</strong> (the account holder)</p>`
+          : `<p style="margin:0 0 8px;line-height:1.6;color:#b91c1c">Filed by: <strong>${requestedByEmail}</strong> — <strong>not</strong> the account holder. Confirm in person before issuing anything.</p>`
+        : `<p style="margin:0 0 8px;line-height:1.6;color:#b91c1c">Filed by: not signed in — identity unverified. Confirm in person before issuing anything.</p>`;
+      return {
+        subject: `Password reset requested: ${accountEmail} (${area})`,
+        html: layout(
+          "Password reset requested",
+          `<p style="margin:0 0 8px;line-height:1.6">Account: <strong>${accountEmail}</strong></p>
+           <p style="margin:0 0 8px;line-height:1.6">Area: <strong>${area}</strong></p>
+           <p style="margin:0 0 8px;line-height:1.6">When: <strong>${when}</strong></p>
+           ${filedBy}
+           <p style="margin:16px 0 24px;line-height:1.6">Nothing has changed yet. Open the queue to review who asked, for which account, and issue a one-time reset link if it checks out — the link is mailed to the account holder, never to whoever asked.</p>
+           ${button(url, "Review the request")}`,
+        ),
+      };
+    }
+    case "admin-verification-code": {
+      const code = str(data, "code");
+      const expiresInMinutes =
+        typeof data.expiresInMinutes === "number" ? data.expiresInMinutes : 10;
+      return {
+        subject: `Your verification code: ${code}`,
+        html: layout(
+          "Verify it's you",
+          `<p style="margin:0 0 16px;line-height:1.6">Use this code to approve or dismiss a password-reset request in the intranet admin queue.</p>
+           <p style="margin:0 0 24px;font-size:28px;font-weight:700;letter-spacing:0.12em;font-family:monospace">${esc(code)}</p>
+           <p style="margin:0 0 8px;line-height:1.6;color:#71717a;font-size:13px">Expires in about ${expiresInMinutes} minutes.</p>
+           <p style="margin:24px 0 0;line-height:1.6;color:#b91c1c;font-size:13px">Didn't request this? Someone may have access to your intranet session — change your password and tell IT immediately.</p>`,
+        ),
+      };
+    }
+    case "password-reset-link": {
+      const area = esc(str(data, "area"));
+      const url = str(data, "url");
+      const expiresAt = typeof data.expiresAt === "number" ? data.expiresAt : null;
+      const minutes = expiresAt ? Math.max(1, Math.round((expiresAt - Date.now()) / 60000)) : 60;
+      return {
+        subject: `Your ${area} password reset link`,
+        html: layout(
+          "Reset your password",
+          `<p style="margin:0 0 16px;line-height:1.6">An admin approved your request to reset your <strong>${area}</strong> password.</p>
+           <p style="margin:0 0 24px;line-height:1.6">This link works once and expires in about <strong>${minutes} minutes</strong>.</p>
+           ${button(url, "Choose a new password")}
+           <p style="margin:24px 0 0;line-height:1.6;color:#71717a;font-size:13px">Didn't ask for this? Don't open the link — tell an admin, and it will be revoked.</p>`,
+        ),
+      };
+    }
   }
 }
 
 export async function sendNotificationEmail(
   kind: NotificationEmailKind,
   to: string,
-  data: Data
+  data: Data,
 ): Promise<void> {
   const { subject, html } = render(kind, data);
   const { error } = await getResend().emails.send({
@@ -168,13 +240,22 @@ export async function sendNotificationEmail(
     subject,
     html,
   });
+  if (
+    kind === "password-reset-request" ||
+    kind === "password-reset-link" ||
+    kind === "admin-verification-code"
+  ) {
+    // Masked recipient only — a reset link in a log line would be a
+    // credential in a log line.
+    const [local, domain] = to.split("@");
+    console.log(
+      `[passwordReset] email kind=${kind} to=${local?.slice(0, 1)}***@${domain} ok=${!error}`,
+    );
+  }
   if (error) throw Errors.upstream(`Resend error: ${error.message}`);
 }
 
-const UPDATE_SUBJECT_PREFIX: Record<
-  "incident" | "maintenance" | "changelog",
-  string
-> = {
+const UPDATE_SUBJECT_PREFIX: Record<"incident" | "maintenance" | "changelog", string> = {
   incident: "Incident",
   maintenance: "Scheduled maintenance",
   changelog: "What's new",
@@ -191,7 +272,7 @@ export function renderUpdateEmail(update: {
     html: layout(
       update.title,
       `<p style="margin:0 0 24px;line-height:1.6">${update.summary}</p>
-       ${button(update.url, "Read the full update")}`
+       ${button(update.url, "Read the full update")}`,
     ),
   };
 }
@@ -215,21 +296,20 @@ export async function sendUpdateBroadcast(
     url: string;
   },
   updateId: string,
-  recipients: BroadcastRecipient[]
+  recipients: BroadcastRecipient[],
 ): Promise<BroadcastResult[]> {
-  console.log(recipients);
   const { subject, html } = renderUpdateEmail(update);
   const results: BroadcastResult[] = [];
   const CHUNK = 100;
   for (let i = 0; i < recipients.length; i += CHUNK) {
     const chunk = recipients.slice(i, i + CHUNK);
     console.log(
-      `[resend] sending batch ${i}-${i + chunk.length} of ${recipients.length} for update ${updateId}`
+      `[resend] sending batch ${i}-${i + chunk.length} of ${recipients.length} for update ${updateId}`,
     );
     let data, error;
     try {
       ({ data, error } = await getResend().batch.send(
-        chunk.map(r => ({
+        chunk.map((r) => ({
           from: FROM,
           to: r.email,
           subject,
@@ -238,22 +318,16 @@ export async function sendUpdateBroadcast(
             { name: "update_id", value: updateId },
             { name: "user_id", value: r.userId },
           ],
-        }))
+        })),
       ));
     } catch (thrown) {
-      console.error(
-        `[resend] batch send threw for update ${updateId}:`,
-        thrown
-      );
-      results.push(...chunk.map(r => ({ ...r, failed: true })));
+      console.error(`[resend] batch send threw for update ${updateId}:`, thrown);
+      results.push(...chunk.map((r) => ({ ...r, failed: true })));
       continue;
     }
     if (error || !data) {
-      console.error(
-        `[resend] batch send failed for update ${updateId}:`,
-        JSON.stringify(error)
-      );
-      results.push(...chunk.map(r => ({ ...r, failed: true })));
+      console.error(`[resend] batch send failed for update ${updateId}:`, JSON.stringify(error));
+      results.push(...chunk.map((r) => ({ ...r, failed: true })));
       continue;
     }
     data.data.forEach((sent, idx) => {

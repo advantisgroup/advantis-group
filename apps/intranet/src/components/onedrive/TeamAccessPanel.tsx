@@ -52,7 +52,7 @@ export function TeamAccessPanel() {
           ? t("teamAccessAlreadyHadAccess", {
               roles: res.roles?.join(", ") || "—",
             })
-          : t("teamAccessGranted")
+          : t("teamAccessGranted"),
       );
       await load();
     } catch (err) {
@@ -85,7 +85,7 @@ export function TeamAccessPanel() {
           granted,
           alreadyHadAccess,
           skipped,
-        })
+        }),
       );
       await load();
     } catch (err) {
@@ -97,18 +97,14 @@ export function TeamAccessPanel() {
 
   if (loadError) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        {t("teamAccessLoadError")}
-      </p>
+      <p className="py-6 text-center text-sm text-muted-foreground">{t("teamAccessLoadError")}</p>
     );
   }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-sm text-muted-foreground">
-          {t("teamAccessDescription")}
-        </p>
+        <p className="text-sm text-muted-foreground">{t("teamAccessDescription")}</p>
         <Button
           size="sm"
           variant="outline"
@@ -126,34 +122,26 @@ export function TeamAccessPanel() {
         </div>
       ) : (
         <div className="divide-y divide-border/60 rounded-xl border border-border/70 bg-card">
-          {rows.map(row => (
+          {rows.map((row) => (
             <div
               key={row.userId}
               className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm"
             >
               <div className="min-w-0">
                 <p className="truncate font-medium">{row.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {row.email}
-                </p>
+                <p className="truncate text-xs text-muted-foreground">{row.email}</p>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <Badge variant={row.permissionId ? "success" : "muted"}>
-                  {row.permissionId
-                    ? t("teamAccessHasAccess")
-                    : t("teamAccessNoAccess")}
+                  {row.permissionId ? t("teamAccessHasAccess") : t("teamAccessNoAccess")}
                 </Badge>
                 <Button
                   size="sm"
                   variant="outline"
                   disabled={busyId === row.userId}
-                  onClick={() =>
-                    void (row.permissionId ? onRevoke(row) : onGrant(row))
-                  }
+                  onClick={() => void (row.permissionId ? onRevoke(row) : onGrant(row))}
                 >
-                  {row.permissionId
-                    ? t("teamAccessRevoke")
-                    : t("teamAccessGrant")}
+                  {row.permissionId ? t("teamAccessRevoke") : t("teamAccessGrant")}
                 </Button>
               </div>
             </div>

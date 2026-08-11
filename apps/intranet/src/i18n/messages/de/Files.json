@@ -1,10 +1,15 @@
 {
   "title": "Dateien",
+  "wikiNoticeTitle": "Neue Dokumente gehören jetzt ins Wiki",
+  "wikiNoticeBody": "Flyer, Kreditrichtlinien und andere Referenzdokumente gehören jetzt ins Wiki, direkt neben dem Artikel, der sie erklärt. Dateien bleibt für bestehende Dokumente bestehen, bis es ausläuft.",
+  "wikiNoticeCta": "Wiki öffnen",
+  "wikiNoticeDismiss": "Schließen",
   "quota": "{used} von {total} belegt",
   "searchPlaceholder": "Dateien suchen…",
   "newFolder": "Neuer Ordner",
   "newFolderDesc": "Erstellt einen Ordner im aktuellen Verzeichnis, sichtbar für alle mit Zugriff auf diesen Ort.",
   "folderName": "Ordnername",
+  "noFolder": "Kein Ordner",
   "create": "Erstellen",
   "cancel": "Abbrechen",
   "save": "Speichern",
@@ -64,5 +69,9 @@
   "bulkDeleteTitle": "{count} Elemente löschen?",
   "uploadQueue": "Uploads",
   "retry": "Erneut versuchen",
-  "finalizing": "Wird abgeschlossen…"
+  "finalizing": "Wird abgeschlossen…",
+  "chooseFolder": "Ordner wählen",
+  "chooseFolderHint": "In einen Unterordner wechseln oder direkt in den aktuellen hochladen.",
+  "selectThisFolder": "Hier speichern",
+  "noSubfolders": "Noch keine Unterordner."
 }

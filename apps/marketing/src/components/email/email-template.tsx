@@ -25,10 +25,7 @@ const localeMessages: Record<string, typeof deMessages> = {
   zh: zhMessages,
 };
 
-function getSubmissionTypeLabel(
-  t: (typeof deMessages)["email"],
-  submissionType?: string
-) {
+function getSubmissionTypeLabel(t: (typeof deMessages)["email"], submissionType?: string) {
   switch (submissionType) {
     case "message":
       return t.typeMessage;
@@ -68,9 +65,7 @@ export function EmailTemplate({
               <tr>
                 <td>
                   <h1 style={heading}>
-                    {t.greeting
-                      .replace("{firstName}", firstName)
-                      .replace("{lastName}", lastName)}
+                    {t.greeting.replace("{firstName}", firstName).replace("{lastName}", lastName)}
                   </h1>
                 </td>
                 {typeLabel && (

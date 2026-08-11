@@ -17,30 +17,23 @@ export const weeklyOverview = query({
 
     const devices = await ctx.db
       .query("devices")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
 
-    const personIds = [
-      ...new Set(devices.flatMap(d => (d.personId ? [d.personId] : []))),
-    ];
+    const personIds = [...new Set(devices.flatMap((d) => (d.personId ? [d.personId] : [])))];
     const peopleById = new Map(
-      (await Promise.all(personIds.map(id => ctx.db.get(id)))).flatMap(p =>
-        p ? [[p._id, p] as const] : []
-      )
+      (await Promise.all(personIds.map((id) => ctx.db.get(id)))).flatMap((p) =>
+        p ? [[p._id, p] as const] : [],
+      ),
     );
 
     return await Promise.all(
-      devices.map(async device => {
-        const person = device.personId
-          ? (peopleById.get(device.personId) ?? null)
-          : null;
+      devices.map(async (device) => {
+        const person = device.personId ? (peopleById.get(device.personId) ?? null) : null;
         const daily = await ctx.db
           .query("dailyStats")
-          .withIndex("by_device_day", q =>
-            q
-              .eq("deviceId", device.deviceId)
-              .gte("day", startDay)
-              .lte("day", endDay)
+          .withIndex("by_device_day", (q) =>
+            q.eq("deviceId", device.deviceId).gte("day", startDay).lte("day", endDay),
           )
           .collect();
         return {
@@ -50,13 +43,13 @@ export const weeklyOverview = query({
           personName: person?.name ?? null,
           windowsUser: device.lastWindowsUser ?? null,
           lastSeen: device.lastSeen,
-          daily: daily.map(d => ({
+          daily: daily.map((d) => ({
             day: d.day,
             activeSeconds: d.activeSeconds,
             idleSeconds: d.idleSeconds,
           })),
         };
-      })
+      }),
     );
   },
 });

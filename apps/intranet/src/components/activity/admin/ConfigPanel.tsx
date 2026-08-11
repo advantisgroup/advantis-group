@@ -18,13 +18,7 @@ import { Reveal } from "@/components/activity/motion/Reveal";
 import { BrandedText } from "@/components/branding/ProviderMark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useI18n } from "@/lib/activity/i18n";
@@ -54,9 +48,7 @@ function NumberField({
           type="number"
           inputMode="numeric"
           value={value}
-          onChange={e =>
-            onChange(e.target.value === "" ? "" : Number(e.target.value))
-          }
+          onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
           className="w-32"
         />
         <span className="text-sm text-muted-foreground">{unit}</span>
@@ -109,7 +101,7 @@ export function ConfigPanel({
         offlineThresholdSeconds: offline,
         retentionDays: retention,
       },
-      { success: t("settings.config.saved") }
+      { success: t("settings.config.saved") },
     );
     setSavingCfg(false);
   }
@@ -122,9 +114,7 @@ export function ConfigPanel({
 
   // ── Tracker debug password ────────────────────────────────────────────
   const isSet = useQuery(api.activity.settings.debugPasswordIsSet);
-  const setDebugPassword = useActionWithToast(
-    api.activity.settings.setDebugPassword
-  );
+  const setDebugPassword = useActionWithToast(api.activity.settings.setDebugPassword);
   const [pw, setPw] = useState("");
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -140,29 +130,21 @@ export function ConfigPanel({
   // that used to need the Convex CLI work from any device (incl. phones).
   type TroubleKey = "sync" | "quarantine" | "prune" | "sanitize";
   const [troubleBusy, setTroubleBusy] = useState<TroubleKey | null>(null);
-  const [troubleResult, setTroubleResult] = useState<
-    Partial<Record<TroubleKey, string>>
-  >({});
+  const [troubleResult, setTroubleResult] = useState<Partial<Record<TroubleKey, string>>>({});
   const MAX_TROUBLE_BATCHES = 500;
   const todayIso = new Date().toISOString().slice(0, 10);
   const [sanitizeDay, setSanitizeDay] = useState(todayIso);
 
-  const syncNow = useActionWithToast(
-    api.activity.integrations.troubleshootSyncNow
-  );
-  const quarantineStep = useMutation(
-    api.activity.maintenance.troubleshootQuarantineOutOfHours
-  );
+  const syncNow = useActionWithToast(api.activity.integrations.troubleshootSyncNow);
+  const quarantineStep = useMutation(api.activity.maintenance.troubleshootQuarantineOutOfHours);
   const pruneStep = useMutation(api.activity.maintenance.troubleshootPruneNow);
-  const sanitizeDayAction = useActionWithToast(
-    api.activity.clockodo.troubleshootSanitizeDay
-  );
+  const sanitizeDayAction = useActionWithToast(api.activity.clockodo.troubleshootSanitizeDay);
 
   async function runSyncNow() {
     setTroubleBusy("sync");
     const res = await syncNow({}, { success: t("settings.trouble.syncDone") });
     if (res !== undefined) {
-      setTroubleResult(r => ({ ...r, sync: t("settings.trouble.syncDone") }));
+      setTroubleResult((r) => ({ ...r, sync: t("settings.trouble.syncDone") }));
     }
     setTroubleBusy(null);
   }
@@ -184,7 +166,7 @@ export function ConfigPanel({
         cursor = res.cursorAt;
       }
       const msg = t("settings.trouble.quarantineDone", { count: moved });
-      setTroubleResult(r => ({ ...r, quarantine: msg }));
+      setTroubleResult((r) => ({ ...r, quarantine: msg }));
       toast(msg, "ok");
     } catch (err) {
       console.error("[troubleshoot quarantine failed]", err);
@@ -203,7 +185,7 @@ export function ConfigPanel({
         if (res.done) break;
       }
       const msg = t("settings.trouble.pruneDone", { count: deleted });
-      setTroubleResult(r => ({ ...r, prune: msg }));
+      setTroubleResult((r) => ({ ...r, prune: msg }));
       toast(msg, "ok");
     } catch (err) {
       console.error("[troubleshoot prune failed]", err);
@@ -222,7 +204,7 @@ export function ConfigPanel({
         deleted: res.deleted,
         quarantined: res.quarantined,
       });
-      setTroubleResult(r => ({ ...r, sanitize: msg }));
+      setTroubleResult((r) => ({ ...r, sanitize: msg }));
       toast(msg, "ok");
     }
     setTroubleBusy(null);
@@ -238,7 +220,7 @@ export function ConfigPanel({
     setBusy(true);
     const result = await setDebugPassword(
       { password: pw },
-      { success: t("settings.debugPw.saved") }
+      { success: t("settings.debugPw.saved") },
     );
     setBusy(false);
     if (result !== undefined) {
@@ -256,9 +238,7 @@ export function ConfigPanel({
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
               <SlidersHorizontal className="h-4 w-4" />
             </span>
-            <CardTitle className="text-base">
-              {t("settings.config.heading")}
-            </CardTitle>
+            <CardTitle className="text-base">{t("settings.config.heading")}</CardTitle>
           </div>
           <CardDescription>{t("settings.config.hint")}</CardDescription>
         </CardHeader>
@@ -304,9 +284,7 @@ export function ConfigPanel({
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
               <KeyRound className="h-4 w-4" />
             </span>
-            <CardTitle className="text-base">
-              {t("settings.debugPw.heading")}
-            </CardTitle>
+            <CardTitle className="text-base">{t("settings.debugPw.heading")}</CardTitle>
           </div>
           <CardDescription>{t("settings.debugPw.hint")}</CardDescription>
         </CardHeader>
@@ -325,7 +303,7 @@ export function ConfigPanel({
             <Input
               type="password"
               value={pw}
-              onChange={e => setPw(e.target.value)}
+              onChange={(e) => setPw(e.target.value)}
               placeholder={t("settings.debugPw.new")}
               className="flex-1"
             />
@@ -352,9 +330,7 @@ export function ConfigPanel({
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
               <Wrench className="h-4 w-4" />
             </span>
-            <CardTitle className="text-base">
-              {t("settings.trouble.heading")}
-            </CardTitle>
+            <CardTitle className="text-base">{t("settings.trouble.heading")}</CardTitle>
           </div>
           <CardDescription>{t("settings.trouble.hint")}</CardDescription>
         </CardHeader>
@@ -367,18 +343,14 @@ export function ConfigPanel({
                 onClick={runSyncNow}
                 className="w-full sm:w-auto"
               >
-                {troubleBusy === "sync" && (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                )}
+                {troubleBusy === "sync" && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("settings.trouble.syncNow")}
               </Button>
               <p className="text-xs text-muted-foreground">
                 <BrandedText text={t("settings.trouble.syncNowHint")} />
               </p>
               {troubleResult.sync && (
-                <p className="text-xs font-medium text-ok">
-                  {troubleResult.sync}
-                </p>
+                <p className="text-xs font-medium text-ok">{troubleResult.sync}</p>
               )}
             </div>
 
@@ -389,18 +361,14 @@ export function ConfigPanel({
                 onClick={runQuarantine}
                 className="w-full sm:w-auto"
               >
-                {troubleBusy === "quarantine" && (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                )}
+                {troubleBusy === "quarantine" && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("settings.trouble.quarantine")}
               </Button>
               <p className="text-xs text-muted-foreground">
                 {t("settings.trouble.quarantineHint")}
               </p>
               {troubleResult.quarantine && (
-                <p className="text-xs font-medium text-ok">
-                  {troubleResult.quarantine}
-                </p>
+                <p className="text-xs font-medium text-ok">{troubleResult.quarantine}</p>
               )}
             </div>
 
@@ -411,18 +379,12 @@ export function ConfigPanel({
                 onClick={runPrune}
                 className="w-full sm:w-auto"
               >
-                {troubleBusy === "prune" && (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                )}
+                {troubleBusy === "prune" && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("settings.trouble.prune")}
               </Button>
-              <p className="text-xs text-muted-foreground">
-                {t("settings.trouble.pruneHint")}
-              </p>
+              <p className="text-xs text-muted-foreground">{t("settings.trouble.pruneHint")}</p>
               {troubleResult.prune && (
-                <p className="text-xs font-medium text-ok">
-                  {troubleResult.prune}
-                </p>
+                <p className="text-xs font-medium text-ok">{troubleResult.prune}</p>
               )}
             </div>
           </div>
@@ -448,25 +410,17 @@ export function ConfigPanel({
                   type="date"
                   value={sanitizeDay}
                   max={todayIso}
-                  onChange={e => setSanitizeDay(e.target.value || todayIso)}
+                  onChange={(e) => setSanitizeDay(e.target.value || todayIso)}
                   className="w-40"
                 />
               </label>
-              <Button
-                variant="outline"
-                disabled={troubleBusy !== null}
-                onClick={runSanitizeDay}
-              >
-                {troubleBusy === "sanitize" && (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                )}
+              <Button variant="outline" disabled={troubleBusy !== null} onClick={runSanitizeDay}>
+                {troubleBusy === "sanitize" && <Loader2 className="h-4 w-4 animate-spin" />}
                 {t("settings.trouble.sanitizeRun")}
               </Button>
             </div>
             {troubleResult.sanitize && (
-              <p className="mt-2 text-xs font-medium text-ok">
-                {troubleResult.sanitize}
-              </p>
+              <p className="mt-2 text-xs font-medium text-ok">{troubleResult.sanitize}</p>
             )}
           </div>
         </CardContent>
@@ -482,9 +436,7 @@ export function ConfigPanel({
               <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
                 <ShieldAlert className="h-4 w-4" />
               </span>
-              <CardTitle className="text-base">
-                {t("settings.discarded.heading")}
-              </CardTitle>
+              <CardTitle className="text-base">{t("settings.discarded.heading")}</CardTitle>
             </div>
             <CardDescription>{t("settings.discarded.hint")}</CardDescription>
           </CardHeader>
@@ -504,9 +456,7 @@ export function ConfigPanel({
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-signal/20 text-signal">
               <Building2 className="h-4 w-4" />
             </span>
-            <CardTitle className="text-base">
-              {t("settings.access.heading")}
-            </CardTitle>
+            <CardTitle className="text-base">{t("settings.access.heading")}</CardTitle>
           </div>
           <CardDescription>{t("settings.access.hint")}</CardDescription>
         </CardHeader>
@@ -516,38 +466,32 @@ export function ConfigPanel({
           ) : (
             <div className="space-y-5">
               <div>
-                <p className="text-sm font-medium text-fg">
-                  {t("settings.access.domainsLabel")}
-                </p>
+                <p className="text-sm font-medium text-fg">{t("settings.access.domainsLabel")}</p>
                 {access.allowedDomains.length === 0 ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     {t("settings.access.noDomains")}
                   </p>
                 ) : (
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {access.allowedDomains.map(domain => (
+                    {access.allowedDomains.map((domain) => (
                       <Badge key={domain} variant="muted">
                         {domain}
                       </Badge>
                     ))}
                   </div>
                 )}
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {t("settings.access.note")}
-                </p>
+                <p className="mt-2 text-xs text-muted-foreground">{t("settings.access.note")}</p>
               </div>
 
               <div className="border-t border-border pt-4">
-                <p className="text-sm font-medium text-fg">
-                  {t("settings.access.adminsLabel")}
-                </p>
+                <p className="text-sm font-medium text-fg">{t("settings.access.adminsLabel")}</p>
                 {access.adminEmails.length === 0 ? (
                   <p className="mt-1 text-xs text-muted-foreground">
                     {t("settings.access.noAdmins")}
                   </p>
                 ) : (
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {access.adminEmails.map(email => (
+                    {access.adminEmails.map((email) => (
                       <Badge key={email} variant="muted">
                         {email}
                       </Badge>

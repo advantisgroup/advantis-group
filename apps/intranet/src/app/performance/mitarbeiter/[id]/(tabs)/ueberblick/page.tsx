@@ -1,25 +1,15 @@
 "use client";
 
-import { useParams } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { useQuery } from "convex/react";
 import { Award, Phone, Target, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { MetricTile } from "@/components/performance/MetricTile";
-import {
-  DeltaTriple,
-  fmtNum,
-  fmtPct,
-} from "@/components/performance/PerformanceFormat";
+import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
+import { DeltaTriple, fmtNum, fmtPct } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { UnqualifiedReasonsChart } from "@/components/performance/UnqualifiedReasonsChart";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 import { cn } from "@/lib/utils";
 
 const BADGE_ICONS: Record<string, string> = {
@@ -27,6 +17,8 @@ const BADGE_ICONS: Record<string, string> = {
   won: "🏆",
   calls: "📞",
 };
+
+const BADGE_ORDER = ["hitrate", "won", "calls"];
 
 function PrimaryKpiCard({
   accent,
@@ -58,9 +50,7 @@ function PrimaryKpiCard({
           {label}
         </span>
         <span className="text-3xl font-semibold tabular-nums">{value}</span>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
-        )}
+        {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
         <DeltaTriple dVm={dVm} dVj={dVj} dTeam={dTeam} />
       </CardContent>
     </Card>
@@ -76,24 +66,16 @@ type Signal = {
   trend: { text: string; dir: "good" | "bad" } | null;
 };
 
-function SignalList({
-  items,
-  kind,
-}: {
-  items: Signal[];
-  kind: "alert" | "highlight";
-}) {
+function SignalList({ items, kind }: { items: Signal[]; kind: "alert" | "highlight" }) {
   return (
     <ul className="space-y-3">
-      {items.map(s => (
+      {items.map((s) => (
         <li key={s.key} className="text-sm">
           <div className="flex items-center justify-between">
             <span className="font-medium">{s.label}</span>
             <span
               className={
-                kind === "alert"
-                  ? "text-destructive"
-                  : "text-emerald-600 dark:text-emerald-400"
+                kind === "alert" ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"
               }
             >
               {fmtNum(s.value)}
@@ -120,15 +102,7 @@ function SignalList({
 
 export default function EmployeeOverviewPage() {
   const t = useTranslations("Performance");
-  const params = useParams<{ id: string }>();
-  const employeeId = params.id as Id<"performanceEmployees">;
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
+  const data = useEmployeeDetailData();
 
   if (!data) return <PerformanceContentSkeleton />;
   if (!data.cur) {
@@ -166,11 +140,7 @@ export default function EmployeeOverviewPage() {
         />
         <PrimaryKpiCard
           accent="slate"
-          label={
-            fc?.isActual
-              ? t("dashboardForecastTitleDone")
-              : t("dashboardForecastTitle")
-          }
+          label={fc?.isActual ? t("dashboardForecastTitleDone") : t("dashboardForecastTitle")}
           value={fmtNum(data.cur.fc1)}
           subtitle={
             fc?.isActual
@@ -265,17 +235,26 @@ export default function EmployeeOverviewPage() {
             {t("badgeCount", { count: data.nBadges })}
           </span>
         </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          {Object.keys(data.monthBadges).length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("badgesEmpty")}</p>
-          ) : (
-            Object.entries(data.monthBadges).map(([key, info]) => (
-              <Badge key={key} variant="success" title={t(`badgeLabel.${key}`)}>
-                {BADGE_ICONS[key] ?? ""} {t(`badgeLabel.${key}`)} ·{" "}
-                {fmtNum(info.value)}
-              </Badge>
-            ))
-          )}
+        <CardContent className="grid gap-2 sm:grid-cols-3">
+          {BADGE_ORDER.map((key) => {
+            const count = data.myBadges[key] ?? 0;
+            return (
+              <div
+                key={key}
+                className="flex items-center justify-between gap-3 rounded-lg border border-border/70 p-3"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    {BADGE_ICONS[key]}
+                  </span>
+                  <span className="truncate text-sm font-medium">
+                    {t(`badgeTotalLabel.${key}`)}
+                  </span>
+                </div>
+                <Badge variant={count > 0 ? "success" : "muted"}>{fmtNum(count)}</Badge>
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
 

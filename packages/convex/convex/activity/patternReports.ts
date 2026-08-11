@@ -26,35 +26,30 @@ async function fetchWeekSamples(
   ctx: QueryCtx | MutationCtx,
   employeeId: string,
   weekStartMs: number,
-  weekEndMs: number
+  weekEndMs: number,
 ): Promise<StateSample[]> {
   const rows = await ctx.db
     .query("stateSamples")
-    .withIndex("by_employee_time", q =>
-      q.eq("employeeId", employeeId).gte("at", weekStartMs).lt("at", weekEndMs)
+    .withIndex("by_employee_time", (q) =>
+      q.eq("employeeId", employeeId).gte("at", weekStartMs).lt("at", weekEndMs),
     )
     .order("asc")
     .take(10000);
 
   const prior = await ctx.db
     .query("stateSamples")
-    .withIndex("by_employee_time", q =>
-      q.eq("employeeId", employeeId).lt("at", weekStartMs)
-    )
+    .withIndex("by_employee_time", (q) => q.eq("employeeId", employeeId).lt("at", weekStartMs))
     .order("desc")
     .first();
 
   const samples = prior ? [prior, ...rows] : rows;
-  return samples.map(r => ({ state: r.state, at: r.at }));
+  return samples.map((r) => ({ state: r.state, at: r.at }));
 }
 
-async function personNameFor(
-  ctx: QueryCtx | MutationCtx,
-  employeeId: string
-): Promise<string> {
+async function personNameFor(ctx: QueryCtx | MutationCtx, employeeId: string): Promise<string> {
   const person = await ctx.db
     .query("people")
-    .withIndex("by_employeeId", q => q.eq("employeeId", employeeId))
+    .withIndex("by_employeeId", (q) => q.eq("employeeId", employeeId))
     .unique();
   return person?.name ?? employeeId;
 }
@@ -62,7 +57,7 @@ async function personNameFor(
 /** Per-day active/idle/quick-flip rollup for one week, for the report's charts. */
 function dailyBreakdown(
   samples: StateSample[],
-  weekStartDay: string
+  weekStartDay: string,
 ): Array<{
   day: string;
   activeSeconds: number;
@@ -74,10 +69,7 @@ function dailyBreakdown(
     const dayStart = dayToMs(day);
     const dayEnd = dayStart + DAY_MS;
     const segments = buildSegments(samples, dayStart, dayEnd);
-    const metrics = computeWeekMetrics(
-      segments,
-      PATTERN_THRESHOLDS.quickFlipMs
-    );
+    const metrics = computeWeekMetrics(segments, PATTERN_THRESHOLDS.quickFlipMs);
     return {
       day,
       activeSeconds: metrics.activeSeconds,
@@ -108,16 +100,9 @@ export const generate = mutation({
     ]);
 
     const segments = buildSegments(samples, weekStartMs, weekEndMs);
-    const current = computeWeekMetrics(
-      segments,
-      PATTERN_THRESHOLDS.quickFlipMs
-    );
+    const current = computeWeekMetrics(segments, PATTERN_THRESHOLDS.quickFlipMs);
 
-    const prevSegments = buildSegments(
-      prevSamples,
-      prevWeekStartMs,
-      weekStartMs
-    );
+    const prevSegments = buildSegments(prevSamples, prevWeekStartMs, weekStartMs);
     const previous =
       prevSamples.length > 0
         ? computeWeekMetrics(prevSegments, PATTERN_THRESHOLDS.quickFlipMs)
@@ -150,8 +135,8 @@ export const generate = mutation({
 
     const existing = await ctx.db
       .query("activityPatternReports")
-      .withIndex("by_employee_week", q =>
-        q.eq("employeeId", employeeId).eq("weekStart", weekStart)
+      .withIndex("by_employee_week", (q) =>
+        q.eq("employeeId", employeeId).eq("weekStart", weekStart),
       )
       .unique();
 
@@ -171,8 +156,8 @@ export const get = query({
     await requireUser(ctx);
     return await ctx.db
       .query("activityPatternReports")
-      .withIndex("by_employee_week", q =>
-        q.eq("employeeId", employeeId).eq("weekStart", weekStart)
+      .withIndex("by_employee_week", (q) =>
+        q.eq("employeeId", employeeId).eq("weekStart", weekStart),
       )
       .unique();
   },
@@ -185,7 +170,7 @@ export const list = query({
     await requireUser(ctx);
     return await ctx.db
       .query("activityPatternReports")
-      .withIndex("by_employee_week", q => q.eq("employeeId", employeeId))
+      .withIndex("by_employee_week", (q) => q.eq("employeeId", employeeId))
       .order("desc")
       .take(Math.min(limit ?? 12, 52));
   },

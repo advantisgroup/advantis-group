@@ -14,10 +14,7 @@ interface Props {
   /** Employee path → drops become approval requests; copy reflects that. */
   requiresApproval: boolean;
   /** Perform the upload(s); report 0–1 progress for the rocket. */
-  onUpload: (
-    files: File[],
-    onProgress: (fraction: number) => void
-  ) => Promise<void>;
+  onUpload: (files: File[], onProgress: (fraction: number) => void) => Promise<void>;
 }
 
 /**
@@ -27,11 +24,7 @@ interface Props {
  * all fades away. Touch devices have no OS file-drag, so this stays dormant
  * there (the toolbar's Upload button covers mobile).
  */
-export function UploadDropOverlay({
-  enabled,
-  requiresApproval,
-  onUpload,
-}: Props) {
+export function UploadDropOverlay({ enabled, requiresApproval, onUpload }: Props) {
   const t = useTranslations("Files");
   const reduce = useReducedMotion();
   const [phase, setPhase] = useState<Phase>("idle");
@@ -55,7 +48,7 @@ export function UploadDropOverlay({
         setPhase("idle");
       }
     },
-    [onUpload]
+    [onUpload],
   );
 
   useEffect(() => {
@@ -65,7 +58,7 @@ export function UploadDropOverlay({
       if (!hasFiles(e)) return;
       e.preventDefault();
       dragDepth.current += 1;
-      setPhase(p => (p === "idle" ? "prompt" : p));
+      setPhase((p) => (p === "idle" ? "prompt" : p));
     };
     const onDragOver = (e: DragEvent) => {
       if (hasFiles(e)) e.preventDefault();
@@ -74,7 +67,7 @@ export function UploadDropOverlay({
       if (!hasFiles(e)) return;
       dragDepth.current = Math.max(0, dragDepth.current - 1);
       if (dragDepth.current === 0) {
-        setPhase(p => (p === "prompt" ? "idle" : p));
+        setPhase((p) => (p === "prompt" ? "idle" : p));
       }
     };
     const onDrop = (e: DragEvent) => {
@@ -133,13 +126,9 @@ export function UploadDropOverlay({
             >
               <UploadCloud className="size-12 text-blue-400" />
               <div>
-                <p className="text-xl font-semibold text-white">
-                  {t("dropTitle")}
-                </p>
+                <p className="text-xl font-semibold text-white">{t("dropTitle")}</p>
                 <p className="mt-1 text-sm text-blue-100/80">
-                  {requiresApproval
-                    ? t("dropSubtitleApproval")
-                    : t("dropSubtitle")}
+                  {requiresApproval ? t("dropSubtitleApproval") : t("dropSubtitle")}
                 </p>
               </div>
             </motion.div>

@@ -29,7 +29,7 @@ function decodeEntities(s: string): string {
 function ogPattern(prop: string): RegExp {
   return new RegExp(
     `<meta[^>]+(?:property|name)=["']${prop}["'][^>]+content=["']([^"']+)["']`,
-    "i"
+    "i",
   );
 }
 
@@ -95,10 +95,7 @@ export const unfurlRoute = new Elysia().get(
         ogPattern("twitter:description"),
         ogPattern("description"),
       ]),
-      image: metaContent(html, [
-        ogPattern("og:image"),
-        ogPattern("twitter:image"),
-      ]),
+      image: metaContent(html, [ogPattern("og:image"), ogPattern("twitter:image")]),
       siteName: metaContent(html, [ogPattern("og:site_name")]),
     };
     return result;
@@ -114,5 +111,5 @@ export const unfurlRoute = new Elysia().get(
         siteName: t.Optional(t.String()),
       }),
     },
-  }
+  },
 );

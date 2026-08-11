@@ -2,15 +2,11 @@
 
 import { useMemo } from "react";
 
-import { useParams } from "next/navigation";
-
-import { api } from "@advantis/convex/api";
-import { type Id } from "@advantis/convex/dataModel";
-import { useQuery } from "convex/react";
 import { useLocale, useTranslations } from "next-intl";
 
 import { FilterableBarChart } from "@/components/activity/charts/FilterableBarChart";
 import { CHART } from "@/components/activity/charts/theme";
+import { useEmployeeDetailData } from "@/components/performance/PerformanceEmployeeDetailContext";
 import {
   DeltaPair,
   fmtDayShort,
@@ -18,9 +14,7 @@ import {
   fmtNum,
 } from "@/components/performance/PerformanceFormat";
 import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { usePerformanceYm } from "@/components/performance/PerformanceYmContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPerformanceToken } from "@/lib/performanceAuth";
 
 function CallStatCard({
   label,
@@ -47,27 +41,19 @@ function CallStatCard({
 export default function EmployeeCallsPage() {
   const t = useTranslations("Performance");
   const locale = useLocale();
-  const params = useParams<{ id: string }>();
-  const employeeId = params.id as Id<"performanceEmployees">;
-  const token = getPerformanceToken() ?? "";
-  const [ym] = usePerformanceYm();
-  const data = useQuery(api.performanceQueries.employeeDetail, {
-    token,
-    employeeId,
-    ym,
-  });
+  const data = useEmployeeDetailData();
 
   // The "Call-Aktivität" chart (answered/outbound) no longer renders here —
   // it's promoted to the top of the page by (tabs)/layout.tsx's
   // EmployeeTopSection for this tab, so it isn't shown twice.
   const timeChart = useMemo(
     () =>
-      (data?.days ?? []).map(d => ({
+      (data?.days ?? []).map((d) => ({
         label: fmtDayShort(d.date, locale),
         talk: d.values.talkTotalSec ?? 0,
         login: d.values.loginSec ?? 0,
       })),
-    [data?.days, locale]
+    [data?.days, locale],
   );
 
   if (!data) return <PerformanceContentSkeleton />;
@@ -82,9 +68,7 @@ export default function EmployeeCallsPage() {
     );
   }
 
-  const daysWithData = data.days.filter(
-    d => d.values.callsToday !== undefined
-  ).length;
+  const daysWithData = data.days.filter((d) => d.values.callsToday !== undefined).length;
   const loginPerDay = daysWithData
     ? Math.round((data.cur?.loginSec ?? 0) / daysWithData)
     : undefined;
@@ -128,10 +112,7 @@ export default function EmployeeCallsPage() {
           dVm={data.dVm.loginSec}
           dVj={data.dVj.loginSec}
         />
-        <CallStatCard
-          label={t("callsLoginPerDayLabel")}
-          value={fmtDuration(loginPerDay)}
-        />
+        <CallStatCard label={t("callsLoginPerDayLabel")} value={fmtDuration(loginPerDay)} />
       </div>
 
       <Card>
@@ -148,16 +129,17 @@ export default function EmployeeCallsPage() {
                 key: "talk",
                 name: t("callsTotalTalkLabel"),
                 color: CHART.idle,
+                axis: "left",
               },
               {
                 key: "login",
                 name: t("callsLoginLabel"),
                 color: CHART.info,
+                axis: "right",
               },
             ]}
             yTickFormatter={(v: number) => fmtDuration(v)}
             tooltipFormatter={(value: number) => fmtDuration(value)}
-            yScale="log"
           />
         </CardContent>
       </Card>

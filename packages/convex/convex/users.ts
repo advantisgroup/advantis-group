@@ -7,6 +7,7 @@ import { internal } from "./_generated/api";
 import { roleValidator } from "./schema";
 import { clearVaultPasswordForUser } from "./applicantVault";
 import {
+  effectiveCustomRoleIds,
   ensureUser,
   getCurrentUser,
   isApplicantEligible,
@@ -17,6 +18,7 @@ import {
   requireVaultUnlocked,
 } from "./lib/auth";
 import { listUserPermissions } from "./lib/permissions";
+import { recordUnifiedAudit } from "./lib/auditLogWrite";
 import {
   lockClerkUser,
   unlockClerkUser,
@@ -32,9 +34,12 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
   const avatar = user.avatarStorageId
     ? await ctx.storage.getUrl(user.avatarStorageId)
     : (user.avatarUrl ?? null);
-  const customRole = user.customRoleId
-    ? await ctx.db.get(user.customRoleId)
-    : null;
+  const customRoleDocs = await Promise.all(
+    effectiveCustomRoleIds(user).map(id => ctx.db.get(id))
+  );
+  const customRoles = customRoleDocs.filter(
+    (role): role is Doc<"customRoles"> => role !== null
+  );
   return {
     _id: user._id,
     clerkUserId: user.clerkUserId,
@@ -51,14 +56,21 @@ async function withAvatar(ctx: QueryCtx, user: Doc<"users">) {
     managerId: user.managerId ?? null,
     status: user.status,
     external: user.external ?? false,
+    clockodoUserId: user.clockodoUserId ?? null,
     updatesEmailConsent: user.updatesEmailConsent ?? false,
     gfAccess: user.gfAccess ?? false,
     uploadRequestsEnabled: user.uploadRequestsEnabled !== false,
     /** `["gf_access", "upload_requests"]`-style — see lib/permissions.ts. */
     permissions: listUserPermissions(user),
-    customRoleId: user.customRoleId ?? null,
-    customRoleName: customRole?.name ?? null,
-    capabilities: customRole?.capabilities ?? [],
+    customRoleIds: customRoles.map(role => role._id),
+    // Per-role breakdown (name + that role's own capabilities), for UI that
+    // needs to explain each grant individually rather than a flattened union.
+    customRoles: customRoles.map(role => ({
+      _id: role._id,
+      name: role.name,
+      capabilities: role.capabilities,
+    })),
+    capabilities: [...new Set(customRoles.flatMap(role => role.capabilities))],
     applicantAccessDelegate: user.applicantAccessDelegate ?? false,
     applicantAccess: user.applicantAccess ?? false,
     roleLabel: user.roleLabel ?? null,
@@ -96,11 +108,15 @@ async function queryUsers(
   ctx: QueryCtx,
   args: { search?: string; department?: string; includeSuspended?: boolean }
 ) {
-  let users = await ctx.db.query("users").collect();
-
-  if (!args.includeSuspended) {
-    users = users.filter(u => u.status === "active");
-  }
+  // Most callers only want active users — use the `by_status` index to skip
+  // suspended rows at the DB layer rather than fetching everyone and
+  // filtering in JS.
+  let users = args.includeSuspended
+    ? await ctx.db.query("users").collect()
+    : await ctx.db
+        .query("users")
+        .withIndex("by_status", q => q.eq("status", "active"))
+        .collect();
   if (args.department) {
     users = users.filter(
       u => u.department?.toLowerCase() === args.department!.toLowerCase()
@@ -162,10 +178,13 @@ export const list = query({
 });
 
 /**
- * Directory page only: `list` plus live presence and "out today" absence
- * status. Isolated from `list` so the sitewide presence heartbeat only
- * invalidates the one page that actually renders online status, not every
- * command palette / admin panel that merely lists users.
+ * Directory page only: `list` plus live presence. Isolated from `list` so the
+ * sitewide presence heartbeat only invalidates the one page that actually
+ * renders online status, not every command palette / admin panel that merely
+ * lists users. "Out today" absence status is fetched separately by the page
+ * itself from apps/api's live Clockodo endpoint (this query can't — Convex
+ * queries have no HTTP access, and absences aren't mirrored into Convex
+ * anymore; see AGENTS.md's Clockodo section).
  */
 export const directoryList = query({
   args: listArgs,
@@ -177,24 +196,11 @@ export const directoryList = query({
     const lastActiveByUser = new Map(
       presenceRows.map(p => [p.userId, p.lastActiveAt])
     );
-    const today = new Date().toISOString().slice(0, 10);
-    const approved = await ctx.db
-      .query("absences")
-      .withIndex("by_status", q => q.eq("status", "approved"))
-      .collect();
-    const outByUser = new Map<string, string>();
-    for (const a of approved) {
-      if (a.startDate <= today && today <= a.endDate) {
-        const prev = outByUser.get(a.userId);
-        if (!prev || a.endDate > prev) outByUser.set(a.userId, a.endDate);
-      }
-    }
 
     return Promise.all(
       users.map(async u => ({
         ...(await withAvatar(ctx, u)),
         lastActiveAt: lastActiveByUser.get(u._id) ?? null,
-        outUntil: outByUser.get(u._id) ?? null,
         managerName: u.managerId
           ? (nameById.get(u.managerId as string) ?? null)
           : null,
@@ -250,9 +256,12 @@ export const orgContext = query({
     const user = await ctx.db.get(userId);
     if (!user) return { manager: null, reports: [] };
     const manager = user.managerId ? await ctx.db.get(user.managerId) : null;
-    const reports = (await ctx.db.query("users").collect()).filter(
-      u => u.managerId === userId && u.status === "active"
-    );
+    const reports = (
+      await ctx.db
+        .query("users")
+        .withIndex("by_managerId", q => q.eq("managerId", userId))
+        .collect()
+    ).filter(u => u.status === "active");
     const brief = async (u: Doc<"users">) => {
       const full = await withAvatar(ctx, u);
       return {
@@ -376,25 +385,26 @@ export const setRole = mutation({
   },
 });
 
-/** Assign or clear a member's custom role. Manager+. */
-export const assignCustomRole = mutation({
+/** Replace a member's full set of custom roles. Manager+. Same full-array-
+ * replace convention as `setTeams` below. */
+export const setCustomRoles = mutation({
   args: {
     userId: v.id("users"),
-    customRoleId: v.optional(v.id("customRoles")),
+    customRoleIds: v.array(v.id("customRoles")),
   },
-  handler: async (ctx, { userId, customRoleId }) => {
+  handler: async (ctx, { userId, customRoleIds }) => {
     await requireManager(ctx);
     const target = await ctx.db.get(userId);
     if (!target) {
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
-    if (customRoleId) {
-      const role = await ctx.db.get(customRoleId);
-      if (!role) {
-        throw new ConvexError({ code: "not_found", message: "Role not found" });
-      }
+    const roles = await Promise.all(customRoleIds.map(id => ctx.db.get(id)));
+    if (roles.some(role => !role)) {
+      throw new ConvexError({ code: "not_found", message: "Role not found" });
     }
-    await ctx.db.patch(userId, { customRoleId });
+    // Clears the legacy singular field too — an explicit assignment is as
+    // good a migration point as any for that holder.
+    await ctx.db.patch(userId, { customRoleIds, customRoleId: undefined });
     return { ok: true };
   },
 });
@@ -501,11 +511,19 @@ export const applyGfAccess = internalMutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { gfAccess });
+    const auditAt = Date.now();
     await ctx.db.insert("onedriveAudit", {
       actorUserId: admin._id,
       action: gfAccess ? "grant_gf_access" : "revoke_gf_access",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "onedrive",
+      actorUserId: admin._id,
+      action: gfAccess ? "grant_gf_access" : "revoke_gf_access",
+      target: target.email,
+      at: auditAt,
     });
     return { clerkUserId: target.clerkUserId, gfAccess };
   },
@@ -535,11 +553,19 @@ export const applyUploadPermission = internalMutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     await ctx.db.patch(userId, { uploadRequestsEnabled: enabled });
+    const auditAt = Date.now();
     await ctx.db.insert("onedriveAudit", {
       actorUserId: actor._id,
       action: enabled ? "enable_uploads" : "disable_uploads",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "onedrive",
+      actorUserId: actor._id,
+      action: enabled ? "enable_uploads" : "disable_uploads",
+      target: target.email,
+      at: auditAt,
     });
     return { clerkUserId: target.clerkUserId, enabled };
   },
@@ -632,7 +658,10 @@ export const departments = query({
   args: {},
   handler: async ctx => {
     await requireUser(ctx);
-    const users = await ctx.db.query("users").collect();
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
     const set = new Set<string>();
     for (const u of users) if (u.department) set.add(u.department);
     return [...set].sort((a, b) => a.localeCompare(b));
@@ -659,11 +688,19 @@ export const setApplicantDelegate = mutation({
     if (!delegate && target.role !== "admin" && !target.applicantAccess) {
       await clearVaultPasswordForUser(ctx, userId);
     }
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: admin._id,
       action: delegate ? "grant_delegate" : "revoke_delegate",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: admin._id,
+      action: delegate ? "grant_delegate" : "revoke_delegate",
+      target: target.email,
+      at: auditAt,
     });
     return { ok: true };
   },
@@ -684,10 +721,10 @@ export const setApplicantAccess = mutation({
       throw new ConvexError({ code: "not_found", message: "User not found" });
     }
     if (access) {
-      const customRole = target.customRoleId
-        ? await ctx.db.get(target.customRoleId)
-        : null;
-      if (!isApplicantEligible(target, customRole)) {
+      const customRoles = await Promise.all(
+        effectiveCustomRoleIds(target).map(id => ctx.db.get(id))
+      );
+      if (!isApplicantEligible(target, customRoles)) {
         throw new ConvexError({
           code: "forbidden",
           message:
@@ -703,11 +740,19 @@ export const setApplicantAccess = mutation({
     if (!access && target.role !== "admin" && !target.applicantAccessDelegate) {
       await clearVaultPasswordForUser(ctx, userId);
     }
+    const auditAt = Date.now();
     await ctx.db.insert("applicantAuditLog", {
       actorUserId: actor._id,
       action: access ? "grant_access" : "revoke_access",
       target: target.email,
-      at: Date.now(),
+      at: auditAt,
+    });
+    await recordUnifiedAudit(ctx, {
+      domain: "applicant",
+      actorUserId: actor._id,
+      action: access ? "grant_access" : "revoke_access",
+      target: target.email,
+      at: auditAt,
     });
     return { ok: true };
   },
@@ -718,17 +763,18 @@ export const eligibleForApplicantAccess = query({
   args: {},
   handler: async ctx => {
     await requireApplicantDelegateOrAdmin(ctx);
-    const users = await ctx.db.query("users").collect();
+    const users = await ctx.db
+      .query("users")
+      .withIndex("by_status", q => q.eq("status", "active"))
+      .collect();
     const customRoles = await ctx.db.query("customRoles").collect();
     const customRoleById = new Map(customRoles.map(r => [r._id, r]));
     return users
-      .filter(
-        u =>
-          u.status === "active" &&
-          isApplicantEligible(
-            u,
-            u.customRoleId ? (customRoleById.get(u.customRoleId) ?? null) : null
-          )
+      .filter(u =>
+        isApplicantEligible(
+          u,
+          effectiveCustomRoleIds(u).map(id => customRoleById.get(id) ?? null)
+        )
       )
       .map(u => ({
         _id: u._id,

@@ -1,17 +1,9 @@
 import type { api } from "@advantis/convex/api";
 import type { FunctionReturnType } from "convex/server";
 
-export type ApplicantDetail = NonNullable<
-  FunctionReturnType<typeof api.applicants.get>
->;
+export type ApplicantDetail = NonNullable<FunctionReturnType<typeof api.applicants.get>>;
 
-export const KONTAKT_ARTEN = [
-  "telefon",
-  "email",
-  "persoenlich",
-  "video",
-  "sonstiges",
-] as const;
+export const KONTAKT_ARTEN = ["telefon", "email", "persoenlich", "video", "sonstiges"] as const;
 
 export const EMAIL_KATEGORIEN = [
   "telefonisch_nicht_erreicht",
@@ -34,11 +26,7 @@ export const TERMIN_TYPEN = [
  * lists) rather than a flat string, both in the manual-entry/rescan form and
  * on the overview tab. Shared so every place that merges extracted data
  * knows which keys need `textToHtml`/`ensureRichHtml`. */
-export const RICH_CV_FIELDS = [
-  "ausbildung",
-  "berufserfahrung",
-  "zusammenfassung",
-] as const;
+export const RICH_CV_FIELDS = ["ausbildung", "berufserfahrung", "zusammenfassung"] as const;
 
 export function today(): string {
   return new Date().toISOString().slice(0, 10);
@@ -46,10 +34,7 @@ export function today(): string {
 
 /** Escapes text for safe embedding inside HTML markup. */
 function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 /**
@@ -64,7 +49,7 @@ export function textToHtml(text: string): string {
   if (!trimmed) return "";
   return trimmed
     .split(/\n{2,}/)
-    .map(para => `<p>${escapeHtml(para.trim()).replace(/\n/g, "<br>")}</p>`)
+    .map((para) => `<p>${escapeHtml(para.trim()).replace(/\n/g, "<br>")}</p>`)
     .join("");
 }
 

@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   Building2,
   Clock,
-  DatabaseZap,
   KeyRound,
   LayoutDashboard,
   type LucideIcon,
@@ -24,11 +23,7 @@ import {
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
-import {
-  useHasCapability,
-  useIsAdmin,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useHasCapability, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -51,6 +46,12 @@ export interface AdminNavItem {
 export interface AdminNavGroup {
   labelKey: string;
   items: AdminNavItem[];
+  /**
+   * Set-and-forget configuration. Real admins reach for these a handful of
+   * times a year, so the sidebar tucks them behind one disclosure instead of
+   * making everyone scroll past them on every visit.
+   */
+  advanced?: boolean;
 }
 
 /**
@@ -61,9 +62,7 @@ export interface AdminNavGroup {
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
   {
     labelKey: "nav.groupGeneral",
-    items: [
-      { href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard },
-    ],
+    items: [{ href: "/admin", labelKey: "nav.overview", icon: LayoutDashboard }],
   },
   {
     labelKey: "nav.groupAccess",
@@ -93,32 +92,9 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         managerOnly: true,
       },
       {
-        href: "/admin/guests",
-        labelKey: "nav.guests",
+        href: "/admin/password-resets",
+        labelKey: "nav.passwordResets",
         icon: KeyRound,
-        adminOnly: true,
-      },
-    ],
-  },
-  {
-    labelKey: "nav.groupOrganization",
-    items: [
-      {
-        href: "/admin/departments",
-        labelKey: "nav.departments",
-        icon: Building2,
-        adminOnly: true,
-      },
-      {
-        href: "/admin/teams",
-        labelKey: "nav.teams",
-        icon: Users2,
-        adminOnly: true,
-      },
-      {
-        href: "/admin/data-cleanup",
-        labelKey: "nav.dataCleanup",
-        icon: DatabaseZap,
         adminOnly: true,
       },
     ],
@@ -131,6 +107,24 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         href: "/admin/integrations",
         labelKey: "nav.integrations",
         icon: Plug,
+      },
+    ],
+  },
+  {
+    labelKey: "nav.groupAdvanced",
+    advanced: true,
+    items: [
+      {
+        href: "/admin/departments",
+        labelKey: "nav.departments",
+        icon: Building2,
+        adminOnly: true,
+      },
+      {
+        href: "/admin/teams",
+        labelKey: "nav.teams",
+        icon: Users2,
+        adminOnly: true,
       },
       {
         href: "/admin/audit",
@@ -172,9 +166,10 @@ export function AdminSidebar() {
   // to open the section just to see there's something waiting.
   const pendingUploads = useQuery(
     api.onedrive.listPending,
-    isManager || hasUploadsView ? {} : "skip"
+    isManager || hasUploadsView ? {} : "skip",
   );
   const pendingCount = pendingUploads?.length ?? 0;
+  const pendingResets = useQuery(api.passwordResets.pendingCount, isAdmin ? {} : "skip") ?? 0;
 
   return (
     <>
@@ -191,42 +186,38 @@ export function AdminSidebar() {
         </SidebarMenu>
       </SidebarGroup>
 
-      {ADMIN_NAV_GROUPS.map(group => {
+      {ADMIN_NAV_GROUPS.map((group) => {
         const items = group.items.filter(
-          item =>
-            (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin)
+          (item) => (!item.managerOnly || isManager) && (!item.adminOnly || isAdmin),
         );
         if (items.length === 0) return null;
         return (
           <SidebarGroup key={group.labelKey}>
             <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
             <SidebarMenu>
-              {items.map(item => {
+              {items.map((item) => {
                 const active =
-                  item.href === "/admin"
-                    ? pathname === "/admin"
-                    : pathname.startsWith(item.href);
+                  item.href === "/admin" ? pathname === "/admin" : pathname.startsWith(item.href);
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      active={active}
-                      tooltip={t(item.labelKey)}
-                    >
+                    <SidebarMenuButton asChild active={active} tooltip={t(item.labelKey)}>
                       <Link
                         href={item.href}
                         onClick={close}
                         aria-current={active ? "page" : undefined}
-                        data-tour={
-                          item.href === "/admin" ? "tour-nav-admin" : undefined
-                        }
+                        data-tour={item.href === "/admin" ? "tour-nav-admin" : undefined}
                       >
                         <Icon />
                         <SidebarLabel>{t(item.labelKey)}</SidebarLabel>
                         {item.href === "/admin/uploads" && pendingCount > 0 && (
                           <SidebarMenuBadge>
                             {pendingCount > 99 ? "99+" : pendingCount}
+                          </SidebarMenuBadge>
+                        )}
+                        {item.href === "/admin/password-resets" && pendingResets > 0 && (
+                          <SidebarMenuBadge>
+                            {pendingResets > 99 ? "99+" : pendingResets}
                           </SidebarMenuBadge>
                         )}
                       </Link>

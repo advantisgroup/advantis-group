@@ -2,6 +2,7 @@
 
 import {
   type KeyboardEvent as ReactKeyboardEvent,
+  Fragment,
   useEffect,
   useMemo,
   useRef,
@@ -18,6 +19,7 @@ import {
   BookOpen,
   Calendar,
   CalendarPlus,
+  Clock,
   FolderOpen,
   LayoutDashboard,
   Megaphone,
@@ -30,16 +32,19 @@ import {
   UploadCloud,
   UserRoundSearch,
   Users,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import posthog from "posthog-js";
 
-import { accessibleGuidebooks } from "@/components/guidebooks/registry";
+import { accessibleGuidebooks, guidebookTitle } from "@/components/guidebooks/registry";
 import {
   useCurrentUser,
   useHasApplicantAccess,
   useIsManager,
 } from "@/components/providers/current-user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useKeyboardInset } from "@/hooks/use-keyboard-inset";
 import { initials } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -50,7 +55,58 @@ interface Item {
   sublabel?: string;
   icon?: typeof Search;
   avatar?: { src?: string | null; name: string; email?: string };
+  /** Present when this item is a plain navigation — lets it be remembered
+   * in "Recent" and replayed later without needing the original data (a
+   * person or applicant fetched live may no longer be in scope). */
+  href?: string;
   run: () => void;
+}
+
+const RECENT_KEY = "cmdk:recent";
+const RECENT_LIMIT = 6;
+
+interface RecentEntry {
+  id: string;
+  label: string;
+  sublabel?: string;
+  href: string;
+}
+
+function loadRecent(): RecentEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(RECENT_KEY);
+    return raw ? (JSON.parse(raw) as RecentEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecent(entry: RecentEntry) {
+  try {
+    const existing = loadRecent().filter((e) => e.id !== entry.id);
+    const next = [entry, ...existing].slice(0, RECENT_LIMIT);
+    window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch {
+    // Storage unavailable (private mode, quota) — recent items just won't persist.
+  }
+}
+
+/** Bolds the first occurrence of `query` inside `label` so scanning a result
+ * list is faster than reading every character. */
+function HighlightMatch({ label, query }: { label: string; query: string }) {
+  if (!query) return <>{label}</>;
+  const idx = label.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return <>{label}</>;
+  return (
+    <Fragment>
+      {label.slice(0, idx)}
+      <mark className="rounded-sm bg-primary/20 text-inherit">
+        {label.slice(idx, idx + query.length)}
+      </mark>
+      {label.slice(idx + query.length)}
+    </Fragment>
+  );
 }
 
 export function CommandPalette() {
@@ -62,24 +118,22 @@ export function CommandPalette() {
   const hasApplicantAccess = useHasApplicantAccess();
   const user = useCurrentUser();
   const guidebooks = accessibleGuidebooks(user);
+  const keyboardInset = useKeyboardInset();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  const [recent, setRecent] = useState<RecentEntry[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const itemRefs = useRef(new Map<number, HTMLButtonElement | null>());
+  const openSourceRef = useRef<"keyboard" | "trigger" | "mobile-nav">("trigger");
 
   const getOrCreateDm = useMutation(api.chat.getOrCreateDm);
 
-  const people = useQuery(
-    api.users.list,
-    open && query.trim() ? { search: query.trim() } : "skip"
-  );
-  const announcements = useQuery(
-    api.announcements.list,
-    open && query.trim() ? {} : "skip"
-  );
+  const people = useQuery(api.users.list, open && query.trim() ? { search: query.trim() } : "skip");
+  const announcements = useQuery(api.announcements.list, open && query.trim() ? {} : "skip");
   const applicants = useQuery(
     api.applicants.list,
-    open && hasApplicantAccess && query.trim() ? {} : "skip"
+    open && hasApplicantAccess && query.trim() ? {} : "skip",
   );
 
   // ⌘K / Ctrl-K toggles the palette from anywhere.
@@ -87,7 +141,8 @@ export function CommandPalette() {
     function onKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen(o => !o);
+        openSourceRef.current = "keyboard";
+        setOpen((o) => !o);
       }
     }
     window.addEventListener("keydown", onKey);
@@ -96,20 +151,37 @@ export function CommandPalette() {
 
   // Allow other surfaces (e.g. the mobile bottom bar) to open the palette.
   useEffect(() => {
-    const open = () => setOpen(true);
-    window.addEventListener("command-palette:open", open);
-    return () => window.removeEventListener("command-palette:open", open);
+    const openFromEvent = () => {
+      openSourceRef.current = "mobile-nav";
+      setOpen(true);
+    };
+    window.addEventListener("command-palette:open", openFromEvent);
+    return () => window.removeEventListener("command-palette:open", openFromEvent);
   }, []);
 
   useEffect(() => {
     if (open) {
       setQuery("");
       setActive(0);
+      setRecent(loadRecent());
+      posthog.capture("command_palette_opened", { source: openSourceRef.current });
       // Focus once the dialog has mounted.
       const id = setTimeout(() => inputRef.current?.focus(), 40);
       return () => clearTimeout(id);
     }
   }, [open]);
+
+  function runItem(it: Item) {
+    posthog.capture("command_palette_item_selected", {
+      group: it.group,
+      id: it.id,
+      query_length: query.trim().length,
+    });
+    if (it.href) {
+      saveRecent({ id: it.id, label: it.label, sublabel: it.sublabel, href: it.href });
+    }
+    it.run();
+  }
 
   function go(href: string) {
     setOpen(false);
@@ -126,7 +198,7 @@ export function CommandPalette() {
     const all = [
       { href: "/", label: tNav("dashboard"), icon: LayoutDashboard },
       { href: "/calendar", label: tNav("calendar"), icon: Calendar },
-      { href: "/absences", label: tNav("absences"), icon: Plane },
+      { href: "/clockodo", label: tNav("absences"), icon: Plane },
       {
         href: "/announcements",
         label: tNav("announcements"),
@@ -149,37 +221,75 @@ export function CommandPalette() {
       },
       { href: "/settings", label: tNav("settings"), icon: Settings },
     ];
-    return all.filter(p => !p.managerOnly || isManager).filter(p => !p.hidden);
+    return all.filter((p) => !p.managerOnly || isManager).filter((p) => !p.hidden);
   }, [tNav, isManager, guidebooks.length]);
+
+  const actions = useMemo(
+    () =>
+      [
+        {
+          id: "new-event",
+          label: t("actionNewEvent"),
+          icon: CalendarPlus,
+          href: "/calendar?new=1",
+          managerOnly: true,
+        },
+        {
+          id: "new-announcement",
+          label: t("actionNewAnnouncement"),
+          icon: Plus,
+          href: "/announcements/new",
+          managerOnly: true,
+        },
+        {
+          id: "upload-file",
+          label: t("actionUpload"),
+          icon: UploadCloud,
+          href: "/files",
+        },
+      ].filter((a) => !a.managerOnly || isManager),
+    [t, isManager],
+  );
 
   const items: Item[] = useMemo(() => {
     const q = query.trim().toLowerCase();
     const list: Item[] = [];
 
-    const actions = [
-      {
-        id: "new-event",
-        label: t("actionNewEvent"),
-        icon: CalendarPlus,
-        href: "/calendar?new=1",
-        managerOnly: true,
-      },
-      {
-        id: "new-announcement",
-        label: t("actionNewAnnouncement"),
-        icon: Plus,
-        href: "/announcements?new=1",
-        managerOnly: true,
-      },
-      {
-        id: "upload-file",
-        label: t("actionUpload"),
-        icon: UploadCloud,
-        href: "/files",
-      },
-    ].filter(a => !a.managerOnly || isManager);
-
+    // Empty query: a quick-launch view (recent, then actions, then pages)
+    // instead of an empty "type to search" screen — most opens are to jump
+    // somewhere already known, not to search.
     if (!q) {
+      for (const r of recent) {
+        list.push({
+          id: `recent:${r.id}`,
+          group: t("recent"),
+          label: r.label,
+          sublabel: r.sublabel,
+          icon: Clock,
+          href: r.href,
+          run: () => go(r.href),
+        });
+      }
+      for (const a of actions) {
+        list.push({
+          id: `action:${a.id}`,
+          group: t("actions"),
+          label: a.label,
+          icon: a.icon,
+          href: a.href,
+          run: () => go(a.href),
+        });
+      }
+      for (const p of pages) {
+        list.push({
+          id: `page:${p.href}`,
+          group: t("pages"),
+          label: p.label,
+          icon: p.icon,
+          href: p.href,
+          run: () => go(p.href),
+        });
+      }
       return list;
     }
 
@@ -190,6 +300,7 @@ export function CommandPalette() {
           group: t("actions"),
           label: a.label,
           icon: a.icon,
+          href: a.href,
           run: () => go(a.href),
         });
       }
@@ -202,19 +313,21 @@ export function CommandPalette() {
           group: t("pages"),
           label: p.label,
           icon: p.icon,
+          href: p.href,
           run: () => go(p.href),
         });
       }
     }
 
     for (const gb of guidebooks) {
-      const title = tGuide(gb.titleKey);
+      const title = guidebookTitle(gb, tGuide);
       if (title.toLowerCase().includes(q)) {
         list.push({
           id: `gb:${gb.slug}`,
           group: t("guidebooks"),
           label: title,
           icon: gb.icon,
+          href: `/guidebooks/${gb.slug}`,
           run: () => go(`/guidebooks/${gb.slug}`),
         });
       }
@@ -238,16 +351,14 @@ export function CommandPalette() {
           label: a.title,
           sublabel: a.authorName,
           icon: Megaphone,
+          href: "/announcements",
           run: () => go("/announcements"),
         });
       }
     }
     if (hasApplicantAccess) {
       for (const ap of applicants ?? []) {
-        const haystack = [ap.name, ap.email, ap.position]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
+        const haystack = [ap.name, ap.email, ap.position].filter(Boolean).join(" ").toLowerCase();
         if (haystack.includes(q)) {
           list.push({
             id: `applicant:${ap._id}`,
@@ -255,7 +366,8 @@ export function CommandPalette() {
             label: ap.name,
             sublabel: ap.position || ap.email,
             icon: UserRoundSearch,
-            run: () => go(`/applicants/${ap._id}/uebersicht`),
+            href: `/hr/${ap._id}/uebersicht`,
+            run: () => go(`/hr/${ap._id}/uebersicht`),
           });
         }
       }
@@ -265,11 +377,13 @@ export function CommandPalette() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     query,
+    recent,
+    actions,
+    pages,
     people,
     announcements,
     applicants,
     hasApplicantAccess,
-    pages,
     guidebooks,
     t,
     tGuide,
@@ -278,6 +392,10 @@ export function CommandPalette() {
   useEffect(() => {
     setActive(0);
   }, [query]);
+
+  useEffect(() => {
+    itemRefs.current.get(active)?.scrollIntoView({ block: "nearest" });
+  }, [active]);
 
   const groups = useMemo(() => {
     const map = new Map<string, Item[]>();
@@ -292,13 +410,14 @@ export function CommandPalette() {
   function onInputKey(e: ReactKeyboardEvent) {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive(i => Math.min(i + 1, items.length - 1));
+      setActive((i) => Math.min(i + 1, items.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setActive(i => Math.max(i - 1, 0));
+      setActive((i) => Math.max(i - 1, 0));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      items[active]?.run();
+      const it = items[active];
+      if (it) runItem(it);
     }
   }
 
@@ -308,7 +427,10 @@ export function CommandPalette() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          openSourceRef.current = "trigger";
+          setOpen(true);
+        }}
         className="flex h-8 w-full max-w-xs items-center gap-2 rounded-lg border border-border bg-card px-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground md:h-9 md:max-w-md md:px-3"
       >
         <Search className="size-4 shrink-0" />
@@ -321,27 +443,43 @@ export function CommandPalette() {
       <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
         <DialogPrimitive.Portal>
           <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-          <DialogPrimitive.Content className="fixed left-1/2 top-[12vh] z-50 w-[92vw] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border/70 bg-popover shadow-2xl shadow-black/30 duration-150 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-            <DialogPrimitive.Title className="sr-only">
-              {t("hint")}
-            </DialogPrimitive.Title>
+          <DialogPrimitive.Content
+            className="fixed left-1/2 top-[12vh] z-50 flex max-h-[76vh] w-[92vw] max-w-xl -translate-x-1/2 flex-col overflow-hidden rounded-xl border border-border/70 bg-popover shadow-2xl shadow-black/30 duration-150 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
+            style={
+              // top-[12vh] + max-h-[76vh] end 12vh above the bottom edge already;
+              // an open keyboard eats into the layout viewport's bottom without
+              // shrinking it, so without this the results list ends up hidden
+              // behind the keyboard instead of shrinking to fit above it.
+              keyboardInset ? { maxHeight: `calc(76vh - ${keyboardInset}px)` } : undefined
+            }
+          >
+            <DialogPrimitive.Title className="sr-only">{t("hint")}</DialogPrimitive.Title>
             <div className="flex items-center gap-2.5 border-b border-border/70 px-4">
               <Search className="size-4 shrink-0 text-muted-foreground" />
               <input
                 ref={inputRef}
                 value={query}
-                onChange={e => setQuery(e.target.value)}
+                onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onInputKey}
                 placeholder={t("placeholder")}
                 className="h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    inputRef.current?.focus();
+                  }}
+                  aria-label={t("clearSearch")}
+                  className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
             </div>
-            <div className="max-h-[60vh] overflow-y-auto p-2">
-              {!query.trim() ? (
-                <p className="px-2 py-8 text-center text-sm text-muted-foreground">
-                  {t("emptyState")}
-                </p>
-              ) : items.length === 0 ? (
+            <div className="min-h-0 flex-1 overflow-y-auto p-2">
+              {items.length === 0 ? (
                 <p className="px-2 py-8 text-center text-sm text-muted-foreground">
                   {t("noResults")}
                 </p>
@@ -351,29 +489,29 @@ export function CommandPalette() {
                     <p className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {group}
                     </p>
-                    {groupItems.map(it => {
+                    {groupItems.map((it) => {
                       flatIndex += 1;
                       const idx = flatIndex;
                       const Icon = it.icon;
                       return (
                         <button
                           key={it.id}
-                          onClick={it.run}
+                          ref={(el) => {
+                            itemRefs.current.set(idx, el);
+                          }}
+                          onClick={() => runItem(it)}
                           onMouseMove={() => setActive(idx)}
                           className={cn(
                             "flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors",
                             active === idx
                               ? "bg-accent text-foreground"
-                              : "text-foreground/90 hover:bg-accent/60"
+                              : "text-foreground/90 hover:bg-accent/60",
                           )}
                         >
                           {it.avatar ? (
                             <Avatar className="size-7 shrink-0">
                               {it.avatar.src && (
-                                <AvatarImage
-                                  src={it.avatar.src}
-                                  alt={it.avatar.name}
-                                />
+                                <AvatarImage src={it.avatar.src} alt={it.avatar.name} />
                               )}
                               <AvatarFallback className="text-[10px]">
                                 {initials(it.avatar.name, it.avatar.email)}
@@ -386,7 +524,7 @@ export function CommandPalette() {
                           )}
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium">
-                              {it.label}
+                              <HighlightMatch label={it.label} query={query.trim()} />
                             </span>
                             {it.sublabel && (
                               <span className="block truncate text-xs text-muted-foreground">
@@ -400,6 +538,29 @@ export function CommandPalette() {
                   </div>
                 ))
               )}
+            </div>
+            <div className="hidden shrink-0 items-center gap-3 border-t border-border/70 px-4 py-2 text-[11px] text-muted-foreground sm:flex">
+              <span className="flex items-center gap-1">
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-medium">
+                  ↑
+                </kbd>
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-medium">
+                  ↓
+                </kbd>
+                {t("navigate")}
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-medium">
+                  ↵
+                </kbd>
+                {t("select")}
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 font-medium">
+                  esc
+                </kbd>
+                {t("close")}
+              </span>
             </div>
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>

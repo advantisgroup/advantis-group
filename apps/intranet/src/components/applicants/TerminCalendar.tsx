@@ -50,10 +50,7 @@ function calendarDays(count: number) {
   });
 }
 
-type Termin = Omit<
-  FunctionReturnType<typeof api.applicants.listTermine>[number],
-  "applicantName"
->;
+type Termin = Omit<FunctionReturnType<typeof api.applicants.listTermine>[number], "applicantName">;
 
 export function TerminRow({
   termin,
@@ -94,7 +91,7 @@ export function TerminRow({
       className={cn(
         "space-y-1 rounded-md border border-border/60 border-l-[3px] p-2 text-xs",
         ART_COLOR[termin.art],
-        termin.uebernommen && "bg-muted/40"
+        termin.uebernommen && "bg-muted/40",
       )}
     >
       <div className="flex flex-wrap items-center gap-1.5">
@@ -108,10 +105,8 @@ export function TerminRow({
         {applicantName && (
           <button
             type="button"
-            onClick={() =>
-              router.push(`/applicants/${termin.applicantId}/uebersicht`)
-            }
-            className="text-primary hover:underline"
+            onClick={() => router.push(`/hr/${termin.applicantId}/uebersicht`)}
+            className="-m-1.5 rounded p-1.5 text-primary hover:underline"
           >
             {applicantName}
           </button>
@@ -121,24 +116,24 @@ export function TerminRow({
       </div>
       {termin.notiz && <p className="text-muted-foreground">{termin.notiz}</p>}
       {!compact && (
-        <div className="flex flex-wrap gap-2 pt-1">
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           {!termin.uebernommen && (
             <button
-              className="text-primary hover:underline"
+              className="-m-1.5 rounded p-1.5 text-primary hover:underline"
               onClick={() => void handleConvert()}
             >
               {t("markAsHappened")}
             </button>
           )}
           <button
-            className="text-destructive hover:underline"
+            className="-m-1.5 rounded p-1.5 text-destructive hover:underline"
             onClick={() => void handleRemove()}
           >
             {tc("delete")}
           </button>
           <Link
-            href={`/applicants/${termin.applicantId}/termine/${termin._id}`}
-            className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+            href={`/hr/${termin.applicantId}/termine/${termin._id}`}
+            className="-m-1.5 ml-auto inline-flex items-center gap-1 rounded p-1.5 text-muted-foreground hover:text-foreground"
           >
             <Link2 className="size-3" />
             {t("openTermin")}
@@ -166,18 +161,11 @@ export function TerminCalendar() {
   const applicants = useQuery(api.applicants.list);
   const [planOpen, setPlanOpen] = useState(false);
 
-  const weeks = [
-    days.slice(0, 7),
-    days.slice(7, 14),
-    days.slice(14, 21),
-    days.slice(21, 28),
-  ];
+  const weeks = [days.slice(0, 7), days.slice(7, 14), days.slice(14, 21), days.slice(21, 28)];
   const rangeStart = days[0].iso;
   const rangeEnd = days[days.length - 1].iso;
-  const vergangen = (termine ?? []).filter(
-    tm => tm.datum < rangeStart && !tm.uebernommen
-  );
-  const spaeter = (termine ?? []).filter(tm => tm.datum > rangeEnd);
+  const vergangen = (termine ?? []).filter((tm) => tm.datum < rangeStart && !tm.uebernommen);
+  const spaeter = (termine ?? []).filter((tm) => tm.datum > rangeEnd);
 
   if (!applicants) return null;
 
@@ -201,7 +189,7 @@ export function TerminCalendar() {
       <div className="hidden space-y-6 md:block">
         {weeks.map((week, wi) => {
           const weekTermine = (termine ?? []).filter(
-            tm => tm.datum >= week[0].iso && tm.datum <= week[6].iso
+            (tm) => tm.datum >= week[0].iso && tm.datum <= week[6].iso,
           );
           return (
             <div key={wi} className="space-y-2">
@@ -215,38 +203,30 @@ export function TerminCalendar() {
                 </span>
               </div>
               <div className="grid grid-cols-4 gap-2 lg:grid-cols-7">
-                {week.map(day => {
-                  const items = (termine ?? []).filter(
-                    tm => tm.datum === day.iso
-                  );
+                {week.map((day) => {
+                  const items = (termine ?? []).filter((tm) => tm.datum === day.iso);
                   return (
                     <div
                       key={day.iso}
                       className={cn(
                         "flex min-h-[70px] flex-col overflow-hidden rounded-lg border",
-                        day.isToday ? "border-primary" : "border-border/70"
+                        day.isToday ? "border-primary" : "border-border/70",
                       )}
                     >
                       <div
                         className={cn(
                           "px-2 py-1 text-xs font-semibold",
-                          day.isToday
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted/50"
+                          day.isToday ? "bg-primary text-primary-foreground" : "bg-muted/50",
                         )}
                       >
                         {day.weekday}{" "}
-                        <span className="font-normal opacity-80">
-                          {day.shortDate}
-                        </span>
+                        <span className="font-normal opacity-80">{day.shortDate}</span>
                       </div>
                       <div className="flex flex-1 flex-col gap-1.5 p-1.5">
                         {items.length === 0 ? (
-                          <span className="text-[11px] text-muted-foreground">
-                            –
-                          </span>
+                          <span className="text-[11px] text-muted-foreground">–</span>
                         ) : (
-                          items.map(tm => (
+                          items.map((tm) => (
                             <TerminRow
                               key={tm._id}
                               termin={tm}
@@ -268,30 +248,25 @@ export function TerminCalendar() {
       {/* Mobile: an agenda of only the days that actually have Termine —
           a phone screen full of empty grid boxes helps no one. */}
       <div className="space-y-4 md:hidden">
-        {days.filter(day => (termine ?? []).some(tm => tm.datum === day.iso))
-          .length === 0 ? (
+        {days.filter((day) => (termine ?? []).some((tm) => tm.datum === day.iso)).length === 0 ? (
           <EmptyState icon={<CalendarPlus />} title={t("noTermineInWindow")} />
         ) : (
-          days.map(day => {
-            const items = (termine ?? []).filter(tm => tm.datum === day.iso);
+          days.map((day) => {
+            const items = (termine ?? []).filter((tm) => tm.datum === day.iso);
             if (items.length === 0) return null;
             return (
               <div key={day.iso} className="space-y-1.5">
                 <p
                   className={cn(
                     "text-xs font-semibold uppercase tracking-wide",
-                    day.isToday ? "text-primary" : "text-muted-foreground"
+                    day.isToday ? "text-primary" : "text-muted-foreground",
                   )}
                 >
                   {day.weekday} {day.shortDate}
                   {day.isToday && ` · ${t("today")}`}
                 </p>
-                {items.map(tm => (
-                  <TerminRow
-                    key={tm._id}
-                    termin={tm}
-                    applicantName={tm.applicantName}
-                  />
+                {items.map((tm) => (
+                  <TerminRow key={tm._id} termin={tm} applicantName={tm.applicantName} />
                 ))}
               </div>
             );
@@ -305,12 +280,8 @@ export function TerminCalendar() {
             <p className="text-sm font-semibold">
               {t("pastTermineWithoutContact", { count: vergangen.length })}
             </p>
-            {vergangen.map(tm => (
-              <TerminRow
-                key={tm._id}
-                termin={tm}
-                applicantName={tm.applicantName}
-              />
+            {vergangen.map((tm) => (
+              <TerminRow key={tm._id} termin={tm} applicantName={tm.applicantName} />
             ))}
           </CardContent>
         </Card>
@@ -319,25 +290,15 @@ export function TerminCalendar() {
       {spaeter.length > 0 && (
         <Card>
           <CardContent className="space-y-2 p-4">
-            <p className="text-sm font-semibold">
-              {t("futureTermine", { count: spaeter.length })}
-            </p>
-            {spaeter.map(tm => (
-              <TerminRow
-                key={tm._id}
-                termin={tm}
-                applicantName={tm.applicantName}
-              />
+            <p className="text-sm font-semibold">{t("futureTermine", { count: spaeter.length })}</p>
+            {spaeter.map((tm) => (
+              <TerminRow key={tm._id} termin={tm} applicantName={tm.applicantName} />
             ))}
           </CardContent>
         </Card>
       )}
 
-      <TerminDialog
-        open={planOpen}
-        onOpenChange={setPlanOpen}
-        applicants={applicants}
-      />
+      <TerminDialog open={planOpen} onOpenChange={setPlanOpen} applicants={applicants} />
     </div>
   );
 }

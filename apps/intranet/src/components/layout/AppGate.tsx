@@ -10,10 +10,7 @@ import { useMutation, useQuery } from "convex/react";
 import { AppShell } from "@/components/layout/AppShell";
 import { RequestAccessGate } from "@/components/layout/RequestAccessGate";
 import { BrandLogo } from "@/components/Logo";
-import {
-  type CurrentUser,
-  CurrentUserProvider,
-} from "@/components/providers/current-user";
+import { type CurrentUser, CurrentUserProvider } from "@/components/providers/current-user";
 import { ConfirmProvider } from "@/components/ui/dialog";
 
 function FullScreenLoader() {

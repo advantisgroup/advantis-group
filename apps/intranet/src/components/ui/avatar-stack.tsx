@@ -27,7 +27,7 @@ export function GroupAvatar({
 }) {
   const base = cn(
     "relative shrink-0 overflow-hidden rounded-[30%] border border-border bg-muted",
-    className
+    className,
   );
 
   if (src) {
@@ -47,10 +47,7 @@ export function GroupAvatar({
   if (cells.length === 0) {
     return (
       <span
-        className={cn(
-          base,
-          "flex items-center justify-center text-xs font-medium text-foreground"
-        )}
+        className={cn(base, "flex items-center justify-center text-xs font-medium text-foreground")}
       >
         {initials(name)}
       </span>
@@ -75,15 +72,11 @@ export function GroupAvatar({
             className={cn(
               "flex items-center justify-center overflow-hidden bg-muted text-[9px] font-semibold text-muted-foreground",
               // With exactly 3 members, the first one takes the full left column.
-              cells.length === 3 && i === 0 && "row-span-2"
+              cells.length === 3 && i === 0 && "row-span-2",
             )}
           >
             {c.avatar ? (
-              <img
-                src={c.avatar}
-                alt=""
-                className="h-full w-full object-cover"
-              />
+              <img src={c.avatar} alt="" className="h-full w-full object-cover" />
             ) : (
               initials(c.name)
             )}
@@ -126,28 +119,25 @@ export function AvatarStack({
 
   return (
     <div className={cn("flex items-center -space-x-2", className)}>
-      {visible.map(p => (
+      {visible.map((p) => (
         <Tooltip key={p.id}>
           <TooltipTrigger asChild>
             {onSelect ? (
               <button
                 type="button"
                 onClick={() => onSelect(p.id)}
+                aria-label={p.name}
                 className="relative rounded-full ring-2 ring-card transition-transform hover:z-10 hover:-translate-y-0.5 focus-visible:z-10 focus-visible:outline-none"
               >
                 <Avatar className={size}>
                   {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                  <AvatarFallback className="text-[10px]">
-                    {initials(p.name)}
-                  </AvatarFallback>
+                  <AvatarFallback className="text-[10px]">{initials(p.name)}</AvatarFallback>
                 </Avatar>
               </button>
             ) : (
               <Avatar className={cn(size, "relative ring-2 ring-card")}>
                 {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                <AvatarFallback className="text-[10px]">
-                  {initials(p.name)}
-                </AvatarFallback>
+                <AvatarFallback className="text-[10px]">{initials(p.name)}</AvatarFallback>
               </Avatar>
             )}
           </TooltipTrigger>
@@ -163,7 +153,7 @@ export function AvatarStack({
             <span
               className={cn(
                 size,
-                "relative z-0 flex shrink-0 cursor-default items-center justify-center rounded-full border border-border bg-muted text-[10px] font-medium text-muted-foreground ring-2 ring-card"
+                "relative z-0 flex shrink-0 cursor-default items-center justify-center rounded-full border border-border bg-muted text-[10px] font-medium text-muted-foreground ring-2 ring-card",
               )}
             >
               +{overflow.length}
@@ -171,13 +161,11 @@ export function AvatarStack({
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-[220px] p-2">
             <ul className="max-h-48 space-y-1.5 overflow-y-auto">
-              {overflow.map(p => (
+              {overflow.map((p) => (
                 <li key={p.id} className="flex items-center gap-2">
                   <Avatar className="size-5 shrink-0">
                     {p.avatar && <AvatarImage src={p.avatar} alt={p.name} />}
-                    <AvatarFallback className="text-[8px]">
-                      {initials(p.name)}
-                    </AvatarFallback>
+                    <AvatarFallback className="text-[8px]">{initials(p.name)}</AvatarFallback>
                   </Avatar>
                   <span className="truncate">{p.name}</span>
                 </li>

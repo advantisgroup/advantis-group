@@ -1,16 +1,9 @@
 "use client";
 
 import * as React from "react";
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useRef,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useCallback, useContext, useRef, useState } from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { CheckCircle2, CircleAlert, Lightbulb, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, CircleAlert, Lightbulb, X, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,8 +24,7 @@ function useLowEndDevice() {
     const evaluate = () => {
       const cores = navigator.hardwareConcurrency ?? 8;
       const memory =
-        typeof (navigator as Navigator & { deviceMemory?: number })
-          .deviceMemory === "number"
+        typeof (navigator as Navigator & { deviceMemory?: number }).deviceMemory === "number"
           ? (navigator as Navigator & { deviceMemory?: number }).deviceMemory!
           : 8;
       setLowEnd(reduceMotion.matches || cores <= 4 || memory <= 4);
@@ -65,7 +57,7 @@ const DialogOverlay = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed inset-0 z-50 bg-background/40 backdrop-blur-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-        className
+        className,
       )}
       {...props}
     >
@@ -90,13 +82,17 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] gap-5 overflow-y-auto border border-border/70 bg-card p-6 shadow-2xl shadow-black/30 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-[calc(var(--radius)+0.25rem)]",
-        className
+        // Grid children default to `min-width: auto`, so one wide table or
+        // unbroken string stretches the whole dialog past max-w-lg and the
+        // page scrolls sideways. `min-w-0` lets them shrink instead; the
+        // overflow-x guard catches anything that still can't.
+        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg max-h-[calc(100dvh-2rem)] translate-x-[-50%] translate-y-[-50%] gap-5 overflow-y-auto overflow-x-hidden overscroll-contain break-words [&>*]:min-w-0 border border-border/70 bg-card p-6 shadow-2xl shadow-black/30 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-[calc(var(--radius)+0.25rem)]",
+        className,
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-80 ring-offset-background transition-all hover:bg-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+      <DialogPrimitive.Close className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground opacity-80 ring-offset-background transition-all hover:bg-accent hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
@@ -109,14 +105,11 @@ DialogContent.displayName = DialogPrimitive.Content.displayName;
  * Section 1 of the canonical dialog layout: the header. Holds the
  * `DialogTitle` (and optionally an icon).
  */
-const DialogHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
       "-mx-6 -mt-6 flex flex-col space-y-1 border-b border-border/70 px-6 pb-4 pt-5 text-left",
-      className
+      className,
     )}
     {...props}
   />
@@ -127,14 +120,11 @@ DialogHeader.displayName = "DialogHeader";
  * Section 3 of the canonical dialog layout: the interactive footer where the
  * action buttons live.
  */
-const DialogFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
       "-mx-6 -mb-6 mt-1 flex flex-col-reverse gap-2 border-t border-border/70 px-6 pb-5 pt-4 sm:flex-row sm:items-center sm:justify-end",
-      className
+      className,
     )}
     {...props}
   />
@@ -147,10 +137,7 @@ const DialogTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn(
-      "font-display text-lg font-semibold leading-tight tracking-tight",
-      className
-    )}
+    className={cn("font-display text-lg font-semibold leading-tight tracking-tight", className)}
     {...props}
   />
 ));
@@ -173,22 +160,21 @@ DialogDescription.displayName = DialogPrimitive.Description.displayName;
  * sits in the description section to call out something the user should know
  * before acting.
  */
-const DialogTip = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, children, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "flex items-start gap-2 rounded-md border border-border/60 bg-muted/50 px-3 py-2 text-xs text-muted-foreground",
-      className
-    )}
-    {...props}
-  >
-    <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-warning" />
-    <span className="min-w-0">{children}</span>
-  </div>
-));
+const DialogTip = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ className, children, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "flex items-start gap-2 rounded-md border border-border/60 bg-muted/50 px-3 py-2 text-xs text-muted-foreground",
+        className,
+      )}
+      {...props}
+    >
+      <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-warning" />
+      <span className="min-w-0">{children}</span>
+    </div>
+  ),
+);
 DialogTip.displayName = "DialogTip";
 
 /**
@@ -232,17 +218,41 @@ export function DialogChecklist({
         const Icon = checklistIcon[item.tone];
         return (
           <li key={i} className="flex items-start gap-2 text-sm">
-            <Icon
-              className={cn(
-                "mt-0.5 size-4 shrink-0",
-                checklistColor[item.tone]
-              )}
-            />
+            <Icon className={cn("mt-0.5 size-4 shrink-0", checklistColor[item.tone])} />
             <span className="min-w-0 text-foreground/90">{item.text}</span>
           </li>
         );
       })}
     </ul>
+  );
+}
+
+export interface DetailRow {
+  label: string;
+  value: ReactNode;
+}
+
+/**
+ * Identifying facts about whatever is being acted on — the name, the target
+ * folder, when it was created. A confirmation that restates the question is
+ * useless; one that shows *which* record is about to go is what actually lets
+ * someone catch a misclick before they commit to it.
+ */
+export function DialogDetails({ rows, className }: { rows: DetailRow[]; className?: string }) {
+  return (
+    <dl
+      className={cn(
+        "divide-y divide-border/60 overflow-hidden rounded-lg border border-border/60 bg-muted/30 text-sm",
+        className,
+      )}
+    >
+      {rows.map((row, i) => (
+        <div key={i} className="flex items-start justify-between gap-4 px-3 py-2">
+          <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
+          <dd className="min-w-0 break-words text-right font-medium">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
@@ -254,6 +264,9 @@ export function DialogChecklist({
 interface ConfirmOptions {
   title: string;
   description?: string;
+  /** What's being acted on, as label/value rows. Prefer this over padding the
+   *  description with the same facts in prose. */
+  details?: DetailRow[];
   /** Optional highlighted tip rendered under the description. */
   tip?: ReactNode;
   /** Itemized consequences of the action, rendered as a checklist. */
@@ -279,11 +292,11 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [typedConfirm, setTypedConfirm] = useState("");
   const resolver = useRef<((value: boolean) => void) | null>(null);
 
-  const confirm = useCallback<ConfirmFn>(options => {
+  const confirm = useCallback<ConfirmFn>((options) => {
     setOpts(options);
     setTypedConfirm("");
     setOpen(true);
-    return new Promise<boolean>(resolve => {
+    return new Promise<boolean>((resolve) => {
       resolver.current = resolve;
     });
   }, []);
@@ -295,49 +308,60 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     setTypedConfirm("");
   }
 
-  const confirmBlocked =
-    !!opts?.confirmText && typedConfirm !== opts.confirmText.target;
+  const confirmBlocked = !!opts?.confirmText && typedConfirm !== opts.confirmText.target;
+  const destructive = opts?.destructive !== false;
+  // The description now sits in the header, so the body section is only worth
+  // rendering (and only worth its border/padding) when something fills it.
+  const hasBody =
+    !!opts?.confirmText || !!opts?.tip || !!opts?.details?.length || !!opts?.items?.length;
 
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
       <Dialog
         open={open}
-        onOpenChange={o => {
+        onOpenChange={(o) => {
           if (!o) settle(false);
         }}
       >
         <DialogContent className="max-w-md gap-0 p-0">
-          <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
-            <DialogTitle className="leading-snug">{opts?.title}</DialogTitle>
+          <div className="flex items-start gap-3 border-b border-border/70 px-6 pb-4 pr-12 pt-6">
+            {destructive && (
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-destructive/10 text-destructive">
+                <AlertTriangle className="size-4" />
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <DialogTitle className="leading-snug">{opts?.title}</DialogTitle>
+              {opts?.description && (
+                <DialogDescription className="mt-1 leading-relaxed">
+                  {opts.description}
+                </DialogDescription>
+              )}
+            </div>
           </div>
-          <div className="flex flex-col gap-4 px-6 pb-5 pt-4">
-            {opts?.description && (
-              <DialogDescription className="leading-relaxed">
-                {opts.description}
-              </DialogDescription>
-            )}
-            {opts?.items && opts.items.length > 0 && (
-              <DialogChecklist items={opts.items} />
-            )}
-            {opts?.tip && <DialogTip>{opts.tip}</DialogTip>}
-            {opts?.confirmText && (
-              <Input
-                autoFocus
-                value={typedConfirm}
-                onChange={e => setTypedConfirm(e.target.value)}
-                placeholder={
-                  opts.confirmText.placeholder ?? opts.confirmText.target
-                }
-              />
-            )}
-          </div>
+          {hasBody && (
+            <div className="flex flex-col gap-4 px-6 pb-5 pt-4">
+              {opts?.details && opts.details.length > 0 && <DialogDetails rows={opts.details} />}
+              {opts?.items && opts.items.length > 0 && <DialogChecklist items={opts.items} />}
+              {opts?.tip && <DialogTip>{opts.tip}</DialogTip>}
+              {opts?.confirmText && (
+                <Input
+                  autoFocus
+                  value={typedConfirm}
+                  onChange={(e) => setTypedConfirm(e.target.value)}
+                  placeholder={opts.confirmText.placeholder ?? opts.confirmText.target}
+                />
+              )}
+            </div>
+          )}
           <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
-            <Button variant="ghost" onClick={() => settle(false)}>
+            <Button variant="ghost" className="sm:min-w-24" onClick={() => settle(false)}>
               {opts?.cancelLabel ?? "Cancel"}
             </Button>
             <Button
-              variant={opts?.destructive === false ? "default" : "destructive"}
+              variant={destructive ? "destructive" : "default"}
+              className="sm:min-w-32"
               onClick={() => settle(true)}
               disabled={confirmBlocked}
               autoFocus={!opts?.confirmText}

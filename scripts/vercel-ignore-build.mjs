@@ -28,14 +28,11 @@ function isInside(file, dir) {
 }
 
 function isIgnored(file) {
-  return ignoredDirs.some(dir => isInside(file, dir));
+  return ignoredDirs.some((dir) => isInside(file, dir));
 }
 
 function isAlwaysBuild(file) {
-  return (
-    alwaysBuildDirs.some(dir => isInside(file, dir)) ||
-    alwaysBuildFiles.includes(file)
-  );
+  return alwaysBuildDirs.some((dir) => isInside(file, dir)) || alwaysBuildFiles.includes(file);
 }
 
 function isRelevantToApp(file) {
@@ -48,23 +45,21 @@ try {
   const base = process.env.VERCEL_GIT_PREVIOUS_SHA || "HEAD^";
   const head = process.env.VERCEL_GIT_COMMIT_SHA || "HEAD";
 
-  changedFiles = run(`git diff --name-only ${base} ${head}`)
-    .split("\n")
-    .filter(Boolean);
+  changedFiles = run(`git diff --name-only ${base} ${head}`).split("\n").filter(Boolean);
 } catch {
   console.log("Could not detect changed files. Building.");
   process.exit(1);
 }
 
 console.log("Changed files:");
-console.log(changedFiles.map(file => `- ${file}`).join("\n"));
+console.log(changedFiles.map((file) => `- ${file}`).join("\n"));
 
 if (changedFiles.length === 0) {
   console.log("No changed files detected. Building.");
   process.exit(1);
 }
 
-const shouldBuild = changedFiles.some(file => {
+const shouldBuild = changedFiles.some((file) => {
   if (isIgnored(file)) return false;
   if (isAlwaysBuild(file)) return true;
   if (isRelevantToApp(file)) return true;

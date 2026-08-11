@@ -18,13 +18,7 @@ interface Datum {
 }
 
 /** Percent-active through the day as a smooth area chart. */
-export function IntradayChart({
-  data,
-  seriesLabel,
-}: {
-  data: Datum[];
-  seriesLabel: string;
-}) {
+export function IntradayChart({ data, seriesLabel }: { data: Datum[]; seriesLabel: string }) {
   return (
     <ResponsiveContainer width="100%" height={200}>
       <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>

@@ -92,7 +92,6 @@ export type NotificationEmailKind =
   | "access-denied"
   | "absence-decision"
   | "upload-decision"
-  | "guest-invite"
   | "chat-reinvite"
   | "digest";
 
@@ -184,13 +183,7 @@ export interface ScanReport {
   scannedAt: number;
 }
 
-export type UploadStatus =
-  | "pending"
-  | "approved"
-  | "denied"
-  | "uploading"
-  | "failed"
-  | "cancelled";
+export type UploadStatus = "pending" | "approved" | "denied" | "uploading" | "failed" | "cancelled";
 
 export const UPLOAD_AUDIT_ACTIONS = [
   "request",
@@ -224,10 +217,7 @@ export interface ApplicantSkillMatchable {
 }
 
 /** Skills from `profile` that show up (case-insensitively) in the applicant's data. */
-export function matchSkills(
-  profileSkills: string[],
-  applicant: ApplicantSkillMatchable
-): string[] {
+export function matchSkills(profileSkills: string[], applicant: ApplicantSkillMatchable): string[] {
   const haystack = [
     ...(applicant.skills ?? []),
     applicant.zusammenfassung ?? "",
@@ -236,19 +226,18 @@ export function matchSkills(
   ]
     .join(" • ")
     .toLowerCase();
-  return profileSkills.filter(skill => haystack.includes(skill.toLowerCase()));
+  return profileSkills.filter((skill) => haystack.includes(skill.toLowerCase()));
 }
 
 /** Suggests a skill profile whose name matches the applicant's stated position. */
 export function autoProfil(
   profiles: ApplicantSkillProfile[],
-  positionText: string | null | undefined
+  positionText: string | null | undefined,
 ): string | null {
   if (!positionText) return null;
   const text = positionText.toLowerCase();
   const hit = profiles.find(
-    p =>
-      text.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(text)
+    (p) => text.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(text),
   );
   return hit ? hit.id : null;
 }

@@ -7,14 +7,14 @@ import { useQuery } from "convex/react";
 import { useTranslations } from "next-intl";
 
 import { InteractionsTable } from "@/components/performance/InteractionsTable";
-import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
-import { PeriodFilter } from "@/components/performance/PeriodFilter";
 import {
   computePeriodRange,
   shiftAnchor,
   todayIso,
   type PeriodGranularity,
-} from "@/components/performance/periodFilter";
+} from "@/components/performance/lib";
+import { PerformanceContentSkeleton } from "@/components/performance/PerformanceSkeleton";
+import { PeriodFilter } from "@/components/performance/PeriodFilter";
 import {
   Select,
   SelectContent,
@@ -43,8 +43,7 @@ export default function DashboardInteractionsPage() {
   const employees = useMemo(() => {
     const seen = new Map<string, string>();
     for (const d of data?.days ?? []) {
-      if (d.employeeId && d.employeeName)
-        seen.set(d.employeeId, d.employeeName);
+      if (d.employeeId && d.employeeName) seen.set(d.employeeId, d.employeeName);
     }
     return [...seen.entries()]
       .map(([id, name]) => ({ id, name }))
@@ -55,21 +54,19 @@ export default function DashboardInteractionsPage() {
     const days =
       employeeFilter === ALL_EMPLOYEES
         ? (data?.days ?? [])
-        : (data?.days ?? []).filter(d => d.employeeId === employeeFilter);
+        : (data?.days ?? []).filter((d) => d.employeeId === employeeFilter);
     const total = days.reduce(
       (acc, d) => ({
         count: acc.count + d.count,
         totalDurationSec: acc.totalDurationSec + d.totalDurationSec,
       }),
-      { count: 0, totalDurationSec: 0 }
+      { count: 0, totalDurationSec: 0 },
     );
     return {
       days,
       total: {
         ...total,
-        avgDurationSec: total.count
-          ? Math.round(total.totalDurationSec / total.count)
-          : 0,
+        avgDurationSec: total.count ? Math.round(total.totalDurationSec / total.count) : 0,
       },
     };
   }, [data?.days, employeeFilter]);
@@ -82,8 +79,8 @@ export default function DashboardInteractionsPage() {
         <PeriodFilter
           granularity={granularity}
           anchor={anchor}
-          onGranularityChange={g => setGranularity(g)}
-          onShift={dir => setAnchor(a => shiftAnchor(a, granularity, dir))}
+          onGranularityChange={(g) => setGranularity(g)}
+          onShift={(dir) => setAnchor((a) => shiftAnchor(a, granularity, dir))}
         />
         {employees.length > 1 && (
           <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
@@ -91,10 +88,8 @@ export default function DashboardInteractionsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL_EMPLOYEES}>
-                {t("listEmpFilterAll")}
-              </SelectItem>
-              {employees.map(e => (
+              <SelectItem value={ALL_EMPLOYEES}>{t("listEmpFilterAll")}</SelectItem>
+              {employees.map((e) => (
                 <SelectItem key={e.id} value={e.id}>
                   {e.name}
                 </SelectItem>
@@ -107,7 +102,7 @@ export default function DashboardInteractionsPage() {
       <InteractionsTable
         days={filtered.days}
         total={filtered.total}
-        hrefForRow={row =>
+        hrefForRow={(row) =>
           row.employeeId
             ? `/performance/mitarbeiter/${row.employeeId}/interaktionen/${row.date}`
             : `/performance/interaktionen/${row.date}`

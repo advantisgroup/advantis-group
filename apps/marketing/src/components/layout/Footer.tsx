@@ -3,17 +3,21 @@
 import { useEffect, useRef, useState } from "react";
 
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Building2, Mail, Phone, MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { Link } from "@/i18n/navigation";
+import { COMPANY_ADDRESS } from "@/lib/company";
+import { isAuthRoute } from "@/lib/utils";
 
 import { SectionDivider } from "./SectionDivider";
 
 export const Footer = () => {
+  const pathname = usePathname();
   const t = useTranslations();
   const footerRef = useRef<HTMLElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -46,6 +50,10 @@ export const Footer = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // The auth cards have their own minimal shell — the marketing chrome
+  // would otherwise occlude them (see AuthShell).
+  if (isAuthRoute(pathname)) return null;
+
   const footerLinks = [
     {
       label: t("nav.home"),
@@ -67,14 +75,6 @@ export const Footer = () => {
       label: t("nav.contact"),
       path: "/contact",
     },
-    ...(intranetUrl
-      ? [
-          {
-            label: t("nav.intranet"),
-            path: intranetUrl,
-          },
-        ]
-      : []),
   ];
 
   const brandLinks = [
@@ -168,6 +168,18 @@ export const Footer = () => {
                     </Link>
                   </li>
                 ))}
+                {intranetUrl && (
+                  <li>
+                    <Link
+                      href={intranetUrl}
+                      className="group/intranet relative inline-flex items-center gap-1.5 overflow-hidden rounded-full border border-advantis/30 bg-advantis/10 px-3 py-1.5 text-xs font-medium text-advantis transition-colors hover:bg-advantis/20"
+                    >
+                      <Building2 className="h-3.5 w-3.5" />
+                      <span>{t("nav.intranet")}</span>
+                      <span className="absolute inset-0 -translate-x-full bg-linear-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover/intranet:translate-x-full" />
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
 
@@ -210,7 +222,7 @@ export const Footer = () => {
                 </li>
                 <li className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="w-4 h-4" />
-                  <span>{process.env.NEXT_PUBLIC_ADRESS}</span>
+                  <span>{COMPANY_ADDRESS}</span>
                 </li>
               </ul>
             </div>

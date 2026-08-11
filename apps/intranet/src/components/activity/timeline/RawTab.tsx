@@ -23,11 +23,7 @@ interface RawSample {
 export function RawTab({ samples }: { samples: RawSample[] }) {
   const { t, lang } = useI18n();
   if (samples.length === 0) {
-    return (
-      <p className="py-8 text-center text-muted-foreground">
-        {t("timeline.empty")}
-      </p>
-    );
+    return <p className="py-8 text-center text-muted-foreground">{t("timeline.empty")}</p>;
   }
   return (
     <Card>
@@ -40,11 +36,9 @@ export function RawTab({ samples }: { samples: RawSample[] }) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {samples.map(s => (
+          {samples.map((s) => (
             <TableRow key={s._id}>
-              <TableCell className="tabular-nums">
-                {formatTime(s.capturedAt, lang)}
-              </TableCell>
+              <TableCell className="tabular-nums">{formatTime(s.capturedAt, lang)}</TableCell>
               <TableCell>
                 <span className={s.active ? "text-ok" : "text-warn"}>
                   {s.active ? t("common.active") : t("common.idle")}

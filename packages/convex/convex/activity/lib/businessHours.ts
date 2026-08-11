@@ -16,19 +16,13 @@ import type { EmployeeState } from "./state";
  */
 
 export const BUSINESS_TIME_ZONE =
-  process.env.ACTIVITY_TIMEZONE ??
-  process.env.CLOCKODO_TIMEZONE ??
-  "Europe/Berlin";
+  process.env.ACTIVITY_TIMEZONE ?? process.env.CLOCKODO_TIMEZONE ?? "Europe/Berlin";
 
 /** Work can plausibly start from this local hour … */
-export const BUSINESS_DAY_START_HOUR = Number(
-  process.env.ACTIVITY_DAY_START_HOUR ?? "7"
-);
+export const BUSINESS_DAY_START_HOUR = Number(process.env.ACTIVITY_DAY_START_HOUR ?? "7");
 /** … and the day is over from this local hour (also the "clock-out is
  * certain" threshold, historically `CLOCKODO_DAY_END_HOUR`). */
-export const BUSINESS_DAY_END_HOUR = Number(
-  process.env.CLOCKODO_DAY_END_HOUR ?? "20"
-);
+export const BUSINESS_DAY_END_HOUR = Number(process.env.CLOCKODO_DAY_END_HOUR ?? "20");
 
 /**
  * States that assert someone is (or was just) working. Only these are
@@ -64,7 +58,7 @@ export function businessLocalParts(at: number): LocalParts {
       hour: "2-digit",
       minute: "2-digit",
     }).formatToParts(new Date(at));
-    const get = (type: string) => parts.find(p => p.type === type)?.value ?? "";
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "";
     const date = `${get("year")}-${get("month")}-${get("day")}`;
     const hour = Number(get("hour"));
     const minute = Number(get("minute"));
@@ -104,18 +98,13 @@ export function isWithinBusinessHours(at: number): boolean {
  * zone offset observed at the guess; the second pass absorbs DST transitions
  * at the boundary.
  */
-export function startOfBusinessDayUtcMs(
-  day: string = businessDayOf(Date.now())
-): number {
+export function startOfBusinessDayUtcMs(day: string = businessDayOf(Date.now())): number {
   const target = Date.parse(`${day}T00:00:00Z`);
   let ts = target;
   for (let i = 0; i < 2; i++) {
     const p = businessLocalParts(ts);
     const seen = Date.parse(
-      `${p.date}T${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(
-        2,
-        "0"
-      )}:00Z`
+      `${p.date}T${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}:00Z`,
     );
     ts -= seen - target;
   }

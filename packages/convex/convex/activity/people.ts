@@ -1,6 +1,7 @@
-import { v } from "convex/values";
+import { v, type Infer } from "convex/values";
 
-import { query, mutation } from "../_generated/server";
+import { type Id } from "../_generated/dataModel";
+import { query, mutation, type QueryCtx, type MutationCtx } from "../_generated/server";
 import { requireUser, requireCapability } from "../lib/auth";
 import { writeAudit } from "./audit";
 import { appError } from "./lib/errors";
@@ -8,11 +9,45 @@ import { appError } from "./lib/errors";
 /** All people (coworkers being tracked). Any signed-in user. */
 export const list = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     return await ctx.db.query("people").take(2000);
   },
 });
+
+export const activitySubprofileValidator = v.object({
+  linked: v.boolean(),
+  personId: v.union(v.id("people"), v.null()),
+  employeeId: v.union(v.string(), v.null()),
+  genesysUserId: v.union(v.string(), v.null()),
+  clockodoUserId: v.union(v.string(), v.null()),
+});
+
+export type ActivitySubprofile = Infer<typeof activitySubprofileValidator>;
+
+/**
+ * ActivityTrack's subprofile for a profile (intranet `users` row): the
+ * `people` roster row that links them into device/Genesys/Clockodo tracking,
+ * if any. Previously each of `state.ts`'s `myState`/`stateBatch`/
+ * `historyBatch` independently ran this same `people.by_userId` lookup —
+ * this is the one place that join happens.
+ */
+export async function getActivitySubprofile(
+  ctx: QueryCtx | MutationCtx,
+  userId: Id<"users">,
+): Promise<ActivitySubprofile> {
+  const person = await ctx.db
+    .query("people")
+    .withIndex("by_userId", (q) => q.eq("userId", userId))
+    .first();
+  return {
+    linked: person !== null,
+    personId: person?._id ?? null,
+    employeeId: person?.employeeId ?? null,
+    genesysUserId: person?.genesysUserId ?? null,
+    clockodoUserId: person?.clockodoUserId ?? null,
+  };
+}
 
 /** Treat empty string as "clear it" (undefined); trim otherwise. */
 function normalizeId(value: string | undefined): string | undefined {
@@ -31,10 +66,7 @@ export const create = mutation({
     genesysUserId: v.optional(v.string()),
     clockodoUserId: v.optional(v.string()),
   },
-  handler: async (
-    ctx,
-    { name, email, userId, employeeId, genesysUserId, clockodoUserId }
-  ) => {
+  handler: async (ctx, { name, email, userId, employeeId, genesysUserId, clockodoUserId }) => {
     const actor = await requireCapability(ctx, "manage_members");
     const id = await ctx.db.insert("people", {
       name,
@@ -63,16 +95,8 @@ export const update = mutation({
     clockodoUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const {
-      personId,
-      name,
-      email,
-      userId,
-      active,
-      employeeId,
-      genesysUserId,
-      clockodoUserId,
-    } = args;
+    const { personId, name, email, userId, active, employeeId, genesysUserId, clockodoUserId } =
+      args;
     const actor = await requireCapability(ctx, "manage_members");
     const person = await ctx.db.get(personId);
     if (!person) throw appError("notFound.person", "Person not found");
@@ -84,7 +108,7 @@ export const update = mutation({
     if (clockodoUserId !== undefined && person.userId) {
       throw appError(
         "clockodo.managedElsewhere",
-        "This person is linked to an intranet account — manage their Clockodo id from Admin → Integrations → Clockodo instead."
+        "This person is linked to an intranet account — manage their Clockodo id from Admin → Integrations → Clockodo instead.",
       );
     }
     await ctx.db.patch(personId, {
@@ -93,15 +117,9 @@ export const update = mutation({
       ...(email !== undefined ? { email: normalizeId(email) } : {}),
       ...(userId !== undefined ? { userId: userId ?? undefined } : {}),
       ...(active !== undefined ? { active } : {}),
-      ...(employeeId !== undefined
-        ? { employeeId: normalizeId(employeeId) }
-        : {}),
-      ...(genesysUserId !== undefined
-        ? { genesysUserId: normalizeId(genesysUserId) }
-        : {}),
-      ...(clockodoUserId !== undefined
-        ? { clockodoUserId: normalizeId(clockodoUserId) }
-        : {}),
+      ...(employeeId !== undefined ? { employeeId: normalizeId(employeeId) } : {}),
+      ...(genesysUserId !== undefined ? { genesysUserId: normalizeId(genesysUserId) } : {}),
+      ...(clockodoUserId !== undefined ? { clockodoUserId: normalizeId(clockodoUserId) } : {}),
     });
     await writeAudit(ctx, actor._id, "person.update", person.name);
   },
@@ -117,7 +135,7 @@ export const remove = mutation({
 
     const linked = await ctx.db
       .query("devices")
-      .withIndex("by_personId", q => q.eq("personId", personId))
+      .withIndex("by_personId", (q) => q.eq("personId", personId))
       .collect();
     for (const d of linked) {
       await ctx.db.patch(d._id, { personId: undefined });

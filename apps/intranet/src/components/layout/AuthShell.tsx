@@ -9,14 +9,9 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/components/Link";
 import { BrandLogo } from "@/components/Logo";
 
-const HIGHLIGHTS = [
-  "Termine, Abwesenheiten & Ankündigungen an einem Ort",
-  "Direkter Draht zum gesamten Team per Chat",
-  "Sicher — nur für Advantis Mitarbeitende",
-];
-
 export function AuthShell({ children }: { children: ReactNode }) {
   const t = useTranslations("Nav");
+  const highlights = t.raw("authHighlights") as string[];
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
@@ -47,17 +42,12 @@ export function AuthShell({ children }: { children: ReactNode }) {
 
         <div className="relative max-w-md">
           <h1 className="font-display text-4xl font-bold leading-[1.1] tracking-tight text-white">
-            Willkommen im Advantis Intranet.
+            {t("authHeadline")}
           </h1>
-          <p className="mt-4 text-base text-white/80">
-            Dein Arbeitsplatz für alles, was im Team passiert.
-          </p>
+          <p className="mt-4 text-base text-white/80">{t("authSubheadline")}</p>
           <ul className="mt-8 space-y-3">
-            {HIGHLIGHTS.map(item => (
-              <li
-                key={item}
-                className="flex items-start gap-3 text-sm text-white/90"
-              >
+            {highlights.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm text-white/90">
                 <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white" />
                 {item}
               </li>
@@ -82,6 +72,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
           </Link>
           <Link href="/terms" className="hover:text-foreground">
             {t("terms")}
+          </Link>
+          <Link href="/imprint" className="hover:text-foreground">
+            {t("imprint")}
           </Link>
         </div>
       </div>

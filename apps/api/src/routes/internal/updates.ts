@@ -15,7 +15,7 @@ export const internalUpdatesRoute = new Elysia().post(
   async ({ request, body }) => {
     requireServerKey(request);
     console.log(
-      `[internal/updates/broadcast] updateId=${body.updateId} type=${body.type} recipients=${body.recipients.length}`
+      `[internal/updates/broadcast] updateId=${body.updateId} type=${body.type} recipients=${body.recipients.length}`,
     );
     try {
       const results = await sendUpdateBroadcast(
@@ -26,25 +26,18 @@ export const internalUpdatesRoute = new Elysia().post(
           url: body.url,
         },
         body.updateId,
-        body.recipients
+        body.recipients,
       );
       return { results };
     } catch (error) {
-      console.error(
-        `[internal/updates/broadcast] failed for updateId=${body.updateId}:`,
-        error
-      );
+      console.error(`[internal/updates/broadcast] failed for updateId=${body.updateId}:`, error);
       throw error;
     }
   },
   {
     body: t.Object({
       updateId: t.String(),
-      type: t.Union([
-        t.Literal("incident"),
-        t.Literal("maintenance"),
-        t.Literal("changelog"),
-      ]),
+      type: t.Union([t.Literal("incident"), t.Literal("maintenance"), t.Literal("changelog")]),
       title: t.String(),
       summary: t.String(),
       url: t.String(),
@@ -58,9 +51,9 @@ export const internalUpdatesRoute = new Elysia().post(
             email: t.String(),
             resendEmailId: t.Optional(t.String()),
             failed: t.Optional(t.Boolean()),
-          })
+          }),
         ),
       }),
     },
-  }
+  },
 );

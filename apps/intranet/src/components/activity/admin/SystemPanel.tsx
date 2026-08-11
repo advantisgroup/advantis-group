@@ -8,6 +8,7 @@ import { AlertTriangle, CheckCircle2, WifiOff } from "lucide-react";
 
 import { InfoTip } from "@/components/activity/InfoTip";
 import { SkeletonCard } from "@/components/activity/Skeleton";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,18 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  formatDuration,
-  formatRelativeTime,
-  formatTime,
-  roleAtLeast,
-  type Role,
-} from "@/lib/activity/fmt";
+import { formatDuration, formatRelativeTime, formatTime } from "@/lib/activity/fmt";
 import { useI18n } from "@/lib/activity/i18n";
-import {
-  SEVERITY_DOT_CLASS as SEV_DOT,
-  type Severity,
-} from "@/lib/activity/ui";
+import { SEVERITY_DOT_CLASS as SEV_DOT, type Severity } from "@/lib/activity/ui";
 import { useMutationWithToast } from "@/lib/activity/useMutationWithToast";
 
 const SEV_VARIANT: Record<Severity, "muted" | "warning" | "destructive"> = {
@@ -44,7 +36,7 @@ const SEV_VARIANT: Record<Severity, "muted" | "warning" | "destructive"> = {
 /** Friendly one-liner for an event code, falling back gracefully. */
 function friendly(
   t: (k: string, v?: Record<string, string | number>) => string,
-  code: string
+  code: string,
 ): string {
   const key = `health.friendly.${code}`;
   const msg = t(key);
@@ -54,7 +46,7 @@ function friendly(
 /** Plain-language "what to do about it" for an event code (tooltip). */
 function fixFor(
   t: (k: string, v?: Record<string, string | number>) => string,
-  code: string
+  code: string,
 ): string {
   const key = `health.fix.${code}`;
   const msg = t(key);
@@ -64,15 +56,11 @@ function fixFor(
 /** System health: device connectivity + reported issues. Settings hub tab. */
 export function SystemPanel() {
   const { t, lang } = useI18n();
-  const me = useQuery(api.users.me);
   const health = useQuery(api.activity.events.health);
-  const isAdmin = roleAtLeast((me?.role ?? "viewer") as Role, "it_admin");
+  const isAdmin = useIsAdmin();
 
   const [onlyOpen, setOnlyOpen] = useState(true);
-  const events = useQuery(
-    api.activity.events.listEvents,
-    isAdmin ? { onlyOpen } : "skip"
-  );
+  const events = useQuery(api.activity.events.listEvents, isAdmin ? { onlyOpen } : "skip");
 
   const resolve = useMutationWithToast(api.activity.events.resolveEvent);
 
@@ -90,8 +78,7 @@ export function SystemPanel() {
 
   const attentionCount = health.offlineDevices.length + health.openEventCount;
   const allGood = attentionCount === 0;
-  const minorWorst =
-    health.worstSeverity === "info" || health.worstSeverity === "warning";
+  const minorWorst = health.worstSeverity === "info" || health.worstSeverity === "warning";
 
   return (
     <section className="space-y-8">
@@ -104,18 +91,14 @@ export function SystemPanel() {
             </span>
             <div>
               <p className="font-medium text-ok">{t("health.allGood.title")}</p>
-              <p className="text-sm text-muted-foreground">
-                {t("health.allGood.body")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("health.allGood.body")}</p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <Card
           className={`animate-fade-up ${
-            minorWorst
-              ? "border-warn/30 bg-warn/5"
-              : "border-danger/30 bg-danger/5"
+            minorWorst ? "border-warn/30 bg-warn/5" : "border-danger/30 bg-danger/5"
           }`}
         >
           <CardContent className="flex items-center gap-3 p-5">
@@ -130,9 +113,7 @@ export function SystemPanel() {
               <p className="font-medium text-fg">
                 {t("health.attention.title", { count: attentionCount })}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {t("health.attention.body")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("health.attention.body")}</p>
             </div>
           </CardContent>
         </Card>
@@ -145,19 +126,15 @@ export function SystemPanel() {
             {t("health.offline.heading")}
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {health.offlineDevices.map(d => (
+            {health.offlineDevices.map((d) => (
               <Card key={d.deviceId} className="animate-fade-up">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2">
                     <WifiOff className="h-4 w-4 shrink-0 text-danger" />
-                    <p className="font-medium text-fg">
-                      {d.personName ?? d.hostname}
-                    </p>
+                    <p className="font-medium text-fg">{d.personName ?? d.hostname}</p>
                   </div>
                   {d.personName && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {d.hostname}
-                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{d.hostname}</p>
                   )}
                   <p className="mt-2 text-sm text-muted-foreground">
                     {t("health.offline.for", {
@@ -189,7 +166,7 @@ export function SystemPanel() {
           </Card>
         ) : (
           <ul className="space-y-2">
-            {health.recentIssues.map(issue => (
+            {health.recentIssues.map((issue) => (
               <li key={issue.id} className="animate-fade-up">
                 <Card>
                   <CardContent className="flex items-start gap-3 p-4">
@@ -215,10 +192,7 @@ export function SystemPanel() {
                         variant="secondary"
                         size="sm"
                         onClick={() =>
-                          void resolve(
-                            { eventId: issue.id },
-                            { success: t("health.resolved") }
-                          )
+                          void resolve({ eventId: issue.id }, { success: t("health.resolved") })
                         }
                       >
                         {t("health.resolve")}
@@ -239,14 +213,8 @@ export function SystemPanel() {
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
               {t("health.detail.heading")}
             </h2>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setOnlyOpen(v => !v)}
-            >
-              {onlyOpen
-                ? t("health.detail.toggleAll")
-                : t("health.detail.toggleOpen")}
+            <Button variant="secondary" size="sm" onClick={() => setOnlyOpen((v) => !v)}>
+              {onlyOpen ? t("health.detail.toggleAll") : t("health.detail.toggleOpen")}
             </Button>
           </div>
           <Card>
@@ -273,24 +241,19 @@ export function SystemPanel() {
                   </TableRow>
                 ) : events.length === 0 ? (
                   <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="py-8 text-center text-muted-foreground"
-                    >
+                    <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                       {t("health.detail.empty")}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  events.map(e => (
+                  events.map((e) => (
                     <TableRow key={e._id} className="align-top">
                       <TableCell>
                         <Badge variant={SEV_VARIANT[e.severity]}>
                           {t(`health.sev.${e.severity}`)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {e.code}
-                      </TableCell>
+                      <TableCell className="font-mono text-xs">{e.code}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {e.message}
                         {e.context && (
@@ -315,9 +278,7 @@ export function SystemPanel() {
                             {t("health.detail.statusResolved")}
                           </span>
                         ) : (
-                          <span className="text-xs text-warn">
-                            {t("health.detail.statusOpen")}
-                          </span>
+                          <span className="text-xs text-warn">{t("health.detail.statusOpen")}</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -326,10 +287,7 @@ export function SystemPanel() {
                             variant="ghost"
                             size="sm"
                             onClick={() =>
-                              void resolve(
-                                { eventId: e._id },
-                                { success: t("health.resolved") }
-                              )
+                              void resolve({ eventId: e._id }, { success: t("health.resolved") })
                             }
                           >
                             {t("health.resolve")}

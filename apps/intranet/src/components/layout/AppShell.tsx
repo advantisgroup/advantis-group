@@ -8,13 +8,22 @@ import { usePathname, useRouter } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useMutation, useQuery } from "convex/react";
 
+import { PostHogIdentify } from "@/components/analytics/PostHogIdentify";
 import { CommandPalette } from "@/components/CommandPalette";
+import { useSmoothScroll } from "@/components/effects/SmoothScrolling";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { FileViewerProvider } from "@/components/file-viewer/FileViewerProvider";
 import { AccountMenu } from "@/components/layout/AccountMenu";
 import { BottomNavTabsProvider } from "@/components/layout/bottom-nav-tabs";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ClockodoHeaderControl } from "@/components/layout/ClockodoHeaderControl";
 import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
+import {
+  PageHeaderActionsSlot,
+  PageHeaderBarProvider,
+  PageHeaderBarSlot,
+  usePageHeaderBarState,
+} from "@/components/layout/PageHeaderBar";
 import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Link } from "@/components/Link";
@@ -29,11 +38,7 @@ import { TourPopout } from "@/components/tour/TourPopout";
 import { TourProgressChip } from "@/components/tour/TourProgressChip";
 import { TourProvider, useTour } from "@/components/tour/TourProvider";
 import { TourSpotlight } from "@/components/tour/TourSpotlight";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UpdateBanner } from "@/components/updates/UpdateBanner";
 import { cn } from "@/lib/utils";
 
@@ -70,18 +75,27 @@ function AppShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const heartbeat = useMutation(api.presence.heartbeat);
   const mainRef = useRef<HTMLElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const { state: tourState, phase: tourPhase, targetRect } = useTour();
   const tourActive = (tourState?.active && tourPhase === "active") ?? false;
+  const { identity: pageHeaderBar } = usePageHeaderBarState();
 
-  // The main pane is the scroll container (not the window), so reset it to the
-  // top on navigation — otherwise a new page would open mid-scroll.
-  useEffect(() => {
-    mainRef.current?.scrollTo({ top: 0 });
-  }, [pathname]);
-
-  // Chat is a full-screen, self-managing view on mobile (its own header and
-  // sticky composer), so it opts out of the bottom nav and its clearance.
-  const immersive = pathname.startsWith("/chat");
+  // Chat and the announcement composer are full-screen, self-managing views
+  // (their own header and sticky composer/toolbar), so they opt out of the
+  // bottom nav and its clearance.
+  const isAnnouncementComposer =
+    pathname === "/announcements/new" ||
+    (pathname.startsWith("/announcements/") && pathname.endsWith("/edit"));
+  // Same deal for the Sales Cockpit flow composer (`/sales-cockpit/flows/<id>`,
+  // but not the `/sales-cockpit/flows` list itself) — a React Flow canvas
+  // needs the full viewport, not viewport-minus-bottom-nav.
+  const isFlowComposer =
+    pathname.startsWith("/sales-cockpit/flows/") && pathname !== "/sales-cockpit/flows/";
+  const immersive =
+    pathname.startsWith("/chat") ||
+    pathname.startsWith("/wiki-chat") ||
+    isAnnouncementComposer ||
+    isFlowComposer;
 
   // The Updates section reads like a blog (Anthropic/GitHub-changelog style)
   // rather than an app surface — the nav sidebar, bottom nav and the sitewide
@@ -89,8 +103,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // dropped in favor of a slim logo-only header. The composer at
   // /updates/new keeps full chrome since it's an editing tool, not reading.
   const isUpdatesReading =
-    pathname === "/updates" ||
-    (pathname.startsWith("/updates/") && pathname !== "/updates/new");
+    pathname === "/updates" || (pathname.startsWith("/updates/") && pathname !== "/updates/new");
 
   // The detail page renders its own full-bleed art banner flush against
   // <main>'s edges, so <main> drops its own padding here and the page
@@ -98,8 +111,20 @@ function AppShellInner({ children }: { children: ReactNode }) {
   // negative-margin "breakout" doesn't work: overflow-y-auto forces
   // overflow-x to compute to auto too, per the CSS overflow spec, so any
   // content pushed past <main>'s padding box gets clipped right back to it.)
-  const isUpdateDetail =
-    pathname.startsWith("/updates/") && pathname !== "/updates/new";
+  const isUpdateDetail = pathname.startsWith("/updates/") && pathname !== "/updates/new";
+
+  // Sitewide smooth scrolling on the real scroll container (see
+  // `useSmoothScroll` for why this can't be marketing's `<ReactLenis root>`).
+  const lenisRef = useSmoothScroll(mainRef, mainContentRef, !immersive);
+
+  // The main pane is the scroll container (not the window), so reset it to the
+  // top on navigation — otherwise a new page would open mid-scroll. When Lenis
+  // owns the container it has to do the reset: a bare `scrollTo` leaves its
+  // animated position pointing at the old offset, which it then eases back to.
+  useEffect(() => {
+    if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
+    else mainRef.current?.scrollTo({ top: 0 });
+  }, [pathname, lenisRef]);
 
   // Keep presence fresh while the app is open so chat can show online state.
   // 60s leaves ample margin under the 5-minute online window
@@ -113,6 +138,7 @@ function AppShellInner({ children }: { children: ReactNode }) {
 
   return (
     <>
+      <PostHogIdentify />
       {!isUpdatesReading && <Sidebar />}
       <SidebarInset>
         {/* Above the scrollable <main> (and the sticky header), so it's
@@ -133,14 +159,29 @@ function AppShellInner({ children }: { children: ReactNode }) {
           ) : (
             <SidebarTrigger className="-ml-1" />
           )}
-          {/* Search lives in the desktop header, but on mobile it moves to the
-              reachable bottom bar — so here it's just a flex spacer. The
-              component stays mounted so ⌘K and the bottom-bar trigger work. */}
-          <div className="flex flex-1 justify-start">
-            <div className="hidden w-full md:flex">
+          {/* A page opted into <PageHeaderBar> (see clockodo/layout.tsx) takes
+              this slot over from search — search stays mounted underneath so
+              ⌘K keeps working, it's just visually hidden instead of unmounted.
+              Pages that haven't opted in see exactly the old layout: search on
+              desktop, an empty flex spacer on mobile. */}
+          <div className="flex min-w-0 flex-1 items-center justify-start gap-2">
+            {!isUpdatesReading && <PageHeaderBarSlot />}
+            <div className={pageHeaderBar ? "hidden" : "hidden w-full md:flex"}>
               <CommandPalette />
             </div>
           </div>
+          {/* Fixed slot right after the title — same position on every page
+              regardless of which/how many actions are active, so actions
+              never shift around the way they would sitting under a
+              variable-length description. */}
+          {!isUpdatesReading && <PageHeaderActionsSlot />}
+          {/* Silent fallback: a header widget crashing shouldn't take out
+              every page in the app the way an unwrapped one would. */}
+          {!isUpdatesReading && (
+            <ErrorBoundary fallback={() => null}>
+              <ClockodoHeaderControl />
+            </ErrorBoundary>
+          )}
           {/* Tour progress — compact checkmark chip; self-hides when finished. */}
           {!isUpdatesReading && <TourProgressChip />}
           {!isUpdatesReading && <OnboardingTrigger />}
@@ -156,15 +197,28 @@ function AppShellInner({ children }: { children: ReactNode }) {
         <main
           ref={mainRef}
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto print:overflow-visible",
+            // `overscroll-contain`: swiping past either end of the page must
+            // stop here rather than handing the gesture to the document,
+            // where it turns into a rubber-band or a pull-to-refresh.
+            "min-h-0 flex-1 overflow-y-auto overscroll-contain print:block print:h-auto print:overflow-visible",
             !immersive && "md:pb-8",
             isUpdateDetail || immersive ? "" : "px-4 pt-6 md:px-8 md:pt-8",
-            immersive ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]"
+            immersive ? "" : "pb-[calc(env(safe-area-inset-bottom)+5rem)]",
           )}
         >
           {/* Isolate page crashes so the surrounding shell stays usable.
               Keyed by route so navigating away clears a previous error. */}
-          <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+          {immersive ? (
+            <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+          ) : (
+            // Lenis needs a single content element inside the scroller to
+            // translate. Only rendered off the immersive branch — those routes
+            // size themselves to the viewport through <main>, and an extra div
+            // would break their `h-full` chain.
+            <div ref={mainContentRef}>
+              <ErrorBoundary key={pathname}>{children}</ErrorBoundary>
+            </div>
+          )}
         </main>
       </SidebarInset>
 
@@ -193,7 +247,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <TourProvider>
           <OnboardingProvider>
             <FileViewerProvider>
-              <AppShellInner>{children}</AppShellInner>
+              <PageHeaderBarProvider>
+                <AppShellInner>{children}</AppShellInner>
+              </PageHeaderBarProvider>
             </FileViewerProvider>
           </OnboardingProvider>
         </TourProvider>

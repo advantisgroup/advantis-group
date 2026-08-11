@@ -23,9 +23,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
-export type TeamDashboardData = FunctionReturnType<
-  typeof api.performanceQueries.teamDashboard
->;
+export type TeamDashboardData = FunctionReturnType<typeof api.performanceQueries.teamDashboard>;
 
 const BADGE_ICONS: Record<string, string> = {
   hitrate: "🎯",
@@ -108,16 +106,12 @@ function SortableHead({
         onClick={() => onSort(sortKey)}
         className={cn(
           "inline-flex items-center gap-1 hover:text-foreground",
-          active ? "font-medium text-foreground" : "text-muted-foreground"
+          active ? "font-medium text-foreground" : "text-muted-foreground",
         )}
       >
         {label}
         {active &&
-          (dir === "asc" ? (
-            <ArrowUp className="h-3 w-3" />
-          ) : (
-            <ArrowDown className="h-3 w-3" />
-          ))}
+          (dir === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
       </button>
     </TableHead>
   );
@@ -132,20 +126,12 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
   const router = useRouter();
 
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>(() =>
-    loadTeamSort()
-  );
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" }>(() => loadTeamSort());
 
   function toggleSort(key: SortKey) {
-    setSort(prev => {
+    setSort((prev) => {
       const dir: "asc" | "desc" =
-        prev.key === key
-          ? prev.dir === "asc"
-            ? "desc"
-            : "asc"
-          : key === "name"
-            ? "asc"
-            : "desc";
+        prev.key === key ? (prev.dir === "asc" ? "desc" : "asc") : key === "name" ? "asc" : "desc";
       const next = { key, dir };
       if (typeof window !== "undefined") {
         window.localStorage.setItem(SORT_STORAGE_KEY, JSON.stringify(next));
@@ -156,9 +142,7 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
 
   const visibleSnaps = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let rows = q
-      ? data.snaps.filter(s => s.name.toLowerCase().includes(q))
-      : data.snaps;
+    let rows = q ? data.snaps.filter((s) => s.name.toLowerCase().includes(q)) : data.snaps;
     rows = [...rows].sort((a, b) => {
       const cmp =
         sort.key === "name"
@@ -171,7 +155,7 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between gap-3">
+      <CardHeader className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-baseline gap-2">
           <CardTitle className="text-base">{t("dashboardEmployees")}</CardTitle>
           <span className="text-xs text-muted-foreground">
@@ -181,231 +165,282 @@ export function TeamTable({ data }: { data: TeamDashboardData }) {
             })}
           </span>
         </div>
-        <div className="relative w-full max-w-[16rem]">
+        <div className="relative w-full sm:max-w-[16rem]">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder={t("dashboardSearchPlaceholder")}
             className="h-8 pl-8 text-sm"
           />
         </div>
       </CardHeader>
-      <CardContent className="overflow-x-auto">
-        <Table className="whitespace-nowrap">
-          <TableHeader>
-            <TableRow>
-              <SortableHead
-                label={t("colName")}
-                sortKey="name"
-                active={sort.key === "name"}
-                dir={sort.dir}
-                onSort={toggleSort}
-              />
-              <SortableHead
-                label={t("colLeads")}
-                sortKey="leadsCreated"
-                active={sort.key === "leadsCreated"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colWorkable")}
-                sortKey="workableCreated"
-                active={sort.key === "workableCreated"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colWorkableRate")}
-                sortKey="workableRate"
-                active={sort.key === "workableRate"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colWon")}
-                sortKey="wonMonth"
-                active={sort.key === "wonMonth"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colHitrate")}
-                sortKey="hitrate"
-                active={sort.key === "hitrate"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colWonPerDay")}
-                sortKey="wonPerDay"
-                active={sort.key === "wonPerDay"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colForecast")}
-                sortKey="fc1"
-                active={sort.key === "fc1"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colOppsOpen")}
-                sortKey="oppsOpen"
-                active={sort.key === "oppsOpen"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colAnalysis30")}
-                sortKey="overduesAnalysis"
-                active={sort.key === "overduesAnalysis"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colOppOverdue")}
-                sortKey="overduesOpps"
-                active={sort.key === "overduesOpps"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colOpps30")}
-                sortKey="oppsOver30"
-                active={sort.key === "oppsOver30"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colLeads14")}
-                sortKey="leadsNoAction14"
-                active={sort.key === "leadsNoAction14"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <SortableHead
-                label={t("colOpps14")}
-                sortKey="oppsNoAction14"
-                active={sort.key === "oppsNoAction14"}
-                dir={sort.dir}
-                onSort={toggleSort}
-                align="right"
-              />
-              <TableHead>{t("colBadges")}</TableHead>
-              <TableHead>{t("colMark")}</TableHead>
-              <TableHead />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visibleSnaps.length === 0 && (
+      <CardContent className="p-0 sm:p-6 sm:pt-0">
+        {/* Below sm: a card per employee with the headline metrics only — all
+            17 columns of the real table don't fit a phone, and every row
+            already opens the employee's own full breakdown on tap. sm and
+            up: the real table. */}
+        <div className="space-y-2 border-t border-border/70 p-4 sm:hidden">
+          {visibleSnaps.length === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              {t("dashboardSearchEmpty")}
+            </p>
+          )}
+          {visibleSnaps.map((s) => {
+            const badges = data.badgeCounts[s.employeeId] ?? {};
+            const mark = data.marks[s.employeeId];
+            return (
+              <Card
+                key={s.employeeId}
+                className="cursor-pointer transition-colors hover:border-border"
+                onClick={() => router.push(`/performance/mitarbeiter/${s.employeeId}`)}
+              >
+                <CardContent className="space-y-2.5 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="min-w-0 truncate font-medium">{s.name}</span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      {mark && (
+                        <Badge variant={mark.level === "high" ? "success" : "warning"}>
+                          {mark.level === "high" ? t("markHigh") : t("markLow")}
+                        </Badge>
+                      )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 border-t border-border/70 pt-2.5 text-xs">
+                    <span className="text-muted-foreground">
+                      {t("colWon")}:{" "}
+                      <span className="tabular-nums text-foreground">{fmtNum(s.wonMonth)}</span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      {t("colHitrate")}:{" "}
+                      <span className="tabular-nums text-foreground">{fmtPct(s.hitrate)}</span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      {t("colLeads")}:{" "}
+                      <span className="tabular-nums text-foreground">{fmtNum(s.leadsCreated)}</span>
+                    </span>
+                    <span className="text-muted-foreground">
+                      {t("colOppsOpen")}:{" "}
+                      <span className="tabular-nums text-foreground">{fmtNum(s.oppsOpen)}</span>
+                    </span>
+                  </div>
+                  {Object.entries(badges).some(([, n]) => n > 0) && (
+                    <div className="flex items-center gap-1.5 text-sm">
+                      {Object.entries(badges)
+                        .filter(([, n]) => n > 0)
+                        .map(([key, n]) => (
+                          <span key={key} title={t(`badgeLabel.${key}`)}>
+                            {BADGE_ICONS[key] ?? ""}
+                            {n > 1 ? `×${n}` : ""}
+                          </span>
+                        ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+        <div className="hidden overflow-x-auto sm:block sm:px-6 sm:pb-6">
+          <Table className="whitespace-nowrap">
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={17}
-                  className="text-center text-sm text-muted-foreground"
-                >
-                  {t("dashboardSearchEmpty")}
-                </TableCell>
+                <SortableHead
+                  label={t("colName")}
+                  sortKey="name"
+                  active={sort.key === "name"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                />
+                <SortableHead
+                  label={t("colLeads")}
+                  sortKey="leadsCreated"
+                  active={sort.key === "leadsCreated"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colWorkable")}
+                  sortKey="workableCreated"
+                  active={sort.key === "workableCreated"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colWorkableRate")}
+                  sortKey="workableRate"
+                  active={sort.key === "workableRate"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colWon")}
+                  sortKey="wonMonth"
+                  active={sort.key === "wonMonth"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colHitrate")}
+                  sortKey="hitrate"
+                  active={sort.key === "hitrate"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colWonPerDay")}
+                  sortKey="wonPerDay"
+                  active={sort.key === "wonPerDay"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colForecast")}
+                  sortKey="fc1"
+                  active={sort.key === "fc1"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colOppsOpen")}
+                  sortKey="oppsOpen"
+                  active={sort.key === "oppsOpen"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colAnalysis30")}
+                  sortKey="overduesAnalysis"
+                  active={sort.key === "overduesAnalysis"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colOppOverdue")}
+                  sortKey="overduesOpps"
+                  active={sort.key === "overduesOpps"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colOpps30")}
+                  sortKey="oppsOver30"
+                  active={sort.key === "oppsOver30"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colLeads14")}
+                  sortKey="leadsNoAction14"
+                  active={sort.key === "leadsNoAction14"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <SortableHead
+                  label={t("colOpps14")}
+                  sortKey="oppsNoAction14"
+                  active={sort.key === "oppsNoAction14"}
+                  dir={sort.dir}
+                  onSort={toggleSort}
+                  align="right"
+                />
+                <TableHead>{t("colBadges")}</TableHead>
+                <TableHead>{t("colMark")}</TableHead>
+                <TableHead />
               </TableRow>
-            )}
-            {visibleSnaps.map(s => {
-              const badges = data.badgeCounts[s.employeeId] ?? {};
-              const mark = data.marks[s.employeeId];
-              return (
-                <TableRow
-                  key={s.employeeId}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() =>
-                    router.push(`/performance/mitarbeiter/${s.employeeId}`)
-                  }
-                >
-                  <TableCell className="font-medium">{s.name}</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.leadsCreated)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.workableCreated)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtPct(s.workableRate)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.wonMonth)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtPct(s.hitrate)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.wonPerDay)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.fc1)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.oppsOpen)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.overduesAnalysis)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.overduesOpps)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.oppsOver30)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.leadsNoAction14)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {fmtNum(s.oppsNoAction14)}
-                  </TableCell>
-                  <TableCell>
-                    {Object.entries(badges).some(([, n]) => n > 0) ? (
-                      <span className="inline-flex items-center gap-1.5 text-sm">
-                        {Object.entries(badges)
-                          .filter(([, n]) => n > 0)
-                          .map(([key, n]) => (
-                            <span key={key} title={t(`badgeLabel.${key}`)}>
-                              {BADGE_ICONS[key] ?? ""}
-                              {n > 1 ? `×${n}` : ""}
-                            </span>
-                          ))}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">–</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {mark && (
-                      <Badge
-                        variant={mark.level === "high" ? "success" : "warning"}
-                      >
-                        {mark.level === "high" ? t("markHigh") : t("markLow")}
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="w-8">
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </TableHeader>
+            <TableBody>
+              {visibleSnaps.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={17} className="text-center text-sm text-muted-foreground">
+                    {t("dashboardSearchEmpty")}
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              )}
+              {visibleSnaps.map((s) => {
+                const badges = data.badgeCounts[s.employeeId] ?? {};
+                const mark = data.marks[s.employeeId];
+                return (
+                  <TableRow
+                    key={s.employeeId}
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => router.push(`/performance/mitarbeiter/${s.employeeId}`)}
+                  >
+                    <TableCell className="font-medium">{s.name}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.leadsCreated)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.workableCreated)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtPct(s.workableRate)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNum(s.wonMonth)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtPct(s.hitrate)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNum(s.wonPerDay)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNum(s.fc1)}</TableCell>
+                    <TableCell className="text-right tabular-nums">{fmtNum(s.oppsOpen)}</TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.overduesAnalysis)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.overduesOpps)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.oppsOver30)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.leadsNoAction14)}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      {fmtNum(s.oppsNoAction14)}
+                    </TableCell>
+                    <TableCell>
+                      {Object.entries(badges).some(([, n]) => n > 0) ? (
+                        <span className="inline-flex items-center gap-1.5 text-sm">
+                          {Object.entries(badges)
+                            .filter(([, n]) => n > 0)
+                            .map(([key, n]) => (
+                              <span key={key} title={t(`badgeLabel.${key}`)}>
+                                {BADGE_ICONS[key] ?? ""}
+                                {n > 1 ? `×${n}` : ""}
+                              </span>
+                            ))}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">–</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {mark && (
+                        <Badge variant={mark.level === "high" ? "success" : "warning"}>
+                          {mark.level === "high" ? t("markHigh") : t("markLow")}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="w-8">
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

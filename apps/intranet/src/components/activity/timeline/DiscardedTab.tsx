@@ -7,10 +7,7 @@ import { useQuery } from "convex/react";
 import { ShieldAlert } from "lucide-react";
 
 import { STATE_COLOR } from "@/components/activity/charts/theme";
-import {
-  ProviderBadge,
-  type Provider,
-} from "@/components/branding/ProviderMark";
+import { ProviderBadge, type Provider } from "@/components/branding/ProviderMark";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { StateName } from "@/lib/activity/activity";
@@ -54,7 +51,7 @@ export function DiscardedTab({
           since: dayStart,
           until: day === today ? undefined : dayStart + DAY_MS,
         }
-      : "skip"
+      : "skip",
   );
 
   const reasonLabel = (reason: string) => {
@@ -75,12 +72,8 @@ export function DiscardedTab({
     <Card className="animate-fade-up">
       <CardHeader className="gap-3">
         <div>
-          <CardTitle className="text-base">
-            {t("timeline.discarded.heading")}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            {t("timeline.discarded.sub")}
-          </p>
+          <CardTitle className="text-base">{t("timeline.discarded.heading")}</CardTitle>
+          <p className="text-sm text-muted-foreground">{t("timeline.discarded.sub")}</p>
         </div>
         <div className="flex items-start gap-2.5 rounded-md border border-border-soft bg-muted/40 p-3">
           <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-signal" />
@@ -105,22 +98,14 @@ export function DiscardedTab({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border-soft text-left text-xs text-muted-foreground">
-                  <th className="py-2 pr-4 font-medium">
-                    {t("timeline.discarded.col.time")}
-                  </th>
-                  <th className="py-2 pr-4 font-medium">
-                    {t("timeline.discarded.col.state")}
-                  </th>
-                  <th className="py-2 pr-4 font-medium">
-                    {t("timeline.discarded.col.source")}
-                  </th>
-                  <th className="py-2 font-medium">
-                    {t("timeline.discarded.col.reason")}
-                  </th>
+                  <th className="py-2 pr-4 font-medium">{t("timeline.discarded.col.time")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("timeline.discarded.col.state")}</th>
+                  <th className="py-2 pr-4 font-medium">{t("timeline.discarded.col.source")}</th>
+                  <th className="py-2 font-medium">{t("timeline.discarded.col.reason")}</th>
                 </tr>
               </thead>
               <tbody>
-                {rows.map(r => (
+                {rows.map((r) => (
                   <tr
                     key={`${r.at}-${r.state}`}
                     className="border-b border-border-soft last:border-0"
@@ -137,17 +122,11 @@ export function DiscardedTab({
                             background: STATE_COLOR[r.state as StateName],
                           }}
                         />
-                        <span className="font-medium text-fg">
-                          {t(`empstate.${r.state}`)}
-                        </span>
+                        <span className="font-medium text-fg">{t(`empstate.${r.state}`)}</span>
                       </span>
                     </td>
-                    <td className="py-2 pr-4 text-muted-foreground">
-                      {sourceLabel(r.source)}
-                    </td>
-                    <td className="py-2 text-muted-foreground">
-                      {reasonLabel(r.reason)}
-                    </td>
+                    <td className="py-2 pr-4 text-muted-foreground">{sourceLabel(r.source)}</td>
+                    <td className="py-2 text-muted-foreground">{reasonLabel(r.reason)}</td>
                   </tr>
                 ))}
               </tbody>

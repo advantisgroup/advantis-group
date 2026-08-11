@@ -13,19 +13,9 @@ export const KNOWN_SYSTEMS = [
 
 export type UpdateType = "incident" | "maintenance" | "changelog";
 
-export const INCIDENT_STATUSES = [
-  "investigating",
-  "identified",
-  "monitoring",
-  "resolved",
-] as const;
+export const INCIDENT_STATUSES = ["investigating", "identified", "monitoring", "resolved"] as const;
 
-export const MAINTENANCE_STATUSES = [
-  "scheduled",
-  "in_progress",
-  "completed",
-  "cancelled",
-] as const;
+export const MAINTENANCE_STATUSES = ["scheduled", "in_progress", "completed", "cancelled"] as const;
 
 export function statusesForType(type: UpdateType): readonly string[] {
   if (type === "incident") return INCIDENT_STATUSES;

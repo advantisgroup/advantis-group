@@ -11,7 +11,7 @@ import { type Locale, locales } from "@/i18n/request";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function generateStaticParams() {
-  return locales.map(locale => ({ locale }));
+  return locales.map((locale) => ({ locale }));
 }
 
 export default async function LocaleLayout({

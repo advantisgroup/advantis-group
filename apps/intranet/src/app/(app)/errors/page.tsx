@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { ErrorFallback } from "@/components/ErrorFallback";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { NotFoundScreen } from "@/components/layout/NotFoundScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { Card } from "@/components/ui/card";
 
 /**
@@ -37,22 +37,15 @@ export default function ErrorsCatalogPage() {
     {
       code: "500",
       name: t("boundary"),
-      render: () => (
-        <ErrorFallback onRetry={() => {}} className="min-h-[280px]" />
-      ),
+      render: () => <ErrorFallback onRetry={() => {}} className="min-h-[280px]" />,
     },
   ];
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <PageHeader
-        eyebrow={t("eyebrow")}
-        title={t("title")}
-        description={t("subtitle")}
-        icon={<Bug />}
-      />
+      <PageHeaderBar title={t("title")} description={t("subtitle")} icon={<Bug />} />
       <div className="space-y-4">
-        {entries.map(entry => (
+        {entries.map((entry) => (
           <Card key={entry.code} className="overflow-hidden">
             <div className="border-b border-border/60 px-4 py-2.5 text-sm font-medium">
               {entry.code} · {entry.name}

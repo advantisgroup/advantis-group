@@ -3,27 +3,27 @@ import { ConvexError } from "convex/values";
 import { type Role } from "./auth";
 
 /**
- * Direct integration with Clerk's Backend API for the intranet Clerk instance.
+ * Direct integration with Clerk's Backend API for the shared Clerk instance
+ * (root domain advantisgroup.de, covering both marketing and the intranet).
  *
  * Invitations are created straight from Convex actions rather than proxied
  * through the Elysia API. That removes a fragile server-key handshake between
  * two deployments — the only thing that needs configuring is the Clerk secret
- * key in the Convex environment (`INTERNAL_CLERK_SECRET_KEY`). Clerk itself
- * sends the invitation email and gates sign-up to the invited address, which is
- * also what lets external domains through a restricted sign-up mode.
+ * key in the Convex environment (`CLERK_SECRET_KEY`). Clerk itself sends the
+ * invitation email and gates sign-up to the invited address, which is also
+ * what lets external domains through a restricted sign-up mode.
  */
 
 const CLERK_API = "https://api.clerk.com/v1";
 
 function clerkSecretKey(): string {
-  const key =
-    process.env.INTERNAL_CLERK_SECRET_KEY ?? process.env.CLERK_SECRET_KEY;
+  const key = process.env.CLERK_SECRET_KEY;
   if (!key) {
     throw new ConvexError({
       code: "internal",
       message:
-        "Clerk is not configured for invitations. Set INTERNAL_CLERK_SECRET_KEY " +
-        "in the Convex environment (npx convex env set INTERNAL_CLERK_SECRET_KEY sk_...).",
+        "Clerk is not configured for invitations. Set CLERK_SECRET_KEY " +
+        "in the Convex environment (npx convex env set CLERK_SECRET_KEY sk_...).",
     });
   }
   return key;
@@ -49,14 +49,12 @@ interface ClerkInvitation {
 async function pendingInvitations(email: string): Promise<ClerkInvitation[]> {
   const res = await clerkFetch(
     `/invitations?status=pending&query=${encodeURIComponent(email)}&limit=100`,
-    { method: "GET" }
+    { method: "GET" },
   );
   if (!res.ok) return [];
-  const json = (await res.json()) as
-    | { data?: ClerkInvitation[] }
-    | ClerkInvitation[];
+  const json = (await res.json()) as { data?: ClerkInvitation[] } | ClerkInvitation[];
   const list = Array.isArray(json) ? json : (json.data ?? []);
-  return list.filter(i => i.email_address.toLowerCase() === email);
+  return list.filter((i) => i.email_address.toLowerCase() === email);
 }
 
 /**
@@ -64,7 +62,7 @@ async function pendingInvitations(email: string): Promise<ClerkInvitation[]> {
  */
 export async function updateClerkUserName(
   clerkUserId: string,
-  opts: { firstName?: string; lastName?: string }
+  opts: { firstName?: string; lastName?: string },
 ): Promise<void> {
   const body: Record<string, string> = {};
   if (opts.firstName !== undefined) body.first_name = opts.firstName;
@@ -87,10 +85,7 @@ export async function updateClerkUserName(
  * Best-effort — the avatar is already saved in Convex storage, so failures here
  * don't affect the app display.
  */
-export async function updateClerkUserAvatar(
-  clerkUserId: string,
-  imageUrl: string
-): Promise<void> {
+export async function updateClerkUserAvatar(clerkUserId: string, imageUrl: string): Promise<void> {
   try {
     const imageRes = await fetch(imageUrl);
     if (!imageRes.ok) return;
@@ -114,7 +109,7 @@ export async function updateClerkUserAvatar(
  */
 export async function updateClerkPublicMetadata(
   clerkUserId: string,
-  publicMetadata: Record<string, unknown>
+  publicMetadata: Record<string, unknown>,
 ): Promise<void> {
   const res = await clerkFetch(`/users/${clerkUserId}/metadata`, {
     method: "PATCH",
@@ -181,9 +176,7 @@ export async function revokeClerkInvitations(email: string): Promise<void> {
   const addr = email.trim().toLowerCase();
   const pending = await pendingInvitations(addr);
   await Promise.all(
-    pending.map(i =>
-      clerkFetch(`/invitations/${i.id}/revoke`, { method: "POST" })
-    )
+    pending.map((i) => clerkFetch(`/invitations/${i.id}/revoke`, { method: "POST" })),
   );
 }
 
@@ -209,8 +202,7 @@ export async function createClerkInvitation(opts: {
   }
 
   const redirectUrl =
-    opts.redirectUrl ??
-    `${process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de"}/sign-up`;
+    opts.redirectUrl ?? `${process.env.INTERNAL_URL ?? "https://intern.advantisgroup.de"}/sign-up`;
 
   const res = await clerkFetch("/invitations", {
     method: "POST",

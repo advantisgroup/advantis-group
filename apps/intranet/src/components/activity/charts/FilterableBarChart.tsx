@@ -2,24 +2,24 @@
 
 import { useMemo, useState } from "react";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from "recharts";
 
 import { cn } from "@/lib/utils";
 
 import { CHART, tooltipStyle } from "./theme";
+import { ChartInfoTip } from "./ChartInfoTip";
 
 export interface BarSeries {
   key: string;
   name: string;
   color: string;
+  /** Plot this series against the right-hand axis instead of the shared
+   * left one. Use when two series differ by an order of magnitude or more
+   * (e.g. minutes-per-day talk time vs. hours-per-day login time) — a
+   * shared linear axis flattens the smaller series to an invisible sliver,
+   * and a shared log axis produces cramped, sometimes duplicate tick
+   * labels. Each axis gets its own independent, "nice" linear scale. */
+  axis?: "left" | "right";
 }
 
 // D3's log scale can't place exactly 0 anywhere on the axis — floor a true
@@ -61,7 +61,7 @@ export function FilterableBarChart({
   const [hidden, setHidden] = useState<Set<string>>(new Set());
 
   function toggle(key: string) {
-    setHidden(prev => {
+    setHidden((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
@@ -70,11 +70,12 @@ export function FilterableBarChart({
     });
   }
 
-  const visible = series.filter(s => !hidden.has(s.key));
+  const visible = series.filter((s) => !hidden.has(s.key));
+  const hasRightAxis = series.some((s) => s.axis === "right");
 
   const chartData = useMemo(() => {
     if (yScale !== "log") return data;
-    return data.map(row => {
+    return data.map((row) => {
       const next: Record<string, string | number> = { ...row };
       for (const s of series) {
         const v = row[s.key];
@@ -90,7 +91,7 @@ export function FilterableBarChart({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap gap-1.5">
-        {series.map(s => {
+        {series.map((s) => {
           const isHidden = hidden.has(s.key);
           return (
             <button
@@ -100,7 +101,7 @@ export function FilterableBarChart({
               aria-pressed={!isHidden}
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full border border-transparent bg-muted px-2.5 py-1 text-xs font-medium transition-colors hover:bg-muted/70",
-                isHidden && "text-muted-foreground/50"
+                isHidden && "text-muted-foreground/50",
               )}
             >
               <span
@@ -131,6 +132,7 @@ export function FilterableBarChart({
             interval="preserveStartEnd"
           />
           <YAxis
+            yAxisId="left"
             stroke={CHART.axis}
             tickLine={false}
             axisLine={false}
@@ -145,34 +147,45 @@ export function FilterableBarChart({
                 }
               : undefined)}
           />
-          <Tooltip
+          {hasRightAxis && (
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              stroke={CHART.axis}
+              tickLine={false}
+              axisLine={false}
+              fontSize={11}
+              width={50}
+              tickFormatter={yTickFormatter}
+            />
+          )}
+          <ChartInfoTip
             {...tooltipStyle}
             formatter={
               tooltipFormatter
-                ? (
-                    value: number,
-                    _name: string,
-                    item: { dataKey?: string | number; payload?: unknown }
-                  ) => {
+                ? (value, _name, item) => {
                     const raw =
                       yScale === "log" &&
                       typeof item.dataKey === "string" &&
                       item.payload &&
                       typeof item.payload === "object"
-                        ? (item.payload as Record<string, unknown>)[
-                            `${item.dataKey}${RAW_SUFFIX}`
-                          ]
+                        ? (item.payload as Record<string, unknown>)[`${item.dataKey}${RAW_SUFFIX}`]
                         : undefined;
-                    return tooltipFormatter(
-                      typeof raw === "number" ? raw : value
-                    );
+
+                    const resolvedValue =
+                      typeof raw === "number" ? raw : typeof value === "number" ? value : undefined;
+
+                    return resolvedValue === undefined
+                      ? undefined
+                      : tooltipFormatter(resolvedValue);
                   }
                 : undefined
             }
           />
-          {visible.map(s => (
+          {visible.map((s) => (
             <Bar
               key={s.key}
+              yAxisId={s.axis === "right" ? "right" : "left"}
               dataKey={s.key}
               name={s.name}
               fill={s.color}

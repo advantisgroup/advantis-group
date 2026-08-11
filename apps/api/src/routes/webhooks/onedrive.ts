@@ -15,8 +15,7 @@ export const onedriveWebhookRoute = new Elysia().post(
   "/webhooks/onedrive",
   async ({ query, body, set }) => {
     // 1. Validation handshake.
-    const validationToken = (query as { validationToken?: string })
-      .validationToken;
+    const validationToken = (query as { validationToken?: string }).validationToken;
     if (validationToken) {
       return new Response(validationToken, {
         status: 200,
@@ -26,8 +25,7 @@ export const onedriveWebhookRoute = new Elysia().post(
 
     // 2. Change notifications.
     const expected = process.env.ONEDRIVE_WEBHOOK_SECRET;
-    const notifications =
-      (body as { value?: { clientState?: string }[] } | null)?.value ?? [];
+    const notifications = (body as { value?: { clientState?: string }[] } | null)?.value ?? [];
     let anyValid = false;
     for (const note of notifications) {
       try {
@@ -44,5 +42,5 @@ export const onedriveWebhookRoute = new Elysia().post(
 
     set.status = 202;
     return { ok: true };
-  }
+  },
 );

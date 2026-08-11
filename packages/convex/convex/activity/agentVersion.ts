@@ -17,18 +17,16 @@ const REPO = "Bluejutzu/ActivityTrack";
 /** Reactive read for the dashboard. `null` until the first cron run lands. */
 export const getLatestAgentVersion = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     const row = await ctx.db
       .query("activitySettings")
-      .withIndex("by_key", q => q.eq("key", LATEST_VERSION_KEY))
+      .withIndex("by_key", (q) => q.eq("key", LATEST_VERSION_KEY))
       .unique();
     console.debug(
       "[activity/agentVersion] getLatestAgentVersion ->",
       row?.value ?? null,
-      row
-        ? `(updated ${new Date(row.updatedAt).toISOString()})`
-        : "(no row yet)"
+      row ? `(updated ${new Date(row.updatedAt).toISOString()})` : "(no row yet)",
     );
     return row?.value ?? null;
   },
@@ -39,7 +37,7 @@ export const storeLatestAgentVersion = internalMutation({
   handler: async (ctx, { version }) => {
     const existing = await ctx.db
       .query("activitySettings")
-      .withIndex("by_key", q => q.eq("key", LATEST_VERSION_KEY))
+      .withIndex("by_key", (q) => q.eq("key", LATEST_VERSION_KEY))
       .unique();
     if (existing) {
       await ctx.db.patch(existing._id, {
@@ -67,33 +65,27 @@ export const storeLatestAgentVersion = internalMutation({
  */
 export const refreshLatestAgentVersion = internalAction({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     let tagName: string | undefined;
     try {
       const token = process.env.ACTIVITYTRACK_GITHUB_TOKEN;
-      const res = await fetch(
-        `https://api.github.com/repos/${REPO}/releases/latest`,
-        {
-          headers: {
-            Accept: "application/vnd.github+json",
-            // GitHub's API 403s any request with no User-Agent, public repo
-            // or not — it doesn't default one for us the way a browser would.
-            "User-Agent": "advantis-group-activitytrack-version-check",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        }
-      );
+      const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
+        headers: {
+          Accept: "application/vnd.github+json",
+          // GitHub's API 403s any request with no User-Agent, public repo
+          // or not — it doesn't default one for us the way a browser would.
+          "User-Agent": "advantis-group-activitytrack-version-check",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
       if (!res.ok) {
         const body = await res.text().catch(() => "");
-        console.error(
-          `[activity/agentVersion] GitHub responded ${res.status} ${res.statusText}`,
-          {
-            authenticated: !!token,
-            rateLimitRemaining: res.headers.get("x-ratelimit-remaining"),
-            rateLimitReset: res.headers.get("x-ratelimit-reset"),
-            body: body.slice(0, 500),
-          }
-        );
+        console.error(`[activity/agentVersion] GitHub responded ${res.status} ${res.statusText}`, {
+          authenticated: !!token,
+          rateLimitRemaining: res.headers.get("x-ratelimit-remaining"),
+          rateLimitReset: res.headers.get("x-ratelimit-reset"),
+          body: body.slice(0, 500),
+        });
         return;
       }
       const data = (await res.json()) as { tag_name?: string };
@@ -103,16 +95,11 @@ export const refreshLatestAgentVersion = internalAction({
       return;
     }
     if (!tagName) {
-      console.error(
-        "[activity/agentVersion] GitHub release response had no tag_name"
-      );
+      console.error("[activity/agentVersion] GitHub release response had no tag_name");
       return;
     }
     const version = tagName.replace(/^v/, "");
     console.log(`[activity/agentVersion] latest version is now ${version}`);
-    await ctx.runMutation(
-      internal.activity.agentVersion.storeLatestAgentVersion,
-      { version }
-    );
+    await ctx.runMutation(internal.activity.agentVersion.storeLatestAgentVersion, { version });
   },
 });

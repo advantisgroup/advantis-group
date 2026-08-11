@@ -25,23 +25,13 @@ crons.cron(
   "activity: poll integrations (daytime)",
   "*/15 5-18 * * *",
   internal.activity.integrations.pollAll,
-  {}
+  {},
 );
 crons.cron(
-  "activity: poll integrations (off-hours fallback)",
-  "0 0-4/2,19-23/2 * * *",
+  "activity: poll integrations (midnight)",
+  "0 0 * * *",
   internal.activity.integrations.pollAll,
-  {}
-);
-
-// Reconcile Clockodo absences into the intranet mirror (absences tab +
-// calendar). The apps/api webhook is the fast path; this hourly pass catches
-// missed webhooks, deletions, and employees who got linked after the fact.
-crons.hourly(
-  "absences: sync Clockodo mirror",
-  { minuteUTC: 35 },
-  internal.absenceSync.syncClockodoAbsences,
-  {}
+  {},
 );
 
 // Mirrors the latest published desktop-agent version so the overview can
@@ -50,35 +40,55 @@ crons.hourly(
   "activity: refresh latest agent version",
   { minuteUTC: 50 },
   internal.activity.agentVersion.refreshLatestAgentVersion,
-  {}
+  {},
 );
 
 crons.daily(
   "activity: prune old raw samples",
   { hourUTC: 3, minuteUTC: 0 },
   internal.activity.maintenance.pruneOldSamples,
-  {}
+  {},
+);
+
+// Backfills the completed-month badge cache (performanceBadgeCache) so
+// teamDashboard/employeeDetail stop recomputing every completed month's team
+// totals from scratch on every request — a completed month's badges never
+// change, so this only ever has new months (the one that just closed) to do.
+crons.daily(
+  "performance: cache completed month badges",
+  { hourUTC: 3, minuteUTC: 5 },
+  internal.performanceQueries.cacheCompletedMonthBadges,
+  {},
 );
 
 crons.daily(
   "activity: prune old state history",
   { hourUTC: 3, minuteUTC: 15 },
   internal.activity.maintenance.pruneOldStateSamples,
-  {}
+  {},
 );
 
 crons.daily(
   "activity: prune old resolved events",
   { hourUTC: 3, minuteUTC: 30 },
   internal.activity.events.purgeOldEvents,
-  {}
+  {},
 );
 
 crons.daily(
   "clockodo: prune old webhook delivery log",
   { hourUTC: 3, minuteUTC: 45 },
   internal.clockodoWebhookLog.pruneOldWebhookLogs,
-  {}
+  {},
+);
+
+// Spent/expired reset tokens and long-settled requests. The audit trail
+// (passwordResetAuditLog) is deliberately not touched — it outlives both.
+crons.daily(
+  "password resets: purge stale tokens and requests",
+  { hourUTC: 3, minuteUTC: 50 },
+  internal.passwordResets.purgeStale,
+  {},
 );
 
 // Keep the OneDrive change-notification subscription fresh (renew well within
@@ -87,16 +97,11 @@ crons.daily(
   "onedrive: renew change subscription",
   { hourUTC: 4, minuteUTC: 0 },
   internal.onedrive.renewSubscription,
-  {}
+  {},
 );
 
 // Delete DMs abandoned by one side once their 48h grace window elapses without
 // a rejoin. Runs hourly so the "auto-deletes in …" countdown stays honest.
-crons.hourly(
-  "chat: purge expired left DMs",
-  { minuteUTC: 20 },
-  internal.chat.purgeExpiredDms,
-  {}
-);
+crons.hourly("chat: purge expired left DMs", { minuteUTC: 20 }, internal.chat.purgeExpiredDms, {});
 
 export default crons;

@@ -34,7 +34,7 @@ export function StatusScreen({
       className={cn(
         "flex items-center justify-center p-6",
         fullScreen ? "min-h-screen" : "min-h-[60vh]",
-        className
+        className,
       )}
     >
       <div className="flex max-w-sm flex-col items-center gap-4 text-center">

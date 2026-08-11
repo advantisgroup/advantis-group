@@ -5,34 +5,26 @@ import { requireUser, requireManager, requireAdmin } from "../lib/auth";
 import { gatedMutation } from "../lib/featureGate";
 import { writeAudit } from "./audit";
 import { appError } from "./lib/errors";
-import {
-  assertSignalSecret,
-  issueDeviceToken,
-  invalidateDeviceToken,
-} from "./deviceAuth";
+import { assertSignalSecret, issueDeviceToken, invalidateDeviceToken } from "./deviceAuth";
 import { hashNonce, safeEqual } from "./lib/crypto";
 
 /** All devices with their linked person's name (if any). Any signed-in user. */
 export const list = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     const devices = await ctx.db.query("devices").take(2000);
 
-    const personIds = [
-      ...new Set(devices.flatMap(d => (d.personId ? [d.personId] : []))),
-    ];
+    const personIds = [...new Set(devices.flatMap((d) => (d.personId ? [d.personId] : [])))];
     const peopleById = new Map(
-      (await Promise.all(personIds.map(id => ctx.db.get(id)))).flatMap(p =>
-        p ? [[p._id, p] as const] : []
-      )
+      (await Promise.all(personIds.map((id) => ctx.db.get(id)))).flatMap((p) =>
+        p ? [[p._id, p] as const] : [],
+      ),
     );
 
-    return devices.map(d => ({
+    return devices.map((d) => ({
       ...d,
-      personName: d.personId
-        ? (peopleById.get(d.personId)?.name ?? null)
-        : null,
+      personName: d.personId ? (peopleById.get(d.personId)?.name ?? null) : null,
     }));
   },
 });
@@ -40,11 +32,11 @@ export const list = query({
 /** Devices awaiting approval (the registration queue). */
 export const listPending = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     await requireUser(ctx);
     return await ctx.db
       .query("devices")
-      .withIndex("by_status", q => q.eq("status", "pending"))
+      .withIndex("by_status", (q) => q.eq("status", "pending"))
       .collect();
   },
 });
@@ -109,12 +101,7 @@ export const link = mutation({
       if (!person) throw appError("notFound.person", "Person not found");
     }
     await ctx.db.patch(deviceId, { personId: personId ?? undefined });
-    await writeAudit(
-      ctx,
-      actor._id,
-      "device.link",
-      `${device.hostname} -> ${personId ?? "none"}`
-    );
+    await writeAudit(ctx, actor._id, "device.link", `${device.hostname} -> ${personId ?? "none"}`);
   },
 });
 
@@ -132,16 +119,13 @@ export const requestEnrollment = gatedMutation("activitytrack")({
     agentVersion: v.string(),
     claimNonce: v.string(),
   },
-  handler: async (
-    ctx,
-    { secret, deviceId, hostname, windowsUser, agentVersion, claimNonce }
-  ) => {
+  handler: async (ctx, { secret, deviceId, hostname, windowsUser, agentVersion, claimNonce }) => {
     assertSignalSecret(secret);
     const now = Date.now();
     const claimNonceHash = await hashNonce(claimNonce);
     const existing = await ctx.db
       .query("devices")
-      .withIndex("by_deviceId", q => q.eq("deviceId", deviceId))
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
       .unique();
 
     if (!existing) {
@@ -190,15 +174,12 @@ export const claimToken = gatedMutation("activitytrack")({
     assertSignalSecret(secret);
     const device = await ctx.db
       .query("devices")
-      .withIndex("by_deviceId", q => q.eq("deviceId", deviceId))
+      .withIndex("by_deviceId", (q) => q.eq("deviceId", deviceId))
       .unique();
     if (!device) return { status: "unknown" as const };
 
     const claimNonceHash = await hashNonce(claimNonce);
-    if (
-      !device.claimNonceHash ||
-      !safeEqual(device.claimNonceHash, claimNonceHash)
-    ) {
+    if (!device.claimNonceHash || !safeEqual(device.claimNonceHash, claimNonceHash)) {
       return { status: "denied" as const };
     }
 

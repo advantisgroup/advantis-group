@@ -42,11 +42,11 @@ export interface ExportRow {
 
 /** Per-employee KPI export for one month. */
 export const apiExportTeam = query({
-  args: { serverKey: v.string(), ym: v.string() },
-  handler: async (ctx, { serverKey, ym }): Promise<ExportRow[]> => {
+  args: { serverKey: v.string(), companyId: v.id("companies"), ym: v.string() },
+  handler: async (ctx, { serverKey, companyId, ym }): Promise<ExportRow[]> => {
     assertServerKey(serverKey);
-    const { snaps } = await teamTotals(ctx, ym);
-    return snaps.map(s => ({
+    const { snaps } = await teamTotals(ctx, companyId, ym);
+    return snaps.map((s) => ({
       name: s.name,
       leadsCreated: s.leadsCreated ?? 0,
       workableCreated: s.workableCreated ?? 0,

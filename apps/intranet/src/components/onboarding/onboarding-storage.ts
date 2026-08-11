@@ -1,9 +1,6 @@
 import { ONBOARDING_STEPS } from "./onboarding-config";
 
-import type {
-  OnboardingLocalState,
-  OnboardingStepStatus,
-} from "./onboarding-types";
+import type { OnboardingLocalState, OnboardingStepStatus } from "./onboarding-types";
 
 const VERSION = 1 as const;
 
@@ -12,10 +9,7 @@ function storageKey(userId: string) {
 }
 
 function buildInitialState(): OnboardingLocalState {
-  const stepStatuses = {} as Record<
-    (typeof ONBOARDING_STEPS)[number],
-    OnboardingStepStatus
-  >;
+  const stepStatuses = {} as Record<(typeof ONBOARDING_STEPS)[number], OnboardingStepStatus>;
   for (const step of ONBOARDING_STEPS) {
     stepStatuses[step] = "pending";
   }
@@ -30,9 +24,7 @@ function buildInitialState(): OnboardingLocalState {
   };
 }
 
-export function readOnboardingState(
-  userId: string
-): OnboardingLocalState | null {
+export function readOnboardingState(userId: string): OnboardingLocalState | null {
   try {
     const raw = localStorage.getItem(storageKey(userId));
     if (!raw) return null;
@@ -44,10 +36,7 @@ export function readOnboardingState(
   }
 }
 
-export function writeOnboardingState(
-  userId: string,
-  state: OnboardingLocalState
-): void {
+export function writeOnboardingState(userId: string, state: OnboardingLocalState): void {
   try {
     localStorage.setItem(storageKey(userId), JSON.stringify(state));
   } catch {

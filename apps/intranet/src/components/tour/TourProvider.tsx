@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable react-refresh/only-export-components --
-   Provider colocated with its `useTour` hook, imported across the app. */
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -20,11 +18,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { api } from "@advantis/convex/api";
 import { useMutation } from "convex/react";
 
-import {
-  useCurrentUser,
-  useIsAdmin,
-  useIsManager,
-} from "@/components/providers/current-user";
+import { useCurrentUser, useIsAdmin, useIsManager } from "@/components/providers/current-user";
 import { useSidebar } from "@/components/ui/sidebar";
 
 import { TOUR_CHECKPOINTS } from "./tour-config";
@@ -46,11 +40,23 @@ const TourContext = createContext<TourContextValue | null>(null);
 const PADDING = 10;
 const SYNC_DEBOUNCE_MS = 2000;
 
+/** A `data-tour` value can now match more than one element at once — a
+ * `PageHeaderBar` action renders both in the desktop header and, hidden via
+ * CSS rather than unmounted, in the mobile bottom-nav pill. Pick whichever
+ * copy is actually visible instead of always the first in DOM order. */
+function findVisibleTarget(attr: string): Element | null {
+  const candidates = document.querySelectorAll(`[data-tour="${attr}"]`);
+  for (const el of candidates) {
+    const r = el.getBoundingClientRect();
+    if (r.width !== 0 || r.height !== 0) return el;
+  }
+  return null;
+}
+
 function measureTarget(attr: string): TargetRect | null {
-  const el = document.querySelector(`[data-tour="${attr}"]`);
+  const el = findVisibleTarget(attr);
   if (!el) return null;
   const r = el.getBoundingClientRect();
-  if (r.width === 0 && r.height === 0) return null;
   const computed = window.getComputedStyle(el);
   const borderRadius = parseFloat(computed.borderRadius) || 8;
   return {
@@ -83,18 +89,18 @@ export function TourProvider({ children }: { children: ReactNode }) {
   // role-gated steps for employees — their target UI doesn't render for them)
   const visibleCheckpoints: TourCheckpoint[] = useMemo(
     () =>
-      TOUR_CHECKPOINTS.filter(cp => !cp.managerOnly || isManager)
-        .map(cp => ({
+      TOUR_CHECKPOINTS.filter((cp) => !cp.managerOnly || isManager)
+        .map((cp) => ({
           ...cp,
           steps: cp.steps.filter(
-            s =>
+            (s) =>
               !s.roles ||
               (s.roles.includes("manager") && isManager) ||
-              (s.roles.includes("admin") && isAdmin)
+              (s.roles.includes("admin") && isAdmin),
           ),
         }))
-        .filter(cp => cp.steps.length > 0),
-    [isManager, isAdmin]
+        .filter((cp) => cp.steps.length > 0),
+    [isManager, isAdmin],
   );
 
   // Persist state to localStorage and schedule Convex sync
@@ -118,12 +124,12 @@ export function TourProvider({ children }: { children: ReactNode }) {
         });
       }, SYNC_DEBOUNCE_MS);
     },
-    [user._id, upsertProgress, visibleCheckpoints]
+    [user._id, upsertProgress, visibleCheckpoints],
   );
 
   // Derive current checkpoint and step
   const currentCheckpoint = state?.currentCheckpointId
-    ? (visibleCheckpoints.find(c => c.id === state.currentCheckpointId) ?? null)
+    ? (visibleCheckpoints.find((c) => c.id === state.currentCheckpointId) ?? null)
     : null;
 
   const currentStep: TourStep | null =
@@ -210,17 +216,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       const rect = measureTarget(currentStep!.targetAttr);
       if (rect) {
-        const el = document.querySelector(
-          `[data-tour="${currentStep!.targetAttr}"]`
-        );
+        const el = findVisibleTarget(currentStep!.targetAttr);
         void (async () => {
           if (el) await scrollTargetIntoView(el);
           if (cancelled) return;
           // Re-measure after scrolling, since the target's position may have
           // changed (or the initial rect was already off-screen).
-          const settledRect = el
-            ? measureTarget(currentStep!.targetAttr)
-            : rect;
+          const settledRect = el ? measureTarget(currentStep!.targetAttr) : rect;
           setTargetRect(settledRect ?? rect);
           setPhase("active");
         })();
@@ -263,17 +265,16 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const findNextCheckpoint = useCallback(
     (current: CheckpointId): TourCheckpoint | null => {
-      const idx = visibleCheckpoints.findIndex(c => c.id === current);
+      const idx = visibleCheckpoints.findIndex((c) => c.id === current);
       return visibleCheckpoints[idx + 1] ?? null;
     },
-    [visibleCheckpoints]
+    [visibleCheckpoints],
   );
 
   const advance = useCallback(() => {
     if (!state || !currentCheckpoint || !currentStep) return;
 
-    const isLastStep =
-      state.currentStepIndex >= currentCheckpoint.steps.length - 1;
+    const isLastStep = state.currentStepIndex >= currentCheckpoint.steps.length - 1;
 
     if (!isLastStep) {
       // Next step within same checkpoint
@@ -347,14 +348,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         setPhase("navigating");
       }
     }
-  }, [
-    state,
-    currentCheckpoint,
-    currentStep,
-    persist,
-    findNextCheckpoint,
-    isReplayingCheckpoint,
-  ]);
+  }, [state, currentCheckpoint, currentStep, persist, findNextCheckpoint, isReplayingCheckpoint]);
   // Update during render (not in an effect) so the measuring effect, which can
   // call advanceRef.current() to auto-skip sidebar steps on mobile, always sees
   // the current `advance` in the same commit rather than a stale closure.
@@ -455,7 +449,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const redoCheckpoint = useCallback(
     (id: CheckpointId) => {
       if (!state) return;
-      const cp = visibleCheckpoints.find(c => c.id === id);
+      const cp = visibleCheckpoints.find((c) => c.id === id);
       if (!cp) return;
       const next: TourLocalState = {
         ...state,
@@ -473,7 +467,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       setState(next);
       setPhase("navigating");
     },
-    [state, visibleCheckpoints, persist]
+    [state, visibleCheckpoints, persist],
   );
 
   const redoTour = useCallback(() => {

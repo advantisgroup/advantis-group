@@ -36,7 +36,7 @@ export function FeatureGate({
 
   if (flags === undefined) return null;
 
-  const flag = flags.find(f => f.key === featureKey);
+  const flag = flags.find((f) => f.key === featureKey);
   if (flag && !flag.enabled && !isAdmin) {
     return <FeatureDisabledScreen label={label} reason={flag.reason} />;
   }

@@ -31,9 +31,7 @@ export const ShimmerText = ({
   // Dark mode: Stronger shimmer (white/60), standard spread
   // Light mode: More subtle shimmer (white/40), thinner spread to be less distracting
   const shimmerColor =
-    resolvedTheme === "white"
-      ? "rgba(255, 255, 255, 0.6)"
-      : "rgba(255, 255, 255, 0.4)";
+    resolvedTheme === "white" ? "rgba(255, 255, 255, 0.6)" : "rgba(255, 255, 255, 0.4)";
 
   // Gradient stops
   // Standard: 0% -> 50% -> 100%
@@ -45,24 +43,15 @@ export const ShimmerText = ({
 
   // Before mount, render without shimmer styles to match server
   if (!mounted) {
-    return (
-      <span className={cn("transition-all duration-500", className)}>
-        {children}
-      </span>
-    );
+    return <span className={cn("transition-all duration-500", className)}>{children}</span>;
   }
   return (
     <span
-      className={cn(
-        "bg-clip-text text-transparent transition-all duration-500",
-        className
-      )}
+      className={cn("bg-clip-text text-transparent transition-all duration-500", className)}
       style={{
         backgroundImage: isHovered ? "none" : gradient,
         backgroundSize: `${shimmerWidth} 100%`,
-        animation: isHovered
-          ? "none"
-          : `shimmer ${duration} ease-in-out infinite`,
+        animation: isHovered ? "none" : `shimmer ${duration} ease-in-out infinite`,
         // When hovered, we unset these so standard CSS (like group-hover:text-primary) can take over.
         // When Not hovered, we enforce transparent text to show the background gradient.
         WebkitBackgroundClip: isHovered ? "unset" : "text",

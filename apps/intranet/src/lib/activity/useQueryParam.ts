@@ -18,7 +18,7 @@ import { usePathname, useRouter } from "next/navigation";
 export function useQueryParam<T extends string>(
   key: string,
   defaultValue: T,
-  isValid: (value: string) => value is T
+  isValid: (value: string) => value is T,
 ) {
   const router = useRouter();
   const pathname = usePathname();
@@ -41,7 +41,7 @@ export function useQueryParam<T extends string>(
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [router, pathname, key, defaultValue]
+    [router, pathname, key, defaultValue],
   );
 
   return [value, setValue] as const;

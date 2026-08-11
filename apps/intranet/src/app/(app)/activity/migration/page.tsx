@@ -11,7 +11,7 @@ import { toast } from "sonner";
 
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
 import { PageHeader } from "@/components/PageHeader";
-import { useCurrentUser } from "@/components/providers/current-user";
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,7 +45,7 @@ function statusVariant(status: string): BadgeVariant {
 
 export default function ActivityMigrationPage() {
   const t = useTranslations("Activity");
-  const isAdmin = useCurrentUser().role === "admin";
+  const isAdmin = useIsAdmin();
   const handleError = useErrorHandler();
 
   const data = useQuery(api.activity.migration.latest, {});
@@ -84,9 +84,7 @@ export default function ActivityMigrationPage() {
             <Button
               variant="outline"
               disabled={busy}
-              onClick={() =>
-                resume({ migrationId: migration._id }).catch(handleError)
-              }
+              onClick={() => resume({ migrationId: migration._id }).catch(handleError)}
             >
               {t("migration.resume")}
             </Button>
@@ -98,14 +96,10 @@ export default function ActivityMigrationPage() {
         }
       />
 
-      <p className="mb-4 text-sm text-muted-foreground">
-        {t("migration.description")}
-      </p>
+      <p className="mb-4 text-sm text-muted-foreground">{t("migration.description")}</p>
 
       {data === undefined ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">
-          {t("common.loading")}
-        </p>
+        <p className="py-12 text-center text-sm text-muted-foreground">{t("common.loading")}</p>
       ) : !migration ? (
         <p className="py-12 text-center text-sm text-muted-foreground">
           {t("migration.notStarted")}
@@ -113,16 +107,12 @@ export default function ActivityMigrationPage() {
       ) : (
         <>
           <div className="mb-4 flex items-center gap-2">
-            <span className="text-sm font-medium">
-              {t("migration.status")}:
-            </span>
-            <Badge variant={statusVariant(migration.status)}>
-              {migration.status}
-            </Badge>
+            <span className="text-sm font-medium">{t("migration.status")}:</span>
+            <Badge variant={statusVariant(migration.status)}>{migration.status}</Badge>
           </div>
 
           <div className="space-y-2">
-            {steps.map(step => {
+            {steps.map((step) => {
               const total = step.total ?? 0;
               const pct =
                 total > 0
@@ -134,26 +124,21 @@ export default function ActivityMigrationPage() {
                 <Card key={step._id}>
                   <CardContent className="p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="break-all font-mono text-sm">
-                        {step.table}
-                      </span>
+                      <span className="break-all font-mono text-sm">{step.table}</span>
                       <div className="flex flex-wrap items-center gap-2">
                         {(step.warnings ?? 0) > 0 && (
                           <Badge variant="warning">
                             {step.warnings} {t("migration.warnings")}
                           </Badge>
                         )}
-                        <Badge variant={statusVariant(step.status)}>
-                          {step.status}
-                        </Badge>
+                        <Badge variant={statusVariant(step.status)}>{step.status}</Badge>
                         {step.status === "failed" && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() =>
                               retryStep({
-                                stepId:
-                                  step._id as Id<"activityMigrationSteps">,
+                                stepId: step._id as Id<"activityMigrationSteps">,
                               }).catch(handleError)
                             }
                           >

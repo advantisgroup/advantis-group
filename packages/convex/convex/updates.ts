@@ -7,6 +7,7 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { requireAdmin, requireUser } from "./lib/auth";
 import { type Audience, userMatchesAudience } from "./lib/audience";
 import { notifyUsers } from "./lib/notify";
+import { displayName } from "./lib/users";
 import { audienceValidator } from "./schema";
 
 /**
@@ -28,7 +29,7 @@ const statusValidator = v.union(
   v.literal("scheduled"),
   v.literal("in_progress"),
   v.literal("completed"),
-  v.literal("cancelled")
+  v.literal("cancelled"),
 );
 
 const NOTIFY_TITLES: Record<Doc<"updates">["type"], string> = {
@@ -44,30 +45,21 @@ function assertServerKey(serverKey: string) {
   }
 }
 
-function authorName(user: Doc<"users"> | null): string {
-  if (!user) return "Unknown";
-  return (
-    [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email
-  );
-}
-
 async function resolveAudienceUserIds(
   ctx: MutationCtx,
-  audience: Audience
+  audience: Audience,
 ): Promise<Id<"users">[]> {
   const all = await ctx.db
     .query("users")
-    .withIndex("by_status", q => q.eq("status", "active"))
+    .withIndex("by_status", (q) => q.eq("status", "active"))
     .collect();
 
   console.log(
     "all:",
-    all.map(a => a._id)
+    all.map((a) => a._id),
   );
 
-  const filtered = all
-    .filter(u => userMatchesAudience(u, audience))
-    .map(u => u._id);
+  const filtered = all.filter((u) => userMatchesAudience(u, audience)).map((u) => u._id);
   console.log("filtered:", filtered);
   return filtered;
 }
@@ -83,14 +75,14 @@ export const previewEmailRecipients = query({
     await requireAdmin(ctx);
     const activeUsers = await ctx.db
       .query("users")
-      .withIndex("by_status", q => q.eq("status", "active"))
+      .withIndex("by_status", (q) => q.eq("status", "active"))
       .collect();
-    const matched = activeUsers.filter(u => userMatchesAudience(u, audience));
+    const matched = activeUsers.filter((u) => userMatchesAudience(u, audience));
     const recipients = matched
-      .filter(u => !u.external || u.updatesEmailConsent === true)
-      .map(u => ({
+      .filter((u) => !u.external || u.updatesEmailConsent === true)
+      .map((u) => ({
         userId: u._id,
-        name: authorName(u),
+        name: displayName(u),
         email: u.email,
         external: u.external ?? false,
       }))
@@ -103,20 +95,13 @@ export const previewEmailRecipients = query({
 });
 
 /** Shared publish side effects: in-app notify now, or schedule for later. */
-async function schedulePublishSideEffects(
-  ctx: MutationCtx,
-  update: Doc<"updates">
-): Promise<void> {
+async function schedulePublishSideEffects(ctx: MutationCtx, update: Doc<"updates">): Promise<void> {
   const now = Date.now();
   if (update.publishedAt > now) {
     console.log("scheduling publish");
-    await ctx.scheduler.runAt(
-      update.publishedAt,
-      internal.updates.publishScheduled,
-      {
-        updateId: update._id,
-      }
-    );
+    await ctx.scheduler.runAt(update.publishedAt, internal.updates.publishScheduled, {
+      updateId: update._id,
+    });
     return;
   }
   console.log("sending publish");
@@ -129,13 +114,9 @@ async function schedulePublishSideEffects(
     link: `/updates/${update._id}`,
   });
   if (update.emailRequested) {
-    const res = await ctx.scheduler.runAfter(
-      10000,
-      internal.updatesEmail.sendBulk,
-      {
-        updateId: update._id,
-      }
-    );
+    const res = await ctx.scheduler.runAfter(10000, internal.updatesEmail.sendBulk, {
+      updateId: update._id,
+    });
     console.log("schedulePublishSideEffects", res);
   }
 }
@@ -155,7 +136,6 @@ export interface InsertUpdateArgs {
   body: string;
   authorUserId: Id<"users">;
   audience: Audience;
-  guestVisible?: boolean;
   affectedSystems?: string[];
   status?: Doc<"updates">["status"];
   startedAt?: number;
@@ -172,11 +152,10 @@ export interface InsertUpdateArgs {
  */
 export async function insertUpdate(
   ctx: MutationCtx,
-  args: InsertUpdateArgs
+  args: InsertUpdateArgs,
 ): Promise<Id<"updates">> {
   const now = Date.now();
-  const publishedAt =
-    args.publishAt && args.publishAt > now ? args.publishAt : now;
+  const publishedAt = args.publishAt && args.publishAt > now ? args.publishAt : now;
   const id = await ctx.db.insert("updates", {
     type: args.type,
     slug: args.slug,
@@ -186,7 +165,6 @@ export async function insertUpdate(
     body: args.body,
     authorUserId: args.authorUserId,
     audience: args.audience,
-    guestVisible: args.guestVisible ?? false,
     affectedSystems: args.affectedSystems,
     status: args.status ?? defaultStatus(args.type),
     timeline: [],
@@ -204,17 +182,12 @@ export async function insertUpdate(
 
 export const create = mutation({
   args: {
-    type: v.union(
-      v.literal("incident"),
-      v.literal("maintenance"),
-      v.literal("changelog")
-    ),
+    type: v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
     title: v.string(),
     summary: v.string(),
     bodyFormat: v.union(v.literal("richtext"), v.literal("markdown")),
     body: v.string(),
     audience: audienceValidator,
-    guestVisible: v.optional(v.boolean()),
     affectedSystems: v.optional(v.array(v.string())),
     status: v.optional(statusValidator),
     startedAt: v.optional(v.number()),
@@ -244,16 +217,11 @@ export const publishFromMarkdown = mutation({
     serverKey: v.string(),
     authorEmail: v.string(),
     slug: v.string(),
-    type: v.union(
-      v.literal("incident"),
-      v.literal("maintenance"),
-      v.literal("changelog")
-    ),
+    type: v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
     title: v.string(),
     summary: v.string(),
     body: v.string(),
     audience: audienceValidator,
-    guestVisible: v.optional(v.boolean()),
     affectedSystems: v.optional(v.array(v.string())),
     status: v.optional(statusValidator),
     startedAt: v.optional(v.number()),
@@ -264,7 +232,7 @@ export const publishFromMarkdown = mutation({
     assertServerKey(args.serverKey);
     const author = await ctx.db
       .query("users")
-      .withIndex("by_email", q => q.eq("email", args.authorEmail.toLowerCase()))
+      .withIndex("by_email", (q) => q.eq("email", args.authorEmail.toLowerCase()))
       .unique();
     if (!author) {
       throw new ConvexError({
@@ -275,7 +243,7 @@ export const publishFromMarkdown = mutation({
 
     const existing = await ctx.db
       .query("updates")
-      .withIndex("by_slug", q => q.eq("slug", args.slug))
+      .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
     const now = Date.now();
 
@@ -285,7 +253,6 @@ export const publishFromMarkdown = mutation({
         summary: args.summary,
         body: args.body,
         audience: args.audience,
-        guestVisible: args.guestVisible ?? existing.guestVisible,
         affectedSystems: args.affectedSystems ?? existing.affectedSystems,
         status: args.status ?? existing.status,
         revision: existing.revision + 1,
@@ -303,7 +270,6 @@ export const publishFromMarkdown = mutation({
       body: args.body,
       authorUserId: author._id,
       audience: args.audience,
-      guestVisible: args.guestVisible,
       affectedSystems: args.affectedSystems,
       status: args.status,
       startedAt: args.startedAt,
@@ -321,9 +287,9 @@ export const publishScheduled = internalMutation({
   handler: async (ctx, { updateId }) => {
     const update = await ctx.db.get(updateId);
     if (!update || update.publishedAt > Date.now()) return;
-    const recipients = (
-      await resolveAudienceUserIds(ctx, update.audience)
-    ).filter(uid => uid !== update.authorUserId);
+    const recipients = (await resolveAudienceUserIds(ctx, update.audience)).filter(
+      (uid) => uid !== update.authorUserId,
+    );
     await notifyUsers(ctx, recipients, {
       type: `update:${update.type}`,
       title: NOTIFY_TITLES[update.type],
@@ -331,11 +297,7 @@ export const publishScheduled = internalMutation({
       link: `/updates/${updateId}`,
     });
     if (update.emailRequested) {
-      const res = await ctx.scheduler.runAfter(
-        0,
-        internal.updatesEmail.sendBulk,
-        { updateId }
-      );
+      const res = await ctx.scheduler.runAfter(0, internal.updatesEmail.sendBulk, { updateId });
       console.log("publishScheduled", res);
     }
   },
@@ -356,7 +318,7 @@ export interface AppendTimelineArgs {
 export async function appendTimeline(
   ctx: MutationCtx,
   updateId: Id<"updates">,
-  args: AppendTimelineArgs
+  args: AppendTimelineArgs,
 ): Promise<void> {
   const update = await ctx.db.get(updateId);
   if (!update) return;
@@ -378,9 +340,9 @@ export async function appendTimeline(
   }
   await ctx.db.patch(updateId, patch);
 
-  const recipients = (
-    await resolveAudienceUserIds(ctx, update.audience)
-  ).filter(uid => uid !== args.authorUserId);
+  const recipients = (await resolveAudienceUserIds(ctx, update.audience)).filter(
+    (uid) => uid !== args.authorUserId,
+  );
   await notifyUsers(ctx, recipients, {
     type: `update:${update.type}`,
     title: `${update.title} — update`,
@@ -418,7 +380,6 @@ export const update = mutation({
     summary: v.optional(v.string()),
     body: v.optional(v.string()),
     audience: v.optional(audienceValidator),
-    guestVisible: v.optional(v.boolean()),
     affectedSystems: v.optional(v.array(v.string())),
   },
   handler: async (ctx, { updateId, ...patch }) => {
@@ -440,14 +401,14 @@ export const remove = mutation({
     if (!existing) return { ok: false };
     const dismissals = await ctx.db
       .query("updateDismissals")
-      .withIndex("by_update_user", q => q.eq("updateId", updateId))
+      .withIndex("by_update_user", (q) => q.eq("updateId", updateId))
       .collect();
-    await Promise.all(dismissals.map(d => ctx.db.delete(d._id)));
+    await Promise.all(dismissals.map((d) => ctx.db.delete(d._id)));
     const emailRows = await ctx.db
       .query("updateEmailRecipients")
-      .withIndex("by_update", q => q.eq("updateId", updateId))
+      .withIndex("by_update", (q) => q.eq("updateId", updateId))
       .collect();
-    await Promise.all(emailRows.map(r => ctx.db.delete(r._id)));
+    await Promise.all(emailRows.map((r) => ctx.db.delete(r._id)));
     await ctx.db.delete(updateId);
     return { ok: true };
   },
@@ -456,11 +417,7 @@ export const remove = mutation({
 export const list = query({
   args: {
     type: v.optional(
-      v.union(
-        v.literal("incident"),
-        v.literal("maintenance"),
-        v.literal("changelog")
-      )
+      v.union(v.literal("incident"), v.literal("maintenance"), v.literal("changelog")),
     ),
     status: v.optional(statusValidator),
     affectedSystem: v.optional(v.string()),
@@ -473,7 +430,7 @@ export const list = query({
     const rows = args.type
       ? await ctx.db
           .query("updates")
-          .withIndex("by_type_publishedAt", q => q.eq("type", args.type!))
+          .withIndex("by_type_publishedAt", (q) => q.eq("type", args.type!))
           .order("desc")
           .take(args.limit ?? 200)
       : await ctx.db
@@ -484,15 +441,11 @@ export const list = query({
 
     const search = args.search?.trim().toLowerCase();
     const isAdmin = user.role === "admin";
-    const visible = rows.filter(u => {
+    const visible = rows.filter((u) => {
       if (!userMatchesAudience(user, u.audience)) return false;
-      if (u.publishedAt > now && u.authorUserId !== user._id && !isAdmin)
-        return false;
+      if (u.publishedAt > now && u.authorUserId !== user._id && !isAdmin) return false;
       if (args.status && u.status !== args.status) return false;
-      if (
-        args.affectedSystem &&
-        !(u.affectedSystems ?? []).includes(args.affectedSystem)
-      ) {
+      if (args.affectedSystem && !(u.affectedSystems ?? []).includes(args.affectedSystem)) {
         return false;
       }
       if (
@@ -506,12 +459,10 @@ export const list = query({
     });
 
     return Promise.all(
-      visible.map(async u => {
+      visible.map(async (u) => {
         const author = await ctx.db.get(u.authorUserId);
         const ongoing = !!u.status && !TERMINAL_STATUSES.has(u.status);
-        const durationMs = u.status
-          ? (u.resolvedAt ?? now) - u.startedAt
-          : null;
+        const durationMs = u.status ? (u.resolvedAt ?? now) - u.startedAt : null;
         return {
           _id: u._id,
           type: u.type,
@@ -525,9 +476,9 @@ export const list = query({
           scheduled: u.publishedAt > now,
           ongoing,
           durationMs,
-          authorName: authorName(author),
+          authorName: displayName(author),
         };
-      })
+      }),
     );
   },
 });
@@ -553,10 +504,10 @@ export const get = query({
     }
     const author = await ctx.db.get(update.authorUserId);
     const timeline = await Promise.all(
-      (update.timeline ?? []).map(async entry => {
+      (update.timeline ?? []).map(async (entry) => {
         const entryAuthor = await ctx.db.get(entry.authorUserId);
-        return { ...entry, authorName: authorName(entryAuthor) };
-      })
+        return { ...entry, authorName: displayName(entryAuthor) };
+      }),
     );
     const isAdmin = user.role === "admin";
 
@@ -565,18 +516,18 @@ export const get = query({
     if (isAdmin) {
       const rows = await ctx.db
         .query("updateEmailRecipients")
-        .withIndex("by_update", q => q.eq("updateId", updateId))
+        .withIndex("by_update", (q) => q.eq("updateId", updateId))
         .collect();
       emailStats = rows.reduce<Record<string, number>>((acc, r) => {
         acc[r.status] = (acc[r.status] ?? 0) + 1;
         return acc;
       }, {});
       recipients = await Promise.all(
-        rows.map(async r => {
+        rows.map(async (r) => {
           const u = await ctx.db.get(r.userId);
           return {
             userId: r.userId,
-            name: authorName(u),
+            name: displayName(u),
             email: r.email,
             status: r.status,
             sentAt: r.sentAt ?? null,
@@ -584,7 +535,7 @@ export const get = query({
             openedAt: r.openedAt ?? null,
             clickedAt: r.clickedAt ?? null,
           };
-        })
+        }),
       );
     }
 
@@ -602,7 +553,7 @@ export const get = query({
       resolvedAt: update.resolvedAt ?? null,
       publishedAt: update.publishedAt,
       scheduled: update.publishedAt > Date.now(),
-      authorName: authorName(author),
+      authorName: displayName(author),
       authorId: update.authorUserId,
       timeline,
       isAdmin,
@@ -617,29 +568,24 @@ export const get = query({
 
 export const bannerActive = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const user = await requireUser(ctx);
     const now = Date.now();
-    const recent = await ctx.db
-      .query("updates")
-      .withIndex("by_publishedAt")
-      .order("desc")
-      .take(50);
+    const recent = await ctx.db.query("updates").withIndex("by_publishedAt").order("desc").take(50);
 
     const dismissals = await ctx.db
       .query("updateDismissals")
-      .withIndex("by_user", q => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
     const dismissedRevisionByUpdate = new Map(
-      dismissals.map(d => [d.updateId, d.dismissedRevision])
+      dismissals.map((d) => [d.updateId, d.dismissedRevision]),
     );
 
-    const candidates = recent.filter(u => {
+    const candidates = recent.filter((u) => {
       if (u.publishedAt > now) return false;
       if (!userMatchesAudience(user, u.audience)) return false;
       const dismissedRev = dismissedRevisionByUpdate.get(u._id);
-      if (dismissedRev !== undefined && u.revision <= dismissedRev)
-        return false;
+      if (dismissedRev !== undefined && u.revision <= dismissedRev) return false;
       if (u.type === "changelog") {
         return now - u.publishedAt <= CHANGELOG_BANNER_WINDOW_MS;
       }
@@ -654,9 +600,7 @@ export const bannerActive = query({
       if (u.type === "maintenance") return terminal ? 3 : 1;
       return 4;
     }
-    candidates.sort(
-      (a, b) => priority(a) - priority(b) || b.publishedAt - a.publishedAt
-    );
+    candidates.sort((a, b) => priority(a) - priority(b) || b.publishedAt - a.publishedAt);
 
     if (candidates.length === 0) return { top: null, moreCount: 0, others: [] };
     const [top, ...rest] = candidates;
@@ -671,7 +615,7 @@ export const bannerActive = query({
         publishedAt: top.publishedAt,
       },
       moreCount: rest.length,
-      others: rest.slice(0, OTHERS_LIMIT).map(u => ({
+      others: rest.slice(0, OTHERS_LIMIT).map((u) => ({
         _id: u._id,
         type: u.type,
         title: u.title,
@@ -689,9 +633,7 @@ export const dismissBanner = mutation({
     if (!update) return { ok: false };
     const existing = await ctx.db
       .query("updateDismissals")
-      .withIndex("by_update_user", q =>
-        q.eq("updateId", updateId).eq("userId", user._id)
-      )
+      .withIndex("by_update_user", (q) => q.eq("updateId", updateId).eq("userId", user._id))
       .first();
     const now = Date.now();
     if (existing) {
@@ -721,7 +663,7 @@ export const recordEmailSendResults = internalMutation({
         email: v.string(),
         resendEmailId: v.optional(v.string()),
         failed: v.optional(v.boolean()),
-      })
+      }),
     ),
   },
   handler: async (ctx, { updateId, results }) => {
@@ -770,16 +712,14 @@ export const recordEmailEvent = mutation({
     let row = args.resendEmailId
       ? await ctx.db
           .query("updateEmailRecipients")
-          .withIndex("by_resendEmailId", q =>
-            q.eq("resendEmailId", args.resendEmailId)
-          )
+          .withIndex("by_resendEmailId", (q) => q.eq("resendEmailId", args.resendEmailId))
           .unique()
       : null;
     if (!row && args.updateId && args.userId) {
       row = await ctx.db
         .query("updateEmailRecipients")
-        .withIndex("by_update_user", q =>
-          q.eq("updateId", args.updateId!).eq("userId", args.userId!)
+        .withIndex("by_update_user", (q) =>
+          q.eq("updateId", args.updateId!).eq("userId", args.userId!),
         )
         .first();
     }
@@ -794,10 +734,7 @@ export const recordEmailEvent = mutation({
     };
     const nextStatus = statusByEvent[args.eventType];
     const patch: Record<string, unknown> = { lastEventAt: args.occurredAt };
-    if (
-      nextStatus &&
-      EVENT_STATUS_RANK[nextStatus] >= EVENT_STATUS_RANK[row.status]
-    ) {
+    if (nextStatus && EVENT_STATUS_RANK[nextStatus] >= EVENT_STATUS_RANK[row.status]) {
       patch.status = nextStatus;
       if (nextStatus === "delivered") patch.deliveredAt = args.occurredAt;
       if (nextStatus === "opened") patch.openedAt = args.occurredAt;

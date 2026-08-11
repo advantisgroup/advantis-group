@@ -35,7 +35,7 @@ export function useTabParam(defaultTab: string) {
       params.set("tab", next);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, pathname]
+    [router, pathname],
   );
 
   return [tab, update] as const;

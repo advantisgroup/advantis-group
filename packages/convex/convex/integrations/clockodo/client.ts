@@ -10,8 +10,7 @@ import { ConvexError } from "convex/values";
  * the same headers independently for its own concern.
  */
 
-const CLOCKODO_BASE = () =>
-  process.env.CLOCKODO_BASE_URL ?? "https://my.clockodo.com";
+const CLOCKODO_BASE = () => process.env.CLOCKODO_BASE_URL ?? "https://my.clockodo.com";
 
 function clockodoHeaders(): Record<string, string> {
   const apiUser = process.env.CLOCKODO_API_USER;
@@ -22,8 +21,7 @@ function clockodoHeaders(): Record<string, string> {
   return {
     "X-ClockodoApiUser": apiUser,
     "X-ClockodoApiKey": apiKey,
-    "X-Clockodo-External-Application":
-      process.env.CLOCKODO_EXTERNAL_APP ?? "AdvantisIntranet",
+    "X-Clockodo-External-Application": process.env.CLOCKODO_EXTERNAL_APP ?? "AdvantisIntranet",
     "Content-Type": "application/json",
   };
 }
@@ -63,7 +61,7 @@ function extractErrorDetail(text: string): string {
  */
 export async function clockodoFetch<T>(
   path: string,
-  init?: { method?: ClockodoMethod; body?: unknown }
+  init?: { method?: ClockodoMethod; body?: unknown },
 ): Promise<T> {
   const res = await fetch(`${CLOCKODO_BASE()}${path}`, {
     method: init?.method ?? "GET",

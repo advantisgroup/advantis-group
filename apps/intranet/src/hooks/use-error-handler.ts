@@ -26,11 +26,10 @@ export function useErrorHandler() {
       console.error(error);
 
       const { code, message } = parseError(error);
-      const text =
-        message ?? (code ? t(code) : (fallbackMessage ?? t("generic")));
+      const text = message ?? (code ? t(code) : (fallbackMessage ?? t("generic")));
 
       toast.error(text);
     },
-    [t]
+    [t],
   );
 }

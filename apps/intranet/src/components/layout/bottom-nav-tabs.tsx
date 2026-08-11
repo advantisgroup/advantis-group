@@ -20,9 +20,7 @@ interface BottomNavTabsContextValue extends BottomNavTabsState {
   setTabs: (tabs: BottomNavTab[] | null, activeValue: string | null) => void;
 }
 
-const BottomNavTabsContext = createContext<BottomNavTabsContextValue | null>(
-  null
-);
+const BottomNavTabsContext = createContext<BottomNavTabsContextValue | null>(null);
 
 /**
  * Lets a page-level tab bar (e.g. `RouteTabs`) hand its tabs to the global
@@ -51,9 +49,7 @@ export function BottomNavTabsProvider({ children }: { children: ReactNode }) {
 export function useBottomNavTabs(): BottomNavTabsContextValue {
   const ctx = useContext(BottomNavTabsContext);
   if (!ctx) {
-    throw new Error(
-      "useBottomNavTabs must be used within BottomNavTabsProvider"
-    );
+    throw new Error("useBottomNavTabs must be used within BottomNavTabsProvider");
   }
   return ctx;
 }

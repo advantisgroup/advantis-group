@@ -5,11 +5,7 @@ import { type Doc } from "./_generated/dataModel";
 import { type MutationCtx } from "./_generated/server";
 import { action, internalMutation, mutation, query } from "./_generated/server";
 import { roleValidator } from "./schema";
-import {
-  getUserByClerkId,
-  isEmailDomainAllowed,
-  requireManager,
-} from "./lib/auth";
+import { canGrantRole, getUserByClerkId, isEmailDomainAllowed, requireManager } from "./lib/auth";
 import { deleteClerkUser } from "./lib/clerk";
 import { notifyUsers } from "./lib/notify";
 
@@ -18,15 +14,13 @@ const roleArg = roleValidator;
 async function managerIds(ctx: MutationCtx): Promise<Doc<"users">["_id"][]> {
   const admins = await ctx.db
     .query("users")
-    .withIndex("by_role", q => q.eq("role", "admin"))
+    .withIndex("by_role", (q) => q.eq("role", "admin"))
     .collect();
   const managers = await ctx.db
     .query("users")
-    .withIndex("by_role", q => q.eq("role", "manager"))
+    .withIndex("by_role", (q) => q.eq("role", "manager"))
     .collect();
-  return [...admins, ...managers]
-    .filter(u => u.status === "active")
-    .map(u => u._id);
+  return [...admins, ...managers].filter((u) => u.status === "active").map((u) => u._id);
 }
 
 /**
@@ -63,12 +57,12 @@ export const create = mutation({
 
     const prior = await ctx.db
       .query("accessRequests")
-      .withIndex("by_clerkUserId", q => q.eq("clerkUserId", identity.subject))
-      .filter(q => q.eq(q.field("status"), "pending"))
+      .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", identity.subject))
+      .filter((q) => q.eq(q.field("status"), "pending"))
       .first();
     if (prior) return { status: "pending" as const };
 
-    await ctx.db.insert("accessRequests", {
+    const requestId = await ctx.db.insert("accessRequests", {
       email,
       clerkUserId: identity.subject,
       name: identity.name ?? undefined,
@@ -81,7 +75,7 @@ export const create = mutation({
       type: "access_request",
       title: "New access request",
       body: `${identity.name ?? email} requested access to the intranet`,
-      link: "/admin/access",
+      link: `/admin/requests?request=${requestId}`,
     });
 
     return { status: "pending" as const };
@@ -91,22 +85,20 @@ export const create = mutation({
 /** Current user's own latest request status (for the request-access screen). */
 export const myStatus = query({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
     const member = await getUserByClerkId(ctx, identity.subject);
     if (member) return { status: "member" as const };
     const request = await ctx.db
       .query("accessRequests")
-      .withIndex("by_clerkUserId", q => q.eq("clerkUserId", identity.subject))
+      .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", identity.subject))
       .order("desc")
       .first();
     return {
       status: request?.status ?? ("none" as const),
       email: identity.email ?? null,
-      domainAllowed: identity.email
-        ? isEmailDomainAllowed(identity.email)
-        : false,
+      domainAllowed: identity.email ? isEmailDomainAllowed(identity.email) : false,
     };
   },
 });
@@ -118,7 +110,7 @@ export const myStatus = query({
  */
 export const assertUnauthorized = internalMutation({
   args: {},
-  handler: async ctx => {
+  handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError({
@@ -154,7 +146,7 @@ export const selfDeleteUnauthorized = action({
   handler: async (ctx): Promise<{ ok: true }> => {
     const clerkUserId: string = await ctx.runMutation(
       internal.accessRequests.assertUnauthorized,
-      {}
+      {},
     );
     await deleteClerkUser(clerkUserId);
     return { ok: true };
@@ -165,11 +157,8 @@ export const list = query({
   args: { status: v.optional(v.string()) },
   handler: async (ctx, { status }) => {
     await requireManager(ctx);
-    const requests = await ctx.db
-      .query("accessRequests")
-      .order("desc")
-      .take(200);
-    return status ? requests.filter(r => r.status === status) : requests;
+    const requests = await ctx.db.query("accessRequests").order("desc").take(200);
+    return status ? requests.filter((r) => r.status === status) : requests;
   },
 });
 
@@ -185,7 +174,7 @@ export const approve = mutation({
       });
     }
     const grantedRole = role ?? "employee";
-    if (grantedRole !== "employee" && reviewer.role !== "admin") {
+    if (!canGrantRole(reviewer, grantedRole)) {
       throw new ConvexError({
         code: "forbidden",
         message: "Only admins can grant manager/admin roles",

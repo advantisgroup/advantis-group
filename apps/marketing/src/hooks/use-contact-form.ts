@@ -5,11 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 import { type z } from "zod";
 
-import {
-  FormDataSchema,
-  OtherFormDataSchema,
-  CallbackFormDataSchema,
-} from "@/lib/schema";
+import { FormDataSchema, OtherFormDataSchema, CallbackFormDataSchema } from "@/lib/schema";
 import {
   type AccountContactProfile,
   type FormData,
@@ -57,24 +53,18 @@ export function useContactForm() {
   const { user, isSignedIn } = useUser();
 
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const [otherFormData, setOtherFormData] =
-    useState<OtherFormData>(initialOtherFormData);
-  const [callbackFormData, setCallbackFormData] = useState<CallbackFormData>(
-    initialCallbackFormData
-  );
+  const [otherFormData, setOtherFormData] = useState<OtherFormData>(initialOtherFormData);
+  const [callbackFormData, setCallbackFormData] =
+    useState<CallbackFormData>(initialCallbackFormData);
 
-  const [errors, setErrors] = useState<
-    z.ZodFlattenedError<FormData>["fieldErrors"]
-  >({});
-  const [otherErrors, setOtherErrors] = useState<
-    z.ZodFlattenedError<OtherFormData>["fieldErrors"]
-  >({});
+  const [errors, setErrors] = useState<z.ZodFlattenedError<FormData>["fieldErrors"]>({});
+  const [otherErrors, setOtherErrors] = useState<z.ZodFlattenedError<OtherFormData>["fieldErrors"]>(
+    {},
+  );
   const [callbackErrors, setCallbackErrors] = useState<
     z.ZodFlattenedError<CallbackFormData>["fieldErrors"]
   >({});
-  const [accountPrefillState, setAccountPrefillState] = useState<
-    "idle" | "success"
-  >("idle");
+  const [accountPrefillState, setAccountPrefillState] = useState<"idle" | "success">("idle");
 
   const messageSubmit = useEmailSubmit();
   const callbackSubmit = useEmailSubmit();
@@ -89,9 +79,7 @@ export function useContactForm() {
       email: user.primaryEmailAddress?.emailAddress || "",
       firstName: user.firstName || "",
       lastName: user.lastName || "",
-      fullName:
-        user.fullName ||
-        [user.firstName, user.lastName].filter(Boolean).join(" "),
+      fullName: user.fullName || [user.firstName, user.lastName].filter(Boolean).join(" "),
     };
   }, [isSignedIn, user]);
 
@@ -100,21 +88,21 @@ export function useContactForm() {
       return false;
     }
 
-    setFormData(current => ({
+    setFormData((current) => ({
       ...current,
       firstName: accountProfile.firstName || current.firstName,
       lastName: accountProfile.lastName || current.lastName,
       email: accountProfile.email || current.email,
     }));
 
-    setOtherFormData(current => ({
+    setOtherFormData((current) => ({
       ...current,
       firstName: accountProfile.firstName || current.firstName,
       lastName: accountProfile.lastName || current.lastName,
       email: accountProfile.email || current.email,
     }));
 
-    setCallbackFormData(current => ({
+    setCallbackFormData((current) => ({
       ...current,
       firstName: accountProfile.firstName || current.firstName,
       lastName: accountProfile.lastName || current.lastName,
@@ -140,11 +128,7 @@ export function useContactForm() {
           return "idle";
       }
     },
-    [
-      messageSubmit.buttonState,
-      callbackSubmit.buttonState,
-      otherSubmit.buttonState,
-    ]
+    [messageSubmit.buttonState, callbackSubmit.buttonState, otherSubmit.buttonState],
   );
 
   const validateAndShowError = useCallback(
@@ -152,7 +136,7 @@ export function useContactForm() {
       schema: z.ZodType<T>,
       data: unknown,
       setErrorsFn: (errors: Partial<Record<string, string[]>>) => void,
-      setButtonError: () => void
+      setButtonError: () => void,
     ): data is T => {
       const result = schema.safeParse(data);
 
@@ -167,7 +151,7 @@ export function useContactForm() {
       setErrorsFn({});
       return true;
     },
-    []
+    [],
   );
 
   const handleMessageSubmit = useCallback(
@@ -197,10 +181,10 @@ export function useContactForm() {
           submissionType: "message",
           subject: `User Request - Message`,
         },
-        "User - Message Submitted"
+        "User - Message Submitted",
       );
     },
-    [formData, messageSubmit, validateAndShowError, tMessages]
+    [formData, messageSubmit, validateAndShowError, tMessages],
   );
 
   const handleCallbackSubmit = useCallback(
@@ -208,16 +192,11 @@ export function useContactForm() {
       e.preventDefault();
 
       if (
-        !validateAndShowError(
-          CallbackFormDataSchema,
-          callbackFormData,
-          setCallbackErrors,
-          () => {
-            callbackSubmit.setButtonState("error");
-            callbackSubmit.showErrorToast(tMessages("errorDesc"));
-            callbackSubmit.resetButtonState();
-          }
-        )
+        !validateAndShowError(CallbackFormDataSchema, callbackFormData, setCallbackErrors, () => {
+          callbackSubmit.setButtonState("error");
+          callbackSubmit.showErrorToast(tMessages("errorDesc"));
+          callbackSubmit.resetButtonState();
+        })
       ) {
         return;
       }
@@ -237,10 +216,10 @@ export function useContactForm() {
           notes: callbackFormData.notes,
           subject: `User Request - Callback`,
         },
-        "User - Callback Submitted"
+        "User - Callback Submitted",
       );
     },
-    [callbackFormData, callbackSubmit, validateAndShowError, tMessages]
+    [callbackFormData, callbackSubmit, validateAndShowError, tMessages],
   );
 
   const handleOtherSubmit = useCallback(
@@ -250,16 +229,11 @@ export function useContactForm() {
       const dataToValidate = { ...otherFormData, mode: "other" };
 
       if (
-        !validateAndShowError(
-          OtherFormDataSchema,
-          dataToValidate,
-          setOtherErrors,
-          () => {
-            otherSubmit.setButtonState("error");
-            otherSubmit.showErrorToast(tMessages("errorDesc"));
-            otherSubmit.resetButtonState();
-          }
-        )
+        !validateAndShowError(OtherFormDataSchema, dataToValidate, setOtherErrors, () => {
+          otherSubmit.setButtonState("error");
+          otherSubmit.showErrorToast(tMessages("errorDesc"));
+          otherSubmit.resetButtonState();
+        })
       ) {
         return;
       }
@@ -277,10 +251,10 @@ export function useContactForm() {
           subject: otherFormData.subject,
           topic: topicValue,
         },
-        "User - Other Submitted"
+        "User - Other Submitted",
       );
     },
-    [otherFormData, otherSubmit, validateAndShowError, tMessages, tOtherForm]
+    [otherFormData, otherSubmit, validateAndShowError, tMessages, tOtherForm],
   );
 
   return {

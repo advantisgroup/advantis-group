@@ -4,10 +4,7 @@ import { ConvexError } from "convex/values";
 import { httpAction } from "./_generated/server";
 import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
-import {
-  ingestPayloadSchema,
-  type ActivitySample,
-} from "./activity/lib/contracts";
+import { ingestPayloadSchema, type ActivitySample } from "./activity/lib/contracts";
 import { z } from "zod";
 import { verifyPassword } from "./activity/lib/crypto";
 import { DEBUG_PASSWORD_SETTING_KEY } from "./activity/settings";
@@ -40,14 +37,13 @@ function bearerToken(request: Request): string | null {
   return h?.startsWith("Bearer ") ? h.slice(7) : null;
 }
 
-const unauthorized = (): Response =>
-  new Response("unauthorized", { status: 401 });
+const unauthorized = (): Response => new Response("unauthorized", { status: 401 });
 const badRequest = (): Response => new Response("bad request", { status: 400 });
 
 function jsonResponse(
   status: number,
   body: unknown,
-  headers: Record<string, string> = {}
+  headers: Record<string, string> = {},
 ): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -72,7 +68,7 @@ async function logBackendEvent(
     deviceId?: string;
     hostname?: string;
     context?: string;
-  }
+  },
 ): Promise<void> {
   try {
     await ctx.runMutation(internal.activity.events.record, {
@@ -86,7 +82,7 @@ async function logBackendEvent(
 
 async function authenticateDevice(
   ctx: ActionCtx,
-  request: Request
+  request: Request,
 ): Promise<{ deviceId: string } | null> {
   const token = bearerToken(request);
   if (!token) return null;
@@ -138,12 +134,9 @@ http.route({
     let inserted = 0;
     if (accepted.length > 0) {
       try {
-        const result = await ctx.runMutation(
-          internal.activity.ingest.recordSamples,
-          {
-            samples: accepted,
-          }
-        );
+        const result = await ctx.runMutation(internal.activity.ingest.recordSamples, {
+          samples: accepted,
+        });
         inserted = result.inserted;
         if (result.throttled && inserted === 0) {
           return new Response("rate limited", {
@@ -210,9 +203,7 @@ http.route({
     const deviceAuth = await authenticateDevice(ctx, request);
     if (!deviceAuth) return unauthorized();
 
-    const body = (await readJson(request)) as
-      | { password?: unknown }
-      | undefined;
+    const body = (await readJson(request)) as { password?: unknown } | undefined;
     if (!body || typeof body.password !== "string") return badRequest();
 
     const row = await ctx.runQuery(internal.activity.settings.getByKey, {

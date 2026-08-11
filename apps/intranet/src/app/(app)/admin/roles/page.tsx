@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 
 import { CustomRolesPanel } from "@/app/(app)/admin/CustomRolesPanel";
 import { ForbiddenScreen } from "@/components/layout/ForbiddenScreen";
-import { PageHeader } from "@/components/PageHeader";
+import { PageHeaderBar } from "@/components/layout/PageHeaderBar";
 import { useIsManager } from "@/components/providers/current-user";
 
 export default function AdminRolesPage() {
@@ -18,7 +18,7 @@ export default function AdminRolesPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <PageHeader title={t("customRolesTab")} icon={<ShieldCheck />} />
+      <PageHeaderBar title={t("customRolesTab")} icon={<ShieldCheck />} />
       <CustomRolesPanel />
     </div>
   );

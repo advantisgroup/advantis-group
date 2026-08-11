@@ -39,9 +39,12 @@ export type NotificationEmailKind =
   | "access-denied"
   | "absence-decision"
   | "upload-decision"
-  | "guest-invite"
   | "chat-reinvite"
-  | "digest";
+  | "digest"
+  | "academy-invite"
+  | "password-reset-request"
+  | "password-reset-link"
+  | "admin-verification-code";
 
 export interface UnfurlResult {
   url: string;
@@ -92,13 +95,12 @@ export interface ApplicantSkillProfile {
 /** Suggests a skill profile whose name matches the applicant's stated position. */
 export function autoProfil(
   profiles: ApplicantSkillProfile[],
-  positionText: string | null | undefined
+  positionText: string | null | undefined,
 ): string | null {
   if (!positionText) return null;
   const text = positionText.toLowerCase();
   const hit = profiles.find(
-    p =>
-      text.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(text)
+    (p) => text.includes(p.name.toLowerCase()) || p.name.toLowerCase().includes(text),
   );
   return hit ? hit.id : null;
 }

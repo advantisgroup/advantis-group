@@ -15,6 +15,7 @@ export interface IcsAllDayEvent {
   endMs?: number;
   description?: string;
   location?: string;
+  categories?: string[];
 }
 
 function icsDate(iso: string): string {
@@ -39,13 +40,28 @@ function escapeText(value: string): string {
     .replaceAll("\\", "\\\\")
     .replaceAll(";", "\\;")
     .replaceAll(",", "\\,")
-    .replaceAll("\n", "\\n");
+    .replace(/\r?\n/g, "\\n");
 }
 
-export function buildIcs(
-  calendarName: string,
-  events: IcsAllDayEvent[]
-): string {
+function foldLine(line: string): string {
+  const encoder = new TextEncoder();
+  const chunks: string[] = [];
+  let chunk = "";
+  let limit = 75;
+  for (const character of line) {
+    if (chunk && encoder.encode(chunk + character).length > limit) {
+      chunks.push(chunk);
+      chunk = character;
+      limit = 74;
+    } else {
+      chunk += character;
+    }
+  }
+  chunks.push(chunk);
+  return chunks.join("\r\n ");
+}
+
+export function buildIcs(calendarName: string, events: IcsAllDayEvent[]): string {
   const stamp = new Date()
     .toISOString()
     .replace(/[-:]/g, "")
@@ -60,13 +76,10 @@ export function buildIcs(
     const timed = e.startMs !== undefined && e.endMs !== undefined;
     lines.push(
       "BEGIN:VEVENT",
-      `UID:${e.uid}@advantis-intranet`,
+      `UID:${escapeText(e.uid)}@advantis-intranet`,
       `DTSTAMP:${stamp}`,
       ...(timed
-        ? [
-            `DTSTART:${icsDateTime(e.startMs!)}`,
-            `DTEND:${icsDateTime(e.endMs!)}`,
-          ]
+        ? [`DTSTART:${icsDateTime(e.startMs!)}`, `DTEND:${icsDateTime(e.endMs!)}`]
         : [
             `DTSTART;VALUE=DATE:${icsDate(e.startDate!)}`,
             `DTEND;VALUE=DATE:${icsDate(addDays(e.endDate!, 1))}`,
@@ -74,11 +87,12 @@ export function buildIcs(
       `SUMMARY:${escapeText(e.title)}`,
       ...(e.description ? [`DESCRIPTION:${escapeText(e.description)}`] : []),
       ...(e.location ? [`LOCATION:${escapeText(e.location)}`] : []),
-      "END:VEVENT"
+      ...(e.categories?.length ? [`CATEGORIES:${e.categories.map(escapeText).join(",")}`] : []),
+      "END:VEVENT",
     );
   }
   lines.push("END:VCALENDAR");
-  return lines.join("\r\n");
+  return `${lines.map(foldLine).join("\r\n")}\r\n`;
 }
 
 export function downloadIcs(filename: string, content: string): void {
@@ -87,6 +101,8 @@ export function downloadIcs(filename: string, content: string): void {
   const a = document.createElement("a");
   a.href = url;
   a.download = filename;
+  document.body.append(a);
   a.click();
-  URL.revokeObjectURL(url);
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }

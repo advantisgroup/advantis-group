@@ -18,7 +18,7 @@ export function SectionHeading({
       <span
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-lg [&_svg]:size-4",
-          tint ?? "bg-primary/10 text-primary"
+          tint ?? "bg-primary/10 text-primary",
         )}
       >
         {icon}

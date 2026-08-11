@@ -19,11 +19,7 @@ interface OpenableDocument {
  * on the Dokumente list underneath. The effect's cleanup closes the viewer
  * when this route unmounts for any other reason.
  */
-export function DocumentModalOpener({
-  document,
-}: {
-  document: OpenableDocument;
-}) {
+export function DocumentModalOpener({ document }: { document: OpenableDocument }) {
   const router = useRouter();
   const { openFileViewer, closeFileViewer } = useFileViewer();
 
@@ -34,7 +30,7 @@ export function DocumentModalOpener({
         name: document.fileName,
         url: document.url ?? undefined,
       },
-      { onClose: () => router.back() }
+      { onClose: () => router.back() },
     );
     return () => closeFileViewer();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- open once per document identity, not on every router/context re-render

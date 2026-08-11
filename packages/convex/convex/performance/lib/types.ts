@@ -97,11 +97,7 @@ export interface EmployeeSnapshot {
 export class SnapshotMap {
   private readonly byEmployee = new Map<string, Map<string, SnapshotFields>>();
 
-  merge(
-    employeeName: string,
-    reportDate: string,
-    fields: SnapshotFields
-  ): void {
+  merge(employeeName: string, reportDate: string, fields: SnapshotFields): void {
     let byDate = this.byEmployee.get(employeeName);
     if (!byDate) {
       byDate = new Map();

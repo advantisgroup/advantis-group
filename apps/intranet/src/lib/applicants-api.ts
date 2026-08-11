@@ -12,9 +12,7 @@ import { useAuth } from "@clerk/nextjs";
  * `useOneDriveApi`).
  */
 
-const API =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ??
-  "http://localhost:3002";
+const API = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "") ?? "http://localhost:3002";
 
 async function parse<T>(res: Response): Promise<T> {
   if (!res.ok) {
@@ -78,10 +76,7 @@ export function useApplicantsApi() {
        * applicant, or a duplicate-conflict result (pass `forceCreate: true`
        * to create anyway once the caller has confirmed with the user).
        */
-      extract: async (
-        file: File,
-        forceCreate = false
-      ): Promise<ExtractResult> => {
+      extract: async (file: File, forceCreate = false): Promise<ExtractResult> => {
         const form = new FormData();
         form.append("file", file);
         if (forceCreate) form.append("forceCreate", "true");
@@ -90,7 +85,7 @@ export function useApplicantsApi() {
             method: "POST",
             headers: await authHeaders(),
             body: form,
-          })
+          }),
         );
       },
 
@@ -107,10 +102,10 @@ export function useApplicantsApi() {
             method: "POST",
             headers: await authHeaders(),
             body: form,
-          })
+          }),
         );
       },
     }),
-    [authHeaders]
+    [authHeaders],
   );
 }

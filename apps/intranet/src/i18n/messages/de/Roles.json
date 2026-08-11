@@ -1,4 +1,5 @@
 {
+  "label": "Rolle",
   "admin": "Administrator",
   "admin_desc": "Voller Zugriff auf alle Admin-Bereiche",
   "manager": "Manager",

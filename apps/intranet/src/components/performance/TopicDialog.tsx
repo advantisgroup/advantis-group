@@ -9,13 +9,8 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -29,6 +24,7 @@ import { useErrorHandler } from "@/hooks/use-error-handler";
 type TopicStatus = "offen" | "erreicht" | "nicht_erreicht";
 
 function TopicForm({
+  open,
   topic,
   employeeId,
   ym,
@@ -36,6 +32,7 @@ function TopicForm({
   onCancel,
   onSaved,
 }: {
+  open: boolean;
   topic: Doc<"performanceTopics"> | null;
   employeeId: Id<"performanceEmployees">;
   ym: string;
@@ -77,78 +74,55 @@ function TopicForm({
   }
 
   return (
-    <>
-      <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-        <DialogTitle className="leading-snug">
-          {topic ? t("topicEditTitle") : t("topicNewTitle")}
-        </DialogTitle>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("topicLabel")}
-          </label>
-          <Input value={text} onChange={e => setText(e.target.value)} />
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("topicTodoLabel")}
-          </label>
-          <Textarea
-            value={todo}
-            onChange={e => setTodo(e.target.value)}
-            rows={3}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("topicEndDateLabel")}
-            </label>
-            <Input
-              type="date"
-              value={endDate}
-              onChange={e => setEndDate(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("topicStatusLabel")}
-            </label>
-            <Select
-              value={status}
-              onValueChange={v => setStatus(v as TopicStatus)}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="offen">{t("topicStatusOpen")}</SelectItem>
-                <SelectItem value="erreicht">
-                  {t("topicStatusReached")}
-                </SelectItem>
-                <SelectItem value="nicht_erreicht">
-                  {t("topicStatusMissed")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+    <ResponsiveDialog
+      open={open}
+      onOpenChange={(next) => !next && onCancel()}
+      title={topic ? t("topicEditTitle") : t("topicNewTitle")}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onCancel}>
+            {t("topicCancel")}
+          </Button>
+          <Button onClick={() => void handleSave()} disabled={saving || !text.trim()}>
+            {t("topicSave")}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">{t("topicLabel")}</label>
+        <Input value={text} onChange={(e) => setText(e.target.value)} />
       </div>
 
-      <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
-        <Button variant="ghost" onClick={onCancel}>
-          {t("topicCancel")}
-        </Button>
-        <Button
-          onClick={() => void handleSave()}
-          disabled={saving || !text.trim()}
-        >
-          {t("topicSave")}
-        </Button>
-      </DialogFooter>
-    </>
+      <div className="space-y-1.5">
+        <label className="text-xs font-medium text-muted-foreground">{t("topicTodoLabel")}</label>
+        <Textarea value={todo} onChange={(e) => setTodo(e.target.value)} rows={3} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            {t("topicEndDateLabel")}
+          </label>
+          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            {t("topicStatusLabel")}
+          </label>
+          <Select value={status} onValueChange={(v) => setStatus(v as TopicStatus)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="offen">{t("topicStatusOpen")}</SelectItem>
+              <SelectItem value="erreicht">{t("topicStatusReached")}</SelectItem>
+              <SelectItem value="nicht_erreicht">{t("topicStatusMissed")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </ResponsiveDialog>
   );
 }
 
@@ -164,27 +138,17 @@ interface Props {
 /** Create/edit dialog for a Performance "topic" (monthly goal/todo) — the
  * primary create/edit action never sits inline on the detail page, per
  * house style. */
-export function TopicDialog({
-  open,
-  onOpenChange,
-  topic,
-  employeeId,
-  ym,
-  token,
-}: Props) {
+export function TopicDialog({ open, onOpenChange, topic, employeeId, ym, token }: Props) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 p-0">
-        <TopicForm
-          key={topic?._id ?? "new"}
-          topic={topic}
-          employeeId={employeeId}
-          ym={ym}
-          token={token}
-          onCancel={() => onOpenChange(false)}
-          onSaved={() => onOpenChange(false)}
-        />
-      </DialogContent>
-    </Dialog>
+    <TopicForm
+      key={topic?._id ?? "new"}
+      open={open}
+      topic={topic}
+      employeeId={employeeId}
+      ym={ym}
+      token={token}
+      onCancel={() => onOpenChange(false)}
+      onSaved={() => onOpenChange(false)}
+    />
   );
 }

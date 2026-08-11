@@ -1,10 +1,23 @@
 import { ConvexError } from "convex/values";
 
-import { type Doc } from "../_generated/dataModel";
+import { type Doc, type Id } from "../_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "../_generated/server";
 
 export type Role = Doc<"users">["role"];
 export type Capability = Doc<"customRoles">["capabilities"][number];
+
+/**
+ * A user's effective custom-role ids: the new `customRoleIds` array, falling
+ * back to the legacy singular `customRoleId` for rows `migrations/
+ * backfillCustomRoleIds.ts` hasn't reached yet. Every reader of custom roles
+ * goes through this so the fallback lives in exactly one place.
+ */
+export function effectiveCustomRoleIds(
+  user: Pick<Doc<"users">, "customRoleIds" | "customRoleId">,
+): Id<"customRoles">[] {
+  if (user.customRoleIds && user.customRoleIds.length > 0) return user.customRoleIds;
+  return user.customRoleId ? [user.customRoleId] : [];
+}
 
 // --- Env helpers -------------------------------------------------------------
 
@@ -12,8 +25,8 @@ function parseList(value: string | undefined): string[] {
   if (!value) return [];
   return value
     .split(/[,;\s]+/)
-    .map(entry => entry.trim().toLowerCase())
-    .filter(entry => entry.length > 0);
+    .map((entry) => entry.trim().toLowerCase())
+    .filter((entry) => entry.length > 0);
 }
 
 /** Admin emails seeded via the `ADMIN_EMAILS` Convex env var. */
@@ -45,11 +58,11 @@ export function isAdminEmail(email: string): boolean {
 
 export async function getUserByClerkId(
   ctx: QueryCtx | MutationCtx,
-  clerkUserId: string
+  clerkUserId: string,
 ): Promise<Doc<"users"> | null> {
   return ctx.db
     .query("users")
-    .withIndex("by_clerkUserId", q => q.eq("clerkUserId", clerkUserId))
+    .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", clerkUserId))
     .unique();
 }
 
@@ -58,16 +71,13 @@ export async function getUserByClerkId(
  * authenticated Clerk identity has not (yet) been provisioned an intranet
  * account. Never throws — callers decide how to handle the null case.
  *
- * Two separate Clerk instances issue identities against this deployment (the
- * marketing site and the intranet — see auth.config.ts), each with its own
- * `subject` for the same person. The `users` row is keyed by the intranet
- * instance's clerkUserId, so a marketing-issued identity for that same
- * person never matches on `subject` — email is the only field the two
- * instances share, so fall back to it when the id lookup misses.
+ * Marketing and the intranet now share a single Clerk instance (see
+ * auth.config.ts), so `subject` lookups are the primary path. The email
+ * fallback below is legacy-compat only, for any session issued while
+ * marketing and the intranet were still on separate Clerk instances with
+ * different `subject`s for the same person.
  */
-export async function getCurrentUser(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users"> | null> {
+export async function getCurrentUser(ctx: QueryCtx | MutationCtx): Promise<Doc<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;
 
@@ -78,14 +88,12 @@ export async function getCurrentUser(
   if (!email) return null;
   return ctx.db
     .query("users")
-    .withIndex("by_email", q => q.eq("email", email))
+    .withIndex("by_email", (q) => q.eq("email", email))
     .unique();
 }
 
 /** Like getCurrentUser but throws when there is no active intranet account. */
-export async function requireUser(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
+export async function requireUser(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   const user = await getCurrentUser(ctx);
   if (!user) {
     throw new ConvexError({
@@ -102,7 +110,7 @@ export async function requireUser(
 /** Require the current user to hold one of the given roles. */
 export async function requireRole(
   ctx: QueryCtx | MutationCtx,
-  roles: readonly Role[]
+  roles: readonly Role[],
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
   if (!roles.includes(user.role)) {
@@ -116,35 +124,51 @@ export async function requireRole(
 
 export const MANAGER_ROLES: readonly Role[] = ["admin", "manager"];
 
-export async function requireManager(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
+export async function requireManager(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   return requireRole(ctx, MANAGER_ROLES);
 }
 
-export async function requireAdmin(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
+export async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   return requireRole(ctx, ["admin"]);
 }
 
 /**
+ * True when `user` is either `ownerId` themselves or an admin — the
+ * "author/creator or admin can edit/delete" rule repeated across
+ * announcements, events, chat messages and guidebook pages/attachments.
+ * A pure predicate (not throwing) so it works both for gating a mutation
+ * and for filtering a list to what's visible.
+ */
+export function isOwnerOrAdmin(user: Doc<"users">, ownerId: Doc<"users">["_id"]): boolean {
+  return ownerId === user._id || user.role === "admin";
+}
+
+/**
+ * True when `actor` may grant `role` to someone else: anyone can grant
+ * "employee", but only an admin can grant manager/admin. Shared by invites
+ * and access-request approval, which both enforce this same escalation
+ * rule independently.
+ */
+export function canGrantRole(actor: Doc<"users">, role: Role): boolean {
+  return role === "employee" || actor.role === "admin";
+}
+
+/**
  * Require the current user to hold `capability` — satisfied automatically by
- * the manager/admin tiers, or by an employee whose assigned `customRoleId`
- * grants it. Capabilities are additive: they never take away what the base
- * role tier already allows.
+ * the manager/admin tiers, or by any one of the employee's assigned custom
+ * roles granting it. Capabilities are additive: they never take away what
+ * the base role tier already allows.
  */
 export async function requireCapability(
   ctx: QueryCtx | MutationCtx,
-  capability: Capability
+  capability: Capability,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
   if (MANAGER_ROLES.includes(user.role)) return user;
 
-  const customRole = user.customRoleId
-    ? await ctx.db.get(user.customRoleId)
-    : null;
-  if (!customRole?.capabilities.includes(capability)) {
+  const customRoles = await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
+  const granted = customRoles.some((role) => role?.capabilities.includes(capability));
+  if (!granted) {
     throw new ConvexError({
       code: "forbidden",
       message: "You do not have permission to do that",
@@ -154,19 +178,53 @@ export async function requireCapability(
 }
 
 /**
+ * Pure predicate version of the capability check, for callers that already
+ * have the user doc and its custom roles resolved and don't want a second
+ * `getCurrentUser()` lookup — e.g. `resolveCaller` in
+ * `integrations/clockodoAbsences.ts`, which resolves its user via an
+ * explicit `clerkUserId` (a server-key-gated call from apps/api, not the
+ * caller's own live Convex session) so `ctx.auth` isn't the caller's
+ * identity there. Mirrors `isApplicantEligible`'s shape below.
+ */
+export function userHasCapability(
+  user: Doc<"users">,
+  customRoles: (Doc<"customRoles"> | null)[],
+  capability: Capability,
+): boolean {
+  if (MANAGER_ROLES.includes(user.role)) return true;
+  return customRoles.some((role) => role?.capabilities.includes(capability) ?? false);
+}
+
+/**
+ * Non-throwing sibling of `requireCapability`, for filtering rather than
+ * hard-gating (e.g. deciding how much of a record to reveal). Same
+ * manager-auto-pass and custom-role lookup, but returns false instead of
+ * throwing when there's no signed-in user or the capability isn't granted.
+ */
+export async function hasCapability(
+  ctx: QueryCtx | MutationCtx,
+  capability: Capability,
+): Promise<boolean> {
+  const user = await getCurrentUser(ctx);
+  if (!user) return false;
+  const customRoles = await Promise.all(effectiveCustomRoleIds(user).map((id) => ctx.db.get(id)));
+  return userHasCapability(user, customRoles, capability);
+}
+
+/**
  * True when `user` qualifies to be granted Applicant Management access: at
- * least Manager (admins qualify too), or an employee whose custom role
- * carries `manage_members`. This is a data-sensitivity gate on the *target*
- * of a grant, independent of who's doing the granting — it applies even when
- * an admin is the one granting.
+ * least Manager (admins qualify too), or an employee holding any custom role
+ * that carries `manage_members`. This is a data-sensitivity gate on the
+ * *target* of a grant, independent of who's doing the granting — it applies
+ * even when an admin is the one granting.
  */
 export function isApplicantEligible(
   user: Doc<"users">,
-  customRole: Doc<"customRoles"> | null
+  customRoles: (Doc<"customRoles"> | null)[],
 ): boolean {
   return (
     MANAGER_ROLES.includes(user.role) ||
-    (customRole?.capabilities.includes("manage_members") ?? false)
+    customRoles.some((role) => role?.capabilities.includes("manage_members") ?? false)
   );
 }
 
@@ -181,11 +239,11 @@ export function isApplicantEligible(
  */
 export async function requireVaultUnlocked(
   ctx: QueryCtx | MutationCtx,
-  userId: Doc<"users">["_id"]
+  userId: Doc<"users">["_id"],
 ): Promise<void> {
   const unlock = await ctx.db
     .query("applicantVaultUnlocks")
-    .withIndex("by_user", q => q.eq("userId", userId))
+    .withIndex("by_user", (q) => q.eq("userId", userId))
     .unique();
   if (!unlock || unlock.expiresAt <= Date.now()) {
     throw new ConvexError({
@@ -195,13 +253,22 @@ export async function requireVaultUnlocked(
   }
 }
 
+/** True when `user` has Applicant Management access: an admin, or granted
+ * `applicantAccess` directly. Used both to gate the caller (via
+ * `requireApplicantAccess`) and to resolve a *target* user's eligibility
+ * elsewhere (e.g. the API's own `apiCheckAccess`). Takes just the fields it
+ * needs so it also accepts the curated `users.me` shape, not only a raw
+ * `Doc<"users">` — both `setPassword`/`unlock` (actions, round-tripping
+ * through `api.users.me`) and direct-db callers can share it. */
+export function hasApplicantAccess(user: Pick<Doc<"users">, "role" | "applicantAccess">): boolean {
+  return user.role === "admin" || user.applicantAccess === true;
+}
+
 /** Require the current user to have Applicant Management access (admin bypasses
  * the role/delegate check, but not the vault). */
-export async function requireApplicantAccess(
-  ctx: QueryCtx | MutationCtx
-): Promise<Doc<"users">> {
+export async function requireApplicantAccess(ctx: QueryCtx | MutationCtx): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (user.role !== "admin" && !user.applicantAccess) {
+  if (!hasApplicantAccess(user)) {
     throw new ConvexError({
       code: "forbidden",
       message: "You do not have permission to do that",
@@ -216,7 +283,7 @@ export async function requireApplicantAccess(
  * access for others: an admin, or a user designated as a delegate.
  */
 export async function requireApplicantDelegateOrAdmin(
-  ctx: QueryCtx | MutationCtx
+  ctx: QueryCtx | MutationCtx,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
   if (user.role !== "admin" && !user.applicantAccessDelegate) {
@@ -229,20 +296,29 @@ export async function requireApplicantDelegateOrAdmin(
   return user;
 }
 
+/** True when `user` belongs to the Applicant Management area at all: an
+ * admin, or granted either `applicantAccess` or `applicantAccessDelegate`.
+ * Same narrow-field shape as `hasApplicantAccess`, for the same reason —
+ * shared by direct-db callers and the action call sites round-tripping
+ * through `api.users.me`. */
+export function isApplicantAreaMember(
+  user: Pick<Doc<"users">, "role" | "applicantAccess" | "applicantAccessDelegate">,
+): boolean {
+  return (
+    user.role === "admin" ||
+    user.applicantAccess === true ||
+    user.applicantAccessDelegate === true
+  );
+}
+
 /** Require Applicant Management access OR delegate rights, without the vault
  * check — used only by the vault's own bootstrap functions (checking status,
  * unlocking), which must work precisely when the vault is still locked. */
 export async function requireApplicantAreaMember(
-  ctx: QueryCtx | MutationCtx
+  ctx: QueryCtx | MutationCtx,
 ): Promise<Doc<"users">> {
   const user = await requireUser(ctx);
-  if (
-    user.role === "admin" ||
-    user.applicantAccess ||
-    user.applicantAccessDelegate
-  ) {
-    return user;
-  }
+  if (isApplicantAreaMember(user)) return user;
   throw new ConvexError({
     code: "forbidden",
     message: "You do not have permission to do that",
@@ -316,8 +392,8 @@ export async function ensureUser(ctx: MutationCtx): Promise<EnsureUserResult> {
   if (email) {
     const invite = await ctx.db
       .query("invites")
-      .withIndex("by_email", q => q.eq("email", email))
-      .filter(q => q.eq(q.field("status"), "pending"))
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .filter((q) => q.eq(q.field("status"), "pending"))
       .first();
 
     if (invite && invite.expiresAt > now) {

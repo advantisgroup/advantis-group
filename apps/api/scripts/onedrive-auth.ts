@@ -27,7 +27,7 @@ const clientSecret = process.env.MS_GRAPH_CLIENT_SECRET;
 if (!clientId || !clientSecret) {
   console.error(
     "Missing MS_GRAPH_CLIENT_ID / MS_GRAPH_CLIENT_SECRET.\n" +
-      "Run:  MS_GRAPH_CLIENT_ID=... MS_GRAPH_CLIENT_SECRET=... bun run scripts/onedrive-auth.ts"
+      "Run:  MS_GRAPH_CLIENT_ID=... MS_GRAPH_CLIENT_SECRET=... bun run scripts/onedrive-auth.ts",
   );
   process.exit(1);
 }
@@ -43,34 +43,29 @@ const authorizeUrl =
   }).toString();
 
 async function exchangeCode(code: string): Promise<void> {
-  const res = await fetch(
-    `https://login.microsoftonline.com/${AUTHORITY}/oauth2/v2.0/token`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        client_id: clientId!,
-        client_secret: clientSecret!,
-        grant_type: "authorization_code",
-        code,
-        redirect_uri: REDIRECT_URI,
-        scope: SCOPE,
-      }).toString(),
-    }
-  );
+  const res = await fetch(`https://login.microsoftonline.com/${AUTHORITY}/oauth2/v2.0/token`, {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: clientId!,
+      client_secret: clientSecret!,
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: REDIRECT_URI,
+      scope: SCOPE,
+    }).toString(),
+  });
   const json = (await res.json()) as {
     refresh_token?: string;
     error_description?: string;
   };
   if (!res.ok || !json.refresh_token) {
-    throw new Error(
-      json.error_description ?? `Token exchange failed (HTTP ${res.status})`
-    );
+    throw new Error(json.error_description ?? `Token exchange failed (HTTP ${res.status})`);
   }
   console.log("\n✅ Success! Set this on the API environment:\n");
   console.log(`ONEDRIVE_REFRESH_TOKEN=${json.refresh_token}\n`);
   console.log(
-    "The API will rotate + persist it in Convex from here on — you won't need to re-run this unless it's revoked.\n"
+    "The API will rotate + persist it in Convex from here on — you won't need to re-run this unless it's revoked.\n",
   );
 }
 
@@ -90,14 +85,11 @@ const server = Bun.serve({
         status: 400,
       });
     }
-    if (!code)
-      return new Response("Missing authorization code", { status: 400 });
+    if (!code) return new Response("Missing authorization code", { status: 400 });
     try {
       await exchangeCode(code);
       queueMicrotask(() => process.exit(0));
-      return new Response(
-        "OneDrive connected. You can close this tab and return to the terminal."
-      );
+      return new Response("OneDrive connected. You can close this tab and return to the terminal.");
     } catch (e) {
       console.error(`\n❌ ${e instanceof Error ? e.message : e}`);
       queueMicrotask(() => process.exit(1));
@@ -109,9 +101,7 @@ const server = Bun.serve({
 });
 
 console.log(`\nListening on ${REDIRECT_URI}`);
-console.log(
-  "Open this URL, sign in as the OneDrive owner (chefsache@), and consent:\n"
-);
+console.log("Open this URL, sign in as the OneDrive owner (chefsache@), and consent:\n");
 console.log(authorizeUrl + "\n");
 
 // Keep the process alive until the callback handler exits it.

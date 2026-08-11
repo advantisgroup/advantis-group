@@ -9,16 +9,13 @@ import { ChevronsUpDown } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { InfoTip } from "@/components/activity/InfoTip";
+import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -35,7 +32,9 @@ export interface LoginRow {
   id: Id<"performanceLogins">;
   email: string;
   name: string;
-  role: "admin" | "mitarbeiter";
+  roleId: Id<"companyRoles"> | null;
+  roleName: string | null;
+  isSuperAdmin: boolean;
   active: boolean;
   employeeId: Id<"performanceEmployees"> | null;
   employeeName: string | null;
@@ -47,6 +46,11 @@ export interface EmployeeOption {
   id: Id<"performanceEmployees">;
   name: string;
   active: boolean;
+}
+
+export interface RoleOption {
+  id: Id<"companyRoles">;
+  name: string;
 }
 
 export interface IntranetUserOption {
@@ -64,11 +68,11 @@ export interface IntranetUserOption {
  * otherwise. */
 function suggestIntranetUser(
   users: IntranetUserOption[],
-  email: string
+  email: string,
 ): IntranetUserOption | null {
   const normalized = email.trim().toLowerCase();
   if (!normalized) return null;
-  return users.find(u => u.email.toLowerCase() === normalized) ?? null;
+  return users.find((u) => u.email.toLowerCase() === normalized) ?? null;
 }
 
 const NONE = "__none__";
@@ -91,9 +95,34 @@ function EmployeeSelect({
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={NONE}>{placeholder}</SelectItem>
-        {employees.map(e => (
+        {employees.map((e) => (
           <SelectItem key={e.id} value={e.id}>
             {e.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function RoleSelect({
+  value,
+  onChange,
+  roles,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  roles: RoleOption[];
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger className="w-full">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {roles.map((r) => (
+          <SelectItem key={r.id} value={r.id}>
+            {r.name}
           </SelectItem>
         ))}
       </SelectContent>
@@ -130,13 +159,13 @@ function IntranetUserPicker({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-  const selected = users.find(u => u.id === value) ?? null;
+  const selected = users.find((u) => u.id === value) ?? null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return users;
     return users.filter(
-      u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q),
     );
   }, [users, search]);
 
@@ -169,14 +198,12 @@ function IntranetUserPicker({
         role="combobox"
         aria-expanded={open}
         className="w-full justify-between gap-2 font-normal"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
       >
         {selected ? (
           <span className="flex min-w-0 items-center gap-2">
             <Avatar className="size-5 shrink-0">
-              {selected.avatarUrl && (
-                <AvatarImage src={selected.avatarUrl} alt={selected.name} />
-              )}
+              {selected.avatarUrl && <AvatarImage src={selected.avatarUrl} alt={selected.name} />}
               <AvatarFallback className="text-[9px]">
                 {initials(selected.name, selected.email)}
               </AvatarFallback>
@@ -194,12 +221,12 @@ function IntranetUserPicker({
             <Input
               autoFocus
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder={t("userIntranetAccountSearch")}
               className="h-8"
             />
           </div>
-          <ScrollArea className="max-h-64">
+          <ScrollArea className="h-64">
             <button
               type="button"
               className="flex w-full items-center border-b border-border/60 px-3 py-2 text-left text-sm text-muted-foreground hover:bg-accent"
@@ -215,7 +242,7 @@ function IntranetUserPicker({
                 {t("userIntranetAccountEmpty")}
               </p>
             ) : (
-              filtered.map(u => {
+              filtered.map((u) => {
                 const linkedElsewhere = u.linkedToLoginName && u.id !== value;
                 return (
                   <button
@@ -228,18 +255,14 @@ function IntranetUserPicker({
                     }}
                   >
                     <Avatar className="size-8 shrink-0">
-                      {u.avatarUrl && (
-                        <AvatarImage src={u.avatarUrl} alt={u.name} />
-                      )}
+                      {u.avatarUrl && <AvatarImage src={u.avatarUrl} alt={u.name} />}
                       <AvatarFallback className="text-xs">
                         {initials(u.name, u.email)}
                       </AvatarFallback>
                     </Avatar>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{u.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {u.email}
-                      </p>
+                      <p className="truncate text-xs text-muted-foreground">{u.email}</p>
                     </div>
                     {linkedElsewhere && (
                       <Badge variant="muted" className="shrink-0 text-[10px]">
@@ -263,20 +286,27 @@ export function CreateLoginDialog({
   token,
   employees,
   intranetUsers,
+  roles,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   token: string;
   employees: EmployeeOption[];
   intranetUsers: IntranetUserOption[];
+  roles: RoleOption[];
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
   const createLogin = useAction(api.performanceAuth.createLogin);
+  // Only Advantis has staff with intranet Clerk accounts to link — every
+  // other company's "users" is naturally empty (and the field itself would
+  // be a confusing dead end for a client admin), so the whole picker is
+  // Advantis-only, not just its data.
+  const showIntranetLink = usePerformanceCompanySlug() === "advantis";
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"admin" | "mitarbeiter">("mitarbeiter");
+  const [roleId, setRoleId] = useState<string>(roles[0]?.id ?? "");
   const [employeeId, setEmployeeId] = useState(NONE);
   const [linkedUserId, setLinkedUserId] = useState<Id<"users"> | null>(null);
   const [linkedUserTouched, setLinkedUserTouched] = useState(false);
@@ -288,17 +318,15 @@ export function CreateLoginDialog({
   // suggests until the admin has touched the picker themself.
   const suggested = useMemo(
     () => suggestIntranetUser(intranetUsers, email),
-    [intranetUsers, email]
+    [intranetUsers, email],
   );
-  const effectiveLinkedUserId = linkedUserTouched
-    ? linkedUserId
-    : (suggested?.id ?? null);
+  const effectiveLinkedUserId = linkedUserTouched ? linkedUserId : (suggested?.id ?? null);
 
   function reset() {
     setEmail("");
     setName("");
     setPassword("");
-    setRole("mitarbeiter");
+    setRoleId(roles[0]?.id ?? "");
     setEmployeeId(NONE);
     setLinkedUserId(null);
     setLinkedUserTouched(false);
@@ -306,7 +334,7 @@ export function CreateLoginDialog({
 
   const needsPassword = !effectiveLinkedUserId;
   const canSave =
-    !!email.trim() && !!name.trim() && (!needsPassword || password.length >= 8);
+    !!email.trim() && !!name.trim() && !!roleId && (!needsPassword || password.length >= 8);
 
   async function handleSave() {
     if (!canSave) return;
@@ -317,11 +345,8 @@ export function CreateLoginDialog({
         email: email.trim(),
         name: name.trim(),
         password: needsPassword ? password : undefined,
-        role,
-        employeeId:
-          employeeId === NONE
-            ? undefined
-            : (employeeId as Id<"performanceEmployees">),
+        roleId: roleId as Id<"companyRoles">,
+        employeeId: employeeId === NONE ? undefined : (employeeId as Id<"performanceEmployees">),
         linkedUserId: effectiveLinkedUserId ?? undefined,
       });
       reset();
@@ -337,47 +362,39 @@ export function CreateLoginDialog({
   return (
     <Dialog
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         if (!o) reset();
         onOpenChange(o);
       }}
     >
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">
-            {t("userNewTitle")}
-          </DialogTitle>
+          <DialogTitle className="leading-snug">{t("userNewTitle")}</DialogTitle>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("emailLabel")}
-            </label>
-            <Input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
+            <label className="text-xs font-medium text-muted-foreground">{t("emailLabel")}</label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("nameLabel")}
-            </label>
-            <Input value={name} onChange={e => setName(e.target.value)} />
+            <label className="text-xs font-medium text-muted-foreground">{t("nameLabel")}</label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-muted-foreground">
-              {t("userIntranetAccountLabel")}
-            </label>
-            <IntranetUserPicker
-              value={effectiveLinkedUserId}
-              onChange={v => {
-                setLinkedUserId(v);
-                setLinkedUserTouched(true);
-              }}
-              users={intranetUsers}
-              placeholder={t("userIntranetAccountNone")}
-            />
-          </div>
+          {showIntranetLink && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t("userIntranetAccountLabel")}
+              </label>
+              <IntranetUserPicker
+                value={effectiveLinkedUserId}
+                onChange={(v) => {
+                  setLinkedUserId(v);
+                  setLinkedUserTouched(true);
+                }}
+                users={intranetUsers}
+                placeholder={t("userIntranetAccountNone")}
+              />
+            </div>
+          )}
           {needsPassword ? (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
@@ -386,33 +403,18 @@ export function CreateLoginDialog({
               <Input
                 type="password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
           ) : (
-            <p className="text-xs text-muted-foreground">
-              {t("userPasswordNotNeeded")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("userPasswordNotNeeded")}</p>
           )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
                 {t("userRoleLabel")}
               </label>
-              <Select
-                value={role}
-                onValueChange={v => setRole(v as "admin" | "mitarbeiter")}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">{t("userRoleAdmin")}</SelectItem>
-                  <SelectItem value="mitarbeiter">
-                    {t("userRoleEmployee")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <RoleSelect value={roleId} onChange={setRoleId} roles={roles} />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">
@@ -431,10 +433,7 @@ export function CreateLoginDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={saving || !canSave}
-          >
+          <Button onClick={() => void handleSave()} disabled={saving || !canSave}>
             {t("topicSave")}
           </Button>
         </DialogFooter>
@@ -449,21 +448,28 @@ export function EditLoginDialog({
   token,
   employees,
   intranetUsers,
+  roles,
+  viewerIsSuperAdmin,
+  viewerLoginId,
 }: {
   login: LoginRow | null;
   onOpenChange: (open: boolean) => void;
   token: string;
   employees: EmployeeOption[];
   intranetUsers: IntranetUserOption[];
+  roles: RoleOption[];
+  viewerIsSuperAdmin: boolean;
+  viewerLoginId: Id<"performanceLogins"> | null;
 }) {
   const t = useTranslations("Performance");
   const handleError = useErrorHandler();
   const updateLogin = useMutation(api.performanceAuth.updateLogin);
+  const setSuperAdmin = useMutation(api.performanceAuth.setSuperAdmin);
 
   return (
     <Dialog
       open={login !== null}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         if (!o) onOpenChange(false);
       }}
     >
@@ -474,9 +480,19 @@ export function EditLoginDialog({
             login={login}
             employees={employees}
             intranetUsers={intranetUsers}
+            roles={roles}
+            viewerIsSuperAdmin={viewerIsSuperAdmin}
+            viewerLoginId={viewerLoginId}
             onCancel={() => onOpenChange(false)}
-            onSave={async patch => {
+            onSave={async ({ isSuperAdmin, ...patch }) => {
               try {
+                if (isSuperAdmin !== login.isSuperAdmin) {
+                  await setSuperAdmin({
+                    token,
+                    loginId: login.id,
+                    isSuperAdmin,
+                  });
+                }
                 await updateLogin({ token, loginId: login.id, ...patch });
                 onOpenChange(false);
                 toast.success(t("userUpdatedToast"));
@@ -495,24 +511,32 @@ function EditLoginForm({
   login,
   employees,
   intranetUsers,
+  roles,
+  viewerIsSuperAdmin,
+  viewerLoginId,
   onCancel,
   onSave,
 }: {
   login: LoginRow;
   employees: EmployeeOption[];
   intranetUsers: IntranetUserOption[];
+  roles: RoleOption[];
+  viewerIsSuperAdmin: boolean;
+  viewerLoginId: Id<"performanceLogins"> | null;
   onCancel: () => void;
   onSave: (patch: {
     name: string;
-    role: "admin" | "mitarbeiter";
+    roleId: Id<"companyRoles"> | undefined;
     active: boolean;
     employeeId: Id<"performanceEmployees"> | null;
     linkedUserId: Id<"users"> | null;
+    isSuperAdmin: boolean;
   }) => void | Promise<void>;
 }) {
   const t = useTranslations("Performance");
+  const showIntranetLink = usePerformanceCompanySlug() === "advantis";
   const [name, setName] = useState(login.name);
-  const [role, setRole] = useState(login.role);
+  const [roleId, setRoleId] = useState<string>(login.roleId ?? roles[0]?.id ?? "");
   const [active, setActive] = useState(login.active);
   const [employeeId, setEmployeeId] = useState(login.employeeId ?? NONE);
   // Existing logins are never re-linked automatically: if this one is
@@ -520,24 +544,25 @@ function EditLoginForm({
   // stands. Only a login with no explicit choice yet falls back to a
   // matching-email suggestion — an admin can still override either way.
   const [linkedUserId, setLinkedUserId] = useState<Id<"users"> | null>(
-    login.linkedUserId ??
-      suggestIntranetUser(intranetUsers, login.email)?.id ??
-      null
+    login.linkedUserId ?? suggestIntranetUser(intranetUsers, login.email)?.id ?? null,
   );
+  const [isSuperAdmin, setIsSuperAdmin] = useState(login.isSuperAdmin);
   const [saving, setSaving] = useState(false);
+
+  // Only another super-admin can grant/revoke the flag, and never on their
+  // own login — see performanceAuth.ts's setSuperAdmin for why.
+  const canToggleSuperAdmin = viewerIsSuperAdmin && login.id !== viewerLoginId;
 
   async function handleSave() {
     setSaving(true);
     try {
       await onSave({
         name: name.trim() || login.name,
-        role,
+        roleId: isSuperAdmin ? undefined : (roleId as Id<"companyRoles">),
         active,
-        employeeId:
-          employeeId === NONE
-            ? null
-            : (employeeId as Id<"performanceEmployees">),
+        employeeId: employeeId === NONE ? null : (employeeId as Id<"performanceEmployees">),
         linkedUserId,
+        isSuperAdmin,
       });
     } finally {
       setSaving(false);
@@ -551,41 +576,32 @@ function EditLoginForm({
         <p className="text-sm text-muted-foreground">{login.email}</p>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("nameLabel")}
-          </label>
-          <Input value={name} onChange={e => setName(e.target.value)} />
+          <label className="text-xs font-medium text-muted-foreground">{t("nameLabel")}</label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} />
         </div>
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t("userIntranetAccountLabel")}
-          </label>
-          <IntranetUserPicker
-            value={linkedUserId}
-            onChange={setLinkedUserId}
-            users={intranetUsers}
-            placeholder={t("userIntranetAccountNone")}
-          />
-        </div>
+        {showIntranetLink && (
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              {t("userIntranetAccountLabel")}
+            </label>
+            <IntranetUserPicker
+              value={linkedUserId}
+              onChange={setLinkedUserId}
+              users={intranetUsers}
+              placeholder={t("userIntranetAccountNone")}
+            />
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
               {t("userRoleLabel")}
             </label>
-            <Select
-              value={role}
-              onValueChange={v => setRole(v as "admin" | "mitarbeiter")}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">{t("userRoleAdmin")}</SelectItem>
-                <SelectItem value="mitarbeiter">
-                  {t("userRoleEmployee")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            {isSuperAdmin ? (
+              <p className="pt-2 text-sm text-muted-foreground">{t("userRoleSuperAdmin")}</p>
+            ) : (
+              <RoleSelect value={roleId} onChange={setRoleId} roles={roles} />
+            )}
           </div>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
@@ -599,13 +615,22 @@ function EditLoginForm({
             />
           </div>
         </div>
-        <label className="flex w-fit items-center gap-2 pt-1 text-sm">
-          <Checkbox
-            checked={active}
-            onCheckedChange={checked => setActive(checked === true)}
-          />
-          {t("userActiveLabel")}
-        </label>
+        <div className="flex flex-wrap items-center gap-4 pt-1">
+          <label className="flex w-fit items-center gap-2 text-sm">
+            <Checkbox checked={active} onCheckedChange={(checked) => setActive(checked === true)} />
+            {t("userActiveLabel")}
+          </label>
+          {canToggleSuperAdmin && (
+            <label className="flex w-fit items-center gap-1.5 text-sm">
+              <Checkbox
+                checked={isSuperAdmin}
+                onCheckedChange={(checked) => setIsSuperAdmin(checked === true)}
+              />
+              {t("userSuperAdminToggleLabel")}
+              <InfoTip text={t("userSuperAdminToggleInfo")} />
+            </label>
+          )}
+        </div>
       </div>
       <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
         <Button variant="ghost" onClick={onCancel}>
@@ -652,7 +677,7 @@ export function ResetPasswordDialog({
   return (
     <Dialog
       open={loginId !== null}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         if (!o) {
           setPassword("");
           onOpenChange(false);
@@ -661,28 +686,19 @@ export function ResetPasswordDialog({
     >
       <DialogContent className="max-w-md gap-0 p-0">
         <div className="space-y-4 px-6 pb-5 pt-6 pr-12">
-          <DialogTitle className="leading-snug">
-            {t("userResetPasswordTitle")}
-          </DialogTitle>
+          <DialogTitle className="leading-snug">{t("userResetPasswordTitle")}</DialogTitle>
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">
               {t("userNewPasswordLabel")}
             </label>
-            <Input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-            />
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
           </div>
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("topicCancel")}
           </Button>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={saving || password.length < 8}
-          >
+          <Button onClick={() => void handleSave()} disabled={saving || password.length < 8}>
             {t("topicSave")}
           </Button>
         </DialogFooter>

@@ -25,7 +25,7 @@ const EXPORTABLE = v.union(
   v.literal("dailyStats"),
   v.literal("employeeStates"),
   v.literal("integrationHealth"),
-  v.literal("activitySettings")
+  v.literal("activitySettings"),
 );
 
 function assertSecret(secret: string): void {

@@ -6,6 +6,7 @@ import { api } from "@advantis/convex/api";
 import { useQuery } from "convex/react";
 import { CheckCircle2, ChevronRight, Circle } from "lucide-react";
 
+import { useIsAdmin } from "@/components/providers/current-user";
 import { Card, CardContent } from "@/components/ui/card";
 import { useI18n } from "@/lib/activity/i18n";
 import { cn } from "@/lib/utils";
@@ -19,8 +20,7 @@ import { cn } from "@/lib/utils";
  */
 export function SetupChecklist() {
   const { t } = useI18n();
-  const me = useQuery(api.users.me);
-  const isAdmin = me?.role === "admin";
+  const isAdmin = useIsAdmin();
 
   // Admin-only queries: skip them entirely for non-admins.
   const args = isAdmin ? {} : "skip";
@@ -28,19 +28,15 @@ export function SetupChecklist() {
   const people = useQuery(api.activity.people.list, args);
   const debugPwSet = useQuery(api.activity.settings.debugPasswordIsSet, args);
 
-  if (!me || !isAdmin) return null;
-  if (
-    devices === undefined ||
-    people === undefined ||
-    debugPwSet === undefined
-  ) {
+  if (!isAdmin) return null;
+  if (devices === undefined || people === undefined || debugPwSet === undefined) {
     return null;
   }
 
   const items = [
     {
       id: "approve",
-      done: devices.some(d => d.status === "active"),
+      done: devices.some((d) => d.status === "active"),
       href: "/activity/devices",
     },
     {
@@ -50,12 +46,12 @@ export function SetupChecklist() {
     },
     {
       id: "link",
-      done: devices.some(d => d.personId != null),
+      done: devices.some((d) => d.personId != null),
       href: "/activity/devices",
     },
     { id: "debugpw", done: debugPwSet, href: "/activity/settings" },
   ];
-  const remaining = items.filter(i => !i.done).length;
+  const remaining = items.filter((i) => !i.done).length;
   if (remaining === 0) return null; // fully set up — don't nag.
 
   return (
@@ -67,11 +63,9 @@ export function SetupChecklist() {
             {t("setup.remaining", { count: remaining })}
           </span>
         </div>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {t("setup.subtitle")}
-        </p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{t("setup.subtitle")}</p>
         <ul className="mt-3 space-y-1">
-          {items.map(i => (
+          {items.map((i) => (
             <li key={i.id}>
               <Link
                 href={i.href}
@@ -85,7 +79,7 @@ export function SetupChecklist() {
                 <span
                   className={cn(
                     "text-sm",
-                    i.done ? "text-muted-foreground line-through" : "text-fg"
+                    i.done ? "text-muted-foreground line-through" : "text-fg",
                   )}
                 >
                   {t(`setup.item.${i.id}`)}

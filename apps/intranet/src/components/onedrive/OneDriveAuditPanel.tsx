@@ -21,29 +21,18 @@ export function OneDriveAuditPanel() {
     );
   }
   if (rows.length === 0) {
-    return (
-      <p className="py-12 text-center text-sm text-muted-foreground">
-        {t("noAudit")}
-      </p>
-    );
+    return <p className="py-12 text-center text-sm text-muted-foreground">{t("noAudit")}</p>;
   }
 
   return (
     <ul className="divide-y divide-border/60 rounded-xl border border-border/70 bg-card">
-      {rows.map(row => (
-        <li
-          key={row._id}
-          className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm"
-        >
+      {rows.map((row) => (
+        <li key={row._id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
           <span className="min-w-0">
-            <span className="font-medium">{row.actorName}</span>{" "}
-            <span className="text-muted-foreground">
-              {t(`audit_${row.action}`)}
-            </span>
+            <span className="font-medium">{row.user?.name ?? "unknown"}</span>{" "}
+            <span className="text-muted-foreground">{t(`audit_${row.action}`)}</span>
             {row.target && (
-              <span className="ml-1 truncate text-muted-foreground">
-                · {row.target}
-              </span>
+              <span className="ml-1 truncate text-muted-foreground">· {row.target}</span>
             )}
           </span>
           <span className="shrink-0 text-xs text-muted-foreground">

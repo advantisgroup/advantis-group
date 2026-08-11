@@ -6,10 +6,7 @@ import { requireAdmin } from "../lib/auth";
 import { gatedInternalMutation } from "../lib/featureGate";
 import { writeAudit } from "./audit";
 import { readConfig } from "./settings";
-import {
-  isWithinBusinessHours,
-  WORK_EVIDENCE_STATES,
-} from "./lib/businessHours";
+import { isWithinBusinessHours, WORK_EVIDENCE_STATES } from "./lib/businessHours";
 import type { EmployeeState } from "./lib/state";
 
 /**
@@ -34,7 +31,7 @@ export const pruneOldSamples = internalMutation({
 
     const stale = await ctx.db
       .query("activitySamples")
-      .withIndex("by_receivedAt", q => q.lt("receivedAt", cutoff))
+      .withIndex("by_receivedAt", (q) => q.lt("receivedAt", cutoff))
       .take(BATCH);
 
     for (const row of stale) {
@@ -48,11 +45,11 @@ export const pruneOldSamples = internalMutation({
 async function pruneStateSamplesBatch(
   ctx: MutationCtx,
   cutoff: number,
-  batch: number
+  batch: number,
 ): Promise<{ deleted: number; done: boolean }> {
   const stale = await ctx.db
     .query("stateSamples")
-    .withIndex("by_at", q => q.lt("at", cutoff))
+    .withIndex("by_at", (q) => q.lt("at", cutoff))
     .take(batch);
   for (const row of stale) {
     await ctx.db.delete(row._id);
@@ -60,7 +57,7 @@ async function pruneStateSamplesBatch(
 
   const staleDiscarded = await ctx.db
     .query("discardedStateSamples")
-    .withIndex("by_at", q => q.lt("at", cutoff))
+    .withIndex("by_at", (q) => q.lt("at", cutoff))
     .take(batch);
   for (const row of staleDiscarded) {
     await ctx.db.delete(row._id);
@@ -96,7 +93,7 @@ async function quarantineOutOfHoursBatch(
   ctx: MutationCtx,
   since: number,
   until: number | undefined,
-  batch: number
+  batch: number,
 ): Promise<{
   scanned: number;
   quarantined: number;
@@ -105,10 +102,8 @@ async function quarantineOutOfHoursBatch(
 }> {
   const rows = await ctx.db
     .query("stateSamples")
-    .withIndex("by_at", q =>
-      until !== undefined
-        ? q.gte("at", since).lt("at", until)
-        : q.gte("at", since)
+    .withIndex("by_at", (q) =>
+      until !== undefined ? q.gte("at", since).lt("at", until) : q.gte("at", since),
     )
     .order("asc")
     .take(batch);
@@ -170,15 +165,10 @@ export const troubleshootQuarantineOutOfHours = mutation({
         ctx,
         me._id,
         "maintenance.quarantineOutOfHours",
-        "moved out-of-hours state history to discarded data"
+        "moved out-of-hours state history to discarded data",
       );
     }
-    return await quarantineOutOfHoursBatch(
-      ctx,
-      cursor ?? 0,
-      undefined,
-      TROUBLESHOOT_BATCH
-    );
+    return await quarantineOutOfHoursBatch(ctx, cursor ?? 0, undefined, TROUBLESHOOT_BATCH);
   },
 });
 
@@ -193,19 +183,13 @@ export const troubleshootPruneNow = mutation({
   handler: async (ctx, { continuation }) => {
     const me = await requireAdmin(ctx);
     if (!continuation) {
-      await writeAudit(
-        ctx,
-        me._id,
-        "maintenance.pruneNow",
-        "retention pruning"
-      );
+      await writeAudit(ctx, me._id, "maintenance.pruneNow", "retention pruning");
     }
-    const cutoff =
-      Date.now() - (await readConfig(ctx)).retentionDays * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - (await readConfig(ctx)).retentionDays * 24 * 60 * 60 * 1000;
 
     const raw = await ctx.db
       .query("activitySamples")
-      .withIndex("by_receivedAt", q => q.lt("receivedAt", cutoff))
+      .withIndex("by_receivedAt", (q) => q.lt("receivedAt", cutoff))
       .take(TROUBLESHOOT_BATCH);
     for (const row of raw) {
       await ctx.db.delete(row._id);
@@ -246,9 +230,7 @@ const CLOCKODO_OWNED_STATES: ReadonlySet<EmployeeState> = new Set([
  *      only assert the ACTIVE fallback if no non-Clockodo sample already
  *      covers that instant — otherwise that more specific evidence stands.
  */
-export const reconcileClockodoDayForEmployee = gatedInternalMutation(
-  "activitytrack"
-)({
+export const reconcileClockodoDayForEmployee = gatedInternalMutation("activitytrack")({
   args: {
     employeeId: v.string(),
     dayStartMs: v.number(),
@@ -260,16 +242,16 @@ export const reconcileClockodoDayForEmployee = gatedInternalMutation(
           v.literal("ABSENT"),
           v.literal("CLOCKED_OUT"),
           v.literal("BREAK"),
-          v.literal("WORKING")
+          v.literal("WORKING"),
         ),
-      })
+      }),
     ),
   },
   handler: async (ctx, { employeeId, dayStartMs, capMs, segments }) => {
     const existing = await ctx.db
       .query("stateSamples")
-      .withIndex("by_employee_time", q =>
-        q.eq("employeeId", employeeId).gte("at", dayStartMs).lt("at", capMs)
+      .withIndex("by_employee_time", (q) =>
+        q.eq("employeeId", employeeId).gte("at", dayStartMs).lt("at", capMs),
       )
       .order("asc")
       .collect();
@@ -287,16 +269,13 @@ export const reconcileClockodoDayForEmployee = gatedInternalMutation(
 
     const prior = await ctx.db
       .query("stateSamples")
-      .withIndex("by_employee_time", q =>
-        q.eq("employeeId", employeeId).lt("at", dayStartMs)
-      )
+      .withIndex("by_employee_time", (q) => q.eq("employeeId", employeeId).lt("at", dayStartMs))
       .order("desc")
       .first();
-    const priorIsNonClockodo =
-      !!prior && !CLOCKODO_OWNED_STATES.has(prior.state);
+    const priorIsNonClockodo = !!prior && !CLOCKODO_OWNED_STATES.has(prior.state);
 
     function hasNonClockodoEvidenceAt(t: number): boolean {
-      return keptTimes.some(k => k <= t) || priorIsNonClockodo;
+      return keptTimes.some((k) => k <= t) || priorIsNonClockodo;
     }
 
     let inserted = 0;
@@ -305,10 +284,7 @@ export const reconcileClockodoDayForEmployee = gatedInternalMutation(
       const state: EmployeeState = seg.kind === "WORKING" ? "ACTIVE" : seg.kind;
       if (seg.kind === "WORKING" && hasNonClockodoEvidenceAt(seg.at)) continue;
 
-      if (
-        (state === "BREAK" || state === "ACTIVE") &&
-        !isWithinBusinessHours(seg.at)
-      ) {
+      if ((state === "BREAK" || state === "ACTIVE") && !isWithinBusinessHours(seg.at)) {
         await ctx.db.insert("discardedStateSamples", {
           employeeId,
           state,

@@ -90,13 +90,7 @@ for (const [field, aliases] of Object.entries(CALL_ALIASES)) {
   for (const alias of aliases) ALIAS_LOOKUP.set(alias, field);
 }
 
-const SUMMARY_NAMES = new Set([
-  "summe",
-  "total",
-  "gesamt",
-  "durchschnitt",
-  "average",
-]);
+const SUMMARY_NAMES = new Set(["summe", "total", "gesamt", "durchschnitt", "average"]);
 
 // ------------------------------------------------------------ duration parsing
 
@@ -110,20 +104,69 @@ const SUMMARY_NAMES = new Set([
 // file itself flagging which unit it's in. A value past the physical
 // ceiling can only be milliseconds, so reinterpret it rather than store
 // an impossible day-count of seconds.
-const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
+export const MAX_PLAUSIBLE_DAY_SECONDS = 86_400;
 
-function capMillisToSeconds(seconds: number): number {
-  return seconds > MAX_PLAUSIBLE_DAY_SECONDS
-    ? Math.round(seconds / 1000)
-    : seconds;
+// The ms-vs-seconds ceiling is a separate knob from `MAX_PLAUSIBLE_DAY_SECONDS`
+// below: callers reading a single value that can't plausibly exceed a full
+// day (this module's day/aggregate fields) pass the default, but a caller
+// whose value is a single, much-shorter thing (e.g. interactionImport.ts's
+// one-interaction duration) passes a tighter ceiling — otherwise a
+// millisecond-encoded short value never crosses the day-sized threshold and
+// is stored as that many literal (and wildly implausible) seconds instead.
+function capMillisToSeconds(seconds: number, msThresholdSeconds: number): number {
+  return seconds > msThresholdSeconds ? Math.round(seconds / 1000) : seconds;
+}
+
+// Unlike a bare number, HH:MM:SS/MM:SS/"1h 20m 15s" text already states its
+// own unit — there's no alternate unit to reinterpret it as. A result past
+// the physical ceiling here means the cell itself is bad (e.g. a
+// month-to-date running total exported into what should be a single day's
+// column, seen in the wild as a literal "51583:08:14"-style string), so it
+// gets dropped rather than trusted — `onImplausible` lets a caller that
+// cares (see `parseDurationField`) capture the rejected value instead of it
+// silently vanishing.
+function capExplicitDuration(
+  seconds: number,
+  onImplausible?: (rawSeconds: number) => void,
+): number | null {
+  if (seconds > MAX_PLAUSIBLE_DAY_SECONDS) {
+    onImplausible?.(seconds);
+    return null;
+  }
+  return seconds;
 }
 
 /** Parses a cell into seconds, or null. Accepts 'HH:MM:SS', 'MM:SS',
  * '1h 20m 15s', an Excel time value, and decimals (day fraction or
  * seconds — or milliseconds, see `capMillisToSeconds`). A `Date` is read
  * as a time-of-day via its UTC hour/min/sec — see `types.ts`'s note on
- * `CellValue` for the UTC contract. */
-export function parseDuration(v: CellValue): number | null {
+ * `CellValue` for the UTC contract. Any parsed result past
+ * `MAX_PLAUSIBLE_DAY_SECONDS` becomes null (explicit-unit formats, via
+ * `capExplicitDuration` — `onImplausible` is called with the rejected
+ * value first, always checked against the fixed day ceiling since an
+ * explicit format states its own unit and this is only a corrupt-data
+ * catch-all) or gets reinterpreted as milliseconds (bare numbers, via
+ * `capMillisToSeconds` — a confirmed vendor quirk, not surfaced as a
+ * rejection, checked against `msThresholdSeconds` since a bare number's
+ * plausible ceiling depends on what the value represents — see that
+ * param). `onBareNumber`, if given, is called with the raw (unconverted,
+ * assume-seconds) reading whenever a bare number is the path taken — a
+ * per-row magnitude check alone still misreads a genuinely short
+ * millisecond value (e.g. 2500ms, comfortably under any sane per-row
+ * ceiling) as that many literal seconds, so a caller needing full
+ * accuracy (interactionImport.ts) uses this to decide the unit once for
+ * every bare number in the file, from the strongest evidence across all
+ * of them, rather than trusting each row's own magnitude. */
+export function parseDuration(
+  v: CellValue,
+  onImplausible?: (rawSeconds: number) => void,
+  /** Ceiling used only for the bare-number ms-vs-seconds heuristic.
+   * Defaults to a full day for this module's day/aggregate fields;
+   * interactionImport.ts passes a much tighter one since a single
+   * interaction can't plausibly run anywhere near that long. */
+  msThresholdSeconds: number = MAX_PLAUSIBLE_DAY_SECONDS,
+  onBareNumber?: (rawSeconds: number) => void,
+): number | null {
   if (v === null || v === undefined || v === "") return null;
   if (v instanceof Date) {
     return v.getUTCHours() * 3600 + v.getUTCMinutes() * 60 + v.getUTCSeconds();
@@ -131,24 +174,56 @@ export function parseDuration(v: CellValue): number | null {
   if (typeof v === "number") {
     // Excel stores times as a day fraction (0.25 = 6 hours).
     if (v > 0 && v < 1) return Math.round(v * 86_400);
-    return capMillisToSeconds(Math.round(v));
+    const raw = Math.round(v);
+    onBareNumber?.(raw);
+    return capMillisToSeconds(raw, msThresholdSeconds);
   }
   const s = String(v).trim();
   if (!s || s === "-" || s === "–") return null;
 
   let m = /^(\d+):([0-5]?\d):([0-5]?\d)(?:[.,]\d+)?$/.exec(s); // HH:MM:SS
-  if (m) return +m[1] * 3600 + +m[2] * 60 + +m[3];
+  if (m) return capExplicitDuration(+m[1] * 3600 + +m[2] * 60 + +m[3], onImplausible);
 
   m = /^(\d+):([0-5]?\d)$/.exec(s); // MM:SS
-  if (m) return +m[1] * 60 + +m[2];
+  if (m) return capExplicitDuration(+m[1] * 60 + +m[2], onImplausible);
 
   m = /^(?:(\d+)\s*h)?\s*(?:(\d+)\s*m(?:in)?)?\s*(?:(\d+)\s*s)?$/i.exec(s); // 1h 20m 15s
   if (m && (m[1] || m[2] || m[3])) {
-    return +(m[1] ?? 0) * 3600 + +(m[2] ?? 0) * 60 + +(m[3] ?? 0);
+    return capExplicitDuration(
+      +(m[1] ?? 0) * 3600 + +(m[2] ?? 0) * 60 + +(m[3] ?? 0),
+      onImplausible,
+    );
   }
 
   const f = parseFloat(s.replace(",", "."));
-  return Number.isFinite(f) ? capMillisToSeconds(Math.round(f)) : null;
+  if (!Number.isFinite(f)) return null;
+  const raw = Math.round(f);
+  onBareNumber?.(raw);
+  return capMillisToSeconds(raw, msThresholdSeconds);
+}
+
+export type FlaggableDurationField = "talkTotalSec" | "talkAvgSec" | "loginSec";
+
+export interface DurationFlag {
+  field: FlaggableDurationField;
+  rawSeconds: number;
+  rawText: string;
+}
+
+/** Parses one of the three call-duration fields and, if the cell's value
+ * failed the plausibility check, also returns a `DurationFlag` describing
+ * what was rejected — so the row-building loops in `readCallExport`/
+ * `readCallCsv` can surface it instead of just losing the value silently. */
+function parseDurationField(
+  field: FlaggableDurationField,
+  v: CellValue,
+): { value: number | null; flag?: DurationFlag } {
+  let rejected: number | undefined;
+  const value = parseDuration(v, (raw) => {
+    rejected = raw;
+  });
+  if (rejected === undefined) return { value };
+  return { value, flag: { field, rawSeconds: rejected, rawText: String(v) } };
 }
 
 /** Seconds as H:MM:SS or M:SS. */
@@ -189,9 +264,7 @@ type DateParser = (s: string) => Date | null;
  * the day.month.-only format, using `fallback`'s year). */
 function toDateWithFallback(v: CellValue, fallback: Date | null): Date | null {
   if (v instanceof Date) {
-    return new Date(
-      Date.UTC(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate())
-    );
+    return new Date(Date.UTC(v.getUTCFullYear(), v.getUTCMonth(), v.getUTCDate()));
   }
   if (v === null || v === undefined || v === "") return fallback;
   // Genesys interval columns ("Intervallstart"/"Intervallende") are a
@@ -204,23 +277,23 @@ function toDateWithFallback(v: CellValue, fallback: Date | null): Date | null {
   // delimited token in every format this function supports.
   const s = String(v).trim().split(/\s+/)[0];
   const parsers: DateParser[] = [
-    str => {
+    (str) => {
       const m = /^(\d{2})\.(\d{2})\.(\d{4})$/.exec(str);
       return m ? new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])) : null;
     },
-    str => {
+    (str) => {
       const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(str);
       return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])) : null;
     },
-    str => {
+    (str) => {
       const m = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(str);
       return m ? new Date(Date.UTC(2000 + +m[3], +m[2] - 1, +m[1])) : null;
     },
-    str => {
+    (str) => {
       const m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(str);
       return m ? new Date(Date.UTC(+m[3], +m[1] - 1, +m[2])) : null;
     },
-    str => {
+    (str) => {
       const m = /^(\d{2})\.(\d{2})\.$/.exec(str); // day.month. only
       if (!m || !fallback) return null;
       return new Date(Date.UTC(fallback.getUTCFullYear(), +m[2] - 1, +m[1]));
@@ -242,15 +315,16 @@ export interface CallRow {
   talkAvgSec: number | null;
   talkTotalSec: number | null;
   loginSec: number | null;
+  // Present only when one of the three duration fields above failed the
+  // plausibility check and got dropped — see `parseDurationField`.
+  flags?: DurationFlag[];
 }
 
 const DATE_IN_TEXT_RE = /(\d{4}-\d{2}-\d{2})/;
 
 /** Detects an Excel/xlsx call report and returns `{reportDate, rows}`, or
  * null. */
-export function readCallExport(
-  wsRows: SheetRow[]
-): { reportDate: Date; rows: CallRow[] } | null {
+export function readCallExport(wsRows: SheetRow[]): { reportDate: Date; rows: CallRow[] } | null {
   let reportDate: Date | null = null;
   let headerIdx: number | null = null;
   let colmap: Record<string, number> = {};
@@ -277,7 +351,7 @@ export function readCallExport(
       "talkTotalSec",
       "talkAvgSec",
       "loginSec",
-    ].filter(f => f in found);
+    ].filter((f) => f in found);
     // A call report needs an employee column and at least two typical call
     // columns — otherwise it's a different kind of report.
     if ("employee" in found && callCols.length >= 2) {
@@ -291,7 +365,7 @@ export function readCallExport(
 
   const rows: CallRow[] = [];
   for (const r of wsRows.slice(headerIdx + 1)) {
-    if (!r || r.every(v => v === null || v === undefined || v === "")) continue;
+    if (!r || r.every((v) => v === null || v === undefined || v === "")) continue;
     const empIdx = colmap.employee;
     const nameRaw = empIdx < r.length ? r[empIdx] : null;
     if (nameRaw === null || nameRaw === undefined || nameRaw === "") continue;
@@ -303,22 +377,29 @@ export function readCallExport(
         ? (toDateWithFallback(r[colmap.date], reportDate) ?? reportDate)
         : reportDate;
 
-    const callsAnswered =
-      "callsAnswered" in colmap ? toInt(r[colmap.callsAnswered]) : 0;
-    const callsOutbound =
-      "callsOutbound" in colmap ? toInt(r[colmap.callsOutbound]) : 0;
-    let talkAvgSec =
-      "talkAvgSec" in colmap ? parseDuration(r[colmap.talkAvgSec]) : null;
-    let talkTotalSec =
-      "talkTotalSec" in colmap ? parseDuration(r[colmap.talkTotalSec]) : null;
-    const loginSec =
-      "loginSec" in colmap ? parseDuration(r[colmap.loginSec]) : null;
+    const callsAnswered = "callsAnswered" in colmap ? toInt(r[colmap.callsAnswered]) : 0;
+    const callsOutbound = "callsOutbound" in colmap ? toInt(r[colmap.callsOutbound]) : 0;
+    const talkAvgSecR =
+      "talkAvgSec" in colmap
+        ? parseDurationField("talkAvgSec", r[colmap.talkAvgSec])
+        : { value: null };
+    const talkTotalSecR =
+      "talkTotalSec" in colmap
+        ? parseDurationField("talkTotalSec", r[colmap.talkTotalSec])
+        : { value: null };
+    const loginSecR =
+      "loginSec" in colmap ? parseDurationField("loginSec", r[colmap.loginSec]) : { value: null };
+    let talkAvgSec = talkAvgSecR.value;
+    let talkTotalSec = talkTotalSecR.value;
+    const loginSec = loginSecR.value;
 
     const calls = (callsAnswered || 0) + (callsOutbound || 0);
-    if (talkTotalSec === null && talkAvgSec && calls)
-      talkTotalSec = talkAvgSec * calls;
-    if (talkAvgSec === null && talkTotalSec && calls)
-      talkAvgSec = Math.round(talkTotalSec / calls);
+    if (talkTotalSec === null && talkAvgSec && calls) talkTotalSec = talkAvgSec * calls;
+    if (talkAvgSec === null && talkTotalSec && calls) talkAvgSec = Math.round(talkTotalSec / calls);
+
+    const flags = [talkAvgSecR.flag, talkTotalSecR.flag, loginSecR.flag].filter(
+      (f): f is DurationFlag => f !== undefined,
+    );
 
     rows.push({
       employee: name,
@@ -329,6 +410,7 @@ export function readCallExport(
       talkTotalSec,
       loginSec,
       callsToday: calls,
+      flags: flags.length > 0 ? flags : undefined,
     });
   }
   if (rows.length === 0) return null;
@@ -337,9 +419,7 @@ export function readCallExport(
 
 function todayFallback(): Date {
   const now = new Date();
-  return new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
-  );
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 }
 
 // --------------------------------------------- outbound source (configurable)
@@ -367,7 +447,7 @@ function tokens(name: CellValue): string[] {
   ]) {
     s = s.split(a).join(b);
   }
-  return s.split(/[^a-z0-9]+/).filter(t => t.length > 0);
+  return s.split(/[^a-z0-9]+/).filter((t) => t.length > 0);
 }
 
 /** Two name parts count as equal when one is a prefix of the other (>= 4
@@ -381,10 +461,7 @@ function tokensMatch(a: string, b: string): boolean {
 /** Maps an agent name to a team member. Name-part order doesn't matter
  * ('BLUME Jessica' = 'Jessica Blume'). Returns the employee name, or null
  * if there's no unambiguous match in the team. */
-export function matchEmployee(
-  agentName: CellValue,
-  employeeNames: string[]
-): string | null {
+export function matchEmployee(agentName: CellValue, employeeNames: string[]): string | null {
   const at = tokens(agentName);
   if (at.length === 0) return null;
   const hits: string[] = [];
@@ -394,7 +471,7 @@ export function matchEmployee(
     const free = [...at];
     let ok = true;
     for (const token of et) {
-      const idx = free.findIndex(x => tokensMatch(token, x));
+      const idx = free.findIndex((x) => tokensMatch(token, x));
       if (idx === -1) {
         ok = false;
         break;
@@ -473,7 +550,7 @@ export function parseCsvText(text: string, delimiter: string): string[][] {
     i++;
   }
   if (field.length > 0 || row.length > 0) endRow();
-  return rows.filter(r => !(r.length === 1 && r[0] === ""));
+  return rows.filter((r) => !(r.length === 1 && r[0] === ""));
 }
 
 interface CsvWorkingRow {
@@ -485,14 +562,14 @@ interface CsvWorkingRow {
   talkAvgSec: number | null;
   talkTotalSec: number | null;
   loginSec: number | null;
+  flags?: DurationFlag[];
 }
 
 function finalizeCsvRow(rec: CsvWorkingRow): CallRow {
   const ans = rec.callsAnswered;
   const handled = rec.callsHandled;
   const outCol = rec.callsOutbound;
-  const callsOutbound =
-    OUTBOUND_SOURCE === "bearbeitet" && handled !== null ? handled : outCol;
+  const callsOutbound = OUTBOUND_SOURCE === "bearbeitet" && handled !== null ? handled : outCol;
 
   let callsToday: number | null;
   if (handled !== null) {
@@ -506,10 +583,8 @@ function finalizeCsvRow(rec: CsvWorkingRow): CallRow {
   const calls = callsToday ?? 0;
   let talkTotalSec = rec.talkTotalSec;
   let talkAvgSec = rec.talkAvgSec;
-  if (talkTotalSec === null && talkAvgSec && calls)
-    talkTotalSec = talkAvgSec * calls;
-  if (talkAvgSec === null && talkTotalSec && calls)
-    talkAvgSec = Math.round(talkTotalSec / calls);
+  if (talkTotalSec === null && talkAvgSec && calls) talkTotalSec = talkAvgSec * calls;
+  if (talkAvgSec === null && talkTotalSec && calls) talkAvgSec = Math.round(talkTotalSec / calls);
 
   return {
     employee: rec.employee,
@@ -520,6 +595,7 @@ function finalizeCsvRow(rec: CsvWorkingRow): CallRow {
     talkTotalSec,
     loginSec: rec.loginSec,
     callsToday,
+    flags: rec.flags,
   };
 }
 
@@ -528,18 +604,13 @@ function finalizeCsvRow(rec: CsvWorkingRow): CallRow {
  * `{reportDate, rows}`, or null when the file isn't recognized as a call
  * report at all (as opposed to recognized-but-empty, e.g. a weekend with
  * no agents on duty, which returns an empty `rows` array). */
-export function readCallCsv(
-  text: string
-): { reportDate: Date; rows: CallRow[] } | null {
-  const firstLine = text.slice(
-    0,
-    text.indexOf("\n") === -1 ? undefined : text.indexOf("\n")
-  );
+export function readCallCsv(text: string): { reportDate: Date; rows: CallRow[] } | null {
+  const firstLine = text.slice(0, text.indexOf("\n") === -1 ? undefined : text.indexOf("\n"));
   const delimiter = sniffDelimiter(firstLine);
   const table = parseCsvText(text, delimiter);
   if (table.length === 0) return null;
 
-  const headers = table[0].filter(h => h !== "");
+  const headers = table[0].filter((h) => h !== "");
   const colmap: Record<string, string> = {};
   for (const h of headers) {
     const f = ALIAS_LOOKUP.get(normHeader(h));
@@ -552,10 +623,10 @@ export function readCallCsv(
     "talkTotalSec",
     "talkAvgSec",
     "loginSec",
-  ].filter(f => f in colmap);
+  ].filter((f) => f in colmap);
   if (!("employee" in colmap) || callCols.length === 0) return null;
 
-  const dataRows = table.slice(1).map(cells => {
+  const dataRows = table.slice(1).map((cells) => {
     const rec: Record<string, string> = {};
     table[0].forEach((h, idx) => {
       if (h !== "") rec[h] = cells[idx] ?? "";
@@ -572,32 +643,44 @@ export function readCallCsv(
     if (!name) continue;
     if (SUMMARY_NAMES.has(normHeader(name))) continue;
 
-    const date =
-      "date" in colmap ? toDateWithFallback(r[colmap.date], null) : null;
+    const date = "date" in colmap ? toDateWithFallback(r[colmap.date], null) : null;
     if (date) dates.push(date);
+
+    const talkAvgSecR =
+      "talkAvgSec" in colmap
+        ? parseDurationField("talkAvgSec", r[colmap.talkAvgSec])
+        : { value: null };
+    const talkTotalSecR =
+      "talkTotalSec" in colmap
+        ? parseDurationField("talkTotalSec", r[colmap.talkTotalSec])
+        : { value: null };
+    const loginSecR =
+      "loginSec" in colmap ? parseDurationField("loginSec", r[colmap.loginSec]) : { value: null };
+    const flags = [talkAvgSecR.flag, talkTotalSecR.flag, loginSecR.flag].filter(
+      (f): f is DurationFlag => f !== undefined,
+    );
 
     const rec: CsvWorkingRow = {
       employee: name,
       date,
-      callsAnswered:
-        "callsAnswered" in colmap ? toInt(r[colmap.callsAnswered]) : null,
-      callsOutbound:
-        "callsOutbound" in colmap ? toInt(r[colmap.callsOutbound]) : null,
-      callsHandled:
-        "callsHandled" in colmap ? toInt(r[colmap.callsHandled]) : null,
-      talkAvgSec:
-        "talkAvgSec" in colmap ? parseDuration(r[colmap.talkAvgSec]) : null,
-      talkTotalSec:
-        "talkTotalSec" in colmap ? parseDuration(r[colmap.talkTotalSec]) : null,
-      loginSec: "loginSec" in colmap ? parseDuration(r[colmap.loginSec]) : null,
+      callsAnswered: "callsAnswered" in colmap ? toInt(r[colmap.callsAnswered]) : null,
+      callsOutbound: "callsOutbound" in colmap ? toInt(r[colmap.callsOutbound]) : null,
+      callsHandled: "callsHandled" in colmap ? toInt(r[colmap.callsHandled]) : null,
+      talkAvgSec: talkAvgSecR.value,
+      talkTotalSec: talkTotalSecR.value,
+      loginSec: loginSecR.value,
+      flags: flags.length > 0 ? flags : undefined,
     };
-    // Skip a row with no value at all (agent wasn't on duty).
+    // Skip a row with no value at all (agent wasn't on duty) — a row that
+    // only ever had a rejected implausible value still has something worth
+    // surfacing, so a pending flag keeps it out of this "empty" path.
     if (
       !rec.callsAnswered &&
       !rec.callsOutbound &&
       !rec.callsHandled &&
       !rec.talkTotalSec &&
-      !rec.loginSec
+      !rec.loginSec &&
+      !rec.flags
     ) {
       emptyCount++;
       continue;

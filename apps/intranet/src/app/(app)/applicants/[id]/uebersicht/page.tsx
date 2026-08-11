@@ -22,13 +22,13 @@ export default function ApplicantUebersichtPage() {
     highlightParam
       ? highlightParam
           .split(",")
-          .map(s => s.trim())
+          .map((s) => s.trim())
           .filter(Boolean)
-      : []
+      : [],
   );
   useEffect(() => {
     if (highlightParam) {
-      router.replace(`/applicants/${applicantId}/uebersicht`);
+      router.replace(`/hr/${applicantId}/uebersicht`);
     }
   }, [highlightParam, applicantId, router]);
 

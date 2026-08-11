@@ -32,13 +32,7 @@ import {
 import { formatIsoDate } from "@/lib/format";
 import { clearPerformanceToken } from "@/lib/performanceAuth";
 
-const LIST_KEYS = [
-  "analysis30",
-  "leads14",
-  "opp_overdue",
-  "opp30",
-  "opps14",
-] as const;
+const LIST_KEYS = ["analysis30", "leads14", "opp_overdue", "opp30", "opps14"] as const;
 type ListKey = (typeof LIST_KEYS)[number];
 
 interface LeadItem {
@@ -90,7 +84,7 @@ export default function DrilldownPage() {
 
   const data = useQuery(
     api.performanceQueries.drilldown,
-    session?.valid && validKey ? { token, key: validKey } : "skip"
+    session?.valid && validKey ? { token, key: validKey } : "skip",
   );
 
   const owners = useMemo(() => {
@@ -104,7 +98,7 @@ export default function DrilldownPage() {
   const items = useMemo(() => {
     const all = (data?.items ?? []) as unknown as (LeadItem | OppItem)[];
     if (empFilter === ALL_EMPLOYEES) return all;
-    return all.filter(i => i.owner === empFilter);
+    return all.filter((i) => i.owner === empFilter);
   }, [data?.items, empFilter]);
 
   if (session === undefined) return <PerformancePageSkeleton />;
@@ -119,12 +113,9 @@ export default function DrilldownPage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+      <PerformanceHeader navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         {!validKey ? (
           <Card>
             <CardContent className="p-6 text-center text-sm text-muted-foreground">
@@ -134,12 +125,8 @@ export default function DrilldownPage() {
         ) : (
           <>
             <div>
-              <h1 className="text-xl font-semibold">
-                {t(`list.${validKey}.title`)}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {t(`list.${validKey}.desc`)}
-              </p>
+              <h1 className="text-xl font-semibold">{t(`list.${validKey}.title`)}</h1>
+              <p className="text-sm text-muted-foreground">{t(`list.${validKey}.desc`)}</p>
               {data?.reportDate && (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("listAsOf", {
@@ -155,10 +142,8 @@ export default function DrilldownPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={ALL_EMPLOYEES}>
-                    {t("listEmpFilterAll")}
-                  </SelectItem>
-                  {owners.map(o => (
+                  <SelectItem value={ALL_EMPLOYEES}>{t("listEmpFilterAll")}</SelectItem>
+                  {owners.map((o) => (
                     <SelectItem key={o} value={o}>
                       {o}
                     </SelectItem>
@@ -181,9 +166,7 @@ export default function DrilldownPage() {
                     ))}
                   </div>
                 ) : items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    {t("listEmpty")}
-                  </p>
+                  <p className="text-sm text-muted-foreground">{t("listEmpty")}</p>
                 ) : data.kind === "lead" ? (
                   <Table>
                     <TableHeader>
@@ -193,20 +176,14 @@ export default function DrilldownPage() {
                         <TableHead>{t("colStatusDetails")}</TableHead>
                         <TableHead>{t("colCreated")}</TableHead>
                         <TableHead>{t("colLastActivity")}</TableHead>
-                        <TableHead className="text-right">
-                          {t("colAgeDays")}
-                        </TableHead>
-                        <TableHead className="text-right">
-                          {t("colInactiveDays")}
-                        </TableHead>
+                        <TableHead className="text-right">{t("colAgeDays")}</TableHead>
+                        <TableHead className="text-right">{t("colInactiveDays")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(items as LeadItem[]).map(item => (
+                      {(items as LeadItem[]).map((item) => (
                         <TableRow key={item._id}>
-                          <TableCell className="font-medium">
-                            {item.owner}
-                          </TableCell>
+                          <TableCell className="font-medium">{item.owner}</TableCell>
                           <TableCell>{item.status ?? "–"}</TableCell>
                           <TableCell className="max-w-xs truncate">
                             {item.statusDetails ?? "–"}
@@ -232,28 +209,18 @@ export default function DrilldownPage() {
                         <TableHead>{t("colStageDetails")}</TableHead>
                         <TableHead>{t("colCreated")}</TableHead>
                         <TableHead>{t("colCloseDate")}</TableHead>
-                        {data?.hasCustomerNo && (
-                          <TableHead>{t("colCustomerNumber")}</TableHead>
-                        )}
-                        <TableHead className="text-right">
-                          {t("colAgeDays")}
-                        </TableHead>
-                        <TableHead className="text-right">
-                          {t("colInactiveDays")}
-                        </TableHead>
+                        {data?.hasCustomerNo && <TableHead>{t("colCustomerNumber")}</TableHead>}
+                        <TableHead className="text-right">{t("colAgeDays")}</TableHead>
+                        <TableHead className="text-right">{t("colInactiveDays")}</TableHead>
                         {validKey === "opp_overdue" && (
-                          <TableHead className="text-right">
-                            {t("colOverdueDays")}
-                          </TableHead>
+                          <TableHead className="text-right">{t("colOverdueDays")}</TableHead>
                         )}
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {(items as OppItem[]).map(item => (
+                      {(items as OppItem[]).map((item) => (
                         <TableRow key={item._id}>
-                          <TableCell className="font-medium">
-                            {item.owner}
-                          </TableCell>
+                          <TableCell className="font-medium">{item.owner}</TableCell>
                           <TableCell>{item.stage ?? "–"}</TableCell>
                           <TableCell className="max-w-xs truncate">
                             {item.stageDetails ?? "–"}
@@ -284,10 +251,7 @@ export default function DrilldownPage() {
           </>
         )}
       </main>
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+      <PerformanceBottomTabs navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
     </div>
   );
 }

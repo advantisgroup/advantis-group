@@ -32,7 +32,7 @@ export function dayRange(start: string, end: string): string[] {
 /** Per-day totals (hours) across every device, for the trend chart. */
 export function aggregateDailyTotals(
   rows: DeviceReportRow[],
-  days: string[]
+  days: string[],
 ): { day: string; activeHours: number; idleHours: number }[] {
   const byDay = new Map<string, { active: number; idle: number }>();
   for (const day of days) byDay.set(day, { active: 0, idle: 0 });
@@ -44,7 +44,7 @@ export function aggregateDailyTotals(
       acc.idle += d.idleSeconds;
     }
   }
-  return days.map(day => {
+  return days.map((day) => {
     const acc = byDay.get(day)!;
     return {
       day,
@@ -63,7 +63,7 @@ export function aggregatePerDevice(rows: DeviceReportRow[]): {
   idleSeconds: number;
 }[] {
   return rows
-    .map(row => ({
+    .map((row) => ({
       deviceId: row.deviceId,
       hostname: row.hostname,
       personName: row.personName,
@@ -93,14 +93,14 @@ export interface DailyStat {
 export function dailyTrend(
   stats: DailyStat[],
   startDay: string,
-  endDay: string
+  endDay: string,
 ): Array<{
   day: string;
   label: string;
   activeHours: number;
   idleHours: number;
 }> {
-  const byDay = new Map(stats.map(s => [s.day, s]));
+  const byDay = new Map(stats.map((s) => [s.day, s]));
   const out: Array<{
     day: string;
     label: string;
@@ -132,7 +132,7 @@ export function dailyTrend(
  */
 export function hourOfDayActivity(
   samples: Sample[],
-  tzOffsetMinutes = 0
+  tzOffsetMinutes = 0,
 ): Array<{ hour: number; ratio: number; total: number }> {
   const buckets = Array.from({ length: 24 }, (_, hour) => ({
     hour,
@@ -144,7 +144,7 @@ export function hourOfDayActivity(
     buckets[h].total += 1;
     if (s.active) buckets[h].active += 1;
   }
-  return buckets.map(b => ({
+  return buckets.map((b) => ({
     hour: b.hour,
     total: b.total,
     ratio: b.total === 0 ? 0 : b.active / b.total,
@@ -189,14 +189,10 @@ export interface StateSample {
  */
 export function isWorkingState(
   finalState: StateName | null | undefined,
-  fallbackActive: boolean
+  fallbackActive: boolean,
 ): boolean {
   if (finalState == null) return fallbackActive;
-  return (
-    finalState === "ACTIVE" ||
-    finalState === "IN_CALL" ||
-    finalState === "WRAP_UP"
-  );
+  return finalState === "ACTIVE" || finalState === "IN_CALL" || finalState === "WRAP_UP";
 }
 
 export type HourStateBucket = { hour: number } & Record<StateName, number>;
@@ -226,7 +222,7 @@ export function hourlyStateBreakdown(
   samples: StateSample[],
   windowStart: number,
   windowEnd: number,
-  tzOffsetMinutes = 0
+  tzOffsetMinutes = 0,
 ): HourStateBucket[] {
   const buckets = emptyHourBuckets();
   if (samples.length === 0 || windowEnd <= windowStart) return buckets;
@@ -247,8 +243,7 @@ export function hourlyStateBreakdown(
       // to its start hour instead of splitting it.
       const shifted = cur - tzOffsetMinutes * 60_000;
       const hour = new Date(shifted).getUTCHours();
-      const nextHourShifted =
-        Math.floor(shifted / 3_600_000) * 3_600_000 + 3_600_000;
+      const nextHourShifted = Math.floor(shifted / 3_600_000) * 3_600_000 + 3_600_000;
       const hourEnd = nextHourShifted + tzOffsetMinutes * 60_000;
       const chunkEnd = Math.min(hourEnd, segEnd);
       buckets[hour][state] += (chunkEnd - cur) / 60_000;
@@ -269,7 +264,7 @@ export function hourlyStateBreakdown(
  */
 export function intradayTimeline(
   samples: Sample[],
-  slotMinutes = 30
+  slotMinutes = 30,
 ): Array<{ t: number; label: string; activePct: number }> {
   if (samples.length === 0) return [];
   const slotMs = slotMinutes * 60_000;
@@ -302,14 +297,12 @@ export function intradayTimeline(
 export function timelineCharts(
   samples: Sample[],
   day: string,
-  tzOffsetMinutes = 0
+  tzOffsetMinutes = 0,
 ): {
   heatmap: ReturnType<typeof hourOfDayActivity>;
   intraday: ReturnType<typeof intradayTimeline>;
 } {
-  const inDay = samples.filter(
-    s => localDay(s.capturedAt, tzOffsetMinutes) === day
-  );
+  const inDay = samples.filter((s) => localDay(s.capturedAt, tzOffsetMinutes) === day);
   return {
     heatmap: hourOfDayActivity(inDay, tzOffsetMinutes),
     intraday: intradayTimeline(inDay, 30),
@@ -333,7 +326,7 @@ export interface StateSegment {
 export function dayStateSegments(
   samples: StateSample[],
   dayStart: number,
-  dayEnd: number
+  dayEnd: number,
 ): StateSegment[] {
   const segments: StateSegment[] = [];
   if (samples.length === 0 || dayEnd <= dayStart) return segments;
@@ -362,13 +355,10 @@ export function dayStateSegments(
 export function minuteStates(
   samples: StateSample[],
   dayStart: number,
-  dayEnd: number
+  dayEnd: number,
 ): Array<StateName | null> {
   const totalMinutes = Math.max(0, Math.round((dayEnd - dayStart) / 60_000));
-  const out: Array<StateName | null> = Array.from(
-    { length: totalMinutes },
-    () => null
-  );
+  const out: Array<StateName | null> = Array.from({ length: totalMinutes }, () => null);
   for (const seg of dayStateSegments(samples, dayStart, dayEnd)) {
     const from = Math.floor((seg.start - dayStart) / 60_000);
     const to = Math.ceil((seg.end - dayStart) / 60_000);
@@ -391,7 +381,7 @@ export function sumDaily(daily: DailyStat[]): {
       activeSeconds: acc.activeSeconds + d.activeSeconds,
       idleSeconds: acc.idleSeconds + d.idleSeconds,
     }),
-    { activeSeconds: 0, idleSeconds: 0 }
+    { activeSeconds: 0, idleSeconds: 0 },
   );
 }
 
@@ -410,7 +400,7 @@ export function weekStartOf(day: string): string {
 export function weeklyTrend(
   daily: DailyStat[],
   startDay: string,
-  endDay: string
+  endDay: string,
 ): Array<{
   weekStart: string;
   label: string;

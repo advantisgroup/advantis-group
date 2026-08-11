@@ -11,11 +11,11 @@ function ScrollArea({
   ...props
 }: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
   return (
-    <ScrollAreaPrimitive.Root
-      className={cn("relative overflow-hidden", className)}
-      {...props}
-    >
-      <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    <ScrollAreaPrimitive.Root className={cn("relative overflow-hidden", className)} {...props}>
+      {/* `data-lenis-prevent`: Lenis smooths the page-level scroller (see
+          `useSmoothScroll`) and would otherwise swallow a wheel aimed at this
+          inner viewport, scrolling the page behind it instead. */}
+      <ScrollAreaPrimitive.Viewport data-lenis-prevent className="h-full w-full rounded-[inherit]">
         {children}
       </ScrollAreaPrimitive.Viewport>
       <ScrollAreaPrimitive.Scrollbar

@@ -7,6 +7,7 @@ import { getConvex, getConvexServerKey } from "../lib/convex.js";
 import { decrypt, encrypt } from "../lib/crypto.js";
 import { requireEnv } from "../lib/env.js";
 import { requireAuth } from "../lib/middleware.js";
+import { rateLimit } from "../lib/rate-limit.js";
 
 const WIKI_SYSTEM = `Du bist ein interner Wissensassistent für UTA Edenred Kundenberater. Antworte präzise, freundlich und auf Deutsch. Nutze Aufzählungen, wenn es die Übersicht verbessert.
 
@@ -60,51 +61,60 @@ interface ChatDTO {
 export const wikiChatRoute = new Elysia()
   .post(
     "/wiki-chat",
-    async ({ request, body, set }) => {
-      await requireAuth(request);
-
-      const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
-
-      const stream = client.messages.stream({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1024,
-        system: WIKI_SYSTEM,
-        messages: body.messages.map(m => ({
-          role: m.role,
-          content: m.content,
-        })),
-      });
-
-      const readable = new ReadableStream({
-        async start(controller) {
-          const encoder = new TextEncoder();
-          try {
-            for await (const event of stream) {
-              if (
-                event.type === "content_block_delta" &&
-                event.delta.type === "text_delta"
-              ) {
-                controller.enqueue(encoder.encode(event.delta.text));
-              }
-            }
-          } catch (err) {
-            controller.error(err);
-          } finally {
-            controller.close();
-          }
-        },
-      });
+    async function* ({ request, body, set }) {
+      const { clerkUserId } = await requireAuth(request);
+      await rateLimit("wikiChat.ask", clerkUserId, 20, "1 m");
 
       set.headers["Content-Type"] = "text/plain; charset=utf-8";
       set.headers["X-Content-Type-Options"] = "nosniff";
       set.headers["Cache-Control"] = "no-cache";
-      return readable;
+
+      const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
+
+      // Caching is a prefix match, and the prefix has to clear the model's
+      // minimum before anything is stored — 1024 tokens on Sonnet 4.6.
+      // WIKI_SYSTEM is only ~400, so a breakpoint on the system block alone
+      // never cached: the marker is ignored silently, no error, and
+      // cache_creation_input_tokens just stays 0. Marking the last message
+      // instead makes the cached prefix system + the whole conversation so
+      // far, which clears the minimum after the first couple of turns and
+      // lets every following turn read the history back.
+      const lastIndex = body.messages.length - 1;
+      const stream = client.messages.stream({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        system: [{ type: "text", text: WIKI_SYSTEM }],
+        messages: body.messages.map((m, i) => ({
+          role: m.role,
+          content:
+            i === lastIndex
+              ? [
+                  {
+                    type: "text" as const,
+                    text: m.content,
+                    cache_control: { type: "ephemeral" as const },
+                  },
+                ]
+              : m.content,
+        })),
+      });
+
+      for await (const event of stream) {
+        if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+          yield event.delta.text;
+        }
+      }
+
+      const { usage } = await stream.finalMessage();
+      console.log(
+        `[wiki-chat] cache write=${usage.cache_creation_input_tokens ?? 0} read=${usage.cache_read_input_tokens ?? 0} uncached=${usage.input_tokens}`,
+      );
     },
     {
       body: t.Object({
         messages: t.Array(messageSchema, { minItems: 1 }),
       }),
-    }
+    },
   )
   // --- Encrypted chat history (per user) ---------------------------------
   .get("/wiki-chat/chats", async ({ request }) => {
@@ -146,7 +156,7 @@ export const wikiChatRoute = new Elysia()
         title: t.String(),
         messages: t.Array(storedMessageSchema),
       }),
-    }
+    },
   )
   .patch(
     "/wiki-chat/chats/:id",
@@ -168,7 +178,7 @@ export const wikiChatRoute = new Elysia()
         title: t.Optional(t.String()),
         messages: t.Optional(t.Array(storedMessageSchema)),
       }),
-    }
+    },
   )
   .delete("/wiki-chat/chats/:id", async ({ request, params }) => {
     const { clerkUserId } = await requireAuth(request);

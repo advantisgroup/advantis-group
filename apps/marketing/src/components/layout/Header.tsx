@@ -5,12 +5,7 @@ import React from "react";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 
-import {
-  AnimatePresence,
-  motion,
-  useMotionValueEvent,
-  useScroll,
-} from "framer-motion";
+import { AnimatePresence, motion, useMotionValueEvent, useScroll } from "framer-motion";
 import { Building2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -18,6 +13,7 @@ import { useCompanyIntranetUrl } from "@/hooks/use-company-intranet-url";
 import { useSingleLetterLogo } from "@/hooks/use-logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Link } from "@/i18n/navigation";
+import { isAuthRoute } from "@/lib/utils";
 
 import { SettingsMenu } from "./SettingsMenu";
 import { AccountMenu } from "../auth/AccountMenu";
@@ -38,7 +34,7 @@ export const Header = () => {
   const [isScrolled, setIsScrolled] = React.useState(false);
   const scrollYRef = React.useRef(0);
 
-  useMotionValueEvent(scrollY, "change", latest => {
+  useMotionValueEvent(scrollY, "change", (latest) => {
     setIsScrolled(latest > SCROLL_THRESHOLD);
   });
 
@@ -74,6 +70,10 @@ export const Header = () => {
       window.scrollTo(0, scrollYRef.current);
     };
   }, [isMobile, mobileMenuOpen]);
+
+  // The auth cards have their own minimal shell — the marketing chrome
+  // would otherwise occlude them (see AuthShell).
+  if (isAuthRoute(pathname)) return null;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLAnchorElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -127,13 +127,7 @@ export const Header = () => {
               }}
               transition={transition}
             >
-              <Image
-                src={logo}
-                alt="Advantis Logo"
-                fill
-                className="object-contain"
-                sizes="36px"
-              />
+              <Image src={logo} alt="Advantis Logo" fill className="object-contain" sizes="36px" />
             </motion.div>
 
             {/* Wordmark — collapses into the logo on scroll */}
@@ -166,13 +160,7 @@ export const Header = () => {
             }}
           >
             <div className="relative w-8 h-8 mr-1">
-              <Image
-                src={logo}
-                alt="Advantis Logo"
-                fill
-                className="object-contain"
-                sizes="32px"
-              />
+              <Image src={logo} alt="Advantis Logo" fill className="object-contain" sizes="32px" />
             </div>
             <span className="group-hover:text-advantis transition-colors duration-500">
               ADVANTIS
@@ -222,9 +210,7 @@ export const Header = () => {
                     <span className="relative z-10">{link.label}</span>
                     <span
                       className={`absolute bottom-0 left-0 h-0.5 bg-linear-to-r from-advantis to-advantis/50 transition-all duration-300 ease-out ${
-                        pathname === link.path
-                          ? "w-full"
-                          : "w-0 group-hover/link:w-full"
+                        pathname === link.path ? "w-full" : "w-0 group-hover/link:w-full"
                       }`}
                     />
                     <span className="absolute inset-0 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300 blur-sm bg-advantis/5" />
@@ -270,9 +256,7 @@ export const Header = () => {
           <div className="space-y-1.5 relative z-10">
             <span
               className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${
-                mobileMenuOpen
-                  ? "rotate-45 translate-y-2"
-                  : "group-hover/menu:w-5"
+                mobileMenuOpen ? "rotate-45 translate-y-2" : "group-hover/menu:w-5"
               }`}
             />
             <span
@@ -282,9 +266,7 @@ export const Header = () => {
             />
             <span
               className={`block h-0.5 w-6 bg-foreground transition-all duration-300 ${
-                mobileMenuOpen
-                  ? "-rotate-45 -translate-y-2"
-                  : "group-hover/menu:w-4"
+                mobileMenuOpen ? "-rotate-45 -translate-y-2" : "group-hover/menu:w-4"
               }`}
             />
           </div>
@@ -339,14 +321,8 @@ export const Header = () => {
                     <span>{t("intranet")}</span>
                   </Link>
                 )}
-                <AccountMenu
-                  isMobile
-                  onMobileNavigate={() => setMobileMenuOpen(false)}
-                />
-                <SettingsMenu
-                  isMobile
-                  onMobileNavigate={() => setMobileMenuOpen(false)}
-                />
+                <AccountMenu isMobile onMobileNavigate={() => setMobileMenuOpen(false)} />
+                <SettingsMenu isMobile onMobileNavigate={() => setMobileMenuOpen(false)} />
               </div>
             </div>
           </motion.div>

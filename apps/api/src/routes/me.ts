@@ -16,5 +16,5 @@ export const meRoute = new Elysia().get(
         sessionId: t.Union([t.String(), t.Null()]),
       }),
     },
-  }
+  },
 );

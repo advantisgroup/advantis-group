@@ -33,14 +33,14 @@ export default function EmployeeInteractionDayPage() {
     }
   }, [session, router]);
 
-  const isAdmin = session?.valid && session.role === "admin";
+  const isAdmin = session?.valid && session.permissions.includes("view_all_employees");
   const canView =
     session?.valid &&
-    (session.role === "admin" || session.employeeId === employeeId);
+    (session.permissions.includes("view_all_employees") || session.employeeId === employeeId);
 
   const data = useQuery(
     api.performanceQueries.interactionsDayDetail,
-    canView ? { token, date: params.date, employeeId } : "skip"
+    canView ? { token, date: params.date, employeeId } : "skip",
   );
 
   if (session === undefined) return <PerformancePageSkeleton />;
@@ -55,7 +55,7 @@ export default function EmployeeInteractionDayPage() {
     return (
       <div className="min-h-screen bg-muted/20">
         <PerformanceHeader onExit={session.viaClerk ? undefined : exit} />
-        <main className="mx-auto max-w-3xl p-4 md:p-6">
+        <main className="mx-auto max-w-3xl p-4 pb-24 md:p-6">
           <Card>
             <div className="p-6 text-center text-sm text-muted-foreground">
               {t("notLinkedBody")}
@@ -77,19 +77,12 @@ export default function EmployeeInteractionDayPage() {
 
   return (
     <div className="min-h-screen bg-muted/20">
-      <PerformanceHeader
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+      <PerformanceHeader navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
 
-      <main className="mx-auto max-w-6xl space-y-6 p-4 md:p-6">
+      <main className="mx-auto max-w-6xl space-y-6 p-4 pb-24 md:p-6">
         <div>
-          <h1 className="text-xl font-semibold">
-            {formatIsoDate(params.date, locale)}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t("interactionsTitle")}
-          </p>
+          <h1 className="text-xl font-semibold">{formatIsoDate(params.date, locale)}</h1>
+          <p className="text-sm text-muted-foreground">{t("interactionsTitle")}</p>
         </div>
 
         {!data ? (
@@ -100,17 +93,10 @@ export default function EmployeeInteractionDayPage() {
             </CardContent>
           </Card>
         ) : (
-          <InteractionRecordsTable
-            records={data.records}
-            total={data.total}
-            showEmployee={false}
-          />
+          <InteractionRecordsTable records={data.records} total={data.total} showEmployee={false} />
         )}
       </main>
-      <PerformanceBottomTabs
-        navItems={navItems}
-        onExit={session.viaClerk ? undefined : exit}
-      />
+      <PerformanceBottomTabs navItems={navItems} onExit={session.viaClerk ? undefined : exit} />
     </div>
   );
 }

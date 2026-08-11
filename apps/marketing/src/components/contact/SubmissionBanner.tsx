@@ -13,11 +13,7 @@ interface SubmissionBannerProps {
   className?: string;
 }
 
-export function SubmissionBanner({
-  text,
-  onNotifyClick,
-  className,
-}: SubmissionBannerProps) {
+export function SubmissionBanner({ text, onNotifyClick, className }: SubmissionBannerProps) {
   const t = useTranslations("contact.submissionBanner");
   const [dismissed, setDismissed] = useState(false);
 
@@ -29,7 +25,7 @@ export function SubmissionBanner({
     <div
       className={cn(
         "flex flex-col md:flex-row md:items-center gap-3 md:gap-4 w-full rounded-lg border border-warning/45 bg-warning/12 px-4 md:px-5 py-4 text-warning-foreground dark:text-white",
-        className
+        className,
       )}
       role="alert"
     >

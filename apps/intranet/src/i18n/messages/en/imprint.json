@@ -1,0 +1,46 @@
+{
+  "title": "Imprint",
+  "subtitle": "Information according to § 5 of the German Telemedia Act (TMG) for the Advantis Group intranet",
+  "updated": "Last updated: July 2026",
+  "tableOfContents": "Table of contents",
+  "viewTerms": "View Terms of Use",
+  "viewPrivacy": "View Privacy Policy",
+  "sections": [
+    {
+      "id": "provider",
+      "title": "Service provider",
+      "paragraphs": ["Information according to § 5 of the German Telemedia Act (TMG):"]
+    },
+    {
+      "id": "taxId",
+      "title": "VAT ID",
+      "paragraphs": [
+        "VAT identification number according to § 27 a of the German Value Added Tax Act:",
+        "DE463759734"
+      ]
+    },
+    {
+      "id": "register",
+      "title": "Commercial register entry",
+      "paragraphs": ["Entry in the commercial register."],
+      "list": [
+        {
+          "title": "Registration court",
+          "description": "Amtsgericht Nürnberg (Nuremberg Local Court)"
+        },
+        {
+          "title": "Registration number",
+          "description": "HRB 46148"
+        }
+      ]
+    },
+    {
+      "id": "responsible",
+      "title": "Responsible for content",
+      "paragraphs": [
+        "Responsible for content according to § 18(2) of the German Interstate Media Treaty (MStV):",
+        "Andrea Reichl, advantis GmbH"
+      ]
+    }
+  ]
+}

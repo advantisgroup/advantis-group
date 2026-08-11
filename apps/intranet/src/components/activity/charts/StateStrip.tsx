@@ -47,7 +47,7 @@ export function StateStrip({
       <div
         className={cn(
           "relative w-full overflow-hidden bg-panel-2",
-          compact ? "h-2 rounded-full" : "h-7 rounded-md border border-border"
+          compact ? "h-2 rounded-full" : "h-7 rounded-md border border-border",
         )}
       >
         {segments.map((seg, i) => {
@@ -77,7 +77,7 @@ export function StateStrip({
       {/* Hour ticks: 00, 06, 12, 18, 24 */}
       {!compact && (
         <div className="mt-1 flex justify-between font-mono text-[10px] text-muted-foreground">
-          {[0, 6, 12, 18, 24].map(h => (
+          {[0, 6, 12, 18, 24].map((h) => (
             <span key={h}>{String(h).padStart(2, "0")}</span>
           ))}
         </div>
@@ -99,15 +99,9 @@ export function StateStripLegend({
   if (states.length === 0) return null;
   return (
     <div className={cn("flex flex-wrap gap-x-3 gap-y-1", className)}>
-      {states.map(s => (
-        <span
-          key={s}
-          className="flex items-center gap-1.5 text-[11px] text-muted-foreground"
-        >
-          <span
-            className="h-2.5 w-2.5 rounded-[3px]"
-            style={{ background: STATE_COLOR[s] }}
-          />
+      {states.map((s) => (
+        <span key={s} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <span className="h-2.5 w-2.5 rounded-[3px]" style={{ background: STATE_COLOR[s] }} />
           {label(s)}
         </span>
       ))}

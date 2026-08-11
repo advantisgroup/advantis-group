@@ -10,7 +10,9 @@ import { LineChart } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Link } from "@/components/Link";
+import { ForgotPasswordPanel } from "@/components/password-reset/ForgotPasswordPanel";
 import { PerformanceBrandMark } from "@/components/performance/PerformanceBrandMark";
+import { usePerformanceCompanySlug } from "@/components/performance/PerformanceCompanyProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,22 +22,26 @@ import { setPerformanceToken } from "@/lib/performanceAuth";
 export default function PerformanceLoginPage() {
   const t = useTranslations("Performance");
   const router = useRouter();
+  const slug = usePerformanceCompanySlug();
   const login = useAction(api.performanceAuth.login);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Only offered once the password has actually been got wrong.
+  const [attemptFailed, setAttemptFailed] = useState(false);
 
   async function submit() {
     if (!email.trim() || !password) return;
     setSubmitting(true);
     setError(null);
     try {
-      const result = await login({ email, password });
+      const result = await login({ slug, email, password });
       setPerformanceToken(result.token, result.expiresAt);
       router.replace("/performance");
     } catch {
       setError(t("loginInvalid"));
+      setAttemptFailed(true);
     } finally {
       setSubmitting(false);
     }
@@ -60,8 +66,8 @@ export default function PerformanceLoginPage() {
               type="email"
               autoComplete="username"
               value={email}
-              onChange={e => setEmail(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") void submit();
               }}
             />
@@ -73,8 +79,8 @@ export default function PerformanceLoginPage() {
               type="password"
               autoComplete="current-password"
               value={password}
-              onChange={e => setPassword(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") void submit();
               }}
             />
@@ -87,11 +93,11 @@ export default function PerformanceLoginPage() {
           >
             {t("loginSubmit")}
           </Button>
+          {attemptFailed && (
+            <ForgotPasswordPanel scope="performance" email={email} companySlug={slug} />
+          )}
           <p className="text-center text-sm text-muted-foreground">
-            <Link
-              href="/performance/setup"
-              className="underline underline-offset-4"
-            >
+            <Link href="/performance/setup" className="underline underline-offset-4">
               {t("setupLink")}
             </Link>
           </p>

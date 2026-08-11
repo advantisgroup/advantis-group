@@ -34,19 +34,12 @@ function hhmm(ms: number): string {
  * proportionally over the rest — real elapsed time everywhere else, visual
  * space rebalanced only at the two ends.
  */
-function layoutSegments(
-  segments: StateSegment[],
-  domainSpan: number
-): Layout[] {
+function layoutSegments(segments: StateSegment[], domainSpan: number): Layout[] {
   const n = segments.length;
-  const rawPct = segments.map(s => ((s.end - s.start) / domainSpan) * 100);
+  const rawPct = segments.map((s) => ((s.end - s.start) / domainSpan) * 100);
 
   const capped = new Array(n).fill(false);
-  if (
-    n > 1 &&
-    segments[0].state === "CLOCKED_OUT" &&
-    rawPct[0] > EDGE_CLOCKED_OUT_CAP_PCT
-  ) {
+  if (n > 1 && segments[0].state === "CLOCKED_OUT" && rawPct[0] > EDGE_CLOCKED_OUT_CAP_PCT) {
     capped[0] = true;
   }
   if (
@@ -61,10 +54,7 @@ function layoutSegments(
   let widthPct = rawPct;
   if (capped.some(Boolean)) {
     const reserved = capped.filter(Boolean).length * EDGE_CLOCKED_OUT_CAP_PCT;
-    const uncappedTotal = rawPct.reduce(
-      (sum, p, i) => (capped[i] ? sum : sum + p),
-      0
-    );
+    const uncappedTotal = rawPct.reduce((sum, p, i) => (capped[i] ? sum : sum + p), 0);
     const remaining = 100 - reserved;
     widthPct = rawPct.map((p, i) => {
       if (capped[i]) return EDGE_CLOCKED_OUT_CAP_PCT;
@@ -82,11 +72,7 @@ function layoutSegments(
 }
 
 /** The real timestamp a display percent (post-compression) corresponds to. */
-function timeAtDisplayPct(
-  pct: number,
-  segments: StateSegment[],
-  layout: Layout[]
-): number {
+function timeAtDisplayPct(pct: number, segments: StateSegment[], layout: Layout[]): number {
   for (let i = 0; i < segments.length; i++) {
     const l = layout[i];
     if (pct >= l.left && pct <= l.left + l.width) {
@@ -105,14 +91,13 @@ function timeAtDisplayPct(
 function segmentAtClientX(
   clientX: number,
   rect: { left: number; width: number },
-  layout: Layout[]
+  layout: Layout[],
 ): number | null {
   if (rect.width === 0) return null;
   // -epsilon so a tap at the very right edge still lands inside the last
   // segment instead of exactly on its (exclusive) end boundary.
-  const pct =
-    Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) * 100 - 0.001;
-  const idx = layout.findIndex(l => pct >= l.left && pct < l.left + l.width);
+  const pct = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width)) * 100 - 0.001;
+  const idx = layout.findIndex((l) => pct >= l.left && pct < l.left + l.width);
   return idx >= 0 ? idx : null;
 }
 
@@ -217,19 +202,17 @@ export function StateTimelineChart({
 
   const highlightedIndex =
     highlightAt != null
-      ? segments.findIndex(s => highlightAt >= s.start && highlightAt < s.end)
+      ? segments.findIndex((s) => highlightAt >= s.start && highlightAt < s.end)
       : -1;
   // `segments` can change out from under a stale hovered index (e.g. a day
   // switch) — an out-of-range lookup just yields undefined, which already
   // disables the badge/guide-lines below, so no extra reset is needed.
-  const activeIndex =
-    hovered ?? (highlightedIndex >= 0 ? highlightedIndex : null);
+  const activeIndex = hovered ?? (highlightedIndex >= 0 ? highlightedIndex : null);
   const activeSeg = activeIndex != null ? segments[activeIndex] : null;
   const activeLayout = activeIndex != null ? layout[activeIndex] : null;
   const startPct = activeLayout ? activeLayout.left : null;
   const endPct = activeLayout ? activeLayout.left + activeLayout.width : null;
-  const centerPct =
-    startPct != null && endPct != null ? (startPct + endPct) / 2 : null;
+  const centerPct = startPct != null && endPct != null ? (startPct + endPct) / 2 : null;
   const badgeAnchor = centerPct != null ? edgeAnchor(centerPct) : null;
 
   return (
@@ -260,24 +243,12 @@ export function StateTimelineChart({
       <div
         className="relative cursor-pointer"
         style={{ height: BAR_HEIGHT }}
-        onMouseMove={e =>
-          setHovered(
-            segmentAtClientX(
-              e.clientX,
-              e.currentTarget.getBoundingClientRect(),
-              layout
-            )
-          )
+        onMouseMove={(e) =>
+          setHovered(segmentAtClientX(e.clientX, e.currentTarget.getBoundingClientRect(), layout))
         }
         onMouseLeave={() => setHovered(null)}
-        onClick={e =>
-          setHovered(
-            segmentAtClientX(
-              e.clientX,
-              e.currentTarget.getBoundingClientRect(),
-              layout
-            )
-          )
+        onClick={(e) =>
+          setHovered(segmentAtClientX(e.clientX, e.currentTarget.getBoundingClientRect(), layout))
         }
       >
         {/* Clipped separately from the guide lines/labels below, which need

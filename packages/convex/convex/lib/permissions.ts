@@ -21,9 +21,6 @@ export function listUserPermissions(user: Doc<"users">): NamedPermission[] {
   return permissions;
 }
 
-export function hasNamedPermission(
-  user: Doc<"users">,
-  permission: NamedPermission
-): boolean {
+export function hasNamedPermission(user: Doc<"users">, permission: NamedPermission): boolean {
   return listUserPermissions(user).includes(permission);
 }

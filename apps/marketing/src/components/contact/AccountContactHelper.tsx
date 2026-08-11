@@ -34,21 +34,13 @@ export function AccountContactHelper({
             {t("badge")}
           </div>
           <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-foreground">
-              {t("title")}
-            </h2>
-            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-              {t("description")}
-            </p>
+            <h2 className="text-xl font-semibold text-foreground">{t("title")}</h2>
+            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{t("description")}</p>
           </div>
           <div className="rounded-2xl border border-border/70 bg-background/85 px-4 py-3 text-sm text-muted-foreground">
-            <p className="font-medium text-foreground">
-              {accountProfile.fullName}
-            </p>
+            <p className="font-medium text-foreground">{accountProfile.fullName}</p>
             <p>{t("signedInAs", { email: accountProfile.email })}</p>
-            <p className="mt-2 text-xs leading-5 text-muted-foreground">
-              {t("emailNote")}
-            </p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">{t("emailNote")}</p>
           </div>
           {isSuccess ? (
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-700 dark:text-emerald-300">

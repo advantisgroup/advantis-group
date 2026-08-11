@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import { CHART, tooltipStyle } from "./theme";
 
@@ -18,13 +10,7 @@ interface Datum {
 }
 
 /** Quick active↔idle flips per day — the "switching a lot" pattern as a bar. */
-export function WeekSwitchesChart({
-  data,
-  seriesLabel,
-}: {
-  data: Datum[];
-  seriesLabel: string;
-}) {
+export function WeekSwitchesChart({ data, seriesLabel }: { data: Datum[]; seriesLabel: string }) {
   return (
     <ResponsiveContainer width="100%" height={180}>
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 4 }}>

@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/select";
 import { formatIsoDate } from "@/lib/format";
 
+import { computePeriodRange, type PeriodGranularity } from "./lib";
 import { fmtYm } from "./PerformanceFormat";
-import { computePeriodRange, type PeriodGranularity } from "./periodFilter";
 
 /** Day/Week/Month granularity toggle + prev/next navigation for the
  * Interaktionen tab — the only place in Performance that needs finer than
@@ -46,7 +46,7 @@ export function PeriodFilter({
     <div className="flex flex-wrap items-center gap-2">
       <Select
         value={granularity}
-        onValueChange={v => onGranularityChange(v as PeriodGranularity)}
+        onValueChange={(v) => onGranularityChange(v as PeriodGranularity)}
       >
         <SelectTrigger className="w-32">
           <SelectValue />
@@ -67,9 +67,7 @@ export function PeriodFilter({
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <span className="min-w-32 text-center text-sm font-medium tabular-nums">
-          {label}
-        </span>
+        <span className="min-w-32 text-center text-sm font-medium tabular-nums">{label}</span>
         <Button
           variant="outline"
           size="icon"

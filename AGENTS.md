@@ -1,5 +1,7 @@
 # AGENTS.md
 
+ALWAYS PULL LATEST CHANGES FROM ORIGIN BEFORE STARTING WORK. COMPARE THE LATEST CHANGES AND SEE IF THEY BREAK YOUR CURRENT CHANGES/SESSION EDITS!
+
 Instructions for AI coding agents (Claude Code, etc.) working in this repo.
 `CLAUDE.md` points here — this file is the canonical source; keep it up to
 date rather than duplicating its content elsewhere.
@@ -35,6 +37,14 @@ Run from repo root unless noted; Turborepo filters by workspace name.
 Always type-check and lint/format touched packages before calling a change
 done.
 
+## Asking questions
+
+The user (Kaleb) does not mind being asked clarifying questions, and does not
+mind agents surfacing a large number of improvement suggestions at once (30+
+is fine). Don't self-censor or trim suggestion lists down to a "safe" handful
+out of concern for overwhelming him — err toward asking and toward listing
+more candidate improvements rather than fewer.
+
 ## Multi-item sessions and commits
 
 When a single session is asked to ship several distinct features, improvements,
@@ -46,6 +56,56 @@ regression), the offending commit narrows down fast instead of forcing a search
 through one giant diff. If grouping vs. separating conflicts with another
 instruction in a given task (e.g. the user explicitly asks for a single
 commit), ask the user how they want it handled rather than guessing.
+
+## Merging without a PR
+
+When the user hasn't asked for a PR, the default is to squash-commit/merge
+finished work directly into `main` rather than opening one anyway. But
+pushing to `main` triggers an immediate Vercel production deploy — so for a
+task still spread across multiple commits/phases, keep committing and
+pushing to the working branch only, and merge into `main` once at a real
+stopping point (the whole task done, or a checkpoint the user explicitly
+asks for), not after every intermediate commit.
+
+## Convex backend conventions
+
+Read [`docs/convex-best-practices.md`](./docs/convex-best-practices.md)
+before adding or editing anything in `packages/convex/convex`. It's Convex's
+official best-practices list annotated with where this repo follows it, where
+it deliberately doesn't, and why. Nothing enforces any of it automatically —
+`packages/convex` has no lint script and none of the `@convex-dev/*` ESLint
+rules are installed — so it's on whoever writes the function.
+
+The four that bite hardest here:
+
+- **`.collect()` only on org-scale tables.** `users`/`presence`/`departments`
+  are fine; `activitySamples`, `stateSamples`, `messages`, the audit tables
+  and `notifications` grow without bound and need `.take()` on an index
+  (newest-first) or `.paginate()`.
+- **Access control first, via `lib/auth.ts`.** `requireUser` /
+  `requireManager` / `requireAdmin` / `requireCapability`, plus non-throwing
+  `hasCapability` when the decision is "how much of this record do I reveal."
+  Don't hand-roll a `ctx.auth` check.
+- **The public `api*` functions are deliberate.** `activity/state.ts`'s
+  `pushSignal`/`reportHealth`/`mappings` and every `api*`-prefixed function
+  elsewhere are reached from `apps/api` server-to-server behind a server key
+  and validate it in-handler. Converting them to `internal` breaks the
+  integration relays.
+- **No `Date.now()` inside a query's `.withIndex` range bound.** Comparing it
+  against already-read rows (overdue labels) is cheap; making the read range
+  itself move continuously is not. Pass a rounded time in as an argument.
+
+## Profile / Subprofile architecture
+
+`users` is the one canonical intranet identity ("Profile"); every
+feature-owned identity-linked record (the Clockodo link, ActivityTrack's
+`people`, HumanResources' `employeeProfiles`, Chat's `conversationMembers`)
+is a "Subprofile." See [`docs/architecture/profiles.md`](./docs/architecture/profiles.md)
+for the full vocabulary, the slim "Partial profile" projection
+(`packages/convex/convex/lib/profile.ts`), and the enrichment convention a
+subprofile-fetching query should follow (always the same shape; a
+`linked`/`status` discriminant instead of a bare `null` or a silently
+filtered-out row).
 
 ## ActivityTrack (`/activity`)
 
@@ -81,6 +141,41 @@ Business-hours / out-of-hours quarantine logic:
 of truth for "when does a workday plausibly happen" — don't duplicate that
 decision elsewhere.
 
+## Clockodo absences (`/absences`, `/calendar`, directory "out today")
+
+Distinct from ActivityTrack's Clockodo *entry* polling above — this is the
+vacation/sick/personal absence data shown on the absences page, calendar, and
+directory "out today" badges. There is **no Convex mirror**: absences change
+rarely and don't need to be reactive, so every read fetches Clockodo fresh
+through `apps/api` instead of syncing a stored copy via webhook + cron (the
+old approach — `clockodoSync.ts`/`absenceSync.ts`/the `/webhooks/clockodo`
+route — has been removed).
+
+- `apps/api/src/lib/clockodo.ts` — the one place that calls Clockodo's
+  `/absences` endpoint and maps its raw type/status codes to the app's coarse
+  `vacation | sick | personal | other` / `pending | approved | denied |
+  cancelled`.
+- `apps/api/src/routes/clockodo-absences.ts` — Clerk-authed public endpoints
+  (`GET /clockodo/absences/me`, `/calendar`, `/pending-count`) the intranet
+  frontend calls via `useEdenApi()` (`apps/intranet/src/lib/eden.ts`).
+  **Privacy**: the calendar endpoint only surfaces `vacation`-type absences
+  for people other than the caller — sick/personal/other absences are visible
+  to that person alone (their own `/me` list still shows everything).
+- `apps/api/src/routes/internal/clockodo.ts` — server-key-gated, called by
+  Convex's ActivityTrack poller (`activity/clockodo.ts`'s `fetchAbsences`) so
+  the raw Clockodo fetch isn't duplicated in Convex's Node runtime too.
+- `packages/convex/convex/integrations/clockodoAbsences.ts` — server-key
+  gated lookups (`resolveCaller`, `roster`) apps/api uses to join a Clockodo
+  user id against the intranet roster, since Clockodo doesn't know intranet
+  identities.
+- `apps/intranet/src/lib/absences-api.ts` — the `useMyAbsences` /
+  `useAbsencesCalendar` / `usePendingAbsenceCount` hooks every consumer page
+  uses. Not reactive like a Convex `useQuery` — each fetches once per
+  mount/param change, which is fine given how rarely absences change.
+- The `absences` Convex table (`schema.ts`) is left declared but unused/dead
+  — nothing reads or writes it anymore. Safe to drop once confirmed nothing
+  needs the historical mirrored rows.
+
 ## Third-party product mentions (Genesys, Clockodo)
 
 Genesys and Clockodo are third-party trademarks referenced throughout the
@@ -89,6 +184,21 @@ touching UI that names either product, check with the user before sourcing
 or embedding official logo assets — trademark usage has its own legal
 constraints beyond a copyright line, and no logo files exist in this repo
 today (`apps/intranet/public/` only has Advantis's own logos).
+
+## Password resets (HR vault, Performance login)
+
+The two areas with a password of their own outside Clerk share one recovery
+flow: a lock screen offers "forgot password" *only after a failed attempt*, it
+files an admin ping (never resets anything), and an admin issues a single-use
+magic link at `/password?o=<scope>&token=…`. Queue lives at
+`/admin/password-resets`. Both admin actions are gated on Clerk step-up
+re-verification, which reads the factor-verification-age claim through a
+custom `convex` JWT Template key named `reverificationAge` — Clerk's
+dashboard blocks the literal name `fva` on hand-built templates ("reserved
+claim"), so the same `{{user.factor_verification_age}}` shortcode is mapped
+under that name instead. See
+[`docs/password-resets.md`](./docs/password-resets.md) for the exact setup,
+the env vars, the audit/PostHog logging, and how to add a third area.
 
 ## Publishing Updates (incidents / maintenance / changelog)
 

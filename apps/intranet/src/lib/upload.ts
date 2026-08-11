@@ -28,7 +28,7 @@ export const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 export function uploadToConvex(
   generateUploadUrl: () => Promise<string>,
   file: File,
-  onProgress?: (fraction: number) => void
+  onProgress?: (fraction: number) => void,
 ): Promise<Id<"_storage">> {
   return new Promise<Id<"_storage">>((resolve, reject) => {
     void (async () => {
@@ -36,11 +36,8 @@ export function uploadToConvex(
         const url = await generateUploadUrl();
         const xhr = new XMLHttpRequest();
         xhr.open("POST", url);
-        xhr.setRequestHeader(
-          "Content-Type",
-          file.type || "application/octet-stream"
-        );
-        xhr.upload.onprogress = e => {
+        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+        xhr.upload.onprogress = (e) => {
           if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total);
         };
         xhr.onload = () => {
@@ -70,11 +67,9 @@ export function uploadToConvex(
  */
 export async function deleteUploadedAttachments(
   deleteFile: (args: { storageId: Id<"_storage"> }) => Promise<unknown>,
-  attachments: { storageId: Id<"_storage"> }[]
+  attachments: { storageId: Id<"_storage"> }[],
 ): Promise<void> {
-  await Promise.allSettled(
-    attachments.map(a => deleteFile({ storageId: a.storageId }))
-  );
+  await Promise.allSettled(attachments.map((a) => deleteFile({ storageId: a.storageId })));
 }
 
 export function isImage(file: File): boolean {
@@ -88,7 +83,7 @@ export function formatFileSize(bytes: number): string {
   if (bytes <= 0) return "0 B";
   const exponent = Math.min(
     Math.floor(Math.log(bytes) / Math.log(1024)),
-    FILE_SIZE_UNITS.length - 1
+    FILE_SIZE_UNITS.length - 1,
   );
   const value = bytes / 1024 ** exponent;
   const decimals = exponent === 0 ? 0 : value < 10 ? 2 : 1;

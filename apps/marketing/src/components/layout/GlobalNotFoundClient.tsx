@@ -4,8 +4,7 @@ import { useEffect, useState } from "react";
 
 import { usePathname } from "next/navigation";
 
-const clamp = (val: number, min: number, max: number) =>
-  Math.min(Math.max(val, min), max);
+const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
 
 export default function GlobalNotFoundClient() {
   const location = usePathname();
@@ -21,15 +20,13 @@ export default function GlobalNotFoundClient() {
   const [particles, setParticles] = useState<Particle[]>([]);
 
   useEffect(() => {
-    const generatedParticles: Particle[] = Array.from({ length: 25 }).map(
-      () => ({
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        delay: `${Math.random() * 5}s`,
-        duration: `${5 + Math.random() * 10}s`,
-        opacity: Number(clamp(Math.random(), 0.5, 1).toFixed(2)),
-      })
-    );
+    const generatedParticles: Particle[] = Array.from({ length: 25 }).map(() => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      delay: `${Math.random() * 5}s`,
+      duration: `${5 + Math.random() * 10}s`,
+      opacity: Number(clamp(Math.random(), 0.5, 1).toFixed(2)),
+    }));
 
     // console.log(...generatedParticles)
     // schedule update next frame to avoid eslint “setState in effect” warning
@@ -61,17 +58,11 @@ export default function GlobalNotFoundClient() {
         </div>
 
         <div className="mb-8 space-y-4">
-          <p className="text-xl text-muted-foreground">
-            Verloren im digitalen Meer?
-          </p>
+          <p className="text-xl text-muted-foreground">Verloren im digitalen Meer?</p>
           <div className="px-4 py-2 rounded-lg bg-muted/50 border border-primary/10">
-            <code className="text-primary font-mono font-medium">
-              {location}
-            </code>
+            <code className="text-primary font-mono font-medium">{location}</code>
           </div>
-          <p className="text-xl text-muted-foreground">
-            scheint sich entfernt zu haben...
-          </p>
+          <p className="text-xl text-muted-foreground">scheint sich entfernt zu haben...</p>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 
 import { mutation } from "../_generated/server";
-import { requireCapability } from "../lib/auth";
+import { requireCapability, requireUser } from "../lib/auth";
 import { toClockodoIdString } from "../lib/clockodoId";
 import { appError } from "../activity/lib/errors";
 import { writeIntegrationsAudit } from "./audit";
@@ -22,36 +22,31 @@ export const linkClockodoUser = mutation({
     clockodoUserId: v.number(),
   },
   handler: async (ctx, { userId, clockodoUserId }) => {
-    const actor = await requireCapability(ctx, "access_integrations");
+    const actor = await requireCapability(ctx, "manage_clockodo_team");
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 
-    await ctx.db.patch(userId, { clockodoUserId });
+    const clockodoUserIdStr = toClockodoIdString(clockodoUserId);
+    await ctx.db.patch(userId, { clockodoUserId: clockodoUserIdStr });
 
     const person = await ctx.db
       .query("people")
-      .withIndex("by_userId", q => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
     if (person) {
       await ctx.db.patch(person._id, {
-        clockodoUserId: toClockodoIdString(clockodoUserId),
+        clockodoUserId: clockodoUserIdStr,
       });
     }
 
-    await writeIntegrationsAudit(
-      ctx,
-      actor._id,
-      "clockodo",
-      "clockodo.link",
-      user.email
-    );
+    await writeIntegrationsAudit(ctx, actor._id, "clockodo", "clockodo.link", user.email);
   },
 });
 
 export const unlinkClockodoUser = mutation({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    const actor = await requireCapability(ctx, "access_integrations");
+    const actor = await requireCapability(ctx, "manage_clockodo_team");
     const user = await ctx.db.get(userId);
     if (!user) throw appError("notFound.user", "User not found");
 
@@ -59,18 +54,35 @@ export const unlinkClockodoUser = mutation({
 
     const person = await ctx.db
       .query("people")
-      .withIndex("by_userId", q => q.eq("userId", userId))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .first();
     if (person) {
       await ctx.db.patch(person._id, { clockodoUserId: undefined });
     }
 
-    await writeIntegrationsAudit(
-      ctx,
-      actor._id,
-      "clockodo",
-      "clockodo.unlink",
-      user.email
-    );
+    await writeIntegrationsAudit(ctx, actor._id, "clockodo", "clockodo.unlink", user.email);
+  },
+});
+
+export const migrateLegacyClockodoLink = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const user = await requireUser(ctx);
+    if (user.clockodoUserId != null) {
+      return { status: "already_linked" as const };
+    }
+
+    const person = await ctx.db
+      .query("people")
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
+      .first();
+    const clockodoUserId = person?.clockodoUserId?.trim();
+    if (!clockodoUserId) {
+      return { status: "not_found" as const };
+    }
+
+    await ctx.db.patch(user._id, { clockodoUserId });
+    await writeIntegrationsAudit(ctx, user._id, "clockodo", "clockodo.link", user.email);
+    return { status: "migrated" as const };
   },
 });

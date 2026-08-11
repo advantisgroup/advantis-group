@@ -4,6 +4,7 @@
   "updated": "Last updated: July 2026",
   "tableOfContents": "Table of contents",
   "viewTerms": "View Terms of Use",
+  "viewImprint": "View Imprint",
   "sections": [
     {
       "id": "scope",
@@ -115,7 +116,9 @@
     {
       "id": "rights",
       "title": "Your rights",
-      "paragraphs": ["Authorized users have the following rights regarding their personal data at any time:"],
+      "paragraphs": [
+        "Authorized users have the following rights regarding their personal data at any time:"
+      ],
       "list": [
         {
           "title": "Access",

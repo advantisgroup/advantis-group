@@ -22,9 +22,9 @@ export async function cropToSquare(file: File, size = 512): Promise<Blob> {
     ctx.drawImage(img, sx, sy, side, side, 0, 0, target, target);
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
-        blob => (blob ? resolve(blob) : reject(new Error("Crop failed"))),
+        (blob) => (blob ? resolve(blob) : reject(new Error("Crop failed"))),
         "image/jpeg",
-        0.9
+        0.9,
       );
     });
   } finally {

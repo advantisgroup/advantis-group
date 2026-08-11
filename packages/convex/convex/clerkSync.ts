@@ -5,7 +5,7 @@ import { mutation } from "./_generated/server";
 /**
  * Server-key gated mutations invoked by the Elysia API's Clerk webhook handler
  * (api.advantisgroup.de). These keep the intranet `users` table in sync with
- * the intranet Clerk instance's user lifecycle. They never *create* members —
+ * the shared Clerk instance's user lifecycle. They never *create* members —
  * provisioning is gated by invites/approvals via lib/auth.ensureUser — they
  * only refresh profiles and deactivate removed accounts.
  */
@@ -29,7 +29,7 @@ export const syncFromClerk = mutation({
     assertServerKey(args.serverKey);
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkUserId", q => q.eq("clerkUserId", args.clerkUserId))
+      .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", args.clerkUserId))
       .unique();
     if (!user) return { synced: false };
     await ctx.db.patch(user._id, {
@@ -48,7 +48,7 @@ export const deactivateFromClerk = mutation({
     assertServerKey(args.serverKey);
     const user = await ctx.db
       .query("users")
-      .withIndex("by_clerkUserId", q => q.eq("clerkUserId", args.clerkUserId))
+      .withIndex("by_clerkUserId", (q) => q.eq("clerkUserId", args.clerkUserId))
       .unique();
     if (!user) return { deactivated: false };
     await ctx.db.delete(user._id);

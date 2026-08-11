@@ -41,10 +41,7 @@ interface SOPScenario {
   email?: EmailTemplate;
 }
 
-const STEP_STYLES: Record<
-  StepType,
-  { container: string; dot: string; bold: boolean }
-> = {
+const STEP_STYLES: Record<StepType, { container: string; dot: string; bold: boolean }> = {
   warning: {
     container:
       "border border-rose-200 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-300",
@@ -462,7 +459,7 @@ function CaseSuggestionCard({ suggestion }: { suggestion: CaseSuggestion }) {
         <span
           className={cn(
             "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide",
-            style.chip
+            style.chip,
           )}
         >
           {suggestion.type}
@@ -506,7 +503,7 @@ function EmailBlock({ email }: { email: EmailTemplate }) {
             "absolute right-3 top-3 flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-semibold transition-colors",
             copied
               ? "border-success/40 bg-success/10 text-success"
-              : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground"
+              : "border-border bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
           )}
         >
           {copied ? <Check className="size-3" /> : <Copy className="size-3" />}
@@ -519,7 +516,7 @@ function EmailBlock({ email }: { email: EmailTemplate }) {
 
 export function SOPPanel() {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const scenario = SOP_SCENARIOS.find(s => s.id === activeId) ?? null;
+  const scenario = SOP_SCENARIOS.find((s) => s.id === activeId) ?? null;
 
   return (
     <div className="flex min-h-[540px] overflow-hidden rounded-xl border border-border">
@@ -529,7 +526,7 @@ export function SOPPanel() {
           Szenarien
         </div>
         <div className="space-y-1">
-          {SOP_SCENARIOS.map(s => (
+          {SOP_SCENARIOS.map((s) => (
             <button
               key={s.id}
               type="button"
@@ -538,16 +535,11 @@ export function SOPPanel() {
                 "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
                 activeId === s.id
                   ? "bg-card font-semibold shadow-sm ring-1 ring-border"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground",
               )}
             >
               <span className="shrink-0 text-base">{s.icon}</span>
-              <span
-                className={cn(
-                  "leading-tight",
-                  activeId === s.id && s.accentClass
-                )}
-              >
+              <span className={cn("leading-tight", activeId === s.id && s.accentClass)}>
                 {s.title}
               </span>
             </button>
@@ -560,21 +552,15 @@ export function SOPPanel() {
         {!scenario ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
             <span className="text-4xl">👈</span>
-            <p className="text-sm font-medium text-foreground">
-              Szenario links auswählen
-            </p>
-            <p className="text-xs">
-              Schritt-für-Schritt Anleitung + Case-Felder
-            </p>
+            <p className="text-sm font-medium text-foreground">Szenario links auswählen</p>
+            <p className="text-xs">Schritt-für-Schritt Anleitung + Case-Felder</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* Title */}
             <div className="flex items-center gap-3">
               <span className="text-2xl">{scenario.icon}</span>
-              <h2 className={cn("text-lg font-bold", scenario.accentClass)}>
-                {scenario.title}
-              </h2>
+              <h2 className={cn("text-lg font-bold", scenario.accentClass)}>{scenario.title}</h2>
             </div>
 
             {/* Steps */}
@@ -589,18 +575,11 @@ export function SOPPanel() {
                     key={i}
                     className={cn(
                       "flex items-start gap-3 rounded-lg px-3.5 py-2.5 text-sm leading-relaxed",
-                      st.container
+                      st.container,
                     )}
                   >
-                    <span
-                      className={cn(
-                        "mt-[6px] size-2 shrink-0 rounded-full",
-                        st.dot
-                      )}
-                    />
-                    <span className={st.bold ? "font-semibold" : ""}>
-                      {step.text}
-                    </span>
+                    <span className={cn("mt-[6px] size-2 shrink-0 rounded-full", st.dot)} />
+                    <span className={st.bold ? "font-semibold" : ""}>{step.text}</span>
                   </div>
                 );
               })}
@@ -615,14 +594,10 @@ export function SOPPanel() {
                 <div className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
                   ⚠ Case-Felder
                 </div>
-                {scenario.caseCard && (
-                  <CaseSuggestionCard suggestion={scenario.caseCard} />
-                )}
+                {scenario.caseCard && <CaseSuggestionCard suggestion={scenario.caseCard} />}
                 {scenario.cases?.map((c, i) => (
                   <div key={i} className="space-y-1.5">
-                    <div className="text-xs font-semibold text-muted-foreground">
-                      {c.label}
-                    </div>
+                    <div className="text-xs font-semibold text-muted-foreground">{c.label}</div>
                     <CaseSuggestionCard suggestion={c.card} />
                   </div>
                 ))}

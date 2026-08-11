@@ -2,22 +2,14 @@
 
 import { useState, useEffect, useMemo } from "react";
 
-import {
-  Shield,
-  Lock,
-  User,
-  Database,
-  Mail,
-  FileText,
-  Menu,
-  X,
-} from "lucide-react";
+import { Shield, Lock, User, Database, Mail, FileText, Menu, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TableOfContents } from "@/components/ui/TableOfContents";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { COMPANY_ADDRESS } from "@/lib/company";
 import { cn } from "@/lib/utils";
 
 export default function Datenschutz() {
@@ -34,9 +26,7 @@ export default function Datenschutz() {
         title: t("sections.overview.title"),
         content: (
           <div className="prose prose-base max-w-none">
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.overview.content")}
-            </p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.overview.content")}</p>
           </div>
         ),
       },
@@ -46,12 +36,8 @@ export default function Datenschutz() {
         title: t("sections.general.title"),
         content: (
           <div className="prose prose-base max-w-none space-y-4">
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.general.content1")}
-            </p>
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.general.content2")}
-            </p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.general.content1")}</p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.general.content2")}</p>
           </div>
         ),
       },
@@ -67,7 +53,7 @@ export default function Datenschutz() {
             <div className="bg-muted/20 p-6 rounded-lg space-y-1">
               <p className="font-semibold text-foreground">advantis GmbH</p>
               <p className="text-foreground/80">Andrea Reichl</p>
-              <p>{process.env.NEXT_PUBLIC_ADRESS}</p>
+              <p>{COMPANY_ADDRESS}</p>
               <p className="text-foreground/80 mt-3">
                 E-Mail: {process.env.NEXT_PUBLIC_EMAIL_ADRESS}
               </p>
@@ -84,9 +70,7 @@ export default function Datenschutz() {
             <h3 className="text-xl font-semibold text-foreground">
               {t("sections.collection.subtitle")}
             </h3>
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.collection.intro")}
-            </p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.collection.intro")}</p>
             <ul className="list-disc list-inside space-y-2 text-foreground/80">
               <li>{t("sections.collection.items.ip")}</li>
               <li>{t("sections.collection.items.browser")}</li>
@@ -94,9 +78,7 @@ export default function Datenschutz() {
               <li>{t("sections.collection.items.datetime")}</li>
               <li>{t("sections.collection.items.referrer")}</li>
             </ul>
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.collection.footer")}
-            </p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.collection.footer")}</p>
           </div>
         ),
       },
@@ -106,12 +88,8 @@ export default function Datenschutz() {
         title: t("sections.contact.title"),
         content: (
           <div className="prose prose-base max-w-none space-y-4">
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.contact.content1")}
-            </p>
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.contact.content2")}
-            </p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.contact.content1")}</p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.contact.content2")}</p>
           </div>
         ),
       },
@@ -121,9 +99,7 @@ export default function Datenschutz() {
         title: t("sections.rights.title"),
         content: (
           <div className="prose prose-base max-w-none space-y-4">
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.rights.intro")}
-            </p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.rights.intro")}</p>
             <h3 className="text-xl font-semibold text-foreground">
               {t("sections.rights.subtitle")}
             </h3>
@@ -133,9 +109,7 @@ export default function Datenschutz() {
                 {t("sections.rights.items.access.description")}
               </li>
               <li>
-                <strong>
-                  {t("sections.rights.items.rectification.title")}
-                </strong>{" "}
+                <strong>{t("sections.rights.items.rectification.title")}</strong>{" "}
                 {t("sections.rights.items.rectification.description")}
               </li>
               <li>
@@ -155,14 +129,12 @@ export default function Datenschutz() {
                 {t("sections.rights.items.portability.description")}
               </li>
             </ul>
-            <p className="text-foreground/80 leading-relaxed">
-              {t("sections.rights.footer")}
-            </p>
+            <p className="text-foreground/80 leading-relaxed">{t("sections.rights.footer")}</p>
           </div>
         ),
       },
     ],
-    [t]
+    [t],
   );
 
   const scrollToSection = (id: string) => {
@@ -189,10 +161,7 @@ export default function Datenschutz() {
         const element = document.getElementById(section.id);
         if (element) {
           const { offsetTop, offsetHeight } = element;
-          if (
-            scrollPosition >= offsetTop &&
-            scrollPosition < offsetTop + offsetHeight
-          ) {
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
             setActiveSection(section.id);
             break;
           }
@@ -213,11 +182,7 @@ export default function Datenschutz() {
           className="fixed bottom-6 right-6 z-50 rounded-full w-14 h-14 shadow-lg"
           size="icon"
         >
-          {sidebarOpen ? (
-            <X className="w-6 h-6" />
-          ) : (
-            <Menu className="w-6 h-6" />
-          )}
+          {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </Button>
       )}
 
@@ -233,9 +198,7 @@ export default function Datenschutz() {
         <section className="max-w-7xl mx-auto space-y-12">
           <div className="text-center space-y-6">
             <h1 className="text-4xl md:text-6xl font-bold">{t("title")}</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {t("subtitle")}
-            </p>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{t("subtitle")}</p>
           </div>
 
           <div className="flex gap-8 relative">
@@ -244,9 +207,7 @@ export default function Datenschutz() {
               <aside className="w-72 shrink-0 sticky top-24 self-start">
                 <Card className="border border-border">
                   <CardHeader>
-                    <CardTitle className="text-lg">
-                      {t("tableOfContents")}
-                    </CardTitle>
+                    <CardTitle className="text-lg">{t("tableOfContents")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <TableOfContents
@@ -264,14 +225,12 @@ export default function Datenschutz() {
               <aside
                 className={cn(
                   "fixed top-24 right-0 w-80 max-w-[85vw] h-[calc(100vh-6rem)] bg-background border-l border-border z-50 transition-transform duration-300 overflow-y-auto",
-                  sidebarOpen ? "translate-x-0" : "translate-x-full"
+                  sidebarOpen ? "translate-x-0" : "translate-x-full",
                 )}
               >
                 <Card className="border-0 rounded-none h-full">
                   <CardHeader>
-                    <CardTitle className="text-lg">
-                      {t("tableOfContents")}
-                    </CardTitle>
+                    <CardTitle className="text-lg">{t("tableOfContents")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <TableOfContents
@@ -286,24 +245,16 @@ export default function Datenschutz() {
 
             {/* Main Content */}
             <div className="flex-1 space-y-12">
-              {sections.map(section => {
+              {sections.map((section) => {
                 return (
-                  <section
-                    key={section.id}
-                    id={section.id}
-                    className="scroll-mt-24"
-                  >
+                  <section key={section.id} id={section.id} className="scroll-mt-24">
                     <Card className="border border-border">
                       <CardHeader>
                         <div className="flex items-center gap-4">
-                          <CardTitle className="text-2xl">
-                            {section.title}
-                          </CardTitle>
+                          <CardTitle className="text-2xl">{section.title}</CardTitle>
                         </div>
                       </CardHeader>
-                      <CardContent className="pt-2">
-                        {section.content}
-                      </CardContent>
+                      <CardContent className="pt-2">{section.content}</CardContent>
                     </Card>
                   </section>
                 );

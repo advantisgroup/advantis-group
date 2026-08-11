@@ -1,20 +1,8 @@
 "use client";
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-import {
-  STATE_NAMES,
-  type HourStateBucket,
-  type StateName,
-} from "@/lib/activity/activity";
+import { STATE_NAMES, type HourStateBucket, type StateName } from "@/lib/activity/activity";
 
 import { CHART, STATE_COLOR, tooltipStyle } from "./theme";
 
@@ -52,10 +40,7 @@ export function HourlyStateChart({
           width={40}
           unit="m"
         />
-        <Tooltip
-          {...tooltipStyle}
-          labelFormatter={h => `${String(h).padStart(2, "0")}:00`}
-        />
+        <Tooltip {...tooltipStyle} labelFormatter={(h) => `${String(h).padStart(2, "0")}:00`} />
         {STATE_NAMES.map((state, i) => (
           <Bar
             key={state}

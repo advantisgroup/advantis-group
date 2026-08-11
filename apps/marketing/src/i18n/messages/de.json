@@ -24,7 +24,7 @@
   "hero": {
     "title": "Mehr als ein Unternehmen, komplette",
     "titleHighlight": "Sales Power",
-    "subtitle": "Wir bringen Deinen Vertrieb auf das nächste Level!",
+    "subtitle": "Wir bringen deinen Vertrieb auf das nächste Level!",
     "ctaPrimary": "Jetzt Kontakt aufnehmen",
     "ctaSecondary": "Unsere Marken entdecken"
   },
@@ -37,14 +37,14 @@
     "eyebrow": "Beratungs-Engine",
     "title": "Warum",
     "titleBrand": "ADVANTIS GROUP",
-    "subtitle": "Wir kombinieren über 15 Jahre Vertriebserfahrung mit innovativen Sales-Ansätzen und KI-Tools, um Deinen Vertrieb auf das nächste Level zu bringen.",
+    "subtitle": "Wir kombinieren über 15 Jahre Vertriebserfahrung mit innovativen Sales-Ansätzen und KI-Tools, um deinen Vertrieb auf das nächste Level zu bringen.",
     "feature1": {
-      "title": "Wir machen Dein Sales-Team erfolgreich",
-      "description": "Durch eine gezielte Leadgeneration-Strategie und eine praxisnahe Unterstützung helfen wir Deinem Team zu wachsen und Eure Ziele zu erreichen."
+      "title": "Wir machen dein Sales-Team erfolgreich",
+      "description": "Durch eine gezielte Leadgeneration-Strategie und eine praxisnahe Unterstützung helfen wir deinem Team zu wachsen und eure Ziele zu erreichen."
     },
     "feature2": {
       "title": "Vertrieb smarter gestalten – intern oder extern",
-      "description": "Mit modernen Tools und AI optimieren wir Deine Vertriebsprozesse für maximale Effizienz. Wir helfen, Dein eigenes Team zu stärken, oder übernehmen den gesamten Vertriebsprozess als Outsourcing-Partner für Dich – Du entscheidest!"
+      "description": "Mit modernen Tools und AI optimieren wir deine Vertriebsprozesse für maximale Effizienz. Wir helfen, dein eigenes Team zu stärken, oder übernehmen den gesamten Vertriebsprozess als Outsourcing-Partner für dich – du entscheidest!"
     },
     "feature3": {
       "title": "Nachhaltige Ergebnisse liefern",
@@ -61,14 +61,14 @@
     "eyebrow": "Markenarchitektur",
     "title": "Unsere",
     "titleHighlight": "Marken",
-    "subtitle": "Vier starke Marken, ein gemeinsames Ziel: Dein Vertriebserfolg",
+    "subtitle": "Vier starke Marken, ein gemeinsames Ziel: dein Vertriebserfolg",
     "salespirates": {
       "tagline": "Externe Vertriebsagentur",
-      "description": "Wir generieren Leads im Cold Calling, qualifizieren vor und übernehmen Deinen Inside Sales. Vom Lead bis zum Abschluss für einen maximalen Erfolg Deines Sales."
+      "description": "Wir generieren Leads im Cold Calling, qualifizieren vor und übernehmen deinen Inside Sales. Vom Lead bis zum Abschluss für einen maximalen Erfolg deines Sales."
     },
     "rodeo": {
       "tagline": "Strategische Beratung",
-      "description": "Sales ist Wild West. Wir richten Deinen Vertrieb neu aus, machen ihn skalierbar und führen mit Effizienz zum Wachstum."
+      "description": "Sales ist Wild West. Wir richten deinen Vertrieb neu aus, machen ihn skalierbar und führen mit Effizienz zum Wachstum."
     },
     "oldschool": {
       "tagline": "Authentische Trainings",
@@ -76,20 +76,20 @@
     },
     "salesai": {
       "tagline": "KI für den Vertrieb",
-      "description": "Wir zeigen, welche KI-Tools für Sales wirklich Sinn machen und wie Du Deinen Vertrieb smarter gestaltest."
+      "description": "Wir zeigen dir, welche KI-Tools für Sales wirklich Sinn machen und wie du deinen Vertrieb smarter gestaltest."
     },
     "cta": "Alle Marken entdecken"
   },
   "cta": {
     "title": "Bereit für das nächste",
     "titleHighlight": "Level?",
-    "subtitle": "Lass uns gemeinsam herausfinden, wie wir Deinen Vertrieb transformieren und pushen können.",
+    "subtitle": "Lass uns gemeinsam herausfinden, wie wir deinen Vertrieb transformieren und pushen können.",
     "primary": "Jetzt Kontakt aufnehmen",
     "secondary": "E-Mail schreiben",
     "benefits": "Kostenfreie Erstberatung • Individuelle Lösungen • Individuelle Angebote"
   },
   "footer": {
-    "description": "Wir sind Dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und vier starken Marken bringen wir Dein Unternehmen voran.",
+    "description": "Wir sind dein Partner für erfolgreichen Vertrieb. Mit über 15 Jahren Erfahrung und vier starken Marken bringen wir dein Unternehmen voran.",
     "quickLinks": "Quick Links",
     "ourBrands": "Unsere Marken",
     "contact": "Kontakt",
@@ -444,7 +444,7 @@
       },
       "taxId": {
         "title": "Umsatzsteuer-ID",
-        "content": "Umsatzsteuer-ID gemäß § 27 a Umsatzsteuergesetz: [folgt]"
+        "content": "Umsatzsteuer-ID gemäß § 27 a Umsatzsteuergesetz: DE463759734"
       },
       "register": {
         "title": "Registereintrag",
@@ -481,6 +481,11 @@
     "menuLabel": "Konto",
     "guest": "Gast",
     "providerHint": "Fahre mit Google oder erstelle dein Konto per E-Mail.",
+    "authShellHighlights": [
+      "Verfolge den Status deiner Anfragen",
+      "Verwalte dein Profil an einem Ort",
+      "Sicher verschlüsselt mit Clerk"
+    ],
     "signInPageCta": "Anmeldeseite öffnen",
     "signUpPageCta": "Registrierungsseite öffnen",
     "signIn": "Anmelden",
@@ -1000,5 +1005,15 @@
     "title": "Ausgezeichnet & zertifiziert",
     "salesClub": "Sales-Presidents Club {year}",
     "dsgvo": "DSGVO-konform"
+  },
+  "licenses": {
+    "eyebrow": "Open Source",
+    "title": "Lizenzen",
+    "description": "Diese Website baut auf Open-Source-Software auf. Hier findest du die verwendeten Pakete und ihre jeweiligen Lizenzen.",
+    "searchPlaceholder": "Paket, Lizenz oder Herausgeber suchen …",
+    "searchLabel": "Lizenzen durchsuchen",
+    "resultCount": "{count, plural, =0 {Keine Pakete} one {# Paket} other {# Pakete}}",
+    "repository": "Repository öffnen",
+    "empty": "Keine passenden Lizenzen gefunden."
   }
 }

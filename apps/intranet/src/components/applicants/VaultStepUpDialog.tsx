@@ -7,13 +7,8 @@ import { useAction } from "convex/react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ResponsiveDialog } from "@/components/ui/responsive-dialog";
 
 /**
  * Step-up re-authentication for granting/revoking Applicant Management
@@ -60,45 +55,37 @@ export function VaultStepUpDialog({
   }
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={open}
-      onOpenChange={o => {
+      onOpenChange={(o) => {
         onOpenChange(o);
         if (!o) reset();
       }}
-    >
-      <DialogContent className="max-w-sm gap-0 p-0">
-        <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
-          <DialogTitle>{t("vaultStepUpTitle")}</DialogTitle>
-          <DialogDescription className="mt-1">
-            {t("vaultStepUpDescription")}
-          </DialogDescription>
-        </div>
-        <div className="space-y-2 px-6 py-5">
-          <Input
-            type="password"
-            autoFocus
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            placeholder={t("vaultPasswordPlaceholder")}
-            onKeyDown={e => {
-              if (e.key === "Enter") void submit();
-            }}
-          />
-          {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
-        <div className="flex items-center justify-end gap-2 border-t border-border/70 px-6 py-4">
+      title={t("vaultStepUpTitle")}
+      description={t("vaultStepUpDescription")}
+      contentClassName="max-w-sm"
+      footer={
+        <>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
-          <Button
-            disabled={submitting || !password.trim()}
-            onClick={() => void submit()}
-          >
+          <Button disabled={submitting || !password.trim()} onClick={() => void submit()}>
             {t("vaultUnlock")}
           </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </>
+      }
+    >
+      <Input
+        type="password"
+        autoFocus
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder={t("vaultPasswordPlaceholder")}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") void submit();
+        }}
+      />
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </ResponsiveDialog>
   );
 }

@@ -22,7 +22,7 @@ const DOC: DocContent = {
           items: [
             {
               label: "Zu den Abwesenheiten (Reiter „Genehmigungen“)",
-              href: "/absences",
+              href: "/clockodo/approvals",
             },
           ],
         },

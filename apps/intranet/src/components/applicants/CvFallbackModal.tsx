@@ -2,6 +2,8 @@
 
 import { type UIEvent, useRef, useState } from "react";
 
+import dynamic from "next/dynamic";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useMutation } from "convex/react";
@@ -9,30 +11,23 @@ import { FileText, Pencil, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
-import {
-  RICH_CV_FIELDS,
-  textToHtml,
-} from "@/components/applicants/applicant-types";
-import { PdfViewer } from "@/components/applicants/pdf/PdfViewer";
+import { RICH_CV_FIELDS, textToHtml } from "@/components/applicants/applicant-types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { Textarea } from "@/components/ui/textarea";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  type ExtractedApplicantFields,
-  useApplicantsApi,
-} from "@/lib/applicants-api";
+import { type ExtractedApplicantFields, useApplicantsApi } from "@/lib/applicants-api";
 import { uploadToConvex } from "@/lib/upload";
 import { cn } from "@/lib/utils";
+
+const PdfViewer = dynamic(
+  () => import("@/components/applicants/pdf/PdfViewer").then((mod) => mod.PdfViewer),
+  { ssr: false },
+);
 
 type FieldKey =
   | "name"
@@ -45,13 +40,7 @@ type FieldKey =
   | "berufserfahrung"
   | "zusammenfassung";
 
-const TEXT_FIELDS: FieldKey[] = [
-  "name",
-  "email",
-  "telefon",
-  "geburtsdatum",
-  "position",
-];
+const TEXT_FIELDS: FieldKey[] = ["name", "email", "telefon", "geburtsdatum", "position"];
 /** Short, single-purpose field that still benefits from a couple of lines of room. */
 const TEXTAREA_FIELDS: FieldKey[] = ["adresse"];
 /** Long-form fields where the applicant's actual history/detail lives — these get
@@ -104,13 +93,7 @@ export interface CvFallbackModalProps {
   onSaved: (applicantId: Id<"applicants">) => void;
 }
 
-function FillableFieldLabel({
-  label,
-  origin,
-}: {
-  label: string;
-  origin: Origin | undefined;
-}) {
+function FillableFieldLabel({ label, origin }: { label: string; origin: Origin | undefined }) {
   const t = useTranslations("Applicants");
   return (
     <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -151,12 +134,9 @@ function FillableField({
       <FillableFieldLabel label={label} origin={origin} />
       <Field
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         onFocus={onFocus}
-        className={cn(
-          multiline && "min-h-20",
-          focused && "ring-2 ring-primary"
-        )}
+        className={cn(multiline && "min-h-20", focused && "ring-2 ring-primary")}
       />
     </label>
   );
@@ -219,20 +199,16 @@ export function CvFallbackModal({
   const generateUploadUrl = useMutation(api.applicants.generateUploadUrl);
 
   const [form, setForm] = useState<FormState>(initialValues);
-  const [origins, setOrigins] = useState<
-    Partial<Record<FieldKey | "skills", Origin>>
-  >(() => {
+  const [origins, setOrigins] = useState<Partial<Record<FieldKey | "skills", Origin>>>(() => {
     const initial: Partial<Record<FieldKey | "skills", Origin>> = {};
     for (const key of initialFromPdfFields ?? []) initial[key] = "pdf";
     return initial;
   });
-  const [focusedField, setFocusedField] = useState<FieldKey | "skills" | null>(
-    null
-  );
+  const [focusedField, setFocusedField] = useState<FieldKey | "skills" | null>(null);
   const [skillInput, setSkillInput] = useState("");
-  const [pendingStorageId, setPendingStorageId] = useState<
-    Id<"_storage"> | undefined
-  >(initialPendingStorageId);
+  const [pendingStorageId, setPendingStorageId] = useState<Id<"_storage"> | undefined>(
+    initialPendingStorageId,
+  );
   const [retrying, setRetrying] = useState(false);
   const [saving, setSaving] = useState(false);
   const [pageHasNoText, setPageHasNoText] = useState(false);
@@ -255,8 +231,8 @@ export function CvFallbackModal({
   }
 
   function setField(key: FieldKey, value: string, origin: Origin) {
-    setForm(prev => ({ ...prev, [key]: value }));
-    setOrigins(prev => ({ ...prev, [key]: origin }));
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setOrigins((prev) => ({ ...prev, [key]: origin }));
   }
 
   function handleTextSelected(text: string) {
@@ -267,11 +243,11 @@ export function CvFallbackModal({
     if (focusedField === "skills") {
       const items = text
         .split(/[,;\n]/)
-        .map(s => s.trim())
+        .map((s) => s.trim())
         .filter(Boolean);
       if (items.length) {
-        setForm(prev => ({ ...prev, skills: items }));
-        setOrigins(prev => ({ ...prev, skills: "pdf" }));
+        setForm((prev) => ({ ...prev, skills: items }));
+        setOrigins((prev) => ({ ...prev, skills: "pdf" }));
       }
       return;
     }
@@ -280,7 +256,7 @@ export function CvFallbackModal({
   }
 
   function applyExtracted(extracted: ExtractedApplicantFields) {
-    setForm(prev => {
+    setForm((prev) => {
       const next = { ...prev };
       const newOrigins: Partial<Record<FieldKey | "skills", Origin>> = {};
       for (const key of TEXT_FIELDS.concat(TEXTAREA_FIELDS, RICH_FIELDS)) {
@@ -294,7 +270,7 @@ export function CvFallbackModal({
         next.skills = extracted.skills;
         newOrigins.skills = "pdf";
       }
-      setOrigins(o => ({ ...o, ...newOrigins }));
+      setOrigins((o) => ({ ...o, ...newOrigins }));
       return next;
     });
   }
@@ -338,9 +314,7 @@ export function CvFallbackModal({
         berufserfahrung: form.berufserfahrung.trim() || undefined,
         zusammenfassung: form.zusammenfassung.trim() || undefined,
       };
-      const storageId =
-        pendingStorageId ??
-        (await uploadToConvex(() => generateUploadUrl(), file));
+      const storageId = pendingStorageId ?? (await uploadToConvex(() => generateUploadUrl(), file));
 
       if (mode === "create") {
         const newApplicantId = await createApplicant(fields);
@@ -368,12 +342,7 @@ export function CvFallbackModal({
   function renderFormFields() {
     return (
       <div className="space-y-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void handleRetry()}
-          disabled={retrying}
-        >
+        <Button variant="outline" size="sm" onClick={() => void handleRetry()} disabled={retrying}>
           {retrying ? t("retrying") : t("retryExtraction")}
         </Button>
 
@@ -383,19 +352,17 @@ export function CvFallbackModal({
           </p>
         )}
         {selectionHintShown && !focusedField && (
-          <p className="text-xs text-muted-foreground">
-            {t("selectFieldFirstHint")}
-          </p>
+          <p className="text-xs text-muted-foreground">{t("selectFieldFirstHint")}</p>
         )}
 
-        {TEXT_FIELDS.map(key => (
+        {TEXT_FIELDS.map((key) => (
           <FillableField
             key={key}
             label={t(FIELD_LABEL_KEY[key])}
             value={form[key]}
             origin={origins[key]}
             focused={focusedField === key}
-            onChange={v => setField(key, v, "manual")}
+            onChange={(v) => setField(key, v, "manual")}
             onFocus={() => setFocusedField(key)}
           />
         ))}
@@ -416,26 +383,26 @@ export function CvFallbackModal({
           <div
             className={cn(
               "flex gap-2 rounded-md",
-              focusedField === "skills" && "ring-2 ring-primary"
+              focusedField === "skills" && "ring-2 ring-primary",
             )}
           >
             <Input
               value={skillInput}
               onFocus={() => setFocusedField("skills")}
-              onChange={e => setSkillInput(e.target.value)}
-              onKeyDown={e => {
+              onChange={(e) => setSkillInput(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
                 e.preventDefault();
                 const items = skillInput
                   .split(/[,;\n]/)
-                  .map(s => s.trim())
+                  .map((s) => s.trim())
                   .filter(Boolean);
                 if (!items.length) return;
-                setForm(prev => ({
+                setForm((prev) => ({
                   ...prev,
                   skills: [...new Set([...prev.skills, ...items])],
                 }));
-                setOrigins(prev => ({ ...prev, skills: "manual" }));
+                setOrigins((prev) => ({ ...prev, skills: "manual" }));
                 setSkillInput("");
               }}
               placeholder={t("skillsPlaceholder")}
@@ -443,16 +410,16 @@ export function CvFallbackModal({
           </div>
           {form.skills.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
-              {form.skills.map(s => (
+              {form.skills.map((s) => (
                 <Badge key={s} variant="muted" className="gap-1.5 pr-1.5">
                   {s}
                   <button
                     type="button"
                     aria-label={t("removeSkill", { skill: s })}
                     onClick={() =>
-                      setForm(prev => ({
+                      setForm((prev) => ({
                         ...prev,
-                        skills: prev.skills.filter(x => x !== s),
+                        skills: prev.skills.filter((x) => x !== s),
                       }))
                     }
                     className="rounded-full px-1 text-muted-foreground hover:bg-background"
@@ -465,7 +432,7 @@ export function CvFallbackModal({
           )}
         </div>
 
-        {TEXTAREA_FIELDS.map(key => (
+        {TEXTAREA_FIELDS.map((key) => (
           <FillableField
             key={key}
             label={t(FIELD_LABEL_KEY[key])}
@@ -473,12 +440,12 @@ export function CvFallbackModal({
             origin={origins[key]}
             focused={focusedField === key}
             multiline
-            onChange={v => setField(key, v, "manual")}
+            onChange={(v) => setField(key, v, "manual")}
             onFocus={() => setFocusedField(key)}
           />
         ))}
 
-        {RICH_FIELDS.map(key => (
+        {RICH_FIELDS.map((key) => (
           <FillableRichField
             key={key}
             label={t(FIELD_LABEL_KEY[key])}
@@ -486,7 +453,7 @@ export function CvFallbackModal({
             origin={origins[key]}
             focused={focusedField === key}
             placeholder={t("richFieldPlaceholder")}
-            onChange={v => setField(key, v, "manual")}
+            onChange={(v) => setField(key, v, "manual")}
             onFocus={() => setFocusedField(key)}
           />
         ))}
@@ -500,9 +467,7 @@ export function CvFallbackModal({
         <DialogContent className="flex h-[92vh] w-[95vw] max-w-md flex-col gap-0 p-0">
           <div className="border-b border-border/70 px-4 pb-3 pt-5 pr-12">
             <DialogTitle className="text-base leading-snug">
-              {mode === "create"
-                ? t("fallbackModalTitle")
-                : t("fallbackModalTitleUpdate")}
+              {mode === "create" ? t("fallbackModalTitle") : t("fallbackModalTitleUpdate")}
             </DialogTitle>
             <DialogDescription className="mt-1 text-xs">
               {t("fallbackModalDescriptionMobile")}
@@ -515,9 +480,7 @@ export function CvFallbackModal({
               onClick={() => scrollToPage(0)}
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                mobilePage === 0
-                  ? "bg-accent text-foreground"
-                  : "text-muted-foreground"
+                mobilePage === 0 ? "bg-accent text-foreground" : "text-muted-foreground",
               )}
             >
               <Pencil className="size-3.5" />
@@ -528,9 +491,7 @@ export function CvFallbackModal({
               onClick={() => scrollToPage(1)}
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                mobilePage === 1
-                  ? "bg-accent text-foreground"
-                  : "text-muted-foreground"
+                mobilePage === 1 ? "bg-accent text-foreground" : "text-muted-foreground",
               )}
             >
               <FileText className="size-3.5" />
@@ -556,11 +517,7 @@ export function CvFallbackModal({
           </div>
 
           <div className="flex items-center justify-end gap-2 border-t border-border/70 px-4 py-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
               {tc("cancel")}
             </Button>
             <Button
@@ -581,13 +538,9 @@ export function CvFallbackModal({
       <DialogContent className="flex h-[88vh] w-[92vw] max-w-[1400px] flex-col gap-0 p-0">
         <div className="border-b border-border/70 px-6 pb-4 pt-6 pr-12">
           <DialogTitle>
-            {mode === "create"
-              ? t("fallbackModalTitle")
-              : t("fallbackModalTitleUpdate")}
+            {mode === "create" ? t("fallbackModalTitle") : t("fallbackModalTitleUpdate")}
           </DialogTitle>
-          <DialogDescription className="mt-1">
-            {t("fallbackModalDescription")}
-          </DialogDescription>
+          <DialogDescription className="mt-1">{t("fallbackModalDescription")}</DialogDescription>
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(320px,420px)_1fr]">
@@ -608,10 +561,7 @@ export function CvFallbackModal({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
-          <Button
-            onClick={() => void handleSave()}
-            disabled={saving || !form.name.trim()}
-          >
+          <Button onClick={() => void handleSave()} disabled={saving || !form.name.trim()}>
             {saving ? t("uploading") : t("saveManualEntry")}
           </Button>
         </div>

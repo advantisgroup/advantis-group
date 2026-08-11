@@ -2,6 +2,8 @@
 
 import { type ReactNode, useEffect, useMemo, useState } from "react";
 
+import dynamic from "next/dynamic";
+
 import { api } from "@advantis/convex/api";
 import { type Id } from "@advantis/convex/dataModel";
 import { useQuery } from "convex/react";
@@ -18,26 +20,27 @@ import {
   DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { downloadWithProgress } from "@/lib/download";
 import { formatDateTime } from "@/lib/format";
+import { useOneDriveApi } from "@/lib/onedrive-api";
 import { formatFileSize } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
 import { detectFileKind, type FileKind } from "./file-kind";
-import { PdfPreview } from "./PdfPreview";
 
 import type { ViewableFile } from "./FileViewerProvider";
+
+const PdfPreview = dynamic(() => import("./PdfPreview").then((mod) => mod.PdfPreview), {
+  ssr: false,
+  loading: () => <Loader2 className="size-6 animate-spin text-white/70" />,
+});
+
+const DocxPreview = dynamic(() => import("./DocxPreview").then((mod) => mod.DocxPreview), {
+  ssr: false,
+  loading: () => <Loader2 className="size-6 animate-spin text-white/70" />,
+});
 
 async function downloadUrl(url: string, name: string, label: string) {
   try {
@@ -66,8 +69,8 @@ function CodeOrTextPreview({
   useEffect(() => {
     let cancelled = false;
     void fetch(url)
-      .then(res => res.text())
-      .then(async raw => {
+      .then((res) => res.text())
+      .then(async (raw) => {
         if (cancelled) return;
         if (kind.kind === "text") {
           setText(raw);
@@ -111,15 +114,7 @@ function CodeOrTextPreview({
 }
 
 /** A single label/value line in the metadata popout, truncating long values with a title tooltip. */
-function MetadataRow({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: string;
-  href?: string;
-}) {
+function MetadataRow({ label, value, href }: { label: string; value: string; href?: string }) {
   return (
     <>
       <dt className="text-muted-foreground">{label}</dt>
@@ -182,7 +177,7 @@ async function readExif(url: string): Promise<ExifSummary | null> {
         translateValues: true,
         reviveValues: true,
         mergeOutput: true,
-      })
+      }),
     )
     .catch(() => null);
   if (!rawTags) return null;
@@ -197,24 +192,18 @@ async function readExif(url: string): Promise<ExifSummary | null> {
   const summary: ExifSummary = {
     camera: camera || undefined,
     lens: typeof tags.LensModel === "string" ? tags.LensModel : undefined,
-    aperture:
-      typeof tags.FNumber === "number" ? `f/${tags.FNumber}` : undefined,
+    aperture: typeof tags.FNumber === "number" ? `f/${tags.FNumber}` : undefined,
     shutterSpeed:
-      typeof tags.ExposureTime === "number"
-        ? formatShutterSpeed(tags.ExposureTime)
-        : undefined,
+      typeof tags.ExposureTime === "number" ? formatShutterSpeed(tags.ExposureTime) : undefined,
     iso: typeof tags.ISO === "number" ? `ISO ${tags.ISO}` : undefined,
     focalLength:
-      typeof tags.FocalLength === "number"
-        ? `${Math.round(tags.FocalLength)}mm`
-        : undefined,
-    dateTaken:
-      tags.DateTimeOriginal instanceof Date ? tags.DateTimeOriginal : undefined,
+      typeof tags.FocalLength === "number" ? `${Math.round(tags.FocalLength)}mm` : undefined,
+    dateTaken: tags.DateTimeOriginal instanceof Date ? tags.DateTimeOriginal : undefined,
     latitude: typeof tags.latitude === "number" ? tags.latitude : undefined,
     longitude: typeof tags.longitude === "number" ? tags.longitude : undefined,
   };
 
-  const hasAnyField = Object.values(summary).some(v => v !== undefined);
+  const hasAnyField = Object.values(summary).some((v) => v !== undefined);
   return hasAnyField ? summary : null;
 }
 
@@ -229,6 +218,8 @@ function ArchiveDownloadConfirm({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("FileViewer");
+  const od = useOneDriveApi();
+  const canDownload = Boolean(url) || Boolean(file.oneDriveItemId);
   return (
     <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md gap-0 p-0">
@@ -236,18 +227,17 @@ function ArchiveDownloadConfirm({
           <DialogTitle className="leading-snug">
             {t("archiveTitle", { name: file.name })}
           </DialogTitle>
-          <DialogDescription className="mt-2 leading-relaxed">
-            {t("archiveDesc")}
-          </DialogDescription>
+          <DialogDescription className="mt-2 leading-relaxed">{t("archiveDesc")}</DialogDescription>
         </div>
         <DialogFooter className="mx-0 mb-0 mt-0 px-6 py-4">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("cancel")}
           </Button>
           <Button
-            disabled={!url}
+            disabled={!canDownload}
             onClick={() => {
-              if (url) void downloadUrl(url, file.name, t("downloading"));
+              if (file.oneDriveItemId) void od.download(file.oneDriveItemId, file.name);
+              else if (url) void downloadUrl(url, file.name, t("downloading"));
               onOpenChange(false);
             }}
             autoFocus
@@ -266,15 +256,20 @@ function FileViewerContent({
   file,
   url,
   kind,
+  isOneDriveOrigin,
+  previewLoading,
   onClose,
 }: {
   file: ViewableFile;
   url: string | undefined;
   kind: FileKind;
+  isOneDriveOrigin: boolean;
+  previewLoading: boolean;
   onClose: () => void;
 }) {
   const t = useTranslations("FileViewer");
   const locale = useLocale();
+  const od = useOneDriveApi();
   const [metadataOpen, setMetadataOpen] = useState(false);
   // Dimensions the browser actually decoded from the image, rather than
   // whatever (possibly stale/unset) width/height was passed in with the file.
@@ -284,15 +279,10 @@ function FileViewerContent({
   } | null>(null);
 
   const dimensions =
-    naturalSize ??
-    (file.width && file.height
-      ? { width: file.width, height: file.height }
-      : null);
+    naturalSize ?? (file.width && file.height ? { width: file.width, height: file.height } : null);
 
   const [exif, setExif] = useState<ExifSummary | null>(null);
-  const [exifStatus, setExifStatus] = useState<"idle" | "loading" | "done">(
-    "idle"
-  );
+  const [exifStatus, setExifStatus] = useState<"idle" | "loading" | "done">("idle");
 
   // Deliberately excludes exifStatus from the deps below: this effect sets
   // it, so depending on it would re-trigger the effect (and cancel its own
@@ -303,7 +293,7 @@ function FileViewerContent({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setExifStatus("loading");
     void readExif(url)
-      .then(summary => {
+      .then((summary) => {
         if (cancelled) return;
         setExif(summary);
       })
@@ -330,35 +320,43 @@ function FileViewerContent({
       label: t("download"),
       icon: <Download className="size-4" />,
       onSelect: () => {
-        if (url) void downloadUrl(url, file.name, t("downloading"));
+        // OneDrive items: go through the authenticated /onedrive/download
+        // route by id — `url` there is a Graph preview/thumbnail link, not
+        // something a plain unauthenticated download fetch can read.
+        if (isOneDriveOrigin && file.oneDriveItemId) {
+          void od.download(file.oneDriveItemId, file.name);
+        } else if (url) {
+          void downloadUrl(url, file.name, t("downloading"));
+        }
       },
     },
-    {
-      key: "copy-link",
-      label: t("copyLink"),
-      icon: <Copy className="size-4" />,
-      onSelect: () => {
-        if (!url) return;
-        const contentType = kind.kind === "image" ? "image" : "file";
-        const publicUrl = `${process.env.NEXT_PUBLIC_MARKETING_URL}/content/${contentType}/${file.storageId}`;
-        void navigator.clipboard
-          .writeText(publicUrl)
-          .then(() => toast.success(t("linkCopied")));
-      },
-    },
+    // No storage-backed public content URL exists for a OneDrive-origin
+    // file, so there's nothing stable to copy.
+    ...(isOneDriveOrigin
+      ? []
+      : [
+          {
+            key: "copy-link",
+            label: t("copyLink"),
+            icon: <Copy className="size-4" />,
+            onSelect: () => {
+              if (!url) return;
+              const contentType = kind.kind === "image" ? "image" : "file";
+              const publicUrl = `${process.env.NEXT_PUBLIC_MARKETING_URL}/content/${contentType}/${file.storageId}`;
+              void navigator.clipboard
+                .writeText(publicUrl)
+                .then(() => toast.success(t("linkCopied")));
+            },
+          },
+        ]),
   ];
 
   return (
-    <div
-      className="flex h-full w-full flex-col"
-      onClick={e => e.stopPropagation()}
-    >
+    <div className="flex h-full w-full flex-col" onClick={(e) => e.stopPropagation()}>
       <TooltipProvider delayDuration={300}>
         <div className="flex shrink-0 items-center gap-1 px-4 py-3 text-white sm:px-6">
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">
-            {file.name}
-          </span>
-          {actions.map(action => (
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{file.name}</span>
+          {actions.map((action) => (
             <Tooltip key={action.key}>
               <TooltipTrigger asChild>
                 <Button
@@ -369,7 +367,7 @@ function FileViewerContent({
                   onClick={action.onSelect}
                   className={cn(
                     "shrink-0 text-white hover:bg-white/10 hover:text-white",
-                    action.active && "bg-white/10"
+                    action.active && "bg-white/10",
                   )}
                 >
                   {action.icon}
@@ -387,26 +385,18 @@ function FileViewerContent({
                 aria-pressed={metadataOpen}
                 className={cn(
                   "shrink-0 text-white hover:bg-white/10 hover:text-white",
-                  metadataOpen && "bg-white/10"
+                  metadataOpen && "bg-white/10",
                 )}
               >
                 <Info className="size-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              className="z-[110] w-80 text-foreground"
-            >
+            <PopoverContent align="end" className="z-[110] w-80 text-foreground">
               <dl className="grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
                 <MetadataRow label={t("name")} value={file.name} />
-                {file.contentType && (
-                  <MetadataRow label={t("type")} value={file.contentType} />
-                )}
+                {file.contentType && <MetadataRow label={t("type")} value={file.contentType} />}
                 {typeof file.size === "number" && (
-                  <MetadataRow
-                    label={t("size")}
-                    value={formatFileSize(file.size)}
-                  />
+                  <MetadataRow label={t("size")} value={formatFileSize(file.size)} />
                 )}
                 {dimensions && (
                   <MetadataRow
@@ -435,47 +425,29 @@ function FileViewerContent({
                     {t("camera")}
                   </p>
                   <dl className="mt-1.5 grid grid-cols-[auto_1fr] items-baseline gap-x-3 gap-y-1.5 text-xs">
-                    {exif.camera && (
-                      <MetadataRow label={t("camera")} value={exif.camera} />
-                    )}
-                    {exif.lens && (
-                      <MetadataRow label={t("lens")} value={exif.lens} />
-                    )}
+                    {exif.camera && <MetadataRow label={t("camera")} value={exif.camera} />}
+                    {exif.lens && <MetadataRow label={t("lens")} value={exif.lens} />}
                     {exif.dateTaken && (
                       <MetadataRow
                         label={t("dateTaken")}
                         value={formatDateTime(exif.dateTaken.getTime(), locale)}
                       />
                     )}
-                    {exif.aperture && (
-                      <MetadataRow
-                        label={t("aperture")}
-                        value={exif.aperture}
-                      />
-                    )}
+                    {exif.aperture && <MetadataRow label={t("aperture")} value={exif.aperture} />}
                     {exif.shutterSpeed && (
-                      <MetadataRow
-                        label={t("shutterSpeed")}
-                        value={exif.shutterSpeed}
-                      />
+                      <MetadataRow label={t("shutterSpeed")} value={exif.shutterSpeed} />
                     )}
-                    {exif.iso && (
-                      <MetadataRow label={t("iso")} value={exif.iso} />
-                    )}
+                    {exif.iso && <MetadataRow label={t("iso")} value={exif.iso} />}
                     {exif.focalLength && (
+                      <MetadataRow label={t("focalLength")} value={exif.focalLength} />
+                    )}
+                    {typeof exif.latitude === "number" && typeof exif.longitude === "number" && (
                       <MetadataRow
-                        label={t("focalLength")}
-                        value={exif.focalLength}
+                        label={t("location")}
+                        value={`${exif.latitude.toFixed(5)}, ${exif.longitude.toFixed(5)}`}
+                        href={`https://www.google.com/maps?q=${exif.latitude},${exif.longitude}`}
                       />
                     )}
-                    {typeof exif.latitude === "number" &&
-                      typeof exif.longitude === "number" && (
-                        <MetadataRow
-                          label={t("location")}
-                          value={`${exif.latitude.toFixed(5)}, ${exif.longitude.toFixed(5)}`}
-                          href={`https://www.google.com/maps?q=${exif.latitude},${exif.longitude}`}
-                        />
-                      )}
                   </dl>
                 </>
               )}
@@ -499,13 +471,13 @@ function FileViewerContent({
       </TooltipProvider>
 
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden px-4 pb-6 sm:px-6">
-        {!url ? (
+        {previewLoading ? (
           <Loader2 className="size-6 animate-spin text-white/70" />
-        ) : kind.kind === "image" ? (
+        ) : kind.kind === "image" && url ? (
           <img
             src={url}
             alt={file.name}
-            onLoad={e =>
+            onLoad={(e) =>
               setNaturalSize({
                 width: e.currentTarget.naturalWidth,
                 height: e.currentTarget.naturalHeight,
@@ -513,14 +485,12 @@ function FileViewerContent({
             }
             className="max-h-full max-w-full rounded-lg object-contain shadow-2xl"
           />
-        ) : kind.kind === "pdf" ? (
+        ) : kind.kind === "pdf" && url ? (
           <PdfPreview url={url} />
-        ) : kind.kind === "code" || kind.kind === "text" ? (
-          <CodeOrTextPreview
-            url={url}
-            kind={kind}
-            noPreviewLabel={t("noPreview")}
-          />
+        ) : kind.kind === "docx" && url ? (
+          <DocxPreview url={url} />
+        ) : (kind.kind === "code" || kind.kind === "text") && url && !isOneDriveOrigin ? (
+          <CodeOrTextPreview url={url} kind={kind} noPreviewLabel={t("noPreview")} />
         ) : (
           <div className="flex flex-col items-center gap-3 text-white/80">
             <FileQuestion className="size-10" />
@@ -528,7 +498,13 @@ function FileViewerContent({
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => downloadUrl(url, file.name, t("downloading"))}
+              onClick={() => {
+                if (isOneDriveOrigin && file.oneDriveItemId) {
+                  void od.download(file.oneDriveItemId, file.name);
+                } else if (url) {
+                  void downloadUrl(url, file.name, t("downloading"));
+                }
+              }}
             >
               <Download className="size-4" />
               {t("download")}
@@ -568,16 +544,85 @@ export function GlobalFileViewer({
     };
   }, [file, onClose]);
 
-  const kind = useMemo(
-    () => (file ? detectFileKind(file.name, file.contentType) : null),
-    [file]
-  );
+  const kind = useMemo(() => (file ? detectFileKind(file.name, file.contentType) : null), [file]);
+  const isOneDriveOrigin = Boolean(file?.oneDriveItemId && !file.url);
 
   const resolvedUrl = useQuery(
     api.files.getUrl,
-    file && !file.url ? { storageId: file.storageId as Id<"_storage"> } : "skip"
+    // `oneDriveItemId` and `storageId` are mutually exclusive in practice —
+    // a caller mistakenly setting both must not still fire a (guaranteed
+    // to fail) Convex storage lookup against an id from a different table.
+    file && !file.url && !file.oneDriveItemId && file.storageId
+      ? { storageId: file.storageId as Id<"_storage"> }
+      : "skip",
   );
-  const url = file?.url ?? resolvedUrl ?? undefined;
+
+  const od = useOneDriveApi();
+  const [oneDrivePreview, setOneDrivePreview] = useState<{
+    itemId: string;
+    url: string | undefined;
+  } | null>(null);
+  useEffect(() => {
+    if (!isOneDriveOrigin || !file?.oneDriveItemId || !kind) return;
+    const itemId = file.oneDriveItemId;
+    let cancelled = false;
+    let objectUrl: string | undefined;
+
+    if (kind.kind === "image") {
+      // A real thumbnail image — no Office/PDF Online embed involved.
+      void od
+        .preview(itemId)
+        .then((r) => {
+          if (!cancelled) setOneDrivePreview({ itemId, url: r.thumbnailUrl ?? r.previewUrl });
+        })
+        .catch(() => {
+          if (!cancelled) setOneDrivePreview({ itemId, url: undefined });
+        });
+    } else if (kind.kind === "pdf" || kind.kind === "docx") {
+      // Rendered natively through `PdfPreview`/`DocxPreview` (same as a
+      // Convex-storage file of that kind) rather than Graph's embeddable
+      // preview iframe — fetches the actual bytes through the authenticated
+      // download route and hands react-pdf/mammoth a local blob URL.
+      void od
+        .downloadAsFile({ id: itemId, name: file.name, mimeType: file.contentType })
+        .then((f) => {
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(f);
+          setOneDrivePreview({ itemId, url: objectUrl });
+        })
+        .catch(() => {
+          if (!cancelled) setOneDrivePreview({ itemId, url: undefined });
+        });
+    } else {
+      // Nothing else gets an inline preview — straight to "no preview,
+      // download instead".
+      setOneDrivePreview({ itemId, url: undefined });
+    }
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      // The blob URL just revoked is dead, but the state still holds it —
+      // and `oneDrivePreviewReady` only compares itemIds, so reopening the
+      // same file would report "ready" and hand PdfPreview the revoked URL
+      // while the fresh download was still in flight. That's what made a
+      // preview work exactly once and fail on every reopen.
+      setOneDrivePreview(null);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOneDriveOrigin, file?.oneDriveItemId, kind?.kind]);
+
+  const oneDrivePreviewReady = Boolean(
+    !isOneDriveOrigin || oneDrivePreview?.itemId === file?.oneDriveItemId,
+  );
+  const url =
+    file?.url ??
+    resolvedUrl ??
+    (isOneDriveOrigin && oneDrivePreviewReady ? oneDrivePreview?.url : undefined) ??
+    undefined;
+  const previewLoading = isOneDriveOrigin
+    ? !oneDrivePreviewReady
+    : !file?.url && resolvedUrl === undefined;
 
   if (!mounted || !file || !kind) return null;
 
@@ -586,7 +631,7 @@ export function GlobalFileViewer({
       <ArchiveDownloadConfirm
         file={file}
         url={url}
-        onOpenChange={open => {
+        onOpenChange={(open) => {
           if (!open) onClose();
         }}
       />
@@ -599,13 +644,15 @@ export function GlobalFileViewer({
       onClick={onClose}
     >
       <FileViewerContent
-        key={file.storageId}
+        key={file.storageId ?? file.oneDriveItemId ?? file.name}
         file={file}
         url={url}
         kind={kind}
+        isOneDriveOrigin={isOneDriveOrigin}
+        previewLoading={previewLoading}
         onClose={onClose}
       />
     </div>,
-    document.body
+    document.body,
   );
 }

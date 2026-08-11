@@ -17,9 +17,12 @@ export const sendNotificationEmail = internalAction({
       v.literal("access-denied"),
       v.literal("absence-decision"),
       v.literal("upload-decision"),
-      v.literal("guest-invite"),
       v.literal("chat-reinvite"),
-      v.literal("digest")
+      v.literal("digest"),
+      v.literal("academy-invite"),
+      v.literal("password-reset-request"),
+      v.literal("password-reset-link"),
+      v.literal("admin-verification-code"),
     ),
     to: v.string(),
     data: v.any(),
@@ -29,7 +32,7 @@ export const sendNotificationEmail = internalAction({
     const serverKey = process.env.CONVEX_SERVER_KEY;
     if (!baseUrl || !serverKey) {
       console.warn(
-        `[outbound] skipping ${args.kind} email to ${args.to} — API_URL/CONVEX_SERVER_KEY not set`
+        `[outbound] skipping ${args.kind} email to ${args.to} — API_URL/CONVEX_SERVER_KEY not set`,
       );
       return { sent: false };
     }
@@ -43,9 +46,7 @@ export const sendNotificationEmail = internalAction({
         body: JSON.stringify({ kind: args.kind, to: args.to, data: args.data }),
       });
       if (!res.ok) {
-        console.error(
-          `[outbound] ${args.kind} email failed: ${res.status} ${await res.text()}`
-        );
+        console.error(`[outbound] ${args.kind} email failed: ${res.status} ${await res.text()}`);
         return { sent: false };
       }
       return { sent: true };

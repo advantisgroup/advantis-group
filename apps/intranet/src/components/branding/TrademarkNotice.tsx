@@ -14,13 +14,6 @@ export function TrademarkNotice({ className }: { className?: string }) {
   const locale = useLocale();
   const text = locale === "de" ? TEXT.de : TEXT.en;
   return (
-    <p
-      className={cn(
-        "text-[11px] leading-relaxed text-muted-foreground/70",
-        className
-      )}
-    >
-      {text}
-    </p>
+    <p className={cn("text-[11px] leading-relaxed text-muted-foreground/70", className)}>{text}</p>
   );
 }

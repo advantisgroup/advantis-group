@@ -43,10 +43,7 @@ function keyFor(version: number, folderId: string, scope: string): string {
   return `${PREFIX}${version}:${scope}:${folderId}`;
 }
 
-export async function getCachedListing<T>(
-  folderId: string,
-  scope: string
-): Promise<T | null> {
+export async function getCachedListing<T>(folderId: string, scope: string): Promise<T | null> {
   const client = getRedis();
   if (!client) return null;
   try {
@@ -61,7 +58,7 @@ export async function getCachedListing<T>(
 export async function setCachedListing<T>(
   folderId: string,
   scope: string,
-  value: T
+  value: T,
 ): Promise<void> {
   const client = getRedis();
   if (!client) return;
