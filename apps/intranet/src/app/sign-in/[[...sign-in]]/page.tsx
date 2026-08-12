@@ -1,6 +1,7 @@
 import { SignIn } from "@clerk/nextjs";
 
 import { AuthShell } from "@/components/layout/AuthShell";
+import { PasskeySignInLink } from "@/components/passkeys/PasskeySignInLink";
 
 export default function SignInPage() {
   return (
@@ -14,6 +15,7 @@ export default function SignInPage() {
           },
         }}
       />
+      <PasskeySignInLink />
     </AuthShell>
   );
 }

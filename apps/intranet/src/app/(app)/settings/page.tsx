@@ -55,6 +55,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { UpdatesEmailConsent } from "@/components/updates/UpdatesEmailConsent";
+import { PasskeySettingsCard } from "@/components/passkeys/PasskeySettingsCard";
 import { useErrorHandler } from "@/hooks/use-error-handler";
 import { initials, roleLabel } from "@/lib/format";
 import { cropToSquare } from "@/lib/image";
@@ -467,6 +468,8 @@ export default function SettingsPage() {
       </Card>
 
       <AppPreferencesCard />
+
+      <PasskeySettingsCard />
 
       <ConnectionsCard />
 

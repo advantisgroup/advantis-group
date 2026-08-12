@@ -91,6 +91,13 @@ crons.daily(
   {},
 );
 
+crons.hourly(
+  "passkeys: purge expired challenges",
+  { minuteUTC: 55 },
+  internal.passkeys.purgeExpiredChallenges,
+  {},
+);
+
 // Keep the OneDrive change-notification subscription fresh (renew well within
 // its expiry) so the file-listing cache invalidates promptly on changes.
 crons.daily(

@@ -283,6 +283,7 @@ export default defineSchema({
     dateOfBirth: v.optional(v.string()),
     /** Opt-in: show `dateOfBirth` (day/month only) to the rest of the org. */
     showBirthdayPublicly: v.optional(v.boolean()),
+    webauthnUserId: v.optional(v.string()),
     /**
      * "YYYY-MM-DD", editable only by Managers+ (see `users.setHireDate`) —
      * drives the overview's work-anniversary shoutouts.
@@ -299,6 +300,58 @@ export default defineSchema({
     .index("by_clockodoUserId", ["clockodoUserId"])
     .index("by_avatarStorageId", ["avatarStorageId"])
     .index("by_managerId", ["managerId"]),
+
+  passkeys: defineTable({
+    userId: v.id("users"),
+    credentialId: v.string(),
+    publicKey: v.string(),
+    counter: v.number(),
+    transports: v.optional(
+      v.array(
+        v.union(
+          v.literal("ble"),
+          v.literal("cable"),
+          v.literal("hybrid"),
+          v.literal("internal"),
+          v.literal("nfc"),
+          v.literal("smart-card"),
+          v.literal("usb"),
+        ),
+      ),
+    ),
+    deviceType: v.union(v.literal("singleDevice"), v.literal("multiDevice")),
+    backedUp: v.boolean(),
+    name: v.string(),
+    createdAt: v.number(),
+    lastUsedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_credentialId", ["credentialId"]),
+
+  passkeyChallenges: defineTable({
+    flowId: v.string(),
+    challenge: v.string(),
+    kind: v.union(v.literal("registration"), v.literal("authentication")),
+    userId: v.optional(v.id("users")),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  })
+    .index("by_flowId", ["flowId"])
+    .index("by_expiresAt", ["expiresAt"]),
+
+  passkeyAuditLog: defineTable({
+    userId: v.id("users"),
+    passkeyId: v.optional(v.id("passkeys")),
+    event: v.union(
+      v.literal("created"),
+      v.literal("used"),
+      v.literal("renamed"),
+      v.literal("removed"),
+    ),
+    at: v.number(),
+  })
+    .index("by_user_at", ["userId", "at"])
+    .index("by_passkey", ["passkeyId"]),
 
   /**
    * Canonical org departments. Replaces the free-text `users.department` —

@@ -104,6 +104,7 @@ import type * as onedrive from "../onedrive.js";
 import type * as orgData from "../orgData.js";
 import type * as orgDataMigration from "../orgDataMigration.js";
 import type * as outbound from "../outbound.js";
+import type * as passkeys from "../passkeys.js";
 import type * as passwordResets from "../passwordResets.js";
 import type * as performance_lib_callImport from "../performance/lib/callImport.js";
 import type * as performance_lib_interactionImport from "../performance/lib/interactionImport.js";
@@ -242,6 +243,7 @@ declare const fullApi: ApiFromModules<{
   orgData: typeof orgData;
   orgDataMigration: typeof orgDataMigration;
   outbound: typeof outbound;
+  passkeys: typeof passkeys;
   passwordResets: typeof passwordResets;
   "performance/lib/callImport": typeof performance_lib_callImport;
   "performance/lib/interactionImport": typeof performance_lib_interactionImport;
