@@ -237,16 +237,19 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick actions */}
-      <div className="mb-6 flex flex-wrap items-center gap-2" data-tour="tour-dashboard-actions">
+      <div
+        className="-mx-1 mb-6 flex items-center gap-2 overflow-x-auto px-1 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+        data-tour="tour-dashboard-actions"
+      >
         {isManager && (
           <>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="h-10 shrink-0 sm:h-8" asChild>
               <Link href="/calendar?new=1">
                 <CalendarPlus className="mr-1.5 size-3.5" />
                 {t("actionNewEvent")}
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="h-10 shrink-0 sm:h-8" asChild>
               <Link href="/announcements/new">
                 <Megaphone className="mr-1.5 size-3.5" />
                 {t("actionNewAnnouncement")}
@@ -254,13 +257,13 @@ export default function DashboardPage() {
             </Button>
           </>
         )}
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" className="h-10 shrink-0 sm:h-8" asChild>
           <Link href="/files">
             <Upload className="mr-1.5 size-3.5" />
             {t("actionUpload")}
           </Link>
         </Button>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size="sm" className="h-10 shrink-0 sm:h-8" asChild>
           <Link href="/sales-cockpit">
             <PhoneCall className="mr-1.5 size-3.5" />
             {t("actionSalesCockpit")}

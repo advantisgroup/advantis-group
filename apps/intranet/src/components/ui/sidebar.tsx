@@ -158,6 +158,7 @@ export function Sidebar({
         onOpenChange={setOpenMobile}
         ariaLabel={ariaLabel}
         data-tour={dataTour}
+        className="h-[94dvh]"
       >
         {children}
       </MobileDrawer>

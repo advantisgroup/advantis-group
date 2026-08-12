@@ -362,7 +362,7 @@ export function Sidebar() {
 
   return (
     <SidebarShell ariaLabel="Advantis Intranet" data-tour="tour-sidebar">
-      <SidebarHeader className="h-auto flex-col items-stretch justify-start gap-3 py-4 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-0">
+      <SidebarHeader className="h-auto flex-col items-stretch justify-start gap-4 border-b border-sidebar-border px-4 pb-4 pt-3 md:gap-3 md:border-0 md:px-4 md:py-4 group-data-[state=collapsed]/sidebar:items-center group-data-[state=collapsed]/sidebar:px-0">
         <Link href="/" onClick={close} aria-label="Advantis Intranet" className="flex items-center">
           {state === "collapsed" ? <MarkLogo size={28} className="size-7" /> : <WordmarkLogo />}
         </Link>
@@ -459,19 +459,16 @@ export function Sidebar() {
         )}
       </SidebarContent>
 
-      {/* Roomier on mobile: this footer is the bottom of a sheet a thumb
-          reaches into, so its rows get tap-target height and the branding
-          line gets space of its own instead of sitting on top of them. */}
-      <SidebarFooter className="py-4 md:py-3">
+      <SidebarFooter className="gap-4 py-5 md:gap-3 md:py-3">
         {/* The top bar stays minimal on mobile, so the account and preferences
             controls live here at the bottom-left of the sidebar. On desktop
             they remain in the header, so this row is hidden there. */}
-        <div className="flex items-center gap-1 border-b border-sidebar-border pb-3 md:hidden">
+        <div className="flex items-center gap-2 rounded-xl bg-sidebar-accent/60 p-1.5 md:hidden">
           <AccountMenu
-            triggerClassName="h-10 flex-1 justify-start hover:bg-sidebar-accent"
+            triggerClassName="h-11 flex-1 justify-start px-2 hover:bg-sidebar"
             onNavigate={close}
           />
-          <SettingsMenu className="shrink-0 hover:bg-sidebar-accent" />
+          <SettingsMenu className="size-11 shrink-0 hover:bg-sidebar" />
         </div>
         {/* Collapsed desktop rail has no room for the header's account
             trigger to be reachable at a glance, so it gets its own
@@ -501,7 +498,7 @@ export function Sidebar() {
             <Link
               href="/updates"
               onClick={close}
-              className="flex items-center gap-2 rounded-md px-2 py-2.5 text-sm font-medium text-sidebar-foreground/60 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 md:py-1.5 md:text-xs"
+              className="flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[state=collapsed]/sidebar:justify-center group-data-[state=collapsed]/sidebar:px-0 md:h-auto md:rounded-md md:px-2 md:py-1.5 md:text-xs"
             >
               <div className="relative shrink-0">
                 <Rss className="size-4 md:size-3.5" />
@@ -525,7 +522,7 @@ export function Sidebar() {
             </Tooltip>
           );
         })()}
-        <p className="border-t border-sidebar-border pt-3 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden md:border-0 md:pt-0">
+        <p className="border-t border-sidebar-border pt-4 text-[11px] font-medium uppercase tracking-[0.16em] text-sidebar-foreground/50 group-data-[state=collapsed]/sidebar:hidden md:border-0 md:pt-0 md:tracking-wider">
           Advantis Group
         </p>
       </SidebarFooter>
