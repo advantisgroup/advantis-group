@@ -50,18 +50,29 @@ interface Scores {
   skript: number;
 }
 
-async function callClaudeJson(system: string, userMsg: string): Promise<unknown> {
+async function callClaudeJson(system: string, userMsg: string, maxTokens = 1024): Promise<unknown> {
   const client = new Anthropic({ apiKey: requireEnv("ANTHROPIC_API_KEY") });
   const message = await client.messages.create({
     model: "claude-sonnet-4-6",
-    max_tokens: 1024,
+    max_tokens: maxTokens,
     system,
     messages: [{ role: "user", content: userMsg }],
   });
   const text = message.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+  // Strip markdown fences and any stray prose the model adds around the JSON
+  // object despite being told to answer with JSON only.
+  const stripped = text.replace(/```json|```/g, "").trim();
+  const jsonSlice = stripped.slice(stripped.indexOf("{"), stripped.lastIndexOf("}") + 1);
   try {
-    return JSON.parse(text.replace(/```json|```/g, "").trim());
+    return JSON.parse(jsonSlice || stripped);
   } catch {
+    // A truncated response (hit max_tokens mid-object) is the most likely
+    // cause — logging the raw text and finish reason makes that visible
+    // instead of just "unparsable" with nothing to go on.
+    console.error(
+      `[sales-coach-ev] unparsable AI response (stop_reason=${message.stop_reason}):`,
+      text.slice(0, 2000),
+    );
     throw Errors.upstream("Coach AI returned an unparsable response");
   }
 }
@@ -216,7 +227,10 @@ export const salesCoachEvRoute = new Elysia({ prefix: "/sales-coach-ev" })
       await rateLimit("salesCoachEv.report", clerkUserId, 10, "1 m");
       const kpiText = await getKpiText(clerkUserId);
       const userMsg = `Dauer: ${fmt(body.durationSec)}, Anrufer: ${body.callerSpeakPct}%, Ergebnis: ${body.outcome}\n\nTranskript:\n${body.transcript}`;
-      const raw = (await callClaudeJson(reportSystemPrompt(kpiText), userMsg)) as {
+      // Larger budget than the default: 8 scores + 8 written comments + several
+      // arrays comfortably exceeds 1024 tokens and was getting truncated
+      // mid-JSON, which surfaced as a generic "unparsable response" 502.
+      const raw = (await callClaudeJson(reportSystemPrompt(kpiText), userMsg, 2048)) as {
         scores: Scores;
         comments: Record<string, string>;
         missingInfos?: string[];
