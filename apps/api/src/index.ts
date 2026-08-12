@@ -9,6 +9,7 @@ import { clockodoAbsencesRoute } from "./routes/clockodo-absences.js";
 import { clockodoEntriesRoute } from "./routes/clockodo-entries.js";
 import { onedriveRoute } from "./routes/onedrive.js";
 import { performanceRoute } from "./routes/performance.js";
+import { salesCoachEvRoute } from "./routes/sales-coach-ev.js";
 import { wikiChatRoute } from "./routes/wiki-chat.js";
 import { internalClockodoRoute } from "./routes/internal/clockodo.js";
 import { internalNotificationsRoute } from "./routes/internal/notifications.js";
@@ -61,6 +62,7 @@ export const app = new Elysia()
   .use(clockodoEntriesRoute)
   .use(onedriveRoute)
   .use(performanceRoute)
+  .use(salesCoachEvRoute)
   .use(wikiChatRoute)
   .use(applicantsRoute);
 

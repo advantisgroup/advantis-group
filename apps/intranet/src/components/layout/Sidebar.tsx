@@ -30,6 +30,7 @@ import {
   UserSearch,
   Users,
   Wrench,
+  Zap,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import posthog from "posthog-js";
@@ -241,6 +242,11 @@ export function Sidebar() {
           href: "/sales-cockpit",
           labelKey: "salesCockpit",
           icon: PhoneCall,
+        },
+        {
+          href: "/sales-coach-ev",
+          labelKey: "salesCoachEv",
+          icon: Zap,
         },
       ],
     },

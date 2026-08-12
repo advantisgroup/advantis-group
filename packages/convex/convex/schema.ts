@@ -2436,6 +2436,74 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_user", ["clerkUserId"]),
 
+  // --- Sales Coach EV (live call-coaching for Projekt Elektromobilitaet) ------
+  // Transcript and feedback text may contain real customer conversations, so
+  // both are stored as AES-256-GCM ciphertext (encrypted in the Elysia API
+  // with a server-held key, same pattern as wikiChats above) — this layer
+  // never sees or stores plaintext call content. `scores`/`skillLevel` stay
+  // plain so charts and the admin roster can read them without decrypting.
+  salesCoachEvCalls: defineTable({
+    clerkUserId: v.string(),
+    userName: v.string(), // snapshot at write time, for admin roster display
+    startedAt: v.number(),
+    durationSec: v.number(),
+    callerSpeakPct: v.number(),
+    outcome: v.union(
+      v.literal("termin"),
+      v.literal("wiedervorlage"),
+      v.literal("kein_ergebnis"),
+    ),
+    transcriptEnc: v.string(), // ciphertext
+    scored: v.boolean(),
+    skillLevel: v.optional(v.number()),
+    // Keys match the AI system prompt's JSON schema verbatim (see
+    // apps/api/src/routes/sales-coach-ev.ts) so no key-renaming layer is
+    // needed between the model's output and storage.
+    scores: v.optional(
+      v.object({
+        zufriedenheit: v.number(),
+        ev_schwenk: v.number(),
+        informationen: v.number(),
+        offene_fragen: v.number(),
+        sprache: v.number(),
+        quittung: v.number(),
+        abschluss: v.number(),
+        skript: v.number(),
+      }),
+    ),
+    feedbackEnc: v.optional(v.string()), // ciphertext (encrypted JSON)
+  })
+    .index("by_user_time", ["clerkUserId", "startedAt"])
+    .index("by_startedAt", ["startedAt"]),
+
+  // Org-wide shared knowledge base for Sales Coach EV — small table, admin-authored.
+  salesCoachEvWiki: defineTable({
+    title: v.string(),
+    cat: v.union(
+      v.literal("Produktdaten"),
+      v.literal("Preisliste"),
+      v.literal("Technik"),
+      v.literal("Argumente"),
+      v.literal("Rechtliches"),
+      v.literal("Intern"),
+      v.literal("Links"),
+    ),
+    tags: v.string(),
+    body: v.string(),
+    url: v.optional(v.string()),
+    isLink: v.optional(v.boolean()),
+    authorClerkUserId: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }),
+
+  // Per-user KPI/call-guide text, fed into the AI coaching prompts.
+  salesCoachEvSettings: defineTable({
+    clerkUserId: v.string(),
+    kpiText: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_user", ["clerkUserId"]),
+
   // --- Fehlermanagement (QVM error/quality management, Sales) -----------------
   // A standalone quality-error tracking tool ported from a prototype built
   // around the 8D/PDCA methodology — entirely separate from the
